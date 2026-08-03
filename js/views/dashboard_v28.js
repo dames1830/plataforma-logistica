@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0034';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0035';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0034';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0034';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0034';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0034';
-import * as metasService from '../services_v245/metasService.js?v=29.0034';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0034';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0034';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0034';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0034';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0034';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0034';
+import * as adminService from '../services_v245/adminService.js?v=29.0035';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0035';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0035';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0035';
+import * as metasService from '../services_v245/metasService.js?v=29.0035';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0035';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0035';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0035';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0035';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0035';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0035';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0034';
+const VERSION = '29.0035';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3248,7 +3248,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0034');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0035');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13485,7 +13485,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0034 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0035 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15057,14 +15057,30 @@ const renderRFSection = (container) => {
       .sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0) || a.ubi.localeCompare(b.ubi));
     if (!lineas.length || !sug.cant) return [];
 
+    // ARRIBA SOLO SUBEN CAJAS CERRADAS, y eso se cuida DOS veces.
+    //
+    // planificarPorTalla ya recorta al factor lo que sube de cada talla, pero ese total se
+    // reparte después entre las ubicaciones del buffer, y ahí se volvía a romper: la talla
+    // 34 con 380 para arriba salía 131 de una ubicación y 249 de otra, y ninguna de las dos
+    // es caja cerrada. Así que se recorta OTRA VEZ, línea por línea.
+    //
+    // Los pares sueltos que sobran del recorte se quedan en el piso, que es donde sirven:
+    // en la zona activa se venden, arriba serían una caja abierta ocupando una paleta. Por
+    // eso el piso puede pasarse un poco del objetivo — es a propósito, igual que en
+    // cuantoAlPiso.
+    const caja = Math.max(1, Math.round(Number(sug.cant.factor) || 1));
+
     const pendiente = {};
     sug.cant.filas.forEach(f => { pendiente[f.talla] = { piso: f.baja, reserva: f.aReserva }; });
 
     return lineas.map(l => {
       const p = pendiente[l.talla] || { piso: 0, reserva: 0 };
-      const alPiso = Math.min(l.qty, p.piso);
+      const pisoIdeal = Math.min(l.qty, Math.max(0, p.piso));
+      // Lo que sobra de la línea después del piso es lo que querría subir; se baja al
+      // múltiplo de la caja y la diferencia se la queda el piso.
+      const aReserva = Math.floor(Math.min(l.qty - pisoIdeal, Math.max(0, p.reserva)) / caja) * caja;
+      const alPiso = l.qty - aReserva;
       p.piso -= alPiso;
-      const aReserva = Math.min(l.qty - alPiso, p.reserva);
       p.reserva -= aReserva;
       return {
         ubi: l.ubi, skuFull: l.skuFull, talla: l.talla, qty: l.qty,
@@ -15313,9 +15329,11 @@ const renderRFSection = (container) => {
         });
 
         let ultimaFila = rH;
+        const totales = [];   // lo que de verdad quedó escrito, artículo por artículo
         grupo.arts.forEach(x => {
           const trabada = x.plan.estado === 'slotting' || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona';
-          filasDelPapel(x, ctx).forEach(l => {
+          const fp = filasDelPapel(x, ctx);
+          fp.forEach(l => {
             const r = ws.addRow([l.ubi, l.skuFull, l.talla, l.qty,
                                  trabada ? '—' : (l.alPiso || '—'),
                                  l.aReserva || '—',
@@ -15330,10 +15348,19 @@ const renderRFSection = (container) => {
             ultimaFila = r;
           });
 
-          // Un total por artículo, como en el Excel de siempre
+          // Un total por artículo, como en el Excel de siempre. SE SUMA DE LAS FILAS DE
+          // ARRIBA, no del cálculo por talla: desde que la reserva se recorta a caja cerrada
+          // en cada línea, los sueltos se pasan al piso y los dos números dejaron de
+          // coincidir. En el papel manda lo que el operario tiene delante — si suma la
+          // columna con el dedo, tiene que darle esto.
+          const tPiso = trabada ? 0 : fp.reduce((a, l) => a + (l.alPiso || 0), 0);
+          const tReserva = fp.reduce((a, l) => a + (l.aReserva || 0), 0);
+          const tPaletas = tallasService.paletasDe(tReserva);
+          totales.push({ pares: x.pares, piso: tPiso, reserva: tReserva, paletas: tPaletas });
+
           const rTot = ws.addRow(['Total ' + x.sku7, '', '', x.pares,
-                                  trabada ? 0 : x.alPiso, x.aReserva,
-                                  x.paletas ? x.paletas + ' paleta' + (x.paletas > 1 ? 's' : '') : '—']);
+                                  tPiso, tReserva,
+                                  tPaletas ? tPaletas + ' paleta' + (tPaletas > 1 ? 's' : '') : '—']);
           ws.mergeCells(rTot.number, 1, rTot.number, 3);
           rTot.height = 20;
           rTot.eachCell({ includeEmpty: true }, c => {
@@ -15347,12 +15374,11 @@ const renderRFSection = (container) => {
         // El total de TODA la tarea, para saber de un vistazo cuánto trabajo hay. Va en
         // negro para que no se confunda con los totales de cada artículo.
         if (grupo.arts.length > 1) {
-          const sum = (f) => grupo.arts.reduce((a, x) => a + (f(x) || 0), 0);
-          const almacenar = grupo.arts.reduce((a, x) => a + ((x.plan.estado === 'slotting'
-            || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona') ? 0 : x.alPiso), 0);
-          const paletas = sum(x => x.paletas);
-          const rTT = ws.addRow(['TOTAL DE LA TAREA', '', '', sum(x => x.pares), almacenar,
-                                 sum(x => x.aReserva),
+          // También de las filas escritas, por lo mismo que el total de cada artículo
+          const sum = (k) => totales.reduce((a, t) => a + (t[k] || 0), 0);
+          const paletas = sum('paletas');
+          const rTT = ws.addRow(['TOTAL DE LA TAREA', '', '', sum('pares'), sum('piso'),
+                                 sum('reserva'),
                                  paletas ? paletas + ' paleta' + (paletas > 1 ? 's' : '') : '—']);
           ws.mergeCells(rTT.number, 1, rTT.number, 3);
           rTT.height = 24;
