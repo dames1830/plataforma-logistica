@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA } from '../services_v245/csvHub_v6.js?v=29.0039';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA } from '../services_v245/csvHub_v6.js?v=29.0040';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0039';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0039';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0039';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0039';
-import * as metasService from '../services_v245/metasService.js?v=29.0039';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0039';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0039';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0039';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0039';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0039';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0039';
+import * as adminService from '../services_v245/adminService.js?v=29.0040';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0040';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0040';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0040';
+import * as metasService from '../services_v245/metasService.js?v=29.0040';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0040';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0040';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0040';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0040';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0040';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0040';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0039';
+const VERSION = '29.0040';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1444,10 +1444,13 @@ const TABS = [
         { id: 'ciclicos', label: 'Cíclicos', icon: '🔄' },
         { id: 'reportes', label: 'Reportes', icon: '📊' }
     ] },
-    // Va al final, a la derecha de todo. Acá se BAJAN los archivos que deja el
-    // robot; no confundir con Configuración > Archivos Nube, que es para SUBIR.
-    { id: 'descargas_inventario', label: 'Descargas', icon: '📥' }
   ]},
+  // Todo lo que el robot deja para bajar, junto y con buscador. Antes era una pestaña
+  // dentro de Inventario y solo tenía el Slotting; ahora también están los dos stocks, y
+  // como no son de un módulo en particular se subió a principal. No confundir con
+  // Configuración > Archivos Nube, que es para SUBIR: acá solo se baja.
+  { id: 'descargas', label: 'Descargas', icon: '📥',
+    roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
   ]},
@@ -2063,6 +2066,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'Gestión NO RETAIL');
     else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
     else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'Gestión de Almacenaje');
+    else if (currentTab === 'descargas') await renderDescargasInventario(contentArea);
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -2750,28 +2754,25 @@ export const renderDashboard = async (container, user, onLogout) => {
       // congelada el día que alguien cargó ese archivo a mano por última vez.
       const metaNube = getUploadMeta(AREA_CANONICA[area] || area);
       const dateStr = metaNube ? new Date(metaNube.ts).toLocaleString() : 'NUNCA';
+      // El mismo verde y el mismo armado que el Maestro (renderMaestroNube): las tres
+      // tarjetas dicen lo mismo —esto viene de la nube, no se toca acá— y tienen que
+      // leerse como una sola cosa, no como tres avisos distintos.
+      const color = isLoaded ? '#22c55e' : '#f59e0b';
       div.innerHTML = `
-        <div style="background:rgba(15,23,42,0.4); border:1px solid rgba(99,102,241,0.25); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #6366f1;">
+        <div style="background:rgba(15,23,42,0.4); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; border-left:4px solid ${color};">
             <div style="display:flex; align-items:center; gap:1.2rem;">
-                <div style="width:36px; height:36px; background:rgba(99,102,241,0.12); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; border:1px solid rgba(99,102,241,0.2);">☁️</div>
+                <div style="width:36px; height:36px; background:rgba(255,255,255,0.03); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${color}; border:1px solid rgba(255,255,255,0.05);">☁️</div>
                 <div style="display:flex; flex-direction:column;">
                     <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${label}</span>
-                    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
-                        <span style="color:${isLoaded ? '#a5b4fc' : 'var(--text-muted)'}; font-weight:700; font-size:0.85rem;">${isLoaded ? 'EN LA NUBE' : 'SIN PUBLICAR'}</span>
+                    <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
+                        <span style="color:${color}; font-weight:700; font-size:0.85rem;">${isLoaded ? 'EN LA NUBE' : 'SIN PUBLICAR'}</span>
                         ${isLoaded ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
-                                      <span style="color:var(--text-muted); font-size:0.75rem;">${hasData.length.toLocaleString('es-PE')} regs</span>` : ''}
+                                      <span style="color:var(--text-muted); font-size:0.75rem;">${hasData.length.toLocaleString('es-PE')} regs · ${dateStr}</span>` : ''}
                     </div>
                 </div>
             </div>
-            <div style="display:flex; align-items:center; gap:1.5rem;">
-                <div style="text-align:right; min-width:180px;">
-                    <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">ÚLTIMA PUBLICACIÓN</div>
-                    <div style="font-size:0.75rem; color:${isLoaded ? '#a5b4fc' : 'rgba(255,255,255,0.2)'}; font-weight:700;">${dateStr}</div>
-                </div>
-                <div title="Lo sube el robot todas las noches a las 19:00. Ya no hace falta cargarlo en cada computadora: todas leen el mismo." style="display:flex; align-items:center; gap:6px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.25); border-radius:6px; padding:6px 10px; cursor:default;">
-                    <span style="font-size:0.8rem;">🔒</span>
-                    <span style="font-size:0.65rem; color:#a5b4fc; font-weight:800; letter-spacing:0.5px;">LO SUBE EL ROBOT</span>
-                </div>
+            <div style="text-align:right; font-size:0.7rem; color:var(--text-muted); line-height:1.5;">
+                Ya no se sube acá.<br>Lo publica <b>el robot</b> todas las noches a las <b>19:00</b>
             </div>
         </div>`;
       container.appendChild(div);
@@ -3286,7 +3287,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0039');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0040');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -9005,7 +9006,7 @@ const renderRFSection = (container) => {
 
     let datos;
     try {
-      datos = await listarArchivos('inventario');
+      datos = await listarArchivos('descargas');
     } catch (e) {
       if (!container.isConnected) return;
       container.innerHTML = `<div class="glass-panel" style="padding:2.5rem; text-align:center;">
@@ -9021,36 +9022,55 @@ const renderRFSection = (container) => {
 
     const { archivos, maximo } = datos;
 
-    const filas = archivos.map(a => `
+    // Los tipos que hay hoy, para los botones de filtro rápido. Salen de los archivos y no
+    // de una lista fija: el día que el robot deje uno nuevo, su botón aparece solo.
+    const tipos = [...new Set(archivos.map(a => a.tipo).filter(Boolean))].sort();
+
+    const iconoDe = (nombre) => /\.csv$/i.test(nombre) ? '📄' : '📗';
+
+    const filaDe = (a) => `
       <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
         <td style="padding:0.85rem 0.6rem; white-space:nowrap;">
-          <span style="font-size:1.1rem; margin-right:0.5rem;">📗</span>
-          <span style="font-weight:700; color:#e2e8f0;">${a.nombre}</span>
+          <span style="font-size:1.1rem; margin-right:0.5rem;">${iconoDe(a.nombre)}</span>
+          <span style="font-weight:700; color:#e2e8f0;">${esc(a.nombre)}</span>
+        </td>
+        <td style="padding:0.85rem 0.6rem; white-space:nowrap;">
+          <span style="background:rgba(129,140,248,0.12); border:1px solid rgba(129,140,248,0.25); color:#a5b4fc; padding:2px 8px; border-radius:20px; font-size:0.7rem; font-weight:800;">${esc(a.tipo || '—')}</span>
         </td>
         <td style="padding:0.85rem 0.6rem; color:var(--text-muted); white-space:nowrap;">${fechaBonita(a.fecha)}</td>
         <td style="padding:0.85rem 0.6rem; color:var(--text-muted); white-space:nowrap;">${a.mb} MB</td>
-        <td style="padding:0.85rem 0.6rem; color:var(--text-muted); font-size:0.75rem; white-space:nowrap;">${a.subido_por || '—'} · ${(a.subido_el || '').slice(11, 16) || ''}</td>
+        <td style="padding:0.85rem 0.6rem; color:var(--text-muted); font-size:0.75rem; white-space:nowrap;">${esc(a.subido_por || '—')} · ${(a.subido_el || '').slice(11, 16) || ''}</td>
         <td style="padding:0.85rem 0.6rem; text-align:right; white-space:nowrap;">
-          <button class="btnBajarArchivo" data-id="${a.id}" data-nombre="${a.nombre}"
+          <button class="btnBajarArchivo" data-id="${a.id}" data-nombre="${esc(a.nombre)}"
                   style="background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); padding:0.45rem 1rem; border-radius:8px; cursor:pointer; font-weight:800; font-size:0.75rem;">
             ⬇️ DESCARGAR
           </button>
-          ${esAdmin ? `<button class="btnBorrarArchivo" data-id="${a.id}" data-nombre="${a.nombre}" title="Borrar"
+          ${esAdmin ? `<button class="btnBorrarArchivo" data-id="${a.id}" data-nombre="${esc(a.nombre)}" title="Borrar"
                   style="background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.25); padding:0.45rem 0.7rem; border-radius:8px; cursor:pointer; font-weight:800; font-size:0.75rem; margin-left:0.4rem;">✕</button>` : ''}
         </td>
-      </tr>`).join('');
+      </tr>`;
 
     container.innerHTML = `
       <div class="glass-panel" style="padding:1.5rem;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
           <div>
-            <h3 style="margin:0 0 0.3rem 0; color:#fff; font-size:1rem; font-weight:900;">📥 ARCHIVOS DE INVENTARIO</h3>
+            <h3 style="margin:0 0 0.3rem 0; color:#fff; font-size:1rem; font-weight:900;">📥 DESCARGAS</h3>
             <p style="margin:0; color:var(--text-muted); font-size:0.78rem;">
-              El robot los deja todas las noches a las 19:00. Se guardan los últimos ${maximo} días: cuando entra uno nuevo, el más viejo se borra solo.
+              Lo que el robot deja todas las noches a las 19:00. De cada archivo se guardan los últimos ${maximo} días: cuando entra el nuevo, el más viejo se borra solo.
             </p>
           </div>
           <button id="refrescarDescargas" style="background:rgba(129,140,248,0.15); color:#818cf8; border:1px solid rgba(129,140,248,0.3); padding:0.5rem 1rem; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.75rem; white-space:nowrap;">↻ ACTUALIZAR</button>
         </div>
+
+        ${archivos.length === 0 ? '' : `
+        <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; margin-bottom:1rem;">
+          <div style="position:relative; flex:1; min-width:220px;">
+            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:0.85rem; opacity:0.5;">🔍</span>
+            <input id="buscarDescarga" type="search" placeholder="Escribe slotting, activo, reserva o una fecha..." autocomplete="off"
+                   style="width:100%; padding:0.55rem 0.8rem 0.55rem 2rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:#fff; font-size:0.82rem;">
+          </div>
+          ${tipos.map(t => `<button class="chipTipo" data-tipo="${esc(t)}" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); color:var(--text-muted); padding:0.5rem 0.9rem; border-radius:8px; cursor:pointer; font-weight:800; font-size:0.72rem; white-space:nowrap;">${esc(t)}</button>`).join('')}
+        </div>` }
 
         ${archivos.length === 0 ? `
           <div style="padding:3rem 1rem; text-align:center;">
@@ -9059,27 +9079,74 @@ const renderRFSection = (container) => {
             <div style="color:var(--text-muted); font-size:0.75rem; margin-top:0.4rem;">El primero aparece después de la próxima corrida del robot.</div>
           </div>` : `
           <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse; font-size:0.82rem; min-width:640px;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.82rem; min-width:720px;">
               <thead>
                 <tr style="border-bottom:1px solid var(--border);">
                   <th style="padding:0.6rem; text-align:left; color:var(--text-muted); font-size:0.7rem; letter-spacing:0.5px;">ARCHIVO</th>
+                  <th style="padding:0.6rem; text-align:left; color:var(--text-muted); font-size:0.7rem; letter-spacing:0.5px;">TIPO</th>
                   <th style="padding:0.6rem; text-align:left; color:var(--text-muted); font-size:0.7rem; letter-spacing:0.5px;">FECHA</th>
                   <th style="padding:0.6rem; text-align:left; color:var(--text-muted); font-size:0.7rem; letter-spacing:0.5px;">PESO</th>
                   <th style="padding:0.6rem; text-align:left; color:var(--text-muted); font-size:0.7rem; letter-spacing:0.5px;">SUBIDO POR</th>
                   <th></th>
                 </tr>
               </thead>
-              <tbody>${filas}</tbody>
+              <tbody id="cuerpoDescargas">${archivos.map(filaDe).join('')}</tbody>
             </table>
+            <div id="sinResultados" style="display:none; padding:2.5rem 1rem; text-align:center; color:var(--text-muted); font-style:italic;">
+              Ningún archivo coincide con lo que buscaste.
+            </div>
           </div>`}
       </div>`;
 
     document.getElementById('refrescarDescargas')?.addEventListener('click', () => renderDescargasInventario(container));
 
+    // ── El buscador ──────────────────────────────────────────────────────────
+    // Filtra sobre lo que ya está en pantalla, sin volver a pedirle nada al servidor: son
+    // pocos archivos y así responde mientras se escribe. Busca en el nombre, el tipo y la
+    // fecha —tanto AAAA-MM-DD como el "Lun 02/08" que se ve—, para que valga escribir
+    // "reserva", "agosto" o "02/08" y encuentre lo mismo.
+    const caja = document.getElementById('buscarDescarga');
+    const cuerpo = document.getElementById('cuerpoDescargas');
+    const vacio = document.getElementById('sinResultados');
+    let tipoElegido = '';
+
+    const aplicar = () => {
+      if (!cuerpo) return;
+      const txt = (caja?.value || '').trim().toLowerCase();
+      let visibles = 0;
+      archivos.forEach((a, i) => {
+        const fila = cuerpo.children[i];
+        if (!fila) return;
+        const heno = `${a.nombre} ${a.tipo || ''} ${a.fecha} ${fechaBonita(a.fecha)} ${a.subido_por || ''}`.toLowerCase();
+        const pasaTexto = !txt || txt.split(/\s+/).every(p => heno.includes(p));
+        const pasaTipo = !tipoElegido || a.tipo === tipoElegido;
+        const ver = pasaTexto && pasaTipo;
+        fila.style.display = ver ? '' : 'none';
+        if (ver) visibles++;
+      });
+      if (vacio) vacio.style.display = visibles ? 'none' : 'block';
+    };
+
+    caja?.addEventListener('input', aplicar);
+
+    container.querySelectorAll('.chipTipo').forEach(chip => {
+      chip.addEventListener('click', () => {
+        // Volver a tocar el mismo chip lo apaga: es el atajo para ver todo de nuevo
+        tipoElegido = (tipoElegido === chip.dataset.tipo) ? '' : chip.dataset.tipo;
+        container.querySelectorAll('.chipTipo').forEach(c => {
+          const on = c.dataset.tipo === tipoElegido;
+          c.style.background = on ? 'rgba(129,140,248,0.18)' : 'rgba(255,255,255,0.04)';
+          c.style.borderColor = on ? 'rgba(129,140,248,0.5)' : 'rgba(255,255,255,0.12)';
+          c.style.color = on ? '#a5b4fc' : 'var(--text-muted)';
+        });
+        aplicar();
+      });
+    });
+
     container.querySelectorAll('.btnBajarArchivo').forEach(btn => {
       btn.addEventListener('click', () => withLoading(btn, '⏳ BAJANDO...', async () => {
         try {
-          await descargarArchivo('inventario', { id: +btn.dataset.id, nombre: btn.dataset.nombre });
+          await descargarArchivo('descargas', { id: +btn.dataset.id, nombre: btn.dataset.nombre });
         } catch (e) {
           showPremiumAlert('No se pudo descargar', e.message);
         }
@@ -9092,7 +9159,7 @@ const renderRFSection = (container) => {
           `Se va a borrar "${btn.dataset.nombre}" del servidor. No se puede deshacer.`);
         if (ok === false) return;
         try {
-          await borrarArchivo('inventario', +btn.dataset.id);
+          await borrarArchivo('descargas', +btn.dataset.id);
           renderDescargasInventario(container);
         } catch (e) {
           showPremiumAlert('No se pudo borrar', e.message);
@@ -13523,7 +13590,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0039 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0040 | MOBILE PORTAL
                             </div>
                     </div>
 

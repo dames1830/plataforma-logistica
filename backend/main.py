@@ -275,6 +275,23 @@ def init_db(ruta: Optional[str] = None):
     cursor.execute('CREATE TABLE IF NOT EXISTS archivos_nube (id INTEGER PRIMARY KEY AUTOINCREMENT, modulo TEXT NOT NULL, nombre TEXT NOT NULL, fecha TEXT NOT NULL, tamano INTEGER NOT NULL, contenido BLOB NOT NULL, subido_por TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_archivos_nube ON archivos_nube (modulo, fecha DESC)')
 
+    # 'tipo' llegó después: en un mismo módulo conviven Slotting, Stock Activo y Stock
+    # Reserva, y cada uno tiene que guardar SUS días. Sin esto los tres se repartían el
+    # mismo cupo y agregar dos archivos dejaba el historial del Slotting en dos días.
+    # A las filas que ya estaban se les pone el tipo por su nombre, que hasta ahora
+    # siempre fue "Slotting DD-MM-AA.xlsx".
+    try:
+        cursor.execute('ALTER TABLE archivos_nube ADD COLUMN tipo TEXT')
+        cursor.execute("UPDATE archivos_nube SET tipo = TRIM(REPLACE(REPLACE(nombre, '.xlsx', ''), '.csv', ''))")
+        cursor.execute("UPDATE archivos_nube SET tipo = 'Slotting' WHERE nombre LIKE 'Slotting%'")
+    except sqlite3.OperationalError:
+        pass          # ya existía: no es un error, es que la base ya estaba al día
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_archivos_nube_tipo ON archivos_nube (modulo, tipo, fecha DESC)')
+
+    # El Slotting vivía en el módulo 'inventario'. Ahora todo lo descargable está junto en
+    # 'descargas', así que los que quedaron se mudan y no se pierde el historial.
+    cursor.execute("UPDATE archivos_nube SET modulo = 'descargas' WHERE modulo = 'inventario'")
+
     # ── Áreas que pasaron a ser singleton después de haberse usado ──────────────
     # Un área normal guarda su dato bajo la fecha del día; una singleton lo guarda
     # bajo 'MASTER'. Cuando un área cambia de categoría, lo que ya estaba guardado
@@ -1201,7 +1218,7 @@ def get_no_retail_photo(client_id: str, photo_type: str):
 # dinámica es de Excel: si se guardaran las filas sueltas, el asistente se
 # bajaría una tabla plana, que es justo lo que no sirve.
 #
-# De cada módulo se conservan los ARCHIVOS_POR_MODULO más recientes y el resto
+# De cada TIPO se conservan los ARCHIVOS_POR_TIPO más recientes y el resto
 # se borra solo. Sin esa rotación, 3,5 MB por día llenan el disco del servidor
 # en unos meses, y cuando el disco se llena hay una rutina de emergencia
 # (hard_reset_if_full) que borra la base de PRODUCCIÓN para recuperar espacio.
@@ -1215,7 +1232,11 @@ def get_no_retail_photo(client_id: str, photo_type: str):
 # vacía, porque init_db() corre también sobre la base de pruebas.
 # ─────────────────────────────────────────────────────────────────────────────
 
-ARCHIVOS_POR_MODULO = 6      # una semana de trabajo: el robot corre de lunes a sábado
+# Siete días de cada TIPO, no del módulo. En Descargas conviven el Slotting, el Stock
+# Activo y el de Reserva, y cada uno guarda su propia semana: el lunes que entra pisa al
+# lunes que sale. Si el cupo fuera del módulo, los tres se lo repartirían y quedarían dos
+# días de cada cosa.
+ARCHIVOS_POR_TIPO = 7
 ARCHIVO_MAX_MB = 25
 
 
@@ -1227,9 +1248,23 @@ def _limpiar_nombre(nombre: str) -> str:
     return nombre[:120] or "archivo.xlsx"
 
 
+def _tipo_de(nombre: str, tipo: str) -> str:
+    """
+    El tipo agrupa las versiones del mismo archivo a lo largo de los días. Si no viene, se
+    deduce quitándole la fecha al nombre: "Stock Activo 02-08-26.xlsx" -> "Stock Activo".
+    Así los archivos que ya estaban y los que suba alguien a mano también rotan bien.
+    """
+    t = (tipo or "").strip()
+    if not t:
+        t = re.sub(r"\.[A-Za-z0-9]+$", "", (nombre or "").strip())      # la extensión
+        t = re.sub(r"[\s_-]*\d{1,4}[-/]\d{1,2}[-/]\d{1,4}\s*$", "", t)  # la fecha del final
+        t = t.strip(" -_") or "Otros"
+    return t[:60]
+
+
 @app.post("/api/archivos/{modulo}")
 async def subir_archivo(modulo: str, request: Request, nombre: str = "",
-                        fecha: str = "", usuario: str = "robot"):
+                        fecha: str = "", usuario: str = "robot", tipo: str = ""):
     """Recibe el archivo en el cuerpo de la petición y lo guarda."""
     try:
         contenido = await request.body()
@@ -1243,36 +1278,39 @@ async def subir_archivo(modulo: str, request: Request, nombre: str = "",
 
         nombre = _limpiar_nombre(nombre)
         fecha = (fecha or datetime.now().strftime("%Y-%m-%d")).strip()[:20]
+        tipo = _tipo_de(nombre, tipo)
 
         conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
 
-        # Si el robot corre dos veces el mismo día, la segunda reemplaza a la
-        # primera en vez de ocupar dos de los seis lugares.
-        cursor.execute("DELETE FROM archivos_nube WHERE modulo = ? AND fecha = ?", (modulo, fecha))
+        # Si el robot corre dos veces el mismo día, la segunda reemplaza a la primera en
+        # vez de ocupar dos lugares. Va por TIPO: que se rehaga el Slotting no tiene por
+        # qué borrar el Stock Activo de esa misma fecha.
+        cursor.execute("DELETE FROM archivos_nube WHERE modulo = ? AND fecha = ? AND tipo = ?",
+                       (modulo, fecha, tipo))
         cursor.execute("""
-            INSERT INTO archivos_nube (modulo, nombre, fecha, tamano, contenido, subido_por, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (modulo, nombre, fecha, len(contenido), sqlite3.Binary(contenido),
+            INSERT INTO archivos_nube (modulo, tipo, nombre, fecha, tamano, contenido, subido_por, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (modulo, tipo, nombre, fecha, len(contenido), sqlite3.Binary(contenido),
               (usuario or "robot")[:60], datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
-        # Rotación: se queda con los más nuevos y borra el resto.
+        # Rotación POR TIPO: cada archivo guarda su propia semana.
         cursor.execute("""
             DELETE FROM archivos_nube
-             WHERE modulo = ?
+             WHERE modulo = ? AND tipo = ?
                AND id NOT IN (SELECT id FROM archivos_nube
-                               WHERE modulo = ?
+                               WHERE modulo = ? AND tipo = ?
                             ORDER BY fecha DESC, id DESC
                                LIMIT ?)
-        """, (modulo, modulo, ARCHIVOS_POR_MODULO))
+        """, (modulo, tipo, modulo, tipo, ARCHIVOS_POR_TIPO))
         borrados = max(cursor.rowcount, 0)
         conn.commit()
 
-        quedan = cursor.execute("SELECT COUNT(*) FROM archivos_nube WHERE modulo = ?",
-                                (modulo,)).fetchone()[0]
+        quedan = cursor.execute("SELECT COUNT(*) FROM archivos_nube WHERE modulo = ? AND tipo = ?",
+                                (modulo, tipo)).fetchone()[0]
         conn.close()
 
-        return {"status": "success", "nombre": nombre, "fecha": fecha,
+        return {"status": "success", "nombre": nombre, "fecha": fecha, "tipo": tipo,
                 "mb": round(len(contenido) / 1024.0 / 1024.0, 2),
                 "guardados": quedan, "borrados": borrados,
                 "entorno": entorno_actual()}
@@ -1286,15 +1324,16 @@ def listar_archivos(modulo: str):
     try:
         conn = sqlite3.connect(db_path())
         filas = conn.execute("""
-            SELECT id, nombre, fecha, tamano, subido_por, created_at
+            SELECT id, nombre, fecha, tamano, subido_por, created_at, COALESCE(tipo, '')
               FROM archivos_nube WHERE modulo = ?
-          ORDER BY fecha DESC, id DESC
+          ORDER BY fecha DESC, tipo ASC, id DESC
         """, (modulo,)).fetchall()
         conn.close()
-        return {"status": "success", "modulo": modulo, "maximo": ARCHIVOS_POR_MODULO,
+        return {"status": "success", "modulo": modulo, "maximo": ARCHIVOS_POR_TIPO,
                 "archivos": [{"id": f[0], "nombre": f[1], "fecha": f[2],
                               "tamano": f[3], "mb": round((f[3] or 0) / 1024.0 / 1024.0, 2),
-                              "subido_por": f[4], "subido_el": f[5]} for f in filas]}
+                              "subido_por": f[4], "subido_el": f[5],
+                              "tipo": f[6] or _tipo_de(f[1], "")} for f in filas]}
     except Exception as e:
         return {"status": "error", "message": str(e), "archivos": []}
 
