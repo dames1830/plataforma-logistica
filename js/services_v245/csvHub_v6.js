@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0049';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0050';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -128,7 +128,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0049';
+const VERSION = '29.0050';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1512,7 +1512,19 @@ export const calculateBufferPallets = (configOverride = null) => {
             // Lógica de colchón: proyectar el stock después de atender los pedidos
             let stockProyectado = Math.max(0, enActivo - totalSolicitado);
             let factorFaltante = Math.max(0, factorConfig - stockProyectado);
-            factorVirtual = Math.min(factorFaltante, stockReservaReal);
+
+            // EL COLCHÓN SE SIRVE DE LO QUE SOBRA, NO DE TODA LA RESERVA.
+            //
+            // Lo que el pedido no encuentra en el piso también sale de arriba, así que esos
+            // pares ya están comprometidos. Topeando el colchón contra la reserva ENTERA, los
+            // dos reservaban los mismos pares y se pedía de más: con un pedido de 100, 50
+            // abajo y 70 arriba, se pedían 170 cuando en todo el almacén hay 120. Bajaban los
+            // 70 que había —eso siempre estuvo bien— pero los otros 50 se reportaban como
+            // SIN STOCK, y no faltaban: estaban contados dos veces.
+            const reservaParaElPedido = Math.max(0, totalSolicitado - enActivo);
+            const reservaLibre = Math.max(0, stockReservaReal - reservaParaElPedido);
+
+            factorVirtual = Math.min(factorFaltante, reservaLibre);
             necesidadTotal = totalSolicitado + factorVirtual;
         }
         
