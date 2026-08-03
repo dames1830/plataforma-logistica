@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0038';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0039';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -128,7 +128,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0038';
+const VERSION = '29.0039';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -926,9 +926,21 @@ export const getAreaData = async (area, forceRefresh = false) => {
       return datos;
   }
 
+  // Las dos que publica el robot SÍ se bajan del servidor, aunque el nombre empiece por
+  // 'analisis_sku'. Esa lista es de cuando cada PC cargaba sus archivos a mano; dejar
+  // 'analisis_sku_reserva' adentro la devolvía vacía en cualquier computadora que no la
+  // hubiera cargado, y por eso la sugerencia tenía que pedirla por su cuenta con un fetch.
+  const laPublicaElRobot = (area === 'almacenaje_activo' || area === 'analisis_sku_reserva');
+
   if (!forceRefresh && dataStore[area] !== undefined && dataStore[area] !== null) return dataStore[area];
-  
-  if (!forceRefresh) {
+
+  // EN LAS DEL ROBOT MANDA EL SERVIDOR, no la copia de esta PC.
+  //
+  // El IndexedDB de una computadora puede tener la foto de hace semanas —o el formato de 33
+  // columnas de antes del 02-ago— y no hay manera de saberlo sin preguntar. Preguntar sale
+  // barato: el servidor las manda comprimidas y son unos 360 KB. Si no contesta, más abajo
+  // se cae igual al respaldo local, así que sin internet se sigue trabajando.
+  if (!forceRefresh && !laPublicaElRobot) {
       // [MOD V12.1.47] Prioridad a la DB Local (Instantáneo)
       const dbData = await loadFromDB(area);
       if (dbData) {
@@ -937,12 +949,6 @@ export const getAreaData = async (area, forceRefresh = false) => {
           return dbData;
       }
   }
-
-  // Las dos que publica el robot SÍ se bajan del servidor, aunque el nombre empiece por
-  // 'analisis_sku'. Esta lista es de cuando cada PC cargaba sus archivos a mano; dejar
-  // 'analisis_sku_reserva' adentro la devolvía vacía en cualquier computadora que no la
-  // hubiera cargado, y por eso la sugerencia tenía que pedirla por su cuenta con un fetch.
-  const laPublicaElRobot = (area === 'almacenaje_activo' || area === 'analisis_sku_reserva');
 
   // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, no buscar en el servidor
   if (!laPublicaElRobot && (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area === 'validar_lpn' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas' || area.startsWith('analisis_sku'))) {
@@ -984,7 +990,20 @@ export const getAreaData = async (area, forceRefresh = false) => {
           }
      }
   } catch (err) { console.warn(`Backend lento o vacío para '${area}'.`); }
-  
+
+  // El respaldo de las del robot: se saltaron el IndexedDB para ir al servidor, así que si
+  // el servidor no contestó hay que volver por él. Sin esto, quedarse sin internet dejaría
+  // la pantalla vacía cuando en la PC había una copia perfectamente usable.
+  if (laPublicaElRobot && !forceRefresh) {
+      const respaldo = await loadFromDB(area);
+      if (respaldo) {
+          console.warn(`[PULSE] '${area}' no llegó del servidor: se usa la copia de esta PC.`);
+          dataStore[area] = respaldo;
+          repartirCanonica(area, respaldo);
+          return respaldo;
+      }
+  }
+
   if (area.endsWith('_activo') || area.endsWith('_reserva')) {
       updateTablaTallas();
   }
