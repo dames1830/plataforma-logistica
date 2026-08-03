@@ -1,8 +1,8 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0048';
-import * as adminService from './services_v245/adminService.js?v=29.0048';
+import { getSession, logout } from './services_v245/auth.js?v=29.0049';
+import * as adminService from './services_v245/adminService.js?v=29.0049';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -345,31 +345,179 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0048';
+      this.APP_VERSION = 'v29.0049';
     
-    // --- LIMPIEZA DE CACHÉ FORZADA v25.1.13 ---
-    const lastVer = localStorage.getItem('PULSE_INSTALLED_VERSION');
-    if (lastVer !== this.APP_VERSION) {
-        console.warn("🧹 [PULSE] Detectada versión nueva. Limpiando caché de scripts...");
-        localStorage.setItem('PULSE_INSTALLED_VERSION', this.APP_VERSION);
-    }
+    // Solo deja constancia de con qué versión se arrancó. La detección de una versión
+    // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
+    // dentro de este mismo archivo: si el navegador lo tiene cacheado, compararlo contra
+    // lo guardado es comparar la versión vieja contra sí misma.
+    localStorage.setItem('PULSE_INSTALLED_VERSION', this.APP_VERSION);
+
     this.isRendered = false;
-    
+
     // Timer de inactividad
     this.inactivityTimeout = null;
+    this.ultimaActividad = Date.now();
     this.setupActivityListeners();
     this.startInactivityTimer();
+    this.vigilarVersion();
 
     this.init();
   }
 
   setupActivityListeners() {
-      const resetTimer = () => this.startInactivityTimer();
+      const resetTimer = () => { this.ultimaActividad = Date.now(); this.startInactivityTimer(); };
       window.addEventListener('mousemove', resetTimer, { passive: true });
       window.addEventListener('keydown', resetTimer, { passive: true });
       window.addEventListener('click', resetTimer, { passive: true });
       window.addEventListener('scroll', resetTimer, { passive: true });
       window.addEventListener('touchstart', resetTimer, { passive: true });
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════════
+  // DETECTOR DE VERSIÓN NUEVA
+  //
+  // Antes había un chequeo acá mismo que no podía funcionar: comparaba APP_VERSION
+  // —que está escrita DENTRO de este archivo— contra lo guardado en localStorage. Si el
+  // navegador tenía app.js cacheado leía la versión vieja y la comparaba contra la vieja,
+  // así que jamás detectaba nada. Y aunque lo hubiera hecho, solo escribía en la consola:
+  // no recargaba. El resultado era gente trabajando media tarde con código viejo sin
+  // enterarse, viendo datos que en la máquina de al lado ya estaban.
+  //
+  // Ahora se le pregunta al SERVIDOR. El index.html se pide con 'no-store' para que el
+  // navegador no pueda contestar de su caché, y de ahí sale el ?v= que está publicado de
+  // verdad. No hace falta ningún archivo nuevo: bump.py ya deja ese número ahí.
+  //
+  // Los avisos van subiendo de tono, porque interrumpir a alguien a mitad de una carga es
+  // peor que esperar cinco minutos:
+  //     1º  se avisa y se puede postergar
+  //     2º  a los 5 min, se avisa que el próximo es obligatorio
+  //     3º  a los 10 min, cuenta regresiva de 20 s y se recarga
+  //
+  // Y si no hay nadie mirando —pestaña en segundo plano, o más de un minuto sin tocar
+  // nada— no se muestra nada: se recarga y listo.
+  // ════════════════════════════════════════════════════════════════════════════════
+
+  /** La versión que está publicada en el servidor, o null si no se pudo saber. */
+  async versionPublicada() {
+      try {
+          const res = await fetch(`./index.html?_chk=${Date.now()}`, { cache: 'no-store' });
+          if (!res.ok) return null;
+          const txt = await res.text();
+          const m = txt.match(/\?v=(\d+(?:\.\d+)+)/);
+          return m ? 'v' + m[1] : null;
+      } catch (e) {
+          return null;   // sin internet se sigue trabajando igual
+      }
+  }
+
+  /** ¿Hay alguien mirando la pantalla en este momento? */
+  estaAtendida() {
+      if (document.hidden) return false;
+      return (Date.now() - (this.ultimaActividad || 0)) < 60000;
+  }
+
+  vigilarVersion() {
+      this.avisosVersion = 0;
+      this.proximoAviso = 0;
+      this.versionNueva = null;
+      this.ultimaActividad = Date.now();
+
+      const revisar = () => this.revisarVersion();
+      // Cada dos minutos, y también al volver a la pestaña: si estuvo abierta toda la
+      // mañana en segundo plano, conviene enterarse al primer vistazo y no dos minutos
+      // después.
+      setInterval(revisar, 120000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) revisar(); });
+      setTimeout(revisar, 30000);
+  }
+
+  async revisarVersion() {
+      if (document.getElementById('pulse-aviso-version')) return;   // ya hay uno a la vista
+
+      const publicada = this.versionNueva || await this.versionPublicada();
+      if (!publicada || publicada === this.APP_VERSION) return;
+      this.versionNueva = publicada;
+
+      // Nadie mirando, o todavía sin entrar: se recarga sin molestar a nadie.
+      if (!this.estaAtendida() || !getSession()) { this.recargarPorVersion(); return; }
+      if (Date.now() < (this.proximoAviso || 0)) return;
+
+      this.avisosVersion = (this.avisosVersion || 0) + 1;
+      this.mostrarAvisoVersion(Math.min(this.avisosVersion, 3), publicada);
+  }
+
+  /** Recarga pidiendo el index de nuevo, no el que el navegador tenga guardado. */
+  recargarPorVersion() {
+      try {
+          const u = new URL(window.location.href);
+          u.searchParams.set('_v', String(Date.now()));
+          window.location.replace(u.toString());
+      } catch (e) {
+          window.location.reload();
+      }
+  }
+
+  mostrarAvisoVersion(paso, publicada) {
+      const ESTILOS = {
+          1: { borde: 'rgba(79,70,229,.5)',  chipBg: 'rgba(79,70,229,.16)',  chipCol: '#a5b4fc', chipBor: 'rgba(129,140,248,.4)',
+               icoBg: 'rgba(79,70,229,.15)', icoBor: 'rgba(129,140,248,.45)', ico: '⟳',
+               chip: 'PRIMER AVISO', titulo: 'Hay una versión nueva',
+               texto: 'Estás viendo una versión anterior de la plataforma. Actualiza para trabajar con los últimos cambios.',
+               pie: 'Si estás a mitad de algo, presiona «Después».' },
+          2: { borde: 'rgba(251,191,36,.55)', chipBg: 'rgba(251,191,36,.14)', chipCol: '#fbbf24', chipBor: 'rgba(251,191,36,.4)',
+               icoBg: 'rgba(251,191,36,.12)', icoBor: 'rgba(251,191,36,.45)', ico: '⚠',
+               chip: 'SEGUNDO AVISO', titulo: 'Sigues con la versión anterior',
+               texto: 'En el <b style="color:#fbbf24;">próximo aviso la actualización será obligatoria</b>. Conviene actualizar ahora.',
+               pie: 'Última vez que se puede postergar.' },
+          3: { borde: 'rgba(239,68,68,.6)',  chipBg: 'rgba(239,68,68,.14)',  chipCol: '#fca5a5', chipBor: 'rgba(239,68,68,.45)',
+               icoBg: 'rgba(239,68,68,.12)', icoBor: 'rgba(239,68,68,.5)',  ico: '⟳',
+               chip: 'ACTUALIZACIÓN OBLIGATORIA', titulo: 'Actualizando la plataforma',
+               texto: 'Guarda lo que estés haciendo. La página se va a recargar sola.',
+               pie: 'Ya no se puede postergar.' }
+      };
+      const e = ESTILOS[paso] || ESTILOS[1];
+      const obligatorio = paso >= 3;
+
+      const capa = document.createElement('div');
+      capa.id = 'pulse-aviso-version';
+      capa.style.cssText = 'position:fixed; inset:0; z-index:2147483000; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(2,6,23,.72); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);';
+      capa.innerHTML = `
+        <div style="width:100%; max-width:400px; text-align:center; background:rgba(15,23,42,.98); border:1px solid ${e.borde}; border-radius:16px; padding:28px 26px 22px; box-shadow:0 20px 60px rgba(0,0,0,.6); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+          <span style="display:inline-block; font-size:10px; font-weight:800; letter-spacing:.09em; padding:3px 10px; border-radius:12px; margin-bottom:12px; background:${e.chipBg}; color:${e.chipCol}; border:1px solid ${e.chipBor};">${e.chip}</span>
+          <div style="width:44px; height:44px; margin:0 auto 14px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; background:${e.icoBg}; border:1px solid ${e.icoBor}; color:${e.chipCol};">${e.ico}</div>
+          <h3 style="color:#f8fafc; font-size:16.5px; font-weight:700; margin:0 0 8px;">${e.titulo}</h3>
+          ${obligatorio ? `<div style="font-size:30px; font-weight:800; color:#fca5a5; margin:2px 0 12px; font-variant-numeric:tabular-nums;"><span id="pulse-cuenta">20</span> <span style="font-size:14px; color:#94a3b8; font-weight:600;">segundos</span></div>` : ''}
+          <p style="color:#94a3b8; font-size:13px; line-height:1.6; margin:0 0 14px;">${e.texto}</p>
+          <div style="display:inline-flex; align-items:center; gap:9px; margin-bottom:20px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:20px; padding:5px 14px; font-size:12px; color:#64748b;">
+            ${this.APP_VERSION} &nbsp;→&nbsp; <b style="color:#a5b4fc;">${publicada}</b>
+          </div>
+          <div style="display:flex; gap:10px;">
+            ${obligatorio ? '' : '<button id="pulse-despues" style="flex:1; background:transparent; border:1px solid rgba(255,255,255,.18); color:#94a3b8; padding:11px; border-radius:9px; font-size:13.5px; font-weight:600; cursor:pointer;">Después</button>'}
+            <button id="pulse-ahora" style="flex:1; background:${obligatorio ? '#dc2626' : '#4f46e5'}; border:1px solid ${obligatorio ? '#dc2626' : '#4f46e5'}; color:#fff; padding:11px; border-radius:9px; font-size:13.5px; font-weight:700; cursor:pointer;">Actualizar ahora</button>
+          </div>
+          <div style="margin-top:13px; font-size:11.5px; color:#64748b;">${e.pie}</div>
+        </div>`;
+      document.body.appendChild(capa);
+
+      capa.querySelector('#pulse-ahora').addEventListener('click', () => this.recargarPorVersion());
+
+      const btnDespues = capa.querySelector('#pulse-despues');
+      if (btnDespues) btnDespues.addEventListener('click', () => {
+          capa.remove();
+          this.proximoAviso = Date.now() + 300000;   // vuelve a los 5 minutos
+      });
+
+      if (obligatorio) {
+          let quedan = 20;
+          const reloj = setInterval(() => {
+              quedan--;
+              const n = document.getElementById('pulse-cuenta');
+              if (!n) { clearInterval(reloj); return; }
+              n.textContent = String(Math.max(0, quedan));
+              if (quedan <= 0) { clearInterval(reloj); this.recargarPorVersion(); }
+          }, 1000);
+      }
   }
 
   startInactivityTimer() {
