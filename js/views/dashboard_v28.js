@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0045';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0046';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0045';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0045';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0045';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0045';
-import * as metasService from '../services_v245/metasService.js?v=29.0045';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0045';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0045';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0045';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0045';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0045';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0045';
+import * as adminService from '../services_v245/adminService.js?v=29.0046';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0046';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0046';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0046';
+import * as metasService from '../services_v245/metasService.js?v=29.0046';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0046';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0046';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0046';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0046';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0046';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0046';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0045';
+const VERSION = '29.0046';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1704,7 +1704,15 @@ window.downloadExcelDetail = async () => {
         { key: 'gender', width: 25 },
         { key: 'act', width: 18 },
         { key: 'res', width: 18 },
-        { key: 'buf', width: 18 }
+        { key: 'buf', width: 18 },
+        // J va vacía a propósito: separa el detalle del REPORTE PALETAS, que arranca en la K
+        // y se filtra por su cuenta sin arrastrar las filas del detalle.
+        { key: 'sep', width: 4 },
+        { key: 'p_ubi', width: 32 },
+        { key: 'p_lpn', width: 30 },
+        { key: 'p_cant', width: 16 },
+        { key: 'p_buf', width: 16 },
+        { key: 'p_pct', width: 16 }
     ];
 
     wsAnalisis.mergeCells('A1:I1');
@@ -1725,7 +1733,7 @@ window.downloadExcelDetail = async () => {
     row3A.height = 30;
 
     const row4A = wsAnalisis.getRow(4);
-    row4A.values = ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "QTY ACTIVO", "QTY RESERVA", "QTY BUFFER"];
+    row4A.values = ["UBICACIÓN", "LPN", "SKU", "TALLAS", "MARCAS", "GENDER RIMS", "CANTIDAD", "RESERVA", "BUFFER"];
     row4A.height = 21;
     row4A.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
     row4A.eachCell(cell => {
@@ -1737,6 +1745,24 @@ window.downloadExcelDetail = async () => {
 
     // maestroMap ya fue construido robustamente al inicio de la función
     const tallasMap = Array.isArray(dataStore.tabla_tallas) ? dataStore.tabla_tallas.reduce((acc, x) => { acc[x.sku] = x.talla; return acc; }, {}) : (dataStore.tabla_tallas || {});
+
+    /**
+     * CUÁNTO DE CADA PALETA SE BAJA.
+     *
+     * Una fila por LPN, no por talla: la paleta se mueve entera o no se mueve, y lo que
+     * hace falta saber al planificar es si se vacía o si vuelve arriba con lo que sobró.
+     * Tres tallas con 100 en reserva y 100 al buffer cada una son 300 sobre 300: baja al
+     * 100%. Con esto se puede filtrar cuántas paletas salen completas y cuántas a medias.
+     */
+    const porPaleta = new Map();
+    physicalDetalle.forEach(d => {
+        const lpn = String(d.LPN || '').trim();
+        if (!lpn) return;
+        if (!porPaleta.has(lpn)) porPaleta.set(lpn, { ubi: d.UBICACIONES || '', reserva: 0, buffer: 0 });
+        const p = porPaleta.get(lpn);
+        p.reserva += (d['QTY RESERVA'] || 0);
+        p.buffer  += (d['QTY BUFFER']  || 0);
+    });
 
     let lastUbi = "", uSumA = 0, uSumR = 0, uSumB = 0;
     let gSumA = 0, gSumR = 0, gSumB = 0;
@@ -1834,6 +1860,58 @@ window.downloadExcelDetail = async () => {
         cell.alignment = { vertical: 'middle' };
     });
     [7, 8, 9].forEach(c => gtRow.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' });
+
+    // ══════════════════════════════════════════════════════════════════════════════════
+    // REPORTE PALETAS — al costado del detalle, de la K a la O
+    //
+    // El detalle de la izquierda va talla por talla y sirve para armar la bajada. Este es
+    // otro corte del mismo dato: UNA FILA POR PALETA, para poder ordenar y filtrar cuáles
+    // salen completas y cuáles a medias sin arrastrar las filas del detalle.
+    //
+    // Va en la misma hoja y no en una pestaña aparte porque se lee junto con el detalle.
+    // La J queda vacía para que Excel los trate como dos bloques distintos: así el filtro
+    // de este no toca al otro.
+    // ══════════════════════════════════════════════════════════════════════════════════
+    wsAnalisis.mergeCells('K2:O2');
+    const tituloPal = wsAnalisis.getCell('K2');
+    tituloPal.value = 'REPORTE PALETAS';
+    tituloPal.font = { bold: true, size: 20, name: 'Calibri' };
+    tituloPal.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    const CAB_PAL = ['UBICACIÓN', 'LPN', 'CANTIDAD', 'BUFFER', '% PALETA'];
+    CAB_PAL.forEach((txt, i) => {
+        const c = wsAnalisis.getRow(4).getCell(11 + i);
+        c.value = txt;
+        c.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+        c.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        c.alignment = { vertical: 'middle', horizontal: i < 2 ? 'left' : 'center' };
+    });
+
+    // Las que más se vacían arriba: son las que conviene bajar primero.
+    const paletasOrdenadas = [...porPaleta.entries()]
+        .map(([lpn, p]) => ({ lpn, ...p, pct: p.reserva > 0 ? p.buffer / p.reserva : 0 }))
+        .sort((a, b) => b.pct - a.pct || b.buffer - a.buffer);
+
+    paletasOrdenadas.forEach((p, idx) => {
+        const fila = wsAnalisis.getRow(5 + idx);
+        const vals = [p.ubi, p.lpn, p.reserva, p.buffer, p.pct];
+        vals.forEach((v, i) => {
+            const c = fila.getCell(11 + i);
+            c.value = v;
+            c.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            c.alignment = { vertical: 'middle', horizontal: i < 2 ? 'left' : 'center' };
+            // Sale impreso en blanco y negro, así que la paleta que se vacía entera se
+            // distingue con NEGRITA y no con color: el relleno no sobrevive a la impresión.
+            c.font = { size: 16, name: 'Calibri', bold: p.pct >= 1 };
+        });
+        fila.getCell(15).numFmt = '0%';
+        if (fila.height < 21) fila.height = 21;
+    });
+
+    if (paletasOrdenadas.length) {
+        wsAnalisis.autoFilter = { from: { row: 4, column: 11 }, to: { row: 4 + paletasOrdenadas.length, column: 15 } };
+    }
 
     // --- OTRAS PESTAÑAS ---
     const addStandardSheet = (name, jsonData, tabColor = null) => {
@@ -3294,7 +3372,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0045');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0046');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13605,7 +13683,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0045 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0046 | MOBILE PORTAL
                             </div>
                     </div>
 
