@@ -1,8 +1,8 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0051';
-import * as adminService from './services_v245/adminService.js?v=29.0051';
+import { getSession, logout } from './services_v245/auth.js?v=29.0052';
+import * as adminService from './services_v245/adminService.js?v=29.0052';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -345,7 +345,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0051';
+      this.APP_VERSION = 'v29.0052';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -439,18 +439,31 @@ class App {
       if (!publicada || publicada === this.APP_VERSION) return;
       this.versionNueva = publicada;
 
-      // SI PIDIÓ ESPERAR, SE ESPERA. Va antes que todo lo demás a propósito: quien aprieta
-      // «Después» está a mitad de algo, y a mitad de algo se está quieto —leyendo, mirando
-      // un papel, atendiendo el teléfono—. Con este chequeo debajo del de actividad, un
-      // minuto sin mover el mouse alcanzaba para que se recargara igual, que es justo lo
-      // que había pedido que no pasara.
+      // SI PIDIÓ ESPERAR, SE ESPERA. Quien aprieta «Después» está a mitad de algo, y a mitad
+      // de algo se está quieto —leyendo, mirando un papel, atendiendo el teléfono—. Con este
+      // chequeo debajo del de actividad, un minuto sin mover el mouse alcanzaba para que se
+      // recargara igual, que es justo lo que había pedido que no pasara.
       if (Date.now() < (this.proximoAviso || 0)) return;
+
+      // A QUIEN YA SE LE AVISÓ, SE LE SIGUE AVISANDO.
+      //
+      // La recarga en silencio es para el que NO se enteró de nada: la pestaña olvidada en
+      // segundo plano, la máquina que quedó prendida. Pero alguien que ya apretó «Después»
+      // está presente y espera el aviso siguiente. Si en el momento en que vence el plazo
+      // llevaba un minuto sin mover el mouse, se le recargaba encima sin mostrarle nada, y
+      // el segundo y el tercer aviso no aparecían nunca. Se le prometió una escalera de
+      // tres, y se la salteaba entera.
+      if ((this.avisosVersion || 0) > 0) {
+          this.avisosVersion += 1;
+          this.mostrarAvisoVersion(Math.min(this.avisosVersion, 3), publicada);
+          return;
+      }
 
       // Nadie mirando, o todavía sin entrar: se recarga sin molestar a nadie.
       if (!this.estaAtendida() || !getSession()) { this.recargarPorVersion(); return; }
 
-      this.avisosVersion = (this.avisosVersion || 0) + 1;
-      this.mostrarAvisoVersion(Math.min(this.avisosVersion, 3), publicada);
+      this.avisosVersion = 1;
+      this.mostrarAvisoVersion(1, publicada);
   }
 
   /** Recarga pidiendo el index de nuevo, no el que el navegador tenga guardado. */
