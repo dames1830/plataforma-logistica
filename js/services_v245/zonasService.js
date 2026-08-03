@@ -25,7 +25,18 @@
  */
 
 const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/config';
-const CACHE_KEY = 'config_zonas_v1';
+/**
+ * OJO CON SUBIRLE LA VERSIÓN A ESTA CLAVE: hay que hacerlo cada vez que se agrega algo a la
+ * configuración que tenga un valor de fábrica nuevo.
+ *
+ * El caché de cada PC se normaliza al leerlo, y normalizar rellena lo que falta con vacío,
+ * no con el valor de fábrica. Así que una PC con caché viejo se queda con el campo nuevo en
+ * blanco para siempre y el cambio no llega nunca — que es justo lo que pasó el 02-ago con
+ * las columnas por marca: andaba en una PC recién estrenada y no en la de Daniel.
+ *
+ * v2 = las marcas pasaron de 'Bata': 'SEL' a { zona, columnas }.
+ */
+const CACHE_KEY = 'config_zonas_v2';
 
 /** Las cuatro temporadas que puede tener una columna. */
 export const FRANJAS = {
@@ -107,19 +118,41 @@ export const zonasPorDefecto = () => ({
      * Esto no estaba en el código: se dedujo del stock real. Con footwear y sin contar el
      * andamio, cada marca está casi entera en una sola zona (Power 100% en MZN01,
      * Puma/Adidas/Skechers 100% en MZN03, Bata 71% en el selectivo).
+     *
+     * LA ZONA NO ALCANZA CUANDO DOS MARCAS LA COMPARTEN. MZN01 es de tres, y el corte lo
+     * dio Daniel el 02-ago-2026:
+     *
+     *   Power ............ col 1 a 11
+     *   Bubblegummers .... col 12 a 23
+     *   B.G Licenses ..... col 24
+     *
+     * Sin esto la sugerencia mandaba Bubblegummers a la columna 4, que es de Power. Encaja
+     * con las franjas que ya estaban escritas —a Power le quedan 1-3 anterior y 4-11 actual;
+     * a Bubblegummers 21-23 anterior y 12-20 actual—, lo que confirma que el corte es real.
+     *
+     * El stock del 02-ago coincide salvo en la columna 10, que tiene 1.926 pares de
+     * Bubblegummers dentro del tramo de Power: es mercadería mal ubicada, no una excepción
+     * de la regla. No estorba, porque un cuerpo con stock cuenta como ocupado igual.
+     *
+     * `columnas: []` significa la zona entera, que es el caso de las marcas que no comparten
+     * —Bata en el selectivo, North Star en el mezzanine 2—.
+     *
+     * OJO: B.G Licenses no tiene ninguna columna de temporada anterior, así que un artículo
+     * suyo que no sea de la actual sale por Slotting. Es correcto —sin ubicación no se
+     * almacena— pero conviene saberlo antes de que aparezca.
      */
     marcas: {
-        'Bata': 'SEL',
-        'Bubblegummers': 'MZN01',
-        'B.G Licenses': 'MZN01',
-        'Power': 'MZN01',
-        'North Star': 'MZN02',
-        'Puma': 'MZN03',
-        'Adidas': 'MZN03',
-        'Weinbrenner': 'MZN03',
-        'Bata Industrials': 'MZN03',
-        'Marie Claire': 'MZN03',
-        'Skechers': 'MZN03'
+        'Bata':          { zona: 'SEL',   columnas: [] },
+        'Power':         { zona: 'MZN01', columnas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+        'Bubblegummers': { zona: 'MZN01', columnas: [12,13,14,15,16,17,18,19,20,21,22,23] },
+        'B.G Licenses':  { zona: 'MZN01', columnas: [24] },
+        'North Star':    { zona: 'MZN02', columnas: [] },
+        'Puma':          { zona: 'MZN03', columnas: [] },
+        'Adidas':        { zona: 'MZN03', columnas: [] },
+        'Weinbrenner':   { zona: 'MZN03', columnas: [] },
+        'Bata Industrials': { zona: 'MZN03', columnas: [] },
+        'Marie Claire':  { zona: 'MZN03', columnas: [] },
+        'Skechers':      { zona: 'MZN03', columnas: [] }
     },
 
     /**
@@ -196,9 +229,21 @@ const normalizar = (crudo) => {
         };
     });
 
+    // Se acepta la forma vieja —'Bata': 'SEL'— además de la nueva —{ zona, columnas }—:
+    // la configuración que ya está guardada en el servidor todavía tiene la primera, y al
+    // leerla no puede quedarse sin marcas. Una marca vieja entra sin columnas, o sea la
+    // zona entera, que es exactamente como se venía comportando.
     const marcas = {};
     const mSrc = (c.marcas && typeof c.marcas === 'object') ? c.marcas : def.marcas;
-    Object.keys(mSrc).forEach(m => { if (zonas[mSrc[m]]) marcas[m] = mSrc[m]; });
+    Object.keys(mSrc).forEach(m => {
+        const v = mSrc[m];
+        const zona = (v && typeof v === 'object') ? v.zona : v;
+        if (!zonas[zona]) return;
+        const cols = (v && typeof v === 'object' && Array.isArray(v.columnas))
+            ? v.columnas.map(Number).filter(n => Number.isFinite(n) && n >= 1 && n <= zonas[zona].columnas)
+            : [];
+        marcas[m] = { zona, columnas: [...new Set(cols)].sort((a, b) => a - b) };
+    });
 
     const others = (Array.isArray(c.others) ? c.others : def.others)
         .filter(o => o && o.subcategoria && zonas[o.zona])
@@ -295,8 +340,8 @@ export const guardarZonas = async (nueva) => {
 
 // ── Lo que consulta la sugerencia ────────────────────────────────────────────
 
-/** La zona de una marca. Devuelve null si esa marca no está configurada. */
-export const zonaDeMarca = (marca) => {
+/** La regla de una marca: su zona y sus columnas. Null si esa marca no está configurada. */
+export const reglaDeMarca = (marca) => {
     const m = String(marca || '').trim();
     const cfg = zonasActual();
     if (cfg.marcas[m]) return cfg.marcas[m];
@@ -304,6 +349,53 @@ export const zonaDeMarca = (marca) => {
     const buscado = m.toUpperCase().replace(/\s+/g, ' ');
     const hallado = Object.keys(cfg.marcas).find(k => k.toUpperCase().replace(/\s+/g, ' ') === buscado);
     return hallado ? cfg.marcas[hallado] : null;
+};
+
+/** La zona de una marca. Devuelve null si esa marca no está configurada. */
+export const zonaDeMarca = (marca) => {
+    const r = reglaDeMarca(marca);
+    return r ? r.zona : null;
+};
+
+/** Las columnas de esa marca dentro de su zona. Vacío = la zona entera, sin repartir. */
+export const columnasDeMarca = (marca) => {
+    const r = reglaDeMarca(marca);
+    return (r && Array.isArray(r.columnas)) ? r.columnas : [];
+};
+
+/**
+ * "1-11" · "1,2,3" · "1-5, 8, 12 al 14"  ->  [1,2,3,...]
+ *
+ * Lo que no se entienda se ignora en vez de rechazar toda la línea: quien escribe esto está
+ * apurado y con una coma de más no puede perder lo que ya cargó.
+ */
+export const leerColumnas = (txt) => {
+    const out = new Set();
+    String(txt || '').split(/[,;]+/).forEach(p => {
+        const t = p.trim();
+        if (!t) return;
+        const m = t.match(/^(\d+)\s*(?:-|a|al)\s*(\d+)$/i);
+        if (m) {
+            const a = Math.min(+m[1], +m[2]), b = Math.max(+m[1], +m[2]);
+            for (let i = a; i <= b; i++) out.add(i);
+        } else if (/^\d+$/.test(t)) out.add(+t);
+    });
+    return [...out].sort((a, b) => a - b);
+};
+
+/** [1,2,3,7,8] -> "1-3, 7-8". Al revés de leerColumnas, para mostrarlo corto. */
+export const escribirColumnas = (cols) => {
+    const c = [...new Set((cols || []).map(Number).filter(Number.isFinite))].sort((a, b) => a - b);
+    if (!c.length) return '';
+    const tramos = [];
+    let ini = c[0], prev = c[0];
+    c.slice(1).forEach(n => {
+        if (n === prev + 1) { prev = n; return; }
+        tramos.push(ini === prev ? String(ini) : `${ini}-${prev}`);
+        ini = prev = n;
+    });
+    tramos.push(ini === prev ? String(ini) : `${ini}-${prev}`);
+    return tramos.join(', ');
 };
 
 /**
@@ -496,8 +588,22 @@ export const planificarAlmacenaje = (art, ocupadosPorZona) => {
     else if (esSaldo && columnasDeFranja(zona, 'saldos').length) franja = 'saldos';
     else franja = art.esTemporadaActual ? 'actual' : 'anterior';
 
-    const columnas = columnasDeFranja(zona, franja);
+    let columnas = columnasDeFranja(zona, franja);
     if (!columnas.length) return paso('sin-regla', `En ${z.etiqueta} no hay columnas de "${franja}".`, { zona, franja });
+
+    // Y DENTRO DE LA FRANJA, SOLO LAS COLUMNAS DE SU MARCA. MZN01 lo comparten Power,
+    // Bubblegummers y B.G Licenses, cada una con su bloque; sin este filtro la sugerencia
+    // mandaba Bubblegummers a la columna 4, que es de Power. Las ojotas no filtran: llegaron
+    // acá por su subcategoría, no por su marca, y la marca no manda en su zona.
+    const suyas = porOthers ? [] : columnasDeMarca(art.marca);
+    if (suyas.length) {
+        columnas = columnas.filter(c => suyas.includes(c));
+        if (!columnas.length) {
+            return paso('sin-regla',
+                `A ${art.marca} le tocan las columnas ${suyas.join(', ')} de ${z.etiqueta}, y ninguna lleva "${franja}".`,
+                { zona, franja });
+        }
+    }
 
     // Paso 3: cuántos cuerpos
     const porCuerpo = densidadDe(zona, serieDe(art.sku7));

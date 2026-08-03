@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0035';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0036';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0035';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0035';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0035';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0035';
-import * as metasService from '../services_v245/metasService.js?v=29.0035';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0035';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0035';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0035';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0035';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0035';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0035';
+import * as adminService from '../services_v245/adminService.js?v=29.0036';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0036';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0036';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0036';
+import * as metasService from '../services_v245/metasService.js?v=29.0036';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0036';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0036';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0036';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0036';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0036';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0036';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0035';
+const VERSION = '29.0036';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3248,7 +3248,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0035');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0036');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13485,7 +13485,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0035 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0036 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15699,24 +15699,41 @@ const renderRFSection = (container) => {
             <div style="padding:0.9rem 1.1rem; background:rgba(99,102,241,0.07); border-bottom:1px solid rgba(99,102,241,0.18); display:flex; justify-content:space-between; align-items:center;">
               <div>
                 <h4 style="color:#a5b4fc; font-weight:900; margin:0; font-size:0.82rem; letter-spacing:0.8px; text-transform:uppercase;">🏷️ A qué zona va cada marca</h4>
-                <div style="font-size:0.64rem; color:rgba(165,180,252,0.55); margin-top:2px;">La primera decisión de todas</div>
+                <div style="font-size:0.64rem; color:rgba(165,180,252,0.55); margin-top:2px;">La primera decisión de todas · y si comparten zona, con qué columnas se queda cada una</div>
               </div>
               <button id="zn_add_marca" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:5px 11px; border-radius:7px; cursor:pointer; font-size:0.68rem; font-weight:800;">+ Marca</button>
             </div>
             <div style="max-height:330px; overflow-y:auto;">
               <table style="width:100%; border-collapse:collapse; font-size:0.76rem; color:#eee;">
-                ${Object.keys(cfg.marcas).sort().map(m => `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                  <td style="padding:0.35rem 1.1rem; font-size:0.6rem; color:rgba(165,180,252,0.5); text-transform:uppercase; letter-spacing:0.5px;">Marca</td>
+                  <td style="padding:0.35rem 0.4rem; font-size:0.6rem; color:rgba(165,180,252,0.5); text-transform:uppercase; letter-spacing:0.5px; text-align:right;">Zona</td>
+                  <td style="padding:0.35rem 0.4rem; font-size:0.6rem; color:rgba(165,180,252,0.5); text-transform:uppercase; letter-spacing:0.5px; text-align:right;" title="Cuando dos marcas comparten la zona, qué columnas son de cada una. Vacío = toda la zona.">Columnas</td>
+                  <td></td>
+                </tr>
+                ${Object.keys(cfg.marcas).sort().map(m => {
+                  // Tolera la forma vieja —'Bata': 'SEL'— por si quedó guardada así
+                  const r = (cfg.marcas[m] && typeof cfg.marcas[m] === 'object')
+                    ? cfg.marcas[m] : { zona: cfg.marcas[m], columnas: [] };
+                  return `
                   <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
                     <td style="padding:0.5rem 1.1rem; color:#fff; font-weight:700;">${esc(m)}</td>
-                    <td style="padding:0.5rem 0.5rem; text-align:right;">
+                    <td style="padding:0.5rem 0.4rem; text-align:right;">
                       <select data-marca="${esc(m)}" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:0.72rem; padding:4px 6px; cursor:pointer;">
-                        ${CLAVES.map(k => `<option value="${k}" ${cfg.marcas[m] === k ? 'selected' : ''}>${esc(cfg.zonas[k].etiqueta)}</option>`).join('')}
+                        ${CLAVES.map(k => `<option value="${k}" ${r.zona === k ? 'selected' : ''}>${esc(cfg.zonas[k].etiqueta)}</option>`).join('')}
                       </select>
+                    </td>
+                    <td style="padding:0.5rem 0.4rem; text-align:right;">
+                      <input data-cols-marca="${esc(m)}" value="${esc(zonasService.escribirColumnas(r.columnas))}"
+                             placeholder="toda la zona"
+                             title="Las columnas de esta marca dentro de su zona. Se escribe 1-11, o 1,2,3, o mezclado. Vacío = toda la zona."
+                             style="width:98px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:0.72rem; padding:4px 6px; text-align:center;">
                     </td>
                     <td style="padding:0.5rem 0.9rem 0.5rem 0; width:30px;">
                       <button data-del-marca="${esc(m)}" title="Quitar" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:0.9rem;">🗑️</button>
                     </td>
-                  </tr>`).join('')}
+                  </tr>`;
+                }).join('')}
               </table>
             </div>
           </div>
@@ -15819,14 +15836,29 @@ const renderRFSection = (container) => {
       container.querySelector('#zn_saldo').onchange = (e) => { z.saldoMenorA = Math.max(0, +e.target.value || 0); marcar(); };
 
       container.querySelectorAll('[data-marca]').forEach(s => s.onchange = () => {
-        cfg.marcas[s.dataset.marca] = s.value; marcar();
+        const m = s.dataset.marca;
+        const prev = (cfg.marcas[m] && typeof cfg.marcas[m] === 'object') ? cfg.marcas[m] : {};
+        // Al mudarla de zona sus columnas dejan de existir: las de la zona nueva son otras
+        cfg.marcas[m] = { zona: s.value, columnas: prev.zona === s.value ? (prev.columnas || []) : [] };
+        pintar(); marcar();
+      });
+      container.querySelectorAll('[data-cols-marca]').forEach(i => i.onchange = () => {
+        const m = i.dataset.colsMarca;
+        const prev = (cfg.marcas[m] && typeof cfg.marcas[m] === 'object')
+          ? cfg.marcas[m] : { zona: cfg.marcas[m] };
+        const tope = (cfg.zonas[prev.zona] || {}).columnas || 99;
+        cfg.marcas[m] = { zona: prev.zona, columnas: zonasService.leerColumnas(i.value).filter(c => c <= tope) };
+        // Se reescribe lo que quedó guardado y no lo que se tecleó: si alguien puso 1-99 en
+        // una zona de 24 columnas, tiene que ver que se recortó y no creer que quedó.
+        i.value = zonasService.escribirColumnas(cfg.marcas[m].columnas);
+        marcar();
       });
       container.querySelectorAll('[data-del-marca]').forEach(b => b.onclick = () => {
         delete cfg.marcas[b.dataset.delMarca]; pintar(); marcar();
       });
       container.querySelector('#zn_add_marca').onclick = () => {
         const m = prompt('Nombre de la marca, igual que en el Maestro:');
-        if (m && m.trim()) { cfg.marcas[m.trim()] = _zonaElegida; pintar(); marcar(); }
+        if (m && m.trim()) { cfg.marcas[m.trim()] = { zona: _zonaElegida, columnas: [] }; pintar(); marcar(); }
       };
 
       container.querySelectorAll('[data-other]').forEach(s => s.onchange = () => {
