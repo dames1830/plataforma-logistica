@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0047';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0048';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0047';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0047';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0047';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0047';
-import * as metasService from '../services_v245/metasService.js?v=29.0047';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0047';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0047';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0047';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0047';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0047';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0047';
+import * as adminService from '../services_v245/adminService.js?v=29.0048';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0048';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0048';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0048';
+import * as metasService from '../services_v245/metasService.js?v=29.0048';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0048';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0048';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0048';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0048';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0048';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0048';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0047';
+const VERSION = '29.0048';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1708,6 +1708,7 @@ window.downloadExcelDetail = async () => {
         // J va vacía a propósito: separa el detalle del REPORTE PALETAS, que arranca en la K
         // y se filtra por su cuenta sin arrastrar las filas del detalle.
         { key: 'sep', width: 4 },
+        { key: 'p_nro', width: 8 },
         { key: 'p_ubi', width: 32 },
         { key: 'p_lpn', width: 30 },
         { key: 'p_cant', width: 16 },
@@ -1872,45 +1873,76 @@ window.downloadExcelDetail = async () => {
     // La J queda vacía para que Excel los trate como dos bloques distintos: así el filtro
     // de este no toca al otro.
     // ══════════════════════════════════════════════════════════════════════════════════
-    wsAnalisis.mergeCells('K2:O2');
+    wsAnalisis.mergeCells('K2:P2');
     const tituloPal = wsAnalisis.getCell('K2');
     tituloPal.value = 'REPORTE PALETAS';
     tituloPal.font = { bold: true, size: 20, name: 'Calibri' };
     tituloPal.alignment = { vertical: 'middle', horizontal: 'center' };
 
-    const CAB_PAL = ['UBICACIÓN', 'LPN', 'CANTIDAD', 'BUFFER', '% PALETA'];
+    // La misma marca de tiempo que el encabezado grande: es la del momento en que se
+    // procesó el buffer, no la de cuando se abre el archivo. Impresa y sin fecha, dos
+    // corridas del mismo día se confunden entre sí.
+    wsAnalisis.mergeCells('K3:P3');
+    const fechaPal = wsAnalisis.getCell('K3');
+    fechaPal.value = data.timestamp || new Date().toLocaleString();
+    fechaPal.font = { size: 10, name: 'Calibri' };
+    fechaPal.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    const CAB_PAL = ['N°', 'UBICACIÓN', 'LPN', 'CANTIDAD', 'BUFFER', '% PALETA'];
     CAB_PAL.forEach((txt, i) => {
         const c = wsAnalisis.getRow(4).getCell(11 + i);
         c.value = txt;
         c.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
         c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
         c.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-        c.alignment = { vertical: 'middle', horizontal: i < 2 ? 'left' : 'center' };
+        c.alignment = { vertical: 'middle', horizontal: (i === 1 || i === 2) ? 'left' : 'center' };
     });
 
-    // Las que más se vacían arriba: son las que conviene bajar primero.
+    // Las que más se vacían arriba: son las que conviene bajar primero. El número queda
+    // pegado a ESE orden y no se renumera al filtrar, así "la paleta 12" es siempre la misma.
     const paletasOrdenadas = [...porPaleta.entries()]
         .map(([lpn, p]) => ({ lpn, ...p, pct: p.reserva > 0 ? p.buffer / p.reserva : 0 }))
         .sort((a, b) => b.pct - a.pct || b.buffer - a.buffer);
 
+    let totPalReserva = 0, totPalBuffer = 0;
     paletasOrdenadas.forEach((p, idx) => {
         const fila = wsAnalisis.getRow(5 + idx);
-        const vals = [p.ubi, p.lpn, p.reserva, p.buffer, p.pct];
+        const vals = [idx + 1, p.ubi, p.lpn, p.reserva, p.buffer, p.pct];
         vals.forEach((v, i) => {
             const c = fila.getCell(11 + i);
             c.value = v;
             c.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-            c.alignment = { vertical: 'middle', horizontal: i < 2 ? 'left' : 'center' };
+            c.alignment = { vertical: 'middle', horizontal: (i === 1 || i === 2) ? 'left' : 'center' };
             // Sale impreso en blanco y negro, así que la paleta que se vacía entera se
             // distingue con NEGRITA y no con color: el relleno no sobrevive a la impresión.
             c.font = { size: 16, name: 'Calibri', bold: p.pct >= 1 };
         });
-        fila.getCell(15).numFmt = '0%';
+        fila.getCell(16).numFmt = '0%';
         if (fila.height < 21) fila.height = 21;
+        totPalReserva += p.reserva;
+        totPalBuffer  += p.buffer;
     });
 
     if (paletasOrdenadas.length) {
-        wsAnalisis.autoFilter = { from: { row: 4, column: 11 }, to: { row: 4 + paletasOrdenadas.length, column: 15 } };
+        const ultima = 4 + paletasOrdenadas.length;
+        wsAnalisis.autoFilter = { from: { row: 4, column: 11 }, to: { row: ultima, column: 16 } };
+
+        // El cierre va DESPUÉS de una fila vacía: pegado al listado, el filtro de arriba se
+        // lo llevaría puesto y al filtrar por "solo las de 100%" el total desaparecería.
+        const filaTot = wsAnalisis.getRow(ultima + 2);
+        const pctGlobal = totPalReserva > 0 ? totPalBuffer / totPalReserva : 0;
+        const valsTot = [paletasOrdenadas.length, 'PALETAS A BAJAR', '', totPalReserva, totPalBuffer, pctGlobal];
+        valsTot.forEach((v, i) => {
+            const c = filaTot.getCell(11 + i);
+            c.value = v;
+            c.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
+            c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+            c.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            c.alignment = { vertical: 'middle', horizontal: i === 1 ? 'left' : 'center' };
+        });
+        wsAnalisis.mergeCells(filaTot.number, 12, filaTot.number, 13);   // "PALETAS A BAJAR"
+        filaTot.getCell(16).numFmt = '0%';
+        filaTot.height = 21;
     }
 
     // --- OTRAS PESTAÑAS ---
@@ -3372,7 +3404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0047');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0048');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13683,7 +13715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0047 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0048 | MOBILE PORTAL
                             </div>
                     </div>
 
