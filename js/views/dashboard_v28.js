@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0044';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0045';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0044';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0044';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0044';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0044';
-import * as metasService from '../services_v245/metasService.js?v=29.0044';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0044';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0044';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0044';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0044';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0044';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0044';
+import * as adminService from '../services_v245/adminService.js?v=29.0045';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0045';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0045';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0045';
+import * as metasService from '../services_v245/metasService.js?v=29.0045';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0045';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0045';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0045';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0045';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0045';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0045';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0044';
+const VERSION = '29.0045';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1538,7 +1538,7 @@ let _replCache = (() => {
     if (parsed && Array.isArray(parsed.items) && parsed.items.length && parsed.items[0].s !== undefined) {
       parsed.items = parsed.items.map(i => ({
         sku: i.s, art7: i.a, talla: i.t, marcas: i.m, genderRims: i.g,
-        temporada: i.T, tipo: i.tp, qAct: i.qA, qRes: i.qR,
+        temporada: i.T, qAct: i.qA, qRes: i.qR,
         estado: i.e, prioridad: i.p, factor: i.f !== undefined ? i.f : parsed.umbral,
         // Un caché guardado antes del llenado por cuerpo no los trae. Se dejan sin definir
         // a propósito: aBajarDe() cae solo al cálculo por factor cuando falta 'aBajar'.
@@ -3294,7 +3294,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0044');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0045');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13605,7 +13605,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0044 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0045 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16917,12 +16917,13 @@ const renderRFSection = (container) => {
 
     // ── Filtros de columna (multi-select tipo Excel) ──
     let colFilterEstado = new Set(); // vacío = todos
-    let colFilterTipo   = new Set(); // vacío = todos
+    // El filtro por TIPO se fue con la columna: acá ya solo entran SolidPack, así que
+    // tenía un solo valor posible. Se deja el Set para no tocar el resto del armado.
+    let colFilterTipo   = new Set(); // siempre vacío = sin filtrar
     let filterTexto     = '';
 
     // Valores posibles derivados de los items
     const estadoOpts = ['QUEBRADO', 'POR QUEBRAR', 'OK'];
-    const tipoOpts   = [...new Set(items.map(i => i.tipo))].sort();
 
     // Crea HTML del dropdown de columna
     const buildColDropdown = (id, opts, activeSet, colorFn) => `
@@ -17054,14 +17055,20 @@ const renderRFSection = (container) => {
               ${i.relleno > 0 ? `title="Incluye ${i.relleno} pares por encima del factor, para no dejar el cuerpo a medio llenar"` : ''}>${aBajarDe(i) > 0 ? aBajarDe(i).toLocaleString('es') : '—'}${i.relleno > 0 ? '<span style="color:#a5b4fc; font-weight:700; font-size:0.7rem;"> +' + i.relleno.toLocaleString('es') + '</span>' : ''}</td>
           <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; font-size:0.82rem; color:${solicitudDe(i) > 0 ? '#a5b4fc' : 'rgba(255,255,255,0.2)'};">${solicitudDe(i) > 0 ? solicitudDe(i).toLocaleString('es') : '—'}</td>
           <td style="padding:0.6rem 1rem; text-align:center;">${estadoBadge(i.estado)}</td>
-          <td style="padding:0.6rem 1rem; text-align:center; font-size:0.8rem; font-weight:700; color:${i.tipo==='Prepack'?'#f59e0b':i.tipo==='SolidPack'?'#22c55e':'#64748b'}; letter-spacing:0.3px;">${i.tipo}</td>
         </tr>`).join('');
     };
 
     // ── Render HTML ──
     container.innerHTML = `
       <!-- KPIs -->
-      <div id="repl_kpis" style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem;"></div>
+      <div id="repl_kpis" style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:0.8rem;"></div>
+
+      <div style="margin-bottom:1.2rem; font-size:0.73rem; color:var(--text-muted); display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+        <span style="border:1px solid var(--border); border-radius:20px; padding:2px 10px; font-weight:700; color:#22c55e;">SOLO SOLIDPACK</span>
+        <span>Los prepack no se reponen por quiebre de talla: bajan por pedido de comercial, desde la Zona Buffer.${
+          (_replCache && _replCache.omitidos) ? ` Quedaron afuera <b>${Number(_replCache.omitidos).toLocaleString('es')}</b> SKU entre prepack y materiales.` : ''
+        }</span>
+      </div>
 
       <!-- Controles -->
       <div style="display:flex; gap:0.8rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
@@ -17098,9 +17105,6 @@ const renderRFSection = (container) => {
               <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted); position:relative;">
                 ESTADO ${buildColDropdown('repl_fcol_estado', estadoOpts, colFilterEstado, v => estadoColor[v] || '#e2e8f0')}
               </th>
-              <th style="padding:0.8rem 1rem; text-align:center; font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f59e0b; position:relative;">
-                TIPO ${buildColDropdown('repl_fcol_tipo', tipoOpts, colFilterTipo, v => v==='Prepack'?'#f59e0b':v==='SolidPack'?'#22c55e':'#64748b')}
-              </th>
             </tr>
           </thead>
           <tbody id="repl_tbody"></tbody>
@@ -17121,7 +17125,6 @@ const renderRFSection = (container) => {
 
     // wiring de filtros de columna
     wireColDropdown('repl_fcol_estado', colFilterEstado, renderTable);
-    wireColDropdown('repl_fcol_tipo',   colFilterTipo,   renderTable);
 
     // botón Reprocesar: limpia cache y vuelve a la landing
     const reprocessBtn = document.getElementById('repl_reprocesar');
@@ -17162,7 +17165,6 @@ const renderRFSection = (container) => {
           'QTY BAJAR':    aBajarDe(i),
           'SOLICITUD':    solicitudDe(i),
           'ESTADO':       i.estado,
-          'TIPO':         i.tipo,
         };
       });
       // La hoja de Tallas salía casi vacía: la columna del activo se llama 'Descripción de
@@ -17371,9 +17373,35 @@ const renderRFSection = (container) => {
       // --- Cargar configuraciones de factores ---
       _loadConfiguracionAnalisis(true);
 
+      /**
+       * ACÁ SOLO SE REPONEN SOLIDPACK.
+       *
+       * El prepack ya viene armado con su curva de tallas y baja por PEDIDO de comercial,
+       * en la Zona Buffer: no se repone por quiebre de talla, que es lo que mira esta
+       * pantalla. Lo que no es ni prepack ni solidpack son materiales, y tampoco se reponen.
+       *
+       * El SKU de un solidpack son 12 caracteres —7 del artículo, la línea y la talla—; el
+       * prepack lleva cuatro más.
+       */
+      const esSolidPack = (sku) => String(sku || '').trim().length === 12;
+
+      /**
+       * Los pares que hay en el piso de cada artículo, contando TODO lo que ocupa el cuerpo
+       * —también los prepack—. Se calcula ANTES de filtrar: el prepack no se repone, pero
+       * ocupa lugar igual, y si no se contara el llenado del cuerpo vería un hueco que no
+       * existe y mandaría bajar de más.
+       */
+      const pisoPorArt = new Map();
+      stockActMap.forEach((q, sku) => {
+        const a = sku.length >= 7 ? sku.substring(0, 7) : sku;
+        pisoPorArt.set(a, (pisoPorArt.get(a) || 0) + q);
+      });
+
       // ── Clasificar ──
       const items = [];
+      let nOmitidos = 0;                       // prepack y materiales que quedaron afuera
       stockActMap.forEach((qAct, sku) => {
+        if (!esSolidPack(sku)) { nOmitidos++; return; }
         const qRes      = stockResMap.get(sku) || 0;
         const art7      = sku.length >= 7 ? sku.substring(0, 7) : sku;
         const talla     = tallasMap.get(sku) || '-';
@@ -17381,8 +17409,7 @@ const renderRFSection = (container) => {
         const marcas     = maestInfo.marcas     || '-';
         const genderRims = maestInfo.genderRims || '-';
         const temporada  = maestInfo.temporada  || '-';
-        const tipo       = sku.length === 15 ? 'Prepack' : sku.length === 12 ? 'SolidPack' : '-';
-        
+
         // Calcular umbral personalizado
         // El objetivo en cascada: la excepción del SKU, si no su marca+género+talla, si no
         // su género+talla. La marca importa porque un mismo Gender RIMS mezcla marcas que no
@@ -17404,20 +17431,20 @@ const renderRFSection = (container) => {
           estado = 'OK';
           prioridad = 3;
         }
-        items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct, qRes, estado, prioridad, factor: skuUmbral });
+        items.push({ sku, art7, talla, marcas, genderRims, temporada, qAct, qRes, estado, prioridad, factor: skuUmbral });
       });
 
       // ── Segunda pasada: SKUs solo en Reserva (qAct=0, ausentes del activo) ──
       // Estos son QUEBRADOS reales: no hay nada en piso pero sí hay stock para bajar.
       stockResMap.forEach((qRes, sku) => {
         if (stockActMap.has(sku)) return; // ya procesado arriba
+        if (!esSolidPack(sku)) { nOmitidos++; return; }
         const art7      = sku.length >= 7 ? sku.substring(0, 7) : sku;
         const talla     = tallasMap.get(sku) || '-';
         const maestInfo = maestroMap.get(art7) || {};
         const marcas     = maestInfo.marcas     || '-';
         const genderRims = maestInfo.genderRims || '-';
         const temporada  = maestInfo.temporada  || '-';
-        const tipo       = sku.length === 15 ? 'Prepack' : sku.length === 12 ? 'SolidPack' : '-';
 
         // Calcular umbral personalizado
         // El objetivo en cascada: la excepción del SKU, si no su marca+género+talla, si no
@@ -17427,9 +17454,9 @@ const renderRFSection = (container) => {
 
         if (skuUmbral === 0) {
           // Excluir de quiebres si el objetivo es 0
-          items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct: 0, qRes, estado: 'OK', prioridad: 3, factor: skuUmbral });
+          items.push({ sku, art7, talla, marcas, genderRims, temporada, qAct: 0, qRes, estado: 'OK', prioridad: 3, factor: skuUmbral });
         } else {
-          items.push({ sku, art7, talla, marcas, genderRims, temporada, tipo, qAct: 0, qRes, estado: 'QUEBRADO', prioridad: 1, factor: skuUmbral });
+          items.push({ sku, art7, talla, marcas, genderRims, temporada, qAct: 0, qRes, estado: 'QUEBRADO', prioridad: 1, factor: skuUmbral });
         }
       });
 
@@ -17473,7 +17500,10 @@ const renderRFSection = (container) => {
         cuerpos.forEach(c => { capacidad += zonasService.densidadDe(c.split('|')[0], serie); });
         if (capacidad <= 0) return;
 
-        const enPiso    = lista.reduce((a, i) => a + i.qAct, 0);
+        // Lo que hay en el piso sale de pisoPorArt y no de la lista: la lista ya viene sin
+        // los prepack, que no se reponen pero ocupan el cuerpo igual. Sumando solo la lista
+        // se vería un hueco que no existe y se mandaría bajar de más.
+        const enPiso    = pisoPorArt.get(art7) || lista.reduce((a, i) => a + i.qAct, 0);
         const yaAsignado = lista.reduce((a, i) => a + i.aBajar, 0);
         let hueco = capacidad - (enPiso + yaAsignado);
         if (hueco <= 0 || (enPiso + yaAsignado) >= capacidad * LLENADO_MINIMO) return;
@@ -17514,7 +17544,7 @@ const renderRFSection = (container) => {
       items.sort((a, b) => a.prioridad - b.prioridad || b.qRes - a.qRes);
 
       // ── Guardar en cache (memoria + localStorage con items comprimidos) ──
-      _replCache = { items, umbral };
+      _replCache = { items, umbral, omitidos: nOmitidos };
       try {
         // Limpiar claves antiguas logistics_ para liberar espacio antes de guardar
         Object.keys(localStorage).forEach(k => {
@@ -17525,10 +17555,10 @@ const renderRFSection = (container) => {
         // cuerpo y la pantalla volvería a mostrar solo lo que pide el factor.
         const compressed = items.map(i => ({
           s: i.sku, a: i.art7, t: i.talla, m: i.marcas, g: i.genderRims,
-          T: i.temporada, tp: i.tipo, qA: i.qAct, qR: i.qRes, e: i.estado, p: i.prioridad, f: i.factor,
+          T: i.temporada, qA: i.qAct, qR: i.qRes, e: i.estado, p: i.prioridad, f: i.factor,
           b: i.aBajar, rl: i.relleno
         }));
-        localStorage.setItem('logistics_v24_prod_replCache', JSON.stringify({ items: compressed, umbral }));
+        localStorage.setItem('logistics_v24_prod_replCache', JSON.stringify({ items: compressed, umbral, omitidos: nOmitidos }));
       } catch(e) {
         console.warn('[REPL] localStorage lleno, cache solo en sesión', e);
       }
