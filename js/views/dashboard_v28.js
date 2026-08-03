@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0033';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0034';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0033';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0033';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0033';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0033';
-import * as metasService from '../services_v245/metasService.js?v=29.0033';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0033';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0033';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0033';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0033';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0033';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0033';
+import * as adminService from '../services_v245/adminService.js?v=29.0034';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0034';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0034';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0034';
+import * as metasService from '../services_v245/metasService.js?v=29.0034';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0034';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0034';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0034';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0034';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0034';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0034';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0033';
+const VERSION = '29.0034';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3248,7 +3248,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0033');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0034');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13485,7 +13485,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0033 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0034 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -14927,7 +14927,23 @@ const renderRFSection = (container) => {
     await zonasService.cargarZonas();
     await tallasService.cargarTallas();
     await rescatarMaestro();
-    const stock = await getAreaData('almacenaje_activo');
+    let stock = await getAreaData('almacenaje_activo');
+
+    // Mismo cuento que la reserva, y por eso mismo se pide directo: en una PC que no subió
+    // el Stock Activo, getAreaData puede devolver vacío —el área queda cacheada en [] y ya
+    // no vuelve a consultar—. Con el stock vacío no hay líneas de buffer, y el papel sale
+    // con la cabecera pero sin una sola fila. Pasó el 02-ago en la segunda PC.
+    if (!stock || !stock.length) {
+      try {
+        const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+        const res = await fetch(`${base}/api/logistics/almacenaje_activo?t=${Date.now()}`);
+        if (res.ok) {
+          const cuerpo = await res.json();
+          const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+          if (Array.isArray(datos) && datos.length) stock = datos;
+        }
+      } catch (e) { console.warn('[Sugerencia] no se pudo traer el stock activo:', e && e.message); }
+    }
 
     // La reserva se pide DIRECTO: getAreaData no consulta la nube para las áreas que
     // empiezan con 'analisis_sku', así que en una PC que no subió el archivo daría cero.
@@ -19335,6 +19351,45 @@ window.showCellModal = function(htmlContent) {
       // artículos de la misma corrida terminarían mandados al mismo cuerpo.
       const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
       const ctx = await cargarContextoSugerencia(abiertas);
+
+      // Sin Stock Activo no hay cálculo posible: planificarPorTalla devuelve null en cuanto
+      // no conoce las tallas, y el papel saldría con la cabecera y sin una sola fila. Es
+      // preferible decirlo que entregar una hoja en blanco que parece un papel bueno.
+      if (!ctx.porTallaDe.size) {
+        showPremiumAlert('FALTA EL STOCK ACTIVO',
+          'No se pudo leer el Stock Activo, así que no se puede calcular cuánto ni dónde almacenar. ' +
+          'Revisa la conexión y vuelve a intentar. Si sigue igual, carga el Stock Activo en Zona Buffer → Archivo.',
+          'error');
+        updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`);
+        return;
+      }
+
+      // LAS FILAS DEL PAPEL SALEN DE LA TAREA, NO DEL STOCK.
+      //
+      // El stock activo pesa 32 MB y solo está cargado en la PC que subió el CSV; en
+      // cualquier otra el papel salía con la cabecera y sin una sola fila. La tarea ya trae
+      // ubicación, SKU, talla y cantidad, pesa 1,2 MB y viaja a todas las computadoras.
+      //
+      // Y además es lo que corresponde: el papel tiene que mostrar la tarea que se generó,
+      // no el stock de este momento —los datos de la tarea quedan estampados a propósito—.
+      // El stock se sigue necesitando, pero para el cálculo: cuánto hay ya en el piso y qué
+      // cuerpos están ocupados.
+      ctx.lineasBufferDe = new Map();
+      tareas.forEach(t => (t.items || []).forEach(art => {
+        const s7 = String(art.sku7 || '').trim();
+        if (!s7) return;
+        (art.items || []).forEach(i => {
+          const ubi = String(i.ubi || '').trim().toUpperCase();
+          const qty = parseFloat(i.qty) || 0;
+          // CDBUFFER-C es PreePack: queda fuera igual que en el generador de tareas
+          if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C') || qty <= 0) return;
+          if (!ctx.lineasBufferDe.has(s7)) ctx.lineasBufferDe.set(s7, []);
+          ctx.lineasBufferDe.get(s7).push({
+            ubi, skuFull: String(i.skuFull || '').trim(),
+            talla: String(i.talla || 'S/T').trim(), qty
+          });
+        });
+      }));
 
       // Un cuerpo sugerido no puede ofrecerse dos veces en la misma corrida
       const tomados = {};
