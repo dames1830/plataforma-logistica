@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0032';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0033';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0032';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0032';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0032';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0032';
-import * as metasService from '../services_v245/metasService.js?v=29.0032';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0032';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0032';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0032';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0032';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0032';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0032';
+import * as adminService from '../services_v245/adminService.js?v=29.0033';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0033';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0033';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0033';
+import * as metasService from '../services_v245/metasService.js?v=29.0033';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0033';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0033';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0033';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0033';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0033';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0033';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0032';
+const VERSION = '29.0033';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3248,7 +3248,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0032');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0033');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13485,7 +13485,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0032 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0033 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -19303,209 +19303,60 @@ window.showCellModal = function(htmlContent) {
     }
   };
 
+  /**
+   * EL PAPEL QUE SE LLEVA EL OPERARIO — todas las tareas del rango de Tareas Día.
+   *
+   * Hasta v29.0032 este botón bajaba un listado corrido de 10 columnas (Marcas, Gender
+   * RIMS, Colección, Qty zona). Eran columnas para DECIDIR, y el operario ya no decide:
+   * el sistema le dice dónde y cuánto. Desde v29.0033 baja el formato acordado el
+   * 01-ago —7 columnas, una tarea por página, vertical y en blanco y negro—, el mismo
+   * que hasta ahora solo salía por la pestaña Sugerencia (prueba), que quedó escondida.
+   *
+   * La sugerencia se calcula acá, al exportar, porque el generador de las 19:00 todavía
+   * no la graba en la tarea. El día que la grabe, esto pasa a leerla en vez de calcularla.
+   */
   const exportAlmacenajeExcel = async () => {
-    console.log("📥 [PULSE] Iniciando exportación a Excel...");
-    if (!almacenajeTasksCache.length) { 
-        alert("⚠️ No hay tareas en el historial para exportar."); 
-        return; 
+    if (!almacenajeTasksCache.length) {
+      showPremiumAlert('SIN TAREAS', 'No hay tareas en el historial para exportar.', 'info');
+      return;
     }
-    
+
+    const desde = window.__almacenajeStartDate, hasta = window.__almacenajeEndDate;
+    const tareas = (almacenajeTasksCache || []).filter(t => t && t.fecha >= desde && t.fecha <= hasta);
+    if (!tareas.length) {
+      showPremiumAlert('SIN TAREAS', 'No hay tareas en el rango de fechas elegido.', 'info');
+      return;
+    }
+
     try {
-        if (typeof ExcelJS === 'undefined') {
-            throw new Error("La librería ExcelJS no está cargada. Por favor, recarga la página (Ctrl+F5).");
-        }
-        
-        updateSyncIndicator('working', 'GENERANDO EXCEL...');
-        const workbook = new ExcelJS.Workbook();
-        const ws = workbook.addWorksheet('Tareas Día', {
-            properties: { tabColor: { argb: 'FF4F46E5' } },
-            pageSetup: { 
-                margins: { left: 0, right: 0, top: 0.5, bottom: 0, header: 0.3, footer: 0 },
-                fitToPage: true,
-                fitToWidth: 1,
-                fitToHeight: 0,
-                printTitlesRow: '1:6'
-            }
-        });
+      updateSyncIndicator('working', 'ARMANDO EL PAPEL...');
 
-        // Poner N° página en el centro de la cabecera
-        ws.headerFooter = {
-            oddHeader: "&C Página &P de &N",
-            evenHeader: "&C Página &P de &N"
-        };
+      // Los cuerpos ya prometidos a tareas abiertas cuentan como ocupados: sin eso, dos
+      // artículos de la misma corrida terminarían mandados al mismo cuerpo.
+      const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
+      const ctx = await cargarContextoSugerencia(abiertas);
 
-        // 7. Configurar anchos de columna (10 columnas en total: A a J)
-        ws.columns = [
-            { key: 'articulo', width: 20.50 }, // A
-            { key: 'ubicacion', width: 26.00 }, // B
-            { key: 'sku', width: 20.50 },      // C
-            { key: 'tallas', width: 10.00 },    // D
-            { key: 'marcas', width: 20.50 },    // E
-            { key: 'gender', width: 18.00 },    // F
-            { key: 'coleccion', width: 16.00 }, // G
-            { key: 'qty_buffer', width: 13.60 },// H
-            { key: 'qty_zona', width: 14.29 },  // I
-            { key: 'tareas', width: 15.00 }     // J (Tareas / ID)
-        ];
+      // Un cuerpo sugerido no puede ofrecerse dos veces en la misma corrida
+      const tomados = {};
+      Object.keys(ctx.ocupados).forEach(z => { tomados[z] = new Set(ctx.ocupados[z]); });
 
-        // 3. Toda la pestaña en fuente 16
-        ws.eachRow((row) => {
-            row.font = { size: 16, name: 'Calibri' };
-        });
+      const filas = [];
+      tareas.forEach(t => (t.items || []).forEach(art => {
+        const s = calcularSugerenciaDeItem(art, t.fecha, ctx, tomados);
+        if (s) filas.push({ ...s, s7: s.sku7, tarea: t, art, f: s.ficha });
+      }));
 
-        // 1. Crear 5 filas (implícito al empezar en la 6 para el header)
-        ws.getCell('A2').value = 'Nombres';
-        ws.getCell('A3').value = 'Hora Inicio';
-        ws.getCell('A4').value = 'Hora Término';
-        ws.getCell('A5').value = new Date().toLocaleString('es-ES');
+      // El botón va en null a propósito: quien lo puso en ⌛ es el handler de
+      // window.exportAlmacenajeExcel, y así se queda esperando también durante el
+      // cálculo de arriba, que es la parte que de verdad tarda.
+      await exportarSugerenciaExcel(filas, ctx, null);
 
-        // Altura 30.00 y alineación en el medio para filas 2, 3, 4
-        [2, 3, 4].forEach(rowNum => {
-            const row = ws.getRow(rowNum);
-            row.height = 30.00;
-            for (let col = 1; col <= 10; col++) {
-                row.getCell(col).alignment = { vertical: 'middle', horizontal: 'left' };
-            }
-        });
-
-        // Estilo para las etiquetas de cabecera
-        ['A2', 'A3', 'A4'].forEach(cellId => {
-            const cell = ws.getCell(cellId);
-            cell.font = { size: 16, bold: true, name: 'Calibri' };
-        });
-        
-        // A5: Solo fecha/hora, fuente 10, gris oscuro
-        const cellA5 = ws.getCell('A5');
-        cellA5.font = { size: 10, color: { argb: 'FF555555' }, name: 'Calibri' };
-
-        // 2. Fila 6 Columnas A hasta la J, Fondo Negro, texto blanco en negrita
-        const headerRow = ws.getRow(6);
-        headerRow.values = [
-            "Articulo", "UBICACION", "SKU", "Tallas", "Marcas", "Gender RIMS", "Colección", 
-            "Qty Buffer", "Qty Zona", "Tareas"
-        ];
-        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
-        headerRow.eachCell((cell) => {
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
-            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-            cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        });
-
-        // Preparar datos
-        const dataRows = [];
-        
-        // Build dynamic map of sku7 to live Column D (Gender RIMS) from maestro
-        const liveGenderRimsMap = new Map();
-        const activeMaestro = dataStore.articulos || [];
-        activeMaestro.forEach(row => {
-            const raw = Array.isArray(row) ? row : Object.values(row);
-            const sku7 = String(raw[1] || '').trim().substring(0, 7);
-            if (sku7 && !liveGenderRimsMap.has(sku7)) {
-                // Column D (index 3) is Gender RIMS
-                liveGenderRimsMap.set(sku7, String(raw[3] || '').trim().toUpperCase());
-            }
-        });
-
-        almacenajeTasksCache.forEach(task => {
-            // Filtrar tareas por rango de fechas
-            if (task.fecha < window.__almacenajeStartDate || task.fecha > window.__almacenajeEndDate) return;
-            if (!task.items || !Array.isArray(task.items)) return;
-
-            task.items.forEach(art => {
-                const getTalla = (sku) => {
-                    const tm = Array.isArray(dataStore.tabla_tallas) ? dataStore.tabla_tallas.reduce((acc, x) => { acc[x.sku] = x.talla; return acc; }, {}) : (dataStore.tabla_tallas || {});
-                    return tm[sku] || sku.split('-').pop();
-                };
-                
-                // CDBUFFER Rows (Buffer)
-                const bufferRows = (art.items || []).filter(i => i.ubi && String(i.ubi).trim().toUpperCase().startsWith('CDBUFFER'));
-                // ZONA Rows (Picking, Rack, etc.)
-                const zonaRows = (art.items || []).filter(i => !i.ubi || !String(i.ubi).trim().toUpperCase().startsWith('CDBUFFER'));
-
-                // Ordenamiento por SKU / Talla para mantener consistencia visual
-                const sortBySku = (a, b) => {
-                    const skuA = String(a.skuFull || a.sku || '');
-                    const skuB = String(b.skuFull || b.sku || '');
-                    return skuA.localeCompare(skuB);
-                };
-                bufferRows.sort(sortBySku);
-                zonaRows.sort(sortBySku);
-
-                // Fechas formateadas
-                // Agregar primero los CDBUFFER (Qty Buffer se muestra, Qty Zona vacía, Avance según estado)
-                bufferRows.forEach(i => {
-                    // Manda lo que quedó estampado en la tarea; el Maestro de hoy es el
-                    // respaldo. Al revés, un cambio de catálogo movía reportes ya cerrados.
-                    const grValue = art.genderRims || liveGenderRimsMap.get(art.sku7) || art.gender || "";
-                    dataRows.push([
-                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), marcaNormalizada(art.marca), grValue, art.coleccion, 
-                        i.qty, "", task.id.includes('_') ? task.id.split('_')[1] : task.id
-                    ]);
-                });
-                // Agregar segundo las Zonas (Qty Buffer vacía, Qty Zona se muestra, Avance es "---")
-                zonaRows.forEach(i => {
-                    // Manda lo que quedó estampado en la tarea; el Maestro de hoy es el
-                    // respaldo. Al revés, un cambio de catálogo movía reportes ya cerrados.
-                    const grValue = art.genderRims || liveGenderRimsMap.get(art.sku7) || art.gender || "";
-                    dataRows.push([
-                        art.sku7, i.ubi, i.skuFull, getTalla(i.skuFull), marcaNormalizada(art.marca), grValue, art.coleccion, 
-                        "", i.qty, task.id.includes('_') ? task.id.split('_')[1] : task.id
-                    ]);
-                });
-                // Subtotal
-                dataRows.push([
-                    `Total ${art.sku7}`, "", "", "", marcaNormalizada(art.marca), "", "", art.bufferQty, art.zonaQty, 
-                    task.id.includes('_') ? task.id.split('_')[1] : task.id
-                ]);
-            });
-        });
-
-        // Agregar filas de datos a partir de la fila 7
-        dataRows.forEach((rowData) => {
-            const row = ws.addRow(rowData);
-            row.font = { size: 16, name: 'Calibri' };
-            
-            // Centrar columnas numéricas, de fechas y estado (H a J / 8 a 10)
-            [8, 9, 10].forEach(colIdx => {
-                row.getCell(colIdx).alignment = { horizontal: 'center', vertical: 'middle' };
-            });
-
-            // 6. Todas las celdas que comiencen con Total, Blanco, Fondo 1 , 35 %. de la columna A hasta la P y en negrita
-            if (String(rowData[0]).startsWith('Total')) {
-                row.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 16, name: 'Calibri' };
-                row.eachCell((cell) => {
-                    cell.fill = { 
-                        type: 'pattern', 
-                        pattern: 'solid', 
-                        fgColor: { argb: 'FFA6A6A6' } // Gris 35% (Aprox)
-                    };
-                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-                });
-            } else {
-                row.eachCell((cell) => {
-                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-                });
-            }
-        });
-
-        // Escribir archivo
-        const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Plan_Almacenaje_v13.0.2_${getLogicalDate()}.xlsx`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        
-        updateSyncIndicator('online', 'EXCEL GENERADO ✅');
-        console.log("✅ [PULSE] Excel generado con éxito.");
-        setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
-
+      updateSyncIndicator('online', 'PAPEL GENERADO ✅');
+      setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
     } catch (err) {
-        console.error("❌ [PULSE] Error en exportAlmacenajeExcel:", err);
-        alert("❌ Error al generar el Excel: " + err.message);
-        updateSyncIndicator('offline', 'ERROR EXCEL');
+      console.error('❌ [PULSE] Error al armar el papel de almacenaje:', err);
+      showPremiumAlert('NO SE PUDO ARMAR EL PAPEL', err.message || String(err), 'error');
+      updateSyncIndicator('offline', 'ERROR EXCEL');
     }
   };
 
