@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro } from '../services_v245/csvHub_v6.js?v=29.0037';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA } from '../services_v245/csvHub_v6.js?v=29.0038';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0037';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0037';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0037';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0037';
-import * as metasService from '../services_v245/metasService.js?v=29.0037';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0037';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0037';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0037';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0037';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0037';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0037';
+import * as adminService from '../services_v245/adminService.js?v=29.0038';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0038';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0038';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0038';
+import * as metasService from '../services_v245/metasService.js?v=29.0038';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0038';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0038';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0038';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0038';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0038';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0038';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0037';
+const VERSION = '29.0038';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2737,9 +2737,47 @@ export const renderDashboard = async (container, user, onLogout) => {
     div.id = `wrap_${area}`;
     div.style.width = '100%';
     const label = customLabel || area.toUpperCase();
-    
+
     const isLoaded = hasData && hasData.length > 0;
-    
+
+    // EL STOCK YA NO SE CARGA A MANO: lo publica el robot a las 19:00 y todas las PC lo
+    // leen de la nube. Se deja la tarjeta a la vista —con cuántas filas hay y de cuándo
+    // son— porque saber si el dato está fresco sigue importando; lo que se saca es el
+    // botón de subir. Cada módulo tenía su propia carga y terminaban desfasados: el
+    // 02-ago-2026 convivían archivos de hace cinco semanas con el del día.
+    if (esAreaDeLaNube(area)) {
+      // La fecha sale del área REAL: si se mira desde un nombre viejo, su meta quedó
+      // congelada el día que alguien cargó ese archivo a mano por última vez.
+      const metaNube = getUploadMeta(AREA_CANONICA[area] || area);
+      const dateStr = metaNube ? new Date(metaNube.ts).toLocaleString() : 'NUNCA';
+      div.innerHTML = `
+        <div style="background:rgba(15,23,42,0.4); border:1px solid rgba(99,102,241,0.25); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #6366f1;">
+            <div style="display:flex; align-items:center; gap:1.2rem;">
+                <div style="width:36px; height:36px; background:rgba(99,102,241,0.12); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; border:1px solid rgba(99,102,241,0.2);">☁️</div>
+                <div style="display:flex; flex-direction:column;">
+                    <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${label}</span>
+                    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+                        <span style="color:${isLoaded ? '#a5b4fc' : 'var(--text-muted)'}; font-weight:700; font-size:0.85rem;">${isLoaded ? 'EN LA NUBE' : 'SIN PUBLICAR'}</span>
+                        ${isLoaded ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                                      <span style="color:var(--text-muted); font-size:0.75rem;">${hasData.length.toLocaleString('es-PE')} regs</span>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:1.5rem;">
+                <div style="text-align:right; min-width:180px;">
+                    <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">ÚLTIMA PUBLICACIÓN</div>
+                    <div style="font-size:0.75rem; color:${isLoaded ? '#a5b4fc' : 'rgba(255,255,255,0.2)'}; font-weight:700;">${dateStr}</div>
+                </div>
+                <div title="Lo sube el robot todas las noches a las 19:00. Ya no hace falta cargarlo en cada computadora: todas leen el mismo." style="display:flex; align-items:center; gap:6px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.25); border-radius:6px; padding:6px 10px; cursor:default;">
+                    <span style="font-size:0.8rem;">🔒</span>
+                    <span style="font-size:0.65rem; color:#a5b4fc; font-weight:800; letter-spacing:0.5px;">LO SUBE EL ROBOT</span>
+                </div>
+            </div>
+        </div>`;
+      container.appendChild(div);
+      return;
+    }
+
     div.innerHTML = `
       <div style="background:rgba(15, 23, 42, 0.4); border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s; border-left:4px solid ${isLoaded ? '#22c55e' : '#64748b'};">
           <div style="display:flex; align-items:center; gap:1.2rem;">
@@ -3248,7 +3286,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0037');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0038');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13485,7 +13523,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0037 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0038 | MOBILE PORTAL
                             </div>
                     </div>
 

@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0037';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0038';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -128,7 +128,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0037';
+const VERSION = '29.0038';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -867,20 +867,85 @@ export const clearAreaData = async (area, username = 'sistema') => {
     }
 };
 
+/**
+ * TODAS LAS PANTALLAS MIRAN EL MISMO STOCK.
+ *
+ * Cada módulo nació con su propio archivo —la convención es `{modulo}_activo` y
+ * `{modulo}_reserva`—, así que el mismo CSV de Oracle había que cargarlo a mano una vez por
+ * pestaña. En la práctica se cargaba en una y las demás se quedaban con la foto vieja: el
+ * 02-ago-2026 había áreas de hace CINCO y SEIS semanas conviviendo con la del día, dos PC
+ * daban papeles distintos, y la reserva que usaba el cálculo llevaba un mes parada.
+ *
+ * Desde que el robot publica los stocks todas apuntan al mismo cajón. Los datos NO se
+ * copian: se reparte la MISMA REFERENCIA, así que siguen ocupando memoria una sola vez.
+ *
+ * Es seguro porque el formato es idéntico en todas: el CSV lo parsea Papa.parse igual para
+ * cualquier área, y todas las de reserva pasan por el mismo mapeo de columnas (ver parseFile,
+ * la rama `area.endsWith('_reserva')`).
+ *
+ * Las de validación (validar_activo, validar_reserva, validar_lpn) NO entran: son archivos
+ * de control que se cruzan CONTRA el stock, y hacerlas apuntar al mismo lado las volvería
+ * inútiles —se compararía el stock consigo mismo—.
+ */
+export const AREA_CANONICA = {
+    // Stock Activo — el que publica el robot a las 19:00
+    'analisis_sku_activo': 'almacenaje_activo',
+    'buffer_activo':       'almacenaje_activo',
+    'inventario_activo':   'almacenaje_activo',
+    'recepcion_activo':    'almacenaje_activo',
+    'stockActivo':         'almacenaje_activo',
+    'inventario':          'almacenaje_activo',
+    // Stock Reserva
+    'almacenaje_reserva':  'analisis_sku_reserva',
+    'buffer_reserva':      'analisis_sku_reserva',
+    'inventario_reserva':  'analisis_sku_reserva',
+    'recepcion_reserva':   'analisis_sku_reserva',
+    'stockReserva':        'analisis_sku_reserva',
+};
+
+/** ¿Esta área la publica el robot? Entonces no se sube a mano. */
+export const esAreaDeLaNube = (area) =>
+    area === 'almacenaje_activo' || area === 'analisis_sku_reserva' || !!AREA_CANONICA[area];
+
+/**
+ * Reparte la misma referencia a todos los nombres viejos. Hace falta porque hay pantallas
+ * que leen `dataStore.buffer_activo` derecho, sin pasar por getAreaData.
+ */
+const repartirCanonica = (canonica, datos) => {
+    Object.keys(AREA_CANONICA).forEach(a => {
+        if (AREA_CANONICA[a] === canonica) dataStore[a] = datos;
+    });
+};
+
 export const getAreaData = async (area, forceRefresh = false) => {
+  // Un nombre viejo se resuelve por el nuevo y se guarda en los dos
+  const canonica = AREA_CANONICA[area];
+  if (canonica) {
+      const datos = await getAreaData(canonica, forceRefresh);
+      dataStore[area] = datos;
+      return datos;
+  }
+
   if (!forceRefresh && dataStore[area] !== undefined && dataStore[area] !== null) return dataStore[area];
   
   if (!forceRefresh) {
       // [MOD V12.1.47] Prioridad a la DB Local (Instantáneo)
       const dbData = await loadFromDB(area);
-      if (dbData) { 
-          dataStore[area] = dbData; 
-          return dbData; 
+      if (dbData) {
+          dataStore[area] = dbData;
+          repartirCanonica(area, dbData);
+          return dbData;
       }
   }
 
+  // Las dos que publica el robot SÍ se bajan del servidor, aunque el nombre empiece por
+  // 'analisis_sku'. Esta lista es de cuando cada PC cargaba sus archivos a mano; dejar
+  // 'analisis_sku_reserva' adentro la devolvía vacía en cualquier computadora que no la
+  // hubiera cargado, y por eso la sugerencia tenía que pedirla por su cuenta con un fetch.
+  const laPublicaElRobot = (area === 'almacenaje_activo' || area === 'analisis_sku_reserva');
+
   // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, no buscar en el servidor
-  if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area === 'validar_lpn' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas' || area.startsWith('analisis_sku')) {
+  if (!laPublicaElRobot && (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area === 'validar_lpn' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas' || area.startsWith('analisis_sku'))) {
       if (area.endsWith('_activo') || area.endsWith('_reserva')) {
           updateTablaTallas();
       }
@@ -897,6 +962,7 @@ export const getAreaData = async (area, forceRefresh = false) => {
          const serverResponse = await response.json();
           if (serverResponse.data && Array.isArray(serverResponse.data) && serverResponse.data.length > 0) {
               dataStore[area] = serverResponse.data;
+              repartirCanonica(area, serverResponse.data);
               await saveToDB(area, serverResponse.data); // Sincronizar cache local
               if (serverResponse.updated_at) {
                   let safeDateStr = serverResponse.updated_at;
