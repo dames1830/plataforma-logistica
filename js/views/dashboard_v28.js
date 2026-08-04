@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0062';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0063';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0062';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0062';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0062';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0062';
-import * as metasService from '../services_v245/metasService.js?v=29.0062';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0062';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0062';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0062';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0062';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0062';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0062';
+import * as adminService from '../services_v245/adminService.js?v=29.0063';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0063';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0063';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0063';
+import * as metasService from '../services_v245/metasService.js?v=29.0063';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0063';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0063';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0063';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0063';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0063';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0063';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0062';
+const VERSION = '29.0063';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0062');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0063');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0062 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0063 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -21340,33 +21340,44 @@ window.showCellModal = function(htmlContent) {
   // pares que llegan, cuatro se van la primera semana y dos y medio la segunda. De la tercera
   // en adelante son migajas. Ver [[buffer-origen-y-cuerpos]].
   //
-  // LA COLUMNA `semana` SE MIDE APAREADA, y no restando la mediana de una semana menos la de
-  // la anterior. Restando medianas sueltas, la semana 6 daba CERO —parecía que no se había
-  // picado nada— y era mentira: los grupos no eran los mismos. En la semana 5 había 237
-  // códigos medidos y en la 6 solo 204, porque los que llegaron en julio todavía no cumplían
-  // seis semanas. Con grupos distintos la mediana puede quedarse quieta aunque cada artículo
-  // se haya movido. Comparando los MISMOS códigos en las dos semanas, la 6 da 2,8%.
+  // UN SOLO GRUPO, SEGUIDO LAS MISMAS OCHO SEMANAS. Y esto NO es un detalle de estadística:
+  // es lo que hace que los números cierren.
   //
-  // Por eso las barras no suman exactamente el acumulado de la curva: cada una es la mediana
-  // de su propio par de semanas, y las medianas no se suman.
+  // La primera versión seguía a los 404 códigos hasta donde llegara cada uno. Parecía mejor
+  // —más datos, más semanas— y estaba mal: cada semana se medía sobre un grupo distinto,
+  // porque los que llegaron en julio todavía no cumplían dos meses. Con grupos distintos
+  // pasaban dos cosas feas. La semana 6 daba CERO, como si no se hubiera picado nada. Y al
+  // sumar las barras salía 96,8% cuando la curva decía 89,9%.
+  //
+  // Lo vio Daniel sumando la fila a mano. Un cuadro cuyos números no cierran no se discute:
+  // se corrige.
+  //
+  // Ahora son los 146 códigos que llegaron en mayo y junio y cumplieron ocho semanas
+  // completas. Se pierden códigos y se pierden tres semanas de cola, y a cambio la curva y
+  // las barras hablan de lo mismo: las barras suman 86,3% y la curva dice que queda 13,7%.
+  // Cierra.
   // ══════════════════════════════════════════════════════════════════════════════════
+  // LO QUE SE LLEVA CADA SEMANA NO SE GUARDA: SE RESTA DE LA CURVA, acá abajo. Guardarlo
+  // aparte ya se desvió una vez —dos semanas quedaron en 0,1 de diferencia por redondear los
+  // dos números por separado—, y Daniel revisa estos cuadros con la calculadora. Restándolo
+  // en el momento, la barra ES la caída de la curva por construcción y no puede discrepar.
   const CURVA_CODIGO_NUEVO = {
-    medido: '04-may al 03-ago-2026', codigos: 404, llegada: 1080,
+    medido: 'llegados en mayo y junio de 2026, seguidos 8 semanas', codigos: 146, llegada: 1251,
     puntos: [
-      { s: 0,  queda: 100.0, p25: 100.0, p75: 100.0, semana: 0.0,  n: 404 },
-      { s: 1,  queda: 61.2,  p25: 44.3,  p75: 73.4,  semana: 38.8, n: 365 },
-      { s: 2,  queda: 34.6,  p25: 23.5,  p75: 52.3,  semana: 25.2, n: 329 },
-      { s: 3,  queda: 27.6,  p25: 16.8,  p75: 47.9,  semana: 6.1,  n: 280 },
-      { s: 4,  queda: 24.8,  p25: 13.3,  p75: 45.2,  semana: 3.0,  n: 252 },
-      { s: 5,  queda: 20.9,  p25: 11.9,  p75: 39.4,  semana: 4.5,  n: 237 },
-      { s: 6,  queda: 20.9,  p25: 11.1,  p75: 36.5,  semana: 2.8,  n: 204 },
-      { s: 7,  queda: 17.2,  p25: 9.9,   p75: 30.5,  semana: 3.6,  n: 188 },
-      { s: 8,  queda: 13.7,  p25: 7.1,   p75: 24.0,  semana: 3.1,  n: 146 },
-      { s: 9,  queda: 12.3,  p25: 4.3,   p75: 20.2,  semana: 2.5,  n: 94 },
-      { s: 10, queda: 11.6,  p25: 6.0,   p75: 15.4,  semana: 2.8,  n: 48 },
-      { s: 11, queda: 10.1,  p25: 7.5,   p75: 11.4,  semana: 4.4,  n: 16 }
+      { s: 0, queda: 100.0, p25: 100.0, p75: 100.0 },
+      { s: 1, queda: 58.0,  p25: 39.3,  p75: 67.2 },
+      { s: 2, queda: 36.6,  p25: 18.3,  p75: 51.9 },
+      { s: 3, queda: 33.8,  p25: 16.1,  p75: 48.2 },
+      { s: 4, queda: 28.2,  p25: 13.7,  p75: 45.3 },
+      { s: 5, queda: 24.2,  p25: 11.8,  p75: 39.4 },
+      { s: 6, queda: 21.4,  p25: 10.8,  p75: 35.8 },
+      { s: 7, queda: 16.9,  p25: 9.2,   p75: 28.2 },
+      { s: 8, queda: 13.7,  p25: 7.1,   p75: 24.0 }
     ]
   };
+  CURVA_CODIGO_NUEVO.puntos.forEach((p, i, t) => {
+    p.semana = i ? Math.round((t[i - 1].queda - p.queda) * 10) / 10 : 0;
+  });
 
   const renderKpiPicking = (container) => {
     if (!container) return;
@@ -21437,7 +21448,6 @@ window.showCellModal = function(htmlContent) {
         <td style="padding:0.45rem 0.9rem; text-align:right;">${(100 - p.queda).toFixed(0)}%</td>
         <td style="padding:0.45rem 0.9rem; text-align:right;">${Math.max(0, p.semana).toFixed(0)}%</td>
         <td style="padding:0.45rem 0.9rem; text-align:right;">${n(D.llegada * p.queda / 100)}</td>
-        <td style="padding:0.45rem 0.9rem; text-align:right; color:rgba(255,255,255,0.28);">${p.n}</td>
       </tr>`).join('');
 
     const tarjeta = (r, v, sub) => `
@@ -21464,8 +21474,8 @@ window.showCellModal = function(htmlContent) {
 
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:0.7rem; margin:1.1rem 0;">
           ${tarjeta('Llegada típica', n(D.llegada), 'pares por código nuevo')}
-          ${tarjeta('Se va en 2 semanas', '65%', 'y en la primera, 39%')}
-          ${tarjeta('Queda a los 2 meses', '14%', 'y de ahí casi no baja')}
+          ${tarjeta('Se va en 2 semanas', '63%', 'y en la primera, 42%')}
+          ${tarjeta('Queda a las 8 semanas', '14%', 'y de ahí casi no baja')}
         </div>
 
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:0.7rem; margin-bottom:1.1rem;">
@@ -21491,9 +21501,9 @@ window.showCellModal = function(htmlContent) {
             <text x="${((X0 + X1) / 2).toFixed(0)}" y="${B1 + 44}" text-anchor="middle" fill="var(--text-muted)" font-size="11">semanas desde que llegó</text>
           </svg>
           <div style="font-size:0.66rem; color:rgba(255,255,255,0.3); line-height:1.65; padding:0.4rem 0.4rem 0;">
-            Las rayas horizontales marcan cuánto es un cuerpo sobre esa llegada típica: <b style="color:rgba(255,255,255,0.5);">a partir de la semana 2 el artículo ya cabe en uno solo</b>.<br>
-            La cantidad de códigos medidos baja con las semanas —365 en la primera, 16 en la última—, porque los que llegaron en julio todavía no cumplieron tres meses.
-            Las barras comparan <b style="color:rgba(255,255,255,0.5);">los mismos códigos</b> en cada par de semanas, así que no suman exactamente el acumulado de la curva: cada una es la mediana de su propio par, y las medianas no se suman.
+            Las rayas horizontales marcan cuánto es un cuerpo sobre esa llegada típica: <b style="color:rgba(255,255,255,0.5);">a partir de la semana 2 el artículo ya cabe en dos</b>, y a la semana 4 en uno solo.<br>
+            Son <b style="color:rgba(255,255,255,0.5);">siempre los mismos ${D.codigos} códigos</b>, seguidos las mismas ocho semanas. Por eso las barras cierran con la curva:
+            suman ${(100 - P[P.length - 1].queda).toFixed(1)}%, que es exactamente lo que se vendió.
           </div>
         </div>
 
@@ -21505,7 +21515,6 @@ window.showCellModal = function(htmlContent) {
               <th style="padding:0.5rem 0.9rem; text-align:right;">Se llevó</th>
               <th style="padding:0.5rem 0.9rem; text-align:right;">Esa semana</th>
               <th style="padding:0.5rem 0.9rem; text-align:right;">Pares que quedan</th>
-              <th style="padding:0.5rem 0.9rem; text-align:right;" title="Cuántos códigos llegaron a cumplir esa semana. Baja porque los de julio son más nuevos.">Códigos medidos</th>
             </tr></thead>
             <tbody>${filas}</tbody>
           </table>
@@ -21513,7 +21522,7 @@ window.showCellModal = function(htmlContent) {
 
         <div style="margin-top:1rem; padding:0.8rem 1rem; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2); border-radius:11px; font-size:0.72rem; color:var(--text-muted); line-height:1.7;">
           <b style="color:#93c5fd;">Para qué sirve.</b> De acá salen los cuerpos que se le reservan a un código nuevo:
-          las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">702 pares</b>, que son dos cuerpos moviéndose.
+          las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">793 pares</b>, que son más de dos cuerpos moviéndose.
           Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento.
           De la tercera semana en adelante el artículo casi no se mueve, y esos cuerpos quedan tomados por una cola que no rota.
         </div>
