@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0064';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0065';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0064';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0064';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0064';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0064';
-import * as metasService from '../services_v245/metasService.js?v=29.0064';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0064';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0064';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0064';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0064';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0064';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0064';
+import * as adminService from '../services_v245/adminService.js?v=29.0065';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0065';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0065';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0065';
+import * as metasService from '../services_v245/metasService.js?v=29.0065';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0065';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0065';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0065';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0065';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0065';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0065';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0064';
+const VERSION = '29.0065';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0064');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0065');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0064 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0065 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -21323,209 +21323,627 @@ window.showCellModal = function(htmlContent) {
   };
 
   // ══════════════════════════════════════════════════════════════════════════════════
-  // KPI PICKING — LA CURVA DE VIDA DE UN CÓDIGO NUEVO
+  // KPI PICKING — CÓMO SE VENDE UN CÓDIGO NUEVO
   //
-  // Cuánto se lleva el picking, semana a semana, de la mercadería que entra por primera vez.
-  //
-  // ES UN ESTUDIO, NO UN INDICADOR EN VIVO, y por eso los números están escritos acá adentro
-  // en vez de calcularse al abrir la pantalla. Salieron de seguir 404 códigos foto a foto en
-  // las 74 tomas diarias de stock que el robot deja en OneDrive —del 04-may al 03-ago-2026—,
-  // sumando activo Y reserva: mirando solo el activo, la mitad que sube a reserva se ve
-  // igual que una venta y el resultado sale al doble.
+  // ES UN ESTUDIO, NO UN INDICADOR EN VIVO, y por eso los números están escritos acá
+  // adentro en vez de calcularse al abrir la pantalla. Salieron de releer las 74 fotos
+  // diarias de stock del 04-may al 03-ago-2026 (OneDrive: `scraping Stock`, `Stock Activo`
+  // y `Stock Reserva`), sumando activo Y reserva: mirando solo el activo, la mitad que
+  // sube a reserva se ve igual que una venta y el resultado sale al doble.
   //
   // El servidor no guarda esa serie: `logistics_snapshots` tiene una foto por área, no una
   // por día. Para que esto se recalcule solo habría que empezar a guardarlas.
   //
-  // Lo que dice, y es lo que decide cuántos cuerpos le tocan a un código nuevo: de cada diez
-  // pares que llegan, cuatro se van la primera semana y dos y medio la segunda. De la tercera
-  // en adelante son migajas. Ver [[buffer-origen-y-cuerpos]].
+  // EL GRUPO: códigos de calzado que llegaron nuevos EN MAYO de 2026 con al menos UN
+  // CUERPO (350 pares) y alcanzaron nueve semanas completas. Los 350 no se eligieron para
+  // que calzara con nada: es lo que entra en un cuerpo, y un código que llega con menos no
+  // obliga a decidir ubicación.
   //
-  // UN SOLO GRUPO, SEGUIDO LAS MISMAS OCHO SEMANAS. Y esto NO es un detalle de estadística:
-  // es lo que hace que los números cierren.
+  // UN GRUPO FIJO, SEGUIDO LAS MISMAS NUEVE SEMANAS. Seguir a cada código hasta donde
+  // llegue hace que cada semana se mida sobre un grupo distinto, y ahí las barras dejan de
+  // sumar y aparecen semanas en cero que no son reales.
   //
-  // La primera versión seguía a los 404 códigos hasta donde llegara cada uno. Parecía mejor
-  // —más datos, más semanas— y estaba mal: cada semana se medía sobre un grupo distinto,
-  // porque los que llegaron en julio todavía no cumplían dos meses. Con grupos distintos
-  // pasaban dos cosas feas. La semana 6 daba CERO, como si no se hubiera picado nada. Y al
-  // sumar las barras salía 96,8% cuando la curva decía 89,9%.
-  //
-  // Lo vio Daniel sumando la fila a mano. Un cuadro cuyos números no cierran no se discute:
-  // se corrige.
-  //
-  // Ahora son los 146 códigos que llegaron en mayo y junio y cumplieron ocho semanas
-  // completas. Se pierden códigos y se pierden tres semanas de cola, y a cambio la curva y
-  // las barras hablan de lo mismo: las barras suman 86,3% y la curva dice que queda 13,7%.
-  // Cierra.
+  // La versión anterior hablaba de 146 códigos de mayo y junio; el filtro con que se
+  // eligieron no quedó anotado y no se pudo rearmar. Este sí: llegada en mayo, mínimo un
+  // cuerpo, nueve semanas. Recalculado el 04-ago-2026.
   // ══════════════════════════════════════════════════════════════════════════════════
-  // LO QUE SE LLEVA CADA SEMANA NO SE GUARDA: SE RESTA DE LA CURVA, acá abajo. Guardarlo
-  // aparte ya se desvió una vez —dos semanas quedaron en 0,1 de diferencia por redondear los
-  // dos números por separado—, y Daniel revisa estos cuadros con la calculadora. Restándolo
-  // en el momento, la barra ES la caída de la curva por construcción y no puede discrepar.
-  const CURVA_CODIGO_NUEVO = {
-    medido: 'llegados en mayo y junio de 2026, seguidos 8 semanas', codigos: 146, llegada: 1251,
-    puntos: [
-      { s: 0, queda: 100.0, p25: 100.0, p75: 100.0 },
-      { s: 1, queda: 58.0,  p25: 39.3,  p75: 67.2 },
-      { s: 2, queda: 36.6,  p25: 18.3,  p75: 51.9 },
-      { s: 3, queda: 33.8,  p25: 16.1,  p75: 48.2 },
-      { s: 4, queda: 28.2,  p25: 13.7,  p75: 45.3 },
-      { s: 5, queda: 24.2,  p25: 11.8,  p75: 39.4 },
-      { s: 6, queda: 21.4,  p25: 10.8,  p75: 35.8 },
-      { s: 7, queda: 16.9,  p25: 9.2,   p75: 28.2 },
-      { s: 8, queda: 13.7,  p25: 7.1,   p75: 24.0 }
-    ]
-  };
-  CURVA_CODIGO_NUEVO.puntos.forEach((p, i, t) => {
-    p.semana = i ? Math.round((t[i - 1].queda - p.queda) * 10) / 10 : 0;
-  });
+  const KPI_GRUPO = {
+    tipo:'grupo', banda:true,
+    titulo:'CÓMO SE VENDE UN CÓDIGO NUEVO',
+    bajada:'<b>81 códigos de calzado</b> que entraron por primera vez <b>en mayo de 2026</b> con al menos un cuerpo (350 pares), seguidos foto a foto nueve semanas. Cada punto es la mediana: la mitad de los códigos queda por debajo y la mitad por encima.',
+    sello:'Estudio · llegados en mayo de 2026, seguidos 9 semanas',
+    llegada:1082, rotuloLlegada:'Llegada típica', subLlegada:'pares por código nuevo',
+    llegadaFranja:'UN ARTÍCULO TÍPICO · LE LLEGAN',
+    ficha:['Muestra', [
+      ['Artículos','81'], ['Unidades','96,505'], ['Semanas seguidas','9'],
+      ['Fotos de stock','74'], ['Llegaron','07-may al 29-may'], ['Seguidos hasta','03-ago-2026']]],
+    puntos:[
+      { s:0, queda:100.0, p25:100.0, p75:100.0 },
+      { s:1, queda:56.6,  p25:30.5,  p75:68.0 },
+      { s:2, queda:35.3,  p25:5.2,   p75:47.8 },
+      { s:3, queda:34.1,  p25:5.0,   p75:47.1 },
+      { s:4, queda:27.0,  p25:5.0,   p75:41.2 },
+      { s:5, queda:22.9,  p25:4.1,   p75:37.8 },
+      { s:6, queda:21.0,  p25:5.0,   p75:32.4 },
+      { s:7, queda:18.8,  p25:5.0,   p75:29.9 },
+      { s:8, queda:14.7,  p25:4.0,   p75:22.3 },
+      { s:9, queda:12.2,  p25:3.9,   p75:20.4 }
+    ]};
 
-  const renderKpiPicking = (container) => {
-    if (!container) return;
-    container.dataset.vista = 'kpi-picking';
-    const D = CURVA_CODIGO_NUEVO, P = D.puntos;
-    const n = (v) => Math.round(v).toLocaleString('es-PE');
+  // Dos casos reales de los mismos 81, elegidos para que se vea lo que la mediana esconde.
+  // ACÁ LOS PARES SON MEDIDOS, NO CALCULADOS: salen de la foto de cada lunes.
+  const KPI_CASO1 = {
+    tipo:'articulo', banda:false,
+    titulo:'UN ARTÍCULO DE MUESTRA · 8816380',
+    bajada:'<b>LACES - FLAG - BLACK/NEGRO - NORTH STAR</b>. Llegó el 28-may-2026 con 1.082 pares, que es justo la llegada típica del grupo. Es uno de los 81 y acá los pares no son un promedio: <b>son los que dice la foto de cada lunes</b>.',
+    sello:'Un caso real · llegó el 28-may-2026, seguido 9 semanas',
+    llegada:1082, rotuloLlegada:'Llegó con', subLlegada:'pares el 28-may-2026',
+    llegadaFranja:'ESTE ARTÍCULO · LE LLEGARON',
+    ficha:['El artículo', [
+      ['Código','8816380'], ['Marca','North Star'], ['Modelo','Laces · Flag'],
+      ['Color','Black / Negro'], ['Llegó el','28-may-2026'], ['Última foto','30-jul-2026']]],
+    puntos:[
+      { s:0, queda:100.0, pares:1082, fecha:'28-may' },
+      { s:1, queda:66.5,  pares:719,  fecha:'04-jun' },
+      { s:2, queda:56.6,  pares:612,  fecha:'11-jun' },
+      { s:3, queda:56.2,  pares:608,  fecha:'18-jun' },
+      { s:4, queda:56.2,  pares:608,  fecha:'25-jun' },
+      { s:5, queda:37.8,  pares:409,  fecha:'02-jul' },
+      { s:6, queda:18.5,  pares:200,  fecha:'09-jul' },
+      { s:7, queda:15.2,  pares:164,  fecha:'16-jul' },
+      { s:8, queda:13.4,  pares:145,  fecha:'23-jul' },
+      { s:9, queda:11.2,  pares:121,  fecha:'30-jul' }
+    ]};
 
-    // Geometría del dibujo. Dos gráficos que comparten el eje de semanas: arriba lo que
-    // queda, abajo lo que se llevó esa semana.
-    const X0 = 78, X1 = 862, Y0 = 62, Y1 = 306, B0 = 372, B1 = 470, MAXS = P.length - 1;
-    const x = (s) => X0 + (X1 - X0) * s / MAXS;
-    const y = (v) => Y1 - (Y1 - Y0) * v / 100;
-    const yb = (v) => B1 - (B1 - B0) * v / 45;
+  const KPI_CASO2 = {
+    tipo:'articulo', banda:false,
+    titulo:'OTRO ARTÍCULO DE MUESTRA · 8818952',
+    bajada:'<b>LACES - SPOT - BEIGE/BEIGE - NORTH STAR</b>. Llegó el mismo día que el anterior, el 28-may-2026, pero con <b>2.519 pares</b>: la llegada más grande de los 81. Y a las nueve semanas todavía tiene 826 pares abajo.',
+    sello:'Un caso real · llegó el 28-may-2026, seguido 9 semanas',
+    llegada:2519, rotuloLlegada:'Llegó con', subLlegada:'pares el 28-may-2026',
+    llegadaFranja:'ESTE ARTÍCULO · LE LLEGARON',
+    ficha:['El artículo', [
+      ['Código','8818952'], ['Marca','North Star'], ['Modelo','Laces · Spot'],
+      ['Color','Beige'], ['Llegó el','28-may-2026'], ['Última foto','30-jul-2026']]],
+    cierre:'Este es el caso que traba el almacén. La primera semana salieron <b style="color:rgba(255,255,255,0.7);">956 pares</b> y parecía que iba bien, pero ahí se frenó: en las ocho semanas siguientes solo se fueron 737 más. A la semana 9 todavía tiene <b style="color:rgba(255,255,255,0.7);">826 pares abajo, que son 2,4 cuerpos</b> ocupados por mercadería que ya casi no se mueve. De acá salen los saldos.',
+    puntos:[
+      { s:0, queda:100.0, pares:2519, fecha:'28-may' },
+      { s:1, queda:62.0,  pares:1563, fecha:'04-jun' },
+      { s:2, queda:49.7,  pares:1253, fecha:'11-jun' },
+      { s:3, queda:48.2,  pares:1214, fecha:'18-jun' },
+      { s:4, queda:47.6,  pares:1199, fecha:'25-jun' },
+      { s:5, queda:43.8,  pares:1104, fecha:'02-jul' },
+      { s:6, queda:38.4,  pares:968,  fecha:'09-jul' },
+      { s:7, queda:37.5,  pares:944,  fecha:'16-jul' },
+      { s:8, queda:35.4,  pares:891,  fecha:'23-jul' },
+      { s:9, queda:32.8,  pares:826,  fecha:'30-jul' }
+    ]};
 
-    const linea = P.map((p, i) => `${i ? 'L' : 'M'}${x(p.s).toFixed(1)},${y(p.queda).toFixed(1)}`).join(' ');
-    const banda = P.map((p, i) => `${i ? 'L' : 'M'}${x(p.s).toFixed(1)},${y(p.p75).toFixed(1)}`).join(' ')
-                + ' ' + P.slice().reverse().map(p => `L${x(p.s).toFixed(1)},${y(p.p25).toFixed(1)}`).join(' ') + ' Z';
-    const area = `${linea} L${x(MAXS).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z`;
+  // Los 81, para el Pareto ABC. Cada fila:
+  // [codigo, marca, modelo, color, llego, quedaSem9, pctSem9, segundaTanda,
+  //  ingreso, ultimoMovimiento, stockAl03ago, diasSinMoverse, diasEnAlmacen, coleccionPO]
+  const KPI_PARETO = [
+    ['8818952','North Star','Laces Spot','Beige',2519,826,32.8,0,'28-may','31-jul',802,3,67,'2026-Q3'],
+    ['8516919','Bata','Laces Fedele','Black',1256,732,58.3,1,'27-may','30-jul',730,4,68,'2026-Q3'],
+    ['4816309','North Star','Urban (Yung Fashion) Soul','Black',2315,656,28.3,0,'22-may','01-ago',589,2,73,'2026-Q4'],
+    ['8819952','North Star','Laces Spot','Navy',2634,621,23.6,0,'28-may','31-jul',604,3,67,'2026-Q3'],
+    ['5898305','North Star','Women Legend 76','Dk Beige',418,517,123.7,1,'14-may','03-ago',190,0,81,'2027-Q1'],
+    ['4819309','North Star','Urban (Yung Fashion) Soul','Navy',2226,452,20.3,0,'22-may','01-ago',354,2,73,'2026-Q4'],
+    ['4895300','North Star','Youth Legend 76','Red',1248,399,32.0,0,'14-may','01-ago',147,2,81,'2027-Q1'],
+    ['4896500','North Star','Youth Legend 76','Black',1552,393,25.3,0,'14-may','03-ago',160,0,81,'2027-Q1'],
+    ['3519030','Bubblegummers','Casual Boys Street','White',1694,377,22.3,0,'26-may','03-ago',364,0,69,'2026-Q2'],
+    ['8891314','North Star','Men Legend 76','White',1506,362,24.0,0,'14-may','03-ago',168,0,81,'2027-Q1'],
+    ['1811504','Bubblegummers','Casual Boys Street','Off White',1256,345,27.5,0,'26-may','03-ago',336,0,69,'2026-Q2'],
+    ['4891300','North Star','Youth Legend 76','White',1342,344,25.6,0,'14-may','01-ago',170,2,81,'2027-Q1'],
+    ['2519030','Bubblegummers','Casual Boys Street','White',1686,344,20.4,0,'26-may','03-ago',332,0,69,'2026-Q2'],
+    ['8899314','North Star','Men Legend 76','Blue',1310,329,25.1,0,'14-may','03-ago',147,0,81,'2027-Q1'],
+    ['3511028','Bubblegummers','Casual Boys Street','White',1694,328,19.4,0,'26-may','03-ago',326,0,69,'2026-Q2'],
+    ['4891350','North Star','Urban (Yung Fashion) Soul','White',1626,323,19.9,0,'22-may','03-ago',216,0,73,'2026-Q4'],
+    ['2818301','Bubblegummers','Casual Girls Street','Off White',1486,319,21.5,0,'26-may','03-ago',307,0,69,'2026-Q2'],
+    ['2511028','Bubblegummers','Casual Boys Street','White',1674,304,18.2,0,'26-may','03-ago',296,0,69,'2026-Q2'],
+    ['8814995','North Star','Laces Maisy','Brown',2103,294,14.0,0,'28-may','30-jul',294,4,67,'2026-Q4'],
+    ['8014335','Weinbrenner','Outdoor Rugged Passo','Chocolate',2662,292,11.0,0,'21-may','03-ago',249,0,74,'2026-Q3'],
+    ['5811957','North Star','Sport Maisy','Silver',2256,288,12.8,0,'18-may','01-ago',215,2,77,'2026-Q4'],
+    ['2811497','Bubblegummers','Casual Girls Clavel','White',1608,283,17.6,0,'23-may','03-ago',239,0,72,'2026-Q4'],
+    ['8816962','North Star','Laces Soul','Black',2881,272,9.4,0,'22-may','01-ago',244,2,73,'2026-Q3'],
+    ['2819491','Bubblegummers','Casual Girls Clavel','Denim',1038,268,25.8,0,'23-may','03-ago',200,0,72,'2026-Q3'],
+    ['8816810','Power','Football Psg','Black',800,255,31.9,1,'21-may','01-ago',195,2,74,'2026-Q2'],
+    ['2811555','Bubblegummers','Casual Boys Clavel','White',1562,252,16.1,0,'23-may','03-ago',206,0,72,'2026-Q4'],
+    ['4899500','North Star','Youth Legend 76','Blue',1435,250,17.4,0,'15-may','31-jul',153,3,80,'2027-Q1'],
+    ['1818301','Bubblegummers','Casual Girls Street','Off White',1462,243,16.6,0,'26-may','03-ago',232,0,69,'2026-Q2'],
+    ['2816953','Bubblegummers','Casual Girls Street','Black',1486,241,16.2,0,'26-may','03-ago',223,0,69,'2026-Q2'],
+    ['6816345','North Star','Sport Mayo Creeper','Black',1387,240,17.3,0,'15-may','03-ago',182,0,80,'2026-Q4'],
+    ['2819336','Bubblegummers','Casual Boys Cody','Navy',862,236,27.4,0,'29-may','03-ago',228,0,66,'2026-Q3'],
+    ['8819995','North Star','Laces Maisy','Navy',1749,216,12.3,0,'28-may','27-jul',216,7,67,'2026-Q4'],
+    ['1816953','Bubblegummers','Casual Girls Street','Black',1460,207,14.2,0,'26-may','03-ago',180,0,69,'2026-Q2'],
+    ['8819962','North Star','Laces Soul','Navy',946,204,21.6,0,'22-may','03-ago',175,0,73,'2026-Q3'],
+    ['6811493','North Star','\'- Gina White/Blanco','',1452,201,13.8,0,'18-may','01-ago',178,2,77,'2026-Q4'],
+    ['811504','Bubblegummers','Casual Boys Street','Off White',912,192,21.1,0,'26-may','03-ago',184,0,69,'2026-Q2'],
+    ['8816433','Power','Outdoor Trek','Black',1274,184,14.4,1,'29-may','03-ago',159,0,66,'2026-Q3'],
+    ['8811380','North Star','Laces Flag','White',882,181,20.5,0,'28-may','30-jul',181,4,67,'2026-Q4'],
+    ['6818345','North Star','Sport Mayo Creeper','Beige',1899,177,9.3,0,'15-may','31-jul',145,3,80,'2026-Q4'],
+    ['1819491','Bubblegummers','Casual Girls Clavel','Denim',975,176,18.1,0,'23-may','03-ago',106,0,72,'2026-Q3'],
+    ['8814433','Power','Outdoor Trek','Brown',842,174,20.7,1,'29-may','03-ago',159,0,66,'2026-Q3'],
+    ['1811555','Bubblegummers','Casual Boys Clavel','White',1562,166,10.6,0,'23-may','03-ago',124,0,72,'2026-Q4'],
+    ['1811497','Bubblegummers','Casual Girls Clavel','White',1425,148,10.4,0,'23-may','03-ago',116,0,72,'2026-Q4'],
+    ['5892375','Power','Outdoor Quest','Grey',1330,143,10.8,0,'29-may','03-ago',121,0,66,'2026-Q3'],
+    ['1819336','Bubblegummers','Casual Boys Cody','Navy',854,138,16.2,0,'29-may','03-ago',134,0,66,'2026-Q3'],
+    ['8816380','North Star','Laces Flag','Black',1082,121,11.2,0,'28-may','30-jul',121,4,67,'2026-Q4'],
+    ['3816953','Bubblegummers','Casual Girls Street','Black',756,92,12.2,0,'26-may','31-jul',77,3,69,'2026-Q2'],
+    ['8098412','Weinbrenner','Outdoor Height Cut Trekkr100','Dk Sand',1360,78,5.7,0,'26-may','03-ago',58,0,69,'2026-Q4'],
+    ['5896546','Puma','Basketball Blaze Lite Nbk Wns','Black',660,69,10.5,1,'28-may','07-jul',69,27,67,'2026-Q2'],
+    ['2095302','Bubblegummers','Boots And Booties Girls Speed Lite','Light Pink',828,67,8.1,0,'20-may','31-jul',47,3,75,'2026-Q2'],
+    ['8516964','Bata','Derby Madrid','Black',492,65,13.2,0,'21-may','31-jul',58,3,74,'2026-Q3'],
+    ['8016951','Bata','Casual Tilko','Black',612,51,8.3,0,'21-may','30-jul',38,4,74,'2026-Q3'],
+    ['8514964','Bata','Derby Madrid','Brown',584,50,8.6,0,'21-may','30-jul',43,4,74,'2026-Q3'],
+    ['6013975','Bata','Dress Boots Height 5 Rebel','Camel',1382,47,3.4,0,'20-may','31-jul',30,3,75,'2026-Q2'],
+    ['8811862','Puma','Basketball Rebound V6 Low','White',1020,44,4.3,1,'18-may','01-ago',0,2,77,'2026-Q3'],
+    ['8896532','Adidas','Tennis Runvista','Black',862,34,3.9,1,'27-may','22-jul',34,12,68,'2026-Q3'],
+    ['5814549','Adidas','Tennis Grand Court Lo','Brown',360,31,8.6,1,'27-may','11-jul',31,23,68,'2026-Q2'],
+    ['5811562','Adidas','Tennis Runvista','Silver',360,30,8.3,1,'27-may','13-jul',30,21,68,'2026-Q2'],
+    ['1095302','Bubblegummers','Boots And Booties Girls Speed Lite','Light Pink',874,27,3.1,0,'20-may','31-jul',17,3,75,'2026-Q2'],
+    ['3811029','Puma','Casual Girls Carina 3.0 Floral Ps','White',600,24,4.0,0,'25-may','12-jun',24,52,70,'2026-Q2'],
+    ['5896516','Adidas','Tennis Terrex Anylander W','Black',1460,24,1.6,0,'27-may','16-jul',24,18,68,'2026-Q2'],
+    ['3811045','Puma','Casual Boys Puma Caven Iii Paw Pat','White',480,24,5.0,0,'28-may','06-jun',24,58,67,'2026-Q2'],
+    ['3815830','Puma','Casual Girls Puma Caven Iii Paw Pat','Pink',480,24,5.0,0,'28-may','09-jun',24,55,67,'2026-Q2'],
+    ['8899532','Adidas','Tennis Runvista','Blue',792,23,2.9,0,'27-may','17-jul',23,17,68,'2026-Q2'],
+    ['8811598','Adidas','Tennis Predator Club Tf','White',440,22,5.0,1,'27-may','02-jul',22,32,68,'2026-Q2'],
+    ['5891591','Adidas','Tennis Duramo Sl2 W','White',1300,14,1.1,0,'27-may','24-jul',14,10,68,'2026-Q2'],
+    ['5892500','Adidas','Tennis Terrex Anylander W','White',1202,6,0.5,1,'27-may','02-jul',6,32,68,'2026-Q2'],
+    ['5896549','Puma','Basketball Blaze Lite Nbk Wns','Black',1080,4,0.4,0,'28-may','30-jul',4,4,67,'2026-Q2'],
+    ['3811103','Puma','Casual Girls Carina 3.0 V Ps','White',520,3,0.6,0,'25-may','19-jun',3,45,70,'2026-Q3'],
+    ['8896537','Adidas','Tennis Grand Court Base 00S','Black',658,3,0.5,0,'27-may','22-jul',3,12,68,'2026-Q2'],
+    ['5811590','—','—','',636,1,0.2,1,'07-may','11-jul',2,23,88,'2026-Q1'],
+    ['8811758','Puma','Basketball Court Classic Clean','White',936,1,0.1,1,'18-may','06-jul',1,28,77,'2026-Q2'],
+    ['2811108','Puma','Casual Boys Puma Rickie V Ps','White',425,1,0.2,1,'25-may','08-jul',1,26,70,'2026-Q3'],
+    ['5898500','Puma','Basketball Milenio Tech_','Beige',696,1,0.1,1,'27-may','27-jul',1,7,68,'2026-Q3'],
+    ['8896555','Puma','Basketball Flyer Lite 3 Evo','Black',612,1,0.2,1,'27-may','13-jul',1,21,68,'2026-Q3'],
+    ['3811107','—','—','',500,0,0.0,0,'25-may','12-jun',0,52,70,'2026-Q3'],
+    ['3811108','—','—','',850,0,0.0,0,'25-may','12-jun',0,52,70,'2026-Q3'],
+    ['5899813','—','—','',360,0,0.0,0,'27-may','09-jun',0,55,68,'2026-Q2'],
+    ['5896547','—','—','',540,0,0.0,0,'28-may','25-jun',0,39,67,'2026-Q2'],
+    ['8896547','—','—','',1080,0,0.0,0,'28-may','15-jun',0,49,67,'2026-Q2'],
+    ['8896549','Puma','Basketball Blaze Lite Nbk','Black',1080,0,0.0,0,'28-may','23-jun',0,41,67,'2026-Q2']
+  ];
 
-    // Cuánto es un cuerpo sobre la llegada típica: la raya deja leer cuándo el artículo
-    // deja de necesitar ese cuerpo.
-    const refs = [1, 2, 3].map(k => {
-      const v = 350 * k * 100 / D.llegada;
-      return `<line x1="${X0}" y1="${y(v).toFixed(1)}" x2="${X1}" y2="${y(v).toFixed(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4"/>`
-           + `<text x="${X1 - 4}" y="${(y(v) - 6).toFixed(1)}" text-anchor="end" fill="var(--text-muted)" font-size="10" font-weight="600">${k} cuerpo${k > 1 ? 's' : ''} · ${n(350 * k)} pares</text>`;
-    }).join('');
+  const kpiN  = v => Math.round(v).toLocaleString('es-PE');
+  const kpiD1 = v => v.toLocaleString('es-PE',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const KPI_AZUL='#3987e5', KPI_NARANJA='#d95926', KPI_AMBAR='#fbbf24', KPI_PARES='rgba(248,250,252,0.55)';
 
-    const rotula = new Set([1, 2, 4, 8, MAXS]);
-    const puntos = P.map(p => `<circle cx="${x(p.s).toFixed(1)}" cy="${y(p.queda).toFixed(1)}" r="${rotula.has(p.s) ? 5 : 3.5}" fill="#3987e5" stroke="var(--bg-card, #111827)" stroke-width="2"/>`).join('');
-    const vals = P.filter(p => rotula.has(p.s)).map(p =>
-      `<text x="${x(p.s).toFixed(1)}" y="${(y(p.queda) - 14).toFixed(1)}" text-anchor="middle" fill="var(--text-main)" font-size="11.5" font-weight="800">${p.queda.toFixed(0)}%</text>`).join('');
+  // ── EL MOLDE ──────────────────────────────────────────────────────────────────────
+  // Lo usan el grupo y los dos casos: mismo dibujo, mismas etiquetas, mismas
+  // comprobaciones. Lo único que cambia es de dónde salen los pares.
+  const kpiBloque = (D) => {
+    const P = D.puntos, MAXS = P.length - 1;
+    const n = kpiN, d1 = kpiD1;
+    const AZUL = KPI_AZUL, NARANJA = KPI_NARANJA, AMBAR = KPI_AMBAR, PARES = KPI_PARES;
 
-    const BW = (X1 - X0) / MAXS * 0.52;
-    const barras = P.filter(p => p.s > 0 && p.semana > 0.05).map(p =>
-      `<rect x="${(x(p.s) - BW / 2).toFixed(1)}" y="${yb(p.semana).toFixed(1)}" width="${BW.toFixed(1)}" height="${(B1 - yb(p.semana)).toFixed(1)}" rx="4" fill="#d95926"/>`
-      + `<text x="${x(p.s).toFixed(1)}" y="${(yb(p.semana) - 7).toFixed(1)}" text-anchor="middle" fill="var(--text-muted)" font-size="10.5" font-weight="700">${p.semana.toFixed(0)}%</text>`).join('');
-
-    const gridy = [0, 25, 50, 75, 100].map(v =>
-      `<line x1="${X0}" y1="${y(v)}" x2="${X1}" y2="${y(v)}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>`
-      + `<text x="${X0 - 10}" y="${y(v) + 4}" text-anchor="end" fill="var(--text-muted)" font-size="11">${v}%</text>`).join('');
-    const ticks = P.map(p => `<text x="${x(p.s).toFixed(1)}" y="${B1 + 22}" text-anchor="middle" fill="var(--text-muted)" font-size="11">${p.s}</text>`).join('');
-
-    // DE CADA DIEZ PARES. Es la lectura que pidió Daniel, y va en dos versiones porque
-    // dicen cosas distintas: sobre los diez que llegaron, y sobre los que quedan el lunes.
-    const diez = P.filter(p => p.s >= 1 && p.s <= 4).map(p => {
-      const previo = P[p.s - 1].queda;
-      return { s: p.s, deLlegada: p.semana / 10, deLoQueQueda: previo > 0 ? p.semana / previo * 10 : 0 };
+    // LOS PARES SE REDONDEAN UNA SOLA VEZ Y LO PICADO SE RESTA DE AHÍ. Si lo picado saliera
+    // del porcentaje por su cuenta, la columna no sumaría lo que se fue de verdad.
+    P.forEach((p,i,t)=>{
+      if (p.pares === undefined) p.pares = Math.round(D.llegada * p.queda / 100);
+      p.semana = i ? Math.round((t[i-1].queda - p.queda)*10)/10 : 0;
+      p.rebase = i ? p.queda / t[i-1].queda * 100 : null;
     });
-    const fmt = (v) => v.toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    const tarjetaDiez = (titulo, sub, campo, color) => `
-      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:13px; padding:0.9rem 1rem;">
-        <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:${color};">${titulo}</div>
-        <div style="font-size:0.68rem; color:var(--text-muted); margin:2px 0 0.7rem;">${sub}</div>
-        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem;">
-          ${diez.map(d => `
-            <div style="text-align:center; background:rgba(0,0,0,0.25); border-radius:9px; padding:0.5rem 0.2rem;">
-              <div style="font-size:0.56rem; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted);">Sem. ${d.s}</div>
-              <div style="font-size:1.35rem; font-weight:900; color:${color}; letter-spacing:-0.5px; margin-top:1px;">${fmt(d[campo])}</div>
-              <div style="font-size:0.55rem; color:var(--text-muted);">pares</div>
-            </div>`).join('')}
-        </div>
-      </div>`;
+    P.forEach((p,i,t)=>{
+      p.paresSemana = i ? t[i-1].pares - p.pares : 0;
+      p.picoRebase  = i ? 100 - p.rebase : null;
+    });
 
-    const filas = P.map(p => `
-      <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:0.45rem 0.9rem;">${p.s}</td>
-        <td style="padding:0.45rem 0.9rem; text-align:right; font-weight:800; color:#fff;">${p.queda.toFixed(0)}%</td>
-        <td style="padding:0.45rem 0.9rem; text-align:right;">${(100 - p.queda).toFixed(0)}%</td>
-        <td style="padding:0.45rem 0.9rem; text-align:right;">${Math.max(0, p.semana).toFixed(0)}%</td>
-        <td style="padding:0.45rem 0.9rem; text-align:right;">${n(D.llegada * p.queda / 100)}</td>
-      </tr>`).join('');
+    const X0=78, X1=862, C0=68, C1=210;
+    const TOPE = Math.max(15, Math.ceil(Math.max(...P.map(p=>p.semana))/15)*15);
+    const x = s => X0 + (X1-X0)*s/MAXS;
+    const yc = v => C1 - (C1-C0)*v/TOPE;
+    const clave = new Set([1,2,4,MAXS]);
+    const totalPicado = P.reduce((a,p)=>a+p.paresSemana,0);
+    const cabeEn = k => { const p = P.find(p=>p.s>0 && p.queda <= 350*k*100/D.llegada); return p ? p.s : null; };
 
-    const tarjeta = (r, v, sub) => `
+    // La etiqueta: un solo renglón, el porcentaje y entre paréntesis los pares.
+    const etiqueta = (xx, yy, k, pct, cant) => {
+      const f = k ? 11 : 9.2;
+      const c = k ? 'var(--text-main)' : 'rgba(248,250,252,0.6)';
+      return `<text x="${xx.toFixed(1)}" y="${(yy-13).toFixed(1)}" text-anchor="middle">`
+       + `<tspan fill="${c}" font-size="${f}" font-weight="800">${pct}</tspan>`
+       + `<tspan dx="4" fill="${PARES}" font-size="${(f-0.8).toFixed(1)}" font-weight="700">(${cant})</tspan></text>`;
+    };
+
+    // LOS PORCENTAJES DEL PICKING VAN CON UN DECIMAL A PROPÓSITO. Redondeados a entero
+    // suman 87 y la curva dice 86,3: el 4,5% de una semana se va para arriba y sobra un
+    // punto. Con el decimal suman exacto, que es como se revisan estos cuadros.
+    const PIC = P.map(p=>({ s:p.s, v:p.s?p.semana:0, pares:p.paresSemana }));
+    const lineaPic = PIC.map((p,i)=>`${i?'L':'M'}${x(p.s).toFixed(1)},${yc(p.v).toFixed(1)}`).join(' ');
+    const areaPic  = `${lineaPic} L${x(MAXS).toFixed(1)},${yc(0).toFixed(1)} L${x(0).toFixed(1)},${yc(0).toFixed(1)} Z`;
+    const puntosPic = PIC.map(p=>`<circle cx="${x(p.s).toFixed(1)}" cy="${yc(p.v).toFixed(1)}" r="${clave.has(p.s)||p.s===0?5:3.5}" fill="${NARANJA}" stroke="#111827" stroke-width="2"/>`).join('');
+    const valsPic = PIC.filter(p=>p.s>0).map(p=>etiqueta(x(p.s), yc(p.v), clave.has(p.s), d1(p.v)+'%', n(p.pares))).join('');
+    const gridPic = [0,TOPE/3,TOPE*2/3,TOPE].map(v=>
+      `<line x1="${X0}" y1="${yc(v).toFixed(1)}" x2="${X1}" y2="${yc(v).toFixed(1)}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>`
+      + `<text x="${X0-10}" y="${(yc(v)+4).toFixed(1)}" text-anchor="end" fill="var(--text-muted)" font-size="11">${v.toFixed(0)}%</text>`).join('');
+    const ticks = P.map(p=>`<text x="${x(p.s).toFixed(1)}" y="${C1+22}" text-anchor="middle" fill="var(--text-muted)" font-size="11">${p.s}</text>`).join('');
+
+    // LA FRANJA DEL TOTAL: lo que se picó y lo que falta. Sumando todo tiene que dar la llegada.
+    const ANCHO = X1 - X0, wPic = ANCHO * (100 - P[MAXS].queda) / 100;
+    const svg = `
+      <svg viewBox="0 0 900 366" style="display:block; width:100%; height:auto;" role="img"
+           aria-label="Cuánto se lleva el picking cada semana de un código nuevo, y cuántos pares faltan picar.">
+        <text x="${X0}" y="26" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">PICKING POR SEM</text>
+        <text x="${X1}" y="26" text-anchor="end" fill="var(--text-muted)" font-size="10" font-weight="600">el % es sobre los ${n(D.llegada)} pares que llegaron · entre paréntesis, los pares</text>
+        ${gridPic}
+        <path d="${areaPic}" fill="${NARANJA}" opacity="0.15"/>
+        <path d="${lineaPic}" fill="none" stroke="${NARANJA}" stroke-width="2" stroke-linejoin="round"/>
+        ${puntosPic}${valsPic}
+        <line x1="${X0}" y1="${C1}" x2="${X1}" y2="${C1}" stroke="var(--border)" stroke-width="1"/>
+        ${ticks}
+        <text x="${((X0+X1)/2).toFixed(0)}" y="${C1+40}" text-anchor="middle" fill="var(--text-muted)" font-size="11">semanas desde que llegó</text>
+        <text x="${X0}" y="286" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">${D.llegadaFranja} ${n(D.llegada)} PARES</text>
+        <rect x="${X0}" y="298" width="${wPic.toFixed(1)}" height="30" rx="5" fill="${NARANJA}"/>
+        <rect x="${(X0+wPic).toFixed(1)}" y="298" width="${(ANCHO-wPic).toFixed(1)}" height="30" rx="5" fill="${AZUL}" fill-opacity="0.3" stroke="${AZUL}" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <text x="${(X0+wPic/2).toFixed(1)}" y="318" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">SE PICÓ ${n(totalPicado)} · ${d1(100-P[MAXS].queda)}%</text>
+        <text x="${X1}" y="350" text-anchor="end" font-size="11.5" font-weight="800">
+          <tspan fill="${AZUL}">FALTA PICAR ${n(P[MAXS].pares)} PARES</tspan>
+          <tspan fill="var(--text-muted)" font-weight="600" dx="6">· ${d1(P[MAXS].queda)}% de los ${n(D.llegada)} que le llegaron</tspan>
+        </text>
+      </svg>`;
+
+    const tarjeta = (r,v,sub)=>`
       <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:13px; padding:0.75rem 1rem;">
         <div style="font-size:0.58rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted);">${r}</div>
         <div style="font-size:1.7rem; font-weight:900; letter-spacing:-1px; margin-top:3px;">${v}</div>
         <div style="font-size:0.68rem; color:var(--text-muted);">${sub}</div>
       </div>`;
 
+    const diez = P.filter(p=>p.s>=1 && p.s<=4).map(p=>({ s:p.s, pares:p.semana/10 }));
+    const lado = `
+      <div class="kpi-lado">
+        <div class="kpi-caja">
+          <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:${AZUL}; margin-bottom:0.7rem;">De cada 10 pares que llegan</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.45rem;">
+            ${diez.map(d=>`
+              <div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:0.45rem 0.6rem; text-align:center;">
+                <div style="font-size:0.56rem; font-weight:700; letter-spacing:0.7px; text-transform:uppercase; color:var(--text-muted);">Semana ${d.s}</div>
+                <div style="display:flex; align-items:baseline; justify-content:center; gap:4px;">
+                  <div style="font-size:1.25rem; font-weight:900; color:${AZUL}; letter-spacing:-0.5px;">${d1(d.pares)}</div>
+                  <div style="font-size:0.55rem; color:var(--text-muted);">pares</div>
+                </div>
+              </div>`).join('')}
+          </div>
+          <div style="margin-top:0.75rem; padding-top:0.65rem; border-top:1px solid var(--border);
+                      display:flex; align-items:baseline; justify-content:space-between;">
+            <span style="font-size:0.61rem; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-muted);">En el primer mes</span>
+            <span><b style="font-size:1.05rem; font-weight:900; color:#fff;">${d1((100-P[4].queda)/10)}</b>
+            <span style="font-size:0.58rem; color:var(--text-muted);"> de 10</span></span>
+          </div>
+        </div>
+        <div class="kpi-caja">
+          <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.8rem;">${D.ficha[0]}</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.35rem 0.8rem;">
+            ${D.ficha[1].map(m=>`
+              <div style="padding-bottom:0.3rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="font-size:0.55rem; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted);">${m[0]}</div>
+                <div style="font-size:0.9rem; font-weight:900; color:#fff; white-space:nowrap;">${m[1]}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>`;
+
+    const hayFecha = P[0].fecha !== undefined;
+    const filas = P.map(p=>`
+      <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:0.45rem 0.8rem;">${p.s}</td>
+        ${hayFecha ? `<td style="padding:0.45rem 0.8rem; color:rgba(255,255,255,0.45);">${p.fecha}</td>` : ''}
+        <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:#fff;">${n(p.pares)}</td>
+        <td style="padding:0.45rem 0.8rem; text-align:right;">${d1(p.queda)}%</td>
+        <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:${AMBAR}; font-style:italic;">${p.rebase===null?'—':d1(p.rebase)+'%'}</td>
+        <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:#fda98a;">${p.s?n(p.paresSemana):'—'}</td>
+        <td style="padding:0.45rem 0.8rem; text-align:right;">${p.s?d1(p.semana)+'%':'—'}</td>
+        <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:${AMBAR}; font-style:italic;">${p.picoRebase===null?'—':d1(p.picoRebase)+'%'}</td>
+      </tr>`).join('');
+
+    return `
+    <div class="glass-panel" style="padding:1.4rem 1.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1.2rem; flex-wrap:wrap;">
+        <div>
+          <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">${D.titulo}</h3>
+          <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:64ch;">${D.bajada}</p>
+        </div>
+        <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted); text-align:right;">
+          ${D.sello}<br><span style="font-weight:500; text-transform:none; letter-spacing:0;">no se recalcula solo</span>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:0.7rem; margin:1.1rem 0;">
+        ${tarjeta(D.rotuloLlegada, n(D.llegada), D.subLlegada)}
+        ${tarjeta('Se va en 2 semanas', (100-P[2].queda).toFixed(0)+'%', 'y en la primera, '+(100-P[1].queda).toFixed(0)+'%')}
+        ${tarjeta(`Queda a las ${MAXS} semanas`, P[MAXS].queda.toFixed(0)+'%', n(P[MAXS].pares)+' pares en el piso')}
+      </div>
+
+      <div class="kpi-gfila">
+        <div class="kpi-gcaja">${svg}</div>
+        ${lado}
+      </div>
+
+      <div style="overflow-x:auto; margin-top:1rem;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.75rem; color:var(--text-muted); min-width:${hayFecha?700:640}px;">
+          <thead>
+            <tr style="font-size:0.55rem; letter-spacing:1px; text-transform:uppercase;">
+              <th rowspan="2" style="padding:0.5rem 0.8rem; text-align:left; vertical-align:bottom;">Sem</th>
+              ${hayFecha ? '<th rowspan="2" style="padding:0.5rem 0.8rem; text-align:left; vertical-align:bottom;">Fecha</th>' : ''}
+              <th colspan="3" style="padding:0.5rem 0.8rem; text-align:center; color:${AZUL}; border-bottom:1px solid rgba(255,255,255,0.08);">Lo que queda</th>
+              <th colspan="3" style="padding:0.5rem 0.8rem; text-align:center; color:${NARANJA}; border-bottom:1px solid rgba(255,255,255,0.08);">Lo que se picó</th>
+            </tr>
+            <tr style="font-size:0.55rem; letter-spacing:1px; text-transform:uppercase;">
+              <th style="padding:0.4rem 0.8rem; text-align:right;">Pares</th>
+              <th style="padding:0.4rem 0.8rem; text-align:right;">Sobre lo que llegó</th>
+              <th style="padding:0.4rem 0.8rem; text-align:right; color:${AMBAR};">Sobre lo que había el lunes</th>
+              <th style="padding:0.4rem 0.8rem; text-align:right;">Pares</th>
+              <th style="padding:0.4rem 0.8rem; text-align:right;">Sobre lo que llegó</th>
+              <th style="padding:0.4rem 0.8rem; text-align:right; color:${AMBAR};">Sobre lo que había el lunes</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+          <tfoot><tr style="border-top:1px solid rgba(255,255,255,0.18); font-weight:800; color:rgba(255,255,255,0.75);">
+            <td style="padding:0.5rem 0.8rem;" colspan="${hayFecha?2:1}">Total</td>
+            <td style="padding:0.5rem 0.8rem; text-align:right;">${n(P[MAXS].pares)}</td>
+            <td style="padding:0.5rem 0.8rem; text-align:right;">${d1(P[MAXS].queda)}%</td>
+            <td></td>
+            <td style="padding:0.5rem 0.8rem; text-align:right;">${n(totalPicado)}</td>
+            <td style="padding:0.5rem 0.8rem; text-align:right;">${d1(100-P[MAXS].queda)}%</td>
+            <td></td>
+          </tr></tfoot>
+        </table>
+        <div style="font-size:0.63rem; color:rgba(255,255,255,0.28); padding:0.5rem 0.8rem 0; line-height:1.6;">
+          La columna en <b style="color:${AMBAR};">ámbar</b> es la misma cantidad medida contra lo que había el lunes en vez de contra lo que llegó.
+          No cambia los pares: en la semana 2, los ${n(P[2].paresSemana)} que se picaron son el ${d1(P[2].semana)}% de los ${n(D.llegada)} que llegaron y el ${d1(P[2].picoRebase)}% de los ${n(P[1].pares)} que había el lunes.
+        </div>
+      </div>
+
+      <div style="margin-top:1rem; padding:0.8rem 1rem; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2); border-radius:11px; font-size:0.72rem; color:var(--text-muted); line-height:1.7;">
+        <b style="color:#93c5fd;">Para qué sirve.</b> ${D.cierre ? D.cierre : D.tipo==='grupo'
+          ? `De acá salen los cuerpos que se le reservan a un código nuevo: las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">${n(P[1].paresSemana+P[2].paresSemana)} pares</b>, que son dos cuerpos moviéndose. Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento. Sobre esos ${n(D.llegada)} pares, ${cabeEn(2)?`desde la semana ${cabeEn(2)} el artículo ya cabe en dos cuerpos`:`a las ${MAXS} semanas todavía ocupa ${Math.ceil(P[MAXS].pares/350)} cuerpos`}.`
+          : `Un artículo de verdad no se pica parejo como la mediana: <b style="color:rgba(255,255,255,0.7);">se mueve a los saltos</b>. Este se llevó ${n(P[1].paresSemana)} pares la primera semana, después estuvo dos semanas parado —${n(P[3].paresSemana)} pares en la 3 y ${n(P[4].paresSemana)} en la 4—, y recién en la 5 y la 6 se fueron otros ${n(P[5].paresSemana+P[6].paresSemana)} de golpe. Por eso los cuerpos se calculan sobre el grupo y no sobre un caso: el caso sirve para entender qué hay detrás del promedio.`}
+      </div>
+    </div>`;
+  };
+
+  // ── PARETO ABC ────────────────────────────────────────────────────────────────────
+  // A: los que hacen el primer 80% de lo que falta picar. B: del 80 al 95. C: el resto.
+  // El corte es por ACUMULADO, que es como se hace el ABC de siempre, no por cuántos
+  // artículos son. TODO EL CUADRO ES DE LA MISMA FOTO, la del 03-ago: antes se mostraba
+  // al lado lo que quedaba a las nueve semanas —que para cada artículo cae en una fecha
+  // distinta— y las dos columnas juntas parecían un error.
+  const kpiPareto = () => {
+    const n = kpiN, d1 = kpiD1;
+    const NARANJA = KPI_NARANJA, AMBAR = KPI_AMBAR;
+    const A = KPI_PARETO
+      .map(a=>({ cod:a[0], marca:a[1], modelo:a[2], color:a[3], llego:a[4], rep:a[7],
+                 ingreso:a[8], ultMov:a[9], hoy:a[10], parado:a[11], dias:a[12], temp:a[13],
+                 pct: a[10]/a[4]*100 }))
+      .sort((x,y)=> y.hoy - x.hoy);
+    const TL = A.reduce((s,a)=>s+a.llego,0), TQ = A.reduce((s,a)=>s+a.hoy,0);
+    const altos = A.filter(a=>a.pct > 20);
+    const TQA = altos.reduce((s,a)=>s+a.hoy,0);
+
+    const X0=78, X1=812, Y0=62, Y1=270;
+    const MAXP = Math.ceil(A[0].hoy/300)*300;
+    const W = (X1-X0)/A.length, BW = Math.max(3, W*0.78);
+    const yb = v => Y1 - (Y1-Y0)*v/MAXP;
+    const yc = p => Y1 - (Y1-Y0)*p/100;
+
+    let ac = 0;
+    const acum = A.map(a=>{ ac += a.hoy; return ac/TQ*100; });
+    const clase = acum.map(p => p <= 80 ? 0 : (p <= 95 ? 1 : 2));
+    const CLS = [
+      { k:'A', col:NARANJA,                 sub:'hasta el 80% de lo que falta' },
+      { k:'B', col:AMBAR,                   sub:'del 80% al 95%' },
+      { k:'C', col:'rgba(57,135,229,0.55)', sub:'el 5% final' }
+    ];
+    CLS.forEach((c,i)=>{
+      c.desde = clase.indexOf(i);
+      c.hasta = clase.lastIndexOf(i);
+      c.art   = c.hasta - c.desde + 1;
+      c.pares = A.slice(c.desde, c.hasta+1).reduce((s,a)=>s+a.hoy,0);
+    });
+    // LAS PARTES TIENEN QUE SUMAR EL TOTAL, con un decimal. Redondeando cada una por su
+    // cuenta los porcentajes dan 99,9 y los cuerpos 34,5 contra un total de 34,6. Se
+    // reparte el decimal que falta al que tenga el resto más grande.
+    const reparto = (vals, objetivo) => {
+      const piso = vals.map(v => Math.floor(v*10)/10);
+      let falta = Math.round((objetivo - piso.reduce((s,v)=>s+v,0))*10);
+      vals.map((v,i)=>({ i, r: v-piso[i] })).sort((x,y)=>y.r-x.r)
+          .forEach(o=>{ if (falta-- > 0) piso[o.i] = Math.round((piso[o.i]+0.1)*10)/10; });
+      return piso;
+    };
+    const TOTCU = Math.round(TQ/350*10)/10;
+    const pcts = reparto(CLS.map(c=>c.pares/TQ*100), 100);
+    const pcta = reparto(CLS.map(c=>c.art/A.length*100), 100);
+    const cues = reparto(CLS.map(c=>c.pares/350), TOTCU);
+    CLS.forEach((c,i)=>{ c.pct = pcts[i]; c.pctArt = pcta[i]; c.cuerpos = cues[i]; });
+
+    const barras = A.map((a,i)=>
+      `<rect x="${(X0+i*W+(W-BW)/2).toFixed(1)}" y="${yb(a.hoy).toFixed(1)}" width="${BW.toFixed(1)}" height="${(Y1-yb(a.hoy)).toFixed(1)}" rx="1.5" fill="${CLS[clase[i]].col}"/>`).join('');
+    const partido = CLS.map(c=>{
+      const x1 = X0 + c.desde*W, x2 = X0 + (c.hasta+1)*W;
+      return `<rect x="${x1.toFixed(1)}" y="${Y0-4}" width="${(x2-x1).toFixed(1)}" height="${(Y1-Y0+4).toFixed(1)}" fill="${c.col}" opacity="0.07"/>`
+       + (c.desde ? `<line x1="${x1.toFixed(1)}" y1="${Y0-4}" x2="${x1.toFixed(1)}" y2="${Y1}" stroke="${c.col}" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.8"/>` : '')
+       + `<text x="${((x1+x2)/2).toFixed(1)}" y="${Y0-14}" text-anchor="middle" font-size="11" font-weight="800">`
+       + `<tspan fill="${c.col}">${c.k}</tspan>`
+       + `<tspan fill="var(--text-muted)" font-weight="600" dx="4">· ${c.art} art · ${d1(c.pct)}% (${n(c.pares)} pares)</tspan></text>`;
+    }).join('');
+    const linea = acum.map((p,i)=>`${i?'L':'M'}${(X0+i*W+W/2).toFixed(1)},${yc(p).toFixed(1)}`).join(' ');
+    const gridp = [0,MAXP/3,MAXP*2/3,MAXP].map(v=>
+      `<line x1="${X0}" y1="${yb(v).toFixed(1)}" x2="${X1}" y2="${yb(v).toFixed(1)}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>`
+      + `<text x="${X0-8}" y="${(yb(v)+4).toFixed(1)}" text-anchor="end" fill="var(--text-muted)" font-size="10">${n(v)}</text>`).join('');
+    const gridc = [50,80,100].map(p=>
+      `<text x="${X1+8}" y="${(yc(p)+4).toFixed(1)}" fill="${AMBAR}" font-size="10" font-weight="${p===80?800:600}" opacity="${p===80?1:0.6}">${p}%</text>`
+      + (p===80 ? `<line x1="${X0}" y1="${yc(80).toFixed(1)}" x2="${X1}" y2="${yc(80).toFixed(1)}" stroke="${AMBAR}" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>` : '')).join('');
+    const ticks = A.map((a,i)=>((i+1)===1||(i+1)%10===0)
+      ? `<text x="${(X0+i*W+W/2).toFixed(1)}" y="${Y1+18}" text-anchor="middle" fill="var(--text-muted)" font-size="10">${i+1}</text>` : '').join('');
+    const top3 = A.slice(0,3).map((a,i)=>
+      `<text x="${(X0+i*W+W/2).toFixed(1)}" y="${(yb(a.hoy)-6).toFixed(1)}" text-anchor="middle" fill="var(--text-main)" font-size="10" font-weight="800">${n(a.hoy)}</text>`).join('');
+
+    const tarjeta = (r,v,sub)=>`
+      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:13px; padding:0.75rem 1rem;">
+        <div style="font-size:0.58rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted);">${r}</div>
+        <div style="font-size:1.7rem; font-weight:900; letter-spacing:-1px; margin-top:3px;">${v}</div>
+        <div style="font-size:0.68rem; color:var(--text-muted);">${sub}</div>
+      </div>`;
+
+    // CADA CLASE TIENE DOS PORCENTAJES Y SE CONFUNDEN: cuántos ARTÍCULOS son sobre los 81,
+    // y cuántos PARES tienen sobre el total. La clase A es el 41% de los artículos pero el
+    // 79,4% de los pares, y esa es justamente la gracia del ABC. Van los dos, rotulados.
+    const claseCard = (c) => `
+      <div style="background:rgba(255,255,255,0.03); border:1px solid ${c.col}44; border-radius:13px; padding:0.85rem 1rem;">
+        <div style="font-size:0.58rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:${c.col}; margin-bottom:0.7rem;">Clase ${c.k} · ${c.sub}</div>
+        <div style="display:flex; align-items:baseline; gap:0.4rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.07);">
+          <b style="font-size:1.35rem; font-weight:900; color:#fff; letter-spacing:-0.5px;">${c.art}</b>
+          <span style="font-size:0.66rem; color:var(--text-muted);">artículos</span>
+          <b style="font-size:0.95rem; font-weight:900; color:#fff; margin-left:auto;">${d1(c.pctArt)}%</b>
+          <span style="font-size:0.6rem; color:var(--text-muted);">de los ${A.length}</span>
+        </div>
+        <div style="display:flex; align-items:baseline; gap:0.4rem; padding-top:0.5rem;">
+          <b style="font-size:1.35rem; font-weight:900; color:${c.col}; letter-spacing:-0.5px;">${n(c.pares)}</b>
+          <span style="font-size:0.66rem; color:var(--text-muted);">pares</span>
+          <b style="font-size:0.95rem; font-weight:900; color:${c.col}; margin-left:auto;">${d1(c.pct)}%</b>
+          <span style="font-size:0.6rem; color:var(--text-muted);">de los ${n(TQ)}</span>
+        </div>
+        <div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:0.6rem;">ocupan <b style="color:rgba(255,255,255,0.6);">${d1(c.cuerpos)}</b> cuerpos</div>
+      </div>`;
+
+    // EL CUADRO VA CON LOS 81, no solo con los que pasan del 20%. La clase se pinta al lado
+    // del puesto, y el % queda en naranja con un ▲ cuando al artículo le sobra más del 20%
+    // de SU llegada: así los dos análisis conviven en la misma fila sin pelearse.
+    const filas = A.map((a,i)=>`
+      <tr style="border-top:1px solid rgba(255,255,255,0.05); ${clase[i]===0?'background:rgba(217,89,38,0.04);':''}">
+        <td style="padding:0.35rem 0.7rem; color:rgba(255,255,255,0.4);">${i+1}</td>
+        <td style="padding:0.35rem 0.7rem;"><span style="display:inline-block; min-width:17px; text-align:center; border-radius:5px; padding:1px 4px; font-weight:900; font-size:0.68rem; color:#0f172a; background:${CLS[clase[i]].col};">${CLS[clase[i]].k}</span></td>
+        <td style="padding:0.35rem 0.7rem; font-weight:800; color:#fff;">${a.cod}${a.rep?' <span style="color:'+AMBAR+'">•</span>':''}</td>
+        <td style="padding:0.35rem 0.7rem; white-space:nowrap; font-weight:700; color:#93c5fd;">${a.temp}</td>
+        <td style="padding:0.35rem 0.7rem;">${a.marca}</td>
+        <td style="padding:0.35rem 0.7rem;">${a.modelo}${a.color?' · '+a.color:''}</td>
+        <td style="padding:0.35rem 0.7rem; white-space:nowrap;">${a.ingreso}</td>
+        <td style="padding:0.35rem 0.7rem; white-space:nowrap; color:${a.parado>=3?AMBAR:'inherit'};">${a.ultMov}${a.parado?` <span style="opacity:0.55;">(${a.parado}d)</span>`:''}</td>
+        <td style="padding:0.35rem 0.7rem; text-align:right; font-weight:800; color:#fff;">${a.dias}</td>
+        <td style="padding:0.35rem 0.7rem; text-align:right;">${n(a.llego)}</td>
+        <td style="padding:0.35rem 0.7rem; text-align:right; font-weight:800; color:${CLS[clase[i]].col};">${n(a.hoy)}</td>
+        <td style="padding:0.35rem 0.7rem; text-align:right; font-weight:800; color:${a.pct>20?NARANJA:'#fff'};">${d1(a.pct)}%${a.pct>20?' <span style="font-size:0.85em;">▲</span>':''}</td>
+        <td style="padding:0.35rem 0.7rem; text-align:right;">${(a.hoy/350).toFixed(1)}</td>
+      </tr>`).join('');
+    const th = 'position:sticky; top:0; z-index:2; background:#101a2c; padding:0.5rem 0.7rem;';
+    const tf = 'position:sticky; bottom:0; z-index:2; background:#101a2c; padding:0.5rem 0.7rem;';
+
+    return `
+    <div class="glass-panel" style="padding:1.4rem 1.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1.2rem; flex-wrap:wrap;">
+        <div>
+          <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">PARETO ABC · LO QUE FALTA PICAR, AL 03-AGO</h3>
+          <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:74ch;">
+            Los <b>${A.length} artículos</b> que entraron nuevos en mayo, ordenados por los pares que <b>todavía tienen hoy</b> en el almacén
+            y partidos en tres clases: <b style="color:${CLS[0].col};">A</b> son los que hacen el primer 80% de lo que falta,
+            <b style="color:${CLS[1].col};">B</b> los que van del 80% al 95%, y <b style="color:rgba(57,135,229,0.9);">C</b> el 5% final.
+          </p>
+        </div>
+        <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted); text-align:right;">
+          Foto del 03-ago-2026<br><span style="font-weight:500; text-transform:none; letter-spacing:0;">todo el cuadro es de esta fecha</span>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:0.7rem; margin:1.1rem 0 0.7rem;">
+        ${tarjeta('Artículos', String(A.length), 'entraron nuevos en mayo')}
+        ${tarjeta('Llegaron', n(TL), 'pares en total')}
+        ${tarjeta('Falta picar hoy', n(TQ), `pares · ${d1(TQ/TL*100)}% de lo que llegó`)}
+        ${tarjeta('Ocupan', d1(TOTCU), 'cuerpos del almacén')}
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:0.7rem; margin-bottom:1.1rem;">
+        ${CLS.map(claseCard).join('')}
+      </div>
+
+      <div class="kpi-gcaja">
+        <svg viewBox="0 0 900 310" style="display:block; width:100%; height:auto;" role="img"
+             aria-label="Pareto ABC de los pares que faltan picar por artículo.">
+          <text x="${X0}" y="26" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">PARES QUE FALTAN PICAR, POR ARTÍCULO</text>
+          <text x="${X1+8}" y="26" text-anchor="end" fill="${AMBAR}" font-size="10" font-weight="700">acumulado</text>
+          ${gridp}${gridc}${partido}
+          ${barras}${top3}
+          <path d="${linea}" fill="none" stroke="${AMBAR}" stroke-width="1.8" stroke-linejoin="round"/>
+          <line x1="${X0}" y1="${Y1}" x2="${X1}" y2="${Y1}" stroke="var(--border)" stroke-width="1"/>
+          ${ticks}
+          <text x="${((X0+X1)/2).toFixed(0)}" y="${Y1+38}" text-anchor="middle" fill="var(--text-muted)" font-size="11">artículos, del que más quedó al que menos</text>
+        </svg>
+      </div>
+
+      <div style="margin-top:1.3rem; display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+        <div style="font-size:0.72rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted);">
+          Los ${A.length} artículos, clasificados
+        </div>
+        <div style="font-size:0.7rem; color:var(--text-muted);">
+          <span style="color:${NARANJA};">▲</span> los <b style="color:#fff;">${altos.length}</b> que siguen con más del 20% de su llegada ·
+          <b style="color:#fff;">${n(TQA)}</b> pares · <b style="color:#fff;">${d1(TQA/350)}</b> cuerpos
+        </div>
+      </div>
+
+      <div style="max-height:620px; overflow:auto; margin-top:0.5rem; border:1px solid var(--border); border-radius:11px;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.73rem; color:var(--text-muted); min-width:900px;">
+          <thead><tr style="font-size:0.53rem; letter-spacing:0.8px; text-transform:uppercase; color:${NARANJA};">
+            <th style="${th} text-align:left;">#</th>
+            <th style="${th} text-align:left;">Clase</th>
+            <th style="${th} text-align:left;">Código</th>
+            <th style="${th} text-align:left; color:#93c5fd;">Colección PO</th>
+            <th style="${th} text-align:left;">Marca</th>
+            <th style="${th} text-align:left;">Modelo</th>
+            <th style="${th} text-align:left;">Ingreso</th>
+            <th style="${th} text-align:left;">Último mov.</th>
+            <th style="${th} text-align:right;">Días</th>
+            <th style="${th} text-align:right;">Llegó</th>
+            <th style="${th} text-align:right;">Falta picar</th>
+            <th style="${th} text-align:right;">%</th>
+            <th style="${th} text-align:right;">Cuerpos</th>
+          </tr></thead>
+          <tbody>${filas}</tbody>
+          <tfoot><tr style="border-top:1px solid rgba(255,255,255,0.18); font-weight:800; color:rgba(255,255,255,0.75);">
+            <td style="${tf}" colspan="9">Total de los ${A.length}</td>
+            <td style="${tf} text-align:right;">${n(TL)}</td>
+            <td style="${tf} text-align:right; color:${NARANJA};">${n(TQ)}</td>
+            <td style="${tf} text-align:right;">${d1(TQ/TL*100)}%</td>
+            <td style="${tf} text-align:right;">${d1(TOTCU)}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+      <div style="font-size:0.63rem; color:rgba(255,255,255,0.3); padding:0.5rem 0.7rem 0; line-height:1.6;">
+        Todo el cuadro es de la foto del <b>03-ago-2026</b>: <b>Falta picar</b> son los pares que hay hoy en el almacén,
+        <b>Días</b> es cuánto lleva el artículo adentro y <b>%</b> es lo que queda sobre lo que llegó.
+        <b style="color:#93c5fd;">Colección PO</b> sale del Maestro de artículos.<br>
+        <span style="color:${AMBAR};">•</span> recibió una segunda tanda: el % está sobre la primera llegada.
+      </div>
+    </div>`;
+  };
+
+  const renderKpiPicking = (container) => {
+    if (!container) return;
+    container.dataset.vista = 'kpi-picking';
+    // El reporte va pegado a la izquierda y ocupa el 85%: lo que sobra a la derecha queda
+    // libre para poner otro reporte al costado más adelante.
     container.innerHTML = `
-      <div class="glass-panel" style="padding:1.4rem 1.5rem;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1.2rem; flex-wrap:wrap;">
-          <div>
-            <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">CÓMO SE VENDE UN CÓDIGO NUEVO</h3>
-            <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:64ch;">
-              ${D.codigos} códigos de calzado que entraron por primera vez, seguidos foto a foto desde el día que llegaron.
-              La línea es la mediana; la banda, dónde cae la mitad del medio.
-            </p>
-          </div>
-          <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted); text-align:right;">
-            Estudio · ${D.medido}<br><span style="font-weight:500; text-transform:none; letter-spacing:0;">no se recalcula solo</span>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:0.7rem; margin:1.1rem 0;">
-          ${tarjeta('Llegada típica', n(D.llegada), 'pares por código nuevo')}
-          ${tarjeta('Se va en 2 semanas', '63%', 'y en la primera, 42%')}
-          ${tarjeta('Queda a las 8 semanas', '14%', 'y de ahí casi no baja')}
-        </div>
-
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:0.7rem; margin-bottom:1.1rem;">
-          ${tarjetaDiez('De cada 10 pares que llegan', 'sobre el stock original', 'deLlegada', '#3987e5')}
-          ${tarjetaDiez('De cada 10 que hay el lunes', 'sobre lo que quedaba al empezar la semana', 'deLoQueQueda', '#d95926')}
-        </div>
-
-        <div style="background:rgba(0,0,0,0.22); border:1px solid var(--border); border-radius:14px; padding:1rem 0.9rem 0.6rem;">
-          <svg viewBox="0 0 900 528" style="display:block; width:100%; height:auto;" role="img"
-               aria-label="Curva de agotamiento de un código nuevo: qué porcentaje del stock queda cada semana y cuánto se lleva el picking en cada una.">
-            <text x="${X0}" y="26" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">CUÁNTO QUEDA DEL STOCK QUE LLEGÓ</text>
-            ${gridy}${refs}
-            <path d="${banda}" fill="#3987e5" opacity="0.13"/>
-            <path d="${area}" fill="#3987e5" opacity="0.16"/>
-            <path d="${linea}" fill="none" stroke="#3987e5" stroke-width="2" stroke-linejoin="round"/>
-            ${puntos}${vals}
-            <text x="${x(6).toFixed(0)}" y="${y(72).toFixed(0)}" text-anchor="middle" fill="var(--text-muted)" font-size="11" font-weight="700">ya se vendió</text>
-            <line x1="${X0}" y1="${Y1}" x2="${X1}" y2="${Y1}" stroke="var(--border)" stroke-width="1"/>
-            <text x="${X0}" y="${B0 - 22}" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">CUÁNTO SE LLEVA EL PICKING CADA SEMANA</text>
-            ${barras}
-            <line x1="${X0}" y1="${B1}" x2="${X1}" y2="${B1}" stroke="var(--border)" stroke-width="1"/>
-            ${ticks}
-            <text x="${((X0 + X1) / 2).toFixed(0)}" y="${B1 + 44}" text-anchor="middle" fill="var(--text-muted)" font-size="11">semanas desde que llegó</text>
-          </svg>
-          <div style="font-size:0.66rem; color:rgba(255,255,255,0.3); line-height:1.65; padding:0.4rem 0.4rem 0;">
-            Las rayas horizontales marcan cuánto es un cuerpo sobre esa llegada típica: <b style="color:rgba(255,255,255,0.5);">a partir de la semana 2 el artículo ya cabe en dos</b>, y a la semana 4 en uno solo.<br>
-            Son <b style="color:rgba(255,255,255,0.5);">siempre los mismos ${D.codigos} códigos</b>, seguidos las mismas ocho semanas. Por eso las barras cierran con la curva:
-            suman ${(100 - P[P.length - 1].queda).toFixed(1)}%, que es exactamente lo que se vendió.
-          </div>
-        </div>
-
-        <div style="overflow-x:auto; margin-top:1rem;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.76rem; color:var(--text-muted); min-width:520px;">
-            <thead><tr style="font-size:0.57rem; letter-spacing:1px; text-transform:uppercase;">
-              <th style="padding:0.5rem 0.9rem; text-align:left;">Semana</th>
-              <th style="padding:0.5rem 0.9rem; text-align:right;">Queda</th>
-              <th style="padding:0.5rem 0.9rem; text-align:right;">Se llevó</th>
-              <th style="padding:0.5rem 0.9rem; text-align:right;">Esa semana</th>
-              <th style="padding:0.5rem 0.9rem; text-align:right;">Pares que quedan</th>
-            </tr></thead>
-            <tbody>${filas}</tbody>
-          </table>
-        </div>
-
-        <div style="margin-top:1rem; padding:0.8rem 1rem; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2); border-radius:11px; font-size:0.72rem; color:var(--text-muted); line-height:1.7;">
-          <b style="color:#93c5fd;">Para qué sirve.</b> De acá salen los cuerpos que se le reservan a un código nuevo:
-          las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">793 pares</b>, que son más de dos cuerpos moviéndose.
-          Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento.
-          De la tercera semana en adelante el artículo casi no se mueve, y esos cuerpos quedan tomados por una cola que no rota.
-        </div>
+      <style>
+        [data-vista="kpi-picking"] .kpi-modulo{ width:85%; min-width:0; display:flex; flex-direction:column; gap:1.2rem; }
+        /* Las dos columnas terminan a la misma altura: stretch en la fila y flex:1 en las
+           tarjetas, si no la columna se estira y las tarjetas cortan más arriba. */
+        [data-vista="kpi-picking"] .kpi-gfila{ display:flex; align-items:stretch; gap:0.9rem; }
+        [data-vista="kpi-picking"] .kpi-gcaja{ flex:1 1 0; min-width:0; background:rgba(0,0,0,0.22);
+             border:1px solid var(--border); border-radius:14px; padding:1rem 0.9rem 0.6rem; }
+        [data-vista="kpi-picking"] .kpi-lado{ flex:0 0 250px; display:flex; flex-direction:column; gap:0.9rem; }
+        [data-vista="kpi-picking"] .kpi-caja{ background:rgba(0,0,0,0.22); border:1px solid var(--border);
+             border-radius:14px; padding:1rem 1rem 0.9rem; flex:1 1 auto; }
+        @media (max-width:1250px){
+          [data-vista="kpi-picking"] .kpi-modulo{ width:100%; }
+          [data-vista="kpi-picking"] .kpi-gfila{ flex-direction:column; }
+          [data-vista="kpi-picking"] .kpi-lado{ flex:1 1 auto; width:100%; }
+        }
+      </style>
+      <div class="kpi-modulo">
+        ${kpiBloque(KPI_GRUPO)}
+        ${kpiBloque(KPI_CASO1)}
+        ${kpiBloque(KPI_CASO2)}
+        ${kpiPareto()}
       </div>`;
   };
 
