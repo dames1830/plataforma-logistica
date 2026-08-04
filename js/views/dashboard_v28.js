@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0058';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0059';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0058';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0058';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0058';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0058';
-import * as metasService from '../services_v245/metasService.js?v=29.0058';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0058';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0058';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0058';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0058';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0058';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0058';
+import * as adminService from '../services_v245/adminService.js?v=29.0059';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0059';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0059';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0059';
+import * as metasService from '../services_v245/metasService.js?v=29.0059';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0059';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0059';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0059';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0059';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0059';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0059';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0058';
+const VERSION = '29.0059';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3404,7 +3404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0058');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0059');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13715,7 +13715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0058 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0059 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15324,6 +15324,28 @@ const renderRFSection = (container) => {
       casaDe.set(s7, new Set(elegidos.map(([k]) => k)));
     });
 
+    // CUÁNTO LE QUEDA A CADA CUERPO, para que los saldos puedan compartir.
+    //
+    // La capacidad sale de la serie del artículo que más pesa adentro, y en la franja de
+    // saldos va A LA MITAD: ahí conviven muchos artículos de pocos pares y llenarlo al tope
+    // deja al picker buscando una aguja en un pajar.
+    const totalDeCuerpo = new Map();
+    paresEnCuerpo.forEach((cuerpos, s7) => {
+      cuerpos.forEach((q, k) => {
+        if (!totalDeCuerpo.has(k)) totalDeCuerpo.set(k, { pares: 0, mayor: null, mayorQty: 0 });
+        const d = totalDeCuerpo.get(k);
+        d.pares += q;
+        if (q > d.mayorQty) { d.mayor = s7; d.mayorQty = q; }
+      });
+    });
+    const libres = {};
+    totalDeCuerpo.forEach((d, k) => {
+      const [zn, col, cue] = k.split('|');
+      const plena = zonasService.densidadDe(zn, zonasService.serieDe(d.mayor));
+      const cap = zonasService.franjaDeColumna(zn, +col) === 'saldos' ? plena * 0.5 : plena;
+      (libres[zn] = libres[zn] || new Map()).set(`${+col}-${+cue}`, Math.max(0, Math.round(cap - d.pares)));
+    });
+
     // Los cuerpos ya prometidos a otras tareas abiertas también están ocupados
     (tareasAbiertas || []).forEach(t => (t.items || []).forEach(art => {
       const s = art && art.sugerencia;
@@ -15347,7 +15369,7 @@ const renderRFSection = (container) => {
       reservaDe.set(prod.substring(0, 7), (reservaDe.get(prod.substring(0, 7)) || 0) + q);
     });
 
-    return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe, origenDe };
+    return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe, origenDe, libres };
   };
 
   /**
@@ -15504,12 +15526,21 @@ const renderRFSection = (container) => {
 
     const alPiso = cant ? cant.alPiso : pares;
     const aReserva = cant ? cant.aReserva : 0;
-    const plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados);
+    const plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados, ctx.libres);
 
     if ((plan.estado === 'ok' || plan.estado === 'reposicion') && plan.cuerpos) {
       plan.cuerpos.forEach(c => {
+        const k = `${c.columna}-${c.cuerpo}`;
         tomados[plan.zona] = tomados[plan.zona] || new Set();
-        tomados[plan.zona].add(`${c.columna}-${c.cuerpo}`);
+        tomados[plan.zona].add(k);
+        // EN SALDOS EL CUERPO SIGUE ABIERTO PARA EL QUE VENGA DETRÁS. Si se marcara tomado y
+        // nada más, cada corrida metería un solo artículo por cuerpo y la consolidación no
+        // pasaría nunca: se le descuenta lo prometido y queda disponible con lo que le sobra.
+        if (plan.franja === 'saldos' && ctx.libres) {
+          const zl = (ctx.libres[plan.zona] = ctx.libres[plan.zona] || new Map());
+          const antes = zl.has(k) ? zl.get(k) : Math.round((plan.porCuerpo || 0) * 0.5);
+          zl.set(k, Math.max(0, antes - alPiso));
+        }
       });
     }
 

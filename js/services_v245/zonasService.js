@@ -536,6 +536,50 @@ export const zonasActivas = () => {
  *
  * ocupados: Set con claves 'columna-cuerpo' (números sin ceros, ej. '5-14').
  */
+/**
+ * UN CUERPO QUE LE HAGA LUGAR, compartiendo.
+ *
+ * Para lo que no justifica un cuerpo propio: los saldos, que son cientos de artículos con
+ * diez pares cada uno. Dándole un cuerpo entero a cada uno harían falta 748 cuerpos y el
+ * selectivo tiene 284. Compartiendo entran en 26.
+ *
+ * Busca el que MEJOR lo reciba, no el que más lugar tenga: entre los que ya tienen algo se
+ * queda con el más lleno de los que todavía le dan. Así se consolida en pocos cuerpos en vez
+ * de dejar veinte a medio llenar, que es lo que después frena al picker.
+ *
+ * Un cuerpo vacío es el último recurso: gastarlo en diez pares es tirar un cuerpo entero.
+ *
+ * `libres` es un Map de 'columna-cuerpo' a los pares que le quedan. Sin él no hay nada que
+ * compartir y devuelve null, y quien llama sigue por el camino de siempre.
+ */
+export const cuerpoQueRecibe = (zona, columnas, pares, ocupados, libres) => {
+    if (!libres || !(pares > 0)) return null;
+    const z = zonasActual().zonas[zona];
+    if (!z) return null;
+
+    let mejor = null, vacio = null;
+    columnas.forEach(col => {
+        const tope = (z.cuerposPorColumna && z.cuerposPorColumna[Number(col)]) || z.cuerpos;
+        for (let cu = 1; cu <= tope; cu++) {
+            if (esPasillo(zona, col, cu)) continue;
+            const clave = `${col}-${cu}`;
+            if (!ocupados.has(clave)) {
+                if (!vacio) vacio = { columna: col, cuerpo: cu };
+                continue;
+            }
+            const queda = libres.get(clave);
+            if (!(queda >= pares)) continue;
+            // el más lleno de los que le dan: el que menos lugar deja sobrando
+            if (!mejor || queda < mejor.queda) mejor = { columna: col, cuerpo: cu, queda };
+        }
+    });
+
+    if (mejor) return { cuerpos: [{ columna: mejor.columna, cuerpo: mejor.cuerpo }],
+                        completo: true, compartido: true, libreQueTenia: mejor.queda };
+    if (vacio) return { cuerpos: [vacio], completo: true, compartido: false };
+    return null;
+};
+
 export const elegirCuerpos = (zona, columnas, cuantos, ocupados) => {
     const z = zonasActual().zonas[zona];
     if (!z || cuantos < 1) return { cuerpos: [], completo: false, libresEnLaFranja: 0 };
@@ -607,7 +651,7 @@ export const resolverZona = (art) => {
              : { zona: null, motivo: `La marca "${art.marca || '(vacía)'}" no tiene zona configurada.` };
 };
 
-export const planificarAlmacenaje = (art, ocupadosPorZona) => {
+export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) => {
     const cfg = zonasActual();
     const paso = (estado, motivo, extra) => ({ estado, motivo, ...extra });
 
@@ -651,6 +695,24 @@ export const planificarAlmacenaje = (art, ocupadosPorZona) => {
             return paso('sin-regla',
                 `A ${art.marca} le tocan las columnas ${suyas.join(', ')} de ${z.etiqueta}, y ninguna lleva "${franja}".`,
                 { zona, franja });
+        }
+    }
+
+    // LOS SALDOS COMPARTEN CUERPO. Son cientos de artículos con diez pares cada uno: darle
+    // un cuerpo propio a cada uno pediría 748 cuerpos y el selectivo tiene 284. Se busca el
+    // que mejor lo reciba entre los que ya tienen algo, y recién si ninguno da, uno vacío.
+    //
+    // Solo acá. Un código nuevo de temporada actual va siempre a cuerpos vacíos, que fue la
+    // decisión de Daniel: llega mercadería de verdad y tiene que entrar entera.
+    if (franja === 'saldos') {
+        const r = cuerpoQueRecibe(zona, columnas, Number(art.pares) || 0,
+                                  ocupadosPorZona[zona] || new Set(), libresPorZona[zona]);
+        if (r) {
+            return paso('ok', null, {
+                zona, franja, cuantos: 1, porCuerpo: densidadDe(zona, serieDe(art.sku7)),
+                cuerpos: r.cuerpos, seguidos: true, compartido: !!r.compartido,
+                libreQueTenia: r.libreQueTenia, porOthers
+            });
         }
     }
 
