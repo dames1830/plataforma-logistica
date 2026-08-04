@@ -449,6 +449,27 @@ export const densidadDe = (zona, serie) => {
     return v || cfg.densidadRespaldo[zona] || 330;
 };
 
+/**
+ * LA FRANJA QUE LE TOCA A UN ARTÍCULO. El orden lo dictó Daniel y no es negociable:
+ *
+ *   1. el gender escolar manda sobre todo lo demás. Si dice SCHOOL va a su columna, no
+ *      importa la temporada ni que sean tres pares
+ *   2. después los de pocos pares —hasta el corte de la zona, hoy 20 en el selectivo—, que
+ *      van a saldos vengan de la temporada que vengan
+ *   3. recién ahí la temporada: actual o anterior
+ *
+ * Vive acá afuera porque la usan dos: planificarAlmacenaje para elegir la columna, y la
+ * sugerencia para saber si el artículo ya está establecido en la franja que le toca.
+ */
+export const franjaDeArticulo = (art, zona) => {
+    const z = zonasActual().zonas[zona];
+    if (!z) return null;
+    const esEscolar = String(art.genderRims || '').toUpperCase().includes('SCHOOL');
+    if (esEscolar && columnasDeFranja(zona, 'escolar').length) return 'escolar';
+    if (Number(art.pares) < z.saldoMenorA && columnasDeFranja(zona, 'saldos').length) return 'saldos';
+    return art.esTemporadaActual ? 'actual' : 'anterior';
+};
+
 /** La temporada que le toca a una columna: 'actual', 'anterior', 'saldos', 'escolar'... */
 export const franjaDeColumna = (zona, columna) => {
     const z = zonasActual().zonas[zona];
@@ -614,12 +635,7 @@ export const planificarAlmacenaje = (art, ocupadosPorZona) => {
     if (!z || !z.activa) return paso('sin-reglas-zona', `${z ? z.etiqueta : zona} todavía no tiene reglas cargadas.`, { zona });
 
     // Paso 2: la franja
-    const esSaldo = Number(art.pares) < z.saldoMenorA;
-    const esEscolar = String(art.genderRims || '').toUpperCase().includes('SCHOOL');
-    let franja;
-    if (esEscolar && columnasDeFranja(zona, 'escolar').length) franja = 'escolar';
-    else if (esSaldo && columnasDeFranja(zona, 'saldos').length) franja = 'saldos';
-    else franja = art.esTemporadaActual ? 'actual' : 'anterior';
+    const franja = franjaDeArticulo(art, zona);
 
     let columnas = columnasDeFranja(zona, franja);
     if (!columnas.length) return paso('sin-regla', `En ${z.etiqueta} no hay columnas de "${franja}".`, { zona, franja });

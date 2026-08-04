@@ -316,7 +316,8 @@ export const guardarTallas = async (nueva) => {
  * porTalla: { '38': { buffer, piso }, '39': {...} }  — lo que hay hoy de cada talla.
  */
 export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo = 300,
-                                     piso = 0, reserva = 0, factor = FACTOR_POR_DEFECTO }) => {
+                                     piso = 0, reserva = 0, factor = FACTOR_POR_DEFECTO,
+                                     reglaForzada = null }) => {
     const f = Math.max(1, Math.round(Number(factor) || FACTOR_POR_DEFECTO));
     const tallas = porTalla && typeof porTalla === 'object' ? porTalla : {};
     const claves = Object.keys(tallas);
@@ -326,7 +327,16 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
     const pisoTotal = piso || claves.reduce((a, t) => a + (Number(tallas[t].piso) || 0), 0);
 
     // 1. Cuánto TENDRÍA que haber del artículo entero en el piso
-    const regla = modoDeMarca(marca);
+    //
+    // MANDA EL ORIGEN, NO LA MARCA. La regla de la marca —la mitad del stock para Bata, un
+    // cuerpo para Power— es la de mercadería NUEVA, y se venía aplicando también a lo que
+    // bajaba de reserva: el replenishment mandaba bajar 421 pares porque una talla estaba
+    // por quebrar, y la tarea devolvía 120 al rack. Medido sobre el buffer del 04-ago, de
+    // los 6.993 pares parados en CDBUFFER-B volvían arriba 4.520, el 65%.
+    //
+    // Por eso quien llama puede forzar la regla según de dónde vino la mercadería. Si no
+    // fuerza nada, sigue mandando la marca y no cambia nada.
+    const regla = reglaForzada || modoDeMarca(marca);
     let objetivoArt;
     if (regla.modo === 'todo')          objetivoArt = pisoTotal + bufferTotal;
     else if (regla.modo === 'cuerpos')  objetivoArt = Math.max(1, Number(regla.valor) || 1) * paresPorCuerpo;

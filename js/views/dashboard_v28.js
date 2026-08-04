@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0054';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0055';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0054';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0054';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0054';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0054';
-import * as metasService from '../services_v245/metasService.js?v=29.0054';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0054';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0054';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0054';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0054';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0054';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0054';
+import * as adminService from '../services_v245/adminService.js?v=29.0055';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0055';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0055';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0055';
+import * as metasService from '../services_v245/metasService.js?v=29.0055';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0055';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0055';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0055';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0055';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0055';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0055';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0054';
+const VERSION = '29.0055';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3404,7 +3404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0054');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0055');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13715,7 +13715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0054 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0055 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15239,6 +15239,7 @@ const renderRFSection = (container) => {
     const casaDe = new Map();
     const porTallaDe = new Map();
     const lineasBufferDe = new Map();
+    const origenDe = new Map();
     (stock || []).forEach(row => {
       const raw = Array.isArray(row) ? row : Object.values(row);
       const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
@@ -15265,6 +15266,13 @@ const renderRFSection = (container) => {
         if (esBuffer) {
           if (!lineasBufferDe.has(s7)) lineasBufferDe.set(s7, []);
           lineasBufferDe.get(s7).push({ ubi, skuFull: String(raw[1] || '').trim(), talla, qty });
+          // DE DÓNDE VINO, que es lo que decide cuánto baja. La sub-zona del buffer lo dice
+          // sin que haya que preguntarle nada a nadie:
+          //   A -> lo dejó recepción, importado o nacional
+          //   B -> bajó de reserva, por un pedido de comercial o por replenishment
+          //   C -> prepack, y ya quedó afuera unas líneas más arriba
+          if (!origenDe.has(s7)) origenDe.set(s7, new Set());
+          origenDe.get(s7).add((ubi.split('-')[1] || '').trim());
         }
       }
       if (!esPiso) return;
@@ -15301,7 +15309,7 @@ const renderRFSection = (container) => {
       reservaDe.set(prod.substring(0, 7), (reservaDe.get(prod.substring(0, 7)) || 0) + q);
     });
 
-    return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe };
+    return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe, origenDe };
   };
 
   /**
@@ -15353,6 +15361,67 @@ const renderRFSection = (container) => {
     });
   };
 
+  /** Cuántos cuerpos le tocan a un artículo que llega de recepción. Los dictó Daniel. */
+  const CUERPOS_CODIGO_NUEVO = 3;
+  const CUERPOS_REPOSICION   = 2;
+
+  /**
+   * DE DÓNDE VINO ESTA MERCADERÍA Y QUÉ SE HACE CON ELLA.
+   *
+   * La tarea de almacenaje es la SEGUNDA fase. La primera —el replenishment y el análisis de
+   * la Zona Buffer— ya decidió qué bajar y cuánto, mirando el tope de cada talla. Cuando la
+   * tarea vuelve a decidir por su cuenta, las dos fases se contradicen: el montacarguista
+   * baja 421 pares porque una talla está por quebrar y el papel le manda 120 de vuelta al
+   * rack. El trabajo se paga dos veces y la talla sigue quebrada.
+   *
+   * La señal de dónde vino está en la ubicación del buffer, así que no hay nada que
+   * adivinar ni ningún dato nuevo que guardar:
+   *
+   *   CDBUFFER-B  bajó de reserva por un pedido o por replenishment
+   *               -> TODO al piso. Ya se decidió, acá solo se ejecuta.
+   *
+   *   CDBUFFER-A  lo dejó recepción, importado o nacional. Acá sí hay que decidir, y
+   *               depende de si el artículo ya vive en el almacén:
+   *
+   *       sin cuerpo en la franja que le toca -> CÓDIGO NUEVO, 3 cuerpos.
+   *               Comercial lo va a pedir en menos de dos días y su primer batch se lleva
+   *               el 40-50%: hay que tenerlo abajo listo. Entra acá también el artículo al
+   *               que le cambiaron la temporada y solo le quedaba un saldo: su cuerpo está
+   *               en una columna que ya no es la suya, así que arranca de cero.
+   *
+   *       con cuerpo en su franja -> REPOSICIÓN DE FÁBRICA, 2 cuerpos.
+   *               No es nuevo: es un código que ya salió y viene por su segundo batch.
+   *
+   * Un artículo no aparece en A y en B a la vez —comprobado sobre el stock del 04-ago, cero
+   * casos de 141—, pero si alguna vez pasa manda la B: si bajó de reserva es porque hacía
+   * falta abajo.
+   */
+  const casoDelItem = (s7, datos, pares, zona, ctx) => {
+    const origen = ctx.origenDe && ctx.origenDe.get(s7);
+
+    if (origen && origen.has('B')) {
+      return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
+               motivo: 'Bajó de reserva por pedido o replenishment: se almacena todo.' };
+    }
+
+    // Sin zona resuelta no se puede saber en qué franja tendría que estar, y sin eso no hay
+    // forma de distinguir un código nuevo de uno establecido. Se deja pasar la regla de la
+    // marca, que es lo que venía haciendo.
+    if (!zona) return { nombre: 'sin-zona', regla: null, motivo: '' };
+
+    // Para la prueba de saldos van los pares DEL BUFFER y no los que terminen bajando: lo
+    // que decide si un artículo es un saldo es cuánto tiene, no cuánto se le almacena hoy.
+    const franja = zonasService.franjaDeArticulo({ ...datos, pares }, zona);
+    const enSuFranja = (datos.yaTiene || []).some(c =>
+      c.zona === zona && zonasService.franjaDeColumna(c.zona, c.columna) === franja);
+
+    return enSuFranja
+      ? { nombre: 'reposicion-fabrica', regla: { modo: 'cuerpos', valor: CUERPOS_REPOSICION },
+          motivo: `Ya vive en la franja de "${franja}": se completa hasta ${CUERPOS_REPOSICION} cuerpos.` }
+      : { nombre: 'codigo-nuevo', regla: { modo: 'cuerpos', valor: CUERPOS_CODIGO_NUEVO },
+          motivo: `No tiene cuerpo en la franja de "${franja}": arranca con ${CUERPOS_CODIGO_NUEVO} cuerpos.` };
+  };
+
   /**
    * La sugerencia de UN artículo de una tarea. `tomados` se va llenando con lo que se
    * promete, así dos artículos de la misma corrida nunca reciben el mismo cuerpo.
@@ -15384,13 +15453,15 @@ const renderRFSection = (container) => {
     // cuerpos por los pares del buffer sería reservar lugar de más.
     const zr = zonasService.resolverZona(datos);
     const porCuerpo = zr.zona ? zonasService.densidadDe(zr.zona, zonasService.serieDe(s7)) : 300;
+    const caso = casoDelItem(s7, datos, pares, zr.zona, ctx);
     const cant = tallasService.planificarPorTalla({
       marca: datos.marca,
       categoria: datos.genderRims,
       porTalla: ctx.porTallaDe.get(s7) || {},
       paresPorCuerpo: porCuerpo,
       reserva: ctx.reservaDe.get(s7) || 0,
-      factor: tallasService.FACTOR_POR_DEFECTO
+      factor: tallasService.FACTOR_POR_DEFECTO,
+      reglaForzada: caso.regla
     });
 
     const alPiso = cant ? cant.alPiso : pares;
@@ -15412,7 +15483,7 @@ const renderRFSection = (container) => {
     const minReserva = tallasService.minutosDeReserva(aReserva);
 
     return {
-      sku7: s7, ficha: f, pares, cant, plan, casa, niveles,
+      sku7: s7, ficha: f, pares, cant, plan, casa, niveles, caso,
       alPiso, aReserva,
       paletas: tallasService.paletasDe(aReserva),
       activo: Math.round(cant ? cant.pisoTotal : 0),
