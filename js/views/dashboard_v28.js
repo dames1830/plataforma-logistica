@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0059';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0060';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0059';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0059';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0059';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0059';
-import * as metasService from '../services_v245/metasService.js?v=29.0059';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0059';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0059';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0059';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0059';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0059';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0059';
+import * as adminService from '../services_v245/adminService.js?v=29.0060';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0060';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0060';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0060';
+import * as metasService from '../services_v245/metasService.js?v=29.0060';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0060';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0060';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0060';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0060';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0060';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0060';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0059';
+const VERSION = '29.0060';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3404,7 +3404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0059');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0060');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13715,7 +13715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0059 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0060 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16612,10 +16612,23 @@ const renderRFSection = (container) => {
   };
 
   // ══════════════════════════════════════════════════════════════════════════════════
-  // FACTORES DE REPOSICIÓN
+  // TOPES DE REPOSICIÓN
   //
   // Cuántos pares tiene que haber en el piso de cada SKU. De acá sale el objetivo que usa
   // Replenishment para decidir qué está quebrado, qué está por quebrar y cuánto bajar.
+  //
+  // OJO CON LA PALABRA "FACTOR". En el almacén significa DOS COSAS DISTINTAS y mezclarlas
+  // costó varias vueltas:
+  //
+  //   TOPE   -> el máximo que tiene que haber en el piso de un SKU. 300 pares de la talla
+  //             24. Es lo que se configura acá y lo que mira Replenishment. NO es lo que se
+  //             baja: con tope 300 y 50 en el piso, se bajan los 250 que faltan.
+  //   FACTOR -> cuántos pares trae una caja cerrada. 10 normalmente, 20 o 40 en las ojotas
+  //             que vienen en bolsa. Vive en tallasService y no tiene nada que ver con esto.
+  //
+  // En pantalla ya se dice TOPE en todos lados. Adentro, varios nombres de esta sección
+  // todavía arrastran "factor" (_publicarFactores, hojaFactores, i.factor): son internos y
+  // renombrarlos toca la caché de las PC, así que quedó para una limpieza aparte.
   //
   // POR QUÉ SE REHIZO
   //
@@ -16637,7 +16650,7 @@ const renderRFSection = (container) => {
   // ══════════════════════════════════════════════════════════════════════════════════
 
   // ══════════════════════════════════════════════════════════════════════════════════
-  // FACTORES DE REPOSICIÓN
+  // TOPES DE REPOSICIÓN — LA PANTALLA
   //
   // Cuántos pares tiene que haber en el piso de cada SKU. De acá sale el objetivo que usa
   // Replenishment para decidir qué está quebrado, qué está por quebrar y cuánto bajar.
@@ -16908,7 +16921,7 @@ const renderRFSection = (container) => {
         <div class="glass-panel" style="padding:4rem 2rem; text-align:center; border:1px dashed var(--border);">
           <h3 style="color:var(--text-main); font-weight:700; margin:0 0 0.6rem; font-size:1rem;">Sin stock para leer</h3>
           <p style="color:var(--text-muted); font-size:0.82rem; margin:0;">
-            Los factores se arman sobre el stock del día. Revisá en <b>ARCHIVO ANÁLISIS SKU</b> que estén cargados
+            Los topes se arman sobre el stock del día. Revise en <b>ARCHIVO ANÁLISIS SKU</b> que estén cargados
             el Stock Activo, el Stock Reserva y el Maestro de Artículos.
           </p>
         </div>`;
@@ -16934,7 +16947,7 @@ const renderRFSection = (container) => {
       <div class="glass-panel" style="padding:1.4rem 1.5rem; margin-bottom:1rem;">
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1.2rem; flex-wrap:wrap;">
           <div>
-            <h3 style="margin:0 0 5px; color:var(--text-main); font-size:0.95rem; font-weight:700; letter-spacing:0.06em;">FACTORES DE REPOSICIÓN</h3>
+            <h3 style="margin:0 0 5px; color:var(--text-main); font-size:0.95rem; font-weight:700; letter-spacing:0.06em;">TOPES DE REPOSICIÓN</h3>
             <p style="margin:0; color:var(--text-muted); font-size:0.76rem; line-height:1.5;">
               Cuántos pares tiene que haber en el piso <b>de cada SKU</b>, por marca, género y talla. En blanco o 0 significa que no se repone.<br>
               Las filas salen del stock del <b>${_escF(fechaStock)}</b>: solo aparece lo que existe hoy en el almacén.
@@ -17206,7 +17219,7 @@ const renderRFSection = (container) => {
       try {
         await _publicarFactores();
         elGuardar.textContent = 'Guardar';
-        showPremiumAlert('Factores publicados', 'Quedaron guardados para todas las computadoras.', 'success');
+        showPremiumAlert('Topes publicados', 'Quedaron guardados para todas las computadoras.', 'success');
       } catch (err) {
         elGuardar.textContent = 'Guardar •';
         showPremiumAlert('No se pudo publicar',
@@ -17228,10 +17241,13 @@ const renderRFSection = (container) => {
         'OBJETIVO': objetivoDe(f)
       }));
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hoja), 'Factores');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hoja), 'Topes');
       const exc = Object.keys(_configSKUExcepciones).sort().map(k => ({ 'SKU': k, 'OBJETIVO': _configSKUExcepciones[k] }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exc.length ? exc : [{ 'SKU': '', 'OBJETIVO': '' }]), 'Excepciones');
-      XLSX.writeFile(wb, `factores_reposicion_${getLogicalDate()}.xlsx`);
+      // La hoja se llama distinto que antes, pero al volver a importarla el sistema no mira
+      // el nombre sino las columnas —OBJETIVO, TALLA, GENERO—, así que los archivos que ya
+      // haya guardados siguen entrando igual.
+      XLSX.writeFile(wb, `topes_reposicion_${getLogicalDate()}.xlsx`);
     });
 
     // ── Subir Excel ──
@@ -17509,9 +17525,9 @@ const renderRFSection = (container) => {
       if (!kEl) return;
       kEl.innerHTML = [
         { label:'QUEBRADOS',   val:nQuebrado,   sub:'Stock en 0',          color:'#ef4444', icon:'🔴' },
-        { label:'POR QUEBRAR', val:nPorQuebrar, sub:'Stock ≤ factor objetivo', color:'#f59e0b', icon:'🟡' },
+        { label:'POR QUEBRAR', val:nPorQuebrar, sub:'Stock ≤ tope', color:'#f59e0b', icon:'🟡' },
         { label:'OK',          val:nOk,         sub:'Stock normal',         color:'#22c55e', icon:'🟢' },
-        { label:'PARES A BAJAR', val:Math.round(paresABajar), sub:'Para llegar al factor', color:'#818cf8', icon:'📦' },
+        { label:'PARES A BAJAR', val:Math.round(paresABajar), sub:'Para llegar al tope', color:'#818cf8', icon:'📦' },
       ].map(k => `
         <div class="glass-panel" style="padding:1.2rem 1.5rem; border-left:3px solid ${k.color};">
           <div style="font-size:1.5rem; margin-bottom:0.3rem;">${k.icon}</div>
@@ -17546,7 +17562,7 @@ const renderRFSection = (container) => {
           <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.qAct===0?'#ef4444':i.qAct<=(i.factor !== undefined ? i.factor : umbral)?'#f59e0b':'#e2e8f0'};">${i.qAct.toLocaleString('es')}</td>
           <td style="padding:0.6rem 1rem; text-align:right; color:${i.qRes>0?'#22c55e':'#ef444488'}; font-weight:600;">${i.qRes.toLocaleString('es')}</td>
           <td style="padding:0.6rem 1rem; text-align:right; font-weight:800; font-size:0.86rem; color:${aBajarDe(i) > 0 ? '#fff' : 'rgba(255,255,255,0.2)'};"
-              ${i.relleno > 0 ? `title="Incluye ${i.relleno} pares por encima del factor, para no dejar el cuerpo a medio llenar"` : ''}>${aBajarDe(i) > 0 ? aBajarDe(i).toLocaleString('es') : '—'}${i.relleno > 0 ? '<span style="color:#a5b4fc; font-weight:700; font-size:0.7rem;"> +' + i.relleno.toLocaleString('es') + '</span>' : ''}</td>
+              ${i.relleno > 0 ? `title="Incluye ${i.relleno} pares por encima del tope, para no dejar el cuerpo a medio llenar"` : ''}>${aBajarDe(i) > 0 ? aBajarDe(i).toLocaleString('es') : '—'}${i.relleno > 0 ? '<span style="color:#a5b4fc; font-weight:700; font-size:0.7rem;"> +' + i.relleno.toLocaleString('es') + '</span>' : ''}</td>
           <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; font-size:0.82rem; color:${solicitudDe(i) > 0 ? '#a5b4fc' : 'rgba(255,255,255,0.2)'};">${solicitudDe(i) > 0 ? solicitudDe(i).toLocaleString('es') : '—'}</td>
           <td style="padding:0.6rem 1rem; text-align:center;">${estadoBadge(i.estado)}</td>
         </tr>`).join('');
@@ -17591,7 +17607,7 @@ const renderRFSection = (container) => {
               <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#fbbf24;">MARCA</th>
               <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#34d399;">GENDER RIMS</th>
               <th style="padding:0.8rem 1rem; text-align:left;   font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#f472b6;">TEMPORADA</th>
-              <th style="padding:0.8rem 1rem; text-align:center;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#818cf8; background:rgba(99,102,241,0.05);">FACTOR</th>
+              <th style="padding:0.8rem 1rem; text-align:center;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#818cf8; background:rgba(99,102,241,0.05);" title="Cuántos pares tiene que haber en el piso de ese SKU. Es el máximo, no lo que se baja.">TOPE</th>
               <th style="padding:0.8rem 1rem; text-align:right;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK ACTIVO</th>
               <th style="padding:0.8rem 1rem; text-align:right;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:var(--text-muted);">STOCK RESERVA</th>
               <th style="padding:0.8rem 1rem; text-align:right;  font-size:0.65rem; font-weight:700; letter-spacing:1px; color:#a5b4fc; background:rgba(99,102,241,0.05);">A BAJAR</th>
@@ -17653,7 +17669,7 @@ const renderRFSection = (container) => {
           'MARCA':        i.marcas,
           'GENDER RIMS':  i.genderRims,
           'TEMPORADA':    i.temporada,
-          'FACTOR':       factorToUse,
+          'TOPE':         factorToUse,
           'STOCK ACTIVO': i.qAct,
           'STOCK RESERVA':i.qRes,
           'QTY BAJAR':    aBajarDe(i),
@@ -17980,10 +17996,10 @@ const renderRFSection = (container) => {
       });
 
       // ══════════════════════════════════════════════════════════════════════════════
-      // EL CUERPO MANDA SOBRE EL FACTOR
+      // EL CUERPO MANDA SOBRE EL TOPE
       //
       // Un cuerpo no se comparte entre artículos: ocuparlo cuesta lo mismo con 300 pares
-      // que con 500. Si se respeta el factor a rajatabla y las tallas comerciales no
+      // que con 500. Si se respeta el tope a rajatabla y las tallas comerciales no
       // tienen respaldo arriba, el cuerpo se queda al 60% y VIVE ASÍ hasta que el
       // artículo se termine de vender. Ese hueco no se recupera después.
       //
@@ -18056,7 +18072,7 @@ const renderRFSection = (container) => {
               if (hueco <= 0) break;
               const dar = Math.min(cuota, x.disp, hueco);
               x.i.aBajar  += dar;
-              x.i.relleno += dar;                    // para poder distinguirlo del factor
+              x.i.relleno += dar;                    // para poder distinguirlo del tope
               x.disp      -= dar;
               hueco       -= dar;
             }
