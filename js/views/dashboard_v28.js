@@ -21339,22 +21339,32 @@ window.showCellModal = function(htmlContent) {
   // Lo que dice, y es lo que decide cuántos cuerpos le tocan a un código nuevo: de cada diez
   // pares que llegan, cuatro se van la primera semana y dos y medio la segunda. De la tercera
   // en adelante son migajas. Ver [[buffer-origen-y-cuerpos]].
+  //
+  // LA COLUMNA `semana` SE MIDE APAREADA, y no restando la mediana de una semana menos la de
+  // la anterior. Restando medianas sueltas, la semana 6 daba CERO —parecía que no se había
+  // picado nada— y era mentira: los grupos no eran los mismos. En la semana 5 había 237
+  // códigos medidos y en la 6 solo 204, porque los que llegaron en julio todavía no cumplían
+  // seis semanas. Con grupos distintos la mediana puede quedarse quieta aunque cada artículo
+  // se haya movido. Comparando los MISMOS códigos en las dos semanas, la 6 da 2,8%.
+  //
+  // Por eso las barras no suman exactamente el acumulado de la curva: cada una es la mediana
+  // de su propio par de semanas, y las medianas no se suman.
   // ══════════════════════════════════════════════════════════════════════════════════
   const CURVA_CODIGO_NUEVO = {
     medido: '04-may al 03-ago-2026', codigos: 404, llegada: 1080,
     puntos: [
-      { s: 0,  queda: 100.0, p25: 100.0, p75: 100.0, semana: 0.0 },
-      { s: 1,  queda: 61.2,  p25: 44.3,  p75: 73.4,  semana: 38.8 },
-      { s: 2,  queda: 34.6,  p25: 23.5,  p75: 52.3,  semana: 26.5 },
-      { s: 3,  queda: 27.6,  p25: 16.8,  p75: 47.9,  semana: 7.0 },
-      { s: 4,  queda: 24.8,  p25: 13.3,  p75: 45.2,  semana: 2.8 },
-      { s: 5,  queda: 20.9,  p25: 11.9,  p75: 39.4,  semana: 3.9 },
-      { s: 6,  queda: 20.9,  p25: 11.1,  p75: 36.5,  semana: 0.0 },
-      { s: 7,  queda: 17.2,  p25: 9.9,   p75: 30.5,  semana: 3.7 },
-      { s: 8,  queda: 13.7,  p25: 7.1,   p75: 24.0,  semana: 3.5 },
-      { s: 9,  queda: 12.3,  p25: 4.3,   p75: 20.2,  semana: 1.5 },
-      { s: 10, queda: 11.6,  p25: 6.0,   p75: 15.4,  semana: 0.7 },
-      { s: 11, queda: 10.1,  p25: 7.5,   p75: 11.4,  semana: 1.4 }
+      { s: 0,  queda: 100.0, p25: 100.0, p75: 100.0, semana: 0.0,  n: 404 },
+      { s: 1,  queda: 61.2,  p25: 44.3,  p75: 73.4,  semana: 38.8, n: 365 },
+      { s: 2,  queda: 34.6,  p25: 23.5,  p75: 52.3,  semana: 25.2, n: 329 },
+      { s: 3,  queda: 27.6,  p25: 16.8,  p75: 47.9,  semana: 6.1,  n: 280 },
+      { s: 4,  queda: 24.8,  p25: 13.3,  p75: 45.2,  semana: 3.0,  n: 252 },
+      { s: 5,  queda: 20.9,  p25: 11.9,  p75: 39.4,  semana: 4.5,  n: 237 },
+      { s: 6,  queda: 20.9,  p25: 11.1,  p75: 36.5,  semana: 2.8,  n: 204 },
+      { s: 7,  queda: 17.2,  p25: 9.9,   p75: 30.5,  semana: 3.6,  n: 188 },
+      { s: 8,  queda: 13.7,  p25: 7.1,   p75: 24.0,  semana: 3.1,  n: 146 },
+      { s: 9,  queda: 12.3,  p25: 4.3,   p75: 20.2,  semana: 2.5,  n: 94 },
+      { s: 10, queda: 11.6,  p25: 6.0,   p75: 15.4,  semana: 2.8,  n: 48 },
+      { s: 11, queda: 10.1,  p25: 7.5,   p75: 11.4,  semana: 4.4,  n: 16 }
     ]
   };
 
@@ -21427,6 +21437,7 @@ window.showCellModal = function(htmlContent) {
         <td style="padding:0.45rem 0.9rem; text-align:right;">${(100 - p.queda).toFixed(0)}%</td>
         <td style="padding:0.45rem 0.9rem; text-align:right;">${Math.max(0, p.semana).toFixed(0)}%</td>
         <td style="padding:0.45rem 0.9rem; text-align:right;">${n(D.llegada * p.queda / 100)}</td>
+        <td style="padding:0.45rem 0.9rem; text-align:right; color:rgba(255,255,255,0.28);">${p.n}</td>
       </tr>`).join('');
 
     const tarjeta = (r, v, sub) => `
@@ -21480,8 +21491,9 @@ window.showCellModal = function(htmlContent) {
             <text x="${((X0 + X1) / 2).toFixed(0)}" y="${B1 + 44}" text-anchor="middle" fill="var(--text-muted)" font-size="11">semanas desde que llegó</text>
           </svg>
           <div style="font-size:0.66rem; color:rgba(255,255,255,0.3); line-height:1.65; padding:0.4rem 0.4rem 0;">
-            Las rayas horizontales marcan cuánto es un cuerpo sobre esa llegada típica: <b style="color:rgba(255,255,255,0.5);">a partir de la semana 2 el artículo ya cabe en uno solo</b>.
-            La cantidad de códigos medidos baja con las semanas —365 en la primera, 16 en la última—, porque los que llegaron en julio todavía no cumplieron tres meses; por eso la curva no baja de forma perfectamente pareja.
+            Las rayas horizontales marcan cuánto es un cuerpo sobre esa llegada típica: <b style="color:rgba(255,255,255,0.5);">a partir de la semana 2 el artículo ya cabe en uno solo</b>.<br>
+            La cantidad de códigos medidos baja con las semanas —365 en la primera, 16 en la última—, porque los que llegaron en julio todavía no cumplieron tres meses.
+            Las barras comparan <b style="color:rgba(255,255,255,0.5);">los mismos códigos</b> en cada par de semanas, así que no suman exactamente el acumulado de la curva: cada una es la mediana de su propio par, y las medianas no se suman.
           </div>
         </div>
 
@@ -21493,6 +21505,7 @@ window.showCellModal = function(htmlContent) {
               <th style="padding:0.5rem 0.9rem; text-align:right;">Se llevó</th>
               <th style="padding:0.5rem 0.9rem; text-align:right;">Esa semana</th>
               <th style="padding:0.5rem 0.9rem; text-align:right;">Pares que quedan</th>
+              <th style="padding:0.5rem 0.9rem; text-align:right;" title="Cuántos códigos llegaron a cumplir esa semana. Baja porque los de julio son más nuevos.">Códigos medidos</th>
             </tr></thead>
             <tbody>${filas}</tbody>
           </table>
