@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0057';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0058';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0057';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0057';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0057';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0057';
-import * as metasService from '../services_v245/metasService.js?v=29.0057';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0057';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0057';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0057';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0057';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0057';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0057';
+import * as adminService from '../services_v245/adminService.js?v=29.0058';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0058';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0058';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0058';
+import * as metasService from '../services_v245/metasService.js?v=29.0058';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0058';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0058';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0058';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0058';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0058';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0058';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0057';
+const VERSION = '29.0058';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3404,7 +3404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0057');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0058');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13715,7 +13715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0057 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0058 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16187,9 +16187,11 @@ const renderRFSection = (container) => {
             </table>
           </div>
           <div style="padding:0.75rem 1.1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,197,94,0.1); font-size:0.65rem; color:rgba(255,255,255,0.32); line-height:1.7;">
-            <b style="color:rgba(255,255,255,0.5);">MEDIR DEL STOCK</b> mira los cuerpos que hoy tienen un solo artículo y se queda con el máximo por serie. Es un <b style="color:rgba(255,255,255,0.5);">piso</b>, no la capacidad: un cuerpo con 200 pares puede estar a medio llenar. Si sabés que entran más, escribilo y manda el tuyo.
+            <b style="color:rgba(255,255,255,0.5);">MEDIR DEL STOCK</b> mira los cuerpos que hoy tienen un solo artículo y se queda con el máximo por serie. Es un <b style="color:rgba(255,255,255,0.5);">piso</b>, no la capacidad: un cuerpo con 200 pares puede estar a medio llenar. Si sabe que entran más, escríbalo y mande el suyo.
           </div>
         </div>
+
+        ${panelEspacioCuerpos(_zonaElegida, z.etiqueta)}
       </div>`;
 
       const marcar = () => {
@@ -16340,6 +16342,202 @@ const renderRFSection = (container) => {
    * MÁXIMO y no el promedio, porque la mayoría de los cuerpos están a medio llenar y el
    * promedio subestimaría la capacidad.
    */
+  /**
+   * CUÁNTO LE QUEDA A CADA CUERPO.
+   *
+   * El sistema sabe si un cuerpo está ocupado o libre, y nada más: al buscar dónde almacenar
+   * descarta cualquiera que tenga algo adentro, aunque tenga un par y le sobre el 99%. Medido
+   * sobre el stock del 04-ago quedan 166.644 pares de lugar invisible dentro de cuerpos que
+   * ya tienen algo, y 770 de los 1.495 cuerpos ocupados YA conviven con más de un artículo:
+   * el almacén comparte hace rato, el sistema es el único que cree que no se puede.
+   *
+   * Esto todavía no cambia ninguna decisión. Solo lo mide y lo muestra, para poder validarlo
+   * contra el almacén real antes de que la sugerencia empiece a ofrecer cuerpos compartidos.
+   *
+   * EN SALDOS LA CAPACIDAD ES LA MITAD. Un cuerpo de saldos junta muchos artículos de pocos
+   * pares, y llenarlo al tope deja al picker buscando una aguja en un pajar. Regla de Daniel:
+   * se llena hasta la mitad. Así que lo que se muestra como capacidad ahí ya viene recortado,
+   * porque si no el número mentiría sobre lo que de verdad entra.
+   */
+  const RECORTE_SALDOS = 0.5;
+
+  /** Cuántos cuerpos tiene una zona de verdad, descontando el paso del elevador. */
+  const cuerposDeLaZona = (zona) => {
+    const z = zonasService.zonasActual().zonas[zona];
+    if (!z) return 0;
+    let n = 0;
+    for (let c = 1; c <= z.columnas; c++) {
+      let t = (z.cuerposPorColumna && z.cuerposPorColumna[c]) || z.cuerpos;
+      (z.pasillos || []).forEach(p => { if (c >= p.desdeCol && c <= p.hastaCol) t -= (p.cuerpos || []).length; });
+      n += Math.max(0, t);
+    }
+    return n;
+  };
+
+  const ocupacionDeCuerpos = () => {
+    const stock = dataStore.almacenaje_activo || dataStore.analisis_sku_activo
+               || dataStore.stockActivo || [];
+    if (!stock.length) return null;
+
+    const col = (row, ...pistas) => {
+      for (const k in row) {
+        const kl = k.toLowerCase();
+        if (pistas.every(p => kl.includes(p)) && !kl.includes('barras')) return row[k];
+      }
+      return '';
+    };
+
+    const cfg = zonasService.zonasActual();
+    const cuerpos = new Map();
+    stock.forEach(row => {
+      const ubi = String(col(row, 'bicac') || '').trim().toUpperCase();
+      const p = ubi.split('-');
+      if (p.length < 3 || !cfg.zonas[p[0]]) return;
+      const sku = String(col(row, 'art') || '').trim();
+      const s7 = sku.substring(0, 7);
+      const qty = parseFloat(String(col(row, 'cantidad', 'actual') || 0).replace(/,/g, '')) || 0;
+      if (!s7 || qty <= 0) return;
+      const clave = `${p[0]}|${p[1]}|${p[2]}`;
+      if (!cuerpos.has(clave)) cuerpos.set(clave, { zona: p[0], columna: +p[1], cuerpo: +p[2], pares: 0, arts: new Map() });
+      const d = cuerpos.get(clave);
+      d.pares += qty;
+      d.arts.set(s7, (d.arts.get(s7) || 0) + qty);
+    });
+
+    const porZona = {};
+    cuerpos.forEach(d => {
+      // La serie del artículo que más pesa: es el que manda cuántos pares entran
+      const mayor = [...d.arts.entries()].sort((a, b) => b[1] - a[1])[0];
+      const serie = zonasService.serieDe(mayor[0]);
+      const franja = zonasService.franjaDeColumna(d.zona, d.columna);
+      const plena = zonasService.densidadDe(d.zona, serie);
+      const cap = Math.round(franja === 'saldos' ? plena * RECORTE_SALDOS : plena);
+      const pares = Math.round(d.pares);
+      (porZona[d.zona] = porZona[d.zona] || []).push({
+        nombre: zonasService.nombreCuerpo(d.zona, d.columna, d.cuerpo),
+        columna: d.columna, cuerpo: d.cuerpo, franja, serie: serie || '—',
+        cap, plena: Math.round(plena), mitad: franja === 'saldos',
+        pares, libre: Math.max(0, cap - pares),
+        pct: cap > 0 ? Math.round(pares / cap * 100) : 0,
+        arts: d.arts.size,
+        codigos: [...d.arts.keys()].sort().join(', ')
+      });
+    });
+    Object.keys(porZona).forEach(z => porZona[z].sort((a, b) => b.libre - a.libre));
+    return porZona;
+  };
+
+  /** El panel de "cuánto le queda a cada cuerpo", para la zona que se está mirando. */
+  const panelEspacioCuerpos = (zona, etiquetaZona) => {
+    const CAJA = 'background:rgba(15,23,42,0.9); border:1px solid rgba(56,189,248,0.22); border-radius:14px;';
+    const cabecera = (txt, sub) => `
+      <div style="padding:0.9rem 1.1rem; background:rgba(56,189,248,0.06); border-bottom:1px solid rgba(56,189,248,0.16);">
+        <h4 style="color:#38bdf8; font-weight:900; margin:0; font-size:0.82rem; letter-spacing:0.8px; text-transform:uppercase;">📐 Espacio dentro de los cuerpos</h4>
+        <div style="font-size:0.64rem; color:rgba(56,189,248,0.55); margin-top:2px;">${txt}${sub || ''}</div>
+      </div>`;
+
+    const todo = ocupacionDeCuerpos();
+    if (!todo) return `
+      <div style="${CAJA} margin-top:1rem; overflow:hidden;">
+        ${cabecera('Hace falta el Stock Activo para poder medirlo')}
+        <div style="padding:1.6rem 1.1rem; text-align:center; color:rgba(255,255,255,0.3); font-size:0.75rem;">
+          Cargue el <b style="color:rgba(255,255,255,0.5);">Stock Activo</b> en Archivo Análisis SKU y vuelva a entrar.
+        </div>
+      </div>`;
+
+    const filas = todo[zona] || [];
+    const total = cuerposDeLaZona(zona);
+    const hueco = filas.reduce((a, x) => a + x.libre, 0);
+    const pares = filas.reduce((a, x) => a + x.pares, 0);
+
+    const tramos = [
+      { et: '0 a 25%', c: '#f87171', n: 0 }, { et: '25 a 50%', c: '#fbbf24', n: 0 },
+      { et: '50 a 75%', c: '#a3e635', n: 0 }, { et: '75 a 100%', c: '#22c55e', n: 0 },
+      { et: 'lleno', c: '#0ea5e9', n: 0 }
+    ];
+    filas.forEach(f => tramos[f.pct < 25 ? 0 : f.pct < 50 ? 1 : f.pct < 75 ? 2 : f.pct < 100 ? 3 : 4].n++);
+
+    const num = (v) => Math.round(v).toLocaleString('es-PE');
+    const tarjeta = (r, v, dest) => `
+      <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:11px; padding:0.6rem 0.8rem;${dest ? ' border-color:rgba(34,197,94,0.35); background:rgba(34,197,94,0.06);' : ''}">
+        <div style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:rgba(255,255,255,0.3);">${r}</div>
+        <div style="font-size:1.25rem; font-weight:900; margin-top:3px;${dest ? ' color:#22c55e;' : ''}">${v}</div>
+      </div>`;
+
+    const colorDe = (p) => p >= 100 ? '#f87171' : p >= 75 ? '#fbbf24' : '#22c55e';
+    const chipFranja = (f) => {
+      const c = { actual: ['34,197,94', '#4ade80'], anterior: ['129,140,248', '#818cf8'],
+                  saldos: ['251,191,36', '#fbbf24'], escolar: ['244,114,182', '#f472b6'] }[f]
+              || ['255,255,255', 'rgba(255,255,255,0.35)'];
+      return `<span style="display:inline-block; padding:2px 7px; border-radius:5px; font-size:0.58rem; font-weight:800; letter-spacing:0.4px; text-transform:uppercase; background:rgba(${c[0]},0.14); color:${c[1]};">${_escF(f)}</span>`;
+    };
+
+    return `
+      <div style="${CAJA} margin-top:1rem; overflow:hidden;">
+        ${cabecera(`${etiquetaZona} · lo que ya está guardado contra lo que entra`,
+                   ' · en <b>saldos</b> la capacidad va a la mitad, para no frenar el picking')}
+        <div style="padding:0.9rem 1.1rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:0.55rem;">
+            ${tarjeta('Cuerpos', num(total))}
+            ${tarjeta('Ocupados', num(filas.length))}
+            ${tarjeta('Vacíos', num(Math.max(0, total - filas.length)))}
+            ${tarjeta('Pares guardados', num(pares))}
+            ${tarjeta('Libre dentro de los ocupados', num(hueco) + ' pares', true)}
+          </div>
+          ${filas.length ? `
+          <div style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:rgba(255,255,255,0.28); margin:0.9rem 0 0.3rem;">Qué tan llenos están los ocupados</div>
+          <div style="display:flex; height:24px; border-radius:7px; overflow:hidden; border:1px solid rgba(255,255,255,0.08);">
+            ${tramos.filter(t => t.n / filas.length >= 0.01).map(t => `
+              <div title="${t.et}: ${t.n} cuerpos" style="width:${(t.n / filas.length * 100).toFixed(2)}%; background:${t.c}; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800; color:#0b1220;">${t.n / filas.length > 0.09 ? t.et : ''}</div>`).join('')}
+          </div>` : ''}
+        </div>
+        ${filas.length ? `
+        <div style="overflow-x:auto; border-top:1px solid rgba(255,255,255,0.06);">
+          <table style="width:100%; border-collapse:collapse; font-size:0.74rem; color:#eee; min-width:660px;">
+            <thead style="background:rgba(0,0,0,0.45);">
+              <tr style="color:rgba(255,255,255,0.3); text-transform:uppercase; font-size:0.57rem; letter-spacing:1px;">
+                <th style="padding:0.55rem 0.9rem; text-align:left;">Cuerpo</th>
+                <th style="padding:0.55rem 0.6rem; text-align:left;">Franja</th>
+                <th style="padding:0.55rem 0.6rem; text-align:right;">Serie</th>
+                <th style="padding:0.55rem 0.6rem; text-align:right;">Artículos</th>
+                <th style="padding:0.55rem 0.6rem; text-align:right;">Entran</th>
+                <th style="padding:0.55rem 0.6rem; text-align:right;">Tiene</th>
+                <th style="padding:0.55rem 0.6rem; text-align:right;">Libre</th>
+                <th style="padding:0.55rem 0.9rem; text-align:left;">Ocupación</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filas.slice(0, 40).map(f => `
+                <tr style="border-top:1px solid rgba(255,255,255,0.04);" title="${_escF(f.codigos)}">
+                  <td style="padding:0.45rem 0.9rem; font-weight:800; letter-spacing:0.3px;">${_escF(f.nombre)}</td>
+                  <td style="padding:0.45rem 0.6rem;">${chipFranja(f.franja)}</td>
+                  <td style="padding:0.45rem 0.6rem; text-align:right; color:rgba(255,255,255,0.4);">${_escF(f.serie)}</td>
+                  <td style="padding:0.45rem 0.6rem; text-align:right;">${f.arts}</td>
+                  <td style="padding:0.45rem 0.6rem; text-align:right; color:rgba(255,255,255,0.4);">${num(f.cap)}${f.mitad ? `<span title="Cuerpo de saldos: se llena hasta la mitad de ${num(f.plena)}" style="color:#fbbf24; font-weight:800;"> ½</span>` : ''}</td>
+                  <td style="padding:0.45rem 0.6rem; text-align:right;">${num(f.pares)}</td>
+                  <td style="padding:0.45rem 0.6rem; text-align:right; font-weight:900; color:#22c55e;">${num(f.libre)}</td>
+                  <td style="padding:0.45rem 0.9rem;">
+                    <div style="display:flex; align-items:center; gap:7px; min-width:118px;">
+                      <div style="flex:1; height:6px; border-radius:4px; background:rgba(255,255,255,0.07); overflow:hidden;">
+                        <div style="height:100%; width:${Math.min(100, f.pct)}%; background:${colorDe(f.pct)}; border-radius:4px;"></div>
+                      </div>
+                      <div style="font-size:0.64rem; font-weight:800; width:32px; text-align:right; color:rgba(255,255,255,0.4);">${f.pct}%</div>
+                    </div>
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:0.7rem 1.1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(56,189,248,0.1); font-size:0.65rem; color:rgba(255,255,255,0.32); line-height:1.7;">
+          Los <b style="color:rgba(255,255,255,0.5);">40 cuerpos con más lugar libre</b>, de ${num(filas.length)} ocupados. Pase el mouse por una fila para ver qué artículos hay adentro.
+          <b style="color:rgba(255,255,255,0.5);">La capacidad no está medida cuerpo por cuerpo</b>: sale de la serie del artículo que más pesa, del cuadro de arriba. Por ahora esto solo se mide y se muestra — la sugerencia todavía no ofrece cuerpos compartidos.
+        </div>` : `
+        <div style="padding:1.6rem 1.1rem; text-align:center; color:rgba(255,255,255,0.3); font-size:0.75rem;">
+          No hay stock en ${_escF(etiquetaZona)} todavía.
+        </div>`}
+      </div>`;
+  };
+
   const medirDensidadDelStock = () => {
     const stock = dataStore.analisis_sku_activo || dataStore.stockActivo || [];
     if (!stock.length) return null;
