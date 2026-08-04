@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0055';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0056';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0055';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0055';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0055';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0055';
-import * as metasService from '../services_v245/metasService.js?v=29.0055';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0055';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0055';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0055';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0055';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0055';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0055';
+import * as adminService from '../services_v245/adminService.js?v=29.0056';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0056';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0056';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0056';
+import * as metasService from '../services_v245/metasService.js?v=29.0056';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0056';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0056';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0056';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0056';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0056';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0056';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0055';
+const VERSION = '29.0056';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3404,7 +3404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0055');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0056');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13715,7 +13715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0055 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0056 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15150,10 +15150,16 @@ const renderRFSection = (container) => {
                                     || (parseFloat(a.talla) - parseFloat(b.talla)))
       : [...conPiso].sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0));
 
-    // Un hueco por nivel de cada cuerpo, en orden de accesibilidad
+    // Un hueco por nivel de cada cuerpo, en orden de accesibilidad.
+    //
+    // LA ZONA SALE DE CADA CUERPO, NO DE LA PRIMERA. Un artículo puede estar repartido en
+    // dos zonas —casi siempre por una matrícula equivocada— y acá se le ponía a todos la
+    // zona del primero. El 5811379 vive en MZN02-11-05 y tiene un par suelto en
+    // MZN03-05-01: el papel imprimía MZN02-05-01, que es de otro artículo, y ahí mandaba
+    // tres de sus seis tallas.
     const huecos = [];
     cuerpos.forEach(c => SUG_NIVELES.forEach(n =>
-      huecos.push(zonasService.nombreCuerpo(zona, c.columna, c.cuerpo) + '-' + n)));
+      huecos.push(zonasService.nombreCuerpo(c.zona || zona, c.columna, c.cuerpo) + '-' + n)));
 
     // Se reparten lo más parejo posible, sin dejar un nivel vacío mientras otro se amontona:
     // con 4 tallas y 3 niveles salen 2, 1 y 1, y el sobrante va a los primeros, que son los
@@ -15237,6 +15243,7 @@ const renderRFSection = (container) => {
     const RE_TALLA = /-\d+-(\d+(?:\.\d+)?)\s*$/;
     const ocupados = {};
     const casaDe = new Map();
+    const paresEnCuerpo = new Map();   // art7 -> Map(zona|col|cuerpo -> pares), para el corte de abajo
     const porTallaDe = new Map();
     const lineasBufferDe = new Map();
     const origenDe = new Map();
@@ -15281,9 +15288,35 @@ const renderRFSection = (container) => {
       if (!col || !cue) return;
       (ocupados[zona] = ocupados[zona] || new Set()).add(`${col}-${cue}`);
       if (s7) {
-        if (!casaDe.has(s7)) casaDe.set(s7, new Set());
-        casaDe.get(s7).add(`${zona}|${col}|${cue}`);
+        if (!paresEnCuerpo.has(s7)) paresEnCuerpo.set(s7, new Map());
+        const m2 = paresEnCuerpo.get(s7);
+        const k = `${zona}|${col}|${cue}`;
+        m2.set(k, (m2.get(k) || 0) + qty);
       }
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // UN PAR SUELTO NO HACE UNA CASA.
+    //
+    // Antes alcanzaba UNA línea de stock —un par— para que un cuerpo contara como casa del
+    // artículo. Y basta con que un operario nuevo matricule mal un par para que el sistema
+    // le reserve un cuerpo entero y le reparta las tallas ahí.
+    //
+    // Pasó con el 5811379: vive en MZN02-11-05 con 215 pares y tenía UN par en MZN03-05-01
+    // y otro en MZN03-07-01. El sistema le creyó las tres casas, repartió las seis tallas
+    // entre nueve niveles y mandó la mitad del artículo a cuerpos que no eran suyos.
+    //
+    // Ahora un cuerpo cuenta como casa desde 20 pares —el mismo corte con el que la zona
+    // decide si algo es saldo—. Y si NINGUNO llega a 20 se queda con el más cargado: un
+    // artículo que se está agotando no puede quedarse sin casa, porque entonces el sistema
+    // saldría a buscarle un cuerpo nuevo mientras el suyo sigue ocupado y lo partiría en dos.
+    // ══════════════════════════════════════════════════════════════════════════════
+    const MINIMO_PARA_SER_CASA = 20;
+    paresEnCuerpo.forEach((cuerpos, s7) => {
+      const orden = Array.from(cuerpos.entries()).sort((a, b) => b[1] - a[1]);
+      const conPeso = orden.filter(([, q]) => q >= MINIMO_PARA_SER_CASA);
+      const elegidos = conPeso.length ? conPeso : orden.slice(0, 1);
+      casaDe.set(s7, new Set(elegidos.map(([k]) => k)));
     });
 
     // Los cuerpos ya prometidos a otras tareas abiertas también están ocupados
