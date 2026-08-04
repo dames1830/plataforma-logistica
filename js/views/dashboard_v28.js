@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0061';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0062';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0061';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0061';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0061';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0061';
-import * as metasService from '../services_v245/metasService.js?v=29.0061';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0061';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0061';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0061';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0061';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0061';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0061';
+import * as adminService from '../services_v245/adminService.js?v=29.0062';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0062';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0062';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0062';
+import * as metasService from '../services_v245/metasService.js?v=29.0062';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0062';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0062';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0062';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0062';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0062';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0062';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0061';
+const VERSION = '29.0062';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1452,7 +1452,8 @@ const TABS = [
   { id: 'descargas', label: 'Descargas', icon: '📥',
     roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' }
+    { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' },
+    { id: 'kpi_picking', label: 'KPI Picking', icon: '📊' }
   ]},
   { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_packing', label: 'Archivo Packing', icon: '🗂️' }
@@ -3404,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0061');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0062');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -11829,6 +11830,9 @@ const renderRFSection = (container) => {
         // Ceder un frame al navegador para que pinte el spinner antes de renderizar
         await new Promise(r => setTimeout(r, 0));
         renderAlmacenajeTareas(container);
+    } else if (tabId === 'picking' && activeSub === 'kpi_picking') {
+        await new Promise(r => setTimeout(r, 0));
+        renderKpiPicking(container);
     } else if (tabId === 'almacenaje' && activeSub === 'productividad') {
         await new Promise(r => setTimeout(r, 0));
         renderProductividad(container);
@@ -13715,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0061 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0062 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -21316,6 +21320,191 @@ window.showCellModal = function(htmlContent) {
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
     });
+  };
+
+  // ══════════════════════════════════════════════════════════════════════════════════
+  // KPI PICKING — LA CURVA DE VIDA DE UN CÓDIGO NUEVO
+  //
+  // Cuánto se lleva el picking, semana a semana, de la mercadería que entra por primera vez.
+  //
+  // ES UN ESTUDIO, NO UN INDICADOR EN VIVO, y por eso los números están escritos acá adentro
+  // en vez de calcularse al abrir la pantalla. Salieron de seguir 404 códigos foto a foto en
+  // las 74 tomas diarias de stock que el robot deja en OneDrive —del 04-may al 03-ago-2026—,
+  // sumando activo Y reserva: mirando solo el activo, la mitad que sube a reserva se ve
+  // igual que una venta y el resultado sale al doble.
+  //
+  // El servidor no guarda esa serie: `logistics_snapshots` tiene una foto por área, no una
+  // por día. Para que esto se recalcule solo habría que empezar a guardarlas.
+  //
+  // Lo que dice, y es lo que decide cuántos cuerpos le tocan a un código nuevo: de cada diez
+  // pares que llegan, cuatro se van la primera semana y dos y medio la segunda. De la tercera
+  // en adelante son migajas. Ver [[buffer-origen-y-cuerpos]].
+  // ══════════════════════════════════════════════════════════════════════════════════
+  const CURVA_CODIGO_NUEVO = {
+    medido: '04-may al 03-ago-2026', codigos: 404, llegada: 1080,
+    puntos: [
+      { s: 0,  queda: 100.0, p25: 100.0, p75: 100.0, semana: 0.0 },
+      { s: 1,  queda: 61.2,  p25: 44.3,  p75: 73.4,  semana: 38.8 },
+      { s: 2,  queda: 34.6,  p25: 23.5,  p75: 52.3,  semana: 26.5 },
+      { s: 3,  queda: 27.6,  p25: 16.8,  p75: 47.9,  semana: 7.0 },
+      { s: 4,  queda: 24.8,  p25: 13.3,  p75: 45.2,  semana: 2.8 },
+      { s: 5,  queda: 20.9,  p25: 11.9,  p75: 39.4,  semana: 3.9 },
+      { s: 6,  queda: 20.9,  p25: 11.1,  p75: 36.5,  semana: 0.0 },
+      { s: 7,  queda: 17.2,  p25: 9.9,   p75: 30.5,  semana: 3.7 },
+      { s: 8,  queda: 13.7,  p25: 7.1,   p75: 24.0,  semana: 3.5 },
+      { s: 9,  queda: 12.3,  p25: 4.3,   p75: 20.2,  semana: 1.5 },
+      { s: 10, queda: 11.6,  p25: 6.0,   p75: 15.4,  semana: 0.7 },
+      { s: 11, queda: 10.1,  p25: 7.5,   p75: 11.4,  semana: 1.4 }
+    ]
+  };
+
+  const renderKpiPicking = (container) => {
+    if (!container) return;
+    container.dataset.vista = 'kpi-picking';
+    const D = CURVA_CODIGO_NUEVO, P = D.puntos;
+    const n = (v) => Math.round(v).toLocaleString('es-PE');
+
+    // Geometría del dibujo. Dos gráficos que comparten el eje de semanas: arriba lo que
+    // queda, abajo lo que se llevó esa semana.
+    const X0 = 78, X1 = 862, Y0 = 62, Y1 = 306, B0 = 372, B1 = 470, MAXS = P.length - 1;
+    const x = (s) => X0 + (X1 - X0) * s / MAXS;
+    const y = (v) => Y1 - (Y1 - Y0) * v / 100;
+    const yb = (v) => B1 - (B1 - B0) * v / 45;
+
+    const linea = P.map((p, i) => `${i ? 'L' : 'M'}${x(p.s).toFixed(1)},${y(p.queda).toFixed(1)}`).join(' ');
+    const banda = P.map((p, i) => `${i ? 'L' : 'M'}${x(p.s).toFixed(1)},${y(p.p75).toFixed(1)}`).join(' ')
+                + ' ' + P.slice().reverse().map(p => `L${x(p.s).toFixed(1)},${y(p.p25).toFixed(1)}`).join(' ') + ' Z';
+    const area = `${linea} L${x(MAXS).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z`;
+
+    // Cuánto es un cuerpo sobre la llegada típica: la raya deja leer cuándo el artículo
+    // deja de necesitar ese cuerpo.
+    const refs = [1, 2, 3].map(k => {
+      const v = 350 * k * 100 / D.llegada;
+      return `<line x1="${X0}" y1="${y(v).toFixed(1)}" x2="${X1}" y2="${y(v).toFixed(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4"/>`
+           + `<text x="${X1 - 4}" y="${(y(v) - 6).toFixed(1)}" text-anchor="end" fill="var(--text-muted)" font-size="10" font-weight="600">${k} cuerpo${k > 1 ? 's' : ''} · ${n(350 * k)} pares</text>`;
+    }).join('');
+
+    const rotula = new Set([1, 2, 4, 8, MAXS]);
+    const puntos = P.map(p => `<circle cx="${x(p.s).toFixed(1)}" cy="${y(p.queda).toFixed(1)}" r="${rotula.has(p.s) ? 5 : 3.5}" fill="#3987e5" stroke="var(--bg-card, #111827)" stroke-width="2"/>`).join('');
+    const vals = P.filter(p => rotula.has(p.s)).map(p =>
+      `<text x="${x(p.s).toFixed(1)}" y="${(y(p.queda) - 14).toFixed(1)}" text-anchor="middle" fill="var(--text-main)" font-size="11.5" font-weight="800">${p.queda.toFixed(0)}%</text>`).join('');
+
+    const BW = (X1 - X0) / MAXS * 0.52;
+    const barras = P.filter(p => p.s > 0 && p.semana > 0.05).map(p =>
+      `<rect x="${(x(p.s) - BW / 2).toFixed(1)}" y="${yb(p.semana).toFixed(1)}" width="${BW.toFixed(1)}" height="${(B1 - yb(p.semana)).toFixed(1)}" rx="4" fill="#d95926"/>`
+      + `<text x="${x(p.s).toFixed(1)}" y="${(yb(p.semana) - 7).toFixed(1)}" text-anchor="middle" fill="var(--text-muted)" font-size="10.5" font-weight="700">${p.semana.toFixed(0)}%</text>`).join('');
+
+    const gridy = [0, 25, 50, 75, 100].map(v =>
+      `<line x1="${X0}" y1="${y(v)}" x2="${X1}" y2="${y(v)}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>`
+      + `<text x="${X0 - 10}" y="${y(v) + 4}" text-anchor="end" fill="var(--text-muted)" font-size="11">${v}%</text>`).join('');
+    const ticks = P.map(p => `<text x="${x(p.s).toFixed(1)}" y="${B1 + 22}" text-anchor="middle" fill="var(--text-muted)" font-size="11">${p.s}</text>`).join('');
+
+    // DE CADA DIEZ PARES. Es la lectura que pidió Daniel, y va en dos versiones porque
+    // dicen cosas distintas: sobre los diez que llegaron, y sobre los que quedan el lunes.
+    const diez = P.filter(p => p.s >= 1 && p.s <= 4).map(p => {
+      const previo = P[p.s - 1].queda;
+      return { s: p.s, deLlegada: p.semana / 10, deLoQueQueda: previo > 0 ? p.semana / previo * 10 : 0 };
+    });
+    const fmt = (v) => v.toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const tarjetaDiez = (titulo, sub, campo, color) => `
+      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:13px; padding:0.9rem 1rem;">
+        <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:${color};">${titulo}</div>
+        <div style="font-size:0.68rem; color:var(--text-muted); margin:2px 0 0.7rem;">${sub}</div>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem;">
+          ${diez.map(d => `
+            <div style="text-align:center; background:rgba(0,0,0,0.25); border-radius:9px; padding:0.5rem 0.2rem;">
+              <div style="font-size:0.56rem; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted);">Sem. ${d.s}</div>
+              <div style="font-size:1.35rem; font-weight:900; color:${color}; letter-spacing:-0.5px; margin-top:1px;">${fmt(d[campo])}</div>
+              <div style="font-size:0.55rem; color:var(--text-muted);">pares</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+
+    const filas = P.map(p => `
+      <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:0.45rem 0.9rem;">${p.s}</td>
+        <td style="padding:0.45rem 0.9rem; text-align:right; font-weight:800; color:#fff;">${p.queda.toFixed(0)}%</td>
+        <td style="padding:0.45rem 0.9rem; text-align:right;">${(100 - p.queda).toFixed(0)}%</td>
+        <td style="padding:0.45rem 0.9rem; text-align:right;">${Math.max(0, p.semana).toFixed(0)}%</td>
+        <td style="padding:0.45rem 0.9rem; text-align:right;">${n(D.llegada * p.queda / 100)}</td>
+      </tr>`).join('');
+
+    const tarjeta = (r, v, sub) => `
+      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:13px; padding:0.75rem 1rem;">
+        <div style="font-size:0.58rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted);">${r}</div>
+        <div style="font-size:1.7rem; font-weight:900; letter-spacing:-1px; margin-top:3px;">${v}</div>
+        <div style="font-size:0.68rem; color:var(--text-muted);">${sub}</div>
+      </div>`;
+
+    container.innerHTML = `
+      <div class="glass-panel" style="padding:1.4rem 1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1.2rem; flex-wrap:wrap;">
+          <div>
+            <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">CÓMO SE VENDE UN CÓDIGO NUEVO</h3>
+            <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:64ch;">
+              ${D.codigos} códigos de calzado que entraron por primera vez, seguidos foto a foto desde el día que llegaron.
+              La línea es la mediana; la banda, dónde cae la mitad del medio.
+            </p>
+          </div>
+          <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted); text-align:right;">
+            Estudio · ${D.medido}<br><span style="font-weight:500; text-transform:none; letter-spacing:0;">no se recalcula solo</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:0.7rem; margin:1.1rem 0;">
+          ${tarjeta('Llegada típica', n(D.llegada), 'pares por código nuevo')}
+          ${tarjeta('Se va en 2 semanas', '65%', 'y en la primera, 39%')}
+          ${tarjeta('Queda a los 2 meses', '14%', 'y de ahí casi no baja')}
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:0.7rem; margin-bottom:1.1rem;">
+          ${tarjetaDiez('De cada 10 pares que llegan', 'sobre el stock original', 'deLlegada', '#3987e5')}
+          ${tarjetaDiez('De cada 10 que hay el lunes', 'sobre lo que quedaba al empezar la semana', 'deLoQueQueda', '#d95926')}
+        </div>
+
+        <div style="background:rgba(0,0,0,0.22); border:1px solid var(--border); border-radius:14px; padding:1rem 0.9rem 0.6rem;">
+          <svg viewBox="0 0 900 528" style="display:block; width:100%; height:auto;" role="img"
+               aria-label="Curva de agotamiento de un código nuevo: qué porcentaje del stock queda cada semana y cuánto se lleva el picking en cada una.">
+            <text x="${X0}" y="26" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">CUÁNTO QUEDA DEL STOCK QUE LLEGÓ</text>
+            ${gridy}${refs}
+            <path d="${banda}" fill="#3987e5" opacity="0.13"/>
+            <path d="${area}" fill="#3987e5" opacity="0.16"/>
+            <path d="${linea}" fill="none" stroke="#3987e5" stroke-width="2" stroke-linejoin="round"/>
+            ${puntos}${vals}
+            <text x="${x(6).toFixed(0)}" y="${y(72).toFixed(0)}" text-anchor="middle" fill="var(--text-muted)" font-size="11" font-weight="700">ya se vendió</text>
+            <line x1="${X0}" y1="${Y1}" x2="${X1}" y2="${Y1}" stroke="var(--border)" stroke-width="1"/>
+            <text x="${X0}" y="${B0 - 22}" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">CUÁNTO SE LLEVA EL PICKING CADA SEMANA</text>
+            ${barras}
+            <line x1="${X0}" y1="${B1}" x2="${X1}" y2="${B1}" stroke="var(--border)" stroke-width="1"/>
+            ${ticks}
+            <text x="${((X0 + X1) / 2).toFixed(0)}" y="${B1 + 44}" text-anchor="middle" fill="var(--text-muted)" font-size="11">semanas desde que llegó</text>
+          </svg>
+          <div style="font-size:0.66rem; color:rgba(255,255,255,0.3); line-height:1.65; padding:0.4rem 0.4rem 0;">
+            Las rayas horizontales marcan cuánto es un cuerpo sobre esa llegada típica: <b style="color:rgba(255,255,255,0.5);">a partir de la semana 2 el artículo ya cabe en uno solo</b>.
+            La cantidad de códigos medidos baja con las semanas —365 en la primera, 16 en la última—, porque los que llegaron en julio todavía no cumplieron tres meses; por eso la curva no baja de forma perfectamente pareja.
+          </div>
+        </div>
+
+        <div style="overflow-x:auto; margin-top:1rem;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.76rem; color:var(--text-muted); min-width:520px;">
+            <thead><tr style="font-size:0.57rem; letter-spacing:1px; text-transform:uppercase;">
+              <th style="padding:0.5rem 0.9rem; text-align:left;">Semana</th>
+              <th style="padding:0.5rem 0.9rem; text-align:right;">Queda</th>
+              <th style="padding:0.5rem 0.9rem; text-align:right;">Se llevó</th>
+              <th style="padding:0.5rem 0.9rem; text-align:right;">Esa semana</th>
+              <th style="padding:0.5rem 0.9rem; text-align:right;">Pares que quedan</th>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:1rem; padding:0.8rem 1rem; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2); border-radius:11px; font-size:0.72rem; color:var(--text-muted); line-height:1.7;">
+          <b style="color:#93c5fd;">Para qué sirve.</b> De acá salen los cuerpos que se le reservan a un código nuevo:
+          las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">702 pares</b>, que son dos cuerpos moviéndose.
+          Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento.
+          De la tercera semana en adelante el artículo casi no se mueve, y esos cuerpos quedan tomados por una cola que no rota.
+        </div>
+      </div>`;
   };
 
   const renderProductividad = async (container) => {
