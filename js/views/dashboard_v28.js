@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0053';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0054';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0053';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0053';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0053';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0053';
-import * as metasService from '../services_v245/metasService.js?v=29.0053';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0053';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0053';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0053';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0053';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0053';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0053';
+import * as adminService from '../services_v245/adminService.js?v=29.0054';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0054';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0054';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0054';
+import * as metasService from '../services_v245/metasService.js?v=29.0054';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0054';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0054';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0054';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0054';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0054';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0054';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0053';
+const VERSION = '29.0054';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3404,7 +3404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0053');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0054');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13715,7 +13715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0053 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0054 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15099,7 +15099,34 @@ const renderRFSection = (container) => {
    * cada uno tuviera el suyo, se separarían con el tiempo y la pantalla mostraría una cosa
    * mientras el papel dice otra.
    */
-  const SUG_ACTUALES = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
+  /**
+   * QUÉ CUENTA COMO TEMPORADA ACTUAL: el trimestre de la tarea y los tres siguientes.
+   *
+   * Antes era una lista escrita a mano —2026-Q3 a 2027-Q2— y andaba mientras alguien se
+   * acordara de estirarla. El día que entre mercadería 2027-Q3 sin que nadie la toque, el
+   * artículo sale como temporada anterior y la sugerencia lo manda a la columna 3. No daría
+   * ningún error: ubicaría mal, en silencio, hasta que alguien lo note en el piso.
+   *
+   * Se calcula desde la FECHA DE LA TAREA y no de hoy, para que una tarea de hace tres meses
+   * se siga viendo con la temporada que le tocaba cuando se armó.
+   */
+  const sugActuales = (fecha) => {
+    const deTexto = (t) => {
+      const a = parseInt(String(t).substring(0, 4), 10);
+      const m = parseInt(String(t).substring(5, 7), 10);
+      if (!Number.isFinite(a) || !Number.isFinite(m) || m < 1 || m > 12) return null;
+      return { anio: a, tri: Math.floor((m - 1) / 3) + 1 };
+    };
+    const p = deTexto(fecha) || deTexto(getLogicalDate());
+    if (!p) return ['ACTUAL'];
+    let { anio, tri } = p;
+    const lista = ['ACTUAL'];
+    for (let i = 0; i < 4; i++) {
+      lista.push(`${anio}-Q${tri}`);
+      if (++tri > 4) { tri = 1; anio++; }
+    }
+    return lista;
+  };
   const SUG_NIVELES = ['A', 'B', 'C'];
 
   /**
@@ -15197,7 +15224,12 @@ const renderRFSection = (container) => {
         genderRims: String(raw[3] || '').trim().toUpperCase(),
         subcategoria: String(raw[5] || '').trim().toUpperCase(),
         marca: String(raw[13] || '').trim(),
-        temporada: String(raw[14] || '').trim().toUpperCase()
+        // LA COLUMNA 9, NO LA 15. El maestro tiene catorce columnas —de la 0 a la 13— y acá
+        // se leía la 14, que no existe: la temporada salía vacía SIEMPRE. No se notó porque
+        // calcularSugerenciaDeItem tiene un respaldo que la saca del ítem de la tarea, así
+        // que el sistema venía funcionando apoyado en el plan B. La 9 es 'Coleccion PO', la
+        // misma que ya leen el análisis del buffer y la ficha del artículo.
+        temporada: String(raw[9] || '').trim().toUpperCase()
       });
     });
 
@@ -15343,7 +15375,7 @@ const renderRFSection = (container) => {
       marca: art.marca || f.marca,
       genderRims: art.genderRims || f.genderRims,
       subcategoria: f.subcategoria,
-      esTemporadaActual: SUG_ACTUALES.some(a => tempTxt.includes(a)),
+      esTemporadaActual: sugActuales(fecha).some(a => tempTxt.includes(a)),
       yaTiene: casa
     };
 
