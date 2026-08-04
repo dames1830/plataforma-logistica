@@ -45,8 +45,18 @@ export const FRANJAS = {
     anterior: { etiqueta: 'Temporada anterior', color: '#ef4444' },
     saldos:   { etiqueta: 'Saldos',             color: '#f59e0b' },
     escolar:  { etiqueta: 'Escolar',            color: '#22c55e' },
+    catalogo: { etiqueta: 'Catálogo',           color: '#a855f7' },
     ninguna:  { etiqueta: 'Sin uso',            color: '#64748b' }
 };
+
+/**
+ * CATÁLOGO ES LA ÚNICA FRANJA QUE NO FILTRA POR MARCA.
+ *
+ * Es la columna 8 del mezzanine 3, y ahí conviven Skechers, Adidas y Puma. No es un error de
+ * matrícula: es a propósito. Lo que llega al buffer D va entero a esa columna, venga de la
+ * marca que venga y sea de la temporada que sea. Llega cada quince o veinte días.
+ */
+export const SIN_FILTRO_DE_MARCA = 'catalogo';
 
 /** Repite una franja para un rango de columnas: rango(5, 13, 'actual'). */
 const rango = (desde, hasta, franja) => {
@@ -464,6 +474,9 @@ export const densidadDe = (zona, serie) => {
 export const franjaDeArticulo = (art, zona) => {
     const z = zonasActual().zonas[zona];
     if (!z) return null;
+    // EL BUFFER D MANDA SOBRE TODO LO DEMÁS. Lo que se matricula ahí va a la columna de
+    // catálogo entero, no importa la marca ni la temporada ni cuántos pares sean.
+    if (art.origen === 'D' && columnasDeFranja(zona, 'catalogo').length) return 'catalogo';
     const esEscolar = String(art.genderRims || '').toUpperCase().includes('SCHOOL');
     if (esEscolar && columnasDeFranja(zona, 'escolar').length) return 'escolar';
     if (Number(art.pares) < z.saldoMenorA && columnasDeFranja(zona, 'saldos').length) return 'saldos';
@@ -659,7 +672,10 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
     // mismos cuerpos y no hace falta preguntarle nada a la configuración. Vale incluso en
     // las zonas que todavía no tienen reglas cargadas —ahí está la mayor parte del volumen—,
     // porque devolver algo a su lugar no depende de saber qué temporada lleva cada columna.
-    if (art.yaTiene && art.yaTiene.length) {
+    // EL BUFFER D SE SALTEA ESTE ATAJO. Lo que llega ahí va a la columna de catálogo aunque
+    // el artículo ya viva en el almacén: un Puma que tiene su cuerpo en la 16 y llega por el
+    // D no vuelve a la 16, va al catálogo. Es la regla de Daniel y no admite excepción.
+    if (art.origen !== 'D' && art.yaTiene && art.yaTiene.length) {
         return paso('reposicion', 'El artículo ya está en el almacén: va a sus mismos cuerpos.',
             { zona: art.yaTiene[0].zona, cuerpos: art.yaTiene, cuantos: art.yaTiene.length });
     }
@@ -688,13 +704,26 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
     // Bubblegummers y B.G Licenses, cada una con su bloque; sin este filtro la sugerencia
     // mandaba Bubblegummers a la columna 4, que es de Power. Las ojotas no filtran: llegaron
     // acá por su subcategoría, no por su marca, y la marca no manda en su zona.
-    const suyas = porOthers ? [] : columnasDeMarca(art.marca);
+    const suyas = (porOthers || franja === SIN_FILTRO_DE_MARCA) ? [] : columnasDeMarca(art.marca);
     if (suyas.length) {
-        columnas = columnas.filter(c => suyas.includes(c));
-        if (!columnas.length) {
-            return paso('sin-regla',
-                `A ${art.marca} le tocan las columnas ${suyas.join(', ')} de ${z.etiqueta}, y ninguna lleva "${franja}".`,
-                { zona, franja });
+        const deSuFranja = columnas.filter(c => suyas.includes(c));
+        if (deSuFranja.length) {
+            columnas = deSuFranja;
+        } else {
+            // LA FRANJA SOLO MANDA SI LA MARCA PARTIÓ SUS COLUMNAS POR TEMPORADA.
+            //
+            // Bata sí lo hace: tiene saldos, anterior, actual y escolar. Pero a Puma, Adidas
+            // y Skechers la temporada no les importa —"todo lo del buffer se almacena", dijo
+            // Daniel— y sus columnas son todas de lo mismo. Antes eso salía por Slotting con
+            // un "ninguna lleva anterior" que no era un problema real: era la marca diciendo
+            // que no separa por temporada.
+            const todasSuyas = suyas.filter(c => franjaDeColumna(zona, c) !== 'ninguna');
+            if (!todasSuyas.length) {
+                return paso('sin-regla',
+                    `A ${art.marca} le tocan las columnas ${suyas.join(', ')} de ${z.etiqueta}, y ninguna está en uso.`,
+                    { zona, franja });
+            }
+            columnas = todasSuyas;
         }
     }
 

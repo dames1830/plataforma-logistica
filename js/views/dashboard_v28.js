@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0060';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0061';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0060';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0060';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0060';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0060';
-import * as metasService from '../services_v245/metasService.js?v=29.0060';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0060';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0060';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0060';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0060';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0060';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0060';
+import * as adminService from '../services_v245/adminService.js?v=29.0061';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0061';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0061';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0061';
+import * as metasService from '../services_v245/metasService.js?v=29.0061';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0061';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0061';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0061';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0061';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0061';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0061';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0060';
+const VERSION = '29.0061';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3404,7 +3404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0060');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0061');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13715,7 +13715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0060 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0061 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15440,6 +15440,10 @@ const renderRFSection = (container) => {
    *   CDBUFFER-B  bajó de reserva por un pedido o por replenishment
    *               -> TODO al piso. Ya se decidió, acá solo se ejecuta.
    *
+   *   CDBUFFER-D  catálogo. Llega cada quince o veinte días y va entero a la columna 8 del
+   *               mezzanine 3, mezclando Skechers, Adidas y Puma.
+   *               -> TODO al piso, y sin mirar temporada ni marca.
+   *
    *   CDBUFFER-A  lo dejó recepción, importado o nacional. Acá sí hay que decidir, y
    *               depende de si el artículo ya vive en el almacén:
    *
@@ -15458,6 +15462,11 @@ const renderRFSection = (container) => {
    */
   const casoDelItem = (s7, datos, pares, zona, ctx) => {
     const origen = ctx.origenDe && ctx.origenDe.get(s7);
+
+    if (origen && origen.has('D')) {
+      return { nombre: 'catalogo', regla: { modo: 'todo', valor: 0 },
+               motivo: 'Viene del buffer D: va entero a la columna de catálogo.' };
+    }
 
     if (origen && origen.has('B')) {
       return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
@@ -15505,6 +15514,9 @@ const renderRFSection = (container) => {
       genderRims: art.genderRims || f.genderRims,
       subcategoria: f.subcategoria,
       esTemporadaActual: sugActuales(fecha).some(a => tempTxt.includes(a)),
+      // La sub-zona del buffer. Solo la D cambia el destino —manda a catálogo—, así que es
+      // la única que se pasa: las demás ya se resuelven en casoDelItem.
+      origen: (ctx.origenDe && (ctx.origenDe.get(s7) || new Set()).has('D')) ? 'D' : '',
       yaTiene: casa
     };
 
