@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0074';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0075';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0074';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0074';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0074';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0074';
-import * as metasService from '../services_v245/metasService.js?v=29.0074';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0074';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0074';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0074';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0074';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0074';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0074';
+import * as adminService from '../services_v245/adminService.js?v=29.0075';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0075';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0075';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0075';
+import * as metasService from '../services_v245/metasService.js?v=29.0075';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0075';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0075';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0075';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0075';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0075';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0075';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0074';
+const VERSION = '29.0075';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0074');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0075');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0074 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0075 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18754,8 +18754,11 @@ const renderRFSection = (container) => {
           const esc = (s) => String(s == null ? '' : s)
             .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
           let occupiedCells = 0;
-          let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
-          
+          // OJO CON EL ORDEN: la barra de marcas va ANTES de abrir la fila del mapa, no
+          // adentro. Metida adentro se convierte en una columna más y, como la fila estira
+          // a sus hijos, se pinta de arriba abajo y tapa el mapa de calor entero.
+          let gridHtml = '';
+
           // LA FORMA DE LA ZONA SALE DE LA CONFIGURACIÓN, NO DE UN if POR NOMBRE.
           // Los mezzanines se dibujan de la 24 hacia la 1 porque así se recorren en el
           // almacén; el selectivo, al revés.
@@ -18787,8 +18790,15 @@ const renderRFSection = (container) => {
           const duenoDe = (c) => hayVariasMarcas
               ? zonasService.duenoDeColumna(currentLayoutZona, c) : null;
 
+          // El scroll horizontal envuelve a la barra Y al mapa: si lo tuviera solo el mapa,
+          // al desplazarlo la barra se quedaría quieta y las marcas dejarían de coincidir
+          // con sus columnas.
+          gridHtml += `<div style="width:100%; overflow-x:auto; padding-bottom:15px;"><div style="min-width:100%;">`;
+
           if (hayVariasMarcas) {
-              gridHtml += `<div style="display:flex; gap:10px; width:100%; margin-bottom:4px;">`;
+              // ALTURA FIJA. Sin esto la fila estira sus hijos y la barra se pinta de arriba
+              // abajo, tapando el mapa entero.
+              gridHtml += `<div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:4px;">`;
               colsArray.forEach(c => {
                   const d = duenoDe(c);
                   const bloq = zonasService.esColumnaBloqueada(currentLayoutZona, c);
@@ -18799,14 +18809,17 @@ const renderRFSection = (container) => {
                   const radio = esMezzanine
                       ? `${fin ? '5px' : '0'} ${ini ? '5px' : '0'} 0 0`
                       : `${ini ? '5px' : '0'} ${fin ? '5px' : '0'} 0 0`;
-                  gridHtml += `<div title="${d ? esc(d.marca) : ''}" style="flex:1; min-width:40px;
-                      background:${col}; border-radius:${radio}; padding:3px 1px; text-align:center;
+                  gridHtml += `<div title="${d ? esc(d.marca) : ''}" style="flex:1 1 0; min-width:40px;
+                      height:14px; line-height:14px; box-sizing:border-box;
+                      background:${col}; border-radius:${radio}; text-align:center;
                       font-size:8.5px; font-weight:900; color:#0b1220; letter-spacing:-0.2px;
                       white-space:nowrap; overflow:hidden; ${bloq ? 'opacity:0.25;' : ''}">${
-                      (d && !bloq) ? esc(d.etiqueta) : '·'}</div>`;
+                      (d && !bloq) ? esc(d.etiqueta) : ''}</div>`;
               });
               gridHtml += `</div>`;
           }
+
+          gridHtml += `<div style="display:flex; justify-content:space-between; gap:10px; width:100%;">`;
 
           for (let c of colsArray) {
               // COLUMNA BLOQUEADA: no existe. Se deja el hueco para no correr el mapa entero
@@ -18902,7 +18915,7 @@ const renderRFSection = (container) => {
               }
               gridHtml += `</div>`;
           }
-          gridHtml += `</div>`;
+          gridHtml += `</div></div></div>`;   // fila del mapa · ancho mínimo · scroll
 
           window.globalLayoutData[currentLayoutZona] = localLayoutData;
             let ACTUAL_TOTAL_CELLS = 14 * 22;
