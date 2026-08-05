@@ -299,7 +299,10 @@ const normalizar = (crudo) => {
         const cols = (v && typeof v === 'object' && Array.isArray(v.columnas))
             ? v.columnas.map(Number).filter(n => Number.isFinite(n) && n >= 1 && n <= zonas[zona].columnas)
             : [];
-        marcas[m] = { zona, columnas: [...new Set(cols)].sort((a, b) => a - b) };
+        // El nombre corto del mapa. Si no viene, lo pone etiquetaDeMarca().
+        const et = (v && typeof v === 'object' && v.etiqueta)
+            ? String(v.etiqueta).trim().toUpperCase().slice(0, 12) : '';
+        marcas[m] = { zona, columnas: [...new Set(cols)].sort((a, b) => a - b), etiqueta: et };
     });
 
     const others = (Array.isArray(c.others) ? c.others : def.others)
@@ -425,6 +428,74 @@ export const columnasDeMarca = (marca) => {
     const z = zonasActual().zonas[r.zona];
     const bloq = (z && z.columnasBloqueadas) || [];
     return r.columnas.filter(c => !bloq.includes(Number(c)));
+};
+
+/**
+ * EL NOMBRE CON EL QUE LA MARCA SE MUESTRA EN EL MAPA.
+ *
+ * No es el del Maestro: en el mapa cada columna mide unos 46 píxeles y "Bata Industrials" no
+ * entra. Y además nadie en el almacén la llama así — Daniel lo dijo el 05-ago-2026:
+ * *"no le pongas Bata Industrial, ponle INDUSTRIAL nada más"*.
+ *
+ * Se puede pisar por marca desde Zonas de Almacenaje con el campo `etiqueta`.
+ */
+const ETIQUETAS_POR_DEFECTO = {
+    'Bata Industrials': 'INDUSTRIAL',
+    'Marie Claire':     'M. CLAIRE',
+    'B.G Licenses':     'BG LICENC.',
+    'Bubblegummers':    'BUBBLEGUM',
+    'North Star':       'NORTH STAR',
+    'Weinbrenner':      'WEINBRENN'
+};
+
+export const etiquetaDeMarca = (marca) => {
+    const r = reglaDeMarca(marca);
+    if (r && r.etiqueta) return String(r.etiqueta).toUpperCase();
+    return (ETIQUETAS_POR_DEFECTO[String(marca || '').trim()] || String(marca || '')).toUpperCase();
+};
+
+/**
+ * Los colores del mapa. Con dos exclusiones, y las dos importan:
+ *
+ *   - NADA DE AZUL NI ROJO: esos ya significan temporada actual y temporada anterior en las
+ *     celdas. Repetirlos haría que dos cosas distintas se vieran igual.
+ *   - NADA DEL VIOLETA DEL CATÁLOGO (#a855f7): esa columna no es de ninguna marca y lleva el
+ *     color que ya tiene la franja 'catalogo' en FRANJAS. Estaba en esta lista y en MZN03 le
+ *     tocaba a Skechers, así que la columna 8 y las 9-11 salían del mismo color.
+ */
+export const PALETA_MARCAS = ['#f59e0b', '#ec4899', '#14b8a6', '#22c55e', '#f97316',
+                              '#06b6d4', '#eab308', '#8b5cf6', '#10b981', '#d946ef'];
+
+/**
+ * Las marcas que se reparten una zona, en orden de columna, ya con su etiqueta y su color.
+ *
+ * DEVUELVE VACÍO CUANDO LA ZONA ES DE UNA SOLA MARCA. Bata tiene el selectivo entero y North
+ * Star el mezzanine 2: ahí `columnas` está vacío —quiere decir "toda la zona"— y no hay nada
+ * que repartir ni que pintar. Por eso el mapa solo dibuja la barra de marcas en las zonas
+ * compartidas, que hoy son MZN01 y MZN03. Si mañana entra otra marca al 2, aparece sola.
+ */
+export const marcasDeZona = (zona) => {
+    const cfg = zonasActual();
+    return Object.keys(cfg.marcas)
+        .filter(m => cfg.marcas[m] && cfg.marcas[m].zona === zona)
+        .map(m => ({ marca: m, columnas: columnasDeMarca(m) }))
+        .filter(x => x.columnas.length)
+        .sort((a, b) => a.columnas[0] - b.columnas[0])
+        .map((x, i) => ({ ...x, etiqueta: etiquetaDeMarca(x.marca),
+                          color: PALETA_MARCAS[i % PALETA_MARCAS.length] }));
+};
+
+/** De quién es esta columna: la marca, o la franja especial si no tiene dueño. */
+export const duenoDeColumna = (zona, columna) => {
+    const m = marcasDeZona(zona).find(x => x.columnas.includes(Number(columna)));
+    if (m) return m;
+    // La 8 del mezzanine 3 no es de nadie: es el catálogo del buffer D. Su color sale de la
+    // franja, que es donde ya estaba definido, y por eso PALETA_MARCAS no lo incluye.
+    if (franjaDeColumna(zona, columna) === SIN_FILTRO_DE_MARCA) {
+        return { marca: 'CATÁLOGO', etiqueta: 'CATÁLOGO',
+                 color: FRANJAS[SIN_FILTRO_DE_MARCA].color, columnas: [Number(columna)] };
+    }
+    return null;
 };
 
 /**

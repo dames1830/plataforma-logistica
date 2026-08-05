@@ -397,6 +397,36 @@ export const renderLayoutActivo = async (container) => {
           } else {
               for (let i = 1; i <= totalCols; i++) colsArray.push(i);
           }
+
+          // De quién es cada columna. Solo en las zonas que comparten marcas —hoy MZN01 y
+          // MZN03—; mismo criterio que en la web principal.
+          const escP = (s) => String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+          const marcasZona = (!isReserva && _zCfg) ? zonasService.marcasDeZona(currentLayoutZona) : [];
+          const hayVariasMarcas = marcasZona.length > 1;
+          const duenoDe = (c) => hayVariasMarcas
+              ? zonasService.duenoDeColumna(currentLayoutZona, c) : null;
+
+          if (hayVariasMarcas) {
+              gridHtml += `<div style="display:flex; gap:10px; width:100%; margin-bottom:4px;">`;
+              colsArray.forEach(c => {
+                  const d = duenoDe(c);
+                  const bloq = zonasService.esColumnaBloqueada(currentLayoutZona, c);
+                  const col = (d && !bloq) ? d.color : 'rgba(0,0,0,0.06)';
+                  const ini = d && c === d.columnas[0];
+                  const fin = d && c === d.columnas[d.columnas.length - 1];
+                  const radio = esMezzanine
+                      ? `${fin ? '5px' : '0'} ${ini ? '5px' : '0'} 0 0`
+                      : `${ini ? '5px' : '0'} ${fin ? '5px' : '0'} 0 0`;
+                  gridHtml += `<div title="${d ? escP(d.marca) : ''}" style="flex:1; min-width:40px;
+                      background:${col}; border-radius:${radio}; padding:3px 1px; text-align:center;
+                      font-size:8.5px; font-weight:900; color:#1C2B3A; letter-spacing:-0.2px;
+                      white-space:nowrap; overflow:hidden; ${bloq ? 'opacity:0.25;' : ''}">${
+                      (d && !bloq) ? escP(d.etiqueta) : '·'}</div>`;
+              });
+              gridHtml += `</div>`;
+          }
+
           for (let c of colsArray) {
               // Columna bloqueada: no existe. Mismo criterio que en la web principal.
               if (!isReserva && zonasService.esColumnaBloqueada(currentLayoutZona, c)) {
@@ -472,6 +502,14 @@ export const renderLayoutActivo = async (container) => {
                   `;
               }
               gridHtml += `<div style="text-align:center; font-size:0.68rem; color:#1C2B3A; font-weight:700; margin-top:8px;">${String(c).padStart(2,'0')}</div>`;
+              if (hayVariasMarcas) {
+                  const d = duenoDe(c);
+                  gridHtml += `<div style="height:5px; border-radius:2px; margin-top:4px;
+                      background:${d ? d.color : 'rgba(0,0,0,0.08)'};"></div>`;
+                  gridHtml += `<div style="text-align:center; font-size:8px; font-weight:800;
+                      margin-top:3px; white-space:nowrap; overflow:hidden; letter-spacing:-0.2px;
+                      color:${d ? d.color : 'rgba(0,0,0,0.25)'};">${d ? escP(d.etiqueta) : ''}</div>`;
+              }
               gridHtml += `</div>`;
           }
           gridHtml += `</div>`;

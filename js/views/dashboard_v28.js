@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0073';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0074';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0073';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0073';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0073';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0073';
-import * as metasService from '../services_v245/metasService.js?v=29.0073';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0073';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0073';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0073';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0073';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0073';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0073';
+import * as adminService from '../services_v245/adminService.js?v=29.0074';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0074';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0074';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0074';
+import * as metasService from '../services_v245/metasService.js?v=29.0074';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0074';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0074';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0074';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0074';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0074';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0074';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0073';
+const VERSION = '29.0074';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0073');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0074');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0073 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0074 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18751,6 +18751,8 @@ const renderRFSection = (container) => {
           const zonaLabel = isReserva ? 'SEL' : currentLayoutZona;
           
           window.__buildLayoutHTML = buildLayoutHTML;
+          const esc = (s) => String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
           let occupiedCells = 0;
           let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
           
@@ -18767,6 +18769,45 @@ const renderRFSection = (container) => {
           } else {
               for (let i = 1; i <= totalCols; i++) colsArray.push(i);
           }
+
+          // ══════════════════════════════════════════════════════════════════════════
+          // DE QUIÉN ES CADA COLUMNA
+          //
+          // El color de la celda dice la TEMPORADA, así que la marca no puede ir ahí sin
+          // tapar lo que ya se muestra. Va en una barra arriba y una franja abajo, con el
+          // nombre repetido en CADA columna — no una vez por bloque: el asistente tiene que
+          // poder mirar cualquier columna suelta y saber de quién es.
+          //
+          // SOLO EN LAS ZONAS QUE COMPARTEN MARCAS. Hoy son MZN01 y MZN03; el selectivo es
+          // todo de Bata y el mezzanine 2 todo de North Star, y ahí la barra sería una
+          // franja de un solo color repetida 24 veces, que no dice nada. Regla de Daniel.
+          // ══════════════════════════════════════════════════════════════════════════
+          const marcasZona = (!isReserva && _zCfg) ? zonasService.marcasDeZona(currentLayoutZona) : [];
+          const hayVariasMarcas = marcasZona.length > 1;
+          const duenoDe = (c) => hayVariasMarcas
+              ? zonasService.duenoDeColumna(currentLayoutZona, c) : null;
+
+          if (hayVariasMarcas) {
+              gridHtml += `<div style="display:flex; gap:10px; width:100%; margin-bottom:4px;">`;
+              colsArray.forEach(c => {
+                  const d = duenoDe(c);
+                  const bloq = zonasService.esColumnaBloqueada(currentLayoutZona, c);
+                  const col = (d && !bloq) ? d.color : 'rgba(255,255,255,0.05)';
+                  // Las esquinas se redondean solo en los extremos del bloque de la marca
+                  const ini = d && c === d.columnas[0];
+                  const fin = d && c === d.columnas[d.columnas.length - 1];
+                  const radio = esMezzanine
+                      ? `${fin ? '5px' : '0'} ${ini ? '5px' : '0'} 0 0`
+                      : `${ini ? '5px' : '0'} ${fin ? '5px' : '0'} 0 0`;
+                  gridHtml += `<div title="${d ? esc(d.marca) : ''}" style="flex:1; min-width:40px;
+                      background:${col}; border-radius:${radio}; padding:3px 1px; text-align:center;
+                      font-size:8.5px; font-weight:900; color:#0b1220; letter-spacing:-0.2px;
+                      white-space:nowrap; overflow:hidden; ${bloq ? 'opacity:0.25;' : ''}">${
+                      (d && !bloq) ? esc(d.etiqueta) : '·'}</div>`;
+              });
+              gridHtml += `</div>`;
+          }
+
           for (let c of colsArray) {
               // COLUMNA BLOQUEADA: no existe. Se deja el hueco para no correr el mapa entero
               // —el operario lee las columnas por su número— pero sin una sola ubicación y con
@@ -18849,6 +18890,16 @@ const renderRFSection = (container) => {
                   `;
               }
               gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#60a5fa; font-weight:900; margin-top:8px; text-shadow:0 0 5px rgba(96, 165, 250, 0.5);">${String(c).padStart(2,'0')}</div>`;
+              // El pie repite la marca: color y nombre, para no tener que subir la vista hasta
+              // la barra de arriba cuando se está mirando la parte baja del mapa.
+              if (hayVariasMarcas) {
+                  const d = duenoDe(c);
+                  gridHtml += `<div style="height:5px; border-radius:2px; margin-top:4px;
+                      background:${d ? d.color : 'rgba(255,255,255,0.06)'};"></div>`;
+                  gridHtml += `<div style="text-align:center; font-size:8px; font-weight:800;
+                      margin-top:3px; white-space:nowrap; overflow:hidden; letter-spacing:-0.2px;
+                      color:${d ? d.color : 'rgba(255,255,255,0.2)'};">${d ? esc(d.etiqueta) : ''}</div>`;
+              }
               gridHtml += `</div>`;
           }
           gridHtml += `</div>`;
