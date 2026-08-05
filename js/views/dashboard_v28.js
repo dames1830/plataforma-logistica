@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0072';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0073';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0072';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0072';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0072';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0072';
-import * as metasService from '../services_v245/metasService.js?v=29.0072';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0072';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0072';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0072';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0072';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0072';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0072';
+import * as adminService from '../services_v245/adminService.js?v=29.0073';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0073';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0073';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0073';
+import * as metasService from '../services_v245/metasService.js?v=29.0073';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0073';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0073';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0073';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0073';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0073';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0073';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0072';
+const VERSION = '29.0073';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0072');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0073');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0072 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0073 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18216,9 +18216,16 @@ const renderRFSection = (container) => {
   let reservaState = { page: 1, query: '', skusArray: [], view: 'resumen' };
   let ubicacionState = { page: 1, query: '', ubisArray: [] };
   let currentLayoutZona = 'SEL';
-  // [ZONAS] Lista central de zonas activas del mapa de calor. Sale de Zonas de Almacenaje:
-  // una zona con reglas cargadas tiene mapa, y el día que se active MZN04 aparece sola.
-  const ZONAS_ACTIVAS = zonasService.zonasActivas();
+  /**
+   * [ZONAS] Las zonas que tienen mapa de calor: las que tienen reglas cargadas en Zonas de
+   * Almacenaje. El día que se active MZN04, su mapa aparece solo.
+   *
+   * ES UNA FUNCIÓN Y NO UNA CONSTANTE A PROPÓSITO. Este archivo se importa antes de que
+   * cargarZonas() traiga la configuración publicada, y en los valores de fábrica MZN03
+   * figura inactivo. Congelando la lista al importar, MZN03 se quedaba "en construcción"
+   * para siempre en la primera carga de cada PC.
+   */
+  const zonasConMapa = () => zonasService.zonasActivas();
 
   /**
    * Cómo empieza una ubicación de esta zona. El WMS escribe el mezzanine de dos formas
@@ -18881,7 +18888,7 @@ const renderRFSection = (container) => {
           const percUnidAnterior = totalUnits > 0 ? Math.round((stats['ANTERIOR'].units / totalUnits) * 100) : 0;
 
           const btnPublicarTodas = (hasLocalPayload && !isReserva) ? `
-              <button title="Procesa y publica TODAS las zonas (${ZONAS_ACTIVAS.join(', ')}) de una sola vez" onclick="window.publicarTodasLasZonas(this)" style="background:linear-gradient(135deg,#8b5cf6,#6366f1); border:none; color:#fff; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:900; letter-spacing:0.3px; display:flex; align-items:center; gap:6px; white-space:nowrap; box-shadow:0 4px 14px rgba(139,92,246,0.4); transition:all 0.2s;" onmouseover="this.style.filter='brightness(1.12)'" onmouseout="this.style.filter='brightness(1)'">
+              <button title="Procesa y publica TODAS las zonas (${zonasConMapa().join(', ')}) de una sola vez" onclick="window.publicarTodasLasZonas(this)" style="background:linear-gradient(135deg,#8b5cf6,#6366f1); border:none; color:#fff; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:900; letter-spacing:0.3px; display:flex; align-items:center; gap:6px; white-space:nowrap; box-shadow:0 4px 14px rgba(139,92,246,0.4); transition:all 0.2s;" onmouseover="this.style.filter='brightness(1.12)'" onmouseout="this.style.filter='brightness(1)'">
                   🌐 PROCESAR Y PUBLICAR TODAS
               </button>
           ` : '';
@@ -19279,12 +19286,17 @@ window.showCellModal = function(htmlContent) {
           window.__layoutHeaderTs = null;
       }
 
-      if (currentLayoutZona !== 'SEL' && currentLayoutZona !== 'MZN01' && currentLayoutZona !== 'MZN02') {
+      // UNA ZONA TIENE MAPA CUANDO TIENE REGLAS CARGADAS, no cuando su nombre está en una
+      // lista. Acá estaban SEL, MZN01 y MZN02 escritas a mano, y por eso MZN03 seguía
+      // mostrando "Zona en Construcción" aunque ya tuviera sus seis marcas, sus franjas y
+      // su grilla. El día que se active MZN04, su mapa aparece solo.
+      if (!zonasConMapa().includes(currentLayoutZona)) {
           activoWrap.innerHTML = `
               <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05);">
                   <div style="font-size:4rem; margin-bottom:1.5rem; opacity:0.15;">🚧</div>
                   <h4 style="color:#fff; font-size:1.5rem; margin-bottom:10px;">Zona en Construcción</h4>
-                  <p style="font-size:1rem;">El mapa de calor y los reportes para la zona <b>${currentLayoutZona}</b> aún no están configurados.</p>
+                  <p style="font-size:1rem;">La zona <b>${currentLayoutZona}</b> todavía no tiene reglas cargadas.</p>
+                  <p style="font-size:0.8rem; opacity:0.7; margin-top:8px;">Se activa en Análisis SKU → Zonas de Almacenaje.</p>
               </div>
           `;
       } else if (window.__verLayoutAnterior && !globalPayload) {
@@ -19381,7 +19393,7 @@ window.showCellModal = function(htmlContent) {
         document.body.appendChild(ov);
         const setMsg = (t) => { const m = document.getElementById('__pubTodasMsg'); if (m) m.textContent = t; };
         const resultados = [];
-        for (const z of ZONAS_ACTIVAS) {
+        for (const z of zonasConMapa()) {
             setMsg(`Procesando zona ${z}...`);
             currentLayoutZona = z;
             window.compartirLayoutPayload = null;

@@ -889,12 +889,13 @@ window.showCellModal = function(htmlContent) {
           window.__layoutHeaderTs = null;
       }
       
-      if (currentLayoutZona !== 'SEL' && currentLayoutZona !== 'MZN01' && currentLayoutZona !== 'MZN02') {
+      // Mismo criterio que la web principal: tiene mapa la zona con reglas cargadas.
+      if (!zonasService.zonasActivas().includes(currentLayoutZona)) {
           activoWrap.innerHTML = `
               <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid #DDD8CF;">
                   <div style="font-size:4rem; margin-bottom:1.5rem; opacity:0.25;">🚧</div>
                   <h4 style="color:#1C2B3A; font-size:1.5rem; margin-bottom:10px;">Zona en Construcción</h4>
-                  <p style="font-size:1rem;">El mapa de calor y los reportes para la zona <b>${currentLayoutZona}</b> aún no están configurados.</p>
+                  <p style="font-size:1rem;">La zona <b>${currentLayoutZona}</b> todavía no tiene reglas cargadas.</p>
               </div>
           `;
       } else if (payloadToRender) {
