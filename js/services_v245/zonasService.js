@@ -620,7 +620,9 @@ export const cuerposDe = (zona) => {
     const salida = [];
     for (let c = 1; c <= z.columnas; c++) {
         if (esColumnaBloqueada(zona, c)) continue;
-        for (let cu = 1; cu <= z.cuerpos; cu++) {
+        // Cada columna termina donde termina: los macizos de MZN01 y MZN02 llegan a 17.
+        const tope = (z.cuerposPorColumna && z.cuerposPorColumna[c]) || z.cuerpos;
+        for (let cu = 1; cu <= tope; cu++) {
             if (!esPasillo(zona, c, cu)) salida.push({ columna: c, cuerpo: cu });
         }
     }

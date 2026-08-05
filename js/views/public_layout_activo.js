@@ -1,6 +1,14 @@
+// Las columnas bloqueadas y la forma real de cada zona salen de la misma configuración que
+// usan las tareas. El reporte público tenía su propia copia escrita a mano y por eso seguía
+// mostrando como ubicaciones vacías columnas que ya no existen.
+import * as zonasService from '../services_v245/zonasService.js';
+
 let currentLayoutZona = 'SEL';
 
 export const renderLayoutActivo = async (container) => {
+      // Se pide una vez; si el servidor no contesta, quedan los valores de fábrica, que ya
+      // traen las columnas bloqueadas.
+      try { await zonasService.cargarZonas(); } catch (e) { /* con lo de fábrica alcanza */ }
       // Indicador de carga mientras se consulta el servidor (el backend puede tardar si estaba dormido)
       if (container) container.innerHTML = `<div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:1.2rem;">
           <div style="width:48px; height:48px; border:4px solid rgba(28,43,58,0.1); border-top-color:#B45309; border-radius:50%; animation:spin 1s linear infinite;"></div>
@@ -384,6 +392,16 @@ export const renderLayoutActivo = async (container) => {
               for (let i = 1; i <= totalCols; i++) colsArray.push(i);
           }
           for (let c of colsArray) {
+              // Columna bloqueada: no existe. Mismo criterio que en la web principal.
+              if (!isReserva && zonasService.esColumnaBloqueada(currentLayoutZona, c)) {
+                  gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px; opacity:0.28;">`;
+                  for (let r = maxRows; r >= 1; r--) {
+                      gridHtml += `<div style="height:15px; border:1px dashed rgba(255,255,255,0.10); background:repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0 3px,transparent 3px 6px);"></div>`;
+                  }
+                  gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#64748b; font-weight:900; margin-top:8px; text-decoration:line-through;">${String(c).padStart(2,'0')}</div>`;
+                  gridHtml += `</div>`;
+                  continue;
+              }
               gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
               for (let r = maxRows; r >= 1; r--) {
                   let cellExists = true;
@@ -455,19 +473,9 @@ export const renderLayoutActivo = async (container) => {
 
           window.globalLayoutData[currentLayoutZona] = localLayoutData;
             let ACTUAL_TOTAL_CELLS = 14 * 22;
-          if (!isReserva && currentLayoutZona === 'SEL') {
-              ACTUAL_TOTAL_CELLS = 14 * 22 - (12 * 2);
-          } else if (!isReserva && (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02')) {
-                let count = 0;
-              for (let c = 1; c <= 24; c++) {
-                  for (let r = 1; r <= 20; r++) {
-                      let exists = true;
-                      if ((c === 2 || c === 3) && r <= 3) exists = false;
-                      if ((c === 22 || c === 23) && r <= 3) exists = false;
-                      if (exists) count++;
-                  }
-              }
-              ACTUAL_TOTAL_CELLS = count;
+          if (!isReserva && zonasService.zonasActual().zonas[currentLayoutZona]) {
+              // Misma fuente que la web principal, para que los dos números coincidan.
+              ACTUAL_TOTAL_CELLS = zonasService.cuerposDe(currentLayoutZona).length;
           }
           const emptyCellsCount = ACTUAL_TOTAL_CELLS - occupiedCells;
           const densidad = occupiedCells > 0 ? (totalUnits / occupiedCells).toFixed(1) : '0';

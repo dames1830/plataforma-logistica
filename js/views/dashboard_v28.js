@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0068';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0069';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0068';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0068';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0068';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0068';
-import * as metasService from '../services_v245/metasService.js?v=29.0068';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0068';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0068';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0068';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0068';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0068';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0068';
+import * as adminService from '../services_v245/adminService.js?v=29.0069';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0069';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0069';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0069';
+import * as metasService from '../services_v245/metasService.js?v=29.0069';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0069';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0069';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0069';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0069';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0069';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0069';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0068';
+const VERSION = '29.0069';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0068');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0069');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0068 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0069 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18708,6 +18708,19 @@ const renderRFSection = (container) => {
               for (let i = 1; i <= totalCols; i++) colsArray.push(i);
           }
           for (let c of colsArray) {
+              // COLUMNA BLOQUEADA: no existe. Se deja el hueco para no correr el mapa entero
+              // —el operario lee las columnas por su número— pero sin una sola ubicación y con
+              // el número apagado. No suma a las vacías ni a la densidad, porque no hay dónde
+              // guardar nada ahí. Ver zonasService.esColumnaBloqueada.
+              if (!isReserva && zonasService.esColumnaBloqueada(currentLayoutZona, c)) {
+                  gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px; opacity:0.28;">`;
+                  for (let r = maxRows; r >= 1; r--) {
+                      gridHtml += `<div style="height:15px; border:1px dashed rgba(255,255,255,0.10); background:repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0 3px,transparent 3px 6px);"></div>`;
+                  }
+                  gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#64748b; font-weight:900; margin-top:8px; text-decoration:line-through;">${String(c).padStart(2,'0')}</div>`;
+                  gridHtml += `</div>`;
+                  continue;
+              }
               gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
               for (let r = maxRows; r >= 1; r--) {
                   let cellExists = true;
@@ -18779,24 +18792,13 @@ const renderRFSection = (container) => {
 
           window.globalLayoutData[currentLayoutZona] = localLayoutData;
             let ACTUAL_TOTAL_CELLS = 14 * 22;
-          if (!isReserva && currentLayoutZona === 'SEL') {
-              // Sale de Zonas de Almacenaje: columnas x cuerpos, menos el paso del elevador.
-              // Con la configuración de fábrica da los mismos 284 que estaban escritos acá.
-              ACTUAL_TOTAL_CELLS = zonasService.cuerposDe('SEL').length;
-          } else if (!isReserva && (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02')) {
-              // Los macizos siguen contando como antes: acá se recorren 20 cuerpos mientras el
-              // mapa dibuja 22, y esa diferencia es anterior a este cambio. Se deja igual para
-              // no mover un número que ya se venía mirando; se revisa aparte.
-                let count = 0;
-              for (let c = 1; c <= 24; c++) {
-                  for (let r = 1; r <= 20; r++) {
-                      let exists = true;
-                      if ((c === 2 || c === 3) && r <= 3) exists = false;
-                      if ((c === 22 || c === 23) && r <= 3) exists = false;
-                      if (exists) count++;
-                  }
-              }
-              ACTUAL_TOTAL_CELLS = count;
+          if (!isReserva && zonasService.zonasActual().zonas[currentLayoutZona]) {
+              // UNA SOLA FUENTE DE VERDAD: Zonas de Almacenaje. Antes cada zona contaba a su
+              // manera —el selectivo por configuración y los mezzanines con un doble bucle
+              // escrito a mano—, y ese bucle no sabía nada de las columnas bloqueadas, así que
+              // las seguía contando como ubicaciones vacías disponibles. Ahora las tres salen
+              // de cuerposDe(), que ya descuenta los pasillos, los macizos y lo bloqueado.
+              ACTUAL_TOTAL_CELLS = zonasService.cuerposDe(currentLayoutZona).length;
           }
           const emptyCellsCount = ACTUAL_TOTAL_CELLS - occupiedCells;
           const densidad = occupiedCells > 0 ? (totalUnits / occupiedCells).toFixed(1) : '0';
