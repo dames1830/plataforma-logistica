@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0069';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0070';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0069';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0069';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0069';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0069';
-import * as metasService from '../services_v245/metasService.js?v=29.0069';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0069';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0069';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0069';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0069';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0069';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0069';
+import * as adminService from '../services_v245/adminService.js?v=29.0070';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0070';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0070';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0070';
+import * as metasService from '../services_v245/metasService.js?v=29.0070';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0070';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0070';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0070';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0070';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0070';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0070';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0069';
+const VERSION = '29.0070';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0069');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0070');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0069 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0070 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15450,6 +15450,25 @@ const renderRFSection = (container) => {
   const CUERPOS_REPOSICION   = 2;
 
   /**
+   * EL ESCOLAR BAJA CON CUENTAGOTAS: 50 PARES Y NADA MÁS.
+   *
+   * Regla de Daniel del 05-ago-2026, para el calzado escolar de CUALQUIER marca — Bata,
+   * North Star, Power, B.G Licenses, todas. No importa si es código nuevo o reposición, ni
+   * cuánto llegue: al piso bajan 50 pares y el resto sube a reserva. Si llegan 300, bajan 50
+   * y suben 250.
+   *
+   * Se mide en PARES y no en cuerpos a propósito: 50 pares no llenan ni un sexto de un cuerpo
+   * del selectivo, así que "un cuerpo" sería veinte veces más de lo que se quiere abajo.
+   *
+   * El escolar se reconoce por el Gender RIMS ('05 SCHOOL'), el mismo campo con el que
+   * franjaDeArticulo ya lo manda a su columna — la 14 del selectivo, que lleva escolar de
+   * cualquier temporada.
+   */
+  const PARES_ESCOLAR = 50;
+  const esEscolar = (genderRims) =>
+    String(genderRims || '').toUpperCase().includes('SCHOOL');
+
+  /**
    * DE DÓNDE VINO ESTA MERCADERÍA Y QUÉ SE HACE CON ELLA.
    *
    * La tarea de almacenaje es la SEGUNDA fase. La primera —el replenishment y el análisis de
@@ -15486,6 +15505,21 @@ const renderRFSection = (container) => {
    */
   const casoDelItem = (s7, datos, pares, zona, ctx) => {
     const origen = ctx.origenDe && ctx.origenDe.get(s7);
+
+    // EL ESCOLAR MANDA SOBRE TODO LO DEMÁS: 50 pares al piso y el resto a reserva.
+    //
+    // Va primero a propósito. Daniel fue explícito: "así sea nuevo, reposición, lo que sea,
+    // solamente 50 pares". Le gana incluso al buffer B —el que bajó por replenishment— y eso
+    // es una excepción a la regla de no contradecir a la fase anterior: acá el tope lo puso
+    // Daniel después, y es más chico.
+    //
+    // Solo calzado: el escolar de MZN04 no existe, y si apareciera un accesorio marcado
+    // SCHOOL manda la regla del mezzanine 4, que se pregunta más abajo... por eso este bloque
+    // NO se aplica cuando la zona es la que va sin ubicación.
+    if (esEscolar(datos.genderRims) && !zonasService.esZonaSinUbicacion(zona)) {
+      return { nombre: 'escolar', regla: { modo: 'pares', valor: PARES_ESCOLAR },
+               motivo: `Es escolar: al piso van ${PARES_ESCOLAR} pares y el resto sube a reserva.` };
+    }
 
     if (origen && origen.has('D')) {
       return { nombre: 'catalogo', regla: { modo: 'todo', valor: 0 },

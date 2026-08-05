@@ -55,7 +55,10 @@ const parejo = repartoParejo;
 export const MODOS = {
     porcentaje: 'Un % del stock total',
     cuerpos:    'Llenar N cuerpos',
-    todo:       'Todo lo del buffer'
+    todo:       'Todo lo del buffer',
+    // Un tope fijo en pares, sin importar cuánto entre en un cuerpo. Lo pide el escolar:
+    // bajan 50 pares y el resto va a reserva, vengan 300 o 3.000. Ver PARES_ESCOLAR.
+    pares:      'Un tope fijo de pares'
 };
 
 export const modoPorDefecto = () => ({ modo: 'cuerpos', valor: 1 });
@@ -198,6 +201,7 @@ const normalizar = (crudo) => {
         if (!Number.isFinite(valor) || valor < 0) valor = modo === 'porcentaje' ? 50 : 1;
         if (modo === 'porcentaje') valor = Math.min(100, valor);
         if (modo === 'cuerpos') valor = Math.max(1, Math.round(valor));
+        if (modo === 'pares') valor = Math.max(0, Math.round(valor));
         marcas[String(k).trim()] = { modo, valor };
     });
 
@@ -340,6 +344,9 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
     let objetivoArt;
     if (regla.modo === 'todo')          objetivoArt = pisoTotal + bufferTotal;
     else if (regla.modo === 'cuerpos')  objetivoArt = Math.max(1, Number(regla.valor) || 1) * paresPorCuerpo;
+    // TOPE FIJO EN PARES. No se mide en cuerpos: son los pares que tienen que quedar abajo y
+    // nada más. El escolar va así — 50 pares, lleguen 300 o 3.000.
+    else if (regla.modo === 'pares')    objetivoArt = Math.max(0, Number(regla.valor) || 0);
     else                                objetivoArt = (bufferTotal + pisoTotal + (Number(reserva) || 0)) * ((Number(regla.valor) || 50) / 100);
 
     // EL CANDADO. Un cuerpo no se comparte entre dos artículos, así que ocuparlo cuesta lo
