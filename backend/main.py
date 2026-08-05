@@ -13,7 +13,32 @@ import hmac
 import secrets
 import time
 from contextvars import ContextVar
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LA HORA ES LA DE LIMA, NO LA DEL SERVIDOR
+#
+# Render corre en UTC y Perú está cinco horas atrás. Con datetime.now() a secas todo
+# quedaba estampado cinco horas adelantado, y eso no era solo un número feo en pantalla:
+#
+#   - El robot corre a las 19:00 de Lima, que en UTC ya son las 00:00 del DÍA SIGUIENTE.
+#     La fecha por defecto de un área subida a esa hora salía con el día equivocado, y la
+#     rotación de Descargas borra por fecha.
+#   - Un archivo subido a las 19:05 aparecía fechado mañana.
+#
+# Perú no cambia de hora en todo el año, así que el desfase fijo de cinco horas alcanza y
+# evita depender de que el contenedor tenga instalada la base de zonas horarias.
+#
+# Devuelve un datetime SIN zona para que .isoformat() y .strftime() sigan dando
+# exactamente el mismo formato de siempre: cambia la hora, no la forma.
+# ─────────────────────────────────────────────────────────────────────────────
+_LIMA = timezone(timedelta(hours=-5))
+
+
+def ahora():
+    """La hora de Lima, con el mismo formato que devolvía datetime.now()."""
+    return datetime.now(timezone.utc).astimezone(_LIMA).replace(tzinfo=None)
 from typing import Optional
 from urllib.parse import quote
 
@@ -410,7 +435,7 @@ def health():
             "entorno": entorno_actual(),
             "db_size_mb": db_size / (1024*1024),
             "disk_free_mb": free / (1024*1024),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": ahora().isoformat()
         }
     except Exception as e: return {"status": "error", "message": str(e)}
 
@@ -617,7 +642,7 @@ def clonar_produccion_a_beta(confirmar: str = "", modo: str = "ligera",
             "disco_libre_mb": round(libre_despues / (1024*1024), 2),
             "produccion_intacta": True,
             "detalle": detalle,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": ahora().isoformat(),
         }
     except Exception as e:
         return {"status": "error", "message": f"No se pudo copiar: {e}"}
@@ -787,7 +812,7 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
 
         # ÁREAS SINGLETON (Ignoran fecha y usan 'MASTER')
         
-        target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
+        target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else ahora().strftime("%Y-%m-%d"))
         
         if area == 'no_retail_cache' and isinstance(payload_data, dict):
             conn = sqlite3.connect(db_path()); cursor = conn.cursor()
@@ -807,7 +832,7 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
                 INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json, updated_at=excluded.updated_at
-            """, (area, "MASTER", json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            """, (area, "MASTER", json_string, ahora().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
         else:
             conn = sqlite3.connect(db_path()); cursor = conn.cursor()
@@ -815,7 +840,7 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
                 INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json, updated_at=excluded.updated_at
-            """, (area, target_date, json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            """, (area, target_date, json_string, ahora().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
 
         # [MOD v25.1.28] Sincronización explícita con la tabla 'users' para mantener el login operativo
@@ -935,7 +960,7 @@ async def patch_area_data(area: str, request: Request, date: Optional[str] = Non
     try:
         partial_data = await request.json()
         
-        target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else datetime.now().strftime("%Y-%m-%d"))
+        target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else ahora().strftime("%Y-%m-%d"))
         
         conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         
@@ -970,7 +995,7 @@ async def patch_area_data(area: str, request: Request, date: Optional[str] = Non
             INSERT INTO logistics_snapshots (area_id, snapshot_date, data_json, updated_at)
             VALUES (?, ?, ?, ?)
             ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json, updated_at=excluded.updated_at
-        """, (area, target_date, json_string, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        """, (area, target_date, json_string, ahora().strftime("%Y-%m-%d %H:%M:%S")))
         conn.commit(); conn.close()
         
         return {"status": "success", "area": area, "date": target_date, "message": "Parcialmente actualizado"}
@@ -1284,7 +1309,7 @@ async def subir_archivo(modulo: str, request: Request, nombre: str = "",
                                % (len(contenido) / 1024.0 / 1024.0, ARCHIVO_MAX_MB)}
 
         nombre = _limpiar_nombre(nombre)
-        fecha = (fecha or datetime.now().strftime("%Y-%m-%d")).strip()[:20]
+        fecha = (fecha or ahora().strftime("%Y-%m-%d")).strip()[:20]
         tipo = _tipo_de(nombre, tipo)
 
         conn = sqlite3.connect(db_path())
@@ -1299,7 +1324,7 @@ async def subir_archivo(modulo: str, request: Request, nombre: str = "",
             INSERT INTO archivos_nube (modulo, tipo, nombre, fecha, tamano, contenido, subido_por, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (modulo, tipo, nombre, fecha, len(contenido), sqlite3.Binary(contenido),
-              (usuario or "robot")[:60], datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+              (usuario or "robot")[:60], ahora().strftime("%Y-%m-%d %H:%M:%S")))
 
         # Rotación POR TIPO: cada archivo guarda su propia semana.
         limite = guardar if 1 <= guardar <= 60 else ARCHIVOS_POR_TIPO
@@ -1424,7 +1449,7 @@ async def add_buffer_history(request: Request):
     """Agrega un nuevo registro al historial de Buffer KPI."""
     try:
         body = await request.json()
-        fecha               = body.get("fecha", datetime.now().strftime("%Y-%m-%d"))
+        fecha               = body.get("fecha", ahora().strftime("%Y-%m-%d"))
         paletas_solicitadas = int(body.get("paletasSolicitadas", 0))
         paletas_bajadas     = int(body.get("paletasBajadas", 0))
         diferencias         = int(body.get("diferencias", 0))
@@ -1435,7 +1460,7 @@ async def add_buffer_history(request: Request):
         cursor.execute("""
             INSERT INTO buffer_history (fecha, paletas_solicitadas, paletas_bajadas, diferencias, fill_rate, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (fecha, paletas_solicitadas, paletas_bajadas, diferencias, fill_rate, datetime.now().isoformat()))
+        """, (fecha, paletas_solicitadas, paletas_bajadas, diferencias, fill_rate, ahora().isoformat()))
         new_id = cursor.lastrowid
         conn.commit()
         conn.close()
@@ -1504,7 +1529,7 @@ async def save_kpi_results(request: Request):
     """
     try:
         body = await request.json()
-        fecha   = body.get("fecha", datetime.now().strftime("%Y-%m-%d"))
+        fecha   = body.get("fecha", ahora().strftime("%Y-%m-%d"))
         results = body.get("results", [])
 
         if not isinstance(results, list):
@@ -1512,7 +1537,7 @@ async def save_kpi_results(request: Request):
 
         results_json = json.dumps(results)
         row_count    = len(results)
-        now_str      = datetime.now().isoformat()
+        now_str      = ahora().isoformat()
 
         conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
