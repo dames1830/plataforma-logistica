@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0065';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0066';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0065';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0065';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0065';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0065';
-import * as metasService from '../services_v245/metasService.js?v=29.0065';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0065';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0065';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0065';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0065';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0065';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0065';
+import * as adminService from '../services_v245/adminService.js?v=29.0066';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0066';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0066';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0066';
+import * as metasService from '../services_v245/metasService.js?v=29.0066';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0066';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0066';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0066';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0066';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0066';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0066';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0065';
+const VERSION = '29.0066';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0065');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0066');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0065 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0066 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15420,7 +15420,11 @@ const renderRFSection = (container) => {
         ubi: l.ubi, skuFull: l.skuFull, talla: l.talla, qty: l.qty,
         marca: sug.ficha.marca || '',
         alPiso, aReserva,
-        destino: sug.niveles[l.talla] || ''
+        // EN EL MEZZANINE 4 EL DESTINO ES LA ZONA Y NADA MÁS. No hay nivel que repartir:
+        // esas ubicaciones no están analizadas y nombrar un cuerpo sería inventarlo.
+        destino: (sug.plan && sug.plan.sinUbicacion)
+          ? sug.plan.zona
+          : (sug.niveles[l.talla] || '')
       };
     });
   };
@@ -15477,6 +15481,14 @@ const renderRFSection = (container) => {
                motivo: 'Bajó de reserva por pedido o replenishment: se almacena todo.' };
     }
 
+    // AL MEZZANINE 4 NO SE LE MANDA NADA A RESERVA. Todo lo que va ahí es para almacenar,
+    // sin excepción — regla de Daniel. Es lo que hace que la columna "Paletizar" del papel
+    // salga vacía para los accesorios en vez de partir la mercadería en dos.
+    if (zonasService.esZonaSinUbicacion(zona)) {
+      return { nombre: 'mezzanine-4', regla: { modo: 'todo', valor: 0 },
+               motivo: 'Va al mezzanine 4: se almacena todo, nada sube a reserva.' };
+    }
+
     // Sin zona resuelta no se puede saber en qué franja tendría que estar, y sin eso no hay
     // forma de distinguir un código nuevo de uno establecido. Se deja pasar la regla de la
     // marca, que es lo que venía haciendo.
@@ -15516,6 +15528,10 @@ const renderRFSection = (container) => {
       sku7: s7,
       marca: art.marca || f.marca,
       genderRims: art.genderRims || f.genderRims,
+      // 'G. Gender' — la que dice si es calzado. NO es genderRims, es la de al lado. De acá
+      // sale que los accesorios, la ropa, la papelería y las promociones vayan al mezzanine 4
+      // en vez de seguir a su marca hasta una zona de calzado.
+      gGender: f.gender,
       subcategoria: f.subcategoria,
       esTemporadaActual: sugActuales(fecha).some(a => tempTxt.includes(a)),
       // La sub-zona del buffer. Solo la D cambia el destino —manda a catálogo—, así que es
@@ -15530,19 +15546,30 @@ const renderRFSection = (container) => {
     const zr = zonasService.resolverZona(datos);
     const porCuerpo = zr.zona ? zonasService.densidadDe(zr.zona, zonasService.serieDe(s7)) : 300;
     const caso = casoDelItem(s7, datos, pares, zr.zona, ctx);
-    const cant = tallasService.planificarPorTalla({
+    const planificar = (regla) => tallasService.planificarPorTalla({
       marca: datos.marca,
       categoria: datos.genderRims,
       porTalla: ctx.porTallaDe.get(s7) || {},
       paresPorCuerpo: porCuerpo,
       reserva: ctx.reservaDe.get(s7) || 0,
       factor: tallasService.FACTOR_POR_DEFECTO,
-      reglaForzada: caso.regla
+      reglaForzada: regla
     });
 
-    const alPiso = cant ? cant.alPiso : pares;
-    const aReserva = cant ? cant.aReserva : 0;
+    let cant = planificar(caso.regla);
+    let alPiso = cant ? cant.alPiso : pares;
+    let aReserva = cant ? cant.aReserva : 0;
     const plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados, ctx.libres);
+
+    // EL SEGUNDO CANDADO DEL MEZZANINE 4. casoDelItem ya lo agarra por la zona de la regla,
+    // pero un calzado mal ubicado puede terminar ahí por el otro camino: su cuerpo está en el
+    // mezzanine 4 y lo lleva la reposición. Si por cualquier vía el destino es el mezzanine 4,
+    // se rehace el cálculo con todo al piso: ahí nada sube a reserva.
+    if (plan.sinUbicacion && aReserva > 0) {
+      cant = planificar({ modo: 'todo', valor: 0 });
+      alPiso = cant ? cant.alPiso : pares;
+      aReserva = cant ? cant.aReserva : 0;
+    }
 
     if ((plan.estado === 'ok' || plan.estado === 'reposicion') && plan.cuerpos) {
       plan.cuerpos.forEach(c => {
@@ -15894,6 +15921,7 @@ const renderRFSection = (container) => {
             ${chip('Artículos', filas.length, '#818cf8')}
             ${chip('Reposición', cuenta('reposicion'), '#22c55e')}
             ${chip('Código nuevo', cuenta('ok'), '#3b82f6')}
+            ${chip('Mezzanine 4', cuenta('solo-zona'), '#f59e0b')}
             ${chip('Revisar Slotting', cuenta('slotting'), '#ef4444')}
             ${chip('Sin regla', cuenta('sin-regla') + cuenta('sin-reglas-zona'), '#94a3b8')}
           </div>
@@ -15941,6 +15969,9 @@ const renderRFSection = (container) => {
                   } else if (p.estado === 'ok') {
                     sug = `<b style="color:#93c5fd;">${p.cuerpos.map(k => nombre(p.zona, k.columna, k.cuerpo)).join(' · ')}</b>
                            <div style="font-size:0.63rem; color:rgba(255,255,255,0.3);">${p.seguidos ? 'seguidos' : 'con huecos'} · franja ${p.franja} · quedan ${p.libresEnLaFranja} libres</div>${detalleNiveles}`;
+                  } else if (p.estado === 'solo-zona') {
+                    sug = `<b style="color:#f59e0b;">${p.zona}</b>
+                           <div style="font-size:0.63rem; color:rgba(255,255,255,0.35);">sin ubicación · se almacena todo</div>`;
                   } else if (p.estado === 'slotting') {
                     sug = `<span style="color:#ef4444; font-weight:900;">⚠️ REVISAR SLOTTING</span>
                            <div style="font-size:0.63rem; color:rgba(255,255,255,0.35);">${p.motivo}</div>`;

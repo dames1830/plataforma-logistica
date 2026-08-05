@@ -445,6 +445,55 @@ export const zonaDeOthers = (subcategoria) => {
 export const esOthers = (genderRims) =>
     String(genderRims || '').trim().toUpperCase().includes('OTHERS');
 
+/**
+ * LO QUE NO ES CALZADO VA AL MEZZANINE 4.
+ *
+ * El corte lo da la columna 'G. Gender' del Maestro —OJO, no 'Gender RIMS', que es la de al
+ * lado—. Tiene cuatro valores y solo uno es calzado:
+ *
+ *   Footwear ........ sigue a su marca, como siempre
+ *   Non Footwear .... accesorios y ropa      -> MZN04
+ *   Non Commercial .. papelería y cajas      -> MZN04
+ *   Promotions ...... promociones            -> MZN04
+ *
+ * El dato ya venía en el Maestro y el código ya lo leía: se usaba SOLO para la meta de
+ * productividad. Por eso las carteras Bata salían al selectivo y los bolsos North Star al
+ * mezzanine 2 — para el sistema eran "Bata" y "North Star" y nada más.
+ *
+ * El almacén ya venía aplicando esta regla solo, sin que estuviera escrita: el 100% de los
+ * pares de Non Footwear, Non Commercial y Promotions que hay en el piso está en MZN04, y
+ * sacando las ojotas, del calzado común solo el 0,2% aparece ahí.
+ *
+ * LAS OJOTAS SE PREGUNTAN ANTES y no pasan por acá: los 1.727 códigos de '06 OTHERS' están
+ * marcados como Footwear, así que las dos reglas no se pisan. La pantufla en caja tiene que
+ * poder seguir yendo al selectivo.
+ *
+ * SIN DATO NO SE INVENTA: 56 códigos del Maestro tienen 'G. Gender' vacío. Esos siguen por
+ * su marca, exactamente como venían — cambiarles el destino con el campo en blanco sería
+ * adivinar.
+ */
+export const ZONA_NO_CALZADO = 'MZN04';
+
+export const esCalzado = (gGender) =>
+    String(gGender || '').trim().toUpperCase() === 'FOOTWEAR';
+
+/**
+ * LAS ZONAS QUE SE ENTREGAN SIN UBICACIÓN.
+ *
+ * El mezzanine 4 no se parece a ninguna otra zona: un cuerpo lleva VARIOS artículos, los
+ * niveles A, B y C son activo y el D es reserva interna, y está al 95% de su capacidad.
+ * Daniel lo tiene analizado pero decidió no cargarlo todavía: primero hay que consolidar las
+ * zonas de calzado.
+ *
+ * Mientras tanto la tarea igual tiene que salir. Si recepción deja accesorios en el buffer,
+ * el operario tiene que saber que van al mezzanine 4 — pero NO se le puede dar una ubicación
+ * exacta, porque esas ubicaciones no están analizadas y cualquier cuerpo que le indiquemos
+ * sería inventado. Así que se le da la zona y nada más.
+ *
+ * Y todo lo que va ahí SE ALMACENA ENTERO: nada sube a reserva. Es regla de Daniel.
+ */
+export const esZonaSinUbicacion = (zona) => zona === ZONA_NO_CALZADO;
+
 /** La serie es el PRIMER DÍGITO del código de artículo. La 0 es la más chica. */
 export const serieDe = (codigo) => {
     const s = String(codigo || '').trim();
@@ -659,6 +708,11 @@ export const resolverZona = (art) => {
         return z ? { zona: z, porOthers: true }
                  : { zona: null, motivo: `Es ${zonasActual().categoriaOthers} y su subcategoría "${art.subcategoria || '(vacía)'}" no está configurada.` };
     }
+    // Después de las ojotas y ANTES de la marca: lo que no es calzado no la sigue.
+    // Con el campo vacío no se decide nada y sigue de largo, que es lo que venía haciendo.
+    if (art.gGender && !esCalzado(art.gGender)) {
+        return { zona: ZONA_NO_CALZADO, porOthers: false, porNoCalzado: true };
+    }
     const z = zonaDeMarca(art.marca);
     return z ? { zona: z, porOthers: false }
              : { zona: null, motivo: `La marca "${art.marca || '(vacía)'}" no tiene zona configurada.` };
@@ -668,7 +722,22 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
     const cfg = zonasActual();
     const paso = (estado, motivo, extra) => ({ estado, motivo, ...extra });
 
-    // REPOSICIÓN antes que todo lo demás: si el artículo ya vive en el almacén, va a sus
+    // LA ZONA SE RESUELVE PRIMERO, PORQUE HAY UNA QUE LE GANA A LA REPOSICIÓN.
+    // Acá arrancaba el atajo de reposición, pero el mezzanine 4 tiene que pasar antes: si un
+    // accesorio ya tiene un cuerpo ahí, tampoco se lo podemos nombrar.
+    const zr = resolverZona(art);
+
+    // EL MEZZANINE 4 SE ENTREGA SIN UBICACIÓN.
+    // La tarea sale igual y con todo para almacenar —el operario tiene que saber que eso va
+    // al mezzanine 4— pero sin columna, sin cuerpo y sin nivel. Ver esZonaSinUbicacion.
+    if (esZonaSinUbicacion(zr.zona)) {
+        return paso('solo-zona', null, {
+            zona: zr.zona, cuerpos: [], cuantos: 0, sinUbicacion: true,
+            porOthers: !!zr.porOthers, porNoCalzado: !!zr.porNoCalzado
+        });
+    }
+
+    // REPOSICIÓN antes que el resto: si el artículo ya vive en el almacén, va a sus
     // mismos cuerpos y no hace falta preguntarle nada a la configuración. Vale incluso en
     // las zonas que todavía no tienen reglas cargadas —ahí está la mayor parte del volumen—,
     // porque devolver algo a su lugar no depende de saber qué temporada lleva cada columna.
@@ -676,20 +745,20 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
     // el artículo ya viva en el almacén: un Puma que tiene su cuerpo en la 16 y llega por el
     // D no vuelve a la 16, va al catálogo. Es la regla de Daniel y no admite excepción.
     if (art.origen !== 'D' && art.yaTiene && art.yaTiene.length) {
+        // Un calzado mal ubicado puede tener su cuerpo EN el mezzanine 4. Ahí tampoco se
+        // nombra la ubicación: se devuelve la zona y nada más.
+        if (esZonaSinUbicacion(art.yaTiene[0].zona)) {
+            return paso('solo-zona', null, {
+                zona: art.yaTiene[0].zona, cuerpos: [], cuantos: 0, sinUbicacion: true
+            });
+        }
         return paso('reposicion', 'El artículo ya está en el almacén: va a sus mismos cuerpos.',
             { zona: art.yaTiene[0].zona, cuerpos: art.yaTiene, cuantos: art.yaTiene.length });
     }
 
-    // Paso 0 y 1: la zona
-    let zona = null, porOthers = false;
-    if (esOthers(art.genderRims)) {
-        zona = zonaDeOthers(art.subcategoria);
-        porOthers = true;
-        if (!zona) return paso('sin-regla', `Es ${cfg.categoriaOthers} y su subcategoría "${art.subcategoria || '(vacía)'}" no está configurada.`);
-    } else {
-        zona = zonaDeMarca(art.marca);
-        if (!zona) return paso('sin-regla', `La marca "${art.marca || '(vacía)'}" no tiene zona configurada.`);
-    }
+    // Paso 0 y 1: la zona (ya resuelta arriba)
+    if (!zr.zona) return paso('sin-regla', zr.motivo);
+    const zona = zr.zona, porOthers = !!zr.porOthers;
 
     const z = cfg.zonas[zona];
     if (!z || !z.activa) return paso('sin-reglas-zona', `${z ? z.etiqueta : zona} todavía no tiene reglas cargadas.`, { zona });
