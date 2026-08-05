@@ -5,6 +5,13 @@ import * as zonasService from '../services_v245/zonasService.js';
 
 let currentLayoutZona = 'SEL';
 
+/** El WMS escribe el mezzanine de dos formas —MZN01 y MZ01—: se aceptan las dos. */
+const prefijosDeZona = (zona) => {
+  const z = String(zona || '').toUpperCase();
+  const m = /^MZN(\d+)$/.exec(z);
+  return m ? [z, 'MZ' + m[1]] : [z];
+};
+
 export const renderLayoutActivo = async (container) => {
       // Se pide una vez; si el servidor no contesta, quedan los valores de fábrica, que ya
       // traen las columnas bloqueadas.
@@ -142,26 +149,23 @@ export const renderLayoutActivo = async (container) => {
               const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
               const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
               
-              const isMzn01 = currentLayoutZona === 'MZN01' && (ubi.startsWith('MZN01') || ubi.startsWith('MZ01'));
-              const isMzn02 = currentLayoutZona === 'MZN02' && (ubi.startsWith('MZN02') || ubi.startsWith('MZ02'));
+              // Sirve para cualquier zona: el prefijo sale de la zona que se está mirando.
               if (!ubi || cant <= 0 || !skuFull) return;
-              if (currentLayoutZona !== 'MZN01' && currentLayoutZona !== 'MZN02' && !ubi.startsWith(currentLayoutZona)) return;
-              if (currentLayoutZona === 'MZN01' && !isMzn01) return;
-              if (currentLayoutZona === 'MZN02' && !isMzn02) return;
-              
+              const prefijos = prefijosDeZona(currentLayoutZona);
+              if (!prefijos.some(p => ubi.startsWith(p))) return;
+
               const sku7 = skuFull.substring(0, 7);
               const totalStockForPadre = padreStock[sku7] || 0;
-              const isSaldo = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? totalStockForPadre < 80 : totalStockForPadre < 20;
+              const _zc = zonasService.zonasActual().zonas[currentLayoutZona];
+              const isSaldo = totalStockForPadre < ((_zc && _zc.saldoMenorA) || 20);
 
               let col = 0;
               let rackRow = 0;
-              
-              if (currentLayoutZona === 'SEL' || currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
+
+              {
                   let ubiClean = ubi;
-                  if (currentLayoutZona === 'MZN01') ubiClean = ubiClean.replace(/MZN01|MZ01/g, '');
-                  else if (currentLayoutZona === 'MZN02') ubiClean = ubiClean.replace(/MZN02|MZ02/g, '');
-                  else if (currentLayoutZona === 'SEL') ubiClean = ubiClean.replace(/SEL/g, '');
-                  
+                  prefijos.forEach(p => { ubiClean = ubiClean.split(p).join(''); });
+
                   const numMatches = ubiClean.match(/\d+/g);
                   if (numMatches) {
                       const allNums = numMatches.join('');
@@ -174,11 +178,12 @@ export const renderLayoutActivo = async (container) => {
                       }
                   }
               }
-              
+
               if (col !== 0 && rackRow !== 0) {
-                  
-                  let maxCols = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 24 : 14;
-                  if (col >= 1 && col <= maxCols && rackRow >= 1 && rackRow <= 22) {
+
+                  const maxCols = (_zc && _zc.columnas) || 14;
+                  const maxCue  = (_zc && _zc.cuerpos)  || 22;
+                  if (col >= 1 && col <= maxCols && rackRow >= 1 && rackRow <= maxCue) {
                       if (currentLayoutZona === 'SEL' && col >= 2 && col <= 13 && (rackRow === 22 || rackRow === 11)) return;
 
                       if (!localLayoutData[col]) localLayoutData[col] = {};
@@ -206,25 +211,23 @@ export const renderLayoutActivo = async (container) => {
                       localStats[temporadaClean].units += cant;
                       localStats[temporadaClean].padres.add(sku7);
 
-                      let isValid = false;
+                      // Si está bien ubicado sale de Zonas de Almacenaje, igual que en la web
+                      // principal. Antes acá estaban las columnas del selectivo escritas a
+                      // mano —5 a 13 actual, 3 a 4 anterior— y ya no coincidían con la
+                      // configuración publicada, así que los dos reportes se contradecían.
                       const genderRaw = skuGender[skuFull] || skuGender[sku7] || '';
                       const isSchool = genderRaw.includes('SCHOOL');
+                      const franjaCol = zonasService.franjaDeColumna(currentLayoutZona, col);
 
-                      if (currentLayoutZona === 'SEL') {
-                          if (col === 14) {
-                              if (isSchool) isValid = true;
-                          } else if (temporadaClean === 'ACTUAL') {
-                              if (col >= 5 && col <= 13) isValid = true;
-                              else if (isSaldo && [1, 2].includes(col)) isValid = true;
-                          } else if (temporadaClean === 'ANTERIOR') {
-                              if (col >= 3 && col <= 4) isValid = true;
-                              else if (isSaldo && [1, 2].includes(col)) isValid = true;
-                          }
-                      } else if (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
-                            isValid = true;
-                        } else {
-                          isValid = true;
-                      }
+                      let isValid;
+                      if (!_zc || !_zc.franjas || !Object.keys(_zc.franjas).length) {
+                          isValid = true;                        // zona sin reglas: no se acusa a nadie
+                      } else if (franjaCol === 'escolar')  isValid = isSchool;
+                      else if (franjaCol === 'saldos')     isValid = isSaldo;
+                      else if (franjaCol === 'catalogo')   isValid = true;   // la 8 de MZN03 acepta todo
+                      else if (franjaCol === 'actual')     isValid = (temporadaClean === 'ACTUAL');
+                      else if (franjaCol === 'anterior')   isValid = (temporadaClean === 'ANTERIOR');
+                      else                                 isValid = false;  // columna sin uso
 
                       if (!isValid) {
                           localStats[temporadaClean].bad_placed += cant;
@@ -383,11 +386,14 @@ export const renderLayoutActivo = async (container) => {
           let occupiedCells = 0;
           let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
           
-          const totalCols = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 24 : 14;
-          const maxRows = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 20 : 22;
+          // La forma de la zona sale de la configuración, igual que en la web principal.
+          const _zCfg = zonasService.zonasActual().zonas[currentLayoutZona];
+          const esMezzanine = /^MZN/.test(currentLayoutZona);
+          const totalCols = (!isReserva && _zCfg) ? _zCfg.columnas : 14;
+          const maxRows   = (!isReserva && _zCfg) ? _zCfg.cuerpos  : 22;
           let colsArray = [];
-          if (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
-              for (let i = 24; i >= 1; i--) colsArray.push(i);
+          if (esMezzanine) {
+              for (let i = totalCols; i >= 1; i--) colsArray.push(i);
           } else {
               for (let i = 1; i <= totalCols; i++) colsArray.push(i);
           }
@@ -402,28 +408,27 @@ export const renderLayoutActivo = async (container) => {
                   gridHtml += `</div>`;
                   continue;
               }
+              // Los macizos arrancan más arriba: los cuerpos que le faltan a la columna van
+              // ABAJO, así que el que se dibuja en la posición 4 es el cuerpo 1.
+              const topeCol = (!isReserva && _zCfg)
+                  ? zonasService.cuerposDeColumna(currentLayoutZona, c) : maxRows;
+              const faltanAbajo = Math.max(0, maxRows - topeCol);
+
               gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
               for (let r = maxRows; r >= 1; r--) {
                   let cellExists = true;
-                  if (!isReserva && currentLayoutZona === 'SEL' && c >= 2 && c <= 13 && (r === 22 || r === 11)) {
+                  if (!isReserva && r <= faltanAbajo) cellExists = false;
+
+                  const logicalR = r - faltanAbajo;
+                  if (cellExists && !isReserva && _zCfg
+                      && zonasService.esPasillo(currentLayoutZona, c, logicalR)) {
                       cellExists = false;
                   }
-                  if (!isReserva && (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02')) {
-                        if ((c === 2 || c === 3) && r <= 3) cellExists = false;
-                        if ((c === 22 || c === 23) && r <= 3) cellExists = false;
-                    }
 
                   if (!cellExists) {
                       gridHtml += `<div style="height:15px; visibility:hidden;"></div>`;
                       continue;
                   }
-
-                  let logicalR = r;
-                  if (!isReserva && (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02')) {
-                        if (c === 2 || c === 3 || c === 22 || c === 23) {
-                            logicalR = r - 3;
-                        }
-                    }
 
                   const cellData = layoutData[c] && layoutData[c][logicalR] ? layoutData[c][logicalR] : null;
                   let bgColor = '#EEE9E3';

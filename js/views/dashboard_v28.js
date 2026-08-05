@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0070';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0071';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0070';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0070';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0070';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0070';
-import * as metasService from '../services_v245/metasService.js?v=29.0070';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0070';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0070';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0070';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0070';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0070';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0070';
+import * as adminService from '../services_v245/adminService.js?v=29.0071';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0071';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0071';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0071';
+import * as metasService from '../services_v245/metasService.js?v=29.0071';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0071';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0071';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0071';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0071';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0071';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0071';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0070';
+const VERSION = '29.0071';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0070');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0071');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0070 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0071 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18216,9 +18216,19 @@ const renderRFSection = (container) => {
   let reservaState = { page: 1, query: '', skusArray: [], view: 'resumen' };
   let ubicacionState = { page: 1, query: '', ubisArray: [] };
   let currentLayoutZona = 'SEL';
-  // [ZONAS] Lista central de zonas activas del mapa de calor.
-  // Cuando MZN03 esté construido, basta con agregar 'MZN03' aquí para que entre en "Publicar Todas".
-  const ZONAS_ACTIVAS = ['SEL', 'MZN01', 'MZN02'];
+  // [ZONAS] Lista central de zonas activas del mapa de calor. Sale de Zonas de Almacenaje:
+  // una zona con reglas cargadas tiene mapa, y el día que se active MZN04 aparece sola.
+  const ZONAS_ACTIVAS = zonasService.zonasActivas();
+
+  /**
+   * Cómo empieza una ubicación de esta zona. El WMS escribe el mezzanine de dos formas
+   * —MZN01-05-12 y también MZ01-05-12—, así que se aceptan las dos.
+   */
+  const prefijosDeZona = (zona) => {
+    const z = String(zona || '').toUpperCase();
+    const m = /^MZN(\d+)$/.exec(z);
+    return m ? [z, 'MZ' + m[1]] : [z];
+  };
   // Visor de versiones: false = mapa ACTUAL, true = mapa ANTERIOR (penúltimo publicado).
   if (typeof window.__verLayoutAnterior === 'undefined') window.__verLayoutAnterior = false;
 
@@ -18494,26 +18504,25 @@ const renderRFSection = (container) => {
               const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
               const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
               
-              const isMzn01 = currentLayoutZona === 'MZN01' && (ubi.startsWith('MZN01') || ubi.startsWith('MZ01'));
-              const isMzn02 = currentLayoutZona === 'MZN02' && (ubi.startsWith('MZN02') || ubi.startsWith('MZ02'));
+              // SIRVE PARA CUALQUIER ZONA. Antes cada una estaba escrita a mano —SEL, MZN01
+              // y MZN02— y por eso el mezzanine 3 quedaba "en construcción": no era que le
+              // faltara lógica propia, es que ninguna rama lo nombraba. Ahora el prefijo sale
+              // de la zona que se está mirando, así que MZN03 y MZN04 entran solos.
               if (!ubi || cant <= 0 || !skuFull) return;
-              if (currentLayoutZona !== 'MZN01' && currentLayoutZona !== 'MZN02' && !ubi.startsWith(currentLayoutZona)) return;
-              if (currentLayoutZona === 'MZN01' && !isMzn01) return;
-              if (currentLayoutZona === 'MZN02' && !isMzn02) return;
-              
+              const prefijos = prefijosDeZona(currentLayoutZona);
+              if (!prefijos.some(p => ubi.startsWith(p))) return;
+
               const sku7 = skuFull.substring(0, 7);
               const totalStockForPadre = padreStock[sku7] || 0;
               const isSaldo = totalStockForPadre < zonasCfg.saldoMenorA;
 
               let col = 0;
               let rackRow = 0;
-              
-              if (currentLayoutZona === 'SEL' || currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
+
+              {
                   let ubiClean = ubi;
-                  if (currentLayoutZona === 'MZN01') ubiClean = ubiClean.replace(/MZN01|MZ01/g, '');
-                  else if (currentLayoutZona === 'MZN02') ubiClean = ubiClean.replace(/MZN02|MZ02/g, '');
-                  else if (currentLayoutZona === 'SEL') ubiClean = ubiClean.replace(/SEL/g, '');
-                  
+                  prefijos.forEach(p => { ubiClean = ubiClean.split(p).join(''); });
+
                   const numMatches = ubiClean.match(/\d+/g);
                   if (numMatches) {
                       const allNums = numMatches.join('');
@@ -18572,6 +18581,11 @@ const renderRFSection = (container) => {
                           isValid = true;                       // zona sin reglas: no se acusa a nadie
                       } else if (franjaCol === 'escolar')  isValid = isSchool;
                       else if (franjaCol === 'saldos')     isValid = isSaldo;
+                      // LA COLUMNA DE CATÁLOGO ACEPTA TODO. Es la 8 del mezzanine 3: ahí va
+                      // entero lo que llega por el buffer D, de la marca que venga y de la
+                      // temporada que sea. Sin esta rama, sus 22 cuerpos salían acusados de
+                      // mal ubicados en cuanto se encendiera el mapa de MZN03.
+                      else if (franjaCol === 'catalogo')   isValid = true;
                       else if (franjaCol === 'actual')     isValid = (temporadaClean === 'ACTUAL');
                       else if (franjaCol === 'anterior')   isValid = (temporadaClean === 'ANTERIOR');
                       else                                 isValid = false;   // columna sin uso
@@ -18733,11 +18747,16 @@ const renderRFSection = (container) => {
           let occupiedCells = 0;
           let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
           
-          const totalCols = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 24 : 14;
-          const maxRows = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 20 : 22;
+          // LA FORMA DE LA ZONA SALE DE LA CONFIGURACIÓN, NO DE UN if POR NOMBRE.
+          // Los mezzanines se dibujan de la 24 hacia la 1 porque así se recorren en el
+          // almacén; el selectivo, al revés.
+          const _zCfg = zonasService.zonasActual().zonas[currentLayoutZona];
+          const esMezzanine = /^MZN/.test(currentLayoutZona);
+          const totalCols = (!isReserva && _zCfg) ? _zCfg.columnas : 14;
+          const maxRows   = (!isReserva && _zCfg) ? _zCfg.cuerpos  : 22;
           let colsArray = [];
-          if (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
-              for (let i = 24; i >= 1; i--) colsArray.push(i);
+          if (esMezzanine) {
+              for (let i = totalCols; i >= 1; i--) colsArray.push(i);
           } else {
               for (let i = 1; i <= totalCols; i++) colsArray.push(i);
           }
@@ -18756,27 +18775,30 @@ const renderRFSection = (container) => {
                   continue;
               }
               gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
+              // Las columnas más cortas —los macizos— arrancan más arriba: si a la columna le
+              // faltan cuerpos respecto al tope de la zona, esos huecos van ABAJO y el cuerpo
+              // que se dibuja en la posición 4 es el cuerpo 1. Antes esto estaba escrito como
+              // "las columnas 2, 3, 22 y 23 no tienen los tres de abajo", que solo valía para
+              // MZN01 y MZN02 y además ignoraba que en MZN02 la 22 sí los tiene.
+              const topeCol = (!isReserva && _zCfg)
+                  ? zonasService.cuerposDeColumna(currentLayoutZona, c) : maxRows;
+              const faltanAbajo = Math.max(0, maxRows - topeCol);
+
               for (let r = maxRows; r >= 1; r--) {
                   let cellExists = true;
-                  if (!isReserva && currentLayoutZona === 'SEL' && c >= 2 && c <= 13 && (r === 22 || r === 11)) {
+                  if (!isReserva && r <= faltanAbajo) cellExists = false;
+
+                  const logicalR = r - faltanAbajo;
+                  // El paso del elevador del selectivo: sale de la configuración.
+                  if (cellExists && !isReserva && _zCfg
+                      && zonasService.esPasillo(currentLayoutZona, c, logicalR)) {
                       cellExists = false;
                   }
-                  if (!isReserva && (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02')) {
-                        if ((c === 2 || c === 3) && r <= 3) cellExists = false;
-                        if ((c === 22 || c === 23) && r <= 3) cellExists = false;
-                    }
 
                   if (!cellExists) {
                       gridHtml += `<div style="height:15px; visibility:hidden;"></div>`;
                       continue;
                   }
-
-                  let logicalR = r;
-                  if (!isReserva && (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02')) {
-                        if (c === 2 || c === 3 || c === 22 || c === 23) {
-                            logicalR = r - 3;
-                        }
-                    }
 
                   const cellData = layoutData[c] && layoutData[c][logicalR] ? layoutData[c][logicalR] : null;
                   let bgColor = 'rgba(255,255,255,0.02)';
