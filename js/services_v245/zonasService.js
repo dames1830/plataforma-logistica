@@ -658,9 +658,11 @@ export const elegirCuerpos = (zona, columnas, cuantos, ocupados) => {
     };
 
     let total = 0, mejor = null;
+    const porColumna = [];
     columnas.forEach(col => {
         const L = libresDe(col);
         total += L.length;
+        porColumna.push({ col, L });
         for (let i = 0; i + cuantos <= L.length; i++) {
             const tramo = L[i + cuantos - 1] - L[i];
             if (!mejor || tramo < mejor.tramo) {
@@ -678,9 +680,29 @@ export const elegirCuerpos = (zona, columnas, cuantos, ocupados) => {
         };
     }
 
+    // NINGUNA COLUMNA SOLA ALCANZA, PERO ENTRE VARIAS SÍ.
+    //
+    // Antes se cortaba acá y la mercadería salía a Slotting con un "hacen falta 3 cuerpos y
+    // solo hay 3 libres" que además era falso: contaba los de una columna, no los de la
+    // franja. Con un mezzanine cargado —que es cuando más falta hace— los libres quedan
+    // repartidos de a uno o dos por columna y así no se podía usar ninguno.
+    //
+    // Se juntan de a columnas, empezando por la que más aporta, para partir el artículo en la
+    // menor cantidad de columnas posible. Va marcado como NO seguidos: el papel tiene que
+    // decir la verdad de que quedó repartido.
+    if (total >= cuantos) {
+        const juntados = [];
+        [...porColumna].sort((a, b) => b.L.length - a.L.length).forEach(({ col, L }) => {
+            for (let i = 0; i < L.length && juntados.length < cuantos; i++) {
+                juntados.push({ columna: col, cuerpo: L[i] });
+            }
+        });
+        return { cuerpos: juntados, completo: true, seguidos: false, libresEnLaFranja: total };
+    }
+
     // No alcanza para todos: se devuelve lo que hay, para poder decir cuánto falta
     const sueltos = [];
-    columnas.forEach(col => libresDe(col).forEach(cu => sueltos.push({ columna: col, cuerpo: cu })));
+    porColumna.forEach(({ col, L }) => L.forEach(cu => sueltos.push({ columna: col, cuerpo: cu })));
     return { cuerpos: sueltos.slice(0, cuantos), completo: false, seguidos: false, libresEnLaFranja: total };
 };
 
@@ -718,6 +740,17 @@ export const resolverZona = (art) => {
              : { zona: null, motivo: `La marca "${art.marca || '(vacía)'}" no tiene zona configurada.` };
 };
 
+/**
+ * Cuánto se tolera pasarse antes de abrir otro cuerpo. Redondeando siempre para arriba, 690
+ * pares con cuerpos de 683 abrían un segundo cuerpo para 7 pares — justo lo que el candado
+ * del "cuánto" viene a evitar. Y la capacidad no es un límite físico exacto: es el percentil
+ * 75 de lo que hay guardado, así que un poco más entra.
+ *
+ * Vive acá afuera porque la usan las dos ramas: la del código nuevo y la de la reposición,
+ * que tiene que medir con la misma vara.
+ */
+const HOLGURA = 0.10;
+
 export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) => {
     const cfg = zonasActual();
     const paso = (estado, motivo, extra) => ({ estado, motivo, ...extra });
@@ -752,8 +785,63 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
                 zona: art.yaTiene[0].zona, cuerpos: [], cuantos: 0, sinUbicacion: true
             });
         }
-        return paso('reposicion', 'El artículo ya está en el almacén: va a sus mismos cuerpos.',
-            { zona: art.yaTiene[0].zona, cuerpos: art.yaTiene, cuantos: art.yaTiene.length });
+
+        // ¿ENTRA? Antes esta pregunta no se hacía: se devolvían sus cuerpos y listo, sin
+        // mirar cuánto les quedaba adentro. El operario llegaba con 500 pares a un cuerpo que
+        // ya tenía 300 de los suyos y no le entraban. Un cuerpo lleva UN artículo con todas
+        // sus tallas, así que no hay dónde meterlos: hay que abrirle otro.
+        const zonaRep = art.yaTiene[0].zona;
+        const porCuerpoRep = densidadDe(zonaRep, serieDe(art.sku7));
+        const libresRep = libresPorZona[zonaRep];
+        // Lo que le queda a cada cuerpo suyo. Si no figura en el mapa es porque está vacío
+        // —el mapa solo trae los cuerpos con stock—, así que entra uno entero.
+        const capsSuyos = art.yaTiene.map(c => {
+            const v = libresRep && libresRep.get(`${c.columna}-${c.cuerpo}`);
+            return v === undefined ? porCuerpoRep : Math.max(0, v);
+        });
+        const leQueda = capsSuyos.reduce((a, b) => a + b, 0);
+
+        const paresRep = Number(art.pares) || 0;
+        const sobran = paresRep - leQueda;
+
+        if (sobran <= porCuerpoRep * HOLGURA) {
+            return paso('reposicion', 'El artículo ya está en el almacén: va a sus mismos cuerpos.',
+                { zona: zonaRep, cuerpos: art.yaTiene, cuantos: art.yaTiene.length,
+                  porCuerpo: porCuerpoRep, leQueda, capacidades: capsSuyos });
+        }
+
+        // No entra. Se le abren los cuerpos que falten, empezando por las columnas donde ya
+        // vive: si el suyo está lleno, lo natural es seguir en el de al lado.
+        const faltan = Math.max(1, Math.ceil((sobran - porCuerpoRep * HOLGURA) / porCuerpoRep));
+        const susColumnas = [...new Set(art.yaTiene.map(c => c.columna))];
+        const ocupRep = ocupadosPorZona[zonaRep] || new Set();
+        let extra = elegirCuerpos(zonaRep, susColumnas, faltan, ocupRep);
+
+        // Si en sus columnas no hay lugar, se busca en el resto de la franja que le toca.
+        if (!extra.completo) {
+            const franjaRep = franjaDeArticulo(art, zonaRep);
+            const otras = columnasDeFranja(zonaRep, franjaRep).filter(c => !susColumnas.includes(c));
+            if (otras.length) {
+                const alt = elegirCuerpos(zonaRep, [...susColumnas, ...otras], faltan, ocupRep);
+                if (alt.completo) extra = alt;
+            }
+        }
+
+        const base = { zona: zonaRep, porCuerpo: porCuerpoRep, leQueda, ampliado: true,
+                       abiertos: faltan, cuerpos: [...art.yaTiene, ...extra.cuerpos],
+                       cuantos: art.yaTiene.length + extra.cuerpos.length,
+                       // Los suyos admiten solo lo que les queda; los nuevos, un cuerpo entero.
+                       capacidades: [...capsSuyos, ...extra.cuerpos.map(() => porCuerpoRep)],
+                       libresEnLaFranja: extra.libresEnLaFranja };
+
+        if (!extra.completo) {
+            return paso('slotting',
+                `Su cuerpo solo admite ${leQueda} de los ${paresRep} pares y hacen falta ${faltan} cuerpos más, pero hay ${extra.cuerpos.length} libres.`,
+                base);
+        }
+        return paso('reposicion',
+            `Su cuerpo solo admite ${leQueda} de los ${paresRep} pares: se le abren ${faltan} cuerpo${faltan > 1 ? 's' : ''} más.`,
+            base);
     }
 
     // Paso 0 y 1: la zona (ya resuelta arriba)
@@ -809,24 +897,22 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
             return paso('ok', null, {
                 zona, franja, cuantos: 1, porCuerpo: densidadDe(zona, serieDe(art.sku7)),
                 cuerpos: r.cuerpos, seguidos: true, compartido: !!r.compartido,
-                libreQueTenia: r.libreQueTenia, porOthers
+                libreQueTenia: r.libreQueTenia, porOthers,
+                capacidades: [r.libreQueTenia !== undefined
+                    ? r.libreQueTenia : densidadDe(zona, serieDe(art.sku7))]
             });
         }
     }
 
     // Paso 3: cuántos cuerpos
     const porCuerpo = densidadDe(zona, serieDe(art.sku7));
-    // Se tolera hasta un 10% de más antes de abrir otro cuerpo. Redondeando siempre para
-    // arriba, 690 pares con cuerpos de 683 abrían un segundo cuerpo para 7 pares — justo
-    // lo que el candado del "cuánto" viene a evitar. Y la capacidad no es un límite físico
-    // exacto: es el percentil 75 de lo que hay guardado, así que un poco más entra.
-    const HOLGURA = 0.10;
     const cuantos = Math.max(1, Math.ceil((Number(art.pares) - porCuerpo * HOLGURA) / porCuerpo));
 
     // Paso 4 y 5
     const r = elegirCuerpos(zona, columnas, cuantos, ocupadosPorZona[zona] || new Set());
     const base = { zona, franja, cuantos, porCuerpo, cuerpos: r.cuerpos, seguidos: r.seguidos,
-                   libresEnLaFranja: r.libresEnLaFranja, porOthers };
+                   libresEnLaFranja: r.libresEnLaFranja, porOthers,
+                   capacidades: r.cuerpos.map(() => porCuerpo) };
 
     if (!r.completo) {
         return paso('slotting',

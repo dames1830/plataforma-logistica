@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0066';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0067';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0066';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0066';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0066';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0066';
-import * as metasService from '../services_v245/metasService.js?v=29.0066';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0066';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0066';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0066';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0066';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0066';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0066';
+import * as adminService from '../services_v245/adminService.js?v=29.0067';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0067';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0067';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0067';
+import * as metasService from '../services_v245/metasService.js?v=29.0067';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0067';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0067';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0067';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0067';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0067';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0067';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0066';
+const VERSION = '29.0067';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0066');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0067');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0066 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0067 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15131,53 +15131,69 @@ const renderRFSection = (container) => {
     }
     return lista;
   };
-  const SUG_NIVELES = ['A', 'B', 'C'];
-
   /**
-   * Qué nivel del cuerpo le toca a cada talla.
+   * A qué CUERPO va cada talla.
    *
-   * Los tres niveles no cuestan lo mismo: el A está abajo, a la mano; el C arriba, algo más
-   * difícil. Así que la talla que más se vende va al A y la que menos, al C. Si ninguna está
-   * marcada como comercial —el caso de niños, que traen tres o cuatro tallas y todas se
-   * venden— se reparten en partes iguales por orden de talla.
+   * EL NIVEL NO IMPORTA. Antes esto repartía talla por nivel —la más vendida al A, que está
+   * abajo y a la mano; la que menos al C—. Daniel lo descartó el 05-ago-2026: "no importa si
+   * las tallas comerciales van en el C, en el A o en el B. La cosa es que esté bien calculado
+   * para que el operario vaya y deje la mercadería".
    *
-   * Con varios cuerpos se llena uno entero antes de pasar al siguiente, para que el artículo
-   * no quede desparramado.
+   * Una talla puede ocupar los tres niveles del cuerpo, o quedar repartida entre ellos —la 37
+   * llena el A, la 36 entra con 50 en el B y 20 en el C—, y está bien. Lo único que no puede
+   * pasar es que se pase del CUERPO: un cuerpo lleva un solo artículo con todas sus tallas.
+   *
+   * Con varios cuerpos se llena uno hasta su capacidad antes de pasar al siguiente, para que
+   * el artículo no quede desparramado.
    */
-  const asignarNiveles = (filas, cuerpos, zona) => {
+  const asignarCuerpos = (filas, cuerpos, zona, capacidades) => {
     const conPiso = filas.filter(f => f.baja > 0);
     if (!conPiso.length || !cuerpos || !cuerpos.length) return {};
 
-    const hayComerciales = conPiso.some(f => f.comercial);
-    const orden = hayComerciales
-      ? [...conPiso].sort((a, b) => (b.comercial - a.comercial) || (b.porcentaje - a.porcentaje)
-                                    || (parseFloat(a.talla) - parseFloat(b.talla)))
-      : [...conPiso].sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0));
+    // Por talla, de menor a mayor. El operario recorre el cuerpo en ese orden.
+    const orden = [...conPiso].sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0));
 
-    // Un hueco por nivel de cada cuerpo, en orden de accesibilidad.
+    // EL DESTINO ES EL CUERPO, NO EL NIVEL.
     //
     // LA ZONA SALE DE CADA CUERPO, NO DE LA PRIMERA. Un artículo puede estar repartido en
     // dos zonas —casi siempre por una matrícula equivocada— y acá se le ponía a todos la
     // zona del primero. El 5811379 vive en MZN02-11-05 y tiene un par suelto en
     // MZN03-05-01: el papel imprimía MZN02-05-01, que es de otro artículo, y ahí mandaba
     // tres de sus seis tallas.
-    const huecos = [];
-    cuerpos.forEach(c => SUG_NIVELES.forEach(n =>
-      huecos.push(zonasService.nombreCuerpo(c.zona || zona, c.columna, c.cuerpo) + '-' + n)));
+    const nombres = cuerpos.map(c => zonasService.nombreCuerpo(c.zona || zona, c.columna, c.cuerpo));
+    const caps = (Array.isArray(capacidades) && capacidades.length === cuerpos.length)
+      ? capacidades.map(v => (Number(v) > 0 ? Number(v) : 1))
+      : cuerpos.map(() => Infinity);
 
-    // Se reparten lo más parejo posible, sin dejar un nivel vacío mientras otro se amontona:
-    // con 4 tallas y 3 niveles salen 2, 1 y 1, y el sobrante va a los primeros, que son los
-    // más accesibles. Si hay más huecos que tallas, los de arriba quedan libres.
-    const usados = Math.min(huecos.length, orden.length);
-    const base = Math.floor(orden.length / usados);
-    const conUnoMas = orden.length % usados;
-
+    // SE REPARTE POR PARES, NO POR CANTIDAD DE TALLAS.
+    //
+    // Antes se armaba un hueco por cada nivel A/B/C de cada cuerpo y se metía UNA TALLA en
+    // cada hueco, sin mirar cuántos pares llevaba. Con 6 tallas y 3 cuerpos las 6 tallas
+    // entraban en los primeros 6 huecos —o sea en los dos primeros cuerpos— y el tercero
+    // quedaba vacío pero igual reservado, sin que ningún otro artículo lo pudiera usar. Y el
+    // primer cuerpo se llevaba 730 pares donde entran 326.
+    //
+    // Ahora se llena un cuerpo hasta su capacidad y recién ahí se pasa al siguiente. La talla
+    // puede quedar repartida entre los tres niveles del cuerpo, y eso está bien: lo que no se
+    // puede es pasarse del cuerpo. Es lo que dijo Daniel — el nivel no importa, el cuerpo sí.
     const destino = {};
-    let i = 0;
-    for (let h = 0; h < usados; h++) {
-      const cuantas = base + (h < conUnoMas ? 1 : 0);
-      for (let k = 0; k < cuantas && i < orden.length; k++, i++) destino[orden[i].talla] = huecos[h];
-    }
+    let i = 0, enEste = 0;
+    orden.forEach(f => {
+      // Si lo que ya lleva más esta talla se pasa del cuerpo, y todavía quedan cuerpos, se
+      // pasa al siguiente. Se tolera la misma holgura que usa el resto del cálculo.
+      //
+      // El "enEste > 0" de la primera condición no alcanza solo: cuando al cuerpo le quedan
+      // 26 pares y la primera talla trae 100, con el cuerpo todavía vacío no habría con qué
+      // compararlo y le entrarían los 100 igual. Por eso la segunda: una talla que por sí
+      // sola no entra tampoco se fuerza. Se pierden esos 26 de lugar, y está bien — es
+      // preferible a mandar al operario con 100 pares a un hueco de 26.
+      const noEntra = (enEste + f.baja) > caps[i] * 1.10;
+      if (noEntra && i < cuerpos.length - 1 && (enEste > 0 || f.baja > caps[i] * 1.10)) {
+        i++; enEste = 0;
+      }
+      destino[f.talla] = nombres[i];
+      enEste += f.baja;
+    });
     return destino;
   };
 
@@ -15424,7 +15440,7 @@ const renderRFSection = (container) => {
         // esas ubicaciones no están analizadas y nombrar un cuerpo sería inventarlo.
         destino: (sug.plan && sug.plan.sinUbicacion)
           ? sug.plan.zona
-          : (sug.niveles[l.talla] || '')
+          : (sug.destinos[l.talla] || '')
       };
     });
   };
@@ -15587,15 +15603,15 @@ const renderRFSection = (container) => {
       });
     }
 
-    const niveles = (plan.estado === 'ok' || plan.estado === 'reposicion') && cant
-      ? asignarNiveles(cant.filas, plan.cuerpos, plan.zona) : {};
+    const destinos = (plan.estado === 'ok' || plan.estado === 'reposicion') && cant
+      ? asignarCuerpos(cant.filas, plan.cuerpos, plan.zona, plan.capacidades) : {};
 
     const meta = metasService.resolverMeta(datos.genderRims, f.gender || '', fecha);
     const minPiso = meta.metaUph > 0 ? Math.round((alPiso / meta.metaUph) * 60) : 0;
     const minReserva = tallasService.minutosDeReserva(aReserva);
 
     return {
-      sku7: s7, ficha: f, pares, cant, plan, casa, niveles, caso,
+      sku7: s7, ficha: f, pares, cant, plan, casa, destinos, caso,
       alPiso, aReserva,
       paletas: tallasService.paletasDe(aReserva),
       activo: Math.round(cant ? cant.pisoTotal : 0),
@@ -15952,15 +15968,15 @@ const renderRFSection = (container) => {
                   const p = x.plan;
                   const COLOR = { ok: '#3b82f6', reposicion: '#22c55e', slotting: '#ef4444' };
                   const c = COLOR[p.estado] || '#94a3b8';
-                  // Qué talla va a qué nivel del cuerpo: el A está abajo y es lo comercial
-                  const porNivel = Object.keys(x.niveles || {}).length
-                    ? Object.entries(x.niveles).reduce((acc, [talla, dest]) => {
+                  // Qué tallas van a cada cuerpo. El nivel no se decide: lo elige el operario.
+                  const porCuerpoDest = Object.keys(x.destinos || {}).length
+                    ? Object.entries(x.destinos).reduce((acc, [talla, dest]) => {
                         (acc[dest] = acc[dest] || []).push(talla); return acc;
                       }, {}) : null;
-                  const detalleNiveles = porNivel
+                  const detalleNiveles = porCuerpoDest
                     ? `<div style="font-size:0.63rem; color:rgba(255,255,255,0.45); margin-top:2px;">${
-                        Object.keys(porNivel).sort().map(d =>
-                          `<b style="color:#93c5fd;">${d}</b> t.${porNivel[d].join('/')}`).join(' &nbsp; ')}</div>`
+                        Object.keys(porCuerpoDest).sort().map(d =>
+                          `<b style="color:#93c5fd;">${d}</b> t.${porCuerpoDest[d].join('/')}`).join(' &nbsp; ')}</div>`
                     : '';
 
                   let sug;
