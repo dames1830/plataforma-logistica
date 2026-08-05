@@ -417,6 +417,13 @@ export const renderLayoutActivo = async (container) => {
           // Arriba, la temporada de cada columna. En todas las zonas.
           const FR = zonasService.FRANJAS;
           const hayFranjas = !isReserva && _zCfg && Object.keys(_zCfg.franjas || {}).length > 0;
+
+          // Las columnas bloqueadas se achican a una tira fina y las buenas se reparten el
+          // espacio que sobra. Mismo criterio que la web principal, y la MISMA funcion para
+          // la barra y para el mapa: si no, dejarian de coincidir columna con columna.
+          const anchoDe = (c) => (!isReserva && zonasService.esColumnaBloqueada(currentLayoutZona, c))
+              ? 'flex:0 0 13px; min-width:13px; max-width:13px;'
+              : 'flex:1 1 0; min-width:40px;';
           if (hayFranjas) {
               gridHtml += `<div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:5px;">`;
               colsArray.forEach(c => {
@@ -424,7 +431,7 @@ export const renderLayoutActivo = async (container) => {
                   const f = zonasService.franjaDeColumna(currentLayoutZona, c);
                   const d = FR[f] || FR.ninguna;
                   const vale = !bloq && f !== 'ninguna';
-                  gridHtml += `<div title="${escP(d.etiqueta)}" style="flex:1 1 0; min-width:40px;
+                  gridHtml += `<div title="${escP(d.etiqueta)}" style="${anchoDe(c)}
                       height:15px; line-height:15px; box-sizing:border-box; border-radius:4px 4px 0 0;
                       background:${vale ? d.color : 'rgba(0,0,0,0.06)'}; text-align:center;
                       font-size:8px; font-weight:900; color:#1C2B3A; letter-spacing:-0.2px;
@@ -439,7 +446,7 @@ export const renderLayoutActivo = async (container) => {
           for (let c of colsArray) {
               // Columna bloqueada: no existe. Mismo criterio que en la web principal.
               if (!isReserva && zonasService.esColumnaBloqueada(currentLayoutZona, c)) {
-                  gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px; opacity:0.28;">`;
+                  gridHtml += `<div title="Columna ${String(c).padStart(2,'0')} · bloqueada" style="display:flex; flex-direction:column; gap:2px; ${anchoDe(c)} opacity:0.28;">`;
                   for (let r = maxRows; r >= 1; r--) {
                       gridHtml += `<div style="height:15px; border:1px dashed rgba(255,255,255,0.10); background:repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0 3px,transparent 3px 6px);"></div>`;
                   }
@@ -453,7 +460,7 @@ export const renderLayoutActivo = async (container) => {
                   ? zonasService.cuerposDeColumna(currentLayoutZona, c) : maxRows;
               const faltanAbajo = Math.max(0, maxRows - topeCol);
 
-              gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
+              gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; ${anchoDe(c)}">`;
               for (let r = maxRows; r >= 1; r--) {
                   let cellExists = true;
                   if (!isReserva && r <= faltanAbajo) cellExists = false;

@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0076';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0077';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0076';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0076';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0076';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0076';
-import * as metasService from '../services_v245/metasService.js?v=29.0076';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0076';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0076';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0076';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0076';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0076';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0076';
+import * as adminService from '../services_v245/adminService.js?v=29.0077';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0077';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0077';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0077';
+import * as metasService from '../services_v245/metasService.js?v=29.0077';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0077';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0077';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0077';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0077';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0077';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0077';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0076';
+const VERSION = '29.0077';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0076');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0077');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0076 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0077 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18809,6 +18809,22 @@ const renderRFSection = (container) => {
           const FR = zonasService.FRANJAS;
           const hayFranjas = !isReserva && _zCfg && Object.keys(_zCfg.franjas || {}).length > 0;
 
+          /**
+           * EL ANCHO DE CADA COLUMNA. Las bloqueadas se achican a una tira fina.
+           *
+           * Siguen estando —hay que poder contar del 24 al 1 y no perderse— pero ocupaban lo
+           * mismo que una columna de trabajo, y en el mezzanine 2 son diez de veinticuatro:
+           * casi la mitad del mapa gastada en lugar que no existe, y las que sí importan
+           * quedaban lejos unas de otras. Al achicarlas, el `flex:1` de las buenas se reparte
+           * solo el espacio que sobra y todas se ensanchan.
+           *
+           * La barra de temporada y el mapa usan LA MISMA función, si no dejarían de
+           * coincidir columna con columna.
+           */
+          const anchoDe = (c) => (!isReserva && zonasService.esColumnaBloqueada(currentLayoutZona, c))
+              ? 'flex:0 0 13px; min-width:13px; max-width:13px;'
+              : 'flex:1 1 0; min-width:40px;';
+
           if (hayFranjas) {
               // ALTURA FIJA. Sin esto la fila estira sus hijos y la barra se pinta de arriba
               // abajo, tapando el mapa entero — que es lo que pasó en la v29.0074.
@@ -18818,7 +18834,7 @@ const renderRFSection = (container) => {
                   const f = zonasService.franjaDeColumna(currentLayoutZona, c);
                   const d = FR[f] || FR.ninguna;
                   const vale = !bloq && f !== 'ninguna';
-                  gridHtml += `<div title="${esc(d.etiqueta)}" style="flex:1 1 0; min-width:40px;
+                  gridHtml += `<div title="${esc(d.etiqueta)}" style="${anchoDe(c)}
                       height:15px; line-height:15px; box-sizing:border-box; border-radius:4px 4px 0 0;
                       background:${vale ? d.color : 'rgba(255,255,255,0.05)'}; text-align:center;
                       font-size:8px; font-weight:900; color:#0b1220; letter-spacing:-0.2px;
@@ -18836,15 +18852,16 @@ const renderRFSection = (container) => {
               // el número apagado. No suma a las vacías ni a la densidad, porque no hay dónde
               // guardar nada ahí. Ver zonasService.esColumnaBloqueada.
               if (!isReserva && zonasService.esColumnaBloqueada(currentLayoutZona, c)) {
-                  gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px; opacity:0.28;">`;
+                  gridHtml += `<div title="Columna ${String(c).padStart(2,'0')} · bloqueada" style="display:flex; flex-direction:column; gap:2px; ${anchoDe(c)} opacity:0.28;">`;
                   for (let r = maxRows; r >= 1; r--) {
                       gridHtml += `<div style="height:15px; border:1px dashed rgba(255,255,255,0.10); background:repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0 3px,transparent 3px 6px);"></div>`;
                   }
-                  gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#64748b; font-weight:900; margin-top:8px; text-decoration:line-through;">${String(c).padStart(2,'0')}</div>`;
+                  // El número va más chico: en 13 píxeles no entra a tamaño normal.
+                  gridHtml += `<div style="text-align:center; font-size:0.58rem; color:#64748b; font-weight:900; margin-top:8px; text-decoration:line-through;">${String(c).padStart(2,'0')}</div>`;
                   gridHtml += `</div>`;
                   continue;
               }
-              gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:40px;">`;
+              gridHtml += `<div style="display:flex; flex-direction:column; gap:2px; ${anchoDe(c)}">`;
               // Las columnas más cortas —los macizos— arrancan más arriba: si a la columna le
               // faltan cuerpos respecto al tope de la zona, esos huecos van ABAJO y el cuerpo
               // que se dibuja en la posición 4 es el cuerpo 1. Antes esto estaba escrito como
