@@ -36,8 +36,9 @@ const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/confi
  *
  * v2 = las marcas pasaron de 'Bata': 'SEL' a { zona, columnas }.
  * v3 = MZN01 y MZN02 bajaron de 22 a 20 cuerpos, y apareció cuerposPorColumna.
+ * v4 = apareció columnasBloqueadas, con las columnas que Daniel sacó de circulación.
  */
-const CACHE_KEY = 'config_zonas_v3';
+const CACHE_KEY = 'config_zonas_v4';
 
 /** Las cuatro temporadas que puede tener una columna. */
 export const FRANJAS = {
@@ -96,6 +97,9 @@ export const zonasPorDefecto = () => ({
             cuerposPorColumna: { 2: 17, 3: 17, 22: 17, 23: 17 },
             saldoMenorA: 80,
             pasillos: [],
+            // Sacadas de circulación por Daniel el 05-ago-2026. Están vacías de punta a
+            // punta —el stock lo confirma: cero pares en las tres— y no se pueden usar.
+            columnasBloqueadas: [5, 6, 9],
             franjas: { ...rango(1, 3, 'anterior'), ...rango(4, 20, 'actual'),
                        ...rango(21, 23, 'anterior'), 24: 'actual' }
         },
@@ -108,6 +112,10 @@ export const zonasPorDefecto = () => ({
             cuerposPorColumna: { 2: 17, 3: 17, 23: 17 },
             saldoMenorA: 80,
             pasillos: [],
+            // Sacadas de circulación por Daniel el 05-ago-2026, vacías de punta a punta.
+            // Quedan en uso solo 1, 2, 3, 4, 7, 8, 11, 12, 15, 16, 19 y 20 — y son
+            // exactamente las que tienen stock hoy, así que la lista cierra con el almacén.
+            columnasBloqueadas: [5, 6, 9, 10, 13, 14, 17, 18, 21, 22],
             franjas: { ...rango(1, 5, 'anterior'), ...rango(6, 24, 'actual') }
         },
         // Sin reglas todavía. Daniel las carga desde este mismo módulo cuando las ordene:
@@ -246,6 +254,14 @@ const normalizar = (crudo) => {
             if (Number.isInteger(col) && col >= 1 && col <= 99 && n) cpc[col] = n;
         });
 
+        // Las columnas que no se pueden usar. Se toman de la configuración publicada si
+        // viene, y si no, de fábrica: una PC con caché viejo no puede quedarse sin ellas
+        // —por eso además subió el CACHE_KEY a v4—.
+        const bloq = [...new Set(
+            (Array.isArray(v.columnasBloqueadas) ? v.columnasBloqueadas : (d.columnasBloqueadas || []))
+                .map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= 99)
+        )].sort((a, b) => a - b);
+
         zonas[z] = {
             etiqueta: String(v.etiqueta || d.etiqueta),
             activa: typeof v.activa === 'boolean' ? v.activa : d.activa,
@@ -255,6 +271,7 @@ const normalizar = (crudo) => {
             saldoMenorA: _num(v.saldoMenorA, d.saldoMenorA, 0, 100000),
             pasillos: Array.isArray(v.pasillos) ? v.pasillos.filter(p =>
                 p && Number.isFinite(Number(p.desdeCol)) && Array.isArray(p.cuerpos)) : d.pasillos,
+            columnasBloqueadas: bloq,
             franjas
         };
     });
@@ -387,10 +404,17 @@ export const zonaDeMarca = (marca) => {
     return r ? r.zona : null;
 };
 
-/** Las columnas de esa marca dentro de su zona. Vacío = la zona entera, sin repartir. */
+/**
+ * Las columnas de esa marca dentro de su zona. Vacío = la zona entera, sin repartir.
+ * Las bloqueadas se sacan acá también: si a Power le tocan la 1 a la 11 y la 5, 6 y 9 están
+ * fuera de circulación, sus columnas son las ocho que quedan.
+ */
 export const columnasDeMarca = (marca) => {
     const r = reglaDeMarca(marca);
-    return (r && Array.isArray(r.columnas)) ? r.columnas : [];
+    if (!r || !Array.isArray(r.columnas)) return [];
+    const z = zonasActual().zonas[r.zona];
+    const bloq = (z && z.columnasBloqueadas) || [];
+    return r.columnas.filter(c => !bloq.includes(Number(c)));
 };
 
 /**
@@ -549,13 +573,35 @@ export const cuerposDeColumna = (zona, columna) => {
     return (z.cuerposPorColumna && z.cuerposPorColumna[Number(columna)]) || z.cuerpos;
 };
 
-/** Las columnas de una zona que llevan esa temporada, en orden. */
+/**
+ * COLUMNAS BLOQUEADAS: las que no se pueden usar, por más que tengan franja y cuerpos.
+ *
+ * Daniel las sacó de circulación el 05-ago-2026 — MZN01 la 5, 6 y 9; MZN02 la 5, 6, 9, 10,
+ * 13, 14, 17, 18, 21 y 22— y están vacías de punta a punta, con todos sus cuerpos. El stock
+ * lo confirma: cero pares en todas ellas.
+ *
+ * No es lo mismo que un pasillo. El pasillo saca CUERPOS sueltos de un tramo de columnas
+ * —los del elevador del selectivo—; esto saca la columna ENTERA.
+ */
+export const esColumnaBloqueada = (zona, columna) => {
+    const z = zonasActual().zonas[zona];
+    return !!(z && (z.columnasBloqueadas || []).includes(Number(columna)));
+};
+
+/** Las columnas bloqueadas de una zona. */
+export const columnasBloqueadasDe = (zona) => {
+    const z = zonasActual().zonas[zona];
+    return (z && z.columnasBloqueadas) ? [...z.columnasBloqueadas] : [];
+};
+
+/** Las columnas de una zona que llevan esa temporada, en orden. Sin las bloqueadas. */
 export const columnasDeFranja = (zona, franja) => {
     const z = zonasActual().zonas[zona];
     if (!z) return [];
+    const bloq = z.columnasBloqueadas || [];
     return Object.keys(z.franjas)
         .filter(c => z.franjas[c] === franja)
-        .map(Number).sort((a, b) => a - b);
+        .map(Number).filter(c => !bloq.includes(c)).sort((a, b) => a - b);
 };
 
 /** ¿Ese cuerpo es paso del elevador? Entonces no existe como ubicación de almacenaje. */
@@ -573,6 +619,7 @@ export const cuerposDe = (zona) => {
     if (!z) return [];
     const salida = [];
     for (let c = 1; c <= z.columnas; c++) {
+        if (esColumnaBloqueada(zona, c)) continue;
         for (let cu = 1; cu <= z.cuerpos; cu++) {
             if (!esPasillo(zona, c, cu)) salida.push({ columna: c, cuerpo: cu });
         }
@@ -621,6 +668,7 @@ export const cuerpoQueRecibe = (zona, columnas, pares, ocupados, libres) => {
 
     let mejor = null, vacio = null;
     columnas.forEach(col => {
+        if (esColumnaBloqueada(zona, col)) return;   // última red: nunca se usa una bloqueada
         const tope = (z.cuerposPorColumna && z.cuerposPorColumna[Number(col)]) || z.cuerpos;
         for (let cu = 1; cu <= tope; cu++) {
             if (esPasillo(zona, col, cu)) continue;
@@ -642,9 +690,12 @@ export const cuerpoQueRecibe = (zona, columnas, pares, ocupados, libres) => {
     return null;
 };
 
-export const elegirCuerpos = (zona, columnas, cuantos, ocupados) => {
+export const elegirCuerpos = (zona, columnasPedidas, cuantos, ocupados) => {
     const z = zonasActual().zonas[zona];
     if (!z || cuantos < 1) return { cuerpos: [], completo: false, libresEnLaFranja: 0 };
+
+    // Última red: una columna bloqueada no se usa aunque quien llame la haya pedido.
+    const columnas = (columnasPedidas || []).filter(c => !esColumnaBloqueada(zona, c));
 
     const libresDe = (col) => {
         const salida = [];
@@ -813,7 +864,10 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
         // No entra. Se le abren los cuerpos que falten, empezando por las columnas donde ya
         // vive: si el suyo está lleno, lo natural es seguir en el de al lado.
         const faltan = Math.max(1, Math.ceil((sobran - porCuerpoRep * HOLGURA) / porCuerpoRep));
-        const susColumnas = [...new Set(art.yaTiene.map(c => c.columna))];
+        // Si el artículo quedó viviendo en una columna bloqueada, sus cuerpos siguen siendo
+        // suyos —no se lo mueve— pero los NUEVOS no se abren ahí.
+        const susColumnas = [...new Set(art.yaTiene.map(c => c.columna))]
+            .filter(c => !esColumnaBloqueada(zonaRep, c));
         const ocupRep = ocupadosPorZona[zonaRep] || new Set();
         let extra = elegirCuerpos(zonaRep, susColumnas, faltan, ocupRep);
 
@@ -874,7 +928,8 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
             // Daniel— y sus columnas son todas de lo mismo. Antes eso salía por Slotting con
             // un "ninguna lleva anterior" que no era un problema real: era la marca diciendo
             // que no separa por temporada.
-            const todasSuyas = suyas.filter(c => franjaDeColumna(zona, c) !== 'ninguna');
+            const todasSuyas = suyas.filter(c =>
+                franjaDeColumna(zona, c) !== 'ninguna' && !esColumnaBloqueada(zona, c));
             if (!todasSuyas.length) {
                 return paso('sin-regla',
                     `A ${art.marca} le tocan las columnas ${suyas.join(', ')} de ${z.etiqueta}, y ninguna está en uso.`,
