@@ -37,8 +37,9 @@ const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/confi
  * v2 = las marcas pasaron de 'Bata': 'SEL' a { zona, columnas }.
  * v3 = MZN01 y MZN02 bajaron de 22 a 20 cuerpos, y apareció cuerposPorColumna.
  * v4 = apareció columnasBloqueadas, con las columnas que Daniel sacó de circulación.
+ * v5 = MZN03 y MZN04 bajaron de 22 a 20 cuerpos, y MZN04 estrenó cuerposPorColumna.
  */
-const CACHE_KEY = 'config_zonas_v4';
+const CACHE_KEY = 'config_zonas_v5';
 
 /** Las cuatro temporadas que puede tener una columna. */
 export const FRANJAS = {
@@ -124,7 +125,12 @@ export const zonasPorDefecto = () => ({
             etiqueta: 'Mezzanine 3',
             activa: false,
             columnas: 24,
-            cuerpos: 22,
+            // 20, NO 22. Los 22 son del selectivo y estaban acá de arrastre, igual que
+            // pasaba en MZN01 y MZN02 antes de la v29.0037. Medido sobre el stock del
+            // 05-ago: ninguna ubicación de MZN03 pasa del cuerpo 20. Lo cazó Daniel
+            // mirando el layout — "los mezzanines tienen 20 cuerpos, el de 22 es el
+            // selectivo"— después de que esta configuración diera 528 ubicaciones.
+            cuerpos: 20,
             saldoMenorA: 80,
             pasillos: [],
             franjas: {}
@@ -133,7 +139,11 @@ export const zonasPorDefecto = () => ({
             etiqueta: 'Mezzanine 4',
             activa: false,
             columnas: 24,
-            cuerpos: 22,
+            // Mismo arrastre que MZN03: el stock tampoco pasa del cuerpo 20.
+            cuerpos: 20,
+            // Las columnas cortas salieron de medir el stock: son las mismas cuatro que
+            // en MZN01. Ver [[mezzanine-4-como-funciona]].
+            cuerposPorColumna: { 2: 17, 3: 17, 22: 17, 23: 17 },
             saldoMenorA: 80,
             pasillos: [],
             franjas: {}
