@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0077';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0078';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0077';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0077';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0077';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0077';
-import * as metasService from '../services_v245/metasService.js?v=29.0077';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0077';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0077';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0077';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0077';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0077';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0077';
+import * as adminService from '../services_v245/adminService.js?v=29.0078';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0078';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0078';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0078';
+import * as metasService from '../services_v245/metasService.js?v=29.0078';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0078';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0078';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0078';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0078';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0078';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0078';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0077';
+const VERSION = '29.0078';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1177,6 +1177,23 @@ if (!window.__repMarcasStart) window.__repMarcasStart = getLogicalDate();
 if (!window.__repMarcasEnd) window.__repMarcasEnd = getLogicalDate();
 if (!window.__repGenderStart) window.__repGenderStart = getLogicalDate();
 if (!window.__repGenderEnd) window.__repGenderEnd = getLogicalDate();
+/**
+ * EL COMODÍN DE LA TALLA ES UNO SOLO: 'S/T'.
+ *
+ * Convivían dos —'S/T' en el cálculo del papel y 'S/TALLA' en el generador de tareas— y como
+ * la talla es la CLAVE con la que se cruzan las dos mitades, un artículo sin talla numérica
+ * nunca se encontraba consigo mismo: la hoja salía con todo al piso, la reserva en cero y el
+ * destino en guion, sin ningún aviso.
+ *
+ * Se sigue aceptando 'S/TALLA' al leer porque las tareas ya guardadas lo tienen escrito así,
+ * y esas hojas se reimprimen. Al escribir, siempre 'S/T'.
+ */
+const normalizarTalla = (t) => {
+  const s = String(t == null ? '' : t).trim().toUpperCase();
+  if (!s || s === 'S/TALLA' || s === 'S/T' || s === 'SIN TALLA') return 'S/T';
+  return s;
+};
+
 let expandedWeeks = []; // Semanas expandidas en el historial
 let almacenajeTasksCache = [];
 try {
@@ -3405,7 +3422,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0077');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0078');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13736,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0077 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0078 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15209,6 +15226,7 @@ const renderRFSection = (container) => {
   const cargarContextoSugerencia = async (tareasAbiertas) => {
     await zonasService.cargarZonas();
     await tallasService.cargarTallas();
+    await cargarTablaTallasNube();
     await rescatarMaestro();
     let stock = await getAreaData('almacenaje_activo');
 
@@ -15265,7 +15283,19 @@ const renderRFSection = (container) => {
     });
 
     // La talla sale del final de la descripción: "...BATA-1-38"
-    const RE_TALLA = /-\d+-(\d+(?:\.\d+)?)\s*$/;
+    // LA TALLA SALE DE extractTalla() Y DE NINGÚN OTRO LADO.
+    //
+    // Acá había una expresión propia —/-\d+-(\d+(\.\d+)?)$/— que solo aceptaba NÚMEROS, y el
+    // generador de tareas tenía otra que aceptaba cualquier cosa. Las dos leían la misma
+    // descripción y sacaban cosas distintas: en la polera "...WEINBRENNER-1-M" el generador
+    // guardaba la talla M y este cálculo decía "S/T". Después, al armar el papel, el sistema
+    // buscaba cuánto le tocaba a la M en una lista donde solo figuraba S/T, no encontraba
+    // nada, y la hoja salía con todo al piso y el destino en guion, SIN NINGÚN AVISO.
+    //
+    // Medido sobre el buffer del 05-ago: 42 de 187 líneas —el 22%, 3.160 pares— no cruzaban.
+    // Primero la tabla que publica el robot —que es la única que conoce los SKU que solo
+    // están en reserva— y si no está, se lee del texto como siempre.
+    const talladeDesc = (sku, desc) => normalizarTalla(tallaDeSku(sku, desc));
     const ocupados = {};
     const casaDe = new Map();
     const paresEnCuerpo = new Map();   // art7 -> Map(zona|col|cuerpo -> pares), para el corte de abajo
@@ -15287,8 +15317,7 @@ const renderRFSection = (container) => {
       const zona = ubi.split('-')[0];
       const esPiso = !esBuffer && !!zonasService.zonasActual().zonas[zona];
       if (s7 && qty > 0 && (esBuffer || esPiso)) {
-        const m = RE_TALLA.exec(String(raw[2] || '').trim());
-        const talla = m ? m[1] : 'S/T';
+        const talla = talladeDesc(String(raw[1] || '').trim(), String(raw[2] || '').trim());
         if (!porTallaDe.has(s7)) porTallaDe.set(s7, {});
         const t = porTallaDe.get(s7);
         if (!t[talla]) t[talla] = { buffer: 0, piso: 0 };
@@ -20754,13 +20783,17 @@ window.showCellModal = function(htmlContent) {
             const qty = parseFloat(row['Cantidad actual'] || row['Cantidad'] || row['Cant.']) || 0;
             const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim();
             
-            // [LOGICA DANIEL v24.9.6] Extraer Talla de la Columna C (Índice 2)
+            // LA TALLA SALE DE extractTalla() Y DE NINGÚN OTRO LADO.
+            //
+            // Acá había una expresión propia —/-[0-9]-(.+)$/— que tomaba TODO lo que viniera
+            // después del guion y no estaba anclada a la talla: con una descripción de dos
+            // grupos numéricos guardaba "1-38" en lugar de "38", y así ensuciaba la tabla de
+            // tallas con valores como 1-35, 0M o 1/2, que no son tallas.
+            //
+            // Y como el cálculo del papel usaba otra distinta, las dos mitades no se
+            // encontraban: ver el comentario de talladeDesc en cargarContextoSugerencia.
             const desc = String(raw[2] || '').trim(); // Columna C
-            let tallaExtraida = 'S/TALLA';
-            const tallaMatch = desc.match(/-[0-9]-(.+)$/);
-            if (tallaMatch) {
-                tallaExtraida = tallaMatch[1].trim();
-            }
+            const tallaExtraida = normalizarTalla(tallaDeSku(skuFull, desc));
 
             const info = artMap.get(sku7) || { marca: 'S/M', gender: 'S/G', genderRims: 'S/GR', coleccion: 'S/C' };
 
@@ -21064,7 +21097,10 @@ window.showCellModal = function(htmlContent) {
           if (!ctx.lineasBufferDe.has(s7)) ctx.lineasBufferDe.set(s7, []);
           ctx.lineasBufferDe.get(s7).push({
             ubi, skuFull: String(i.skuFull || '').trim(),
-            talla: String(i.talla || 'S/T').trim(), qty
+            // Las tareas guardadas ANTES de unificar la regla traen 'S/TALLA' como comodín,
+            // y el cálculo usa 'S/T'. Sin esta traducción, reimprimir una tarea vieja no
+            // cruzaría y la hoja saldría con todo al piso y el destino en guion.
+            talla: normalizarTalla(i.talla), qty
           });
         });
       }));

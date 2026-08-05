@@ -1264,8 +1264,15 @@ def _tipo_de(nombre: str, tipo: str) -> str:
 
 @app.post("/api/archivos/{modulo}")
 async def subir_archivo(modulo: str, request: Request, nombre: str = "",
-                        fecha: str = "", usuario: str = "robot", tipo: str = ""):
-    """Recibe el archivo en el cuerpo de la petición y lo guarda."""
+                        fecha: str = "", usuario: str = "robot", tipo: str = "",
+                        guardar: int = 0):
+    """
+    Recibe el archivo en el cuerpo de la petición y lo guarda.
+
+    `guardar` es cuántas versiones conservar de ESTE tipo. Si no viene, se usan las siete de
+    siempre. Existe porque no todos los archivos valen lo mismo: la Tabla de Tallas se
+    publica solo cuando cambia, y Daniel la quiere con seis.
+    """
     try:
         contenido = await request.body()
         if not contenido:
@@ -1295,6 +1302,7 @@ async def subir_archivo(modulo: str, request: Request, nombre: str = "",
               (usuario or "robot")[:60], datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
         # Rotación POR TIPO: cada archivo guarda su propia semana.
+        limite = guardar if 1 <= guardar <= 60 else ARCHIVOS_POR_TIPO
         cursor.execute("""
             DELETE FROM archivos_nube
              WHERE modulo = ? AND tipo = ?
@@ -1302,7 +1310,7 @@ async def subir_archivo(modulo: str, request: Request, nombre: str = "",
                                WHERE modulo = ? AND tipo = ?
                             ORDER BY fecha DESC, id DESC
                                LIMIT ?)
-        """, (modulo, tipo, modulo, tipo, ARCHIVOS_POR_TIPO))
+        """, (modulo, tipo, modulo, tipo, limite))
         borrados = max(cursor.rowcount, 0)
         conn.commit()
 

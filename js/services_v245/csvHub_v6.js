@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0077';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0078';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -128,7 +128,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0077';
+const VERSION = '29.0078';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1045,6 +1045,54 @@ export const extractTalla = (desc) => {
         }
     }
     return null;
+};
+
+/**
+ * LA TABLA DE TALLAS QUE PUBLICA EL ROBOT.
+ *
+ * El robot es el único que tiene los DOS stocks juntos. Medido sobre los datos del
+ * 05-ago-2026: el activo da 17.554 SKU con talla y la reserva 9.428, pero **la reserva
+ * aporta 4.609 que el activo no tiene**. Una PC que solo vio el activo nunca va a saber la
+ * talla de esos: están arriba, en paletas, y no aparecen abajo hasta que se bajan.
+ *
+ * Es ACUMULATIVA: el robot solo agrega. Así una talla corregida a mano no se pisa, y un
+ * artículo que se agotó conserva la suya para cuando vuelva.
+ *
+ * SI NO ESTÁ, NO PASA NADA. Se sigue leyendo del texto de la descripción, que es lo que se
+ * hacía hasta ahora. La tabla acelera y completa, no es un requisito.
+ */
+let _tallasNube = null;
+let _tallasPedidas = false;
+
+export const cargarTablaTallasNube = async () => {
+    if (_tallasNube || _tallasPedidas) return _tallasNube;
+    _tallasPedidas = true;
+    try {
+        const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+        const res = await fetch(`${base}/api/logistics/tabla_tallas?t=${Date.now()}`);
+        if (!res.ok) return null;
+        const cuerpo = await res.json();
+        const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        if (Array.isArray(datos) && datos.length) {
+            const m = {};
+            datos.forEach(d => { if (d && d.SKU) m[String(d.SKU).trim()] = String(d.TALLA || '').trim(); });
+            _tallasNube = m;
+            console.log(`[Tallas] ${datos.length.toLocaleString('es-PE')} tallas del robot`);
+        }
+    } catch (e) {
+        console.warn('[Tallas] no se pudo traer la tabla publicada:', e && e.message);
+    }
+    return _tallasNube;
+};
+
+/**
+ * La talla de un SKU. Primero la tabla del robot; si no está, se lee de la descripción.
+ * Devuelve null si no se puede saber — quien llama decide qué comodín usar.
+ */
+export const tallaDeSku = (sku, desc) => {
+    const s = String(sku || '').trim();
+    if (_tallasNube && s && _tallasNube[s]) return _tallasNube[s];
+    return extractTalla(desc);
 };
 
 export const updateTablaTallas = () => {
