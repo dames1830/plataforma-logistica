@@ -384,7 +384,10 @@ export const renderLayoutActivo = async (container) => {
           
           window.__buildLayoutHTML = buildLayoutHTML;
           let occupiedCells = 0;
-          let gridHtml = `<div style="display:flex; justify-content:space-between; gap:10px; width:100%; overflow-x:auto; padding-bottom:15px;">`;
+          // OJO CON EL ORDEN: las barras van ANTES de abrir la fila del mapa, no adentro.
+          // Adentro se convierten en una columna más y, como la fila estira a sus hijos, se
+          // pintan de arriba abajo y tapan el mapa de calor entero.
+          let gridHtml = '';
           
           // La forma de la zona sale de la configuración, igual que en la web principal.
           const _zCfg = zonasService.zonasActual().zonas[currentLayoutZona];
@@ -407,25 +410,31 @@ export const renderLayoutActivo = async (container) => {
           const duenoDe = (c) => hayVariasMarcas
               ? zonasService.duenoDeColumna(currentLayoutZona, c) : null;
 
-          if (hayVariasMarcas) {
-              gridHtml += `<div style="display:flex; gap:10px; width:100%; margin-bottom:4px;">`;
+          // El scroll envuelve a las barras y al mapa: si lo tuviera solo el mapa, al
+          // desplazarlo las barras se quedarían quietas y dejarían de coincidir.
+          gridHtml += `<div style="width:100%; overflow-x:auto; padding-bottom:15px;"><div style="min-width:100%;">`;
+
+          // Arriba, la temporada de cada columna. En todas las zonas.
+          const FR = zonasService.FRANJAS;
+          const hayFranjas = !isReserva && _zCfg && Object.keys(_zCfg.franjas || {}).length > 0;
+          if (hayFranjas) {
+              gridHtml += `<div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:5px;">`;
               colsArray.forEach(c => {
-                  const d = duenoDe(c);
                   const bloq = zonasService.esColumnaBloqueada(currentLayoutZona, c);
-                  const col = (d && !bloq) ? d.color : 'rgba(0,0,0,0.06)';
-                  const ini = d && c === d.columnas[0];
-                  const fin = d && c === d.columnas[d.columnas.length - 1];
-                  const radio = esMezzanine
-                      ? `${fin ? '5px' : '0'} ${ini ? '5px' : '0'} 0 0`
-                      : `${ini ? '5px' : '0'} ${fin ? '5px' : '0'} 0 0`;
-                  gridHtml += `<div title="${d ? escP(d.marca) : ''}" style="flex:1; min-width:40px;
-                      background:${col}; border-radius:${radio}; padding:3px 1px; text-align:center;
-                      font-size:8.5px; font-weight:900; color:#1C2B3A; letter-spacing:-0.2px;
+                  const f = zonasService.franjaDeColumna(currentLayoutZona, c);
+                  const d = FR[f] || FR.ninguna;
+                  const vale = !bloq && f !== 'ninguna';
+                  gridHtml += `<div title="${escP(d.etiqueta)}" style="flex:1 1 0; min-width:40px;
+                      height:15px; line-height:15px; box-sizing:border-box; border-radius:4px 4px 0 0;
+                      background:${vale ? d.color : 'rgba(0,0,0,0.06)'}; text-align:center;
+                      font-size:8px; font-weight:900; color:#1C2B3A; letter-spacing:-0.2px;
                       white-space:nowrap; overflow:hidden; ${bloq ? 'opacity:0.25;' : ''}">${
-                      (d && !bloq) ? escP(d.etiqueta) : '·'}</div>`;
+                      vale ? escP(d.corta) : ''}</div>`;
               });
               gridHtml += `</div>`;
           }
+
+          gridHtml += `<div style="display:flex; justify-content:space-between; gap:10px; width:100%;">`;
 
           for (let c of colsArray) {
               // Columna bloqueada: no existe. Mismo criterio que en la web principal.
@@ -504,15 +513,15 @@ export const renderLayoutActivo = async (container) => {
               gridHtml += `<div style="text-align:center; font-size:0.68rem; color:#1C2B3A; font-weight:700; margin-top:8px;">${String(c).padStart(2,'0')}</div>`;
               if (hayVariasMarcas) {
                   const d = duenoDe(c);
-                  gridHtml += `<div style="height:5px; border-radius:2px; margin-top:4px;
+                  gridHtml += `<div style="height:4px; border-radius:2px; margin-top:5px;
                       background:${d ? d.color : 'rgba(0,0,0,0.08)'};"></div>`;
-                  gridHtml += `<div style="text-align:center; font-size:8px; font-weight:800;
-                      margin-top:3px; white-space:nowrap; overflow:hidden; letter-spacing:-0.2px;
-                      color:${d ? d.color : 'rgba(0,0,0,0.25)'};">${d ? escP(d.etiqueta) : ''}</div>`;
+                  gridHtml += `<div title="${d ? escP(d.marca) : ''}" style="text-align:center;
+                      font-size:9.5px; font-weight:900; margin-top:3px; letter-spacing:0.3px;
+                      color:${d ? d.color : 'rgba(0,0,0,0.25)'};">${d ? escP(d.sigla) : ''}</div>`;
               }
               gridHtml += `</div>`;
           }
-          gridHtml += `</div>`;
+          gridHtml += `</div></div></div>`;   // fila del mapa · ancho mínimo · scroll
 
           window.globalLayoutData[currentLayoutZona] = localLayoutData;
             let ACTUAL_TOTAL_CELLS = 14 * 22;

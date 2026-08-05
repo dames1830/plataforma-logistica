@@ -41,14 +41,20 @@ const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/confi
  */
 const CACHE_KEY = 'config_zonas_v5';
 
-/** Las cuatro temporadas que puede tener una columna. */
+/**
+ * Las cuatro temporadas que puede tener una columna.
+ *
+ * `corta` es el nombre para el mapa, donde cada columna mide unos 46 píxeles. Va en la barra
+ * de arriba, para que el asistente no solo vea de qué color es cada celda sino DÓNDE tiene
+ * que dejar la temporada actual y dónde la anterior.
+ */
 export const FRANJAS = {
-    actual:   { etiqueta: 'Temporada actual',  color: '#3b82f6' },
-    anterior: { etiqueta: 'Temporada anterior', color: '#ef4444' },
-    saldos:   { etiqueta: 'Saldos',             color: '#f59e0b' },
-    escolar:  { etiqueta: 'Escolar',            color: '#22c55e' },
-    catalogo: { etiqueta: 'Catálogo',           color: '#a855f7' },
-    ninguna:  { etiqueta: 'Sin uso',            color: '#64748b' }
+    actual:   { etiqueta: 'Temporada actual',   corta: 'ACTUAL',   color: '#3b82f6' },
+    anterior: { etiqueta: 'Temporada anterior', corta: 'ANTERIOR', color: '#ef4444' },
+    saldos:   { etiqueta: 'Saldos',             corta: 'SALDOS',   color: '#f59e0b' },
+    escolar:  { etiqueta: 'Escolar',            corta: 'ESCOLAR',  color: '#22c55e' },
+    catalogo: { etiqueta: 'Catálogo',           corta: 'CATÁLOGO', color: '#a855f7' },
+    ninguna:  { etiqueta: 'Sin uso',            corta: '',         color: '#64748b' }
 };
 
 /**
@@ -455,6 +461,15 @@ export const etiquetaDeMarca = (marca) => {
 };
 
 /**
+ * LAS TRES PRIMERAS LETRAS. Es lo que va al pie de cada columna del mapa: WEI, PUM, ADI,
+ * IND... Con el nombre entero las columnas quedaban tapadas de texto.
+ *
+ * Se toman solo letras y números, así "M. CLAIRE" da MCL y no "M. ", y "B.G Licenses" da BGL.
+ */
+export const siglaDeMarca = (marca) =>
+    etiquetaDeMarca(marca).replace(/[^A-ZÁÉÍÓÚÑ0-9]/gi, '').slice(0, 3);
+
+/**
  * Los colores del mapa. Con dos exclusiones, y las dos importan:
  *
  *   - NADA DE AZUL NI ROJO: esos ya significan temporada actual y temporada anterior en las
@@ -481,7 +496,7 @@ export const marcasDeZona = (zona) => {
         .map(m => ({ marca: m, columnas: columnasDeMarca(m) }))
         .filter(x => x.columnas.length)
         .sort((a, b) => a.columnas[0] - b.columnas[0])
-        .map((x, i) => ({ ...x, etiqueta: etiquetaDeMarca(x.marca),
+        .map((x, i) => ({ ...x, etiqueta: etiquetaDeMarca(x.marca), sigla: siglaDeMarca(x.marca),
                           color: PALETA_MARCAS[i % PALETA_MARCAS.length] }));
 };
 
@@ -492,7 +507,7 @@ export const duenoDeColumna = (zona, columna) => {
     // La 8 del mezzanine 3 no es de nadie: es el catálogo del buffer D. Su color sale de la
     // franja, que es donde ya estaba definido, y por eso PALETA_MARCAS no lo incluye.
     if (franjaDeColumna(zona, columna) === SIN_FILTRO_DE_MARCA) {
-        return { marca: 'CATÁLOGO', etiqueta: 'CATÁLOGO',
+        return { marca: 'CATÁLOGO', etiqueta: 'CATÁLOGO', sigla: 'CAT',
                  color: FRANJAS[SIN_FILTRO_DE_MARCA].color, columnas: [Number(columna)] };
     }
     return null;

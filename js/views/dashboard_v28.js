@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0075';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla } from '../services_v245/csvHub_v6.js?v=29.0076';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0075';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0075';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0075';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0075';
-import * as metasService from '../services_v245/metasService.js?v=29.0075';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0075';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0075';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0075';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0075';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0075';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0075';
+import * as adminService from '../services_v245/adminService.js?v=29.0076';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0076';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0076';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0076';
+import * as metasService from '../services_v245/metasService.js?v=29.0076';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0076';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0076';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0076';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0076';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0076';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0076';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0075';
+const VERSION = '29.0076';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3405,7 +3405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0075');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0076');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13719,7 +13719,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0075 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0076 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18795,26 +18795,35 @@ const renderRFSection = (container) => {
           // con sus columnas.
           gridHtml += `<div style="width:100%; overflow-x:auto; padding-bottom:15px;"><div style="min-width:100%;">`;
 
-          if (hayVariasMarcas) {
+          // ══════════════════════════════════════════════════════════════════════════
+          // ARRIBA, LA TEMPORADA QUE VA EN CADA COLUMNA — EN TODAS LAS ZONAS.
+          //
+          // La leyenda decía qué colores existen, pero no DÓNDE va cada uno: el asistente
+          // veía "T. Actual · T. Anterior · Mixto" y seguía sin saber dónde dejar la
+          // mercadería. Ahora cada columna dice de qué temporada es, y el color es el mismo
+          // que el de sus celdas. Vale para el selectivo y para los cuatro mezzanines.
+          //
+          // Sale de las franjas configuradas en Zonas de Almacenaje, así que mover una
+          // columna de temporada se refleja acá sin tocar código.
+          // ══════════════════════════════════════════════════════════════════════════
+          const FR = zonasService.FRANJAS;
+          const hayFranjas = !isReserva && _zCfg && Object.keys(_zCfg.franjas || {}).length > 0;
+
+          if (hayFranjas) {
               // ALTURA FIJA. Sin esto la fila estira sus hijos y la barra se pinta de arriba
-              // abajo, tapando el mapa entero.
-              gridHtml += `<div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:4px;">`;
+              // abajo, tapando el mapa entero — que es lo que pasó en la v29.0074.
+              gridHtml += `<div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:5px;">`;
               colsArray.forEach(c => {
-                  const d = duenoDe(c);
                   const bloq = zonasService.esColumnaBloqueada(currentLayoutZona, c);
-                  const col = (d && !bloq) ? d.color : 'rgba(255,255,255,0.05)';
-                  // Las esquinas se redondean solo en los extremos del bloque de la marca
-                  const ini = d && c === d.columnas[0];
-                  const fin = d && c === d.columnas[d.columnas.length - 1];
-                  const radio = esMezzanine
-                      ? `${fin ? '5px' : '0'} ${ini ? '5px' : '0'} 0 0`
-                      : `${ini ? '5px' : '0'} ${fin ? '5px' : '0'} 0 0`;
-                  gridHtml += `<div title="${d ? esc(d.marca) : ''}" style="flex:1 1 0; min-width:40px;
-                      height:14px; line-height:14px; box-sizing:border-box;
-                      background:${col}; border-radius:${radio}; text-align:center;
-                      font-size:8.5px; font-weight:900; color:#0b1220; letter-spacing:-0.2px;
+                  const f = zonasService.franjaDeColumna(currentLayoutZona, c);
+                  const d = FR[f] || FR.ninguna;
+                  const vale = !bloq && f !== 'ninguna';
+                  gridHtml += `<div title="${esc(d.etiqueta)}" style="flex:1 1 0; min-width:40px;
+                      height:15px; line-height:15px; box-sizing:border-box; border-radius:4px 4px 0 0;
+                      background:${vale ? d.color : 'rgba(255,255,255,0.05)'}; text-align:center;
+                      font-size:8px; font-weight:900; color:#0b1220; letter-spacing:-0.2px;
                       white-space:nowrap; overflow:hidden; ${bloq ? 'opacity:0.25;' : ''}">${
-                      (d && !bloq) ? esc(d.etiqueta) : ''}</div>`;
+                      vale ? esc(d.corta) : ''}</div>`;
               });
               gridHtml += `</div>`;
           }
@@ -18903,15 +18912,16 @@ const renderRFSection = (container) => {
                   `;
               }
               gridHtml += `<div style="text-align:center; font-size:0.75rem; color:#60a5fa; font-weight:900; margin-top:8px; text-shadow:0 0 5px rgba(96, 165, 250, 0.5);">${String(c).padStart(2,'0')}</div>`;
-              // El pie repite la marca: color y nombre, para no tener que subir la vista hasta
-              // la barra de arriba cuando se está mirando la parte baja del mapa.
+              // AL PIE, LA MARCA EN TRES LETRAS: WEI, PUM, ADI, IND. El nombre entero tapaba
+              // la columna de texto, y con tres alcanza para saber de quién es. El nombre
+              // completo queda en el globito al pasar el mouse.
               if (hayVariasMarcas) {
                   const d = duenoDe(c);
-                  gridHtml += `<div style="height:5px; border-radius:2px; margin-top:4px;
+                  gridHtml += `<div style="height:4px; border-radius:2px; margin-top:5px;
                       background:${d ? d.color : 'rgba(255,255,255,0.06)'};"></div>`;
-                  gridHtml += `<div style="text-align:center; font-size:8px; font-weight:800;
-                      margin-top:3px; white-space:nowrap; overflow:hidden; letter-spacing:-0.2px;
-                      color:${d ? d.color : 'rgba(255,255,255,0.2)'};">${d ? esc(d.etiqueta) : ''}</div>`;
+                  gridHtml += `<div title="${d ? esc(d.marca) : ''}" style="text-align:center;
+                      font-size:9.5px; font-weight:900; margin-top:3px; letter-spacing:0.3px;
+                      color:${d ? d.color : 'rgba(255,255,255,0.2)'};">${d ? esc(d.sigla) : ''}</div>`;
               }
               gridHtml += `</div>`;
           }
