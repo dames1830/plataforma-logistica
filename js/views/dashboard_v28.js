@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0101';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0102';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0101';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0101';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0101';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0101';
-import * as metasService from '../services_v245/metasService.js?v=29.0101';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0101';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0101';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0101';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0101';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0101';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0101';
+import * as adminService from '../services_v245/adminService.js?v=29.0102';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0102';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0102';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0102';
+import * as metasService from '../services_v245/metasService.js?v=29.0102';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0102';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0102';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0102';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0102';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0102';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0102';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0101';
+const VERSION = '29.0102';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0101');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0102');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0101 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0102 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22282,15 +22282,11 @@ window.showCellModal = function(htmlContent) {
    */
   const kpiDeGrupo = (P, R, filtro) => ({
     tipo: 'grupo', banda: true,
-    titulo: 'EVOLUCIÓN DEL ARTÍCULO · CÓMO SE VACÍA UN CÓDIGO NUEVO',
-    bajada: `<b>${R.articulos} códigos${(filtro && filtro.marca) ? ` de ${filtro.marca}` : ' de marca propia'}</b> `
-      + `que entraron nuevos en los últimos ${Math.round(P.ventanaDias / 30)} meses `
-      + `${(filtro && filtro.minimo) ? `con más de ${kpiN(filtro.minimo)} pares` : `con al menos un cuerpo (${kpiN(P.minimoPares)} pares)`}, `
-      + `seguidos foto a foto. La curva se mide sobre los <b>${R.grupoFijo}</b> que ya cumplieron `
-      + `${R.semanasFijas} semanas, para que todos hayan tenido el mismo plazo. Cada punto es la `
-      + `mediana: la mitad de los códigos queda por debajo y la mitad por encima.`,
+    titulo: 'EVOLUCIÓN DEL ARTÍCULO (CÓDIGO NUEVO)',
+    bajada: '',
     sello: `Estudio · ${P.fotos} fotos, al ${kpiFechaLarga(P.hasta)}`,
-    llegada: R.tipica, rotuloLlegada: 'Llegada típica', subLlegada: 'pares por código nuevo',
+    llegada: R.tipica, rotuloLlegada: 'Llegada típica',
+    subLlegada: 'pares · la mitad recibe más y la mitad menos',
     llegadaFranja: 'UN ARTÍCULO TÍPICO · LE LLEGAN',
     ficha: ['La muestra', [
       ['Artículos', String(R.articulos)],
@@ -22418,7 +22414,7 @@ window.showCellModal = function(htmlContent) {
         const s = fijo.filter(f);
         const p = s.reduce((x, a) => x + a.hoy, 0);
         return { k, n: s.length, pct: kpiR1(s.length * 100 / Math.max(1, fijo.length)),
-                 pares: p, cuerpos: kpiR1(p / 350) };
+                 pares: p };
       })
     };
   };
@@ -22458,12 +22454,13 @@ window.showCellModal = function(htmlContent) {
     // El Pareto NO se filtra: ése no pregunta cómo rota un código nuevo sino qué hay
     // hoy ocupando el almacén, y para eso hace falta todo.
     const marcas = [...new Set((P.articulos || []).filter(a => !a.rep).map(a => a.marca))].sort();
-    const TOPES = [[0, 'Cualquier tamaño'], [350, 'Más de un cuerpo · 350'],
-                   [1000, 'Más de 1.000 pares'], [2000, 'Más de 2.000 pares']];
+    const TOPES = [[0, 'Todos los tamaños'], [300, 'Mayores a 300 pares'],
+                   [500, 'Mayores a 500 pares'], [800, 'Mayores a 800 pares'],
+                   [1000, 'Mayores a 1.000 pares']];
     const barra = `
       <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin:0.9rem 0 0;
                   padding:0.6rem 0.8rem; background:rgba(0,0,0,0.22); border:1px solid var(--border); border-radius:11px;">
-        <span style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted);">Mirar solo</span>
+        <span style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted);">Filtros</span>
         <select onchange="window.__kpiFiltro('marca', this.value)"
                 style="background:#101a2c; color:var(--text-main); border:1px solid var(--border); border-radius:8px;
                        padding:0.32rem 0.6rem; font-size:0.75rem; font-weight:700; cursor:pointer;">
@@ -22488,7 +22485,7 @@ window.showCellModal = function(htmlContent) {
     // dos casos no hay curva ni semáforo que mostrar, y hay que decir cuál de los dos es.
     if (!R || !R.grupoFijo) return `
       <div class="glass-panel" style="padding:1.4rem 1.5rem;">
-        <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">EVOLUCIÓN DEL ARTÍCULO · CUÁNTO TARDA EN AGOTARSE</h3>
+        <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">EVOLUCIÓN DEL ARTÍCULO</h3>
         ${barra}
         <div style="padding:2.2rem; text-align:center; color:var(--text-muted); font-size:0.85rem; line-height:1.7;">
           ${!R ? 'Con este filtro no queda ningún artículo.'
@@ -22507,27 +22504,6 @@ window.showCellModal = function(htmlContent) {
         <div style="font-size:0.66rem; color:${colPie || 'var(--text-muted)'};">${pie}</div>
       </div>`;
 
-    // Cuánto tarda en bajar a cada hito. El "de N" es siempre el grupo fijo: así el
-    // porcentaje habla del almacén y no del largo de la ventana.
-    const hito = (u) => {
-      const h = R.hitos[String(u)];
-      const col = u === 10 ? AMBAR : AZUL;
-      if (!h) return caja(col, `${u}% de lo que llegó`, col, 'no llega', col,
-                          `ninguno de los ${R.grupoFijo} lo cruzó`);
-      const todos = h.cruzaron === h.de;
-      return caja(col, u === 50 ? 'La mitad · 50%' : (u === 25 ? 'Un cuarto · 25%' : 'La décima parte · 10%'),
-        col, `${kpiSem(h.sem)} <span style="font-size:0.78rem; font-weight:700; color:var(--text-muted);">${kpiSem(h.sem) === '1' ? 'semana' : 'semanas'}</span>`,
-        'var(--text-main)',
-        todos ? `llegaron los ${h.de}` : `llegaron ${h.cruzaron} de ${h.de}`,
-        todos ? '#10b981' : (h.pct < 50 ? AMBAR : null));
-    };
-
-    const c = R.cero;
-    const cajaCero = c.n === 0
-      ? caja(NARANJA, 'Agotado · cero pares', NARANJA, 'ninguno', NARANJA, `0 de ${c.de}`)
-      : caja(NARANJA, 'Agotado · cero pares', NARANJA, String(c.n), NARANJA,
-             `de ${c.de} · el ${d1(c.pct)}%${c.sem ? ` · en ${kpiSem(c.sem)} semanas` : ''}`);
-
     // El semáforo: los cuatro estados de hoy. Los recién llegados no entran.
     const EST = { agotado: ['Agotados', '#94a3b8', 'cero pares'],
                   casi: ['Casi vacíos', '#10b981', 'menos del 5%'],
@@ -22545,7 +22521,7 @@ window.showCellModal = function(htmlContent) {
             <span style="font-size:0.66rem; color:var(--text-muted);">art${vacio ? '' : ` · ${d1(e.pct)}%`}</span>
           </div>
           <div style="font-size:0.66rem; color:var(--text-muted); margin-top:3px;">${pie}${
-            e.pares ? ` · <b style="color:${col};">${d1(e.cuerpos)} cuerpos</b>` : ''}</div>
+            e.pares ? ` · <b style="color:${col};">${n(e.pares)} pares</b>` : ''}</div>
         </div>`;
     }).join('');
 
@@ -22600,11 +22576,11 @@ window.showCellModal = function(htmlContent) {
     <div class="glass-panel" style="padding:1.4rem 1.5rem;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1.2rem; flex-wrap:wrap;">
         <div>
-          <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">EVOLUCIÓN DEL ARTÍCULO · CUÁNTO TARDA EN AGOTARSE</h3>
+          <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">EVOLUCIÓN DEL ARTÍCULO</h3>
           <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:80ch;">
             <b>${R.articulos} códigos${filtro.marca ? ` de ${filtro.marca}` : ' de marca propia'}</b>
             que entraron nuevos en los últimos ${Math.round(P.ventanaDias / 30)} meses
-            ${filtro.minimo ? `con más de ${n(filtro.minimo)} pares` : 'con al menos un cuerpo'}, seguidos foto a foto.
+            ${filtro.minimo ? `mayores a ${n(filtro.minimo)} pares` : `de ${n(P.minimoPares)} pares o más`}, seguidos foto a foto.
             La curva y el semáforo se miden sobre los <b>${R.grupoFijo}</b> que ya cumplieron
             ${R.semanasFijas} semanas, para que todos hayan tenido el mismo plazo.
           </p>
@@ -22629,13 +22605,6 @@ window.showCellModal = function(htmlContent) {
           <b style="color:var(--text-main);">${d1(restoSem)}%</b>, y a la ${kpiOrdinal(R.semanasFijas)}
           todavía le queda el <b style="color:${AMBAR};">${d1(queda)}%</b> abajo.
         </div>`}
-      </div>
-
-      <div style="font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); margin:1.1rem 0 0.55rem;">
-        Cuánto tarda en bajar a… <span style="text-transform:none; letter-spacing:0; font-weight:500;">(de los ${R.grupoFijo})</span>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:0.7rem;">
-        ${hito(50)}${hito(25)}${hito(10)}${cajaCero}
       </div>
 
       ${contraste}
@@ -22712,8 +22681,6 @@ window.showCellModal = function(htmlContent) {
     const yc = v => C1 - (C1-C0)*v/TOPE;
     const clave = new Set([1,2,4,MAXS]);
     const totalPicado = P.reduce((a,p)=>a+p.picado,0);
-    const cabeEn = k => { const p = P.find(p=>p.s>0 && p.queda <= 350*k*100/D.llegada); return p ? p.s : null; };
-
     // La etiqueta: un solo renglón, el porcentaje y entre paréntesis los pares.
     const etiqueta = (xx, yy, k, pct, cant) => {
       const f = k ? 11 : 9.2;
@@ -22822,9 +22789,7 @@ window.showCellModal = function(htmlContent) {
           : '')
       + `. Hoy le quedan <b style="color:rgba(255,255,255,0.7);">${n(ULT.pares)} pares</b>, `
       + `el ${d1(ULT.queda)}% de lo que llegó`
-      + (ULT.pares >= 350 ? ` · ${d1(ULT.pares / 350)} cuerpos` : '')
-      + `. Por eso los cuerpos se calculan sobre el grupo y no sobre un caso: el caso sirve `
-      + `para entender qué hay detrás del promedio.`;
+      + `. Un caso sirve para ver qué hay detrás del promedio, no para sacar la regla.`;
 
     const hayFecha = P[0].fecha !== undefined;
     const filas = P.map(p=>`
@@ -22902,7 +22867,7 @@ window.showCellModal = function(htmlContent) {
 
       <div style="margin-top:1rem; padding:0.8rem 1rem; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2); border-radius:11px; font-size:0.72rem; color:var(--text-muted); line-height:1.7;">
         <b style="color:#93c5fd;">Para qué sirve.</b> ${D.cierre ? D.cierre : D.tipo==='grupo'
-          ? `De acá salen los cuerpos que se le reservan a un código nuevo: las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">${n(E(1).picado+E(2).picado)} pares</b>, que son ${d1((E(1).picado+E(2).picado)/350)} cuerpos moviéndose. Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento. Sobre esos ${n(D.llegada)} pares, ${cabeEn(2)?`desde la semana ${cabeEn(2)} el artículo ya cabe en dos cuerpos`:`a las ${MAXS} semanas todavía ocupa ${Math.ceil(ULT.pares/350)} cuerpos`}.`
+          ? `De acá sale cuánto conviene dejar al alcance cuando llega un código nuevo: las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">${n(E(1).picado+E(2).picado)} pares</b> de los ${n(D.llegada)} que llegan. Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento. A las ${kpiSem(MAXS)} semanas todavía quedan <b style="color:rgba(255,255,255,0.7);">${n(ULT.pares)} pares</b> sin picar.`
           : quietas}
       </div>
     </div>`;
@@ -22924,10 +22889,13 @@ window.showCellModal = function(htmlContent) {
     const FECHA = kpiFechaLarga(P.hasta);
     const A = (P.articulos || [])
       .filter(a => a.hoy > 0)
-      .map(a=>({ cod:a.cod, marca:a.marca, modelo:a.modelo, color:a.color, llego:a.pares,
+      // 'Llegó' es TODO LO QUE ENTRÓ, no la primera tanda: midiendo contra la primera,
+      // un artículo que recibió otra salía con "270,9% de lo que llegó" en la fila, que
+      // se lee como un error del reporte. El • marca cuáles son.
+      .map(a=>({ cod:a.cod, marca:a.marca, modelo:a.modelo, color:a.color, llego:a.entro,
                  rep:a.rep, ingreso:kpiFechaCorta(a.llegada), ultMov:kpiFechaCorta(a.ultMov),
                  hoy:a.hoy, parado:a.parado, dias:a.dias, temp:a.coleccion || '—',
-                 pct: a.hoy/a.pares*100 }))
+                 pct: a.pct }))
       .sort((x,y)=> y.hoy - x.hoy);
     if (!A.length) return '';
     const TL = A.reduce((s,a)=>s+a.llego,0), TQ = A.reduce((s,a)=>s+a.hoy,0);
@@ -22955,7 +22923,7 @@ window.showCellModal = function(htmlContent) {
       c.pares = A.slice(c.desde, c.hasta+1).reduce((s,a)=>s+a.hoy,0);
     });
     // LAS PARTES TIENEN QUE SUMAR EL TOTAL, con un decimal. Redondeando cada una por su
-    // cuenta los porcentajes dan 99,9 y los cuerpos 34,5 contra un total de 34,6. Se
+    // cuenta los porcentajes dan 99,9 y el cuadro se lee como si faltara algo. Se
     // reparte el decimal que falta al que tenga el resto más grande.
     const reparto = (vals, objetivo) => {
       const piso = vals.map(v => Math.floor(v*10)/10);
@@ -22964,11 +22932,9 @@ window.showCellModal = function(htmlContent) {
           .forEach(o=>{ if (falta-- > 0) piso[o.i] = Math.round((piso[o.i]+0.1)*10)/10; });
       return piso;
     };
-    const TOTCU = Math.round(TQ/350*10)/10;
     const pcts = reparto(CLS.map(c=>c.pares/TQ*100), 100);
     const pcta = reparto(CLS.map(c=>c.art/A.length*100), 100);
-    const cues = reparto(CLS.map(c=>c.pares/350), TOTCU);
-    CLS.forEach((c,i)=>{ c.pct = pcts[i]; c.pctArt = pcta[i]; c.cuerpos = cues[i]; });
+    CLS.forEach((c,i)=>{ c.pct = pcts[i]; c.pctArt = pcta[i]; });
 
     const barras = A.map((a,i)=>
       `<rect x="${(X0+i*W+(W-BW)/2).toFixed(1)}" y="${yb(a.hoy).toFixed(1)}" width="${BW.toFixed(1)}" height="${(Y1-yb(a.hoy)).toFixed(1)}" rx="1.5" fill="${CLS[clase[i]].col}"/>`).join('');
@@ -23017,7 +22983,7 @@ window.showCellModal = function(htmlContent) {
           <b style="font-size:0.95rem; font-weight:900; color:${c.col}; margin-left:auto;">${d1(c.pct)}%</b>
           <span style="font-size:0.6rem; color:var(--text-muted);">de los ${n(TQ)}</span>
         </div>
-        <div style="font-size:0.62rem; color:rgba(255,255,255,0.3); margin-top:0.6rem;">ocupan <b style="color:rgba(255,255,255,0.6);">${d1(c.cuerpos)}</b> cuerpos</div>
+
       </div>`;
 
     // EL CUADRO VA CON LOS 81, no solo con los que pasan del 20%. La clase se pinta al lado
@@ -23043,7 +23009,6 @@ window.showCellModal = function(htmlContent) {
         <td style="padding:0.35rem 0.7rem; text-align:right;">${n(a.llego)}</td>
         <td style="padding:0.35rem 0.7rem; text-align:right; font-weight:800; color:${CLS[clase[i]].col};">${n(a.hoy)}</td>
         <td style="padding:0.35rem 0.7rem; text-align:right; font-weight:800; color:${a.pct>20?NARANJA:'#fff'};">${d1(a.pct)}%${a.pct>20?' <span style="font-size:0.85em;">▲</span>':''}</td>
-        <td style="padding:0.35rem 0.7rem; text-align:right;">${(a.hoy/350).toFixed(1)}</td>
       </tr>`).join('');
     const th = 'position:sticky; top:0; z-index:2; background:#101a2c; padding:0.5rem 0.7rem;';
     const tf = 'position:sticky; bottom:0; z-index:2; background:#101a2c; padding:0.5rem 0.7rem;';
@@ -23068,7 +23033,7 @@ window.showCellModal = function(htmlContent) {
         ${tarjeta('Artículos', String(A.length), `de los ${P.total.articulos} nuevos, los que tienen stock`)}
         ${tarjeta('Llegaron', n(TL), 'pares en total')}
         ${tarjeta('Falta picar hoy', n(TQ), `pares · ${d1(TQ/TL*100)}% de lo que llegó`)}
-        ${tarjeta('Ocupan', d1(TOTCU), 'cuerpos del almacén')}
+        ${tarjeta('Ya se picó', n(TL-TQ), `pares · ${d1((TL-TQ)/TL*100)}% de lo que entró`)}
       </div>
 
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:0.7rem; margin-bottom:1.1rem;">
@@ -23096,7 +23061,7 @@ window.showCellModal = function(htmlContent) {
         </div>
         <div style="font-size:0.7rem; color:var(--text-muted);">
           <span style="color:${NARANJA};">▲</span> los <b style="color:#fff;">${altos.length}</b> que siguen con más del 20% de su llegada ·
-          <b style="color:#fff;">${n(TQA)}</b> pares · <b style="color:#fff;">${d1(TQA/350)}</b> cuerpos
+          <b style="color:#fff;">${n(TQA)}</b> pares
         </div>
       </div>
 
@@ -23115,7 +23080,6 @@ window.showCellModal = function(htmlContent) {
             <th style="${th} text-align:right;">Llegó</th>
             <th style="${th} text-align:right;">Falta picar</th>
             <th style="${th} text-align:right;">%</th>
-            <th style="${th} text-align:right;">Cuerpos</th>
           </tr></thead>
           <tbody>${filas}</tbody>
           <tfoot><tr style="border-top:1px solid rgba(255,255,255,0.18); font-weight:800; color:rgba(255,255,255,0.75);">
@@ -23123,7 +23087,6 @@ window.showCellModal = function(htmlContent) {
             <td style="${tf} text-align:right;">${n(TL)}</td>
             <td style="${tf} text-align:right; color:${NARANJA};">${n(TQ)}</td>
             <td style="${tf} text-align:right;">${d1(TQ/TL*100)}%</td>
-            <td style="${tf} text-align:right;">${d1(TOTCU)}</td>
           </tr></tfoot>
         </table>
       </div>
@@ -23131,7 +23094,7 @@ window.showCellModal = function(htmlContent) {
         Todo el cuadro es de la foto del <b>${FECHA}</b>: <b>Falta picar</b> son los pares que hay hoy en el almacén,
         <b>Días</b> es cuánto lleva el artículo adentro y <b>%</b> es lo que queda sobre lo que llegó.
         <b style="color:#93c5fd;">Colección PO</b> sale del Maestro de artículos.<br>
-        <span style="color:${AMBAR};">•</span> recibió una segunda tanda: el % está medido sobre todo lo que entró, no sobre la primera llegada.
+        <span style="color:${AMBAR};">•</span> recibió una segunda tanda: <b>Llegó</b> es todo lo que entró, sumando las dos.
       </div>
     </div>`;
   };
