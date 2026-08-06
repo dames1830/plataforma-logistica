@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0104';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0105';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0104';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0104';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0104';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0104';
-import * as metasService from '../services_v245/metasService.js?v=29.0104';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0104';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0104';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0104';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0104';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0104';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0104';
+import * as adminService from '../services_v245/adminService.js?v=29.0105';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0105';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0105';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0105';
+import * as metasService from '../services_v245/metasService.js?v=29.0105';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0105';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0105';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0105';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0105';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0105';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0105';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0104';
+const VERSION = '29.0105';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0104');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0105');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0104 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0105 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22485,7 +22485,6 @@ window.showCellModal = function(htmlContent) {
   const kpiBarraFiltros = (P, R, filtro) => {
     const NARANJA = KPI_NARANJA, AMBAR = KPI_AMBAR;
     const vivos = (P.articulos || []).filter(a => !a.rep);
-    const marcasSel = filtro.marcas || [], mesesSel = filtro.meses || [];
 
     const marcas = [...new Set(vivos.map(a => a.marca))].sort();
     // Los meses salen de las llegadas que hay, no de una lista fija: con la ventana
@@ -22498,26 +22497,19 @@ window.showCellModal = function(htmlContent) {
                        'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const nombreMes = (m) => `${MES_LARGO[parseInt(m.slice(5, 7), 10) - 1] || m} ${m.slice(0, 4)}`;
 
-    // BOTONES QUE SE MARCAN, no una lista desplegable: se pueden elegir dos marcas o
-    // dos meses a la vez, y con un desplegable múltiple habría que saber que eso se
-    // hace con Ctrl+clic. Acá queda marcado lo que está marcado.
-    const chip = (campo, valor, texto, activo) => `
-      <button onclick="window.__kpiFiltro('${campo}', '${valor}')"
-              style="padding:0.26rem 0.62rem; border-radius:999px; cursor:pointer; font-size:0.72rem;
-                     font-weight:${activo ? '800' : '600'}; white-space:nowrap;
-                     background:${activo ? 'rgba(79,70,229,0.28)' : 'rgba(255,255,255,0.04)'};
-                     color:${activo ? '#fff' : 'var(--text-muted)'};
-                     border:1px solid ${activo ? 'rgba(129,140,248,0.85)' : 'var(--border)'};">${texto}</button>`;
+    const combo = (campo, opciones, valor) => `
+      <select onchange="window.__kpiFiltro('${campo}', this.value)"
+              style="background:#101a2c; color:var(--text-main); border:1px solid var(--border); border-radius:8px;
+                     padding:0.32rem 0.6rem; font-size:0.75rem; font-weight:700; cursor:pointer;">
+        ${opciones.map(([v, t]) => `<option value="${v}"${String(valor || '') === String(v) ? ' selected' : ''}>${t}</option>`).join('')}
+      </select>`;
 
-    const linea = (rotulo, campo, todos, lista, seleccionadas) => `
-      <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
-        <span style="min-width:52px; font-size:0.57rem; font-weight:800; letter-spacing:1.1px;
-                     text-transform:uppercase; color:var(--text-muted);">${rotulo}</span>
-        ${chip(campo, '', todos, !seleccionadas.length)}
-        ${lista.map(([v, t]) => chip(campo, v, t, seleccionadas.indexOf(v) >= 0)).join('')}
-      </div>`;
+    // El estado guarda listas —marcas y meses— aunque acá se elija de a uno: así el
+    // filtrado es el mismo para todos y volver a varios a la vez es cambiar solo esto.
+    const marcaSel = (filtro.marcas || [])[0] || '';
+    const mesSel = (filtro.meses || [])[0] || '';
+    const hayFiltro = marcaSel || mesSel || filtro.minimo;
 
-    const hayFiltro = marcasSel.length || mesesSel.length || filtro.minimo;
     const aviso = !R ? 'Con estos filtros no queda ningún artículo.'
       : !R.grupoFijo ? `Quedan ${R.articulos} artículos, pero ninguno cumplió todavía las `
                        + `${R.semanasFijas} semanas: sin eso no hay curva que dibujar.`
@@ -22529,27 +22521,22 @@ window.showCellModal = function(htmlContent) {
       : '';
 
     return `
-    <div class="glass-panel" style="padding:0.85rem 1rem; display:flex; flex-direction:column; gap:0.5rem;">
-      ${linea('Mes', 'mes', 'Todos', meses.map(m => [m, nombreMes(m)]), mesesSel)}
-      ${linea('Marca', 'marca', 'Todas', marcas.map(m => [m, m]), marcasSel)}
-      <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-        <span style="min-width:52px; font-size:0.57rem; font-weight:800; letter-spacing:1.1px;
-                     text-transform:uppercase; color:var(--text-muted);">Tamaño</span>
-        <select onchange="window.__kpiFiltro('minimo', this.value)"
-                style="background:#101a2c; color:var(--text-main); border:1px solid var(--border);
-                       border-radius:8px; padding:0.28rem 0.6rem; font-size:0.72rem; font-weight:700; cursor:pointer;">
-          ${TOPES.map(([v, t]) => `<option value="${v}"${Number(filtro.minimo || 0) === v ? ' selected' : ''}>${t}</option>`).join('')}
-        </select>
+    <div class="glass-panel" style="padding:0.85rem 1rem;">
+      <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+        <span style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted);">Filtros</span>
+        ${combo('mes', [['', 'Todos los meses'], ...meses.map(m => [m, nombreMes(m)])], mesSel)}
+        ${combo('marca', [['', 'Todas las marcas'], ...marcas.map(m => [m, m])], marcaSel)}
+        ${combo('minimo', TOPES, filtro.minimo || 0)}
         ${hayFiltro ? `
-          <button onclick="window.__kpiFiltro('limpiar')"
-                  style="padding:0.28rem 0.7rem; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer;
-                         background:rgba(217,89,38,0.12); color:${NARANJA}; border:1px solid ${NARANJA}73;">✕ Quitar filtros</button>` : ''}
+          <button onclick="window.__kpiFiltro('limpiar')" class="btn"
+                  style="width:auto; padding:0.3rem 0.7rem; font-size:0.68rem; background:rgba(217,89,38,0.12);
+                         color:${NARANJA}; border:1px solid ${NARANJA}73; cursor:pointer;">✕ Quitar filtros</button>` : ''}
         <span style="margin-left:auto; font-size:0.62rem; font-weight:700; letter-spacing:0.6px;
                      text-transform:uppercase; color:var(--text-muted); white-space:nowrap;">
           ${P.fotos} fotos · al ${kpiFechaLarga(P.hasta)}
         </span>
       </div>
-      ${aviso ? `<div style="font-size:0.72rem; color:${AMBAR};">⚠ ${aviso}</div>` : ''}
+      ${aviso ? `<div style="margin-top:0.6rem; font-size:0.72rem; color:${AMBAR};">⚠ ${aviso}</div>` : ''}
     </div>`;
   };
   // ── EL MOLDE ──────────────────────────────────────────────────────────────────────
@@ -22806,7 +22793,15 @@ window.showCellModal = function(htmlContent) {
                  hoy:a.hoy, parado:a.parado, dias:a.dias, temp:a.coleccion || '—',
                  pct: a.pct }))
       .sort((x,y)=> y.hoy - x.hoy);
-    if (!A.length) return '';
+    // Desaparecer sin decir nada deja la pantalla con la barra de filtros y el vacío,
+    // y no se entiende si es que no hay datos o si se rompió algo.
+    if (!A.length) return `
+      <div class="glass-panel" style="padding:1.4rem 1.5rem;">
+        <h3 style="margin:0 0 0.8rem; font-size:1rem; font-weight:800; letter-spacing:0.04em;">PARETO ABC · LO QUE FALTA PICAR, AL ${FECHA.toUpperCase()}</h3>
+        <div style="padding:1.8rem; text-align:center; color:var(--text-muted); font-size:0.82rem;">
+          Con estos filtros no queda ningún artículo con stock.
+        </div>
+      </div>`;
     const TL = A.reduce((s,a)=>s+a.llego,0), TQ = A.reduce((s,a)=>s+a.hoy,0);
     const altos = A.filter(a=>a.pct > 20);
     const TQA = altos.reduce((s,a)=>s+a.hoy,0);
@@ -23096,13 +23091,9 @@ window.showCellModal = function(htmlContent) {
     if (que === 'limpiar') kpiFiltro = { marcas: [], meses: [], minimo: 0 };
     else if (que === 'minimo') kpiFiltro.minimo = Number(valor) || 0;
     else if (que === 'marca' || que === 'mes') {
-      // Marcar y desmarcar con el mismo botón: sin valor, se limpia toda la lista.
-      const k = que === 'marca' ? 'marcas' : 'meses';
-      if (!valor) kpiFiltro[k] = [];
-      else {
-        const i = kpiFiltro[k].indexOf(valor);
-        if (i >= 0) kpiFiltro[k].splice(i, 1); else kpiFiltro[k].push(valor);
-      }
+      // Se guardan como lista aunque la barra elija de a uno: el filtrado ya trabaja
+      // con listas, así que permitir varias a la vez sería cambiar solo la barra.
+      kpiFiltro[que === 'marca' ? 'marcas' : 'meses'] = valor ? [valor] : [];
     }
     const c = document.querySelector('[data-vista="kpi-picking"]');
     if (c) renderKpiPicking(c);
