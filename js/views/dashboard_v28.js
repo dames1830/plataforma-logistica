@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0083';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0084';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0083';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0083';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0083';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0083';
-import * as metasService from '../services_v245/metasService.js?v=29.0083';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0083';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0083';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0083';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0083';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0083';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0083';
+import * as adminService from '../services_v245/adminService.js?v=29.0084';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0084';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0084';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0084';
+import * as metasService from '../services_v245/metasService.js?v=29.0084';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0084';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0084';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0084';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0084';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0084';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0084';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0083';
+const VERSION = '29.0084';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3422,7 +3422,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0083');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0084');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13736,7 +13736,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0083 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0084 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15467,8 +15467,11 @@ const renderRFSection = (container) => {
         alPiso, aReserva,
         // EN EL MEZZANINE 4 EL DESTINO ES LA ZONA Y NADA MÁS. No hay nivel que repartir:
         // esas ubicaciones no están analizadas y nombrar un cuerpo sería inventarlo.
+        //
+        // Y en el mezzanine 3, para Adidas, Puma y Skechers, la zona MÁS SUS COLUMNAS: ahí sí
+        // se sabe dónde va, solo que el cuerpo lo elige el operario. Ver MARCAS_SIN_CUERPO.
         destino: (sug.plan && sug.plan.sinUbicacion)
-          ? sug.plan.zona
+          ? (sug.plan.destinoTexto || sug.plan.zona)
           : (sug.destinos[l.talla] || '')
       };
     });
@@ -15502,6 +15505,43 @@ const renderRFSection = (container) => {
   const PCT_CODIGO_NUEVO     = 60;
   /** La reposición de fábrica sigue midiéndose en cuerpos: no es un código nuevo. */
   const CUERPOS_REPOSICION   = 2;
+
+  /**
+   * LAS MARCAS QUE SE ENTREGAN CON LA COLUMNA Y NO CON EL CUERPO.
+   *
+   * Las tres del mezzanine 3. Sus columnas son propias —nadie más entra ahí— así que nombrar
+   * el cuerpo no le ahorra un paso al operario: le llena el papel de renglones distintos. Una
+   * llegada de Adidas se reparte en seis o siete cuerpos y salía una ubicación por talla.
+   *
+   * Va como lista escrita y no como "las marcas de modo todo", que hoy son las mismas tres.
+   * Son dos reglas distintas que casualmente coinciden: una dice CUÁNTO baja -todo- y esta
+   * dice CÓMO se nombra el destino. Atarlas haría que agregar una marca al modo 'todo' le
+   * borrara la ubicación exacta sin que nadie lo pidiera.
+   */
+  const MARCAS_SIN_CUERPO = ['Adidas', 'Puma', 'Skechers'];
+
+  const esMarcaSinCuerpo = (marca) => {
+    const m = String(marca || '').trim().toUpperCase().replace(/\s+/g, ' ');
+    return MARCAS_SIN_CUERPO.some(x => x.toUpperCase() === m);
+  };
+
+  /**
+   * "MZN03 · Col 12-15". Las columnas seguidas se juntan en un rango, que es como Daniel las
+   * dice y como se leen de un vistazo: Adidas son la 12, 13, 14 y 15, no cuatro números.
+   */
+  const destinoDeColumnas = (zona, columnas) => {
+    const cols = [...new Set((columnas || []).map(Number).filter(n => n > 0))].sort((a, b) => a - b);
+    if (!cols.length) return zona;
+    const tramos = [];
+    let ini = cols[0], prev = cols[0];
+    cols.slice(1).forEach(c => {
+      if (c === prev + 1) { prev = c; return; }
+      tramos.push(ini === prev ? `${ini}` : `${ini}-${prev}`);
+      ini = prev = c;
+    });
+    tramos.push(ini === prev ? `${ini}` : `${ini}-${prev}`);
+    return `${zona} · Col ${tramos.join(', ')}`;
+  };
 
   /**
    * EL ESCOLAR BAJA CON CUENTAGOTAS: 50 PARES Y NADA MÁS.
@@ -15704,7 +15744,35 @@ const renderRFSection = (container) => {
     let cant = planificar(caso.regla);
     let alPiso = cant ? cant.alPiso : pares;
     let aReserva = cant ? cant.aReserva : 0;
-    const plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados, ctx.libres);
+    let plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados, ctx.libres);
+
+    // LAS TRES DEL MEZZANINE 3 SE ENTREGAN CON LA COLUMNA, NO CON EL CUERPO.
+    //
+    // Adidas, Puma y Skechers tienen sus columnas propias en el mezzanine 3 y nadie más entra
+    // ahí, así que nombrar el cuerpo exacto no le agrega nada al operario: le agrega renglones.
+    // Una llegada de Adidas se reparte en seis o siete cuerpos y el papel salía con una
+    // ubicación distinta por talla. Daniel, 05-ago-2026: "solo dame la zona que es mezzanine
+    // tres y la columna, la ubicación exacta es muy complicada de que el operario entienda".
+    //
+    // Y NO SE MANDA NADA A SLOTTING. Si la zona está llena, el papel manda igual: el operario
+    // almacena lo que entra y lo que sobra se queda en el buffer hasta la corrida siguiente.
+    // "Tú mandas nada más, y si no entra lo voy a dejar en buffer. Yo decido qué artículos se
+    // quedan." Por eso se reemplaza el plan entero y no se mira si quedaban cuerpos libres.
+    //
+    // Tampoco se marcan cuerpos como tomados, y no hace falta: esas columnas son de la marca y
+    // no hay otro artículo compitiendo por ellas.
+    //
+    // EL BUFFER D QUEDA AFUERA. Lo que llega por el catálogo va a la columna 8 del mezzanine 3
+    // —mezclando las tres marcas— y no a las columnas de la suya. Un Puma que viene por el D no
+    // vuelve a la 16 ni aunque ya viva ahí: es regla de Daniel y no admite excepción. Sin este
+    // filtro, el papel lo mandaría a "Col 16-17" y sería justo al revés de lo que corresponde.
+    if (esMarcaSinCuerpo(datos.marca) && zr.zona && datos.origen !== 'D'
+        && !zonasService.esZonaSinUbicacion(zr.zona)) {
+      plan = {
+        estado: 'solo-zona', zona: zr.zona, cuerpos: [], cuantos: 0, sinUbicacion: true,
+        destinoTexto: destinoDeColumnas(zr.zona, zonasService.columnasDeMarca(datos.marca))
+      };
+    }
 
     // EL SEGUNDO CANDADO DEL MEZZANINE 4. casoDelItem ya lo agarra por la zona de la regla,
     // pero un calzado mal ubicado puede terminar ahí por el otro camino: su cuerpo está en el
@@ -16115,8 +16183,11 @@ const renderRFSection = (container) => {
                     sug = `<b style="color:#93c5fd;">${p.cuerpos.map(k => nombre(p.zona, k.columna, k.cuerpo)).join(' · ')}</b>
                            <div style="font-size:0.63rem; color:rgba(255,255,255,0.3);">${p.seguidos ? 'seguidos' : 'con huecos'} · franja ${p.franja} · quedan ${p.libresEnLaFranja} libres</div>${detalleNiveles}`;
                   } else if (p.estado === 'solo-zona') {
-                    sug = `<b style="color:#f59e0b;">${p.zona}</b>
-                           <div style="font-size:0.63rem; color:rgba(255,255,255,0.35);">sin ubicación · se almacena todo</div>`;
+                    // El mezzanine 4 va sin nada más; las tres marcas del 3 llevan sus columnas,
+                    // que es todo lo que el operario necesita. Ver MARCAS_SIN_CUERPO.
+                    sug = `<b style="color:#f59e0b;">${p.destinoTexto || p.zona}</b>
+                           <div style="font-size:0.63rem; color:rgba(255,255,255,0.35);">${
+                             p.destinoTexto ? 'el cuerpo lo elige el operario' : 'sin ubicación'} · se almacena todo</div>`;
                   } else if (p.estado === 'slotting') {
                     sug = `<span style="color:#ef4444; font-weight:900;">⚠️ REVISAR SLOTTING</span>
                            <div style="font-size:0.63rem; color:rgba(255,255,255,0.35);">${p.motivo}</div>`;
