@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0079';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0080';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -128,7 +128,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0079';
+const VERSION = '29.0080';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -544,6 +544,27 @@ export const infoMaestroPublicado = async () => {
 };
 
 /**
+ * LA HORA A LA QUE SE PUBLICÓ, EN HORA DE ACÁ Y NO EN LA DE GREENWICH.
+ *
+ * Acá había un toISOString(), que devuelve UTC. Perú está cinco horas atrás, así que un
+ * Maestro publicado a las 19:31 quedaba fichado a las 00:31 —y del día siguiente—, que es
+ * justo la hora a la que se trabaja: el turno noche entra a las 19:00.
+ *
+ * Y el daño no se podía deshacer después. La ficha no guarda el instante, guarda el texto
+ * ya armado, y al armarlo se le cae la 'Z' que avisaba que eso era UTC. Sin esa marca, el
+ * que la muestra no tiene cómo saber que hay que restarle cinco horas: la pinta tal cual.
+ *
+ * El backend estampa en hora de Lima desde la v29.0079, pero esta ficha se arma en el
+ * navegador y quedó afuera de aquel arreglo.
+ */
+const selloLocal = () => {
+    const d = new Date();
+    const dd = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${dd(d.getMonth() + 1)}-${dd(d.getDate())} `
+         + `${dd(d.getHours())}:${dd(d.getMinutes())}:${dd(d.getSeconds())}`;
+};
+
+/**
  * Publica el Maestro para toda la empresa. Devuelve la ficha que quedó publicada.
  * Sube primero las filas y la ficha DESPUÉS: si el envío grande falla, la ficha
  * sigue describiendo la copia anterior y nadie baja un archivo a medias.
@@ -567,7 +588,7 @@ export const publicarMaestro = async (filas, username = 'sistema') => {
     const ficha = {
         filas: revision.articulos,
         usuario: username,
-        fecha: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        fecha: selloLocal()
     };
     await enviar(MAESTRO_FICHA, ficha);
 
