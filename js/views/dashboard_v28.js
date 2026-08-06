@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0089';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0090';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0089';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0089';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0089';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0089';
-import * as metasService from '../services_v245/metasService.js?v=29.0089';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0089';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0089';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0089';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0089';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0089';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0089';
+import * as adminService from '../services_v245/adminService.js?v=29.0090';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0090';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0090';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0090';
+import * as metasService from '../services_v245/metasService.js?v=29.0090';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0090';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0090';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0090';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0090';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0090';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0090';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0089';
+const VERSION = '29.0090';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1361,6 +1361,77 @@ const vencerTareasViejas = (tareas) => {
         }
     });
     return n;
+};
+
+/**
+ * LA TAREA VIVA SE CORRIGE CON EL STOCK DE ESTA NOCHE. LA PASADA NO SE TOCA.
+ *
+ * Ejemplo de Daniel: el 15 llegan 1.000 pares y nace la Tarea1. El 16 picking se llevó 30, así
+ * que en el buffer hay 970. Hoy nacería OTRA tarea con 970 y la del 15 quedaría viva con 1.000
+ * —el sistema creería que hay 1.970 por almacenar—. Ahora sigue siendo la Tarea1, con su fecha
+ * original, y la hoja dice 970.
+ *
+ * Solo se tocan las Creada que siguen vivas. Una Asignada tiene su hoja en la calle y una
+ * Vencida o Finalizada es historia: esas quedan como quedaron.
+ *
+ * Si a la tarea no le queda nada —picking se llevó todo— se vence ahí mismo: no hay nada que
+ * almacenar y dejarla abierta volvería a bloquear stock que ya no existe.
+ */
+const ajustarTareasVivas = (tareas, filasStock) => {
+    const hoy = new Map();
+    (filasStock || []).forEach(row => {
+        const raw = Array.isArray(row) ? row : Object.values(row);
+        const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
+        if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C')) return;
+        const k = `${String(raw[1] || '').trim()}|${ubi}`;
+        const q = parseFloat(String(row['Cantidad actual'] || row['Cantidad'] || 0).replace(/,/g, '')) || 0;
+        hoy.set(k, (hoy.get(k) || 0) + q);
+    });
+
+    let cambiadas = 0, vencidasVacias = 0;
+    (tareas || []).forEach(t => {
+        if (!t || t.status !== 'Creada' || !esTareaViva(t)) return;
+        let toco = false, totalTarea = 0;
+        (t.items || []).forEach(art => {
+            let bq = 0;
+            (art.items || []).forEach(i => {
+                const ubi = String(i.ubi || '').trim().toUpperCase();
+                if (!ubi.startsWith('CDBUFFER')) return;   // las de zona son referencia, no trabajo
+                const q = hoy.get(`${String(i.skuFull || '').trim()}|${ubi}`) || 0;
+                if (q !== i.qty) { i.qty = q; toco = true; }
+                bq += q;
+            });
+            if (art.bufferQty !== bq) { art.bufferQty = bq; toco = true; }
+            totalTarea += bq;
+        });
+        if (!toco) return;
+        t.qty = totalTarea;
+        cambiadas++;
+        if (totalTarea <= 0) { t.status = 'Vencida'; t.vencidaEl = selloLocalTarea(); vencidasVacias++; }
+    });
+    return { cambiadas, vencidasVacias };
+};
+
+/**
+ * DESDE CUÁNDO ESPERA CADA ARTÍCULO.
+ *
+ * Cuando un artículo vuelve a generar tarea porque la anterior caducó, la nueva hereda la fecha
+ * en que empezó a esperar, no la de hoy. Sin eso la deuda es invisible: hay códigos en el
+ * buffer desde el 22 de junio y en la lista se ven igual que uno que llegó anoche.
+ */
+const esperaPorArticulo = (tareas) => {
+    const m = new Map();
+    (tareas || []).forEach(t => {
+        if (!t || t.status === 'Finalizado') return;
+        const f = t.esperaDesde || t.fecha;
+        if (!f) return;
+        (t.items || []).forEach(a => {
+            if (!a || !a.sku7) return;
+            const prev = m.get(a.sku7);
+            if (!prev || f < prev) m.set(a.sku7, f);
+        });
+    });
+    return m;
 };
 
 /** La hora de acá, no la de Greenwich. Mismo criterio que la ficha del Maestro (v29.0080). */
@@ -3483,7 +3554,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0089');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0090');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13797,7 +13868,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0089 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0090 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -21168,9 +21239,19 @@ window.showCellModal = function(htmlContent) {
         // Tiene que ir en este orden: si una Creada de hace tres días siguiera contando como
         // comprometida, su stock quedaría bloqueado y no entraría en la ola de esta noche.
         const cuantasVencieron = vencerTareasViejas(almacenajeTasksCache);
-        if (cuantasVencieron > 0) {
-            await guardarBloqueFusionado(base => { vencerTareasViejas(base); return base; });
-            console.log(`[Almacenaje] ${cuantasVencieron} tareas pasaron a Vencida por las ${HORAS_VENCIMIENTO}h`);
+
+        // Y a las que siguen vivas se les corrige la cantidad con el buffer de esta noche, en
+        // vez de dejarlas diciendo lo de anteayer. Va después de vencer y antes de contar.
+        const ajuste = ajustarTareasVivas(almacenajeTasksCache, filtered);
+
+        if (cuantasVencieron > 0 || ajuste.cambiadas > 0) {
+            await guardarBloqueFusionado(base => {
+                vencerTareasViejas(base);
+                ajustarTareasVivas(base, filtered);
+                return base;
+            });
+            console.log(`[Almacenaje] ${cuantasVencieron} vencidas por las ${HORAS_VENCIMIENTO}h · `
+                      + `${ajuste.cambiadas} corregidas con el stock de hoy (${ajuste.vencidasVacias} quedaron en cero)`);
         }
 
         const yaComprometido = {};
@@ -21309,7 +21390,13 @@ window.showCellModal = function(htmlContent) {
             });
         });
 
-        const tasksWithDate = finalTasks.map(t => ({...t, fecha: logicalDate}));
+        // Cada tarea nueva hereda desde cuándo espera el más viejo de sus artículos. Si ninguno
+        // venía de antes, espera desde hoy.
+        const esperaDe = esperaPorArticulo(almacenajeTasksCache);
+        const tasksWithDate = finalTasks.map(t => {
+            const desde = (t.items || []).map(a => esperaDe.get(a && a.sku7)).filter(Boolean).sort()[0];
+            return { ...t, fecha: logicalDate, esperaDesde: desde || logicalDate };
+        });
         // No salió ninguna tarea pero sí hubo descuento: el buffer entero ya estaba cubierto.
         // Conviene decirlo con todas las letras y no con un "0 tareas creadas" en verde, que
         // se lee como si el proceso hubiera fallado.
@@ -25425,7 +25512,7 @@ window.showCellModal = function(htmlContent) {
                                     <td style="padding:10.8px 1rem; text-align:center; color:#fff; font-weight:900; font-size:1rem;">${productividad}</td>
                                     <td style="padding:10.8px 1rem; text-align:center; font-size:0.7rem;"><span style="${objStyle}">${objetivo}</span></td>
                                     <td style="padding:10.8px 1rem; text-align:center;">
-                                        <span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; font-weight:900; font-size:0.7rem;">
+                                        <span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : t.status === 'Vencida' ? '#ef4444' : 'var(--text-muted)'}; font-weight:900; font-size:0.7rem;">
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
@@ -25508,7 +25595,7 @@ window.showCellModal = function(htmlContent) {
                                     <td style="padding:0.6rem 1rem; text-align:center; font-size:0.75rem; opacity:0.6;">${fAsignado}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-size:0.75rem; opacity:0.6;">${fFinalizado}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center;">
-                                        <span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : 'var(--text-muted)'}; font-weight:900; font-size:0.7rem;">
+                                        <span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : t.status === 'Vencida' ? '#ef4444' : 'var(--text-muted)'}; font-weight:900; font-size:0.7rem;">
                                             ${t.status.toUpperCase()}
                                         </span>
                                     </td>
