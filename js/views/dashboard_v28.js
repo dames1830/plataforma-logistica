@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0094';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0095';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0094';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0094';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0094';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0094';
-import * as metasService from '../services_v245/metasService.js?v=29.0094';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0094';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0094';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0094';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0094';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0094';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0094';
+import * as adminService from '../services_v245/adminService.js?v=29.0095';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0095';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0095';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0095';
+import * as metasService from '../services_v245/metasService.js?v=29.0095';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0095';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0095';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0095';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0095';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0095';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0095';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0094';
+const VERSION = '29.0095';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0094');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0095');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0094 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0095 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15848,16 +15848,29 @@ const renderRFSection = (container) => {
       //
       // Medido sobre el buffer de ese día: de los 41 códigos en el B, 37 tenían piso o reserva
       // —esos sí bajaron— y 4 no tenían nada. Los 4 eran de recepción.
-      const enPiso = Object.values(ctx.porTallaDe.get(s7) || {})
-        .reduce((a, t) => a + (Number(t.piso) || 0), 0);
+      // SE COMPARA CONTRA LA RESERVA, NO SE PREGUNTA SI EXISTE.
+      //
+      // La primera versión de esto miraba si el artículo tenía ALGO en piso o en reserva, y con
+      // eso lo daba por bajado de arriba. Se le escapó el 8816454 —lo cazó Daniel en el papel—:
+      // llegaron 3.274 pares al buffer B y el artículo tenía 60 en reserva, así que pasó como
+      // replenishment y se almacenó entero. De una reserva de 60 no pueden bajar 3.274.
+      //
+      // La cuenta no miente: lo que baja de reserva NO PUEDE SER MÁS de lo que había en
+      // reserva. Si llega más, entró por la puerta, deje recepción en el A o en el B.
       const enReserva = Number(ctx.reservaDe && ctx.reservaDe.get(s7)) || 0;
 
-      if (enPiso > 0 || enReserva > 0) {
+      if (pares <= enReserva) {
         return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
                  motivo: 'Bajó de reserva por pedido o replenishment: se almacena todo.' };
       }
-      // No tiene de dónde haber bajado: sigue de largo y lo agarra la regla del código nuevo,
-      // que es la decisión que se habría tomado si hubiera entrado por el A.
+      // Llegó más de lo que había arriba. Sigue de largo y manda la regla de siempre, que es la
+      // que se habría aplicado si hubiera entrado por el A:
+      //
+      //   ya tiene cuerpo en su franja  ->  reposición de fábrica, 2 cuerpos
+      //   no tiene ninguno              ->  código nuevo, el 60%
+      //
+      // El replenishment de verdad sigue protegido: si bajaron 200 de una reserva de 500, la
+      // llegada no supera a la reserva y va todo al piso. No se le devuelve nada al rack.
     }
 
     // AL MEZZANINE 4 NO SE LE MANDA NADA A RESERVA. Todo lo que va ahí es para almacenar,
