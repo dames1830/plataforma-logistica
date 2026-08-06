@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0093';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0094';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0093';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0093';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0093';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0093';
-import * as metasService from '../services_v245/metasService.js?v=29.0093';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0093';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0093';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0093';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0093';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0093';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0093';
+import * as adminService from '../services_v245/adminService.js?v=29.0094';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0094';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0094';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0094';
+import * as metasService from '../services_v245/metasService.js?v=29.0094';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0094';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0094';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0094';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0094';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0094';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0094';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0093';
+const VERSION = '29.0094';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1419,7 +1419,7 @@ const ajustarTareasVivas = (tareas, filasStock) => {
  * en que empezó a esperar, no la de hoy. Sin eso la deuda es invisible: hay códigos en el
  * buffer desde el 22 de junio y en la lista se ven igual que uno que llegó anoche.
  */
-const esperaPorArticulo = (tareas) => {
+const esperaPorArticulo = (tareas, desdeCero = false) => {
     // ALMACENARLO SALDA LA ESPERA.
     //
     // Acá se miraba la tarea abierta más vieja y nada más, y eso daba números imposibles. El
@@ -1443,7 +1443,10 @@ const esperaPorArticulo = (tareas) => {
     const m = new Map();
     (tareas || []).forEach(t => {
         if (!t || t.status === 'Finalizado') return;
-        const f = t.esperaDesde || t.fecha;
+        // Con `desdeCero` se ignora el esperaDesde ya grabado y se recalcula desde las fechas
+        // de las tareas. Hace falta para arreglar las que quedaron con un valor viejo: si se
+        // leyera el grabado, un dato equivocado se copiaría a sí mismo para siempre.
+        const f = desdeCero ? t.fecha : (t.esperaDesde || t.fecha);
         if (!f) return;
         (t.items || []).forEach(a => {
             if (!a || !a.sku7) return;
@@ -1454,6 +1457,29 @@ const esperaPorArticulo = (tareas) => {
         });
     });
     return m;
+};
+
+/**
+ * REFRESCA LA ANTIGÜEDAD DE LAS TAREAS VIVAS.
+ *
+ * El `esperaDesde` viaja grabado en la tarea, así que una tarea que ya existe se queda con el
+ * valor que le tocó el día que nació. Cuando se corrigió la cuenta —almacenar el artículo salda
+ * su espera— las tareas de antes siguieron mostrando lo viejo: la Tarea60 seguía diciendo
+ * "esperando hace 44 días" después del arreglo, porque nadie le tocaba el dato.
+ *
+ * Se recalcula desde cero a propósito. Leyendo el grabado, un valor equivocado se copiaría a sí
+ * mismo en cada corrida y no habría forma de enderezarlo.
+ */
+const refrescarEspera = (tareas) => {
+    const base = esperaPorArticulo(tareas, true);
+    let n = 0;
+    (tareas || []).forEach(t => {
+        if (!t || t.status === 'Finalizado' || t.status === 'Vencida') return;
+        const fechas = (t.items || []).map(a => base.get(a && a.sku7)).filter(Boolean).sort();
+        const nueva = fechas[0] || t.fecha;
+        if (t.esperaDesde !== nueva) { t.esperaDesde = nueva; n++; }
+    });
+    return n;
 };
 
 /** La hora de acá, no la de Greenwich. Mismo criterio que la ficha del Maestro (v29.0080). */
@@ -3576,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0093');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0094');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13890,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0093 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0094 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -21314,14 +21340,19 @@ window.showCellModal = function(htmlContent) {
         // vez de dejarlas diciendo lo de anteayer. Va después de vencer y antes de contar.
         const ajuste = ajustarTareasVivas(almacenajeTasksCache, filtered);
 
-        if (cuantasVencieron > 0 || ajuste.cambiadas > 0) {
+        // Y se les recalcula la antigüedad, que viaja grabada y no se arregla sola.
+        const refrescadas = refrescarEspera(almacenajeTasksCache);
+
+        if (cuantasVencieron > 0 || ajuste.cambiadas > 0 || refrescadas > 0) {
             await guardarBloqueFusionado(base => {
                 vencerTareasViejas(base);
                 ajustarTareasVivas(base, filtered);
+                refrescarEspera(base);
                 return base;
             });
             console.log(`[Almacenaje] ${cuantasVencieron} vencidas por las ${HORAS_VENCIMIENTO}h · `
-                      + `${ajuste.cambiadas} corregidas con el stock de hoy (${ajuste.vencidasVacias} quedaron en cero)`);
+                      + `${ajuste.cambiadas} corregidas con el stock de hoy (${ajuste.vencidasVacias} quedaron en cero) · `
+                      + `${refrescadas} con la antigüedad recalculada`);
         }
 
         const yaComprometido = {};
