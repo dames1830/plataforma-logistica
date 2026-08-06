@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0105';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0106';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0105';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0105';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0105';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0105';
-import * as metasService from '../services_v245/metasService.js?v=29.0105';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0105';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0105';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0105';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0105';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0105';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0105';
+import * as adminService from '../services_v245/adminService.js?v=29.0106';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0106';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0106';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0106';
+import * as metasService from '../services_v245/metasService.js?v=29.0106';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0106';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0106';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0106';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0106';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0106';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0106';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0105';
+const VERSION = '29.0106';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0105');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0106');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0105 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0106 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -27170,7 +27170,221 @@ window.showCellModal = function(htmlContent) {
         requestAnimationFrame(() => window.scrollTo({ top: _sy, behavior: 'instant' }));
     };
 
-    window.openShiftModal = () => {
+    // ══════════════════════════════════════════════════════════════════════════════════
+  // CARGAR EL STOCK A MANO PARA PROCESAR TAREAS
+  //
+  // El robot publica el stock a las 19:00, y hasta entonces el turno día no tenía con qué
+  // generar tareas: había que esperar. Esto deja subir el archivo bajado del WMS en
+  // cualquier momento.
+  //
+  // SE PUBLICA EN LA NUBE, NO SE GUARDA ACÁ. Es la misma razón por la que en su momento
+  // se sacó la carga de cada módulo: el 02-ago-2026 dos computadoras dieron papeles
+  // distintos porque cada una tenía su propio archivo, y la reserva llevaba un mes sin
+  // actualizarse. Sube al MISMO lugar donde escribe el robot, con `?date=MASTER`, así que
+  // en cuanto termina, todas las PC ven lo mismo — y la corrida de las 19:00 lo reemplaza
+  // esa noche sin dejar rastro.
+  //
+  // EL FORMATO ES UN CONTRATO. Lo que se manda tiene que ser exactamente lo que manda el
+  // robot (`wms_scraping/generar_slotting.py`): el activo con sus seis columnas leídas POR
+  // POSICIÓN y la reserva con sus ocho claves. Una columna de más o un nombre distinto no
+  // da error, da tareas mal calculadas.
+  // ══════════════════════════════════════════════════════════════════════════════════
+
+  const AREA_TAREAS_ACTIVO = 'almacenaje_activo';
+  const AREA_TAREAS_RESERVA = 'analisis_sku_reserva';
+  // Las seis primeras del CSV de Oracle, en su orden. Igual que COLS_ACTIVO del robot.
+  const COLS_TAREAS_ACTIVO = ['Área', 'Artículo', 'Descripción de artículo',
+                              'Ubicación', 'Cantidad actual', 'Cantidad asignada'];
+
+  /** Cuántas filas hay publicadas de un área y de cuándo son. */
+  const fichaDelArea = async (area) => {
+    const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+    try {
+      const res = await fetch(`${base}/api/logistics/${area}?date=MASTER&t=${Date.now()}`);
+      if (!res.ok) return { filas: 0, cuando: '' };
+      const cuerpo = await res.json();
+      const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+      return { filas: Array.isArray(datos) ? datos.length : 0,
+               cuando: cuerpo && cuerpo.updated_at ? formatDateTime(cuerpo.updated_at) : '' };
+    } catch (e) { return { filas: 0, cuando: '' }; }
+  };
+
+  /** Lee un archivo como filas crudas: CSV con Papa, Excel con XLSX. */
+  const leerTabla = (file) => new Promise((resolve, reject) => {
+    const nombre = (file.name || '').toLowerCase();
+    if (nombre.endsWith('.csv') || nombre.endsWith('.txt')) {
+      // El CSV de Oracle viene con punto y coma; Papa lo detecta solo.
+      Papa.parse(file, {
+        header: false, skipEmptyLines: true,
+        complete: (r) => resolve(r.data || []),
+        error: (e) => reject(e)
+      });
+      return;
+    }
+    const fr = new FileReader();
+    fr.onload = (e) => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const hoja = wb.Sheets[wb.SheetNames[0]];
+        resolve(XLSX.utils.sheet_to_json(hoja, { header: 1, defval: '' }));
+      } catch (err) { reject(err); }
+    };
+    fr.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    fr.readAsArrayBuffer(file);
+  });
+
+  const _txt = (v) => String(v === null || v === undefined ? '' : v).trim();
+
+  /** El Stock Activo: las seis primeras columnas, por posición y sin mirar los nombres. */
+  const armarActivo = (filas) => {
+    if (filas.length < 2) throw new Error('El archivo no tiene filas de datos.');
+    const cab = filas[0].map(_txt);
+    if (cab.length < 6) {
+      throw new Error(`El archivo trae ${cab.length} columna(s) y se esperaban al menos 6. `
+                    + '¿Es el Stock Activo de Oracle?');
+    }
+    // Se avisa si la primera columna no se parece a la del reporte de siempre: el orden es
+    // un contrato y equivocarse de archivo daría tareas mal calculadas sin ningún error.
+    const primera = cab[0].toUpperCase();
+    if (primera.indexOf('REA') < 0 && primera.indexOf('ZON') < 0) {
+      throw new Error(`La primera columna dice "${cab[0]}" y debería ser el Área. `
+                    + 'Parece otro reporte.');
+    }
+    return filas.slice(1).map(f => {
+      const o = {};
+      COLS_TAREAS_ACTIVO.forEach((nombre, i) => { o[nombre] = _txt(f[i]); });
+      return o;
+    }).filter(o => o['Artículo']);
+  };
+
+  /**
+   * El Stock Reserva. Vienen dos formatos y hay que reconocerlos:
+   *   · el de Oracle — fila 1 "Reporte de Stock", fila 2 vacía, fila 3 encabezados;
+   *   · el que arma el robot para Descargas — encabezados en la fila 1.
+   * Se mira dónde está la fila que dice UBICACION y se cuenta desde ahí.
+   */
+  const armarReserva = (filas) => {
+    let iCab = -1;
+    for (let i = 0; i < Math.min(8, filas.length); i++) {
+      const fila = (filas[i] || []).map(x => _txt(x).toUpperCase());
+      if (fila.indexOf('UBICACION') >= 0 || fila.indexOf('UBICACIÓN') >= 0) { iCab = i; break; }
+    }
+    if (iCab < 0) throw new Error('No se encontró la fila de encabezados con UBICACION. ¿Es el Stock Reserva?');
+
+    const cab = (filas[iCab] || []).map(x => _txt(x).toUpperCase());
+    const col = (...nombres) => {
+      for (const n of nombres) { const i = cab.indexOf(n); if (i >= 0) return i; }
+      return -1;
+    };
+    const iUbi = col('UBICACION', 'UBICACIÓN'), iProd = col('PRODUCTO'), iCant = col('CANTIDAD');
+    const iNivel = col('NIVEL'), iLpn = col('LPN'), iDesc = col('DESCRIPCION', 'DESCRIPCIÓN');
+    if (iUbi < 0 || iProd < 0 || iCant < 0) {
+      throw new Error('Faltan columnas en el archivo: hacen falta UBICACION, PRODUCTO y CANTIDAD.');
+    }
+
+    return filas.slice(iCab + 1).map(f => {
+      const ubi = _txt(f[iUbi]), producto = _txt(f[iProd]);
+      if (!ubi && !producto) return null;
+      const nivel = _txt(f[iNivel]).toUpperCase();
+      const qty = parseFloat(String(f[iCant]).replace(',', '.')) || 0;
+      return {
+        NIVEL: nivel,
+        ES_ALTO: nivel.indexOf('ALTO') >= 0 || nivel === 'A',
+        PRODUCTO: producto,
+        CANTIDAD: qty,
+        UBICACION: ubi,
+        UBI_KEY: ubi.toUpperCase().replace(/[^A-Z0-9]/g, ''),
+        LPN: _txt(f[iLpn]),
+        DESCRIPCION: _txt(f[iDesc])
+      };
+    }).filter(Boolean);
+  };
+
+  /**
+   * Lee el archivo, lo arma con el formato del robot y lo publica para todas las PC.
+   * No toca nada más: las tareas se generan después, con el botón de siempre.
+   */
+  window.__subirStockTareas = async (input, cual) => {
+    const file = input && input.files && input.files[0];
+    if (!file) return;
+    input.value = '';
+    const esActivo = cual === 'activo';
+    const area = esActivo ? AREA_TAREAS_ACTIVO : AREA_TAREAS_RESERVA;
+    const nombre = esActivo ? 'Stock Activo' : 'Stock Reserva';
+    const caja = document.getElementById(esActivo ? 'fichaStockActivo' : 'fichaStockReserva');
+    const decir = (html, color) => {
+      if (!caja) return;
+      caja.style.borderColor = color || 'rgba(255,255,255,0.08)';
+      caja.querySelector('.ficha-cuerpo').innerHTML = html;
+    };
+
+    decir('Leyendo el archivo…');
+    try {
+      const crudas = await leerTabla(file);
+      const filas = esActivo ? armarActivo(crudas) : armarReserva(crudas);
+      if (!filas.length) throw new Error('No se encontró ninguna fila con datos.');
+
+      decir(`Publicando ${filas.length.toLocaleString('es-PE')} filas…`);
+      const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+      const res = await fetch(`${base}/api/logistics/${area}?date=MASTER`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(filas)
+      });
+      if (!res.ok) throw new Error('El servidor respondió ' + res.status);
+
+      // La copia local se actualiza también para que el proceso de esta PC no tenga que
+      // volver a bajarla, pero la que manda es la del servidor.
+      dataStore[area] = filas;
+      try {
+        await logSystemAction((getSession() || {}).username || 'sistema', 'STOCK_TAREAS',
+          `${nombre} cargado a mano: ${filas.length} filas`);
+      } catch (e) { /* el registro no puede tumbar la carga */ }
+
+      await pintarFichasStock();
+    } catch (e) {
+      decir(`<b style="color:#ef4444;">No se pudo cargar.</b><br>${(e && e.message) || e}`,
+            'rgba(239,68,68,0.45)');
+    }
+  };
+
+  /** Deja las dos fichas del modal al día con lo que hay publicado. */
+  const pintarFichasStock = async () => {
+    const pares = [['fichaStockActivo', AREA_TAREAS_ACTIVO, 'Stock Activo', 'activo', '.csv,.xlsx'],
+                   ['fichaStockReserva', AREA_TAREAS_RESERVA, 'Stock Reserva', 'reserva', '.xlsx']];
+    for (const [id, area, nombre, cual, acepta] of pares) {
+      const caja = document.getElementById(id);
+      if (!caja) continue;
+      const f = await fichaDelArea(area);
+      const hay = f.filas > 0;
+      caja.style.borderColor = hay ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.45)';
+      caja.style.background = hay ? 'rgba(34,197,94,0.05)' : 'rgba(239,68,68,0.07)';
+      caja.querySelector('.ficha-cuerpo').innerHTML = hay
+        ? `<b style="color:#22c55e;">${nombre} publicado</b><br>
+           <span style="color:#fff;">${f.filas.toLocaleString('es-PE')} filas</span>${f.cuando ? ` · ${f.cuando}` : ''}`
+        : `<b style="color:#ef4444;">No hay ${nombre} publicado</b><br>
+           Sin él las tareas salen vacías o sin destino.`;
+      const btn = caja.querySelector('.ficha-boton');
+      if (btn) btn.textContent = hay ? '↻ Reemplazar' : '📤 Cargar archivo';
+    }
+  };
+
+  /** El bloque de una ficha de stock, con su botón de carga. */
+  const fichaStockHTML = (id, titulo, cual, acepta) => `
+    <div id="${id}" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+                           border-radius:10px; padding:12px 14px; font-size:0.78rem; line-height:1.5;
+                           color:var(--text-muted); display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div class="ficha-cuerpo" style="min-width:0;">Revisando el ${titulo}…</div>
+      <div style="position:relative; flex:0 0 auto;">
+        <button class="ficha-boton" style="background:rgba(79,70,229,0.15); color:#a5b4fc; border:1px solid rgba(79,70,229,0.5);
+                       border-radius:8px; padding:0.4rem 0.8rem; font-size:0.72rem; font-weight:700;
+                       cursor:pointer; white-space:nowrap;">📤 Cargar archivo</button>
+        <input type="file" accept="${acepta}" onchange="window.__subirStockTareas(this, '${cual}')"
+               style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+      </div>
+    </div>`;
+
+  window.openShiftModal = () => {
         try {
             const logicalDate = getLogicalDate();
             const modal = document.createElement('div');
@@ -27194,6 +27408,14 @@ window.showCellModal = function(htmlContent) {
                             Revisando el catálogo de artículos…
                         </div>
 
+                        ${fichaStockHTML('fichaStockActivo', 'Stock Activo', 'activo', '.csv,.xlsx')}
+                        ${fichaStockHTML('fichaStockReserva', 'Stock Reserva', 'reserva', '.xlsx')}
+                        <div style="font-size:0.72rem; color:var(--text-muted); line-height:1.5; margin-top:-6px;">
+                            El robot publica los dos stocks a las <b>19:00</b>. Para trabajar antes, cargá acá
+                            el archivo bajado del WMS: se publica para <b>todas las computadoras</b>, igual que
+                            lo haría el robot.
+                        </div>
+
                         <button id="optUpdate" class="btn" style="padding:1.2rem; font-weight:800; background:linear-gradient(135deg, var(--primary), #6366f1); border:none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); margin-top:10px;">
                             PROCESAR TAREAS
                         </button>
@@ -27213,6 +27435,9 @@ window.showCellModal = function(htmlContent) {
             (async () => {
                 const caja = modal.querySelector('#fichaMaestro');
                 if (!caja) return;
+                // El stock se revisa junto con el Maestro: son las dos cosas sin las que
+                // el proceso no puede salir bien, y se ven de un vistazo antes de apretar.
+                pintarFichasStock();
                 try { await rescatarMaestro(true); } catch (e) { /* el estado queda en 'ninguno' */ }
                 const m = maestroEnUso();
                 const cuando = m.fecha ? formatDateTime(m.fecha) : '';
