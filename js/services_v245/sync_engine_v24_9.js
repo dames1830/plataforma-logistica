@@ -119,7 +119,19 @@ function descomprimirTareas(data) {
             return {
                 sku7, marca, gender, coleccion, bufferQty: bQty, zonaQty: zQty,
                 ...(genderRims ? { genderRims } : {}),
-                items: (cItems || []).map(i => { const itemObj = { skuFull: i[0], ubi: i[1], qty: i[2], talla: i[3] }; if (i[4] !== undefined && i[4] !== null) { itemObj.avance = i[4]; } if (i[5] !== undefined && i[5] !== null) { itemObj.qtyInitial = i[5]; } return itemObj; })
+                items: (cItems || []).map(i => {
+                    const itemObj = { skuFull: i[0], ubi: i[1], qty: i[2], talla: i[3] };
+                    if (i[4] !== undefined && i[4] !== null) { itemObj.avance = i[4]; }
+                    if (i[5] !== undefined && i[5] !== null) { itemObj.qtyInitial = i[5]; }
+                    // EL PAPEL, GRABADO. Se calcula una vez al generar la tarea y no se vuelve
+                    // a tocar: una tarea de ayer no puede cambiar porque el stock de hoy sea
+                    // otro. Las tareas anteriores a v29.0087 no lo traen y quedan sin estos
+                    // tres campos, que es lo correcto — su cálculo se perdió y no se inventa.
+                    if (i[6] !== undefined && i[6] !== null) { itemObj.almacenar = i[6]; }
+                    if (i[7] !== undefined && i[7] !== null) { itemObj.paletizar = i[7]; }
+                    if (i[8] !== undefined && i[8] !== null && i[8] !== '') { itemObj.destino = i[8]; }
+                    return itemObj;
+                })
             };
         });
         return { ...t, items: restoredItems, _comp: false };
@@ -249,7 +261,19 @@ export async function pushChange(area, data, date = null) {
         if (area === 'almacenaje_tasks' || area === 'almacenaje_tasks_history') {
             const comprimir = (t) => {
                 const compactItems = (t.items || []).map(art => {
-                    const cArtItems = (art.items || []).map(i => [i.skuFull || i.sku || '---', i.ubi, i.qty, i.talla || 'S/TALLA', i.avance !== undefined ? i.avance : null, i.qtyInitial !== undefined ? i.qtyInitial : null]);
+                    const cArtItems = (art.items || []).map(i => {
+                        const base = [i.skuFull || i.sku || '---', i.ubi, i.qty, i.talla || 'S/TALLA',
+                                      i.avance !== undefined ? i.avance : null,
+                                      i.qtyInitial !== undefined ? i.qtyInitial : null];
+                        // El papel grabado va al final, y solo si existe: una tarea sin calcular
+                        // sigue viajando con seis campos, igual que siempre.
+                        if (i.almacenar !== undefined || i.paletizar !== undefined || i.destino !== undefined) {
+                            base.push(i.almacenar !== undefined ? i.almacenar : null,
+                                      i.paletizar !== undefined ? i.paletizar : null,
+                                      i.destino !== undefined ? i.destino : '');
+                        }
+                        return base;
+                    });
                     // El Gender RIMS se agrega al final para no mover los índices ya guardados.
                     // Sin él, las metas por detalle (01 MEN, 08 ACCESORIES...) no pueden aplicarse.
                     return [art.sku7, art.marca, art.gender, art.coleccion, art.bufferQty, art.zonaQty, cArtItems, art.genderRims || ''];

@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0086';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0087';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0086';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0086';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0086';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0086';
-import * as metasService from '../services_v245/metasService.js?v=29.0086';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0086';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0086';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0086';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0086';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0086';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0086';
+import * as adminService from '../services_v245/adminService.js?v=29.0087';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0087';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0087';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0087';
+import * as metasService from '../services_v245/metasService.js?v=29.0087';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0087';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0087';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0087';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0087';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0087';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0087';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0086';
+const VERSION = '29.0087';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3422,7 +3422,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0086');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0087');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13736,7 +13736,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0086 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0087 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15434,7 +15434,28 @@ const renderRFSection = (container) => {
     const lineas = (ctx.lineasBufferDe.get(sug.sku7) || [])
       .slice()
       .sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0) || a.ubi.localeCompare(b.ubi));
-    if (!lineas.length || !sug.cant) return [];
+    if (!lineas.length) return [];
+
+    // LO GRABADO MANDA, Y NO SE DISCUTE.
+    //
+    // Si la tarea ya trae su papel, se devuelve tal cual: es lo que se imprimió el día que se
+    // generó y lo que el operario tiene en la mano. Recalcularlo con el stock de hoy daba
+    // TODO al piso y sin destino, porque esa mercadería ya salió del buffer. Ver
+    // grabarPapelEnTareas.
+    //
+    // Se pide que estén TODAS las líneas grabadas, no algunas: media hoja del día que se
+    // generó y media de hoy sería peor que cualquiera de las dos enteras.
+    if (lineas.every(l => l.almacenar !== undefined || l.destino !== undefined)) {
+      return lineas.map(l => ({
+        ubi: l.ubi, skuFull: l.skuFull, talla: l.talla, qty: l.qty,
+        marca: sug.ficha.marca || '',
+        alPiso: Number(l.almacenar) || 0,
+        aReserva: Number(l.paletizar) || 0,
+        destino: l.destino || ''
+      }));
+    }
+
+    if (!sug.cant) return [];
 
     // ARRIBA SOLO SUBEN CAJAS CERRADAS, y eso se cuida DOS veces.
     //
@@ -15851,26 +15872,57 @@ const renderRFSection = (container) => {
     if (_sugCalculando || firma === _sugFirma) return;
     _sugCalculando = true;
     try {
-      const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
-      const ctx = await cargarContextoSugerencia(abiertas);
       _sugPorLinea.clear();
-      const tomados = {};
-      Object.keys(ctx.ocupados).forEach(z => { tomados[z] = new Set(ctx.ocupados[z]); });
 
-      tareas.forEach(t => (t.items || []).forEach(art => {
-        const s = calcularSugerenciaDeItem(art, t.fecha, ctx, tomados);
-        if (!s) return;
-        const trabada = s.plan.estado === 'slotting' || s.plan.estado === 'sin-regla'
-                     || s.plan.estado === 'sin-reglas-zona';
-        filasDelPapel(s, ctx).forEach(l => {
-          _sugPorLinea.set(`${t.id}|${l.ubi}|${l.skuFull}|${l.talla}`, {
-            almacenar: trabada ? 0 : l.alPiso,
-            paletizar: l.aReserva,
-            destino: trabada ? 'Revisar Slotting' : l.destino,
-            trabada
+      // PRIMERO LO GRABADO. Una tarea que ya trae su papel no se recalcula: es historia.
+      const sinGrabar = [];
+      tareas.forEach(t => {
+        let alguna = false;
+        (t.items || []).forEach(art => (art.items || []).forEach(i => {
+          if (i.almacenar === undefined && i.destino === undefined) return;
+          alguna = true;
+          _sugPorLinea.set(`${t.id}|${i.ubi}|${i.skuFull}|${i.talla}`, {
+            almacenar: Number(i.almacenar) || 0,
+            paletizar: Number(i.paletizar) || 0,
+            destino: i.destino || '',
+            trabada: i.destino === 'Revisar Slotting'
           });
-        });
-      }));
+        }));
+        if (!alguna) sinGrabar.push(t);
+      });
+
+      // LAS QUE NO LO TIENEN, SOLO SI SON DEL DÍA.
+      //
+      // Una tarea vieja sin papel grabado es anterior a v29.0087 y su cálculo se perdió: el
+      // stock de esos días ya pasó y no se puede reconstruir. Se deja en blanco antes que
+      // inventarlo con el stock de ahora, que devuelve todo al piso y sin destino — con la
+      // apariencia de una hoja buena, que es lo peligroso.
+      const hoy = getLogicalDate();
+      const porCalcular = sinGrabar.filter(t => t.fecha === hoy);
+
+      // Va dentro de un if y no con un return temprano a propósito: abajo se apaga
+      // `_sugCalculando`, y saltearlo dejaría la pantalla sin volver a calcular nunca.
+      if (porCalcular.length) {
+        const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
+        const ctx = await cargarContextoSugerencia(abiertas);
+        const tomados = {};
+        Object.keys(ctx.ocupados).forEach(z => { tomados[z] = new Set(ctx.ocupados[z]); });
+
+        porCalcular.forEach(t => (t.items || []).forEach(art => {
+          const s = calcularSugerenciaDeItem(art, t.fecha, ctx, tomados);
+          if (!s) return;
+          const trabada = s.plan.estado === 'slotting' || s.plan.estado === 'sin-regla'
+                       || s.plan.estado === 'sin-reglas-zona';
+          filasDelPapel(s, ctx).forEach(l => {
+            _sugPorLinea.set(`${t.id}|${l.ubi}|${l.skuFull}|${l.talla}`, {
+              almacenar: trabada ? 0 : l.alPiso,
+              paletizar: l.aReserva,
+              destino: trabada ? 'Revisar Slotting' : l.destino,
+              trabada
+            });
+          });
+        }));
+      }
       _sugFirma = firma;
     } catch (e) {
       console.warn('[Sugerencia] no se pudo calcular para el detalle:', e && e.message);
@@ -15879,6 +15931,100 @@ const renderRFSection = (container) => {
     if (container && container.isConnected && container.dataset.vista === 'almacenaje') {
       renderAlmacenajeTareas(container);
     }
+  };
+
+  /**
+   * LAS LÍNEAS DEL BUFFER SALEN DE LA TAREA, NO DEL STOCK.
+   *
+   * La tarea ya trae ubicación, SKU, talla y cantidad, y es lo que corresponde: el papel
+   * muestra la tarea que se generó. Además viaja a todas las computadoras, mientras que el
+   * stock activo pesa 32 MB y solo está en la PC que subió el CSV.
+   *
+   * La clave se arma igual acá y al leerla —ubicación en mayúsculas, talla normalizada—, o
+   * el cruce falla en silencio y la línea sale sin cálculo.
+   */
+  const claveDeLinea = (ubi, skuFull, talla) =>
+    `${String(ubi || '').trim().toUpperCase()}|${String(skuFull || '').trim()}|${normalizarTalla(talla)}`;
+
+  const lineasDesdeTareas = (tareas) => {
+    const mapa = new Map();
+    (tareas || []).forEach(t => (t.items || []).forEach(art => {
+      const s7 = String(art.sku7 || '').trim();
+      if (!s7) return;
+      (art.items || []).forEach(i => {
+        const ubi = String(i.ubi || '').trim().toUpperCase();
+        const qty = parseFloat(i.qty) || 0;
+        // CDBUFFER-C es PreePack: queda fuera igual que en el generador de tareas
+        if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C') || qty <= 0) return;
+        if (!mapa.has(s7)) mapa.set(s7, []);
+        // Las tareas guardadas ANTES de unificar la regla traen 'S/TALLA' como comodín y el
+        // cálculo usa 'S/T'. Sin esta traducción el cruce no se da y la línea sale en blanco.
+        const linea = { ubi, skuFull: String(i.skuFull || '').trim(), talla: normalizarTalla(i.talla), qty };
+        // El papel grabado viaja con la línea, para que filasDelPapel lo prefiera al cálculo.
+        if (i.almacenar !== undefined) linea.almacenar = i.almacenar;
+        if (i.paletizar !== undefined) linea.paletizar = i.paletizar;
+        if (i.destino !== undefined) linea.destino = i.destino;
+        mapa.get(s7).push(linea);
+      });
+    }));
+    return mapa;
+  };
+
+  /**
+   * GRABA EL PAPEL EN LA TAREA. Se llama UNA vez, apenas la tarea nace.
+   *
+   * Hasta v29.0086 las tres columnas del papel —Almacenar, Paletizar y Destino— no se
+   * guardaban en ningún lado: se recalculaban cada vez que alguien abría el Detalle o bajaba
+   * la hoja. Para una tarea del día daba bien, pero para una de ayer no: esa mercadería ya
+   * salió del buffer, así que el cálculo arrancaba con cero pares y devolvía TODO al piso, sin
+   * destino y sin una sola advertencia. Medido sobre las tareas reales del 03 y 04 de agosto,
+   * salían mal el 84% y el 61% de los artículos.
+   *
+   * Daniel lo dijo así: "una tarea del cuatro hacia atrás no se debe mover ni un pelo, ni el
+   * sistema ni el usuario". Y tiene razón — es historia, no una pregunta abierta.
+   *
+   * Devuelve cuántas líneas quedaron grabadas. Si algo falla, las tareas ya existen igual: por
+   * eso es un paso aparte y no parte del generador.
+   */
+  const grabarPapelEnTareas = async (tareas) => {
+    if (!tareas || !tareas.length) return 0;
+    const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
+    const ctx = await cargarContextoSugerencia(abiertas);
+    // Sin Stock Activo no hay cálculo posible. Mejor dejar las tres columnas vacías que
+    // grabar ceros, que después nadie distingue de un cálculo de verdad.
+    if (!ctx.porTallaDe.size) return 0;
+
+    ctx.lineasBufferDe = lineasDesdeTareas(tareas);
+
+    const tomados = {};
+    Object.keys(ctx.ocupados).forEach(z => { tomados[z] = new Set(ctx.ocupados[z]); });
+
+    let grabadas = 0;
+    tareas.forEach(t => {
+      const porLinea = new Map();
+      (t.items || []).forEach(art => {
+        const s = calcularSugerenciaDeItem(art, t.fecha, ctx, tomados);
+        if (!s) return;
+        const trabada = s.plan.estado === 'slotting' || s.plan.estado === 'sin-regla'
+                     || s.plan.estado === 'sin-reglas-zona';
+        filasDelPapel(s, ctx).forEach(l => {
+          porLinea.set(claveDeLinea(l.ubi, l.skuFull, l.talla), {
+            almacenar: trabada ? 0 : l.alPiso,
+            paletizar: l.aReserva,
+            destino: trabada ? 'Revisar Slotting' : (l.destino || '')
+          });
+        });
+      });
+      (t.items || []).forEach(art => (art.items || []).forEach(i => {
+        const v = porLinea.get(claveDeLinea(i.ubi, i.skuFull, i.talla));
+        if (!v) return;
+        i.almacenar = v.almacenar;
+        i.paletizar = v.paletizar;
+        i.destino = v.destino;
+        grabadas++;
+      }));
+    });
+    return grabadas;
   };
 
   /**
@@ -21102,6 +21248,25 @@ window.showCellModal = function(htmlContent) {
         // asignado o finalizado desde la suya.
         await guardarBloqueFusionado(base => [...base, ...tasksWithDate]);
 
+        // EL PAPEL SE GRABA ACÁ, Y DESPUÉS NO SE VUELVE A CALCULAR NUNCA.
+        //
+        // Va en un paso aparte, con su propio try, y DESPUÉS de que las tareas ya quedaron
+        // guardadas arriba. Si el cálculo falla —falta el Stock Activo, una zona sin reglas—
+        // las tareas existen igual y las tres columnas quedan vacías; lo que no puede pasar es
+        // que un error del cálculo se lleve puesta la generación. Es la opción B.
+        try {
+          const lineas = await grabarPapelEnTareas(tasksWithDate);
+          if (lineas > 0) {
+            const nuevas = new Map(tasksWithDate.map(t => [t.id, t]));
+            await guardarBloqueFusionado(base => base.map(t => nuevas.get(t.id) || t));
+            console.log(`[Almacenaje] papel grabado en ${lineas} líneas de ${tasksWithDate.length} tareas`);
+          } else {
+            console.warn('[Almacenaje] las tareas quedaron sin el papel grabado');
+          }
+        } catch (e) {
+          console.warn('[Almacenaje] no se pudo grabar el papel en las tareas:', e && e.message);
+        }
+
         // Animar la barra de progreso de 0% a 100% de manera fluida y mostrar el mensaje final
         let currentPct = 0;
         const progressFill = progressModal.querySelector('#progress_bar_fill');
@@ -21231,25 +21396,10 @@ window.showCellModal = function(htmlContent) {
       // no el stock de este momento —los datos de la tarea quedan estampados a propósito—.
       // El stock se sigue necesitando, pero para el cálculo: cuánto hay ya en el piso y qué
       // cuerpos están ocupados.
-      ctx.lineasBufferDe = new Map();
-      tareas.forEach(t => (t.items || []).forEach(art => {
-        const s7 = String(art.sku7 || '').trim();
-        if (!s7) return;
-        (art.items || []).forEach(i => {
-          const ubi = String(i.ubi || '').trim().toUpperCase();
-          const qty = parseFloat(i.qty) || 0;
-          // CDBUFFER-C es PreePack: queda fuera igual que en el generador de tareas
-          if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C') || qty <= 0) return;
-          if (!ctx.lineasBufferDe.has(s7)) ctx.lineasBufferDe.set(s7, []);
-          ctx.lineasBufferDe.get(s7).push({
-            ubi, skuFull: String(i.skuFull || '').trim(),
-            // Las tareas guardadas ANTES de unificar la regla traen 'S/TALLA' como comodín,
-            // y el cálculo usa 'S/T'. Sin esta traducción, reimprimir una tarea vieja no
-            // cruzaría y la hoja saldría con todo al piso y el destino en guion.
-            talla: normalizarTalla(i.talla), qty
-          });
-        });
-      }));
+      // Y con ellas viaja el papel ya grabado, si la tarea lo tiene: filasDelPapel lo prefiere
+      // al cálculo, así que una tarea de días anteriores imprime lo mismo que imprimió
+      // entonces en vez de recalcularse contra el stock de ahora. Ver grabarPapelEnTareas.
+      ctx.lineasBufferDe = lineasDesdeTareas(tareas);
 
       // Un cuerpo sugerido no puede ofrecerse dos veces en la misma corrida
       const tomados = {};
