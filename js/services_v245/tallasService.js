@@ -361,8 +361,13 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
     //
     // No se aplica a 'todo' -que ya baja todo- ni a 'cuerpos', que por definición ya es un
     // número entero de cuerpos.
+    //
+    // Y TAMPOCO CUANDO QUIEN LLAMA PIDE `sinCandado`. Lo estrenó el código nuevo, que baja el
+    // 60% de lo que llega: ahí el porcentaje no es una aproximación que convenga redondear,
+    // es la regla. Palabras de Daniel el 05-ago-2026: "no importa si me ocupa un cuerpo, dos
+    // cuerpos o tres cuerpos, pero el sesenta por ciento tiene que quedarse abajo".
     let candado = null;
-    if (regla.modo === 'porcentaje' && paresPorCuerpo > 0) {
+    if (regla.modo === 'porcentaje' && paresPorCuerpo > 0 && !regla.sinCandado) {
         const cuerpos = Math.max(1, Math.round(objetivoArt / paresPorCuerpo));
         const conCandado = Math.min(cuerpos * paresPorCuerpo, pisoTotal + bufferTotal);
         if (Math.round(conCandado) !== Math.round(objetivoArt)) {

@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0080';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0081';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0080';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0080';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0080';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0080';
-import * as metasService from '../services_v245/metasService.js?v=29.0080';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0080';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0080';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0080';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0080';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0080';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0080';
+import * as adminService from '../services_v245/adminService.js?v=29.0081';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0081';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0081';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0081';
+import * as metasService from '../services_v245/metasService.js?v=29.0081';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0081';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0081';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0081';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0081';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0081';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0081';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0080';
+const VERSION = '29.0081';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3422,7 +3422,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0080');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0081');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13736,7 +13736,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0080 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0081 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15474,8 +15474,28 @@ const renderRFSection = (container) => {
     });
   };
 
-  /** Cuántos cuerpos le tocan a un artículo que llega de recepción. Los dictó Daniel. */
-  const CUERPOS_CODIGO_NUEVO = 3;
+  /**
+   * UN CÓDIGO NUEVO DEJA ABAJO EL 60% DE LO QUE LLEGA. NO TRES CUERPOS.
+   *
+   * Antes se le daban 3 cuerpos fijos, y el número salía de la misma curva que ahora manda:
+   * las dos primeras semanas se llevaban 700 pares, o sea dos cuerpos, y se redondeaba para
+   * arriba. El problema es que un cuerpo fijo no se estira ni se encoge con la llegada, y las
+   * llegadas son de todos los tamaños. Con cuerpos de 330:
+   *
+   *     llegan 1.082 (la llegada típica) -> 990 abajo, el 91%. Se le almacena casi todo.
+   *     llegan 2.519 (la más grande)     -> 990 abajo, el 39%. Se le almacena de menos.
+   *
+   * El porcentaje sí se estira, y sale medido: sobre los 81 códigos que entraron en mayo de
+   * 2026, la primera semana se picó el 43,4% y la segunda el 21,3% —64,7% entre las dos— y de
+   * la tercera en adelante se planta en 1,2%. Daniel lo redondeó a 60% el 05-ago-2026: es el
+   * colchón de las dos primeras semanas, que es lo que un código nuevo llega a vender.
+   *
+   * Va SIN CANDADO a propósito. El candado redondea el objetivo al cuerpo entero más cercano,
+   * y acá eso contradice la regla: "no importa si me ocupa un cuerpo, dos cuerpos o tres
+   * cuerpos, pero el sesenta por ciento tiene que quedarse abajo".
+   */
+  const PCT_CODIGO_NUEVO     = 60;
+  /** La reposición de fábrica sigue midiéndose en cuerpos: no es un código nuevo. */
   const CUERPOS_REPOSICION   = 2;
 
   /**
@@ -15556,8 +15576,30 @@ const renderRFSection = (container) => {
     }
 
     if (origen && origen.has('B')) {
-      return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
-               motivo: 'Bajó de reserva por pedido o replenishment: se almacena todo.' };
+      // ¿Y DE DÓNDE HABRÍA BAJADO? LA LETRA SOLA DEJÓ DE ALCANZAR.
+      //
+      // El 05-ago-2026 el buffer A se llenó y recepción metió mercadería nueva en el B. No fue
+      // un descuido: no había otro lado donde ponerla, así que va a volver a pasar. Y como el B
+      // significa "bajó de reserva", esos códigos nuevos se almacenaban ENTEROS: el 5816945
+      // llegó con 1.356 pares y se llevaba 4,1 cuerpos del mezzanine 2.
+      //
+      // No hace falta ningún dato nuevo ni que recepción se acuerde de nada. Lo que bajó de
+      // reserva estuvo antes en algún lado —arriba, o en su cuerpo de abajo—, así que basta con
+      // preguntarle al stock. Un artículo sin un solo par en el piso y sin un solo par en
+      // reserva no pudo haber bajado de ninguna parte: entró por la puerta.
+      //
+      // Medido sobre el buffer de ese día: de los 41 códigos en el B, 37 tenían piso o reserva
+      // —esos sí bajaron— y 4 no tenían nada. Los 4 eran de recepción.
+      const enPiso = Object.values(ctx.porTallaDe.get(s7) || {})
+        .reduce((a, t) => a + (Number(t.piso) || 0), 0);
+      const enReserva = Number(ctx.reservaDe && ctx.reservaDe.get(s7)) || 0;
+
+      if (enPiso > 0 || enReserva > 0) {
+        return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
+                 motivo: 'Bajó de reserva por pedido o replenishment: se almacena todo.' };
+      }
+      // No tiene de dónde haber bajado: sigue de largo y lo agarra la regla del código nuevo,
+      // que es la decisión que se habría tomado si hubiera entrado por el A.
     }
 
     // AL MEZZANINE 4 NO SE LE MANDA NADA A RESERVA. Todo lo que va ahí es para almacenar,
@@ -15582,8 +15624,8 @@ const renderRFSection = (container) => {
     return enSuFranja
       ? { nombre: 'reposicion-fabrica', regla: { modo: 'cuerpos', valor: CUERPOS_REPOSICION },
           motivo: `Ya vive en la franja de "${franja}": se completa hasta ${CUERPOS_REPOSICION} cuerpos.` }
-      : { nombre: 'codigo-nuevo', regla: { modo: 'cuerpos', valor: CUERPOS_CODIGO_NUEVO },
-          motivo: `No tiene cuerpo en la franja de "${franja}": arranca con ${CUERPOS_CODIGO_NUEVO} cuerpos.` };
+      : { nombre: 'codigo-nuevo', regla: { modo: 'porcentaje', valor: PCT_CODIGO_NUEVO, sinCandado: true },
+          motivo: `No tiene cuerpo en la franja de "${franja}": se le deja abajo el ${PCT_CODIGO_NUEVO}%, que es lo que se vende en las dos primeras semanas.` };
   };
 
   /**
