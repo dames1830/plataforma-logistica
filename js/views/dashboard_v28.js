@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0096';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0097';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0096';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0096';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0096';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0096';
-import * as metasService from '../services_v245/metasService.js?v=29.0096';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0096';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0096';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0096';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0096';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0096';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0096';
+import * as adminService from '../services_v245/adminService.js?v=29.0097';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0097';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0097';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0097';
+import * as metasService from '../services_v245/metasService.js?v=29.0097';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0097';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0097';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0097';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0097';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0097';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0097';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0096';
+const VERSION = '29.0097';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0096');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0097');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0096 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0097 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16276,22 +16276,38 @@ const renderRFSection = (container) => {
     await withLoading(btn, '⌛', async () => {
       const wb = new ExcelJS.Workbook();
       wb.creator = 'Logística DEAM1830';
-      const ws = wb.addWorksheet('Tareas', {
-        pageSetup: {
-          orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0,
-          margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.4, header: 0.2, footer: 0.2 }
-        }
-      });
-      // La marca no lleva columna: una tarea es de una sola marca, así que va en la cabecera
-      ws.columns = [
-        { width: 25 },  // A Ubicación
-        { width: 18 },  // B SKU
-        { width: 8 },   // C Talla
-        { width: 12 },  // D Qty buffer
-        { width: 11 },  // E Al piso
-        { width: 12 },  // F Paletizar
-        { width: 18 }   // G Destino
-      ];
+      /**
+       * UNA HOJA DE EXCEL POR TAREA. Las tres cosas que pidió Daniel salen de acá:
+       *
+       *   COMPAGINADO   cada tarea es su propia hoja, no un tramo de una hoja larga.
+       *   CABECERAS     con `printTitlesRow` por hoja, la fila de títulos se repite sola en la
+       *                 segunda página. Antes eran todas una sola hoja, así que esa fila
+       *                 pertenecía a la primera tarea y no volvía a salir.
+       *   DOBLE CARA    al imprimir en dúplex, Excel arranca cada HOJA en una hoja física
+       *                 nueva. Con saltos de página dentro de una misma hoja no: la segunda
+       *                 tarea caía al dorso de la primera.
+       *
+       * Se baja el archivo y se manda a la impresora sin tocar nada, que era el punto.
+       */
+      const nuevaHoja = (nombre) => {
+        const h = wb.addWorksheet(nombre, {
+          pageSetup: {
+            orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+            margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.4, header: 0.2, footer: 0.2 }
+          }
+        });
+        // La marca no lleva columna: una tarea es de una sola marca, así que va en la cabecera
+        h.columns = [
+          { width: 25 },  // A Ubicación
+          { width: 18 },  // B SKU
+          { width: 8 },   // C Talla
+          { width: 12 },  // D Qty buffer
+          { width: 11 },  // E Al piso
+          { width: 12 },  // F Paletizar
+          { width: 18 }   // G Destino
+        ];
+        return h;
+      };
       const COLS = 7;
 
       const NEGRO = 'FF2C2C2A', GRIS = 'FFF1EFE8', GRIS_FUERTE = 'FFB4B2A9', LINEA = 'FF888780';
@@ -16311,6 +16327,13 @@ const renderRFSection = (container) => {
       tareas.forEach((grupo, idx) => {
         const t = grupo.tarea;
         const idCorto = String(t.id).includes('_') ? String(t.id).split('_')[1] : String(t.id);
+
+        // El nombre de la pestaña: Excel no admite : \ / ? * [ ] ni más de 31 caracteres, y
+        // dos hojas no pueden llamarse igual — de ahí el índice al final.
+        const ws = nuevaHoja(
+          `${(/^tarea/i.test(idCorto) ? idCorto : 'Tarea ' + idCorto)}`
+            .replace(/[:\\\/\?\*\[\]]/g, '-').slice(0, 27) + ' ' + (idx + 1)
+        );
         const trabadas = grupo.arts.filter(x => x.plan.estado === 'slotting'
           || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona');
 
@@ -16391,6 +16414,9 @@ const renderRFSection = (container) => {
         ws.addRow([]);
 
         const rH = ws.addRow(['Ubicación', 'SKU', 'Talla', 'Qty buffer', 'Almacenar', 'Paletizar', 'Destino']);
+        // Esta fila se repite arriba de cada página impresa. Si la tarea entra en una sola, no
+        // cambia nada; si ocupa dos, la segunda deja de salir sin títulos.
+        ws.pageSetup.printTitlesRow = `${rH.number}:${rH.number}`;
         rH.height = 20;
         rH.eachCell(c => {
           c.font = { size: 11, bold: true, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
@@ -16461,12 +16487,8 @@ const renderRFSection = (container) => {
           ultimaFila = rTT;
         }
 
-        // Cada tarea, su hoja. El salto va sobre una fila con celdas: ExcelJS descarta las
-        // vacías y el salto se iría con ellas.
-        if (idx < tareas.length - 1) {
-          ultimaFila.addPageBreak();
-          ws.addRow([]);
-        }
+        // Ya no hace falta ningún salto de página: cada tarea vive en su propia hoja y Excel
+        // arranca hoja nueva por su cuenta, también al imprimir a doble cara.
       });
 
       const buf = await wb.xlsx.writeBuffer();
