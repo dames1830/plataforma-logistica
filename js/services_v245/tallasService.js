@@ -362,16 +362,35 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
     // No se aplica a 'todo' -que ya baja todo- ni a 'cuerpos', que por definición ya es un
     // número entero de cuerpos.
     //
-    // Y TAMPOCO CUANDO QUIEN LLAMA PIDE `sinCandado`. Lo estrenó el código nuevo, que baja el
-    // 60% de lo que llega: ahí el porcentaje no es una aproximación que convenga redondear,
-    // es la regla. Palabras de Daniel el 05-ago-2026: "no importa si me ocupa un cuerpo, dos
-    // cuerpos o tres cuerpos, pero el sesenta por ciento tiene que quedarse abajo".
+    // `sinCandado` -que usa el código nuevo con su 60%- apaga el REDONDEO, no el piso de
+    // abajo. Son dos cosas distintas y conviene no confundirlas:
+    //
+    //   REDONDEO   llevar el objetivo al cuerpo entero más cercano. Al código nuevo no se le
+    //              aplica: "no importa si me ocupa un cuerpo, dos cuerpos o tres cuerpos,
+    //              pero el sesenta por ciento tiene que quedarse abajo".
+    //
+    //   PISO       si TODO lo que hay entra en un cuerpo, baja todo. Este vale siempre, y el
+    //              código nuevo lo necesita más que nadie. El 5616307 llegó con 125 pares a
+    //              un cuerpo del selectivo de 548: sacarle el 40% dejaba 75 abajo —un cuerpo
+    //              al 14%, porque un cuerpo no se comparte— y mandaba 50 pares a armar una
+    //              paleta. No se ahorra nada y hay que volver a bajarlos. Daniel, 05-ago-2026:
+    //              "si un código nuevo llega con trescientos, no vayas a separar el sesenta
+    //              por ciento, porque sabes que esos trescientos sí entran en un cuerpo".
+    //
+    // Para las marcas no cambia nada: el candado viejo ya daba esto mismo cuando lo que había
+    // entraba en un cuerpo, porque el mínimo de un cuerpo se recortaba contra lo que hay.
     let candado = null;
-    if (regla.modo === 'porcentaje' && paresPorCuerpo > 0 && !regla.sinCandado) {
-        const cuerpos = Math.max(1, Math.round(objetivoArt / paresPorCuerpo));
-        const conCandado = Math.min(cuerpos * paresPorCuerpo, pisoTotal + bufferTotal);
+    if (regla.modo === 'porcentaje' && paresPorCuerpo > 0) {
+        const hay = pisoTotal + bufferTotal;
+        const conCandado = (hay <= paresPorCuerpo)
+            ? hay                                                    // el piso: cabe en un cuerpo
+            : (regla.sinCandado
+                ? objetivoArt                                        // el 60% manda, sin redondear
+                : Math.min(Math.max(1, Math.round(objetivoArt / paresPorCuerpo)) * paresPorCuerpo, hay));
         if (Math.round(conCandado) !== Math.round(objetivoArt)) {
-            candado = { antes: Math.round(objetivoArt), cuerpos, capacidad: paresPorCuerpo };
+            candado = { antes: Math.round(objetivoArt),
+                        cuerpos: Math.max(1, Math.round(conCandado / paresPorCuerpo)),
+                        capacidad: paresPorCuerpo };
         }
         objetivoArt = conCandado;
     }
