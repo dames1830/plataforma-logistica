@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0107';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0108';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0107';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0107';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0107';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0107';
-import * as metasService from '../services_v245/metasService.js?v=29.0107';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0107';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0107';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0107';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0107';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0107';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0107';
+import * as adminService from '../services_v245/adminService.js?v=29.0108';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0108';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0108';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0108';
+import * as metasService from '../services_v245/metasService.js?v=29.0108';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0108';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0108';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0108';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0108';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0108';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0108';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0107';
+const VERSION = '29.0108';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0107');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0108');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0107 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0108 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16522,6 +16522,260 @@ const renderRFSection = (container) => {
       URL.revokeObjectURL(a.href);
     });
   };
+
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════
+   * EL PAPEL, IMPRESO DESDE LA WEB
+   *
+   * Mismo papel que el Excel —las siete columnas, los totales, los avisos de marco
+   * grueso, todo en blanco y negro—, pero armado como páginas de verdad. Existe porque
+   * en Excel no se puede hacer una de las tres cosas que Daniel pidió:
+   *
+   *   NI ExcelJS NI SheetJS ESCRIBEN LOS SALTOS DE PÁGINA. Las dos aceptan la orden
+   *   —`row.addPageBreak()`— pero al guardar el archivo no la escriben: el .xlsx que
+   *   sale ni siquiera menciona los saltos. Comprobado en ExcelJS 4.3, 4.4 y SheetJS
+   *   0.18. Sin poder poner los cortes no se sabe en qué página cae cada tarea, y sin
+   *   eso no hay forma de saber si ocupa un número par o impar de páginas.
+   *
+   * Acá las páginas las reparte este código MIDIENDO: se agrega una fila, se mira
+   * cuánto creció la página y cuando ya no entra otra, se cierra y se abre la
+   * siguiente. Nada queda librado a lo que decida el navegador.
+   *
+   * LAS TRES COSAS, entonces:
+   *   COMPAGINADO   cada tarea empieza en página nueva, nunca a mitad de una.
+   *   CABECERAS     si ocupa dos páginas, la segunda repite el nombre de la tarea, su
+   *                 fecha, el "página 2 de 2" y los títulos de columna.
+   *   DOBLE CARA    si una tarea ocupa un número IMPAR de páginas se le agrega una
+   *                 página de cierre, así la siguiente arranca en el frente de un papel
+   *                 nuevo y ninguna tarea comparte hoja con otra.
+   *
+   * LA PÁGINA DE CIERRE NO ES UN RELLENO: hoy lleva el "Fin de la Tarea14" y ahí va a
+   * ir el manual del operario cuando esté escrito. Por eso se arma como una página
+   * propia —`paginaDeCierre()`— y cambiarla después es tocar una sola función.
+   * ══════════════════════════════════════════════════════════════════════════════════
+   */
+  const imprimirTareasWeb = async (filas, ctx) => {
+    if (!filas.length) { showPremiumAlert('SIN TAREAS', 'No hay tareas en el rango para imprimir.', 'info'); return; }
+
+    // Una tarea puede traer varios artículos, y salen juntos en la misma hoja
+    const porTarea = new Map();
+    filas.forEach(x => {
+      const k = String(x.tarea.id);
+      if (!porTarea.has(k)) porTarea.set(k, { tarea: x.tarea, arts: [] });
+      porTarea.get(k).arts.push(x);
+    });
+    const tareas = [...porTarea.values()];
+
+    const esc = (v) => String(v === null || v === undefined ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    // A4 vertical. Los márgenes van en la página y no en @page para poder medir el alto
+    // útil desde acá: con margen de @page el navegador lo descuenta por su cuenta y el
+    // cálculo dejaría de coincidir con lo que se ve.
+    const CSS = `
+      @page { size: A4 portrait; margin: 0; }
+      * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      html, body { margin: 0; padding: 0; background: #58585b; }
+      body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #000; }
+      .pg { width: 210mm; height: 297mm; padding: 9mm 7mm; background: #fff;
+            margin: 0 auto 6mm; position: relative; overflow: hidden; }
+      .cuerpo { height: 100%; }
+      .t1 { text-align: center; font-size: 26pt; font-weight: 700; line-height: 1.05; }
+      .t1.cont { font-size: 18pt; }
+      .t2 { text-align: center; font-size: 10.5pt; margin-top: 1mm; }
+      .cartel { border: 2.2px solid #000; margin-top: 2.5mm; padding: 1.2mm 2mm; text-align: center; }
+      .cartel b { display: block; font-size: 13pt; }
+      .cartel span { font-size: 8.5pt; }
+      table { width: 100%; border-collapse: collapse; }
+      .firmas { margin-top: 3mm; font-size: 10.5pt; }
+      .firmas td { border: 1px solid #888780; height: 8mm; padding: 0 2mm; }
+      .firmas .rot { background: #F1EFE8; font-weight: 400; white-space: nowrap; }
+      .det { margin-top: 3mm; font-size: 10.5pt; }
+      .det th { background: #2C2C2A; color: #fff; font-weight: 700; font-size: 10.5pt;
+                border: 1px solid #888780; height: 7mm; text-align: center; }
+      .det td { border: 1px solid #888780; height: 6.4mm; text-align: center; padding: 0 1mm; }
+      .det td.g { background: #F1EFE8; font-weight: 700; }
+      .det td.b { font-weight: 700; }
+      .det tr.tot td { background: #B4B2A9; font-weight: 700; height: 7mm; }
+      .det tr.tt td { background: #2C2C2A; color: #fff; font-weight: 700; height: 8mm; font-size: 12pt; }
+      .cierre { display: flex; align-items: center; justify-content: center; height: 100%;
+                color: #888780; font-size: 15pt; font-weight: 700; }
+      @media print { body { background: #fff; } .pg { margin: 0; page-break-after: always; }
+                     .pg:last-child { page-break-after: auto; } .noimp { display: none !important; } }
+      .noimp { position: sticky; top: 0; z-index: 9; background: #1e293b; color: #e2e8f0;
+               padding: 10px 14px; font: 600 13px/1.5 system-ui, sans-serif; text-align: center; }
+      .noimp button { background: #4f46e5; color: #fff; border: 0; border-radius: 8px;
+               padding: 7px 18px; font: 700 13px system-ui, sans-serif; cursor: pointer; margin-left: 10px; }`;
+
+    const ANCHOS = ['22%', '16%', '7%', '11%', '11%', '11%', '22%'];
+    const TITULOS = ['Ubicación', 'SKU', 'Talla', 'Qty buffer', 'Almacenar', 'Paletizar', 'Destino'];
+    const cabeceraTabla = '<thead><tr>'
+      + TITULOS.map((t, i) => `<th style="width:${ANCHOS[i]}">${t}</th>`).join('') + '</tr></thead>';
+
+    const win = window.open('', '_blank');
+    if (!win) { showPremiumAlert('EL NAVEGADOR BLOQUEÓ LA VENTANA', 'Permití las ventanas emergentes de este sitio para poder imprimir.', 'warning'); return; }
+    win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8">
+      <title>Tareas de almacenaje · ${esc(getLogicalDate())}</title><style>${CSS}</style></head>
+      <body><div class="noimp" id="barra">Armando las páginas…</div><div id="hojas"></div></body></html>`);
+    win.document.close();
+
+    const doc = win.document;
+    const hojas = doc.getElementById('hojas');
+
+    /** Una página nueva, ya en el documento para poder medirla. */
+    const nuevaPagina = () => {
+      const pg = doc.createElement('div');
+      pg.className = 'pg';
+      const cuerpo = doc.createElement('div');
+      cuerpo.className = 'cuerpo';
+      pg.appendChild(cuerpo);
+      hojas.appendChild(pg);
+      return { pg, cuerpo };
+    };
+
+    /** El alto útil de una página, medido de verdad y no calculado a ojo. */
+    const { pg: pgMedida, cuerpo: cuerpoMedida } = nuevaPagina();
+    const ALTO_UTIL = cuerpoMedida.clientHeight;
+    pgMedida.remove();
+
+    const num = (v) => (v === null || v === undefined || v === '' ? '—' : v);
+
+    for (const grupo of tareas) {
+      const t = grupo.tarea;
+      const idCorto = String(t.id).includes('_') ? String(t.id).split('_')[1] : String(t.id);
+      const nombreTarea = /^tarea/i.test(idCorto) ? idCorto : 'Tarea ' + idCorto;
+      const trabadas = grupo.arts.filter(x => x.plan.estado === 'slotting'
+        || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona');
+      const marcaTarea = t.marca || (grupo.arts[0] && grupo.arts[0].ficha.marca) || '';
+      const primerArt = grupo.arts[0] ? grupo.arts[0].sku7 : '';
+      const subtitulo = String(t.fecha).split('-').reverse().join('/')
+        + ' · ' + primerArt + (grupo.arts.length > 1 ? ' +' : '')
+        + ' · ' + grupo.arts.length + ' artículo' + (grupo.arts.length > 1 ? 's' : '');
+
+      const diasEsperando = (() => {
+        if (!t.esperaDesde || String(t.esperaDesde) >= String(t.fecha)) return 0;
+        const a = new Date(`${t.esperaDesde}T00:00:00`), b = new Date(`${t.fecha}T00:00:00`);
+        if (isNaN(a.getTime()) || isNaN(b.getTime())) return 0;
+        return Math.round((b - a) / 86400000);
+      })();
+
+      // Las filas, antes de repartirlas. Se arman igual que en el Excel: los totales de
+      // cada artículo salen de las filas de arriba y no del cálculo por talla, porque en
+      // el papel manda lo que el operario tiene delante.
+      const items = [];
+      const totales = [];
+      grupo.arts.forEach(x => {
+        const trabada = x.plan.estado === 'slotting' || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona';
+        const fp = filasDelPapel(x, ctx);
+        fp.forEach(l => items.push({ tipo: 'det', trabada, l }));
+        const tPiso = trabada ? 0 : fp.reduce((a, l) => a + (l.alPiso || 0), 0);
+        const tReserva = fp.reduce((a, l) => a + (l.aReserva || 0), 0);
+        const tPaletas = tallasService.paletasDe(tReserva);
+        totales.push({ pares: x.pares, piso: tPiso, reserva: tReserva, paletas: tPaletas });
+        items.push({ tipo: 'tot', sku7: x.sku7, pares: x.pares, piso: tPiso, reserva: tReserva, paletas: tPaletas });
+      });
+      if (grupo.arts.length > 1) {
+        const sum = (k) => totales.reduce((a, x) => a + (x[k] || 0), 0);
+        items.push({ tipo: 'tt', pares: sum('pares'), piso: sum('piso'), reserva: sum('reserva'), paletas: sum('paletas') });
+      }
+
+      const filaHTML = (it) => {
+        if (it.tipo === 'det') {
+          const l = it.l;
+          return `<tr>
+            <td>${esc(l.ubi)}</td><td>${esc(l.skuFull)}</td><td class="b">${esc(l.talla)}</td>
+            <td>${esc(num(l.qty))}</td>
+            <td class="g">${esc(it.trabada ? '—' : num(l.alPiso))}</td>
+            <td>${esc(num(l.aReserva))}</td>
+            <td class="g">${esc(it.trabada ? 'Revisar Slotting' : num(l.destino))}</td></tr>`;
+        }
+        const pal = it.paletas ? it.paletas + ' paleta' + (it.paletas > 1 ? 's' : '') : '—';
+        if (it.tipo === 'tot') {
+          return `<tr class="tot"><td colspan="3">Total ${esc(it.sku7)}</td><td>${esc(it.pares)}</td>
+                  <td>${esc(it.piso)}</td><td>${esc(it.reserva)}</td><td>${esc(pal)}</td></tr>`;
+        }
+        return `<tr class="tt"><td colspan="3">TOTAL DE LA TAREA</td><td>${esc(it.pares)}</td>
+                <td>${esc(it.piso)}</td><td>${esc(it.reserva)}</td><td>${esc(pal)}</td></tr>`;
+      };
+
+      /** La parte de arriba de una página. La primera lleva los avisos y las firmas. */
+      const encabezado = (primera) => {
+        let h = `<div class="t1${primera ? '' : ' cont'}">${esc(nombreTarea)}${marcaTarea ? ' · ' + esc(marcaTarea) : ''}${primera ? '' : ' (cont.)'}</div>`
+              + `<div class="t2">${esc(subtitulo)}<span class="pagX"></span></div>`;
+        if (primera) {
+          if (trabadas.length) {
+            h += `<div class="cartel"><b>${trabadas.length === grupo.arts.length
+              ? 'SIN UBICACIÓN · NO ALMACENAR'
+              : 'SIN UBICACIÓN EN ' + trabadas.length + ' DE ' + grupo.arts.length + ' ARTÍCULOS · VER ABAJO'}</b>
+              <span>${esc(trabadas[0].plan.motivo || 'Avisar a Slotting antes de mover nada.')}</span></div>`;
+          }
+          if (diasEsperando > 0) {
+            h += `<div class="cartel"><b>ESPERANDO HACE ${diasEsperando} DÍA${diasEsperando > 1 ? 'S' : ''}</b>
+              <span>En el buffer desde el ${esc(String(t.esperaDesde).split('-').reverse().join('/'))}. La tarea anterior caducó sin trabajarse.</span></div>`;
+          }
+          h += `<table class="firmas"><tr>
+                  <td class="rot" style="width:14%">Nombres</td><td style="width:34%"></td>
+                  <td class="rot" style="width:14%">Hora inicio</td><td style="width:14%"></td>
+                  <td class="rot" style="width:10%">Término</td><td></td></tr></table>`;
+        }
+        return h;
+      };
+
+      // ── A REPARTIR ───────────────────────────────────────────────────────────────
+      // Se agrega fila por fila y se mide: cuando la página ya no da, se saca la última,
+      // se cierra y se abre otra. Así el corte es exacto y no depende del navegador.
+      const paginasTarea = [];
+      let pagina = null, tbody = null;
+      const abrirPagina = (primera) => {
+        const { pg, cuerpo } = nuevaPagina();
+        cuerpo.innerHTML = encabezado(primera) + `<table class="det">${cabeceraTabla}<tbody></tbody></table>`;
+        // '.det tbody' y no 'tbody' a secas: la tabla de firmas de la primera página no
+        // lleva tbody escrito, pero el navegador se lo agrega, y buscando el primero las
+        // filas de detalle terminaban adentro de las firmas.
+        tbody = cuerpo.querySelector('.det tbody');
+        pagina = { pg, cuerpo };
+        paginasTarea.push(pagina);
+      };
+      abrirPagina(true);
+      for (const it of items) {
+        tbody.insertAdjacentHTML('beforeend', filaHTML(it));
+        if (pagina.cuerpo.scrollHeight > ALTO_UTIL) {
+          tbody.lastElementChild.remove();       // no entraba: se la lleva la página siguiente
+          abrirPagina(false);
+          tbody.insertAdjacentHTML('beforeend', filaHTML(it));
+        }
+      }
+
+      // El "página 1 de 2" recién se puede escribir cuando se sabe cuántas son
+      if (paginasTarea.length > 1) {
+        paginasTarea.forEach((p, i) => {
+          const s = p.cuerpo.querySelector('.pagX');
+          if (s) s.textContent = ` · página ${i + 1} de ${paginasTarea.length}`;
+        });
+      }
+
+      // ── LA PÁGINA DE CIERRE ──────────────────────────────────────────────────────
+      // Solo si la tarea ocupó un número impar de páginas. Sin ella, con la impresora en
+      // doble cara la tarea siguiente saldría al dorso de ésta.
+      if (paginasTarea.length % 2 === 1) {
+        const { cuerpo } = nuevaPagina();
+        cuerpo.innerHTML = `<div class="cierre">Fin de la ${esc(nombreTarea)}</div>`;
+      }
+    }
+
+    const totalPaginas = hojas.querySelectorAll('.pg').length;
+    const barra = doc.getElementById('barra');
+    barra.innerHTML = `${tareas.length} tarea${tareas.length > 1 ? 's' : ''} · ${totalPaginas} página${totalPaginas > 1 ? 's' : ''}`
+      + ` · ${totalPaginas / 2} hoja${totalPaginas / 2 > 1 ? 's' : ''} de papel a doble cara`
+      + `<button onclick="window.print()">🖨️ Imprimir</button>`;
+
+    win.focus();
+  };
+
+  // Queda a mano para revisar el papel sin generar tareas de verdad: se le pasan las
+  // filas y el contexto y se mira cómo quedaron repartidas las páginas. Compilar no dice
+  // nada del compaginado, y de eso se trata todo esto.
+  window.__imprimirTareasWeb = imprimirTareasWeb;
 
   const renderSugerenciaAlmacenaje = async (container) => {
     if (!container) return;
@@ -21687,7 +21941,7 @@ window.showCellModal = function(htmlContent) {
    * La sugerencia se calcula acá, al exportar, porque el generador de las 19:00 todavía
    * no la graba en la tarea. El día que la grabe, esto pasa a leerla en vez de calcularla.
    */
-  const exportAlmacenajeExcel = async () => {
+  const exportAlmacenajeExcel = async (destino = 'excel') => {
     if (!almacenajeTasksCache.length) {
       showPremiumAlert('SIN TAREAS', 'No hay tareas en el historial para exportar.', 'info');
       return;
@@ -21746,10 +22000,15 @@ window.showCellModal = function(htmlContent) {
         if (s) filas.push({ ...s, s7: s.sku7, tareaId: t.id, tarea: t, art, f: s.ficha });
       }));
 
+      // MISMO PAPEL, DOS SALIDAS. Todo lo de arriba —el cálculo, que es lo que tarda—
+      // es idéntico: lo único que cambia es si termina en un archivo o en la ventana de
+      // impresión. Ver imprimirTareasWeb para por qué existe la segunda.
+      //
       // El botón va en null a propósito: quien lo puso en ⌛ es el handler de
       // window.exportAlmacenajeExcel, y así se queda esperando también durante el
-      // cálculo de arriba, que es la parte que de verdad tarda.
-      await exportarSugerenciaExcel(filas, ctx, null);
+      // cálculo de arriba.
+      if (destino === 'imprimir') await imprimirTareasWeb(filas, ctx);
+      else await exportarSugerenciaExcel(filas, ctx, null);
 
       updateSyncIndicator('online', 'PAPEL GENERADO ✅');
       setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
@@ -24933,7 +25192,8 @@ window.showCellModal = function(htmlContent) {
                 <!-- BOTONES DE ACCIÓN PRINCIPALES -->
                 <div style="display:flex; gap:10px; align-items:center;">
                     ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
-                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel(this)" class="btn" title="Descargar en Excel las tareas del rango" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:var(--primary); color:#fff; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥</button>` : ''}
+                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel(this)" class="btn" title="Descargar en Excel las tareas del rango" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:var(--primary); color:#fff; border:none; box-shadow:0 4px 12px rgba(79,70,229,0.3);">📥</button>
+                    <button onclick="window.imprimirTareasAlmacenaje(this)" class="btn" title="Imprimir las tareas del rango · una tarea por hoja, lista para doble cara" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:#0f766e; color:#fff; border:none; box-shadow:0 4px 12px rgba(15,118,110,0.3);">🖨️</button>` : ''}
                     ${!isDetail ? `<button onclick="window.openAuditModal()" class="btn" title="Auditar WMS: cruza lo que dice la tarea contra lo que dice el WMS" style="width:auto; padding:6px 12px; font-size:0.7rem; background:#06b6d4; color:#fff; font-weight:800; border:none; box-shadow:0 4px 12px rgba(6,182,212,0.3); margin-left:5px;">🎯 WMS</button>` : ''}
                 </div>
 
@@ -26203,6 +26463,7 @@ window.showCellModal = function(htmlContent) {
     // Recibe el botón para que muestre que está trabajando: armar el Excel con muchas tareas tarda
     // El botón es solo el icono: el rótulo de espera va sin texto para que no se estire
     window.exportAlmacenajeExcel = (btn) => withLoading(btn, '⌛', () => exportAlmacenajeExcel());
+    window.imprimirTareasAlmacenaje = (btn) => withLoading(btn, '⌛', () => exportAlmacenajeExcel('imprimir'));
 
     // --- LÓGICA DE AUDITORÍA WMS ---
     // ========================================================================
