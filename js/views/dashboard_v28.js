@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0095';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0096';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0095';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0095';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0095';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0095';
-import * as metasService from '../services_v245/metasService.js?v=29.0095';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0095';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0095';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0095';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0095';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0095';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0095';
+import * as adminService from '../services_v245/adminService.js?v=29.0096';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0096';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0096';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0096';
+import * as metasService from '../services_v245/metasService.js?v=29.0096';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0096';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0096';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0096';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0096';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0096';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0096';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0095';
+const VERSION = '29.0096';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0095');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0096');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0095 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0096 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15616,7 +15616,20 @@ const renderRFSection = (container) => {
     const propias = sug.tareaId ? ctx.lineasBufferDe.get(claveTareaArt(sug.tareaId, sug.sku7)) : null;
     const lineas = (propias || ctx.lineasBufferDe.get(sug.sku7) || [])
       .slice()
-      .sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0) || a.ubi.localeCompare(b.ubi));
+      // LO QUE BAJA AL PISO SE CONCENTRA EN LA MENOR CANTIDAD DE UBICACIONES.
+      //
+      // Dentro de una talla las líneas van de MENOR a MAYOR cantidad, y el reparto llena de a
+      // una: así la más chica que alcance se lleva todo lo que va al piso y las grandes quedan
+      // enteras para paletizar. Lo pidió Daniel el 06-ago con este caso de la Tarea51:
+      //
+      //     antes   B-00-087 (240) -> 10 al piso     B-00-088 (198) -> 8 al piso
+      //     ahora   B-00-088 (198) -> 18 al piso     B-00-087 (240) -> entera a reserva
+      //
+      // Los mismos 18 pares, pero el operario va a UNA ubicación en vez de dos y la paleta de
+      // 240 sale sin que nadie la abra. Ordenar por ubicación repartía a ciegas.
+      .sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0)
+                   || ((Number(a.qty) || 0) - (Number(b.qty) || 0))
+                   || String(a.ubi).localeCompare(String(b.ubi)));
     if (!lineas.length) return [];
 
     // LO GRABADO MANDA, Y NO SE DISCUTE.
@@ -15678,7 +15691,12 @@ const renderRFSection = (container) => {
           ? (sug.plan.destinoTexto || sug.plan.zona)
           : (sug.destinos[l.talla] || '')
       };
-    });
+    })
+    // EL CÁLCULO VA POR CANTIDAD, EL PAPEL POR UBICACIÓN. El reparto necesita empezar por la
+    // línea más chica —así se concentra en una sola—, pero el operario recorre el buffer en
+    // orden, así que la hoja se reordena antes de imprimirse.
+    .sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0)
+                 || String(a.ubi).localeCompare(String(b.ubi)));
   };
 
   /**
