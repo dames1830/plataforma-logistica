@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0108';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0109';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0108';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0108';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0108';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0108';
-import * as metasService from '../services_v245/metasService.js?v=29.0108';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0108';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0108';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0108';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0108';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0108';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0108';
+import * as adminService from '../services_v245/adminService.js?v=29.0109';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0109';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0109';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0109';
+import * as metasService from '../services_v245/metasService.js?v=29.0109';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0109';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0109';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0109';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0109';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0109';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0109';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0108';
+const VERSION = '29.0109';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0108');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0109');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0108 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0109 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16662,21 +16662,30 @@ const renderRFSection = (container) => {
       // Las filas, antes de repartirlas. Se arman igual que en el Excel: los totales de
       // cada artículo salen de las filas de arriba y no del cálculo por talla, porque en
       // el papel manda lo que el operario tiene delante.
-      const items = [];
+      // UN ARTÍCULO ES UN BLOQUE Y NO SE PARTE. Sus filas y su total viajan juntos: si no
+      // entran en lo que queda de la página, se van enteros a la siguiente. Repartiendo
+      // fila por fila pasaba lo que vio Daniel el 06-ago — el 5811680 arrancaba al pie de
+      // la página 2 y su "Total 5811680" quedaba arriba de la 3, así que para saber cuánto
+      // era ese artículo había que dar vuelta la hoja.
+      const bloques = [];
       const totales = [];
       grupo.arts.forEach(x => {
         const trabada = x.plan.estado === 'slotting' || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona';
         const fp = filasDelPapel(x, ctx);
-        fp.forEach(l => items.push({ tipo: 'det', trabada, l }));
+        const items = fp.map(l => ({ tipo: 'det', trabada, l }));
         const tPiso = trabada ? 0 : fp.reduce((a, l) => a + (l.alPiso || 0), 0);
         const tReserva = fp.reduce((a, l) => a + (l.aReserva || 0), 0);
         const tPaletas = tallasService.paletasDe(tReserva);
         totales.push({ pares: x.pares, piso: tPiso, reserva: tReserva, paletas: tPaletas });
         items.push({ tipo: 'tot', sku7: x.sku7, pares: x.pares, piso: tPiso, reserva: tReserva, paletas: tPaletas });
+        bloques.push(items);
       });
-      if (grupo.arts.length > 1) {
+      // El TOTAL DE LA TAREA se pega al último artículo, para que no quede solo arriba de
+      // una página como si fuera el título de algo.
+      if (grupo.arts.length > 1 && bloques.length) {
         const sum = (k) => totales.reduce((a, x) => a + (x[k] || 0), 0);
-        items.push({ tipo: 'tt', pares: sum('pares'), piso: sum('piso'), reserva: sum('reserva'), paletas: sum('paletas') });
+        bloques[bloques.length - 1].push({ tipo: 'tt', pares: sum('pares'), piso: sum('piso'),
+                                           reserva: sum('reserva'), paletas: sum('paletas') });
       }
 
       const filaHTML = (it) => {
@@ -16722,8 +16731,8 @@ const renderRFSection = (container) => {
       };
 
       // ── A REPARTIR ───────────────────────────────────────────────────────────────
-      // Se agrega fila por fila y se mide: cuando la página ya no da, se saca la última,
-      // se cierra y se abre otra. Así el corte es exacto y no depende del navegador.
+      // Se prueba a meter el artículo ENTERO y se mide: si no entra, se saca y se lleva
+      // completo a la página siguiente. Un artículo nunca queda partido entre dos hojas.
       const paginasTarea = [];
       let pagina = null, tbody = null;
       const abrirPagina = (primera) => {
@@ -16736,13 +16745,35 @@ const renderRFSection = (container) => {
         pagina = { pg, cuerpo };
         paginasTarea.push(pagina);
       };
+      const entra = () => pagina.cuerpo.scrollHeight <= ALTO_UTIL;
+      const meter = (items) => items.forEach(it => tbody.insertAdjacentHTML('beforeend', filaHTML(it)));
+      const sacarDesde = (n) => { while (tbody.children.length > n) tbody.lastElementChild.remove(); };
+
       abrirPagina(true);
-      for (const it of items) {
-        tbody.insertAdjacentHTML('beforeend', filaHTML(it));
-        if (pagina.cuerpo.scrollHeight > ALTO_UTIL) {
-          tbody.lastElementChild.remove();       // no entraba: se la lleva la página siguiente
+      for (const bloque of bloques) {
+        const antes = tbody.children.length;
+        meter(bloque);
+        if (entra()) continue;
+
+        sacarDesde(antes);
+        if (antes > 0) {
+          // Había otros artículos arriba: éste empieza en hoja nueva
           abrirPagina(false);
+          meter(bloque);
+          if (entra()) continue;
+          sacarDesde(0);
+        }
+
+        // NO ENTRA NI EN UNA PÁGINA VACÍA. Un artículo con muchísimas tallas no cabe
+        // entero en una hoja, y ahí no queda otra que partirlo — pero recién acá, y
+        // fila por fila, para aprovechar la hoja hasta el final.
+        for (const it of bloque) {
           tbody.insertAdjacentHTML('beforeend', filaHTML(it));
+          if (!entra()) {
+            tbody.lastElementChild.remove();
+            abrirPagina(false);
+            tbody.insertAdjacentHTML('beforeend', filaHTML(it));
+          }
         }
       }
 
