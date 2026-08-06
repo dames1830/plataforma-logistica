@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0088';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0089';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0088';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0088';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0088';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0088';
-import * as metasService from '../services_v245/metasService.js?v=29.0088';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0088';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0088';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0088';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0088';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0088';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0088';
+import * as adminService from '../services_v245/adminService.js?v=29.0089';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0089';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0089';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0089';
+import * as metasService from '../services_v245/metasService.js?v=29.0089';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0089';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0089';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0089';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0089';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0089';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0089';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0088';
+const VERSION = '29.0089';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1309,6 +1309,67 @@ const saveAlmacenajeTasks = async (partialTask = null) => {
  *
  * @param transformar recibe las tareas del servidor y devuelve cómo tienen que quedar.
  */
+/**
+ * UNA TAREA CREADA VIVE 48 HORAS.
+ *
+ * Hasta acá una tarea que nadie trabajaba se quedaba abierta para siempre, y como el descuento
+ * de lo comprometido solo miraba las tareas del MISMO día, cada noche nacía una tarea nueva por
+ * el mismo stock. Medido el 06-ago-2026: de 502 artículos con tarea abierta, 180 la tenían en
+ * más de un día, y eso sumaba 470.600 unidades fantasma. La más vieja era del 25 de mayo.
+ *
+ * Ese número inflado es el que hacía que el reporte de buffer marcara 57% cuando el trabajo
+ * real había sido 81%.
+ *
+ * Regla de Daniel, 06-ago-2026: "no tiene que haber ninguna creada; se puede vencer la tarea
+ * después de cuarenta y ocho horas". El sistema la caduca solo, sin que nadie tenga que
+ * acordarse.
+ */
+const HORAS_VENCIMIENTO = 48;
+
+/**
+ * Cuántas horas lleva la tarea. Se mide desde que se procesó; si esa marca falta —las tareas
+ * viejas no siempre la traen— se cae a su fecha operativa a las 19:00, que es cuando corre la
+ * ola. Sin eso, una tarea sin `fechaProcesado` no vencería nunca.
+ */
+const horasDeTarea = (t) => {
+    const ts = t && t.fechaProcesado ? new Date(t.fechaProcesado).getTime() : NaN;
+    if (!isNaN(ts)) return (Date.now() - ts) / 3600000;
+    const d = t && t.fecha ? new Date(`${t.fecha}T19:00:00`) : null;
+    return (d && !isNaN(d.getTime())) ? (Date.now() - d.getTime()) / 3600000 : Infinity;
+};
+
+/**
+ * Si su mercadería sigue comprometida. Las Asignadas cuentan siempre: alguien las empezó y su
+ * hoja está en la calle, así que ese stock no se puede volver a repartir.
+ */
+const esTareaViva = (t) => {
+    if (!t || t.status === 'Finalizado' || t.status === 'Vencida') return false;
+    if (t.status !== 'Creada') return true;
+    return horasDeTarea(t) < HORAS_VENCIMIENTO;
+};
+
+/** Pasa a Vencida toda Creada que cruzó las 48 horas. Devuelve cuántas cambiaron. */
+const vencerTareasViejas = (tareas) => {
+    let n = 0;
+    (tareas || []).forEach(t => {
+        if (t && t.status === 'Creada' && horasDeTarea(t) >= HORAS_VENCIMIENTO) {
+            t.status = 'Vencida';
+            // Queda el sello de cuándo se venció: sirve para saber que caducó sola y no que
+            // alguien la cerró a mano.
+            t.vencidaEl = selloLocalTarea();
+            n++;
+        }
+    });
+    return n;
+};
+
+/** La hora de acá, no la de Greenwich. Mismo criterio que la ficha del Maestro (v29.0080). */
+const selloLocalTarea = () => {
+    const d = new Date(), dd = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${dd(d.getMonth() + 1)}-${dd(d.getDate())} `
+         + `${dd(d.getHours())}:${dd(d.getMinutes())}:${dd(d.getSeconds())}`;
+};
+
 const guardarBloqueFusionado = async (transformar) => {
     let base = almacenajeTasksCache;
     try {
@@ -3422,7 +3483,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0088');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0089');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13736,7 +13797,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0088 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0089 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -21102,9 +21163,19 @@ window.showCellModal = function(htmlContent) {
         // vuelve a traer lo que ya tiene tarea abierta y todavía nadie movió. Sin descontarlo se
         // generaría otra tarea por el mismo stock y el buffer quedaría contado dos veces. Lo
         // finalizado no se descuenta: ese stock ya salió del buffer y no vuelve en la foto.
+        // PRIMERO SE VENCEN LAS VIEJAS, DESPUÉS SE CUENTA.
+        //
+        // Tiene que ir en este orden: si una Creada de hace tres días siguiera contando como
+        // comprometida, su stock quedaría bloqueado y no entraría en la ola de esta noche.
+        const cuantasVencieron = vencerTareasViejas(almacenajeTasksCache);
+        if (cuantasVencieron > 0) {
+            await guardarBloqueFusionado(base => { vencerTareasViejas(base); return base; });
+            console.log(`[Almacenaje] ${cuantasVencieron} tareas pasaron a Vencida por las ${HORAS_VENCIMIENTO}h`);
+        }
+
         const yaComprometido = {};
         almacenajeTasksCache.forEach(t => {
-            if (!t || t.fecha !== logicalDate || t.status === 'Finalizado') return;
+            if (!t || !esTareaViva(t)) return;
             (t.items || []).forEach(art => {
                 if (!art || !art.sku7) return;
                 yaComprometido[art.sku7] = (yaComprometido[art.sku7] || 0) + (parseFloat(art.bufferQty) || 0);
