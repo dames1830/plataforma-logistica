@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0103';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0104';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0103';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0103';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0103';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0103';
-import * as metasService from '../services_v245/metasService.js?v=29.0103';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0103';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0103';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0103';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0103';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0103';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0103';
+import * as adminService from '../services_v245/adminService.js?v=29.0104';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0104';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0104';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0104';
+import * as metasService from '../services_v245/metasService.js?v=29.0104';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0104';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0104';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0104';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0104';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0104';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0104';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0103';
+const VERSION = '29.0104';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0103');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0104');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0103 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0104 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22284,7 +22284,7 @@ window.showCellModal = function(htmlContent) {
     tipo: 'grupo', banda: true,
     titulo: 'EVOLUCIÓN DEL ARTÍCULO (CÓDIGO NUEVO)',
     bajada: '',
-    sello: kpiQueGrupo(P, R, filtro),
+    sello: '',
     llegada: R.tipica, rotuloLlegada: 'Llegada típica',
     subLlegada: 'pares · la mitad recibe más y la mitad menos',
     llegadaFranja: 'UN ARTÍCULO TÍPICO · LE LLEGAN',
@@ -22298,21 +22298,8 @@ window.showCellModal = function(htmlContent) {
     puntos: R.curva.map(c => ({ s: c.s, queda: c.queda }))
   });
 
-  /** La frase que dice sobre qué grupo está el gráfico, con los filtros aplicados. */
-  const kpiQueGrupo = (P, R, filtro) => {
-    const f = filtro || {};
-    const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
-    const partes = [`${R.grupoFijo} de ${R.articulos} códigos`];
-    partes.push(f.marca ? `de ${f.marca}` : 'de marca propia');
-    if (f.mes) partes.push(`llegados en ${MES[parseInt(f.mes.slice(5, 7), 10) - 1]}-${f.mes.slice(0, 4)}`);
-    if (f.minimo) partes.push(`mayores a ${kpiN(f.minimo)} pares`);
-    partes.push(R.semanasFijas === 1 ? 'con 1 semana cumplida'
-                                     : `con ${R.semanasFijas} semanas cumplidas`);
-    return partes.join(' · ');
-  };
-
   /** Lo mismo para un artículo concreto: acá los pares son medidos, no calculados. */
-  const kpiDeArticulo = (P, a, rotulo, cierre) => ({
+  const kpiDeArticulo = (P, a, rotulo) => ({
     tipo: 'articulo', banda: false,
     titulo: `${rotulo} · ${a.cod}`,
     // LA BASE ES TODO LO QUE ENTRÓ, no la primera llegada. Para el que llegó una sola vez
@@ -22335,7 +22322,6 @@ window.showCellModal = function(htmlContent) {
       ['Color', a.color || '—'],
       ['Llegó el', kpiFechaCorta(a.llegada)],
       ['Última foto', kpiFechaCorta(a.curva[a.curva.length - 1][3])]]],
-    cierre: cierre,
     puntos: a.curva.map(c => ({ s: c[0], queda: c[2], pares: c[1], fecha: kpiFechaCorta(c[3]) }))
   });
 
@@ -22441,15 +22427,35 @@ window.showCellModal = function(htmlContent) {
    * esa manda, sea propia o de terceros: filtrar por Puma y que no aparezca nada
    * porque Puma no es propia no tendría ninguna explicación.
    */
-  const kpiFiltrar = (P, filtro) => {
-    const base = (P.articulos || []).filter(a => !a.rep
-      && (filtro.marca ? a.marca === filtro.marca : a.propia)
-      && (!filtro.minimo || a.entro >= filtro.minimo)
-      // El mes es el de la LLEGADA del artículo, no el de la foto: "los nuevos de mayo"
-      // son los que entraron en mayo, se los siga hasta donde se los siga.
-      && (!filtro.mes || a.llegada.slice(0, 7) === filtro.mes));
-    return { propia: kpiResumen(base, kpiSemanasDe(base, P.semanasFijas || 9),
-                                P.hitos || [50, 25, 10]) };
+  const kpiFiltrar = (P, filtro) =>
+    kpiResumen(kpiAplicarFiltro(P.articulos, filtro),
+               kpiSemanasDe(kpiAplicarFiltro(P.articulos, filtro), P.semanasFijas || 9),
+               P.hitos || [50, 25, 10]);
+
+  /**
+   * El filtro, en un solo lugar. Lo usan la curva y el Pareto, que tienen que mirar
+   * exactamente el mismo conjunto: si cada uno filtrara por su cuenta, la pantalla
+   * mostraría dos grupos distintos con los mismos botones marcados.
+   *
+   * MARCAS Y MESES SON LISTAS: se pueden marcar varios. Vacío quiere decir "todos".
+   *
+   * `conReposicion` es la única diferencia entre los dos: la curva deja fuera a los que
+   * recibieron una segunda tanda —el % dejaría de ser sobre lo que entró de una vez—
+   * pero el Pareto los cuenta, porque esos pares están igual ocupando el almacén.
+   */
+  const kpiAplicarFiltro = (articulos, filtro, conReposicion) => {
+    const f = filtro || {};
+    const marcas = f.marcas || [], meses = f.meses || [];
+    return (articulos || []).filter(a =>
+         (conReposicion || !a.rep)
+      // Sin marcas marcadas se miran solo las propias: las de terceros entran y salen
+      // casi enteras y mezclarlas hace parecer que el almacén rota mejor de lo que rota.
+      // Con marcas marcadas mandan ésas, sean propias o no.
+      && (marcas.length ? marcas.indexOf(a.marca) >= 0 : a.propia)
+      && (!f.minimo || a.entro >= f.minimo)
+      // El mes es el de la LLEGADA, no el de la foto: "los nuevos de mayo" son los que
+      // nacieron en mayo, y después se los sigue hasta donde lleguen.
+      && (meses.length ? meses.indexOf(a.llegada.slice(0, 7)) >= 0 : true));
   };
 
   /**
@@ -22477,9 +22483,9 @@ window.showCellModal = function(htmlContent) {
   // Los filtros mandan sobre el gráfico de abajo. El Pareto NO se filtra: ése no
   // pregunta cómo rota un código nuevo sino qué hay hoy ocupando el almacén.
   const kpiBarraFiltros = (P, R, filtro) => {
-    const n = kpiN;
     const NARANJA = KPI_NARANJA, AMBAR = KPI_AMBAR;
     const vivos = (P.articulos || []).filter(a => !a.rep);
+    const marcasSel = filtro.marcas || [], mesesSel = filtro.meses || [];
 
     const marcas = [...new Set(vivos.map(a => a.marca))].sort();
     // Los meses salen de las llegadas que hay, no de una lista fija: con la ventana
@@ -22488,48 +22494,62 @@ window.showCellModal = function(htmlContent) {
     const TOPES = [[0, 'Todos los tamaños'], [300, 'Mayores a 300 pares'],
                    [500, 'Mayores a 500 pares'], [800, 'Mayores a 800 pares'],
                    [1000, 'Mayores a 1.000 pares']];
-    const MES_LARGO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
-                       'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre'];
-    const nombreMes = (m) => {
-      const t = MES_LARGO[parseInt(m.slice(5, 7), 10) - 1] || m;
-      return t.charAt(0).toUpperCase() + t.slice(1) + ' ' + m.slice(0, 4);
-    };
+    const MES_LARGO = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio',
+                       'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const nombreMes = (m) => `${MES_LARGO[parseInt(m.slice(5, 7), 10) - 1] || m} ${m.slice(0, 4)}`;
 
-    const combo = (campo, opciones, valor) => `
-      <select onchange="window.__kpiFiltro('${campo}', this.value)"
-              style="background:#101a2c; color:var(--text-main); border:1px solid var(--border); border-radius:8px;
-                     padding:0.32rem 0.6rem; font-size:0.75rem; font-weight:700; cursor:pointer;">
-        ${opciones.map(([v, t]) => `<option value="${v}"${String(valor || '') === String(v) ? ' selected' : ''}>${t}</option>`).join('')}
-      </select>`;
+    // BOTONES QUE SE MARCAN, no una lista desplegable: se pueden elegir dos marcas o
+    // dos meses a la vez, y con un desplegable múltiple habría que saber que eso se
+    // hace con Ctrl+clic. Acá queda marcado lo que está marcado.
+    const chip = (campo, valor, texto, activo) => `
+      <button onclick="window.__kpiFiltro('${campo}', '${valor}')"
+              style="padding:0.26rem 0.62rem; border-radius:999px; cursor:pointer; font-size:0.72rem;
+                     font-weight:${activo ? '800' : '600'}; white-space:nowrap;
+                     background:${activo ? 'rgba(79,70,229,0.28)' : 'rgba(255,255,255,0.04)'};
+                     color:${activo ? '#fff' : 'var(--text-muted)'};
+                     border:1px solid ${activo ? 'rgba(129,140,248,0.85)' : 'var(--border)'};">${texto}</button>`;
 
-    const hayFiltro = filtro.marca || filtro.minimo || filtro.mes;
+    const linea = (rotulo, campo, todos, lista, seleccionadas) => `
+      <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+        <span style="min-width:52px; font-size:0.57rem; font-weight:800; letter-spacing:1.1px;
+                     text-transform:uppercase; color:var(--text-muted);">${rotulo}</span>
+        ${chip(campo, '', todos, !seleccionadas.length)}
+        ${lista.map(([v, t]) => chip(campo, v, t, seleccionadas.indexOf(v) >= 0)).join('')}
+      </div>`;
+
+    const hayFiltro = marcasSel.length || mesesSel.length || filtro.minimo;
+    const aviso = !R ? 'Con estos filtros no queda ningún artículo.'
+      : !R.grupoFijo ? `Quedan ${R.articulos} artículos, pero ninguno cumplió todavía las `
+                       + `${R.semanasFijas} semanas: sin eso no hay curva que dibujar.`
+      : R.grupoFijo < 15 ? `Quedan ${R.grupoFijo} artículos con `
+                           + `${R.semanasFijas === 1 ? '1 semana cumplida' : R.semanasFijas + ' semanas cumplidas'}: `
+                           + 'la mediana de tan pocos se mueve mucho.'
+      : R.semanasFijas < (P.semanasFijas || 9) ? `Estos artículos llegaron hace poco: la curva llega `
+                           + `hasta la semana ${R.semanasFijas} y no hasta la ${P.semanasFijas}.`
+      : '';
+
     return `
-    <div class="glass-panel" style="padding:0.85rem 1rem;">
-      <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
-        <span style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted);">Filtros</span>
-        ${combo('marca', [['', 'Todas las marcas'], ...marcas.map(m => [m, m])], filtro.marca)}
-        ${combo('minimo', TOPES, filtro.minimo || 0)}
-        ${combo('mes', [['', 'Todos los meses'], ...meses.map(m => [m, nombreMes(m)])], filtro.mes)}
+    <div class="glass-panel" style="padding:0.85rem 1rem; display:flex; flex-direction:column; gap:0.5rem;">
+      ${linea('Mes', 'mes', 'Todos', meses.map(m => [m, nombreMes(m)]), mesesSel)}
+      ${linea('Marca', 'marca', 'Todas', marcas.map(m => [m, m]), marcasSel)}
+      <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+        <span style="min-width:52px; font-size:0.57rem; font-weight:800; letter-spacing:1.1px;
+                     text-transform:uppercase; color:var(--text-muted);">Tamaño</span>
+        <select onchange="window.__kpiFiltro('minimo', this.value)"
+                style="background:#101a2c; color:var(--text-main); border:1px solid var(--border);
+                       border-radius:8px; padding:0.28rem 0.6rem; font-size:0.72rem; font-weight:700; cursor:pointer;">
+          ${TOPES.map(([v, t]) => `<option value="${v}"${Number(filtro.minimo || 0) === v ? ' selected' : ''}>${t}</option>`).join('')}
+        </select>
         ${hayFiltro ? `
-          <button onclick="window.__kpiFiltro('limpiar')" class="btn"
-                  style="width:auto; padding:0.3rem 0.7rem; font-size:0.68rem; background:rgba(217,89,38,0.12);
-                         color:${NARANJA}; border:1px solid ${NARANJA}73; cursor:pointer;">✕ Quitar filtros</button>` : ''}
+          <button onclick="window.__kpiFiltro('limpiar')"
+                  style="padding:0.28rem 0.7rem; border-radius:8px; font-size:0.68rem; font-weight:700; cursor:pointer;
+                         background:rgba(217,89,38,0.12); color:${NARANJA}; border:1px solid ${NARANJA}73;">✕ Quitar filtros</button>` : ''}
         <span style="margin-left:auto; font-size:0.62rem; font-weight:700; letter-spacing:0.6px;
                      text-transform:uppercase; color:var(--text-muted); white-space:nowrap;">
           ${P.fotos} fotos · al ${kpiFechaLarga(P.hasta)}
         </span>
       </div>
-      ${!R ? `<div style="margin-top:0.6rem; font-size:0.72rem; color:${AMBAR};">
-                ⚠ Con estos filtros no queda ningún artículo.</div>`
-           : !R.grupoFijo ? `<div style="margin-top:0.6rem; font-size:0.72rem; color:${AMBAR};">
-                ⚠ Quedan ${R.articulos} artículos, pero ninguno cumplió todavía las ${R.semanasFijas} semanas:
-                sin eso no hay curva que dibujar.</div>`
-           : (R.grupoFijo < 15 || R.semanasFijas < (P.semanasFijas || 9)) ? `
-              <div style="margin-top:0.6rem; font-size:0.72rem; color:${AMBAR};">
-                ⚠ ${R.grupoFijo < 15
-                     ? `Quedan ${R.grupoFijo} artículos con ${R.semanasFijas === 1 ? '1 semana cumplida' : R.semanasFijas + ' semanas cumplidas'}: la mediana de tan pocos se mueve mucho.`
-                     : `Estos artículos llegaron hace poco: la curva llega hasta la semana ${R.semanasFijas} y no hasta la ${P.semanasFijas}.`}
-              </div>` : ''}
+      ${aviso ? `<div style="font-size:0.72rem; color:${AMBAR};">⚠ ${aviso}</div>` : ''}
     </div>`;
   };
   // ── EL MOLDE ──────────────────────────────────────────────────────────────────────
@@ -22683,27 +22703,6 @@ window.showCellModal = function(htmlContent) {
         </div>
       </div>`;
 
-    // EL CIERRE DEL CASO SE ESCRIBE CON LO QUE HIZO ESE ARTÍCULO, no con un texto fijo.
-    // Antes decía "estuvo dos semanas parado y en la 5 y la 6 se fueron otros 408": era
-    // verdad del 8816380, el caso que estaba escrito a mano. Ahora el caso lo elige el
-    // robot cada noche, y ese mismo texto sobre otro artículo sería mentira.
-    const mov = P.filter(p => p.s > 0);
-    const pico = mov.reduce((a, p) => p.picado > a.picado ? p : a, mov[0] || P[0]);
-    const paradas = mov.filter(p => !p.ingreso && p.picado <= D.llegada * 0.02).length;
-    const quietas = `Un artículo de verdad no se pica parejo como la mediana: `
-      + `<b style="color:rgba(255,255,255,0.7);">se mueve a los saltos</b>. Este se llevó `
-      + `${n(E(1).picado)} pares la primera semana`
-      + (pico && pico.s !== 1 && pico.picado > 0
-          ? `, y su mejor semana fue la ${pico.s}, con ${n(pico.picado)}`
-          : '')
-      + (hayIngreso ? '. En el medio recibió otra tanda' : '')
-      + (paradas
-          ? `. Estuvo ${paradas === 1 ? 'una semana' : `${paradas} semanas`} casi sin moverse`
-          : '')
-      + `. Hoy le quedan <b style="color:rgba(255,255,255,0.7);">${n(ULT.pares)} pares</b>, `
-      + `el ${d1(ULT.queda)}% de lo que llegó`
-      + `. Un caso sirve para ver qué hay detrás del promedio, no para sacar la regla.`;
-
     const hayFecha = P[0].fecha !== undefined;
     const filas = P.map(p=>`
       <tr style="border-top:1px solid rgba(255,255,255,0.05);">
@@ -22778,11 +22777,6 @@ window.showCellModal = function(htmlContent) {
         </div>
       </div>
 
-      <div style="margin-top:1rem; padding:0.8rem 1rem; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2); border-radius:11px; font-size:0.72rem; color:var(--text-muted); line-height:1.7;">
-        <b style="color:#93c5fd;">Para qué sirve.</b> ${D.cierre ? D.cierre : D.tipo==='grupo'
-          ? `De acá sale cuánto conviene dejar al alcance cuando llega un código nuevo: las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">${n(E(1).picado+E(2).picado)} pares</b> de los ${n(D.llegada)} que llegan. Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento. A las ${kpiSem(MAXS)} semanas todavía quedan <b style="color:rgba(255,255,255,0.7);">${n(ULT.pares)} pares</b> sin picar.`
-          : quietas}
-      </div>
     </div>`;
   };
 
@@ -22796,11 +22790,13 @@ window.showCellModal = function(htmlContent) {
   // ACÁ ENTRAN TODOS, propia y terceros, y también los que llegaron hace dos semanas: la
   // pregunta de este bloque no es cómo rota un código nuevo sino QUÉ HAY HOY OCUPANDO EL
   // ALMACÉN, y para eso el stock de un recién llegado cuenta igual que el de uno viejo.
-  const kpiPareto = (P) => {
+  const kpiPareto = (P, filtro) => {
     const n = kpiN, d1 = kpiD1;
     const NARANJA = KPI_NARANJA, AMBAR = KPI_AMBAR;
     const FECHA = kpiFechaLarga(P.hasta);
-    const A = (P.articulos || [])
+    // Los mismos filtros que la curva. Los que recibieron una segunda tanda SÍ entran
+    // acá: esos pares están ocupando el almacén igual que los demás.
+    const A = kpiAplicarFiltro(P.articulos, filtro, true)
       .filter(a => a.hoy > 0)
       // 'Llegó' es TODO LO QUE ENTRÓ, no la primera tanda: midiendo contra la primera,
       // un artículo que recibió otra salía con "270,9% de lo que llegó" en la fila, que
@@ -22931,11 +22927,6 @@ window.showCellModal = function(htmlContent) {
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1.2rem; flex-wrap:wrap;">
         <div>
           <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">PARETO ABC · LO QUE FALTA PICAR, AL ${FECHA.toUpperCase()}</h3>
-          <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:74ch;">
-            Los <b>${A.length} artículos</b> nuevos que todavía tienen stock, ordenados por los pares que <b>les quedan hoy</b> en el almacén
-            y partidos en tres clases: <b style="color:${CLS[0].col};">A</b> son los que hacen el primer 80% de lo que falta,
-            <b style="color:${CLS[1].col};">B</b> los que van del 80% al 95%, y <b style="color:rgba(57,135,229,0.9);">C</b> el 5% final.
-          </p>
         </div>
         <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted); text-align:right;">
           Foto del ${FECHA}<br><span style="font-weight:500; text-transform:none; letter-spacing:0;">todo el cuadro es de esta fecha</span>
@@ -22943,7 +22934,7 @@ window.showCellModal = function(htmlContent) {
       </div>
 
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:0.7rem; margin:1.1rem 0 0.7rem;">
-        ${tarjeta('Artículos', String(A.length), `de los ${P.total.articulos} nuevos, los que tienen stock`)}
+        ${tarjeta('Artículos', String(A.length), 'nuevos, con stock hoy')}
         ${tarjeta('Llegaron', n(TL), 'pares en total')}
         ${tarjeta('Falta picar hoy', n(TQ), `pares · ${d1(TQ/TL*100)}% de lo que llegó`)}
         ${tarjeta('Ya se picó', n(TL-TQ), `pares · ${d1((TL-TQ)/TL*100)}% de lo que entró`)}
@@ -23054,7 +23045,7 @@ window.showCellModal = function(htmlContent) {
 
   // Lo que el usuario eligió en la barra de filtros. Vive fuera del render para que
   // sobreviva a redibujar: si no, al filtrar volvería solo a "todas las marcas".
-  let kpiFiltro = { marca: '', minimo: 0, mes: '' };
+  let kpiFiltro = { marcas: [], meses: [], minimo: 0 };
 
   /**
    * EVOLUCIÓN DEL ARTÍCULO. Lee el estudio que dejó el robot y lo dibuja.
@@ -23091,21 +23082,28 @@ window.showCellModal = function(htmlContent) {
       return;
     }
 
-    const { propia } = kpiFiltrar(P, kpiFiltro);
+    const R = kpiFiltrar(P, kpiFiltro);
     container.innerHTML = kpiEnvoltura(`
-      ${kpiBarraFiltros(P, propia, kpiFiltro)}
-      ${propia && propia.grupoFijo ? kpiBloque(kpiDeGrupo(P, propia, kpiFiltro)) : ''}
-      ${kpiPareto(P)}
+      ${kpiBarraFiltros(P, R, kpiFiltro)}
+      ${R && R.grupoFijo ? kpiBloque(kpiDeGrupo(P, R, kpiFiltro)) : ''}
+      ${kpiPareto(P, kpiFiltro)}
     `);
   };
 
   /** Cambia un filtro y redibuja. El Pareto no depende de esto, pero se rehace igual:
       partirlo en dos redibujados por ahorrar unos milisegundos no vale el enredo. */
   window.__kpiFiltro = (que, valor) => {
-    if (que === 'limpiar') kpiFiltro = { marca: '', minimo: 0, mes: '' };
-    else if (que === 'marca') kpiFiltro.marca = valor || '';
-    else if (que === 'mes') kpiFiltro.mes = valor || '';
+    if (que === 'limpiar') kpiFiltro = { marcas: [], meses: [], minimo: 0 };
     else if (que === 'minimo') kpiFiltro.minimo = Number(valor) || 0;
+    else if (que === 'marca' || que === 'mes') {
+      // Marcar y desmarcar con el mismo botón: sin valor, se limpia toda la lista.
+      const k = que === 'marca' ? 'marcas' : 'meses';
+      if (!valor) kpiFiltro[k] = [];
+      else {
+        const i = kpiFiltro[k].indexOf(valor);
+        if (i >= 0) kpiFiltro[k].splice(i, 1); else kpiFiltro[k].push(valor);
+      }
+    }
     const c = document.querySelector('[data-vista="kpi-picking"]');
     if (c) renderKpiPicking(c);
   };
