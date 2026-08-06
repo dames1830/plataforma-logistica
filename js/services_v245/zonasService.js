@@ -437,6 +437,46 @@ export const columnasDeMarca = (marca) => {
 };
 
 /**
+ * MARCAS QUE COMPARTEN COLUMNAS EN ALGUNAS FRANJAS.
+ *
+ * B.G Licenses ES Bubblegummers: la misma marca, solo que la licencia trae los dibujitos
+ * licenciados y la regular no. Daniel lo dijo el 06-ago-2026 — su temporada ACTUAL se queda
+ * sola en la 24 del mezzanine 1, que es la columna de las licencias, pero SU TEMPORADA
+ * ANTERIOR Y SUS SALDOS van con los de Bubblegummers. Son lo mismo y no tiene sentido
+ * guardarlos aparte.
+ *
+ * Sin esto no había a dónde mandarlos. A B.G Licenses le toca una sola columna y es de
+ * temporada actual, así que los 864 pares de "T. Anterior" que había en el buffer ese día
+ * caían en el respaldo `todasSuyas` y terminaban en la 24, mezclados con la actual y sin que
+ * el papel dijera nada.
+ */
+const COMPARTE_COLUMNAS = {
+    'B.G LICENSES': { con: 'Bubblegummers', franjas: ['anterior', 'saldos'] }
+};
+
+/**
+ * Las columnas que le tocan a una marca EN ESA FRANJA. Casi siempre son las suyas; las de
+ * COMPARTE_COLUMNAS piden prestadas las de otra marca en las franjas que comparten.
+ */
+export const columnasDeMarcaEnFranja = (marca, franja) => {
+    const propias = columnasDeMarca(marca);
+    const clave = String(marca || '').trim().toUpperCase().replace(/\s+/g, ' ');
+    const acuerdo = COMPARTE_COLUMNAS[clave];
+    if (!acuerdo || !acuerdo.franjas.includes(franja)) return propias;
+
+    // Prestar solo dentro de la misma zona. Mandar un artículo del mezzanine 1 a una columna
+    // del 3 sería peor que dejarlo mezclado, y con la configuración de hoy no puede pasar
+    // -las dos están en MZN01-, pero acá no se da por sentado.
+    const mia = reglaDeMarca(marca), otra = reglaDeMarca(acuerdo.con);
+    if (!mia || !otra || mia.zona !== otra.zona) return propias;
+
+    const prestadas = columnasDeMarca(acuerdo.con);
+    // Si la otra marca no tiene columnas repartidas, se sigue con las propias: es preferible
+    // dejarlo mezclado a mandarlo a Slotting por una configuración incompleta.
+    return prestadas.length ? prestadas : propias;
+};
+
+/**
  * EL NOMBRE CON EL QUE LA MARCA SE MUESTRA EN EL MAPA.
  *
  * No es el del Maestro: en el mapa cada columna mide unos 46 píxeles y "Bata Industrials" no
@@ -1013,7 +1053,7 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
     // Bubblegummers y B.G Licenses, cada una con su bloque; sin este filtro la sugerencia
     // mandaba Bubblegummers a la columna 4, que es de Power. Las ojotas no filtran: llegaron
     // acá por su subcategoría, no por su marca, y la marca no manda en su zona.
-    const suyas = (porOthers || franja === SIN_FILTRO_DE_MARCA) ? [] : columnasDeMarca(art.marca);
+    const suyas = (porOthers || franja === SIN_FILTRO_DE_MARCA) ? [] : columnasDeMarcaEnFranja(art.marca, franja);
     if (suyas.length) {
         const deSuFranja = columnas.filter(c => suyas.includes(c));
         if (deSuFranja.length) {
