@@ -90,7 +90,7 @@ encima es el escolar, porque se pregunta antes.
 
 ```
 antes    MZN03-13-07, MZN03-13-08, MZN03-14-02, MZN03-14-03...
-ahora    MZN03 · Col 12-15
+ahora    MZN03-12
 ```
 
 Sus columnas son propias y nadie más entra ahí, así que nombrar el cuerpo no le ahorra un
@@ -98,11 +98,16 @@ paso al operario: le llena el papel de renglones. Una llegada de Adidas se repar
 siete cuerpos y salía una ubicación distinta por talla. *"La ubicación exacta es muy
 complicada de que el operario entienda."*
 
+**Es la nomenclatura de siempre, cortada en la columna** — `MZN03-13-07` sin el cuerpo. Un
+intento anterior salió como "MZN03 · Col 12-15" y Daniel lo rechazó: el operario lee
+ubicaciones todo el día y una que se escribe distinta lo hace frenar. Nada de la palabra
+"Col", nada de rangos. Un solo número, el de dónde empieza la marca, con sus dos dígitos.
+
 | Marca | Columnas del MZN03 | Sale como |
 |---|---|---|
-| Skechers | 9, 10, 11 | `MZN03 · Col 9-11` |
-| Adidas | 12, 13, 14, 15 | `MZN03 · Col 12-15` |
-| Puma | 16, 17 | `MZN03 · Col 16-17` |
+| Skechers | 9, 10, 11 | `MZN03-09` |
+| Adidas | 12, 13, 14, 15 | `MZN03-12` |
+| Puma | 16, 17 | `MZN03-16` |
 
 La lista `MARCAS_SIN_CUERPO` va **escrita a mano**, no derivada de "las marcas de modo
 todo", aunque hoy sean las mismas tres. Son dos reglas que coinciden por casualidad: una
@@ -122,7 +127,7 @@ cuerpos, el artículo se iba a Slotting y no salía en ninguna tarea.
 
 Lo que llega por catálogo va a la **columna 8** del MZN03, mezclando las tres marcas, y no a
 las columnas de la suya. **Un Puma que viene por el D no vuelve a la 16 ni aunque ya viva
-ahí.** Sin ese filtro el papel lo manda a `Col 16-17`, justo al revés de lo que corresponde.
+ahí.** Sin ese filtro el papel lo manda a `MZN03-16`, justo al revés de lo que corresponde.
 
 ## 3. Dónde va el resto de las marcas
 

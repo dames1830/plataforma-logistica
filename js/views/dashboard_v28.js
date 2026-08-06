@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0084';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0085';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0084';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0084';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0084';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0084';
-import * as metasService from '../services_v245/metasService.js?v=29.0084';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0084';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0084';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0084';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0084';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0084';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0084';
+import * as adminService from '../services_v245/adminService.js?v=29.0085';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0085';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0085';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0085';
+import * as metasService from '../services_v245/metasService.js?v=29.0085';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0085';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0085';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0085';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0085';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0085';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0085';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0084';
+const VERSION = '29.0085';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3422,7 +3422,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0084');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0085');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13736,7 +13736,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0084 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0085 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15526,21 +15526,24 @@ const renderRFSection = (container) => {
   };
 
   /**
-   * "MZN03 · Col 12-15". Las columnas seguidas se juntan en un rango, que es como Daniel las
-   * dice y como se leen de un vistazo: Adidas son la 12, 13, 14 y 15, no cuatro números.
+   * "MZN03-12". LA MISMA NOMENCLATURA DE SIEMPRE, CORTADA EN LA COLUMNA.
+   *
+   * Una ubicación normal es `MZN03-13-07` —zona, columna, cuerpo— y esta es esa misma sin el
+   * cuerpo. Acá primero salió "MZN03 · Col 12-15" y Daniel lo corrigió el 05-ago-2026: el
+   * operario lee ubicaciones todo el día y una que se escribe distinta lo hace frenar. La
+   * palabra "Col" y el rango sobran; el destino es un solo número, el de dónde empieza la
+   * marca. Ver MARCAS_SIN_CUERPO.
+   *
+   *     Skechers  -> MZN03-09
+   *     Adidas    -> MZN03-12
+   *     Puma      -> MZN03-16
+   *
+   * Los dos dígitos son a propósito: `nombreCuerpo` rellena igual, y "MZN03-9" al lado de un
+   * "MZN03-09" del papel de ayer se lee como otra cosa.
    */
-  const destinoDeColumnas = (zona, columnas) => {
+  const destinoDeMarca = (zona, columnas) => {
     const cols = [...new Set((columnas || []).map(Number).filter(n => n > 0))].sort((a, b) => a - b);
-    if (!cols.length) return zona;
-    const tramos = [];
-    let ini = cols[0], prev = cols[0];
-    cols.slice(1).forEach(c => {
-      if (c === prev + 1) { prev = c; return; }
-      tramos.push(ini === prev ? `${ini}` : `${ini}-${prev}`);
-      ini = prev = c;
-    });
-    tramos.push(ini === prev ? `${ini}` : `${ini}-${prev}`);
-    return `${zona} · Col ${tramos.join(', ')}`;
+    return cols.length ? `${zona}-${String(cols[0]).padStart(2, '0')}` : zona;
   };
 
   /**
@@ -15765,12 +15768,12 @@ const renderRFSection = (container) => {
     // EL BUFFER D QUEDA AFUERA. Lo que llega por el catálogo va a la columna 8 del mezzanine 3
     // —mezclando las tres marcas— y no a las columnas de la suya. Un Puma que viene por el D no
     // vuelve a la 16 ni aunque ya viva ahí: es regla de Daniel y no admite excepción. Sin este
-    // filtro, el papel lo mandaría a "Col 16-17" y sería justo al revés de lo que corresponde.
+    // filtro, el papel lo mandaría a "MZN03-16" y sería justo al revés de lo que corresponde.
     if (esMarcaSinCuerpo(datos.marca) && zr.zona && datos.origen !== 'D'
         && !zonasService.esZonaSinUbicacion(zr.zona)) {
       plan = {
         estado: 'solo-zona', zona: zr.zona, cuerpos: [], cuantos: 0, sinUbicacion: true,
-        destinoTexto: destinoDeColumnas(zr.zona, zonasService.columnasDeMarca(datos.marca))
+        destinoTexto: destinoDeMarca(zr.zona, zonasService.columnasDeMarca(datos.marca))
       };
     }
 
