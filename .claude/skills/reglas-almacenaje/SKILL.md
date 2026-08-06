@@ -142,6 +142,16 @@ ahí.** Sin ese filtro el papel diría `ZONA PUMA`, justo al revés de lo que co
    ubicación**: sin columna, sin cuerpo, sin nivel. Y nada sube a reserva.
 3. **La zona sale de la marca**, y las columnas también cuando la marca las tiene repartidas
    (MZN01 lo comparten Power, Bubblegummers y B.G Licenses).
+
+   **B.G Licenses ES Bubblegummers** — la misma marca, solo que la licencia trae dibujitos
+   licenciados. Su temporada **actual** se queda sola en la 24; su **anterior y sus saldos**
+   van a las columnas de Bubblegummers (la 22 y la 23). Sin eso no tenían a dónde ir: le toca
+   una sola columna y es de actual, así que caían en el respaldo y terminaban mezclados con
+   la temporada actual, sin aviso. Va en la tabla `COMPARTE_COLUMNAS` de `zonasService.js`.
+
+   **Marie Claire tiene el problema inverso y sigue abierto:** sus columnas (6 y 7 del MZN03)
+   son anterior y saldos, sin ninguna de actual. Hoy no se dispara porque no tiene nada en el
+   buffer, pero el día que llegue algo de temporada actual va a caer en el respaldo.
 4. **Reposición:** si el artículo ya vive en el almacén va a sus mismos cuerpos. Si no le
    entra, se le abren los que falten empezando por sus columnas.
 5. **Si no hay lugar, no se improvisa:** va a Slotting — salvo las tres marcas de arriba.
