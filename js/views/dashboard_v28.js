@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0090';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0091';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0090';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0090';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0090';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0090';
-import * as metasService from '../services_v245/metasService.js?v=29.0090';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0090';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0090';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0090';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0090';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0090';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0090';
+import * as adminService from '../services_v245/adminService.js?v=29.0091';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0091';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0091';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0091';
+import * as metasService from '../services_v245/metasService.js?v=29.0091';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0091';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0091';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0091';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0091';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0091';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0091';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0090';
+const VERSION = '29.0091';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3554,7 +3554,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0090');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0091');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13868,7 +13868,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0090 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0091 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16248,6 +16248,32 @@ const renderRFSection = (container) => {
           rM.getCell(1).font = { size: 9, name: 'Calibri' };
           rM.getCell(1).alignment = centro;
           rM.getCell(1).border = { left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+        }
+
+        // ESPERANDO HACE N DÍAS.
+        //
+        // Si el artículo viene arrastrándose de olas anteriores, el papel lo dice. Es la única
+        // forma de que la deuda se vea: hay códigos en el buffer desde junio y en la hoja se
+        // leían igual que uno que llegó anoche. Va en la misma caja de borde grueso que el
+        // cartel de SIN UBICACIÓN, para que se distinga impreso en blanco y negro.
+        const diasEsperando = (() => {
+          if (!t.esperaDesde || String(t.esperaDesde) >= String(t.fecha)) return 0;
+          const a = new Date(`${t.esperaDesde}T00:00:00`), b = new Date(`${t.fecha}T00:00:00`);
+          if (isNaN(a.getTime()) || isNaN(b.getTime())) return 0;
+          return Math.round((b - a) / 86400000);
+        })();
+        if (diasEsperando > 0) {
+          const rE = ws.addRow([`ESPERANDO HACE ${diasEsperando} DÍA${diasEsperando > 1 ? 'S' : ''}`]);
+          ws.mergeCells(rE.number, 1, rE.number, COLS);
+          rE.getCell(1).font = { size: 13, bold: true, name: 'Calibri' };
+          rE.getCell(1).alignment = centro;
+          rE.getCell(1).border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'thin' }, right: { style: 'medium' } };
+          rE.height = 20;
+          const rE2 = ws.addRow([`En el buffer desde el ${String(t.esperaDesde).split('-').reverse().join('/')}. La tarea anterior caducó sin trabajarse.`]);
+          ws.mergeCells(rE2.number, 1, rE2.number, COLS);
+          rE2.getCell(1).font = { size: 9, name: 'Calibri' };
+          rE2.getCell(1).alignment = centro;
+          rE2.getCell(1).border = { left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
         }
 
         ws.addRow([]);
@@ -24368,7 +24394,17 @@ window.showCellModal = function(htmlContent) {
 
     // Totales del pie: siguen el filtro de fechas y suman la MISMA Qty que muestra la tabla
     // (en las finalizadas eso es el avance real, no la cantidad pedida).
-    const tareasEnRango = tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate);
+    // LO QUE MÁS TIEMPO LLEVA ESPERANDO VA ARRIBA.
+    //
+    // La capacidad de un turno no alcanza para todo, así que lo que queda sin hacer es una
+    // decisión que se toma mirando esta lista. Ordenada por número de tarea, un código que
+    // arrastra desde junio quedaba enterrado entre ciento treinta y nadie lo veía. `esperaDesde`
+    // lo trae la tarea desde que nace; las que no lo tienen —las anteriores a v29.0090— se
+    // ordenan por su fecha, que es lo mismo para ellas.
+    const tareasEnRango = tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate)
+      .slice()
+      .sort((a, b) => String(a.esperaDesde || a.fecha).localeCompare(String(b.esperaDesde || b.fecha))
+                   || String(a.id).localeCompare(String(b.id)));
     const paresEnRango = tareasEnRango.reduce((s, t) =>
         s + (t.status === 'Finalizado' ? getTaskTotalAvance(t) : (t.qty || 0)), 0);
     const targetItems = isDetail ? detailedItems : resumenItems;
