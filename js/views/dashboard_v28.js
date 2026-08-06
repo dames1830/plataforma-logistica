@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0099';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0100';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0099';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0099';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0099';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0099';
-import * as metasService from '../services_v245/metasService.js?v=29.0099';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0099';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0099';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0099';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0099';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0099';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0099';
+import * as adminService from '../services_v245/adminService.js?v=29.0100';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0100';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0100';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0100';
+import * as metasService from '../services_v245/metasService.js?v=29.0100';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0100';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0100';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0100';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0100';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0100';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0100';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0099';
+const VERSION = '29.0100';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0099');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0100');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0099 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0100 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22198,192 +22198,294 @@ window.showCellModal = function(htmlContent) {
   };
 
   // ══════════════════════════════════════════════════════════════════════════════════
-  // KPI PICKING — CÓMO SE VENDE UN CÓDIGO NUEVO
+  // KPI PICKING · EVOLUCIÓN DEL ARTÍCULO — CUÁNTO TARDA EN AGOTARSE UN CÓDIGO NUEVO
   //
-  // ES UN ESTUDIO, NO UN INDICADOR EN VIVO, y por eso los números están escritos acá
-  // adentro en vez de calcularse al abrir la pantalla. Salieron de releer las 74 fotos
-  // diarias de stock del 04-may al 03-ago-2026 (OneDrive: `scraping Stock`, `Stock Activo`
-  // y `Stock Reserva`), sumando activo Y reserva: mirando solo el activo, la mitad que
-  // sube a reserva se ve igual que una venta y el resultado sale al doble.
+  // SE ACTUALIZA SOLO. Hasta el 06-ago-2026 los números estaban escritos acá adentro y
+  // el reporte envejecía: decía "al 03-ago" para siempre. Ahora los calcula el robot
+  // después de bajar el stock de las 19:00 (`wms_scraping/generar_evolucion.py`) y los
+  // publica en el área `evolucion_articulo`. Esta pantalla solo los lee y los dibuja.
   //
-  // El servidor no guarda esa serie: `logistics_snapshots` tiene una foto por área, no una
-  // por día. Para que esto se recalcule solo habría que empezar a guardarlas.
+  // POR QUÉ NO SE CALCULA ACÁ. El estudio necesita la SERIE de fotos diarias —cuánto
+  // tenía cada código cada día desde que llegó— y el servidor guarda una sola foto por
+  // área. Guardar 76 fotos de 8 MB no entra en su disco. El robot sí las tiene todas en
+  // OneDrive, así que el cálculo pesado corre allá y acá baja un paquete de 0,2 MB.
   //
-  // EL GRUPO: códigos de calzado que llegaron nuevos EN MAYO de 2026 con al menos UN
-  // CUERPO (350 pares) y alcanzaron nueve semanas completas. Los 350 no se eligieron para
-  // que calzara con nada: es lo que entra en un cuerpo, y un código que llega con menos no
-  // obliga a decidir ubicación.
+  // LO QUE MIDE, y por qué está medido así:
   //
-  // UN GRUPO FIJO, SEGUIDO LAS MISMAS NUEVE SEMANAS. Seguir a cada código hasta donde
-  // llegue hace que cada semana se mida sobre un grupo distinto, y ahí las barras dejan de
-  // sumar y aparecen semanas en cero que no son reales.
+  // · AGOTADO ES CERO PARES. Lo eligió Daniel: es lo más claro de explicar y el reporte
+  //   no tiene que andar aclarando ningún umbral.
   //
-  // La versión anterior hablaba de 146 códigos de mayo y junio; el filtro con que se
-  // eligieron no quedó anotado y no se pudo rearmar. Este sí: llegada en mayo, mínimo un
-  // cuerpo, nueve semanas. Recalculado el 04-ago-2026.
+  // · LA CURVA ES DE MARCA PROPIA. Propia y terceros se comportan al revés: de 82
+  //   códigos propios con nueve semanas ni uno llegó a cero, y de 27 de terceros llegaron
+  //   10. Puma y Adidas entran y salen casi enteros —cruce de andén, no mercadería que se
+  //   almacena— y mezclarlos hace parecer que el almacén rota mejor de lo que rota.
+  //
+  // · VENTANA MÓVIL DE TRES MESES, para que el reporte no termine hablando de mercadería
+  //   vieja. Hoy son los códigos nuevos de mayo, junio y julio.
+  //
+  // · LA CURVA Y EL SEMÁFORO VAN SOBRE UN GRUPO FIJO: los que ya cumplieron nueve
+  //   semanas. Con la ventana móvil entran códigos que llegaron hace dos semanas, y uno
+  //   de esos con el 40% no está plantado, está en su curva. Mezclándolos, "se plantaron"
+  //   pasaba del 17% al 54% sin que hubiera cambiado nada en el almacén.
+  //
+  // Los hitos —cuánto tarda en bajar al 50, al 25 y al 10%— van sobre ese mismo grupo
+  // fijo por la misma razón: contando "cruzaron 42 de 264" se mezcla a los que tuvieron
+  // nueve semanas con los que tuvieron dos, y el porcentaje no habla del almacén sino
+  // del largo de la ventana.
   // ══════════════════════════════════════════════════════════════════════════════════
-  const KPI_GRUPO = {
-    tipo:'grupo', banda:true,
-    titulo:'CÓMO SE VENDE UN CÓDIGO NUEVO',
-    bajada:'<b>81 códigos de calzado</b> que entraron por primera vez <b>en mayo de 2026</b> con al menos un cuerpo (350 pares), seguidos foto a foto nueve semanas. Cada punto es la mediana: la mitad de los códigos queda por debajo y la mitad por encima.',
-    sello:'Estudio · llegados en mayo de 2026, seguidos 9 semanas',
-    llegada:1082, rotuloLlegada:'Llegada típica', subLlegada:'pares por código nuevo',
-    llegadaFranja:'UN ARTÍCULO TÍPICO · LE LLEGAN',
-    ficha:['Muestra', [
-      ['Artículos','81'], ['Unidades','96,505'], ['Semanas seguidas','9'],
-      ['Fotos de stock','74'], ['Llegaron','07-may al 29-may'], ['Seguidos hasta','03-ago-2026']]],
-    puntos:[
-      { s:0, queda:100.0, p25:100.0, p75:100.0 },
-      { s:1, queda:56.6,  p25:30.5,  p75:68.0 },
-      { s:2, queda:35.3,  p25:5.2,   p75:47.8 },
-      { s:3, queda:34.1,  p25:5.0,   p75:47.1 },
-      { s:4, queda:27.0,  p25:5.0,   p75:41.2 },
-      { s:5, queda:22.9,  p25:4.1,   p75:37.8 },
-      { s:6, queda:21.0,  p25:5.0,   p75:32.4 },
-      { s:7, queda:18.8,  p25:5.0,   p75:29.9 },
-      { s:8, queda:14.7,  p25:4.0,   p75:22.3 },
-      { s:9, queda:12.2,  p25:3.9,   p75:20.4 }
-    ]};
 
-  // Dos casos reales de los mismos 81, elegidos para que se vea lo que la mediana esconde.
-  // ACÁ LOS PARES SON MEDIDOS, NO CALCULADOS: salen de la foto de cada lunes.
-  const KPI_CASO1 = {
-    tipo:'articulo', banda:false,
-    titulo:'UN ARTÍCULO DE MUESTRA · 8816380',
-    bajada:'<b>LACES - FLAG - BLACK/NEGRO - NORTH STAR</b>. Llegó el 28-may-2026 con 1.082 pares, que es justo la llegada típica del grupo. Es uno de los 81 y acá los pares no son un promedio: <b>son los que dice la foto de cada lunes</b>.',
-    sello:'Un caso real · llegó el 28-may-2026, seguido 9 semanas',
-    llegada:1082, rotuloLlegada:'Llegó con', subLlegada:'pares el 28-may-2026',
-    llegadaFranja:'ESTE ARTÍCULO · LE LLEGARON',
-    ficha:['El artículo', [
-      ['Código','8816380'], ['Marca','North Star'], ['Modelo','Laces · Flag'],
-      ['Color','Black / Negro'], ['Llegó el','28-may-2026'], ['Última foto','30-jul-2026']]],
-    puntos:[
-      { s:0, queda:100.0, pares:1082, fecha:'28-may' },
-      { s:1, queda:66.5,  pares:719,  fecha:'04-jun' },
-      { s:2, queda:56.6,  pares:612,  fecha:'11-jun' },
-      { s:3, queda:56.2,  pares:608,  fecha:'18-jun' },
-      { s:4, queda:56.2,  pares:608,  fecha:'25-jun' },
-      { s:5, queda:37.8,  pares:409,  fecha:'02-jul' },
-      { s:6, queda:18.5,  pares:200,  fecha:'09-jul' },
-      { s:7, queda:15.2,  pares:164,  fecha:'16-jul' },
-      { s:8, queda:13.4,  pares:145,  fecha:'23-jul' },
-      { s:9, queda:11.2,  pares:121,  fecha:'30-jul' }
-    ]};
+  const AREA_EVOLUCION = 'evolucion_articulo';
+  let kpiPaquete = null;      // lo último que trajo el servidor
+  let kpiPaqueteTs = null;
 
-  const KPI_CASO2 = {
-    tipo:'articulo', banda:false,
-    titulo:'OTRO ARTÍCULO DE MUESTRA · 8818952',
-    bajada:'<b>LACES - SPOT - BEIGE/BEIGE - NORTH STAR</b>. Llegó el mismo día que el anterior, el 28-may-2026, pero con <b>2.519 pares</b>: la llegada más grande de los 81. Y a las nueve semanas todavía tiene 826 pares abajo.',
-    sello:'Un caso real · llegó el 28-may-2026, seguido 9 semanas',
-    llegada:2519, rotuloLlegada:'Llegó con', subLlegada:'pares el 28-may-2026',
-    llegadaFranja:'ESTE ARTÍCULO · LE LLEGARON',
-    ficha:['El artículo', [
-      ['Código','8818952'], ['Marca','North Star'], ['Modelo','Laces · Spot'],
-      ['Color','Beige'], ['Llegó el','28-may-2026'], ['Última foto','30-jul-2026']]],
-    cierre:'Este es el caso que traba el almacén. La primera semana salieron <b style="color:rgba(255,255,255,0.7);">956 pares</b> y parecía que iba bien, pero ahí se frenó: en las ocho semanas siguientes solo se fueron 737 más. A la semana 9 todavía tiene <b style="color:rgba(255,255,255,0.7);">826 pares abajo, que son 2,4 cuerpos</b> ocupados por mercadería que ya casi no se mueve. De acá salen los saldos.',
-    puntos:[
-      { s:0, queda:100.0, pares:2519, fecha:'28-may' },
-      { s:1, queda:62.0,  pares:1563, fecha:'04-jun' },
-      { s:2, queda:49.7,  pares:1253, fecha:'11-jun' },
-      { s:3, queda:48.2,  pares:1214, fecha:'18-jun' },
-      { s:4, queda:47.6,  pares:1199, fecha:'25-jun' },
-      { s:5, queda:43.8,  pares:1104, fecha:'02-jul' },
-      { s:6, queda:38.4,  pares:968,  fecha:'09-jul' },
-      { s:7, queda:37.5,  pares:944,  fecha:'16-jul' },
-      { s:8, queda:35.4,  pares:891,  fecha:'23-jul' },
-      { s:9, queda:32.8,  pares:826,  fecha:'30-jul' }
-    ]};
+  /** Trae el estudio publicado por el robot. Devuelve null si todavía no hay ninguno. */
+  const traerEvolucion = async () => {
+    const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+    try {
+      const res = await fetch(`${base}/api/logistics/${AREA_EVOLUCION}?date=MASTER&t=${Date.now()}`);
+      if (!res.ok) return null;
+      const cuerpo = await res.json();
+      const p = cuerpo && cuerpo.data;
+      // El backend guarda áreas como lista de filas; ésta es un objeto solo. Según cómo
+      // haya viajado puede llegar envuelto en un arreglo de un elemento.
+      const paq = Array.isArray(p) ? p[0] : p;
+      if (!paq || !paq.propia) return null;
+      kpiPaquete = paq;
+      kpiPaqueteTs = cuerpo.updated_at || null;
+      return paq;
+    } catch (e) {
+      console.warn('[EVOL] no se pudo traer el estudio:', e && e.message);
+      return null;
+    }
+  };
 
-  // Los 81, para el Pareto ABC. Cada fila:
-  // [codigo, marca, modelo, color, llego, quedaSem9, pctSem9, segundaTanda,
-  //  ingreso, ultimoMovimiento, stockAl03ago, diasSinMoverse, diasEnAlmacen, coleccionPO]
-  const KPI_PARETO = [
-    ['8818952','North Star','Laces Spot','Beige',2519,826,32.8,0,'28-may','31-jul',802,3,67,'2026-Q3'],
-    ['8516919','Bata','Laces Fedele','Black',1256,732,58.3,1,'27-may','30-jul',730,4,68,'2026-Q3'],
-    ['4816309','North Star','Urban (Yung Fashion) Soul','Black',2315,656,28.3,0,'22-may','01-ago',589,2,73,'2026-Q4'],
-    ['8819952','North Star','Laces Spot','Navy',2634,621,23.6,0,'28-may','31-jul',604,3,67,'2026-Q3'],
-    ['5898305','North Star','Women Legend 76','Dk Beige',418,517,123.7,1,'14-may','03-ago',190,0,81,'2027-Q1'],
-    ['4819309','North Star','Urban (Yung Fashion) Soul','Navy',2226,452,20.3,0,'22-may','01-ago',354,2,73,'2026-Q4'],
-    ['4895300','North Star','Youth Legend 76','Red',1248,399,32.0,0,'14-may','01-ago',147,2,81,'2027-Q1'],
-    ['4896500','North Star','Youth Legend 76','Black',1552,393,25.3,0,'14-may','03-ago',160,0,81,'2027-Q1'],
-    ['3519030','Bubblegummers','Casual Boys Street','White',1694,377,22.3,0,'26-may','03-ago',364,0,69,'2026-Q2'],
-    ['8891314','North Star','Men Legend 76','White',1506,362,24.0,0,'14-may','03-ago',168,0,81,'2027-Q1'],
-    ['1811504','Bubblegummers','Casual Boys Street','Off White',1256,345,27.5,0,'26-may','03-ago',336,0,69,'2026-Q2'],
-    ['4891300','North Star','Youth Legend 76','White',1342,344,25.6,0,'14-may','01-ago',170,2,81,'2027-Q1'],
-    ['2519030','Bubblegummers','Casual Boys Street','White',1686,344,20.4,0,'26-may','03-ago',332,0,69,'2026-Q2'],
-    ['8899314','North Star','Men Legend 76','Blue',1310,329,25.1,0,'14-may','03-ago',147,0,81,'2027-Q1'],
-    ['3511028','Bubblegummers','Casual Boys Street','White',1694,328,19.4,0,'26-may','03-ago',326,0,69,'2026-Q2'],
-    ['4891350','North Star','Urban (Yung Fashion) Soul','White',1626,323,19.9,0,'22-may','03-ago',216,0,73,'2026-Q4'],
-    ['2818301','Bubblegummers','Casual Girls Street','Off White',1486,319,21.5,0,'26-may','03-ago',307,0,69,'2026-Q2'],
-    ['2511028','Bubblegummers','Casual Boys Street','White',1674,304,18.2,0,'26-may','03-ago',296,0,69,'2026-Q2'],
-    ['8814995','North Star','Laces Maisy','Brown',2103,294,14.0,0,'28-may','30-jul',294,4,67,'2026-Q4'],
-    ['8014335','Weinbrenner','Outdoor Rugged Passo','Chocolate',2662,292,11.0,0,'21-may','03-ago',249,0,74,'2026-Q3'],
-    ['5811957','North Star','Sport Maisy','Silver',2256,288,12.8,0,'18-may','01-ago',215,2,77,'2026-Q4'],
-    ['2811497','Bubblegummers','Casual Girls Clavel','White',1608,283,17.6,0,'23-may','03-ago',239,0,72,'2026-Q4'],
-    ['8816962','North Star','Laces Soul','Black',2881,272,9.4,0,'22-may','01-ago',244,2,73,'2026-Q3'],
-    ['2819491','Bubblegummers','Casual Girls Clavel','Denim',1038,268,25.8,0,'23-may','03-ago',200,0,72,'2026-Q3'],
-    ['8816810','Power','Football Psg','Black',800,255,31.9,1,'21-may','01-ago',195,2,74,'2026-Q2'],
-    ['2811555','Bubblegummers','Casual Boys Clavel','White',1562,252,16.1,0,'23-may','03-ago',206,0,72,'2026-Q4'],
-    ['4899500','North Star','Youth Legend 76','Blue',1435,250,17.4,0,'15-may','31-jul',153,3,80,'2027-Q1'],
-    ['1818301','Bubblegummers','Casual Girls Street','Off White',1462,243,16.6,0,'26-may','03-ago',232,0,69,'2026-Q2'],
-    ['2816953','Bubblegummers','Casual Girls Street','Black',1486,241,16.2,0,'26-may','03-ago',223,0,69,'2026-Q2'],
-    ['6816345','North Star','Sport Mayo Creeper','Black',1387,240,17.3,0,'15-may','03-ago',182,0,80,'2026-Q4'],
-    ['2819336','Bubblegummers','Casual Boys Cody','Navy',862,236,27.4,0,'29-may','03-ago',228,0,66,'2026-Q3'],
-    ['8819995','North Star','Laces Maisy','Navy',1749,216,12.3,0,'28-may','27-jul',216,7,67,'2026-Q4'],
-    ['1816953','Bubblegummers','Casual Girls Street','Black',1460,207,14.2,0,'26-may','03-ago',180,0,69,'2026-Q2'],
-    ['8819962','North Star','Laces Soul','Navy',946,204,21.6,0,'22-may','03-ago',175,0,73,'2026-Q3'],
-    ['6811493','North Star','\'- Gina White/Blanco','',1452,201,13.8,0,'18-may','01-ago',178,2,77,'2026-Q4'],
-    ['811504','Bubblegummers','Casual Boys Street','Off White',912,192,21.1,0,'26-may','03-ago',184,0,69,'2026-Q2'],
-    ['8816433','Power','Outdoor Trek','Black',1274,184,14.4,1,'29-may','03-ago',159,0,66,'2026-Q3'],
-    ['8811380','North Star','Laces Flag','White',882,181,20.5,0,'28-may','30-jul',181,4,67,'2026-Q4'],
-    ['6818345','North Star','Sport Mayo Creeper','Beige',1899,177,9.3,0,'15-may','31-jul',145,3,80,'2026-Q4'],
-    ['1819491','Bubblegummers','Casual Girls Clavel','Denim',975,176,18.1,0,'23-may','03-ago',106,0,72,'2026-Q3'],
-    ['8814433','Power','Outdoor Trek','Brown',842,174,20.7,1,'29-may','03-ago',159,0,66,'2026-Q3'],
-    ['1811555','Bubblegummers','Casual Boys Clavel','White',1562,166,10.6,0,'23-may','03-ago',124,0,72,'2026-Q4'],
-    ['1811497','Bubblegummers','Casual Girls Clavel','White',1425,148,10.4,0,'23-may','03-ago',116,0,72,'2026-Q4'],
-    ['5892375','Power','Outdoor Quest','Grey',1330,143,10.8,0,'29-may','03-ago',121,0,66,'2026-Q3'],
-    ['1819336','Bubblegummers','Casual Boys Cody','Navy',854,138,16.2,0,'29-may','03-ago',134,0,66,'2026-Q3'],
-    ['8816380','North Star','Laces Flag','Black',1082,121,11.2,0,'28-may','30-jul',121,4,67,'2026-Q4'],
-    ['3816953','Bubblegummers','Casual Girls Street','Black',756,92,12.2,0,'26-may','31-jul',77,3,69,'2026-Q2'],
-    ['8098412','Weinbrenner','Outdoor Height Cut Trekkr100','Dk Sand',1360,78,5.7,0,'26-may','03-ago',58,0,69,'2026-Q4'],
-    ['5896546','Puma','Basketball Blaze Lite Nbk Wns','Black',660,69,10.5,1,'28-may','07-jul',69,27,67,'2026-Q2'],
-    ['2095302','Bubblegummers','Boots And Booties Girls Speed Lite','Light Pink',828,67,8.1,0,'20-may','31-jul',47,3,75,'2026-Q2'],
-    ['8516964','Bata','Derby Madrid','Black',492,65,13.2,0,'21-may','31-jul',58,3,74,'2026-Q3'],
-    ['8016951','Bata','Casual Tilko','Black',612,51,8.3,0,'21-may','30-jul',38,4,74,'2026-Q3'],
-    ['8514964','Bata','Derby Madrid','Brown',584,50,8.6,0,'21-may','30-jul',43,4,74,'2026-Q3'],
-    ['6013975','Bata','Dress Boots Height 5 Rebel','Camel',1382,47,3.4,0,'20-may','31-jul',30,3,75,'2026-Q2'],
-    ['8811862','Puma','Basketball Rebound V6 Low','White',1020,44,4.3,1,'18-may','01-ago',0,2,77,'2026-Q3'],
-    ['8896532','Adidas','Tennis Runvista','Black',862,34,3.9,1,'27-may','22-jul',34,12,68,'2026-Q3'],
-    ['5814549','Adidas','Tennis Grand Court Lo','Brown',360,31,8.6,1,'27-may','11-jul',31,23,68,'2026-Q2'],
-    ['5811562','Adidas','Tennis Runvista','Silver',360,30,8.3,1,'27-may','13-jul',30,21,68,'2026-Q2'],
-    ['1095302','Bubblegummers','Boots And Booties Girls Speed Lite','Light Pink',874,27,3.1,0,'20-may','31-jul',17,3,75,'2026-Q2'],
-    ['3811029','Puma','Casual Girls Carina 3.0 Floral Ps','White',600,24,4.0,0,'25-may','12-jun',24,52,70,'2026-Q2'],
-    ['5896516','Adidas','Tennis Terrex Anylander W','Black',1460,24,1.6,0,'27-may','16-jul',24,18,68,'2026-Q2'],
-    ['3811045','Puma','Casual Boys Puma Caven Iii Paw Pat','White',480,24,5.0,0,'28-may','06-jun',24,58,67,'2026-Q2'],
-    ['3815830','Puma','Casual Girls Puma Caven Iii Paw Pat','Pink',480,24,5.0,0,'28-may','09-jun',24,55,67,'2026-Q2'],
-    ['8899532','Adidas','Tennis Runvista','Blue',792,23,2.9,0,'27-may','17-jul',23,17,68,'2026-Q2'],
-    ['8811598','Adidas','Tennis Predator Club Tf','White',440,22,5.0,1,'27-may','02-jul',22,32,68,'2026-Q2'],
-    ['5891591','Adidas','Tennis Duramo Sl2 W','White',1300,14,1.1,0,'27-may','24-jul',14,10,68,'2026-Q2'],
-    ['5892500','Adidas','Tennis Terrex Anylander W','White',1202,6,0.5,1,'27-may','02-jul',6,32,68,'2026-Q2'],
-    ['5896549','Puma','Basketball Blaze Lite Nbk Wns','Black',1080,4,0.4,0,'28-may','30-jul',4,4,67,'2026-Q2'],
-    ['3811103','Puma','Casual Girls Carina 3.0 V Ps','White',520,3,0.6,0,'25-may','19-jun',3,45,70,'2026-Q3'],
-    ['8896537','Adidas','Tennis Grand Court Base 00S','Black',658,3,0.5,0,'27-may','22-jul',3,12,68,'2026-Q2'],
-    ['5811590','—','—','',636,1,0.2,1,'07-may','11-jul',2,23,88,'2026-Q1'],
-    ['8811758','Puma','Basketball Court Classic Clean','White',936,1,0.1,1,'18-may','06-jul',1,28,77,'2026-Q2'],
-    ['2811108','Puma','Casual Boys Puma Rickie V Ps','White',425,1,0.2,1,'25-may','08-jul',1,26,70,'2026-Q3'],
-    ['5898500','Puma','Basketball Milenio Tech_','Beige',696,1,0.1,1,'27-may','27-jul',1,7,68,'2026-Q3'],
-    ['8896555','Puma','Basketball Flyer Lite 3 Evo','Black',612,1,0.2,1,'27-may','13-jul',1,21,68,'2026-Q3'],
-    ['3811107','—','—','',500,0,0.0,0,'25-may','12-jun',0,52,70,'2026-Q3'],
-    ['3811108','—','—','',850,0,0.0,0,'25-may','12-jun',0,52,70,'2026-Q3'],
-    ['5899813','—','—','',360,0,0.0,0,'27-may','09-jun',0,55,68,'2026-Q2'],
-    ['5896547','—','—','',540,0,0.0,0,'28-may','25-jun',0,39,67,'2026-Q2'],
-    ['8896547','—','—','',1080,0,0.0,0,'28-may','15-jun',0,49,67,'2026-Q2'],
-    ['8896549','Puma','Basketball Blaze Lite Nbk','Black',1080,0,0.0,0,'28-may','23-jun',0,41,67,'2026-Q2']
-  ];
+  const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+  /** '2026-06-04' -> '04-jun'. Sin Date: construirla y formatearla mueve el día. */
+  const kpiFechaCorta = (s) => {
+    if (!s || s.length < 10) return s || '';
+    const m = parseInt(s.slice(5, 7), 10);
+    return `${s.slice(8, 10)}-${MESES_CORTOS[m - 1] || '??'}`;
+  };
+
+  const kpiFechaLarga = (s) => {
+    if (!s || s.length < 10) return s || '';
+    return `${kpiFechaCorta(s)}-${s.slice(0, 4)}`;
+  };
+
+  /**
+   * Arma lo que espera el molde del gráfico a partir del resumen de un conjunto.
+   * El molde no cambió: sigue recibiendo `llegada` y una lista de puntos con el % que
+   * queda, y él calcula los pares y lo picado. Lo único nuevo es de dónde salen.
+   */
+  const kpiDeGrupo = (P, R) => ({
+    tipo: 'grupo', banda: true,
+    titulo: 'EVOLUCIÓN DEL ARTÍCULO · CÓMO SE VACÍA UN CÓDIGO NUEVO',
+    bajada: `<b>${R.articulos} códigos de marca propia</b> que entraron nuevos en los últimos `
+      + `${Math.round(P.ventanaDias / 30)} meses con al menos un cuerpo (${kpiN(P.minimoPares)} pares), `
+      + `seguidos foto a foto. La curva se mide sobre los <b>${R.grupoFijo}</b> que ya cumplieron `
+      + `${R.semanasFijas} semanas, para que todos hayan tenido el mismo plazo. Cada punto es la `
+      + `mediana: la mitad de los códigos queda por debajo y la mitad por encima.`,
+    sello: `Estudio · ${P.fotos} fotos, al ${kpiFechaLarga(P.hasta)}`,
+    llegada: R.tipica, rotuloLlegada: 'Llegada típica', subLlegada: 'pares por código nuevo',
+    llegadaFranja: 'UN ARTÍCULO TÍPICO · LE LLEGAN',
+    ficha: ['La muestra', [
+      ['Artículos', String(R.articulos)],
+      ['Con 9 semanas', String(R.grupoFijo)],
+      ['Unidades', kpiN(R.pares)],
+      ['Fotos de stock', String(P.fotos)],
+      ['Desde', kpiFechaCorta(P.desde)],
+      ['Hasta', kpiFechaCorta(P.hasta)]]],
+    puntos: R.curva.map(c => ({ s: c.s, queda: c.queda }))
+  });
+
+  /** Lo mismo para un artículo concreto: acá los pares son medidos, no calculados. */
+  const kpiDeArticulo = (P, a, rotulo, cierre) => ({
+    tipo: 'articulo', banda: false,
+    titulo: `${rotulo} · ${a.cod}`,
+    bajada: `<b>${a.modelo}${a.color ? ' · ' + a.color : ''} · ${a.marca}</b>. Llegó el `
+      + `${kpiFechaLarga(a.llegada)} con ${kpiN(a.pares)} pares. Es uno de los del grupo y acá los `
+      + `pares no son un promedio: <b>son los que dice la foto de cada semana</b>.`,
+    sello: `Un caso real · llegó el ${kpiFechaCorta(a.llegada)}, seguido ${a.sem} semanas`,
+    llegada: a.pares, rotuloLlegada: 'Llegó con',
+    subLlegada: `pares el ${kpiFechaCorta(a.llegada)}`,
+    llegadaFranja: 'ESTE ARTÍCULO · LE LLEGARON',
+    ficha: ['El artículo', [
+      ['Código', a.cod], ['Marca', a.marca],
+      ['Modelo', a.modelo.split(' · ').slice(-1)[0] || a.modelo],
+      ['Color', a.color || '—'],
+      ['Llegó el', kpiFechaCorta(a.llegada)],
+      ['Última foto', kpiFechaCorta(a.curva[a.curva.length - 1][3])]]],
+    cierre: cierre,
+    puntos: a.curva.map(c => ({ s: c[0], queda: c[2], pares: c[1], fecha: kpiFechaCorta(c[3]) }))
+  });
 
   const kpiN  = v => Math.round(v).toLocaleString('es-PE');
   const kpiD1 = v => v.toLocaleString('es-PE',{minimumFractionDigits:1,maximumFractionDigits:1});
+  /** Semanas: con decimal solo si lo tiene. "en 3 semanas" y no "en 3.0 semanas". */
+  const kpiSem = v => (v === null || v === undefined) ? '—'
+    : (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : kpiD1(v));
+  const KPI_ORDINAL = ['', 'primera', 'segunda', 'tercera', 'cuarta', 'quinta', 'sexta',
+                       'séptima', 'octava', 'novena', 'décima'];
+  const kpiOrdinal = k => KPI_ORDINAL[k] || `semana ${k}`;
   const KPI_AZUL='#3987e5', KPI_NARANJA='#d95926', KPI_AMBAR='#fbbf24', KPI_PARES='rgba(248,250,252,0.55)';
+
+  // ── LA PORTADA ────────────────────────────────────────────────────────────────────
+  // Responde la pregunta de frente —cuánto tarda en agotarse— antes de cualquier gráfico:
+  // el titular, los hitos, el contraste con los terceros y cómo están hoy.
+  const kpiPortada = (P) => {
+    const n = kpiN, d1 = kpiD1;
+    const R = P.propia, T = P.terceros;
+    const AZUL = KPI_AZUL, NARANJA = KPI_NARANJA, AMBAR = KPI_AMBAR;
+
+    const caja = (borde, rotulo, colRotulo, valor, colValor, pie, colPie) => `
+      <div style="background:${borde === NARANJA ? 'rgba(217,89,38,0.09)' : 'rgba(255,255,255,0.03)'};
+                  border:1px solid ${borde}8c; border-radius:13px; padding:0.8rem 1rem;">
+        <div style="font-size:0.57rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:${colRotulo};">${rotulo}</div>
+        <div style="font-size:1.75rem; font-weight:900; letter-spacing:-1px; color:${colValor}; margin-top:2px;">${valor}</div>
+        <div style="font-size:0.66rem; color:${colPie || 'var(--text-muted)'};">${pie}</div>
+      </div>`;
+
+    // Cuánto tarda en bajar a cada hito. El "de N" es siempre el grupo fijo: así el
+    // porcentaje habla del almacén y no del largo de la ventana.
+    const hito = (u) => {
+      const h = R.hitos[String(u)];
+      const col = u === 10 ? AMBAR : AZUL;
+      if (!h) return caja(col, `${u}% de lo que llegó`, col, 'no llega', col,
+                          `ninguno de los ${R.grupoFijo} lo cruzó`);
+      const todos = h.cruzaron === h.de;
+      return caja(col, u === 50 ? 'La mitad · 50%' : (u === 25 ? 'Un cuarto · 25%' : 'La décima parte · 10%'),
+        col, `${kpiSem(h.sem)} <span style="font-size:0.78rem; font-weight:700; color:var(--text-muted);">${kpiSem(h.sem) === '1' ? 'semana' : 'semanas'}</span>`,
+        'var(--text-main)',
+        todos ? `llegaron los ${h.de}` : `llegaron ${h.cruzaron} de ${h.de}`,
+        todos ? '#10b981' : (h.pct < 50 ? AMBAR : null));
+    };
+
+    const c = R.cero;
+    const cajaCero = c.n === 0
+      ? caja(NARANJA, 'Agotado · cero pares', NARANJA, 'ninguno', NARANJA, `0 de ${c.de}`)
+      : caja(NARANJA, 'Agotado · cero pares', NARANJA, String(c.n), NARANJA,
+             `de ${c.de} · el ${d1(c.pct)}%${c.sem ? ` · en ${kpiSem(c.sem)} semanas` : ''}`);
+
+    // El semáforo: los cuatro estados de hoy. Los recién llegados no entran.
+    const EST = { agotado: ['Agotados', '#94a3b8', 'cero pares'],
+                  casi: ['Casi vacíos', '#10b981', 'menos del 5%'],
+                  saliendo: ['Van saliendo', AZUL, 'del 5 al 20%'],
+                  plantado: ['Se plantaron', NARANJA, '20% o más'] };
+    const semaforo = R.estados.map(e => {
+      const [rot, col, pie] = EST[e.k] || [e.k, 'var(--text-muted)', ''];
+      const vacio = e.n === 0;
+      return `
+        <div style="background:${col === NARANJA && !vacio ? 'rgba(217,89,38,0.09)' : 'rgba(255,255,255,0.03)'};
+                    border:1px solid ${col}${vacio ? '3a' : '8c'}; border-radius:13px; padding:0.8rem 1rem; ${vacio ? 'opacity:0.55;' : ''}">
+          <div style="font-size:0.57rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:${col};">${rot}</div>
+          <div style="display:flex; align-items:baseline; gap:0.35rem; margin-top:3px;">
+            <b style="font-size:1.7rem; font-weight:900; color:var(--text-main); letter-spacing:-1px;">${e.n}</b>
+            <span style="font-size:0.66rem; color:var(--text-muted);">art${vacio ? '' : ` · ${d1(e.pct)}%`}</span>
+          </div>
+          <div style="font-size:0.66rem; color:var(--text-muted); margin-top:3px;">${pie}${
+            e.pares ? ` · <b style="color:${col};">${d1(e.cuerpos)} cuerpos</b>` : ''}</div>
+        </div>`;
+    }).join('');
+
+    // EL CONTRASTE. Es el hallazgo del reporte y por eso va en el cuerpo y no en una nota
+    // al pie: la marca propia no se agota y la de terceros sí, y son dos negocios distintos
+    // metidos en el mismo almacén.
+    const fila = (rot, a, b, colA, colB) => `
+      <tr style="border-top:1px solid rgba(255,255,255,0.07);">
+        <td style="padding:0.4rem 0.6rem; color:var(--text-muted);">${rot}</td>
+        <td style="text-align:right; padding:0.4rem 0.6rem; font-weight:800; color:${colA || 'var(--text-main)'};">${a}</td>
+        <td style="text-align:right; padding:0.4rem 0.6rem; font-weight:800; color:${colB || 'var(--text-main)'};">${b}</td>
+      </tr>`;
+    const h25 = (X) => X.hitos['25'] ? `${kpiSem(X.hitos['25'].sem)} sem` : '—';
+    const contraste = !T || !T.articulos ? '' : `
+      <div style="margin-top:1.1rem; background:rgba(217,89,38,0.08); border:1px solid ${NARANJA}73; border-radius:13px; padding:1rem 1.15rem;">
+        <div style="font-size:0.57rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:${NARANJA};">El hallazgo · quién se agota y quién no</div>
+        <div style="font-size:1rem; color:var(--text-main); font-weight:700; margin-top:7px; line-height:1.45;">
+          ${R.cero.n === 0
+            ? `Ninguno de los ${R.grupoFijo} de marca propia llegó a cero.`
+            : `De los ${R.grupoFijo} de marca propia llegaron a cero ${R.cero.n}.`}
+          ${T.cero.n ? ` De los ${T.grupoFijo} de terceros, ${T.cero.n} sí —el ${d1(T.cero.pct)}%— y en ${kpiSem(T.cero.sem)} semanas.` : ''}
+        </div>
+        <div style="overflow-x:auto; margin-top:0.85rem;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.75rem; min-width:430px;">
+            <thead><tr style="font-size:0.53rem; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-muted);">
+              <th style="text-align:left; padding:0.4rem 0.6rem;"></th>
+              <th style="text-align:right; padding:0.4rem 0.6rem;">Marca propia</th>
+              <th style="text-align:right; padding:0.4rem 0.6rem;">Terceros</th>
+            </tr></thead>
+            <tbody style="color:var(--text-muted);">
+              ${fila(`Artículos con ${R.semanasFijas} semanas`, R.grupoFijo, T.grupoFijo)}
+              ${fila('Sale en dos semanas', d1(R.dosSemanas) + '%', d1(T.dosSemanas) + '%', AMBAR, '#10b981')}
+              ${fila('Tarda en bajar al 25%', h25(R), h25(T), AMBAR, '#10b981')}
+              ${fila('Llegaron a cero', R.cero.n === 0 ? 'ninguno' : `${R.cero.n} · ${d1(R.cero.pct)}%`,
+                     T.cero.n === 0 ? 'ninguno' : `${T.cero.n} · ${d1(T.cero.pct)}%`, NARANJA, '#10b981')}
+              ${fila('Les queda hoy', d1(R.pct) + '%', d1(T.pct) + '%')}
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.7rem; line-height:1.6;">
+          Las marcas de terceros entran y salen casi enteras: son cruce de andén, no mercadería que se almacena.
+          Por eso todo lo de arriba mide <b style="color:var(--text-main);">solo marca propia</b> — mezclarlas
+          hace parecer que el almacén rota mejor de lo que rota.
+        </div>
+      </div>`;
+
+    const restoSem = R.curva.length > 2
+      ? Math.round((R.curva[R.curva.length - 1].acum - R.dosSemanas) * 10) / 10 : 0;
+    const queda = R.curva.length ? R.curva[R.curva.length - 1].queda : null;
+
+    return `
+    <div class="glass-panel" style="padding:1.4rem 1.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1.2rem; flex-wrap:wrap;">
+        <div>
+          <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">EVOLUCIÓN DEL ARTÍCULO · CUÁNTO TARDA EN AGOTARSE</h3>
+          <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:80ch;">
+            <b>${R.articulos} códigos de marca propia</b> que entraron nuevos en los últimos
+            ${Math.round(P.ventanaDias / 30)} meses con al menos un cuerpo, seguidos foto a foto.
+            La curva y el semáforo se miden sobre los <b>${R.grupoFijo}</b> que ya cumplieron
+            ${R.semanasFijas} semanas, para que todos hayan tenido el mismo plazo.
+          </p>
+        </div>
+        <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted); text-align:right; white-space:nowrap;">
+          ${P.fotos} fotos · al ${kpiFechaLarga(P.hasta)}<br>
+          <span style="font-weight:500; text-transform:none; letter-spacing:0;">lo actualiza el robot cada noche</span>
+        </div>
+      </div>
+
+      <div style="margin:1.1rem 0 0; background:rgba(79,70,229,0.10); border:1px solid rgba(79,70,229,0.45); border-radius:13px; padding:1rem 1.15rem;">
+        <div style="font-size:0.57rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:#a5b4fc;">La respuesta corta</div>
+        <div style="display:flex; align-items:baseline; gap:0.55rem; flex-wrap:wrap; margin-top:6px;">
+          <b style="font-size:2.4rem; font-weight:900; letter-spacing:-2px; color:var(--text-main); line-height:1;">${d1(R.dosSemanas)}%</b>
+          <span style="font-size:0.95rem; color:var(--text-muted);">sale en las <b style="color:var(--text-main);">dos primeras semanas</b>.
+            ${R.curva.length > 2 ? `<span>${d1(R.curva[1].salio)}% la primera, ${d1(R.curva[2].salio)}% la segunda.</span>` : ''}</span>
+        </div>
+        ${queda === null ? '' : `
+        <div style="font-size:0.79rem; color:var(--text-muted); margin-top:7px; line-height:1.55;">
+          Después se planta: las ${R.semanasFijas - 2} semanas siguientes juntas suman
+          <b style="color:var(--text-main);">${d1(restoSem)}%</b>, y a la ${kpiOrdinal(R.semanasFijas)}
+          todavía le queda el <b style="color:${AMBAR};">${d1(queda)}%</b> abajo.
+        </div>`}
+      </div>
+
+      <div style="font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); margin:1.1rem 0 0.55rem;">
+        Cuánto tarda en bajar a… <span style="text-transform:none; letter-spacing:0; font-weight:500;">(de los ${R.grupoFijo})</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:0.7rem;">
+        ${hito(50)}${hito(25)}${hito(10)}${cajaCero}
+      </div>
+
+      ${contraste}
+
+      <div style="font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); margin:1.1rem 0 0.55rem;">
+        Cómo están hoy los ${R.grupoFijo} · ${kpiFechaLarga(P.hasta)}
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:0.7rem;">${semaforo}</div>
+      ${R.enCurva ? `<div style="font-size:0.67rem; color:var(--text-muted); margin-top:0.55rem;">
+        Los otros <b style="color:var(--text-main);">${R.enCurva}</b> códigos de marca propia llegaron hace menos de
+        ${R.semanasFijas} semanas: están en su curva y todavía no se los puede juzgar.</div>` : ''}
+    </div>`;
+  };
 
   // ── EL MOLDE ──────────────────────────────────────────────────────────────────────
   // Lo usan el grupo y los dos casos: mismo dibujo, mismas etiquetas, mismas
@@ -22392,17 +22494,23 @@ window.showCellModal = function(htmlContent) {
     const P = D.puntos, MAXS = P.length - 1;
     const n = kpiN, d1 = kpiD1;
     const AZUL = KPI_AZUL, NARANJA = KPI_NARANJA, AMBAR = KPI_AMBAR, PARES = KPI_PARES;
+    // Antes las curvas venían escritas acá y siempre tenían diez puntos. Ahora las manda
+    // el robot y un artículo recién llegado puede traer tres: sin esto, los textos que
+    // hablan de la semana 4, 5 o 6 reventarían la pantalla entera con un error.
+    const E = i => P[Math.min(i, MAXS)];
 
     // LOS PARES SE REDONDEAN UNA SOLA VEZ Y LO PICADO SE RESTA DE AHÍ. Si lo picado saliera
     // del porcentaje por su cuenta, la columna no sumaría lo que se fue de verdad.
     P.forEach((p,i,t)=>{
       if (p.pares === undefined) p.pares = Math.round(D.llegada * p.queda / 100);
       p.semana = i ? Math.round((t[i-1].queda - p.queda)*10)/10 : 0;
-      p.rebase = i ? p.queda / t[i-1].queda * 100 : null;
+      // "Sobre lo que había el lunes" no existe si el lunes no había nada: 0/0 daba NaN.
+      // Pasa desde que el robot elige los casos y puede tocarle uno que se agotó.
+      p.rebase = (i && t[i-1].queda > 0) ? p.queda / t[i-1].queda * 100 : null;
     });
     P.forEach((p,i,t)=>{
       p.paresSemana = i ? t[i-1].pares - p.pares : 0;
-      p.picoRebase  = i ? 100 - p.rebase : null;
+      p.picoRebase  = p.rebase === null ? null : 100 - p.rebase;
     });
 
     const X0=78, X1=862, C0=68, C1=210;
@@ -22484,7 +22592,7 @@ window.showCellModal = function(htmlContent) {
           <div style="margin-top:0.75rem; padding-top:0.65rem; border-top:1px solid var(--border);
                       display:flex; align-items:baseline; justify-content:space-between;">
             <span style="font-size:0.61rem; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-muted);">En el primer mes</span>
-            <span><b style="font-size:1.05rem; font-weight:900; color:#fff;">${d1((100-P[4].queda)/10)}</b>
+            <span><b style="font-size:1.05rem; font-weight:900; color:#fff;">${d1((100-E(4).queda)/10)}</b>
             <span style="font-size:0.58rem; color:var(--text-muted);"> de 10</span></span>
           </div>
         </div>
@@ -22499,6 +22607,28 @@ window.showCellModal = function(htmlContent) {
           </div>
         </div>
       </div>`;
+
+    // EL CIERRE DEL CASO SE ESCRIBE CON LO QUE HIZO ESE ARTÍCULO, no con un texto fijo.
+    // Antes decía "estuvo dos semanas parado y en la 5 y la 6 se fueron otros 408": era
+    // verdad del 8816380, el caso que estaba escrito a mano. Ahora el caso lo elige el
+    // robot cada noche, y ese mismo texto sobre otro artículo sería mentira.
+    const mov = P.filter(p => p.s > 0);
+    const pico = mov.reduce((a, p) => p.paresSemana > a.paresSemana ? p : a, mov[0] || P[0]);
+    const paradas = mov.filter(p => p.paresSemana <= D.llegada * 0.02).length;
+    const quietas = `Un artículo de verdad no se pica parejo como la mediana: `
+      + `<b style="color:rgba(255,255,255,0.7);">se mueve a los saltos</b>. Este se llevó `
+      + `${n(E(1).paresSemana)} pares la primera semana`
+      + (pico && pico.s !== 1
+          ? `, y su mejor semana fue la ${pico.s}, con ${n(pico.paresSemana)}`
+          : '')
+      + (paradas
+          ? `. Estuvo ${paradas === 1 ? 'una semana' : `${paradas} semanas`} casi sin moverse`
+          : '')
+      + `. Hoy le quedan <b style="color:rgba(255,255,255,0.7);">${n(P[MAXS].pares)} pares</b>, `
+      + `el ${d1(P[MAXS].queda)}% de lo que llegó`
+      + (P[MAXS].pares >= 350 ? ` · ${d1(P[MAXS].pares / 350)} cuerpos` : '')
+      + `. Por eso los cuerpos se calculan sobre el grupo y no sobre un caso: el caso sirve `
+      + `para entender qué hay detrás del promedio.`;
 
     const hayFecha = P[0].fecha !== undefined;
     const filas = P.map(p=>`
@@ -22521,13 +22651,13 @@ window.showCellModal = function(htmlContent) {
           <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:64ch;">${D.bajada}</p>
         </div>
         <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted); text-align:right;">
-          ${D.sello}<br><span style="font-weight:500; text-transform:none; letter-spacing:0;">no se recalcula solo</span>
+          ${D.sello}<br><span style="font-weight:500; text-transform:none; letter-spacing:0;">lo actualiza el robot cada noche</span>
         </div>
       </div>
 
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:0.7rem; margin:1.1rem 0;">
         ${tarjeta(D.rotuloLlegada, n(D.llegada), D.subLlegada)}
-        ${tarjeta('Se va en 2 semanas', (100-P[2].queda).toFixed(0)+'%', 'y en la primera, '+(100-P[1].queda).toFixed(0)+'%')}
+        ${tarjeta('Se va en 2 semanas', (100-E(2).queda).toFixed(0)+'%', 'y en la primera, '+(100-E(1).queda).toFixed(0)+'%')}
         ${tarjeta(`Queda a las ${MAXS} semanas`, P[MAXS].queda.toFixed(0)+'%', n(P[MAXS].pares)+' pares en el piso')}
       </div>
 
@@ -22567,14 +22697,15 @@ window.showCellModal = function(htmlContent) {
         </table>
         <div style="font-size:0.63rem; color:rgba(255,255,255,0.28); padding:0.5rem 0.8rem 0; line-height:1.6;">
           La columna en <b style="color:${AMBAR};">ámbar</b> es la misma cantidad medida contra lo que había el lunes en vez de contra lo que llegó.
-          No cambia los pares: en la semana 2, los ${n(P[2].paresSemana)} que se picaron son el ${d1(P[2].semana)}% de los ${n(D.llegada)} que llegaron y el ${d1(P[2].picoRebase)}% de los ${n(P[1].pares)} que había el lunes.
+          ${E(2).picoRebase === null ? 'Queda con guión en las semanas en que el lunes ya no había nada: no se puede medir contra cero.'
+            : `No cambia los pares: en la semana 2, los ${n(E(2).paresSemana)} que se picaron son el ${d1(E(2).semana)}% de los ${n(D.llegada)} que llegaron y el ${d1(E(2).picoRebase)}% de los ${n(E(1).pares)} que había el lunes.`}
         </div>
       </div>
 
       <div style="margin-top:1rem; padding:0.8rem 1rem; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2); border-radius:11px; font-size:0.72rem; color:var(--text-muted); line-height:1.7;">
         <b style="color:#93c5fd;">Para qué sirve.</b> ${D.cierre ? D.cierre : D.tipo==='grupo'
-          ? `De acá salen los cuerpos que se le reservan a un código nuevo: las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">${n(P[1].paresSemana+P[2].paresSemana)} pares</b>, que son dos cuerpos moviéndose. Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento. Sobre esos ${n(D.llegada)} pares, ${cabeEn(2)?`desde la semana ${cabeEn(2)} el artículo ya cabe en dos cuerpos`:`a las ${MAXS} semanas todavía ocupa ${Math.ceil(P[MAXS].pares/350)} cuerpos`}.`
-          : `Un artículo de verdad no se pica parejo como la mediana: <b style="color:rgba(255,255,255,0.7);">se mueve a los saltos</b>. Este se llevó ${n(P[1].paresSemana)} pares la primera semana, después estuvo dos semanas parado —${n(P[3].paresSemana)} pares en la 3 y ${n(P[4].paresSemana)} en la 4—, y recién en la 5 y la 6 se fueron otros ${n(P[5].paresSemana+P[6].paresSemana)} de golpe. Por eso los cuerpos se calculan sobre el grupo y no sobre un caso: el caso sirve para entender qué hay detrás del promedio.`}
+          ? `De acá salen los cuerpos que se le reservan a un código nuevo: las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">${n(E(1).paresSemana+E(2).paresSemana)} pares</b>, que son ${d1((E(1).paresSemana+E(2).paresSemana)/350)} cuerpos moviéndose. Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento. Sobre esos ${n(D.llegada)} pares, ${cabeEn(2)?`desde la semana ${cabeEn(2)} el artículo ya cabe en dos cuerpos`:`a las ${MAXS} semanas todavía ocupa ${Math.ceil(P[MAXS].pares/350)} cuerpos`}.`
+          : quietas}
       </div>
     </div>`;
   };
@@ -22582,17 +22713,25 @@ window.showCellModal = function(htmlContent) {
   // ── PARETO ABC ────────────────────────────────────────────────────────────────────
   // A: los que hacen el primer 80% de lo que falta picar. B: del 80 al 95. C: el resto.
   // El corte es por ACUMULADO, que es como se hace el ABC de siempre, no por cuántos
-  // artículos son. TODO EL CUADRO ES DE LA MISMA FOTO, la del 03-ago: antes se mostraba
-  // al lado lo que quedaba a las nueve semanas —que para cada artículo cae en una fecha
+  // artículos son. TODO EL CUADRO ES DE LA MISMA FOTO, la última: antes se mostraba al
+  // lado lo que quedaba a las nueve semanas —que para cada artículo cae en una fecha
   // distinta— y las dos columnas juntas parecían un error.
-  const kpiPareto = () => {
+  //
+  // ACÁ ENTRAN TODOS, propia y terceros, y también los que llegaron hace dos semanas: la
+  // pregunta de este bloque no es cómo rota un código nuevo sino QUÉ HAY HOY OCUPANDO EL
+  // ALMACÉN, y para eso el stock de un recién llegado cuenta igual que el de uno viejo.
+  const kpiPareto = (P) => {
     const n = kpiN, d1 = kpiD1;
     const NARANJA = KPI_NARANJA, AMBAR = KPI_AMBAR;
-    const A = KPI_PARETO
-      .map(a=>({ cod:a[0], marca:a[1], modelo:a[2], color:a[3], llego:a[4], rep:a[7],
-                 ingreso:a[8], ultMov:a[9], hoy:a[10], parado:a[11], dias:a[12], temp:a[13],
-                 pct: a[10]/a[4]*100 }))
+    const FECHA = kpiFechaLarga(P.hasta);
+    const A = (P.articulos || [])
+      .filter(a => a.hoy > 0)
+      .map(a=>({ cod:a.cod, marca:a.marca, modelo:a.modelo, color:a.color, llego:a.pares,
+                 rep:a.rep, ingreso:kpiFechaCorta(a.llegada), ultMov:kpiFechaCorta(a.ultMov),
+                 hoy:a.hoy, parado:a.parado, dias:a.dias, temp:a.coleccion || '—',
+                 pct: a.hoy/a.pares*100 }))
       .sort((x,y)=> y.hoy - x.hoy);
+    if (!A.length) return '';
     const TL = A.reduce((s,a)=>s+a.llego,0), TQ = A.reduce((s,a)=>s+a.hoy,0);
     const altos = A.filter(a=>a.pct > 20);
     const TQA = altos.reduce((s,a)=>s+a.hoy,0);
@@ -22662,7 +22801,7 @@ window.showCellModal = function(htmlContent) {
         <div style="font-size:0.68rem; color:var(--text-muted);">${sub}</div>
       </div>`;
 
-    // CADA CLASE TIENE DOS PORCENTAJES Y SE CONFUNDEN: cuántos ARTÍCULOS son sobre los 81,
+    // CADA CLASE TIENE DOS PORCENTAJES Y SE CONFUNDEN: cuántos ARTÍCULOS son sobre el total,
     // y cuántos PARES tienen sobre el total. La clase A es el 41% de los artículos pero el
     // 79,4% de los pares, y esa es justamente la gracia del ABC. Van los dos, rotulados.
     const claseCard = (c) => `
@@ -22709,20 +22848,20 @@ window.showCellModal = function(htmlContent) {
     <div class="glass-panel" style="padding:1.4rem 1.5rem;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1.2rem; flex-wrap:wrap;">
         <div>
-          <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">PARETO ABC · LO QUE FALTA PICAR, AL 03-AGO</h3>
+          <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">PARETO ABC · LO QUE FALTA PICAR, AL ${FECHA.toUpperCase()}</h3>
           <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:74ch;">
-            Los <b>${A.length} artículos</b> que entraron nuevos en mayo, ordenados por los pares que <b>todavía tienen hoy</b> en el almacén
+            Los <b>${A.length} artículos</b> nuevos que todavía tienen stock, ordenados por los pares que <b>les quedan hoy</b> en el almacén
             y partidos en tres clases: <b style="color:${CLS[0].col};">A</b> son los que hacen el primer 80% de lo que falta,
             <b style="color:${CLS[1].col};">B</b> los que van del 80% al 95%, y <b style="color:rgba(57,135,229,0.9);">C</b> el 5% final.
           </p>
         </div>
         <div style="font-size:0.6rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted); text-align:right;">
-          Foto del 03-ago-2026<br><span style="font-weight:500; text-transform:none; letter-spacing:0;">todo el cuadro es de esta fecha</span>
+          Foto del ${FECHA}<br><span style="font-weight:500; text-transform:none; letter-spacing:0;">todo el cuadro es de esta fecha</span>
         </div>
       </div>
 
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:0.7rem; margin:1.1rem 0 0.7rem;">
-        ${tarjeta('Artículos', String(A.length), 'entraron nuevos en mayo')}
+        ${tarjeta('Artículos', String(A.length), `de los ${P.total.articulos} nuevos, los que tienen stock`)}
         ${tarjeta('Llegaron', n(TL), 'pares en total')}
         ${tarjeta('Falta picar hoy', n(TQ), `pares · ${d1(TQ/TL*100)}% de lo que llegó`)}
         ${tarjeta('Ocupan', d1(TOTCU), 'cuerpos del almacén')}
@@ -22784,7 +22923,7 @@ window.showCellModal = function(htmlContent) {
         </table>
       </div>
       <div style="font-size:0.63rem; color:rgba(255,255,255,0.3); padding:0.5rem 0.7rem 0; line-height:1.6;">
-        Todo el cuadro es de la foto del <b>03-ago-2026</b>: <b>Falta picar</b> son los pares que hay hoy en el almacén,
+        Todo el cuadro es de la foto del <b>${FECHA}</b>: <b>Falta picar</b> son los pares que hay hoy en el almacén,
         <b>Días</b> es cuánto lleva el artículo adentro y <b>%</b> es lo que queda sobre lo que llegó.
         <b style="color:#93c5fd;">Colección PO</b> sale del Maestro de artículos.<br>
         <span style="color:${AMBAR};">•</span> recibió una segunda tanda: el % está sobre la primera llegada.
@@ -22792,12 +22931,8 @@ window.showCellModal = function(htmlContent) {
     </div>`;
   };
 
-  const renderKpiPicking = (container) => {
-    if (!container) return;
-    container.dataset.vista = 'kpi-picking';
-    // El reporte va pegado a la izquierda y ocupa el 85%: lo que sobra a la derecha queda
-    // libre para poner otro reporte al costado más adelante.
-    container.innerHTML = `
+  /** El armazón de estilos, igual para el spinner, el error y el reporte. */
+  const kpiEnvoltura = (dentro) => `
       <style>
         [data-vista="kpi-picking"] .kpi-modulo{ width:85%; min-width:0; display:flex; flex-direction:column; gap:1.2rem; }
         /* Las dos columnas terminan a la misma altura: stretch en la fila y flex:1 en las
@@ -22814,13 +22949,73 @@ window.showCellModal = function(htmlContent) {
           [data-vista="kpi-picking"] .kpi-lado{ flex:1 1 auto; width:100%; }
         }
       </style>
-      <div class="kpi-modulo">
-        ${kpiBloque(KPI_GRUPO)}
-        ${kpiBloque(KPI_CASO1)}
-        ${kpiBloque(KPI_CASO2)}
-        ${kpiPareto()}
-      </div>`;
+      <div class="kpi-modulo">${dentro}</div>`;
+
+  /**
+   * EVOLUCIÓN DEL ARTÍCULO. Lee el estudio que dejó el robot y lo dibuja.
+   *
+   * Cuatro secciones: la portada con la respuesta, la curva del grupo, dos artículos
+   * reales y el Pareto ABC. Las tres últimas usan el mismo molde de siempre.
+   */
+  const renderKpiPicking = async (container) => {
+    if (!container) return;
+    container.dataset.vista = 'kpi-picking';
+    container.innerHTML = kpiEnvoltura(`
+      <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:4rem; color:var(--text-muted);">
+        <div class="spinner" style="width:26px; height:26px; border:3px solid rgba(99,102,241,0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:0.85rem;">Trayendo la evolución del artículo...</span>
+      </div>
+      <style>@keyframes spin { 100% { transform:rotate(360deg); } }</style>`);
+
+    const P = kpiPaquete || await traerEvolucion();
+    // Al volver de la espera la pantalla puede haber cambiado: sin esto el reporte se
+    // dibujaría encima de la pestaña a la que el usuario ya se fue.
+    if (!container.isConnected || container.dataset.vista !== 'kpi-picking') return;
+
+    if (!P) {
+      container.innerHTML = kpiEnvoltura(`
+        <div class="glass-panel" style="padding:2.5rem; text-align:center; color:var(--text-muted);">
+          <div style="font-size:2rem; margin-bottom:0.6rem;">📉</div>
+          <h4 style="margin:0 0 0.5rem; color:var(--text-main); font-weight:800;">Todavía no hay estudio publicado</h4>
+          <p style="margin:0 auto; max-width:56ch; font-size:0.82rem; line-height:1.6;">
+            Lo arma el robot después de bajar el stock de las 19:00 y lo deja en el servidor.
+            Si el robot ya corrió y esto sigue vacío, conviene mirar el registro de la corrida.
+          </p>
+        </div>`);
+      return;
+    }
+
+    // El caso que se agota y el que se traba: los elige el robot cada noche sobre lo
+    // que de verdad pasó, así que los rótulos no pueden dar por sentado cuál es cuál.
+    const porCod = new Map((P.articulos || []).map(a => [a.cod, a]));
+    const casos = (P.casos || []).map(c => porCod.get(c)).filter(Boolean);
+    const bloqueCaso = (a, i) => {
+      const seVa = a.cero !== null && a.cero !== undefined;
+      return kpiBloque(kpiDeArticulo(P, a,
+        seVa ? 'EL QUE SE AGOTA' : 'EL QUE SE TRABA',
+        seVa
+          ? `Este es el caso que sale como debería: llegó con ${kpiN(a.pares)} pares y a la `
+            + `semana ${a.cero} ya no quedaba ninguno. Es de <b style="color:rgba(255,255,255,0.7);">${a.marca}</b>, `
+            + `y ahí está la diferencia: las marcas de terceros entran y salen casi enteras.`
+          : `Este es el caso que traba el almacén. Llegó con ${kpiN(a.pares)} pares y a la semana `
+            + `${a.sem} todavía tiene <b style="color:rgba(255,255,255,0.7);">${kpiN(a.hoy)} abajo, que son `
+            + `${kpiD1(a.hoy / 350)} cuerpos</b> ocupados por mercadería que ya casi no se mueve. `
+            + `De acá salen los saldos.`));
+    };
+
+    container.innerHTML = kpiEnvoltura(`
+      ${kpiPortada(P)}
+      ${kpiBloque(kpiDeGrupo(P, P.propia))}
+      ${casos.map(bloqueCaso).join('')}
+      ${kpiPareto(P)}
+    `);
   };
+
+  // Queda a mano para poder dibujar el reporte sin pasar por el login: cargar la página,
+  // interceptar el fetch del área y llamarla con un div. Compilar no alcanza —el import
+  // no ve un identificador mal escrito dentro de una plantilla— y este reporte tiene
+  // cuatro secciones que solo se rompen al dibujarse.
+  window.__renderKpiPicking = (div) => renderKpiPicking(div || document.body);
 
   const renderProductividad = async (container) => {
     container.dataset.vista = 'productividad';
