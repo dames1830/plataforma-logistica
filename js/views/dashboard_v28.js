@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0092';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0093';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0092';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0092';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0092';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0092';
-import * as metasService from '../services_v245/metasService.js?v=29.0092';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0092';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0092';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0092';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0092';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0092';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0092';
+import * as adminService from '../services_v245/adminService.js?v=29.0093';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0093';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0093';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0093';
+import * as metasService from '../services_v245/metasService.js?v=29.0093';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0093';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0093';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0093';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0093';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0093';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0093';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0092';
+const VERSION = '29.0093';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1420,6 +1420,26 @@ const ajustarTareasVivas = (tareas, filasStock) => {
  * buffer desde el 22 de junio y en la lista se ven igual que uno que llegó anoche.
  */
 const esperaPorArticulo = (tareas) => {
+    // ALMACENARLO SALDA LA ESPERA.
+    //
+    // Acá se miraba la tarea abierta más vieja y nada más, y eso daba números imposibles. El
+    // 8816458 salió con "esperando hace 44 días" —lo cazó Daniel— cuando en realidad se había
+    // almacenado el 1, el 4 y el 5 de agosto: los 44 días venían de tres tareas Creada de junio
+    // y julio que nunca se trabajaron y cuya mercadería hace rato no existe.
+    //
+    // Una tarea vieja sin cerrar no prueba que el artículo esté esperando desde entonces. Lo
+    // que sí lo prueba es que NO se haya almacenado en el medio. Así que las esperas anteriores
+    // a la última vez que se finalizó una tarea suya se descartan: esa deuda ya se pagó.
+    const ultimaFinalizada = new Map();
+    (tareas || []).forEach(t => {
+        if (!t || t.status !== 'Finalizado' || !t.fecha) return;
+        (t.items || []).forEach(a => {
+            if (!a || !a.sku7) return;
+            const prev = ultimaFinalizada.get(a.sku7);
+            if (!prev || t.fecha > prev) ultimaFinalizada.set(a.sku7, t.fecha);
+        });
+    });
+
     const m = new Map();
     (tareas || []).forEach(t => {
         if (!t || t.status === 'Finalizado') return;
@@ -1427,6 +1447,8 @@ const esperaPorArticulo = (tareas) => {
         if (!f) return;
         (t.items || []).forEach(a => {
             if (!a || !a.sku7) return;
+            const fin = ultimaFinalizada.get(a.sku7);
+            if (fin && String(f) <= String(fin)) return;   // se almacenó después: ya no cuenta
             const prev = m.get(a.sku7);
             if (!prev || f < prev) m.set(a.sku7, f);
         });
@@ -3554,7 +3576,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0092');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0093');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13868,7 +13890,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0092 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0093 | MOBILE PORTAL
                             </div>
                     </div>
 
