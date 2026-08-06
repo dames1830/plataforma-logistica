@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0097';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0098';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0097';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0097';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0097';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0097';
-import * as metasService from '../services_v245/metasService.js?v=29.0097';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0097';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0097';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0097';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0097';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0097';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0097';
+import * as adminService from '../services_v245/adminService.js?v=29.0098';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0098';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0098';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0098';
+import * as metasService from '../services_v245/metasService.js?v=29.0098';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0098';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0098';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0098';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0098';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0098';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0098';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0097';
+const VERSION = '29.0098';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0097');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0098');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0097 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0098 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16289,12 +16289,34 @@ const renderRFSection = (container) => {
        *
        * Se baja el archivo y se manda a la impresora sin tocar nada, que era el punto.
        */
+      // Excel no admite : \ / ? * [ ] en el nombre de una pestaña, ni más de 31 caracteres, ni
+      // dos hojas iguales. El sufijo solo aparece si de verdad se repite: antes iba siempre y
+      // las pestañas salían "Tarea2 2", con el número al pedo.
+      const nombresUsados = new Set();
+      const nombreDeHoja = (base) => {
+        let n = String(base || 'Tarea').replace(/[:\\\/\?\*\[\]]/g, '-').trim().slice(0, 31) || 'Tarea';
+        let i = 2;
+        while (nombresUsados.has(n)) n = n.slice(0, 28) + '_' + (i++);
+        nombresUsados.add(n);
+        return n;
+      };
+
       const nuevaHoja = (nombre) => {
-        const h = wb.addWorksheet(nombre, {
+        const h = wb.addWorksheet(nombreDeHoja(nombre), {
           pageSetup: {
             orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0,
             margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.4, header: 0.2, footer: 0.2 }
-          }
+          },
+          // TODAS LAS HOJAS QUEDAN SELECCIONADAS AL GUARDAR.
+          //
+          // Excel no guarda dentro del archivo la opción "imprimir todo el libro" —es de la
+          // sesión de impresión, no del documento—, pero SÍ guarda qué hojas están
+          // seleccionadas. Y "Imprimir hojas activas", que es lo que viene por defecto,
+          // imprime todas las seleccionadas.
+          //
+          // Así el asistente abre el archivo, da Ctrl+P e imprime las 60 tareas sin entrar a
+          // ninguna configuración, que es lo que pidió Daniel.
+          views: [{ tabSelected: true, showGridLines: false }]
         });
         // La marca no lleva columna: una tarea es de una sola marca, así que va en la cabecera
         h.columns = [
@@ -16328,12 +16350,9 @@ const renderRFSection = (container) => {
         const t = grupo.tarea;
         const idCorto = String(t.id).includes('_') ? String(t.id).split('_')[1] : String(t.id);
 
-        // El nombre de la pestaña: Excel no admite : \ / ? * [ ] ni más de 31 caracteres, y
-        // dos hojas no pueden llamarse igual — de ahí el índice al final.
-        const ws = nuevaHoja(
-          `${(/^tarea/i.test(idCorto) ? idCorto : 'Tarea ' + idCorto)}`
-            .replace(/[:\\\/\?\*\[\]]/g, '-').slice(0, 27) + ' ' + (idx + 1)
-        );
+        // La pestaña se llama como la tarea y nada más. De limpiar el nombre y de que no se
+        // repita se encarga nombreDeHoja.
+        const ws = nuevaHoja(/^tarea/i.test(idCorto) ? idCorto : 'Tarea ' + idCorto);
         const trabadas = grupo.arts.filter(x => x.plan.estado === 'slotting'
           || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona');
 
