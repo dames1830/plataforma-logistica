@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0082';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0083';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0082';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0082';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0082';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0082';
-import * as metasService from '../services_v245/metasService.js?v=29.0082';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0082';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0082';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0082';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0082';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0082';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0082';
+import * as adminService from '../services_v245/adminService.js?v=29.0083';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0083';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0083';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0083';
+import * as metasService from '../services_v245/metasService.js?v=29.0083';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0083';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0083';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0083';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0083';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0083';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0083';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0082';
+const VERSION = '29.0083';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3422,7 +3422,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0082');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0083');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13736,7 +13736,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0082 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0083 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -15619,6 +15619,25 @@ const renderRFSection = (container) => {
     // forma de distinguir un código nuevo de uno establecido. Se deja pasar la regla de la
     // marca, que es lo que venía haciendo.
     if (!zona) return { nombre: 'sin-zona', regla: null, motivo: '' };
+
+    // HAY MARCAS QUE NO MANDAN NADA A RESERVA, Y ESO LE GANA AL CASO.
+    //
+    // Puma, Adidas y Skechers viven en el mezzanine 3 y ahí se quedan, llegue lo que llegue
+    // —regla de Daniel, 05-ago-2026—. Van con `modo: 'todo'` en la configuración de marcas, y
+    // hasta acá el caso se las pasaba por encima: un Puma nuevo caía en la regla del 60% y se
+    // le paletizaba el 40%. Medido sobre el buffer de hoy eran 3.045 pares de Puma, de los que
+    // 1.218 habrían subido a reserva teniendo el mezzanine 3 con 13 cuerpos libres.
+    //
+    // Si el mezzanine se llena, lo que no entra NO sube: se queda en el buffer y vuelve a
+    // aparecer en la corrida siguiente, que es como se trabaja hoy a mano.
+    //
+    // El escolar sigue mandando sobre esto, porque se pregunta más arriba: son 50 pares
+    // "así sea nuevo, reposición, lo que sea".
+    const deLaMarca = tallasService.modoDeMarca(datos.marca);
+    if (deLaMarca && deLaMarca.modo === 'todo') {
+      return { nombre: 'marca-sin-reserva', regla: { modo: 'todo', valor: 0 },
+               motivo: `${datos.marca} no manda nada a reserva: todo se almacena en su zona.` };
+    }
 
     // Para la prueba de saldos van los pares DEL BUFFER y no los que terminen bajando: lo
     // que decide si un artículo es un saldo es cuánto tiene, no cuánto se le almacena hoy.

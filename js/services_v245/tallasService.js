@@ -72,9 +72,13 @@ export const marcasPorDefecto = () => ({
     'Power':         { modo: 'cuerpos', valor: 1 },
     'Weinbrenner':   { modo: 'cuerpos', valor: 1 },
     'Bata Industrials': { modo: 'cuerpos', valor: 1 },
-    'Puma':          { modo: 'cuerpos', valor: 1 },
     'Marie Claire':  { modo: 'cuerpos', valor: 1 },
+    // LAS TRES DEL MEZZANINE 3 NO MANDAN NADA A RESERVA, llegue lo que llegue. Puma estaba en
+    // un cuerpo y pasó acá el 05-ago-2026, con Adidas y Skechers, por regla de Daniel: las tres
+    // viven en el mezzanine 3 y ahí se quedan. Si la zona se llena, lo que no entra se queda en
+    // el buffer y vuelve en la corrida siguiente — a reserva no sube.
     'Adidas':        { modo: 'todo', valor: 0 },
+    'Puma':          { modo: 'todo', valor: 0 },
     'Skechers':      { modo: 'todo', valor: 0 }
 });
 
