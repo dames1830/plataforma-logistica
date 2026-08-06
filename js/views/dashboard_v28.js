@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0100';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0101';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0100';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0100';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0100';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0100';
-import * as metasService from '../services_v245/metasService.js?v=29.0100';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0100';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0100';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0100';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0100';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0100';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0100';
+import * as adminService from '../services_v245/adminService.js?v=29.0101';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0101';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0101';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0101';
+import * as metasService from '../services_v245/metasService.js?v=29.0101';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0101';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0101';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0101';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0101';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0101';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0101';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0100';
+const VERSION = '29.0101';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0100');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0101');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13916,7 +13916,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0100 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0101 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22249,7 +22249,9 @@ window.showCellModal = function(htmlContent) {
       // El backend guarda áreas como lista de filas; ésta es un objeto solo. Según cómo
       // haya viajado puede llegar envuelto en un arreglo de un elemento.
       const paq = Array.isArray(p) ? p[0] : p;
-      if (!paq || !paq.propia) return null;
+      // Se exige la lista de artículos porque es de donde sale TODO lo que se dibuja.
+      // Un paquete sin ella no es un estudio a medias: es una pantalla en blanco.
+      if (!paq || !Array.isArray(paq.articulos) || !paq.articulos.length) return null;
       kpiPaquete = paq;
       kpiPaqueteTs = cuerpo.updated_at || null;
       return paq;
@@ -22278,11 +22280,12 @@ window.showCellModal = function(htmlContent) {
    * El molde no cambió: sigue recibiendo `llegada` y una lista de puntos con el % que
    * queda, y él calcula los pares y lo picado. Lo único nuevo es de dónde salen.
    */
-  const kpiDeGrupo = (P, R) => ({
+  const kpiDeGrupo = (P, R, filtro) => ({
     tipo: 'grupo', banda: true,
     titulo: 'EVOLUCIÓN DEL ARTÍCULO · CÓMO SE VACÍA UN CÓDIGO NUEVO',
-    bajada: `<b>${R.articulos} códigos de marca propia</b> que entraron nuevos en los últimos `
-      + `${Math.round(P.ventanaDias / 30)} meses con al menos un cuerpo (${kpiN(P.minimoPares)} pares), `
+    bajada: `<b>${R.articulos} códigos${(filtro && filtro.marca) ? ` de ${filtro.marca}` : ' de marca propia'}</b> `
+      + `que entraron nuevos en los últimos ${Math.round(P.ventanaDias / 30)} meses `
+      + `${(filtro && filtro.minimo) ? `con más de ${kpiN(filtro.minimo)} pares` : `con al menos un cuerpo (${kpiN(P.minimoPares)} pares)`}, `
       + `seguidos foto a foto. La curva se mide sobre los <b>${R.grupoFijo}</b> que ya cumplieron `
       + `${R.semanasFijas} semanas, para que todos hayan tenido el mismo plazo. Cada punto es la `
       + `mediana: la mitad de los códigos queda por debajo y la mitad por encima.`,
@@ -22303,13 +22306,20 @@ window.showCellModal = function(htmlContent) {
   const kpiDeArticulo = (P, a, rotulo, cierre) => ({
     tipo: 'articulo', banda: false,
     titulo: `${rotulo} · ${a.cod}`,
+    // LA BASE ES TODO LO QUE ENTRÓ, no la primera llegada. Para el que llegó una sola vez
+    // son el mismo número; para el que recibió otra tanda es lo único que hace que la
+    // franja de abajo cierre —lo picado más lo que queda tiene que dar lo que entró—.
     bajada: `<b>${a.modelo}${a.color ? ' · ' + a.color : ''} · ${a.marca}</b>. Llegó el `
-      + `${kpiFechaLarga(a.llegada)} con ${kpiN(a.pares)} pares. Es uno de los del grupo y acá los `
-      + `pares no son un promedio: <b>son los que dice la foto de cada semana</b>.`,
+      + `${kpiFechaLarga(a.llegada)} con ${kpiN(a.pares)} pares`
+      + (a.rep ? ` y después recibió <b style="color:${KPI_AMBAR};">${kpiN(a.entro - a.pares)} más</b>, `
+                 + `así que todo lo de abajo va sobre los <b>${kpiN(a.entro)}</b> que entraron en total`
+               : '')
+      + `. Acá los pares no son un promedio: <b>son los que dice la foto de cada semana</b>.`,
     sello: `Un caso real · llegó el ${kpiFechaCorta(a.llegada)}, seguido ${a.sem} semanas`,
-    llegada: a.pares, rotuloLlegada: 'Llegó con',
-    subLlegada: `pares el ${kpiFechaCorta(a.llegada)}`,
-    llegadaFranja: 'ESTE ARTÍCULO · LE LLEGARON',
+    llegada: a.entro,
+    rotuloLlegada: a.rep ? 'Entraron' : 'Llegó con',
+    subLlegada: a.rep ? `pares desde el ${kpiFechaCorta(a.llegada)}` : `pares el ${kpiFechaCorta(a.llegada)}`,
+    llegadaFranja: a.rep ? 'ESTE ARTÍCULO · LE ENTRARON' : 'ESTE ARTÍCULO · LE LLEGARON',
     ficha: ['El artículo', [
       ['Código', a.cod], ['Marca', a.marca],
       ['Modelo', a.modelo.split(' · ').slice(-1)[0] || a.modelo],
@@ -22320,8 +22330,12 @@ window.showCellModal = function(htmlContent) {
     puntos: a.curva.map(c => ({ s: c[0], queda: c[2], pares: c[1], fecha: kpiFechaCorta(c[3]) }))
   });
 
-  const kpiN  = v => Math.round(v).toLocaleString('es-PE');
-  const kpiD1 = v => v.toLocaleString('es-PE',{minimumFractionDigits:1,maximumFractionDigits:1});
+  // Toleran que no haya número. Con los filtros puede quedar un conjunto sin ningún
+  // artículo con las semanas cumplidas, y ahí no hay mediana que mostrar: un guión es
+  // la respuesta correcta, y reventar la pantalla entera no lo es.
+  const kpiN  = v => (v === null || v === undefined || isNaN(v)) ? '—' : Math.round(v).toLocaleString('es-PE');
+  const kpiD1 = v => (v === null || v === undefined || isNaN(v)) ? '—'
+    : v.toLocaleString('es-PE',{minimumFractionDigits:1,maximumFractionDigits:1});
   /** Semanas: con decimal solo si lo tiene. "en 3 semanas" y no "en 3.0 semanas". */
   const kpiSem = v => (v === null || v === undefined) ? '—'
     : (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : kpiD1(v));
@@ -22330,13 +22344,160 @@ window.showCellModal = function(htmlContent) {
   const kpiOrdinal = k => KPI_ORDINAL[k] || `semana ${k}`;
   const KPI_AZUL='#3987e5', KPI_NARANJA='#d95926', KPI_AMBAR='#fbbf24', KPI_PARES='rgba(248,250,252,0.55)';
 
+  // ── EL CÁLCULO ────────────────────────────────────────────────────────────────────
+  //
+  // LOS NÚMEROS SE SACAN ACÁ, NO EN EL ROBOT. El robot manda la lista de artículos con
+  // la curva de cada uno; el resumen —la mediana semana a semana, los hitos, el
+  // semáforo— se calcula en la pantalla. Es lo que permite filtrar por marca o por
+  // tamaño de llegada sin volver a pedirle nada al servidor.
+  //
+  // Y evita el problema de tener la misma fórmula escrita dos veces, en Python y en
+  // JavaScript: bastaría con tocar una para que el reporte y el registro de la corrida
+  // dijeran cosas distintas sin que nadie se entere.
+  const kpiMediana = (v) => {
+    if (!v.length) return null;
+    const s = [...v].sort((a, b) => a - b), n = s.length;
+    return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+  };
+  const kpiPctil = (v, p) => {
+    if (!v.length) return null;
+    const s = [...v].sort((a, b) => a - b);
+    return s[Math.min(s.length - 1, Math.round((s.length - 1) * p / 100))];
+  };
+  const kpiR1 = v => v === null || v === undefined ? null : Math.round(v * 10) / 10;
+
+  /**
+   * El resumen de un conjunto de artículos. `art` ya viene sin los que recibieron una
+   * segunda tanda: con una reposición en el medio, el % dejaría de ser sobre lo que entró.
+   *
+   * LA CURVA Y EL SEMÁFORO VAN SOBRE EL GRUPO FIJO —los que ya cumplieron las semanas
+   * pedidas— y no sobre todos. Si no, cada semana se mide sobre un grupo distinto: la
+   * mediana llega a SUBIR, que es imposible, y "se plantaron" se dispara solo porque
+   * entraron códigos que llegaron hace dos semanas.
+   */
+  const kpiResumen = (art, semanasFijas, hitos) => {
+    if (!art.length) return null;
+    const fijo = art.filter(a => a.sem >= semanasFijas);
+    const curva = [];
+    let prev = 100, acum = 0;
+    for (let k = 0; k <= semanasFijas; k++) {
+      const v = fijo.filter(a => a.curva.length > k).map(a => a.curva[k][2]);
+      if (!v.length) break;
+      const m = kpiMediana(v);
+      if (k) acum += prev - m;
+      curva.push({ s: k, queda: kpiR1(m), salio: k ? kpiR1(prev - m) : null,
+                   acum: k ? kpiR1(acum) : null,
+                   p25: kpiR1(kpiPctil(v, 25)), p75: kpiR1(kpiPctil(v, 75)) });
+      prev = m;
+    }
+    const H = {};
+    hitos.forEach(u => {
+      const v = fijo.map(a => a.hitos[String(u)]).filter(x => x !== null && x !== undefined);
+      H[String(u)] = v.length ? { sem: kpiR1(kpiMediana(v)), cruzaron: v.length, de: fijo.length,
+                                  pct: kpiR1(v.length * 100 / fijo.length),
+                                  rapido: kpiR1(kpiPctil(v, 25)), lento: kpiR1(kpiPctil(v, 75)) } : null;
+    });
+    const ceros = fijo.filter(a => a.cero !== null && a.cero !== undefined);
+    const TRAMOS = [['agotado', a => a.hoy === 0],
+                    ['casi',     a => a.hoy > 0 && a.pct < 5],
+                    ['saliendo', a => a.pct >= 5 && a.pct < 20],
+                    ['plantado', a => a.pct >= 20]];
+    const entro = art.reduce((s, a) => s + a.entro, 0);
+    const hoy = art.reduce((s, a) => s + a.hoy, 0);
+    return {
+      articulos: art.length, pares: entro, hoy,
+      pct: kpiR1(hoy * 100 / Math.max(1, entro)),
+      tipica: Math.round(kpiMediana(art.map(a => a.entro)) || 0),
+      curva, grupoFijo: fijo.length, semanasFijas, enCurva: art.length - fijo.length,
+      dosSemanas: curva.length > 2 ? kpiR1(100 - curva[2].queda) : null,
+      hitos: H,
+      cero: { n: ceros.length, de: fijo.length,
+              pct: kpiR1(ceros.length * 100 / Math.max(1, fijo.length)),
+              sem: ceros.length ? kpiR1(kpiMediana(ceros.map(a => a.cero))) : null },
+      estados: TRAMOS.map(([k, f]) => {
+        const s = fijo.filter(f);
+        const p = s.reduce((x, a) => x + a.hoy, 0);
+        return { k, n: s.length, pct: kpiR1(s.length * 100 / Math.max(1, fijo.length)),
+                 pares: p, cuerpos: kpiR1(p / 350) };
+      })
+    };
+  };
+
+  /**
+   * Aplica los filtros de la barra. Devuelve el conjunto principal y, si corresponde,
+   * el de terceros para la comparación.
+   *
+   * SIN FILTRO DE MARCA, el principal es la marca propia y los terceros van al costado:
+   * se comportan al revés y mezclarlos hace parecer que el almacén rota mejor. PERO SI
+   * SE ELIGE UNA MARCA, esa es la que manda, sea propia o de terceros — filtrar por Puma
+   * y que no aparezca nada porque Puma no es propia no tiene ninguna explicación.
+   */
+  const kpiFiltrar = (P, filtro) => {
+    const SEM = P.semanasFijas || 9, H = P.hitos || [50, 25, 10];
+    const base = (P.articulos || []).filter(a => !a.rep
+      && (!filtro.marca || a.marca === filtro.marca)
+      && (!filtro.minimo || a.entro >= filtro.minimo));
+    if (filtro.marca) return { propia: kpiResumen(base, SEM, H), terceros: null, unaMarca: true };
+    return {
+      propia: kpiResumen(base.filter(a => a.propia), SEM, H),
+      terceros: kpiResumen(base.filter(a => !a.propia), SEM, H),
+      unaMarca: false
+    };
+  };
+
   // ── LA PORTADA ────────────────────────────────────────────────────────────────────
   // Responde la pregunta de frente —cuánto tarda en agotarse— antes de cualquier gráfico:
   // el titular, los hitos, el contraste con los terceros y cómo están hoy.
-  const kpiPortada = (P) => {
+  const kpiPortada = (P, R, T, filtro) => {
     const n = kpiN, d1 = kpiD1;
-    const R = P.propia, T = P.terceros;
     const AZUL = KPI_AZUL, NARANJA = KPI_NARANJA, AMBAR = KPI_AMBAR;
+
+    // ── LOS FILTROS ─────────────────────────────────────────────────────────────
+    // Van acá arriba y mandan sobre la portada Y sobre la curva de abajo: son el mismo
+    // estudio, y filtrar uno solo dejaría dos grupos distintos en la misma pantalla.
+    // El Pareto NO se filtra: ése no pregunta cómo rota un código nuevo sino qué hay
+    // hoy ocupando el almacén, y para eso hace falta todo.
+    const marcas = [...new Set((P.articulos || []).filter(a => !a.rep).map(a => a.marca))].sort();
+    const TOPES = [[0, 'Cualquier tamaño'], [350, 'Más de un cuerpo · 350'],
+                   [1000, 'Más de 1.000 pares'], [2000, 'Más de 2.000 pares']];
+    const barra = `
+      <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin:0.9rem 0 0;
+                  padding:0.6rem 0.8rem; background:rgba(0,0,0,0.22); border:1px solid var(--border); border-radius:11px;">
+        <span style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted);">Mirar solo</span>
+        <select onchange="window.__kpiFiltro('marca', this.value)"
+                style="background:#101a2c; color:var(--text-main); border:1px solid var(--border); border-radius:8px;
+                       padding:0.32rem 0.6rem; font-size:0.75rem; font-weight:700; cursor:pointer;">
+          <option value=""${!filtro.marca ? ' selected' : ''}>Todas las marcas</option>
+          ${marcas.map(m => `<option value="${m}"${filtro.marca === m ? ' selected' : ''}>${m}</option>`).join('')}
+        </select>
+        <select onchange="window.__kpiFiltro('minimo', this.value)"
+                style="background:#101a2c; color:var(--text-main); border:1px solid var(--border); border-radius:8px;
+                       padding:0.32rem 0.6rem; font-size:0.75rem; font-weight:700; cursor:pointer;">
+          ${TOPES.map(([v, t]) => `<option value="${v}"${Number(filtro.minimo || 0) === v ? ' selected' : ''}>${t}</option>`).join('')}
+        </select>
+        ${(filtro.marca || filtro.minimo) ? `
+          <button onclick="window.__kpiFiltro('limpiar')" class="btn"
+                  style="width:auto; padding:0.3rem 0.7rem; font-size:0.68rem; background:rgba(217,89,38,0.12);
+                         color:${NARANJA}; border:1px solid ${NARANJA}73; cursor:pointer;">✕ Quitar filtros</button>` : ''}
+        ${R && R.grupoFijo < 15 ? `
+          <span style="font-size:0.68rem; color:${AMBAR};">⚠ Con este filtro quedan ${R.grupoFijo} artículos
+          con ${R.semanasFijas} semanas: la mediana de tan pocos se mueve mucho.</span>` : ''}
+      </div>`;
+
+    // Sin artículos, o con artículos pero ninguno que haya cumplido las semanas: en los
+    // dos casos no hay curva ni semáforo que mostrar, y hay que decir cuál de los dos es.
+    if (!R || !R.grupoFijo) return `
+      <div class="glass-panel" style="padding:1.4rem 1.5rem;">
+        <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">EVOLUCIÓN DEL ARTÍCULO · CUÁNTO TARDA EN AGOTARSE</h3>
+        ${barra}
+        <div style="padding:2.2rem; text-align:center; color:var(--text-muted); font-size:0.85rem; line-height:1.7;">
+          ${!R ? 'Con este filtro no queda ningún artículo.'
+               : `Quedan <b style="color:var(--text-main);">${R.articulos} artículos</b>, pero ninguno cumplió todavía
+                  las ${R.semanasFijas} semanas, así que no hay curva ni semáforo que mostrar.<br>
+                  Entre todos entraron <b style="color:var(--text-main);">${n(R.pares)} pares</b> y les queda el
+                  <b style="color:var(--text-main);">${d1(R.pct)}%</b>.`}
+        </div>
+      </div>`;
 
     const caja = (borde, rotulo, colRotulo, valor, colValor, pie, colPie) => `
       <div style="background:${borde === NARANJA ? 'rgba(217,89,38,0.09)' : 'rgba(255,255,255,0.03)'};
@@ -22441,8 +22602,9 @@ window.showCellModal = function(htmlContent) {
         <div>
           <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">EVOLUCIÓN DEL ARTÍCULO · CUÁNTO TARDA EN AGOTARSE</h3>
           <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:80ch;">
-            <b>${R.articulos} códigos de marca propia</b> que entraron nuevos en los últimos
-            ${Math.round(P.ventanaDias / 30)} meses con al menos un cuerpo, seguidos foto a foto.
+            <b>${R.articulos} códigos${filtro.marca ? ` de ${filtro.marca}` : ' de marca propia'}</b>
+            que entraron nuevos en los últimos ${Math.round(P.ventanaDias / 30)} meses
+            ${filtro.minimo ? `con más de ${n(filtro.minimo)} pares` : 'con al menos un cuerpo'}, seguidos foto a foto.
             La curva y el semáforo se miden sobre los <b>${R.grupoFijo}</b> que ya cumplieron
             ${R.semanasFijas} semanas, para que todos hayan tenido el mismo plazo.
           </p>
@@ -22452,6 +22614,7 @@ window.showCellModal = function(htmlContent) {
           <span style="font-weight:500; text-transform:none; letter-spacing:0;">lo actualiza el robot cada noche</span>
         </div>
       </div>
+      ${barra}
 
       <div style="margin:1.1rem 0 0; background:rgba(79,70,229,0.10); border:1px solid rgba(79,70,229,0.45); border-radius:13px; padding:1rem 1.15rem;">
         <div style="font-size:0.57rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:#a5b4fc;">La respuesta corta</div>
@@ -22491,13 +22654,34 @@ window.showCellModal = function(htmlContent) {
   // Lo usan el grupo y los dos casos: mismo dibujo, mismas etiquetas, mismas
   // comprobaciones. Lo único que cambia es de dónde salen los pares.
   const kpiBloque = (D) => {
-    const P = D.puntos, MAXS = P.length - 1;
+    // MAXS es la SEMANA del último punto y sirve para el eje; ULT es el punto en sí.
+    // No son lo mismo desde que la curva termina en la última foto: ahí la semana puede
+    // ser 9,7 y usarla como posición de la lista devuelve un hueco.
+    const P = D.puntos, ULT = P[P.length - 1], MAXS = ULT.s;
     const n = kpiN, d1 = kpiD1;
     const AZUL = KPI_AZUL, NARANJA = KPI_NARANJA, AMBAR = KPI_AMBAR, PARES = KPI_PARES;
+
+    // UN ARTÍCULO QUE LLEGÓ AYER NO TIENE CURVA. Con una sola semana el eje se divide
+    // por cero y el gráfico sale con NaN por todos lados. Desde que se puede abrir
+    // cualquiera de los del cuadro, esto pasa con los recién llegados.
+    if (MAXS < 1) return `
+      <div class="glass-panel" style="padding:1.4rem 1.5rem;">
+        <h3 style="margin:0; font-size:1rem; font-weight:800; letter-spacing:0.04em;">${D.titulo}</h3>
+        <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.78rem; line-height:1.55; max-width:64ch;">${D.bajada}</p>
+        <div style="margin-top:1.2rem; padding:1.6rem; text-align:center; background:rgba(0,0,0,0.22);
+                    border:1px solid var(--border); border-radius:13px;">
+          <div style="font-size:1.7rem; font-weight:900; letter-spacing:-1px; color:var(--text-main);">${n(D.llegada)}</div>
+          <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">pares, y ahí sigue</div>
+          <div style="margin-top:0.9rem; font-size:0.8rem; color:var(--text-muted); line-height:1.6; max-width:52ch; margin-left:auto; margin-right:auto;">
+            Llegó hace menos de una semana: todavía no hay una foto anterior contra la cual
+            comparar, así que no se puede decir nada de cómo se mueve.
+          </div>
+        </div>
+      </div>`;
     // Antes las curvas venían escritas acá y siempre tenían diez puntos. Ahora las manda
     // el robot y un artículo recién llegado puede traer tres: sin esto, los textos que
     // hablan de la semana 4, 5 o 6 reventarían la pantalla entera con un error.
-    const E = i => P[Math.min(i, MAXS)];
+    const E = i => P[Math.min(i, P.length - 1)];
 
     // LOS PARES SE REDONDEAN UNA SOLA VEZ Y LO PICADO SE RESTA DE AHÍ. Si lo picado saliera
     // del porcentaje por su cuenta, la columna no sumaría lo que se fue de verdad.
@@ -22505,20 +22689,29 @@ window.showCellModal = function(htmlContent) {
       if (p.pares === undefined) p.pares = Math.round(D.llegada * p.queda / 100);
       p.semana = i ? Math.round((t[i-1].queda - p.queda)*10)/10 : 0;
       // "Sobre lo que había el lunes" no existe si el lunes no había nada: 0/0 daba NaN.
-      // Pasa desde que el robot elige los casos y puede tocarle uno que se agotó.
-      p.rebase = (i && t[i-1].queda > 0) ? p.queda / t[i-1].queda * 100 : null;
+      // Y tampoco tiene sentido la semana en que ENTRÓ mercadería: sería más del 100%.
+      p.rebase = (i && t[i-1].queda > 0 && p.semana >= 0) ? p.queda / t[i-1].queda * 100 : null;
     });
     P.forEach((p,i,t)=>{
       p.paresSemana = i ? t[i-1].pares - p.pares : 0;
       p.picoRebase  = p.rebase === null ? null : 100 - p.rebase;
+      // UNA SEMANA EN NEGATIVO NO ES PICKING AL REVÉS: es una segunda tanda que entró.
+      // Se guarda aparte para poder marcarla, y el gráfico la dibuja en cero — una barra
+      // hacia abajo en un gráfico de "cuánto se picó" se lee como un error del reporte.
+      p.ingreso = p.paresSemana < 0 ? -p.paresSemana : 0;
+      p.picado  = p.paresSemana > 0 ? p.paresSemana : 0;
+      p.picadoPct = p.semana > 0 ? p.semana : 0;
     });
+    const hayIngreso = P.some(p => p.ingreso > 0);
 
     const X0=78, X1=862, C0=68, C1=210;
-    const TOPE = Math.max(15, Math.ceil(Math.max(...P.map(p=>p.semana))/15)*15);
+    // El eje se topa en 100: redondeando de a 15 hacia arriba, un artículo que se picó
+    // el 90,7% en su primera semana dejaba el eje marcado hasta "105%", que no existe.
+    const TOPE = Math.min(100, Math.max(15, Math.ceil(Math.max(...P.map(p=>p.picadoPct))/15)*15));
     const x = s => X0 + (X1-X0)*s/MAXS;
     const yc = v => C1 - (C1-C0)*v/TOPE;
     const clave = new Set([1,2,4,MAXS]);
-    const totalPicado = P.reduce((a,p)=>a+p.paresSemana,0);
+    const totalPicado = P.reduce((a,p)=>a+p.picado,0);
     const cabeEn = k => { const p = P.find(p=>p.s>0 && p.queda <= 350*k*100/D.llegada); return p ? p.s : null; };
 
     // La etiqueta: un solo renglón, el porcentaje y entre paréntesis los pares.
@@ -22533,23 +22726,25 @@ window.showCellModal = function(htmlContent) {
     // LOS PORCENTAJES DEL PICKING VAN CON UN DECIMAL A PROPÓSITO. Redondeados a entero
     // suman 87 y la curva dice 86,3: el 4,5% de una semana se va para arriba y sobra un
     // punto. Con el decimal suman exacto, que es como se revisan estos cuadros.
-    const PIC = P.map(p=>({ s:p.s, v:p.s?p.semana:0, pares:p.paresSemana }));
+    const PIC = P.map(p=>({ s:p.s, v:p.s?p.picadoPct:0, pares:p.picado, ingreso:p.ingreso }));
     const lineaPic = PIC.map((p,i)=>`${i?'L':'M'}${x(p.s).toFixed(1)},${yc(p.v).toFixed(1)}`).join(' ');
     const areaPic  = `${lineaPic} L${x(MAXS).toFixed(1)},${yc(0).toFixed(1)} L${x(0).toFixed(1)},${yc(0).toFixed(1)} Z`;
-    const puntosPic = PIC.map(p=>`<circle cx="${x(p.s).toFixed(1)}" cy="${yc(p.v).toFixed(1)}" r="${clave.has(p.s)||p.s===0?5:3.5}" fill="${NARANJA}" stroke="#111827" stroke-width="2"/>`).join('');
-    const valsPic = PIC.filter(p=>p.s>0).map(p=>etiqueta(x(p.s), yc(p.v), clave.has(p.s), d1(p.v)+'%', n(p.pares))).join('');
+    const puntosPic = PIC.map(p=>`<circle cx="${x(p.s).toFixed(1)}" cy="${yc(p.v).toFixed(1)}" r="${p.ingreso?6:(clave.has(p.s)||p.s===0?5:3.5)}" fill="${p.ingreso?AMBAR:NARANJA}" stroke="#111827" stroke-width="2"/>`).join('');
+    const valsPic = PIC.filter(p=>p.s>0).map(p=> p.ingreso
+      ? `<text x="${x(p.s).toFixed(1)}" y="${(yc(p.v)-13).toFixed(1)}" text-anchor="middle" fill="${AMBAR}" font-size="10" font-weight="800">+${n(p.ingreso)} entraron</text>`
+      : etiqueta(x(p.s), yc(p.v), clave.has(p.s), d1(p.v)+'%', n(p.pares))).join('');
     const gridPic = [0,TOPE/3,TOPE*2/3,TOPE].map(v=>
       `<line x1="${X0}" y1="${yc(v).toFixed(1)}" x2="${X1}" y2="${yc(v).toFixed(1)}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>`
       + `<text x="${X0-10}" y="${(yc(v)+4).toFixed(1)}" text-anchor="end" fill="var(--text-muted)" font-size="11">${v.toFixed(0)}%</text>`).join('');
     const ticks = P.map(p=>`<text x="${x(p.s).toFixed(1)}" y="${C1+22}" text-anchor="middle" fill="var(--text-muted)" font-size="11">${p.s}</text>`).join('');
 
     // LA FRANJA DEL TOTAL: lo que se picó y lo que falta. Sumando todo tiene que dar la llegada.
-    const ANCHO = X1 - X0, wPic = ANCHO * (100 - P[MAXS].queda) / 100;
+    const ANCHO = X1 - X0, wPic = ANCHO * totalPicado / Math.max(1, D.llegada);
     const svg = `
       <svg viewBox="0 0 900 366" style="display:block; width:100%; height:auto;" role="img"
            aria-label="Cuánto se lleva el picking cada semana de un código nuevo, y cuántos pares faltan picar.">
         <text x="${X0}" y="26" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">PICKING POR SEM</text>
-        <text x="${X1}" y="26" text-anchor="end" fill="var(--text-muted)" font-size="10" font-weight="600">el % es sobre los ${n(D.llegada)} pares que llegaron · entre paréntesis, los pares</text>
+        <text x="${X1}" y="26" text-anchor="end" fill="var(--text-muted)" font-size="10" font-weight="600">el % es sobre los ${n(D.llegada)} pares que ${hayIngreso?'entraron':'llegaron'} · entre paréntesis, los pares</text>
         ${gridPic}
         <path d="${areaPic}" fill="${NARANJA}" opacity="0.15"/>
         <path d="${lineaPic}" fill="none" stroke="${NARANJA}" stroke-width="2" stroke-linejoin="round"/>
@@ -22560,10 +22755,10 @@ window.showCellModal = function(htmlContent) {
         <text x="${X0}" y="286" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">${D.llegadaFranja} ${n(D.llegada)} PARES</text>
         <rect x="${X0}" y="298" width="${wPic.toFixed(1)}" height="30" rx="5" fill="${NARANJA}"/>
         <rect x="${(X0+wPic).toFixed(1)}" y="298" width="${(ANCHO-wPic).toFixed(1)}" height="30" rx="5" fill="${AZUL}" fill-opacity="0.3" stroke="${AZUL}" stroke-width="1.5" stroke-dasharray="5 3"/>
-        <text x="${(X0+wPic/2).toFixed(1)}" y="318" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">SE PICÓ ${n(totalPicado)} · ${d1(100-P[MAXS].queda)}%</text>
+        <text x="${(X0+wPic/2).toFixed(1)}" y="318" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">SE PICÓ ${n(totalPicado)} · ${d1(100-ULT.queda)}%</text>
         <text x="${X1}" y="350" text-anchor="end" font-size="11.5" font-weight="800">
-          <tspan fill="${AZUL}">FALTA PICAR ${n(P[MAXS].pares)} PARES</tspan>
-          <tspan fill="var(--text-muted)" font-weight="600" dx="6">· ${d1(P[MAXS].queda)}% de los ${n(D.llegada)} que le llegaron</tspan>
+          <tspan fill="${AZUL}">FALTA PICAR ${n(ULT.pares)} ${ULT.pares===1?'PAR':'PARES'}</tspan>
+          <tspan fill="var(--text-muted)" font-weight="600" dx="6">· ${d1(ULT.queda)}% de los ${n(D.llegada)} que le ${hayIngreso?'entraron':'llegaron'}</tspan>
         </text>
       </svg>`;
 
@@ -22574,7 +22769,7 @@ window.showCellModal = function(htmlContent) {
         <div style="font-size:0.68rem; color:var(--text-muted);">${sub}</div>
       </div>`;
 
-    const diez = P.filter(p=>p.s>=1 && p.s<=4).map(p=>({ s:p.s, pares:p.semana/10 }));
+    const diez = P.filter(p=>p.s>=1 && p.s<=4).map(p=>({ s:p.s, pares:p.picadoPct/10, ingreso:p.ingreso }));
     const lado = `
       <div class="kpi-lado">
         <div class="kpi-caja">
@@ -22584,15 +22779,15 @@ window.showCellModal = function(htmlContent) {
               <div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:0.45rem 0.6rem; text-align:center;">
                 <div style="font-size:0.56rem; font-weight:700; letter-spacing:0.7px; text-transform:uppercase; color:var(--text-muted);">Semana ${d.s}</div>
                 <div style="display:flex; align-items:baseline; justify-content:center; gap:4px;">
-                  <div style="font-size:1.25rem; font-weight:900; color:${AZUL}; letter-spacing:-0.5px;">${d1(d.pares)}</div>
-                  <div style="font-size:0.55rem; color:var(--text-muted);">pares</div>
+                  <div style="font-size:1.25rem; font-weight:900; color:${d.ingreso?AMBAR:AZUL}; letter-spacing:-0.5px;">${d.ingreso?'—':d1(d.pares)}</div>
+                  <div style="font-size:0.55rem; color:var(--text-muted);">${d.ingreso?'entró otra tanda':'pares'}</div>
                 </div>
               </div>`).join('')}
           </div>
           <div style="margin-top:0.75rem; padding-top:0.65rem; border-top:1px solid var(--border);
                       display:flex; align-items:baseline; justify-content:space-between;">
             <span style="font-size:0.61rem; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-muted);">En el primer mes</span>
-            <span><b style="font-size:1.05rem; font-weight:900; color:#fff;">${d1((100-E(4).queda)/10)}</b>
+            <span><b style="font-size:1.05rem; font-weight:900; color:#fff;">${d1(P.filter(p=>p.s>=1&&p.s<=4).reduce((x,p)=>x+p.picadoPct,0)/10)}</b>
             <span style="font-size:0.58rem; color:var(--text-muted);"> de 10</span></span>
           </div>
         </div>
@@ -22613,20 +22808,21 @@ window.showCellModal = function(htmlContent) {
     // verdad del 8816380, el caso que estaba escrito a mano. Ahora el caso lo elige el
     // robot cada noche, y ese mismo texto sobre otro artículo sería mentira.
     const mov = P.filter(p => p.s > 0);
-    const pico = mov.reduce((a, p) => p.paresSemana > a.paresSemana ? p : a, mov[0] || P[0]);
-    const paradas = mov.filter(p => p.paresSemana <= D.llegada * 0.02).length;
+    const pico = mov.reduce((a, p) => p.picado > a.picado ? p : a, mov[0] || P[0]);
+    const paradas = mov.filter(p => !p.ingreso && p.picado <= D.llegada * 0.02).length;
     const quietas = `Un artículo de verdad no se pica parejo como la mediana: `
       + `<b style="color:rgba(255,255,255,0.7);">se mueve a los saltos</b>. Este se llevó `
-      + `${n(E(1).paresSemana)} pares la primera semana`
-      + (pico && pico.s !== 1
-          ? `, y su mejor semana fue la ${pico.s}, con ${n(pico.paresSemana)}`
+      + `${n(E(1).picado)} pares la primera semana`
+      + (pico && pico.s !== 1 && pico.picado > 0
+          ? `, y su mejor semana fue la ${pico.s}, con ${n(pico.picado)}`
           : '')
+      + (hayIngreso ? '. En el medio recibió otra tanda' : '')
       + (paradas
           ? `. Estuvo ${paradas === 1 ? 'una semana' : `${paradas} semanas`} casi sin moverse`
           : '')
-      + `. Hoy le quedan <b style="color:rgba(255,255,255,0.7);">${n(P[MAXS].pares)} pares</b>, `
-      + `el ${d1(P[MAXS].queda)}% de lo que llegó`
-      + (P[MAXS].pares >= 350 ? ` · ${d1(P[MAXS].pares / 350)} cuerpos` : '')
+      + `. Hoy le quedan <b style="color:rgba(255,255,255,0.7);">${n(ULT.pares)} pares</b>, `
+      + `el ${d1(ULT.queda)}% de lo que llegó`
+      + (ULT.pares >= 350 ? ` · ${d1(ULT.pares / 350)} cuerpos` : '')
       + `. Por eso los cuerpos se calculan sobre el grupo y no sobre un caso: el caso sirve `
       + `para entender qué hay detrás del promedio.`;
 
@@ -22638,8 +22834,8 @@ window.showCellModal = function(htmlContent) {
         <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:#fff;">${n(p.pares)}</td>
         <td style="padding:0.45rem 0.8rem; text-align:right;">${d1(p.queda)}%</td>
         <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:${AMBAR}; font-style:italic;">${p.rebase===null?'—':d1(p.rebase)+'%'}</td>
-        <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:#fda98a;">${p.s?n(p.paresSemana):'—'}</td>
-        <td style="padding:0.45rem 0.8rem; text-align:right;">${p.s?d1(p.semana)+'%':'—'}</td>
+        <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:${p.ingreso?AMBAR:'#fda98a'};">${!p.s?'—':(p.ingreso?'+'+n(p.ingreso):n(p.picado))}</td>
+        <td style="padding:0.45rem 0.8rem; text-align:right;">${!p.s?'—':(p.ingreso?'entró':d1(p.picadoPct)+'%')}</td>
         <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:${AMBAR}; font-style:italic;">${p.picoRebase===null?'—':d1(p.picoRebase)+'%'}</td>
       </tr>`).join('');
 
@@ -22657,8 +22853,10 @@ window.showCellModal = function(htmlContent) {
 
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:0.7rem; margin:1.1rem 0;">
         ${tarjeta(D.rotuloLlegada, n(D.llegada), D.subLlegada)}
-        ${tarjeta('Se va en 2 semanas', (100-E(2).queda).toFixed(0)+'%', 'y en la primera, '+(100-E(1).queda).toFixed(0)+'%')}
-        ${tarjeta(`Queda a las ${MAXS} semanas`, P[MAXS].queda.toFixed(0)+'%', n(P[MAXS].pares)+' pares en el piso')}
+        ${hayIngreso
+          ? tarjeta('Se picó en total', n(totalPicado), `pares · ${d1(totalPicado/D.llegada*100)}% de lo que entró`)
+          : tarjeta('Se va en 2 semanas', (100-E(2).queda).toFixed(0)+'%', 'y en la primera, '+(100-E(1).queda).toFixed(0)+'%')}
+        ${tarjeta(`Queda a las ${kpiSem(MAXS)} semanas`, ULT.queda.toFixed(0)+'%', n(ULT.pares)+(ULT.pares===1?' par':' pares')+' en el piso')}
       </div>
 
       <div class="kpi-gfila">
@@ -22687,24 +22885,24 @@ window.showCellModal = function(htmlContent) {
           <tbody>${filas}</tbody>
           <tfoot><tr style="border-top:1px solid rgba(255,255,255,0.18); font-weight:800; color:rgba(255,255,255,0.75);">
             <td style="padding:0.5rem 0.8rem;" colspan="${hayFecha?2:1}">Total</td>
-            <td style="padding:0.5rem 0.8rem; text-align:right;">${n(P[MAXS].pares)}</td>
-            <td style="padding:0.5rem 0.8rem; text-align:right;">${d1(P[MAXS].queda)}%</td>
+            <td style="padding:0.5rem 0.8rem; text-align:right;">${n(ULT.pares)}</td>
+            <td style="padding:0.5rem 0.8rem; text-align:right;">${d1(ULT.queda)}%</td>
             <td></td>
             <td style="padding:0.5rem 0.8rem; text-align:right;">${n(totalPicado)}</td>
-            <td style="padding:0.5rem 0.8rem; text-align:right;">${d1(100-P[MAXS].queda)}%</td>
+            <td style="padding:0.5rem 0.8rem; text-align:right;">${d1(100-ULT.queda)}%</td>
             <td></td>
           </tr></tfoot>
         </table>
         <div style="font-size:0.63rem; color:rgba(255,255,255,0.28); padding:0.5rem 0.8rem 0; line-height:1.6;">
-          La columna en <b style="color:${AMBAR};">ámbar</b> es la misma cantidad medida contra lo que había el lunes en vez de contra lo que llegó.
+          ${hayIngreso ? `Las filas en <b style="color:${AMBAR};">ámbar</b> no son picking: ahí <b>entró</b> mercadería, una segunda tanda. ` : ''}La columna en <b style="color:${AMBAR};">ámbar</b> es la misma cantidad medida contra lo que había el lunes en vez de contra lo que llegó.
           ${E(2).picoRebase === null ? 'Queda con guión en las semanas en que el lunes ya no había nada: no se puede medir contra cero.'
-            : `No cambia los pares: en la semana 2, los ${n(E(2).paresSemana)} que se picaron son el ${d1(E(2).semana)}% de los ${n(D.llegada)} que llegaron y el ${d1(E(2).picoRebase)}% de los ${n(E(1).pares)} que había el lunes.`}
+            : `No cambia los pares: en la semana 2, los ${n(E(2).picado)} que se picaron son el ${d1(E(2).picadoPct)}% de los ${n(D.llegada)} que llegaron y el ${d1(E(2).picoRebase)}% de los ${n(E(1).pares)} que había el lunes.`}
         </div>
       </div>
 
       <div style="margin-top:1rem; padding:0.8rem 1rem; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2); border-radius:11px; font-size:0.72rem; color:var(--text-muted); line-height:1.7;">
         <b style="color:#93c5fd;">Para qué sirve.</b> ${D.cierre ? D.cierre : D.tipo==='grupo'
-          ? `De acá salen los cuerpos que se le reservan a un código nuevo: las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">${n(E(1).paresSemana+E(2).paresSemana)} pares</b>, que son ${d1((E(1).paresSemana+E(2).paresSemana)/350)} cuerpos moviéndose. Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento. Sobre esos ${n(D.llegada)} pares, ${cabeEn(2)?`desde la semana ${cabeEn(2)} el artículo ya cabe en dos cuerpos`:`a las ${MAXS} semanas todavía ocupa ${Math.ceil(P[MAXS].pares/350)} cuerpos`}.`
+          ? `De acá salen los cuerpos que se le reservan a un código nuevo: las dos primeras semanas se llevan <b style="color:rgba(255,255,255,0.7);">${n(E(1).picado+E(2).picado)} pares</b>, que son ${d1((E(1).picado+E(2).picado)/350)} cuerpos moviéndose. Si no están abajo el día que llega, alguien tiene que bajar paletas de reserva justo en las dos semanas de más movimiento. Sobre esos ${n(D.llegada)} pares, ${cabeEn(2)?`desde la semana ${cabeEn(2)} el artículo ya cabe en dos cuerpos`:`a las ${MAXS} semanas todavía ocupa ${Math.ceil(ULT.pares/350)} cuerpos`}.`
           : quietas}
       </div>
     </div>`;
@@ -22825,8 +23023,14 @@ window.showCellModal = function(htmlContent) {
     // EL CUADRO VA CON LOS 81, no solo con los que pasan del 20%. La clase se pinta al lado
     // del puesto, y el % queda en naranja con un ▲ cuando al artículo le sobra más del 20%
     // de SU llegada: así los dos análisis conviven en la misma fila sin pelearse.
+    // CADA FILA ABRE EL HISTORIAL DE ESE ARTÍCULO. Antes había dos artículos de muestra
+    // fijos arriba del Pareto; Daniel pidió sacarlos y poder ver ese mismo reporte de
+    // cualquiera de los del cuadro. Las curvas de todos ya vienen en el paquete, así que
+    // el clic no le pide nada al servidor.
     const filas = A.map((a,i)=>`
-      <tr style="border-top:1px solid rgba(255,255,255,0.05); ${clase[i]===0?'background:rgba(217,89,38,0.04);':''}">
+      <tr class="kpi-fila" onclick="window.__verEvolucionArticulo('${a.cod}')"
+          title="Ver el historial de ${a.cod}"
+          style="border-top:1px solid rgba(255,255,255,0.05); cursor:pointer; ${clase[i]===0?'background:rgba(217,89,38,0.04);':''}">
         <td style="padding:0.35rem 0.7rem; color:rgba(255,255,255,0.4);">${i+1}</td>
         <td style="padding:0.35rem 0.7rem;"><span style="display:inline-block; min-width:17px; text-align:center; border-radius:5px; padding:1px 4px; font-weight:900; font-size:0.68rem; color:#0f172a; background:${CLS[clase[i]].col};">${CLS[clase[i]].k}</span></td>
         <td style="padding:0.35rem 0.7rem; font-weight:800; color:#fff;">${a.cod}${a.rep?' <span style="color:'+AMBAR+'">•</span>':''}</td>
@@ -22888,6 +23092,7 @@ window.showCellModal = function(htmlContent) {
       <div style="margin-top:1.3rem; display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
         <div style="font-size:0.72rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted);">
           Los ${A.length} artículos, clasificados
+          <span style="text-transform:none; letter-spacing:0; font-weight:600; color:${KPI_AZUL};">· clic en una fila para ver su historial</span>
         </div>
         <div style="font-size:0.7rem; color:var(--text-muted);">
           <span style="color:${NARANJA};">▲</span> los <b style="color:#fff;">${altos.length}</b> que siguen con más del 20% de su llegada ·
@@ -22926,7 +23131,7 @@ window.showCellModal = function(htmlContent) {
         Todo el cuadro es de la foto del <b>${FECHA}</b>: <b>Falta picar</b> son los pares que hay hoy en el almacén,
         <b>Días</b> es cuánto lleva el artículo adentro y <b>%</b> es lo que queda sobre lo que llegó.
         <b style="color:#93c5fd;">Colección PO</b> sale del Maestro de artículos.<br>
-        <span style="color:${AMBAR};">•</span> recibió una segunda tanda: el % está sobre la primera llegada.
+        <span style="color:${AMBAR};">•</span> recibió una segunda tanda: el % está medido sobre todo lo que entró, no sobre la primera llegada.
       </div>
     </div>`;
   };
@@ -22948,14 +23153,39 @@ window.showCellModal = function(htmlContent) {
           [data-vista="kpi-picking"] .kpi-gfila{ flex-direction:column; }
           [data-vista="kpi-picking"] .kpi-lado{ flex:1 1 auto; width:100%; }
         }
+        /* El historial de un artículo se dibuja con el mismo molde que la curva del
+           grupo, así que las clases del gráfico tienen que valer también adentro de la
+           ventana. Sin esto el gráfico y su columna lateral salen apilados y sin caja. */
+        .kpi-ficha .kpi-gfila{ display:flex; align-items:stretch; gap:0.9rem; }
+        .kpi-ficha .kpi-gcaja{ flex:1 1 0; min-width:0; background:rgba(0,0,0,0.22);
+             border:1px solid var(--border); border-radius:14px; padding:1rem 0.9rem 0.6rem; }
+        .kpi-ficha .kpi-lado{ flex:0 0 250px; display:flex; flex-direction:column; gap:0.9rem; }
+        .kpi-ficha .kpi-caja{ background:rgba(0,0,0,0.22); border:1px solid var(--border);
+             border-radius:14px; padding:1rem 1rem 0.9rem; flex:1 1 auto; }
+        @media (max-width:1100px){
+          .kpi-ficha .kpi-gfila{ flex-direction:column; }
+          .kpi-ficha .kpi-lado{ flex:1 1 auto; width:100%; }
+        }
+        [data-vista="kpi-picking"] .kpi-fila:hover{ background:rgba(79,70,229,0.16) !important; }
+        .kpi-telon{ position:fixed; inset:0; z-index:9000; background:rgba(2,6,23,0.82);
+             display:flex; align-items:flex-start; justify-content:center; padding:2.2rem 1.2rem;
+             overflow-y:auto; animation:kpiEntra 0.14s ease-out; }
+        .kpi-ficha{ width:min(1180px,100%); background:var(--bg-panel,#0f172a);
+             border:1px solid var(--border); border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,0.55); }
+        @keyframes kpiEntra{ from{ opacity:0; } to{ opacity:1; } }
       </style>
       <div class="kpi-modulo">${dentro}</div>`;
+
+  // Lo que el usuario eligió en la barra de filtros. Vive fuera del render para que
+  // sobreviva a redibujar: si no, al filtrar volvería solo a "todas las marcas".
+  let kpiFiltro = { marca: '', minimo: 0 };
 
   /**
    * EVOLUCIÓN DEL ARTÍCULO. Lee el estudio que dejó el robot y lo dibuja.
    *
-   * Cuatro secciones: la portada con la respuesta, la curva del grupo, dos artículos
-   * reales y el Pareto ABC. Las tres últimas usan el mismo molde de siempre.
+   * Tres secciones: la portada con la respuesta, la curva del grupo y el Pareto ABC.
+   * El historial de un artículo ya no ocupa lugar fijo —antes había dos de muestra—:
+   * sale al hacer clic en cualquier fila del cuadro del Pareto.
    */
   const renderKpiPicking = async (container) => {
     if (!container) return;
@@ -22985,36 +23215,82 @@ window.showCellModal = function(htmlContent) {
       return;
     }
 
-    // El caso que se agota y el que se traba: los elige el robot cada noche sobre lo
-    // que de verdad pasó, así que los rótulos no pueden dar por sentado cuál es cuál.
-    const porCod = new Map((P.articulos || []).map(a => [a.cod, a]));
-    const casos = (P.casos || []).map(c => porCod.get(c)).filter(Boolean);
-    const bloqueCaso = (a, i) => {
-      const seVa = a.cero !== null && a.cero !== undefined;
-      return kpiBloque(kpiDeArticulo(P, a,
-        seVa ? 'EL QUE SE AGOTA' : 'EL QUE SE TRABA',
-        seVa
-          ? `Este es el caso que sale como debería: llegó con ${kpiN(a.pares)} pares y a la `
-            + `semana ${a.cero} ya no quedaba ninguno. Es de <b style="color:rgba(255,255,255,0.7);">${a.marca}</b>, `
-            + `y ahí está la diferencia: las marcas de terceros entran y salen casi enteras.`
-          : `Este es el caso que traba el almacén. Llegó con ${kpiN(a.pares)} pares y a la semana `
-            + `${a.sem} todavía tiene <b style="color:rgba(255,255,255,0.7);">${kpiN(a.hoy)} abajo, que son `
-            + `${kpiD1(a.hoy / 350)} cuerpos</b> ocupados por mercadería que ya casi no se mueve. `
-            + `De acá salen los saldos.`));
-    };
-
+    const { propia, terceros } = kpiFiltrar(P, kpiFiltro);
     container.innerHTML = kpiEnvoltura(`
-      ${kpiPortada(P)}
-      ${kpiBloque(kpiDeGrupo(P, P.propia))}
-      ${casos.map(bloqueCaso).join('')}
+      ${kpiPortada(P, propia, terceros, kpiFiltro)}
+      ${propia && propia.grupoFijo ? kpiBloque(kpiDeGrupo(P, propia, kpiFiltro)) : ''}
       ${kpiPareto(P)}
     `);
+  };
+
+  /** Cambia un filtro y redibuja. El Pareto no depende de esto, pero se rehace igual:
+      partirlo en dos redibujados por ahorrar unos milisegundos no vale el enredo. */
+  window.__kpiFiltro = (que, valor) => {
+    if (que === 'limpiar') kpiFiltro = { marca: '', minimo: 0 };
+    else if (que === 'marca') kpiFiltro.marca = valor || '';
+    else if (que === 'minimo') kpiFiltro.minimo = Number(valor) || 0;
+    const c = document.querySelector('[data-vista="kpi-picking"]');
+    if (c) renderKpiPicking(c);
+  };
+
+  /**
+   * EL HISTORIAL DE UN ARTÍCULO, en una ventana. Es el mismo bloque que antes estaba
+   * fijo para dos artículos de muestra; ahora sale para cualquiera de los del cuadro.
+   * No pide nada al servidor: la curva de cada uno ya viene en el paquete.
+   */
+  window.__verEvolucionArticulo = (cod) => {
+    const P = kpiPaquete;
+    const a = P && (P.articulos || []).find(x => x.cod === cod);
+    if (!a) return;
+    // Dos clics seguidos dejaban dos ventanas encimadas, y al cerrar una quedaba la otra
+    // con el fondo ya desbloqueado.
+    window.__cerrarEvolucionArticulo();
+
+    // El rótulo dice en qué terminó, que es lo primero que se quiere saber al abrirlo.
+    // "Se trabó" solo vale si tuvo tiempo de moverse: uno que llegó anteayer tiene el
+    // 100% y no está trabado, está recién llegado.
+    const rotulo = a.cero !== null && a.cero !== undefined ? 'SE AGOTÓ'
+      : (a.hoy === 0 ? 'HOY ESTÁ EN CERO'
+      : (a.sem < 2 ? 'RECIÉN LLEGÓ'
+      : (a.pct >= 20 ? (a.sem >= (P.semanasFijas || 9) ? 'SE TRABÓ' : 'TODAVÍA EN CURVA') : 'VA SALIENDO')));
+
+    const telon = document.createElement('div');
+    telon.className = 'kpi-telon';
+    telon.innerHTML = `
+      <div class="kpi-ficha">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;
+                    padding:0.7rem 1rem 0; ">
+          <span style="font-size:0.6rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted);">
+            Historial del artículo
+          </span>
+          <button onclick="window.__cerrarEvolucionArticulo()"
+                  style="background:rgba(255,255,255,0.06); color:var(--text-main); border:1px solid var(--border);
+                         border-radius:9px; width:32px; height:32px; font-size:1rem; cursor:pointer; line-height:1;"
+                  title="Cerrar (Esc)">✕</button>
+        </div>
+        ${kpiBloque(kpiDeArticulo(P, a, rotulo))}
+      </div>`;
+
+    // Cerrar con la X, con Escape o tocando fuera de la ficha. Las tres, porque una
+    // ventana que solo cierra con un botón chico se siente trabada.
+    telon.addEventListener('click', (e) => { if (e.target === telon) window.__cerrarEvolucionArticulo(); });
+    document.body.appendChild(telon);
+    document.body.style.overflow = 'hidden';
+    window.__kpiTelon = telon;
+    window.__kpiEsc = (e) => { if (e.key === 'Escape') window.__cerrarEvolucionArticulo(); };
+    document.addEventListener('keydown', window.__kpiEsc);
+  };
+
+  window.__cerrarEvolucionArticulo = () => {
+    if (window.__kpiTelon) { window.__kpiTelon.remove(); window.__kpiTelon = null; }
+    if (window.__kpiEsc) { document.removeEventListener('keydown', window.__kpiEsc); window.__kpiEsc = null; }
+    document.body.style.overflow = '';
   };
 
   // Queda a mano para poder dibujar el reporte sin pasar por el login: cargar la página,
   // interceptar el fetch del área y llamarla con un div. Compilar no alcanza —el import
   // no ve un identificador mal escrito dentro de una plantilla— y este reporte tiene
-  // cuatro secciones que solo se rompen al dibujarse.
+  // varias secciones que solo se rompen al dibujarse.
   window.__renderKpiPicking = (div) => renderKpiPicking(div || document.body);
 
   const renderProductividad = async (container) => {
