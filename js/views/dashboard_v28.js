@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0119';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0120';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0119';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0119';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0119';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0119';
-import * as metasService from '../services_v245/metasService.js?v=29.0119';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0119';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0119';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0119';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0119';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0119';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0119';
+import * as adminService from '../services_v245/adminService.js?v=29.0120';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0120';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0120';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0120';
+import * as metasService from '../services_v245/metasService.js?v=29.0120';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0120';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0120';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0120';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0120';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0120';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0120';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0119';
+const VERSION = '29.0120';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1404,14 +1404,43 @@ const ordenParaElPapel = (a, b) => {
 };
 
 const desempatarNumeros = (tareas) => {
-    const vivas = (tareas || []).filter(t => t && t.id && esTareaViva(t));
+    const todas = (tareas || []).filter(t => t && t.id);
     const numeroDe = (t) => {
         const c = String(t.id).includes('_') ? String(t.id).split('_')[1] : String(t.id);
         const n = parseInt(String(c).replace('Tarea', ''));
         return isNaN(n) ? null : n;
     };
+
+    /**
+     * EL NÚMERO LIBRE SE BUSCA ENTRE TODAS LAS DE ESE DÍA, NO SOLO ENTRE LAS VIVAS.
+     *
+     * Acá estaba el error que le llenó la pantalla de tareas repetidas al Daniel el
+     * 06-ago-2026. El número libre salía de `Math.max(...)` sobre las VIVAS, con el
+     * razonamiento de que "una finalizada puede repetir número sin molestar a nadie". Es
+     * falso: el id es `fecha_TareaN` y ES LA CLAVE con la que el servidor reemplaza cada
+     * tarea. Del 05/08 el mayor número vivo era 46, así que repartió 47, 48, 49, 50, 51 y
+     * 52 — que ya los usaban seis tareas finalizadas de ese mismo día. Resultado: seis
+     * pares de tareas distintas compartiendo id, dos hojas iguales para el asistente, y
+     * el avance de dos de ellas contado dos veces (4.664 pares que nadie hizo).
+     *
+     * Además el contador era uno solo para todas las fechas, cuando el id se arma por
+     * fecha. Ahora cada día lleva su propia cuenta y se arranca por encima de su máximo,
+     * mirando finalizadas y vencidas incluidas.
+     *
+     * Que dos PC lo calculen a la vez ya no rompe nada: partiendo del mismo máximo por
+     * fecha, las dos llegan al mismo número para la misma tarea.
+     */
+    const usadosPorFecha = new Map();
+    todas.forEach(t => {
+        const n = numeroDe(t);
+        if (n === null) return;
+        const f = String(t.fecha || '');
+        if (!usadosPorFecha.has(f)) usadosPorFecha.set(f, new Set());
+        usadosPorFecha.get(f).add(n);
+    });
+
     const porNumero = new Map();
-    vivas.forEach(t => {
+    todas.filter(esTareaViva).forEach(t => {
         const n = numeroDe(t);
         if (n === null) return;
         if (!porNumero.has(n)) porNumero.set(n, []);
@@ -1419,7 +1448,6 @@ const desempatarNumeros = (tareas) => {
     });
 
     const hoy = getLogicalDate();
-    let libre = Math.max(0, ...porNumero.keys());
     let cambiadas = 0;
     [...porNumero.keys()].sort((a, b) => a - b).forEach(n => {
         const grupo = porNumero.get(n);
@@ -1428,8 +1456,13 @@ const desempatarNumeros = (tareas) => {
         grupo.sort((a, b) => (String(a.fecha) === hoy ? 0 : 1) - (String(b.fecha) === hoy ? 0 : 1)
                           || String(a.fecha).localeCompare(String(b.fecha)));
         grupo.slice(1).forEach(t => {
-            libre++;
-            t.id = `${t.fecha}_Tarea${libre}`;
+            const f = String(t.fecha || '');
+            const usados = usadosPorFecha.get(f) || new Set();
+            let libre = Math.max(0, ...usados) + 1;
+            while (usados.has(libre)) libre++;
+            usados.add(libre);
+            usadosPorFecha.set(f, usados);
+            t.id = `${f}_Tarea${libre}`;
             cambiadas++;
         });
     });
@@ -1566,6 +1599,23 @@ const selloLocalTarea = () => {
 const soloElDia = (d) => {
     const dd = (n) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${dd(d.getMonth() + 1)}-${dd(d.getDate())}`;
+};
+
+/**
+ * LA HORA EN QUE PASA ALGO, EN HORA DE ACÁ. NUNCA `toISOString()`.
+ *
+ * Los botones de asignar y finalizar estampaban `new Date().toISOString()`, que devuelve
+ * UTC — cinco horas adelante. Asignar a las 20:44 quedaba grabado como `01:44Z` del día
+ * SIGUIENTE, así que el trabajo del turno noche se le imputaba al día equivocado desde el
+ * primer clic. Es la misma trampa que ya está anotada para las fechas de la plataforma, y
+ * sobrevivió acá porque estos tres estampados no se habían revisado.
+ *
+ * Mismo formato que escribe la ventana de horas (`YYYY-MM-DDTHH:MM:SS`, sin Z), así que
+ * las dos vías guardan igual y nada tiene que adivinar cuál es cuál.
+ */
+const selloHoraLocal = () => {
+    const d = new Date(), dd = (n) => String(n).padStart(2, '0');
+    return `${soloElDia(d)}T${dd(d.getHours())}:${dd(d.getMinutes())}:${dd(d.getSeconds())}`;
 };
 
 /**
@@ -3750,7 +3800,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0119');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0120');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14060,7 +14110,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0119 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0120 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -27454,7 +27504,7 @@ window.showCellModal = function(htmlContent) {
         if (bufferItems.length === 0) {
             // Si no hay items CDBUFFER, finalizar directamente
             t.status = 'Finalizado';
-            t.termino = new Date().toISOString();
+            t.termino = selloHoraLocal();
             t._dirty = true;
             saveAlmacenajeTasks(t).catch(e => console.error("Save error:", e));
             if (assignModal && assignModal.parentNode) {
@@ -27575,7 +27625,7 @@ window.showCellModal = function(htmlContent) {
 
             // Finalizar tarea
             t.status = 'Finalizado';
-            t.termino = new Date().toISOString();
+            t.termino = selloHoraLocal();
             t._dirty = true;
             
             saveAlmacenajeTasks(t);
@@ -27686,7 +27736,7 @@ window.showCellModal = function(htmlContent) {
             t.u1 = u1;
             t.u2 = u2;
             t.status = 'Asignado';
-            if (!t.inicio) t.inicio = new Date().toISOString();
+            if (!t.inicio) t.inicio = selloHoraLocal();
             t._dirty = true;
             saveAlmacenajeTasks(t); 
             if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
