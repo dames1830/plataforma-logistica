@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0117';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0118';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0117';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0117';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0117';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0117';
-import * as metasService from '../services_v245/metasService.js?v=29.0117';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0117';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0117';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0117';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0117';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0117';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0117';
+import * as adminService from '../services_v245/adminService.js?v=29.0118';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0118';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0118';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0118';
+import * as metasService from '../services_v245/metasService.js?v=29.0118';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0118';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0118';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0118';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0118';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0118';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0118';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0117';
+const VERSION = '29.0118';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1560,6 +1560,38 @@ const selloLocalTarea = () => {
     const d = new Date(), dd = (n) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${dd(d.getMonth() + 1)}-${dd(d.getDate())} `
          + `${dd(d.getHours())}:${dd(d.getMinutes())}:${dd(d.getSeconds())}`;
+};
+
+/** 'YYYY-MM-DD' de una fecha, en hora de acá. */
+const soloElDia = (d) => {
+    const dd = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${dd(d.getMonth() + 1)}-${dd(d.getDate())}`;
+};
+
+/**
+ * QUÉ DÍA TIENE YA REGISTRADA LA TAREA, si es que tiene alguno.
+ *
+ * Las horas de una tarea viajan en DOS formatos y hay que saberlo para leerlas: las que se
+ * escriben a mano quedan en hora de acá (`2026-08-05T11:30:00`) y las que pone el sistema al
+ * tocar un botón salen de `toISOString()`, o sea en UTC y con Z (`2026-08-07T01:38:47.104Z`),
+ * cinco horas adelante. Leer una UTC como si fuera local corre el trabajo casi medio día.
+ */
+const diaYaRegistrado = (t) => {
+    const s = String((t && t.inicio) || '').trim();
+    if (!s) return null;
+    if (s.endsWith('Z')) {
+        const d = new Date(s);
+        return isNaN(d.getTime()) ? null : soloElDia(d);
+    }
+    return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : null;
+};
+
+/** El día siguiente de 'YYYY-MM-DD'. Para el turno que cruza la medianoche. */
+const sumarUnDia = (fechaStr) => {
+    const d = new Date(`${fechaStr}T12:00:00`);   // mediodía: el horario de verano no mueve el día
+    if (isNaN(d.getTime())) return fechaStr;
+    d.setDate(d.getDate() + 1);
+    return soloElDia(d);
 };
 
 const guardarBloqueFusionado = async (transformar) => {
@@ -3718,7 +3750,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0117');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0118');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14028,7 +14060,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0117 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0118 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -27865,9 +27897,22 @@ window.showCellModal = function(htmlContent) {
                 return;
             }
 
-            // Re-construir ISO conservando la fecha original de la tarea
-            const baseDate = task.fecha || getLogicalDate();
-            
+            // LA FECHA ES LA DEL TRABAJO, NO LA DEL NACIMIENTO DE LA TAREA.
+            //
+            // Acá decía `task.fecha`, así que las horas escritas a mano quedaban con el día en
+            // que la tarea se generó. Como una tarea vive hasta 48 horas, el turno día de HOY
+            // trabajando una tarea nacida AYER quedaba registrado como trabajo de ayer, y el
+            // reporte del día mostraba cero. Lo cazó Daniel el 06-ago-2026: su turno día había
+            // almacenado 3.072 pares de Bubblegummers y B.G Licenses y el cuadro decía 0.
+            //
+            // Nadie tiene que escribir la fecha: se registra el día que se trabajó, así que es
+            // la jornada de hoy. `getLogicalDate` ya resuelve la madrugada — el asistente que
+            // carga a las 02:00 sigue cargando la jornada que empezó la tarde anterior.
+            //
+            // Si la tarea YA tenía horas, se respeta el día que tenía: corregir un typo de una
+            // tarea vieja no puede mudarle el trabajo a hoy.
+            const baseDate = diaYaRegistrado(task) || getLogicalDate();
+
             task.u1 = u1;
             task.u2 = u2 || '';
 
@@ -27878,7 +27923,10 @@ window.showCellModal = function(htmlContent) {
             }
 
             if (newEnd) {
-                task.termino = `${baseDate}T${newEnd}:00`;
+                // SI EL TÉRMINO ES ANTERIOR AL INICIO, CRUZÓ LA MEDIANOCHE.
+                // Sin esto el turno noche quedaba con duraciones negativas: la Tarea49 del
+                // 05-ago dice 20:45 -> 01:45, que son 5 horas y el sistema leía -19.
+                task.termino = `${newEnd <= newStart ? sumarUnDia(baseDate) : baseDate}T${newEnd}:00`;
             } else {
                 task.termino = null;
             }
