@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0132';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0133';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0132';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0132';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0132';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0132';
-import * as metasService from '../services_v245/metasService.js?v=29.0132';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0132';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0132';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0132';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0132';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0132';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0132';
+import * as adminService from '../services_v245/adminService.js?v=29.0133';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0133';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0133';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0133';
+import * as metasService from '../services_v245/metasService.js?v=29.0133';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0133';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0133';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0133';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0133';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0133';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0133';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0132';
+const VERSION = '29.0133';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1346,9 +1346,15 @@ const saveAlmacenajeTasks = async (partialTask = null) => {
             console.warn("⚠️ [SYNC] Error de sincronización. Los datos permanecen seguros en tu PC.");
             updateSyncIndicator('offline', 'PENDIENTE DE SINCRONIZACIÓN');
         }
+        // DEVUELVE SI LLEGÓ. Antes no devolvía nada, así que quien la llamaba no podía saber
+        // si el guardado había funcionado — y todos la llamaban sin esperarla. El 07-ago-2026
+        // la Tarea64 quedó con el avance guardado y el estado en Asignado: el modal cerró, dijo
+        // "TAREA FINALIZADA" y redibujó, mientras el guardado se perdía en silencio.
+        return !!success;
     } catch (e) {
         console.error("[SYNC] Error crítico:", e);
         updateSyncIndicator('offline', 'FALLO CRÍTICO DE CONEXIÓN');
+        return false;
     }
 };
 
@@ -3958,7 +3964,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0132');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0133');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14271,7 +14277,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0132 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0133 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -27741,7 +27747,7 @@ window.showCellModal = function(htmlContent) {
             renderAlmacenajeTareas(container);
         }
     };
-        const openPartialAvanceModal = (t, container, assignModal) => {
+        const openPartialAvanceModal = async (t, container, assignModal) => {
         // Obtener todos los items tipo CDBUFFER
         const bufferItems = [];
         (t.items || []).forEach(art => {
@@ -27754,11 +27760,20 @@ window.showCellModal = function(htmlContent) {
         });
 
         if (bufferItems.length === 0) {
-            // Si no hay items CDBUFFER, finalizar directamente
+            // Si no hay items CDBUFFER, finalizar directamente. Se espera igual que en el
+            // parcial: si el servidor no confirma, la tarea NO puede quedar cerrada solo acá.
             t.status = 'Finalizado';
             t.termino = selloHoraLocal();
             t._dirty = true;
-            saveAlmacenajeTasks(t).catch(e => console.error("Save error:", e));
+            const llego = await saveAlmacenajeTasks(t);
+            if (!llego) {
+                t.status = 'Asignado';
+                t.termino = '';
+                showPremiumAlert('NO SE PUDO FINALIZAR',
+                    `El servidor no confirmó el cierre de la ${String(t.id).split('_').pop()}. Revise la conexión y vuelva a intentar.`,
+                    'error');
+                return;
+            }
             if (assignModal && assignModal.parentNode) {
                 document.body.removeChild(assignModal);
             }
@@ -27842,7 +27857,7 @@ window.showCellModal = function(htmlContent) {
             document.body.removeChild(pModal);
         };
 
-        document.getElementById('p_confirm').onclick = () => {
+        document.getElementById('p_confirm').onclick = async () => {
             const inputs = pModal.querySelectorAll('.nr-partial-avance-input');
             let hasError = false;
             
@@ -27875,12 +27890,38 @@ window.showCellModal = function(htmlContent) {
                 });
             });
 
-            // Finalizar tarea
+            // FINALIZAR, PERO ESPERANDO A QUE EL SERVIDOR LO CONFIRME.
+            //
+            // Acá se llamaba a `saveAlmacenajeTasks(t)` sin esperarla, se cerraba el modal, se
+            // redibujaba y se cantaba "TAREA FINALIZADA" — todo antes de saber si había llegado.
+            // El 07-ago-2026 la Tarea64 de Daniel quedó con el avance guardado y el estado en
+            // Asignado: el guardado se perdió en silencio y el asistente vio el cartel de éxito.
+            // Encima el redibujado corría contra el guardado.
+            //
+            // Ahora: se espera, y si no llegó el modal NO se cierra y se dice qué pasó. Vale más
+            // un aviso incómodo que una tarea que el operario da por cerrada y no lo está.
+            const btn = document.getElementById('p_confirm');
+            const rotulo = btn ? btn.innerText : '';
+            if (btn) { btn.disabled = true; btn.innerText = 'GUARDANDO...'; }
+
             t.status = 'Finalizado';
             t.termino = selloHoraLocal();
             t._dirty = true;
-            
-            saveAlmacenajeTasks(t);
+
+            const llego = await saveAlmacenajeTasks(t);
+
+            if (!llego) {
+                // Se deshace lo del estado para que la tarea no quede "finalizada" solo en esta
+                // pantalla. El avance escrito se conserva: es trabajo real y se reintenta solo.
+                t.status = 'Asignado';
+                t.termino = '';
+                if (btn) { btn.disabled = false; btn.innerText = rotulo || 'CONFIRMAR'; }
+                showPremiumAlert('NO SE PUDO FINALIZAR',
+                    `El avance quedó guardado en esta PC, pero el servidor no confirmó el cierre de la ${String(t.id).split('_').pop()}.\n\nRevise la conexión y vuelva a darle a CONFIRMAR. La tarea sigue Asignada hasta que llegue.`,
+                    'error');
+                return;
+            }
+
             document.body.removeChild(pModal);
             if (assignModal && assignModal.parentNode) {
                 document.body.removeChild(assignModal);
