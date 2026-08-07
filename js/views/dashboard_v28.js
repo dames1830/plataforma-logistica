@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0133';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0134';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0133';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0133';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0133';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0133';
-import * as metasService from '../services_v245/metasService.js?v=29.0133';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0133';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0133';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0133';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0133';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0133';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0133';
+import * as adminService from '../services_v245/adminService.js?v=29.0134';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0134';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0134';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0134';
+import * as metasService from '../services_v245/metasService.js?v=29.0134';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0134';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0134';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0134';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0134';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0134';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0134';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0133';
+const VERSION = '29.0134';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1836,7 +1836,15 @@ const loadAlmacenajeTasks = async () => {
                   return t;
               });
               if (migratedSynced) {
-                  setTimeout(() => saveAlmacenajeTasks(), 200);
+                  // Por `guardarBloqueFusionado`, que relee del servidor antes de escribir.
+                  // Subir el bloque entero desde acá pisaría lo que otra PC haya hecho: es la
+                  // misma vía que rompió la noche del 07-ago-2026 desde el reenvío de pendientes.
+                  // Solo se migran los ids sin fecha; el resto de cada tarea queda como está.
+                  setTimeout(() => guardarBloqueFusionado(base => base.map(t => {
+                      if (t && t.id && !String(t.id).includes('_')) t.id = `${t.fecha}_${t.id}`;
+                      if (t && t.status === 'Auditado') { t.status = 'Finalizado'; t.audited = true; }
+                      return t;
+                  })).catch(e => console.warn('[MIGRACIÓN] no se pudo guardar:', e && e.message)), 200);
               }
               
               if (syncedTasks.length === 0 && almacenajeTasksCache.length > 0) {
@@ -3964,7 +3972,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0133');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0134');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -9549,10 +9557,28 @@ const renderRFSection = (container) => {
               }
 
               if (window.navigator.onLine) {
-                  const hasDirty = almacenajeTasksCache.some(t => t._dirty);
-                  if (hasDirty) {
-                      console.log("📡 [OFFLINE RECOVERY] Tareas pendientes detectadas tras retorno de red. Subiendo a la nube...");
-                      await saveAlmacenajeTasks(); 
+                  /**
+                   * REENVÍO DE LO QUE QUEDÓ SIN SINCRONIZAR — DE A UNA TAREA, NUNCA EL BLOQUE.
+                   *
+                   * Acá se llamaba a `saveAlmacenajeTasks()` SIN argumento, que sube el listado
+                   * ENTERO de esta PC. Con una sola tarea marcada pendiente, esta máquina
+                   * reescribía todo el almacén cada 20 segundos con su foto vieja, pisando lo
+                   * que hicieran las demás.
+                   *
+                   * Es lo que rompió la noche del 07-ago-2026: hizo volver una tarea borrada y
+                   * dejó la Tarea64 en Asignado con avance 312 —el valor viejo— por más que el
+                   * asistente la finalizara bien con 48 desde su PC. El guardado del asistente
+                   * llegaba; segundos después esta otra lo tapaba.
+                   *
+                   * Mandando cada tarea por separado, el servidor la reemplaza POR ID y no toca
+                   * ninguna otra: lo que esta PC no sepa, no lo puede romper.
+                   */
+                  const sucias = almacenajeTasksCache.filter(t => t && t._dirty);
+                  if (sucias.length) {
+                      console.log(`📡 [OFFLINE RECOVERY] ${sucias.length} tarea(s) sin sincronizar. Se reenvían de a una.`);
+                      for (const sucia of sucias) {
+                          await saveAlmacenajeTasks(sucia);
+                      }
                   }
               }
 
@@ -14277,7 +14303,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0133 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0134 | MOBILE PORTAL
                             </div>
                     </div>
 
