@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0116';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0117';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0116';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0116';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0116';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0116';
-import * as metasService from '../services_v245/metasService.js?v=29.0116';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0116';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0116';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0116';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0116';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0116';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0116';
+import * as adminService from '../services_v245/adminService.js?v=29.0117';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0117';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0117';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0117';
+import * as metasService from '../services_v245/metasService.js?v=29.0117';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0117';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0117';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0117';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0117';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0117';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0117';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0116';
+const VERSION = '29.0117';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1635,16 +1635,56 @@ const loadAlmacenajeTasks = async () => {
 const SUBTABS_DE_TAREAS = ['tareas_dia', 'kpi_tareas'];
 const tareasEsLaVistaActiva = () => SUBTABS_DE_TAREAS.includes(localStorage.getItem('activeSub_almacenaje'));
 
-// Radar de sincronización automática (cada 60s)
+/**
+ * RADAR: lo que hace que una PC vea lo que otra acaba de hacer.
+ *
+ * ANTES TARDABA HASTA 90 SEGUNDOS, y no por la red. Eran dos relojes que no se hablaban:
+ * este radar corría cada 60 s y llamaba a `initializeAdminData()` SIN forzar — y esa
+ * función, después de la primera carga, devuelve el store tal como está y no le pregunta
+ * nada al servidor (`if (isFirstPullDone && !force) return syncStore`). Lo único que
+ * bajaba datos era el `setInterval(pullGlobal, 30000)` del motor, por su cuenta. Así que
+ * un cambio esperaba hasta 30 s a que alguien lo bajara y hasta 60 s más a que este radar
+ * se asomara a mirar: hasta minuto y medio.
+ *
+ * Lo midió Daniel el 06-ago-2026 con el turno adentro: el asistente asignaba dos tareas y
+ * en la otra PC no aparecían; tuvo que forzar la actualización a mano. La red no tenía
+ * nada que ver — el área entera son 1,4 MB y baja en 2 segundos.
+ *
+ * FORZAR ES BARATO. `pullGlobal` pregunta primero por las versiones (2 KB, medio segundo)
+ * y solo descarga las áreas cuya marca cambió. Preguntar cada 20 s cuesta esos 2 KB; el
+ * 1,4 MB se baja únicamente cuando de verdad hay algo nuevo.
+ */
+let __versionTareasPintada = null;
+/**
+ * Que dos vueltas no se pisen. A 60 s sobraba tiempo para terminar; a 20 s, con la red del
+ * trabajo lenta o el servidor recién despierto, una vuelta puede no haber vuelto cuando
+ * entra la siguiente. Sin esto se encimarían descargas y cada una repintaría la pantalla.
+ */
+let __radarOcupado = false;
+
 setInterval(async () => {
     if (document.visibilityState === 'visible') {
+        if (__radarOcupado) { console.log("📡 [RADAR v24] La vuelta anterior sigue en curso; se saltea esta."); return; }
+        __radarOcupado = true;
+        try {
         console.log("📡 [RADAR v24] Buscando actualizaciones en la nube...");
-        await adminService.initializeAdminData();
+        await adminService.initializeAdminData(true);
         // Solo refrescar si estamos en la pestaña de almacenaje y no hay cambios pendientes locales
         const currentTab = ((document.querySelector('.nav-item.active') || {}).dataset || {}).id;
         if (currentTab === 'almacenaje') {
             const synced = adminService.adminStore.almacenaje_tasks;
-            if (synced && JSON.stringify(synced) !== JSON.stringify(almacenajeTasksCache)) {
+            // SE COMPARA LA MARCA DEL ÁREA, NO EL CONTENIDO. Acá se stringificaban las dos
+            // listas enteras en cada vuelta —varios MB, dos veces— solo para saber si había
+            // algo nuevo. A 60 s se notaba poco; a 20 s trabaría la pantalla. La marca la
+            // deja el motor al aplicar el área y cambia con cualquier escritura del servidor.
+            // Si no está —servidor viejo, o área que todavía no se aplicó— se cae a la
+            // comparación de antes, que es lenta pero nunca se pierde un cambio.
+            const versionArea = ((window._pulseSyncState || {}).versiones || {})['almacenaje_tasks'];
+            const hayAlgoNuevo = versionArea
+                ? versionArea !== __versionTareasPintada
+                : JSON.stringify(synced) !== JSON.stringify(almacenajeTasksCache);
+            if (synced && hayAlgoNuevo) {
+                __versionTareasPintada = versionArea;
                 console.log("✨ [RADAR v24] Datos nuevos detectados. Aplicando Fusión Híbrida.");
                 
                 // [INTELIGENCIA HÍBRIDA v25.0.0] Blindaje de Hierro: Solo actualizar si la nube tiene DATOS y son IGUAL O MÁS que el PC
@@ -1676,8 +1716,11 @@ setInterval(async () => {
                 }
             }
         }
+        } finally { __radarOcupado = false; }
     }
-}, 60000);
+    // Cada 20 s, no cada 60. Dos personas repartiendo hojas del mismo turno necesitan verse
+    // en segundos, no en minutos; y con la consulta de versiones cada vuelta cuesta 2 KB.
+}, 20000);
     
 const restoreAdminDataFromLocal = async () => {
     try {
@@ -3675,7 +3718,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0116');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0117');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13985,7 +14028,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0116 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0117 | MOBILE PORTAL
                             </div>
                     </div>
 
