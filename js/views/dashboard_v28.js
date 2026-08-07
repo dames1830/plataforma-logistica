@@ -23845,10 +23845,20 @@ window.showCellModal = function(htmlContent) {
     const x = i => X0 + (X1 - X0) * i / (claves.length - 1);
     const y = v => C1 - (C1 - C0) * v / TOPE;
 
-    // CON 26 SEMANAS NO ENTRAN 26 ETIQUETAS: se pisan y no se lee ninguna. Van las cinco
-    // más altas y la última, que es la que dice cómo viene la semana en curso.
-    const orden = val.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]);
-    const clave = new Set(orden.slice(0, 5).map(p => p[1]).concat([claves.length - 1]));
+    // CON 26 SEMANAS NO ENTRAN 26 ETIQUETAS: se pisan y no se lee ninguna. Van las más
+    // altas, y NUNCA DOS VECINAS — con "las cinco más altas" a secas, las semanas 30, 31
+    // y 32 salían una encima de otra y no se leía ninguna de las tres. Se empieza por la
+    // última, que es la semana en curso y siempre interesa, y después se agregan las más
+    // altas que queden a tres puntos o más de las ya puestas.
+    const lejos = (i) => { for (const j of clave) if (Math.abs(j - i) < 3) return false; return true; };
+    // Primero el pico más alto, que es el que la gente busca; después la última semana,
+    // que es la que dice cómo viene la actual; y recién ahí se rellena con el resto.
+    // Al revés, el pico se quedaba sin número cuando caía a dos semanas del final.
+    const clave = new Set([val.indexOf(Math.max(...val))]);
+    if (lejos(claves.length - 1)) clave.add(claves.length - 1);
+    val.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => {
+      if (clave.size < 6 && lejos(i)) clave.add(i);
+    });
 
     const linea = val.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
     const area = `${linea} L${x(claves.length - 1).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z`;
