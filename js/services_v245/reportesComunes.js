@@ -149,10 +149,29 @@ export const jornadaDelTrabajo = (t, fechaLogicaDe) => {
  * Por eso vive acá y no en cada pantalla: quien cuente tareas por día usa esta función.
  */
 export const diaOperativoDeTarea = (t, fechaLogicaDe) => {
-    if (t && t.status === 'Finalizado') {
-        return jornadaDelTrabajo(t, fechaLogicaDe) || (t && t.fecha);
-    }
-    return t && t.fecha;
+    if (!t) return null;
+    if (t.status !== 'Finalizado') return t.fecha;
+
+    // LA HORA GRABADA SOLO SE USA SI ES CREÍBLE.
+    //
+    // Hay 137 tareas viejas que dicen haberse trabajado ANTES de existir: nacieron a las
+    // 19:30 y su hora de inicio quedó a la 01:00 del mismo día, porque hasta v29.0118 las
+    // horas escritas a mano tomaban la fecha de la ola en vez del día del trabajo.
+    //
+    // Leer esa hora corre el trabajo un día HACIA ATRÁS, y eso rompió reportes que estaban
+    // bien: el 07-ago-2026 Daniel comparó contra sus propios registros y el miércoles pasó
+    // de 20.657 —su número real— a 10.426. Con esta guarda vuelve a dar 20.657 exacto, y el
+    // jueves sigue mostrando los 13.292 que antes no aparecían.
+    //
+    // El criterio es sencillo: si el trabajo figura empezado antes de que la tarea existiera,
+    // ese dato está corrupto y la fecha de la ola es más confiable. En el modelo nuevo —las
+    // tareas se cierran en cada corrida y no se arrastran— las dos coinciden casi siempre.
+    const nacio = momentoDeTarea(t.fechaProcesado);
+    const trabajo = momentoDeTarea(t.inicio) || momentoDeTarea(t.termino);
+    if (!trabajo) return t.fecha;
+    if (nacio && trabajo < nacio) return t.fecha;
+
+    return jornadaDelTrabajo(t, fechaLogicaDe) || t.fecha;
 };
 
 /* ── RANGO DE FECHAS DE UN REPORTE ────────────────────────────────────────
