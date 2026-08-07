@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0115';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0116';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0115';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0115';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0115';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0115';
-import * as metasService from '../services_v245/metasService.js?v=29.0115';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0115';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0115';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0115';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0115';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0115';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0115';
+import * as adminService from '../services_v245/adminService.js?v=29.0116';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0116';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0116';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0116';
+import * as metasService from '../services_v245/metasService.js?v=29.0116';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0116';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0116';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0116';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0116';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0116';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0116';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0115';
+const VERSION = '29.0116';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3675,7 +3675,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0115');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0116');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13985,7 +13985,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0115 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0116 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25228,19 +25228,30 @@ window.showCellModal = function(htmlContent) {
     };
 
     /**
-     * LAS TAREAS QUE SE VEN: las del rango de fechas MÁS todas las Creadas que sigan
-     * vivas, sean del día que sean.
+     * LAS TAREAS QUE SE VEN: las del rango de fechas MÁS todas las que sigan VIVAS,
+     * sean del día que sean y estén Creadas o Asignadas.
      *
      * El asistente asigna y cierra las tareas desde esta pantalla. Desde que el papel
      * saca todas las Creadas juntas —v29.0112—, si acá solo salieran las del rango
      * imprimiría 53 y en pantalla vería 9: las otras 44 quedarían en la calle, con su
      * hoja, sin forma de asignarlas ni cerrarlas porque no aparecen en ningún lado.
      *
+     * VIVAS, NO SOLO CREADAS. Hasta v29.0115 acá decía `t.status === 'Creada'`, y eso
+     * hacía desaparecer la tarea EN EL ACTO DE ASIGNARLA: al pasar a Asignado dejaba de
+     * cumplir la condición y se caía de la lista. Lo vio Daniel el 06-ago-2026 mientras
+     * repartía las hojas del turno —"en una laptop sí agarra el asignado, en la otra no
+     * se refleja"—: no era la laptop, era el filtro de fechas de cada una. En la que
+     * miraba el día anterior la tarea seguía en pantalla; en la que miraba hoy, no.
+     * El dato siempre se guardó bien en el servidor; lo que fallaba era la vista.
+     *
+     * Y si desaparece al asignarla, tampoco se puede cerrar después: la hoja se queda en
+     * la calle sin forma de finalizarla, que es justo lo que este bloque venía a evitar.
+     *
      * No se acumulan: a las 48 horas caducan solas, así que son las de los dos últimos
      * días. Y cada una trae su fecha en la primera columna, así que se ve de dónde viene.
      */
     const enRango = (t) => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate;
-    const pendienteDeOtroDia = (t) => !enRango(t) && t.status === 'Creada' && esTareaViva(t);
+    const pendienteDeOtroDia = (t) => !enRango(t) && esTareaViva(t);
     const visibles = (tasks || []).filter(t => t && (enRango(t) || pendienteDeOtroDia(t)));
     const arrastradas = visibles.filter(pendienteDeOtroDia).length;
 
@@ -25406,14 +25417,15 @@ window.showCellModal = function(htmlContent) {
 
                 <!-- LAS QUE VIENEN DE DÍAS ANTERIORES.
                      Se avisa para que no parezca que el filtro de fechas dejó de andar: son
-                     Creadas que siguen esperando y que también salen en el papel. -->
+                     tareas todavía abiertas —Creadas o ya Asignadas— que siguen esperando
+                     y que también salen en el papel. Se quedan acá hasta que se cierran. -->
                 ${arrastradas ? `
-                <div title="Son tareas en estado Creada de días anteriores que todavía nadie trabajó. Salen igual en el papel."
+                <div title="Son tareas de días anteriores que siguen abiertas: Creadas sin trabajar y Asignadas sin cerrar. Se quedan a la vista hasta que se finalizan."
                      style="display:flex; align-items:center; gap:6px; background:rgba(251,191,36,0.1);
                             border:1px solid rgba(251,191,36,0.35); border-radius:8px; padding:4px 10px;">
                     <span style="font-size:0.85rem;">⏳</span>
                     <span style="font-size:0.7rem; color:#fbbf24; font-weight:700;">
-                        +${arrastradas} de días anteriores, sin trabajar
+                        +${arrastradas} de días anteriores, sin cerrar
                     </span>
                 </div>` : ''}
 
