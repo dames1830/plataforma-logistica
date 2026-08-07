@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0110';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0111';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0110';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0110';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0110';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0110';
-import * as metasService from '../services_v245/metasService.js?v=29.0110';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0110';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0110';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0110';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0110';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0110';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0110';
+import * as adminService from '../services_v245/adminService.js?v=29.0111';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0111';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0111';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0111';
+import * as metasService from '../services_v245/metasService.js?v=29.0111';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0111';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0111';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0111';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0111';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0111';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0111';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0110';
+const VERSION = '29.0111';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0110');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0111');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13912,7 +13912,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0110 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0111 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16550,7 +16550,7 @@ const renderRFSection = (container) => {
    * propia —`paginaDeCierre()`— y cambiarla después es tocar una sola función.
    * ══════════════════════════════════════════════════════════════════════════════════
    */
-  const imprimirTareasWeb = async (filas, ctx) => {
+  const imprimirTareasWeb = async (filas, ctx, fuera) => {
     if (!filas.length) { showPremiumAlert('SIN TAREAS', 'No hay tareas en el rango para imprimir.', 'info'); return; }
 
     // Una tarea puede traer varios artículos, y salen juntos en la misma hoja
@@ -16792,8 +16792,9 @@ const renderRFSection = (container) => {
 
     const totalPaginas = hojas.querySelectorAll('.pg').length;
     const barra = doc.getElementById('barra');
-    barra.innerHTML = `${tareas.length} tarea${tareas.length > 1 ? 's' : ''} · ${totalPaginas} página${totalPaginas > 1 ? 's' : ''}`
+    barra.innerHTML = `${tareas.length} tarea${tareas.length > 1 ? 's' : ''} por trabajar · ${totalPaginas} página${totalPaginas > 1 ? 's' : ''}`
       + ` · ${totalPaginas / 2} hoja${totalPaginas / 2 > 1 ? 's' : ''} de papel a doble cara`
+      + (fuera ? ` · <span style="color:#fbbf24;">${fuera} finalizada${fuera > 1 ? 's' : ''} o vencida${fuera > 1 ? 's' : ''} no ${fuera > 1 ? 'entran' : 'entra'}</span>` : '')
       + `<button onclick="window.print()">🖨️ Imprimir</button>`;
 
     win.focus();
@@ -21973,10 +21974,26 @@ window.showCellModal = function(htmlContent) {
     }
 
     const desde = window.__almacenajeStartDate, hasta = window.__almacenajeEndDate;
-    const tareas = (almacenajeTasksCache || []).filter(t => t && t.fecha >= desde && t.fecha <= hasta);
+    const delRango = (almacenajeTasksCache || []).filter(t => t && t.fecha >= desde && t.fecha <= hasta);
+
+    // SOLO SE IMPRIME LO QUE FALTA TRABAJAR. Antes salía todo lo del rango, así que en el
+    // fajo de papeles venían mezcladas las que ya se habían terminado — el operario no
+    // tiene forma de distinguirlas y termina yendo a buscar mercadería que ya está guardada.
+    // Las Vencidas tampoco: caducaron solas a las 48 horas y su stock ya volvió a entrar en
+    // la corrida siguiente, así que ese papel mandaría a mover algo que hoy tiene otra tarea.
+    const cerrada = (t) => t.status === 'Finalizado' || t.status === 'Vencida';
+    const tareas = delRango.filter(t => !cerrada(t));
+    const fuera = delRango.length - tareas.length;
+
     if (!tareas.length) {
-      showPremiumAlert('SIN TAREAS', 'No hay tareas en el rango de fechas elegido.', 'info');
+      showPremiumAlert('SIN TAREAS POR TRABAJAR', delRango.length
+        ? `En el rango hay <b>${delRango.length}</b> tarea${delRango.length > 1 ? 's' : ''}, pero `
+          + `${delRango.length > 1 ? 'todas están' : 'está'} finalizada${delRango.length > 1 ? 's' : ''} o vencida${delRango.length > 1 ? 's' : ''}.`
+        : 'No hay tareas en el rango de fechas elegido.', 'info');
       return;
+    }
+    if (fuera > 0) {
+      console.log(`[Almacenaje] ${fuera} tarea(s) finalizadas o vencidas quedan fuera del papel`);
     }
 
     try {
@@ -22032,7 +22049,7 @@ window.showCellModal = function(htmlContent) {
       // El botón va en null a propósito: quien lo puso en ⌛ es el handler de
       // window.exportAlmacenajeExcel, y así se queda esperando también durante el
       // cálculo de arriba.
-      if (destino === 'imprimir') await imprimirTareasWeb(filas, ctx);
+      if (destino === 'imprimir') await imprimirTareasWeb(filas, ctx, fuera);
       else await exportarSugerenciaExcel(filas, ctx, null);
 
       updateSyncIndicator('online', 'PAPEL GENERADO ✅');
