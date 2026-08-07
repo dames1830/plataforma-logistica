@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0124';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0125';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0124';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0124';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0124';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0124';
-import * as metasService from '../services_v245/metasService.js?v=29.0124';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0124';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0124';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0124';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0124';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0124';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0124';
+import * as adminService from '../services_v245/adminService.js?v=29.0125';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0125';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0125';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0125';
+import * as metasService from '../services_v245/metasService.js?v=29.0125';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0125';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0125';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0125';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0125';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0125';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0125';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0124';
+const VERSION = '29.0125';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1697,6 +1697,35 @@ const sumarUnDia = (fechaStr) => {
     return soloElDia(d);
 };
 
+/**
+ * DOS TAREAS NO PUEDEN COMPARTIR ID. Devuelve la lista sin repetidos; gana la última.
+ *
+ * El 07-ago-2026, después del corte de Daniel, el servidor terminó con 40 tareas vivas que
+ * eran 25 de verdad: 15 estaban guardadas DOS VECES, con el mismo id. El reporte las contaba
+ * dos veces —39.300 pares donde el buffer tenía 25.888— y el papel habría salido con 15 hojas
+ * repetidas, mandando a dos operarios al mismo sitio.
+ *
+ * El id no es una etiqueta: es la clave con la que el servidor reemplaza cada tarea por PATCH
+ * y con la que la pantalla las une al refrescar. Con dos registros iguales, cuál gana depende
+ * del orden del array, que no es de nadie.
+ *
+ * Se limpia acá, en el embudo por el que pasan TODAS las reescrituras del bloque, y no en
+ * cada sitio que llama: así ninguna vía futura puede volver a meter un duplicado. Gana el
+ * último porque las transformaciones agregan al final: si algo se append-eó dos veces, la
+ * segunda copia es la buena.
+ */
+const sinIdsRepetidos = (tareas) => {
+    const porId = new Map();
+    let repetidas = 0;
+    (tareas || []).forEach(t => {
+        if (!t || !t.id) return;
+        if (porId.has(t.id)) repetidas++;
+        porId.set(t.id, t);
+    });
+    if (repetidas) console.warn(`[Almacenaje] se descartaron ${repetidas} tarea(s) con id repetido antes de guardar.`);
+    return [...porId.values()];
+};
+
 const guardarBloqueFusionado = async (transformar) => {
     let base = almacenajeTasksCache;
     try {
@@ -1705,7 +1734,7 @@ const guardarBloqueFusionado = async (transformar) => {
     } catch (e) {
         console.warn('[PULSE] No se pudo releer del servidor; se guarda con lo de esta PC:', e && e.message);
     }
-    almacenajeTasksCache = transformar(base) || [];
+    almacenajeTasksCache = sinIdsRepetidos(transformar(base) || []);
     await saveAlmacenajeTasks();
 };
 
@@ -3853,7 +3882,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0124');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0125');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14163,7 +14192,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0124 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0125 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22023,10 +22052,29 @@ window.showCellModal = function(htmlContent) {
         // finalizadas y las vencidas lo sueltan: si no, el número crecería sin techo y en
         // un mes andaríamos por la Tarea900. Como las vivas son a lo sumo las de dos días
         // —caducan a las 48 horas— los números se quedan siempre en un rango chico.
+        /**
+         * LOS NÚMEROS OCUPADOS SON LOS DE ESE DÍA, ESTÉN VIVOS O CERRADOS.
+         *
+         * Acá se saltaban las Finalizadas y las Vencidas, con el mismo razonamiento falso que
+         * tenía `desempatarNumeros`: "una cerrada puede repetir número sin molestar". No puede.
+         * El id es `fecha_TareaN` y ES LA CLAVE con la que el servidor guarda cada tarea: dos
+         * registros con el mismo id se pisan, y cuál gana depende del orden del array.
+         *
+         * Con la regla nueva —al procesar, toda Creada pasa a NO TRABAJADA— esto dejó de ser
+         * un riesgo ocasional y pasó a ser seguro en CADA corrida: recién cerradas, todos sus
+         * números parecían libres y el generador repartía 1, 2, 3... encima de ellas. El
+         * 07-ago-2026, tras el corte de Daniel, quedaron 40 registros vivos que eran 25 tareas
+         * reales; el reporte contaba 39.300 pares donde el buffer tenía 25.888, y el papel iba
+         * a salir con 15 hojas repetidas.
+         *
+         * Y se filtra POR FECHA, que antes tampoco se hacía: el id lleva la fecha adentro, así
+         * que un número usado por otro día nunca estorbó, y uno usado por el MISMO día sí.
+         * Estaba al revés en las dos puntas.
+         */
         const usedNumbers = new Set();
         almacenajeTasksCache.forEach(t => {
             if (!t || !t.id) return;
-            if (t.status === 'Finalizado' || t.status === 'Vencida') return;
+            if (String(t.fecha || '') !== String(logicalDate)) return;
             const cleanId = String(t.id).includes('_') ? String(t.id).split('_')[1] : String(t.id);
             const num = parseInt(cleanId.replace('Tarea', ''));
             if (!isNaN(num)) usedNumbers.add(num);
@@ -24457,14 +24505,26 @@ window.showCellModal = function(htmlContent) {
     try {
       const vencidas = vencerTareasViejas(almacenajeTasksCache);
       const renumeradas = desempatarNumeros(almacenajeTasksCache);
-      if (!vencidas && !renumeradas) return;
+      // Y los registros repetidos, que es lo que dejó el corte del 07-ago-2026: 40 tareas
+      // vivas que eran 25. `guardarBloqueFusionado` los descarta al escribir, pero alguien
+      // tiene que disparar esa escritura — si no, se quedan ahí hasta la próxima corrida y
+      // mientras tanto el reporte cuenta doble y el papel sale repetido.
+      const idsVistos = new Set();
+      const repetidos = (almacenajeTasksCache || []).filter(t => {
+        if (!t || !t.id) return false;
+        if (idsVistos.has(t.id)) return true;
+        idsVistos.add(t.id);
+        return false;
+      }).length;
+      if (!vencidas && !renumeradas && !repetidos) return;
       await guardarBloqueFusionado(base => {
         vencerTareasViejas(base);
         desempatarNumeros(base);
         return base;
       });
       console.log(`[Almacenaje] al abrir: ${vencidas} vencida(s) por las ${HORAS_VENCIMIENTO}h · `
-                + `${renumeradas} renumerada(s) para que no haya dos con el mismo nombre`);
+                + `${renumeradas} renumerada(s) para que no haya dos con el mismo nombre · `
+                + `${repetidos} registro(s) repetido(s) descartado(s)`);
     } catch (e) {
       console.warn('[Almacenaje] no se pudo limpiar al abrir:', e && e.message);
     }
