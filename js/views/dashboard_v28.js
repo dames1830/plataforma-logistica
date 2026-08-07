@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube } from '../services_v245/csvHub_v6.js?v=29.0109';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0110';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0109';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0109';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0109';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0109';
-import * as metasService from '../services_v245/metasService.js?v=29.0109';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0109';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0109';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0109';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0109';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0109';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0109';
+import * as adminService from '../services_v245/adminService.js?v=29.0110';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0110';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0110';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0110';
+import * as metasService from '../services_v245/metasService.js?v=29.0110';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0110';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0110';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0110';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0110';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0110';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0110';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0109';
+const VERSION = '29.0110';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3602,7 +3602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0109');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0110');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -7186,16 +7186,12 @@ const renderRFSection = (container) => {
       if (!caja.isConnected) return;
 
       const enLaPc = (dataStore.articulos || []).length;
-      const fmtFecha = (f) => {
-          if (!f) return '—';
-          const t = String(f).replace(' ', 'T');
-          const d = new Date(t.endsWith('Z') || t.includes('+') ? t : t + 'Z');
-          return isNaN(d) ? String(f) : d.toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' });
-      };
+      // Ver fechaDelServidor: lo que manda el backend ya es hora de Lima, y tratarlo
+      // como UTC mostraba todo 5 horas antes de lo que había pasado.
+      const fmtFecha = (f) => textoFechaServidor(f, { dateStyle: 'medium', timeStyle: 'short' }) || (f ? String(f) : '—');
       const diasDesde = (f) => {
-          if (!f) return null;
-          const d = new Date(String(f).replace(' ', 'T') + 'Z');
-          return isNaN(d) ? null : Math.floor((Date.now() - d.getTime()) / 86400000);
+          const d = fechaDelServidor(f);
+          return d ? Math.floor((Date.now() - d.getTime()) / 86400000) : null;
       };
       const dias = ficha ? diasDesde(ficha.fecha) : null;
       // El Maestro cambia cada 10 días más o menos: a los 15 ya conviene revisarlo
@@ -13916,7 +13912,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0109 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0110 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -19201,12 +19197,10 @@ const renderRFSection = (container) => {
 
   /** El texto que se muestra en el encabezado del mapa. */
   const _textoStockHora = () => {
-    if (!_stockHoraTs) return null;
-    let s = String(_stockHoraTs);
-    if (s.includes(' ') && !s.includes('T')) s = s.replace(' ', 'T');
-    if (!s.endsWith('Z')) s += 'Z';
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d.toLocaleString('es-PE');
+    // Acá llegan las dos clases de fecha: la del backend, que ya es hora de Lima, y la
+    // que estampa esta pantalla al subir el archivo, que es una ISO en UTC.
+    // fechaDelServidor las distingue por si traen zona o no.
+    return textoFechaServidor(_stockHoraTs) || null;
   };
 
   /**

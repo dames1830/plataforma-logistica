@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0109';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0110';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -55,6 +55,35 @@ const loadFromDB = async (key) => {
             req.onerror = () => resolve(null);
         });
     } catch (err) { return null; }
+};
+
+/**
+ * La fecha que manda el servidor, leída bien.
+ *
+ * EL BACKEND GUARDA HORA DE LIMA, no UTC: su `ahora()` convierte a la zona de Lima
+ * antes de escribir. Pero acá se le agregaba una "Z" —"2026-08-06T19:09:26Z"—, que la
+ * declara UTC, y al mostrarla el navegador le restaba las 5 horas de diferencia. El
+ * stock publicado a las 19:09 aparecía en pantalla como las 2:09 p.m.
+ *
+ * Una fecha SIN zona se lee como hora local, que es lo correcto para lo que guarda el
+ * backend. Y si ya trae zona —una ISO terminada en Z, o con +05:00— se respeta: el
+ * stock que se sube desde el navegador se estampa con toISOString(), y ése sí es UTC.
+ */
+export const fechaDelServidor = (valor) => {
+    if (!valor) return null;
+    if (valor instanceof Date) return isNaN(valor.getTime()) ? null : valor;
+    if (typeof valor === 'number') { const d = new Date(valor); return isNaN(d.getTime()) ? null : d; }
+    let t = String(valor).trim();
+    if (!t) return null;
+    if (t.includes(' ') && !t.includes('T')) t = t.replace(' ', 'T');
+    const d = new Date(t);            // sin zona -> hora local; con Z o +hh:mm -> la suya
+    return isNaN(d.getTime()) ? null : d;
+};
+
+/** La misma fecha, ya escrita para mostrar. Devuelve '' si no hay nada que mostrar. */
+export const textoFechaServidor = (valor, opciones) => {
+    const d = fechaDelServidor(valor);
+    return d ? d.toLocaleString('es-PE', opciones) : '';
 };
 
 export const getUploadMeta = (area) => {
@@ -128,7 +157,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0109';
+const VERSION = '29.0110';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -992,14 +1021,10 @@ export const getAreaData = async (area, forceRefresh = false) => {
               repartirCanonica(area, serverResponse.data);
               await saveToDB(area, serverResponse.data); // Sincronizar cache local
               if (serverResponse.updated_at) {
-                  let safeDateStr = serverResponse.updated_at;
-                  if (safeDateStr.includes(' ') && !safeDateStr.includes('T')) {
-                      safeDateStr = safeDateStr.replace(' ', 'T');
-                  }
-                  if (!safeDateStr.endsWith('Z')) {
-                      safeDateStr += 'Z';
-                  }
-                  const parsedTime = new Date(safeDateStr).getTime();
+                  // Ver fechaDelServidor: lo que manda el backend YA es hora de Lima, y
+                  // marcarlo como UTC hacía que en pantalla se viera 5 horas antes.
+                  const fecha = fechaDelServidor(serverResponse.updated_at);
+                  const parsedTime = fecha ? fecha.getTime() : NaN;
                   const len = serverResponse.data.length;
                   localStorage.setItem('meta_' + area, JSON.stringify({
                       ts: isNaN(parsedTime) ? Date.now() : parsedTime,
