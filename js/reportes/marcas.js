@@ -12,7 +12,8 @@
  *
  * Para agregar una columna se toca acá y aparece en los dos.
  */
-import { marcaNormalizada, marcaCorta } from '../services_v245/reportesComunes.js?v=29.0118';
+import { marcaNormalizada, marcaCorta, tareaSigueViva, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0119';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0119';
 
 /** Las columnas del reporte. Agregar una acá la agrega en las dos pantallas. */
 export const COLUMNAS = [
@@ -33,6 +34,29 @@ export const COLUMNAS = [
 /**
  * Arma el reporte a partir de las tareas.
  *
+ * QUÉ ENTRA EN EL CUADRO — cambiado el 06-ago-2026, y es el corazón del reporte.
+ *
+ * Antes entraba lo que hubiera NACIDO en el rango: `t.fecha >= desde && <= hasta`. Pero la
+ * fecha de una tarea es el día en que se generó la ola, no el día en que hay que trabajarla
+ * ni el día en que se trabajó. Como una tarea vive 48 horas, eso dejaba fuera casi todo:
+ * el 06-ago el cuadro decía 3.062 pares por almacenar cuando en el buffer había 29.312, y
+ * decía 0 de avance el mismo día que el turno día almacenó 3.072 pares. Daniel lo mandaba
+ * así al grupo de supervisores.
+ *
+ * Ahora una tarea entra si cumple una de dos cosas, y son independientes:
+ *
+ *   1. SIGUE PENDIENTE — está viva y nació antes del cierre del rango. Es trabajo que
+ *      todavía está en el buffer esperando, sea de hoy o de anteayer. Suma a BUFFER.
+ *   2. SE TRABAJÓ EN EL RANGO — se cerró en una jornada de este rango. Suma a BUFFER y
+ *      además a DÍA o a NOCHE.
+ *
+ * Con eso el cuadro cierra solo: BUFFER − DÍA − NOCHE = PENDIENTE, y PENDIENTE es
+ * exactamente lo que queda en el buffer. Antes el total bajaba solo al asignar una tarea.
+ *
+ * EL TURNO LO DICE LA MATRIZ DEL TRABAJADOR, no el reloj. Regla de Daniel: "si lsanchez
+ * termina una tarea a las ocho de la noche, él pertenece al turno día, así de simple".
+ * Un trabajador no puede estar en dos turnos.
+ *
  * @param tasks     todas las tareas
  * @param desde     'YYYY-MM-DD'
  * @param hasta     'YYYY-MM-DD'
@@ -40,8 +64,27 @@ export const COLUMNAS = [
  */
 export const datosMarcas = (tasks, desde, hasta, turnoDe) => {
     const porArea = {};
+    const fechaLogicaDe = (m) => jornadaService.fechaLogicaDe(m);
 
-    (tasks || []).filter(t => t && t.fecha >= desde && t.fecha <= hasta).forEach(t => {
+    // UNA TAREA SE CUENTA UNA SOLA VEZ.
+    // El 06-ago-2026 había 6 números repetidos en el servidor y dos de ellos con las dos
+    // copias finalizadas, así que su avance se sumaba dos veces: 4.664 pares que nadie hizo.
+    // El origen se arregla aparte; acá se blinda el número, que es lo que se manda al grupo.
+    const yaContadas = new Set();
+
+    (tasks || []).forEach(t => {
+        if (!t) return;
+
+        const trabajadaEn = jornadaDelTrabajo(t, fechaLogicaDe);
+        const seTrabajo = t.status === 'Finalizado' && trabajadaEn
+                       && trabajadaEn >= desde && trabajadaEn <= hasta;
+        const sigueEnBuffer = tareaSigueViva(t) && String(t.fecha || '') <= hasta;
+        if (!seTrabajo && !sigueEnBuffer) return;
+
+        const huella = `${t.id}|${t.status}|${t.termino || ''}`;
+        if (yaContadas.has(huella)) return;
+        yaContadas.add(huella);
+
         // El turno sale del operario, no de la hora: es el turno al que se le imputa
         const turno = turnoDe(t.u1) || (t.u2 ? turnoDe(t.u2) : null) || 'DIA';
 
@@ -62,7 +105,9 @@ export const datosMarcas = (tasks, desde, hasta, turnoDe) => {
                 if (!porArea[area][marca]) porArea[area][marca] = { buffer: 0, dia: 0, noche: 0 };
                 porArea[area][marca].buffer += qty;
 
-                if (t.status === 'Finalizado') {
+                // Solo lo trabajado EN ESTE RANGO suma al avance. Una tarea que sigue
+                // pendiente aporta su carga al BUFFER y nada más.
+                if (seTrabajo) {
                     const avance = (i.avance !== undefined && i.avance !== null) ? (parseFloat(i.avance) || 0) : qty;
                     if (turno === 'NOCHE') porArea[area][marca].noche += avance;
                     else porArea[area][marca].dia += avance;

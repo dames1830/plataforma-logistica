@@ -70,6 +70,70 @@ export const marcaCorta = (m) => {
     return MARCAS_CORTAS[nombre.toUpperCase()] || nombre;
 };
 
+/* ── CUÁNDO CUENTA UNA TAREA ──────────────────────────────────────────────
+   Qué sigue pendiente y a qué día se le imputa el trabajo. Estaba metido dentro
+   de cada reporte y por eso el cuadro del día no cuadraba con el almacén.
+*/
+
+/**
+ * EL MOMENTO DE UNA TAREA, EN HORA DE ACÁ.
+ *
+ * Las horas viajan en DOS formatos y confundirlos corre el trabajo casi medio día:
+ * las que escribe una persona quedan en hora local (`2026-08-05T11:30:00`) y las que
+ * pone el sistema al tocar un botón salen de `toISOString()`, o sea UTC y con Z
+ * (`2026-08-07T01:38:47.104Z`), cinco horas adelante.
+ */
+export const momentoDeTarea = (valor) => {
+    const s = String(valor || '').trim();
+    if (!s) return null;
+    const d = new Date(s);          // con Z lo pasa a local solo; sin Z ya lo lee local
+    return isNaN(d.getTime()) ? null : d;
+};
+
+/** Una tarea sin cerrar vive 48 horas. Pasadas esas, su mercadería ya no está comprometida. */
+export const HORAS_VENCIMIENTO = 48;
+
+/**
+ * Cuántas horas lleva la tarea. Se mide desde que se procesó; si esa marca falta —las
+ * tareas viejas no siempre la traen— se cae a su fecha operativa a las 19:00, que es
+ * cuando corre la ola. Sin eso una tarea sin `fechaProcesado` no vencería nunca.
+ */
+export const horasDeTarea = (t) => {
+    const p = momentoDeTarea(t && t.fechaProcesado);
+    if (p) return (Date.now() - p.getTime()) / 3600000;
+    const d = t && t.fecha ? new Date(`${t.fecha}T19:00:00`) : null;
+    return (d && !isNaN(d.getTime())) ? (Date.now() - d.getTime()) / 3600000 : Infinity;
+};
+
+/** Si su mercadería sigue esperando en el buffer: ni cerrada, ni vencida, ni caduca. */
+export const tareaSigueViva = (t) => {
+    if (!t || t.status === 'Finalizado' || t.status === 'Vencida') return false;
+    return horasDeTarea(t) < HORAS_VENCIMIENTO;
+};
+
+/**
+ * A QUÉ JORNADA SE LE IMPUTA EL TRABAJO DE UNA TAREA.
+ *
+ * Se mira el INICIO, no el término: el trabajo es de la jornada que lo empezó. Un
+ * operario de turno noche que arranca a las 21:00 y cierra a las 06:22 trabajó la noche
+ * anterior, no la mañana siguiente — mirando el término, esas horas se le sumaban al día
+ * equivocado. Lo señaló Daniel el 06-ago-2026: "el turno noche aún no almacena nada" y
+ * el cuadro le mostraba 5.734 pares de North Star.
+ *
+ * El corte lo pone la jornada configurada (la salida del turno noche), así que quien
+ * empieza a las 02:00 sigue dentro de la jornada de la tarde anterior.
+ *
+ * @param fechaLogicaDe  (Date) => 'YYYY-MM-DD' — se inyecta para no atar este archivo
+ *                       a la configuración de jornada, que no todas las pantallas cargan.
+ */
+export const jornadaDelTrabajo = (t, fechaLogicaDe) => {
+    const m = momentoDeTarea(t && t.inicio) || momentoDeTarea(t && t.termino);
+    if (!m) return null;
+    if (typeof fechaLogicaDe === 'function') return fechaLogicaDe(m);
+    const dd = (n) => String(n).padStart(2, '0');
+    return `${m.getFullYear()}-${dd(m.getMonth() + 1)}-${dd(m.getDate())}`;
+};
+
 /* ── RANGO DE FECHAS DE UN REPORTE ────────────────────────────────────────
    Cada reporte lleva su propio rango, aparte del filtro general de la pantalla:
    sirve para mirar Marcas en una semana y Gender RIMS en otra sin pelearse.
