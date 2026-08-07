@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0112';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0113';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0112';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0112';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0112';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0112';
-import * as metasService from '../services_v245/metasService.js?v=29.0112';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0112';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0112';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0112';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0112';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0112';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0112';
+import * as adminService from '../services_v245/adminService.js?v=29.0113';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0113';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0113';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0113';
+import * as metasService from '../services_v245/metasService.js?v=29.0113';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0113';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0113';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0113';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0113';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0113';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0113';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0112';
+const VERSION = '29.0113';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3607,7 +3607,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0112');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0113');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13917,7 +13917,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0112 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0113 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -21767,15 +21767,25 @@ window.showCellModal = function(htmlContent) {
 
         const finalTasks = [];
         
-        // --- [NUEVA LÓGICA DE HUECOS] ---
-        // 1. Mapear qué números de "TareaX" ya están ocupados hoy
+        // --- LOS NÚMEROS NO SE REPITEN ENTRE TAREAS VIVAS ---
+        //
+        // Antes se miraban solo los números usados HOY, así que cada corrida volvía a
+        // empezar en Tarea1: el 06-ago-2026 había tres tareas distintas llamadas "Tarea2",
+        // una del 4, otra del 5 y otra del 6. Mientras cada día se miraba por separado no
+        // molestaba, pero desde que el papel saca todas las Creadas juntas el asistente
+        // termina con tres hojas que dicen lo mismo y no sabe cuál es cuál.
+        //
+        // Ahora reserva su número CUALQUIER tarea que siga viva, sea del día que sea. Las
+        // finalizadas y las vencidas lo sueltan: si no, el número crecería sin techo y en
+        // un mes andaríamos por la Tarea900. Como las vivas son a lo sumo las de dos días
+        // —caducan a las 48 horas— los números se quedan siempre en un rango chico.
         const usedNumbers = new Set();
         almacenajeTasksCache.forEach(t => {
-            if (t.fecha === logicalDate) {
-                const cleanId = t.id.includes('_') ? t.id.split('_')[1] : t.id;
-                const num = parseInt(cleanId.replace('Tarea', ''));
-                if (!isNaN(num)) usedNumbers.add(num);
-            }
+            if (!t || !t.id) return;
+            if (t.status === 'Finalizado' || t.status === 'Vencida') return;
+            const cleanId = String(t.id).includes('_') ? String(t.id).split('_')[1] : String(t.id);
+            const num = parseInt(cleanId.replace('Tarea', ''));
+            if (!isNaN(num)) usedNumbers.add(num);
         });
 
         // 2. Función para obtener el siguiente ID libre
@@ -25111,10 +25121,27 @@ window.showCellModal = function(htmlContent) {
         `;
     };
 
+    /**
+     * LAS TAREAS QUE SE VEN: las del rango de fechas MÁS todas las Creadas que sigan
+     * vivas, sean del día que sean.
+     *
+     * El asistente asigna y cierra las tareas desde esta pantalla. Desde que el papel
+     * saca todas las Creadas juntas —v29.0112—, si acá solo salieran las del rango
+     * imprimiría 53 y en pantalla vería 9: las otras 44 quedarían en la calle, con su
+     * hoja, sin forma de asignarlas ni cerrarlas porque no aparecen en ningún lado.
+     *
+     * No se acumulan: a las 48 horas caducan solas, así que son las de los dos últimos
+     * días. Y cada una trae su fecha en la primera columna, así que se ve de dónde viene.
+     */
+    const enRango = (t) => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate;
+    const pendienteDeOtroDia = (t) => !enRango(t) && t.status === 'Creada' && esTareaViva(t);
+    const visibles = (tasks || []).filter(t => t && (enRango(t) || pendienteDeOtroDia(t)));
+    const arrastradas = visibles.filter(pendienteDeOtroDia).length;
+
     // Pre-calcular listado plano de ítems detallados para paginación de 25 en 25
     const detailedItems = [];
     if (isDetail) {
-        tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate).forEach(t => {
+        visibles.forEach(t => {
             (t.items || []).forEach(art => {
                 const bufferItems = art.items || [];
                 const bufferUbis = new Set(bufferItems.map(bi => bi.ubi));
@@ -25198,7 +25225,7 @@ window.showCellModal = function(htmlContent) {
         window.__detailLastDate = rangeKey;
     }
     
-    const resumenItems = isDetail ? [] : tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate);
+    const resumenItems = isDetail ? [] : visibles;
 
     // Totales del pie: siguen el filtro de fechas y suman la MISMA Qty que muestra la tabla
     // (en las finalizadas eso es el avance real, no la cantidad pedida).
@@ -25209,7 +25236,7 @@ window.showCellModal = function(htmlContent) {
     // arrastra desde junio quedaba enterrado entre ciento treinta y nadie lo veía. `esperaDesde`
     // lo trae la tarea desde que nace; las que no lo tienen —las anteriores a v29.0090— se
     // ordenan por su fecha, que es lo mismo para ellas.
-    const tareasEnRango = tasks.filter(t => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate)
+    const tareasEnRango = visibles
       .slice()
       .sort((a, b) => String(a.esperaDesde || a.fecha).localeCompare(String(b.esperaDesde || b.fecha))
                    || String(a.id).localeCompare(String(b.id)));
@@ -25270,6 +25297,19 @@ window.showCellModal = function(htmlContent) {
                            oninput="window.setAlmacenajeDetailSearch(this.value)">
                 </div>
                 ` : ''}
+
+                <!-- LAS QUE VIENEN DE DÍAS ANTERIORES.
+                     Se avisa para que no parezca que el filtro de fechas dejó de andar: son
+                     Creadas que siguen esperando y que también salen en el papel. -->
+                ${arrastradas ? `
+                <div title="Son tareas en estado Creada de días anteriores que todavía nadie trabajó. Salen igual en el papel."
+                     style="display:flex; align-items:center; gap:6px; background:rgba(251,191,36,0.1);
+                            border:1px solid rgba(251,191,36,0.35); border-radius:8px; padding:4px 10px;">
+                    <span style="font-size:0.85rem;">⏳</span>
+                    <span style="font-size:0.7rem; color:#fbbf24; font-weight:700;">
+                        +${arrastradas} de días anteriores, sin trabajar
+                    </span>
+                </div>` : ''}
 
                 <!-- RANGO DE FECHAS DE : HASTA -->
                 <div style="display:flex; align-items:center; gap:8px;">
