@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0138';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0139';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0138';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0138';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0138';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0138';
-import * as metasService from '../services_v245/metasService.js?v=29.0138';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0138';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0138';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0138';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0138';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0138';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0138';
+import * as adminService from '../services_v245/adminService.js?v=29.0139';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0139';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0139';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0139';
+import * as metasService from '../services_v245/metasService.js?v=29.0139';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0139';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0139';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0139';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0139';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0139';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0139';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0138';
+const VERSION = '29.0139';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3972,7 +3972,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0138');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0139');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14303,7 +14303,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0138 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0139 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23846,100 +23846,6 @@ window.showCellModal = function(htmlContent) {
    * El historial de un artículo ya no ocupa lugar fijo —antes había dos de muestra—:
    * sale al hacer clic en cualquier fila del cuadro del Pareto.
    */
-  /**
-   * PICKING POR SEMANA DEL AÑO. El otro gráfico responde "cuánto tarda en salir un
-   * artículo" y su eje son semanas desde que llegó cada uno, así que el punto 1 junta a
-   * uno que llegó en la semana 20 con otro de la 29. Este responde otra pregunta —"cuánto
-   * se picó en la semana 23"— y por eso su eje sí es el calendario.
-   *
-   * Los dos conviven a propósito: el de arriba mide la vida del artículo, éste la carga
-   * de trabajo de cada semana. Al filtrar un mes, además, las semanas de éste quedan
-   * exactas, porque todos los de ese mes comparten el punto de partida.
-   *
-   * Se dibuja solo si los artículos traen 'sems'. Un paquete viejo —publicado antes del
-   * 07-ago-2026— no lo tiene, y la pantalla tiene que seguir andando igual.
-   */
-  const kpiSemanasDelAnio = (P, filtro) => {
-    const n = kpiN, d1 = kpiD1;
-    const AZUL = KPI_AZUL, NARANJA = KPI_NARANJA, PARES = KPI_PARES;
-    const arts = kpiAplicarFiltro(P.articulos, filtro, false);
-    if (!arts.length || !arts.some(a => a.sems)) return '';
-
-    const suma = {};
-    let entro = 0, hoy = 0;
-    arts.forEach(a => {
-      entro += a.entro; hoy += a.hoy;
-      Object.keys(a.sems || {}).forEach(k => { suma[k] = (suma[k] || 0) + a.sems[k]; });
-    });
-    // Las claves son '2026-S23' y se ordenan como texto: con el año adelante eso ya es
-    // el orden del calendario, incluso si la ventana cruza un 31 de diciembre.
-    const claves = Object.keys(suma).sort();
-    if (claves.length < 2) return '';
-    const val = claves.map(k => suma[k]);
-    const picado = val.reduce((a, b) => a + b, 0);
-
-    const X0 = 78, X1 = 862, C0 = 68, C1 = 210;
-    // El eje se redondea hacia arriba a un múltiplo de 5.000 para que las líneas caigan
-    // en números redondos y no en 13.333.
-    const TOPE = Math.max(5000, Math.ceil(Math.max(...val) / 5000) * 5000);
-    const x = i => X0 + (X1 - X0) * i / (claves.length - 1);
-    const y = v => C1 - (C1 - C0) * v / TOPE;
-
-    // CON 26 SEMANAS NO ENTRAN 26 ETIQUETAS: se pisan y no se lee ninguna. Van las más
-    // altas, y NUNCA DOS VECINAS — con "las cinco más altas" a secas, las semanas 30, 31
-    // y 32 salían una encima de otra y no se leía ninguna de las tres. Se empieza por la
-    // última, que es la semana en curso y siempre interesa, y después se agregan las más
-    // altas que queden a tres puntos o más de las ya puestas.
-    const lejos = (i) => { for (const j of clave) if (Math.abs(j - i) < 3) return false; return true; };
-    // Primero el pico más alto, que es el que la gente busca; después la última semana,
-    // que es la que dice cómo viene la actual; y recién ahí se rellena con el resto.
-    // Al revés, el pico se quedaba sin número cuando caía a dos semanas del final.
-    const clave = new Set([val.indexOf(Math.max(...val))]);
-    if (lejos(claves.length - 1)) clave.add(claves.length - 1);
-    val.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => {
-      if (clave.size < 6 && lejos(i)) clave.add(i);
-    });
-
-    const linea = val.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-    const area = `${linea} L${x(claves.length - 1).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z`;
-    const puntos = val.map((v, i) =>
-      `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${clave.has(i) ? 5 : 3.5}" fill="${NARANJA}" stroke="#111827" stroke-width="2"/>`).join('');
-    const vals = val.map((v, i) => !clave.has(i) ? '' :
-      `<text x="${x(i).toFixed(1)}" y="${(y(v) - 13).toFixed(1)}" text-anchor="middle">`
-      + `<tspan fill="var(--text-main)" font-size="11" font-weight="800">${d1(v * 100 / picado)}%</tspan>`
-      + `<tspan dx="4" fill="${PARES}" font-size="10.2" font-weight="700">(${n(v)})</tspan></text>`).join('');
-    const grid = [0, TOPE / 4, TOPE / 2, TOPE * 3 / 4, TOPE].map(g =>
-      `<line x1="${X0}" y1="${y(g).toFixed(1)}" x2="${X1}" y2="${y(g).toFixed(1)}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>`
-      + `<text x="${X0 - 10}" y="${(y(g) + 4).toFixed(1)}" text-anchor="end" fill="var(--text-muted)" font-size="11">${g ? (g / 1000) + 'k' : '0'}</text>`).join('');
-    const ticks = claves.map((k, i) =>
-      `<text x="${x(i).toFixed(1)}" y="${C1 + 22}" text-anchor="middle" fill="var(--text-muted)" font-size="10.5">${parseInt(k.slice(-2), 10)}</text>`).join('');
-
-    const ANCHO = X1 - X0, wPic = ANCHO * picado / Math.max(1, entro);
-    return `
-      <div class="glass-panel" style="padding:0.9rem 1rem 0.6rem; margin-top:0.9rem;">
-        <svg viewBox="0 0 900 366" style="display:block; width:100%; height:auto;" role="img"
-             aria-label="Cuántos pares de código nuevo se picaron en cada semana del año.">
-          <text x="${X0}" y="26" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">PICKING POR SEMANA DEL AÑO</text>
-          <text x="${X1}" y="26" text-anchor="end" fill="var(--text-muted)" font-size="10" font-weight="600">el % es sobre los ${n(picado)} pares picados · entre paréntesis, los pares</text>
-          ${grid}
-          <path d="${area}" fill="${NARANJA}" opacity="0.15"/>
-          <path d="${linea}" fill="none" stroke="${NARANJA}" stroke-width="2" stroke-linejoin="round"/>
-          ${puntos}${vals}
-          <line x1="${X0}" y1="${C1}" x2="${X1}" y2="${C1}" stroke="var(--border)" stroke-width="1"/>
-          ${ticks}
-          <text x="${((X0 + X1) / 2).toFixed(0)}" y="${C1 + 40}" text-anchor="middle" fill="var(--text-muted)" font-size="11">semana del año</text>
-          <text x="${X0}" y="286" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">${n(arts.length)} ARTÍCULOS · ENTRARON ${n(entro)} PARES</text>
-          <rect x="${X0}" y="298" width="${wPic.toFixed(1)}" height="30" rx="5" fill="${NARANJA}"/>
-          <rect x="${(X0 + wPic).toFixed(1)}" y="298" width="${(ANCHO - wPic).toFixed(1)}" height="30" rx="5" fill="${AZUL}" fill-opacity="0.3" stroke="${AZUL}" stroke-width="1.5" stroke-dasharray="5 3"/>
-          <text x="${(X0 + wPic / 2).toFixed(1)}" y="318" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">SE PICÓ ${n(picado)} · ${d1(picado * 100 / entro)}%</text>
-          <text x="${X1}" y="350" text-anchor="end" font-size="11.5" font-weight="800">
-            <tspan fill="${AZUL}">FALTA PICAR ${n(hoy)} ${hoy === 1 ? 'PAR' : 'PARES'}</tspan>
-            <tspan fill="var(--text-muted)" font-weight="600" dx="6">· ${d1(hoy * 100 / entro)}% de los ${n(entro)} que entraron</tspan>
-          </text>
-        </svg>
-      </div>`;
-  };
-
   const renderKpiPicking = async (container) => {
     if (!container) return;
     container.dataset.vista = 'kpi-picking';
@@ -23972,7 +23878,6 @@ window.showCellModal = function(htmlContent) {
     container.innerHTML = kpiEnvoltura(`
       ${kpiBarraFiltros(P, R, kpiFiltro)}
       ${R && R.grupoFijo ? kpiBloque(kpiDeGrupo(P, R, kpiFiltro)) : ''}
-      ${kpiSemanasDelAnio(P, kpiFiltro)}
       ${kpiPareto(P, kpiFiltro)}
     `);
   };
