@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0113';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0114';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0113';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0113';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0113';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0113';
-import * as metasService from '../services_v245/metasService.js?v=29.0113';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0113';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0113';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0113';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0113';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0113';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0113';
+import * as adminService from '../services_v245/adminService.js?v=29.0114';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0114';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0114';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0114';
+import * as metasService from '../services_v245/metasService.js?v=29.0114';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0114';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0114';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0114';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0114';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0114';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0114';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0113';
+const VERSION = '29.0114';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1366,6 +1366,55 @@ const vencerTareasViejas = (tareas) => {
         }
     });
     return n;
+};
+
+/**
+ * Dos tareas vivas no pueden llamarse igual. Devuelve cuántas se renumeraron.
+ *
+ * La numeración reiniciaba cada día, así que el 06-ago-2026 había tres tareas distintas
+ * llamadas "Tarea2": una del 4, otra del 5 y otra del 6. Mientras cada día se miraba por
+ * separado no molestaba, pero desde que el papel saca todas las Creadas juntas el
+ * asistente termina con tres hojas que dicen lo mismo y no sabe cuál es cuál.
+ *
+ * EL NÚMERO SE LO QUEDA LA TAREA DE HOY, y si ninguna es de hoy, la más antigua. Las
+ * demás se mueven al primer número libre por encima del más alto en uso: renumerar la de
+ * hoy sería peor que el problema, porque es de la que se habla en el turno y la que el
+ * asistente ya tiene delante.
+ *
+ * Solo mira las vivas. Una finalizada puede repetir número con una de hoy sin molestar a
+ * nadie, y arrastrar el historial entero haría que en un mes anduviéramos por la Tarea900.
+ */
+const desempatarNumeros = (tareas) => {
+    const vivas = (tareas || []).filter(t => t && t.id && esTareaViva(t));
+    const numeroDe = (t) => {
+        const c = String(t.id).includes('_') ? String(t.id).split('_')[1] : String(t.id);
+        const n = parseInt(String(c).replace('Tarea', ''));
+        return isNaN(n) ? null : n;
+    };
+    const porNumero = new Map();
+    vivas.forEach(t => {
+        const n = numeroDe(t);
+        if (n === null) return;
+        if (!porNumero.has(n)) porNumero.set(n, []);
+        porNumero.get(n).push(t);
+    });
+
+    const hoy = getLogicalDate();
+    let libre = Math.max(0, ...porNumero.keys());
+    let cambiadas = 0;
+    [...porNumero.keys()].sort((a, b) => a - b).forEach(n => {
+        const grupo = porNumero.get(n);
+        if (grupo.length < 2) return;
+        // Primero la de hoy; entre las demás, la más antigua
+        grupo.sort((a, b) => (String(a.fecha) === hoy ? 0 : 1) - (String(b.fecha) === hoy ? 0 : 1)
+                          || String(a.fecha).localeCompare(String(b.fecha)));
+        grupo.slice(1).forEach(t => {
+            libre++;
+            t.id = `${t.fecha}_Tarea${libre}`;
+            cambiadas++;
+        });
+    });
+    return cambiadas;
 };
 
 /**
@@ -3607,7 +3656,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0113');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0114');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13917,7 +13966,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0113 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0114 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24190,8 +24239,46 @@ window.showCellModal = function(htmlContent) {
     pintar();
   };
 
+  /**
+   * LA LIMPIEZA AL ABRIR LA VISTA: vence lo que caducó y desempata los números repetidos.
+   *
+   * Las dos cosas las hacía hasta ahora solo `processAlmacenajeTasks`, o sea al generar
+   * tareas nuevas. Pero el asistente puede pasarse el turno entero en esta pantalla sin
+   * procesar nada, y mientras tanto veía tareas que ya deberían haber caducado y dos
+   * hojas con el mismo nombre.
+   *
+   * Y HAY UNA RAZÓN MÁS FUERTE: el área es singleton, así que el último que guarda pisa
+   * al anterior. El 06-ago-2026 se arreglaron las dos cosas escribiendo directo en el
+   * servidor y la pantalla, que tenía la copia vieja en memoria, las deshizo en menos de
+   * un minuto. Arreglarlo desde acá es lo único que aguanta.
+   *
+   * Corre UNA vez por carga de la vista: `guardarBloqueFusionado` vuelve a dibujar, y sin
+   * la bandera se llamaría a sí misma para siempre.
+   */
+  let __limpiezaHecha = false;
+  const limpiarTareasAlAbrir = async () => {
+    if (__limpiezaHecha) return;
+    __limpiezaHecha = true;
+    try {
+      const vencidas = vencerTareasViejas(almacenajeTasksCache);
+      const renumeradas = desempatarNumeros(almacenajeTasksCache);
+      if (!vencidas && !renumeradas) return;
+      await guardarBloqueFusionado(base => {
+        vencerTareasViejas(base);
+        desempatarNumeros(base);
+        return base;
+      });
+      console.log(`[Almacenaje] al abrir: ${vencidas} vencida(s) por las ${HORAS_VENCIMIENTO}h · `
+                + `${renumeradas} renumerada(s) para que no haya dos con el mismo nombre`);
+    } catch (e) {
+      console.warn('[Almacenaje] no se pudo limpiar al abrir:', e && e.message);
+    }
+  };
+
   window.renderAlmacenajeTareas = (container) => {
     window.__almacenajeContainer = container;
+    // Se dispara sin esperarla: si hay algo que corregir, guarda y vuelve a dibujar sola.
+    limpiarTareasAlAbrir();
     // Marca el contenedor como suyo: si Config. Tareas venía cargando reglas, al terminar
     // verá que ya no le pertenece y no pintará encima (comparten el mismo contenedor).
     if (container) container.dataset.vista = 'almacenaje';
