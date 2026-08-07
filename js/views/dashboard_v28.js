@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0121';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0122';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0121';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0121';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0121';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0121';
-import * as metasService from '../services_v245/metasService.js?v=29.0121';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0121';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0121';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0121';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0121';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0121';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0121';
+import * as adminService from '../services_v245/adminService.js?v=29.0122';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0122';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0122';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0122';
+import * as metasService from '../services_v245/metasService.js?v=29.0122';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0122';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0122';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0122';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0122';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0122';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0122';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0121';
+const VERSION = '29.0122';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1350,6 +1350,59 @@ const horasDeTarea = (t) => {
 const esTareaViva = (t) => {
     if (!t || t.status === 'Finalizado' || t.status === 'Vencida') return false;
     return horasDeTarea(t) < HORAS_VENCIMIENTO;
+};
+
+/**
+ * CIERRA LO QUE NO SE TRABAJÓ, AL PROCESAR. Devuelve cuántas se cerraron.
+ *
+ * En pantalla estas tareas dicen NO TRABAJADA, que es exactamente lo que pasó: nadie las
+ * tocó durante el turno. Por dentro siguen marcadas 'Vencida' para no tener que reescribir
+ * las 357 que ya existían ni la docena de sitios que comparan contra ese valor.
+ *
+ * No es un error ni una excepción: un turno que cierra con quince NO TRABAJADA es un turno
+ * normal. La ola siguiente las vuelve a proponer si su mercadería sigue en el buffer, con
+ * la cantidad que diga el stock de ese momento.
+ *
+ * Solo toca las CREADA. Una Asignada está en manos de alguien y se respeta.
+ */
+const cerrarCreadasSinTrabajar = (tareas) => {
+    let n = 0;
+    (tareas || []).forEach(t => {
+        if (t && t.status === 'Creada') {
+            t.status = 'Vencida';
+            t.vencidaEl = selloLocalTarea();
+            // Se distingue de la que caducó sola por las 48 horas: esta la cerró una corrida.
+            t.cerradaPorCorrida = true;
+            n++;
+        }
+    });
+    return n;
+};
+
+/**
+ * CÓMO SE LLAMA CADA ESTADO EN PANTALLA.
+ *
+ * 'Vencida' se muestra como NO TRABAJADA. Adentro el valor no cambia —hay 357 tareas ya
+ * guardadas así y una docena de sitios que comparan contra él—, pero la palabra que ve la
+ * gente sí: "vencida" suena a error, y no lo es. Es el final normal de lo que no se alcanzó
+ * en el turno. Decisión de Daniel, 07-ago-2026.
+ *
+ * Y no puede llamarse "Cerrada": quedaría al lado de FINALIZADO en la misma columna y las
+ * dos se leerían como "ya está lista", cuando significan lo contrario.
+ */
+const ROTULOS_ESTADO = { 'Vencida': 'NO TRABAJADA' };
+const rotuloEstado = (t) => {
+    const s = String((t && t.status) || '');
+    return ROTULOS_ESTADO[s] || s.toUpperCase();
+};
+
+/** El color de cada estado. NO TRABAJADA va en gris: no se hizo, pero no es una falla. */
+const colorEstado = (t) => {
+    const s = String((t && t.status) || '');
+    if (s === 'Finalizado') return '#22c55e';
+    if (s === 'Asignado') return '#eab308';
+    if (s === 'Vencida') return '#94a3b8';
+    return 'var(--text-muted)';
 };
 
 /** Pasa a Vencida toda tarea sin cerrar que cruzó las 48 horas. Devuelve cuántas cambiaron. */
@@ -3800,7 +3853,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0121');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0122');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14110,7 +14163,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0121 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0122 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -21891,6 +21944,24 @@ window.showCellModal = function(htmlContent) {
         // comprometida, su stock quedaría bloqueado y no entraría en la ola de esta noche.
         const cuantasVencieron = vencerTareasViejas(almacenajeTasksCache);
 
+        // UNA CREADA NO SE ARRASTRA A LA CORRIDA SIGUIENTE.
+        //
+        // Regla de Daniel, 07-ago-2026: "si hay diez tareas y solamente avancé dos, las ocho
+        // que quedan creadas se cambian de estado al momento que yo procese tareas".
+        //
+        // Lo que no se trabajó en el turno se cierra acá, y la ola nueva se arma con el stock
+        // de este momento. Con eso vale la única cuenta que importa: SI EL BUFFER TIENE
+        // VEINTE MIL, LAS TAREAS SUMAN VEINTE MIL. Ni de más ni de menos.
+        //
+        // Antes vivían 48 horas y se arrastraban, y de ahí salió casi todo lo que rompimos
+        // esta semana: tareas de ayer trabajadas hoy, fechas que no coincidían, reportes que
+        // sumaban al día equivocado y números repetidos. Se acabó: lo vivo es de hoy.
+        //
+        // LAS ASIGNADAS NO SE TOCAN. Alguien las está trabajando con la hoja en la mano, y su
+        // mercadería sigue en el buffer: el descuento de `yaComprometido` la cuenta, así que
+        // no se duplica y la cuenta sigue cerrando.
+        const noTrabajadas = cerrarCreadasSinTrabajar(almacenajeTasksCache);
+
         // Y a las que siguen vivas se les corrige la cantidad con el buffer de esta noche, en
         // vez de dejarlas diciendo lo de anteayer. Va después de vencer y antes de contar.
         const ajuste = ajustarTareasVivas(almacenajeTasksCache, filtered);
@@ -21898,14 +21969,16 @@ window.showCellModal = function(htmlContent) {
         // Y se les recalcula la antigüedad, que viaja grabada y no se arregla sola.
         const refrescadas = refrescarEspera(almacenajeTasksCache);
 
-        if (cuantasVencieron > 0 || ajuste.cambiadas > 0 || refrescadas > 0) {
+        if (cuantasVencieron > 0 || noTrabajadas > 0 || ajuste.cambiadas > 0 || refrescadas > 0) {
             await guardarBloqueFusionado(base => {
                 vencerTareasViejas(base);
+                cerrarCreadasSinTrabajar(base);
                 ajustarTareasVivas(base, filtered);
                 refrescarEspera(base);
                 return base;
             });
-            console.log(`[Almacenaje] ${cuantasVencieron} vencidas por las ${HORAS_VENCIMIENTO}h · `
+            console.log(`[Almacenaje] ${noTrabajadas} pasaron a NO TRABAJADA (no se alcanzaron en el turno) · `
+                      + `${cuantasVencieron} vencidas por las ${HORAS_VENCIMIENTO}h · `
                       + `${ajuste.cambiadas} corregidas con el stock de hoy (${ajuste.vencidasVacias} quedaron en cero) · `
                       + `${refrescadas} con la antigüedad recalculada`);
         }
@@ -26640,8 +26713,8 @@ window.showCellModal = function(htmlContent) {
                                     <td style="padding:10.8px 1rem; text-align:center; color:#fff; font-weight:900; font-size:1rem;">${productividad}</td>
                                     <td style="padding:10.8px 1rem; text-align:center; font-size:0.7rem;"><span style="${objStyle}">${objetivo}</span></td>
                                     <td style="padding:10.8px 1rem; text-align:center;">
-                                        <span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : t.status === 'Vencida' ? '#ef4444' : 'var(--text-muted)'}; font-weight:900; font-size:0.7rem;">
-                                            ${t.status.toUpperCase()}
+                                        <span style="color:${colorEstado(t)}; font-weight:900; font-size:0.7rem;">
+                                            ${rotuloEstado(t)}
                                         </span>
                                     </td>
                                     <td style="padding:10.8px 1rem; text-align:center; font-size:1.2rem;">
@@ -26723,8 +26796,8 @@ window.showCellModal = function(htmlContent) {
                                     <td style="padding:0.6rem 1rem; text-align:center; font-size:0.75rem; opacity:0.6;">${fAsignado}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-size:0.75rem; opacity:0.6;">${fFinalizado}</td>
                                     <td style="padding:0.6rem 1rem; text-align:center;">
-                                        <span style="color:${t.status === 'Finalizado' ? '#22c55e' : t.status === 'Asignado' ? '#eab308' : t.status === 'Vencida' ? '#ef4444' : 'var(--text-muted)'}; font-weight:900; font-size:0.7rem;">
-                                            ${t.status.toUpperCase()}
+                                        <span style="color:${colorEstado(t)}; font-weight:900; font-size:0.7rem;">
+                                            ${rotuloEstado(t)}
                                         </span>
                                     </td>
                                     <td style="padding:0.6rem 1rem; text-align:center; font-size:1rem;">
