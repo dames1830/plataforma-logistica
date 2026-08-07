@@ -134,6 +134,27 @@ export const jornadaDelTrabajo = (t, fechaLogicaDe) => {
     return `${m.getFullYear()}-${dd(m.getMonth() + 1)}-${dd(m.getDate())}`;
 };
 
+/**
+ * EN QUÉ DÍA CUENTA UNA TAREA. La usan TODOS los reportes.
+ *
+ * Una FINALIZADA cuenta en la jornada en que se trabajó; una que sigue pendiente, en el día
+ * en que nació, porque todavía no se trabajó en ninguno.
+ *
+ * Los reportes agrupaban por `t.fecha`, que es el día en que se generó la ola. Como una tarea
+ * podía vivir 48 horas, el turno de hoy trabajando una tarea de ayer sumaba al día de ayer.
+ * El 07-ago-2026 Daniel abrió el detalle del jueves y le decía CERO en footwear, con su gente
+ * habiendo movido 13.292 pares esa noche — y no era el único reporte con el mismo error.
+ *
+ * Regla de Daniel: "revisa todos los reportes, no puedo estar diciéndote me falta esto".
+ * Por eso vive acá y no en cada pantalla: quien cuente tareas por día usa esta función.
+ */
+export const diaOperativoDeTarea = (t, fechaLogicaDe) => {
+    if (t && t.status === 'Finalizado') {
+        return jornadaDelTrabajo(t, fechaLogicaDe) || (t && t.fecha);
+    }
+    return t && t.fecha;
+};
+
 /* ── RANGO DE FECHAS DE UN REPORTE ────────────────────────────────────────
    Cada reporte lleva su propio rango, aparte del filtro general de la pantalla:
    sirve para mirar Marcas en una semana y Gender RIMS en otra sin pelearse.

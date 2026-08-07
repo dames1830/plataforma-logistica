@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0128';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0129';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0128';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0128';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0128';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0128';
-import * as metasService from '../services_v245/metasService.js?v=29.0128';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0128';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0128';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0128';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0128';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0128';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0128';
+import * as adminService from '../services_v245/adminService.js?v=29.0129';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0129';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0129';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0129';
+import * as metasService from '../services_v245/metasService.js?v=29.0129';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0129';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0129';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0129';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0129';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0129';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0129';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0128';
+const VERSION = '29.0129';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -685,7 +685,9 @@ const buildKpiDataset = (tasks, desde, hasta) => {
     const filas = [];
     (tasks || []).forEach(t => {
         if (!t || t.status !== 'Finalizado') return;
-        if (!(t.fecha >= desde && t.fecha <= hasta)) return;
+        // POR LA JORNADA EN QUE SE TRABAJO, no por la fecha de la ola.
+        const diaTarea = diaOperativoDeTarea(t);
+        if (!(diaTarea >= desde && diaTarea <= hasta)) return;
 
         const mins = getTaskMinutos(t);
         const qty = getTaskTotalAvance(t);
@@ -704,7 +706,9 @@ const buildKpiDataset = (tasks, desde, hasta) => {
 
         filas.push({
             id: t.id,
-            fecha: t.fecha,
+            // El dia que cuenta es el trabajado: de aca cuelgan la tabla KPI,
+            // los graficos de tendencia y el filtro por dia.
+            fecha: diaTarea,
             marca: marcaNormalizada(t.marca) || 'S/M',
             usuarios,
             grupo: usuarios.join(' + ') || '---',
@@ -885,7 +889,9 @@ const unidadesPorGenderYDia = (tasks, desde, hasta) => {
     const mapa = new Map();
     (tasks || []).forEach(t => {
         if (!t || t.status !== 'Finalizado' || !t.fecha) return;
-        if (t.fecha < desde || t.fecha > hasta) return;
+        // Por la jornada en que se trabajo, no por la fecha de la ola.
+        const dTarea = diaOperativoDeTarea(t);
+        if (dTarea < desde || dTarea > hasta) return;
         unidadesPorGender(t).forEach((u, g) => {
             if (!mapa.has(g)) mapa.set(g, new Map());
             const porDia = mapa.get(g);
@@ -904,7 +910,9 @@ const unidadesPorMarca = (tasks, desde, hasta, soloGender = null) => {
     const mapa = new Map();
     (tasks || []).forEach(t => {
         if (!t || t.status !== 'Finalizado' || !t.fecha) return;
-        if (t.fecha < desde || t.fecha > hasta) return;
+        // Por la jornada en que se trabajo, no por la fecha de la ola.
+        const dTarea = diaOperativoDeTarea(t);
+        if (dTarea < desde || dTarea > hasta) return;
         const m = marcaNormalizada(t.marca) || 'Sin marca';
         // Con `soloGender` se cuenta únicamente esa categoría de la tarea, no su
         // total: una tarea puede mezclar artículos de varios G. Gender.
@@ -976,16 +984,33 @@ const buildStatsOperarios = (filas) => {
  * sigue en el buffer y al día siguiente el sistema la vuelve a convertir en tarea nueva, así
  * que el mismo SKU aparece repetido en varias jornadas.
  */
+/**
+ * EN QUÉ DÍA CUENTA UNA TAREA.
+ *
+ * Una FINALIZADA cuenta en la jornada en que se trabajó; una que sigue pendiente, en el día
+ * en que nació, porque todavía no se trabajó en ninguno.
+ *
+ * Acá se agrupaba todo por `t.fecha`, la fecha en que se generó la ola. Como una tarea podía
+ * vivir 48 horas, el turno de hoy trabajando una tarea de ayer sumaba al día de ayer: el
+ * 07-ago-2026 Daniel abrió el detalle del jueves y le decía CERO en footwear, con el turno
+ * habiendo movido más de trece mil pares esa noche. Es el mismo defecto que ya se corrigió en
+ * el reporte de Marcas, y la regla que se aplica es la misma.
+ */
+const diaOperativoDeTarea = (t) => diaOperativoCompartido(t, (m) => jornadaService.fechaLogicaDe(m));
+
 const buildJornadas = (tasksAll, desde, hasta, familia) => {
-    const enRango = (tasksAll || []).filter(t => t && t.fecha >= desde && t.fecha <= hasta);
+    const enRango = (tasksAll || []).filter(t => {
+        const d = diaOperativoDeTarea(t);
+        return d && d >= desde && d <= hasta;
+    });
     const delFiltro = (!familia || familia === 'TODAS')
         ? enRango
         : enRango.filter(t => getTaskCategoria(t).familia === familia);
 
-    const dias = [...new Set(delFiltro.map(t => t.fecha))].sort((a, b) => b.localeCompare(a));
+    const dias = [...new Set(delFiltro.map(diaOperativoDeTarea))].sort((a, b) => b.localeCompare(a));
 
     return dias.map(fecha => {
-        const dd = delFiltro.filter(t => t.fecha === fecha);
+        const dd = delFiltro.filter(t => diaOperativoDeTarea(t) === fecha);
         const fin = dd.filter(t => t.status === 'Finalizado');
         const asignadas = dd.filter(t => t.status === 'Asignado');
         const creadas = dd.filter(t => t.status !== 'Finalizado' && t.status !== 'Asignado');
@@ -1139,13 +1164,14 @@ const avisarCerrada = (t) => {
  * Tarea47 —impresa por el defecto del radar— y le cambiara el estado creyendo que estaba
  * pendiente. La hoja mentía; la tarea llevaba rato cerrada.
  *
- * BLOQUEA A TODOS, TAMBIÉN AL SUPERUSUARIO. Primero le puse la excepción de siempre, y
- * Daniel la probó y la rechazó: "no me debía permitir ni siquiera que me salga el modal".
- * Tiene razón — no existe el caso legítimo. Si una NO TRABAJADA tuviera que volver a hacerse,
- * el camino es correr el proceso otra vez y que nazca de nuevo con el stock del momento, no
- * reabrir una que ya tiene su mercadería reclamada en otra parte.
+ * El superusuario queda exento, como en todo lo demás del módulo. Daniel lo probó primero
+ * bloqueado para todos y decidió mantener la excepción: "dames tiene acceso a todo normal,
+ * déjalo que yo pueda editar cualquier cosa. Todo lo demás deben ser bloqueados".
+ *
+ * El riesgo de reabrir una sigue existiendo —su mercadería ya está pedida en otra tarea—,
+ * así que si alguna vez hay que deshacer algo, lo limpio es correr el proceso otra vez.
  */
-const tareaNoTrabajada = (t) => !!t && t.status === 'Vencida';
+const tareaNoTrabajada = (t) => !!t && t.status === 'Vencida' && !esSuperusuario();
 
 const avisarNoTrabajada = (t) => {
     const n = String((t && t.id) || '').split('_').pop();
@@ -2861,7 +2887,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     // Día a analizar: hoy. Si hoy todavía no tiene tareas (de madrugada, o un día
     // no laborable) se muestra el último día que sí tuvo, y las tarjetas dicen
     // cuál es: mejor un número real fechado que cuatro ceros sin explicación.
-    const diasConTareas = [...new Set(tasks.filter(t => t && t.fecha).map(t => t.fecha))].sort();
+    const diasConTareas = [...new Set(tasks.filter(t => t && t.fecha).map(diaOperativoDeTarea))].sort();
     const diaAnalizado = diasConTareas.includes(r.estaHasta)
         ? r.estaHasta
         : (diasConTareas[diasConTareas.length - 1] || r.estaHasta);
@@ -3923,7 +3949,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0128');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0129');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -9532,7 +9558,10 @@ const renderRFSection = (container) => {
                       let __n = 0, __q = 0;
                       __tareas.forEach(t => {
                           if (!t || t.status !== 'Finalizado') return;
-                          if (!(t.fecha >= __r.estaDesde && t.fecha <= __r.estaHasta)) return;
+                          // Por la jornada en que se TRABAJÓ, no por la fecha en que nació la
+                          // ola: una tarea de ayer cerrada hoy es avance de hoy.
+                          const __d = diaOperativoDeTarea(t);
+                          if (!(__d >= __r.estaDesde && __d <= __r.estaHasta)) return;
                           __n++;
                           __q += getTaskTotalAvance(t);
                       });
@@ -14233,7 +14262,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0128 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0129 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24949,7 +24978,8 @@ window.showCellModal = function(htmlContent) {
 
         tasksList.forEach(t => {
             if (t.status !== 'Finalizado') return;
-            const weekStr = getWeekStr(t.fecha);
+            // Por la jornada trabajada: una tarea de ayer cerrada hoy es avance de hoy.
+            const weekStr = getWeekStr(diaOperativoDeTarea(t));
             if (weekStr === '---') return;
             
             // Primero se juntan las que son la misma marca, y recién después se acorta
@@ -25203,8 +25233,9 @@ window.showCellModal = function(htmlContent) {
         let maxDate = '';
         tasksList.forEach(t => {
             if (t.status === 'Finalizado' && t.fecha) {
-                if (!minDate || t.fecha < minDate) minDate = t.fecha;
-                if (!maxDate || t.fecha > maxDate) maxDate = t.fecha;
+                const dT = diaOperativoDeTarea(t);
+                if (!minDate || dT < minDate) minDate = dT;
+                if (!maxDate || dT > maxDate) maxDate = dT;
             }
         });
 
@@ -25233,14 +25264,16 @@ window.showCellModal = function(htmlContent) {
 
         const chartTasks = tasksList.filter(t => {
             if (!t.fecha) return false;
-            if (startDate && t.fecha < startDate) return false;
-            if (endDate && t.fecha > endDate) return false;
+            const dT = diaOperativoDeTarea(t);
+            if (startDate && dT < startDate) return false;
+            if (endDate && dT > endDate) return false;
             return true;
         });
 
         chartTasks.forEach(t => {
-            const weekStr = getWeekStr(t.fecha);
-            const dayIdx = getDayIndex(t.fecha);
+            const dOper = diaOperativoDeTarea(t);
+            const weekStr = getWeekStr(dOper);
+            const dayIdx = getDayIndex(dOper);
             if (weekStr === '---' || dayIdx === -1) return;
             
             if (!chartWeeksData[weekStr]) {
@@ -26301,7 +26334,7 @@ window.showCellModal = function(htmlContent) {
                                     }
 
                                     const genderGroups = {};
-                                    const filteredTasks = tasks.filter(t => t.fecha >= window.__repGenderStart && t.fecha <= window.__repGenderEnd);
+                                    const filteredTasks = tasks.filter(t => { const d = diaOperativoDeTarea(t); return d >= window.__repGenderStart && d <= window.__repGenderEnd; });
 
                                     filteredTasks.forEach(t => {
                                         (t.items || []).forEach(art => {

@@ -11,13 +11,13 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0128';
+} from '../services_v245/csvHub_v6.js?v=29.0129';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0128';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0128';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0128';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0128';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0128';
+import * as adminService from '../services_v245/adminService.js?v=29.0129';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0129';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0129';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0129';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0129';
 
 /**
  * El día operativo, no el del calendario.
@@ -28,6 +28,13 @@ import * as jornadaService from '../services_v245/jornadaService.js?v=29.0128';
  * principal, para que los dos digan lo mismo.
  */
 const getLogicalDate = () => jornadaService.fechaLogicaDe();
+
+/**
+ * EN QUE DIA CUENTA UNA TAREA. La misma regla que usa el dashboard, importada del archivo
+ * compartido para que las dos pantallas no vuelvan a separarse: una FINALIZADA cuenta en la
+ * jornada en que se trabajo, una pendiente en el dia en que nacio.
+ */
+const diaOperativoDeTarea = (t) => diaOperativoCompartido(t, (m) => jornadaService.fechaLogicaDe(m));
 
 // Catálogo Maestro de Módulos
 const ALL_MODULES = [
@@ -281,7 +288,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0128</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0129</span>
     </div>`;
 
   buildTabNav();
@@ -528,10 +535,11 @@ const getTaskTotalAvance = (t) => {
 };
 
 function getFilteredTasks() {
-  return getAlmacenajeTasks().filter(t =>
-    (!filterStart || t.fecha >= filterStart) &&
-    (!filterEnd   || t.fecha <= filterEnd)
-  );
+  return getAlmacenajeTasks().filter(t => {
+    // Por la jornada en que se trabajo. De esta funcion cuelga TODO el portal publico.
+    const d = diaOperativoDeTarea(t);
+    return (!filterStart || d >= filterStart) && (!filterEnd || d <= filterEnd);
+  });
 }
 
 function getPctHtml(avance, buffer) {
@@ -648,7 +656,7 @@ Período: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd, '#9C9590
                                         }
                                     }
                                     const genderGroups = {};
-                                    const filteredTasksGR = tasks.filter(t => t.fecha >= window.__repGenderStart && t.fecha <= window.__repGenderEnd);
+                                    const filteredTasksGR = tasks.filter(t => { const d = diaOperativoDeTarea(t); return d >= window.__repGenderStart && d <= window.__repGenderEnd; });
                                     filteredTasksGR.forEach(t => {
                                         (t.items || []).forEach(art => {
                                             const sku7 = String(art.sku7 || '').trim().substring(0, 7);
@@ -722,7 +730,7 @@ Período: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd, '#9C9590
 function renderRendimientoOperarios() {
   const area = document.getElementById('almacenajeContent') || document.getElementById('contentArea');
   const tasks = getFilteredTasks();
-  const filteredTasks = tasks.filter(t => t.fecha >= filterStart && t.fecha <= filterEnd);
+  const filteredTasks = tasks.filter(t => { const d = diaOperativoDeTarea(t); return d >= filterStart && d <= filterEnd; });
   const weeklyDailyTasks = tasks;
   window.__kpiStartDate = filterStart || getLogicalDate();
   window.__kpiEndDate = filterEnd || getLogicalDate();
@@ -1127,7 +1135,8 @@ const renderWeeklyStorageReport = (tasksList) => {
 
         tasksList.forEach(t => {
             if (t.status !== 'Finalizado') return;
-            const weekStr = getWeekStr(t.fecha);
+            // Por la jornada trabajada: una tarea de ayer cerrada hoy es avance de hoy.
+            const weekStr = getWeekStr(diaOperativoDeTarea(t));
             if (weekStr === '---') return;
             
             let brand = marcaCorta(t.marca) || 'S/M';
@@ -1387,8 +1396,9 @@ const renderWeeklyDailyChartSection = (tasksList) => {
         let maxDate = '';
         tasksList.forEach(t => {
             if (t.status === 'Finalizado' && t.fecha) {
-                if (!minDate || t.fecha < minDate) minDate = t.fecha;
-                if (!maxDate || t.fecha > maxDate) maxDate = t.fecha;
+                const dT = diaOperativoDeTarea(t);
+                if (!minDate || dT < minDate) minDate = dT;
+                if (!maxDate || dT > maxDate) maxDate = dT;
             }
         });
 
@@ -1417,14 +1427,16 @@ const renderWeeklyDailyChartSection = (tasksList) => {
 
         const chartTasks = tasksList.filter(t => {
             if (!t.fecha) return false;
-            if (startDate && t.fecha < startDate) return false;
-            if (endDate && t.fecha > endDate) return false;
+            const dT = diaOperativoDeTarea(t);
+            if (startDate && dT < startDate) return false;
+            if (endDate && dT > endDate) return false;
             return true;
         });
 
         chartTasks.forEach(t => {
-            const weekStr = getWeekStr(t.fecha);
-            const dayIdx = getDayIndex(t.fecha);
+            const dOper = diaOperativoDeTarea(t);
+            const weekStr = getWeekStr(dOper);
+            const dayIdx = getDayIndex(dOper);
             if (weekStr === '---' || dayIdx === -1) return;
             
             if (!chartWeeksData[weekStr]) {
