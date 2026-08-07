@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0126';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0127';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0126';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0126';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0126';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0126';
-import * as metasService from '../services_v245/metasService.js?v=29.0126';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0126';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0126';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0126';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0126';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0126';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0126';
+import * as adminService from '../services_v245/adminService.js?v=29.0127';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0127';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0127';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0127';
+import * as metasService from '../services_v245/metasService.js?v=29.0127';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0127';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0127';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0127';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0127';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0127';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0127';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0126';
+const VERSION = '29.0127';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1125,6 +1125,29 @@ const avisarCerrada = (t) => {
     const dia = String((t && t.fecha) || '').split('-').reverse().join('/');
     showPremiumAlert('JORNADA CERRADA',
         `La tarea del ${dia} ya no se puede modificar.\n\nLas tareas quedan abiertas ${jornadaService.textoCierre()}. Después solo ${SUPERUSUARIO.toUpperCase()} puede tocarlas.\n\nEs lo que evita que los números de días pasados cambien después de haberlos presentado.`,
+        'warning');
+};
+
+/**
+ * UNA TAREA NO TRABAJADA NO SE VUELVE A ABRIR.
+ *
+ * Cuando una corrida la cierra, su mercadería vuelve al buffer disponible y la ola nueva la
+ * reclama en OTRA tarea. Reabrir la vieja pone dos tareas mandando por lo mismo: dos hojas,
+ * dos operarios y el mismo stock contado dos veces.
+ *
+ * Lo pidió Daniel el 07-ago-2026, después de que su asistente viera una hoja vieja de la
+ * Tarea47 —impresa por el defecto del radar— y le cambiara el estado creyendo que estaba
+ * pendiente. La hoja mentía; la tarea llevaba rato cerrada.
+ *
+ * El superusuario puede, como en todo lo demás: si hay que deshacer algo, alguien tiene que
+ * poder. Pero el asistente no.
+ */
+const tareaNoTrabajada = (t) => !!t && t.status === 'Vencida' && !esSuperusuario();
+
+const avisarNoTrabajada = (t) => {
+    const n = String((t && t.id) || '').split('_').pop();
+    showPremiumAlert('TAREA NO TRABAJADA',
+        `La ${n} se cerró en una corrida porque no se alcanzó a trabajar.\n\nSu mercadería ya está pedida en una tarea NUEVA, así que esta no se puede reabrir: serían dos hojas mandando por lo mismo.\n\nBusque el código en la lista de tareas de hoy; está en alguna de las nuevas.`,
         'warning');
 };
 
@@ -3897,7 +3920,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0126');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0127');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14207,7 +14230,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0126 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0127 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -27633,6 +27656,7 @@ window.showCellModal = function(htmlContent) {
         const task = almacenajeTasksCache.find(x => x.id === id);
         if (!task) return;
         if (tareaCerrada(task)) { avisarCerrada(task); return; }
+        if (tareaNoTrabajada(task)) { avisarNoTrabajada(task); return; }
         
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
         const isClosed = task.status === 'Finalizado';
@@ -27654,6 +27678,7 @@ window.showCellModal = function(htmlContent) {
         const task = almacenajeTasksCache.find(x => x.id === id);
         if (!task) return;
         if (tareaCerrada(task)) { avisarCerrada(task); return; }
+        if (tareaNoTrabajada(task)) { avisarNoTrabajada(task); return; }
         
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
         const isClosed = task.status === 'Finalizado';
@@ -27826,6 +27851,7 @@ window.showCellModal = function(htmlContent) {
 
         const t = almacenajeTasksCache.find(x => x.id === id);
         if (tareaCerrada(t)) { avisarCerrada(t); return; }
+        if (tareaNoTrabajada(t)) { avisarNoTrabajada(t); return; }
         if (t && t.status === 'Finalizado') {
             showPremiumAlert("TAREA BLOQUEADA", "Esta tarea ya está finalizada y bloqueada. Para realizar cualquier cambio, utiliza el botón de edición (✏️).", "warning");
             return;
@@ -28041,6 +28067,7 @@ window.showCellModal = function(htmlContent) {
         const task = almacenajeTasksCache.find(t => t.id === taskId);
         if (!task) return;
         if (tareaCerrada(task)) { avisarCerrada(task); return; }
+        if (tareaNoTrabajada(task)) { avisarNoTrabajada(task); return; }
 
         const session = JSON.parse(localStorage.getItem('logistics_session') || '{}');
         const isClosed = task.status === 'Finalizado';
