@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0114';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0115';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0114';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0114';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0114';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0114';
-import * as metasService from '../services_v245/metasService.js?v=29.0114';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0114';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0114';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0114';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0114';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0114';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0114';
+import * as adminService from '../services_v245/adminService.js?v=29.0115';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0115';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0115';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0115';
+import * as metasService from '../services_v245/metasService.js?v=29.0115';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0115';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0115';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0115';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0115';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0115';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0115';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0114';
+const VERSION = '29.0115';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1384,6 +1384,25 @@ const vencerTareasViejas = (tareas) => {
  * Solo mira las vivas. Una finalizada puede repetir número con una de hoy sin molestar a
  * nadie, y arrastrar el historial entero haría que en un mes anduviéramos por la Tarea900.
  */
+/**
+ * El orden en que salen las tareas del papel: por NÚMERO, de menor a mayor.
+ *
+ * Sin esto salían en el orden en que estaban guardadas —la 47, después la 49, y la 36 al
+ * final—, que no es ningún orden para quien reparte las hojas. Se ordena por número y no
+ * por fecha porque el número es lo que se lee en el papel y por lo que se pregunta en el
+ * turno; con la renumeración, dos tareas vivas nunca comparten número.
+ */
+const ordenParaElPapel = (a, b) => {
+    const num = (t) => {
+        const id = String((t && (t.id || (t.tarea && t.tarea.id))) || '');
+        const c = id.includes('_') ? id.split('_')[1] : id;
+        const n = parseInt(String(c).replace('Tarea', ''));
+        return isNaN(n) ? Number.MAX_SAFE_INTEGER : n;
+    };
+    const fecha = (t) => String((t && (t.fecha || (t.tarea && t.tarea.fecha))) || '');
+    return num(a) - num(b) || fecha(a).localeCompare(fecha(b));
+};
+
 const desempatarNumeros = (tareas) => {
     const vivas = (tareas || []).filter(t => t && t.id && esTareaViva(t));
     const numeroDe = (t) => {
@@ -3656,7 +3675,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0114');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0115');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13966,7 +13985,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0114 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0115 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16397,7 +16416,7 @@ const renderRFSection = (container) => {
         if (!porTarea.has(k)) porTarea.set(k, { tarea: x.tarea, arts: [] });
         porTarea.get(k).arts.push(x);
       });
-      const tareas = [...porTarea.values()];
+      const tareas = [...porTarea.values()].sort(ordenParaElPapel);
 
       tareas.forEach((grupo, idx) => {
         const t = grupo.tarea;
@@ -16614,7 +16633,7 @@ const renderRFSection = (container) => {
       if (!porTarea.has(k)) porTarea.set(k, { tarea: x.tarea, arts: [] });
       porTarea.get(k).arts.push(x);
     });
-    const tareas = [...porTarea.values()];
+    const tareas = [...porTarea.values()].sort(ordenParaElPapel);
 
     const esc = (v) => String(v === null || v === undefined ? '' : v)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
