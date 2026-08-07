@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0111';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0112';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0111';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0111';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0111';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0111';
-import * as metasService from '../services_v245/metasService.js?v=29.0111';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0111';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0111';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0111';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0111';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0111';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0111';
+import * as adminService from '../services_v245/adminService.js?v=29.0112';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0112';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0112';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0112';
+import * as metasService from '../services_v245/metasService.js?v=29.0112';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0112';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0112';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0112';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0112';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0112';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0112';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0111';
+const VERSION = '29.0112';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1339,20 +1339,25 @@ const horasDeTarea = (t) => {
 };
 
 /**
- * Si su mercadería sigue comprometida. Las Asignadas cuentan siempre: alguien las empezó y su
- * hoja está en la calle, así que ese stock no se puede volver a repartir.
+ * Si su mercadería sigue comprometida.
+ *
+ * LAS 48 HORAS VALEN PARA TODAS, NO SOLO PARA LAS CREADAS. Antes una Asignada no caducaba
+ * nunca —"alguien la empezó y su hoja está en la calle"—, y ese razonamiento vale para unas
+ * horas, no para meses: el 06-ago-2026 había 13 tareas en Asignado sin cerrar, cinco de
+ * ellas del 25 de MAYO, reteniendo 4.443 pares que no podían entrar en ninguna corrida.
+ * Si a las 48 horas nadie la cerró, no se está trabajando.
  */
 const esTareaViva = (t) => {
     if (!t || t.status === 'Finalizado' || t.status === 'Vencida') return false;
-    if (t.status !== 'Creada') return true;
     return horasDeTarea(t) < HORAS_VENCIMIENTO;
 };
 
-/** Pasa a Vencida toda Creada que cruzó las 48 horas. Devuelve cuántas cambiaron. */
+/** Pasa a Vencida toda tarea sin cerrar que cruzó las 48 horas. Devuelve cuántas cambiaron. */
 const vencerTareasViejas = (tareas) => {
     let n = 0;
     (tareas || []).forEach(t => {
-        if (t && t.status === 'Creada' && horasDeTarea(t) >= HORAS_VENCIMIENTO) {
+        if (t && t.status !== 'Finalizado' && t.status !== 'Vencida'
+            && horasDeTarea(t) >= HORAS_VENCIMIENTO) {
             t.status = 'Vencida';
             // Queda el sello de cuándo se venció: sirve para saber que caducó sola y no que
             // alguien la cerró a mano.
@@ -3602,7 +3607,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0111');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0112');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13912,7 +13917,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0111 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0112 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16550,7 +16555,7 @@ const renderRFSection = (container) => {
    * propia —`paginaDeCierre()`— y cambiarla después es tocar una sola función.
    * ══════════════════════════════════════════════════════════════════════════════════
    */
-  const imprimirTareasWeb = async (filas, ctx, fuera) => {
+  const imprimirTareasWeb = async (filas, ctx, aparte) => {
     if (!filas.length) { showPremiumAlert('SIN TAREAS', 'No hay tareas en el rango para imprimir.', 'info'); return; }
 
     // Una tarea puede traer varios artículos, y salen juntos en la misma hoja
@@ -16792,9 +16797,11 @@ const renderRFSection = (container) => {
 
     const totalPaginas = hojas.querySelectorAll('.pg').length;
     const barra = doc.getElementById('barra');
-    barra.innerHTML = `${tareas.length} tarea${tareas.length > 1 ? 's' : ''} por trabajar · ${totalPaginas} página${totalPaginas > 1 ? 's' : ''}`
+    const ap = aparte || {};
+    barra.innerHTML = `${tareas.length} tarea${tareas.length > 1 ? 's' : ''} creada${tareas.length > 1 ? 's' : ''} · ${totalPaginas} página${totalPaginas > 1 ? 's' : ''}`
       + ` · ${totalPaginas / 2} hoja${totalPaginas / 2 > 1 ? 's' : ''} de papel a doble cara`
-      + (fuera ? ` · <span style="color:#fbbf24;">${fuera} finalizada${fuera > 1 ? 's' : ''} o vencida${fuera > 1 ? 's' : ''} no ${fuera > 1 ? 'entran' : 'entra'}</span>` : '')
+      + (ap.deOtrosDias ? ` · <span style="color:#a5b4fc;">${ap.deOtrosDias} de días anteriores</span>` : '')
+      + (ap.asignadas ? ` · <span style="color:#fbbf24;">${ap.asignadas} ya asignada${ap.asignadas > 1 ? 's' : ''}, no ${ap.asignadas > 1 ? 'entran' : 'entra'}</span>` : '')
       + `<button onclick="window.print()">🖨️ Imprimir</button>`;
 
     win.focus();
@@ -21973,27 +21980,39 @@ window.showCellModal = function(htmlContent) {
       return;
     }
 
-    const desde = window.__almacenajeStartDate, hasta = window.__almacenajeEndDate;
-    const delRango = (almacenajeTasksCache || []).filter(t => t && t.fecha >= desde && t.fecha <= hasta);
-
-    // SOLO SE IMPRIME LO QUE FALTA TRABAJAR. Antes salía todo lo del rango, así que en el
-    // fajo de papeles venían mezcladas las que ya se habían terminado — el operario no
-    // tiene forma de distinguirlas y termina yendo a buscar mercadería que ya está guardada.
-    // Las Vencidas tampoco: caducaron solas a las 48 horas y su stock ya volvió a entrar en
-    // la corrida siguiente, así que ese papel mandaría a mover algo que hoy tiene otra tarea.
-    const cerrada = (t) => t.status === 'Finalizado' || t.status === 'Vencida';
-    const tareas = delRango.filter(t => !cerrada(t));
-    const fuera = delRango.length - tareas.length;
+    // EL PAPEL SON LAS CREADAS QUE SIGUEN VIVAS, SIN MIRAR EL FILTRO DE FECHAS.
+    //
+    // Dos cosas que pidió Daniel el 06-ago-2026, y las dos vienen del mismo lugar:
+    //
+    //   · TODAS LAS CREADAS JUNTAS, las de hoy, las de ayer y las de anteayer. El trabajo
+    //     pendiente no entiende de fechas: una tarea del 4 que nadie tocó hay que hacerla
+    //     igual. Con el filtro por fecha había que ir cambiándolo día por día para
+    //     encontrarlas, y el fajo nunca era todo lo que faltaba.
+    //
+    //   · SOLO LAS CREADAS. Una Asignada ya tiene su hoja impresa en manos de alguien y
+    //     volver a sacarla es mandar dos veces la misma mercadería. Las Finalizadas y las
+    //     Vencidas, menos todavía: unas ya están guardadas y las otras devolvieron su stock
+    //     a la corrida siguiente, así que ese papel mandaría a mover algo que hoy tiene
+    //     otra tarea.
+    //
+    // Con las 48 horas de caducidad, "todas las Creadas vivas" son a lo sumo las de los dos
+    // últimos días: no se acumulan para siempre.
+    const todas = almacenajeTasksCache || [];
+    const tareas = todas.filter(t => t && t.status === 'Creada' && esTareaViva(t));
+    const fuera = todas.filter(t => t && t.status !== 'Creada'
+                                 && t.status !== 'Finalizado' && t.status !== 'Vencida').length;
+    const deOtrosDias = tareas.filter(t => t.fecha < window.__almacenajeStartDate
+                                        || t.fecha > window.__almacenajeEndDate).length;
 
     if (!tareas.length) {
-      showPremiumAlert('SIN TAREAS POR TRABAJAR', delRango.length
-        ? `En el rango hay <b>${delRango.length}</b> tarea${delRango.length > 1 ? 's' : ''}, pero `
-          + `${delRango.length > 1 ? 'todas están' : 'está'} finalizada${delRango.length > 1 ? 's' : ''} o vencida${delRango.length > 1 ? 's' : ''}.`
-        : 'No hay tareas en el rango de fechas elegido.', 'info');
+      showPremiumAlert('SIN TAREAS POR TRABAJAR',
+        'No hay ninguna tarea en estado <b>Creada</b> esperando. Las finalizadas, las vencidas y '
+        + 'las que ya están asignadas a alguien no entran en el papel.', 'info');
       return;
     }
-    if (fuera > 0) {
-      console.log(`[Almacenaje] ${fuera} tarea(s) finalizadas o vencidas quedan fuera del papel`);
+    if (deOtrosDias > 0) {
+      console.log(`[Almacenaje] el papel lleva ${tareas.length} tareas Creadas, `
+                + `${deOtrosDias} de días anteriores al filtro de pantalla`);
     }
 
     try {
@@ -22049,7 +22068,7 @@ window.showCellModal = function(htmlContent) {
       // El botón va en null a propósito: quien lo puso en ⌛ es el handler de
       // window.exportAlmacenajeExcel, y así se queda esperando también durante el
       // cálculo de arriba.
-      if (destino === 'imprimir') await imprimirTareasWeb(filas, ctx, fuera);
+      if (destino === 'imprimir') await imprimirTareasWeb(filas, ctx, { asignadas: fuera, deOtrosDias });
       else await exportarSugerenciaExcel(filas, ctx, null);
 
       updateSyncIndicator('online', 'PAPEL GENERADO ✅');
