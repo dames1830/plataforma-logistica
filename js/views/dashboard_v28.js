@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0127';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0128';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0127';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0127';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0127';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0127';
-import * as metasService from '../services_v245/metasService.js?v=29.0127';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0127';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0127';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0127';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0127';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0127';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0127';
+import * as adminService from '../services_v245/adminService.js?v=29.0128';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0128';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0128';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0128';
+import * as metasService from '../services_v245/metasService.js?v=29.0128';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0128';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0128';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0128';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0128';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0128';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0128';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0127';
+const VERSION = '29.0128';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1139,10 +1139,13 @@ const avisarCerrada = (t) => {
  * Tarea47 —impresa por el defecto del radar— y le cambiara el estado creyendo que estaba
  * pendiente. La hoja mentía; la tarea llevaba rato cerrada.
  *
- * El superusuario puede, como en todo lo demás: si hay que deshacer algo, alguien tiene que
- * poder. Pero el asistente no.
+ * BLOQUEA A TODOS, TAMBIÉN AL SUPERUSUARIO. Primero le puse la excepción de siempre, y
+ * Daniel la probó y la rechazó: "no me debía permitir ni siquiera que me salga el modal".
+ * Tiene razón — no existe el caso legítimo. Si una NO TRABAJADA tuviera que volver a hacerse,
+ * el camino es correr el proceso otra vez y que nazca de nuevo con el stock del momento, no
+ * reabrir una que ya tiene su mercadería reclamada en otra parte.
  */
-const tareaNoTrabajada = (t) => !!t && t.status === 'Vencida' && !esSuperusuario();
+const tareaNoTrabajada = (t) => !!t && t.status === 'Vencida';
 
 const avisarNoTrabajada = (t) => {
     const n = String((t && t.id) || '').split('_').pop();
@@ -3920,7 +3923,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0127');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0128');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14230,7 +14233,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0127 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0128 | MOBILE PORTAL
                             </div>
                     </div>
 
