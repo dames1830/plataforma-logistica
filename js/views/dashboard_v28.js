@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0120';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0121';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0120';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0120';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0120';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0120';
-import * as metasService from '../services_v245/metasService.js?v=29.0120';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0120';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0120';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0120';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0120';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0120';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0120';
+import * as adminService from '../services_v245/adminService.js?v=29.0121';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0121';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0121';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0121';
+import * as metasService from '../services_v245/metasService.js?v=29.0121';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0121';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0121';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0121';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0121';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0121';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0121';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0120';
+const VERSION = '29.0121';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3800,7 +3800,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0120');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0121');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14110,7 +14110,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0120 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0121 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -26803,7 +26803,68 @@ window.showCellModal = function(htmlContent) {
             searchInput.setSelectionRange(len, len);
         }
     };
-    window.processAlmacenajeTasks = async () => { if (await showPremiumConfirm("PROCESAR TAREAS", "¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.", "warning")) processAlmacenajeTasks(); };
+    /**
+     * DE CUÁNDO ES EL STOCK QUE SE VA A USAR.
+     *
+     * Se le pregunta al servidor por la marca del área, que son 2 KB. No sirve mirar lo que
+     * esta PC tenga en memoria: la pregunta es qué hay publicado AHORA.
+     *
+     * La marca viene en hora de Lima -el backend convierte con `ahora()`-, así que se lee
+     * como hora local y no hay que corregir nada.
+     */
+    const horaDelStockPublicado = async () => {
+        try {
+            const r = await fetch(`${API_BASE}/sync/versiones?z=${Date.now()}`);
+            if (!r.ok) return null;
+            const j = await r.json();
+            const sello = ((j || {}).versiones || {})['almacenaje_activo'];
+            if (!sello) return null;
+            const d = new Date(String(sello).replace(' ', 'T'));
+            if (isNaN(d.getTime())) return null;
+            const horas = (Date.now() - d.getTime()) / 3600000;
+            const dd = (n) => String(n).padStart(2, '0');
+            return {
+                texto: `${dd(d.getDate())}/${dd(d.getMonth() + 1)} a las ${dd(d.getHours())}:${dd(d.getMinutes())}`,
+                horas,
+                viejo: horas > 3,
+            };
+        } catch (e) { return null; }
+    };
+
+    /**
+     * PROCESAR TAREAS, DICIENDO PRIMERO CON QUÉ STOCK.
+     *
+     * El 06-ago-2026 la descarga de las 19:00 falló y el robot publicó el stock de las 08:23
+     * con la hora de las 19:09. Daniel corrió la ola sin forma de saberlo, y esa ola generó
+     * tareas sobre mercadería que el turno día ya había almacenado — 870 pares que el
+     * operario iba a buscar y no estaban. Las hojas ya estaban repartidas cuando se supo.
+     *
+     * Ahora la hora del stock se ve ANTES de correr, y si tiene más de tres horas el aviso
+     * cambia de color y lo dice con todas las letras. La decisión sigue siendo suya: puede
+     * haber una razón para correr con un stock viejo, pero no por no haberlo sabido.
+     */
+    window.processAlmacenajeTasks = async () => {
+        const stock = await horaDelStockPublicado();
+        let msg = "¿Deseas procesar el stock actual para generar tareas? Esto se acumulará en el historial.";
+        let tono = "warning";
+        if (!stock) {
+            msg += "\n\n⚠️ No se pudo averiguar de cuándo es el stock publicado.";
+        } else if (stock.viejo) {
+            const cuanto = stock.horas >= 24
+                ? `${Math.floor(stock.horas / 24)} día(s)`
+                : `${Math.floor(stock.horas)} horas`;
+            msg = `EL STOCK PUBLICADO ES DEL ${stock.texto.toUpperCase()}, hace ${cuanto}.\n\n`
+                + "Si el robot no bajó el stock de esta corrida, las tareas van a salir sobre "
+                + "mercadería que quizá ya se almacenó.\n\n" + msg;
+            tono = "danger";
+        } else {
+            const cuanto = stock.horas < 1
+                ? `hace ${Math.max(1, Math.round(stock.horas * 60))} minutos`
+                : `hace ${stock.horas.toFixed(1)} horas`;
+            msg = `Stock publicado: ${stock.texto} (${cuanto}).\n\n` + msg;
+        }
+        if (await showPremiumConfirm("PROCESAR TAREAS", msg, tono)) processAlmacenajeTasks();
+    };
     // Recibe el botón para que muestre que está trabajando: armar el Excel con muchas tareas tarda
     // El botón es solo el icono: el rótulo de espera va sin texto para que no se estire
     window.exportAlmacenajeExcel = (btn) => withLoading(btn, '⌛', () => exportAlmacenajeExcel());
