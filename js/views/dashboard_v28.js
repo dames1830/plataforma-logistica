@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0123';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0124';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0123';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0123';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0123';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0123';
-import * as metasService from '../services_v245/metasService.js?v=29.0123';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0123';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0123';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0123';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0123';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0123';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0123';
+import * as adminService from '../services_v245/adminService.js?v=29.0124';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0124';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0124';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0124';
+import * as metasService from '../services_v245/metasService.js?v=29.0124';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0124';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0124';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0124';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0124';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0124';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0124';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0123';
+const VERSION = '29.0124';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3853,7 +3853,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0123');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0124');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14163,7 +14163,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0123 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0124 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16642,31 +16642,17 @@ const renderRFSection = (container) => {
           rM.getCell(1).border = { left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
         }
 
-        // ESPERANDO HACE N DÍAS.
+        // EL CARTEL DE "ESPERANDO HACE N DÍAS" SE QUITÓ DEL PAPEL EL 07-ago-2026.
         //
-        // Si el artículo viene arrastrándose de olas anteriores, el papel lo dice. Es la única
-        // forma de que la deuda se vea: hay códigos en el buffer desde junio y en la hoja se
-        // leían igual que uno que llegó anoche. Va en la misma caja de borde grueso que el
-        // cartel de SIN UBICACIÓN, para que se distinga impreso en blanco y negro.
-        const diasEsperando = (() => {
-          if (!t.esperaDesde || String(t.esperaDesde) >= String(t.fecha)) return 0;
-          const a = new Date(`${t.esperaDesde}T00:00:00`), b = new Date(`${t.fecha}T00:00:00`);
-          if (isNaN(a.getTime()) || isNaN(b.getTime())) return 0;
-          return Math.round((b - a) / 86400000);
-        })();
-        if (diasEsperando > 0) {
-          const rE = ws.addRow([`ESPERANDO HACE ${diasEsperando} DÍA${diasEsperando > 1 ? 'S' : ''}`]);
-          ws.mergeCells(rE.number, 1, rE.number, COLS);
-          rE.getCell(1).font = { size: 13, bold: true, name: 'Calibri' };
-          rE.getCell(1).alignment = centro;
-          rE.getCell(1).border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'thin' }, right: { style: 'medium' } };
-          rE.height = 20;
-          const rE2 = ws.addRow([`En el buffer desde el ${String(t.esperaDesde).split('-').reverse().join('/')}. La tarea anterior caducó sin trabajarse.`]);
-          ws.mergeCells(rE2.number, 1, rE2.number, COLS);
-          rE2.getCell(1).font = { size: 9, name: 'Calibri' };
-          rE2.getCell(1).alignment = centro;
-          rE2.getCell(1).border = { left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
-        }
+        // Se puso cuando las tareas vivían 48 horas y se arrastraban: servía para que la deuda
+        // se viera, porque había códigos en el buffer desde junio y en la hoja se leían igual
+        // que uno llegado anoche. Desde v29.0122 lo no trabajado se cierra en cada corrida y
+        // la ola nueva se arma con el stock del momento, así que el cartel dejó de decirle
+        // algo útil al operario: él almacena lo que tiene delante, no la historia del código.
+        //
+        // El dato NO se borra: `esperaDesde` se sigue calculando y guardando en la tarea, y la
+        // pantalla lo sigue usando para ordenar por lo que más espera. Lo que sale del papel es
+        // el cartel. Lo pidió Daniel.
 
         ws.addRow([]);
 
@@ -16899,13 +16885,6 @@ const renderRFSection = (container) => {
         + ' · ' + primerArt + (grupo.arts.length > 1 ? ' +' : '')
         + ' · ' + grupo.arts.length + ' artículo' + (grupo.arts.length > 1 ? 's' : '');
 
-      const diasEsperando = (() => {
-        if (!t.esperaDesde || String(t.esperaDesde) >= String(t.fecha)) return 0;
-        const a = new Date(`${t.esperaDesde}T00:00:00`), b = new Date(`${t.fecha}T00:00:00`);
-        if (isNaN(a.getTime()) || isNaN(b.getTime())) return 0;
-        return Math.round((b - a) / 86400000);
-      })();
-
       // Las filas, antes de repartirlas. Se arman igual que en el Excel: los totales de
       // cada artículo salen de las filas de arriba y no del cálculo por talla, porque en
       // el papel manda lo que el operario tiene delante.
@@ -16965,10 +16944,9 @@ const renderRFSection = (container) => {
               : 'SIN UBICACIÓN EN ' + trabadas.length + ' DE ' + grupo.arts.length + ' ARTÍCULOS · VER ABAJO'}</b>
               <span>${esc(trabadas[0].plan.motivo || 'Avisar a Slotting antes de mover nada.')}</span></div>`;
           }
-          if (diasEsperando > 0) {
-            h += `<div class="cartel"><b>ESPERANDO HACE ${diasEsperando} DÍA${diasEsperando > 1 ? 'S' : ''}</b>
-              <span>En el buffer desde el ${esc(String(t.esperaDesde).split('-').reverse().join('/'))}. La tarea anterior caducó sin trabajarse.</span></div>`;
-          }
+          // Acá iba el cartel de "ESPERANDO HACE N DÍAS". Se quitó el 07-ago-2026 junto con
+          // el del Excel: desde que lo no trabajado se cierra en cada corrida, al operario no
+          // le dice nada útil. El dato se sigue guardando y la pantalla lo sigue usando.
           h += `<table class="firmas"><tr>
                   <td class="rot" style="width:14%">Nombres</td><td style="width:34%"></td>
                   <td class="rot" style="width:14%">Hora inicio</td><td style="width:14%"></td>
