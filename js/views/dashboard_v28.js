@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0135';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0136';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0135';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0135';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0135';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0135';
-import * as metasService from '../services_v245/metasService.js?v=29.0135';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0135';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0135';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0135';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0135';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0135';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0135';
+import * as adminService from '../services_v245/adminService.js?v=29.0136';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0136';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0136';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0136';
+import * as metasService from '../services_v245/metasService.js?v=29.0136';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0136';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0136';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0136';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0136';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0136';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0136';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0135';
+const VERSION = '29.0136';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3972,7 +3972,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0135');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0136');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14303,7 +14303,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0135 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0136 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23242,27 +23242,54 @@ window.showCellModal = function(htmlContent) {
         ${opciones.map(([v, t]) => `<option value="${v}"${String(valor || '') === String(v) ? ' selected' : ''}>${t}</option>`).join('')}
       </select>`;
 
-    // MES Y MARCA SE MARCAN DE A VARIOS, y con botones en vez de un desplegable: en un
-    // desplegable hay que abrirlo para ver qué está elegido, y con varios elegidos a la
-    // vez ni siquiera se puede mostrar. Acá lo elegido se ve sin tocar nada. Son 6 meses
-    // y 9 marcas: entran holgados y no hacen falta ni buscador ni menú.
+    // MES Y MARCA ADMITEN VARIOS A LA VEZ, PERO LA CAJA ES LA MISMA. Un <select> del
+    // navegador no deja marcar dos cosas sin cambiar de aspecto —el multiple se dibuja
+    // como una lista abierta, que es otro control—, así que la caja cerrada se copia
+    // exacta del combo de al lado, con su mismo fondo, borde, radio, relleno y letra, y
+    // lo único que se agrega es lo que aparece al abrirla.
     const mesesSel = filtro.meses || [];
     const marcasSel = filtro.marcas || [];
     // Las marcas vienen del Maestro y hoy ninguna trae comillas, pero el nombre viaja
-    // dentro de un onclick: si mañana aparece una con apóstrofo, sin esto rompe el botón.
+    // dentro de un onclick: si mañana aparece una con apóstrofo, sin esto rompe la fila.
     const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    const chip = (campo, valor, texto, activo) => `
-      <button onclick="window.__kpiFiltro('${campo}', '${esc(valor)}')"
-              style="background:${activo ? 'rgba(217,89,38,0.18)' : 'transparent'};
-                     color:${activo ? 'var(--text-main)' : 'var(--text-muted)'};
-                     border:1px solid ${activo ? NARANJA + '90' : 'var(--border)'};
-                     border-radius:7px; padding:0.26rem 0.62rem; font-size:0.7rem;
-                     font-weight:700; cursor:pointer; white-space:nowrap;">${texto}</button>`;
-    const grupo = (rotulo, botones) => `
-      <div style="display:flex; align-items:center; gap:0.28rem; flex-wrap:wrap;">
-        <span style="font-size:0.55rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;
-                     color:var(--text-muted); margin-right:0.15rem;">${rotulo}</span>${botones}
+    const CAJA = 'background:#101a2c; color:var(--text-main); border:1px solid var(--border);'
+               + ' border-radius:8px; padding:0.32rem 0.6rem; font-size:0.75rem;'
+               + ' font-weight:700; cursor:pointer;';
+
+    /** El texto de la caja cerrada: con nada marcado dice lo mismo que decía el combo de
+        antes; con uno, su nombre; con varios, cuántos —los nombres completos no entran
+        y cortarlos se lee peor que el número. */
+    const resumenSel = (sel, todos, uno, varios) =>
+      !sel.length ? todos : sel.length === 1 ? uno(sel[0]) : `${sel.length} ${varios}`;
+
+    /** El combo de a varios. `abierto` viaja en el estado del módulo y no en el DOM
+        porque cada clic redibuja la vista entera: guardándolo en el DOM, el menú se
+        cerraría al marcar la primera opción y habría que abrirlo de nuevo para cada una. */
+    const comboVarios = (campo, opciones, sel, texto) => `
+      <div style="position:relative;">
+        <button onclick="window.__kpiMenu('${campo}')" style="${CAJA} display:flex; align-items:center; gap:0.4rem;">
+          <span>${texto}</span>
+          <span style="font-size:0.6rem; opacity:0.75;">${kpiMenuAbierto === campo ? '▲' : '▼'}</span>
+        </button>
+        ${kpiMenuAbierto !== campo ? '' : `
+        <div style="position:absolute; z-index:40; top:calc(100% + 4px); left:0; min-width:100%;
+                    background:#101a2c; border:1px solid var(--border); border-radius:8px;
+                    padding:0.25rem; max-height:15rem; overflow:auto; box-shadow:0 8px 22px rgba(0,0,0,0.5);">
+          ${[['', sel.length ? 'Quitar todos' : 'Todos']].concat(opciones).map(([v, t]) => {
+            const marcado = v ? sel.indexOf(v) >= 0 : !sel.length;
+            return `<div onclick="window.__kpiFiltro('${campo}', '${esc(v)}')"
+                         style="display:flex; align-items:center; gap:0.45rem; padding:0.3rem 0.5rem;
+                                border-radius:6px; font-size:0.73rem; font-weight:700; white-space:nowrap;
+                                cursor:pointer; color:${marcado ? 'var(--text-main)' : 'var(--text-muted)'};
+                                background:${marcado && v ? 'rgba(217,89,38,0.14)' : 'transparent'};"
+                         onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+                         onmouseout="this.style.background='${marcado && v ? 'rgba(217,89,38,0.14)' : 'transparent'}'">
+                      <span style="width:0.85rem; color:${NARANJA};">${marcado ? '✓' : ''}</span>${t}
+                    </div>`;
+          }).join('')}
+        </div>`}
       </div>`;
+
     const hayFiltro = marcasSel.length || mesesSel.length || filtro.minimo;
 
     const aviso = !R ? 'Con estos filtros no queda ningún artículo.'
@@ -23279,10 +23306,10 @@ window.showCellModal = function(htmlContent) {
     <div class="glass-panel" style="padding:0.85rem 1rem;">
       <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
         <span style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted);">Filtros</span>
-        ${grupo('Mes', chip('mes', '', 'Todos', !mesesSel.length)
-                       + meses.map(m => chip('mes', m, nombreMes(m), mesesSel.indexOf(m) >= 0)).join(''))}
-        ${grupo('Marca', chip('marca', '', 'Todas', !marcasSel.length)
-                       + marcas.map(m => chip('marca', m, m, marcasSel.indexOf(m) >= 0)).join(''))}
+        ${comboVarios('mes', meses.map(m => [m, nombreMes(m)]), mesesSel,
+                      resumenSel(mesesSel, 'Todos los meses', nombreMes, 'meses'))}
+        ${comboVarios('marca', marcas.map(m => [m, m]), marcasSel,
+                      resumenSel(marcasSel, 'Todas las marcas', m => m, 'marcas'))}
         ${combo('minimo', TOPES, filtro.minimo || 0)}
         ${hayFiltro ? `
           <button onclick="window.__kpiFiltro('limpiar')" class="btn"
@@ -23798,6 +23825,10 @@ window.showCellModal = function(htmlContent) {
   // Lo que el usuario eligió en la barra de filtros. Vive fuera del render para que
   // sobreviva a redibujar: si no, al filtrar volvería solo a "todas las marcas".
   let kpiFiltro = { marcas: [], meses: [], minimo: 0 };
+  // Cuál de los dos desplegables está abierto ('mes', 'marca' o nada). Vive acá por lo
+  // mismo que el filtro: cada clic redibuja la vista entera, y guardándolo en el DOM el
+  // menú se cerraría al marcar la primera opción. Se pueden marcar varias seguidas.
+  let kpiMenuAbierto = '';
 
   /**
    * EVOLUCIÓN DEL ARTÍCULO. Lee el estudio que dejó el robot y lo dibuja.
@@ -23940,8 +23971,8 @@ window.showCellModal = function(htmlContent) {
   /** Cambia un filtro y redibuja. El Pareto no depende de esto, pero se rehace igual:
       partirlo en dos redibujados por ahorrar unos milisegundos no vale el enredo. */
   window.__kpiFiltro = (que, valor) => {
-    if (que === 'limpiar') kpiFiltro = { marcas: [], meses: [], minimo: 0 };
-    else if (que === 'minimo') kpiFiltro.minimo = Number(valor) || 0;
+    if (que === 'limpiar') { kpiFiltro = { marcas: [], meses: [], minimo: 0 }; kpiMenuAbierto = ''; }
+    else if (que === 'minimo') { kpiFiltro.minimo = Number(valor) || 0; kpiMenuAbierto = ''; }
     else if (que === 'marca' || que === 'mes') {
       // SE MARCAN Y SE DESMARCAN, de a varias. El filtrado ya trabajaba con listas desde
       // el principio; lo único que elegía de a uno era la barra, y eso es lo que cambió
@@ -23952,6 +23983,14 @@ window.showCellModal = function(htmlContent) {
       else if (lista.indexOf(valor) >= 0) kpiFiltro[campo] = lista.filter(v => v !== valor);
       else kpiFiltro[campo] = lista.concat([valor]);
     }
+    const c = document.querySelector('[data-vista="kpi-picking"]');
+    if (c) renderKpiPicking(c);
+  };
+
+  /** Abre y cierra un desplegable de la barra. Solo uno a la vez: dos menús abiertos se
+      superponen y no se sabe cuál se está tocando. */
+  window.__kpiMenu = (campo) => {
+    kpiMenuAbierto = (kpiMenuAbierto === campo) ? '' : campo;
     const c = document.querySelector('[data-vista="kpi-picking"]');
     if (c) renderKpiPicking(c);
   };
