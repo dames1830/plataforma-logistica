@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0122';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0123';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0122';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0122';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0122';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0122';
-import * as metasService from '../services_v245/metasService.js?v=29.0122';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0122';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0122';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0122';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0122';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0122';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0122';
+import * as adminService from '../services_v245/adminService.js?v=29.0123';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0123';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0123';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0123';
+import * as metasService from '../services_v245/metasService.js?v=29.0123';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0123';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0123';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0123';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango } from '../services_v245/reportesComunes.js?v=29.0123';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0123';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0123';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0122';
+const VERSION = '29.0123';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3853,7 +3853,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0122');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0123');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14163,7 +14163,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0122 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0123 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25451,7 +25451,6 @@ window.showCellModal = function(htmlContent) {
     const enRango = (t) => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate;
     const pendienteDeOtroDia = (t) => !enRango(t) && esTareaViva(t);
     const visibles = (tasks || []).filter(t => t && (enRango(t) || pendienteDeOtroDia(t)));
-    const arrastradas = visibles.filter(pendienteDeOtroDia).length;
 
     // Pre-calcular listado plano de ítems detallados para paginación de 25 en 25
     const detailedItems = [];
@@ -25613,19 +25612,15 @@ window.showCellModal = function(htmlContent) {
                 </div>
                 ` : ''}
 
-                <!-- LAS QUE VIENEN DE DÍAS ANTERIORES.
-                     Se avisa para que no parezca que el filtro de fechas dejó de andar: son
-                     tareas todavía abiertas —Creadas o ya Asignadas— que siguen esperando
-                     y que también salen en el papel. Se quedan acá hasta que se cierran. -->
-                ${arrastradas ? `
-                <div title="Son tareas de días anteriores que siguen abiertas: Creadas sin trabajar y Asignadas sin cerrar. Se quedan a la vista hasta que se finalizan."
-                     style="display:flex; align-items:center; gap:6px; background:rgba(251,191,36,0.1);
-                            border:1px solid rgba(251,191,36,0.35); border-radius:8px; padding:4px 10px;">
-                    <span style="font-size:0.85rem;">⏳</span>
-                    <span style="font-size:0.7rem; color:#fbbf24; font-weight:700;">
-                        +${arrastradas} de días anteriores, sin cerrar
-                    </span>
-                </div>` : ''}
+                <!-- EL AVISO DE "+N DE DÍAS ANTERIORES" SE QUITÓ EL 07-ago-2026.
+                     Tenía sentido mientras las tareas vivían 48 horas y se arrastraban: avisaba
+                     que la lista mostraba más de lo que decía el filtro. Desde que al procesar
+                     todo lo no trabajado se cierra, no quedan Creadas de días anteriores y el
+                     cartel solo hacía ruido. Lo pidió Daniel al verlo.
+
+                     LO QUE SÍ SE MANTIENE es que esas tareas se VEAN: una Asignada sobrevive al
+                     proceso -alguien la está trabajando- y si se cayera de la lista no habría
+                     forma de cerrarla. Eso fue el defecto de la v29.0116; no se vuelve atrás. -->
 
                 <!-- RANGO DE FECHAS DE : HASTA -->
                 <div style="display:flex; align-items:center; gap:8px;">
