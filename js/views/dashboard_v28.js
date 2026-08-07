@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0136';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0137';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0136';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0136';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0136';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0136';
-import * as metasService from '../services_v245/metasService.js?v=29.0136';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0136';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0136';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0136';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0136';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0136';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0136';
+import * as adminService from '../services_v245/adminService.js?v=29.0137';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0137';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0137';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0137';
+import * as metasService from '../services_v245/metasService.js?v=29.0137';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0137';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0137';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0137';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0137';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0137';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0137';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0136';
+const VERSION = '29.0137';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3972,7 +3972,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0136');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0137');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14303,7 +14303,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0136 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0137 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23302,8 +23302,15 @@ window.showCellModal = function(htmlContent) {
                            + `hasta la semana ${R.semanasFijas} y no hasta la ${P.semanasFijas}.`
       : '';
 
+    // EL DESENFOQUE DEL PANEL RECORTA EL MENÚ. `.glass-panel` trae backdrop-filter, y un
+    // elemento con backdrop-filter recorta a los hijos que se salen de su caja aunque no
+    // tenga overflow:hidden. El desplegable se abre hacia abajo, se pasa del panel —que
+    // es de un solo renglón— y quedaba cortado en la primera opción: parecía una lista
+    // vacía. Se le quita el desenfoque nada más mientras hay un menú abierto; el fondo
+    // sigue siendo el mismo y la diferencia no se nota.
+    const sinRecorte = kpiMenuAbierto ? ' backdrop-filter:none; -webkit-backdrop-filter:none;' : '';
     return `
-    <div class="glass-panel" style="padding:0.85rem 1rem;">
+    <div class="glass-panel" style="padding:0.85rem 1rem;${sinRecorte}">
       <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
         <span style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted);">Filtros</span>
         ${comboVarios('mes', meses.map(m => [m, nombreMes(m)]), mesesSel,
