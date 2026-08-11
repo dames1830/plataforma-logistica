@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0140';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0142';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0140';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0140';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0140';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0140';
-import * as metasService from '../services_v245/metasService.js?v=29.0140';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0140';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0140';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0140';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0140';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0140';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0140';
+import * as adminService from '../services_v245/adminService.js?v=29.0142';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0142';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0142';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0142';
+import * as metasService from '../services_v245/metasService.js?v=29.0142';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0142';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0142';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0142';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0142';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0142';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0142';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0140';
+const VERSION = '29.0142';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4015,7 +4015,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0140');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0142');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14346,7 +14346,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0140 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0142 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25699,31 +25699,69 @@ window.showCellModal = function(htmlContent) {
     };
 
     /**
-     * LAS TAREAS QUE SE VEN: las del rango de fechas MÁS todas las que sigan VIVAS,
-     * sean del día que sean y estén Creadas o Asignadas.
+     * LAS TAREAS QUE SE VEN: SOLO LAS DEL RANGO. El filtro manda.
      *
-     * El asistente asigna y cierra las tareas desde esta pantalla. Desde que el papel
-     * saca todas las Creadas juntas —v29.0112—, si acá solo salieran las del rango
-     * imprimiría 53 y en pantalla vería 9: las otras 44 quedarían en la calle, con su
-     * hoja, sin forma de asignarlas ni cerrarlas porque no aparecen en ningún lado.
+     * Regla de Daniel, 10-ago-2026: "si dice 10, debes filtrar 10". Vale igual para RESUMEN
+     * y para DETALLE, que beben los dos de esta misma lista.
      *
-     * VIVAS, NO SOLO CREADAS. Hasta v29.0115 acá decía `t.status === 'Creada'`, y eso
-     * hacía desaparecer la tarea EN EL ACTO DE ASIGNARLA: al pasar a Asignado dejaba de
-     * cumplir la condición y se caía de la lista. Lo vio Daniel el 06-ago-2026 mientras
-     * repartía las hojas del turno —"en una laptop sí agarra el asignado, en la otra no
-     * se refleja"—: no era la laptop, era el filtro de fechas de cada una. En la que
-     * miraba el día anterior la tarea seguía en pantalla; en la que miraba hoy, no.
-     * El dato siempre se guardó bien en el servidor; lo que fallaba era la vista.
+     * LA FECHA QUE MANDA ES LA DE CREACIÓN, la de la ola que parió la tarea, y NO SE MUEVE
+     * cuando alguien la asigna o la cierra: al asignar solo se graban usuario y hora de
+     * inicio, al finalizar el estado y la de término. Una tarea del 10 se ve en el 10 en sus
+     * tres estados. La contracara, decidida a sabiendas: una tarea del 8 que se trabaja el 10
+     * se queda en el 8. Quien quiera medir por el día trabajado tiene KPI TAREAS, que cuenta
+     * por la jornada (`diaOperativoDeTarea`) justamente para eso.
      *
-     * Y si desaparece al asignarla, tampoco se puede cerrar después: la hoja se queda en
-     * la calle sin forma de finalizarla, que es justo lo que este bloque venía a evitar.
+     * HASTA v29.0141 ACÁ SE COLABAN LAS VIVAS DE CUALQUIER FECHA, y la pantalla contradecía a
+     * su propio filtro: con el rango puesto en 08/08 se veían las 44 Creadas del 10 y parecía
+     * que el cierre por corrida no había funcionado. Funcionaba —las 11 del 8 pasaron a NO
+     * TRABAJADA a las 19:22 de ese día—; lo que engañaba era la lista.
      *
-     * No se acumulan: a las 48 horas caducan solas, así que son las de los dos últimos
-     * días. Y cada una trae su fecha en la primera columna, así que se ve de dónde viene.
+     * PERO NO PUEDEN PERDERSE DE VISTA. El asistente asigna y cierra desde esta pantalla: una
+     * viva que se cae de la lista se queda en la calle con su hoja y sin forma de cerrarla.
+     * Ese fue el defecto de la v29.0116 y no se repite. Por eso no desaparecen sin más: van a
+     * `fueraDelRango`, y el aviso de arriba de la tabla lleva hasta ellas con un clic.
+     *
+     * VIVAS, NO SOLO CREADAS: una recién asignada también tiene que poder encontrarse.
      */
     const enRango = (t) => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate;
-    const pendienteDeOtroDia = (t) => !enRango(t) && esTareaViva(t);
-    const visibles = (tasks || []).filter(t => t && (enRango(t) || pendienteDeOtroDia(t)));
+    const visibles = (tasks || []).filter(t => t && enRango(t));
+    // No entran en la tabla —el filtro manda—, solo en el aviso que las va a buscar.
+    const fueraDelRango = (tasks || []).filter(t => t && !enRango(t) && esTareaViva(t));
+
+    /**
+     * EL AVISO DE LO QUE QUEDÓ FUERA DEL FILTRO.
+     *
+     * Reemplaza al cartel "+N de días anteriores" que se quitó el 07-ago-2026. Aquel contaba
+     * tareas que SÍ estaban en la lista; este cuenta las que NO están, que es lo que hace
+     * falta ahora que el filtro manda de verdad.
+     *
+     * El botón AMPLÍA el rango, no lo reemplaza: si se mueve, las que se estaban mirando
+     * desaparecen y sale el aviso al revés, y se va y se viene sin llegar nunca a verlas
+     * todas juntas. Y como amplía, las fechas de arriba muestran el rango nuevo: lo que se ve
+     * sigue siendo exactamente lo que dice el filtro.
+     */
+    const avisoFueraDeRango = (() => {
+        if (!fueraDelRango.length) return '';
+        const dmy = (f) => String(f).split('-').reverse().join('/');
+        const fechas = [...new Set(fueraDelRango.map(t => t.fecha))].sort();
+        const una = fueraDelRango.length === 1;
+        const detalle = fechas
+            .map(f => `<b style="color:#fbbf24;">${fueraDelRango.filter(t => t.fecha === f).length}</b> del ${dmy(f)}`)
+            .join(' · ');
+        const asignadas = fueraDelRango.filter(t => t.status === 'Asignado').length;
+        // Se amplía a la unión del rango actual con el de las pendientes.
+        const nDesde = window.__almacenajeStartDate < fechas[0] ? window.__almacenajeStartDate : fechas[0];
+        const ultima = fechas[fechas.length - 1];
+        const nHasta = window.__almacenajeEndDate > ultima ? window.__almacenajeEndDate : ultima;
+        return `
+            <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.35); border-radius:10px; padding:10px 14px; margin-bottom:12px; font-size:0.78rem;">
+                <span style="font-size:1rem;">⚠️</span>
+                <div style="flex:1; min-width:260px; line-height:1.6; color:rgba(255,255,255,0.75);">
+                    ${una ? 'Hay 1 tarea pendiente' : 'Hay tareas pendientes'} <b style="color:#fbbf24;">fuera de este rango</b>: ${detalle}${asignadas ? ` · <b style="color:#fbbf24;">${asignadas} ya está${asignadas > 1 ? 'n' : ''} en manos de alguien</b>` : ''}. No se muestra${una ? '' : 'n'} acá porque el filtro dice del ${dmy(window.__almacenajeStartDate)} al ${dmy(window.__almacenajeEndDate)}.
+                </div>
+                <button onclick="window.setAlmacenajeDateRange('${nDesde}','${nHasta}')" style="background:rgba(245,158,11,0.16); color:#fbbf24; border:1px solid rgba(245,158,11,0.45); padding:6px 14px; font-size:0.7rem; font-weight:800; border-radius:8px; cursor:pointer; white-space:nowrap; font-family:'Inter', sans-serif; letter-spacing:0.5px;">${una ? 'VER ESA TAREA' : `VER ESAS ${fueraDelRango.length}`}</button>
+            </div>`;
+    })();
 
     // Pre-calcular listado plano de ítems detallados para paginación de 25 en 25
     const detailedItems = [];
@@ -25885,15 +25923,17 @@ window.showCellModal = function(htmlContent) {
                 </div>
                 ` : ''}
 
-                <!-- EL AVISO DE "+N DE DÍAS ANTERIORES" SE QUITÓ EL 07-ago-2026.
-                     Tenía sentido mientras las tareas vivían 48 horas y se arrastraban: avisaba
-                     que la lista mostraba más de lo que decía el filtro. Desde que al procesar
-                     todo lo no trabajado se cierra, no quedan Creadas de días anteriores y el
-                     cartel solo hacía ruido. Lo pidió Daniel al verlo.
+                <!-- EL AVISO VOLVIÓ EL 10-ago-2026, y ahora cuenta lo contrario.
+                     El viejo "+N de días anteriores" avisaba que la lista traía MÁS de lo que
+                     decía el filtro; se quitó el 07-ago por ruidoso. Desde que el filtro manda,
+                     el que hace falta es el que avisa lo que NO está: va pegado a la tabla
+                     (avisoFueraDeRango), no acá arriba. Sin comillas invertidas en este
+                     comentario: está dentro de un template literal y lo parten en dos.
 
-                     LO QUE SÍ SE MANTIENE es que esas tareas se VEAN: una Asignada sobrevive al
-                     proceso -alguien la está trabajando- y si se cayera de la lista no habría
-                     forma de cerrarla. Eso fue el defecto de la v29.0116; no se vuelve atrás. -->
+                     LO QUE SÍ SE MANTIENE es que esas tareas se puedan ALCANZAR: una Asignada
+                     sobrevive al proceso -alguien la está trabajando- y si no hubiera forma de
+                     llegar a ella no se podría cerrar. Ese fue el defecto de la v29.0116; el
+                     botón del aviso es lo que ocupa su lugar. -->
 
                 <!-- RANGO DE FECHAS DE : HASTA -->
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -26881,6 +26921,7 @@ window.showCellModal = function(htmlContent) {
         </div>
             ` : `
 
+                ${avisoFueraDeRango}
 
                 <div id="almacenajeTablaScroll" class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(79, 70, 229, 0.3); background:rgba(15, 23, 42, 0.4); border-radius:12px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
                     <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
