@@ -127,9 +127,6 @@
   .phead .sub { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
 
   /* ── controles ───────────────────────────────────────────────────────── */
-  .ctrls { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-end; }
-  .fld { display: flex; flex-direction: column; gap: 4px; }
-  .fld > span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
   input, button { font-family: var(--mono); font-size: 13px; color: var(--text); background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; }
   input[type="text"] { font-family: var(--ui); }
   input:hover { border-color: var(--line-2); }
@@ -137,7 +134,6 @@
   button { cursor: pointer; }
   button:hover { border-color: var(--line-2); }
   .btn-a { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
-  .spacer { flex: 1; }
 
   /* ── gantt ───────────────────────────────────────────────────────────── */
   /* La barra de desplazamiento, con los colores del tema. Firefox entiende
@@ -166,12 +162,18 @@
   .gnm { font-size: 13px; color: var(--text-2); padding: 0 12px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .axis { position: relative; height: 20px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
   .tick { position: absolute; top: 0; font-family: var(--mono); font-size: 11px; color: var(--text-3); transform: translateX(-50%); }
-  .lane { position: relative; height: 34px; }
+  /* Con el turno terminado, la línea de "ahora" cae en el 100% y su píxel de
+     borde asomaba fuera del carril: un solo píxel, pero alcanzaba para sacar
+     barra de desplazamiento en las siete filas. Todo lo que va adentro del
+     carril —barras, guías, la línea de ahora— se recorta en su borde. */
+  .lane { position: relative; height: 34px; overflow: hidden; }
   .vl { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
   .bar { position: absolute; border-radius: 4px; }
   .plan { border: 1px dashed var(--plan-line); border-radius: 4px; top: 5px; height: 24px; }
   .now { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--now); z-index: 3; }
-  .foot { position: relative; height: 20px; }
+  /* `overflow:hidden` es el cinturón: aunque la etiqueta de la hora quede a un
+     pelo del borde, no puede empujar el ancho del cuadro ni sacar barra. */
+  .foot { position: relative; height: 20px; overflow: hidden; }
   .nowtag { position: absolute; top: 2px; font-family: var(--mono); font-size: 11px; color: var(--now); transform: translateX(-50%); white-space: nowrap; }
   .endline { position: absolute; top: 0; bottom: 0; right: 0; width: 1px; background: var(--line-2); }
 
@@ -211,7 +213,6 @@
 
 
   /* ── carga de stock ──────────────────────────────────────────────────── */
-  .stockbox { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
   .slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
   .slot { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; }
   .slab { display: block; font-size: 12.5px; color: var(--text-2); margin-bottom: 8px; }
@@ -237,16 +238,8 @@
   </header>
 
   <section class="panel">
-    <div class="phead"><h2>El turno</h2><span class="sub" id="dur"></span></div>
-    <div class="ctrls">
-      <label class="fld"><span>Empieza</span><input type="time" id="f_ini"></label>
-      <label class="fld"><span>Termina</span><input type="time" id="f_fin"></label>
-      <label class="fld"><span>Hora actual</span><input type="time" id="f_ahora"></label>
-      <div class="spacer"></div>
-      <button id="b_reset">Volver al ejemplo</button>
-    </div>
-
-    <div class="stockbox">
+    <div class="phead"><h2>Stock</h2><button id="b_reset">Volver al ejemplo</button></div>
+    <div>
       <div class="slots">
         <div class="slot">
           <span class="slab">Stock <b>activo</b> de ahora</span>
@@ -308,7 +301,7 @@
   /* La versión de la clave sube con cada cambio de los datos de fábrica. Sin
      eso, la PC que ya guardó la maqueta anterior sigue viendo las actividades
      viejas y nunca le llegan las nuevas. */
-  var LS = 'maqueta_turno_v12';
+  var LS = 'maqueta_turno_v13';
 
   /* HORARIO FIJO DEL TURNO — el que dictó Daniel el 11-ago-2026.
      El plan no cambia de un día para otro: se configura una vez. Lo que cambia
@@ -319,7 +312,12 @@
      seguridad ocupa su rato del turno y hay que verla en el Gantt, pero no es
      una meta —no se mide en cantidades— así que no entra a los cuadros. */
   var BASE = {
-    ini: '20:00', fin: '06:30', ahora: '06:30',
+    /* EL TURNO NO SE CONFIGURA ACÁ. Sale de la jornada que ya está en el
+       servidor —área `config`, clave `jornada`, que lee `jornadaService`—, donde
+       hay un horario por cada día de la semana y reglas que lo pisan por
+       temporada. Estos son los valores que tiene hoy el turno noche:
+       `nocheEntrada` 19:00 y `nocheSalida` 06:30. */
+    ini: '19:00', fin: '06:30', ahora: '06:30',
     procs: [
       { n: 'Charla de seguridad',  u: '',            meta: 0,     av: 0,     pi: '20:15', pf: '20:30', ri: '20:15', rf: '20:30', cuenta: false },
       /* AUTOMÁTICA. Los dos números salen solos del reporte Almacenaje → Marcas
@@ -495,7 +493,12 @@
 
     $('#gg').innerHTML =
       '<div></div><div class="axis">' + eje + '<span class="endline"></span></div>' + filas +
-      '<div></div><div class="foot"><span class="nowtag" style="left:' + pc(AHORA) + '">ahora ' + esc(S.ahora) + '</span></div>';
+      /* La etiqueta va centrada bajo su línea, salvo cuando la línea está pegada
+         a un extremo: ahí se apoya contra el borde. Centrada al 100% se salía 35
+         px del cuadro y sacaba barra de desplazamiento. */
+      '<div></div><div class="foot"><span class="nowtag" style="left:' + pc(AHORA) +
+      '; transform:translateX(' + (AHORA / SPAN > 0.92 ? '-100%' : (AHORA / SPAN < 0.08 ? '0' : '-50%')) + ')">' +
+      'ahora ' + esc(S.ahora) + '</span></div>';
 
     $('#g_sub').textContent = reloj(INI) + ' → ' + reloj(INI + SPAN) + ' · ' + S.procs.length + ' actividades';
   }
@@ -780,7 +783,7 @@
         ? nf(res.totalB) + ' pares en el buffer · <b>' + nf(res.totalC) + '</b> en el Buffer C'
         : nf(res.total) + ' pares en reserva · ' + nf(res.lineas) + ' líneas';
       infoSlot(id, '<b>' + esc(file.name) + '</b><br>' + (res.hora ? 'foto de las ' + res.hora + ' · ' : '') + det);
-      if (id === 'now-activo' && res.hora) { S.ahora = res.hora; $('#f_ahora').value = res.hora; }
+      if (id === 'now-activo' && res.hora) S.ahora = res.hora;
       pintar();
     } catch (err) {
       STOCK[id] = null;
@@ -815,8 +818,6 @@
   function pintar(foco) {
     recalcularTurno();
     aplicarStock();
-    var h = Math.round(SPAN / 60), m = SPAN % 60;
-    $('#dur').textContent = 'dura ' + h + ' h' + (m ? ' ' + m + ' min' : '') + ' · ' + SPAN + ' minutos';
     if (foco && foco.k !== 'cuenta') {
       /* Escribiendo: las tablas se dejan en paz y solo se reescriben las celdas
          calculadas. La casilla "¿Tiene meta?" es la excepción —cambia qué filas
@@ -839,10 +840,6 @@
 
   document.addEventListener('input', function (e) {
     var t = e.target;
-    if (t.id === 'f_ini' || t.id === 'f_fin' || t.id === 'f_ahora') {
-      S[t.id === 'f_ini' ? 'ini' : t.id === 'f_fin' ? 'fin' : 'ahora'] = t.value;
-      pintar(); return;
-    }
     var k = t.getAttribute('data-k');
     if (!k) return;
     var i = Number(t.getAttribute('data-i'));
@@ -876,8 +873,10 @@
   window.addEventListener('resize', function () { pintarGantt(); });
 
   function arrancar() {
-    $('#f_ini').value = S.ini;
-    $('#f_fin').value = S.fin; $('#f_ahora').value = S.ahora;
+    /* La hora actual es la del reloj, no un campo que alguien tenga que llenar.
+       Si se carga una foto de stock, pasa a ser la hora de esa foto. */
+    var d = new Date();
+    S.ahora = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
     pintar();
   }
   arrancar();
