@@ -387,6 +387,11 @@
   }
   function guardar() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
 
+  /* El navegador ofrece lo que ya se escribió en campos parecidos y lo pinta
+     ENCIMA de la celda: en la columna Unidad se veían letras sueltas de otra
+     cosa. Estos campos no son un formulario que valga la pena recordar. */
+  var SIN_AYUDA = 'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"';
+
   var $ = function (s) { return document.querySelector(s); };
   var nf = function (n) { return Number(n || 0).toLocaleString('es-PE'); };
   var mm = function (t) {
@@ -531,11 +536,11 @@
     cuerpo.innerHTML = conMeta().map(function (x) {
       var p = x.p, i = x.i, c = calcular(p);
       return '<tr>' +
-        '<td class="l" style="white-space:nowrap"><input type="text" data-t="c" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '" style="min-width:118px">' +
+        '<td class="l" style="white-space:nowrap"><input type="text" ' + SIN_AYUDA + ' data-t="c" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '" style="min-width:118px">' +
         (p.auto ? '<span class="auto">auto</span>' : '') + '</td>' +
-        '<td class="u"><input type="text" data-t="c" data-k="u" data-i="' + i + '" value="' + esc(p.u || '') + '"></td>' +
-        '<td><input type="number" min="0" data-t="c" data-k="meta" data-i="' + i + '" value="' + c.meta + '"></td>' +
-        '<td><input type="number" min="0" data-t="c" data-k="av" data-i="' + i + '" value="' + c.av + '"></td>' +
+        '<td class="u"><input type="text" ' + SIN_AYUDA + ' data-t="c" data-k="u" data-i="' + i + '" value="' + esc(p.u || '') + '"></td>' +
+        '<td><input type="number" min="0" ' + SIN_AYUDA + ' data-t="c" data-k="meta" data-i="' + i + '" value="' + c.meta + '"></td>' +
+        '<td><input type="number" min="0" ' + SIN_AYUDA + ' data-t="c" data-k="av" data-i="' + i + '" value="' + c.av + '"></td>' +
         '<td style="color:' + (c.falta ? 'var(--text-2)' : 'var(--text-3)') + '">' + (c.falta ? nf(c.falta) : '—') + '</td>' +
         '<td style="color:var(--text-3)">' + nf(c.esperado) + '</td>' +
         '<td style="color:' + COLOR[c.tono] + '">' + c.pct + '%</td>' +
@@ -544,7 +549,7 @@
         '</tr>';
     }).join('');
 
-    $('#c_sub').textContent = 'a las ' + S.ahora;
+    $('#c_sub').textContent = 'actualizado a las ' + S.ahora;
   }
 
   /* ── Tabla de horarios ────────────────────────────────────────────────── */
@@ -566,7 +571,7 @@
       var c = calcular(p);
       var col = c.desvio === null ? 'var(--text-3)' : (c.desvio > 0 ? 'var(--warn)' : 'var(--ok)');
       return '<tr>' +
-        '<td class="l"><input type="text" data-t="h" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '"></td>' +
+        '<td class="l"><input type="text" ' + SIN_AYUDA + ' data-t="h" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '"></td>' +
         '<td>' + plan('pi', i, p.pi) + '</td>' +
         '<td>' + plan('pf', i, p.pf) + '</td>' +
         '<td><input type="time" data-t="h" data-k="ri" data-i="' + i + '" value="' + esc(p.ri) + '"></td>' +
