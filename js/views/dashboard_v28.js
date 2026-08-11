@@ -1,20 +1,20 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0154';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0155';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0154';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0154';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0154';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0154';
-import * as metasService from '../services_v245/metasService.js?v=29.0154';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0154';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0154';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0154';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0154';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0154';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0154';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0154';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0154';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0154';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0154';
+import * as adminService from '../services_v245/adminService.js?v=29.0155';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0155';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0155';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0155';
+import * as metasService from '../services_v245/metasService.js?v=29.0155';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0155';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0155';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0155';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0155';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0155';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0155';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0155';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0155';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0155';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0155';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -371,7 +371,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0154';
+const VERSION = '29.0155';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4092,7 +4092,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0154');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0155');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14432,7 +14432,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0154 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0155 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24534,6 +24534,16 @@ window.showCellModal = function(htmlContent) {
       if (!container.isConnected || container.dataset.vista !== 'reporte-picking') return;
     }
 
+    // EL MAESTRO SE BAJA ACÁ, y sin esto el Balance y la Cobertura no se
+    // dibujaban NUNCA. Los dos necesitan saber qué es calzado y de qué marca;
+    // sin el catálogo cargado en esta PC, `idxMaestro` viene vacío y los dos
+    // cuadros se saltaban dejando solo el aviso amarillo. El resto del reporte
+    // sale del resumen ya calculado, así que no lo notaba nadie.
+    if (!(dataStore.articulos || []).length) {
+      try { await rescatarMaestro(); } catch (e) { /* sigue con el aviso */ }
+      if (!container.isConnected || container.dataset.vista !== 'reporte-picking') return;
+    }
+
     const todos = Object.keys(pickingDiasCache).sort();
     if (!todos.length) {
       container.innerHTML = `
@@ -24604,7 +24614,7 @@ window.showCellModal = function(htmlContent) {
         ? adminService.getAlmacenajeTasksHistory() : [];
     const todasLasTareas = [...(almacenajeTasksCache || []), ...(historico || [])];
 
-    const balance = idxMaestro.vacio ? null : calcularBalance({
+    const balance = (idxMaestro.vacio || !todasLasTareas.length) ? null : calcularBalance({
         tareas: todasLasTareas,
         dias: diasElegidos,
         esCalzado: esCalzadoSku,
@@ -24615,7 +24625,7 @@ window.showCellModal = function(htmlContent) {
 
     // El stock activo trae las seis columnas del contrato del robot, por POSICIÓN:
     // 0 Área · 1 Artículo · 2 Descripción · 3 Ubicación · 4 Cantidad actual.
-    const cobertura = idxMaestro.vacio ? null : calcularCobertura({
+    const cobertura = (idxMaestro.vacio || !(dataStore.almacenaje_activo || []).length) ? null : calcularCobertura({
         stock: dataStore.almacenaje_activo || [],
         dias: diasElegidos,
         esCalzado: esCalzadoSku,
@@ -24625,10 +24635,17 @@ window.showCellModal = function(htmlContent) {
         colCantidad: 4
     });
 
-    const avisoPiso = idxMaestro.vacio
-        ? `<div class="glass-panel" style="padding:1rem 1.3rem; border:1px solid rgba(245,158,11,0.3); font-size:0.76rem; color:#fde68a; line-height:1.7;">
-             ⚠️ <b>Falta el Maestro de Artículos</b>, y sin él no se pueden armar el Balance ni la Cobertura del piso:
-             no hay forma de saber qué es calzado ni de qué marca. Publicalo desde <b>Configuración → Archivos Nube</b>.
+    // Si algo falta, se DICE. Un cuadro que desaparece sin explicación es peor
+    // que uno vacío: el 11-ago el Balance no se dibujaba y no había forma de
+    // saber por qué.
+    const faltan = [];
+    if (idxMaestro.vacio) faltan.push('el <b>Maestro de Artículos</b> (Configuración → Archivos Nube)');
+    if (!todasLasTareas.length) faltan.push('las <b>tareas de almacenaje</b> (entre una vez a Almacenaje y vuelva)');
+    if (!(dataStore.almacenaje_activo || []).length) faltan.push('el <b>stock activo</b>, que publica el robot a las 19:00');
+    const avisoPiso = faltan.length
+        ? `<div class="glass-panel" style="padding:1rem 1.3rem; border:1px solid rgba(245,158,11,0.3); font-size:0.76rem; color:#fde68a; line-height:1.8;">
+             ⚠️ Para el <b>Balance</b> y la <b>Cobertura del piso</b> falta ${faltan.join(', y ')}.
+             El resto del reporte no depende de eso y se ve igual.
            </div>` : '';
 
     container.innerHTML = cabecera + `
