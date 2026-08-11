@@ -183,10 +183,14 @@
 
   /* ── tablas ──────────────────────────────────────────────────────────── */
   table { border-collapse: collapse; width: 100%; min-width: 640px; }
-  th { font-family: var(--mono); font-weight: 400; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); padding: 0 8px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  /* Solo la columna de la actividad va pegada a la izquierda. Todo lo demás va
+     centrado, encabezado y celda con la misma regla: antes el encabezado tiraba
+     a la derecha y la celda a la izquierda, y las columnas salían descuadradas. */
+  th { font-family: var(--mono); font-weight: 400; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); padding: 0 8px 8px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
   th.l { text-align: left; }
-  td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+  td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: center; font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
   td.l { text-align: left; font-family: var(--ui); color: var(--text-2); }
+  td.u input[type="text"] { text-align: center; }
   tr:last-child td { border-bottom: none; }
   td input[type="number"] { width: 88px; text-align: right; }
   td input[type="time"] { width: 104px; }
@@ -201,8 +205,6 @@
   .del { padding: 3px 8px; font-size: 12px; color: var(--text-3); background: transparent; border-color: transparent; }
   .del:hover { color: var(--bad); border-color: var(--line); }
 
-  .tally { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-  .tally .chip { font-size: 12px; padding: 3px 11px; }
 
   /* ── carga de stock ──────────────────────────────────────────────────── */
   .stockbox { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
@@ -293,13 +295,12 @@
 
   <section class="panel">
     <div class="phead"><h2>Cumplimiento del turno</h2><span class="sub" id="c_sub"></span></div>
-    <div class="tally" id="tally"></div>
     <div class="rings" id="rings"></div>
     <div class="twrap">
       <table id="t_cum">
         <thead><tr>
-          <th class="l">Actividad</th><th class="l">Unidad</th><th>Meta</th><th>Avance</th>
-          <th>Falta</th><th>A esta hora</th><th>%</th><th class="l">Estado</th><th></th>
+          <th class="l">Actividad</th><th>Unidad</th><th>Meta</th><th>Avance</th>
+          <th>Falta</th><th>A esta hora</th><th>%</th><th>Estado</th><th></th>
         </tr></thead>
         <tbody></tbody>
       </table>
@@ -512,12 +513,11 @@
   }
 
   function pintarCumplimiento() {
-    var cuenta = { ok: 0, warn: 0, bad: 0, off: 0 }, anillos = '';
+    var anillos = '';
 
     conMeta().forEach(function (x) {
       var p = x.p;
       var c = calcular(p);
-      cuenta[c.tono]++;
       var g = Math.max(0, Math.min(100, c.pct));
       anillos += '<div class="rcard">' +
         '<div class="ring" style="background:conic-gradient(' + COLOR[c.tono] + ' 0 ' + g + '%, var(--line) ' + g + '% 100%)">' +
@@ -527,24 +527,19 @@
     });
     $('#rings').innerHTML = anillos;
 
-    var etiquetas = [['ok', 'al día o cumplidas'], ['warn', 'justas'], ['bad', 'pendientes'], ['off', 'sin empezar']];
-    $('#tally').innerHTML = etiquetas.filter(function (e) { return cuenta[e[0]]; }).map(function (e) {
-      return '<span class="chip" style="background:' + FONDO[e[0]] + '; color:' + COLOR[e[0]] + '">' + cuenta[e[0]] + ' ' + e[1] + '</span>';
-    }).join('');
-
     var cuerpo = $('#t_cum').tBodies[0];
     cuerpo.innerHTML = conMeta().map(function (x) {
       var p = x.p, i = x.i, c = calcular(p);
       return '<tr>' +
         '<td class="l" style="white-space:nowrap"><input type="text" data-t="c" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '" style="min-width:118px">' +
         (p.auto ? '<span class="auto">auto</span>' : '') + '</td>' +
-        '<td class="l u"><input type="text" data-t="c" data-k="u" data-i="' + i + '" value="' + esc(p.u || '') + '"></td>' +
+        '<td class="u"><input type="text" data-t="c" data-k="u" data-i="' + i + '" value="' + esc(p.u || '') + '"></td>' +
         '<td><input type="number" min="0" data-t="c" data-k="meta" data-i="' + i + '" value="' + c.meta + '"></td>' +
         '<td><input type="number" min="0" data-t="c" data-k="av" data-i="' + i + '" value="' + c.av + '"></td>' +
         '<td style="color:' + (c.falta ? 'var(--text-2)' : 'var(--text-3)') + '">' + (c.falta ? nf(c.falta) : '—') + '</td>' +
         '<td style="color:var(--text-3)">' + nf(c.esperado) + '</td>' +
         '<td style="color:' + COLOR[c.tono] + '">' + c.pct + '%</td>' +
-        '<td class="l"><span class="chip" style="background:' + FONDO[c.tono] + '; color:' + COLOR[c.tono] + '">' + c.est + '</span></td>' +
+        '<td><span class="chip" style="background:' + FONDO[c.tono] + '; color:' + COLOR[c.tono] + '">' + c.est + '</span></td>' +
         '<td><button class="del" data-del="' + i + '" title="Quitar esta actividad">✕</button></td>' +
         '</tr>';
     }).join('');
