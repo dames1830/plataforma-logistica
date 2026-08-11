@@ -565,7 +565,7 @@
         '</tr>';
     }).join('');
 
-    $('#c_sub').textContent = 'actualizado a las ' + S.ahora;
+    $('#c_sub').textContent = 'actualizado ' + S.ahora;
   }
 
   /* ── REFRESCO AL ESCRIBIR ────────────────────────────────────────────────
@@ -583,7 +583,7 @@
         if (td) { td.innerHTML = cc[k].html; td.style.color = cc[k].color; }
       }
     }
-    $('#c_sub').textContent = 'actualizado a las ' + S.ahora;
+    $('#c_sub').textContent = 'actualizado ' + S.ahora;
 
     f = $('#t_hor').tBodies[0].rows;
     for (r = 0; r < f.length; r++) {
@@ -877,7 +877,11 @@
     if (d !== null && d !== undefined) { S.procs.splice(Number(d), 1); pintar(); return; }
     if (e.target.id === 'b_lock') { S.editarPlan = !S.editarPlan; pintar(); return; }
     if (e.target.id === 'b_add' || e.target.id === 'b_add2') {
-      S.procs.push({ n: 'Actividad nueva', u: 'unidades', meta: 0, av: 0, pi: '', pf: '', ri: '', rf: '' });
+      /* `cuenta: true` no es un detalle: sin él la actividad nueva nacía sin la
+         marca de "tiene meta", salía en el Gantt y NO en el Cumplimiento. El
+         relleno de `cargar()` solo corre al abrir la página, así que aparecía
+         recién al recargar. */
+      S.procs.push({ n: 'Actividad nueva', u: 'unidades', meta: 0, av: 0, pi: '', pf: '', ri: '', rf: '', cuenta: true });
       pintar();
       /* El cursor queda en la tabla desde la que se apretó el botón: si no,
          agregar desde Cumplimiento saltaba de vuelta al Gantt. */
