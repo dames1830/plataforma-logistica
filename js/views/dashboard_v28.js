@@ -1,18 +1,18 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0149';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0150';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0149';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0149';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0149';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0149';
-import * as metasService from '../services_v245/metasService.js?v=29.0149';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0149';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0149';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0149';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0149';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0149';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0149';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK } from '../reportes/picking.js?v=29.0149';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0149';
+import * as adminService from '../services_v245/adminService.js?v=29.0150';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0150';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0150';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0150';
+import * as metasService from '../services_v245/metasService.js?v=29.0150';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0150';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0150';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0150';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0150';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0150';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0150';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK } from '../reportes/picking.js?v=29.0150';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0150';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -369,7 +369,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0149';
+const VERSION = '29.0150';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4090,7 +4090,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0149');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0150');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14430,7 +14430,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0149 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0150 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23155,7 +23155,10 @@ window.showCellModal = function(htmlContent) {
       ['Fotos de stock', String(P.fotos)],
       ['Desde', kpiFechaCorta(P.desde)],
       ['Hasta', kpiFechaCorta(P.hasta)]]],
-    puntos: R.curva.map(c => ({ s: c.s, queda: c.queda }))
+    puntos: R.curva.map(c => ({ s: c.s, queda: c.queda })),
+    // El rótulo de calendario que va DEBAJO del eje. Solo lo tiene el grupo: en la
+    // ficha de un artículo suelto no hace falta, porque ahí la semana 1 es una sola.
+    calendario: kpiSemanasCalendario(kpiAplicarFiltro(P.articulos, filtro), R.semanasFijas)
   });
 
   /** Lo mismo para un artículo concreto: acá los pares son medidos, no calculados. */
@@ -23305,7 +23308,7 @@ window.showCellModal = function(htmlContent) {
    */
   const kpiAplicarFiltro = (articulos, filtro, conReposicion) => {
     const f = filtro || {};
-    const marcas = f.marcas || [], meses = f.meses || [];
+    const marcas = f.marcas || [], meses = f.meses || [], semanas = f.semanas || [];
     return (articulos || []).filter(a =>
          (conReposicion || !a.rep)
       // Sin marcas marcadas se miran solo las propias: las de terceros entran y salen
@@ -23315,7 +23318,73 @@ window.showCellModal = function(htmlContent) {
       && (!f.minimo || a.entro >= f.minimo)
       // El mes es el de la LLEGADA, no el de la foto: "los nuevos de mayo" son los que
       // nacieron en mayo, y después se los sigue hasta donde lleguen.
-      && (meses.length ? meses.indexOf(a.llegada.slice(0, 7)) >= 0 : true));
+      && (meses.length ? meses.indexOf(a.llegada.slice(0, 7)) >= 0 : true)
+      // Y la semana, igual: la de la llegada. Ver kpiSemanaDe.
+      && (semanas.length ? semanas.indexOf(String(kpiSemanaDe(a.llegada))) >= 0 : true));
+  };
+
+  /**
+   * LA SEMANA DEL CALENDARIO (ISO 8601) DE UNA FECHA `aaaa-mm-dd`.
+   *
+   * JavaScript no la trae. La regla ISO: la semana de una fecha es la del JUEVES de esa
+   * misma semana, y la semana 1 del año es la que contiene el primer jueves. Por eso se
+   * corre la fecha al jueves antes de contar, y no se divide el año en tramos de siete
+   * días desde el 1 de enero — eso daría otra numeración a partir de febrero.
+   *
+   * Se trabaja en UTC a propósito: con horas locales, una fecha de madrugada puede caer
+   * en el día anterior y cambiar de semana.
+   *
+   * SE LLAMA `kpiSemanaDe` Y NO `semanaISO` POR UNA RAZÓN. Ya hay una `semanaISO` a
+   * nivel de módulo (la del "SEM 31" del tablero) que recibe un Date, no un texto. Una
+   * segunda con ese nombre acá dentro la TAPA en todo `renderDashboard` —`const` es de
+   * bloque y alcanza también a las líneas de más arriba—, y el tablero se quedaba sin
+   * número de semana. Pasó el 11-ago-2026 y lo cazó la prueba, no la pantalla. La misma
+   * trampa está anotada en `prodSemanaDe`, que existe por lo mismo.
+   *
+   * Comprobado contra el mismo cálculo hecho aparte: 14-may → 20, 18-may → 21,
+   * 26-may → 22, 01-ene → 1.
+   */
+  const kpiSemanaDe = (iso) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    if (!m) return null;
+    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    const dia = d.getUTCDay() || 7;                 // lunes=1 … domingo=7
+    d.setUTCDate(d.getUTCDate() + 4 - dia);         // al jueves de esa semana
+    const ene1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil(((d - ene1) / 86400000 + 1) / 7);
+  };
+
+  /**
+   * QUÉ SEMANAS DEL CALENDARIO ABARCA CADA "SEMANA DESDE QUE LLEGÓ".
+   *
+   * Es el rótulo que va DEBAJO del eje, y existe porque el número de arriba —1, 2, 3—
+   * se confunde con la semana del año: Daniel lo planteó el 11-ago-2026 pensando en el
+   * comité. *"Si yo filtro mayo, debería darme las semanas de mayo"*.
+   *
+   * Con el filtro puesto en UNA semana el rótulo es exacto —todos llegaron el mismo
+   * lunes, así que su semana 1 es la misma para todos—. Con un mes entero es un RANGO,
+   * y eso también informa: enseña que dentro del mes hay tandas de días distintos.
+   *
+   * Sale de la fecha que cada punto de la curva ya trae guardada (posición 3), no de
+   * sumarle siete días a la llegada: si el estudio saltó un día, la fecha real manda.
+   */
+  const kpiSemanasCalendario = (articulos, hasta) => {
+    const porSemana = {};
+    (articulos || []).forEach(a => {
+      (a.curva || []).forEach(punto => {
+        const s = punto[0], fecha = punto[3];
+        if (!s || s > hasta || !fecha) return;
+        const w = kpiSemanaDe(fecha);
+        if (!w) return;
+        (porSemana[s] = porSemana[s] || new Set()).add(w);
+      });
+    });
+    const rotulos = {};
+    Object.keys(porSemana).forEach(s => {
+      const ws = [...porSemana[s]].sort((x, y) => x - y);
+      rotulos[s] = ws.length === 1 ? `sem ${ws[0]}` : `sem ${ws[0]}-${ws[ws.length - 1]}`;
+    });
+    return rotulos;
   };
 
   /**
@@ -23419,7 +23488,25 @@ window.showCellModal = function(htmlContent) {
         </div>`}
       </div>`;
 
-    const hayFiltro = marcasSel.length || mesesSel.length || filtro.minimo;
+    // LAS SEMANAS SALEN DE LOS MESES YA ELEGIDOS, no de todo el histórico: con la ventana
+    // de tres meses habría trece opciones y ninguna diría de qué mes es. Con "Mayo"
+    // puesto, el desplegable ofrece solo las semanas de mayo.
+    //
+    // Y CADA UNA LLEVA CUÁNTOS ARTÍCULOS TRAE. Sin ese número no hay forma de saber que
+    // la semana 20 tiene ocho y la 22 veintiuno, y la curva de ocho artículos se mueve
+    // mucho más. Lo pidió Daniel el 11-ago-2026.
+    const enMeses = mesesSel.length
+      ? vivos.filter(a => mesesSel.indexOf(a.llegada.slice(0, 7)) >= 0)
+      : vivos;
+    const cuentaSemana = {};
+    enMeses.forEach(a => {
+      const w = kpiSemanaDe(a.llegada);
+      if (w) cuentaSemana[w] = (cuentaSemana[w] || 0) + 1;
+    });
+    const semanas = Object.keys(cuentaSemana).sort((a, b) => a - b);
+    const semanasSel = filtro.semanas || [];
+
+    const hayFiltro = marcasSel.length || mesesSel.length || semanasSel.length || filtro.minimo;
 
     const aviso = !R ? 'Con estos filtros no queda ningún artículo.'
       : !R.grupoFijo ? `Quedan ${R.articulos} artículos, pero ninguno cumplió todavía las `
@@ -23444,6 +23531,9 @@ window.showCellModal = function(htmlContent) {
         <span style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted);">Filtros</span>
         ${comboVarios('mes', meses.map(m => [m, nombreMes(m)]), mesesSel,
                       resumenSel(mesesSel, 'Todos los meses', nombreMes, 'meses'))}
+        ${comboVarios('semana', semanas.map(w => [w, `Semana ${w} (${cuentaSemana[w]})`]), semanasSel,
+                      resumenSel(semanasSel, 'Todas las semanas',
+                                 w => `Semana ${w} (${cuentaSemana[w] || 0})`, 'semanas'))}
         ${comboVarios('marca', marcas.map(m => [m, m]), marcasSel,
                       resumenSel(marcasSel, 'Todas las marcas', m => m, 'marcas'))}
         ${combo('minimo', TOPES, filtro.minimo || 0)}
@@ -23543,12 +23633,25 @@ window.showCellModal = function(htmlContent) {
     const gridPic = [0,TOPE/3,TOPE*2/3,TOPE].map(v=>
       `<line x1="${X0}" y1="${yc(v).toFixed(1)}" x2="${X1}" y2="${yc(v).toFixed(1)}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>`
       + `<text x="${X0-10}" y="${(yc(v)+4).toFixed(1)}" text-anchor="end" fill="var(--text-muted)" font-size="11">${v.toFixed(0)}%</text>`).join('');
-    const ticks = P.map(p=>`<text x="${x(p.s).toFixed(1)}" y="${C1+22}" text-anchor="middle" fill="var(--text-muted)" font-size="11">${p.s}</text>`).join('');
+    // EL EJE LLEVA DOS RENGLONES: arriba la semana desde que llegó —que es lo que mide
+    // el gráfico— y debajo, en chico, la semana del calendario en que ocurrió. Sin el
+    // segundo, "semana 1" con el filtro puesto en mayo se lee como la primera semana de
+    // mayo, y en un comité eso se toma por un error del reporte. Con el filtro en una
+    // sola semana el rótulo es exacto; con un mes entero es un rango, y ese rango
+    // también dice algo: dentro del mes hubo tandas de días distintos.
+    const cal = D.calendario || {};
+    const ticks = P.map(p => {
+      const arriba = `<text x="${x(p.s).toFixed(1)}" y="${C1+22}" text-anchor="middle" fill="var(--text-muted)" font-size="11">${p.s}</text>`;
+      const w = cal[p.s];
+      return arriba + (w
+        ? `<text x="${x(p.s).toFixed(1)}" y="${C1+36}" text-anchor="middle" fill="#818cf8" font-size="9.5">(${w})</text>`
+        : '');
+    }).join('');
 
     // LA FRANJA DEL TOTAL: lo que se picó y lo que falta. Sumando todo tiene que dar la llegada.
     const ANCHO = X1 - X0, wPic = ANCHO * totalPicado / Math.max(1, D.llegada);
     const svg = `
-      <svg viewBox="0 0 900 366" style="display:block; width:100%; height:auto;" role="img"
+      <svg viewBox="0 0 900 382" style="display:block; width:100%; height:auto;" role="img"
            aria-label="Cuánto se lleva el picking cada semana de un código nuevo, y cuántos pares faltan picar.">
         <text x="${X0}" y="26" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">PICKING POR SEM</text>
         <text x="${X1}" y="26" text-anchor="end" fill="var(--text-muted)" font-size="10" font-weight="600">el % es sobre los ${n(D.llegada)} pares que ${hayIngreso?'entraron':'llegaron'} · entre paréntesis, los pares</text>
@@ -23558,7 +23661,7 @@ window.showCellModal = function(htmlContent) {
         ${puntosPic}${valsPic}
         <line x1="${X0}" y1="${C1}" x2="${X1}" y2="${C1}" stroke="var(--border)" stroke-width="1"/>
         ${ticks}
-        <text x="${((X0+X1)/2).toFixed(0)}" y="${C1+40}" text-anchor="middle" fill="var(--text-muted)" font-size="11">semanas desde que llegó</text>
+        <text x="${((X0+X1)/2).toFixed(0)}" y="${C1+56}" text-anchor="middle" fill="var(--text-muted)" font-size="11">semanas desde que llegó · entre paréntesis, la semana del calendario</text>
         <text x="${X0}" y="286" fill="var(--text-muted)" font-size="11" font-weight="700" letter-spacing="0.6">${D.llegadaFranja} ${n(D.llegada)} PARES</text>
         <rect x="${X0}" y="298" width="${wPic.toFixed(1)}" height="30" rx="5" fill="${NARANJA}"/>
         <rect x="${(X0+wPic).toFixed(1)}" y="298" width="${(ANCHO-wPic).toFixed(1)}" height="30" rx="5" fill="${AZUL}" fill-opacity="0.3" stroke="${AZUL}" stroke-width="1.5" stroke-dasharray="5 3"/>
@@ -23960,7 +24063,7 @@ window.showCellModal = function(htmlContent) {
 
   // Lo que el usuario eligió en la barra de filtros. Vive fuera del render para que
   // sobreviva a redibujar: si no, al filtrar volvería solo a "todas las marcas".
-  let kpiFiltro = { marcas: [], meses: [], minimo: 0 };
+  let kpiFiltro = { marcas: [], meses: [], semanas: [], minimo: 0 };
   // Cuál de los dos desplegables está abierto ('mes', 'marca' o nada). Vive acá por lo
   // mismo que el filtro: cada clic redibuja la vista entera, y guardándolo en el DOM el
   // menú se cerraría al marcar la primera opción. Se pueden marcar varias seguidas.
@@ -24645,13 +24748,13 @@ window.showCellModal = function(htmlContent) {
   /** Cambia un filtro y redibuja. El Pareto no depende de esto, pero se rehace igual:
       partirlo en dos redibujados por ahorrar unos milisegundos no vale el enredo. */
   window.__kpiFiltro = (que, valor) => {
-    if (que === 'limpiar') { kpiFiltro = { marcas: [], meses: [], minimo: 0 }; kpiMenuAbierto = ''; }
+    if (que === 'limpiar') { kpiFiltro = { marcas: [], meses: [], semanas: [], minimo: 0 }; kpiMenuAbierto = ''; }
     else if (que === 'minimo') { kpiFiltro.minimo = Number(valor) || 0; kpiMenuAbierto = ''; }
-    else if (que === 'marca' || que === 'mes') {
+    else if (que === 'marca' || que === 'mes' || que === 'semana') {
       // SE MARCAN Y SE DESMARCAN, de a varias. El filtrado ya trabajaba con listas desde
       // el principio; lo único que elegía de a uno era la barra, y eso es lo que cambió
       // el 07-ago-2026. Sin valor se vacía la lista, que es el "Todos".
-      const campo = que === 'marca' ? 'marcas' : 'meses';
+      const campo = que === 'marca' ? 'marcas' : que === 'mes' ? 'meses' : 'semanas';
       const lista = kpiFiltro[campo] || [];
       if (!valor) kpiFiltro[campo] = [];
       else if (lista.indexOf(valor) >= 0) kpiFiltro[campo] = lista.filter(v => v !== valor);
