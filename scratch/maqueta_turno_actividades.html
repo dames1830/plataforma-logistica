@@ -1,0 +1,845 @@
+<title>Gantt de actividades y cumplimiento del turno</title>
+
+<style>
+  :root {
+    /* `color-scheme` es lo que hace que el navegador pinte OSCURAS sus propias
+       piezas: la barra de desplazamiento y el relojito de los campos de hora.
+       Sin esto la barra sale blanca sobre el panel oscuro. */
+    color-scheme: light;
+    --ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
+
+    --bg: #f2f5fa;
+    --panel: #ffffff;
+    --panel-2: #eef1f8;
+    --line: #dce1ec;
+    --line-2: #bcc5d8;
+    --text: #10151f;
+    --text-2: #4c566d;
+    --text-3: #79839a;
+    --accent: #4f46e5;
+    --accent-soft: #e9e8fd;
+    --ok: #0f7f57;
+    --ok-soft: #ddf2e9;
+    --warn: #a76a06;
+    --warn-soft: #fcefd6;
+    --bad: #bd332d;
+    --bad-soft: #fbe8e7;
+    --plan-line: #b3bdd1;
+    --now: #bd332d;
+    --on-ok: #eafaf3; --on-warn: #fff6e6; --on-bad: #fdeceb;
+    --shadow: 0 1px 2px rgba(16, 21, 31, .05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #0b0e15;
+      --panel: #151a24;
+      --panel-2: #1b2130;
+      --line: #242b3a;
+      --line-2: #38425a;
+      --text: #e8ecf4;
+      --text-2: #99a3ba;
+      --text-3: #6a7590;
+      --accent: #8b93f8;
+      --accent-soft: #23244a;
+      --ok: #34d399;
+      --ok-soft: #10322a;
+      --warn: #fbbf24;
+      --warn-soft: #3a2c0c;
+      --bad: #f87171;
+      --bad-soft: #3a1d1d;
+      --plan-line: #3c4660;
+      --now: #fb7185;
+      --on-ok: #06231c; --on-warn: #2b1f04; --on-bad: #2e0f0f;
+      --shadow: none;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0b0e15;
+    --panel: #151a24;
+    --panel-2: #1b2130;
+    --line: #242b3a;
+    --line-2: #38425a;
+    --text: #e8ecf4;
+    --text-2: #99a3ba;
+    --text-3: #6a7590;
+    --accent: #8b93f8;
+    --accent-soft: #23244a;
+    --ok: #34d399;
+    --ok-soft: #10322a;
+    --warn: #fbbf24;
+    --warn-soft: #3a2c0c;
+    --bad: #f87171;
+    --bad-soft: #3a1d1d;
+    --plan-line: #3c4660;
+    --now: #fb7185;
+    --on-ok: #06231c; --on-warn: #2b1f04; --on-bad: #2e0f0f;
+    --shadow: none;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f2f5fa;
+    --panel: #ffffff;
+    --panel-2: #eef1f8;
+    --line: #dce1ec;
+    --line-2: #bcc5d8;
+    --text: #10151f;
+    --text-2: #4c566d;
+    --text-3: #79839a;
+    --accent: #4f46e5;
+    --accent-soft: #e9e8fd;
+    --ok: #0f7f57;
+    --ok-soft: #ddf2e9;
+    --warn: #a76a06;
+    --warn-soft: #fcefd6;
+    --bad: #bd332d;
+    --bad-soft: #fbe8e7;
+    --plan-line: #b3bdd1;
+    --now: #bd332d;
+    --on-ok: #eafaf3; --on-warn: #fff6e6; --on-bad: #fdeceb;
+    --shadow: 0 1px 2px rgba(16, 21, 31, .05);
+  }
+
+  /* Sin esto la caja punteada del plan de la última actividad se pasa 2 px del
+     carril: el borde se suma al ancho y la barra termina fuera del turno. */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body { background: var(--bg); color: var(--text); font-family: var(--ui); font-size: 14px; line-height: 1.6; }
+
+  .page { max-width: 1180px; margin: 0 auto; padding: 28px 22px 64px; display: flex; flex-direction: column; gap: 18px; }
+
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); }
+  h1 { font-size: 22px; font-weight: 500; margin: 2px 0 4px; letter-spacing: -.01em; text-wrap: balance; }
+  h2 { font-size: 17px; font-weight: 500; margin: 0; letter-spacing: -.005em; }
+  .lead { color: var(--text-2); font-size: 13px; margin: 0; max-width: 68ch; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 20px; box-shadow: var(--shadow); }
+  .phead { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .phead .sub { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+
+  /* ── controles ───────────────────────────────────────────────────────── */
+  .ctrls { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-end; }
+  .fld { display: flex; flex-direction: column; gap: 4px; }
+  .fld > span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
+  input, button { font-family: var(--mono); font-size: 13px; color: var(--text); background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; }
+  input[type="text"] { font-family: var(--ui); }
+  input:hover { border-color: var(--line-2); }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--line-2); }
+  .btn-a { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+  .spacer { flex: 1; }
+
+  /* ── gantt ───────────────────────────────────────────────────────────── */
+  /* La barra de desplazamiento, con los colores del tema. Firefox entiende
+     `scrollbar-color`; Chrome y Edge necesitan las pseudo-clases de abajo. */
+  .gwrap, .twrap { overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+  .gwrap::-webkit-scrollbar, .twrap::-webkit-scrollbar { height: 11px; width: 11px; }
+  .gwrap::-webkit-scrollbar-track, .twrap::-webkit-scrollbar-track { background: transparent; }
+  .gwrap::-webkit-scrollbar-thumb, .twrap::-webkit-scrollbar-thumb {
+    background: var(--line-2); border-radius: 7px; border: 3px solid var(--panel); background-clip: padding-box;
+  }
+  .gwrap::-webkit-scrollbar-thumb:hover, .twrap::-webkit-scrollbar-thumb:hover { background: var(--text-3); background-clip: padding-box; }
+  .gwrap::-webkit-scrollbar-corner, .twrap::-webkit-scrollbar-corner { background: transparent; }
+
+  html { scrollbar-width: thin; scrollbar-color: var(--line-2) var(--bg); }
+  body::-webkit-scrollbar { width: 12px; }
+  body::-webkit-scrollbar-track { background: var(--bg); }
+  body::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 7px; border: 3px solid var(--bg); background-clip: padding-box; }
+  body::-webkit-scrollbar-thumb:hover { background: var(--text-3); background-clip: padding-box; }
+
+  .gg { min-width: 720px; display: grid; grid-template-columns: 186px 1fr; align-items: center; }
+  .gnm { font-size: 13px; color: var(--text-2); padding: 0 12px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .axis { position: relative; height: 20px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+  .tick { position: absolute; top: 0; font-family: var(--mono); font-size: 11px; color: var(--text-3); transform: translateX(-50%); }
+  .lane { position: relative; height: 34px; }
+  .vl { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+  .bar { position: absolute; border-radius: 4px; }
+  .plan { border: 1px dashed var(--plan-line); border-radius: 4px; top: 5px; height: 24px; }
+  .now { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--now); z-index: 3; }
+  .foot { position: relative; height: 20px; }
+  .nowtag { position: absolute; top: 2px; font-family: var(--mono); font-size: 11px; color: var(--now); transform: translateX(-50%); white-space: nowrap; }
+  .endline { position: absolute; top: 0; bottom: 0; right: 0; width: 1px; background: var(--line-2); }
+
+  .leg { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 12px; color: var(--text-2); margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .sw { display: inline-block; width: 22px; height: 9px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+
+  /* ── anillos ─────────────────────────────────────────────────────────── */
+  .rings { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .rcard { background: var(--panel-2); border-radius: 10px; padding: 14px 10px 12px; text-align: center; }
+  .ring { width: 82px; height: 82px; border-radius: 50%; margin: 0 auto 9px; display: flex; align-items: center; justify-content: center; }
+  .hole { width: 62px; height: 62px; border-radius: 50%; background: var(--panel-2); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 16px; }
+  .rn { font-size: 12.5px; margin-bottom: 3px; line-height: 1.35; }
+  .rq { font-family: var(--mono); font-size: 11px; color: var(--text-3); line-height: 1.5; }
+
+  /* ── tablas ──────────────────────────────────────────────────────────── */
+  table { border-collapse: collapse; width: 100%; min-width: 640px; }
+  th { font-family: var(--mono); font-weight: 400; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); padding: 0 8px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th.l { text-align: left; }
+  td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+  td.l { text-align: left; font-family: var(--ui); color: var(--text-2); }
+  tr:last-child td { border-bottom: none; }
+  td input[type="number"] { width: 88px; text-align: right; }
+  td input[type="time"] { width: 104px; }
+  td input[type="text"] { width: 100%; min-width: 130px; }
+  td.u input[type="text"] { width: 100px; min-width: 0; }
+  .fijo { display: inline-block; padding: 6px 9px; color: var(--text-2); }
+  /* Marca las actividades cuyos números NO se escriben a mano: llegan solos. */
+  .auto { font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .07em;
+          background: var(--accent-soft); color: var(--accent); padding: 2px 7px; border-radius: 10px;
+          margin-left: 7px; vertical-align: 1px; white-space: nowrap; }
+  .chip { display: inline-block; font-family: var(--ui); font-size: 11.5px; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
+  .del { padding: 3px 8px; font-size: 12px; color: var(--text-3); background: transparent; border-color: transparent; }
+  .del:hover { color: var(--bad); border-color: var(--line); }
+
+  .tally { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tally .chip { font-size: 12px; padding: 3px 11px; }
+
+  /* ── carga de stock ──────────────────────────────────────────────────── */
+  .stockbox { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .sbase { font-size: 12.5px; color: var(--text-2); background: var(--panel-2); border-radius: 8px;
+           padding: 10px 13px; margin-bottom: 14px; }
+  .sbase b { font-weight: 400; color: var(--text); }
+  .slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .slot { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; }
+  .slab { display: block; font-size: 12.5px; color: var(--text-2); margin-bottom: 8px; }
+  .slot input[type="file"] { width: 100%; font-size: 12px; padding: 5px; }
+  .slot input[type="file"]::file-selector-button { font-family: var(--mono); font-size: 12px; color: var(--accent);
+    background: var(--accent-soft); border: none; border-radius: 6px; padding: 5px 11px; margin-right: 10px; cursor: pointer; }
+  .sinfo { font-family: var(--mono); font-size: 11.5px; color: var(--text-3); margin-top: 8px; line-height: 1.6; }
+  .sinfo b { color: var(--text-2); font-weight: 400; }
+
+  .note { font-size: 12.5px; color: var(--text-3); margin: 14px 0 0; max-width: 74ch; }
+  .note b { font-weight: 500; color: var(--text-2); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="page">
+
+  <header>
+    <p class="eyebrow">Maqueta · nada de esto está programado todavía</p>
+    <h1>Control del turno — actividades y cumplimiento</h1>
+    <p class="lead">Todos los campos se pueden escribir y los cuadros se recalculan solos. Cambie las horas, las metas y los avances hasta que quede como lo necesita; lo que quede acá es lo que se programa.</p>
+  </header>
+
+  <section class="panel">
+    <div class="phead"><h2>El turno</h2><span class="sub" id="dur"></span></div>
+    <div class="ctrls">
+      <label class="fld"><span>Empieza</span><input type="time" id="f_ini"></label>
+      <label class="fld"><span>Termina</span><input type="time" id="f_fin"></label>
+      <label class="fld"><span>Hora actual</span><input type="time" id="f_ahora"></label>
+      <div class="spacer"></div>
+      <button id="b_reset">Volver al ejemplo</button>
+    </div>
+
+    <div class="stockbox">
+      <p class="eyebrow" style="margin:0 0 10px">Foto de ahora · alimenta el Gantt y el Cumplimiento</p>
+      <div class="sbase" id="s_base"></div>
+      <div class="slots">
+        <div class="slot">
+          <span class="slab">Stock <b>activo</b> de ahora</span>
+          <input type="file" data-slot="now-activo" accept=".csv,text/csv">
+          <div class="sinfo" data-info="now-activo">sin cargar</div>
+        </div>
+        <div class="slot">
+          <span class="slab">Stock <b>reserva</b> de ahora</span>
+          <input type="file" data-slot="now-reserva" accept=".xlsx,.csv">
+          <div class="sinfo" data-info="now-reserva">sin cargar</div>
+        </div>
+      </div>
+      <p class="note" style="margin:12px 0 0">El arranque del turno <b>no se carga</b>: ya está en el servidor, publicado por el robot a las 19:00. Acá solo va la foto de ahora, y <b>se lee en esta computadora sin publicarse</b> — no toca el stock del servidor ni lo que ven las demás pantallas. Al cargarla, la <b>hora actual</b> del reporte se mueve sola a la hora de esa foto, así que el Gantt y el Cumplimiento quedan medidos en el mismo momento.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="phead"><h2>Gantt de actividades</h2><span class="sub" id="g_sub"></span></div>
+    <div class="gwrap"><div class="gg" id="gg"></div></div>
+    <div class="leg">
+      <span><span class="sw" style="border:1px dashed var(--plan-line); height:8px"></span>Lo que debía hacerse</span>
+      <span><span class="sw" style="background:var(--ok)"></span>Hecho</span>
+      <span><span class="sw" style="background:var(--warn)"></span>Se pasó del plan</span>
+      <span><span class="sw" style="background:var(--accent)"></span>En curso</span>
+      <span><span style="display:inline-block;width:0;border-left:1px dashed var(--now);height:12px;vertical-align:-2px;margin-right:8px"></span>Ahora</span>
+    </div>
+
+    <div class="phead" style="margin:26px 0 10px">
+      <span class="eyebrow">Horarios · el plan es fijo, lo real se carga cada noche</span>
+      <button id="b_lock"></button>
+    </div>
+    <div class="twrap">
+      <table id="t_hor">
+        <thead><tr>
+          <th class="l">Actividad</th><th>Plan · empieza</th><th>Plan · termina</th>
+          <th>Real · empezó</th><th>Real · terminó</th><th>Desvío</th>
+          <th title="Marcada, la actividad entra al Cumplimiento del turno">¿Tiene meta?</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px"><button class="btn-a" id="b_add">+ Agregar actividad</button></div>
+    <p class="note">El <b>plan</b> es el horario de siempre: se configura una vez y no se vuelve a tocar. Lo que se carga cada noche son las dos columnas de <b>real</b>.
+      <br>La actividad que ya empezó y todavía no termina se deja con <b>Real · terminó</b> en blanco: la barra corre hasta la hora actual y sale en morado.</p>
+  </section>
+
+  <section class="panel">
+    <div class="phead"><h2>Cumplimiento del turno</h2><span class="sub" id="c_sub"></span></div>
+    <div class="tally" id="tally"></div>
+    <div class="rings" id="rings"></div>
+    <div class="twrap">
+      <table id="t_cum">
+        <thead><tr>
+          <th class="l">Actividad</th><th class="l">Unidad</th><th>Meta</th><th>Avance</th>
+          <th>Falta</th><th>A esta hora</th><th>%</th><th class="l">Estado</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px"><button class="btn-a" id="b_add2">+ Agregar actividad</button></div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  /* La versión de la clave sube con cada cambio de los datos de fábrica. Sin
+     eso, la PC que ya guardó la maqueta anterior sigue viendo las actividades
+     viejas y nunca le llegan las nuevas. */
+  var LS = 'maqueta_turno_v11';
+
+  /* HORARIO FIJO DEL TURNO — el que dictó Daniel el 11-ago-2026.
+     El plan no cambia de un día para otro: se configura una vez. Lo que cambia
+     cada noche es la hora real y el avance. Por eso arrancan iguales.
+
+     `cuenta` separa las dos cosas: TODA actividad sale en el Gantt, pero solo
+     las que tienen `cuenta: true` entran al Cumplimiento. La Charla de
+     seguridad ocupa su rato del turno y hay que verla en el Gantt, pero no es
+     una meta —no se mide en cantidades— así que no entra a los cuadros. */
+  var BASE = {
+    ini: '20:00', fin: '06:30', ahora: '06:30', editarPlan: false,
+    procs: [
+      { n: 'Charla de seguridad',  u: '',            meta: 0,     av: 0,     pi: '20:15', pf: '20:30', ri: '20:15', rf: '20:30', cuenta: false },
+      /* AUTOMÁTICA. Los dos números salen solos del reporte Almacenaje → Marcas
+         (`datosMarcas` en js/reportes/marcas.js): la meta es la columna BUFFER
+         —lo que dejó por almacenar la corrida de olas— y el avance es la columna
+         TOTAL —día + noche de las tareas que se van finalizando—. Los de acá son
+         los del corte del 10-ago-2026 que dio Daniel: 32.994 y 18.195. */
+      { n: 'Almacenamiento',       u: 'pares',       meta: 32994, av: 18195, pi: '20:30', pf: '05:45', ri: '20:30', rf: '05:45', cuenta: true, auto: true },
+      { n: 'Slotting',             u: 'tareas',      meta: 60,    av: 45,    pi: '20:30', pf: '06:00', ri: '20:30', rf: '06:00', cuenta: true },
+      /* AUTOMÁTICA, comparando dos fotos del stock activo. Meta = los pares que
+         tenía CDBUFFER-C a las 19:00; avance = los de esa foto que ya no están
+         a las 06:00. Los de acá son los reales de la noche del 10 al 11-ago:
+         1.759 en 133 ubicaciones, de los que se movieron 869. NO sirve restar
+         los totales: a las 06:00 había 1.820 —más que al empezar— porque entraron
+         930 pares nuevos durante la noche. */
+      { n: 'Limpieza de Buffer C', u: 'pares',       meta: 1759,  av: 869,   pi: '20:30', pf: '22:00', ri: '20:30', rf: '22:00', cuenta: true, auto: true, fuente: 'bufferC' },
+      /* AUTOMÁTICA. Sale del área `buffer_history` del servidor, que ya guarda
+         `paletasSolicitadas` (meta), `paletasBajadas` (avance), `diferencias` y
+         `fillRate`. Estos son los del registro real del 10-ago-2026: 124 y 124.
+         OJO: `paletasBajadas` suma las INCOMPLETAS como bajadas, así que da 100%
+         casi siempre —11 de las últimas 12 corridas—. Si el avance debe ser solo
+         las completas, hay que guardar ese número aparte. */
+      { n: 'Bajada de paletas',    u: 'paletas',     meta: 124,   av: 124,   pi: '00:00', pf: '03:00', ri: '00:00', rf: '03:00', cuenta: true, auto: true },
+      /* Es el análisis del buffer. LA META son las unidades que hay que bajar
+         para cubrir el pedido: la suma de `plannedQty` por código —los 2.496 que
+         Daniel leyó en Análisis Buffer SKU—. No es lo que pide el pedido entero,
+         es lo que FALTA: si piden 100 y en el buffer ya hay 20, la meta son 80.
+
+         EL AVANCE sale de la foto del stock de las 06:00, código por código:
+             avance = Σ min( lo que había que bajar , lo que hay en el buffer )
+         El tope es la regla de Daniel: bajar 100 cuando pedían 80 cuenta 80, no
+         100. Y cuenta CUALQUIER buffer —A, B, C o D—, no solo los de almacenaje.
+         Funciona porque lo que ya estaba se almacena durante el turno para hacer
+         sitio, así que a las 06:00 el buffer tiene lo que se bajó esa noche.
+
+         Para esto hace falta guardar la LISTA de códigos del pedido, no solo el
+         total: el 2.496 suelto no sirve, la cuenta es código por código.
+         El horario 03:00 → 05:45 lo puse yo: es el hueco entre las paletas y BPA. */
+      { n: 'Separación de mercadería', u: 'unidades', meta: 2496, av: 0,    pi: '03:00', pf: '05:45', ri: '',      rf: '',      cuenta: true, auto: true },
+      /* MANUAL por decisión de Daniel. La unidad y la meta siguen siendo
+         suposiciones mías, pendientes de confirmar. */
+      { n: 'BPA',                  u: '',            meta: 0,     av: 0,     pi: '05:45', pf: '06:20', ri: '05:45', rf: '06:20', cuenta: false }
+    ]
+  };
+
+  var S = cargar();
+  function cargar() {
+    var g = null;
+    try { var v = localStorage.getItem(LS); if (v) g = JSON.parse(v); } catch (e) {}
+    if (!g || !g.procs) return JSON.parse(JSON.stringify(BASE));
+    /* UN CAMPO NUEVO NO PUEDE LLEGAR VACÍO A LA PANTALLA QUE YA GUARDÓ.
+       Si lo guardado es de antes de que existiera `cuenta`, la actividad no
+       aparecía en ningún cuadro de cumplimiento y no había forma de saber por
+       qué. Lo que falta se rellena con el valor de fábrica, no con vacío. */
+    g.procs.forEach(function (p) { if (p.cuenta === undefined) p.cuenta = true; });
+    if (g.editarPlan === undefined) g.editarPlan = false;
+    return g;
+  }
+  function guardar() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
+
+  var $ = function (s) { return document.querySelector(s); };
+  var nf = function (n) { return Number(n || 0).toLocaleString('es-PE'); };
+  var mm = function (t) {
+    var p = String(t || '').split(':');
+    var h = Number(p[0]), m = Number(p[1]);
+    return (isFinite(h) && isFinite(m) && p.length === 2) ? h * 60 + m : null;
+  };
+  var reloj = function (v) {
+    v = ((v % 1440) + 1440) % 1440;
+    return String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(v % 60).padStart(2, '0');
+  };
+
+  var INI = 1200, SPAN = 630, AHORA = 550;
+
+  /* Minutos desde que empieza el turno. Un turno de noche cruza la medianoche,
+     así que toda hora menor que la de entrada pertenece al día siguiente. */
+  function off(t) {
+    var v = mm(t); if (v === null) return null;
+    return (v < INI ? v + 1440 : v) - INI;
+  }
+  function pc(v) { return (v / SPAN * 100) + '%'; }
+
+  function recalcularTurno() {
+    INI = mm(S.ini); if (INI === null) INI = 1200;
+    var fin = mm(S.fin); if (fin === null) fin = INI + 600;
+    SPAN = (fin < INI ? fin + 1440 : fin) - INI;
+    if (SPAN <= 0) SPAN = 60;
+    AHORA = off(S.ahora); if (AHORA === null) AHORA = 0;
+    AHORA = Math.max(0, Math.min(SPAN, AHORA));
+  }
+
+  /* Todo lo derivado de una actividad: horario, desvío, esperado y estado. */
+  function calcular(p) {
+    var pi = off(p.pi), pf = off(p.pf), ri = off(p.ri), rf = off(p.rf);
+    if (pi !== null && pf !== null && pf < pi) pf += 1440;
+    if (ri !== null && rf !== null && rf < ri) rf += 1440;
+
+    var enCurso = ri !== null && rf === null;
+    var rFin = enCurso ? Math.max(ri, AHORA) : rf;
+
+    var meta = Number(p.meta) || 0, av = Number(p.av) || 0;
+    var esperado = 0;
+    if (pi !== null && pf !== null && pf > pi) {
+      var r = (AHORA - pi) / (pf - pi);
+      esperado = meta * Math.max(0, Math.min(1, r));
+    }
+    esperado = Math.round(esperado);
+
+    var est, tono;
+    if (meta > 0 && av >= meta) { est = 'Cumplido'; tono = 'ok'; }
+    else if (av === 0 && esperado === 0) { est = 'Sin empezar'; tono = 'off'; }
+    else if (av >= esperado) { est = 'Al día'; tono = 'ok'; }
+    else if (av >= esperado * 0.8) { est = 'Justo'; tono = 'warn'; }
+    else { est = 'Atrasado'; tono = 'bad'; }
+
+    var desvio = null, desvTxt = '—';
+    if (rf !== null && pf !== null) { desvio = rf - pf; desvTxt = (desvio > 0 ? '+' : '') + desvio + ' min'; }
+    else if (enCurso && pi !== null) { desvio = ri - pi; desvTxt = 'arrancó ' + (desvio > 0 ? '+' : '') + desvio + ' min'; }
+
+    return {
+      pi: pi, pf: pf, ri: ri, rf: rFin, enCurso: enCurso,
+      meta: meta, av: av, esperado: esperado,
+      pct: meta > 0 ? Math.round(100 * av / meta) : 0,
+      falta: Math.max(0, meta - av),
+      est: est, tono: tono, desvio: desvio, desvTxt: desvTxt
+    };
+  }
+
+  var COLOR = { ok: 'var(--ok)', warn: 'var(--warn)', bad: 'var(--bad)', off: 'var(--text-3)' };
+  var FONDO = { ok: 'var(--ok-soft)', warn: 'var(--warn-soft)', bad: 'var(--bad-soft)', off: 'var(--panel-2)' };
+
+  /* ── El Gantt ─────────────────────────────────────────────────────────── */
+  function pintarGantt() {
+    var lane = document.querySelector('.gg .axis');
+    var ancho = lane ? lane.getBoundingClientRect().width : 900;
+    if (!ancho) ancho = 900;
+
+    /* Cada cuánto se rotula el eje: si las horas quedan a menos de 58 px, se
+       saltea de dos en dos. Es lo que hacía que 06:00 se montara sobre el fin
+       del turno cuando la pantalla es angosta. */
+    var horas = SPAN / 60;
+    var paso = 1;
+    while (ancho / (horas / paso) < 58) paso++;
+
+    var eje = '', guias = '', t;
+    for (t = 0; t <= SPAN; t += 60) {
+      var etiqueta = (t / 60) % paso === 0 && (SPAN - t) > 30;
+      if (t > 0) guias += '<span class="vl" style="left:' + pc(t) + '"></span>';
+      if (etiqueta) eje += '<span class="tick" style="left:' + pc(t) + '">' + reloj(INI + t) + '</span>';
+    }
+
+    var filas = S.procs.map(function (p) {
+      var c = calcular(p), b = '';
+      if (c.pi !== null && c.pf !== null) {
+        b += '<span class="bar plan" style="left:' + pc(c.pi) + '; width:' + pc(c.pf - c.pi) + '"></span>';
+      }
+      if (c.ri !== null && c.rf !== null) {
+        var color = c.enCurso ? 'var(--accent)' : 'var(--ok)';
+        var corte = c.pf !== null ? Math.min(c.rf, c.pf) : c.rf;
+        if (corte > c.ri) b += '<span class="bar" style="left:' + pc(c.ri) + '; width:' + pc(corte - c.ri) + '; top:12px; height:11px; background:' + color + '"></span>';
+        if (c.rf > corte) {
+          var d = Math.max(corte, c.ri);
+          b += '<span class="bar" style="left:' + pc(d) + '; width:' + pc(c.rf - d) + '; top:12px; height:11px; background:var(--warn)"></span>';
+        }
+      }
+      return '<div class="gnm">' + rotulo(p) + '</div><div class="lane">' + guias + b +
+        '<span class="now" style="left:' + pc(AHORA) + '"></span><span class="endline"></span></div>';
+    }).join('');
+
+    $('#gg').innerHTML =
+      '<div></div><div class="axis">' + eje + '<span class="endline"></span></div>' + filas +
+      '<div></div><div class="foot"><span class="nowtag" style="left:' + pc(AHORA) + '">ahora ' + esc(S.ahora) + '</span></div>';
+
+    $('#g_sub').textContent = reloj(INI) + ' → ' + reloj(INI + SPAN) + ' · ' + S.procs.length + ' actividades';
+  }
+
+  /* ── Anillos y tabla de cumplimiento ──────────────────────────────────── */
+  /* Las que tienen meta, con el índice que ocupan en la lista completa: los
+     campos editables lo necesitan para no escribir en la actividad equivocada. */
+  function conMeta() {
+    var r = [];
+    S.procs.forEach(function (p, i) { if (p.cuenta) r.push({ p: p, i: i }); });
+    return r;
+  }
+
+  function pintarCumplimiento() {
+    var cuenta = { ok: 0, warn: 0, bad: 0, off: 0 }, anillos = '';
+
+    conMeta().forEach(function (x) {
+      var p = x.p;
+      var c = calcular(p);
+      cuenta[c.tono]++;
+      var g = Math.max(0, Math.min(100, c.pct));
+      anillos += '<div class="rcard">' +
+        '<div class="ring" style="background:conic-gradient(' + COLOR[c.tono] + ' 0 ' + g + '%, var(--line) ' + g + '% 100%)">' +
+        '<div class="hole" style="color:' + COLOR[c.tono] + '">' + c.pct + '%</div></div>' +
+        '<div class="rn">' + rotulo(p) + '</div>' +
+        '<div class="rq">' + nf(c.av) + ' de ' + nf(c.meta) + '<br>' + esc(p.u || '') + '</div></div>';
+    });
+    $('#rings').innerHTML = anillos;
+
+    var etiquetas = [['ok', 'al día o cumplidas'], ['warn', 'justas'], ['bad', 'atrasadas'], ['off', 'sin empezar']];
+    $('#tally').innerHTML = etiquetas.filter(function (e) { return cuenta[e[0]]; }).map(function (e) {
+      return '<span class="chip" style="background:' + FONDO[e[0]] + '; color:' + COLOR[e[0]] + '">' + cuenta[e[0]] + ' ' + e[1] + '</span>';
+    }).join('');
+
+    var cuerpo = $('#t_cum').tBodies[0];
+    cuerpo.innerHTML = conMeta().map(function (x) {
+      var p = x.p, i = x.i, c = calcular(p);
+      return '<tr>' +
+        '<td class="l" style="white-space:nowrap"><input type="text" data-t="c" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '" style="min-width:118px">' +
+        (p.auto ? '<span class="auto">auto</span>' : '') + '</td>' +
+        '<td class="l u"><input type="text" data-t="c" data-k="u" data-i="' + i + '" value="' + esc(p.u || '') + '"></td>' +
+        '<td><input type="number" min="0" data-t="c" data-k="meta" data-i="' + i + '" value="' + c.meta + '"></td>' +
+        '<td><input type="number" min="0" data-t="c" data-k="av" data-i="' + i + '" value="' + c.av + '"></td>' +
+        '<td style="color:' + (c.falta ? 'var(--text-2)' : 'var(--text-3)') + '">' + (c.falta ? nf(c.falta) : '—') + '</td>' +
+        '<td style="color:var(--text-3)">' + nf(c.esperado) + '</td>' +
+        '<td style="color:' + COLOR[c.tono] + '">' + c.pct + '%</td>' +
+        '<td class="l"><span class="chip" style="background:' + FONDO[c.tono] + '; color:' + COLOR[c.tono] + '">' + c.est + '</span></td>' +
+        '<td><button class="del" data-del="' + i + '" title="Quitar esta actividad">✕</button></td>' +
+        '</tr>';
+    }).join('');
+
+    $('#c_sub').textContent = 'medido a las ' + S.ahora;
+  }
+
+  /* ── Tabla de horarios ────────────────────────────────────────────────── */
+  function pintarHorarios() {
+    /* El plan sale como texto mientras esté con candado: es el horario de
+       siempre y no se toca todas las noches. El botón lo abre para configurarlo. */
+    var abierto = !!S.editarPlan;
+    $('#b_lock').textContent = abierto ? '🔓 Listo, dejar fijo' : '🔒 Cambiar el horario fijo';
+    $('#b_lock').className = abierto ? 'btn-a' : '';
+
+    var plan = function (k, i, v) {
+      return abierto
+        ? '<input type="time" data-t="h" data-k="' + k + '" data-i="' + i + '" value="' + esc(v) + '">'
+        : '<span class="fijo">' + (v ? esc(v) : '—') + '</span>';
+    };
+
+    var cuerpo = $('#t_hor').tBodies[0];
+    cuerpo.innerHTML = S.procs.map(function (p, i) {
+      var c = calcular(p);
+      var col = c.desvio === null ? 'var(--text-3)' : (c.desvio > 0 ? 'var(--warn)' : 'var(--ok)');
+      return '<tr>' +
+        '<td class="l"><input type="text" data-t="h" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '"></td>' +
+        '<td>' + plan('pi', i, p.pi) + '</td>' +
+        '<td>' + plan('pf', i, p.pf) + '</td>' +
+        '<td><input type="time" data-t="h" data-k="ri" data-i="' + i + '" value="' + esc(p.ri) + '"></td>' +
+        '<td><input type="time" data-t="h" data-k="rf" data-i="' + i + '" value="' + esc(p.rf) + '"></td>' +
+        '<td style="color:' + col + '">' + c.desvTxt + '</td>' +
+        '<td><input type="checkbox" data-t="h" data-k="cuenta" data-i="' + i + '"' + (p.cuenta ? ' checked' : '') +
+        ' title="Marcada, entra al Cumplimiento del turno"></td>' +
+        '<td><button class="del" data-del="' + i + '" title="Quitar esta actividad">✕</button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  /* El nombre, con la marca "auto" cuando los números no se escriben a mano
+     sino que llegan del sistema. Hoy solo Almacenamiento. */
+  function rotulo(p) { return esc(p.n) + (p.auto ? ' <span class="auto">auto</span>' : ''); }
+
+  /* ── EL STOCK SE LEE ACÁ, NO SE PUBLICA ───────────────────────────────────
+     El archivo entra por el navegador, se calcula y se queda en esta pantalla.
+     No hay ningún envío al servidor: no toca el stock del robot ni lo que ven
+     las otras computadoras. Alimenta las DOS partes del reporte, porque al
+     cargar la foto de ahora se mueve la hora actual de todo el tablero. */
+  var STOCK = { 'now-activo': null, 'now-reserva': null };
+
+  /* EL ARRANQUE DEL TURNO NO SE CARGA: ya está en el servidor, publicado por el
+     robot a las 19:00. En la maqueta va copiado acá para que se comporte igual
+     —el reporte de verdad lo lee del servidor—. Es el Buffer C real de la foto
+     del 10-ago 19:00: 117 artículos, 1.759 pares. */
+  var ARRANQUE = {
+    hora: '19:00', fecha: '10-ago-2026',
+    bufferC: {"0819307-1-06007":38,"0819307-1-08185":4,"1611410-1-06013":17,"1811335-1-06009":55,"1811335-1-08011":6,"1811592-1-06009":35,"1811592-1-08011":7,"1815311-1-08011":9,"1819307-1-06009":37,"1819307-1-08011":4,"1819428-1-08011":9,"2416303-1-06023":5,"2611410-1-06003":19,"2611418-1-06024":25,"2615468-1-06097":25,"2811335-1-06023":57,"2811335-1-08006":6,"2811592-1-06097":36,"2811592-1-08006":7,"2815311-1-08006":9,"2816513-1-06023":11,"2816513-1-08006":2,"2816516-1-06023":11,"2816516-1-08006":2,"2819428-1-08006":9,"2891306-1-06023":13,"2891306-1-08006":4,"2896315-1-06023":20,"2899915-1-06023":22,"3611410-1-06039":17,"3611418-1-06039":25,"3811305-1-06038":41,"3811305-1-08052":8,"3811592-1-06041":38,"3811592-1-08052":7,"3812301-1-06038":15,"3812301-1-08052":2,"3816513-1-06038":10,"3816513-1-08052":2,"3816516-1-06038":10,"3816516-1-08052":2,"3819503-1-06038":15,"3819503-1-08052":3,"3891306-1-06038":14,"3891306-1-08052":4,"3896315-1-06038":19,"3899915-1-06038":19,"4812301-1-06050":15,"4812301-1-08074":2,"4816463-1-06056":37,"4816463-1-08074":8,"4819503-1-06050":36,"4819503-1-08074":6,"4899977-1-06015":14,"5019302-1-10085":3,"5613407-1-06060":20,"5613407-1-08093":10,"5613407-1-10114":23,"5616307-1-06060":20,"5616307-1-08093":10,"5616307-1-10114":23,"5616407-1-06060":14,"5616407-1-08093":9,"5616407-1-10114":21,"5616447-1-06044":16,"5618307-1-06060":16,"5618307-1-08093":9,"5618307-1-10114":19,"5811309-1-06067":23,"5811309-1-08093":15,"5811309-1-10085":9,"5811321-1-06067":20,"5813997-1-06067":22,"5813997-1-10085":13,"5814306-1-06067":20,"5814306-1-08093":9,"5814306-1-10085":3,"5814330-1-06067":9,"5814330-1-08093":6,"5814330-1-10085":12,"5816330-1-06067":9,"5816330-1-08093":6,"5816330-1-10085":12,"5816409-1-05029":26,"5816945-1-08093":24,"5816945-1-10085":15,"5816976-1-06067":36,"5816976-1-08093":4,"5818306-1-06067":20,"5818306-1-08093":9,"5818306-1-10085":11,"5818409-1-06073":6,"5818409-1-08093":1,"5818409-1-10085":8,"5818457-1-06067":36,"5818457-1-08093":3,"5818976-1-06067":41,"5818976-1-08093":4,"5818997-1-06067":36,"5818997-1-08093":2,"5818997-1-10085":3,"5896991-1-06060":2,"5896991-1-10082":2,"5898317-1-06039":35,"5898317-1-08093":11,"5898317-1-10085":16,"5898987-1-10113":36,"7016417-1-08093":2,"8017407-1-10082":1,"8812421-1-06059":25,"8812421-1-08076":14,"8812421-1-10188":20,"8816491-1-09043":6,"8896423-1-06063":13,"8896423-1-08076":8,"8896423-1-10111":3,"8899499-1-06063":6}
+  };
+
+  var num = function (v) { return parseFloat(String(v == null ? 0 : v).replace(/,/g, '')) || 0; };
+
+  /* La hora sale del nombre que le pone el robot: "Stock Activo 11-08-26 0600.csv" */
+  function horaDelNombre(nombre) {
+    var m = String(nombre).match(/\d{2}-\d{2}-\d{2}\s+(\d{2})(\d{2})/);
+    return m ? m[1] + ':' + m[2] : null;
+  }
+
+  /* El CSV del stock activo: UTF-8 y separado por punto y coma. Las columnas se
+     buscan POR NOMBRE, no por posición: si el WMS mueve una, esto sigue andando. */
+  function leerActivo(texto) {
+    var l = texto.split(/\r?\n/);
+    var sep = (l[0] || '').indexOf(';') >= 0 ? ';' : ',';
+    var cab = (l[0] || '').split(sep).map(function (s) { return s.trim(); });
+    var iU = cab.findIndex(function (c) { return /^Ubicaci/i.test(c); });
+    var iQ = cab.findIndex(function (c) { return /^Cantidad actual/i.test(c); });
+    var iA = cab.findIndex(function (c) { return /^Art/i.test(c); });
+    if (iU < 0 || iQ < 0 || iA < 0) throw new Error('faltan las columnas Artículo, Ubicación o Cantidad actual');
+    var bufferC = new Map(), buffer = new Map(), totalC = 0, totalB = 0, lineas = 0;
+    for (var k = 1; k < l.length; k++) {
+      if (!l[k]) continue;
+      var c = l[k].split(sep);
+      var u = String(c[iU] || '').trim().toUpperCase();
+      if (u.indexOf('CDBUFFER') !== 0) continue;
+      var q = num(c[iQ]); if (q <= 0) continue;
+      var a = String(c[iA] || '').trim();
+      lineas++;
+      buffer.set(a, (buffer.get(a) || 0) + q); totalB += q;
+      if (u.indexOf('CDBUFFER-C') === 0) { bufferC.set(a, (bufferC.get(a) || 0) + q); totalC += q; }
+    }
+    return { tipo: 'activo', bufferC: bufferC, buffer: buffer, totalC: totalC, totalB: totalB, lineas: lineas };
+  }
+
+  /* ── EL EXCEL DE RESERVA, ABIERTO COMO LO QUE ES: UN ZIP ───────────────────
+     Sin librerías, que acá no se pueden cargar. El navegador ya sabe
+     descomprimir (DecompressionStream) y leer XML (DOMParser); un .xlsx no es
+     más que eso adentro. Se lee el directorio central del zip, que es el que
+     siempre trae los tamaños correctos. */
+  async function abrirZip(buf) {
+    var dv = new DataView(buf), n = buf.byteLength, fin = -1;
+    for (var i = n - 22; i >= 0 && i > n - 66000; i--) { if (dv.getUint32(i, true) === 0x06054b50) { fin = i; break; } }
+    if (fin < 0) throw new Error('no parece un archivo de Excel');
+    var cuantos = dv.getUint16(fin + 10, true), p = dv.getUint32(fin + 16, true), ent = {};
+    for (var e = 0; e < cuantos; e++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) break;
+      var nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
+      ent[new TextDecoder().decode(new Uint8Array(buf, p + 46, nl))] = {
+        metodo: dv.getUint16(p + 10, true), comp: dv.getUint32(p + 20, true), lho: dv.getUint32(p + 42, true)
+      };
+      p += 46 + nl + el + cl;
+    }
+    return {
+      nombres: Object.keys(ent),
+      sacar: async function (nombre) {
+        var en = ent[nombre]; if (!en) return null;
+        var ini = en.lho + 30 + dv.getUint16(en.lho + 26, true) + dv.getUint16(en.lho + 28, true);
+        var crudo = new Uint8Array(buf, ini, en.comp);
+        if (en.metodo === 0) return new TextDecoder().decode(crudo);
+        return await new Response(new Blob([crudo]).stream()
+          .pipeThrough(new DecompressionStream('deflate-raw'))).text();
+      }
+    };
+  }
+
+  async function filasDelXlsx(buf) {
+    var zip = await abrirZip(buf);
+    var textos = [], ss = await zip.sacar('xl/sharedStrings.xml');
+    if (ss) {
+      var si = new DOMParser().parseFromString(ss, 'application/xml').getElementsByTagName('si');
+      for (var i = 0; i < si.length; i++) {
+        var ts = si[i].getElementsByTagName('t'), s = '';
+        for (var j = 0; j < ts.length; j++) s += ts[j].textContent;
+        textos.push(s);
+      }
+    }
+    var hoja = zip.nombres.filter(function (x) { return /^xl\/worksheets\/sheet\d+\.xml$/.test(x); }).sort()[0];
+    if (!hoja) throw new Error('el Excel no tiene hojas');
+    var d = new DOMParser().parseFromString(await zip.sacar(hoja), 'application/xml');
+    var rows = d.getElementsByTagName('row'), out = [];
+    for (var r = 0; r < rows.length; r++) {
+      var cs = rows[r].getElementsByTagName('c'), fila = [];
+      for (var q = 0; q < cs.length; q++) {
+        var letras = (cs[q].getAttribute('r') || '').replace(/\d+/g, ''), col = 0;
+        for (var z = 0; z < letras.length; z++) col = col * 26 + (letras.charCodeAt(z) - 64);
+        var t = cs[q].getAttribute('t'), v = cs[q].getElementsByTagName('v')[0];
+        var val = v ? v.textContent : '';
+        if (t === 's') val = textos[Number(val)] || '';
+        else if (t === 'inlineStr') { var w = cs[q].getElementsByTagName('t')[0]; val = w ? w.textContent : ''; }
+        fila[Math.max(0, col - 1)] = val;
+      }
+      out.push(fila);
+    }
+    return out;
+  }
+
+  /* La reserva no arranca en la primera fila: lleva título y una fila en blanco
+     antes de los encabezados. Por eso se busca la fila que los tiene. */
+  function resumirReserva(filas) {
+    var cab = null, iCab = -1;
+    for (var r = 0; r < Math.min(filas.length, 15); r++) {
+      var f = (filas[r] || []).map(function (x) { return String(x || '').trim().toUpperCase(); });
+      if (f.some(function (c) { return /^(PRODUCTO|ARTICULO|ARTÍCULO)$/.test(c); })) { cab = f; iCab = r; break; }
+    }
+    if (!cab) throw new Error('no encontré la fila de encabezados (PRODUCTO / CANTIDAD)');
+    /* PRODUCTO primero, y ARTICULO solo si no está: la reserva trae las dos, y
+       ARTICULO es el código corto de 7 dígitos, que NO cruza con el del stock
+       activo. Si se toma ese, ningún artículo coincide y todo sale en cero. */
+    var iP = cab.indexOf('PRODUCTO');
+    if (iP < 0) iP = cab.findIndex(function (c) { return /^(ARTICULO|ARTÍCULO)$/.test(c); });
+    var iQ = cab.findIndex(function (c) { return /^CANTIDAD/.test(c); });
+    var porArt = new Map(), total = 0, lineas = 0;
+    for (var k = iCab + 1; k < filas.length; k++) {
+      var f2 = filas[k] || [], q = num(f2[iQ]);
+      if (!(q > 0)) continue;
+      var a = String(f2[iP] || '').trim(); if (!a) continue;
+      porArt.set(a, (porArt.get(a) || 0) + q); total += q; lineas++;
+    }
+    return { tipo: 'reserva', porArt: porArt, total: total, lineas: lineas };
+  }
+
+  function infoSlot(id, html) {
+    var d = document.querySelector('[data-info="' + id + '"]');
+    if (d) d.innerHTML = html;
+  }
+
+  async function cargarArchivo(id, file) {
+    infoSlot(id, 'leyendo <b>' + esc(file.name) + '</b>…');
+    try {
+      var res;
+      if (/\.xlsx$/i.test(file.name)) res = resumirReserva(await filasDelXlsx(await file.arrayBuffer()));
+      else if (id.indexOf('reserva') >= 0) {
+        var txt = await file.text(), sep = (txt.split(/\r?\n/)[0] || '').indexOf(';') >= 0 ? ';' : ',';
+        res = resumirReserva(txt.split(/\r?\n/).map(function (x) { return x.split(sep); }));
+      } else res = leerActivo(await file.text());
+      res.nombre = file.name;
+      res.hora = horaDelNombre(file.name);
+      STOCK[id] = res;
+      var det = res.tipo === 'activo'
+        ? nf(res.totalB) + ' pares en el buffer · <b>' + nf(res.totalC) + '</b> en el Buffer C'
+        : nf(res.total) + ' pares en reserva · ' + nf(res.lineas) + ' líneas';
+      infoSlot(id, '<b>' + esc(file.name) + '</b><br>' + (res.hora ? 'foto de las ' + res.hora + ' · ' : '') + det);
+      if (id === 'now-activo' && res.hora) { S.ahora = res.hora; $('#f_ahora').value = res.hora; }
+      pintar();
+    } catch (err) {
+      STOCK[id] = null;
+      infoSlot(id, '<span style="color:var(--bad)">No se pudo leer: ' + esc(err.message) + '</span>');
+    }
+  }
+
+  /* Con las dos fotos del activo, la Limpieza de Buffer C se calcula sola:
+     de lo que había al arrancar, cuánto ya no está. Código por código, porque
+     restar los totales no sirve —durante la noche entra prepack nuevo—. */
+  function aplicarStock() {
+    var b = STOCK['now-activo'];
+    var meta = 0, av = 0;
+    Object.keys(ARRANQUE.bufferC).forEach(function (art) {
+      var x = ARRANQUE.bufferC[art];
+      meta += x;
+      if (b) { var y = b.bufferC.get(art) || 0; if (x > y) av += x - y; }
+    });
+    var base = document.getElementById('s_base');
+    if (base) base.innerHTML =
+      'Arranque del turno: <b>lo trae el servidor</b> · foto del robot de las ' + ARRANQUE.hora +
+      ' del ' + ARRANQUE.fecha + ' · <b>' + nf(meta) + '</b> pares en el Buffer C, ' +
+      Object.keys(ARRANQUE.bufferC).length + ' artículos.';
+    if (!b) return;
+    S.procs.forEach(function (p) {
+      if (p.fuente === 'bufferC') { p.meta = Math.round(meta); p.av = Math.round(av); p.u = 'pares'; }
+    });
+  }
+
+  document.addEventListener('change', function (e) {
+    var slot = e.target.getAttribute && e.target.getAttribute('data-slot');
+    if (slot && e.target.files && e.target.files[0]) cargarArchivo(slot, e.target.files[0]);
+  });
+
+  /* Se vuelven a dibujar los tres bloques. Las tablas se rehacen enteras, así
+     que el foco se devuelve al campo que se estaba escribiendo. */
+  function pintar(foco) {
+    recalcularTurno();
+    aplicarStock();
+    var h = Math.round(SPAN / 60), m = SPAN % 60;
+    $('#dur').textContent = 'dura ' + h + ' h' + (m ? ' ' + m + ' min' : '') + ' · ' + SPAN + ' minutos';
+    pintarHorarios();
+    pintarCumplimiento();
+    pintarGantt();
+    if (foco) {
+      /* El nombre de la actividad está en las DOS tablas, así que el foco se
+         busca también por tabla: si no, escribir en Cumplimiento saltaba a
+         Horarios en la primera letra. */
+      var n = document.querySelector('[data-t="' + foco.t + '"][data-k="' + foco.k + '"][data-i="' + foco.i + '"]');
+      if (n) { n.focus(); if (n.type !== 'time' && n.setSelectionRange) { try { n.setSelectionRange(foco.p, foco.p); } catch (e) {} } }
+    }
+    guardar();
+  }
+
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.id === 'f_ini' || t.id === 'f_fin' || t.id === 'f_ahora') {
+      S[t.id === 'f_ini' ? 'ini' : t.id === 'f_fin' ? 'fin' : 'ahora'] = t.value;
+      pintar(); return;
+    }
+    var k = t.getAttribute('data-k');
+    if (!k) return;
+    var i = Number(t.getAttribute('data-i'));
+    S.procs[i][k] = k === 'cuenta' ? t.checked
+      : (k === 'meta' || k === 'av') ? (t.value === '' ? 0 : Number(t.value))
+      : t.value;
+    pintar({ t: t.getAttribute('data-t'), k: k, i: i, p: (t.selectionStart == null ? 0 : t.selectionStart) });
+  });
+
+  document.addEventListener('click', function (e) {
+    var d = e.target.getAttribute && e.target.getAttribute('data-del');
+    if (d !== null && d !== undefined) { S.procs.splice(Number(d), 1); pintar(); return; }
+    if (e.target.id === 'b_lock') { S.editarPlan = !S.editarPlan; pintar(); return; }
+    if (e.target.id === 'b_add' || e.target.id === 'b_add2') {
+      S.procs.push({ n: 'Actividad nueva', u: 'unidades', meta: 0, av: 0, pi: '', pf: '', ri: '', rf: '' });
+      pintar();
+      /* El cursor queda en la tabla desde la que se apretó el botón: si no,
+         agregar desde Cumplimiento saltaba de vuelta al Gantt. */
+      var tabla = e.target.id === 'b_add2' ? 'c' : 'h';
+      var f = document.querySelector('[data-t="' + tabla + '"][data-k="n"][data-i="' + (S.procs.length - 1) + '"]');
+      if (f) { f.focus(); f.select(); }
+      return;
+    }
+
+    if (e.target.id === 'b_reset') { S = JSON.parse(JSON.stringify(BASE)); arrancar(); }
+  });
+
+  window.addEventListener('resize', function () { pintarGantt(); });
+
+  function arrancar() {
+    $('#f_ini').value = S.ini;
+    $('#f_fin').value = S.fin; $('#f_ahora').value = S.ahora;
+    pintar();
+  }
+  arrancar();
+})();
+</script>
