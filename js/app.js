@@ -1,8 +1,8 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0141';
-import * as adminService from './services_v245/adminService.js?v=29.0141';
+import { getSession, logout } from './services_v245/auth.js?v=29.0144';
+import * as adminService from './services_v245/adminService.js?v=29.0144';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -345,7 +345,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0141';
+      this.APP_VERSION = 'v29.0144';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -606,21 +606,45 @@ class App {
   }
 
   /**
+   * LA DIRECCIÓN DEL DASHBOARD SE ARMA EN UN SOLO SITIO, Y ES ESTE.
+   *
+   * La usan los dos que tienen que coincidir: la precarga de acá abajo y el import de
+   * render(). Si se escribieran por separado y una quedara distinta de la otra —aunque sea
+   * en un carácter— el navegador las trataría como dos archivos y bajaría 1,78 MB dos veces,
+   * que es peor que no precargar nada. Por eso hay una sola función: no se pueden separar.
+   *
+   * VA CON `new URL(..., import.meta.url)` Y NO CON './views/...' A SECAS. Es la trampa que
+   * rompió esto del 01-ago al 10-ago-2026 (v29.0011 a v29.0142), diez días sin funcionar:
+   *
+   *   · En un `import('./views/x.js')` el './' se resuelve contra ESTE ARCHIVO, o sea
+   *     `/js/views/x.js`. Correcto.
+   *   · En el `href` de un `<link>` el './' se resuelve contra LA PÁGINA, o sea
+   *     `/views/x.js`. Esa carpeta no existe: el navegador pedía, recibía un 404, lo anotaba
+   *     en la consola y seguía. Nadie lo veía porque la web funcionaba igual —el import de
+   *     render() sí usaba el camino bueno—, pero la precarga no adelantaba nada y entrar
+   *     seguía tardando lo mismo que antes de escribirla.
+   *
+   * `new URL()` devuelve la dirección completa y no depende de desde dónde se la mire, así
+   * que las dos apuntan al mismo archivo siempre.
+   */
+  urlDashboard() {
+    return new URL(`./views/dashboard_v28.js?v=${this.APP_VERSION}`, import.meta.url).href;
+  }
+
+  /**
    * Le pide al navegador que vaya bajando y compilando el dashboard MIENTRAS la persona
    * escribe su usuario y su contraseña.
    *
-   * Son ~1,4 MB y unas 22.000 líneas: cerca de medio segundo en bajar y otro medio en
+   * Son ~1,8 MB y unas 22.000 líneas: cerca de medio segundo en bajar y otro medio en
    * compilar. Esto no acorta ese tiempo, lo corre a un momento en el que nadie está mirando
    * la pantalla en blanco. Cuando se aprieta ENTRAR, el archivo ya está listo.
    *
    * No ejecuta nada: 'modulepreload' descarga y compila, pero el módulo recién corre cuando
-   * lo importa render(). Y la URL se arma con la MISMA constante que usa el import de abajo:
-   * si la versión no coincidiera al carácter, el navegador lo trataría como otro archivo y
-   * lo bajaría dos veces, que es peor que no precargar nada.
+   * lo importa render().
    */
   adelantarDashboard() {
     try {
-      const href = `./views/dashboard_v28.js?v=${this.APP_VERSION}`;
+      const href = this.urlDashboard();
       if (document.head.querySelector(`link[rel="modulepreload"][href="${href}"]`)) return;
       const link = document.createElement('link');
       link.rel = 'modulepreload';
@@ -635,7 +659,8 @@ class App {
     
     try {
         if (user) {
-            const { renderDashboard } = await import(`./views/dashboard_v28.js?v=${this.APP_VERSION}`);
+            // La MISMA dirección que precargó adelantarDashboard(), o se baja dos veces.
+            const { renderDashboard } = await import(this.urlDashboard());
             this.root.innerHTML = '';
             await renderDashboard(this.root, user, () => {
                 this.isRendered = false;

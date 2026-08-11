@@ -1,16 +1,16 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0141';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0144';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0141';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0141';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0141';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0141';
-import * as metasService from '../services_v245/metasService.js?v=29.0141';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0141';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0141';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0141';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0141';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0141';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0141';
+import * as adminService from '../services_v245/adminService.js?v=29.0144';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0144';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0144';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0144';
+import * as metasService from '../services_v245/metasService.js?v=29.0144';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0144';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0144';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0144';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0144';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0144';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0144';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +367,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0141';
+const VERSION = '29.0144';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1186,6 +1186,55 @@ const avisarNoTrabajada = (t) => {
 };
 
 /**
+ * LA TAREA COMO ESTÁ AHORA EN LA LISTA, NO COMO ESTABA AL ABRIR EL MODAL.
+ *
+ * EL DEFECTO QUE ESTO VIENE A CERRAR (Daniel, 10-ago-2026): "justo cuando estoy asignando y
+ * el ícono se pone amarillo, no me asigna la tarea. Pongo asignar, pongo los usuarios, y no
+ * queda". No era el servidor ni la red.
+ *
+ * El radar recarga la lista cada 20 segundos y lo hace REEMPLAZANDO `almacenajeTasksCache`
+ * por objetos nuevos traídos del servidor. Los modales, en cambio, guardan la tarea que
+ * encontraron AL ABRIRSE. Elegir dos operarios lleva más de 20 segundos, así que el radar
+ * pasa en el medio y esa referencia deja de pertenecer a la lista: queda una ficha suelta.
+ * Lo que se escriba encima no lo ve nadie —el redibujado sale de la lista, no de la ficha—,
+ * y la tarea aparece otra vez sin asignar.
+ *
+ * Por eso, antes de tocar una tarea, se vuelve a pedir por su id. Hay que llamarla al
+ * PRINCIPIO del handler, antes de escribir nada: si se llamara al final, los cambios ya
+ * estarían hechos sobre la ficha vieja y se perderían igual.
+ *
+ * Devuelve null si la tarea ya no está —la borraron desde otra PC—, y entonces hay que
+ * avisar en vez de escribir sobre algo que no existe.
+ */
+const tareaDelCache = (t) => {
+    const id = t && t.id;
+    if (!id) return null;
+    return almacenajeTasksCache.find(x => x && x.id === id) || null;
+};
+
+/** Avisa cuando la tarea se esfumó de la lista mientras el modal estaba abierto. */
+const avisarTareaDesaparecida = (t, accion) => {
+    const n = String((t && t.id) || '').split('_').pop();
+    showPremiumAlert('LA TAREA YA NO ESTÁ',
+        `No se pudo ${accion} la ${n}: desapareció de la lista mientras esta ventana estaba abierta.\n\nSeguramente la borraron o se corrió el proceso desde otra PC. Cierre esta ventana y vuelva a mirar la lista.`,
+        'error');
+};
+
+/**
+ * NO REPINTAR LA PANTALLA POR DEBAJO DE UNA VENTANA ABIERTA.
+ *
+ * El radar redibuja la lista cada 20 segundos. Si hay un modal encima —asignar, finalizar,
+ * editar—, ese redibujado no aporta nada (la ventana tapa la tabla) y sí molesta: mueve el
+ * scroll y reemplaza las tareas justo mientras alguien está trabajando sobre una.
+ *
+ * Los datos igual quedan al día en memoria; lo único que se posterga es el dibujo, y se
+ * hace solo al cerrar la ventana, que es cuando la tabla se vuelve a ver.
+ */
+const hayModalDeTareaAbierto = () => !!document.querySelector(
+    '#assign_task_modal, #partial_avance_modal, #edit_task_modal, #wmsAuditModal, #modal_fecha_operativa'
+);
+
+/**
  * Semana laboral (lunes a sábado) a la que pertenece la fecha lógica. El domingo no se
  * trabaja, así que se considera parte de la semana que acaba de cerrar: si abres la web
  * un domingo, ves el lunes-sábado anterior, no una semana vacía que recién empieza.
@@ -1961,6 +2010,21 @@ setInterval(async () => {
             const hayAlgoNuevo = versionArea
                 ? versionArea !== __versionTareasPintada
                 : JSON.stringify(synced) !== JSON.stringify(almacenajeTasksCache);
+            // CON UNA VENTANA ABIERTA, EL RADAR NO TOCA NADA.
+            //
+            // Acá se perdían las asignaciones (Daniel, 10-ago-2026). Abajo se reemplaza
+            // `almacenajeTasksCache` por objetos nuevos, y el modal que esté abierto quedó
+            // apuntando a los viejos: lo que el asistente escriba va a una ficha suelta que
+            // ya no está en la lista, así que no se ve ni se guarda con el resto.
+            //
+            // No se marca `__versionTareasPintada`, a propósito: el área sigue contando como
+            // no pintada y la vuelta siguiente —20 segundos— la aplica. Solo se posterga,
+            // nunca se pierde. Y mientras tanto no hay nada que ver: la ventana tapa la tabla.
+            if (hayModalDeTareaAbierto()) {
+                console.log('📡 [RADAR v24] Hay una ventana de tarea abierta: no se toca la lista hasta que se cierre.');
+                return;
+            }
+
             if (synced && hayAlgoNuevo) {
                 __versionTareasPintada = versionArea;
                 console.log("✨ [RADAR v24] Datos nuevos detectados. Aplicando Fusión Híbrida.");
@@ -4015,7 +4079,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0141');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0144');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14346,7 +14410,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0141 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0144 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23271,7 +23335,12 @@ window.showCellModal = function(htmlContent) {
                    [1000, 'Mayores a 1.000 pares']];
     const MES_LARGO = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio',
                        'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-    const nombreMes = (m) => `${MES_LARGO[parseInt(m.slice(5, 7), 10) - 1] || m} ${m.slice(0, 4)}`;
+    // EL AÑO SOLO SE ESCRIBE SI LA VENTANA CRUZA UNO. Seis meses casi siempre caen en el
+    // mismo año, y repetir "2026" seis veces solo ocupa lugar; pero en enero la ventana
+    // llega a agosto del año anterior y ahí sin el año no se sabe cuál es cuál.
+    const variosAnios = new Set(meses.map(m => m.slice(0, 4))).size > 1;
+    const nombreMes = (m) => `${MES_LARGO[parseInt(m.slice(5, 7), 10) - 1] || m}`
+                             + (variosAnios ? ` ${m.slice(2, 4)}` : '');
 
     const combo = (campo, opciones, valor) => `
       <select onchange="window.__kpiFiltro('${campo}', this.value)"
@@ -23280,11 +23349,57 @@ window.showCellModal = function(htmlContent) {
         ${opciones.map(([v, t]) => `<option value="${v}"${String(valor || '') === String(v) ? ' selected' : ''}>${t}</option>`).join('')}
       </select>`;
 
-    // El estado guarda listas —marcas y meses— aunque acá se elija de a uno: así el
-    // filtrado es el mismo para todos y volver a varios a la vez es cambiar solo esto.
-    const marcaSel = (filtro.marcas || [])[0] || '';
-    const mesSel = (filtro.meses || [])[0] || '';
-    const hayFiltro = marcaSel || mesSel || filtro.minimo;
+    // MES Y MARCA ADMITEN VARIOS A LA VEZ, PERO LA CAJA ES LA MISMA. Un <select> del
+    // navegador no deja marcar dos cosas sin cambiar de aspecto —el multiple se dibuja
+    // como una lista abierta, que es otro control—, así que la caja cerrada se copia
+    // exacta del combo de al lado, con su mismo fondo, borde, radio, relleno y letra, y
+    // lo único que se agrega es lo que aparece al abrirla.
+    const mesesSel = filtro.meses || [];
+    const marcasSel = filtro.marcas || [];
+    // Las marcas vienen del Maestro y hoy ninguna trae comillas, pero el nombre viaja
+    // dentro de un onclick: si mañana aparece una con apóstrofo, sin esto rompe la fila.
+    const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const CAJA = 'background:#101a2c; color:var(--text-main); border:1px solid var(--border);'
+               + ' border-radius:8px; padding:0.32rem 0.6rem; font-size:0.75rem;'
+               + ' font-weight:700; cursor:pointer;';
+
+    /** El texto de la caja cerrada: con nada marcado dice lo mismo que decía el combo de
+        antes; con uno, su nombre; con varios, cuántos —los nombres completos no entran
+        y cortarlos se lee peor que el número. */
+    const resumenSel = (sel, todos, uno, varios) =>
+      !sel.length ? todos : sel.length === 1 ? uno(sel[0]) : `${sel.length} ${varios}`;
+
+    /** El combo de a varios. `abierto` viaja en el estado del módulo y no en el DOM
+        porque cada clic redibuja la vista entera: guardándolo en el DOM, el menú se
+        cerraría al marcar la primera opción y habría que abrirlo de nuevo para cada una. */
+    const comboVarios = (campo, opciones, sel, texto) => `
+      <div style="position:relative;">
+        <button onclick="window.__kpiMenu('${campo}')" style="${CAJA} display:flex; align-items:center; gap:0.4rem;">
+          <span>${texto}</span>
+          <span style="font-size:0.6rem; opacity:0.75;">${kpiMenuAbierto === campo ? '▲' : '▼'}</span>
+        </button>
+        ${kpiMenuAbierto !== campo ? '' : `
+        <div onclick="window.__kpiMenu('')" title="cerrar"
+             style="position:fixed; top:0; left:0; right:0; bottom:0; z-index:39;"></div>
+        <div style="position:absolute; z-index:40; top:calc(100% + 4px); left:0; min-width:100%;
+                    background:#101a2c; border:1px solid var(--border); border-radius:8px;
+                    padding:0.25rem; max-height:15rem; overflow:auto; box-shadow:0 8px 22px rgba(0,0,0,0.5);">
+          ${[['', sel.length ? 'Quitar todos' : 'Todos']].concat(opciones).map(([v, t]) => {
+            const marcado = v ? sel.indexOf(v) >= 0 : !sel.length;
+            return `<div onclick="window.__kpiFiltro('${campo}', '${esc(v)}')"
+                         style="display:flex; align-items:center; gap:0.45rem; padding:0.3rem 0.5rem;
+                                border-radius:6px; font-size:0.73rem; font-weight:700; white-space:nowrap;
+                                cursor:pointer; color:${marcado ? 'var(--text-main)' : 'var(--text-muted)'};
+                                background:${marcado && v ? 'rgba(217,89,38,0.14)' : 'transparent'};"
+                         onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+                         onmouseout="this.style.background='${marcado && v ? 'rgba(217,89,38,0.14)' : 'transparent'}'">
+                      <span style="width:0.85rem; color:${NARANJA};">${marcado ? '✓' : ''}</span>${t}
+                    </div>`;
+          }).join('')}
+        </div>`}
+      </div>`;
+
+    const hayFiltro = marcasSel.length || mesesSel.length || filtro.minimo;
 
     const aviso = !R ? 'Con estos filtros no queda ningún artículo.'
       : !R.grupoFijo ? `Quedan ${R.articulos} artículos, pero ninguno cumplió todavía las `
@@ -23296,12 +23411,21 @@ window.showCellModal = function(htmlContent) {
                            + `hasta la semana ${R.semanasFijas} y no hasta la ${P.semanasFijas}.`
       : '';
 
+    // EL DESENFOQUE DEL PANEL RECORTA EL MENÚ. `.glass-panel` trae backdrop-filter, y un
+    // elemento con backdrop-filter recorta a los hijos que se salen de su caja aunque no
+    // tenga overflow:hidden. El desplegable se abre hacia abajo, se pasa del panel —que
+    // es de un solo renglón— y quedaba cortado en la primera opción: parecía una lista
+    // vacía. Se le quita el desenfoque nada más mientras hay un menú abierto; el fondo
+    // sigue siendo el mismo y la diferencia no se nota.
+    const sinRecorte = kpiMenuAbierto ? ' backdrop-filter:none; -webkit-backdrop-filter:none;' : '';
     return `
-    <div class="glass-panel" style="padding:0.85rem 1rem;">
+    <div class="glass-panel" style="padding:0.85rem 1rem;${sinRecorte}">
       <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
         <span style="font-size:0.58rem; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-muted);">Filtros</span>
-        ${combo('mes', [['', 'Todos los meses'], ...meses.map(m => [m, nombreMes(m)])], mesSel)}
-        ${combo('marca', [['', 'Todas las marcas'], ...marcas.map(m => [m, m])], marcaSel)}
+        ${comboVarios('mes', meses.map(m => [m, nombreMes(m)]), mesesSel,
+                      resumenSel(mesesSel, 'Todos los meses', nombreMes, 'meses'))}
+        ${comboVarios('marca', marcas.map(m => [m, m]), marcasSel,
+                      resumenSel(marcasSel, 'Todas las marcas', m => m, 'marcas'))}
         ${combo('minimo', TOPES, filtro.minimo || 0)}
         ${hayFiltro ? `
           <button onclick="window.__kpiFiltro('limpiar')" class="btn"
@@ -23817,6 +23941,10 @@ window.showCellModal = function(htmlContent) {
   // Lo que el usuario eligió en la barra de filtros. Vive fuera del render para que
   // sobreviva a redibujar: si no, al filtrar volvería solo a "todas las marcas".
   let kpiFiltro = { marcas: [], meses: [], minimo: 0 };
+  // Cuál de los dos desplegables está abierto ('mes', 'marca' o nada). Vive acá por lo
+  // mismo que el filtro: cada clic redibuja la vista entera, y guardándolo en el DOM el
+  // menú se cerraría al marcar la primera opción. Se pueden marcar varias seguidas.
+  let kpiMenuAbierto = '';
 
   /**
    * EVOLUCIÓN DEL ARTÍCULO. Lee el estudio que dejó el robot y lo dibuja.
@@ -23864,13 +23992,26 @@ window.showCellModal = function(htmlContent) {
   /** Cambia un filtro y redibuja. El Pareto no depende de esto, pero se rehace igual:
       partirlo en dos redibujados por ahorrar unos milisegundos no vale el enredo. */
   window.__kpiFiltro = (que, valor) => {
-    if (que === 'limpiar') kpiFiltro = { marcas: [], meses: [], minimo: 0 };
-    else if (que === 'minimo') kpiFiltro.minimo = Number(valor) || 0;
+    if (que === 'limpiar') { kpiFiltro = { marcas: [], meses: [], minimo: 0 }; kpiMenuAbierto = ''; }
+    else if (que === 'minimo') { kpiFiltro.minimo = Number(valor) || 0; kpiMenuAbierto = ''; }
     else if (que === 'marca' || que === 'mes') {
-      // Se guardan como lista aunque la barra elija de a uno: el filtrado ya trabaja
-      // con listas, así que permitir varias a la vez sería cambiar solo la barra.
-      kpiFiltro[que === 'marca' ? 'marcas' : 'meses'] = valor ? [valor] : [];
+      // SE MARCAN Y SE DESMARCAN, de a varias. El filtrado ya trabajaba con listas desde
+      // el principio; lo único que elegía de a uno era la barra, y eso es lo que cambió
+      // el 07-ago-2026. Sin valor se vacía la lista, que es el "Todos".
+      const campo = que === 'marca' ? 'marcas' : 'meses';
+      const lista = kpiFiltro[campo] || [];
+      if (!valor) kpiFiltro[campo] = [];
+      else if (lista.indexOf(valor) >= 0) kpiFiltro[campo] = lista.filter(v => v !== valor);
+      else kpiFiltro[campo] = lista.concat([valor]);
     }
+    const c = document.querySelector('[data-vista="kpi-picking"]');
+    if (c) renderKpiPicking(c);
+  };
+
+  /** Abre y cierra un desplegable de la barra. Solo uno a la vez: dos menús abiertos se
+      superponen y no se sabe cuál se está tocando. */
+  window.__kpiMenu = (campo) => {
+    kpiMenuAbierto = (kpiMenuAbierto === campo) ? '' : campo;
     const c = document.querySelector('[data-vista="kpi-picking"]');
     if (c) renderKpiPicking(c);
   };
@@ -25622,31 +25763,69 @@ window.showCellModal = function(htmlContent) {
     };
 
     /**
-     * LAS TAREAS QUE SE VEN: las del rango de fechas MÁS todas las que sigan VIVAS,
-     * sean del día que sean y estén Creadas o Asignadas.
+     * LAS TAREAS QUE SE VEN: SOLO LAS DEL RANGO. El filtro manda.
      *
-     * El asistente asigna y cierra las tareas desde esta pantalla. Desde que el papel
-     * saca todas las Creadas juntas —v29.0112—, si acá solo salieran las del rango
-     * imprimiría 53 y en pantalla vería 9: las otras 44 quedarían en la calle, con su
-     * hoja, sin forma de asignarlas ni cerrarlas porque no aparecen en ningún lado.
+     * Regla de Daniel, 10-ago-2026: "si dice 10, debes filtrar 10". Vale igual para RESUMEN
+     * y para DETALLE, que beben los dos de esta misma lista.
      *
-     * VIVAS, NO SOLO CREADAS. Hasta v29.0115 acá decía `t.status === 'Creada'`, y eso
-     * hacía desaparecer la tarea EN EL ACTO DE ASIGNARLA: al pasar a Asignado dejaba de
-     * cumplir la condición y se caía de la lista. Lo vio Daniel el 06-ago-2026 mientras
-     * repartía las hojas del turno —"en una laptop sí agarra el asignado, en la otra no
-     * se refleja"—: no era la laptop, era el filtro de fechas de cada una. En la que
-     * miraba el día anterior la tarea seguía en pantalla; en la que miraba hoy, no.
-     * El dato siempre se guardó bien en el servidor; lo que fallaba era la vista.
+     * LA FECHA QUE MANDA ES LA DE CREACIÓN, la de la ola que parió la tarea, y NO SE MUEVE
+     * cuando alguien la asigna o la cierra: al asignar solo se graban usuario y hora de
+     * inicio, al finalizar el estado y la de término. Una tarea del 10 se ve en el 10 en sus
+     * tres estados. La contracara, decidida a sabiendas: una tarea del 8 que se trabaja el 10
+     * se queda en el 8. Quien quiera medir por el día trabajado tiene KPI TAREAS, que cuenta
+     * por la jornada (`diaOperativoDeTarea`) justamente para eso.
      *
-     * Y si desaparece al asignarla, tampoco se puede cerrar después: la hoja se queda en
-     * la calle sin forma de finalizarla, que es justo lo que este bloque venía a evitar.
+     * HASTA v29.0141 ACÁ SE COLABAN LAS VIVAS DE CUALQUIER FECHA, y la pantalla contradecía a
+     * su propio filtro: con el rango puesto en 08/08 se veían las 44 Creadas del 10 y parecía
+     * que el cierre por corrida no había funcionado. Funcionaba —las 11 del 8 pasaron a NO
+     * TRABAJADA a las 19:22 de ese día—; lo que engañaba era la lista.
      *
-     * No se acumulan: a las 48 horas caducan solas, así que son las de los dos últimos
-     * días. Y cada una trae su fecha en la primera columna, así que se ve de dónde viene.
+     * PERO NO PUEDEN PERDERSE DE VISTA. El asistente asigna y cierra desde esta pantalla: una
+     * viva que se cae de la lista se queda en la calle con su hoja y sin forma de cerrarla.
+     * Ese fue el defecto de la v29.0116 y no se repite. Por eso no desaparecen sin más: van a
+     * `fueraDelRango`, y el aviso de arriba de la tabla lleva hasta ellas con un clic.
+     *
+     * VIVAS, NO SOLO CREADAS: una recién asignada también tiene que poder encontrarse.
      */
     const enRango = (t) => t.fecha >= window.__almacenajeStartDate && t.fecha <= window.__almacenajeEndDate;
-    const pendienteDeOtroDia = (t) => !enRango(t) && esTareaViva(t);
-    const visibles = (tasks || []).filter(t => t && (enRango(t) || pendienteDeOtroDia(t)));
+    const visibles = (tasks || []).filter(t => t && enRango(t));
+    // No entran en la tabla —el filtro manda—, solo en el aviso que las va a buscar.
+    const fueraDelRango = (tasks || []).filter(t => t && !enRango(t) && esTareaViva(t));
+
+    /**
+     * EL AVISO DE LO QUE QUEDÓ FUERA DEL FILTRO.
+     *
+     * Reemplaza al cartel "+N de días anteriores" que se quitó el 07-ago-2026. Aquel contaba
+     * tareas que SÍ estaban en la lista; este cuenta las que NO están, que es lo que hace
+     * falta ahora que el filtro manda de verdad.
+     *
+     * El botón AMPLÍA el rango, no lo reemplaza: si se mueve, las que se estaban mirando
+     * desaparecen y sale el aviso al revés, y se va y se viene sin llegar nunca a verlas
+     * todas juntas. Y como amplía, las fechas de arriba muestran el rango nuevo: lo que se ve
+     * sigue siendo exactamente lo que dice el filtro.
+     */
+    const avisoFueraDeRango = (() => {
+        if (!fueraDelRango.length) return '';
+        const dmy = (f) => String(f).split('-').reverse().join('/');
+        const fechas = [...new Set(fueraDelRango.map(t => t.fecha))].sort();
+        const una = fueraDelRango.length === 1;
+        const detalle = fechas
+            .map(f => `<b style="color:#fbbf24;">${fueraDelRango.filter(t => t.fecha === f).length}</b> del ${dmy(f)}`)
+            .join(' · ');
+        const asignadas = fueraDelRango.filter(t => t.status === 'Asignado').length;
+        // Se amplía a la unión del rango actual con el de las pendientes.
+        const nDesde = window.__almacenajeStartDate < fechas[0] ? window.__almacenajeStartDate : fechas[0];
+        const ultima = fechas[fechas.length - 1];
+        const nHasta = window.__almacenajeEndDate > ultima ? window.__almacenajeEndDate : ultima;
+        return `
+            <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.35); border-radius:10px; padding:10px 14px; margin-bottom:12px; font-size:0.78rem;">
+                <span style="font-size:1rem;">⚠️</span>
+                <div style="flex:1; min-width:260px; line-height:1.6; color:rgba(255,255,255,0.75);">
+                    ${una ? 'Hay 1 tarea pendiente' : 'Hay tareas pendientes'} <b style="color:#fbbf24;">fuera de este rango</b>: ${detalle}${asignadas ? ` · <b style="color:#fbbf24;">${asignadas} ya está${asignadas > 1 ? 'n' : ''} en manos de alguien</b>` : ''}. No se muestra${una ? '' : 'n'} acá porque el filtro dice del ${dmy(window.__almacenajeStartDate)} al ${dmy(window.__almacenajeEndDate)}.
+                </div>
+                <button onclick="window.setAlmacenajeDateRange('${nDesde}','${nHasta}')" style="background:rgba(245,158,11,0.16); color:#fbbf24; border:1px solid rgba(245,158,11,0.45); padding:6px 14px; font-size:0.7rem; font-weight:800; border-radius:8px; cursor:pointer; white-space:nowrap; font-family:'Inter', sans-serif; letter-spacing:0.5px;">${una ? 'VER ESA TAREA' : `VER ESAS ${fueraDelRango.length}`}</button>
+            </div>`;
+    })();
 
     // Pre-calcular listado plano de ítems detallados para paginación de 25 en 25
     const detailedItems = [];
@@ -25808,15 +25987,17 @@ window.showCellModal = function(htmlContent) {
                 </div>
                 ` : ''}
 
-                <!-- EL AVISO DE "+N DE DÍAS ANTERIORES" SE QUITÓ EL 07-ago-2026.
-                     Tenía sentido mientras las tareas vivían 48 horas y se arrastraban: avisaba
-                     que la lista mostraba más de lo que decía el filtro. Desde que al procesar
-                     todo lo no trabajado se cierra, no quedan Creadas de días anteriores y el
-                     cartel solo hacía ruido. Lo pidió Daniel al verlo.
+                <!-- EL AVISO VOLVIÓ EL 10-ago-2026, y ahora cuenta lo contrario.
+                     El viejo "+N de días anteriores" avisaba que la lista traía MÁS de lo que
+                     decía el filtro; se quitó el 07-ago por ruidoso. Desde que el filtro manda,
+                     el que hace falta es el que avisa lo que NO está: va pegado a la tabla
+                     (avisoFueraDeRango), no acá arriba. Sin comillas invertidas en este
+                     comentario: está dentro de un template literal y lo parten en dos.
 
-                     LO QUE SÍ SE MANTIENE es que esas tareas se VEAN: una Asignada sobrevive al
-                     proceso -alguien la está trabajando- y si se cayera de la lista no habría
-                     forma de cerrarla. Eso fue el defecto de la v29.0116; no se vuelve atrás. -->
+                     LO QUE SÍ SE MANTIENE es que esas tareas se puedan ALCANZAR: una Asignada
+                     sobrevive al proceso -alguien la está trabajando- y si no hubiera forma de
+                     llegar a ella no se podría cerrar. Ese fue el defecto de la v29.0116; el
+                     botón del aviso es lo que ocupa su lugar. -->
 
                 <!-- RANGO DE FECHAS DE : HASTA -->
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -26804,6 +26985,7 @@ window.showCellModal = function(htmlContent) {
         </div>
             ` : `
 
+                ${avisoFueraDeRango}
 
                 <div id="almacenajeTablaScroll" class="glass-panel" style="padding:0; overflow:auto; flex:1; border:1px solid rgba(79, 70, 229, 0.3); background:rgba(15, 23, 42, 0.4); border-radius:12px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);">
                     <table style="width:100%; border-collapse:collapse; font-size:0.9rem; color:#d1d5db;">
@@ -27785,12 +27967,39 @@ window.showCellModal = function(htmlContent) {
 
         const cleanId = id.includes('_') ? id.split('_')[1] : id;
         if (await showPremiumConfirm("REINICIAR TAREA", `¿Reiniciar la tarea ${cleanId}? Se borrarán los usuarios y horas asignadas.`, "warning")) {
-            task.u1 = null; task.u2 = null; task.inicio = null; task.termino = null; task.status = 'Creada';
+            // Sobre la tarea viva: entre que se abre el aviso y se contesta, el radar pudo
+            // haber renovado la lista. Ver tareaDelCache.
+            const tarea = tareaDelCache(task);
+            if (!tarea) { avisarTareaDesaparecida(task, 'reiniciar'); return; }
+
+            const previoReset = { u1: tarea.u1, u2: tarea.u2, inicio: tarea.inicio,
+                                  termino: tarea.termino, status: tarea.status,
+                                  audited: tarea.audited, auditoria: tarea.auditoria };
+
+            tarea.u1 = null; tarea.u2 = null; tarea.inicio = null; tarea.termino = null; tarea.status = 'Creada';
             // La auditoría vieja ya no aplica: la tarea se va a volver a hacer
-            task.audited = false;
-            delete task.auditoria;
-            task._dirty = true;
-            await saveAlmacenajeTasks(task);
+            tarea.audited = false;
+            delete tarea.auditoria;
+            tarea._dirty = true;
+
+            // Se mira si llegó: antes se esperaba el guardado pero se ignoraba el resultado,
+            // así que un fallo dejaba la tarea reiniciada solo en esta pantalla.
+            const llegoReset = await saveAlmacenajeTasks(tarea);
+
+            if (!llegoReset) {
+                tarea.u1 = previoReset.u1;
+                tarea.u2 = previoReset.u2;
+                tarea.inicio = previoReset.inicio;
+                tarea.termino = previoReset.termino;
+                tarea.status = previoReset.status;
+                tarea.audited = previoReset.audited;
+                if (previoReset.auditoria !== undefined) tarea.auditoria = previoReset.auditoria;
+                showPremiumAlert('NO SE PUDO REINICIAR',
+                    `El servidor no confirmó el reinicio de la ${cleanId}.\n\nRevise la conexión y vuelva a intentar. La tarea quedó como estaba.`,
+                    'error');
+                return;
+            }
+
             renderAlmacenajeTareas(container);
         }
     };
@@ -27831,15 +28040,21 @@ window.showCellModal = function(htmlContent) {
         if (bufferItems.length === 0) {
             // Si no hay items CDBUFFER, finalizar directamente. Se espera igual que en el
             // parcial: si el servidor no confirma, la tarea NO puede quedar cerrada solo acá.
-            t.status = 'Finalizado';
-            t.termino = selloHoraLocal();
-            t._dirty = true;
-            const llego = await saveAlmacenajeTasks(t);
+            // Y se escribe sobre la tarea viva, no sobre la que se tomó al abrir el modal:
+            // ver tareaDelCache.
+            const tarea = tareaDelCache(t);
+            if (!tarea) { avisarTareaDesaparecida(t, 'finalizar'); return; }
+
+            const previoFin = { status: tarea.status, termino: tarea.termino };
+            tarea.status = 'Finalizado';
+            tarea.termino = selloHoraLocal();
+            tarea._dirty = true;
+            const llego = await saveAlmacenajeTasks(tarea);
             if (!llego) {
-                t.status = 'Asignado';
-                t.termino = '';
+                tarea.status = previoFin.status || 'Asignado';
+                tarea.termino = previoFin.termino || '';
                 showPremiumAlert('NO SE PUDO FINALIZAR',
-                    `El servidor no confirmó el cierre de la ${String(t.id).split('_').pop()}. Revise la conexión y vuelva a intentar.`,
+                    `El servidor no confirmó el cierre de la ${String(tarea.id).split('_').pop()}. Revise la conexión y vuelva a intentar.`,
                     'error');
                 return;
             }
@@ -27877,6 +28092,8 @@ window.showCellModal = function(htmlContent) {
 
         // Crear modal de avances parciales consolidado
         const pModal = document.createElement('div');
+        // Con id, para que el radar sepa que hay una ventana abierta y no repinte por debajo.
+        pModal.id = 'partial_avance_modal';
         pModal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1001; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px);";
         
         let rowsHtml = consolidatedList.map((g, index) => {
@@ -27973,20 +28190,29 @@ window.showCellModal = function(htmlContent) {
             const rotulo = btn ? btn.innerText : '';
             if (btn) { btn.disabled = true; btn.innerText = 'GUARDANDO...'; }
 
-            t.status = 'Finalizado';
-            t.termino = selloHoraLocal();
-            t._dirty = true;
+            // SOBRE LA TAREA VIVA. Acá los avances se acaban de escribir dentro de `t.items`,
+            // que son los ítems de la tarea que se tomó al abrir el modal. Si el radar renovó
+            // la lista mientras el asistente contaba los pares, esos ítems ya no son los de la
+            // lista: por eso se traspasan a la tarea viva antes de guardar. El avance que
+            // acaba de declarar la persona manda sobre lo que hubiera bajado del servidor.
+            const tarea = tareaDelCache(t) || t;
+            if (tarea !== t) tarea.items = t.items;
 
-            const llego = await saveAlmacenajeTasks(t);
+            const previoParcial = { status: tarea.status, termino: tarea.termino };
+            tarea.status = 'Finalizado';
+            tarea.termino = selloHoraLocal();
+            tarea._dirty = true;
+
+            const llego = await saveAlmacenajeTasks(tarea);
 
             if (!llego) {
                 // Se deshace lo del estado para que la tarea no quede "finalizada" solo en esta
                 // pantalla. El avance escrito se conserva: es trabajo real y se reintenta solo.
-                t.status = 'Asignado';
-                t.termino = '';
+                tarea.status = previoParcial.status || 'Asignado';
+                tarea.termino = previoParcial.termino || '';
                 if (btn) { btn.disabled = false; btn.innerText = rotulo || 'CONFIRMAR'; }
                 showPremiumAlert('NO SE PUDO FINALIZAR',
-                    `El avance quedó guardado en esta PC, pero el servidor no confirmó el cierre de la ${String(t.id).split('_').pop()}.\n\nRevise la conexión y vuelva a darle a CONFIRMAR. La tarea sigue Asignada hasta que llegue.`,
+                    `El avance quedó guardado en esta PC, pero el servidor no confirmó el cierre de la ${String(tarea.id).split('_').pop()}.\n\nRevise la conexión y vuelva a darle a CONFIRMAR. La tarea sigue Asignada hasta que llegue.`,
                     'error');
                 return;
             }
@@ -27996,7 +28222,7 @@ window.showCellModal = function(htmlContent) {
                 document.body.removeChild(assignModal);
             }
             renderAlmacenajeTareas(container);
-            showPremiumAlert("TAREA FINALIZADA", `La tarea ${t.id} ha sido finalizada con los avances indicados.`, "success");
+            showPremiumAlert("TAREA FINALIZADA", `La tarea ${tarea.id} ha sido finalizada con los avances indicados.`, "success");
         };
     };
 
@@ -28059,7 +28285,7 @@ window.showCellModal = function(htmlContent) {
         if (t.u1) document.getElementById('m_u1').value = t.u1;
         if (t.u2) document.getElementById('m_u2').value = t.u2;
 
-        document.getElementById('m_save').onclick = () => {
+        document.getElementById('m_save').onclick = async () => {
             const u1 = document.getElementById('m_u1').value;
             const u2 = document.getElementById('m_u2').value;
             if (!u1 || !u2 || u2 === '---') {
@@ -28096,12 +28322,47 @@ window.showCellModal = function(htmlContent) {
                 }
             }
 
-            t.u1 = u1;
-            t.u2 = u2;
-            t.status = 'Asignado';
-            if (!t.inicio) t.inicio = selloHoraLocal();
-            t._dirty = true;
-            saveAlmacenajeTasks(t); 
+            // ASIGNAR, PERO SOBRE LA TAREA VIVA Y ESPERANDO AL SERVIDOR.
+            //
+            // Antes se escribía sobre la `t` capturada al abrir el modal y se llamaba a
+            // `saveAlmacenajeTasks(t)` sin esperarla: el modal se cerraba y la pantalla se
+            // redibujaba antes de saber si había llegado. Si el radar había renovado la lista
+            // mientras se elegían los operarios —cada 20 segundos—, esa `t` ya era una ficha
+            // suelta y la asignación no aparecía por ningún lado. Es lo que Daniel veía el
+            // 10-ago-2026: "pongo asignar, pongo los usuarios, y no me asigna".
+            //
+            // Mismo trato que Finalizar desde la v29.0133: si no llegó, el modal NO se cierra
+            // y se dice qué pasó.
+            const tarea = tareaDelCache(t);
+            if (!tarea) { avisarTareaDesaparecida(t, 'asignar'); return; }
+
+            const btnAsignar = document.getElementById('m_save');
+            const rotuloAsignar = btnAsignar ? btnAsignar.innerText : '';
+            if (btnAsignar) { btnAsignar.disabled = true; btnAsignar.innerText = 'GUARDANDO...'; }
+
+            // Lo que había antes, para poder volver atrás si el servidor no confirma.
+            const previo = { u1: tarea.u1, u2: tarea.u2, status: tarea.status, inicio: tarea.inicio };
+
+            tarea.u1 = u1;
+            tarea.u2 = u2;
+            tarea.status = 'Asignado';
+            if (!tarea.inicio) tarea.inicio = selloHoraLocal();
+            tarea._dirty = true;
+
+            const llegoAsignacion = await saveAlmacenajeTasks(tarea);
+
+            if (!llegoAsignacion) {
+                tarea.u1 = previo.u1;
+                tarea.u2 = previo.u2;
+                tarea.status = previo.status;
+                tarea.inicio = previo.inicio;
+                if (btnAsignar) { btnAsignar.disabled = false; btnAsignar.innerText = rotuloAsignar || 'ASIGNAR E INICIAR'; }
+                showPremiumAlert('NO SE PUDO ASIGNAR',
+                    `El servidor no confirmó la asignación de la ${String(tarea.id).split('_').pop()}.\n\nRevise la conexión y vuelva a darle a ASIGNAR. La tarea sigue sin asignar hasta que llegue.`,
+                    'error');
+                return;
+            }
+
             if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
             renderAlmacenajeTareas(container);
         };
@@ -28237,8 +28498,10 @@ window.showCellModal = function(htmlContent) {
         }
 
         const modal = document.createElement('div');
+        // Con id, para que el radar sepa que hay una ventana abierta y no repinte por debajo.
+        modal.id = 'edit_task_modal';
         modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:100000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
-        
+
         // Helper para formatear ISO a input time (HH:mm)
         const toTimeInput = (iso) => iso ? new Date(iso).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}) : '';
         
@@ -28292,7 +28555,7 @@ window.showCellModal = function(htmlContent) {
         `;
         document.body.appendChild(modal);
 
-        modal.querySelector('#save_times').onclick = () => {
+        modal.querySelector('#save_times').onclick = async () => {
             const u1 = modal.querySelector('#edit_u1').value;
             const u2 = modal.querySelector('#edit_u2').value;
             const newStart = modal.querySelector('#edit_start').value;
@@ -28326,18 +28589,27 @@ window.showCellModal = function(htmlContent) {
             // Si la tarea YA tenía horas, se respeta la jornada que tenía: corregir un typo de
             // una tarea vieja no puede mudarle el trabajo a hoy. Es la JORNADA, no el día del
             // calendario: ver jornadaYaRegistrada.
-            const jornadaBase = jornadaYaRegistrada(task) || getLogicalDate();
+            // Sobre la tarea VIVA, no sobre la que se encontró al abrir esta ventana: el radar
+            // pudo haber renovado la lista mientras se escribían las horas. Ver tareaDelCache.
+            const tarea = tareaDelCache(task);
+            if (!tarea) { avisarTareaDesaparecida(task, 'editar'); return; }
 
-            task.u1 = u1;
-            task.u2 = u2 || '';
+            const jornadaBase = jornadaYaRegistrada(tarea) || getLogicalDate();
+
+            // Lo que había antes, para volver atrás si el servidor no confirma.
+            const previoEdit = { u1: tarea.u1, u2: tarea.u2, inicio: tarea.inicio,
+                                 termino: tarea.termino, status: tarea.status };
+
+            tarea.u1 = u1;
+            tarea.u2 = u2 || '';
 
             // El día del calendario lo decide la hora escrita, no el reloj de quien la escribe.
             const diaInicio = newStart ? diaDelSello(jornadaBase, newStart) : null;
 
             if (newStart) {
-                task.inicio = `${diaInicio}T${newStart}:00`;
+                tarea.inicio = `${diaInicio}T${newStart}:00`;
             } else {
-                task.inicio = null;
+                tarea.inicio = null;
             }
 
             if (newEnd) {
@@ -28345,22 +28617,44 @@ window.showCellModal = function(htmlContent) {
                 // Sin esto el turno noche quedaba con duraciones negativas: la Tarea49 del
                 // 05-ago dice 20:45 -> 01:45, que son 5 horas y el sistema leía -19.
                 // Se cuelga del día del INICIO ya corregido, para que los dos sellos se muevan juntos.
-                task.termino = `${newEnd <= newStart ? sumarUnDia(diaInicio) : diaInicio}T${newEnd}:00`;
+                tarea.termino = `${newEnd <= newStart ? sumarUnDia(diaInicio) : diaInicio}T${newEnd}:00`;
             } else {
-                task.termino = null;
-            }
-            
-            // Recalcular Status
-            if (task.inicio && task.termino) {
-                task.status = 'Finalizado';
-            } else if (task.inicio) {
-                task.status = 'Asignado';
-            } else {
-                task.status = 'Creada';
+                tarea.termino = null;
             }
 
-            task._dirty = true;
-            saveAlmacenajeTasks(task).catch(e => console.error("Save error:", e));
+            // Recalcular Status
+            if (tarea.inicio && tarea.termino) {
+                tarea.status = 'Finalizado';
+            } else if (tarea.inicio) {
+                tarea.status = 'Asignado';
+            } else {
+                tarea.status = 'Creada';
+            }
+
+            tarea._dirty = true;
+
+            // Se espera al servidor, como en asignar y finalizar. Antes salía un `.catch` que
+            // solo escribía en la consola: el modal se cerraba igual y la corrección parecía
+            // guardada aunque no hubiera llegado a ninguna parte.
+            const btnEdit = modal.querySelector('#save_times');
+            const rotuloEdit = btnEdit ? btnEdit.innerText : '';
+            if (btnEdit) { btnEdit.disabled = true; btnEdit.innerText = 'GUARDANDO...'; }
+
+            const llegoEdicion = await saveAlmacenajeTasks(tarea);
+
+            if (!llegoEdicion) {
+                tarea.u1 = previoEdit.u1;
+                tarea.u2 = previoEdit.u2;
+                tarea.inicio = previoEdit.inicio;
+                tarea.termino = previoEdit.termino;
+                tarea.status = previoEdit.status;
+                if (btnEdit) { btnEdit.disabled = false; btnEdit.innerText = rotuloEdit || 'GUARDAR'; }
+                showPremiumAlert('NO SE PUDO GUARDAR',
+                    `El servidor no confirmó los cambios de la ${String(tarea.id).split('_').pop()}.\n\nRevise la conexión y vuelva a intentar. La tarea quedó como estaba.`,
+                    'error');
+                return;
+            }
+
             if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
             renderAlmacenajeTareas(container);
         };
