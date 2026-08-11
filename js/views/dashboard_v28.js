@@ -1,20 +1,20 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0161';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0162';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0161';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0161';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0161';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0161';
-import * as metasService from '../services_v245/metasService.js?v=29.0161';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0161';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0161';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0161';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0161';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0161';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0161';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0161';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0161';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0161';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0161';
+import * as adminService from '../services_v245/adminService.js?v=29.0162';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0162';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0162';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0162';
+import * as metasService from '../services_v245/metasService.js?v=29.0162';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0162';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0162';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0162';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0162';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0162';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0162';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0162';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0162';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0162';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0162';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -371,7 +371,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0161';
+const VERSION = '29.0162';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2194,7 +2194,8 @@ const TABS = [
         { id: 'graficos', label: 'KPI Gráficos', icon: '📊' },
         { id: 'reporte', label: 'KPI Reporte', icon: '📋' }
     ]},
-    { id: 'rfs', label: 'RF´s', icon: '🔋' }
+    { id: 'rfs', label: 'RF´s', icon: '🔋' },
+    { id: 'actividades', label: 'Actividades', icon: '🗓️' }
   ] },
   // Configuración pinta su propia barra interna (renderConfigTab), no la genérica.
   // Estas sub-pestañas están acá para que la matriz de Permisos genere su clave
@@ -4092,7 +4093,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0161');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0162');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -4156,6 +4157,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (activeAdminSub === 'asistencia') renderAsistenciaSection(adminContainer);
     else if (activeAdminSub === 'performance') renderPerformanceSection(adminContainer);
     else if (activeAdminSub === 'rfs') renderRFSection(adminContainer);
+    else if (activeAdminSub === 'actividades') renderActividadesSection(adminContainer);
   };
 
   const renderTrabajadoresSection = (container) => {
@@ -5493,6 +5495,47 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
   };
 
+
+/**
+ * ADMINISTRACIÓN → ACTIVIDADES — el control del turno de noche.
+ *
+ * Dos cuadros: el Gantt de actividades (plan contra real) y el Cumplimiento del
+ * turno (meta y avance por actividad). Ubicación provisional, decidida por
+ * Daniel el 11-ago-2026: *"por el momento en administración, en una subpestaña
+ * llamada actividades"*.
+ *
+ * TODAVÍA ES UNA MAQUETA y por eso entra en un marco, no portada acá adentro:
+ *
+ *  - Sus estilos usan nombres genéricos —`.panel`, `.note`, `.bar`, `.slot`— que
+ *    chocarían con los del tablero. Dentro del marco no se tocan con nada.
+ *  - Hay una sola copia del archivo, así que lo que Daniel pula en la maqueta se
+ *    ve acá sin volver a portar nada. Mientras siga cambiando de forma, eso vale
+ *    más que la integración fina.
+ *
+ * CUANDO DEJE DE SER MAQUETA hay que traerla adentro de verdad, porque desde el
+ * marco no alcanza los datos de la pantalla: la meta de Almacenamiento sale de
+ * `datosMarcas`, la de Bajada de paletas de `buffer_history` y la de Separación
+ * del análisis del buffer. Hoy ninguna de esas está conectada —la maqueta trae
+ * los números escritos a mano— así que el marco no le quita nada.
+ */
+const renderActividadesSection = (container) => {
+    if (!container) return;
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:1rem;">
+        <span style="font-size:0.72rem; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
+                     color:#fbbf24; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3);
+                     padding:3px 10px; border-radius:20px;">Maqueta</span>
+        <span style="font-size:0.8rem; color:var(--text-muted);">
+          Los números son de ejemplo. Se está puliendo antes de conectarla a los datos de verdad.
+        </span>
+        <a href="scratch/maqueta_turno_actividades.html" target="_blank" rel="noopener"
+           style="margin-left:auto; font-size:0.78rem; color:#a5b4fc; text-decoration:none;">Abrir en otra pestaña ↗</a>
+      </div>
+      <iframe src="scratch/maqueta_turno_actividades.html"
+              title="Control del turno: actividades y cumplimiento"
+              style="width:100%; height:calc(100vh - 250px); min-height:600px; border:1px solid var(--border);
+                     border-radius:12px; background:#0b0e15;"></iframe>`;
+};
 
 const renderRFSection = (container) => {
     const rfs = adminService.getRfs() || [];
@@ -14432,7 +14475,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0161 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0162 | MOBILE PORTAL
                             </div>
                     </div>
 
