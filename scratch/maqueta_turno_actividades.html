@@ -32,6 +32,7 @@
     --plan-line: #b3bdd1;
     --now: #bd332d;
     --on-ok: #eafaf3; --on-warn: #fff6e6; --on-bad: #fdeceb;
+    --neon: #0891b2; --neon-glow: 0 0 0 3px rgba(8, 145, 178, .07);
     --shadow: 0 1px 2px rgba(16, 21, 31, .05);
   }
 
@@ -57,6 +58,7 @@
       --plan-line: #3c4660;
       --now: #fb7185;
       --on-ok: #06231c; --on-warn: #2b1f04; --on-bad: #2e0f0f;
+    --neon: #00E5FF; --neon-glow: 0 0 14px rgba(0, 229, 255, .16);
       --shadow: none;
     }
   }
@@ -82,6 +84,7 @@
     --plan-line: #3c4660;
     --now: #fb7185;
     --on-ok: #06231c; --on-warn: #2b1f04; --on-bad: #2e0f0f;
+    --neon: #00E5FF; --neon-glow: 0 0 14px rgba(0, 229, 255, .16);
     --shadow: none;
   }
 
@@ -106,6 +109,7 @@
     --plan-line: #b3bdd1;
     --now: #bd332d;
     --on-ok: #eafaf3; --on-warn: #fff6e6; --on-bad: #fdeceb;
+    --neon: #0891b2; --neon-glow: 0 0 0 3px rgba(8, 145, 178, .07);
     --shadow: 0 1px 2px rgba(16, 21, 31, .05);
   }
 
@@ -128,6 +132,9 @@
   /* Marco de adentro: encierra lo que se MIRA —título, cuadro y leyenda— y deja
      fuera la tabla, que es donde se ESCRIBE. */
   .marco { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; }
+  /* Cian neón, el mismo que usa el reporte de Marcas en el tablero. En claro se
+     baja a un cian oscuro, porque el neón sobre blanco no se lee. */
+  .neon { border-color: var(--neon); box-shadow: var(--neon-glow); }
   .marco .phead { margin-bottom: 14px; }
 
   /* ── controles ───────────────────────────────────────────────────────── */
@@ -262,7 +269,7 @@
   <section class="panel">
     <!-- El cuadro va en su propio marco, del título a la leyenda. La tabla de
          abajo queda fuera: es para escribir, no para mirar. -->
-    <div class="marco">
+    <div class="marco neon">
       <div class="phead"><h2>Gantt de actividades</h2><span class="sub" id="g_sub"></span></div>
       <div class="gwrap"><div class="gg" id="gg"></div></div>
       <div class="leg">
@@ -287,7 +294,7 @@
     <div style="margin-top:12px"><button class="btn-a" id="b_add">+ Agregar actividad</button></div>
   </section>
 
-  <section class="panel">
+  <section class="panel neon">
     <div class="phead"><h2>Cumplimiento del turno</h2><span class="sub" id="c_sub"></span></div>
     <div class="rings" id="rings"></div>
     <div class="twrap">
