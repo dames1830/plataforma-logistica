@@ -519,7 +519,7 @@
     return r;
   }
 
-  function pintarCumplimiento() {
+  function pintarAnillos() {
     var anillos = '';
 
     conMeta().forEach(function (x) {
@@ -533,11 +533,25 @@
         '<div class="rq">' + nf(c.av) + ' de ' + nf(c.meta) + '<br>' + esc(p.u || '') + '</div></div>';
     });
     $('#rings').innerHTML = anillos;
+  }
 
+  /* Las cuatro celdas CALCULADAS de la fila —falta, lo esperado, el % y el
+     estado—. Se arman acá una sola vez para que el dibujado completo y el
+     refresco al escribir no puedan separarse. */
+  function celdasCalculadas(c) {
+    return [
+      { html: c.falta ? nf(c.falta) : '—', color: c.falta ? 'var(--text-2)' : 'var(--text-3)' },
+      { html: nf(c.esperado), color: 'var(--text-3)' },
+      { html: c.pct + '%', color: COLOR[c.tono] },
+      { html: '<span class="chip" style="background:' + FONDO[c.tono] + '; color:' + COLOR[c.tono] + '">' + c.est + '</span>', color: '' }
+    ];
+  }
+
+  function pintarTablaCum() {
     var cuerpo = $('#t_cum').tBodies[0];
     cuerpo.innerHTML = conMeta().map(function (x) {
       var p = x.p, i = x.i, c = calcular(p);
-      return '<tr>' +
+      return '<tr data-i="' + i + '">' +
         /* SIN la etiqueta "auto" acá. No entra: la celda ya la ocupa el campo del
            nombre, y la etiqueta asomaba cortada sobre la columna Unidad —se veía
            una "A" suelta y ensuciaba el cuadro—. La marca sigue estando donde sí
@@ -546,15 +560,42 @@
         '<td class="u"><input type="text" ' + SIN_AYUDA + ' data-t="c" data-k="u" data-i="' + i + '" value="' + esc(p.u || '') + '"></td>' +
         '<td><input type="number" min="0" ' + SIN_AYUDA + ' data-t="c" data-k="meta" data-i="' + i + '" value="' + c.meta + '"></td>' +
         '<td><input type="number" min="0" ' + SIN_AYUDA + ' data-t="c" data-k="av" data-i="' + i + '" value="' + c.av + '"></td>' +
-        '<td style="color:' + (c.falta ? 'var(--text-2)' : 'var(--text-3)') + '">' + (c.falta ? nf(c.falta) : '—') + '</td>' +
-        '<td style="color:var(--text-3)">' + nf(c.esperado) + '</td>' +
-        '<td style="color:' + COLOR[c.tono] + '">' + c.pct + '%</td>' +
-        '<td><span class="chip" style="background:' + FONDO[c.tono] + '; color:' + COLOR[c.tono] + '">' + c.est + '</span></td>' +
+        celdasCalculadas(c).map(function (z) { return '<td style="color:' + z.color + '">' + z.html + '</td>'; }).join('') +
         '<td><button class="del" data-del="' + i + '" title="Quitar esta actividad">✕</button></td>' +
         '</tr>';
     }).join('');
 
     $('#c_sub').textContent = 'actualizado a las ' + S.ahora;
+  }
+
+  /* ── REFRESCO AL ESCRIBIR ────────────────────────────────────────────────
+     Mientras se escribe NO se rehacen las tablas. Rehacerlas cambia el campo
+     por otro nuevo y el cursor se va al principio: tecleando 2496 salía 6942.
+     Acá solo se reescriben las celdas calculadas, que no son campos. */
+  function refrescarCalculadas() {
+    var f = $('#t_cum').tBodies[0].rows, r, i, cc, k, td;
+    for (r = 0; r < f.length; r++) {
+      i = Number(f[r].getAttribute('data-i'));
+      if (!S.procs[i]) continue;
+      cc = celdasCalculadas(calcular(S.procs[i]));
+      for (k = 0; k < cc.length; k++) {
+        td = f[r].cells[4 + k];
+        if (td) { td.innerHTML = cc[k].html; td.style.color = cc[k].color; }
+      }
+    }
+    $('#c_sub').textContent = 'actualizado a las ' + S.ahora;
+
+    f = $('#t_hor').tBodies[0].rows;
+    for (r = 0; r < f.length; r++) {
+      i = Number(f[r].getAttribute('data-i'));
+      if (!S.procs[i]) continue;
+      var c = calcular(S.procs[i]);
+      td = f[r].cells[5];
+      if (td) {
+        td.textContent = c.desvTxt;
+        td.style.color = c.desvio === null ? 'var(--text-3)' : (c.desvio > 0 ? 'var(--warn)' : 'var(--ok)');
+      }
+    }
   }
 
   /* ── Tabla de horarios ────────────────────────────────────────────────── */
@@ -575,7 +616,7 @@
     cuerpo.innerHTML = S.procs.map(function (p, i) {
       var c = calcular(p);
       var col = c.desvio === null ? 'var(--text-3)' : (c.desvio > 0 ? 'var(--warn)' : 'var(--ok)');
-      return '<tr>' +
+      return '<tr data-i="' + i + '">' +
         '<td class="l"><input type="text" ' + SIN_AYUDA + ' data-t="h" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '"></td>' +
         '<td>' + plan('pi', i, p.pi) + '</td>' +
         '<td>' + plan('pf', i, p.pf) + '</td>' +
@@ -796,16 +837,23 @@
     aplicarStock();
     var h = Math.round(SPAN / 60), m = SPAN % 60;
     $('#dur').textContent = 'dura ' + h + ' h' + (m ? ' ' + m + ' min' : '') + ' · ' + SPAN + ' minutos';
-    pintarHorarios();
-    pintarCumplimiento();
-    pintarGantt();
-    if (foco) {
-      /* El nombre de la actividad está en las DOS tablas, así que el foco se
-         busca también por tabla: si no, escribir en Cumplimiento saltaba a
-         Horarios en la primera letra. */
-      var n = document.querySelector('[data-t="' + foco.t + '"][data-k="' + foco.k + '"][data-i="' + foco.i + '"]');
-      if (n) { n.focus(); if (n.type !== 'time' && n.setSelectionRange) { try { n.setSelectionRange(foco.p, foco.p); } catch (e) {} } }
+    if (foco && foco.k !== 'cuenta') {
+      /* Escribiendo: las tablas se dejan en paz y solo se reescriben las celdas
+         calculadas. La casilla "¿Tiene meta?" es la excepción —cambia qué filas
+         entran al Cumplimiento— y ahí sí hay que rehacerlo todo. */
+      refrescarCalculadas();
+      /* El nombre vive en las dos tablas: se copia a la gemela, que no se está
+         editando, para que no queden distintas hasta el próximo dibujado. */
+      if (foco.k === 'n' && S.procs[foco.i]) {
+        var gemela = document.querySelector('[data-t="' + (foco.t === 'h' ? 'c' : 'h') + '"][data-k="n"][data-i="' + foco.i + '"]');
+        if (gemela) gemela.value = S.procs[foco.i].n;
+      }
+    } else {
+      pintarHorarios();
+      pintarTablaCum();
     }
+    pintarAnillos();
+    pintarGantt();
     guardar();
   }
 
