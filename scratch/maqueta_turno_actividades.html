@@ -439,7 +439,7 @@
     else if (av === 0 && esperado === 0) { est = 'Sin empezar'; tono = 'off'; }
     else if (av >= esperado) { est = 'Al día'; tono = 'ok'; }
     else if (av >= esperado * 0.8) { est = 'Justo'; tono = 'warn'; }
-    else { est = 'Atrasado'; tono = 'bad'; }
+    else { est = 'Pendiente'; tono = 'bad'; }
 
     var desvio = null, desvTxt = '—';
     if (rf !== null && pf !== null) { desvio = rf - pf; desvTxt = (desvio > 0 ? '+' : '') + desvio + ' min'; }
@@ -527,7 +527,7 @@
     });
     $('#rings').innerHTML = anillos;
 
-    var etiquetas = [['ok', 'al día o cumplidas'], ['warn', 'justas'], ['bad', 'atrasadas'], ['off', 'sin empezar']];
+    var etiquetas = [['ok', 'al día o cumplidas'], ['warn', 'justas'], ['bad', 'pendientes'], ['off', 'sin empezar']];
     $('#tally').innerHTML = etiquetas.filter(function (e) { return cuenta[e[0]]; }).map(function (e) {
       return '<span class="chip" style="background:' + FONDO[e[0]] + '; color:' + COLOR[e[0]] + '">' + cuenta[e[0]] + ' ' + e[1] + '</span>';
     }).join('');
