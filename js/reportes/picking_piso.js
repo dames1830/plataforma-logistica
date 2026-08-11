@@ -41,21 +41,29 @@ const esc = (s) => String(s == null ? '' : s)
  * nadie hizo se cuenta aparte, en `vencido`, porque es justo lo que hay que
  * mirar cuando el piso no se llena.
  */
-export const calcularBalance = ({ tareas, dias, esCalzado, marcaDe, diaDeTarea, normalizar }) => {
+export const calcularBalance = ({ tareas, dias, esCalzado, marcaDe, diaDeTarea, normalizar, topeAlmacenaje }) => {
     if (!dias.length) return null;
 
-    // EL BALANCE CUBRE TODAS LAS JORNADAS DEL TRAMO, con o sin picking.
+    // UNA JORNADA ENTRA SI TIENE ALMACENAJE **O** PICKING.
     //
-    // Regla de Daniel, 09-ago-2026: *"si no hay archivo de picking, es que ese
-    // día no se picó — el cero es un dato real, no un hueco"*. Armando el cuadro
-    // con una fila por archivo, el domingo 02-ago —2.924 pares almacenados, cero
-    // picado— desaparecía entero, y un cuadro al que le falta lo que ENTRÓ no
-    // sirve para avisar de que el piso se está llenando.
+    // Regla de Daniel, 11-ago-2026: *"cuando ni picking ni almacenaje hay, ahí no
+    // lo cuentes, pero si hay almacenaje deberías contarlo, así no haya ni un par
+    // picado — y al revés también. La lógica de ese reporte es que me muestre
+    // cuánto se almacena y cuánto se pica"*.
     //
-    // Se toma el tramo entre el primer y el último día elegidos, así que elegir
-    // un día suelto nunca arrastra al de al lado.
+    // Antes el tramo terminaba en el último archivo de picking, y todo lo que se
+    // almacenó después quedaba fuera sin decirlo: el 11-ago eran 31.512 pares del
+    // sábado 8 y el lunes 10 que no aparecían en ningún lado. Un cuadro que
+    // esconde lo que entró no sirve para avisar de que el piso se está llenando.
+    //
+    // `topeAlmacenaje` es hasta dónde mirar cuando NO hay filtro de fechas: la
+    // última jornada con almacenaje, aunque su picking todavía no se haya subido.
+    // Con fechas marcadas manda lo marcado, así que elegir un día suelto sigue sin
+    // arrastrar al de al lado.
     const fechas = dias.map(d => d.dia).sort();
-    const desde = fechas[0], hasta = fechas[fechas.length - 1];
+    const desde = fechas[0];
+    const hasta = (topeAlmacenaje && topeAlmacenaje > fechas[fechas.length - 1])
+        ? topeAlmacenaje : fechas[fechas.length - 1];
     const jornadas = new Set(fechas);
 
     const almacenado = new Map();   // marca → pares
