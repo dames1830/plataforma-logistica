@@ -125,6 +125,10 @@
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 20px; box-shadow: var(--shadow); }
   .phead { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
   .phead .sub { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+  /* Marco de adentro: encierra lo que se MIRA —título, cuadro y leyenda— y deja
+     fuera la tabla, que es donde se ESCRIBE. */
+  .marco { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; }
+  .marco .phead { margin-bottom: 14px; }
 
   /* ── controles ───────────────────────────────────────────────────────── */
   input, button { font-family: var(--mono); font-size: 13px; color: var(--text); background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; }
@@ -256,17 +260,21 @@
   </section>
 
   <section class="panel">
-    <div class="phead"><h2>Gantt de actividades</h2><span class="sub" id="g_sub"></span></div>
-    <div class="gwrap"><div class="gg" id="gg"></div></div>
-    <div class="leg">
-      <span><span class="sw" style="border:1px dashed var(--plan-line); height:8px"></span>Lo que debía hacerse</span>
-      <span><span class="sw" style="background:var(--ok)"></span>Hecho</span>
-      <span><span class="sw" style="background:var(--warn)"></span>Se pasó del plan</span>
-      <span><span class="sw" style="background:var(--accent)"></span>En curso</span>
-      <span><span style="display:inline-block;width:0;border-left:1px dashed var(--now);height:12px;vertical-align:-2px;margin-right:8px"></span>Ahora</span>
+    <!-- El cuadro va en su propio marco, del título a la leyenda. La tabla de
+         abajo queda fuera: es para escribir, no para mirar. -->
+    <div class="marco">
+      <div class="phead"><h2>Gantt de actividades</h2><span class="sub" id="g_sub"></span></div>
+      <div class="gwrap"><div class="gg" id="gg"></div></div>
+      <div class="leg">
+        <span><span class="sw" style="border:1px dashed var(--plan-line); height:8px"></span>Lo que debía hacerse</span>
+        <span><span class="sw" style="background:var(--ok)"></span>Hecho</span>
+        <span><span class="sw" style="background:var(--warn)"></span>Se pasó del plan</span>
+        <span><span class="sw" style="background:var(--accent)"></span>En curso</span>
+        <span><span style="display:inline-block;width:0;border-left:1px dashed var(--now);height:12px;vertical-align:-2px;margin-right:8px"></span>Ahora</span>
+      </div>
     </div>
 
-    <div class="twrap" style="margin-top:26px">
+    <div class="twrap" style="margin-top:22px">
       <table id="t_hor">
         <thead><tr>
           <th class="l">Actividad</th><th>Plan · empieza</th><th>Plan · termina</th>
