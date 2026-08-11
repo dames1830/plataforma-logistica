@@ -157,7 +157,9 @@
   body::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 7px; border: 3px solid var(--bg); background-clip: padding-box; }
   body::-webkit-scrollbar-thumb:hover { background: var(--text-3); background-clip: padding-box; }
 
-  .gg { min-width: 720px; display: grid; grid-template-columns: 186px 1fr; align-items: center; }
+  /* 232 px y no 186: en 186 el nombre más largo con su etiqueta "auto" no
+     entraba y la etiqueta salía cortada, el mismo defecto que en la tabla. */
+  .gg { min-width: 760px; display: grid; grid-template-columns: 232px 1fr; align-items: center; }
   .gnm { font-size: 13px; color: var(--text-2); padding: 0 12px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .axis { position: relative; height: 20px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
   .tick { position: absolute; top: 0; font-family: var(--mono); font-size: 11px; color: var(--text-3); transform: translateX(-50%); }
@@ -536,8 +538,11 @@
     cuerpo.innerHTML = conMeta().map(function (x) {
       var p = x.p, i = x.i, c = calcular(p);
       return '<tr>' +
-        '<td class="l" style="white-space:nowrap"><input type="text" ' + SIN_AYUDA + ' data-t="c" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '" style="min-width:118px">' +
-        (p.auto ? '<span class="auto">auto</span>' : '') + '</td>' +
+        /* SIN la etiqueta "auto" acá. No entra: la celda ya la ocupa el campo del
+           nombre, y la etiqueta asomaba cortada sobre la columna Unidad —se veía
+           una "A" suelta y ensuciaba el cuadro—. La marca sigue estando donde sí
+           hay sitio: en los anillos de arriba y en el Gantt. */
+        '<td class="l"><input type="text" ' + SIN_AYUDA + ' data-t="c" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '" style="min-width:118px"></td>' +
         '<td class="u"><input type="text" ' + SIN_AYUDA + ' data-t="c" data-k="u" data-i="' + i + '" value="' + esc(p.u || '') + '"></td>' +
         '<td><input type="number" min="0" ' + SIN_AYUDA + ' data-t="c" data-k="meta" data-i="' + i + '" value="' + c.meta + '"></td>' +
         '<td><input type="number" min="0" ' + SIN_AYUDA + ' data-t="c" data-k="av" data-i="' + i + '" value="' + c.av + '"></td>' +
