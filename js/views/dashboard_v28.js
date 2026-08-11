@@ -1,17 +1,17 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0147';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0148';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0147';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0147';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0147';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0147';
-import * as metasService from '../services_v245/metasService.js?v=29.0147';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0147';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0147';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0147';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0147';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0147';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0147';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK } from '../reportes/picking.js?v=29.0147';
+import * as adminService from '../services_v245/adminService.js?v=29.0148';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0148';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0148';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0148';
+import * as metasService from '../services_v245/metasService.js?v=29.0148';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0148';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0148';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0148';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0148';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0148';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0148';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK } from '../reportes/picking.js?v=29.0148';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -368,7 +368,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0147';
+const VERSION = '29.0148';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4083,7 +4083,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0147');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0148');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14420,7 +14420,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0147 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0148 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24254,6 +24254,94 @@ window.showCellModal = function(htmlContent) {
       </details>`;
   };
 
+  /**
+   * PREPACK CONTRA SUELTO — por qué la cifra de arriba es la que es.
+   *
+   * ES EL ARGUMENTO, no un cuadro más. Las dos formas fáciles de medir dan
+   * resultados OPUESTOS sobre la misma jornada: contando pares gana quien saca
+   * cajas, contando movimientos gana quien saca sueltos, y cada uno puede
+   * presentar el número que le conviene. Las dos mienten. Por eso se mide el
+   * esfuerzo, que es lo único que no cambia de opinión según quién lo mire.
+   *
+   * Se eligen a propósito las dos personas MÁS OPUESTAS del período —la de más
+   * pares por hora contra la de más esfuerzo por hora—: si son la misma, no hay
+   * contradicción que mostrar y el bloque no se dibuja.
+   */
+  const bloquePrepack = (R) => {
+    const gente = (R.gente || []).filter(p => !p.bajo_corte && p.horas > 0);
+    if (gente.length < 2 || !R.prepack || !R.prepack.lineas) return '';
+
+    const porPares = [...gente].sort((a, b) => (b.pares / b.horas) - (a.pares / a.horas))[0];
+    const porEsfuerzo = [...gente].sort((a, b) => (b.esfuerzo / b.horas) - (a.esfuerzo / a.horas))[0];
+    if (porPares.usuario === porEsfuerzo.usuario) return '';
+
+    const f = (p, campo) => Math.round(p[campo] / p.horas);
+    const veces = (a, b) => (a / b).toFixed(1).replace('.', ',');
+
+    // Lo que el prepack le ahorra al almacén: cada caja es UN viaje que, par por
+    // par, habrían sido tantos viajes como pares lleva.
+    const viajesAhorrados = R.prepack.pares - R.prepack.lineas;
+    const pctParesEnCaja = 100 * R.prepack.pares / R.pares;
+    const pctMovEnCaja = 100 * R.prepack.lineas / R.lineas;
+
+    const fila = (rotulo, a, b, dice) => `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding:0.6rem 1.2rem; color:rgba(255,255,255,0.7);">${rotulo}</td>
+        <td style="padding:0.6rem 0.9rem; text-align:right; font-weight:800; color:#fff;">${nMil(a)}</td>
+        <td style="padding:0.6rem 0.9rem; text-align:right; font-weight:800; color:#fff;">${nMil(b)}</td>
+        <td style="padding:0.6rem 1.2rem; color:rgba(255,255,255,0.45); font-size:0.72rem;">${dice}</td>
+      </tr>`;
+
+    const parA = f(porPares, 'pares'), parB = f(porEsfuerzo, 'pares');
+    const movA = Math.round(porPares.lineas / porPares.horas), movB = Math.round(porEsfuerzo.lineas / porEsfuerzo.horas);
+    const esfA = f(porPares, 'esfuerzo'), esfB = f(porEsfuerzo, 'esfuerzo');
+
+    return `
+      <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(245,158,11,0.25);">
+        <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+          <h3 style="margin:0 0 2px; color:#fff; font-size:0.92rem; font-weight:900; letter-spacing:0.5px;">📦 PREPACK CONTRA SUELTO</h3>
+          <div style="font-size:0.7rem; color:rgba(245,158,11,0.7); font-weight:600;">La misma jornada, medida de tres formas</div>
+        </div>
+        <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#d1d5db;">
+          <thead>
+            <tr style="color:var(--text-muted); text-align:left;">
+              <th style="padding:0.6rem 1.2rem; font-weight:700;">Si medimos por…</th>
+              <th style="padding:0.6rem 0.9rem; text-align:right; font-weight:700;">${escPick(porPares.usuario)}</th>
+              <th style="padding:0.6rem 0.9rem; text-align:right; font-weight:700;">${escPick(porEsfuerzo.usuario)}</th>
+              <th style="padding:0.6rem 1.2rem; font-weight:700;">Qué diría</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${fila('Pares por hora', parA, parB,
+                `que ${escPick(porPares.usuario)} rinde <b style="color:#fbbf24;">${veces(parA, parB)} veces más</b>`)}
+            ${fila('Movimientos por hora <span style="opacity:.6">(cada caja = 1)</span>', movA, movB,
+                `que ${escPick(porEsfuerzo.usuario)} rinde <b style="color:#fbbf24;">${veces(movB, movA)} veces más</b>`)}
+            <tr style="background:rgba(34,197,94,0.06);">
+              <td style="padding:0.6rem 1.2rem; color:#fff; font-weight:800;">Esfuerzo real — <span style="color:#4ade80;">el que usamos</span></td>
+              <td style="padding:0.6rem 0.9rem; text-align:right; font-weight:900; color:#4ade80;">${nMil(esfA)}</td>
+              <td style="padding:0.6rem 0.9rem; text-align:right; font-weight:900; color:#4ade80;">${nMil(esfB)}</td>
+              <td style="padding:0.6rem 1.2rem; color:rgba(255,255,255,0.6); font-size:0.72rem;">
+                que ${escPick(esfA >= esfB ? porPares.usuario : porEsfuerzo.usuario)} rinde
+                <b style="color:#4ade80;">${veces(Math.max(esfA, esfB), Math.min(esfA, esfB))} veces más</b>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="padding:0.8rem 1.3rem; background:rgba(245,158,11,0.07); font-size:0.73rem; color:rgba(255,255,255,0.7); line-height:1.8;">
+          Las dos formas fáciles de medir dan <b style="color:#fbbf24;">resultados opuestos</b>, y las dos mienten:
+          contando pares gana quien saca cajas, contando movimientos gana quien saca sueltos. Por eso se mide el esfuerzo.
+        </div>
+        <div style="padding:0.9rem 1.3rem; border-top:1px solid rgba(255,255,255,0.06); font-size:0.73rem; color:rgba(255,255,255,0.55); line-height:1.9;">
+          <b style="color:rgba(255,255,255,0.8);">Lo que el prepack le ahorra al almacén.</b>
+          En este período salieron <b style="color:#fff;">${nMil(R.prepack.pares)} pares en ${nMil(R.prepack.lineas)} cajas</b>.
+          Par por par habrían costado un movimiento cada uno: son
+          <b style="color:#4ade80;">${nMil(viajesAhorrados)} viajes ahorrados</b>.
+          El <b style="color:#fff;">${pctParesEnCaja.toFixed(1)}% de los pares</b> sale en caja usando solo el
+          <b style="color:#fff;">${pctMovEnCaja.toFixed(1)}% de los movimientos</b>.
+        </div>
+      </div>`;
+  };
+
   const renderReportePicking = async (container) => {
     if (!container) return;
     container.dataset.vista = 'reporte-picking';
@@ -24381,6 +24469,8 @@ window.showCellModal = function(htmlContent) {
             ${cuadroEquivalencia()}
           </div>
         </div>
+
+        ${bloquePrepack(R)}
 
         <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
           ${cuadroPick('📦 POR COLECCIÓN', R.coleccion, R.pares, 'Sale de <b>Coleccion PO</b> del Maestro, no de la temporada comercial.')}
