@@ -392,6 +392,24 @@
   }
   function guardar() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
 
+  /* DOS VENTANAS ABIERTAS SE PISABAN.
+     Cada una guarda TODO el estado en cada tecla y cada una tiene su propia copia
+     en memoria, así que la que escribía después borraba lo que la otra acababa de
+     anotar: se veía como que el dato se borra solo. Ahora, cuando otra ventana
+     guarda, esta se pone al día —salvo que acá se esté escribiendo, para no
+     arrancarle el campo de las manos a quien está tecleando—. */
+  window.addEventListener('storage', function (e) {
+    if (e.key !== LS || !e.newValue) return;
+    var a = document.activeElement;
+    if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+    var g;
+    try { g = JSON.parse(e.newValue); } catch (err) { return; }
+    if (!g || !g.procs) return;
+    g.procs.forEach(function (p) { if (p.cuenta === undefined) p.cuenta = true; });
+    S = g;
+    pintar();
+  });
+
   /* El navegador ofrece lo que ya se escribió en campos parecidos y lo pinta
      ENCIMA de la celda: en la columna Unidad se veían letras sueltas de otra
      cosa. Estos campos no son un formulario que valga la pena recordar. */
@@ -647,6 +665,8 @@
      las otras computadoras. Alimenta las DOS partes del reporte, porque al
      cargar la foto de ahora se mueve la hora actual de todo el tablero. */
   var STOCK = { 'now-activo': null, 'now-reserva': null };
+  /* Se enciende al cargar una foto y se apaga cuando sus números ya se aplicaron. */
+  var stockNuevo = false;
 
   /* EL ARRANQUE DEL TURNO NO SE CARGA: ya está en el servidor, publicado por el
      robot a las 19:00. En la maqueta va copiado acá para que se comporte igual
@@ -800,7 +820,7 @@
       infoSlot(id, '<b>' + esc(file.name) + '</b><br>' + (res.hora ? 'foto de las ' + res.hora + ' · ' : '') + det);
       /* Con una foto cargada manda la hora de la foto: el reloj deja de mover
          nada, o el cuadro diría una hora y los números serían de otra. */
-      if (id === 'now-activo' && res.hora) { S.ahora = res.hora; mandaLaFoto = true; }
+      if (id === 'now-activo') { stockNuevo = true; if (res.hora) { S.ahora = res.hora; mandaLaFoto = true; } }
       pintar();
     } catch (err) {
       STOCK[id] = null;
@@ -819,7 +839,11 @@
       meta += x;
       if (b) { var y = b.bufferC.get(art) || 0; if (x > y) av += x - y; }
     });
-    if (!b) return;
+    /* SOLO al cargar una foto nueva, no en cada tecla.
+       Antes esto corría en cada dibujado, así que pisaba lo que Daniel estuviera
+       escribiendo en esa fila: escribía un número y volvía al del stock. */
+    if (!b || !stockNuevo) return;
+    stockNuevo = false;
     S.procs.forEach(function (p) {
       if (p.fuente === 'bufferC') { p.meta = Math.round(meta); p.av = Math.round(av); p.u = 'pares'; }
     });
