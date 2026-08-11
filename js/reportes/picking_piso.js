@@ -70,9 +70,20 @@ export const calcularBalance = ({ tareas, dias, esCalzado, marcaDe, diaDeTarea, 
         // Finalizada Y con operario Y con hora: las tres, o no bajó al piso.
         const hecha = t.status === 'Finalizado' && t.u1 && t.inicio;
         (t.items || []).forEach(art => {
-            if (!Array.isArray(art) || art.length <= 4) return;
-            const sku = art[0], q = Number(art[4]) || 0;
-            if (!q) return;
+            if (!art) return;
+            // LOS ÍTEMS LLEGAN DE DOS FORMAS Y HAY QUE ACEPTAR LAS DOS.
+            //
+            // En el servidor viajan COMPRIMIDOS como arreglo —[sku7, marca, gender,
+            // coleccion, bufferQty, ...]— para que el bloque no pese de más. En el
+            // navegador ya vienen EXPANDIDOS como objeto, porque el motor los
+            // descomprime al bajarlos.
+            //
+            // Mirando solo el arreglo, en la pantalla no entraba ni una tarea y la
+            // columna Almacena salía en cero. En la prueba de Node no se veía,
+            // porque ahí se lee el JSON crudo del servidor, que sí es arreglo.
+            const sku = Array.isArray(art) ? art[0] : art.sku7;
+            const q = Number(Array.isArray(art) ? art[4] : art.bufferQty) || 0;
+            if (!sku || !q) return;
             if (!hecha) {
                 if (t.status !== 'Finalizado') vencido += q;
                 return;
