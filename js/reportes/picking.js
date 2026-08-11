@@ -746,6 +746,24 @@ export const cronometrarJornada = (filas, totalArchivo) => {
     const muestras = {};
     const cuenta = {};
 
+    // TODOS LOS HUECOS, sin el tope de 5 minutos, repartidos por tamaño.
+    //
+    // Es otra pregunta que la del factor: el factor mide lo que cuesta un pick y
+    // por eso descarta las paradas; esto mide EN QUÉ SE VA EL TURNO, y ahí los
+    // huecos largos son justamente lo que hay que ver. La última columna —qué
+    // parte de cada tramo es un cambio de zona— es el hallazgo: los huecos
+    // cortos casi nunca cambian de sitio y los largos sí.
+    const RANGOS = [
+        { et: 'hasta 30 s',     max: 30 },
+        { et: '30 s a 2 min',   max: 120 },
+        { et: '2 a 5 min',      max: 300 },
+        { et: '5 a 15 min',     max: 900 },
+        { et: '15 a 45 min',    max: 2700 },
+        { et: 'más de 45 min',  max: Infinity }
+    ];
+    const rangos = RANGOS.map(r => ({ et: r.et, max: r.max, n: 0, seg: 0, zona: 0 }));
+    const enRango = (sg) => rangos[RANGOS.findIndex(r => sg <= r.max)];
+
     porPersona.forEach((lista, usuario) => {
         lista.sort((a, b) => {
             const ha = horaDePick(a['Hora de selección']);
@@ -765,6 +783,17 @@ export const cronometrarJornada = (filas, totalArchivo) => {
             // Dos confirmaciones en el MISMO segundo no miden ningún trabajo: el
             // WMS las graba juntas. Se cuentan aparte para que el embudo cierre
             // con el número de mediciones que se muestra arriba.
+            // El reparto por tramos cuenta TODOS los huecos: los largos y también
+            // los de cero segundos. Para el FACTOR esos no sirven —no miden trabajo—
+            // y se descartan unas líneas más abajo, pero el turno igual pasó por ahí.
+            // LA ZONA, no la ubicación exacta: MZN01-11-10-C y MZN01-15-02-B son el
+            // mismo pasillo. Comparando la ubicación, el 84% de los huecos cortos
+            // salía como "cambio" y la columna dejaba de significar nada.
+            const zonaDe = (u) => String(u || '?').split('-')[0];
+            const cambio = zonaDe(lista[i]['De ubicación']) !== zonaDe(lista[i - 1]['De ubicación']);
+            const rg = enRango(seg);
+            if (rg) { rg.n++; rg.seg += seg; if (cambio) rg.zona++; }
+
             if (seg <= 0) { cuenta[t].simultaneos++; continue; }
             if (seg > TOPE_HUECO_SEG) { cuenta[t].largos++; continue; }
 
@@ -788,6 +817,39 @@ export const cronometrarJornada = (filas, totalArchivo) => {
         }
     });
 
+    // PRODUCTIVIDAD GLOBAL, la de la portada: una sola cifra para todos.
+    //
+    // Va acá y no en `agregar` porque NO respeta el segmento: cubre todo lo que
+    // sacó la persona, calzado y bolsas. Un operario que pasó media jornada
+    // bajando mochilas trabajó igual, y medirlo solo con el calzado lo deja
+    // pareciendo lento.
+    const pg = new Map();
+    filas.forEach(r => {
+        const u = r['Usuario de selección'] || 'Sin usuario';
+        const a = pg.get(u) || { usuario: u, picks: 0, pares: 0, sueltos: 0, cajas: 0, esfuerzo: 0, horas: [] };
+        a.picks++;
+        a.pares += paresDeLinea(r);
+        if (esPrepack(r['Código de artículo'])) {
+            const cajas = aNumero(r['Cantidad empaquetada']);
+            a.cajas += cajas;
+            // El esfuerzo de una caja es su factor, y una línea puede llevar varias.
+            a.esfuerzo += cajas * esfuerzoDeLinea(r['Código de artículo']);
+        } else {
+            a.sueltos++;
+            a.esfuerzo += 1;
+        }
+        const h = horaDePick(r['Hora de selección']); if (h) a.horas.push(h);
+        pg.set(u, a);
+    });
+    const gente = [...pg.values()].map(a => {
+        const span = a.horas.length > 1 ? (Math.max(...a.horas) - Math.min(...a.horas)) / 3600000 : 0;
+        return { usuario: a.usuario, picks: a.picks, pares: a.pares, sueltos: a.sueltos,
+                 cajas: a.cajas, esfuerzo: +a.esfuerzo.toFixed(1), horas: +span.toFixed(1),
+                 // "Picks por hora" es el ESFUERZO por hora: la caja pesa lo que
+                 // cuesta, no 1. Es la cifra única que Daniel quiere en la portada.
+                 picks_hora: span > 0 ? Math.round(a.esfuerzo / span) : null };
+    }).sort((x, y) => (y.picks_hora || -1) - (x.picks_hora || -1));
+
     const movPrepack = filas.filter(r => esPrepack(r['Código de artículo']));
     const cajas = movPrepack.reduce((s, r) => s + (parseInt(r['Cantidad empaquetada'], 10) || 0), 0);
     const paresWms = filas.reduce((s, r) => s + (parseInt(r['Cantidad empaquetada'], 10) || 0), 0);
@@ -801,7 +863,9 @@ export const cronometrarJornada = (filas, totalArchivo) => {
         hist: hist,
         hist_sit: histSit,
         muestras: muestras,
-        cuenta: cuenta
+        cuenta: cuenta,
+        gente: gente,
+        rangos: rangos.map(r => ({ et: r.et, n: r.n, seg: r.seg, zona: r.zona }))
     };
 };
 
@@ -823,7 +887,9 @@ export const juntarCronometros = (cronos) => {
         hist: {},
         hist_sit: { suelto: { mismo: {}, camino: {} }, prepack: { mismo: {}, camino: {} } },
         muestras: {},
-        cuenta: {}
+        cuenta: {},
+        rangos: [],
+        _gente: new Map()
     };
 
     buenos.forEach(d => {
@@ -837,6 +903,16 @@ export const juntarCronometros = (cronos) => {
         Object.keys(d.muestras || {}).forEach(t => {
             if (!o.muestras[t] || !o.muestras[t].length) o.muestras[t] = d.muestras[t];
         });
+        (d.gente || []).forEach(p => {
+            const a = o._gente.get(p.usuario) || { usuario: p.usuario, picks: 0, pares: 0, sueltos: 0, cajas: 0, esfuerzo: 0, horas: 0 };
+            a.picks += p.picks; a.pares += p.pares; a.sueltos += p.sueltos;
+            a.cajas += p.cajas; a.esfuerzo += (p.esfuerzo || 0); a.horas += p.horas;
+            o._gente.set(p.usuario, a);
+        });
+        (d.rangos || []).forEach((r, i) => {
+            if (!o.rangos[i]) o.rangos[i] = { et: r.et, n: 0, seg: 0, zona: 0 };
+            o.rangos[i].n += r.n; o.rangos[i].seg += r.seg; o.rangos[i].zona += r.zona;
+        });
         Object.keys(d.cuenta || {}).forEach(t => {
             if (!o.cuenta[t]) o.cuenta[t] = { picks: 0, primeros: 0, largos: 0, simultaneos: 0 };
             o.cuenta[t].picks += d.cuenta[t].picks;
@@ -845,6 +921,16 @@ export const juntarCronometros = (cronos) => {
             o.cuenta[t].simultaneos += (d.cuenta[t].simultaneos || 0);
         });
     });
+    // El ritmo se recalcula sobre el total de horas de cada persona: promediar
+    // los ritmos de días distintos da un número que no es de nadie.
+    o.gente = [...o._gente.values()].map(a => ({
+        ...a, horas: +a.horas.toFixed(1), esfuerzo: +a.esfuerzo.toFixed(1),
+        picks_hora: a.horas > 0 ? Math.round(a.esfuerzo / a.horas) : null
+    })).sort((x, y) => (y.picks_hora || -1) - (x.picks_hora || -1));
+    delete o._gente;
+    const hs = o.gente.reduce((s, p) => s + p.horas, 0);
+    o.picks_hora = hs > 0 ? Math.round(o.gente.reduce((s, p) => s + p.esfuerzo, 0) / hs) : null;
+
     return o;
 };
 

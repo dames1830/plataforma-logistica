@@ -285,3 +285,95 @@ export const cuadroQuePaso = (R, segmento, ayer) => {
     return panel('💬 QUÉ PASÓ EN ESTE PERÍODO',
         'Sale de los propios números: si algo no aplica, no aparece.', filas, '');
 };
+
+/* --- Productividad: UNA sola cifra para todos -------------------------------
+   Es la portada del reporte. Cubre TODO lo que sacó la persona, calzado y no
+   calzado, y no respeta el segmento de arriba: un operario que pasó media
+   jornada bajando mochilas trabajó igual, y medirlo solo con el calzado lo deja
+   pareciendo lento. Tampoco hay corte de horas — acá están todos.
+   -------------------------------------------------------------------------- */
+
+export const cuadroProductividad = (C) => {
+    const g = (C && C.gente || []).filter(p => p.picks_hora);
+    if (!g.length) return '';
+    const filas = g.map((p, i) => `
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+          ${td(`<span style="color:${i < 3 ? '#facc15' : 'var(--text-muted)'}; font-weight:800;">${i + 1}</span>`)}
+          ${td(`<b style="color:#fff;">${esc(p.usuario)}</b>`)}
+          ${td(`<b style="color:#4ade80;">${F(p.picks_hora)}</b>`, true)}
+          ${td(F(p.pares), true)}
+          ${td(p.horas, true, 'color:var(--text-muted);')}
+          ${td(F(p.sueltos), true, 'color:var(--text-muted);')}
+          ${td(F(p.cajas), true, 'color:var(--text-muted);')}
+        </tr>`).join('');
+    return panel(`⚡ PRODUCTIVIDAD · ${F(C.picks_hora)} PICKS POR HORA`,
+        'Una sola cifra para todos. Un pick es una ida a una ubicación a sacar algo. El par suelto y la caja de '
+      + 'prepack se suman en la misma cuenta, cada uno pesando el tiempo que de verdad cuesta. '
+      + '<b style="color:rgba(255,255,255,0.6);">Cubre todo lo que sacó la persona, calzado y no calzado.</b>',
+        tabla(th('#') + th('Usuario') + th('Picks por hora', 1) + th('Pares que sacó', 1)
+            + th('Horas', 1) + th('De ahí, sueltos', 1) + th('De ahí, cajas', 1), filas, '420px'),
+        'Las horas son las de cada persona, de su primer pick al último. Acá no hay corte de horas: están todos, '
+      + 'incluidos los que entraron un rato — por eso alguien con media hora puede encabezar.');
+};
+
+/* --- El tiempo entre un pick y el siguiente ---------------------------------- */
+
+export const cuadroTiempoEntrePicks = (C) => {
+    const r = (C && C.rangos || []).filter(x => x.n);
+    if (!r.length) return '';
+    const totN = r.reduce((s, x) => s + x.n, 0);
+    const totS = r.reduce((s, x) => s + x.seg, 0);
+    const filas = r.map(x => `
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+          ${td(`<b style="color:#fff;">${x.et}</b>`)}
+          ${td(F(x.n), true)}
+          ${td((x.seg / 3600).toFixed(1), true, 'color:var(--text-muted);')}
+          ${td(pct(x.seg, totS) + '%', true)}
+          ${td(`<b style="color:${x.n && (x.zona / x.n) > 0.3 ? '#fbbf24' : 'var(--text-muted)'};">${pct(x.zona, x.n)}%</b>`, true)}
+        </tr>`).join('')
+      + `<tr style="border-top:2px solid rgba(255,255,255,0.1); font-weight:900; color:#fff;">
+          ${td('Total')}${td(F(totN), 1)}${td((totS / 3600).toFixed(1), 1)}${td('100%', 1)}${td('', 1)}
+        </tr>`;
+    return panel('⏱️ EL TIEMPO ENTRE UN PICK Y EL SIGUIENTE',
+        'Todos los huecos, sumados entre todas las personas, repartidos por tamaño. '
+      + '<b style="color:rgba(255,255,255,0.6);">La última columna es la clave:</b> dice qué parte de esos huecos es un cambio de zona.',
+        tabla(th('Hueco entre un pick y el siguiente') + th('Cuántos', 1) + th('Horas', 1)
+            + th('% del tiempo', 1) + th('Cambia de zona', 1), filas),
+        `${F(totN)} huecos y ${(totS / 3600).toFixed(1)} horas sumadas. `
+      + '<b style="color:rgba(255,255,255,0.6);">Los huecos cortos casi nunca cambian de zona y los largos sí:</b> '
+      + 'el tiempo no se pierde sacando, se pierde caminando. Acá entran todos los huecos, también los largos — '
+      + 'para medir el factor del prepack esos se descartan, porque son paradas y no trabajo.');
+};
+
+/* --- Total: el único cuadro que mezcla fechas -------------------------------- */
+
+export const cuadroTotal = (dias, segmento) => {
+    const cols = dias.filter(d => d.resumen && d.resumen.seg && d.resumen.seg[segmento]);
+    if (cols.length < 2) return '';
+    const dmy = (f) => String(f).slice(8, 10) + '/' + String(f).slice(5, 7);
+    const INDIC = [
+        ['Pares',                 s => s.pares],
+        ['Líneas',                s => s.lineas],
+        ['Pedidos',               s => s.pedidos],
+        ['Personas',              s => s._personas.length],
+        ['Corridas',              s => s.olas],
+        ['Ubicaciones visitadas', s => s._ubic.length],
+        ['Códigos distintos',     s => s._cod.length]
+    ];
+    const filas = INDIC.map(([nom, f]) => {
+        const vals = cols.map(c => f(c.resumen.seg[segmento]));
+        const total = vals.reduce((a, b) => a + b, 0);
+        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+            ${td(`<b style="color:#fff;">${nom}</b>`)}
+            ${vals.map(v => td(F(v), true, 'color:var(--text-muted);')).join('')}
+            ${td(F(Math.round(total / vals.length)), true)}
+            ${td(`<b style="color:#fff;">${F(total)}</b>`, true)}
+          </tr>`;
+    }).join('');
+    return panel('🧮 TOTAL',
+        'Único cuadro que mezcla fechas, y lo dice. Sigue el segmento elegido arriba.',
+        tabla(th('Indicador') + cols.map(c => th(dmy(c.dia), 1)).join('') + th('Promedio', 1) + th('Total', 1), filas),
+        '<b style="color:rgba(255,255,255,0.6);">Ojo con las tres últimas filas.</b> Personas, ubicaciones y códigos '
+      + 'son cosas DISTINTAS, no cantidades: el total de la derecha las suma, así que cuenta varias veces a quien '
+      + 'trabajó varios días. Para saber cuántas personas distintas hubo, mire la tarjeta de arriba.');
+};

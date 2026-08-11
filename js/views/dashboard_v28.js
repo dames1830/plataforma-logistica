@@ -1,20 +1,20 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0153';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0154';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0153';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0153';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0153';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0153';
-import * as metasService from '../services_v245/metasService.js?v=29.0153';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0153';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0153';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0153';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0153';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0153';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0153';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking } from '../reportes/picking.js?v=29.0153';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0153';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso } from '../reportes/picking_cuadros.js?v=29.0153';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0153';
+import * as adminService from '../services_v245/adminService.js?v=29.0154';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0154';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0154';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0154';
+import * as metasService from '../services_v245/metasService.js?v=29.0154';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0154';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0154';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0154';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0154';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0154';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0154';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0154';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0154';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0154';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0154';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -371,7 +371,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0153';
+const VERSION = '29.0154';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4092,7 +4092,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0153');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0154');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14432,7 +14432,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0153 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0154 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24270,7 +24270,13 @@ window.showCellModal = function(htmlContent) {
      en el período se lee de una sola vez.
      -------------------------------------------------------------------------- */
 
-  const pickFiltro = { seg: 'calzado', desde: '', hasta: '' };
+  // LAS FECHAS SE ELIGEN DE A UNA, MARCÁNDOLAS, como en la maqueta: un botón por
+  // jornada y "Todas" para volver al conjunto. Vacío quiere decir todas.
+  //
+  // Antes eran dos desplegables DE/HASTA, y con nueve jornadas sueltas —que no
+  // son días seguidos— elegir tres días concretos obligaba a abarcar todo el
+  // tramo del medio.
+  const pickFiltro = { seg: 'calzado', fechas: [] };
 
   const tarjetaPick = (rotulo, valor, pie, color) => `
     <div style="flex:1; min-width:150px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-left:3px solid ${color}; border-radius:12px; padding:0.9rem 1.1rem;">
@@ -24478,10 +24484,10 @@ window.showCellModal = function(htmlContent) {
     if (!container.isConnected || container.dataset.vista !== 'prepack-picking') return;
 
     const todos = Object.keys(pickingDiasCache).sort();
-    if (!pickFiltro.desde || !todos.includes(pickFiltro.desde)) pickFiltro.desde = todos[0] || '';
-    if (!pickFiltro.hasta || !todos.includes(pickFiltro.hasta)) pickFiltro.hasta = todos[todos.length - 1] || '';
-
-    const elegidos = todos.filter(d => d >= pickFiltro.desde && d <= pickFiltro.hasta);
+    pickFiltro.fechas = (pickFiltro.fechas || []).filter(d => todos.includes(d));
+    const elegidos = pickFiltro.fechas.length
+        ? todos.filter(d => pickFiltro.fechas.indexOf(d) >= 0)
+        : todos;
 
     // Las jornadas subidas antes de la v29.0149 no traen cronómetro: se avisa en
     // vez de dibujar una pantalla a medias.
@@ -24489,34 +24495,29 @@ window.showCellModal = function(htmlContent) {
     const sinCrono = elegidos.length - conCrono.length;
 
     const barra = `
-      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:1rem; padding-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-        <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-          <span style="font-size:0.85rem; color:var(--primary);">📅</span>
-          <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">DE:</span>
-          <select id="pp_desde" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:inherit;">
-            ${todos.map(d => `<option value="${d}" ${d === pickFiltro.desde ? 'selected' : ''} style="background:#1e293b;">${nDia(d)}</option>`).join('')}
-          </select>
-        </div>
-        <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-          <span style="font-size:0.85rem; color:var(--primary);">📅</span>
-          <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">HASTA:</span>
-          <select id="pp_hasta" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:inherit;">
-            ${todos.map(d => `<option value="${d}" ${d === pickFiltro.hasta ? 'selected' : ''} style="background:#1e293b;">${nDia(d)}</option>`).join('')}
-          </select>
-        </div>
-        <button id="pp_todas" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.7); padding:6px 14px; border-radius:8px; font-size:0.7rem; font-weight:700; cursor:pointer; font-family:inherit;">Todas</button>
-        ${sinCrono ? `<span style="font-size:0.7rem; color:#fbbf24;">⚠️ ${sinCrono} ${sinCrono === 1 ? 'jornada quedó' : 'jornadas quedaron'} fuera: se cargaron antes y no tienen cronómetro. Vuelva a subir ${sinCrono === 1 ? 'ese archivo' : 'esos archivos'}.</span>` : ''}
+      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:1rem; padding-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <span style="font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); margin-right:4px;">Jornadas</span>
+        <button data-fecha="" style="background:${!pickFiltro.fechas.length ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${!pickFiltro.fechas.length ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${!pickFiltro.fechas.length ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:5px 12px; border-radius:7px; font-size:0.72rem; font-weight:800; cursor:pointer; font-family:inherit;">Todas</button>
+        ${todos.map(d => {
+          const on = pickFiltro.fechas.indexOf(d) >= 0;
+          return `<button data-fecha="${d}" style="background:${on ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${on ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${on ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:5px 11px; border-radius:7px; font-size:0.72rem; font-weight:700; cursor:pointer; font-family:inherit;">${nDia(d).slice(0, 5)}</button>`;
+        }).join('')}
+        ${sinCrono ? `<span style="font-size:0.7rem; color:#fbbf24; margin-left:8px;">⚠️ ${sinCrono} sin cronómetro: vuelva a subir ${sinCrono === 1 ? 'ese archivo' : 'esos archivos'}.</span>` : ''}
       </div>`;
 
     container.innerHTML = barra + '<div id="pp_cuerpo"></div>';
     pintarPrepack(container.querySelector('#pp_cuerpo'),
                   conCrono.map(d => ({ dia: d, pp: pickingDiasCache[d].pp })));
 
-    const d = container.querySelector('#pp_desde'), h = container.querySelector('#pp_hasta');
-    if (d) d.onchange = () => { pickFiltro.desde = d.value; if (pickFiltro.hasta < pickFiltro.desde) pickFiltro.hasta = pickFiltro.desde; renderPrepackPicking(container); };
-    if (h) h.onchange = () => { pickFiltro.hasta = h.value; if (pickFiltro.desde > pickFiltro.hasta) pickFiltro.desde = pickFiltro.hasta; renderPrepackPicking(container); };
-    const t = container.querySelector('#pp_todas');
-    if (t) t.onclick = () => { pickFiltro.desde = todos[0]; pickFiltro.hasta = todos[todos.length - 1]; renderPrepackPicking(container); };
+    container.querySelectorAll('[data-fecha]').forEach(b => {
+      b.onclick = () => {
+        const f = b.dataset.fecha;
+        if (!f) pickFiltro.fechas = [];
+        else if (pickFiltro.fechas.indexOf(f) >= 0) pickFiltro.fechas = pickFiltro.fechas.filter(x => x !== f);
+        else pickFiltro.fechas = pickFiltro.fechas.concat([f]);
+        renderPrepackPicking(container);
+      };
+    });
   };
 
   const renderReportePicking = async (container) => {
@@ -24547,10 +24548,10 @@ window.showCellModal = function(htmlContent) {
       return;
     }
 
-    if (!pickFiltro.desde || !todos.includes(pickFiltro.desde)) pickFiltro.desde = todos[0];
-    if (!pickFiltro.hasta || !todos.includes(pickFiltro.hasta)) pickFiltro.hasta = todos[todos.length - 1];
-
-    const elegidos = todos.filter(d => d >= pickFiltro.desde && d <= pickFiltro.hasta);
+    pickFiltro.fechas = (pickFiltro.fechas || []).filter(d => todos.includes(d));
+    const elegidos = pickFiltro.fechas.length
+        ? todos.filter(d => pickFiltro.fechas.indexOf(d) >= 0)
+        : todos;
     const R = juntarDiasPicking(elegidos.map(d => pickingDiasCache[d]), pickFiltro.seg);
 
     const rotSeg = { calzado: 'Calzado', no_calzado: 'No calzado', todo: 'Todo' };
@@ -24560,22 +24561,12 @@ window.showCellModal = function(htmlContent) {
     const cabecera = `
       <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:1.2rem; padding-bottom:0.9rem; border-bottom:1px solid rgba(255,255,255,0.05);">
         <div style="display:flex; gap:8px;">${botonSeg('calzado')}${botonSeg('no_calzado')}${botonSeg('todo')}</div>
-        <div style="display:flex; align-items:center; gap:8px; margin-left:auto; flex-wrap:wrap;">
-          <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-            <span style="font-size:0.85rem; color:var(--primary);">📅</span>
-            <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">DE:</span>
-            <select id="pick_desde" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:inherit;">
-              ${todos.map(d => `<option value="${d}" ${d === pickFiltro.desde ? 'selected' : ''} style="background:#1e293b;">${nDia(d)}</option>`).join('')}
-            </select>
-          </div>
-          <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-            <span style="font-size:0.85rem; color:var(--primary);">📅</span>
-            <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">HASTA:</span>
-            <select id="pick_hasta" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:inherit;">
-              ${todos.map(d => `<option value="${d}" ${d === pickFiltro.hasta ? 'selected' : ''} style="background:#1e293b;">${nDia(d)}</option>`).join('')}
-            </select>
-          </div>
-          <button id="pick_todas" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.7); padding:6px 14px; border-radius:8px; font-size:0.7rem; font-weight:700; cursor:pointer; font-family:inherit;">Todas</button>
+        <div style="display:flex; align-items:center; gap:6px; margin-left:auto; flex-wrap:wrap;">
+          <button data-fecha="" style="background:${!pickFiltro.fechas.length ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${!pickFiltro.fechas.length ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${!pickFiltro.fechas.length ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:5px 12px; border-radius:7px; font-size:0.72rem; font-weight:800; cursor:pointer; font-family:inherit;">Todas</button>
+          ${todos.map(d => {
+            const on = pickFiltro.fechas.indexOf(d) >= 0;
+            return `<button data-fecha="${d}" style="background:${on ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${on ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${on ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:5px 11px; border-radius:7px; font-size:0.72rem; font-weight:700; cursor:pointer; font-family:inherit;">${nDia(d).slice(0, 5)}</button>`;
+          }).join('')}
         </div>
       </div>`;
 
@@ -24587,6 +24578,10 @@ window.showCellModal = function(htmlContent) {
       engancharPick(container);
       return;
     }
+
+    // El cronómetro del período: de acá salen la productividad global y el
+    // reparto de los huecos, que NO dependen del segmento elegido.
+    const crono = juntarCronometros(elegidos.map(d => pickingDiasCache[d] && pickingDiasCache[d].pp));
 
     const conRitmo = R.gente.filter(p => !p.bajo_corte);
     const bajo = R.gente.filter(p => p.bajo_corte).length;
@@ -24640,17 +24635,18 @@ window.showCellModal = function(htmlContent) {
       <div style="display:flex; flex-direction:column; gap:1.2rem;">
 
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          ${tarjetaPick('Pares picados', nMil(R.pares), `${R.jornadas || 1} ${(R.jornadas || 1) === 1 ? 'jornada' : 'jornadas'} · ${nMil(Math.round(R.pares / (R.jornadas || 1)))} por día`, '#22c55e')}
-          ${tarjetaPick('Líneas', nMil(R.lineas), `${R.pares_x_linea} pares por línea`, '#6366f1')}
-          ${tarjetaPick('Personas', R._personas.length, `${conRitmo.length} con ${HORAS_MIN_RANKING} h o más`, '#38bdf8')}
+          ${tarjetaPick('Pares', nMil(R.pares), `${R.pares_x_linea} pares por línea`, '#22c55e')}
+          ${tarjetaPick('Líneas', nMil(R.lineas), `${nMil(R._ubic.length)} ubicaciones distintas`, '#6366f1')}
           ${tarjetaPick('Pedidos', nMil(R.pedidos), `${nMil(R.olas)} corridas`, '#a78bfa')}
-          ${tarjetaPick('Nivel de atención', R.nivel_atencion + '%', `${nMil(R.no_entregado)} pares pedidos sin salir`, R.nivel_atencion >= 99 ? '#22c55e' : '#f59e0b')}
+          ${tarjetaPick('Personas', R._personas.length, `distintas en ${R.jornadas || 1} ${(R.jornadas || 1) === 1 ? 'jornada' : 'jornadas'}`, '#38bdf8')}
+          ${tarjetaPick('Códigos', nMil(R._cod.length), 'artículos distintos', '#f472b6')}
+          ${tarjetaPick('Nivel de atención', R.nivel_atencion + '%', `faltaron ${nMil(R.no_entregado)} pares en ${nMil(R.lineas_incompletas)} líneas`, R.nivel_atencion >= 99 ? '#22c55e' : '#f59e0b')}
         </div>
 
         <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(34,197,94,0.22);">
           <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <h3 style="margin:0; color:#fff; font-size:0.92rem; font-weight:900; letter-spacing:0.5px;">👷 PRODUCTIVIDAD POR PERSONA</h3>
-            <span style="font-size:0.7rem; color:var(--text-muted);">${rotSeg[pickFiltro.seg]} · ${nDia(pickFiltro.desde)} a ${nDia(pickFiltro.hasta)}</span>
+            <span style="font-size:0.7rem; color:var(--text-muted);">${rotSeg[pickFiltro.seg]} · ${elegidos.length === 1 ? nDia(elegidos[0]) : `${elegidos.length} jornadas`}</span>
           </div>
           <div style="overflow:auto; max-height:460px;">
             <table style="width:100%; border-collapse:collapse; font-size:0.77rem; color:#d1d5db;">
@@ -24721,6 +24717,7 @@ window.showCellModal = function(htmlContent) {
           ${cuadroPick('👟 POR CATEGORÍA', R.categoria, R.pares, 'Gender RIMS del Maestro.')}
         </div>
 
+        ${cuadroProductividad(crono)}
         ${cuadroPorHora(R)}
         ${cuadroCurvas(R)}
 
@@ -24729,8 +24726,10 @@ window.showCellModal = function(htmlContent) {
           <div style="flex:1; min-width:340px;">${cuadroRepetida(R)}</div>
         </div>
 
+        ${cuadroTiempoEntrePicks(crono)}
         ${cuadroCorridas(R)}
         ${cuadroArticulos(R)}
+        ${cuadroTotal(diasElegidos, pickFiltro.seg)}
 
         <div class="glass-panel" style="padding:1rem 1.3rem; border:1px solid rgba(255,255,255,0.06); font-size:0.72rem; color:rgba(255,255,255,0.45); line-height:1.9;">
           <b style="color:rgba(255,255,255,0.7);">Cómo se cuenta.</b>
@@ -24754,26 +24753,15 @@ window.showCellModal = function(htmlContent) {
     container.querySelectorAll('[data-seg]').forEach(b => {
       b.onclick = () => { pickFiltro.seg = b.dataset.seg; renderReportePicking(container); };
     });
-    const d = container.querySelector('#pick_desde');
-    const h = container.querySelector('#pick_hasta');
-    if (d) d.onchange = () => {
-      pickFiltro.desde = d.value;
-      if (pickFiltro.hasta < pickFiltro.desde) pickFiltro.hasta = pickFiltro.desde;
-      renderReportePicking(container);
-    };
-    if (h) h.onchange = () => {
-      pickFiltro.hasta = h.value;
-      if (pickFiltro.desde > pickFiltro.hasta) pickFiltro.desde = pickFiltro.hasta;
-      renderReportePicking(container);
-    };
-    const t = container.querySelector('#pick_todas');
-    if (t) t.onclick = () => {
-      const todos = Object.keys(pickingDiasCache || {}).sort();
-      if (!todos.length) return;
-      pickFiltro.desde = todos[0];
-      pickFiltro.hasta = todos[todos.length - 1];
-      renderReportePicking(container);
-    };
+    container.querySelectorAll('[data-fecha]').forEach(b => {
+      b.onclick = () => {
+        const f = b.dataset.fecha;
+        if (!f) pickFiltro.fechas = [];
+        else if (pickFiltro.fechas.indexOf(f) >= 0) pickFiltro.fechas = pickFiltro.fechas.filter(x => x !== f);
+        else pickFiltro.fechas = pickFiltro.fechas.concat([f]);
+        renderReportePicking(container);
+      };
+    });
   };
 
   /**
