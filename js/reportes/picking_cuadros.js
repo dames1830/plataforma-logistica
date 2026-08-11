@@ -191,3 +191,97 @@ export const cuadroArticulos = (R) => {
 export const cuadroGenero = (R, cuadroPick) => cuadroPick
     ? cuadroPick('👟 POR GÉNERO', R.genero, R.pares, 'Sale de la jerarquía del propio archivo del WMS, no del Maestro.')
     : '';
+
+/* --- Qué pasó ese día -------------------------------------------------------
+   MENSAJES CALCULADOS, NUNCA ESCRITOS A MANO. Cada uno sale de los propios
+   números del período y desaparece si no aplica: el de colecciones viejas solo
+   se asoma cuando pasan del 3%, y el del día anterior solo con un día elegido.
+   Un cuadro con frases fijas envejece mal; éste dice lo que hay.
+   -------------------------------------------------------------------------- */
+
+const COLOR_MSG = { bueno: '#4ade80', aviso: '#fbbf24', dato: '#818cf8' };
+
+export const cuadroQuePaso = (R, segmento, ayer) => {
+    const u = segmento === 'no_calzado' ? 'unidades' : 'pares';
+    const m = [];
+
+    // 1. Contra el día anterior. Solo con UN día elegido: comparar un tramo de
+    //    nueve jornadas contra "el anterior" no significa nada.
+    if (ayer && ayer.pares) {
+        const d = ayer.pares ? Math.round(100 * (R.pares - ayer.pares) / ayer.pares) : 0;
+        m.push({ t: `Contra la jornada anterior: ${d >= 0 ? 'más' : 'menos'} ${u}`,
+                 d: `${F(R.pares)} ${u} contra ${F(ayer.pares)} (${d >= 0 ? '+' : ''}${d}%), con `
+                  + `${R._personas.length} personas contra ${ayer._personas.length} y ${F(R.lineas)} líneas `
+                  + `contra ${F(ayer.lineas)}. El promedio por línea pasó de ${ayer.pares_x_linea} a ${R.pares_x_linea}.`,
+                 tipo: d >= 0 ? 'bueno' : 'aviso' });
+    }
+
+    // 2. La brecha de productividad
+    const con = (R.gente || []).filter(p => p.ritmo);
+    if (con.length >= 3) {
+        const mej = con[0], peo = con[con.length - 1];
+        const veces = +(mej.ritmo / peo.ritmo).toFixed(1);
+        m.push({ t: 'La distancia entre el que más rinde y el que menos',
+                 d: `${esc(mej.usuario)} rinde ${F(mej.ritmo)} y ${esc(peo.usuario)} ${F(peo.ritmo)}: `
+                  + `<b>${veces} veces</b>. Son ${con.length} personas con horas suficientes para medirse; `
+                  + `las otras ${R._personas.length - con.length} entraron poco rato y no entran en el podio.`,
+                 tipo: veces > 2.5 ? 'aviso' : 'dato' });
+    }
+
+    // 3. Dónde se camina
+    const zl = (R.zonas || []).slice().sort((a, b) => b.lineas - a.lineas)[0];
+    if (zl) {
+        m.push({ t: `${esc(zl.nom)} es donde más se camina`,
+                 d: `${F(zl.lineas)} líneas (${pct(zl.lineas, R.lineas)}% de ${F(R.lineas)}) salieron de ahí, `
+                  + `repartidas en ${F(zl.ubicaciones)} ubicaciones distintas, por ${F(zl.pares)} ${u}.`,
+                 tipo: 'dato' });
+    }
+
+    // 4. Colección vieja: solo si pesa
+    const vieja = (R.coleccion || []).filter(x => /^\d{4}/.test(x.nom) && parseInt(x.nom, 10) <= 2025);
+    const vp = vieja.reduce((s, x) => s + x.pares, 0);
+    if (vp > 0.03 * R.pares) {
+        const peor = vieja.reduce((a, b) => b.pares > a.pares ? b : a);
+        m.push({ t: 'Sale mercadería de colecciones viejas',
+                 d: `${F(vp)} ${u} (${pct(vp, R.pares)}% de ${F(R.pares)}) son de colecciones de 2025 o anteriores. `
+                  + `La más pesada es ${esc(peor.nom)} con ${F(peor.pares)} ${u}, ${pct(peor.pares, R.pares)}% del total.`,
+                 tipo: 'aviso' });
+    }
+
+    // 5. La colección que manda
+    const c0 = (R.coleccion || [])[0];
+    if (c0) {
+        m.push({ t: `La colección que más sale es ${esc(c0.nom)}`,
+                 d: `${F(c0.pares)} ${u} (${pct(c0.pares, R.pares)}% de ${F(R.pares)}) en ${F(c0.lineas)} líneas. `
+                  + `Se tocaron ${R.coleccion.length} colecciones distintas.`,
+                 tipo: 'dato' });
+    }
+
+    // 6. La corrida más grande
+    const ol = (R.corridas || [])[0];
+    if (ol) {
+        m.push({ t: 'La corrida más grande',
+                 d: `${F(ol.lineas)} líneas y ${F(ol.pares)} ${u} entre ${ol.desde} y ${ol.hasta} `
+                  + `(${ol.minutos} minutos) con ${ol.personas} personas. En total hubo ${F(R.olas)} corridas.`,
+                 tipo: 'dato' });
+    }
+
+    // 7. Solo para el segmento que no es calzado: por qué va aparte
+    const t0 = (R.articulos || [])[0];
+    if (segmento === 'no_calzado' && t0) {
+        m.unshift({ t: 'Por qué esto va aparte',
+                    d: `«${esc(String(t0.desc || '').slice(0, 46))}» son ${F(t0.pares)} unidades en ${F(t0.lineas)} líneas. `
+                     + `Medir eso junto al calzado ensucia el número: no es lo mismo bajar ${F(t0.pares)} unidades `
+                     + `de ${t0.ubicaciones} ubicación(es) que recorrer el almacén par por par.`,
+                    tipo: 'aviso' });
+    }
+
+    if (!m.length) return '';
+    const filas = m.map(x => `
+        <div style="padding:0.8rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.04); border-left:3px solid ${COLOR_MSG[x.tipo]};">
+          <div style="font-size:0.82rem; font-weight:800; color:#fff; margin-bottom:3px;">${x.t}</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.75;">${x.d}</div>
+        </div>`).join('');
+    return panel('💬 QUÉ PASÓ EN ESTE PERÍODO',
+        'Sale de los propios números: si algo no aplica, no aparece.', filas, '');
+};
