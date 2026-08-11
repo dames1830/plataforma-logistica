@@ -1,17 +1,17 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0145';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0146';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0145';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0145';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0145';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0145';
-import * as metasService from '../services_v245/metasService.js?v=29.0145';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0145';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0145';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0145';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0145';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0145';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0145';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING } from '../reportes/picking.js?v=29.0145';
+import * as adminService from '../services_v245/adminService.js?v=29.0146';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0146';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0146';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0146';
+import * as metasService from '../services_v245/metasService.js?v=29.0146';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0146';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0146';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0146';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0146';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0146';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0146';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING } from '../reportes/picking.js?v=29.0146';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -368,7 +368,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0145';
+const VERSION = '29.0146';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4083,7 +4083,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0145');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0146');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14420,7 +14420,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0145 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0146 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23971,6 +23971,18 @@ window.showCellModal = function(htmlContent) {
   const nDia = (d) => String(d || '').split('-').reverse().join('/');
   const nMil = (n) => Number(n || 0).toLocaleString('es-PE');
 
+  /**
+   * Escapa lo que va a HTML. Los nombres de usuario, marca y colección salen de
+   * archivos del WMS y del Maestro, así que se tratan como texto ajeno.
+   *
+   * VA ACÁ Y NO SE DA POR SENTADA: en este archivo `esc` se define local dentro
+   * de cada pantalla que la usa, no hay una sola en el módulo. Usarla sin
+   * declararla revienta con "esc is not defined" al abrir la pestaña —pasó el
+   * 11-ago-2026— y el error no sale hasta que alguien entra a esa pantalla.
+   */
+  const escPick = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
   /** Fila de la tabla de días cargados. */
   const filaDiaPicking = (dia, r) => {
     const t = (r && r.seg && r.seg.todo) || {};
@@ -24167,7 +24179,7 @@ window.showCellModal = function(htmlContent) {
               const pct = total ? (100 * f.pares / total) : 0;
               return `
               <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                <td style="padding:0.55rem 1.2rem; white-space:nowrap;">${esc(f.nom)}</td>
+                <td style="padding:0.55rem 1.2rem; white-space:nowrap;">${escPick(f.nom)}</td>
                 <td style="padding:0.55rem 0.4rem; width:45%;">
                   <div style="background:rgba(255,255,255,0.05); border-radius:4px; height:7px; overflow:hidden;">
                     <div style="width:${(100 * f.pares / max).toFixed(1)}%; height:100%; background:linear-gradient(90deg,#6366f1,#818cf8);"></div>
@@ -24290,7 +24302,7 @@ window.showCellModal = function(htmlContent) {
                 ${conRitmo.map((p, i) => `
                   <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
                     <td style="padding:0.55rem 1.2rem; color:${i < 3 ? '#facc15' : 'var(--text-muted)'}; font-weight:800;">${i + 1}</td>
-                    <td style="padding:0.55rem 0.9rem; color:#fff; font-weight:700;">${esc(p.usuario)}</td>
+                    <td style="padding:0.55rem 0.9rem; color:#fff; font-weight:700;">${escPick(p.usuario)}</td>
                     <td style="padding:0.55rem 0.9rem; text-align:right; font-weight:900; color:#4ade80;">${nMil(p.ritmo)}</td>
                     <td style="padding:0.55rem 0.9rem; text-align:right; font-weight:700;">${nMil(p.pares_hora)}</td>
                     <td style="padding:0.55rem 0.9rem; text-align:right;">${nMil(p.pares)}</td>
@@ -24328,6 +24340,11 @@ window.showCellModal = function(htmlContent) {
           El <b>prepack</b> sale por cajas en el WMS y acá se abre a pares: en este período fueron
           <b style="color:rgba(255,255,255,0.7);">${nMil(R.prepack.pares)} pares (${pctPrepack.toFixed(1)}% del total)</b> que sin abrir la curva no se verían.
           El corte entre calzado y el resto lo hace <b>G. Gender</b> del Maestro publicado.
+          <br>
+          <b style="color:rgba(255,255,255,0.7);">Qué suma y qué no.</b> Los <b>pares</b> y las <b>líneas</b> de Calzado y No calzado
+          dan exactamente el total de Todo. Los <b>pedidos</b> y las <b>personas</b> no: un mismo pedido puede llevar
+          zapatos y bolsas, y la misma persona pica las dos cosas, así que aparecen en los dos segmentos pero cuentan
+          una sola vez en el total. Por eso ahí las cifras no cierran sumando, y está bien que no cierren.
         </div>
       </div>`;
 
