@@ -387,7 +387,11 @@ export const procesarArchivoPicking = (texto, maestro) => {
             calzado: agregar(calzado, idx),
             no_calzado: agregar(noCalzado, idx),
             todo: agregar(buenas, idx)
-        }
+        },
+        // El cronómetro va sobre TODO el picking, no por segmento: la caja de
+        // prepack cuesta lo mismo lleve zapatos o lleve otra cosa, y partirlo
+        // por segmento solo reduciría la muestra sin cambiar lo que mide.
+        pp: cronometrarJornada(buenas, filas.length)
     };
 };
 
@@ -476,4 +480,254 @@ export const juntarDias = (resumenes, segmento) => {
     }).sort((a, b) => (b.ritmo || -1) - (a.ritmo || -1));
 
     return o;
+};
+
+/* ============================================================================
+   PREPACK CONTRA SUELTO — el cronómetro
+   ----------------------------------------------------------------------------
+   Todo lo de abajo sale de UNA sola idea: el hueco entre un movimiento y el
+   siguiente DE LA MISMA PERSONA es lo que costó ese movimiento —caminar hasta
+   el sitio y sacar—. No hay ninguna estimación: es el reloj del propio archivo.
+
+   POR QUÉ SE GUARDAN HISTOGRAMAS Y NO LA MEDIANA YA CALCULADA. La mediana de
+   varios días NO es el promedio de las medianas de cada día: hay que volver a
+   ordenar todas las mediciones juntas. Guardando cuántas veces se midió cada
+   valor de segundos —un histograma de 300 casillas como mucho— se recalcula la
+   mediana EXACTA de cualquier combinación de fechas sin arrastrar las 87.000
+   mediciones sueltas.
+   ============================================================================ */
+
+/** Un hueco de más de esto no es trabajo: es refrigerio, reunión o parada. */
+export const TOPE_HUECO_SEG = 300;
+
+/**
+ * LA DEL MEDIO, y tiene que ser un valor REALMENTE MEDIDO.
+ *
+ * El promedio de los dos centrales —lo que hace la mediana de manual cuando la
+ * muestra es par— da un número que no existe en los datos: el detalle mostraba
+ * 23 s donde la celda decía 22. Se toma el de la posición del medio.
+ */
+const medianaDeHistograma = (h) => {
+    const valores = Object.keys(h).map(Number).sort((a, b) => a - b);
+    const total = valores.reduce((s, v) => s + h[v], 0);
+    if (!total) return null;
+    const objetivo = Math.floor(total / 2);
+    let acum = 0;
+    for (const v of valores) {
+        acum += h[v];
+        if (acum > objetivo) return v;
+    }
+    return valores[valores.length - 1];
+};
+
+const totalDeHistograma = (h) => Object.keys(h || {}).reduce((s, v) => s + h[v], 0);
+
+/** Suma dos histogramas sin tocar los originales. */
+const sumarHistogramas = (a, b) => {
+    const o = Object.assign({}, a || {});
+    Object.keys(b || {}).forEach(k => { o[k] = (o[k] || 0) + b[k]; });
+    return o;
+};
+
+/** La clave del tipo de movimiento: pares sueltos, o la curva de la caja. */
+const tipoDeFila = (fila) => esPrepack(fila['Código de artículo'])
+    ? String(paresDeLaCaja(fila['Código de artículo']))
+    : 'suelto';
+
+/**
+ * Cronometra una jornada. `filas` son las Finalizada del día ya filtradas, y
+ * `totalArchivo` el total de filas del CSV antes de quitar las copias.
+ */
+export const cronometrarJornada = (filas, totalArchivo) => {
+    const porPersona = new Map();
+    filas.forEach(r => {
+        const u = r['Usuario de selección'] || 'Sin usuario';
+        if (!porPersona.has(u)) porPersona.set(u, []);
+        porPersona.get(u).push(r);
+    });
+
+    const hist = {};
+    const histSit = { suelto: { mismo: {}, camino: {} }, prepack: { mismo: {}, camino: {} } };
+    const muestras = {};
+    const cuenta = {};
+
+    porPersona.forEach((lista, usuario) => {
+        lista.sort((a, b) => {
+            const ha = horaDePick(a['Hora de selección']);
+            const hb = horaDePick(b['Hora de selección']);
+            return (ha ? ha.getTime() : 0) - (hb ? hb.getTime() : 0);
+        });
+        for (let i = 0; i < lista.length; i++) {
+            const t = tipoDeFila(lista[i]);
+            if (!cuenta[t]) cuenta[t] = { picks: 0, primeros: 0, largos: 0, simultaneos: 0 };
+            cuenta[t].picks++;
+            if (i === 0) { cuenta[t].primeros++; continue; }
+
+            const h1 = horaDePick(lista[i - 1]['Hora de selección']);
+            const h2 = horaDePick(lista[i]['Hora de selección']);
+            if (!h1 || !h2) { cuenta[t].simultaneos++; continue; }
+            const seg = Math.round((h2 - h1) / 1000);
+            // Dos confirmaciones en el MISMO segundo no miden ningún trabajo: el
+            // WMS las graba juntas. Se cuentan aparte para que el embudo cierre
+            // con el número de mediciones que se muestra arriba.
+            if (seg <= 0) { cuenta[t].simultaneos++; continue; }
+            if (seg > TOPE_HUECO_SEG) { cuenta[t].largos++; continue; }
+
+            if (!hist[t]) hist[t] = {};
+            hist[t][seg] = (hist[t][seg] || 0) + 1;
+
+            const familia = t === 'suelto' ? 'suelto' : 'prepack';
+            const donde = (lista[i]['De ubicación'] === lista[i - 1]['De ubicación']) ? 'mismo' : 'camino';
+            histSit[familia][donde][seg] = (histSit[familia][donde][seg] || 0) + 1;
+
+            if (!muestras[t]) muestras[t] = [];
+            if (muestras[t].length < 6) {
+                muestras[t].push({
+                    user: usuario,
+                    ant: String(lista[i - 1]['Hora de selección'] || '').slice(11, 19),
+                    hora: String(lista[i]['Hora de selección'] || '').slice(11, 19),
+                    seg: seg,
+                    ubi: lista[i]['De ubicación'] || ''
+                });
+            }
+        }
+    });
+
+    const movPrepack = filas.filter(r => esPrepack(r['Código de artículo']));
+    const cajas = movPrepack.reduce((s, r) => s + (parseInt(r['Cantidad empaquetada'], 10) || 0), 0);
+    const paresWms = filas.reduce((s, r) => s + (parseInt(r['Cantidad empaquetada'], 10) || 0), 0);
+    const paresReales = filas.reduce((s, r) => s + paresDeLinea(r), 0);
+
+    return {
+        total_archivo: totalArchivo || filas.length,
+        mov: { suelto: filas.length - movPrepack.length, prepack: movPrepack.length, cajas: cajas },
+        pares_wms: paresWms,
+        pares_reales: paresReales,
+        hist: hist,
+        hist_sit: histSit,
+        muestras: muestras,
+        cuenta: cuenta
+    };
+};
+
+/** Junta los cronómetros de varios días en uno solo. */
+export const juntarCronometros = (cronos) => {
+    const buenos = (cronos || []).filter(Boolean);
+    if (!buenos.length) return null;
+
+    const o = {
+        jornadas: buenos.length,
+        total_archivo: buenos.reduce((s, d) => s + (d.total_archivo || 0), 0),
+        mov: {
+            suelto: buenos.reduce((s, d) => s + d.mov.suelto, 0),
+            prepack: buenos.reduce((s, d) => s + d.mov.prepack, 0),
+            cajas: buenos.reduce((s, d) => s + d.mov.cajas, 0)
+        },
+        pares_wms: buenos.reduce((s, d) => s + d.pares_wms, 0),
+        pares_reales: buenos.reduce((s, d) => s + d.pares_reales, 0),
+        hist: {},
+        hist_sit: { suelto: { mismo: {}, camino: {} }, prepack: { mismo: {}, camino: {} } },
+        muestras: {},
+        cuenta: {}
+    };
+
+    buenos.forEach(d => {
+        Object.keys(d.hist || {}).forEach(t => { o.hist[t] = sumarHistogramas(o.hist[t], d.hist[t]); });
+        ['suelto', 'prepack'].forEach(f => {
+            const s = (d.hist_sit || {})[f];
+            if (!s) return;
+            o.hist_sit[f].mismo = sumarHistogramas(o.hist_sit[f].mismo, s.mismo);
+            o.hist_sit[f].camino = sumarHistogramas(o.hist_sit[f].camino, s.camino);
+        });
+        Object.keys(d.muestras || {}).forEach(t => {
+            if (!o.muestras[t] || !o.muestras[t].length) o.muestras[t] = d.muestras[t];
+        });
+        Object.keys(d.cuenta || {}).forEach(t => {
+            if (!o.cuenta[t]) o.cuenta[t] = { picks: 0, primeros: 0, largos: 0, simultaneos: 0 };
+            o.cuenta[t].picks += d.cuenta[t].picks;
+            o.cuenta[t].primeros += d.cuenta[t].primeros;
+            o.cuenta[t].largos += d.cuenta[t].largos;
+            o.cuenta[t].simultaneos += (d.cuenta[t].simultaneos || 0);
+        });
+    });
+    return o;
+};
+
+/** Cuántas mediciones y cuánto tarda un tipo, leído del histograma. */
+export const tiempoDe = (crono, tipo) => {
+    const h = (crono && crono.hist && crono.hist[tipo]) || null;
+    if (!h) return { n: 0, mediana: null };
+    return { n: totalDeHistograma(h), mediana: medianaDeHistograma(h) };
+};
+
+/** Lo mismo para una situación: 'suelto'/'prepack' por 'mismo'/'camino'. */
+export const tiempoSituacion = (crono, familia, donde) => {
+    const h = (((crono || {}).hist_sit || {})[familia] || {})[donde] || null;
+    if (!h) return { n: 0, mediana: null };
+    return { n: totalDeHistograma(h), mediana: medianaDeHistograma(h) };
+};
+
+/**
+ * La escalera de un tipo: la más rápida, los cuartos, la del medio y la más
+ * lenta, más los valores pegados al corte. Es lo que se abre al tocar el
+ * número de segundos, y existe para que nadie tenga que creer en la mediana.
+ */
+export const escaleraDe = (crono, tipo) => {
+    const h = (crono && crono.hist && crono.hist[tipo]) || null;
+    if (!h) return null;
+    const valores = Object.keys(h).map(Number).sort((a, b) => a - b);
+    const total = totalDeHistograma(h);
+    if (!total) return null;
+
+    const enPosicion = (pos) => {
+        let acum = 0;
+        for (const v of valores) { acum += h[v]; if (acum > pos) return v; }
+        return valores[valores.length - 1];
+    };
+    const medio = Math.floor(total / 2);
+    const q1 = Math.floor(total / 4);
+    const q3 = Math.floor(3 * total / 4);
+
+    const puestos = [
+        { pos: 1, seg: valores[0], et: 'la más rápida' },
+        { pos: Math.max(1, q1), seg: enPosicion(q1), et: 'una de cada cuatro está por debajo' },
+        { pos: medio + 1, seg: enPosicion(medio), et: 'LA DEL MEDIO', medio: true },
+        { pos: Math.max(1, q3), seg: enPosicion(q3), et: 'tres de cada cuatro están por debajo' },
+        { pos: total, seg: valores[valores.length - 1], et: 'la más lenta' }
+    ];
+
+    const centro = [];
+    let acum = 0;
+    for (const v of valores) {
+        const desde = acum + 1, hasta = acum + h[v];
+        for (let p = Math.max(desde, medio - 4); p <= Math.min(hasta, medio + 6); p++) centro.push(v);
+        acum = hasta;
+        if (acum > medio + 6) break;
+    }
+    return { puestos: puestos, centro: centro, mediana: enPosicion(medio), n: total };
+};
+
+/**
+ * El embudo: de las filas del archivo a las mediciones que quedan.
+ *
+ * Es la respuesta a "de dónde salen esas N mediciones", y cada paso dice qué se
+ * quita y por qué. Sin esto, el número es un dato que hay que creer.
+ */
+export const embudoDe = (crono, tipo) => {
+    const c = (crono && crono.cuenta && crono.cuenta[tipo]) || null;
+    if (!c) return [];
+    const nombre = tipo === 'suelto' ? 'son pares sueltos' : 'son cajas de ' + tipo + ' pares';
+    return [
+        { n: crono.total_archivo, q: 'Filas en el archivo del WMS', p: '' },
+        { n: crono.mov.suelto + crono.mov.prepack, q: 'Quitando las Cancelado, que son copias',
+          p: 'cada picking real deja dos filas: la tarea y la confirmación' },
+        { n: c.picks, q: 'De esas, las que ' + nombre, p: '' },
+        { n: c.picks - c.primeros, q: 'Menos el primer movimiento de cada persona',
+          p: 'no tiene un movimiento anterior contra el cual medirse' },
+        { n: c.picks - c.primeros - (c.simultaneos || 0), q: 'Menos los grabados en el mismo segundo',
+          p: 'el WMS confirma varios a la vez: entre ellos no hay trabajo que medir' },
+        { n: c.picks - c.primeros - (c.simultaneos || 0) - c.largos,
+          q: 'Menos los huecos de más de ' + (TOPE_HUECO_SEG / 60) + ' minutos',
+          p: 'son paradas, refrigerio o reuniones: no es trabajo' }
+    ];
 };

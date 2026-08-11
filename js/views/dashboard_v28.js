@@ -1,17 +1,18 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0148';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0149';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0148';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0148';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0148';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0148';
-import * as metasService from '../services_v245/metasService.js?v=29.0148';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0148';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0148';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0148';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0148';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0148';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0148';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK } from '../reportes/picking.js?v=29.0148';
+import * as adminService from '../services_v245/adminService.js?v=29.0149';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0149';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0149';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0149';
+import * as metasService from '../services_v245/metasService.js?v=29.0149';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0149';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0149';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0149';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0149';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0149';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0149';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK } from '../reportes/picking.js?v=29.0149';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0149';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -368,7 +369,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0148';
+const VERSION = '29.0149';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2124,9 +2125,15 @@ const TABS = [
     roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
   // 'kpi_picking' es la Evolución del artículo, que ya estaba acá y no se toca.
   // El reporte del archivo de picking va aparte, en 'reporte_picking'.
+  // 'analisis_prepack' es una PANTALLA PROPIA dentro de Picking, no un cuadro
+  // dentro del reporte. Decisión de Daniel, 11-ago-2026: el estudio de prepack
+  // contra suelto explica por qué la productividad se mide como se mide y se
+  // abre para defender esa cifra ante quien la discuta; metido como un recuadro
+  // más del reporte diario, *"no me sirve para nada"*.
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' },
     { id: 'reporte_picking', label: 'Reporte Picking', icon: '📈' },
+    { id: 'analisis_prepack', label: 'Análisis Prepack', icon: '📦' },
     { id: 'kpi_picking', label: 'KPI Picking', icon: '📊' }
   ]},
   { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
@@ -4083,7 +4090,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0148');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0149');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12531,6 +12538,9 @@ const renderRFSection = (container) => {
     } else if (tabId === 'picking' && activeSub === 'reporte_picking') {
         await new Promise(r => setTimeout(r, 0));
         renderReportePicking(container);
+    } else if (tabId === 'picking' && activeSub === 'analisis_prepack') {
+        await new Promise(r => setTimeout(r, 0));
+        renderPrepackPicking(container);
     } else if (tabId === 'picking' && activeSub === 'kpi_picking') {
         await new Promise(r => setTimeout(r, 0));
         renderKpiPicking(container);
@@ -14420,7 +14430,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0148 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0149 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24338,8 +24348,70 @@ window.showCellModal = function(htmlContent) {
           <b style="color:#4ade80;">${nMil(viajesAhorrados)} viajes ahorrados</b>.
           El <b style="color:#fff;">${pctParesEnCaja.toFixed(1)}% de los pares</b> sale en caja usando solo el
           <b style="color:#fff;">${pctMovEnCaja.toFixed(1)}% de los movimientos</b>.
+          <br>El estudio completo —de dónde sale cada segundo, jornada por jornada— está en
+          <b style="color:#a5b4fc;">Picking → Análisis Prepack</b>.
         </div>
       </div>`;
+  };
+
+  /**
+   * PREPACK — la pantalla entera vive en `js/reportes/picking_prepack.js`.
+   *
+   * Acá solo se traen los días y se elige el rango; el análisis no depende de
+   * nada del dashboard, así que se puede abrir y probar por separado.
+   */
+  const renderPrepackPicking = async (container) => {
+    if (!container) return;
+    container.dataset.vista = 'prepack-picking';
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:3rem; color:var(--text-muted);">
+        <div style="width:26px; height:26px; border:3px solid rgba(99,102,241,0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:0.85rem;">Trayendo las jornadas...</span>
+      </div>`;
+
+    if (!pickingDiasCache) pickingDiasCache = await cargarPickingDias();
+    if (!container.isConnected || container.dataset.vista !== 'prepack-picking') return;
+
+    const todos = Object.keys(pickingDiasCache).sort();
+    if (!pickFiltro.desde || !todos.includes(pickFiltro.desde)) pickFiltro.desde = todos[0] || '';
+    if (!pickFiltro.hasta || !todos.includes(pickFiltro.hasta)) pickFiltro.hasta = todos[todos.length - 1] || '';
+
+    const elegidos = todos.filter(d => d >= pickFiltro.desde && d <= pickFiltro.hasta);
+
+    // Las jornadas subidas antes de la v29.0149 no traen cronómetro: se avisa en
+    // vez de dibujar una pantalla a medias.
+    const conCrono = elegidos.filter(d => pickingDiasCache[d] && pickingDiasCache[d].pp);
+    const sinCrono = elegidos.length - conCrono.length;
+
+    const barra = `
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:1rem; padding-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+          <span style="font-size:0.85rem; color:var(--primary);">📅</span>
+          <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">DE:</span>
+          <select id="pp_desde" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:inherit;">
+            ${todos.map(d => `<option value="${d}" ${d === pickFiltro.desde ? 'selected' : ''} style="background:#1e293b;">${nDia(d)}</option>`).join('')}
+          </select>
+        </div>
+        <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+          <span style="font-size:0.85rem; color:var(--primary);">📅</span>
+          <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">HASTA:</span>
+          <select id="pp_hasta" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:inherit;">
+            ${todos.map(d => `<option value="${d}" ${d === pickFiltro.hasta ? 'selected' : ''} style="background:#1e293b;">${nDia(d)}</option>`).join('')}
+          </select>
+        </div>
+        <button id="pp_todas" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.7); padding:6px 14px; border-radius:8px; font-size:0.7rem; font-weight:700; cursor:pointer; font-family:inherit;">Todas</button>
+        ${sinCrono ? `<span style="font-size:0.7rem; color:#fbbf24;">⚠️ ${sinCrono} ${sinCrono === 1 ? 'jornada quedó' : 'jornadas quedaron'} fuera: se cargaron antes y no tienen cronómetro. Vuelva a subir ${sinCrono === 1 ? 'ese archivo' : 'esos archivos'}.</span>` : ''}
+      </div>`;
+
+    container.innerHTML = barra + '<div id="pp_cuerpo"></div>';
+    pintarPrepack(container.querySelector('#pp_cuerpo'),
+                  conCrono.map(d => ({ dia: d, pp: pickingDiasCache[d].pp })));
+
+    const d = container.querySelector('#pp_desde'), h = container.querySelector('#pp_hasta');
+    if (d) d.onchange = () => { pickFiltro.desde = d.value; if (pickFiltro.hasta < pickFiltro.desde) pickFiltro.hasta = pickFiltro.desde; renderPrepackPicking(container); };
+    if (h) h.onchange = () => { pickFiltro.hasta = h.value; if (pickFiltro.desde > pickFiltro.hasta) pickFiltro.desde = pickFiltro.hasta; renderPrepackPicking(container); };
+    const t = container.querySelector('#pp_todas');
+    if (t) t.onclick = () => { pickFiltro.desde = todos[0]; pickFiltro.hasta = todos[todos.length - 1]; renderPrepackPicking(container); };
   };
 
   const renderReportePicking = async (container) => {
