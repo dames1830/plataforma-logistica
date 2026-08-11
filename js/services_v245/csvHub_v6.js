@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0144';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0145';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -157,7 +157,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0144';
+const VERSION = '29.0145';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -2339,4 +2339,100 @@ export const calculateBufferPallets = (configOverride = null) => {
         sinStockPorRevisar: sinStockPorRevisar,
         timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
+};
+
+/* ============================================================================
+   PICKING — el resumen de cada día, guardado en la nube
+   ----------------------------------------------------------------------------
+   Un archivo de picking son ~11.400 filas de 33 columnas. NO se guardan: el
+   navegador lee el CSV, calcula (ver `js/reportes/picking.js`) y sube un
+   resumen de unos 80 KB por día. Sesenta días son 4,7 MB, que el disco de 1 GB
+   aguanta sin problema; las filas crudas serían cientos de MB.
+
+   Todo vive en UNA sola clave `{ "aaaa-mm-dd": {resumen} }`, igual que
+   `kpi_results_v2`, porque siempre se leen varios días juntos: Daniel no mide
+   día por día — *"yo no voy a medir día por día"*— y bajar un archivo por
+   jornada sería una llamada por día.
+
+   A DIFERENCIA DEL KPI VIEJO, ACÁ NO SE FUERZA `X-Environment: production`.
+   Ese sello está puesto a mano en `_fetchKPIStore` y hace que pruebas escriba
+   sobre los datos reales. Sin él, `env.js` sella solo cuando toca y beta
+   trabaja contra su propia base, que es lo que se quiere.
+   ============================================================================ */
+
+const PICKING_AREA = 'picking_dias';
+/** Tope de días guardados. A 80 KB cada uno son ~9,6 MB en el peor caso. */
+const PICKING_TOPE_DIAS = 120;
+
+/**
+ * SIEMPRE `?date=MASTER`, EN LA LECTURA Y EN LA ESCRITURA.
+ *
+ * `picking_dias` no está en `SINGLETON_AREAS` del backend, así que sin este
+ * parámetro cada guardado dejaría UN SNAPSHOT NUEVO con la fecha del día: el
+ * bloque entero —casi 1 MB con nueve jornadas— duplicado cada vez que alguien
+ * carga un archivo, hasta llenar el disco de 1 GB. Con MASTER se reemplaza.
+ * Es lo mismo que hace el robot con los stocks.
+ *
+ * Y se lee con MASTER explícito, no a secas: sin fecha el servidor devuelve el
+ * snapshot más reciente por orden alfabético, que hoy es MASTER de casualidad
+ * —la M va después de los años— pero no es algo en lo que convenga confiar.
+ */
+const PICKING_URL = `${API_URL}/${PICKING_AREA}?date=MASTER`;
+
+/** Lee el objeto {dia: resumen} completo. Devuelve {} si no hay nada. */
+export const cargarPickingDias = async () => {
+    try {
+        const res = await fetchWithTimeout(`${PICKING_URL}&t=${Date.now()}`, {}, 15000);
+        if (res.ok) {
+            const json = await res.json();
+            const obj = (json && json.data && typeof json.data === 'object' && !Array.isArray(json.data))
+                ? json.data
+                : ((typeof json === 'object' && json !== null && !Array.isArray(json)) ? json : null);
+            if (obj) return obj;
+        }
+    } catch (e) { /* sin conexión: se devuelve vacío y la pantalla lo dice */ }
+    return {};
+};
+
+/**
+ * Agrega o reemplaza los días indicados y sube el bloque entero.
+ *
+ * SE RELEE ANTES DE ESCRIBIR. Si dos personas cargan archivos distintos a la
+ * vez, quien guarde último se llevaría por delante lo del otro: releyendo, cada
+ * uno solo agrega lo suyo. Es la misma razón de `guardarBloqueFusionado` en las
+ * tareas de almacenaje.
+ */
+export const guardarPickingDias = async (nuevos) => {
+    const store = await cargarPickingDias();
+    Object.keys(nuevos || {}).forEach(d => { store[d] = nuevos[d]; });
+
+    const dias = Object.keys(store).sort();
+    if (dias.length > PICKING_TOPE_DIAS) {
+        dias.slice(0, dias.length - PICKING_TOPE_DIAS).forEach(d => { delete store[d]; });
+    }
+    try {
+        const res = await fetchWithTimeout(PICKING_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(store)
+        }, 30000);
+        if (!res.ok) return false;
+        const j = await res.json().catch(() => ({}));
+        return j.status !== 'error';
+    } catch (e) { return false; }
+};
+
+/** Borra un día del histórico. */
+export const borrarPickingDia = async (dia) => {
+    const store = await cargarPickingDias();
+    if (!(dia in store)) return true;
+    delete store[dia];
+    try {
+        const res = await fetchWithTimeout(PICKING_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(store)
+        }, 30000);
+        return res.ok;
+    } catch (e) { return false; }
 };

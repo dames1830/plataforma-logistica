@@ -1,16 +1,17 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0144';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0145';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0144';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0144';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0144';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0144';
-import * as metasService from '../services_v245/metasService.js?v=29.0144';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0144';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0144';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0144';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0144';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0144';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0144';
+import * as adminService from '../services_v245/adminService.js?v=29.0145';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0145';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0145';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0145';
+import * as metasService from '../services_v245/metasService.js?v=29.0145';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0145';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0145';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0145';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0145';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0145';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0145';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING } from '../reportes/picking.js?v=29.0145';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -367,7 +368,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0144';
+const VERSION = '29.0145';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2121,8 +2122,11 @@ const TABS = [
   // Configuración > Archivos Nube, que es para SUBIR: acá solo se baja.
   { id: 'descargas', label: 'Descargas', icon: '📥',
     roles: ['admin', 'jefe', 'supervisor', 'encargado', 'asistente'] },
+  // 'kpi_picking' es la Evolución del artículo, que ya estaba acá y no se toca.
+  // El reporte del archivo de picking va aparte, en 'reporte_picking'.
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' },
+    { id: 'reporte_picking', label: 'Reporte Picking', icon: '📈' },
     { id: 'kpi_picking', label: 'KPI Picking', icon: '📊' }
   ]},
   { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
@@ -4079,7 +4083,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0144');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0145');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12521,6 +12525,12 @@ const renderRFSection = (container) => {
         // Ceder un frame al navegador para que pinte el spinner antes de renderizar
         await new Promise(r => setTimeout(r, 0));
         renderAlmacenajeTareas(container);
+    } else if (tabId === 'picking' && activeSub === 'archivo_picking') {
+        await new Promise(r => setTimeout(r, 0));
+        renderArchivoPicking(container);
+    } else if (tabId === 'picking' && activeSub === 'reporte_picking') {
+        await new Promise(r => setTimeout(r, 0));
+        renderReportePicking(container);
     } else if (tabId === 'picking' && activeSub === 'kpi_picking') {
         await new Promise(r => setTimeout(r, 0));
         renderKpiPicking(container);
@@ -14410,7 +14420,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0144 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0145 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23945,6 +23955,410 @@ window.showCellModal = function(htmlContent) {
   // mismo que el filtro: cada clic redibuja la vista entera, y guardándolo en el DOM el
   // menú se cerraría al marcar la primera opción. Se pueden marcar varias seguidas.
   let kpiMenuAbierto = '';
+
+  /**
+  /* ══════════════════════════════════════════════════════════════════════════
+     PICKING — carga del archivo del WMS y reporte
+
+     El cálculo entero vive en `js/reportes/picking.js`; acá solo se pinta. Los
+     archivos NO se guardan: se lee el CSV, se calcula y se sube un resumen de
+     ~80 KB por día. Ver el encabezado de ese archivo para las cuatro trampas
+     del formato, que son la razón de que esto no sea un simple contar filas.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  let pickingDiasCache = null;   // {dia: resumen} tal como está en la nube
+
+  const nDia = (d) => String(d || '').split('-').reverse().join('/');
+  const nMil = (n) => Number(n || 0).toLocaleString('es-PE');
+
+  /** Fila de la tabla de días cargados. */
+  const filaDiaPicking = (dia, r) => {
+    const t = (r && r.seg && r.seg.todo) || {};
+    const c = (r && r.seg && r.seg.calzado) || {};
+    return `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding:0.6rem 0.9rem; font-weight:800; color:#fff;">${nDia(dia)}</td>
+        <td style="padding:0.6rem 0.9rem; text-align:right;">${nMil(t.lineas)}</td>
+        <td style="padding:0.6rem 0.9rem; text-align:right; font-weight:700;">${nMil(c.pares)}</td>
+        <td style="padding:0.6rem 0.9rem; text-align:right; color:var(--text-muted);">${nMil((t.pares || 0) - (c.pares || 0))}</td>
+        <td style="padding:0.6rem 0.9rem; text-align:center; color:var(--text-muted);">${(t._personas || []).length}</td>
+        <td style="padding:0.6rem 0.9rem; text-align:center; color:var(--text-muted); font-size:0.7rem;">${t.desde || '—'}–${t.hasta || '—'}</td>
+        <td style="padding:0.6rem 0.9rem; text-align:center;">
+          <button data-borrar-dia="${dia}" title="Quitar este día" style="background:none; border:none; cursor:pointer; font-size:1rem; color:#ef4444;">🗑️</button>
+        </td>
+      </tr>`;
+  };
+
+  /**
+   * ARCHIVO PICKING — subir los CSV que Daniel exporta del WMS.
+   *
+   * Acepta varios de una vez: la serie se arma cargando todos los días juntos,
+   * no de a uno. El día sale del CONTENIDO del archivo, nunca del nombre —
+   * "Picking 1-8" ordena antes que "Picking 30-7" y así se armó mal más de una
+   * lista.
+   */
+  const renderArchivoPicking = async (container) => {
+    if (!container) return;
+    container.dataset.vista = 'archivo-picking';
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:3rem; color:var(--text-muted);">
+        <div style="width:26px; height:26px; border:3px solid rgba(99,102,241,0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:0.85rem;">Buscando los días ya cargados...</span>
+      </div>`;
+
+    pickingDiasCache = await cargarPickingDias();
+    if (!container.isConnected || container.dataset.vista !== 'archivo-picking') return;
+
+    const dias = Object.keys(pickingDiasCache).sort().reverse();
+    const hayMaestro = (dataStore.articulos || []).length > 0;
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+
+        <div class="glass-panel" style="padding:1.4rem 1.6rem; border:1px solid rgba(99,102,241,0.25);">
+          <h3 style="margin:0 0 0.4rem; color:#fff; font-size:1rem; font-weight:900; letter-spacing:0.5px;">🗂️ CARGAR ARCHIVOS DE PICKING</h3>
+          <p style="margin:0 0 1.1rem; color:var(--text-muted); font-size:0.78rem; line-height:1.7;">
+            Los CSV que se exportan del WMS, uno por día. Se pueden elegir <b style="color:#a5b4fc;">varios a la vez</b>.<br>
+            El archivo no se guarda: se lee acá, se calcula y se sube solo el resumen del día. Volver a cargar un día
+            <b style="color:#a5b4fc;">reemplaza</b> el que ya estaba.
+          </p>
+
+          ${!hayMaestro ? `
+            <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:0.8rem 1rem; margin-bottom:1rem; font-size:0.76rem; color:#fca5a5; line-height:1.6;">
+              ⚠️ <b>Falta el Maestro de Artículos.</b> Sin él no se puede separar calzado de bolsas ni saber la marca
+              ni la colección. Publicalo desde <b>Configuración → Archivos Nube</b> y volvé a esta pantalla.
+            </div>` : ''}
+
+          <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <label style="display:inline-flex; align-items:center; gap:9px; background:var(--primary); color:#fff; padding:0.6rem 1.3rem; border-radius:10px; font-size:0.78rem; font-weight:800; cursor:${hayMaestro ? 'pointer' : 'not-allowed'}; opacity:${hayMaestro ? '1' : '0.45'}; box-shadow:0 4px 14px rgba(79,70,229,0.3);">
+              📥 ELEGIR ARCHIVOS
+              <input type="file" id="pick_files" accept=".csv" multiple ${hayMaestro ? '' : 'disabled'} style="display:none;">
+            </label>
+            <span id="pick_estado" style="font-size:0.76rem; color:var(--text-muted);"></span>
+          </div>
+
+          <div id="pick_resultado" style="margin-top:1rem;"></div>
+        </div>
+
+        <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(255,255,255,0.06);">
+          <div style="padding:1rem 1.4rem; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <h3 style="margin:0; color:#fff; font-size:0.9rem; font-weight:900; letter-spacing:0.5px;">📅 DÍAS CARGADOS</h3>
+            <span style="font-size:0.72rem; color:var(--text-muted);">${dias.length} ${dias.length === 1 ? 'jornada' : 'jornadas'}</span>
+          </div>
+          ${dias.length ? `
+            <div style="overflow:auto; max-height:420px;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#d1d5db;">
+                <thead style="position:sticky; top:0; background:#1e293b;">
+                  <tr>
+                    <th style="padding:0.7rem 0.9rem; text-align:left;">Día</th>
+                    <th style="padding:0.7rem 0.9rem; text-align:right;">Líneas</th>
+                    <th style="padding:0.7rem 0.9rem; text-align:right;">Pares calzado</th>
+                    <th style="padding:0.7rem 0.9rem; text-align:right;">No calzado</th>
+                    <th style="padding:0.7rem 0.9rem; text-align:center;">Personas</th>
+                    <th style="padding:0.7rem 0.9rem; text-align:center;">Franja</th>
+                    <th style="padding:0.7rem 0.9rem; text-align:center;"></th>
+                  </tr>
+                </thead>
+                <tbody>${dias.map(d => filaDiaPicking(d, pickingDiasCache[d])).join('')}</tbody>
+              </table>
+            </div>` : `
+            <div style="padding:3rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.85rem; line-height:1.8;">
+              Todavía no hay ningún día cargado.<br>
+              Elegí los archivos de arriba y aparecerán acá.
+            </div>`}
+        </div>
+      </div>`;
+
+    const input = container.querySelector('#pick_files');
+    if (input) input.onchange = (e) => procesarArchivosPicking([...e.target.files], container);
+
+    container.querySelectorAll('[data-borrar-dia]').forEach(b => {
+      b.onclick = async () => {
+        const dia = b.dataset.borrarDia;
+        if (!await showPremiumConfirm('QUITAR DÍA', `¿Quitar el ${nDia(dia)} del reporte?\n\nNo se borra ningún archivo: solo sale del histórico y se puede volver a cargar.`, 'warning')) return;
+        const ok = await borrarPickingDia(dia);
+        if (!ok) { showPremiumAlert('NO SE PUDO', 'El servidor no confirmó el borrado. Revise la conexión.', 'error'); return; }
+        renderArchivoPicking(container);
+      };
+    });
+  };
+
+  /** Lee los archivos elegidos, calcula y sube. */
+  const procesarArchivosPicking = async (files, container) => {
+    if (!files.length) return;
+    const estado = container.querySelector('#pick_estado');
+    const salida = container.querySelector('#pick_resultado');
+    const maestro = dataStore.articulos || [];
+
+    const nuevos = {};
+    const lineas = [];
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (estado) estado.textContent = `Leyendo ${i + 1} de ${files.length}: ${f.name}...`;
+      // Un respiro al navegador para que pinte el avance antes del archivo grande
+      await new Promise(r => setTimeout(r, 0));
+      let texto;
+      try { texto = await f.text(); }
+      catch (e) { lineas.push({ nom: f.name, error: 'No se pudo leer el archivo.' }); continue; }
+
+      const r = procesarArchivoPicking(texto, maestro);
+      if (r.error) { lineas.push({ nom: f.name, error: r.error }); continue; }
+      if (!r.dia) { lineas.push({ nom: f.name, error: 'No se pudo deducir el día: la columna Hora de selección viene vacía.' }); continue; }
+
+      nuevos[r.dia] = r;
+      const c = r.seg.calzado || {};
+      lineas.push({
+        nom: f.name, dia: r.dia,
+        detalle: `${nMil(r.filas_archivo)} filas · ${nMil(r.filas_copia)} copias descartadas · `
+               + `${nMil(c.lineas || 0)} líneas de calzado · <b style="color:#4ade80;">${nMil(c.pares || 0)} pares</b>`
+      });
+    }
+
+    if (estado) estado.textContent = Object.keys(nuevos).length ? 'Guardando en la nube...' : '';
+    let guardado = true;
+    if (Object.keys(nuevos).length) guardado = await guardarPickingDias(nuevos);
+    if (estado) estado.textContent = '';
+
+    if (salida) {
+      salida.innerHTML = `
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:0.9rem 1.1rem; font-size:0.75rem; line-height:1.9; color:rgba(255,255,255,0.75);">
+          ${lineas.map(l => l.error
+            ? `<div>❌ <b>${l.nom}</b> — <span style="color:#fca5a5;">${l.error}</span></div>`
+            : `<div>✅ <b>${nDia(l.dia)}</b> · ${l.detalle}</div>`).join('')}
+          ${!guardado ? `<div style="color:#fca5a5; margin-top:8px;">⚠️ Se leyeron bien, pero el servidor no confirmó el guardado. Revise la conexión y vuelva a cargarlos.</div>` : ''}
+        </div>`;
+    }
+    if (guardado && Object.keys(nuevos).length) {
+      setTimeout(() => renderArchivoPicking(container), 1200);
+    }
+  };
+
+  /* --- REPORTE DE PICKING ---------------------------------------------------
+     EL SEGMENTO FILTRA LA PANTALLA ENTERA, y es lo primero que se elige: no es
+     igual picar cien pares que cinco mil bolsas, y mezclarlos hace que la
+     productividad no signifique nada. Arranca en Calzado, que es el negocio.
+
+     LAS FECHAS SE ELIGEN DE A VARIAS, no de a una: con un día suelto una marca
+     parece errática —Bubblegummers hizo 0, 0 y 10.125 en tres días seguidos— y
+     en el período se lee de una sola vez.
+     -------------------------------------------------------------------------- */
+
+  const pickFiltro = { seg: 'calzado', desde: '', hasta: '' };
+
+  const tarjetaPick = (rotulo, valor, pie, color) => `
+    <div style="flex:1; min-width:150px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-left:3px solid ${color}; border-radius:12px; padding:0.9rem 1.1rem;">
+      <div style="font-size:0.64rem; color:var(--text-muted); font-weight:800; letter-spacing:0.7px; text-transform:uppercase;">${rotulo}</div>
+      <div style="font-size:1.5rem; font-weight:900; color:#fff; line-height:1.3; margin-top:2px;">${valor}</div>
+      <div style="font-size:0.66rem; color:var(--text-muted); line-height:1.5;">${pie || ''}</div>
+    </div>`;
+
+  /** Cuadro de dos columnas con barra: siempre la cantidad Y su porcentaje. */
+  const cuadroPick = (titulo, filas, total, nota) => {
+    if (!filas || !filas.length) return '';
+    const max = Math.max(...filas.map(f => f.pares), 1);
+    return `
+      <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(255,255,255,0.06); flex:1; min-width:320px;">
+        <div style="padding:0.9rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+          <h4 style="margin:0; color:#fff; font-size:0.82rem; font-weight:900; letter-spacing:0.5px;">${titulo}</h4>
+        </div>
+        <table style="width:100%; border-collapse:collapse; font-size:0.76rem; color:#d1d5db;">
+          <tbody>
+            ${filas.slice(0, 12).map(f => {
+              const pct = total ? (100 * f.pares / total) : 0;
+              return `
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                <td style="padding:0.55rem 1.2rem; white-space:nowrap;">${esc(f.nom)}</td>
+                <td style="padding:0.55rem 0.4rem; width:45%;">
+                  <div style="background:rgba(255,255,255,0.05); border-radius:4px; height:7px; overflow:hidden;">
+                    <div style="width:${(100 * f.pares / max).toFixed(1)}%; height:100%; background:linear-gradient(90deg,#6366f1,#818cf8);"></div>
+                  </div>
+                </td>
+                <td style="padding:0.55rem 0.6rem; text-align:right; font-weight:800; color:#fff; white-space:nowrap;">${nMil(f.pares)}</td>
+                <td style="padding:0.55rem 1.2rem 0.55rem 0; text-align:right; color:var(--text-muted); white-space:nowrap; font-size:0.7rem;">${pct.toFixed(1)}%</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        ${nota ? `<div style="padding:0.6rem 1.2rem; background:rgba(0,0,0,0.25); font-size:0.66rem; color:rgba(255,255,255,0.35); line-height:1.6;">${nota}</div>` : ''}
+      </div>`;
+  };
+
+  const renderReportePicking = async (container) => {
+    if (!container) return;
+    container.dataset.vista = 'reporte-picking';
+
+    if (!pickingDiasCache) {
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:3rem; color:var(--text-muted);">
+          <div style="width:26px; height:26px; border:3px solid rgba(99,102,241,0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <span style="font-size:0.85rem;">Trayendo los días de picking...</span>
+        </div>`;
+      pickingDiasCache = await cargarPickingDias();
+      if (!container.isConnected || container.dataset.vista !== 'reporte-picking') return;
+    }
+
+    const todos = Object.keys(pickingDiasCache).sort();
+    if (!todos.length) {
+      container.innerHTML = `
+        <div class="glass-panel" style="padding:3rem 2rem; text-align:center; color:var(--text-muted);">
+          <div style="font-size:2.2rem; margin-bottom:0.6rem;">📈</div>
+          <h4 style="margin:0 0 0.5rem; color:var(--text-main); font-weight:800;">Todavía no hay archivos de picking</h4>
+          <p style="margin:0 auto; max-width:56ch; font-size:0.82rem; line-height:1.7;">
+            Este reporte se arma con los CSV que se exportan del WMS. Cargalos en
+            <b style="color:#a5b4fc;">Picking → Archivo Picking</b> y el cuadro aparece solo.
+          </p>
+        </div>`;
+      return;
+    }
+
+    if (!pickFiltro.desde || !todos.includes(pickFiltro.desde)) pickFiltro.desde = todos[0];
+    if (!pickFiltro.hasta || !todos.includes(pickFiltro.hasta)) pickFiltro.hasta = todos[todos.length - 1];
+
+    const elegidos = todos.filter(d => d >= pickFiltro.desde && d <= pickFiltro.hasta);
+    const R = juntarDiasPicking(elegidos.map(d => pickingDiasCache[d]), pickFiltro.seg);
+
+    const rotSeg = { calzado: 'Calzado', no_calzado: 'No calzado', todo: 'Todo' };
+    const botonSeg = (id) => `
+      <button data-seg="${id}" style="background:${pickFiltro.seg === id ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${pickFiltro.seg === id ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${pickFiltro.seg === id ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:6px 16px; border-radius:8px; font-size:0.73rem; font-weight:800; cursor:pointer; font-family:inherit;">${rotSeg[id]}</button>`;
+
+    const cabecera = `
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:1.2rem; padding-bottom:0.9rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex; gap:8px;">${botonSeg('calzado')}${botonSeg('no_calzado')}${botonSeg('todo')}</div>
+        <div style="display:flex; align-items:center; gap:8px; margin-left:auto; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+            <span style="font-size:0.85rem; color:var(--primary);">📅</span>
+            <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">DE:</span>
+            <select id="pick_desde" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:inherit;">
+              ${todos.map(d => `<option value="${d}" ${d === pickFiltro.desde ? 'selected' : ''} style="background:#1e293b;">${nDia(d)}</option>`).join('')}
+            </select>
+          </div>
+          <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:4px 10px; gap:8px;">
+            <span style="font-size:0.85rem; color:var(--primary);">📅</span>
+            <span style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:700;">HASTA:</span>
+            <select id="pick_hasta" style="background:transparent; border:none; color:#fff; font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; font-family:inherit;">
+              ${todos.map(d => `<option value="${d}" ${d === pickFiltro.hasta ? 'selected' : ''} style="background:#1e293b;">${nDia(d)}</option>`).join('')}
+            </select>
+          </div>
+          <button id="pick_todas" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.7); padding:6px 14px; border-radius:8px; font-size:0.7rem; font-weight:700; cursor:pointer; font-family:inherit;">Todas</button>
+        </div>
+      </div>`;
+
+    if (!R) {
+      container.innerHTML = cabecera + `
+        <div class="glass-panel" style="padding:2.5rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">
+          No hay <b>${rotSeg[pickFiltro.seg].toLowerCase()}</b> en las fechas elegidas.
+        </div>`;
+      engancharPick(container);
+      return;
+    }
+
+    const conRitmo = R.gente.filter(p => !p.bajo_corte);
+    const bajo = R.gente.filter(p => p.bajo_corte).length;
+    const pctPrepack = R.pares ? (100 * R.prepack.pares / R.pares) : 0;
+
+    container.innerHTML = cabecera + `
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          ${tarjetaPick('Pares picados', nMil(R.pares), `${R.jornadas || 1} ${(R.jornadas || 1) === 1 ? 'jornada' : 'jornadas'} · ${nMil(Math.round(R.pares / (R.jornadas || 1)))} por día`, '#22c55e')}
+          ${tarjetaPick('Líneas', nMil(R.lineas), `${R.pares_x_linea} pares por línea`, '#6366f1')}
+          ${tarjetaPick('Personas', R._personas.length, `${conRitmo.length} con ${HORAS_MIN_RANKING} h o más`, '#38bdf8')}
+          ${tarjetaPick('Pedidos', nMil(R.pedidos), `${nMil(R.olas)} corridas`, '#a78bfa')}
+          ${tarjetaPick('Nivel de atención', R.nivel_atencion + '%', `${nMil(R.no_entregado)} pares pedidos sin salir`, R.nivel_atencion >= 99 ? '#22c55e' : '#f59e0b')}
+        </div>
+
+        <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(34,197,94,0.22);">
+          <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <h3 style="margin:0; color:#fff; font-size:0.92rem; font-weight:900; letter-spacing:0.5px;">👷 PRODUCTIVIDAD POR PERSONA</h3>
+            <span style="font-size:0.7rem; color:var(--text-muted);">${rotSeg[pickFiltro.seg]} · ${nDia(pickFiltro.desde)} a ${nDia(pickFiltro.hasta)}</span>
+          </div>
+          <div style="overflow:auto; max-height:460px;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.77rem; color:#d1d5db;">
+              <thead style="position:sticky; top:0; background:#1e293b;">
+                <tr>
+                  <th style="padding:0.7rem 1.2rem; text-align:left;">#</th>
+                  <th style="padding:0.7rem 0.9rem; text-align:left;">Persona</th>
+                  <th style="padding:0.7rem 0.9rem; text-align:right;">Ritmo</th>
+                  <th style="padding:0.7rem 0.9rem; text-align:right;">Pares/hora</th>
+                  <th style="padding:0.7rem 0.9rem; text-align:right;">Pares</th>
+                  <th style="padding:0.7rem 0.9rem; text-align:right;">Líneas</th>
+                  <th style="padding:0.7rem 0.9rem; text-align:right;">Horas</th>
+                  <th style="padding:0.7rem 1.2rem; text-align:right;">Ubicaciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${conRitmo.map((p, i) => `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <td style="padding:0.55rem 1.2rem; color:${i < 3 ? '#facc15' : 'var(--text-muted)'}; font-weight:800;">${i + 1}</td>
+                    <td style="padding:0.55rem 0.9rem; color:#fff; font-weight:700;">${esc(p.usuario)}</td>
+                    <td style="padding:0.55rem 0.9rem; text-align:right; font-weight:900; color:#4ade80;">${nMil(p.ritmo)}</td>
+                    <td style="padding:0.55rem 0.9rem; text-align:right; font-weight:700;">${nMil(p.pares_hora)}</td>
+                    <td style="padding:0.55rem 0.9rem; text-align:right;">${nMil(p.pares)}</td>
+                    <td style="padding:0.55rem 0.9rem; text-align:right; color:var(--text-muted);">${nMil(p.lineas)}</td>
+                    <td style="padding:0.55rem 0.9rem; text-align:right; color:var(--text-muted);">${p.horas}</td>
+                    <td style="padding:0.55rem 1.2rem; text-align:right; color:var(--text-muted);">${nMil(p.ubicaciones)}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:0.8rem 1.3rem; background:rgba(0,0,0,0.25); font-size:0.68rem; color:rgba(255,255,255,0.4); line-height:1.8;">
+            <b style="color:rgba(255,255,255,0.6);">Ritmo</b> es una sola cifra con el prepack pesando por dentro: sacar una caja
+            de 6 cuesta 1,28 veces lo que un par suelto; la de 12, 4,11. No cuesta doce veces más porque
+            <b style="color:rgba(255,255,255,0.6);">el trabajo es llegar al sitio, no levantar la caja</b>.
+            Las horas son las de cada persona —de su primer pick al último—, no las del turno.
+            ${bajo ? `<br>Quedan fuera del podio <b style="color:rgba(255,255,255,0.6);">${bajo} ${bajo === 1 ? 'persona que trabajó' : 'personas que trabajaron'} menos de ${HORAS_MIN_RANKING} h</b>, pero sus pares sí están en los totales de arriba.` : ''}
+          </div>
+        </div>
+
+        <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
+          ${cuadroPick('📦 POR COLECCIÓN', R.coleccion, R.pares, 'Sale de <b>Coleccion PO</b> del Maestro, no de la temporada comercial.')}
+          ${cuadroPick('🏷️ POR MARCA', R.marcas, R.pares, '')}
+        </div>
+
+        <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
+          ${cuadroPick('📍 DE DÓNDE SALE', R.zonas.map(z => ({ nom: z.nom, pares: z.pares })), R.pares,
+              `${nMil(R._ubic.length)} ubicaciones distintas visitadas.`)}
+          ${cuadroPick('👟 POR CATEGORÍA', R.categoria, R.pares, 'Gender RIMS del Maestro.')}
+        </div>
+
+        <div class="glass-panel" style="padding:1rem 1.3rem; border:1px solid rgba(255,255,255,0.06); font-size:0.72rem; color:rgba(255,255,255,0.45); line-height:1.9;">
+          <b style="color:rgba(255,255,255,0.7);">Cómo se cuenta.</b>
+          Solo entran las líneas <b>Finalizada</b>: cada picking real deja además una fila <i>Cancelado</i> que es su copia
+          —misma ubicación, misma persona, el mismo segundo— y contarla duplicaría todo.
+          El <b>prepack</b> sale por cajas en el WMS y acá se abre a pares: en este período fueron
+          <b style="color:rgba(255,255,255,0.7);">${nMil(R.prepack.pares)} pares (${pctPrepack.toFixed(1)}% del total)</b> que sin abrir la curva no se verían.
+          El corte entre calzado y el resto lo hace <b>G. Gender</b> del Maestro publicado.
+        </div>
+      </div>`;
+
+    engancharPick(container);
+  };
+
+  const engancharPick = (container) => {
+    container.querySelectorAll('[data-seg]').forEach(b => {
+      b.onclick = () => { pickFiltro.seg = b.dataset.seg; renderReportePicking(container); };
+    });
+    const d = container.querySelector('#pick_desde');
+    const h = container.querySelector('#pick_hasta');
+    if (d) d.onchange = () => {
+      pickFiltro.desde = d.value;
+      if (pickFiltro.hasta < pickFiltro.desde) pickFiltro.hasta = pickFiltro.desde;
+      renderReportePicking(container);
+    };
+    if (h) h.onchange = () => {
+      pickFiltro.hasta = h.value;
+      if (pickFiltro.desde > pickFiltro.hasta) pickFiltro.desde = pickFiltro.hasta;
+      renderReportePicking(container);
+    };
+    const t = container.querySelector('#pick_todas');
+    if (t) t.onclick = () => {
+      const todos = Object.keys(pickingDiasCache || {}).sort();
+      if (!todos.length) return;
+      pickFiltro.desde = todos[0];
+      pickFiltro.hasta = todos[todos.length - 1];
+      renderReportePicking(container);
+    };
+  };
 
   /**
    * EVOLUCIÓN DEL ARTÍCULO. Lee el estudio que dejó el robot y lo dibuja.
