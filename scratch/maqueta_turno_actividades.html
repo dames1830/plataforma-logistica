@@ -1,3 +1,7 @@
+<!-- Va primero y no se saca: servido por http.server el archivo llega SIN charset
+     y el navegador lo lee como latin-1 — "artículos" salía "artÃ­culos". Abierto
+     con doble clic no se nota, porque ahí el navegador adivina bien. -->
+<meta charset="utf-8">
 <title>Gantt de actividades y cumplimiento del turno</title>
 
 <style>
@@ -310,7 +314,7 @@
   /* La versión de la clave sube con cada cambio de los datos de fábrica. Sin
      eso, la PC que ya guardó la maqueta anterior sigue viendo las actividades
      viejas y nunca le llegan las nuevas. */
-  var LS = 'maqueta_turno_v11';
+  var LS = 'maqueta_turno_v12';
 
   /* HORARIO FIJO DEL TURNO — el que dictó Daniel el 11-ago-2026.
      El plan no cambia de un día para otro: se configura una vez. Lo que cambia
