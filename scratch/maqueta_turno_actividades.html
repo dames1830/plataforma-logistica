@@ -201,7 +201,6 @@
   td input[type="time"] { width: 104px; }
   td input[type="text"] { width: 100%; min-width: 130px; }
   td.u input[type="text"] { width: 100px; min-width: 0; }
-  .fijo { display: inline-block; padding: 6px 9px; color: var(--text-2); }
   /* Marca las actividades cuyos números NO se escriben a mano: llegan solos. */
   .auto { font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .07em;
           background: var(--accent-soft); color: var(--accent); padding: 2px 7px; border-radius: 10px;
@@ -274,11 +273,7 @@
       <span><span style="display:inline-block;width:0;border-left:1px dashed var(--now);height:12px;vertical-align:-2px;margin-right:8px"></span>Ahora</span>
     </div>
 
-    <div class="phead" style="margin:26px 0 10px">
-      <span class="eyebrow">Horarios · el plan es fijo, lo real se carga cada noche</span>
-      <button id="b_lock"></button>
-    </div>
-    <div class="twrap">
+    <div class="twrap" style="margin-top:26px">
       <table id="t_hor">
         <thead><tr>
           <th class="l">Actividad</th><th>Plan · empieza</th><th>Plan · termina</th>
@@ -324,7 +319,7 @@
      seguridad ocupa su rato del turno y hay que verla en el Gantt, pero no es
      una meta —no se mide en cantidades— así que no entra a los cuadros. */
   var BASE = {
-    ini: '20:00', fin: '06:30', ahora: '06:30', editarPlan: false,
+    ini: '20:00', fin: '06:30', ahora: '06:30',
     procs: [
       { n: 'Charla de seguridad',  u: '',            meta: 0,     av: 0,     pi: '20:15', pf: '20:30', ri: '20:15', rf: '20:30', cuenta: false },
       /* AUTOMÁTICA. Los dos números salen solos del reporte Almacenaje → Marcas
@@ -380,7 +375,6 @@
        aparecía en ningún cuadro de cumplimiento y no había forma de saber por
        qué. Lo que falta se rellena con el valor de fábrica, no con vacío. */
     g.procs.forEach(function (p) { if (p.cuenta === undefined) p.cuenta = true; });
-    if (g.editarPlan === undefined) g.editarPlan = false;
     return g;
   }
   function guardar() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
@@ -596,16 +590,11 @@
 
   /* ── Tabla de horarios ────────────────────────────────────────────────── */
   function pintarHorarios() {
-    /* El plan sale como texto mientras esté con candado: es el horario de
-       siempre y no se toca todas las noches. El botón lo abre para configurarlo. */
-    var abierto = !!S.editarPlan;
-    $('#b_lock').textContent = abierto ? '🔓 Listo, dejar fijo' : '🔒 Cambiar el horario fijo';
-    $('#b_lock').className = abierto ? 'btn-a' : '';
-
+    /* El plan se escribe directo en la tabla. Antes estaba con candado y había un
+       botón para abrirlo; se saco porque el candado no aportaba nada: si el
+       horario hay que cambiarlo, se cambia. */
     var plan = function (k, i, v) {
-      return abierto
-        ? '<input type="time" data-t="h" data-k="' + k + '" data-i="' + i + '" value="' + esc(v) + '">'
-        : '<span class="fijo">' + (v ? esc(v) : '—') + '</span>';
+      return '<input type="time" data-t="h" data-k="' + k + '" data-i="' + i + '" value="' + esc(v) + '">';
     };
 
     var cuerpo = $('#t_hor').tBodies[0];
@@ -866,7 +855,6 @@
   document.addEventListener('click', function (e) {
     var d = e.target.getAttribute && e.target.getAttribute('data-del');
     if (d !== null && d !== undefined) { S.procs.splice(Number(d), 1); pintar(); return; }
-    if (e.target.id === 'b_lock') { S.editarPlan = !S.editarPlan; pintar(); return; }
     if (e.target.id === 'b_add' || e.target.id === 'b_add2') {
       /* `cuenta: true` no es un detalle: sin él la actividad nueva nacía sin la
          marca de "tiene meta", salía en el Gantt y NO en el Cumplimiento. El
