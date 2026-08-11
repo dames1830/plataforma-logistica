@@ -210,9 +210,6 @@
 
   /* ── carga de stock ──────────────────────────────────────────────────── */
   .stockbox { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
-  .sbase { font-size: 12.5px; color: var(--text-2); background: var(--panel-2); border-radius: 8px;
-           padding: 10px 13px; margin-bottom: 14px; }
-  .sbase b { font-weight: 400; color: var(--text); }
   .slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
   .slot { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; }
   .slab { display: block; font-size: 12.5px; color: var(--text-2); margin-bottom: 8px; }
@@ -247,8 +244,6 @@
     </div>
 
     <div class="stockbox">
-      <p class="eyebrow" style="margin:0 0 10px">Foto de ahora · alimenta el Gantt y el Cumplimiento</p>
-      <div class="sbase" id="s_base"></div>
       <div class="slots">
         <div class="slot">
           <span class="slab">Stock <b>activo</b> de ahora</span>
@@ -813,11 +808,6 @@
       meta += x;
       if (b) { var y = b.bufferC.get(art) || 0; if (x > y) av += x - y; }
     });
-    var base = document.getElementById('s_base');
-    if (base) base.innerHTML =
-      'Arranque del turno: <b>lo trae el servidor</b> · foto del robot de las ' + ARRANQUE.hora +
-      ' del ' + ARRANQUE.fecha + ' · <b>' + nf(meta) + '</b> pares en el Buffer C, ' +
-      Object.keys(ARRANQUE.bufferC).length + ' artículos.';
     if (!b) return;
     S.procs.forEach(function (p) {
       if (p.fuente === 'bufferC') { p.meta = Math.round(meta); p.av = Math.round(av); p.u = 'pares'; }
