@@ -1,19 +1,20 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0151';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0152';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0151';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0151';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0151';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0151';
-import * as metasService from '../services_v245/metasService.js?v=29.0151';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0151';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0151';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0151';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0151';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0151';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0151';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK } from '../reportes/picking.js?v=29.0151';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0151';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero } from '../reportes/picking_cuadros.js?v=29.0151';
+import * as adminService from '../services_v245/adminService.js?v=29.0152';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0152';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0152';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0152';
+import * as metasService from '../services_v245/metasService.js?v=29.0152';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0152';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0152';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0152';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0152';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0152';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0152';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking } from '../reportes/picking.js?v=29.0152';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0152';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero } from '../reportes/picking_cuadros.js?v=29.0152';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0152';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -370,7 +371,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0151';
+const VERSION = '29.0152';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4091,7 +4092,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0151');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0152');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14431,7 +14432,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0151 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0152 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24591,6 +24592,50 @@ window.showCellModal = function(htmlContent) {
     const bajo = R.gente.filter(p => p.bajo_corte).length;
     const pctPrepack = R.pares ? (100 * R.prepack.pares / R.pares) : 0;
 
+    // ── BALANCE Y COBERTURA DEL PISO ────────────────────────────────────────
+    // Los dos cruzan el picking con otra fuente, así que se arman acá —donde
+    // están las tareas y el stock— y el cálculo vive en picking_piso.js.
+    //
+    // El día de la tarea sale de `diaOperativoDeTarea`, que es la función que ya
+    // usan los demás reportes. Recalcularla aparte fue lo que en la maqueta
+    // dejó el miércoles en 12.831 pares cuando eran 20.657.
+    usarNombreCorto(marcaCorta);
+    const idxMaestro = indexarMaestroPicking(dataStore.articulos || []);
+    const esCalzadoSku = (sku) => (idxMaestro.get(sku) || {}).gender === 'Footwear';
+    const marcaDeSku = (sku) => (idxMaestro.get(sku) || {}).marca || 'Sin marca';
+    const diasElegidos = elegidos.map(d => ({ dia: d, resumen: pickingDiasCache[d] }));
+
+    const historico = typeof adminService.getAlmacenajeTasksHistory === 'function'
+        ? adminService.getAlmacenajeTasksHistory() : [];
+    const todasLasTareas = [...(almacenajeTasksCache || []), ...(historico || [])];
+
+    const balance = idxMaestro.vacio ? null : calcularBalance({
+        tareas: todasLasTareas,
+        dias: diasElegidos,
+        esCalzado: esCalzadoSku,
+        marcaDe: marcaDeSku,
+        diaDeTarea: (t) => diaOperativoDeTarea(t),
+        normalizar: marcaNormalizada
+    });
+
+    // El stock activo trae las seis columnas del contrato del robot, por POSICIÓN:
+    // 0 Área · 1 Artículo · 2 Descripción · 3 Ubicación · 4 Cantidad actual.
+    const cobertura = idxMaestro.vacio ? null : calcularCobertura({
+        stock: dataStore.almacenaje_activo || [],
+        dias: diasElegidos,
+        esCalzado: esCalzadoSku,
+        marcaDe: marcaDeSku,
+        normalizar: marcaNormalizada,
+        colArticulo: 1,
+        colCantidad: 4
+    });
+
+    const avisoPiso = idxMaestro.vacio
+        ? `<div class="glass-panel" style="padding:1rem 1.3rem; border:1px solid rgba(245,158,11,0.3); font-size:0.76rem; color:#fde68a; line-height:1.7;">
+             ⚠️ <b>Falta el Maestro de Artículos</b>, y sin él no se pueden armar el Balance ni la Cobertura del piso:
+             no hay forma de saber qué es calzado ni de qué marca. Publicalo desde <b>Configuración → Archivos Nube</b>.
+           </div>` : '';
+
     container.innerHTML = cabecera + `
       <div style="display:flex; flex-direction:column; gap:1.2rem;">
 
@@ -24647,6 +24692,10 @@ window.showCellModal = function(htmlContent) {
         </div>
 
         ${bloquePrepack(R)}
+
+        ${avisoPiso}
+        ${balance ? cuadroBalance(balance) : ''}
+        ${cobertura ? cuadroCobertura(cobertura) : ''}
 
         <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
           ${cuadroPick('📦 POR COLECCIÓN', R.coleccion, R.pares, 'Sale de <b>Coleccion PO</b> del Maestro, no de la temporada comercial.')}

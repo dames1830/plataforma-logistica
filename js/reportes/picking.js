@@ -345,6 +345,19 @@ export const agregar = (filas, maestro) => {
         .sort((a, b) => b.pares - a.pares);
 
     o.marcas = corte(filas, (r, m) => m.marca, maestro);
+
+    // POR MARCA CONTANDO COMO CUENTA EL WMS: la caja de prepack vale 1, no sus
+    // pares. No es el número bueno —el bueno es `marcas`— pero es el que usaba el
+    // Balance del piso de la maqueta, y sin él no hay forma de reproducir aquel
+    // cuadro para compararlo. Se guarda para poder mostrar los dos y que se vea
+    // de dónde sale la diferencia.
+    const mc = new Map();
+    filas.forEach(r => {
+        const nom = (maestro.get(r['Código de artículo']) || SIN_DATO).marca;
+        mc.set(nom, (mc.get(nom) || 0) + aNumero(r['Cantidad empaquetada']));
+    });
+    o.marcas_cajas = [...mc.entries()].map(([nom, cajas]) => ({ nom, cajas }))
+        .sort((a, b) => b.cajas - a.cajas);
     o.coleccion = corte(filas, (r, m) => m.coleccion, maestro);
     o.categoria = corte(filas, (r, m) => m.rims, maestro, 10);
     o.genero = corte(filas, (r) => r['Jerarquía de artículo 1'], maestro, 10);
@@ -548,6 +561,14 @@ export const juntarDias = (resumenes, segmento) => {
         ? +(100 * o.pares / (o.pares + o.no_entregado)).toFixed(1) : 0;
 
     o.marcas = unir(dias.map(d => d.marcas));
+
+    // El mismo por marca pero contando cajas, para poder reproducir el Balance viejo.
+    const mcJ = new Map();
+    dias.forEach(d => (d.marcas_cajas || []).forEach(x => {
+        mcJ.set(x.nom, (mcJ.get(x.nom) || 0) + x.cajas);
+    }));
+    o.marcas_cajas = [...mcJ.entries()].map(([nom, cajas]) => ({ nom, cajas }))
+        .sort((a, b) => b.cajas - a.cajas);
     o.coleccion = unir(dias.map(d => d.coleccion));
     o.categoria = unir(dias.map(d => d.categoria)).slice(0, 10);
     o.genero = unir(dias.map(d => d.genero)).slice(0, 10);
