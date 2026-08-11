@@ -1,20 +1,20 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0159';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0160';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0159';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0159';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0159';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0159';
-import * as metasService from '../services_v245/metasService.js?v=29.0159';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0159';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0159';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0159';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0159';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0159';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0159';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0159';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0159';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0159';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0159';
+import * as adminService from '../services_v245/adminService.js?v=29.0160';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0160';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0160';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0160';
+import * as metasService from '../services_v245/metasService.js?v=29.0160';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0160';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0160';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0160';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0160';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0160';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0160';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0160';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0160';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0160';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0160';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -371,7 +371,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0159';
+const VERSION = '29.0160';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4092,7 +4092,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0159');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0160');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14432,7 +14432,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0159 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0160 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24544,7 +24544,25 @@ window.showCellModal = function(htmlContent) {
       if (!container.isConnected || container.dataset.vista !== 'reporte-picking') return;
     }
 
-    const todos = Object.keys(pickingDiasCache).sort();
+    // LAS FECHAS SALEN DE LAS DOS FUENTES, no solo del picking.
+    //
+    // Regla de Daniel, 11-ago-2026: *"si no hay picking y sí hay almacenaje,
+    // también debe estar. Cuando no hay ninguna de las dos, ahí sí no pongas
+    // nada"*. El domingo 02-ago se almacenó y no se picó, y no aparecía en el
+    // filtro: para el cuadro era como si no hubiera existido.
+    const historicoT = typeof adminService.getAlmacenajeTasksHistory === 'function'
+        ? adminService.getAlmacenajeTasksHistory() : [];
+    const todasLasTareas = [...(almacenajeTasksCache || []), ...(historicoT || [])];
+
+    const conAlmacenaje = new Set();
+    todasLasTareas.forEach(t => {
+        if (!t || t.status !== 'Finalizado' || !t.u1 || !t.inicio) return;
+        const d = diaOperativoDeTarea(t);
+        if (d) conAlmacenaje.add(d);
+    });
+    const conPicking = new Set(Object.keys(pickingDiasCache));
+    const todos = [...new Set([...conPicking, ...conAlmacenaje])].sort();
+
     if (!todos.length) {
       container.innerHTML = `
         <div class="glass-panel" style="padding:3rem 2rem; text-align:center; color:var(--text-muted);">
@@ -24559,10 +24577,13 @@ window.showCellModal = function(htmlContent) {
     }
 
     pickFiltro.fechas = (pickFiltro.fechas || []).filter(d => todos.includes(d));
-    const elegidos = pickFiltro.fechas.length
+    const marcadas = pickFiltro.fechas.length
         ? todos.filter(d => pickFiltro.fechas.indexOf(d) >= 0)
         : todos;
-    const R = juntarDiasPicking(elegidos.map(d => pickingDiasCache[d]), pickFiltro.seg);
+    // Para el picking solo sirven las que tienen archivo; el balance usa todas.
+    const elegidos = marcadas.filter(d => conPicking.has(d));
+    const R = elegidos.length
+        ? juntarDiasPicking(elegidos.map(d => pickingDiasCache[d]), pickFiltro.seg) : null;
 
     const rotSeg = { calzado: 'Calzado', no_calzado: 'No calzado', todo: 'Todo' };
     const botonSeg = (id) => `
@@ -24575,16 +24596,38 @@ window.showCellModal = function(htmlContent) {
           <button data-fecha="" style="background:${!pickFiltro.fechas.length ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${!pickFiltro.fechas.length ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${!pickFiltro.fechas.length ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:5px 12px; border-radius:7px; font-size:0.72rem; font-weight:800; cursor:pointer; font-family:inherit;">Todas</button>
           ${todos.map(d => {
             const on = pickFiltro.fechas.indexOf(d) >= 0;
-            return `<button data-fecha="${d}" style="background:${on ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${on ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${on ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:5px 11px; border-radius:7px; font-size:0.72rem; font-weight:700; cursor:pointer; font-family:inherit;">${nDia(d).slice(0, 5)}</button>`;
+            // Sin picking, la jornada igual está: se marca con un punto para que
+            // se entienda por qué el resto del reporte sale vacío al elegirla.
+            const soloAlm = !conPicking.has(d);
+            return `<button data-fecha="${d}" title="${soloAlm ? 'Solo almacenaje: esta jornada no tiene archivo de picking' : ''}" style="background:${on ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${on ? '#fff' : (soloAlm ? '#fbbf24' : 'rgba(255,255,255,0.6)')}; border:1px solid ${on ? 'var(--primary)' : (soloAlm ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.1)')}; padding:5px 11px; border-radius:7px; font-size:0.72rem; font-weight:700; cursor:pointer; font-family:inherit;">${nDia(d).slice(0, 5)}${soloAlm ? ' •' : ''}</button>`;
           }).join('')}
         </div>
       </div>`;
 
     if (!R) {
-      container.innerHTML = cabecera + `
-        <div class="glass-panel" style="padding:2.5rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">
-          No hay <b>${rotSeg[pickFiltro.seg].toLowerCase()}</b> en las fechas elegidas.
-        </div>`;
+      // SIN PICKING, PERO PUEDE HABER ALMACENAJE. Antes se cortaba acá y la
+      // jornada del domingo no mostraba nada, cuando sí había mercadería que bajó.
+      const soloAlm = marcadas.filter(d => conAlmacenaje.has(d));
+      let balanceSolo = '';
+      if (soloAlm.length && (dataStore.articulos || []).length) {
+        const idxM = indexarMaestroPicking(dataStore.articulos);
+        usarNombreCorto(marcaCorta);
+        const B = calcularBalance({
+            tareas: todasLasTareas,
+            dias: soloAlm.map(d => ({ dia: d, resumen: null })),
+            esCalzado: (sku) => (idxM.get(sku) || {}).gender === 'Footwear',
+            marcaDe: (sku) => (idxM.get(sku) || {}).marca || 'Sin marca',
+            diaDeTarea: (t) => diaOperativoDeTarea(t),
+            normalizar: marcaNormalizada
+        });
+        if (B) balanceSolo = cuadroBalance(B);
+      }
+      container.innerHTML = `<div style="max-width:1180px; margin:0 auto;">` + cabecera + `
+        <div class="glass-panel" style="padding:1.2rem 1.4rem; color:#fde68a; font-size:0.8rem; line-height:1.8; margin-bottom:1.2rem; border:1px solid rgba(245,158,11,0.3);">
+          ⚠️ ${soloAlm.length ? 'Estas jornadas <b>no tienen archivo de picking</b>: solo se puede mostrar lo que se almacenó. '
+             + 'Cargue el CSV en <b>Picking → Archivo Picking</b> y aparece el resto.'
+             : `No hay <b>${rotSeg[pickFiltro.seg].toLowerCase()}</b> en las fechas elegidas.`}
+        </div>${balanceSolo}</div>`;
       engancharPick(container);
       return;
     }
@@ -24608,11 +24651,7 @@ window.showCellModal = function(htmlContent) {
     const idxMaestro = indexarMaestroPicking(dataStore.articulos || []);
     const esCalzadoSku = (sku) => (idxMaestro.get(sku) || {}).gender === 'Footwear';
     const marcaDeSku = (sku) => (idxMaestro.get(sku) || {}).marca || 'Sin marca';
-    const diasElegidos = elegidos.map(d => ({ dia: d, resumen: pickingDiasCache[d] }));
-
-    const historico = typeof adminService.getAlmacenajeTasksHistory === 'function'
-        ? adminService.getAlmacenajeTasksHistory() : [];
-    const todasLasTareas = [...(almacenajeTasksCache || []), ...(historico || [])];
+    const diasElegidos = marcadas.map(d => ({ dia: d, resumen: pickingDiasCache[d] || null }));
 
     // HASTA DÓNDE LLEGA EL CUADRO cuando no hay fechas marcadas: hasta la última
     // jornada CON ALMACENAJE, aunque su archivo de picking todavía no se haya
