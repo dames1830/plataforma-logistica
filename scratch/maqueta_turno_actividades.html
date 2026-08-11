@@ -157,9 +157,12 @@
   body::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 7px; border: 3px solid var(--bg); background-clip: padding-box; }
   body::-webkit-scrollbar-thumb:hover { background: var(--text-3); background-clip: padding-box; }
 
-  /* 232 px y no 186: en 186 el nombre más largo con su etiqueta "auto" no
-     entraba y la etiqueta salía cortada, el mismo defecto que en la tabla. */
-  .gg { min-width: 760px; display: grid; grid-template-columns: 232px 1fr; align-items: center; }
+  /* SIN `min-width`: el ancho mínimo era lo que sacaba la barra de
+     desplazamiento cuando el cuadro entraba en un panel angosto. La rejilla es
+     186 px para el nombre y el resto para el turno, así que entra en cualquier
+     ancho; si queda muy angosto, el eje rotula las horas de dos en dos.
+     Los 186 px alcanzan porque la etiqueta "auto" ya no va acá. */
+  .gg { display: grid; grid-template-columns: 186px 1fr; align-items: center; }
   .gnm { font-size: 13px; color: var(--text-2); padding: 0 12px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .axis { position: relative; height: 20px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
   .tick { position: absolute; top: 0; font-family: var(--mono); font-size: 11px; color: var(--text-3); transform: translateX(-50%); }
@@ -216,7 +219,10 @@
   .slot input[type="file"] { width: 100%; font-size: 12px; padding: 5px; }
   .slot input[type="file"]::file-selector-button { font-family: var(--mono); font-size: 12px; color: var(--accent);
     background: var(--accent-soft); border: none; border-radius: 6px; padding: 5px 11px; margin-right: 10px; cursor: pointer; }
+  /* Arranca vacío: el propio campo ya dice "Ningún archivo seleccionado" y
+     repetirlo abajo con un "sin cargar" era decir dos veces lo mismo. */
   .sinfo { font-family: var(--mono); font-size: 11.5px; color: var(--text-3); margin-top: 8px; line-height: 1.6; }
+  .sinfo:empty { margin-top: 0; }
   .sinfo b { color: var(--text-2); font-weight: 400; }
 
   .note { font-size: 12.5px; color: var(--text-3); margin: 14px 0 0; max-width: 74ch; }
@@ -248,12 +254,12 @@
         <div class="slot">
           <span class="slab">Stock <b>activo</b> de ahora</span>
           <input type="file" data-slot="now-activo" accept=".csv,text/csv">
-          <div class="sinfo" data-info="now-activo">sin cargar</div>
+          <div class="sinfo" data-info="now-activo"></div>
         </div>
         <div class="slot">
           <span class="slab">Stock <b>reserva</b> de ahora</span>
           <input type="file" data-slot="now-reserva" accept=".xlsx,.csv">
-          <div class="sinfo" data-info="now-reserva">sin cargar</div>
+          <div class="sinfo" data-info="now-reserva"></div>
         </div>
       </div>
     </div>
@@ -493,7 +499,7 @@
           b += '<span class="bar" style="left:' + pc(d) + '; width:' + pc(c.rf - d) + '; top:12px; height:11px; background:var(--warn)"></span>';
         }
       }
-      return '<div class="gnm">' + rotulo(p) + '</div><div class="lane">' + guias + b +
+      return '<div class="gnm">' + esc(p.n) + '</div><div class="lane">' + guias + b +
         '<span class="now" style="left:' + pc(AHORA) + '"></span><span class="endline"></span></div>';
     }).join('');
 
