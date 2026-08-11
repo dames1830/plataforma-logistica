@@ -349,6 +349,113 @@ export const agregar = (filas, maestro) => {
     o.categoria = corte(filas, (r, m) => m.rims, maestro, 10);
     o.genero = corte(filas, (r) => r['Jerarquía de artículo 1'], maestro, 10);
 
+    // ── A QUÉ HORA SE PICÓ ────────────────────────────────────────────────
+    // La hora del reloj, no la de la jornada: sirve para ver dónde está el pico
+    // del turno y dónde se cae. Se guarda por hora entera.
+    const ph = new Map();
+    filas.forEach(r => {
+        const h = horaDePick(r['Hora de selección']);
+        if (!h) return;
+        const k = h.getHours();
+        const a = ph.get(k) || { hora: k, lineas: 0, pares: 0, gente: new Set() };
+        a.lineas++; a.pares += paresDeLinea(r);
+        a.gente.add(r['Usuario de selección']);
+        ph.set(k, a);
+    });
+    o.por_hora = [...ph.values()]
+        .map(a => ({ hora: a.hora, lineas: a.lineas, pares: a.pares, personas: a.gente.size }))
+        .sort((a, b) => a.hora - b.hora);
+
+    // ── LAS CORRIDAS (olas) ───────────────────────────────────────────────
+    const ol = new Map();
+    filas.forEach(r => {
+        const k = r['Número de ejecución'];
+        if (!k) return;
+        const a = ol.get(k) || { ola: k, lineas: 0, pares: 0, gente: new Set(), horas: [] };
+        a.lineas++; a.pares += paresDeLinea(r);
+        a.gente.add(r['Usuario de selección']);
+        const h = horaDePick(r['Hora de selección']); if (h) a.horas.push(h);
+        ol.set(k, a);
+    });
+    o.corridas = [...ol.values()].filter(a => a.horas.length).map(a => ({
+        ola: a.ola, lineas: a.lineas, pares: a.pares, personas: a.gente.size,
+        desde: new Date(Math.min(...a.horas)).toTimeString().slice(0, 5),
+        hasta: new Date(Math.max(...a.horas)).toTimeString().slice(0, 5),
+        minutos: Math.round((Math.max(...a.horas) - Math.min(...a.horas)) / 60000)
+    })).sort((a, b) => b.lineas - a.lineas).slice(0, 15);
+
+    // ── LOS ARTÍCULOS QUE MÁS SALIERON ────────────────────────────────────
+    const ta = new Map();
+    filas.forEach(r => {
+        const k = String(r['Código de artículo'] || '').slice(0, 7);
+        const a = ta.get(k) || { codigo: k, lineas: 0, pares: 0, desc: '', ubis: new Set() };
+        a.lineas++; a.pares += paresDeLinea(r);
+        a.desc = r['Descripción de artículo'] || a.desc;
+        a.ubis.add(r['De ubicación']);
+        ta.set(k, a);
+    });
+    o.articulos = [...ta.values()].map(a => {
+        const m = maestro.get(a.codigo) || SIN_DATO;
+        return { codigo: a.codigo, lineas: a.lineas, pares: a.pares, desc: a.desc,
+                 marca: m.marca, coleccion: m.coleccion, ubicaciones: a.ubis.size };
+    }).sort((a, b) => b.pares - a.pares).slice(0, 40);
+
+    // ── QUÉ CURVAS SE PICARON ─────────────────────────────────────────────
+    // Cajas, líneas y pares por tamaño de curva. Las cajas no son las líneas:
+    // una línea puede llevar más de una caja del mismo código.
+    const cv = new Map();
+    filasPre.forEach(r => {
+        const k = paresDeLaCaja(r['Código de artículo']);
+        const a = cv.get(k) || { curva: k, cajas: 0, lineas: 0, pares: 0 };
+        a.cajas += aNumero(r['Cantidad empaquetada']);
+        a.lineas++; a.pares += paresDeLinea(r);
+        cv.set(k, a);
+    });
+    o.curvas = [...cv.values()].sort((a, b) => a.curva - b.curva);
+
+    // ── EL RECORRIDO: contenedores que obligan a visitar más de una zona ───
+    const cont = new Map();
+    filas.forEach(r => {
+        const k = r['Número de contenedor'];
+        if (!k) return;
+        const a = cont.get(k) || { zonas: new Set(), lineas: 0 };
+        a.zonas.add(String(r['De ubicación'] || '?').split('-')[0]);
+        a.lineas++;
+        cont.set(k, a);
+    });
+    const dist = new Map();
+    let multi = 0, lineasMulti = 0;
+    cont.forEach(a => {
+        const n = a.zonas.size;
+        dist.set(n, (dist.get(n) || 0) + 1);
+        if (n > 1) { multi++; lineasMulti += a.lineas; }
+    });
+    o.recorrido = {
+        contenedores: cont.size,
+        con_varias_zonas: multi,
+        lineas_en_multi: lineasMulti,
+        pct: cont.size ? +(100 * multi / cont.size).toFixed(1) : 0,
+        dist: [...dist.entries()].sort((a, b) => a[0] - b[0]).map(([z, n]) => [z, n])
+    };
+
+    // ── UBICACIÓN REPETIDA ────────────────────────────────────────────────
+    // Cuántas de las visitas son volver a un sitio donde ya se estuvo ese día.
+    const vis = new Map();
+    filas.forEach(r => {
+        const u = r['De ubicación'];
+        if (!u) return;
+        vis.set(u, (vis.get(u) || 0) + 1);
+    });
+    const totalVisitas = [...vis.values()].reduce((s, v) => s + v, 0);
+    o.repetida = {
+        visitas: totalVisitas,
+        ubicaciones: vis.size,
+        repetidas: totalVisitas - vis.size,
+        pct: totalVisitas ? +(100 * (totalVisitas - vis.size) / totalVisitas).toFixed(1) : 0,
+        top: [...vis.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12)
+            .map(([ubicacion, visitas]) => ({ ubicacion, visitas }))
+    };
+
     return o;
 };
 
@@ -455,6 +562,73 @@ export const juntarDias = (resumenes, segmento) => {
         z.set(x.cod, a);
     }));
     o.zonas = [...z.values()].sort((a, b) => b.pares - a.pares);
+
+    // ── Y LOS CUADROS QUE SE AGREGARON DESPUÉS ────────────────────────────
+    // La regla es la de siempre: el VOLUMEN se suma, lo DISTINTO se une.
+
+    // Por hora: se suma la misma hora de días distintos. Las personas de esa
+    // hora no se pueden sumar —es la misma gente cada día—, así que se toma la
+    // del día más cargado.
+    const ph = new Map();
+    dias.forEach(d => (d.por_hora || []).forEach(x => {
+        const a = ph.get(x.hora) || { hora: x.hora, lineas: 0, pares: 0, personas: 0 };
+        a.lineas += x.lineas; a.pares += x.pares;
+        a.personas = Math.max(a.personas, x.personas);
+        ph.set(x.hora, a);
+    }));
+    o.por_hora = [...ph.values()].sort((a, b) => a.hora - b.hora);
+
+    // Las corridas son de cada día y no se juntan: se apilan y se queda con las
+    // más grandes del período.
+    o.corridas = dias.flatMap(d => d.corridas || [])
+        .sort((a, b) => b.lineas - a.lineas).slice(0, 15);
+
+    const ta = new Map();
+    dias.forEach(d => (d.articulos || []).forEach(x => {
+        const a = ta.get(x.codigo) || { ...x, lineas: 0, pares: 0, ubicaciones: 0 };
+        a.lineas += x.lineas; a.pares += x.pares;
+        a.ubicaciones = Math.max(a.ubicaciones, x.ubicaciones);
+        ta.set(x.codigo, a);
+    }));
+    o.articulos = [...ta.values()].sort((a, b) => b.pares - a.pares).slice(0, 40);
+
+    const cv = new Map();
+    dias.forEach(d => (d.curvas || []).forEach(x => {
+        const a = cv.get(x.curva) || { curva: x.curva, cajas: 0, lineas: 0, pares: 0 };
+        a.cajas += x.cajas; a.lineas += x.lineas; a.pares += x.pares;
+        cv.set(x.curva, a);
+    }));
+    o.curvas = [...cv.values()].sort((a, b) => a.curva - b.curva);
+
+    const rec = { contenedores: 0, con_varias_zonas: 0, lineas_en_multi: 0, dist: [] };
+    const dm = new Map();
+    dias.forEach(d => {
+        const r = d.recorrido; if (!r) return;
+        rec.contenedores += r.contenedores;
+        rec.con_varias_zonas += r.con_varias_zonas;
+        rec.lineas_en_multi += r.lineas_en_multi;
+        (r.dist || []).forEach(([zn, n]) => dm.set(zn, (dm.get(zn) || 0) + n));
+    });
+    rec.dist = [...dm.entries()].sort((a, b) => a[0] - b[0]);
+    rec.pct = rec.contenedores ? +(100 * rec.con_varias_zonas / rec.contenedores).toFixed(1) : 0;
+    o.recorrido = rec;
+
+    // Ubicación repetida: las visitas se suman, pero las ubicaciones DISTINTAS
+    // del período son la unión —que ya está calculada en `_ubic`—, no la suma.
+    // Sumarlas contaría una misma ubicación tantas veces como días se visitó.
+    const visitas = dias.reduce((s, d) => s + ((d.repetida && d.repetida.visitas) || 0), 0);
+    const tp = new Map();
+    dias.forEach(d => ((d.repetida && d.repetida.top) || []).forEach(x => {
+        tp.set(x.ubicacion, (tp.get(x.ubicacion) || 0) + x.visitas);
+    }));
+    o.repetida = {
+        visitas,
+        ubicaciones: o._ubic.length,
+        repetidas: visitas - o._ubic.length,
+        pct: visitas ? +(100 * (visitas - o._ubic.length) / visitas).toFixed(1) : 0,
+        top: [...tp.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12)
+            .map(([ubicacion, v]) => ({ ubicacion, visitas: v }))
+    };
 
     // La gente sí se acumula por persona, y el ritmo se recalcula sobre el total
     // de horas de esa persona: promediar ritmos de días distintos da un número

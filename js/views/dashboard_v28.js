@@ -1,18 +1,19 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0150';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0151';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0150';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0150';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0150';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0150';
-import * as metasService from '../services_v245/metasService.js?v=29.0150';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0150';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0150';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0150';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0150';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0150';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0150';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK } from '../reportes/picking.js?v=29.0150';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0150';
+import * as adminService from '../services_v245/adminService.js?v=29.0151';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0151';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0151';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0151';
+import * as metasService from '../services_v245/metasService.js?v=29.0151';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0151';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0151';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0151';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0151';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0151';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0151';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK } from '../reportes/picking.js?v=29.0151';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0151';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero } from '../reportes/picking_cuadros.js?v=29.0151';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -369,7 +370,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0150';
+const VERSION = '29.0151';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4090,7 +4091,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0150');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0151');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14430,7 +14431,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0150 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0151 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24655,8 +24656,20 @@ window.showCellModal = function(htmlContent) {
         <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
           ${cuadroPick('📍 DE DÓNDE SALE', R.zonas.map(z => ({ nom: z.nom, pares: z.pares })), R.pares,
               `${nMil(R._ubic.length)} ubicaciones distintas visitadas.`)}
+          ${cuadroGenero(R, cuadroPick)}
           ${cuadroPick('👟 POR CATEGORÍA', R.categoria, R.pares, 'Gender RIMS del Maestro.')}
         </div>
+
+        ${cuadroPorHora(R)}
+        ${cuadroCurvas(R)}
+
+        <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
+          <div style="flex:1; min-width:340px;">${cuadroRecorrido(R)}</div>
+          <div style="flex:1; min-width:340px;">${cuadroRepetida(R)}</div>
+        </div>
+
+        ${cuadroCorridas(R)}
+        ${cuadroArticulos(R)}
 
         <div class="glass-panel" style="padding:1rem 1.3rem; border:1px solid rgba(255,255,255,0.06); font-size:0.72rem; color:rgba(255,255,255,0.45); line-height:1.9;">
           <b style="color:rgba(255,255,255,0.7);">Cómo se cuenta.</b>
