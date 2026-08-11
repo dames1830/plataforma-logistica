@@ -95,48 +95,72 @@ export const parsearCsvPicking = (texto) => {
  * (`#######-#-#####`): los dos primeros dígitos del sufijo son los pares. El
  * mismo código aparece en 06, 08 y 10.
  */
+/**
+ * Se reconoce por la FORMA del código, no por su largo: `#######-#-#####`.
+ * Un código de 15 caracteres con otro formato no es prepack, y contarlo como
+ * tal le multiplicaría los pares por un número sacado de donde no toca.
+ */
+const FORMA_PREPACK = /^\d{7}-\d-\d{5}$/;
+
+export const esPrepack = (sku) => FORMA_PREPACK.test(String(sku || '').trim());
+
 export const paresDeLaCaja = (sku) => {
     const s = String(sku || '').trim();
-    if (s.length !== 15) return 1;
-    const suf = s.slice(-5);
-    const n = parseInt(suf.slice(0, 2), 10);
+    if (!FORMA_PREPACK.test(s)) return 1;
+    const n = parseInt(s.slice(-5).slice(0, 2), 10);
     return (n > 0 && n <= 24) ? n : 1;
 };
-
-export const esPrepack = (sku) => String(sku || '').trim().length === 15;
 
 /**
  * LO QUE CUESTA UN PICK DE PREPACK, MEDIDO CONTRA UNO SUELTO.
  *
  * Daniel no quiere dos productividades, quiere UNA, con el prepack pesando por
- * dentro. El factor se midió con el reloj del propio archivo: el hueco entre un
- * pick y el siguiente ES lo que costó ese pick (descartando los de más de 5
- * minutos, que son paradas). Un pick suelto tarda 18 s.
+ * dentro. Es la equivalencia que él resume como *"por cada caja que saco de
+ * prepack, equivale a 1,83"* — ese 1,83 es la caja de 10, la más común.
  *
- * NO cuesta 10 veces más sacar una caja de 10: el trabajo es llegar al sitio,
- * no levantar la caja. Con el pick anterior en el mismo sitio son 9 s contra
- * 18 s; cambiando de sitio, 20 s contra 26 s.
+ * CÓMO SE MIDIÓ, sobre los nueve archivos reales: el hueco entre un pick y el
+ * siguiente DE LA MISMA PERSONA es lo que costó ese pick —caminar hasta el
+ * sitio y sacar—, descartando los huecos de más de 5 minutos, que son paradas
+ * y no trabajo. Un pick suelto tarda 18 s (mediana de 79.770 mediciones).
+ *
+ * NO cuesta diez veces más sacar una caja de diez: el trabajo es llegar al
+ * sitio, no levantar la caja. Con el pick anterior en el MISMO sitio son 9 s
+ * el suelto contra 20 s el prepack; cambiando de sitio, 20 s contra 28 s.
+ *
+ * `MUESTRA` es cuántos picks respaldan cada fila y está acá a propósito: la
+ * curva de 5 salió con factor 7,72 sobre TRES mediciones y no se usa —se le
+ * aplica el general—, porque tres huecos no miden nada. El corte es 50.
  */
-const FACTOR_PREPACK = { 6: 1.28, 8: 1.61, 10: 1.97, 12: 4.11 };
+export const EQUIVALENCIA_PREPACK = {
+    segundos_suelto: 18,
+    muestra_suelto: 79770,
+    factor_general: 1.56,
+    minimo_muestra: 50,
+    // curva → { seg: cuánto tarda, factor: medido, muestra: en cuántos picks, usa: el que se aplica }
+    curvas: {
+        4:  { seg: 35, factor: 1.94, muestra: 53,   usa: 1.94 },
+        5:  { seg: 139, factor: 7.72, muestra: 3,   usa: 1.56 },
+        6:  { seg: 26, factor: 1.44, muestra: 4500, usa: 1.44 },
+        7:  { seg: 23, factor: 1.28, muestra: 57,   usa: 1.28 },
+        8:  { seg: 29, factor: 1.61, muestra: 1203, usa: 1.61 },
+        9:  { seg: 23, factor: 1.28, muestra: 186,  usa: 1.28 },
+        10: { seg: 33, factor: 1.83, muestra: 1397, usa: 1.83 },
+        12: { seg: 61, factor: 3.39, muestra: 229,  usa: 3.39 }
+    }
+};
 
-/** El esfuerzo de una línea, en "líneas sueltas equivalentes". */
+/**
+ * El esfuerzo de una línea, en "líneas sueltas equivalentes".
+ *
+ * Una curva que no está en la tabla se cuenta con el factor general (1,56) y NO
+ * se interpola: interpolar inventa precisión que la medición no tiene, y la
+ * tabla ya no es monótona —la de 9 cuesta menos que la de 8—, así que la recta
+ * entre dos vecinas no significa nada.
+ */
 export const esfuerzoDeLinea = (sku) => {
     if (!esPrepack(sku)) return 1;
-    const pares = paresDeLaCaja(sku);
-    if (FACTOR_PREPACK[pares]) return FACTOR_PREPACK[pares];
-    // Curva no medida: se interpola con las dos vecinas conocidas en vez de
-    // contarla como suelta, que la dejaría valiendo lo mismo que un par.
-    const medidas = Object.keys(FACTOR_PREPACK).map(Number).sort((a, b) => a - b);
-    if (pares <= medidas[0]) return FACTOR_PREPACK[medidas[0]];
-    if (pares >= medidas[medidas.length - 1]) return FACTOR_PREPACK[medidas[medidas.length - 1]];
-    for (let i = 0; i < medidas.length - 1; i++) {
-        const a = medidas[i], b = medidas[i + 1];
-        if (pares > a && pares < b) {
-            const t = (pares - a) / (b - a);
-            return +(FACTOR_PREPACK[a] + t * (FACTOR_PREPACK[b] - FACTOR_PREPACK[a])).toFixed(2);
-        }
-    }
-    return 1;
+    const c = EQUIVALENCIA_PREPACK.curvas[paresDeLaCaja(sku)];
+    return c ? c.usa : EQUIVALENCIA_PREPACK.factor_general;
 };
 
 /** Los pares de verdad de una línea: la caja de prepack cuenta por sus pares. */

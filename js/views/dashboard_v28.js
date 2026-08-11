@@ -1,17 +1,17 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0146';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0147';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0146';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0146';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0146';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0146';
-import * as metasService from '../services_v245/metasService.js?v=29.0146';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0146';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0146';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0146';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0146';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0146';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0146';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING } from '../reportes/picking.js?v=29.0146';
+import * as adminService from '../services_v245/adminService.js?v=29.0147';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0147';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0147';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0147';
+import * as metasService from '../services_v245/metasService.js?v=29.0147';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0147';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0147';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0147';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0147';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0147';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0147';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK } from '../reportes/picking.js?v=29.0147';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -368,7 +368,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0146';
+const VERSION = '29.0147';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4083,7 +4083,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0146');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0147');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -14420,7 +14420,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0146 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0147 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24195,6 +24195,65 @@ window.showCellModal = function(htmlContent) {
       </div>`;
   };
 
+  /**
+   * LA EQUIVALENCIA DEL PREPACK, PLEGADA.
+   *
+   * Daniel quiere ver UNA cifra de productividad —*"¿cómo lo interpreto en el
+   * comité?"*— y que el factor corra por dentro. Pero el número tiene que poder
+   * defenderse, así que la tabla está, escondida detrás de un desplegable.
+   *
+   * Cada fila se puede comprobar con calculadora: el factor es los segundos de
+   * la caja divididos por los 18 s del pick suelto, con los dos ya redondeados.
+   * Por eso la división de la pantalla da exactamente el número de al lado.
+   */
+  const cuadroEquivalencia = () => {
+    const E = EQUIVALENCIA_PREPACK;
+    const filas = Object.keys(E.curvas).map(Number).sort((a, b) => a - b).map(c => {
+      const x = E.curvas[c];
+      const flojo = x.muestra < E.minimo_muestra;
+      return `
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+          <td style="padding:0.35rem 0.7rem; color:rgba(255,255,255,0.75);">caja de ${c}</td>
+          <td style="padding:0.35rem 0.7rem; text-align:right; color:rgba(255,255,255,0.55);">${nMil(x.muestra)}</td>
+          <td style="padding:0.35rem 0.7rem; text-align:right; color:rgba(255,255,255,0.55);">${x.seg} s</td>
+          <td style="padding:0.35rem 0.7rem; text-align:right; ${flojo ? 'color:rgba(255,255,255,0.3); text-decoration:line-through;' : 'color:rgba(255,255,255,0.75);'}">${x.factor}</td>
+          <td style="padding:0.35rem 0.7rem; text-align:right; font-weight:800; color:#4ade80;">${x.usa}</td>
+          <td style="padding:0.35rem 0.7rem; color:rgba(255,255,255,0.35); font-size:0.62rem;">${flojo ? `solo ${x.muestra} medicion${x.muestra === 1 ? '' : 'es'}: se usa el general` : ''}</td>
+        </tr>`;
+    }).join('');
+
+    return `
+      <details style="margin-top:0.7rem;">
+        <summary style="cursor:pointer; color:#a5b4fc; font-weight:800; font-size:0.7rem; letter-spacing:0.3px;">▸ Cómo se calcula el ritmo</summary>
+        <div style="margin-top:0.7rem; padding:0.8rem 0 0.2rem;">
+          <div style="margin-bottom:0.6rem; line-height:1.8;">
+            El hueco entre un pick y el siguiente <b style="color:rgba(255,255,255,0.6);">de la misma persona</b> es lo que costó ese pick:
+            caminar hasta el sitio y sacar. Los huecos de más de 5 minutos no cuentan — eso es una parada, no trabajo.
+            Un pick suelto tarda <b style="color:rgba(255,255,255,0.6);">${E.segundos_suelto} s</b>, medido sobre ${nMil(E.muestra_suelto)} huecos.
+          </div>
+          <table style="width:100%; border-collapse:collapse; font-size:0.66rem;">
+            <thead>
+              <tr style="color:rgba(255,255,255,0.35); text-align:left;">
+                <th style="padding:0.35rem 0.7rem; font-weight:700;">Qué se saca</th>
+                <th style="padding:0.35rem 0.7rem; text-align:right; font-weight:700;">Medido en</th>
+                <th style="padding:0.35rem 0.7rem; text-align:right; font-weight:700;">Tarda</th>
+                <th style="padding:0.35rem 0.7rem; text-align:right; font-weight:700;">Factor</th>
+                <th style="padding:0.35rem 0.7rem; text-align:right; font-weight:700;">Se usa</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+          <div style="margin-top:0.6rem; line-height:1.8;">
+            El factor es <b style="color:rgba(255,255,255,0.6);">los segundos de la caja divididos por los ${E.segundos_suelto} s del suelto</b>,
+            así que cada fila se puede comprobar a mano. Cuando una curva tiene menos de ${E.minimo_muestra} mediciones no se le cree
+            y se le aplica el general (<b style="color:rgba(255,255,255,0.6);">${E.factor_general}</b>).
+            Los factores están medidos sobre los archivos del 27-jul al 7-ago; si el ritmo del almacén cambia, hay que volver a medirlos.
+          </div>
+        </div>
+      </details>`;
+  };
+
   const renderReportePicking = async (container) => {
     if (!container) return;
     container.dataset.vista = 'reporte-picking';
@@ -24314,11 +24373,12 @@ window.showCellModal = function(htmlContent) {
             </table>
           </div>
           <div style="padding:0.8rem 1.3rem; background:rgba(0,0,0,0.25); font-size:0.68rem; color:rgba(255,255,255,0.4); line-height:1.8;">
-            <b style="color:rgba(255,255,255,0.6);">Ritmo</b> es una sola cifra con el prepack pesando por dentro: sacar una caja
-            de 6 cuesta 1,28 veces lo que un par suelto; la de 12, 4,11. No cuesta doce veces más porque
+            <b style="color:rgba(255,255,255,0.6);">Ritmo</b> es una sola cifra, con el prepack pesando por dentro: una caja de 10
+            equivale a <b style="color:rgba(255,255,255,0.6);">1,83</b> picks sueltos, no a 10, porque
             <b style="color:rgba(255,255,255,0.6);">el trabajo es llegar al sitio, no levantar la caja</b>.
             Las horas son las de cada persona —de su primer pick al último—, no las del turno.
             ${bajo ? `<br>Quedan fuera del podio <b style="color:rgba(255,255,255,0.6);">${bajo} ${bajo === 1 ? 'persona que trabajó' : 'personas que trabajaron'} menos de ${HORAS_MIN_RANKING} h</b>, pero sus pares sí están en los totales de arriba.` : ''}
+            ${cuadroEquivalencia()}
           </div>
         </div>
 
