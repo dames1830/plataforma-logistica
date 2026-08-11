@@ -798,7 +798,9 @@
         ? nf(res.totalB) + ' pares en el buffer · <b>' + nf(res.totalC) + '</b> en el Buffer C'
         : nf(res.total) + ' pares en reserva · ' + nf(res.lineas) + ' líneas';
       infoSlot(id, '<b>' + esc(file.name) + '</b><br>' + (res.hora ? 'foto de las ' + res.hora + ' · ' : '') + det);
-      if (id === 'now-activo' && res.hora) S.ahora = res.hora;
+      /* Con una foto cargada manda la hora de la foto: el reloj deja de mover
+         nada, o el cuadro diría una hora y los números serían de otra. */
+      if (id === 'now-activo' && res.hora) { S.ahora = res.hora; mandaLaFoto = true; }
       pintar();
     } catch (err) {
       STOCK[id] = null;
@@ -887,11 +889,34 @@
 
   window.addEventListener('resize', function () { pintarGantt(); });
 
+  /* Mientras no se cargue una foto de stock, la hora del reporte es la del
+     reloj de la computadora. */
+  var mandaLaFoto = false;
+  function delReloj() {
+    var d = new Date();
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  /* LA HORA CORRE SOLA. Cada medio minuto se mueve la línea de "ahora" y se
+     vuelve a calcular cuánto debería llevar cada actividad a esta altura del
+     turno. NO se rehacen las tablas: si alguien está escribiendo un número, no
+     se entera de nada. */
+  setInterval(function () {
+    if (mandaLaFoto) return;
+    var h = delReloj();
+    if (h === S.ahora) return;
+    S.ahora = h;
+    recalcularTurno();
+    refrescarCalculadas();
+    pintarAnillos();
+    pintarGantt();
+  }, 30000);
+
   function arrancar() {
     /* La hora actual es la del reloj, no un campo que alguien tenga que llenar.
        Si se carga una foto de stock, pasa a ser la hora de esa foto. */
-    var d = new Date();
-    S.ahora = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    S.ahora = delReloj();
+    mandaLaFoto = false;
     pintar();
   }
   arrancar();
