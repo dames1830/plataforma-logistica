@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Prueba del filtro de fechas del Reporte Picking</title>
+<!--
+  BANCO DE PRUEBAS SIN LOGIN, como prueba_turno.html y prueba_marcas.html.
+
+  NO copia el control: lo SACA de dashboard_v28.js con las llaves contadas, así
+  que lo que se ve acá es exactamente el código que va a producción. Si alguien
+  toca comboFechas y rompe un identificador, esta página lo muestra.
+-->
+<style>
+  :root {
+    --primary: #4f46e5;
+    --bg-dark: #0f172a;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: rgba(255, 255, 255, 0.1);
+  }
+  body {
+    margin: 0; padding: 2rem; background: var(--bg-dark); color: var(--text-main);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+  h1 { font-size: 1rem; font-weight: 800; letter-spacing: 0.5px; margin: 0 0 1.4rem; }
+  #estado { margin-top: 1.6rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.9; }
+  #estado b { color: var(--text-main); }
+  .mal { color: #f87171; }
+</style>
+</head>
+<body>
+<h1>Reporte Picking &mdash; filtro de fechas</h1>
+<div id="marco"></div>
+<div id="estado">Cargando el control desde <b>dashboard_v28.js</b>&hellip;</div>
+
+<script>
+const FECHAS = ['2026-07-27','2026-07-30','2026-07-31','2026-08-01','2026-08-02',
+                '2026-08-03','2026-08-04','2026-08-05','2026-08-06','2026-08-07',
+                '2026-08-08','2026-08-10','2026-08-11'];
+// El 02-ago fue domingo: tuvo almacenaje pero no picking.
+const CON_PICKING = new Set(FECHAS.filter(d => d !== '2026-08-02'));
+
+const nDia = (d) => String(d || '').split('-').reverse().join('/');
+const pickFiltro = { seg: 'calzado', fechas: [] };
+let pickMenuAbierto = false;
+let comboFechas = null;
+
+/** Saca el cuerpo de una función flecha del archivo real, contando llaves. */
+function recortar(txt, firma) {
+  const i = txt.indexOf(firma);
+  if (i < 0) throw new Error('No se encontró ' + firma);
+  let n = 0, dentro = false;
+  for (let j = i; j < txt.length; j++) {
+    if (txt[j] === '{') { n++; dentro = true; }
+    else if (txt[j] === '}') { n--; if (dentro && n === 0) return txt.slice(i, j + 1); }
+  }
+  throw new Error('Llaves sin cerrar en ' + firma);
+}
+
+const botonSeg = (id, rot, on) =>
+  `<button style="background:${on ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${on ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${on ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:6px 16px; border-radius:8px; font-size:0.73rem; font-weight:800; cursor:pointer; font-family:inherit;">${rot}</button>`;
+
+function pintar() {
+  document.getElementById('marco').innerHTML = `
+    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:1.2rem; padding-bottom:0.9rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div style="display:flex; gap:8px;">${botonSeg('calzado','Calzado',true)}${botonSeg('no_calzado','No calzado',false)}${botonSeg('todo','Todo',false)}</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
+        <span style="font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted);">Fechas</span>
+        ${comboFechas(FECHAS, CON_PICKING)}
+      </div>
+    </div>`;
+
+  document.querySelectorAll('[data-fecha]').forEach(b => {
+    b.onclick = () => {
+      const f = b.dataset.fecha;
+      if (!f) pickFiltro.fechas = [];
+      else if (pickFiltro.fechas.indexOf(f) >= 0) pickFiltro.fechas = pickFiltro.fechas.filter(x => x !== f);
+      else pickFiltro.fechas = pickFiltro.fechas.concat([f]);
+      pintar();
+    };
+  });
+  document.querySelectorAll('[data-pickmenu],[data-pickcerrar]').forEach(b => {
+    b.onclick = () => {
+      pickMenuAbierto = b.hasAttribute('data-pickmenu') ? !pickMenuAbierto : false;
+      pintar();
+    };
+  });
+
+  const s = pickFiltro.fechas;
+  document.getElementById('estado').innerHTML =
+    'Marcadas: <b>' + (s.length ? s.map(nDia).join(', ') : 'ninguna, o sea las 13') + '</b>'
+    + '<br>El reporte se armaría con <b>' + (s.length || FECHAS.length) + '</b> fecha(s).'
+    + '<br>Menú: <b>' + (pickMenuAbierto ? 'abierto' : 'cerrado') + '</b>';
+}
+
+fetch('../js/views/dashboard_v28.js')
+  .then(r => r.text())
+  .then(txt => {
+    const src = recortar(txt, 'const comboFechas = (todos, conPicking) => {');
+    comboFechas = eval('(' + src.replace('const comboFechas = ', '') + ')');
+    pintar();
+  })
+  .catch(e => {
+    document.getElementById('estado').innerHTML =
+      '<span class="mal">No se pudo montar el control: ' + e.message + '</span>';
+  });
+</script>
+</body>
+</html>
