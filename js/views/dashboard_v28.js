@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0183';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0184';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0183';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0183';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0183';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0183';
-import * as metasService from '../services_v245/metasService.js?v=29.0183';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0183';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0183';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0183';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0183';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0183';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0183';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0183';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0183';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0183';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0183';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0183';
+import * as adminService from '../services_v245/adminService.js?v=29.0184';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0184';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0184';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0184';
+import * as metasService from '../services_v245/metasService.js?v=29.0184';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0184';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0184';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0184';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0184';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0184';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0184';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0184';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0184';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0184';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0184';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0184';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0183';
+const VERSION = '29.0184';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0183');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0184');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5872,26 +5872,72 @@ const fuentesDelTurno = async (dia) => {
      * Lo pidió Daniel así: *"si mi jefe me pide a las once de la noche un reporte,
      * ¿qué hago?"*.
      *
-     * SOLO PARA LA JORNADA DE HOY, igual que la meta de más arriba. El cajón de la
-     * hora va con MASTER —cada corrida reemplaza a la anterior— así que para una
-     * jornada pasada ese stock ya es otro y daría un avance inventado. En una fecha
-     * vieja el campo queda vacío y se puede escribir a mano, que es lo honesto.
+     * EN LA JORNADA DE HOY sale del cajón de la hora. EN UNA JORNADA PASADA, de las
+     * FOTOS DEL CIERRE que congela el robot en la corrida de las 06:30.
+     *
+     * Sin esas fotos, a las 06:30 los tres avances de la noche volvían a cero con las
+     * metas ahí puestas, y no había forma de recuperarlos: el cajón de la hora va con
+     * MASTER, así que a media mañana ya es otra foto. Medir una jornada pasada contra
+     * el stock de ahora sería comparar el arranque de anoche con el almacén de esta
+     * tarde. Lo encontró Daniel el 12-ago-2026: *"¿qué pasa con el avance? Bajó el
+     * stock de las 6 am, se supone que tiene que validar lo que falta"*.
+     *
+     * Las dos vías dejan lo mismo —el Buffer C de ahora, las paletas que siguen
+     * arriba y el activo por código— así que las tres cuentas de abajo no se enteran
+     * de cuál se usó.
      *
      * La foto que se carga a mano sigue mandando: se lee en la pantalla y pisa a
      * esta. Es la salida para el día que el robot no corra. */
-    if (hoy === getLogicalDate()) {
+    const esLaDeHoy = (hoy === getLogicalDate());
+    let bcAhora = null;      // {articulo: pares} del Buffer C
+    let palArriba = null;    // Set de LPN que siguen arriba
+    let actAhora = null;     // {sku: pares} en la zona activa
+    let horaAhora = '';
 
-        /* 1. EL BUFFER C — de lo que había al arrancar, cuánto ya no está. */
+    if (esLaDeHoy) {
         const stockAhora = await traerCajonDeLaHora(AREA_STOCK_DE_LA_HORA, foto);
         if (stockAhora) {
-            const ahora = fotoBufferCDe(stockAhora.filas);
+            bcAhora = fotoBufferCDe(stockAhora.filas).detalle;
+            horaAhora = stockAhora.hora;
+            actAhora = {};
+            stockAhora.filas.forEach(f => {
+                const a = String((Array.isArray(f) ? f[1] : f['Artículo']) || '').trim();
+                if (!a) return;
+                const q = parseFloat(String((Array.isArray(f) ? f[4] : f['Cantidad actual']) || 0).replace(/,/g, '')) || 0;
+                actAhora[a] = (actAhora[a] || 0) + q;
+            });
             F.ahoraBufferC = {
-                hora: stockAhora.hora,
-                bufferC: ahora.detalle,
-                totalC: Object.keys(ahora.detalle).reduce((s, a) => s + ahora.detalle[a], 0),
+                hora: horaAhora,
+                bufferC: bcAhora,
+                totalC: Object.keys(bcAhora).reduce((s, a) => s + bcAhora[a], 0),
                 lineas: stockAhora.filas.length
             };
         }
+        const resAhora = await traerCajonDeLaHora(AREA_RESERVA_DE_LA_HORA, foto);
+        if (resAhora) palArriba = new Set(Object.keys(paletasAltasDe(resAhora.filas)).map(l => l.toUpperCase()));
+    } else {
+        /* Jornada cerrada: lo que congeló el robot a las 06:30. Si esa noche el robot
+           no corrió, no hay fotos y las tres filas quedan sin avance medido, que es lo
+           honesto: se pueden escribir a mano. */
+        try {
+            const bc = await leerArea('buffer_c_cierre', hoy);
+            if (bc && bc.detalle) {
+                bcAhora = bc.detalle;
+                horaAhora = bc.hora || '';
+                F.ahoraBufferC = {
+                    hora: horaAhora, bufferC: bcAhora,
+                    totalC: Object.keys(bcAhora).reduce((s, a) => s + (bcAhora[a] || 0), 0),
+                    lineas: 0, cerrada: true
+                };
+            }
+            const rc = await leerArea('reserva_cierre', hoy);
+            if (rc && rc.detalle) palArriba = new Set(Object.keys(rc.detalle).map(l => l.toUpperCase()));
+            const ac = await leerArea('activo_cierre', hoy);
+            if (ac && ac.detalle) actAhora = ac.detalle;
+        } catch (e) { console.warn('[TURNO] Fotos del cierre:', e); }
+    }
+
+    {
 
         /* ── 2. LA BAJADA DE PALETAS, CRUZANDO LAS DOS FOTOS DE RESERVA ───────
          *
@@ -5932,20 +5978,8 @@ const fuentesDelTurno = async (dia) => {
                y el avance de otras 1.592: una paleta bajada sin que nadie la pidiera
                contaba igual, y el porcentaje no significaba nada. */
             const pedidas = Array.isArray(plan.paletas) ? plan.paletas : [];
-            const resAhora = pedidas.length
-                ? await traerCajonDeLaHora(AREA_RESERVA_DE_LA_HORA, foto)
-                : null;
 
-            if (resAhora) {
-                const arriba = new Set(Object.keys(paletasAltasDe(resAhora.filas)).map(l => l.toUpperCase()));
-                /* Las ubicaciones que siguen ocupadas arriba, para las pocas filas del
-                   plan que no traen LPN. Se comparan sin guiones, igual que la
-                   validación del Buffer KPI. */
-                const ubisArriba = new Set();
-                resAhora.filas.forEach(f => {
-                    if (f && f.ES_ALTO) ubisArriba.add(String(f.UBICACION || '').toUpperCase().replace(/[^A-Z0-9]/g, ''));
-                });
-
+            if (pedidas.length && palArriba) {
                 /* Y los pares se sacan de la foto del arranque, que es donde está
                    cuánto traía cada paleta cuando todavía estaba arriba. */
                 const arranquePal = await leerArea('reserva_arranque', hoy);
@@ -5954,15 +5988,17 @@ const fuentesDelTurno = async (dia) => {
                 let bajaron = 0, pares = 0;
                 pedidas.forEach(p => {
                     const lpn = String((p && p.lpn) || '').trim().toUpperCase();
-                    const ubi = String((p && p.ubi) || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-                    const yaNoEsta = lpn ? !arriba.has(lpn) : (!!ubi && !ubisArriba.has(ubi));
-                    if (yaNoEsta) { bajaron++; pares += Number(traia[lpn]) || 0; }
+                    /* Sin LPN no se puede decidir contra la foto del cierre, que guarda
+                       paletas y no ubicaciones. Son pocas y se dejan fuera antes que
+                       darlas por bajadas sin saberlo. */
+                    if (!lpn) return;
+                    if (!palArriba.has(lpn)) { bajaron++; pares += Number(traia[lpn]) || 0; }
                 });
 
                 F.paletas = Object.assign({ unidad: 'paletas' }, F.paletas || {}, {
                     avance: bajaron,
-                    hora: resAhora.hora,
-                    alArrancar: pedidas.length,
+                    hora: horaAhora,
+                    alArrancar: pedidas.filter(p => String((p && p.lpn) || '').trim()).length,
                     paresBajados: Math.round(pares)
                 });
             }
@@ -5983,14 +6019,8 @@ const fuentesDelTurno = async (dia) => {
          * se avisa por consola cuando casi nada encuentra pareja. */
         try {
             const codigos = Array.isArray(plan.codigos) ? plan.codigos : [];
-            if (codigos.length && stockAhora) {
-                const activo = {};
-                stockAhora.filas.forEach(f => {
-                    const a = String((Array.isArray(f) ? f[1] : f['Artículo']) || '').trim();
-                    if (!a) return;
-                    const q = parseFloat(String((Array.isArray(f) ? f[4] : f['Cantidad actual']) || 0).replace(/,/g, '')) || 0;
-                    activo[a] = (activo[a] || 0) + q;
-                });
+            if (codigos.length && actAhora) {
+                const activo = actAhora;
 
                 let separadas = 0, aSeparar = 0, cruzan = 0;
                 codigos.forEach(p => {
@@ -6010,7 +6040,7 @@ const fuentesDelTurno = async (dia) => {
                     F.separacion = Object.assign({ unidad: 'unidades' }, F.separacion || {}, {
                         meta: Math.round(aSeparar),
                         avance: Math.round(separadas),
-                        hora: stockAhora.hora
+                        hora: horaAhora
                     });
                 }
             }
@@ -15114,7 +15144,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0183 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0184 | MOBILE PORTAL
                             </div>
                     </div>
 
