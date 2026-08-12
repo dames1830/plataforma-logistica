@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0178';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0179';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -157,7 +157,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0178';
+const VERSION = '29.0179';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -825,21 +825,38 @@ export const parseBufferFiles = async (files) => {
    No se filtran las líneas ya atendidas aunque el motor las descarte: quedarían
    10.253 de 50.333 y la pantalla diría que se perdieron filas. Verificado que el
    total pedido es el mismo con y sin filtro: 20.245 pares.
+
+   CADA UNA TRAE SU `valida`, Y NO ES UN ADORNO. En el servidor quedó un archivo de
+   pedidos del 23-jun-2026 SIN REDUCIR, de cuando esto se guardaba entero: 50.333
+   filas de 30 columnas. Hasta hoy nadie lo leía —el área era local— pero desde que
+   se lee, una PC lo bajaría, se lo daría al motor Y ADEMÁS pisaría con él la copia
+   local del archivo de hoy. Se rechaza lo que no tenga el formato reducido y se sigue
+   con lo que tenga la PC, que es el bueno.
    ══════════════════════════════════════════════════════════════════════════════ */
 const DEMANDA_EN_LA_NUBE = {
     /* PEDIDOS. Los nombres de salida son los canónicos, y están dentro de la lista
        que busca el motor, así que el cálculo no cambia ni una línea. */
-    buffer: (filas) => (filas || []).map(f => ({
-        'Código de artículo':  String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo', 'Cod. Articulo', 'CodArticulo', 'Producto']) || '').trim(),
-        'Cantidad solicitada': getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cantidad', 'Cant']) || 0,
-        'Cantidad asignada':   getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado']) || 0
-    })).filter(f => f['Código de artículo']),
+    buffer: {
+        reducir: (filas) => (filas || []).map(f => ({
+            'Código de artículo':  String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo', 'Cod. Articulo', 'CodArticulo', 'Producto']) || '').trim(),
+            'Cantidad solicitada': getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cantidad', 'Cant']) || 0,
+            'Cantidad asignada':   getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado']) || 0
+        })).filter(f => f['Código de artículo']),
+        /* Tres columnas, no treinta. Se deja margen por si alguna vez se agrega una. */
+        valida: (fila) => !!fila && !Array.isArray(fila) && Object.keys(fila).length <= 5
+    },
 
     /* OTRAS SOLICITUDES y REPLENISHMENT: código y cantidad, EN ESE ORDEN. */
-    solicitud: (filas) => (filas || []).map(f => Object.values(f).slice(0, 2))
-                                       .filter(v => String(v[0] || '').trim()),
-    tallas:    (filas) => (filas || []).map(f => Object.values(f).slice(0, 2))
-                                       .filter(v => String(v[0] || '').trim())
+    solicitud: {
+        reducir: (filas) => (filas || []).map(f => Object.values(f).slice(0, 2))
+                                         .filter(v => String(v[0] || '').trim()),
+        valida: (fila) => Array.isArray(fila) && fila.length === 2
+    },
+    tallas: {
+        reducir: (filas) => (filas || []).map(f => Object.values(f).slice(0, 2))
+                                         .filter(v => String(v[0] || '').trim()),
+        valida: (fila) => Array.isArray(fila) && fila.length === 2
+    }
 };
 
 /** ¿Esta área es una de las tres de la demanda, que ahora se comparten? */
@@ -873,7 +890,7 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
      */
     if (DEMANDA_EN_LA_NUBE[area]) {
         try {
-            const reducido = DEMANDA_EN_LA_NUBE[area](payload);
+            const reducido = DEMANDA_EN_LA_NUBE[area].reducir(payload);
             fetch(`${API_URL}/${area}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1103,6 +1120,18 @@ export const getAreaData = async (area, forceRefresh = false) => {
      });
      if (response.ok) {
          const serverResponse = await response.json();
+          /* Lo que hay en el servidor para una de las tres de la demanda tiene que venir
+             REDUCIDO. Si no, es de antes de que esto existiera —el archivo de pedidos
+             entero del 23-jun sigue ahí— y usarlo sería darle al motor un archivo de hace
+             dos meses y encima pisar con él la copia buena de esta PC. */
+          if (esAreaDeDemanda(area) && Array.isArray(serverResponse.data) && serverResponse.data.length > 0
+              && !DEMANDA_EN_LA_NUBE[area].valida(serverResponse.data[0])) {
+              console.warn(`[DEMANDA] Lo que hay en el servidor para '${area}' no está reducido ` +
+                           `(${serverResponse.data.length.toLocaleString('es')} filas del formato viejo). ` +
+                           `Se ignora y se usa la copia de esta PC.`);
+              serverResponse.data = [];
+          }
+
           if (serverResponse.data && Array.isArray(serverResponse.data) && serverResponse.data.length > 0) {
               dataStore[area] = serverResponse.data;
               repartirCanonica(area, serverResponse.data);
@@ -1124,10 +1153,14 @@ export const getAreaData = async (area, forceRefresh = false) => {
      }
   } catch (err) { console.warn(`Backend lento o vacío para '${area}'.`); }
 
-  // El respaldo de las del robot: se saltaron el IndexedDB para ir al servidor, así que si
-  // el servidor no contestó hay que volver por él. Sin esto, quedarse sin internet dejaría
-  // la pantalla vacía cuando en la PC había una copia perfectamente usable.
-  if (laPublicaElRobot && !forceRefresh) {
+  // El respaldo de las que vienen de la nube: se saltaron el IndexedDB para ir al servidor,
+  // así que si el servidor no contestó hay que volver por él. Sin esto, quedarse sin internet
+  // dejaría la pantalla vacía cuando en la PC había una copia perfectamente usable.
+  //
+  // Vale también para las TRES DE LA DEMANDA, y ahí es todavía más importante: la PC que
+  // cargó el archivo tiene el bueno: si el servidor no contesta y no se cae acá, esa
+  // computadora se quedaría sin poder correr el análisis con su propio archivo.
+  if (vieneDeLaNube && !forceRefresh) {
       const respaldo = await loadFromDB(area);
       if (respaldo) {
           console.warn(`[PULSE] '${area}' no llegó del servidor: se usa la copia de esta PC.`);
