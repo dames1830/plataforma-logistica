@@ -171,8 +171,35 @@
     check('volver al automático devuelve el número del robot', false, 'no apareció el enlace');
   }
 
+  /* ── 4. AVANCE SIN META: un guion, nunca un 0% ────────────────────────
+     El 12-ago la Bajada de paletas mostraba "109 de 0" con un 0% al lado: 109
+     paletas bajadas de verdad y el cuadro diciendo que no se hizo nada. */
+  const celdaPct = (nombre) => {
+    const tr = filaPor(nombre); if (!tr) return null;
+    return tr.cells[tr.cells.length - 3].textContent.trim();
+  };
+  check('con meta, el porcentaje se ve', celdaPct('Bajada de paletas') === '78%',
+        celdaPct('Bajada de paletas'));
+
+  const inpMeta = filaPor('Bajada de paletas').querySelector('input[data-k="meta"]');
+  inpMeta.value = '0';
+  inpMeta.dispatchEvent(new Event('input', { bubbles: true }));
+  inpMeta.dispatchEvent(new Event('change', { bubbles: true }));
+  await esperar(() => celdaPct('Bajada de paletas') === '—', 3000).catch(() => {});
+
+  check('sin meta, el porcentaje es un guion y no 0%', celdaPct('Bajada de paletas') === '—',
+        'dice ' + celdaPct('Bajada de paletas'));
+  check('y el avance medido no se pierde', campoDe('Bajada de paletas', 'av') === 97,
+        'dice ' + campoDe('Bajada de paletas', 'av'));
+  const anillos = [...document.querySelectorAll('#ta .rcard')]
+    .find(r => r.querySelector('.rn') && /Bajada de paletas/.test(r.querySelector('.rn').textContent));
+  check('el anillo dice guion, no 0%', anillos && anillos.querySelector('.hole').textContent.trim() === '—',
+        anillos && anillos.querySelector('.hole').textContent.trim());
+  check('y avisa que falta la meta', anillos && /sin meta/i.test(anillos.querySelector('.rq').textContent),
+        anillos && anillos.querySelector('.rq').textContent.trim().replace(/\s+/g, ' '));
+
   check('el módulo no tiró ningún error de JS', errores.length === 0, errores.join(' · '));
-  pintar('3/3');
+  pintar('4/4');
   window.__listo = true;
   window.__fallaron = res.filter(r => !r.ok).length + errores.length;
 </script>

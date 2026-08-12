@@ -208,7 +208,12 @@ export const montarTurno = function (RAIZ, OPC) {
     return {
       pi: pi, pf: pf, ri: ri, rf: rFin, enCurso: enCurso,
       meta: meta, av: av, esperado: esperado,
-      pct: meta > 0 ? Math.round(100 * av / meta) : 0,
+      /* SIN META NO HAY PORCENTAJE, y va null y no 0.
+         El 12-ago-2026 la Bajada de paletas mostraba "109 de 0" y al lado un 0%:
+         bajaron 109 paletas de verdad, medidas contra el stock, y el cuadro decía
+         que no se había hecho nada. Lo que falta es la meta —sale del análisis del
+         buffer— y eso hay que decirlo, no disfrazarlo de cero. */
+      pct: meta > 0 ? Math.round(100 * av / meta) : null,
       falta: Math.max(0, meta - av),
       est: est, tono: tono, desvio: desvio, desvTxt: desvTxt
     };
@@ -315,12 +320,15 @@ export const montarTurno = function (RAIZ, OPC) {
     conMeta().forEach(function (x) {
       var p = x.p;
       var c = calcular(p);
-      var g = Math.max(0, Math.min(100, c.pct));
+      /* El anillo vacío y un guion cuando todavía no hay meta: un 0% ahí diría que
+         no se hizo nada, y abajo puede haber un avance medido de verdad. */
+      var g = c.pct === null ? 0 : Math.max(0, Math.min(100, c.pct));
       anillos += '<div class="rcard">' +
         '<div class="ring" style="background:conic-gradient(' + COLOR[c.tono] + ' 0 ' + g + '%, var(--line) ' + g + '% 100%)">' +
-        '<div class="hole" style="color:' + COLOR[c.tono] + '">' + c.pct + '%</div></div>' +
+        '<div class="hole" style="color:' + COLOR[c.tono] + '">' + (c.pct === null ? '—' : c.pct + '%') + '</div></div>' +
         '<div class="rn">' + rotulo(p) + '</div>' +
-        '<div class="rq">' + nf(c.av) + ' de ' + nf(c.meta) + '<br>' + esc(p.u || '') + '</div></div>';
+        '<div class="rq">' + nf(c.av) + (c.meta ? ' de ' + nf(c.meta) : ' · <span style="opacity:.65">sin meta</span>') +
+        '<br>' + esc(p.u || '') + '</div></div>';
     });
     $('#ta_rings').innerHTML = anillos;
   }
@@ -332,7 +340,7 @@ export const montarTurno = function (RAIZ, OPC) {
     return [
       { html: c.falta ? nf(c.falta) : '—', color: c.falta ? 'var(--text-2)' : 'var(--text-3)' },
       { html: nf(c.esperado), color: 'var(--text-3)' },
-      { html: c.pct + '%', color: COLOR[c.tono] },
+      { html: c.pct === null ? '—' : c.pct + '%', color: COLOR[c.tono] },
       { html: '<span class="chip" style="background:' + FONDO[c.tono] + '; color:' + COLOR[c.tono] + '">' + c.est + '</span>', color: '' }
     ];
   }
