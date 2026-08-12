@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0166';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0167';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0166';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0166';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0166';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0166';
-import * as metasService from '../services_v245/metasService.js?v=29.0166';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0166';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0166';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0166';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0166';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0166';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0166';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0166';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0166';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0166';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0166';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0166';
+import * as adminService from '../services_v245/adminService.js?v=29.0167';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0167';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0167';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0167';
+import * as metasService from '../services_v245/metasService.js?v=29.0167';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0167';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0167';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0167';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0167';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0167';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0167';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0167';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0167';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0167';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0167';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0167';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0166';
+const VERSION = '29.0167';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4094,7 +4094,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0166');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0167');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5503,9 +5503,10 @@ export const renderDashboard = async (container, user, onLogout) => {
 const TURNO_AREA = 'turno_actividades';
 const TURNO_API  = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
 
-const leerArea = async (area) => {
+/* Con fecha trae ESA jornada; sin fecha, la única que hay. */
+const leerArea = async (area, dia) => {
     try {
-        const r = await fetch(`${TURNO_API}/${area}?date=MASTER`);
+        const r = await fetch(`${TURNO_API}/${area}?date=${dia || 'MASTER'}`);
         if (!r.ok) return null;
         const j = await r.json();
         return (j && j.data !== undefined) ? j.data : j;
@@ -5519,8 +5520,8 @@ const leerArea = async (area) => {
  * —el robot no corrió, todavía no se procesó la ola— esa actividad simplemente no
  * trae número y se puede escribir a mano, en vez de mostrar un cero que engaña.
  */
-const fuentesDelTurno = async () => {
-    const hoy = getLogicalDate();
+const fuentesDelTurno = async (dia) => {
+    const hoy = dia || getLogicalDate();
     const F = {};
 
     // Almacenamiento: es el gran total del reporte de Marcas para la jornada.
@@ -5554,8 +5555,10 @@ const fuentesDelTurno = async () => {
         }
     } catch (e) { console.warn('[TURNO] Buffer:', e); }
 
-    // La foto del Buffer C con la que arrancó el turno, que publica el robot a las 19:00.
-    const foto = await leerArea('buffer_c_arranque');
+    /* La foto del Buffer C con la que arrancó ESA jornada, que publica el robot a
+       las 19:00 y queda guardada con su fecha. Sin fecha no habría histórico:
+       la corrida de la mañana siguiente la pisaría. */
+    const foto = await leerArea('buffer_c_arranque', hoy);
     if (foto && foto.detalle) F.arranqueBufferC = { hora: foto.hora, fecha: foto.fecha, bufferC: foto.detalle };
 
     return F;
@@ -5584,21 +5587,29 @@ const fuentesDelTurno = async () => {
  * los números escritos a mano— así que el marco no le quita nada.
  */
 let turnoGuardando = null;
-const renderActividadesSection = async (container) => {
+const renderActividadesSection = async (container, dia) => {
     if (!container) return;
+    const jornada = dia || getLogicalDate();
     container.innerHTML = `
       <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:3rem; color:var(--text-muted);">
         <div style="width:26px; height:26px; border:3px solid rgba(99,102,241,0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
         <span style="font-size:0.85rem;">Trayendo el turno...</span>
       </div>`;
 
-    const [guardado, fuentes] = await Promise.all([leerArea(TURNO_AREA), fuentesDelTurno()]);
+    const [guardado, fuentes] = await Promise.all([
+        leerArea(TURNO_AREA, jornada), fuentesDelTurno(jornada)
+    ]);
     // La pestaña pudo cambiar mientras se buscaban los datos.
     if (!container.isConnected || activeAdminSub !== 'actividades') return;
 
     montarTurno(container, {
         estado: guardado,
         fuentes: fuentes,
+        fecha: jornada,
+        /* Elegir otra fecha vuelve a traerlo todo: lo guardado de esa jornada y
+           sus números. Cada turno queda con su fecha, así que el histórico se
+           arma solo — antes todo iba a MASTER y solo existía el último. */
+        alCambiarFecha: (nueva) => renderActividadesSection(container, nueva),
         /**
          * SE GUARDA EN EL SERVIDOR, no en el navegador.
          *
@@ -5614,7 +5625,7 @@ const renderActividadesSection = async (container) => {
             clearTimeout(turnoGuardando);
             turnoGuardando = setTimeout(async () => {
                 try {
-                    await fetch(`${TURNO_API}/${TURNO_AREA}?date=MASTER`, {
+                    await fetch(`${TURNO_API}/${TURNO_AREA}?date=${estado.dia || jornada}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(estado)
@@ -14613,7 +14624,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0166 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0167 | MOBILE PORTAL
                             </div>
                     </div>
 

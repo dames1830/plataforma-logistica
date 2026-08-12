@@ -129,6 +129,7 @@
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 20px; box-shadow: var(--shadow); }
   .phead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
   .fh { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+  .cal { font-size: 12px; padding: 3px 7px; color: var(--text-2); }
   /* Marco de adentro: encierra lo que se MIRA —título, cuadro y leyenda— y deja
      fuera la tabla, que es donde se ESCRIBE. */
   .marco { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; }
@@ -264,7 +265,7 @@
     <!-- El cuadro va en su propio marco, del título a la leyenda. La tabla de
          abajo queda fuera: es para escribir, no para mirar. -->
     <div class="marco neon">
-      <div class="phead"><h2>Gantt de actividades</h2><span class="fh" id="g_fh"></span></div>
+      <div class="phead"><h2>Gantt de actividades</h2><input type="date" class="cal" id="g_dia" title="Ver otra jornada"><span class="fh" id="g_fh"></span></div>
       <div class="gwrap"><div class="gg" id="gg"></div></div>
       <div class="leg">
         <span><span class="sw" style="border:1px dashed var(--plan-line); height:8px"></span>Lo que debía hacerse</span>
@@ -289,7 +290,7 @@
   </section>
 
   <section class="panel neon">
-    <div class="phead"><h2>Cumplimiento del turno</h2><span class="fh" id="c_fh"></span></div>
+    <div class="phead"><h2>Cumplimiento del turno</h2><input type="date" class="cal" id="c_dia" title="Ver otra jornada"><span class="fh" id="c_fh"></span></div>
     <div class="rings" id="rings"></div>
     <div class="twrap">
       <table id="t_cum">
@@ -310,7 +311,11 @@
   /* La versión de la clave sube con cada cambio de los datos de fábrica. Sin
      eso, la PC que ya guardó la maqueta anterior sigue viendo las actividades
      viejas y nunca le llegan las nuevas. */
-  var LS = 'maqueta_turno_v13';
+  /* UNA JORNADA POR CLAVE. La maqueta no tiene servidor, así que el histórico
+     vive en el navegador: cada fecha su propio guardado. En el módulo de verdad
+     esto lo hace el servidor, que es donde tiene que estar. */
+  var LS_BASE = 'maqueta_turno_v14';
+  var LS = LS_BASE;
 
   /* HORARIO FIJO DEL TURNO — el que dictó Daniel el 11-ago-2026.
      El plan no cambia de un día para otro: se configura una vez. Lo que cambia
@@ -384,7 +389,27 @@
     g.procs.forEach(function (p) { if (p.cuenta === undefined) p.cuenta = true; });
     return g;
   }
-  function guardar() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
+  function claveDe(dia) { return LS_BASE + (dia ? '_' + dia : ''); }
+  function guardar() { try { localStorage.setItem(claveDe(S.dia), JSON.stringify(S)); } catch (e) {} }
+
+  /* Al elegir otra fecha se guarda lo que hay y se trae lo de esa jornada. Si
+     esa fecha nunca se cargó, arranca del horario de fábrica: es un turno que
+     todavía no se trabajó, no un error. */
+  function irADia(dia) {
+    guardar();
+    var g = null;
+    try { var v = localStorage.getItem(claveDe(dia)); if (v) g = JSON.parse(v); } catch (e) {}
+    if (!g || !g.procs) g = JSON.parse(JSON.stringify(BASE));
+    g.procs.forEach(function (p) { if (p.cuenta === undefined) p.cuenta = true; });
+    g.dia = dia;
+    S = g;
+    STOCK['now-activo'] = null; STOCK['now-reserva'] = null;
+    RAIZ_INFO.forEach(function (id) { var d = document.querySelector('[data-info="' + id + '"]'); if (d) d.innerHTML = ''; });
+    mandaLaFoto = false;
+    S.ahora = delReloj();
+    pintar();
+  }
+  var RAIZ_INFO = ['now-activo', 'now-reserva'];
 
   /* DOS VENTANAS ABIERTAS SE PISABAN.
      Cada una guarda TODO el estado en cada tecla y cada una tiene su propia copia
@@ -457,12 +482,24 @@
     }
     esperado = Math.round(esperado);
 
+    /* TRES ESTADOS, los que pidió Daniel:
+     *
+     *     ATENDIDO      llegó a la meta
+     *     PENDIENTE     avanzó algo pero todavía le falta
+     *     NO ATENDIDO   no se hizo nada
+     *
+     * Es la MISMA regla que pinta el anillo, a propósito: antes el estado miraba
+     * además si a esta altura del turno ya debería llevar más, y podía decir "Al
+     * día" mientras el anillo salía amarillo. Dos cuadros del mismo renglón
+     * diciendo cosas distintas.
+     *
+     * Sin meta puesta no hay estado que dar: va un guion en gris. Poner
+     * NO ATENDIDO ahí sería culpar al turno de algo que nadie definió todavía. */
     var est, tono;
-    if (meta > 0 && av >= meta) { est = 'Cumplido'; tono = 'ok'; }
-    else if (av === 0 && esperado === 0) { est = 'Sin empezar'; tono = 'off'; }
-    else if (av >= esperado) { est = 'Al día'; tono = 'ok'; }
-    else if (av >= esperado * 0.8) { est = 'Justo'; tono = 'warn'; }
-    else { est = 'Pendiente'; tono = 'bad'; }
+    if (!meta)           { est = '—';           tono = 'off';  }
+    else if (av >= meta) { est = 'ATENDIDO';    tono = 'ok';   }
+    else if (av > 0)     { est = 'PENDIENTE';   tono = 'warn'; }
+    else                 { est = 'NO ATENDIDO'; tono = 'bad';  }
 
     var desvio = null, desvTxt = '—';
     if (rf !== null && pf !== null) { desvio = rf - pf; desvTxt = (desvio > 0 ? '+' : '') + desvio + ' min'; }
@@ -538,22 +575,27 @@
     return r;
   }
 
-  /* EL COLOR DEL ANILLO va por lo simple, que es como lo pidió Daniel:
-     verde si está cumplido, amarillo si avanzó algo y rojo si no hay nada.
-
-     No usa el mismo criterio que la columna Estado —esa mira además si a esta
-     altura del turno ya debería llevar más—, porque el anillo se lee de lejos y
-     ahí manda una sola pregunta: ¿está o no está? La actividad sin meta puesta
-     queda gris: en rojo parecería que se hizo mal algo que nadie definió. */
-  function tonoAnillo(c) {
-    if (!c.meta) return 'off';
-    if (c.av >= c.meta) return 'ok';
-    if (c.av > 0) return 'warn';
-    return 'bad';
+  /* EL CALENDARIO DE CADA CUADRO.
+     Los dos van sincronizados a propósito: son dos vistas del MISMO turno, y
+     verlos con fechas distintas se leería como un error del reporte. Se toca
+     uno y los dos se mueven. */
+  function fechaElegida() { return S.dia || hoyISO(); }
+  function hoyISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
+           '-' + String(d.getDate()).padStart(2, '0');
   }
-  /* LA FECHA Y LA HORA, al lado de cada título. Sale del reloj, o de la foto
-     de stock si se cargó una: así los dos cuadros dicen SIEMPRE el mismo
-     momento, y no hay forma de mirar uno creyendo que es de otra hora. */
+  function pintarCalendario() {
+    var v = fechaElegida();
+    ['#g_dia', '#c_dia'].forEach(function (sel) {
+      var i = $(sel);
+      if (i && i.value !== v) i.value = v;
+    });
+  }
+
+  /* LA FECHA Y LA HORA, al lado de cada título. Sale del reloj, o de la foto de
+     stock si se cargó una: así los dos cuadros dicen SIEMPRE el mismo momento y
+     no hay forma de mirar uno creyendo que es de otra hora. */
   function fechaHora() {
     var d = new Date();
     var f = S.fecha || (String(d.getDate()).padStart(2, '0') + '/' +
@@ -561,21 +603,22 @@
     return f + ' · ' + S.ahora;
   }
   function pintarFechaHora() {
+    pintarCalendario();
     var t = fechaHora();
     var a = $('#g_fh'), b = $('#c_fh');
     if (a) a.textContent = t;
     if (b) b.textContent = t;
   }
+
   function pintarAnillos() {
     var anillos = '';
-
     conMeta().forEach(function (x) {
       var p = x.p;
       var c = calcular(p);
       var g = Math.max(0, Math.min(100, c.pct));
       anillos += '<div class="rcard">' +
-        '<div class="ring" style="background:conic-gradient(' + COLOR[tonoAnillo(c)] + ' 0 ' + g + '%, var(--line) ' + g + '% 100%)">' +
-        '<div class="hole" style="color:' + COLOR[tonoAnillo(c)] + '">' + c.pct + '%</div></div>' +
+        '<div class="ring" style="background:conic-gradient(' + COLOR[c.tono] + ' 0 ' + g + '%, var(--line) ' + g + '% 100%)">' +
+        '<div class="hole" style="color:' + COLOR[c.tono] + '">' + c.pct + '%</div></div>' +
         '<div class="rn">' + rotulo(p) + '</div>' +
         '<div class="rq">' + nf(c.av) + ' de ' + nf(c.meta) + '<br>' + esc(p.u || '') + '</div></div>';
     });
@@ -878,6 +921,7 @@
   }
 
   document.addEventListener('change', function (e) {
+    if (e.target.classList && e.target.classList.contains('cal') && e.target.value) { irADia(e.target.value); return; }
     var slot = e.target.getAttribute && e.target.getAttribute('data-slot');
     if (slot && e.target.files && e.target.files[0]) cargarArchivo(slot, e.target.files[0]);
   });
@@ -967,6 +1011,8 @@
        Si se carga una foto de stock, pasa a ser la hora de esa foto. */
     S.ahora = delReloj();
     mandaLaFoto = false;
+    if (!S.dia) S.dia = hoyISO();
+    LS = claveDe(S.dia);
     pintar();
   }
   arrancar();
