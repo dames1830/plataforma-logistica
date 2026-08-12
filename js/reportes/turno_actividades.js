@@ -615,12 +615,20 @@ export const montarTurno = function (RAIZ, OPC) {
        no aparezca sin explicación. */
     var p = (OPC.fuentes && OPC.fuentes.paletas) || null;
     if (p && p.hora && p.alArrancar) {
+      /* Cuando el plan de esa noche no guardó qué paletas se pidió bajar —las
+         jornadas anteriores al 12-ago-2026— el número sale de TODAS las que estaban
+         arriba. Es cuántas bajaron, no cuántas de las pedidas bajaron, y hay que
+         decirlo: un número aproximado presentado como exacto es peor que no tenerlo. */
+      var aprox = (p.exacto === false);
       infoSlot('now-reserva',
         '<b>Llega solo del robot</b> · foto de las <b>' + esc(p.hora) + '</b>' +
-        '<br>' + nf(p.avance) + ' de ' + nf(p.alArrancar) + ' paletas ya no están arriba' +
+        '<br>' + nf(p.avance) + (aprox ? ' paletas bajaron esa noche' : ' de ' + nf(p.alArrancar) + ' paletas pedidas ya no están arriba') +
         (p.paresBajados ? ' · ' + nf(p.paresBajados) + ' pares' : '') +
         '<br><span style="opacity:.7">Se cuenta paleta por paleta: las que subieron ' +
-        'durante el turno no descuentan.</span>');
+        'durante el turno no descuentan.' +
+        (aprox ? ' <b>Esa noche no se guardó qué paletas pidió el análisis</b>, así que ' +
+                 'son todas las que bajaron: como mucho, las pedidas.' : '') +
+        '</span>');
     }
   }
 
