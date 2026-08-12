@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0181';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0182';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0181';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0181';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0181';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0181';
-import * as metasService from '../services_v245/metasService.js?v=29.0181';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0181';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0181';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0181';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0181';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0181';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0181';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0181';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0181';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0181';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0181';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0181';
+import * as adminService from '../services_v245/adminService.js?v=29.0182';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0182';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0182';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0182';
+import * as metasService from '../services_v245/metasService.js?v=29.0182';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0182';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0182';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0182';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0182';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0182';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0182';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0182';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0182';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0182';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0182';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0182';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0181';
+const VERSION = '29.0182';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0181');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0182');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15094,7 +15094,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0181 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0182 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24796,6 +24796,24 @@ window.showCellModal = function(htmlContent) {
       </div>`;
 
     pickingDiasCache = await cargarPickingDias();
+
+    /* EL MAESTRO SE TRAE ACÁ, NO SE SUPONE.
+     *
+     * Esta pantalla lo EXIGE —sin él no se separa calzado de bolsas ni se sabe la
+     * marca— y desactiva el botón si no está. Pero solo miraba `dataStore.articulos`
+     * sin ir a buscarlo: si alguien entra directo a Picking sin pasar antes por una
+     * pantalla que lo cargue, el botón queda muerto y **al pulsarlo no pasa nada**.
+     *
+     * Ese es el peor fallo posible: no da error, no dice nada, simplemente no
+     * reacciona. El 12-ago-2026 Daniel cargó el picking del día 11, no vio ningún
+     * mensaje y se fue al reporte a buscar un número que nunca se iba a calcular.
+     * El día anterior le había funcionado, porque venía de otra pantalla.
+     *
+     * `rescatarMaestro()` es barato: pide una ficha de unos bytes y solo baja el
+     * archivo grande si de verdad cambió. */
+    try { await rescatarMaestro(); }
+    catch (e) { console.warn('[Picking] no se pudo traer el Maestro publicado:', e && e.message); }
+
     if (!container.isConnected || container.dataset.vista !== 'archivo-picking') return;
 
     const dias = Object.keys(pickingDiasCache).sort().reverse();
@@ -24816,8 +24834,9 @@ window.showCellModal = function(htmlContent) {
 
           ${!hayMaestro ? `
             <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:0.8rem 1rem; margin-bottom:1rem; font-size:0.76rem; color:#fca5a5; line-height:1.6;">
-              ⚠️ <b>Falta el Maestro de Artículos.</b> Sin él no se puede separar calzado de bolsas ni saber la marca
-              ni la colección. Publíquelo desde <b>Configuración → Archivos Nube</b> y vuelva a esta pantalla.
+              ⚠️ <b>Falta el Maestro de Artículos, y por eso el botón de abajo está apagado.</b> Sin él no se puede
+              separar calzado de bolsas ni saber la marca ni la colección. Publíquelo desde
+              <b>Configuración → Archivos Nube</b> y vuelva a esta pantalla.
             </div>` : ''}
 
           <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
