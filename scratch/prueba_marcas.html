@@ -1,0 +1,56 @@
+<meta charset="utf-8">
+<title>Banco · el gran total de Marcas para una jornada</title>
+<!--
+  Corre el CÓDIGO REAL —datosMarcas, jornadaService, el motor de sincronización—
+  contra los datos del servidor, sin pasar por el login. Sirve para comprobar que
+  la fuente que alimenta Cumplimiento del turno da el mismo número que el reporte
+  de Marcas que Daniel mira en pantalla.
+-->
+<style>
+  body { background:#0b0e15; color:#e8ecf4; font-family: ui-monospace, Consolas, monospace; padding:20px; font-size:13px; }
+  b { color:#00E5FF; font-weight:400; }
+  .mal { color:#f87171; } .bien { color:#34d399; }
+</style>
+<pre id="out">trabajando…</pre>
+
+<script type="module">
+const out = document.getElementById('out');
+const di = (t) => { out.innerHTML += '\n' + t; };
+out.innerHTML = '';
+
+try {
+  const sync = await import('../js/services_v245/sync_engine_v24_9.js');
+  const jorn = await import('../js/services_v245/jornadaService.js');
+  const admin = await import('../js/services_v245/adminService.js');
+  const { datosMarcas, armarTurnoDe } = await import('../js/reportes/marcas.js');
+
+  di('bajando la jornada…');
+  await jorn.cargarJornada();
+
+  di('bajando tareas, historial y trabajadores…');
+  await sync.pullGlobal(['almacenaje_tasks', 'almacenaje_tasks_history', 'workers'], true);
+
+  const vivas = sync.syncStore.almacenaje_tasks || [];
+  const hist  = sync.syncStore.almacenaje_tasks_history || [];
+  const wk    = sync.syncStore.workers || [];
+  di('tareas vivas: <b>' + vivas.length + '</b> · historial: <b>' + hist.length + '</b> · trabajadores: <b>' + wk.length + '</b>');
+
+  const finalizadas = vivas.filter(t => t && t.status === 'Finalizado').length;
+  di('de las vivas, finalizadas: <b>' + finalizadas + '</b>');
+
+  const tareas = [...vivas, ...hist];
+  for (const dia of ['2026-08-11', '2026-08-10']) {
+    const gt = datosMarcas(tareas, dia, dia, armarTurnoDe(wk)).granTotal;
+    di('\n<b>' + dia + '</b>   buffer ' + gt.buffer.toLocaleString('es-PE') +
+       ' · dia ' + gt.dia.toLocaleString('es-PE') +
+       ' · noche ' + gt.noche.toLocaleString('es-PE') +
+       ' · TOTAL ' + gt.total.toLocaleString('es-PE') +
+       ' · ' + gt.pct + '% · pendiente ' + gt.pendiente.toLocaleString('es-PE'));
+  }
+  di('\nLo que Daniel ve en el reporte de Marcas del 11-08: buffer 25.024 · noche 3.547 · total 3.547 · 14%');
+  window.__listo = true;
+} catch (e) {
+  di('<span class="mal">' + e.message + '</span>\n' + (e.stack || ''));
+  window.__listo = 'error';
+}
+</script>

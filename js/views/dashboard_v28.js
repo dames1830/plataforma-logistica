@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0170';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0171';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0170';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0170';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0170';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0170';
-import * as metasService from '../services_v245/metasService.js?v=29.0170';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0170';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0170';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0170';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0170';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0170';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0170';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0170';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0170';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0170';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0170';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0170';
+import * as adminService from '../services_v245/adminService.js?v=29.0171';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0171';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0171';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0171';
+import * as metasService from '../services_v245/metasService.js?v=29.0171';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0171';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0171';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0171';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0171';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0171';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0171';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0171';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0171';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0171';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0171';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0171';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0170';
+const VERSION = '29.0171';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4094,7 +4094,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0170');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0171');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5526,8 +5526,24 @@ const fuentesDelTurno = async (dia) => {
 
     // Almacenamiento: es el gran total del reporte de Marcas para la jornada.
     try {
+        /* LAS TAREAS SE PIDEN AL SERVIDOR ANTES DE CONTAR.
+         *
+         * Acá se leía `almacenajeTasksCache` a secas, y esa copia es la que tenga
+         * esta PC de la última vez que se entró a Almacenaje. El 11-ago a las 00:08
+         * eso daba la meta bien —25.024, porque las tareas ya existían— y el avance
+         * en CERO, porque en esa copia todavía figuraban sin finalizar. El reporte
+         * de Marcas, al lado, decía 3.547.
+         *
+         * El propio reporte de Marcas resuelve esto releyendo `adminStore` antes de
+         * calcular; acá se hace lo mismo y además se fuerza la bajada, porque esta
+         * pantalla se puede abrir sin haber pasado nunca por Almacenaje.
+         */
+        try { await syncEngine.pullGlobal(['almacenaje_tasks'], true); } catch (e) { /* se sigue con lo que haya */ }
+        const vivas = Array.isArray(adminService.adminStore.almacenaje_tasks)
+            ? adminService.adminStore.almacenaje_tasks
+            : (almacenajeTasksCache || []);
         const tareas = [
-            ...(almacenajeTasksCache || []),
+            ...vivas,
             ...(typeof adminService.getAlmacenajeTasksHistory === 'function'
                 ? (adminService.getAlmacenajeTasksHistory() || []) : [])
         ];
@@ -14656,7 +14672,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0170 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0171 | MOBILE PORTAL
                             </div>
                     </div>
 
