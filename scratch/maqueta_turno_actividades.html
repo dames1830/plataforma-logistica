@@ -720,7 +720,7 @@
 
   /* El nombre, con la marca "auto" cuando los números no se escriben a mano
      sino que llegan del sistema. Hoy solo Almacenamiento. */
-  function rotulo(p) { return esc(p.n) + (p.auto ? ' <span class="auto">auto</span>' : ''); }
+  function rotulo(p) { return esc(p.n); }
 
   /* ── EL STOCK SE LEE ACÁ, NO SE PUBLICA ───────────────────────────────────
      El archivo entra por el navegador, se calcula y se queda en esta pantalla.
@@ -916,7 +916,11 @@
     if (!b || !stockNuevo) return;
     stockNuevo = false;
     S.procs.forEach(function (p) {
-      if (p.fuente === 'bufferC') { p.meta = Math.round(meta); p.av = Math.round(av); p.u = 'pares'; }
+      if (p.fuente !== 'bufferC') return;
+      /* Lo escrito a mano manda: la foto no lo vuelve a pisar en esta jornada. */
+      var m = p.aMano || {};
+      if (!m.meta) { p.meta = Math.round(meta); p.u = 'pares'; }
+      if (!m.av) p.av = Math.round(av);
     });
   }
 
@@ -956,6 +960,12 @@
     var k = t.getAttribute('data-k');
     if (!k) return;
     var i = Number(t.getAttribute('data-i'));
+    /* Escribir la meta o el avance los deja marcados como puestos A MANO, y
+       desde ahí la fuente automática no los vuelve a pisar en esta jornada. */
+    if (k === 'meta' || k === 'av') {
+      if (!S.procs[i].aMano) S.procs[i].aMano = {};
+      S.procs[i].aMano[k] = true;
+    }
     S.procs[i][k] = k === 'cuenta' ? t.checked
       : (k === 'meta' || k === 'av') ? (t.value === '' ? 0 : Number(t.value))
       : t.value;

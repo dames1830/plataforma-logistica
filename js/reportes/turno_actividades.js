@@ -340,14 +340,13 @@ export const montarTurno = function (RAIZ, OPC) {
            hay sitio: en los anillos de arriba y en el Gantt. */
         '<td class="l"><input type="text" ' + SIN_AYUDA + ' data-t="c" data-k="n" data-i="' + i + '" value="' + esc(p.n) + '" style="min-width:118px"></td>' +
         '<td class="u"><input type="text" ' + SIN_AYUDA + ' data-t="c" data-k="u" data-i="' + i + '" value="' + esc(p.u || '') + '"></td>' +
-        /* LO AUTOMÁTICO NO SE ESCRIBE. Si estos dos fueran campos, escribir en
-           ellos no serviría de nada: el número vuelve del servidor en el
-           siguiente dibujado y parecería que se borra solo. Salen como texto,
-           que además deja claro de un vistazo cuáles se cargan a mano. */
-        (p.auto
-          ? '<td class="fijo">' + nf(c.meta) + '</td><td class="fijo">' + nf(c.av) + '</td>'
-          : '<td><input type="number" min="0" ' + SIN_AYUDA + ' data-t="c" data-k="meta" data-i="' + i + '" value="' + c.meta + '"></td>' +
-            '<td><input type="number" min="0" ' + SIN_AYUDA + ' data-t="c" data-k="av" data-i="' + i + '" value="' + c.av + '"></td>') +
+        /* META Y AVANCE SIEMPRE SE PUEDEN ESCRIBIR, también en las automáticas.
+           Lo que se escribe a mano MANDA: desde esa tecla la fuente deja de pisar
+           ese número por el resto de la jornada. Sin esa marca el valor volvía en
+           el siguiente dibujado y parecía que se borraba solo. Mañana, con otra
+           jornada, la fuente vuelve a mandar sola. */
+        '<td><input type="number" min="0" ' + SIN_AYUDA + ' data-t="c" data-k="meta" data-i="' + i + '" value="' + c.meta + '"></td>' +
+        '<td><input type="number" min="0" ' + SIN_AYUDA + ' data-t="c" data-k="av" data-i="' + i + '" value="' + c.av + '"></td>' +
         celdasCalculadas(c).map(function (z) { return '<td style="color:' + z.color + '">' + z.html + '</td>'; }).join('') +
         '<td><button class="del" data-del="' + i + '" title="Quitar esta actividad">✕</button></td>' +
         '</tr>';
@@ -418,7 +417,7 @@ export const montarTurno = function (RAIZ, OPC) {
 
   /* El nombre, con la marca "auto" cuando los números no se escriben a mano
      sino que llegan del sistema. Hoy solo Almacenamiento. */
-  function rotulo(p) { return esc(p.n) + (p.auto ? ' <span class="auto">auto</span>' : ''); }
+  function rotulo(p) { return esc(p.n); }
 
   /* ── EL STOCK SE LEE ACÁ, NO SE PUBLICA ───────────────────────────────────
      El archivo entra por el navegador, se calcula y se queda en esta pantalla.
@@ -606,8 +605,11 @@ export const montarTurno = function (RAIZ, OPC) {
       if (!p.fuente || p.fuente === 'bufferC') return;
       var f = F[p.fuente];
       if (!f) return;
-      if (typeof f.meta === 'number') p.meta = Math.round(f.meta);
-      if (typeof f.avance === 'number') p.av = Math.round(f.avance);
+      /* Lo que Daniel escribió a mano MANDA. Sin esto la fuente lo volvía a pisar
+         en el dibujado siguiente y parecía que el número se borraba solo. */
+      var m = p.aMano || {};
+      if (typeof f.meta === 'number' && !m.meta) p.meta = Math.round(f.meta);
+      if (typeof f.avance === 'number' && !m.av) p.av = Math.round(f.avance);
       if (f.unidad) p.u = f.unidad;
       p.auto = true;
     });
@@ -626,8 +628,9 @@ export const montarTurno = function (RAIZ, OPC) {
        robot. El AVANCE, en cambio, necesita las dos fotos. */
     S.procs.forEach(function (p) {
       if (p.fuente !== 'bufferC') return;
-      if (meta > 0) { p.meta = Math.round(meta); p.u = 'pares'; p.auto = true; }
-      if (b) p.av = Math.round(av);
+      var m = p.aMano || {};
+      if (meta > 0 && !m.meta) { p.meta = Math.round(meta); p.u = 'pares'; p.auto = true; }
+      if (b && !m.av) p.av = Math.round(av);
     });
   }
 
@@ -677,6 +680,12 @@ export const montarTurno = function (RAIZ, OPC) {
     var k = t.getAttribute('data-k');
     if (!k) return;
     var i = Number(t.getAttribute('data-i'));
+    /* Escribir la meta o el avance los deja marcados como puestos A MANO, y
+       desde ahí la fuente automática no los vuelve a pisar en esta jornada. */
+    if (k === 'meta' || k === 'av') {
+      if (!S.procs[i].aMano) S.procs[i].aMano = {};
+      S.procs[i].aMano[k] = true;
+    }
     S.procs[i][k] = k === 'cuenta' ? t.checked
       : (k === 'meta' || k === 'av') ? (t.value === '' ? 0 : Number(t.value))
       : t.value;
