@@ -1,20 +1,20 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0162';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0163';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0162';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0162';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0162';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0162';
-import * as metasService from '../services_v245/metasService.js?v=29.0162';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0162';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0162';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0162';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0162';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0162';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0162';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0162';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0162';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0162';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0162';
+import * as adminService from '../services_v245/adminService.js?v=29.0163';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0163';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0163';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0163';
+import * as metasService from '../services_v245/metasService.js?v=29.0163';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0163';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0163';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0163';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0163';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0163';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0163';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0163';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0163';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0163';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0163';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -371,7 +371,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0162';
+const VERSION = '29.0163';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4093,7 +4093,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0162');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0163');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -9444,8 +9444,18 @@ const renderRFSection = (container) => {
         });
     }
 
-    // Auto-save KPI validation history (solo cuando calculamos de cero)
-    if (!preCalculatedResults) {
+    /* SE GUARDA SIEMPRE, tambien al re-procesar sobre resultados ya calculados.
+     *
+     * Antes esto colgaba de `if (!preCalculatedResults)` y por eso habia 24
+     * corridas en el historial y UNA SOLA con el detalle fila por fila —la del
+     * 07-ago, y encima la de antes de trabajar, con las 151 filas en PENDIENTE—.
+     * Sin ese detalle no hay con que medir la separacion de mercaderia: la
+     * cuenta es codigo por codigo, y el total suelto no alcanza.
+     *
+     * Guardar de mas no cuesta: `saveKPIResults` va por fecha y pisa la anterior,
+     * y el registro del historial ahora se ACTUALIZA en vez de agregar otro.
+     */
+    {
         localStorage.setItem('logistics_v24_prod_lastKPIResults', JSON.stringify(results));
 
         const todayKPI = fechaProceso || getLogicalDate();
@@ -9460,9 +9470,28 @@ const renderRFSection = (container) => {
             const requestedPalletsCount = uniquePlannedLPNs.length;
             const effectiveRequested = requestedPalletsCount > 0 ? requestedPalletsCount : results.length;
             // Sumar completados e incompletos como bajados (porque físicamente la paleta ya fue bajada)
-            const effectiveLowered  = requestedPalletsCount > 0 
-                ? (completedCount + partialCount) 
+            const effectiveLowered  = requestedPalletsCount > 0
+                ? (completedCount + partialCount)
                 : results.filter(r => r.generalState === 'COMPLETADO' || r.generalState === 'INCOMPLETO').length;
+
+            /* LAS UNIDADES, que hasta ahora no se guardaban en ningun lado.
+             *
+             * `unidadesASeparar` es lo que manda bajar el analisis del buffer —lo
+             * que Daniel lee en Analisis Buffer SKU—. `unidadesSeparadas` es lo
+             * que de verdad llego al piso, CODIGO POR CODIGO y con tope:
+             *
+             *     min( lo que habia que bajar , lo que subio en la zona activa )
+             *
+             * El tope es regla de Daniel: *"me puedes pedir ochenta pero yo puedo
+             * bajar cien; la cosa es tener igual o mas, nunca menos"*. Sin el, un
+             * codigo que bajo de mas taparia a otros que no bajaron nada.
+             */
+            const num = (v) => parseFloat(String(v == null ? 0 : v).replace(/,/g, '')) || 0;
+            const bajadoDe = (r) => Math.min(num(r.plannedQty),
+                                             Math.max(0, num(r.actFinalQty) - num(r.origActQty)));
+            const unidadesASeparar  = results.reduce((s, r) => s + num(r.plannedQty), 0);
+            const unidadesSeparadas = results.reduce((s, r) => s + bajadoDe(r), 0);
+
             if (effectiveRequested > 0) {
                 const todayISO = fechaProceso || getLogicalDate();
                 const record = {
@@ -9470,15 +9499,36 @@ const renderRFSection = (container) => {
                     paletasSolicitadas:  effectiveRequested,
                     paletasBajadas:      effectiveLowered,
                     diferencias:         Math.max(0, effectiveRequested - effectiveLowered),
-                    fillRate:            ((effectiveLowered / effectiveRequested) * 100).toFixed(2) + '%'
+                    fillRate:            ((effectiveLowered / effectiveRequested) * 100).toFixed(2) + '%',
+                    /* `paletasBajadas` cuenta las INCOMPLETAS como bajadas —"fisicamente
+                       la paleta ya bajo"—, y por eso da 100% en 11 de las ultimas 12
+                       corridas. Estas dos van aparte para poder mirar el cumplimiento
+                       de verdad sin cambiarle el significado a la de arriba. */
+                    paletasCompletas:    completedCount,
+                    paletasIncompletas:  partialCount,
+                    unidadesASeparar:    Math.round(unidadesASeparar),
+                    unidadesSeparadas:   Math.round(unidadesSeparadas)
                 };
-                saveBufferHistoryRecord(record).then(serverId => {
-                    if (serverId) {
-                        console.log(`[BH] ✅ Registro sincronizado. Servidor id=${serverId}`);
-                    } else {
-                        console.warn('[BH] ⚠️ Guardado solo en localStorage (servidor no disponible).');
-                    }
-                });
+
+                /* UN REGISTRO POR JORNADA, NO UNO POR CORRIDA. El 07-ago quedaron
+                   dos del mismo dia —134/0 y 142/142— y un reporte que busque "el
+                   del dia" puede agarrar el equivocado. Si ya hay uno, se
+                   actualiza; si no, se crea. */
+                fetchBufferHistory().then(hist => {
+                    const previo = (hist || []).find(r => r && r.fecha === todayISO);
+                    const guardado = (previo && previo.id)
+                        ? updateBufferHistoryRecord(previo.id, record).then(ok => ok ? previo.id : null)
+                        : saveBufferHistoryRecord(record);
+                    return guardado.then(serverId => {
+                        if (serverId) {
+                            console.log(`[BH] ✅ ${previo ? 'Actualizado' : 'Creado'} el registro del ${todayISO}. id=${serverId} · ` +
+                                        `${record.paletasCompletas} completas, ${record.paletasIncompletas} incompletas, ` +
+                                        `${record.unidadesSeparadas} de ${record.unidadesASeparar} unidades.`);
+                        } else {
+                            console.warn('[BH] ⚠️ Guardado solo en localStorage (servidor no disponible).');
+                        }
+                    });
+                }).catch(e => console.warn('[BH] ⚠️ No se pudo guardar el registro:', e));
             }
         } catch(e) {
             console.warn("[PULSE] Error auto-saving KPI validation run:", e);
@@ -14475,7 +14525,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0162 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0163 | MOBILE PORTAL
                             </div>
                     </div>
 
