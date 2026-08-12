@@ -242,14 +242,8 @@
 
 <div class="page">
 
-  <header>
-    <p class="eyebrow">Maqueta · nada de esto está programado todavía</p>
-    <h1>Control del turno — actividades y cumplimiento</h1>
-    <p class="lead">Todos los campos se pueden escribir y los cuadros se recalculan solos. Cambie las horas, las metas y los avances hasta que quede como lo necesita; lo que quede acá es lo que se programa.</p>
-  </header>
 
   <section class="panel">
-    <div class="phead"><h2>Stock</h2><button id="b_reset">Volver al ejemplo</button></div>
     <div>
       <div class="slots">
         <div class="slot">
@@ -545,6 +539,19 @@
     return r;
   }
 
+  /* EL COLOR DEL ANILLO va por lo simple, que es como lo pidió Daniel:
+     verde si está cumplido, amarillo si avanzó algo y rojo si no hay nada.
+
+     No usa el mismo criterio que la columna Estado —esa mira además si a esta
+     altura del turno ya debería llevar más—, porque el anillo se lee de lejos y
+     ahí manda una sola pregunta: ¿está o no está? La actividad sin meta puesta
+     queda gris: en rojo parecería que se hizo mal algo que nadie definió. */
+  function tonoAnillo(c) {
+    if (!c.meta) return 'off';
+    if (c.av >= c.meta) return 'ok';
+    if (c.av > 0) return 'warn';
+    return 'bad';
+  }
   function pintarAnillos() {
     var anillos = '';
 
@@ -553,8 +560,8 @@
       var c = calcular(p);
       var g = Math.max(0, Math.min(100, c.pct));
       anillos += '<div class="rcard">' +
-        '<div class="ring" style="background:conic-gradient(' + COLOR[c.tono] + ' 0 ' + g + '%, var(--line) ' + g + '% 100%)">' +
-        '<div class="hole" style="color:' + COLOR[c.tono] + '">' + c.pct + '%</div></div>' +
+        '<div class="ring" style="background:conic-gradient(' + COLOR[tonoAnillo(c)] + ' 0 ' + g + '%, var(--line) ' + g + '% 100%)">' +
+        '<div class="hole" style="color:' + COLOR[tonoAnillo(c)] + '">' + c.pct + '%</div></div>' +
         '<div class="rn">' + rotulo(p) + '</div>' +
         '<div class="rq">' + nf(c.av) + ' de ' + nf(c.meta) + '<br>' + esc(p.u || '') + '</div></div>';
     });
@@ -907,8 +914,6 @@
       if (f) { f.focus(); f.select(); }
       return;
     }
-
-    if (e.target.id === 'b_reset') { S = JSON.parse(JSON.stringify(BASE)); arrancar(); }
   });
 
   window.addEventListener('resize', function () { pintarGantt(); });
