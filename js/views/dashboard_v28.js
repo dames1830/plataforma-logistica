@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0182';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0183';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0182';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0182';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0182';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0182';
-import * as metasService from '../services_v245/metasService.js?v=29.0182';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0182';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0182';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0182';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0182';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0182';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0182';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0182';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0182';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0182';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0182';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0182';
+import * as adminService from '../services_v245/adminService.js?v=29.0183';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0183';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0183';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0183';
+import * as metasService from '../services_v245/metasService.js?v=29.0183';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0183';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0183';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0183';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0183';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0183';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0183';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0183';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0183';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0183';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0183';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0183';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0182';
+const VERSION = '29.0183';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0182');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0183');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13129,7 +13129,27 @@ const renderRFSection = (container) => {
     }));
 
     const container = document.getElementById('areaContent');
-    if (activeSub && activeSub.startsWith('archivo_')) {
+
+    /* PICKING TIENE SU PROPIA PANTALLA DE ARCHIVO, Y ESTA RAMA SE LA COMÍA.
+     *
+     * Las pestañas "Archivo X" de casi todos los módulos son la misma cosa: subir el
+     * Stock Activo y el de Reserva de ese módulo. Por eso esta rama las atiende a
+     * todas de una, con `startsWith('archivo_')`.
+     *
+     * Pero cuando se hizo el módulo de Picking (v29.0145) su pestaña se llamó igual
+     * —`archivo_picking`— y ESTA rama, que es anterior y va primero en la cadena, se
+     * la quedaba: en vez de la carga de los CSV del WMS, la pantalla mostraba dos
+     * cuadros de stock vacíos, y la rama propia de Picking, que está más abajo en el
+     * mismo `else if`, no se alcanzaba NUNCA.
+     *
+     * Daniel lo encontró el 12-ago-2026 buscando el botón de cargar el picking del
+     * día 11: *"¿dónde está el ELEGIR ARCHIVO?"*. No estaba, y no estuvo nunca desde
+     * que el módulo existe.
+     *
+     * Se excluye por MÓDULO y no por sub-pestaña porque las otras siete
+     * —almacenaje, recepción, inventario, packing, despacho, no_retail, análisis—
+     * sí son genéricas de verdad y tienen que seguir entrando acá. */
+    if (activeSub && activeSub.startsWith('archivo_') && tabId !== 'picking') {
         const actKey = `${tabId}_activo`;
         const resKey = `${tabId}_reserva`;
 
@@ -15094,7 +15114,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0182 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0183 | MOBILE PORTAL
                             </div>
                     </div>
 
