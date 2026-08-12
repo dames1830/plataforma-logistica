@@ -1,20 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0163';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0164';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0163';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0163';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0163';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0163';
-import * as metasService from '../services_v245/metasService.js?v=29.0163';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0163';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0163';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0163';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0163';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0163';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0163';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0163';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0163';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0163';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0163';
+import * as adminService from '../services_v245/adminService.js?v=29.0164';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0164';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0164';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0164';
+import * as metasService from '../services_v245/metasService.js?v=29.0164';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0164';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0164';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0164';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0164';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0164';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0164';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0164';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0164';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0164';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0164';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0164';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -371,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0163';
+const VERSION = '29.0164';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4093,7 +4094,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0163');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0164');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5496,6 +5497,70 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
 
+/* ── ADMINISTRACIÓN → ACTIVIDADES ─────────────────────────────────────────────
+   El dibujo vive en js/reportes/turno_actividades.js. Acá se junta lo que ese
+   archivo no sabe buscar: lo guardado del turno y los números que llegan solos. */
+const TURNO_AREA = 'turno_actividades';
+const TURNO_API  = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+
+const leerArea = async (area) => {
+    try {
+        const r = await fetch(`${TURNO_API}/${area}?date=MASTER`);
+        if (!r.ok) return null;
+        const j = await r.json();
+        return (j && j.data !== undefined) ? j.data : j;
+    } catch (e) { console.warn(`[TURNO] No se pudo leer ${area}:`, e); return null; }
+};
+
+/**
+ * LOS NÚMEROS QUE LLEGAN SOLOS, para la jornada de hoy.
+ *
+ * Cada uno sale de donde ya vivía; acá no se recalcula nada. Si una fuente falta
+ * —el robot no corrió, todavía no se procesó la ola— esa actividad simplemente no
+ * trae número y se puede escribir a mano, en vez de mostrar un cero que engaña.
+ */
+const fuentesDelTurno = async () => {
+    const hoy = getLogicalDate();
+    const F = {};
+
+    // Almacenamiento: es el gran total del reporte de Marcas para la jornada.
+    try {
+        const tareas = [
+            ...(almacenajeTasksCache || []),
+            ...(typeof adminService.getAlmacenajeTasksHistory === 'function'
+                ? (adminService.getAlmacenajeTasksHistory() || []) : [])
+        ];
+        if (tareas.length) {
+            const gt = datosMarcas(tareas, hoy, hoy, armarTurnoDe(adminService.getWorkers())).granTotal;
+            if (gt && gt.buffer > 0) F.almacenamiento = { meta: gt.buffer, avance: gt.total, unidad: 'pares' };
+        }
+    } catch (e) { console.warn('[TURNO] Almacenamiento:', e); }
+
+    /* Bajada de paletas y Separación salen del MISMO registro del historial del
+       buffer, el que escribe el proceso de paletas al cerrar su corrida.
+       Para las paletas se usa `paletasCompletas` y no `paletasBajadas`: esta
+       última suma las incompletas —"físicamente la paleta ya bajó"— y por eso da
+       100% en 11 de las últimas 12 corridas. Si el registro es viejo y no la
+       trae, se cae a la de siempre. */
+    try {
+        const hist = await fetchBufferHistory();
+        const reg = (hist || []).find(r => r && r.fecha === hoy);
+        if (reg) {
+            const completas = (reg.paletasCompletas !== undefined) ? reg.paletasCompletas : reg.paletasBajadas;
+            if (reg.paletasSolicitadas > 0)
+                F.paletas = { meta: reg.paletasSolicitadas, avance: completas, unidad: 'paletas' };
+            if (reg.unidadesASeparar > 0)
+                F.separacion = { meta: reg.unidadesASeparar, avance: reg.unidadesSeparadas || 0, unidad: 'unidades' };
+        }
+    } catch (e) { console.warn('[TURNO] Buffer:', e); }
+
+    // La foto del Buffer C con la que arrancó el turno, que publica el robot a las 19:00.
+    const foto = await leerArea('buffer_c_arranque');
+    if (foto && foto.detalle) F.arranqueBufferC = { hora: foto.hora, fecha: foto.fecha, bufferC: foto.detalle };
+
+    return F;
+};
+
 /**
  * ADMINISTRACIÓN → ACTIVIDADES — el control del turno de noche.
  *
@@ -5518,23 +5583,46 @@ export const renderDashboard = async (container, user, onLogout) => {
  * del análisis del buffer. Hoy ninguna de esas está conectada —la maqueta trae
  * los números escritos a mano— así que el marco no le quita nada.
  */
-const renderActividadesSection = (container) => {
+let turnoGuardando = null;
+const renderActividadesSection = async (container) => {
     if (!container) return;
     container.innerHTML = `
-      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:1rem;">
-        <span style="font-size:0.72rem; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
-                     color:#fbbf24; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3);
-                     padding:3px 10px; border-radius:20px;">Maqueta</span>
-        <span style="font-size:0.8rem; color:var(--text-muted);">
-          Los números son de ejemplo. Se está puliendo antes de conectarla a los datos de verdad.
-        </span>
-        <a href="scratch/maqueta_turno_actividades.html" target="_blank" rel="noopener"
-           style="margin-left:auto; font-size:0.78rem; color:#a5b4fc; text-decoration:none;">Abrir en otra pestaña ↗</a>
-      </div>
-      <iframe src="scratch/maqueta_turno_actividades.html"
-              title="Control del turno: actividades y cumplimiento"
-              style="width:100%; height:calc(100vh - 250px); min-height:600px; border:1px solid var(--border);
-                     border-radius:12px; background:#0b0e15;"></iframe>`;
+      <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:3rem; color:var(--text-muted);">
+        <div style="width:26px; height:26px; border:3px solid rgba(99,102,241,0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:0.85rem;">Trayendo el turno...</span>
+      </div>`;
+
+    const [guardado, fuentes] = await Promise.all([leerArea(TURNO_AREA), fuentesDelTurno()]);
+    // La pestaña pudo cambiar mientras se buscaban los datos.
+    if (!container.isConnected || activeAdminSub !== 'actividades') return;
+
+    montarTurno(container, {
+        estado: guardado,
+        fuentes: fuentes,
+        /**
+         * SE GUARDA EN EL SERVIDOR, no en el navegador.
+         *
+         * Con el estado en cada PC, cada computadora vería sus propias actividades
+         * y sus propios avances — el mismo enredo que ya se había resuelto con el
+         * stock. Y con dos ventanas abiertas se pisaban entre ellas: Daniel vio
+         * desaparecer lo que acababa de escribir.
+         *
+         * Va con espera: escribir un número dispara un cambio por tecla, y sin esto
+         * se mandaría una petición por letra.
+         */
+        alGuardar: (estado) => {
+            clearTimeout(turnoGuardando);
+            turnoGuardando = setTimeout(async () => {
+                try {
+                    await fetch(`${TURNO_API}/${TURNO_AREA}?date=MASTER`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(estado)
+                    });
+                } catch (e) { console.warn('[TURNO] No se pudo guardar:', e); }
+            }, 1200);
+        }
+    });
 };
 
 const renderRFSection = (container) => {
@@ -14525,7 +14613,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0163 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0164 | MOBILE PORTAL
                             </div>
                     </div>
 

@@ -1,0 +1,55 @@
+<meta charset="utf-8">
+<title>Banco de pruebas · módulo del turno</title>
+<!--
+  Ejecuta el MÓDULO REAL (js/reportes/turno_actividades.js) fuera del tablero, que
+  pide contraseña. Le da fuentes de mentira con los números que ya verificamos
+  contra el servidor, y engancha window.onerror: si algo revienta al dibujar, se
+  ve acá y no en la pantalla de Daniel.
+-->
+<style>
+  body { background:#0b0e15; color:#e8ecf4; font-family: system-ui, "Segoe UI", sans-serif; margin:0; }
+  #panel { padding:10px 16px; background:#151a24; border-bottom:1px solid #242b3a; font-family: ui-monospace, Consolas, monospace; font-size:12px; }
+  #panel b { color:#00E5FF; font-weight:400; }
+  .mal { color:#f87171; }
+  .bien { color:#34d399; }
+  #caja { padding:8px; }
+</style>
+<div id="panel">cargando…</div>
+<div id="caja"></div>
+
+<script type="module">
+  const errores = [];
+  window.onerror = (m, f, l) => { errores.push(m + ' (' + f + ':' + l + ')'); pintarPanel(); };
+  window.addEventListener('unhandledrejection', e => { errores.push('promesa: ' + e.reason); pintarPanel(); });
+
+  let guardados = 0;
+  const pintarPanel = () => {
+    const p = document.getElementById('panel');
+    p.innerHTML = errores.length
+      ? '<span class="mal">' + errores.length + ' error(es): ' + errores.join(' · ') + '</span>'
+      : '<span class="bien">sin errores</span> · guardados: <b>' + guardados + '</b>' +
+        ' · actividades en el Gantt: <b>' + document.querySelectorAll('#ta .lane').length + '</b>' +
+        ' · en Cumplimiento: <b>' + document.querySelectorAll('#ta #ta_t_cum tbody tr').length + '</b>' +
+        ' · anillos: <b>' + document.querySelectorAll('#ta .rcard').length + '</b>';
+  };
+
+  const { montarTurno } = await import('../js/reportes/turno_actividades.js');
+
+  /* Los números que ya verificamos contra el servidor el 11-ago. */
+  const fuentes = {
+    almacenamiento: { meta: 32994, avance: 18195, unidad: 'pares' },
+    paletas:        { meta: 124,   avance: 100,   unidad: 'paletas' },
+    separacion:     { meta: 2496,  avance: 1500,  unidad: 'unidades' },
+    arranqueBufferC: { hora: '19:00', fecha: '2026-08-10',
+                       bufferC: { '1811335-1-06009': 55, '2811335-1-06023': 57, '0819307-1-06007': 38 } }
+  };
+
+  montarTurno(document.getElementById('caja'), {
+    estado: null,
+    fuentes,
+    alGuardar: () => { guardados++; pintarPanel(); }
+  });
+
+  pintarPanel();
+  window.__listo = true;
+</script>
