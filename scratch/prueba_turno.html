@@ -5,10 +5,16 @@
   pide contraseña. Le da fuentes de mentira con los números que ya verificamos
   contra el servidor, y engancha window.onerror: si algo revienta al dibujar, se
   ve acá y no en la pantalla de Daniel.
+
+  12-ago-2026: cubre además EL STOCK DE LA HORA, que el robot publica solo. Las
+  tres cosas que hay que probar y que ninguna prueba de compilación ve:
+    1. que el avance de Limpieza de Buffer C se llene sin cargar ningún archivo;
+    2. que un archivo cargado a mano lo pise;
+    3. que se pueda VOLVER al automático, que es la parte que el 11-ago faltó.
 -->
 <style>
   body { background:#0b0e15; color:#e8ecf4; font-family: system-ui, "Segoe UI", sans-serif; margin:0; }
-  #panel { padding:10px 16px; background:#151a24; border-bottom:1px solid #242b3a; font-family: ui-monospace, Consolas, monospace; font-size:12px; }
+  #panel { padding:10px 16px; background:#151a24; border-bottom:1px solid #242b3a; font-family: ui-monospace, Consolas, monospace; font-size:12px; white-space:pre-line; }
   #panel b { color:#00E5FF; font-weight:400; }
   .mal { color:#f87171; }
   .bien { color:#34d399; }
@@ -19,37 +25,130 @@
 
 <script type="module">
   const errores = [];
-  window.onerror = (m, f, l) => { errores.push(m + ' (' + f + ':' + l + ')'); pintarPanel(); };
-  window.addEventListener('unhandledrejection', e => { errores.push('promesa: ' + e.reason); pintarPanel(); });
+  window.onerror = (m, f, l) => { errores.push(m + ' (' + f + ':' + l + ')'); };
+  window.addEventListener('unhandledrejection', e => { errores.push('promesa: ' + e.reason); });
+
+  const res = [];
+  const check = (nombre, ok, detalle) => res.push({ nombre, ok, detalle: detalle || '' });
 
   let guardados = 0;
-  const pintarPanel = () => {
-    const p = document.getElementById('panel');
-    p.innerHTML = errores.length
-      ? '<span class="mal">' + errores.length + ' error(es): ' + errores.join(' · ') + '</span>'
-      : '<span class="bien">sin errores</span> · guardados: <b>' + guardados + '</b>' +
-        ' · actividades en el Gantt: <b>' + document.querySelectorAll('#ta .lane').length + '</b>' +
-        ' · en Cumplimiento: <b>' + document.querySelectorAll('#ta #ta_t_cum tbody tr').length + '</b>' +
-        ' · anillos: <b>' + document.querySelectorAll('#ta .rcard').length + '</b>';
+  const pintar = (estado) => {
+    const fallan = res.filter(r => !r.ok);
+    document.getElementById('panel').innerHTML =
+      (errores.length ? '<span class="mal">' + errores.length + ' ERROR(ES) DE JS: ' + errores.join(' · ') + '</span>\n'
+                      : '<span class="bien">sin errores de js</span>\n') +
+      res.map(r => (r.ok ? '<span class="bien">  OK  </span>' : '<span class="mal">FALLA </span>') +
+                   ' ' + r.nombre + (r.detalle ? '  → ' + r.detalle : '')).join('\n') +
+      '\n' + (fallan.length ? '<span class="mal">FALLARON ' + fallan.length + '</span>'
+                            : '<span class="bien">TODO BIEN</span>') +
+      ' · ' + (estado || '') +
+      ' · guardados: <b>' + guardados + '</b>' +
+      ' · Gantt: <b>' + document.querySelectorAll('#ta .lane').length + '</b>' +
+      ' · Cumplimiento: <b>' + document.querySelectorAll('#ta #ta_t_cum tbody tr').length + '</b>';
   };
 
   const { montarTurno } = await import('../js/reportes/turno_actividades.js');
 
   /* Los números que ya verificamos contra el servidor el 11-ago. */
+  const ARRANQUE = { '1811335-1-06009': 55, '2811335-1-06023': 57, '0819307-1-06007': 38 };
   const fuentes = {
     almacenamiento: { meta: 32994, avance: 18195, unidad: 'pares' },
     paletas:        { meta: 124,   avance: 100,   unidad: 'paletas' },
     separacion:     { meta: 2496,  avance: 1500,  unidad: 'unidades' },
-    arranqueBufferC: { hora: '19:00', fecha: '2026-08-10',
-                       bufferC: { '1811335-1-06009': 55, '2811335-1-06023': 57, '0819307-1-06007': 38 } }
+    arranqueBufferC: { hora: '19:00', fecha: '2026-08-10', bufferC: ARRANQUE },
+    /* LA FOTO DE LA HORA, la que ahora llega sola.
+       De los 150 pares del arranque quedan: 20 del primero (se sacaron 35), los 57
+       del segundo enteros, y ninguno del tercero (se sacaron los 38). */
+    ahoraBufferC: { hora: '23:30', totalC: 77, lineas: 31624,
+                    bufferC: { '1811335-1-06009': 20, '2811335-1-06023': 57 } }
   };
+  const META_ESPERADA = 150;   // 55 + 57 + 38, lo que había al arrancar
+  const AV_AUTO = 73;          // 35 del primero + 38 del tercero
+  const AV_MANUAL = 55;        // el archivo de abajo solo deja fuera al primero
 
   montarTurno(document.getElementById('caja'), {
-    estado: null,
-    fuentes,
-    alGuardar: () => { guardados++; pintarPanel(); }
+    estado: null, fuentes, alGuardar: () => { guardados++; }
   });
 
-  pintarPanel();
+  /* ── Utilidades para mirar la fila de Limpieza de Buffer C ── */
+  const filaBufferC = () => {
+    const filas = [...document.querySelectorAll('#ta_t_cum tbody tr')];
+    return filas.find(tr => {
+      const n = tr.querySelector('input[data-k="n"]');
+      return n && n.value === 'Limpieza de Buffer C';
+    });
+  };
+  const leerCampo = (k) => {
+    const tr = filaBufferC(); if (!tr) return null;
+    const i = tr.querySelector('input[data-k="' + k + '"]');
+    return i ? Number(i.value) : null;
+  };
+  const infoActivo = () => (document.querySelector('[data-info="now-activo"]') || {}).textContent || '';
+  const esperar = (cond, ms = 4000) => new Promise((ok, mal) => {
+    const t0 = Date.now();
+    (function tic() {
+      if (cond()) return ok();
+      if (Date.now() - t0 > ms) return mal(new Error('se acabó la espera'));
+      setTimeout(tic, 50);
+    })();
+  });
+
+  /* ── 1. EL NÚMERO LLEGA SOLO ─────────────────────────────────────────── */
+  check('la fila de Limpieza de Buffer C se dibujó', !!filaBufferC());
+  check('la meta sale del arranque del robot', leerCampo('meta') === META_ESPERADA,
+        'dice ' + leerCampo('meta') + ', se esperaba ' + META_ESPERADA);
+  check('el AVANCE se calcula solo, sin cargar ningún archivo', leerCampo('av') === AV_AUTO,
+        'dice ' + leerCampo('av') + ', se esperaba ' + AV_AUTO);
+  check('se avisa que el stock llega solo', /llega solo del robot/i.test(infoActivo()), infoActivo().slice(0, 60));
+  check('se ve DE QUÉ HORA es la foto', infoActivo().indexOf('23:30') >= 0);
+  check('todavía no hay vuelta atrás que mostrar',
+        !document.querySelector('[data-volver-auto]'));
+  pintar('1/3');
+
+  /* ── 2. UN ARCHIVO CARGADO A MANO PISA AL AUTOMÁTICO ──────────────────── */
+  const CSV = [
+    'Área;Artículo;Descripción de artículo;Ubicación;Cantidad actual;Cantidad asignada',
+    'CD;2811335-1-06023;ZAPATO A;CDBUFFER-C-01-01;57;0',
+    'CD;0819307-1-06007;ZAPATO B;CDBUFFER-C-02-01;38;0',
+    'CD;9999999-1-00001;OTRO BUFFER;CDBUFFER-A-01-01;900;0'
+  ].join('\n');
+
+  const inp = document.querySelector('[data-slot="now-activo"]');
+  const dt = new DataTransfer();
+  dt.items.add(new File([CSV], 'Stock Activo 11-08-26 2330.csv', { type: 'text/csv' }));
+  inp.files = dt.files;
+  inp.dispatchEvent(new Event('change', { bubbles: true }));
+
+  try {
+    await esperar(() => leerCampo('av') === AV_MANUAL);
+    check('el archivo cargado a mano manda', true, 'avance ' + AV_MANUAL);
+  } catch (e) {
+    check('el archivo cargado a mano manda', false, 'quedó en ' + leerCampo('av') + ', se esperaba ' + AV_MANUAL);
+  }
+  check('aparece la vuelta al automático', !!document.querySelector('[data-volver-auto]'));
+  check('la meta no se movió', leerCampo('meta') === META_ESPERADA, 'dice ' + leerCampo('meta'));
+  pintar('2/3');
+
+  /* ── 3. Y SE PUEDE VOLVER ─────────────────────────────────────────────── */
+  const volver = document.querySelector('[data-volver-auto]');
+  if (volver) {
+    volver.click();
+    try {
+      await esperar(() => leerCampo('av') === AV_AUTO);
+      check('volver al automático devuelve el número del robot', true, 'avance ' + AV_AUTO);
+    } catch (e) {
+      check('volver al automático devuelve el número del robot', false,
+            'quedó en ' + leerCampo('av') + ', se esperaba ' + AV_AUTO);
+    }
+    check('y se redibuja el aviso de que llega solo', /llega solo del robot/i.test(infoActivo()),
+          infoActivo().slice(0, 60));
+    check('el campo del archivo quedó vacío', inp.value === '');
+  } else {
+    check('volver al automático devuelve el número del robot', false, 'no apareció el enlace');
+  }
+
+  check('el módulo no tiró ningún error de JS', errores.length === 0, errores.join(' · '));
+  pintar('3/3');
   window.__listo = true;
+  window.__fallaron = res.filter(r => !r.ok).length + errores.length;
 </script>

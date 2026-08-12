@@ -438,6 +438,28 @@ export const montarTurno = function (RAIZ, OPC) {
      'buffer_c_arranque': artículo por artículo, porque restar totales no sirve. */
   var ARRANQUE = (OPC.fuentes && OPC.fuentes.arranqueBufferC) || { hora: '', fecha: '', bufferC: {} };
 
+  /* ── Y LA FOTO DE AHORA TAMBIÉN LLEGA SOLA ────────────────────────────────
+     Desde el 12-ago-2026 el robot publica el stock cada hora, así que el avance
+     de la Limpieza de Buffer C ya no espera a que alguien baje el CSV de Oracle
+     y lo arrastre acá. Quien monta el módulo la trae en `fuentes.ahoraBufferC`.
+
+     Se arma con la MISMA forma que devuelve leerActivo() —bufferC como Map— para
+     que aplicarStock() no tenga que preguntar de dónde vino cada foto.
+
+     EL ARCHIVO CARGADO A MANO SIGUE MANDANDO sobre esta: es la salida para el día
+     que el robot no corra, o para revisar una foto puntual. */
+  var AUTO = (function () {
+    var a = OPC.fuentes && OPC.fuentes.ahoraBufferC;
+    if (!a || !a.bufferC) return null;
+    var m = new Map();
+    Object.keys(a.bufferC).forEach(function (k) { m.set(k, a.bufferC[k]); });
+    return {
+      tipo: 'activo', bufferC: m, buffer: new Map(),
+      totalC: a.totalC || 0, totalB: 0, lineas: a.lineas || 0,
+      hora: a.hora || '', auto: true
+    };
+  })();
+
   var num = function (v) { return parseFloat(String(v == null ? 0 : v).replace(/,/g, '')) || 0; };
 
   /* La hora sale del nombre que le pone el robot: "Stock Activo 11-08-26 0600.csv" */
@@ -569,6 +591,43 @@ export const montarTurno = function (RAIZ, OPC) {
     if (d) d.innerHTML = html;
   }
 
+  /* El texto del stock que llega solo, CON SU HORA.
+     Sin la hora a la vista, un avance calculado a las 23:30 se lee como si fuera
+     de las 23:58 y no hay forma de saber que faltan 28 minutos por contar. */
+  function pintarInfoAuto() {
+    if (!AUTO) return;
+    infoSlot('now-activo',
+      '<b>Llega solo del robot</b>' + (AUTO.hora ? ' · foto de las <b>' + esc(AUTO.hora) + '</b>' : '') +
+      '<br>' + nf(AUTO.totalC) + ' pares en el Buffer C' +
+      '<br><span style="opacity:.7">Se actualiza cada hora. Solo hace falta cargar un ' +
+      'archivo para mirar otra foto.</span>');
+  }
+
+  /* LA VUELTA ATRÁS. Una foto cargada a mano se queda mandando hasta que alguien
+     recargue la pantalla, y sin salida la primera prueba se vuelve permanente: el
+     11-ago un 500 escrito para probar dejó el avance clavado y desde afuera se veía
+     como un defecto. Acá el camino de vuelta está a la vista, al lado del número. */
+  var fechaAntesDeLaFoto = null;
+  function volverAlAutomatico() {
+    STOCK['now-activo'] = null;
+    if (fechaAntesDeLaFoto !== null) { S.fecha = fechaAntesDeLaFoto; fechaAntesDeLaFoto = null; }
+    mandaLaFoto = false;
+    S.ahora = delReloj();
+    var inp = RAIZ.querySelector('[data-slot="now-activo"]');
+    if (inp) inp.value = '';
+    /* Se REDIBUJA. Soltar sin rehacer deja el campo con el número viejo mientras
+       el bueno vuelve por detrás, y parece roto de otra manera. */
+    pintar();
+    pintarInfoAuto();
+  }
+
+  RAIZ.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('[data-volver-auto]');
+    if (!a) return;
+    e.preventDefault();
+    volverAlAutomatico();
+  });
+
   async function cargarArchivo(id, file) {
     infoSlot(id, 'leyendo <b>' + esc(file.name) + '</b>…');
     try {
@@ -585,15 +644,24 @@ export const montarTurno = function (RAIZ, OPC) {
       var det = res.tipo === 'activo'
         ? nf(res.totalB) + ' pares en el buffer · <b>' + nf(res.totalC) + '</b> en el Buffer C'
         : nf(res.total) + ' pares en reserva · ' + nf(res.lineas) + ' líneas';
-      infoSlot(id, '<b>' + esc(file.name) + '</b><br>' + (res.hora ? 'foto de las ' + res.hora + ' · ' : '') + det);
+      /* El camino de vuelta, al lado del número que acaba de pisar al automático. */
+      var volver = (id === 'now-activo' && AUTO)
+        ? '<br><a href="#" data-volver-auto="1">volver al automático</a>' : '';
+      infoSlot(id, '<b>' + esc(file.name) + '</b><br>' + (res.hora ? 'foto de las ' + res.hora + ' · ' : '') + det + volver);
       /* Con una foto cargada manda la hora de la foto: el reloj deja de mover
          nada, o el cuadro diría una hora y los números serían de otra. */
-      if (id === 'now-activo') { if (res.fecha) S.fecha = res.fecha;
-        if (res.hora) { S.ahora = res.hora; mandaLaFoto = true; } }
+      if (id === 'now-activo') {
+        if (fechaAntesDeLaFoto === null) fechaAntesDeLaFoto = S.fecha;
+        if (res.fecha) S.fecha = res.fecha;
+        if (res.hora) { S.ahora = res.hora; mandaLaFoto = true; }
+      }
       pintar();
     } catch (err) {
+      /* El archivo no se pudo leer: se vuelve solo al automático, en vez de dejar
+         el avance en blanco por un archivo equivocado. */
       STOCK[id] = null;
       infoSlot(id, '<span style="color:var(--bad)">No se pudo leer: ' + esc(err.message) + '</span>');
+      pintar();
     }
   }
 
@@ -624,7 +692,8 @@ export const montarTurno = function (RAIZ, OPC) {
   }
 
   function aplicarStock() {
-    var b = STOCK['now-activo'];
+    /* La cargada a mano primero; si no hay, la que publica el robot cada hora. */
+    var b = STOCK['now-activo'] || AUTO;
     var meta = 0, av = 0;
     Object.keys(ARRANQUE.bufferC).forEach(function (art) {
       var x = ARRANQUE.bufferC[art];
@@ -767,6 +836,8 @@ export const montarTurno = function (RAIZ, OPC) {
     S.ahora = delReloj();
     mandaLaFoto = false;
     pintar();
+    /* Y se dice que el stock de ahora llegó solo, con la hora de esa foto. */
+    pintarInfoAuto();
   }
   arrancar();
 };

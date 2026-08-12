@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0172';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0173';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0172';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0172';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0172';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0172';
-import * as metasService from '../services_v245/metasService.js?v=29.0172';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0172';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0172';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0172';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0172';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0172';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0172';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0172';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0172';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0172';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0172';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0172';
+import * as adminService from '../services_v245/adminService.js?v=29.0173';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0173';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0173';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0173';
+import * as metasService from '../services_v245/metasService.js?v=29.0173';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0173';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0173';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0173';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0173';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0173';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0173';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0173';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0173';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0173';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0173';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0173';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0172';
+const VERSION = '29.0173';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4094,7 +4094,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0172');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0173');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5513,6 +5513,22 @@ const leerArea = async (area, dia) => {
     } catch (e) { console.warn(`[TURNO] No se pudo leer ${area}:`, e); return null; }
 };
 
+/* EL CAJÓN DE LA HORA — el stock que el robot reescribe cada hora.
+ *
+ * No confundir con `almacenaje_activo`, que es la foto del turno y no se mueve hasta
+ * la corrida siguiente. Este se pisa solo cada 60 minutos y lo leen ÚNICAMENTE los
+ * reportes de avance: el mapa de calor del Slotting y el Cumplimiento del turno.
+ *
+ * El nombre es histórico —nació para el mapa— y no se cambia porque ya está elegido
+ * para esquivar dos reglas de csvHub_v6.js: no está en AREA_CANONICA (si estuviera,
+ * se repartiría a buffer_activo y compañía y volvería a mover lo que se quiso dejar
+ * quieto) y no termina en `_activo` (eso dispara updateTablaTallas en cada lectura).
+ *
+ * Se llama distinto que el `AREA_STOCK_HORA` del mapa a propósito: ese vive dentro de
+ * otra función y dos `const` con el mismo nombre en ámbitos distintos es exactamente
+ * la trampa que dejó al tablero sin número de semana el 11-ago. */
+const AREA_STOCK_DE_LA_HORA = 'layout_stock_hora';
+
 /**
  * LOS NÚMEROS QUE LLEGAN SOLOS, para la jornada de hoy.
  *
@@ -5594,6 +5610,77 @@ const fuentesDelTurno = async (dia) => {
         } catch (e) { console.warn('[TURNO] Buffer C del stock:', e); }
     }
     if (foto && foto.detalle) F.arranqueBufferC = { hora: foto.hora, fecha: foto.fecha, bufferC: foto.detalle };
+
+    /* ── LA FOTO DE AHORA, SIN CARGAR NADA A MANO ─────────────────────────────
+     *
+     * Desde el 12-ago-2026 el robot publica el stock CADA HORA en un cajón aparte,
+     * y de ahí sale el avance de la Limpieza de Buffer C. Antes había que bajar el
+     * CSV de Oracle y arrastrarlo a la pantalla: mientras nadie lo hiciera, el
+     * avance quedaba en blanco y el reporte solo servía a las 06:00.
+     *
+     * Lo pidió Daniel así: *"si mi jefe me pide a las once de la noche un reporte,
+     * ¿qué hago?"*.
+     *
+     * SOLO PARA LA JORNADA DE HOY, igual que la meta de más arriba. El cajón de la
+     * hora va con MASTER —cada corrida reemplaza a la anterior— así que para una
+     * jornada pasada ese stock ya es otro y daría un avance inventado. En una fecha
+     * vieja el campo queda vacío y se puede escribir a mano, que es lo honesto.
+     *
+     * La foto que se carga a mano sigue mandando: se lee en la pantalla y pisa a
+     * esta. Es la salida para el día que el robot no corra. */
+    if (hoy === getLogicalDate()) {
+        try {
+            const r = await fetch(`${TURNO_API}/${AREA_STOCK_DE_LA_HORA}?date=MASTER&t=${Date.now()}`);
+            if (r.ok) {
+                const cuerpo = await r.json();
+                const filas = cuerpo && cuerpo.data;
+                if (Array.isArray(filas) && filas.length) {
+                    /* `updated_at` YA VIENE EN HORA DE LIMA: no se le resta nada ni se
+                       pasa por toISOString(), que volvería a moverla. */
+                    const sello = String(cuerpo.updated_at || '');
+
+                    /* ── UNA FOTO VIEJA NO SIRVE, Y ES PEOR QUE NO TENER NINGUNA ──
+                     *
+                     * Este cajón también se puede llenar A MANO desde el mapa de calor, y
+                     * así estuvo hasta el 12-ago-2026. Si el robot no corrió, lo que queda
+                     * ahí puede ser de hace tres días: el avance saldría calculado contra
+                     * el almacén de otra noche y nadie lo notaría, porque un número
+                     * equivocado se ve igual que uno bueno.
+                     *
+                     * Es la misma trampa del 06-ago, cuando se publicó el stock de las
+                     * 08:23 como si fuera el de las 19:00 y se generaron tareas sobre 870
+                     * pares que ya no estaban.
+                     *
+                     * Dos condiciones, las dos necesarias:
+                     *   - no más de 3 horas (tolera que se salten dos corridas seguidas);
+                     *   - y posterior al arranque del turno, o estaríamos midiendo el
+                     *     avance de la noche contra una foto de antes de que empezara.
+                     * Si no las cumple, la actividad queda sin avance y se puede escribir
+                     * a mano, que es lo honesto. */
+                    const cuando = sello ? new Date(sello.replace(' ', 'T')) : null;
+                    const horas = cuando && !isNaN(cuando) ? (Date.now() - cuando.getTime()) / 3600000 : 999;
+                    const arranque = (foto && foto.fecha && foto.hora)
+                        ? new Date(String(foto.fecha) + 'T' + String(foto.hora) + ':00') : null;
+                    const anterior = arranque && !isNaN(arranque) && cuando && cuando < arranque;
+
+                    if (horas > 3 || anterior) {
+                        console.warn('[TURNO] El stock de la hora se descarta:',
+                            anterior ? 'es anterior al arranque del turno' : `tiene ${horas.toFixed(1)} horas`,
+                            '(' + sello + ')');
+                    } else {
+                        const ahora = fotoBufferCDe(filas);
+                        const hh = sello.match(/(\d{2}):(\d{2})/);
+                        F.ahoraBufferC = {
+                            hora: hh ? (hh[1] + ':' + hh[2]) : '',
+                            bufferC: ahora.detalle,
+                            totalC: Object.keys(ahora.detalle).reduce((s, a) => s + ahora.detalle[a], 0),
+                            lineas: filas.length
+                        };
+                    }
+                }
+            }
+        } catch (e) { console.warn('[TURNO] Stock de la hora:', e); }
+    }
 
     return F;
 };
@@ -14672,7 +14759,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0172 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0173 | MOBILE PORTAL
                             </div>
                     </div>
 
