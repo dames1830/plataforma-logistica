@@ -971,8 +971,17 @@
     /* Escribir la meta o el avance los deja marcados como puestos A MANO, y
        desde ahí la fuente automática no los vuelve a pisar en esta jornada. */
     if (k === 'meta' || k === 'av') {
+      /* VACIAR EL CAMPO DEVUELVE EL AUTOMATICO.
+         Sin esta salida, escribir una vez un numero dejaba esa casilla clavada
+         para siempre: Daniel puso 500 de prueba en el avance de Almacenamiento y
+         el 3.547 que llegaba solo no volvia a entrar nunca. Ahora se borra el
+         contenido y la fuente vuelve a mandar. */
       if (!S.procs[i].aMano) S.procs[i].aMano = {};
-      S.procs[i].aMano[k] = true;
+      if (t.value === '') delete S.procs[i].aMano[k];
+      else S.procs[i].aMano[k] = true;
+      /* Al soltar el campo hay que REDIBUJARLO ENTERO para que se vea el numero
+         que devuelve la fuente; el refresco liviano no toca los campos. */
+      if (t.value === '' && S.procs[i].fuente) { S.procs[i][k] = 0; pintar(); return; }
     }
     S.procs[i][k] = k === 'cuenta' ? t.checked
       : (k === 'meta' || k === 'av') ? (t.value === '' ? 0 : Number(t.value))
