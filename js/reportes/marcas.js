@@ -12,8 +12,8 @@
  *
  * Para agregar una columna se toca acá y aparece en los dos.
  */
-import { marcaNormalizada, marcaCorta, tareaSigueViva, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0186';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0186';
+import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0187';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0187';
 
 /** Las columnas del reporte. Agregar una acá la agrega en las dos pantallas. */
 export const COLUMNAS = [
@@ -43,15 +43,20 @@ export const COLUMNAS = [
  * decía 0 de avance el mismo día que el turno día almacenó 3.072 pares. Daniel lo mandaba
  * así al grupo de supervisores.
  *
- * Ahora una tarea entra si cumple una de dos cosas, y son independientes:
+ * Una tarea entra si cumple una de dos cosas, y son independientes:
  *
- *   1. SIGUE PENDIENTE — está viva y nació antes del cierre del rango. Es trabajo que
- *      todavía está en el buffer esperando, sea de hoy o de anteayer. Suma a BUFFER.
- *   2. SE TRABAJÓ EN EL RANGO — se cerró en una jornada de este rango. Suma a BUFFER y
- *      además a DÍA o a NOCHE.
+ *   1. ES DE LA OLA DE ESE RANGO — nació dentro de él. Se haya trabajado o no, y sin
+ *      importar en qué estado esté HOY. Suma a BUFFER.
+ *   2. SE TRABAJÓ EN EL RANGO — se cerró en una jornada de este rango, aunque venga de
+ *      una ola anterior. Suma a BUFFER y además a DÍA o a NOCHE.
  *
- * Con eso el cuadro cierra solo: BUFFER − DÍA − NOCHE = PENDIENTE, y PENDIENTE es
- * exactamente lo que queda en el buffer. Antes el total bajaba solo al asignar una tarea.
+ * El punto 1 decía antes "sigue viva y nació antes del cierre", y ese "sigue viva" se
+ * miraba HOY. Al abrir un día pasado, lo no trabajado ya había vencido y desaparecía
+ * del cuadro: BUFFER se achicaba hasta igualar al avance y todos los días salían al
+ * 100% con PENDIENTE 0. Ver el detalle en el cuerpo de la función.
+ *
+ * Con esto el cuadro cierra solo: BUFFER − DÍA − NOCHE = PENDIENTE, y PENDIENTE es lo
+ * que quedó sin hacer de esa ola.
  *
  * EL TURNO LO DICE LA MATRIZ DEL TRABAJADOR, no el reloj. Regla de Daniel: "si lsanchez
  * termina una tarea a las ocho de la noche, él pertenece al turno día, así de simple".
@@ -78,8 +83,30 @@ export const datosMarcas = (tasks, desde, hasta, turnoDe) => {
         const trabajadaEn = jornadaDelTrabajo(t, fechaLogicaDe);
         const seTrabajo = t.status === 'Finalizado' && trabajadaEn
                        && trabajadaEn >= desde && trabajadaEn <= hasta;
-        const sigueEnBuffer = tareaSigueViva(t) && String(t.fecha || '') <= hasta;
-        if (!seTrabajo && !sigueEnBuffer) return;
+
+        /* LO QUE NO SE TRABAJÓ TAMBIÉN CUENTA — corregido el 12-ago-2026.
+         *
+         * Acá decía `tareaSigueViva(t) && t.fecha <= hasta`, y ese "sigue viva" se
+         * evalúa HOY, no en la jornada que se está mirando. Consecuencia: al abrir un
+         * día pasado, todo lo que no se trabajó ya había vencido, no entraba ni al
+         * BUFFER, y el denominador se achicaba hasta igualar al avance. **El cuadro
+         * decía 100% y PENDIENTE 0 todos los días.**
+         *
+         * Lo cazó Daniel mandándolo al grupo: *"se va a pensar que almacené el cien
+         * por ciento, y eso no es cierto"*. El 11-ago decía 11.858 de 11.858; lo real
+         * era 11.858 de 25.024, porque 12 tareas con 13.166 pares nunca se tocaron.
+         *
+         * LA REGLA ES LA OLA DE ESA NOCHE: entra lo que se generó para esa jornada,
+         * se haya trabajado o no, más lo que se trabajó en ella aunque venga de una
+         * ola anterior. Así BUFFER − DÍA − NOCHE = PENDIENTE sigue cerrando, y
+         * PENDIENTE es lo que quedó sin hacer.
+         *
+         * Se probó arrastrar además las pendientes de días anteriores —"todo lo que
+         * estaba para trabajarse esa noche"— y da disparates: 564.663 pares el
+         * 02-ago, porque cada tarea vieja sin fecha de vencimiento se suma a todas
+         * las jornadas siguientes. */
+        const nacioEnElRango = String(t.fecha || '') >= desde && String(t.fecha || '') <= hasta;
+        if (!seTrabajo && !nacioEnElRango) return;
 
         const huella = `${t.id}|${t.status}|${t.termino || ''}`;
         if (yaContadas.has(huella)) return;
