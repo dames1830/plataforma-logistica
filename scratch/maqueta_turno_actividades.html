@@ -127,8 +127,8 @@
   .lead { color: var(--text-2); font-size: 13px; margin: 0; max-width: 68ch; }
 
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 20px; box-shadow: var(--shadow); }
-  .phead { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
-  .phead .sub { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+  .phead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .fh { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
   /* Marco de adentro: encierra lo que se MIRA —título, cuadro y leyenda— y deja
      fuera la tabla, que es donde se ESCRIBE. */
   .marco { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; }
@@ -264,7 +264,7 @@
     <!-- El cuadro va en su propio marco, del título a la leyenda. La tabla de
          abajo queda fuera: es para escribir, no para mirar. -->
     <div class="marco neon">
-      <div class="phead"><h2>Gantt de actividades</h2><span class="sub" id="g_sub"></span></div>
+      <div class="phead"><h2>Gantt de actividades</h2><span class="fh" id="g_fh"></span></div>
       <div class="gwrap"><div class="gg" id="gg"></div></div>
       <div class="leg">
         <span><span class="sw" style="border:1px dashed var(--plan-line); height:8px"></span>Lo que debía hacerse</span>
@@ -289,7 +289,7 @@
   </section>
 
   <section class="panel neon">
-    <div class="phead"><h2>Cumplimiento del turno</h2><span class="sub" id="c_sub"></span></div>
+    <div class="phead"><h2>Cumplimiento del turno</h2><span class="fh" id="c_fh"></span></div>
     <div class="rings" id="rings"></div>
     <div class="twrap">
       <table id="t_cum">
@@ -526,8 +526,7 @@
       '<div></div><div class="foot"><span class="nowtag" style="left:' + pc(AHORA) +
       '; transform:translateX(' + (AHORA / SPAN > 0.92 ? '-100%' : (AHORA / SPAN < 0.08 ? '0' : '-50%')) + ')">' +
       'ahora ' + esc(S.ahora) + '</span></div>';
-
-    $('#g_sub').textContent = reloj(INI) + ' → ' + reloj(INI + SPAN) + ' · ' + S.procs.length + ' actividades';
+    pintarFechaHora();
   }
 
   /* ── Anillos y tabla de cumplimiento ──────────────────────────────────── */
@@ -551,6 +550,21 @@
     if (c.av >= c.meta) return 'ok';
     if (c.av > 0) return 'warn';
     return 'bad';
+  }
+  /* LA FECHA Y LA HORA, al lado de cada título. Sale del reloj, o de la foto
+     de stock si se cargó una: así los dos cuadros dicen SIEMPRE el mismo
+     momento, y no hay forma de mirar uno creyendo que es de otra hora. */
+  function fechaHora() {
+    var d = new Date();
+    var f = S.fecha || (String(d.getDate()).padStart(2, '0') + '/' +
+                        String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear());
+    return f + ' · ' + S.ahora;
+  }
+  function pintarFechaHora() {
+    var t = fechaHora();
+    var a = $('#g_fh'), b = $('#c_fh');
+    if (a) a.textContent = t;
+    if (b) b.textContent = t;
   }
   function pintarAnillos() {
     var anillos = '';
@@ -597,8 +611,7 @@
         '<td><button class="del" data-del="' + i + '" title="Quitar esta actividad">✕</button></td>' +
         '</tr>';
     }).join('');
-
-    $('#c_sub').textContent = 'actualizado ' + S.ahora;
+    pintarFechaHora();
   }
 
   /* ── REFRESCO AL ESCRIBIR ────────────────────────────────────────────────
@@ -616,7 +629,7 @@
         if (td) { td.innerHTML = cc[k].html; td.style.color = cc[k].color; }
       }
     }
-    $('#c_sub').textContent = 'actualizado ' + S.ahora;
+    pintarFechaHora();
 
     f = $('#t_hor').tBodies[0].rows;
     for (r = 0; r < f.length; r++) {
@@ -687,6 +700,12 @@
   var num = function (v) { return parseFloat(String(v == null ? 0 : v).replace(/,/g, '')) || 0; };
 
   /* La hora sale del nombre que le pone el robot: "Stock Activo 11-08-26 0600.csv" */
+  /* "Stock Activo 11-08-26 0600.csv" → 11/08/2026 */
+  function fechaDelNombre(nombre) {
+    var m = String(nombre).match(/(\d{2})-(\d{2})-(\d{2})/);
+    return m ? (m[1] + '/' + m[2] + '/20' + m[3]) : null;
+  }
+
   function horaDelNombre(nombre) {
     var m = String(nombre).match(/\d{2}-\d{2}-\d{2}\s+(\d{2})(\d{2})/);
     return m ? m[1] + ':' + m[2] : null;
@@ -820,6 +839,7 @@
       } else res = leerActivo(await file.text());
       res.nombre = file.name;
       res.hora = horaDelNombre(file.name);
+      res.fecha = fechaDelNombre(file.name);
       STOCK[id] = res;
       var det = res.tipo === 'activo'
         ? nf(res.totalB) + ' pares en el buffer · <b>' + nf(res.totalC) + '</b> en el Buffer C'
@@ -827,7 +847,8 @@
       infoSlot(id, '<b>' + esc(file.name) + '</b><br>' + (res.hora ? 'foto de las ' + res.hora + ' · ' : '') + det);
       /* Con una foto cargada manda la hora de la foto: el reloj deja de mover
          nada, o el cuadro diría una hora y los números serían de otra. */
-      if (id === 'now-activo') { stockNuevo = true; if (res.hora) { S.ahora = res.hora; mandaLaFoto = true; } }
+      if (id === 'now-activo') { stockNuevo = true; if (res.fecha) S.fecha = res.fecha;
+        if (res.hora) { S.ahora = res.hora; mandaLaFoto = true; } }
       pintar();
     } catch (err) {
       STOCK[id] = null;
