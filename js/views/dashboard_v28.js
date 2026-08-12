@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0180';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0181';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0180';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0180';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0180';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0180';
-import * as metasService from '../services_v245/metasService.js?v=29.0180';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0180';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0180';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0180';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0180';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0180';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0180';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0180';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0180';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0180';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0180';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0180';
+import * as adminService from '../services_v245/adminService.js?v=29.0181';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0181';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0181';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0181';
+import * as metasService from '../services_v245/metasService.js?v=29.0181';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0181';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0181';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0181';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0181';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0181';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0181';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0181';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0181';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0181';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0181';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0181';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0180';
+const VERSION = '29.0181';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0180');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0181');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -8397,7 +8397,7 @@ const renderRFSection = (container) => {
               : `Publicado hoy:  ${antes.toLocaleString('es-PE')} artículos\nArchivo nuevo:  ${revision.articulos.toLocaleString('es-PE')} artículos\nDiferencia:     ${diferencia >= 0 ? '+' : ''}${diferencia.toLocaleString('es-PE')}`;
 
           const aviso = (ficha && antes > 0 && revision.articulos < antes * 0.8)
-              ? '\n\n⚠️ El archivo nuevo tiene bastante menos artículos que el publicado. Revisá que no esté cortado.'
+              ? '\n\n⚠️ El archivo nuevo tiene bastante menos artículos que el publicado. Revise que no esté cortado.'
               : '';
 
           if (!await showPremiumConfirm('PUBLICAR PARA TODA LA EMPRESA',
@@ -8775,7 +8775,7 @@ const renderRFSection = (container) => {
       if (!nombre) { err.textContent = 'Ponele un nombre para reconocerla después.'; return; }
       if (!desde) { err.textContent = 'Falta la fecha de inicio.'; return; }
       if (hasta && hasta < desde) { err.textContent = 'La fecha de fin no puede ser anterior a la de inicio.'; return; }
-      if (!dias.length) { err.textContent = 'Elegí al menos un día.'; return; }
+      if (!dias.length) { err.textContent = 'Elija al menos un día.'; return; }
 
       const nueva = {
         id: r.id, nombre, desde, hasta, dias,
@@ -15094,7 +15094,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0180 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0181 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16307,7 +16307,7 @@ const renderRFSection = (container) => {
 
         <div style="padding:1.2rem; overflow-x:auto;">
           <div style="font-size:0.68rem; color:rgba(255,255,255,0.4); margin-bottom:12px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
-            <span>Marcá cuáles son las comerciales y escribí el porcentaje. Abajo se ve cómo quedarían</span>
+            <span>Marque cuáles son las comerciales y escriba el porcentaje. Abajo se ve cómo quedarían</span>
             <input type="number" id="tll_ejemplo" min="0" step="10" value="${EJEMPLO}" style="width:78px; padding:4px 6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; font-weight:800; text-align:center;">
             <span>pares repartidos, en cajas de</span>
             <input type="number" id="tll_factor" min="1" step="1" value="${_factorEjemplo}" style="width:60px; padding:4px 6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; font-weight:800; text-align:center;">
@@ -16422,7 +16422,7 @@ const renderRFSection = (container) => {
       panel.querySelector('#tll_regla').onclick = () => {
         const com = c.comerciales.length, otras = c.tallas.length - com;
         if (!com || !otras) {
-          showPremiumAlert('FALTA MARCAR', 'Marcá cuáles son las tallas comerciales antes de usar este reparto.', 'warning');
+          showPremiumAlert('FALTA MARCAR', 'Marque cuáles son las tallas comerciales antes de usar este reparto.', 'warning');
           return;
         }
         // 25% a cada comercial; lo que quede, parejo entre las demás
@@ -18481,7 +18481,7 @@ const renderRFSection = (container) => {
         await withLoading(ev.currentTarget, '⌛ MIDIENDO...', async () => {
           const medido = medirDensidadDelStock();
           if (!medido) {
-            showPremiumAlert('SIN STOCK', 'No hay Stock Activo cargado en esta sesión. Subilo en Análisis SKU → Archivo Análisis SKU y volvé a intentar.', 'warning');
+            showPremiumAlert('SIN STOCK', 'No hay Stock Activo cargado en esta sesión. Súbalo en Análisis SKU → Archivo Análisis SKU y vuelva a intentar.', 'warning');
             return;
           }
           let cambios = 0;
@@ -18523,7 +18523,7 @@ const renderRFSection = (container) => {
           } catch (e) {
             showPremiumAlert('NO SE PUDO PUBLICAR',
               'Quedó guardado en esta computadora, pero el servidor no respondió: ' + e.message +
-              '\n\nVolvé a intentar cuando tengas conexión para que lo vean los demás.', 'error');
+              '\n\nVuelva a intentar cuando tenga conexión para que lo vean los demás.', 'error');
           }
         });
       };
@@ -19355,7 +19355,7 @@ const renderRFSection = (container) => {
     document.getElementById('fx_ex_add').addEventListener('click', () => {
       const sku = document.getElementById('fx_ex_sku').value.trim();
       const v   = parseInt(document.getElementById('fx_ex_qty').value, 10);
-      if (!sku) { showPremiumAlert('Falta el SKU', 'Escribí el SKU completo, por ejemplo 8811610-1-05.', 'error'); return; }
+      if (!sku) { showPremiumAlert('Falta el SKU', 'Escriba el SKU completo, por ejemplo 8811610-1-05.', 'error'); return; }
       if (!Number.isFinite(v) || v < 0) { showPremiumAlert('Falta el objetivo', 'El objetivo tiene que ser un número entero de 0 para arriba.', 'error'); return; }
       _configSKUExcepciones[sku] = v;
       _guardarFactoresLocal();
@@ -19388,7 +19388,7 @@ const renderRFSection = (container) => {
       } catch (err) {
         elGuardar.textContent = 'Guardar •';
         showPremiumAlert('No se pudo publicar',
-          `Quedaron guardados en esta PC, pero el servidor no los recibió: ${_escF(err && err.message)}.<br>Probá de nuevo en un momento.`, 'error');
+          `Quedaron guardados en esta PC, pero el servidor no los recibió: ${_escF(err && err.message)}.<br>Pruebe de nuevo en un momento.`, 'error');
       }
       elGuardar.disabled = false;
     });
@@ -19518,7 +19518,7 @@ const renderRFSection = (container) => {
             partes.join(' '), entraron ? (noCruzan.length ? 'warning' : 'success') : 'error');
         } catch (err) {
           console.error(err);
-          showPremiumAlert('No se pudo leer el archivo', 'Revisá que sea un .xlsx y que no esté abierto en Excel.', 'error');
+          showPremiumAlert('No se pudo leer el archivo', 'Revise que sea un .xlsx y que no esté abierto en Excel.', 'error');
         }
         ev.target.value = '';
       };
@@ -21192,7 +21192,7 @@ const renderRFSection = (container) => {
                               <div style="background:rgba(250,204,21,0.09); border-left:3px solid #facc15; padding:9px 11px; margin-bottom:14px; border-radius:4px; font-size:0.72rem; color:#fde68a; line-height:1.6;">
                                   <b>Estos porcentajes son los del día que se publicó el mapa.</b> Quedaron guardados adentro,
                                   así que si cambiaste las temporadas en <b>Zonas de Almacenaje</b> no se ven acá todavía:
-                                  cargá el Stock Activo y volvé a procesar para calcularlos con las reglas de ahora.
+                                  cargue el Stock Activo y vuelva a procesar para calcularlos con las reglas de ahora.
                               </div>` : ''}
 
                               <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
@@ -24808,6 +24808,8 @@ window.showCellModal = function(htmlContent) {
           <h3 style="margin:0 0 0.4rem; color:#fff; font-size:1rem; font-weight:900; letter-spacing:0.5px;">🗂️ CARGAR ARCHIVOS DE PICKING</h3>
           <p style="margin:0 0 1.1rem; color:var(--text-muted); font-size:0.78rem; line-height:1.7;">
             Los CSV que se exportan del WMS, uno por día. Se pueden elegir <b style="color:#a5b4fc;">varios a la vez</b>.<br>
+            <b style="color:#a5b4fc;">No hay nada más que pulsar:</b> al elegir el archivo ya se calcula y el reporte
+            queda actualizado.<br>
             El archivo no se guarda: se lee acá, se calcula y se sube solo el resumen del día. Volver a cargar un día
             <b style="color:#a5b4fc;">reemplaza</b> el que ya estaba.
           </p>
@@ -24815,12 +24817,12 @@ window.showCellModal = function(htmlContent) {
           ${!hayMaestro ? `
             <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:0.8rem 1rem; margin-bottom:1rem; font-size:0.76rem; color:#fca5a5; line-height:1.6;">
               ⚠️ <b>Falta el Maestro de Artículos.</b> Sin él no se puede separar calzado de bolsas ni saber la marca
-              ni la colección. Publicalo desde <b>Configuración → Archivos Nube</b> y volvé a esta pantalla.
+              ni la colección. Publíquelo desde <b>Configuración → Archivos Nube</b> y vuelva a esta pantalla.
             </div>` : ''}
 
           <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
             <label style="display:inline-flex; align-items:center; gap:9px; background:var(--primary); color:#fff; padding:0.6rem 1.3rem; border-radius:10px; font-size:0.78rem; font-weight:800; cursor:${hayMaestro ? 'pointer' : 'not-allowed'}; opacity:${hayMaestro ? '1' : '0.45'}; box-shadow:0 4px 14px rgba(79,70,229,0.3);">
-              📥 ELEGIR ARCHIVOS
+              📥 ELEGIR ARCHIVOS Y CALCULAR
               <input type="file" id="pick_files" accept=".csv" multiple ${hayMaestro ? '' : 'disabled'} style="display:none;">
             </label>
             <span id="pick_estado" style="font-size:0.76rem; color:var(--text-muted);"></span>
@@ -24853,7 +24855,7 @@ window.showCellModal = function(htmlContent) {
             </div>` : `
             <div style="padding:3rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.85rem; line-height:1.8;">
               Todavía no hay ningún día cargado.<br>
-              Elegí los archivos de arriba y aparecerán acá.
+              Elija los archivos de arriba y aparecerán acá.
             </div>`}
         </div>
       </div>`;
@@ -25833,7 +25835,7 @@ window.showCellModal = function(htmlContent) {
       try { await rescatarMaestro(true); } catch (e) { /* sigue con lo que haya */ }
       const m = maestroEnUso();
       if (m.origen === 'ninguno') {
-          showPremiumAlert('SIN CATÁLOGO', 'No hay Maestro de Artículos para comparar. Publicalo desde Configuración → Archivos Nube.', 'error');
+          showPremiumAlert('SIN CATÁLOGO', 'No hay Maestro de Artículos para comparar. Publíquelo desde Configuración → Archivos Nube.', 'error');
           return;
       }
 
@@ -25935,7 +25937,7 @@ window.showCellModal = function(htmlContent) {
 
       document.getElementById('rmAplicar').onclick = async () => {
           const elegidas = Array.from(document.querySelectorAll('.rmChk')).filter(c => c.checked).map(c => difs[Number(c.dataset.i)]);
-          if (!elegidas.length) { showPremiumAlert('SIN SELECCIÓN', 'Marcá al menos una diferencia para aplicar.', 'warning'); return; }
+          if (!elegidas.length) { showPremiumAlert('SIN SELECCIÓN', 'Marque al menos una diferencia para aplicar.', 'warning'); return; }
 
           const btn = document.getElementById('rmAplicar');
           btn.disabled = true; btn.textContent = 'APLICANDO…';
@@ -26101,7 +26103,7 @@ window.showCellModal = function(htmlContent) {
 
                 ${!hayMaestro ? `
                 <div style="padding:0.85rem 1.2rem; background:rgba(148,163,184,0.07); border-top:1px solid rgba(148,163,184,0.2); font-size:0.72rem; color:#94a3b8; line-height:1.7;">
-                    ℹ️ El Maestro de Artículos no está cargado en esta sesión, así que el desplegable solo muestra las categorías que ya tienen regla. Subí el Maestro en <b style="color:rgba(255,255,255,0.6);">Análisis SKU → Archivo Análisis SKU</b> para ver todas las categorías disponibles.
+                    ℹ️ El Maestro de Artículos no está cargado en esta sesión, así que el desplegable solo muestra las categorías que ya tienen regla. Suba el Maestro en <b style="color:rgba(255,255,255,0.6);">Análisis SKU → Archivo Análisis SKU</b> para ver todas las categorías disponibles.
                 </div>` : ''}
 
                 ${sinMetaSuya.length > 0 ? `
@@ -26115,7 +26117,7 @@ window.showCellModal = function(htmlContent) {
                 <div style="padding:0.8rem 1.2rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(99,102,241,0.15); font-size:0.68rem; color:rgba(255,255,255,0.35); line-height:1.7;">
                     Las categorías salen del Maestro de Artículos: <b style="color:rgba(255,255,255,0.55);">G. Gender</b> (columna C) es la familia y <b style="color:rgba(255,255,255,0.55);">Gender RIMS</b> (columna D) el detalle. Si Comercial agrega una nueva, aparece sola.<br>
                     Precedencia: <b style="color:rgba(255,255,255,0.55);">detalle → familia → respaldo</b>. Entre reglas del mismo nivel gana la de inicio más reciente, así una campaña pisa a la base sin borrarla.<br>
-                    La meta se elige por la <b style="color:rgba(255,255,255,0.55);">fecha de la tarea</b>, no por la de hoy: un reporte de mayo sigue midiendo con la meta que estaba vigente en mayo. Para dejar de usar una regla usá 🕘 (cerrar vigencia), no el borrado.
+                    La meta se elige por la <b style="color:rgba(255,255,255,0.55);">fecha de la tarea</b>, no por la de hoy: un reporte de mayo sigue midiendo con la meta que estaba vigente en mayo. Para dejar de usar una regla use 🕘 (cerrar vigencia), no el borrado.
                 </div>
             </div>
 
@@ -26158,7 +26160,7 @@ window.showCellModal = function(htmlContent) {
         const btnCorregir = container.querySelector('#cfg_corregir');
         btnCorregir.onclick = async () => {
             const d = inDesde.value, h = inHasta.value;
-            if (!d || !h) { showPremiumAlert('FALTA EL RANGO', 'Elegí la fecha DE y la fecha HASTA.', 'warning'); return; }
+            if (!d || !h) { showPremiumAlert('FALTA EL RANGO', 'Elija la fecha DE y la fecha HASTA.', 'warning'); return; }
             if (d > h) { showPremiumAlert('RANGO AL REVÉS', 'La fecha DE tiene que ser anterior a la fecha HASTA.', 'warning'); return; }
             window.__correccionDesde = d; window.__correccionHasta = h;
             await withLoading(btnCorregir, '⌛ COMPARANDO...', () => window.openRefrescarMaestroModal(d, h));
@@ -26172,7 +26174,7 @@ window.showCellModal = function(htmlContent) {
             if (!await showPremiumConfirm('CERRAR VIGENCIA', `La regla de ${r.categoria} (${r.metaUph} u/h) dejará de aplicar a partir de mañana. Los reportes anteriores a hoy no cambian.`, 'warning')) return;
             await withLoading(b, '⌛', async () => {
                 const ok = await metasService.cerrarVigencia(r.id, hoyStr);
-                if (ok === false) showPremiumAlert('GUARDADO SOLO EN ESTE EQUIPO', 'El cambio quedó guardado localmente pero el servidor no respondió. Volvé a intentar cuando tengas conexión para que lo vean los demás.', 'warning');
+                if (ok === false) showPremiumAlert('GUARDADO SOLO EN ESTE EQUIPO', 'El cambio quedó guardado localmente pero el servidor no respondió. Vuelva a intentar cuando tenga conexión para que lo vean los demás.', 'warning');
             });
             pintar();
         });
@@ -26181,7 +26183,7 @@ window.showCellModal = function(htmlContent) {
             const r = metasService.getReglas().find(x => x.id === b.dataset.del);
             if (!r) return;
             const confirmado = await showPremiumConfirm('BORRAR REGLA',
-                `Borrar la regla de ${r.categoria} (${r.metaUph} u/h) puede CAMBIAR NÚMEROS YA PRESENTADOS: las tareas históricas de esa categoría pasarán a medirse con la meta de su familia.\n\nSi solo querés dejar de usarla de hoy en adelante, cancelá y usá el botón 🕘 de cerrar vigencia.`, 'warning');
+                `Borrar la regla de ${r.categoria} (${r.metaUph} u/h) puede CAMBIAR NÚMEROS YA PRESENTADOS: las tareas históricas de esa categoría pasarán a medirse con la meta de su familia.\n\nSi solo quiere dejar de usarla de hoy en adelante, cancele y use el botón 🕘 de cerrar vigencia.`, 'warning');
             if (!confirmado) return;
             let res;
             await withLoading(b, '⌛', async () => { res = await metasService.borrarRegla(r.id); });
@@ -26313,7 +26315,7 @@ window.showCellModal = function(htmlContent) {
             const repetida = metasService.reglaDuplicada(categoria, desde, editando ? r.id : null);
             if (repetida) {
                 showPremiumAlert('YA EXISTE ESA REGLA',
-                    `Ya hay una regla de ${categoria} que empieza el ${fmt(desde)} (${repetida.metaUph} u/h).\n\nSi querés cambiarla, editá esa. Si querés una meta distinta a partir de otro día, poné otra fecha de inicio.`,
+                    `Ya hay una regla de ${categoria} que empieza el ${fmt(desde)} (${repetida.metaUph} u/h).\n\nSi quiere cambiarla, edite esa. Si quiere una meta distinta a partir de otro día, ponga otra fecha de inicio.`,
                     'error');
                 return;
             }
