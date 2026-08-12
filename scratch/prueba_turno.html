@@ -53,7 +53,11 @@
   const ARRANQUE = { '1811335-1-06009': 55, '2811335-1-06023': 57, '0819307-1-06007': 38 };
   const fuentes = {
     almacenamiento: { meta: 32994, avance: 18195, unidad: 'pares' },
-    paletas:        { meta: 124,   avance: 100,   unidad: 'paletas' },
+    /* La Bajada de paletas ahora se cruza con las dos fotos de reserva y llega ya
+       calculada: 97 de las 1.543 que estaban arriba al arrancar la noche del 10.
+       La meta —lo que pidió el análisis— sigue saliendo del Buffer KPI. */
+    paletas:        { meta: 124, avance: 97, unidad: 'paletas',
+                      hora: '23:30', alArrancar: 1543, paresBajados: 5671 },
     separacion:     { meta: 2496,  avance: 1500,  unidad: 'unidades' },
     arranqueBufferC: { hora: '19:00', fecha: '2026-08-10', bufferC: ARRANQUE },
     /* LA FOTO DE LA HORA, la que ahora llega sola.
@@ -103,6 +107,26 @@
   check('se ve DE QUÉ HORA es la foto', infoActivo().indexOf('23:30') >= 0);
   check('todavía no hay vuelta atrás que mostrar',
         !document.querySelector('[data-volver-auto]'));
+
+  /* ── LA BAJADA DE PALETAS, que se cruza afuera y llega ya calculada ──── */
+  const filaPor = (nombre) => [...document.querySelectorAll('#ta_t_cum tbody tr')].find(tr => {
+    const n = tr.querySelector('input[data-k="n"]');
+    return n && n.value === nombre;
+  });
+  const campoDe = (nombre, k) => {
+    const tr = filaPor(nombre); if (!tr) return null;
+    const i = tr.querySelector('input[data-k="' + k + '"]');
+    return i ? Number(i.value) : null;
+  };
+  check('Bajada de paletas toma el avance medido', campoDe('Bajada de paletas', 'av') === 97,
+        'dice ' + campoDe('Bajada de paletas', 'av'));
+  check('y la meta sigue saliendo del Buffer KPI', campoDe('Bajada de paletas', 'meta') === 124,
+        'dice ' + campoDe('Bajada de paletas', 'meta'));
+  const infoRes = (document.querySelector('[data-info="now-reserva"]') || {}).textContent || '';
+  check('se explica de dónde salió el número de paletas', /llega solo del robot/i.test(infoRes),
+        infoRes.slice(0, 70));
+  check('con la hora de la foto de reserva', infoRes.indexOf('23:30') >= 0);
+  check('y se dice que las que subieron no descuentan', /no descuentan/i.test(infoRes));
   pintar('1/3');
 
   /* ── 2. UN ARCHIVO CARGADO A MANO PISA AL AUTOMÁTICO ──────────────────── */

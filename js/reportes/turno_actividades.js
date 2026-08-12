@@ -595,12 +595,25 @@ export const montarTurno = function (RAIZ, OPC) {
      Sin la hora a la vista, un avance calculado a las 23:30 se lee como si fuera
      de las 23:58 y no hay forma de saber que faltan 28 minutos por contar. */
   function pintarInfoAuto() {
-    if (!AUTO) return;
-    infoSlot('now-activo',
-      '<b>Llega solo del robot</b>' + (AUTO.hora ? ' · foto de las <b>' + esc(AUTO.hora) + '</b>' : '') +
-      '<br>' + nf(AUTO.totalC) + ' pares en el Buffer C' +
-      '<br><span style="opacity:.7">Se actualiza cada hora. Solo hace falta cargar un ' +
-      'archivo para mirar otra foto.</span>');
+    if (AUTO) {
+      infoSlot('now-activo',
+        '<b>Llega solo del robot</b>' + (AUTO.hora ? ' · foto de las <b>' + esc(AUTO.hora) + '</b>' : '') +
+        '<br>' + nf(AUTO.totalC) + ' pares en el Buffer C' +
+        '<br><span style="opacity:.7">Se actualiza cada hora. Solo hace falta cargar un ' +
+        'archivo para mirar otra foto.</span>');
+    }
+    /* La reserva no alimenta ningún cálculo de esta pantalla, pero SÍ es de donde
+       sale la Bajada de paletas, que se cruza afuera. Se dice acá para que el número
+       no aparezca sin explicación. */
+    var p = (OPC.fuentes && OPC.fuentes.paletas) || null;
+    if (p && p.hora && p.alArrancar) {
+      infoSlot('now-reserva',
+        '<b>Llega solo del robot</b> · foto de las <b>' + esc(p.hora) + '</b>' +
+        '<br>' + nf(p.avance) + ' de ' + nf(p.alArrancar) + ' paletas ya no están arriba' +
+        (p.paresBajados ? ' · ' + nf(p.paresBajados) + ' pares' : '') +
+        '<br><span style="opacity:.7">Se cuenta paleta por paleta: las que subieron ' +
+        'durante el turno no descuentan.</span>');
+    }
   }
 
   /* LA VUELTA ATRÁS. Una foto cargada a mano se queda mandando hasta que alguien

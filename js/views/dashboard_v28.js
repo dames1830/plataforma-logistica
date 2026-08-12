@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0173';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0174';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0173';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0173';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0173';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0173';
-import * as metasService from '../services_v245/metasService.js?v=29.0173';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0173';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0173';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0173';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0173';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0173';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0173';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0173';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0173';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0173';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0173';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0173';
+import * as adminService from '../services_v245/adminService.js?v=29.0174';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0174';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0174';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0174';
+import * as metasService from '../services_v245/metasService.js?v=29.0174';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0174';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0174';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0174';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0174';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0174';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0174';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0174';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0174';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0174';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0174';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0174';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0173';
+const VERSION = '29.0174';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4094,7 +4094,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0173');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0174');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5528,6 +5528,77 @@ const leerArea = async (area, dia) => {
  * otra función y dos `const` con el mismo nombre en ámbitos distintos es exactamente
  * la trampa que dejó al tablero sin número de semana el 11-ago. */
 const AREA_STOCK_DE_LA_HORA = 'layout_stock_hora';
+const AREA_RESERVA_DE_LA_HORA = 'reserva_hora';
+
+/**
+ * Trae un cajón de la hora, o null si lo que hay no sirve para medir.
+ *
+ * UNA FOTO VIEJA ES PEOR QUE NO TENER NINGUNA. Estos cajones también se pueden llenar
+ * a mano desde el mapa de calor, y así estuvo hasta el 12-ago-2026: si el robot no
+ * corrió, lo que queda ahí puede ser de hace tres días. El avance saldría calculado
+ * contra el almacén de otra noche y nadie lo notaría, porque un número equivocado se
+ * ve igual que uno bueno. Es la misma trampa del 06-ago, cuando se publicó el stock de
+ * las 08:23 como si fuera el de las 19:00 y se generaron tareas sobre 870 pares que ya
+ * no estaban.
+ *
+ * Dos condiciones, las dos necesarias:
+ *   - no más de 3 horas (tolera que se salten dos corridas seguidas);
+ *   - y posterior al arranque del turno, o estaríamos midiendo el avance de la noche
+ *     contra una foto de antes de que empezara.
+ */
+const traerCajonDeLaHora = async (area, arranque) => {
+    try {
+        const r = await fetch(`${TURNO_API}/${area}?date=MASTER&t=${Date.now()}`);
+        if (!r.ok) return null;
+        const cuerpo = await r.json();
+        const filas = cuerpo && cuerpo.data;
+        if (!Array.isArray(filas) || !filas.length) return null;
+
+        /* `updated_at` YA VIENE EN HORA DE LIMA: no se le resta nada ni se pasa por
+           toISOString(), que volvería a moverla. */
+        const sello = String(cuerpo.updated_at || '');
+        const cuando = sello ? new Date(sello.replace(' ', 'T')) : null;
+        const horas = cuando && !isNaN(cuando) ? (Date.now() - cuando.getTime()) / 3600000 : 999;
+        const inicio = (arranque && arranque.fecha && arranque.hora)
+            ? new Date(String(arranque.fecha) + 'T' + String(arranque.hora) + ':00') : null;
+        const anterior = inicio && !isNaN(inicio) && cuando && cuando < inicio;
+
+        if (horas > 3 || anterior) {
+            console.warn(`[TURNO] Se descarta ${area}:`,
+                anterior ? 'es anterior al arranque del turno' : `tiene ${horas.toFixed(1)} horas`,
+                '(' + sello + ')');
+            return null;
+        }
+        const hh = sello.match(/(\d{2}):(\d{2})/);
+        return { filas, sello, hora: hh ? (hh[1] + ':' + hh[2]) : '' };
+    } catch (e) {
+        console.warn(`[TURNO] No se pudo traer ${area}:`, e);
+        return null;
+    }
+};
+
+/**
+ * Las paletas que están ARRIBA, una entrada por paleta (LPN) con sus pares.
+ *
+ * Se cuenta por LPN y no por línea —una paleta trae varios artículos y son varias
+ * líneas— y se mira `ES_ALTO`, que en este almacén es exactamente el selectivo
+ * (`SEL-*`). El resto del reporte de reserva es MERMA, DEV, recepción, inspección y
+ * aéreo: no son paletas de reserva y ensuciarían la cuenta.
+ *
+ * Es la MISMA regla que aplica el robot en `paletas_altas()`. Si se separan, una
+ * empieza a contar paletas que la otra no y el avance deja de cerrar.
+ */
+const paletasAltasDe = (filas) => {
+    const arriba = {};
+    (filas || []).forEach(f => {
+        if (!f || !f.ES_ALTO) return;
+        const lpn = String(f.LPN || '').trim();
+        if (!lpn) return;
+        const q = parseFloat(String(f.CANTIDAD == null ? 0 : f.CANTIDAD).replace(/,/g, '')) || 0;
+        arriba[lpn] = (arriba[lpn] || 0) + q;
+    });
+    return arriba;
+};
 
 /**
  * LOS NÚMEROS QUE LLEGAN SOLOS, para la jornada de hoy.
@@ -5629,57 +5700,71 @@ const fuentesDelTurno = async (dia) => {
      * La foto que se carga a mano sigue mandando: se lee en la pantalla y pisa a
      * esta. Es la salida para el día que el robot no corra. */
     if (hoy === getLogicalDate()) {
+
+        /* 1. EL BUFFER C — de lo que había al arrancar, cuánto ya no está. */
+        const stockAhora = await traerCajonDeLaHora(AREA_STOCK_DE_LA_HORA, foto);
+        if (stockAhora) {
+            const ahora = fotoBufferCDe(stockAhora.filas);
+            F.ahoraBufferC = {
+                hora: stockAhora.hora,
+                bufferC: ahora.detalle,
+                totalC: Object.keys(ahora.detalle).reduce((s, a) => s + ahora.detalle[a], 0),
+                lineas: stockAhora.filas.length
+            };
+        }
+
+        /* ── 2. LA BAJADA DE PALETAS, CRUZANDO LAS DOS FOTOS DE RESERVA ───────
+         *
+         * Lo planteó Daniel el 12-ago-2026, y planteó también la trampa antes de que
+         * la viéramos en los datos: *"no vaya a ser que en la foto inicial tengas
+         * cien, de ahí bajas, y en el stock de la hora te aparezcan ciento veinte;
+         * quiere decir que no has bajado nada, y no, porque tú bajas y a la vez
+         * también subes mercadería"*.
+         *
+         * Tenía razón, y los números de la noche del 10-ago lo confirman: bajaron 97
+         * paletas y subieron 24, así que restar los totales daba 49. Es el mismo caso
+         * del Buffer C, que cerró con MÁS pares de los que empezó.
+         *
+         * LA CUENTA ES POR PALETA: cuáles de las que estaban ARRIBA al arrancar ya no
+         * están arriba. Las que aparecieron son otra cosa y no descuentan.
+         *
+         * Y "ya no está arriba" no es lo mismo que "desapareció": esa noche 73 salieron
+         * del reporte y otras 24 seguían, pero en MZM-TRANS-00-01, o sea bajadas y en
+         * tránsito al mezzanine. Contando solo las que desaparecen se perdía un cuarto
+         * del trabajo de la noche.
+         *
+         * El avance medido MANDA sobre el del registro del Buffer KPI: aquel solo
+         * existe cuando se corre la validación, al final, y hasta entonces la fila
+         * quedaba vacía toda la noche. La META sigue saliendo del registro. */
         try {
-            const r = await fetch(`${TURNO_API}/${AREA_STOCK_DE_LA_HORA}?date=MASTER&t=${Date.now()}`);
-            if (r.ok) {
-                const cuerpo = await r.json();
-                const filas = cuerpo && cuerpo.data;
-                if (Array.isArray(filas) && filas.length) {
-                    /* `updated_at` YA VIENE EN HORA DE LIMA: no se le resta nada ni se
-                       pasa por toISOString(), que volvería a moverla. */
-                    const sello = String(cuerpo.updated_at || '');
-
-                    /* ── UNA FOTO VIEJA NO SIRVE, Y ES PEOR QUE NO TENER NINGUNA ──
-                     *
-                     * Este cajón también se puede llenar A MANO desde el mapa de calor, y
-                     * así estuvo hasta el 12-ago-2026. Si el robot no corrió, lo que queda
-                     * ahí puede ser de hace tres días: el avance saldría calculado contra
-                     * el almacén de otra noche y nadie lo notaría, porque un número
-                     * equivocado se ve igual que uno bueno.
-                     *
-                     * Es la misma trampa del 06-ago, cuando se publicó el stock de las
-                     * 08:23 como si fuera el de las 19:00 y se generaron tareas sobre 870
-                     * pares que ya no estaban.
-                     *
-                     * Dos condiciones, las dos necesarias:
-                     *   - no más de 3 horas (tolera que se salten dos corridas seguidas);
-                     *   - y posterior al arranque del turno, o estaríamos midiendo el
-                     *     avance de la noche contra una foto de antes de que empezara.
-                     * Si no las cumple, la actividad queda sin avance y se puede escribir
-                     * a mano, que es lo honesto. */
-                    const cuando = sello ? new Date(sello.replace(' ', 'T')) : null;
-                    const horas = cuando && !isNaN(cuando) ? (Date.now() - cuando.getTime()) / 3600000 : 999;
-                    const arranque = (foto && foto.fecha && foto.hora)
-                        ? new Date(String(foto.fecha) + 'T' + String(foto.hora) + ':00') : null;
-                    const anterior = arranque && !isNaN(arranque) && cuando && cuando < arranque;
-
-                    if (horas > 3 || anterior) {
-                        console.warn('[TURNO] El stock de la hora se descarta:',
-                            anterior ? 'es anterior al arranque del turno' : `tiene ${horas.toFixed(1)} horas`,
-                            '(' + sello + ')');
-                    } else {
-                        const ahora = fotoBufferCDe(filas);
-                        const hh = sello.match(/(\d{2}):(\d{2})/);
-                        F.ahoraBufferC = {
-                            hora: hh ? (hh[1] + ':' + hh[2]) : '',
-                            bufferC: ahora.detalle,
-                            totalC: Object.keys(ahora.detalle).reduce((s, a) => s + ahora.detalle[a], 0),
-                            lineas: filas.length
-                        };
-                    }
-                }
+            let inicio = await leerArea('reserva_arranque', hoy);
+            if (!inicio || !inicio.detalle) {
+                /* Todavía no lo guarda el robot, o esta jornada es anterior a que
+                   empezara. Durante la noche el stock de reserva del servidor ES el de
+                   las 19:00 —recién se pisa a las 06:00— así que sirve igual. */
+                const res = (dataStore.analisis_sku_reserva || []).length
+                    ? dataStore.analisis_sku_reserva
+                    : await leerArea('analisis_sku_reserva');
+                if (res && res.length) inicio = { fecha: hoy, hora: '', detalle: paletasAltasDe(res) };
             }
-        } catch (e) { console.warn('[TURNO] Stock de la hora:', e); }
+            const resAhora = inicio && inicio.detalle
+                ? await traerCajonDeLaHora(AREA_RESERVA_DE_LA_HORA, (inicio.hora ? inicio : foto))
+                : null;
+
+            if (inicio && inicio.detalle && resAhora) {
+                const arriba = paletasAltasDe(resAhora.filas);
+                let bajaron = 0, pares = 0;
+                Object.keys(inicio.detalle).forEach(lpn => {
+                    if (arriba[lpn] === undefined) { bajaron++; pares += inicio.detalle[lpn] || 0; }
+                });
+                F.paletas = Object.assign({ unidad: 'paletas' }, F.paletas || {}, {
+                    avance: bajaron,
+                    hora: resAhora.hora,
+                    alArrancar: Object.keys(inicio.detalle).length,
+                    paresBajados: Math.round(pares)
+                });
+            }
+        } catch (e) { console.warn('[TURNO] Bajada de paletas:', e); }
     }
 
     return F;
@@ -14759,7 +14844,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0173 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0174 | MOBILE PORTAL
                             </div>
                     </div>
 
