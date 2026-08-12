@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0176';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0177';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0176';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0176';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0176';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0176';
-import * as metasService from '../services_v245/metasService.js?v=29.0176';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0176';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0176';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0176';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0176';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0176';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0176';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0176';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0176';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0176';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0176';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0176';
+import * as adminService from '../services_v245/adminService.js?v=29.0177';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0177';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0177';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0177';
+import * as metasService from '../services_v245/metasService.js?v=29.0177';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0177';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0177';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0177';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0177';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0177';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0177';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0177';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0177';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0177';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0177';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0177';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0176';
+const VERSION = '29.0177';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3798,8 +3798,38 @@ export const renderDashboard = async (container, user, onLogout) => {
      * que bajar). Si acá se contara distinto, la meta y el avance hablarían de cosas
      * distintas y el porcentaje sería mentira.
      */
-    const publicarMetaDelBuffer = async (res) => {
+    /**
+     * A qué jornada pertenece un análisis, según la hora en que se calculó.
+     *
+     * `calculateBufferPallets` sella el resultado con `toLocaleString('es-ES')`, o sea
+     * "12/08/2026, 03:22:15". De ahí sale la fecha, y la jornada la decide
+     * `jornadaService`, LA MISMA función que usa todo lo demás. Copiar la regla acá
+     * —"antes de las 06:30 cuenta el día anterior"— sería tener dos verdades: el día
+     * que alguien mueva el horario del turno, una de las dos se queda vieja.
+     */
+    const jornadaDelAnalisis = (res) => {
+      const m = String((res && res.timestamp) || '').match(/(\d{2})\/(\d{2})\/(\d{4})[,\s]+(\d{2}):(\d{2})/);
+      if (!m) return null;
+      const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5]));
+      return isNaN(d.getTime()) ? null : jornadaService.fechaLogicaDe(d);
+    };
+
+    /**
+     * @param {boolean} desdeCache  true cuando el análisis viene del guardado de esta
+     *   PC y no de una corrida recién hecha. Ahí HAY QUE COMPROBAR LA JORNADA: el
+     *   análisis del martes sigue en el navegador el jueves, y publicarlo como meta de
+     *   hoy pondría a medir el turno contra lo que se pidió bajar hace dos días.
+     */
+    const publicarMetaDelBuffer = async (res, desdeCache) => {
       try {
+        if (desdeCache) {
+          const j = jornadaDelAnalisis(res);
+          if (!j || j !== getLogicalDate()) {
+            console.log(`[BH] El análisis guardado es de la jornada ${j || 'desconocida'}, ` +
+                        `no de la de hoy (${getLogicalDate()}). No se publica como meta.`);
+            return;
+          }
+        }
         const detalle = res && (res.detalle || res.detallePallets);
         if (!Array.isArray(detalle) || !detalle.length) return;
 
@@ -3987,6 +4017,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             setTimeout(() => {
                 try {
                     renderBufferResults(results, lastBufferKPI);
+                    /* Y SI ESE ANÁLISIS ES DE ESTA JORNADA, se publica al abrir la
+                       pantalla. Si no, el análisis que se corrió antes de que esto
+                       existiera —o desde una PC con la versión vieja— se quedaba
+                       guardado acá adentro y el reporte del turno seguía sin meta,
+                       aunque el trabajo ya estuviera hecho. Con la comprobación de
+                       jornada adentro, un análisis viejo no se publica. */
+                    publicarMetaDelBuffer(lastBufferKPI, true);
                 } catch (err) {
                     console.warn("[PULSE] Error cargando caché de resultados (incompatible), ignorando...", err);
                     localStorage.removeItem('lastBufferKPI');
@@ -4205,7 +4242,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0176');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0177');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15003,7 +15040,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0176 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0177 | MOBILE PORTAL
                             </div>
                     </div>
 
