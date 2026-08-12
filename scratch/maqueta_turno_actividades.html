@@ -471,7 +471,13 @@
     if (pi !== null && pf !== null && pf < pi) pf += 1440;
     if (ri !== null && rf !== null && rf < ri) rf += 1440;
 
-    var enCurso = ri !== null && rf === null;
+    /* UNA ACTIVIDAD NO PUEDE HABER TERMINADO EN EL FUTURO.
+       Si no tiene hora de fin, o si la que tiene todavia no llego, esta EN CURSO:
+       la barra corre hasta ahora y sale en morado. Daniel puso las horas de
+       arranque y el fin quedo en 00:00 sin que el lo tocara; sin esta regla el
+       cuadro mostraba barras verdes hasta la medianoche a las 20:42, o sea
+       trabajo dado por hecho tres horas antes de que ocurriera. */
+    var enCurso = ri !== null && (rf === null || rf > AHORA);
     var rFin = enCurso ? Math.max(ri, AHORA) : rf;
 
     var meta = Number(p.meta) || 0, av = Number(p.av) || 0;
@@ -502,7 +508,9 @@
     else                 { est = 'NO ATENDIDO'; tono = 'bad';  }
 
     var desvio = null, desvTxt = '—';
-    if (rf !== null && pf !== null) { desvio = rf - pf; desvTxt = (desvio > 0 ? '+' : '') + desvio + ' min'; }
+    /* El desvio del final solo vale si la actividad TERMINO. En curso, lo unico
+       que se puede medir es cuanto se corrio el arranque. */
+    if (!enCurso && rf !== null && pf !== null) { desvio = rf - pf; desvTxt = (desvio > 0 ? '+' : '') + desvio + ' min'; }
     else if (enCurso && pi !== null) { desvio = ri - pi; desvTxt = 'arrancó ' + (desvio > 0 ? '+' : '') + desvio + ' min'; }
 
     return {
