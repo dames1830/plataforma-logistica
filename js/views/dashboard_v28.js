@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0179';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0180';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0179';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0179';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0179';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0179';
-import * as metasService from '../services_v245/metasService.js?v=29.0179';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0179';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0179';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0179';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0179';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0179';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0179';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0179';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0179';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0179';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0179';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0179';
+import * as adminService from '../services_v245/adminService.js?v=29.0180';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0180';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0180';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0180';
+import * as metasService from '../services_v245/metasService.js?v=29.0180';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0180';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0180';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0180';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0180';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0180';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0180';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0180';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0180';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0180';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0180';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0180';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0179';
+const VERSION = '29.0180';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3897,14 +3897,46 @@ export const renderDashboard = async (container, user, onLogout) => {
           if (!porSku[sku]) porSku[sku] = { sku, plan: 0, ini: Number(p['QTY ACTIVO']) || 0 };
           porSku[sku].plan += Number(p['QTY BUFFER']) || 0;
         });
-        const plan = Object.values(porSku);
-        if (plan.length) {
+        const codigos = Object.values(porSku);
+
+        /* ── Y LAS PALETAS QUE HAY QUE BAJAR, UNA POR UNA ─────────────────────
+         *
+         * Lo planteó Daniel el 12-ago-2026: *"en el análisis del buffer están las
+         * ubicaciones que tienes que bajar; si en el stock de las siete te aparecía
+         * la ubicación 1 hasta la 102 y después de una hora ya no aparecen dos de
+         * las que te pedían, quiere decir que ya bajaste esas dos"*.
+         *
+         * Y tiene razón en algo que yo tenía mal: el avance se mide contra LAS QUE
+         * PIDIÓ EL ANÁLISIS, no contra todas las paletas altas del almacén. Midiendo
+         * contra todas, la meta hablaba de 112 paletas y el avance de otras 1.592, así
+         * que una paleta que alguien bajó sin que nadie la pidiera contaba igual y el
+         * porcentaje no significaba nada.
+         *
+         * Se guardan las dos llaves. El LPN es la buena —identifica la paleta aunque
+         * la muevan de sitio— y la ubicación queda de respaldo para las filas que no
+         * traen LPN, igual que hace la validación del Buffer KPI. */
+        const vistas = new Set();
+        const paletas = [];
+        planificadas.forEach(p => {
+          const lpn = String(p.LPN || '').trim().toUpperCase();
+          const ubi = String(p.UBICACIONES || '').trim().toUpperCase();
+          const llave = lpn || ubi;
+          if (!llave || vistas.has(llave)) return;
+          vistas.add(llave);
+          paletas.push({ lpn, ubi });
+        });
+
+        if (codigos.length) {
+          /* UN OBJETO, NO UNA LISTA. Hasta v29.0179 acá iba el arreglo de códigos a
+             secas; quien lo lea tiene que aguantar las dos formas, porque en el
+             servidor puede haber planes guardados con la vieja. */
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
           const r = await fetch(`${base}/api/logistics/plan_buffer?date=${fecha}`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(plan)
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fecha, codigos, paletas })
           });
           console.log(r.ok
-            ? `[BH] ✅ Plan del buffer publicado (${fecha}): ${plan.length} códigos.`
+            ? `[BH] ✅ Plan del buffer publicado (${fecha}): ${codigos.length} códigos, ${paletas.length} paletas.`
             : `[BH] ⚠️ El plan del buffer no se pudo publicar (${r.status}).`);
         }
       } catch (e) {
@@ -4242,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0179');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0180');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5884,31 +5916,53 @@ const fuentesDelTurno = async (dia) => {
          * El avance medido MANDA sobre el del registro del Buffer KPI: aquel solo
          * existe cuando se corre la validación, al final, y hasta entonces la fila
          * quedaba vacía toda la noche. La META sigue saliendo del registro. */
+        /* EL PLAN DEL BUFFER alimenta a las dos actividades de abajo, así que se lee
+           una sola vez. Aguanta las DOS formas: la de hoy —{fecha, codigos, paletas}—
+           y la de v29.0179, que era el arreglo de códigos a secas y todavía puede
+           estar guardada en el servidor de una corrida de esa versión. */
+        let planBruto = null;
+        try { planBruto = await leerArea('plan_buffer', hoy); } catch (e) { /* sin plan */ }
+        const plan = Array.isArray(planBruto)
+            ? { codigos: planBruto, paletas: [] }
+            : (planBruto && typeof planBruto === 'object' ? planBruto : { codigos: [], paletas: [] });
+
         try {
-            let inicio = await leerArea('reserva_arranque', hoy);
-            if (!inicio || !inicio.detalle) {
-                /* Todavía no lo guarda el robot, o esta jornada es anterior a que
-                   empezara. Durante la noche el stock de reserva del servidor ES el de
-                   las 19:00 —recién se pisa a las 06:00— así que sirve igual. */
-                const res = (dataStore.analisis_sku_reserva || []).length
-                    ? dataStore.analisis_sku_reserva
-                    : await leerArea('analisis_sku_reserva');
-                if (res && res.length) inicio = { fecha: hoy, hora: '', detalle: paletasAltasDe(res) };
-            }
-            const resAhora = inicio && inicio.detalle
-                ? await traerCajonDeLaHora(AREA_RESERVA_DE_LA_HORA, (inicio.hora ? inicio : foto))
+            /* SE MIDE CONTRA LAS PALETAS QUE PIDIÓ EL ANÁLISIS, no contra todas las
+               altas del almacén. Midiendo contra todas, la meta hablaba de 112 paletas
+               y el avance de otras 1.592: una paleta bajada sin que nadie la pidiera
+               contaba igual, y el porcentaje no significaba nada. */
+            const pedidas = Array.isArray(plan.paletas) ? plan.paletas : [];
+            const resAhora = pedidas.length
+                ? await traerCajonDeLaHora(AREA_RESERVA_DE_LA_HORA, foto)
                 : null;
 
-            if (inicio && inicio.detalle && resAhora) {
-                const arriba = paletasAltasDe(resAhora.filas);
-                let bajaron = 0, pares = 0;
-                Object.keys(inicio.detalle).forEach(lpn => {
-                    if (arriba[lpn] === undefined) { bajaron++; pares += inicio.detalle[lpn] || 0; }
+            if (resAhora) {
+                const arriba = new Set(Object.keys(paletasAltasDe(resAhora.filas)).map(l => l.toUpperCase()));
+                /* Las ubicaciones que siguen ocupadas arriba, para las pocas filas del
+                   plan que no traen LPN. Se comparan sin guiones, igual que la
+                   validación del Buffer KPI. */
+                const ubisArriba = new Set();
+                resAhora.filas.forEach(f => {
+                    if (f && f.ES_ALTO) ubisArriba.add(String(f.UBICACION || '').toUpperCase().replace(/[^A-Z0-9]/g, ''));
                 });
+
+                /* Y los pares se sacan de la foto del arranque, que es donde está
+                   cuánto traía cada paleta cuando todavía estaba arriba. */
+                const arranquePal = await leerArea('reserva_arranque', hoy);
+                const traia = (arranquePal && arranquePal.detalle) || {};
+
+                let bajaron = 0, pares = 0;
+                pedidas.forEach(p => {
+                    const lpn = String((p && p.lpn) || '').trim().toUpperCase();
+                    const ubi = String((p && p.ubi) || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+                    const yaNoEsta = lpn ? !arriba.has(lpn) : (!!ubi && !ubisArriba.has(ubi));
+                    if (yaNoEsta) { bajaron++; pares += Number(traia[lpn]) || 0; }
+                });
+
                 F.paletas = Object.assign({ unidad: 'paletas' }, F.paletas || {}, {
                     avance: bajaron,
                     hora: resAhora.hora,
-                    alArrancar: Object.keys(inicio.detalle).length,
+                    alArrancar: pedidas.length,
                     paresBajados: Math.round(pares)
                 });
             }
@@ -5928,8 +5982,8 @@ const fuentesDelTurno = async (dia) => {
          * día dejaran de cruzar, esto daría CERO sin ningún error a la vista, así que
          * se avisa por consola cuando casi nada encuentra pareja. */
         try {
-            const plan = await leerArea('plan_buffer', hoy);
-            if (Array.isArray(plan) && plan.length && stockAhora) {
+            const codigos = Array.isArray(plan.codigos) ? plan.codigos : [];
+            if (codigos.length && stockAhora) {
                 const activo = {};
                 stockAhora.filas.forEach(f => {
                     const a = String((Array.isArray(f) ? f[1] : f['Artículo']) || '').trim();
@@ -5939,7 +5993,7 @@ const fuentesDelTurno = async (dia) => {
                 });
 
                 let separadas = 0, aSeparar = 0, cruzan = 0;
-                plan.forEach(p => {
+                codigos.forEach(p => {
                     const sku = String((p && p.sku) || '').trim();
                     const aBajar = Number(p && p.plan) || 0;
                     if (!sku || aBajar <= 0) return;
@@ -5949,8 +6003,8 @@ const fuentesDelTurno = async (dia) => {
                     separadas += Math.min(aBajar, subio);
                 });
 
-                if (cruzan < plan.length * 0.5) {
-                    console.warn(`[TURNO] Separación: solo ${cruzan} de ${plan.length} códigos del plan ` +
+                if (cruzan < codigos.length * 0.5) {
+                    console.warn(`[TURNO] Separación: solo ${cruzan} de ${codigos.length} códigos del plan ` +
                                  `aparecen en el stock. El avance puede estar mal; no se muestra.`);
                 } else {
                     F.separacion = Object.assign({ unidad: 'unidades' }, F.separacion || {}, {
@@ -15040,7 +15094,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0179 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0180 | MOBILE PORTAL
                             </div>
                     </div>
 

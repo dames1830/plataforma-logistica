@@ -1,0 +1,62 @@
+<meta charset="utf-8">
+<title>Banco de pruebas · Almacenamiento del turno</title>
+<!--
+  Corre el CÁLCULO REAL de Almacenamiento -datosMarcas- contra los datos REALES de
+  beta, sin pasar por el tablero, que pide contraseña.
+
+  Es la única fila del Cumplimiento del turno que no se había visto funcionando: en
+  la pantalla salía "0 de 0" porque la copia de tareas de beta era del 5 de agosto.
+  Después de copiar producción a beta tiene que dar un número.
+-->
+<style>
+  body { background:#0b0e15; color:#e8ecf4; font-family: ui-monospace, Consolas, monospace; margin:0; padding:16px; font-size:13px; }
+  .bien { color:#34d399; } .mal { color:#f87171; } b { color:#00E5FF; font-weight:400; }
+  pre { white-space:pre-wrap; line-height:1.6; }
+</style>
+<pre id="salida">cargando…</pre>
+
+<script src="../js/env.js"></script>
+<script type="module">
+  const P = document.getElementById('salida');
+  const decir = (t) => { P.innerHTML += t + '\n'; };
+  window.onerror = (m, f, l) => decir('<span class="mal">ERROR: ' + m + ' (' + f + ':' + l + ')</span>');
+
+  const JORNADA = '2026-08-11';
+  P.innerHTML = '';
+  try {
+    decir('entorno: <b>' + (window.__PULSE_ES_BETA ? 'BETA' : 'produccion/desconocido') + '</b>  ·  jornada <b>' + JORNADA + '</b>\n');
+
+    const syncEngine = await import('../js/services_v245/sync_engine_v24_9.js');
+    const { datosMarcas, armarTurnoDe } = await import('../js/reportes/marcas.js');
+
+    decir('bajando tareas y trabajadores del servidor…');
+    await syncEngine.pullGlobal(['almacenaje_tasks', 'workers'], true);
+    const tareas = syncEngine.syncStore.almacenaje_tasks || [];
+    const workers = syncEngine.syncStore.workers || [];
+    decir('  tareas: <b>' + tareas.length.toLocaleString('es') + '</b>   trabajadores: <b>' + workers.length + '</b>\n');
+
+    /* EL MISMO CÁLCULO QUE HACE fuentesDelTurno: el gran total del reporte de Marcas
+       para esa jornada. BUFFER es la meta y TOTAL el avance. */
+    const gt = datosMarcas(tareas, JORNADA, JORNADA, armarTurnoDe(workers)).granTotal;
+
+    decir('EL GRAN TOTAL DEL REPORTE DE MARCAS');
+    decir('  BUFFER (la meta) : <b>' + Number(gt.buffer || 0).toLocaleString('es') + '</b>');
+    decir('  DÍA              : ' + Number(gt.dia || 0).toLocaleString('es'));
+    decir('  NOCHE            : ' + Number(gt.noche || 0).toLocaleString('es'));
+    decir('  TOTAL (el avance): <b>' + Number(gt.total || 0).toLocaleString('es') + '</b>\n');
+
+    const ok = gt && gt.buffer > 0;
+    decir(ok
+      ? '<span class="bien">  OK    Almacenamiento SÍ trae número: ' +
+        Number(gt.total).toLocaleString('es') + ' de ' + Number(gt.buffer).toLocaleString('es') + ' pares</span>'
+      : '<span class="mal">  FALLA Almacenamiento sigue sin meta (buffer = ' + gt.buffer + '), la fila saldría en 0 de 0</span>');
+
+    window.__listo = true;
+    window.__resultado = { buffer: gt.buffer, total: gt.total, tareas: tareas.length };
+  } catch (e) {
+    decir('<span class="mal">Se cayó: ' + (e && e.message) + '</span>');
+    decir((e && e.stack || '').split('\n').slice(0, 4).join('\n'));
+    window.__listo = true;
+    window.__resultado = { error: String(e && e.message) };
+  }
+</script>
