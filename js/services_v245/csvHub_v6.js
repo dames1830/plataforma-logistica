@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0177';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0178';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -157,7 +157,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0177';
+const VERSION = '29.0178';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -801,6 +801,50 @@ export const parseBufferFiles = async (files) => {
     return combinedData;
 };
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   LA DEMANDA, EN LA NUBE
+
+   El análisis del buffer se arma de TRES archivos, y los tres vivían solo en la PC
+   que los cargó. Consecuencia: únicamente esa computadora podía correr el análisis.
+   Si esa PC no estaba, nadie más podía; y el reporte del turno se quedaba sin meta
+   para Bajada de paletas y para Separación.
+
+   Es el mismo problema que el 02-ago-2026 se resolvió con los stocks —dos PC daban
+   papeles distintos— y se resuelve igual: se publican, y todas las pantallas leen
+   el mismo.
+
+   SE SUBEN SOLO LAS COLUMNAS QUE EL MOTOR USA. El archivo de pedidos trae 30
+   columnas y 50.333 filas: 58 MB. De ahí el motor lee TRES —código, solicitada y
+   asignada— y calcula `solicitada − asignada`. Con esas tres son 4,6 MB.
+
+   Las otras dos fuentes el motor las lee POR POSICIÓN —`Object.values(fila)[0]` es
+   el código y `[1]` la cantidad— así que se guardan como pares en ese orden y no
+   como objetos con nombre. Así la posición es explícita y no depende de en qué
+   orden quedaron las claves.
+
+   No se filtran las líneas ya atendidas aunque el motor las descarte: quedarían
+   10.253 de 50.333 y la pantalla diría que se perdieron filas. Verificado que el
+   total pedido es el mismo con y sin filtro: 20.245 pares.
+   ══════════════════════════════════════════════════════════════════════════════ */
+const DEMANDA_EN_LA_NUBE = {
+    /* PEDIDOS. Los nombres de salida son los canónicos, y están dentro de la lista
+       que busca el motor, así que el cálculo no cambia ni una línea. */
+    buffer: (filas) => (filas || []).map(f => ({
+        'Código de artículo':  String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo', 'Cod. Articulo', 'CodArticulo', 'Producto']) || '').trim(),
+        'Cantidad solicitada': getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cantidad', 'Cant']) || 0,
+        'Cantidad asignada':   getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado']) || 0
+    })).filter(f => f['Código de artículo']),
+
+    /* OTRAS SOLICITUDES y REPLENISHMENT: código y cantidad, EN ESE ORDEN. */
+    solicitud: (filas) => (filas || []).map(f => Object.values(f).slice(0, 2))
+                                       .filter(v => String(v[0] || '').trim()),
+    tallas:    (filas) => (filas || []).map(f => Object.values(f).slice(0, 2))
+                                       .filter(v => String(v[0] || '').trim())
+};
+
+/** ¿Esta área es una de las tres de la demanda, que ahora se comparten? */
+export const esAreaDeDemanda = (area) => Object.prototype.hasOwnProperty.call(DEMANDA_EN_LA_NUBE, area);
+
 const persistToDatabase = async (area, payload, username = 'sistema') => {
     // 1. Guardar de forma inmediata en local IndexedDB y memoria
     dataStore[area] = payload;
@@ -809,6 +853,42 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
     // [AUTO] Actualizar Tabla de Tallas si es Stock Activo o Reserva de cualquier área
     if (area.endsWith('_activo') || area.endsWith('_reserva')) {
         updateTablaTallas();
+    }
+
+    /* 1.b LA DEMANDA SE PUBLICA, REDUCIDA.
+     *
+     * Va acá arriba y no en el envío de más abajo porque el área sigue siendo
+     * "local-only" para todo lo demás: en la PC se guarda el archivo ENTERO, con sus
+     * 30 columnas, que es lo que se ve en pantalla y lo que se descarga. A la nube va
+     * solo lo que el motor necesita.
+     *
+     * Sin `await`: cargar el archivo no puede quedarse esperando al servidor. Si el
+     * envío falla, esta PC igual tiene el archivo y puede calcular; lo que se pierde
+     * es que las otras lo vean, y eso se arregla volviendo a cargarlo.
+     *
+     * NO SE LE PONE `X-Environment` A MANO. En pruebas lo sella `env.js`, y en
+     * producción no va cabecera, que es como el servidor entiende "los datos de
+     * verdad". Ponerla fija acá es lo que hace el envío de más abajo, y funciona solo
+     * porque env.js la sobrescribe: es una trampa esperando a que alguien toque env.js.
+     */
+    if (DEMANDA_EN_LA_NUBE[area]) {
+        try {
+            const reducido = DEMANDA_EN_LA_NUBE[area](payload);
+            fetch(`${API_URL}/${area}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reducido)
+            }).then(r => {
+                if (r.ok) {
+                    console.log(`[DEMANDA] ✅ ${area} publicado: ${reducido.length.toLocaleString('es')} filas de ${(payload || []).length.toLocaleString('es')}.`);
+                    logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${reducido.length} (demanda compartida)`);
+                } else {
+                    console.warn(`[DEMANDA] ⚠️ ${area} no se pudo publicar (${r.status}). Las otras PC van a seguir con el anterior.`);
+                }
+            }).catch(e => console.warn(`[DEMANDA] ⚠️ ${area} no se pudo publicar:`, e && e.message));
+        } catch (e) {
+            console.warn(`[DEMANDA] No se pudo preparar ${area} para publicar:`, e);
+        }
     }
 
     // 2. Si es local-only, terminar aquí
@@ -982,6 +1062,13 @@ export const getAreaData = async (area, forceRefresh = false) => {
   // hubiera cargado, y por eso la sugerencia tenía que pedirla por su cuenta con un fetch.
   const laPublicaElRobot = (area === 'almacenaje_activo' || area === 'analisis_sku_reserva');
 
+  /* Y desde el 12-ago-2026 también las TRES DE LA DEMANDA —pedidos, otras solicitudes
+     y replenishment—, por el mismo motivo: vivían solo en la PC que cargó el archivo,
+     así que únicamente esa computadora podía correr el análisis del buffer. Ojo: es
+     coincidencia exacta, no por prefijo. `buffer` sí; `buffer_activo` y
+     `buffer_history` no, que son otra cosa y ya se resuelven más arriba. */
+  const vieneDeLaNube = laPublicaElRobot || esAreaDeDemanda(area);
+
   if (!forceRefresh && dataStore[area] !== undefined && dataStore[area] !== null) return dataStore[area];
 
   // EN LAS DEL ROBOT MANDA EL SERVIDOR, no la copia de esta PC.
@@ -990,7 +1077,7 @@ export const getAreaData = async (area, forceRefresh = false) => {
   // columnas de antes del 02-ago— y no hay manera de saberlo sin preguntar. Preguntar sale
   // barato: el servidor las manda comprimidas y son unos 360 KB. Si no contesta, más abajo
   // se cae igual al respaldo local, así que sin internet se sigue trabajando.
-  if (!forceRefresh && !laPublicaElRobot) {
+  if (!forceRefresh && !vieneDeLaNube) {
       // [MOD V12.1.47] Prioridad a la DB Local (Instantáneo)
       const dbData = await loadFromDB(area);
       if (dbData) {
@@ -1001,7 +1088,7 @@ export const getAreaData = async (area, forceRefresh = false) => {
   }
 
   // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, no buscar en el servidor
-  if (!laPublicaElRobot && (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area === 'validar_lpn' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas' || area.startsWith('analisis_sku'))) {
+  if (!vieneDeLaNube && (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area === 'validar_lpn' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas' || area.startsWith('analisis_sku'))) {
       if (area.endsWith('_activo') || area.endsWith('_reserva')) {
           updateTablaTallas();
       }
