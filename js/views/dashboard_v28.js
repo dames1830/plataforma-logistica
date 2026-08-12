@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0174';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0175';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0174';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0174';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0174';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0174';
-import * as metasService from '../services_v245/metasService.js?v=29.0174';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0174';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0174';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0174';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0174';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0174';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0174';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0174';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0174';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0174';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0174';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0174';
+import * as adminService from '../services_v245/adminService.js?v=29.0175';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0175';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0175';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0175';
+import * as metasService from '../services_v245/metasService.js?v=29.0175';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0175';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0175';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0175';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0175';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0175';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0175';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0175';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0175';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0175';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0175';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0175';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0174';
+const VERSION = '29.0175';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3777,7 +3777,112 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div id="resultsArea" style="display:flex; gap:0.6rem; align-items:start;"></div>
           </div>`;
         const results = document.getElementById('resultsArea');
-        
+
+    /**
+     * LO QUE EL ANÁLISIS MANDA BAJAR, AL SERVIDOR Y EN EL ACTO.
+     *
+     * PROCESAR ANÁLISIS guardaba **solo en esta PC** —IndexedDB y localStorage— y el
+     * único que escribía en el servidor era el Buffer KPI, que corre al final de la
+     * noche cuando se valida. Consecuencia: durante todo el turno el reporte de
+     * Actividades no tenía meta para Bajada de paletas ni para Separación, y Daniel
+     * llegó a correr el análisis dos veces esperando que apareciera.
+     *
+     * Lo pidió así el 12-ago-2026: *"al buffer lo tenemos que poner de forma global,
+     * para que vaya al servidor y de ahí lo puedas bajar y leer"*.
+     *
+     * SE GUARDA LA META, NUNCA EL AVANCE. Si ya hay registro de la jornada —porque la
+     * validación corrió— se actualizan solo estos dos campos y lo demás queda intacto:
+     * volver a procesar el análisis no puede borrar lo que ya se midió.
+     *
+     * Y se cuenta con EL MISMO FILTRO que usa la validación (paletas altas, con algo
+     * que bajar). Si acá se contara distinto, la meta y el avance hablarían de cosas
+     * distintas y el porcentaje sería mentira.
+     */
+    const publicarMetaDelBuffer = async (res) => {
+      try {
+        const detalle = res && (res.detalle || res.detallePallets);
+        if (!Array.isArray(detalle) || !detalle.length) return;
+
+        const planificadas = detalle.filter(p => {
+          if (!p) return false;
+          const nivel = String(p.NIVEL || '').toUpperCase();
+          return (p.ES_ALTO === true || nivel.includes('ALTO')) && (Number(p['QTY BUFFER']) || 0) > 0;
+        });
+        if (!planificadas.length) return;
+
+        /* Las paletas se cuentan por LPN ÚNICO: una paleta trae varios artículos y
+           sería varias filas. Es la misma cuenta que hace uniquePlannedLPNs. */
+        const lpns = new Set();
+        let unidades = 0;
+        planificadas.forEach(p => {
+          const lpn = String(p.LPN || '').trim().toUpperCase();
+          if (lpn) lpns.add(lpn);
+          unidades += Number(p['QTY BUFFER']) || 0;
+        });
+        if (!lpns.size) return;
+
+        const fecha = getLogicalDate();
+        const meta = {
+          fecha,
+          paletasSolicitadas: lpns.size,
+          unidadesASeparar: Math.round(unidades)
+        };
+
+        const hist = await fetchBufferHistory();
+        const previo = (hist || []).find(r => r && r.fecha === fecha);
+        const ok = (previo && previo.id)
+          ? await updateBufferHistoryRecord(previo.id, meta)
+          : await saveBufferHistoryRecord({
+              ...meta,
+              /* El avance arranca en cero porque todavía no bajó nada, y es la
+                 verdad a esta hora. Lo reemplaza la validación cuando corra. */
+              paletasBajadas: 0, paletasCompletas: 0, paletasIncompletas: 0,
+              diferencias: lpns.size, fillRate: '0.00%', unidadesSeparadas: 0
+            });
+
+        console.log(ok
+          ? `[BH] ✅ Meta del análisis publicada (${fecha}): ${meta.paletasSolicitadas} paletas, ${meta.unidadesASeparar} unidades.`
+          : `[BH] ⚠️ La meta del análisis no llegó al servidor; el reporte del turno va a quedar sin meta.`);
+
+        /* ── Y EL DETALLE POR CÓDIGO, que es lo que permite medir la separación
+         *    DURANTE la noche en vez de esperar a la validación.
+         *
+         * De cada código se guardan dos cosas: cuánto hay que bajar y cuánto había
+         * en la zona activa al planificar. Con el stock de la hora, lo separado es
+         * lo que subió en el activo, con tope en lo planificado:
+         *
+         *     min( lo que había que bajar , lo que subió en la zona activa )
+         *
+         * El tope es regla de Daniel: *"me puedes pedir ochenta pero yo puedo bajar
+         * cien; la cosa es tener igual o más, nunca menos"*.
+         *
+         * SE AGRUPA POR CÓDIGO, no por fila. Un mismo código puede venir en varias
+         * paletas —22 de las 151 filas del plan del 07-ago— y sumar el tope de cada
+         * fila contaría dos veces lo mismo. `QTY ACTIVO` es el stock de ESE código,
+         * así que se asigna, no se suma. */
+        const porSku = {};
+        planificadas.forEach(p => {
+          const sku = String(p.SKU || '').trim();
+          if (!sku) return;
+          if (!porSku[sku]) porSku[sku] = { sku, plan: 0, ini: Number(p['QTY ACTIVO']) || 0 };
+          porSku[sku].plan += Number(p['QTY BUFFER']) || 0;
+        });
+        const plan = Object.values(porSku);
+        if (plan.length) {
+          const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+          const r = await fetch(`${base}/api/logistics/plan_buffer?date=${fecha}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(plan)
+          });
+          console.log(r.ok
+            ? `[BH] ✅ Plan del buffer publicado (${fecha}): ${plan.length} códigos.`
+            : `[BH] ⚠️ El plan del buffer no se pudo publicar (${r.status}).`);
+        }
+      } catch (e) {
+        console.warn('[BH] No se pudo publicar la meta del análisis:', e);
+      }
+    };
+
+
         console.log("[PULSE] Vinculando botones de acción...");
         
         // ACTIVAR BOTONES PRIMERO (Prioridad Máxima)
@@ -3841,7 +3946,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 localStorage.setItem('lastBufferKPI', serialized);
                                 sessionStorage.setItem('lastBufferKPI_session', serialized); // backup extra
                             } catch(e) { console.warn("[PULSE] Quota Full en Zona Buffer (localStorage), guardado en IndexedDB únicamente.", e); }
-                            renderBufferResults(results, res); 
+                            renderBufferResults(results, res);
+
+                            /* Y LA META AL SERVIDOR, para que el reporte del turno la tenga
+                               desde que arranca la noche y no recién al validar. Va sin
+                               await: el análisis ya está en pantalla y esto no debe
+                               retrasarlo ni romperlo si el servidor no contesta. */
+                            publicarMetaDelBuffer(res);
 
                         } else {
                             showPremiumAlert("Error de Maestros", "No se pudo realizar el análisis porque faltan los archivos maestros.", "error");
@@ -4094,7 +4205,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0174');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0175');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5765,6 +5876,54 @@ const fuentesDelTurno = async (dia) => {
                 });
             }
         } catch (e) { console.warn('[TURNO] Bajada de paletas:', e); }
+
+        /* ── 3. LA SEPARACIÓN, contra el stock activo de la hora ──────────────
+         *
+         * El plan lo publica PROCESAR ANÁLISIS: por cada código, cuánto hay que bajar
+         * y cuánto había en la zona activa al planificar. Lo separado es lo que subió
+         * en el activo desde entonces, con tope en lo planificado —regla de Daniel:
+         * *"me puedes pedir ochenta pero yo puedo bajar cien; la cosa es tener igual
+         * o más, nunca menos"*—. Sin el tope, un código que bajó de más taparía a
+         * otros que no bajaron nada.
+         *
+         * OJO CON EL CÓDIGO: el del plan y el `Artículo` del stock son el mismo
+         * formato —se comprobó contra el plan del 07-ago, 127 de 129 cruzan—. Si un
+         * día dejaran de cruzar, esto daría CERO sin ningún error a la vista, así que
+         * se avisa por consola cuando casi nada encuentra pareja. */
+        try {
+            const plan = await leerArea('plan_buffer', hoy);
+            if (Array.isArray(plan) && plan.length && stockAhora) {
+                const activo = {};
+                stockAhora.filas.forEach(f => {
+                    const a = String((Array.isArray(f) ? f[1] : f['Artículo']) || '').trim();
+                    if (!a) return;
+                    const q = parseFloat(String((Array.isArray(f) ? f[4] : f['Cantidad actual']) || 0).replace(/,/g, '')) || 0;
+                    activo[a] = (activo[a] || 0) + q;
+                });
+
+                let separadas = 0, aSeparar = 0, cruzan = 0;
+                plan.forEach(p => {
+                    const sku = String((p && p.sku) || '').trim();
+                    const aBajar = Number(p && p.plan) || 0;
+                    if (!sku || aBajar <= 0) return;
+                    aSeparar += aBajar;
+                    if (activo[sku] !== undefined) cruzan++;
+                    const subio = Math.max(0, (activo[sku] || 0) - (Number(p.ini) || 0));
+                    separadas += Math.min(aBajar, subio);
+                });
+
+                if (cruzan < plan.length * 0.5) {
+                    console.warn(`[TURNO] Separación: solo ${cruzan} de ${plan.length} códigos del plan ` +
+                                 `aparecen en el stock. El avance puede estar mal; no se muestra.`);
+                } else {
+                    F.separacion = Object.assign({ unidad: 'unidades' }, F.separacion || {}, {
+                        meta: Math.round(aSeparar),
+                        avance: Math.round(separadas),
+                        hora: stockAhora.hora
+                    });
+                }
+            }
+        } catch (e) { console.warn('[TURNO] Separación:', e); }
     }
 
     return F;
@@ -14844,7 +15003,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0174 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0175 | MOBILE PORTAL
                             </div>
                     </div>
 
