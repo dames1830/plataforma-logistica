@@ -34,6 +34,34 @@ const HTML = "<div class=\"page\">\n\n\n  <section class=\"panel\">\n    <div>\n
 /** Dibuja el reporte dentro de `raiz` y avisa por `OPC.alGuardar` cuando algo cambia. */
 export const montarTurno = function (RAIZ, OPC) {
   OPC = OPC || {};
+
+  /* ── LOS ESCUCHADORES SE LIMPIAN ANTES DE VOLVER A ENGANCHARLOS ──────────
+   *
+   * Este módulo cuelga cuatro escuchadores de RAIZ —click, change, input y otro
+   * click— y RAIZ NO SE REEMPLAZA entre montajes: quien monta solo le cambia el
+   * contenido. Así que cada vez que se remontaba quedaban cuatro más encima de los
+   * de antes.
+   *
+   * Con dos montajes, cambiar la fecha llamaba DOS veces a `alCambiarFecha`, o sea
+   * dos remontajes, que dejaban cuatro escuchadores más cada uno... y a la vuelta
+   * siguiente cuatro llamadas, y ocho. La pantalla se veía temblar: aparecía con
+   * datos, volvía al cargador, aparecía otra vez.
+   *
+   * Lo reportó Daniel el 12-ago-2026: *"me aparece un gráfico con data, y de ahí se
+   * reversa, y de ahí vuelve a actualizarse; está que se mueve a cada rato"*. Se
+   * notó ahora porque el cálculo se hizo más lento —lee las fotos del cierre— y el
+   * ida y vuelta pasó a durar lo suficiente para verse.
+   *
+   * No alcanza con `RAIZ.innerHTML = ''`: eso se lleva a los hijos, no a lo que está
+   * enganchado en RAIZ. */
+  if (RAIZ.__taEscuchas) {
+    RAIZ.__taEscuchas.forEach(function (e) { RAIZ.removeEventListener(e[0], e[1]); });
+  }
+  RAIZ.__taEscuchas = [];
+  var escuchar = function (tipo, fn) {
+    RAIZ.addEventListener(tipo, fn);
+    RAIZ.__taEscuchas.push([tipo, fn]);
+  };
   if (!document.getElementById('ta_estilos')) {
     var hoja = document.createElement('style');
     hoja.id = 'ta_estilos';
@@ -650,7 +678,7 @@ export const montarTurno = function (RAIZ, OPC) {
     pintarInfoAuto();
   }
 
-  RAIZ.addEventListener('click', function (e) {
+  escuchar('click', function (e) {
     var a = e.target.closest && e.target.closest('[data-volver-auto]');
     if (!a) return;
     e.preventDefault();
@@ -740,7 +768,7 @@ export const montarTurno = function (RAIZ, OPC) {
     });
   }
 
-  RAIZ.addEventListener('change', function (e) {
+  escuchar('change', function (e) {
     /* CAMBIAR LA FECHA no se resuelve acá: este archivo no sabe leer del
        servidor. Se avisa hacia afuera y quien monta el módulo vuelve a traer
        la jornada entera —lo guardado y los números que llegan solos— y lo
@@ -781,7 +809,7 @@ export const montarTurno = function (RAIZ, OPC) {
     guardar();
   }
 
-  RAIZ.addEventListener('input', function (e) {
+  escuchar('input', function (e) {
     var t = e.target;
     var k = t.getAttribute('data-k');
     if (!k) return;
@@ -807,7 +835,7 @@ export const montarTurno = function (RAIZ, OPC) {
     pintar({ t: t.getAttribute('data-t'), k: k, i: i, p: (t.selectionStart == null ? 0 : t.selectionStart) });
   });
 
-  RAIZ.addEventListener('click', function (e) {
+  escuchar('click', function (e) {
     var d = e.target.getAttribute && e.target.getAttribute('data-del');
     if (d !== null && d !== undefined) { S.procs.splice(Number(d), 1); pintar(); return; }
     if (e.target.id === 'ta_b_add' || e.target.id === 'ta_b_add2') {

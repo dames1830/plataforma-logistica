@@ -198,8 +198,34 @@
   check('y avisa que falta la meta', anillos && /sin meta/i.test(anillos.querySelector('.rq').textContent),
         anillos && anillos.querySelector('.rq').textContent.trim().replace(/\s+/g, ' '));
 
+  /* ── 5. REMONTAR NO PUEDE ACUMULAR ESCUCHADORES ───────────────────────
+     El módulo cuelga cuatro escuchadores de la caja, y la caja NO se reemplaza
+     entre montajes. Sin limpiarlos, cambiar la fecha llamaba una vez POR CADA
+     montaje anterior: dos remontajes, cuatro, ocho... y la pantalla temblaba. */
+  let fechasPedidas = 0;
+  /* Contenedor propio: el de arriba ya lo movieron los pasos anteriores, y lo que
+     se prueba acá es montar TRES VECES SOBRE EL MISMO elemento. */
+  const caja = document.createElement('div');
+  document.body.appendChild(caja);
+  for (let i = 0; i < 3; i++) {
+    montarTurno(caja, {
+      estado: null, fuentes, fecha: '2026-08-11',
+      alGuardar: () => {},
+      alCambiarFecha: () => { fechasPedidas++; }
+    });
+  }
+  const cal = caja.querySelector('input.cal');
+  check('hay calendario para probar', !!cal);
+  if (cal) {
+    cal.value = '2026-08-09';
+    cal.dispatchEvent(new Event('change', { bubbles: true }));
+    await esperar(() => fechasPedidas > 0, 2000).catch(() => {});
+  }
+  check('tras 3 montajes, cambiar la fecha avisa UNA sola vez', fechasPedidas === 1,
+        'aviso ' + fechasPedidas + ' vece(s)');
+
   check('el módulo no tiró ningún error de JS', errores.length === 0, errores.join(' · '));
-  pintar('4/4');
+  pintar('5/5');
   window.__listo = true;
   window.__fallaron = res.filter(r => !r.ok).length + errores.length;
 </script>
