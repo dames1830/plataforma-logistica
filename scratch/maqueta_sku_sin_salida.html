@@ -18,7 +18,15 @@
   * { box-sizing:border-box; }
   body { margin:0; padding:1.6rem; background:var(--bg-dark); color:var(--text-main);
          font-family:'Segoe UI',system-ui,sans-serif; }
-  .wrap { max-width:1180px; margin:0 auto; }
+  /* 1.500 y no los 1.180 de siempre: el cuadro de la izquierda necesita 1.219 px por
+     sus once columnas, y a 1.180 la ultima -Pedido mas antiguo, que es por la que se
+     ordena- quedaba cortada contra el borde. Sigue centrado y con aire a los costados
+     en una pantalla de 1.600.
+
+     Y NO HAY SCROLL HORIZONTAL EN NINGUN ANCHO, que es como lo pidio Daniel: "toda la
+     data deberia entrar en el ancho, nada de scroll". Lo que cede es el relleno de las
+     celdas y el ancho del modelo, no las columnas. Comprobado a 1.633 y a 1.280. */
+  .wrap { max-width:1500px; margin:0 auto; }
   .cab { display:flex; align-items:center; gap:14px; flex-wrap:wrap;
          padding-bottom:0.9rem; margin-bottom:1.2rem;
          border-bottom:1px solid rgba(255,255,255,0.05); }
@@ -39,9 +47,16 @@
             font-size:0.72rem; margin-left:0.5rem; }
   table { width:100%; border-collapse:collapse; font-size:0.78rem; color:#d1d5db; }
   thead tr { background:#1e293b; }
-  th { padding:0.55rem 0.7rem; font-weight:700; color:var(--text-muted);
+  /* El relleno lateral se achica solo cuando la pantalla aprieta: once columnas por
+     dos costados son 66 px que no valen una barra de scroll. */
+  th { padding:0.55rem clamp(0.3rem, 0.55vw, 0.7rem); font-weight:700; color:var(--text-muted);
        font-size:0.66rem; letter-spacing:0.4px; text-transform:uppercase; white-space:nowrap; }
-  td { padding:0.5rem 0.7rem; border-bottom:1px solid rgba(255,255,255,0.04); white-space:nowrap; }
+  td { padding:0.5rem clamp(0.3rem, 0.55vw, 0.7rem);
+       border-bottom:1px solid rgba(255,255,255,0.04); white-space:nowrap; }
+  /* EL MODELO ES LA VALVULA. Es la unica columna larga -252 px de los 1.219 que pide
+     el cuadro-, asi que es la que cede cuando la pantalla no da: se parte en dos
+     renglones. Todas las demas son numeros y fechas, y partirlas se lee como un error. */
+  td.mod { white-space:normal; min-width:7.5rem; }
   tbody tr:nth-child(even) { background:rgba(255,255,255,0.02); }
   .der { text-align:right; } .cen { text-align:center; }
   th.ord { cursor:pointer; user-select:none; }
@@ -87,14 +102,14 @@
   <h2 style="color:#f87171;">Se pidieron y no se asignaron
     <span>&mdash; hay demanda y mercader&iacute;a; la orden nunca se asign&oacute;
     &middot; clic en cualquier t&iacute;tulo para ordenar por esa columna</span></h2>
-  <div style="overflow-x:auto;"><table>
+  <div><table>
     <thead><tr id="th_conped"></tr></thead>
     <tbody id="conped"></tbody>
   </table></div>
 
   <h2 style="color:#60a5fa;">Sin ning&uacute;n pedido
     <span>&mdash; nadie los pidi&oacute;: no es un problema del almac&eacute;n</span></h2>
-  <div style="overflow-x:auto;"><table>
+  <div><table>
     <thead><tr id="th_sinped"></tr></thead>
     <tbody id="sinped"></tbody>
   </table></div>
@@ -116,7 +131,7 @@
 var CP = [["8892504", "Adidas", "2026-Q3", "21-07", 1159, 1148, 0.9, 0.9, 1136, 127, "22-07", 21, "Tennis · Response Runner 2", 127, "2026-07-21"], ["5896558", "Adidas", "2026-Q3", "21-07", 1130, 1119, 1.0, 1.0, 1089, 111, "22-07", 21, "Tennis · Run 60S 4.0", 111, "2026-07-21"], ["8899503", "Adidas", "2026-Q3", "21-07", 922, 911, 1.2, 1.2, 880, 76, "22-07", 21, "Tennis · Galaxy 8 M", 76, "2026-07-21"], ["9998404", "North Star", "2026-Q4", "25-05", 300, 106, 0.0, 0.0, 2, 2, "30-07", 13, "Women · Tripack Print Beige", 2, "2026-05-25"], ["9896406", "Bata", "2026-Q3", "20-04", 300, 88, 0.0, 0.0, 1, 1, "30-07", 13, "Men · Bipack Print Mid Mn", 1, "2026-04-20"], ["5892901", "Skechers", "2026-Q3", "31-03", 420, 54, 0.0, 0.0, 4, 3, "03-08", 9, "'- Edgeride · Nude Tones/Tonos Desnudos", 3, "2026-03-31"], ["1816303", "Bubblegummers", "2026-Q3", "04-06", 1233, 401, 0.0, 0.0, 9, 4, "04-08", 8, "Sport Boys · Everglade", 4, "2026-06-04"], ["9916212", "Weinbrenner", "2026-Q3", "02-04", 100, 1, 0.0, 0.0, 2, 2, "05-08", 7, "Polar · Alpamayo Wm", 2, "2026-04-02"], ["7646807", "Bata", "2026-Q4", "24-07", 1545, 1100, 0.0, 0.0, 406, 48, "07-08", 5, "Sandal Height 7 · Agata", 48, "2026-07-24"], ["8819807", "Power", "2026-Q3", "16-07", 1040, 1102, 0.0, 8.1, 131, 28, "10-08", 2, "'- Cancha · Navy/Azul Marino", 28, "2026-07-16"], ["2815311", "Bubblegummers", "2026-Q3", "01-08", 257, 240, 1.9, 6.6, 16, 7, "10-08", 2, "Sport Girls · Speed Lite", 4, "2026-08-01"], ["1819428", "Bubblegummers", "2026-Q3", "01-08", 205, 191, 2.4, 6.8, 16, 7, "10-08", 2, "Sport Girls · Speed Lite", 4, "2026-08-01"], ["1815311", "Bubblegummers", "2026-Q3", "01-08", 205, 191, 2.4, 6.8, 16, 7, "10-08", 2, "Sport Girls · Speed Lite", 4, "2026-08-01"], ["8892493", "Power", "2026-Q3", "24-06", 1392, 256, 0.0, 0.0, 4, 3, "10-08", 2, "Fitness · Journey", 3, "2026-06-24"], ["5896968", "Skechers", "2026-Q3", "31-03", 468, 51, 0.0, 0.0, 4, 1, "10-08", 2, "Aerobics · Summits", 1, "2026-03-31"], ["8896598", "Adidas", "2026-Q3", "05-06", 517, 7, 0.0, 0.0, 3, 1, "10-08", 2, "Tennis · Runfalcon 5", 1, "2026-06-05"], ["9896405", "Bata", "2026-Q3", "20-04", 400, 51, 0.0, 0.0, 2, 2, "10-08", 2, "Men · Bipack Basic Mid Mn", 2, "2026-04-20"], ["5896985", "Skechers", "2026-Q3", "31-03", 384, 2, 0.0, 0.0, 1, 1, "10-08", 2, "Aerobics · Summits", 1, "2026-03-31"], ["5515192", "Bata", "2026-Q4", "07-07", 876, 152, 0.1, 0.1, 9, 5, "11-08", 1, "Ballerinas · Eva", 5, "2026-07-07"], ["5516192", "Bata", "2026-Q4", "07-07", 684, 100, 0.1, 0.1, 8, 4, "11-08", 1, "Ballerinas · Eva", 4, "2026-07-07"], ["4816345", "North Star", "2026-Q3", "18-07", 432, 2748, 0.0, 0.0, 316, 63, "12-08", 0, "Urban (Yung Fashion) · Potosi", 49, "2026-07-18"], ["4811345", "North Star", "2026-Q3", "18-07", 528, 2722, 0.0, 0.0, 307, 62, "12-08", 0, "Urban (Yung Fashion) · Potosi", 48, "2026-07-18"], ["8014822", "Bata", "2026-Q3", "30-07", 442, 442, 0.0, 0.0, 123, 10, "12-08", 0, "Casual · Rooney", 10, "2026-07-30"], ["9816200", "Weinbrenner", "2026-Q3", "16-02", 1, 17, 0.0, 0.0, 1, 1, "12-08", 0, "Jacket · Martigny", 1, "2026-02-16"], ["8811771", "Puma", "2026-Q3", "13-03", 24, 6, 0.0, 0.0, 1, 1, "12-08", 0, "'- Puma Shuffle · White/Blanco", 1, "2026-03-13"]], SP = [["5616447", "Bata", "2026-Q4", "22-07", 1500, 1413, 0.1, 5.6, 0, 0, "", 0, "Flat · Irma", 0, "2026-07-22"], ["8514900", "Bata", "2026-Q3", "31-07", 1190, 1189, 0.1, 0.1, 0, 0, "", 0, "Laces · Los Angeles", 0, "2026-07-31"], ["5615447", "Bata", "2026-Q4", "22-07", 1000, 913, 0.1, 8.4, 0, 0, "", 0, "- Irma · Burgundy", 0, "2026-07-22"], ["9918203", "Weinbrenner", "2026-Q3", "18-07", 200, 80, 0.0, 0.0, 0, 0, "", 0, "Polar · Yaupi Wm", 0, "2026-07-18"], ["2011338", "Bubblegummers", "2026-Q4", "03-03", 1324, 61, 0.0, 0.0, 0, 0, "", 0, "Boots And Booties Girls · Gunter", 0, "2026-03-03"], ["8016822", "Bata", "2026-Q3", "30-07", 60, 60, 0.0, 0.0, 0, 0, "", 0, "Casual · Rooney", 0, "2026-07-30"], ["9919203", "Weinbrenner", "2026-Q3", "18-07", 200, 54, 0.0, 0.0, 0, 0, "", 0, "Polar · Yaupi Wm", 0, "2026-07-18"], ["9817223", "Weinbrenner", "2026-Q3", "18-07", 180, 35, 0.0, 0.0, 0, 0, "", 0, "Polar · Yaupi", 0, "2026-07-18"], ["8014949", "Bata", "2026-Q3", "02-02", 371, 30, 0.0, 0.0, 0, 0, "", 0, "Outdoor Rugged · Tonka", 0, "2026-02-02"], ["1011338", "Bubblegummers", "2026-Q4", "03-03", 1328, 30, 0.0, 0.0, 0, 0, "", 0, "Boots And Booties Girls · Gunter", 0, "2026-03-03"], ["9818223", "Weinbrenner", "2026-Q3", "18-07", 150, 28, 0.0, 0.0, 0, 0, "", 0, "Polar · Yaupi", 0, "2026-07-18"], ["5895900", "Skechers", "2026-Q3", "31-03", 420, 27, 0.0, 0.0, 0, 0, "", 0, "'- Edgeride · Pink/Rosa", 0, "2026-03-31"], ["8013949", "Bata", "2026-Q3", "02-02", 931, 23, 0.0, 0.0, 0, 0, "", 0, "Outdoor Rugged · Tonka", 0, "2026-02-02"], ["5890803", "Puma", "2026-Q3", "28-03", 264, 2, 0.0, 0.0, 0, 0, "", 0, "Basketball · Milenio Tech", 0, "2026-03-28"], ["9917200", "Weinbrenner", "2026-Q3", "25-03", 150, 0, 0.0, 0.0, 0, 0, "", 0, "Parkas Outdoor · Hagen Wm", 0, "2026-03-25"], ["8892965", "Skechers", "2026-Q3", "31-03", 396, 0, 0.0, 0.0, 0, 0, "", 0, "Baby Football (Mini Football) · Track", 0, "2026-03-31"], ["5892905", "Skechers", "2026-Q3", "31-03", 420, 0, 0.0, 0.0, 0, 0, "", 0, "Aerobics · Edgeride", 0, "2026-03-31"], ["4615303", "Bubblegummers", "2026-Q4", "27-03", 1, 0, 0.0, 0.0, 0, 0, "", 0, "Sandals Girls · Hilda", 0, "2026-03-27"]];
 var mil = function(n){ return n.toLocaleString('es-PE'); };
 var pc  = function(v){ return v <= 0.2 ? 'nada' : v.toFixed(1).replace('.', ',') + '%'; };
-var dias = function(d){ return d === 0 ? 'hoy' : d === 1 ? '1 día' : d + ' días'; };
+var dias = function(d){ return d === 0 ? 'hoy' : d === 1 ? '1 dÃ­a' : d + ' dÃ­as'; };
 
 /* CADA COLUMNA ORDENA. Lo pidio Daniel el 13-ago-2026: "quiero filtrarlo en base a
    lo que yo quiero". Antes el orden lo decidia yo -primero por pendiente, despues
@@ -131,24 +146,24 @@ var dias = function(d){ return d === 0 ? 'hoy' : d === 1 ? '1 día' : d + ' día
    a menor y los dias de mas viejo a mas nuevo, que es lo que uno quiere ver primero;
    los textos de la A a la Z. */
 var COLS_CP = [
-  {r:'Código', k:0, t:'s'}, {r:'Marca', k:1, t:'s'}, {r:'Colec.', k:2, t:'s', a:'cen'},
-  {r:'Modelo', k:12, t:'s'}, {r:'Llegó', k:14, t:'s', a:'cen'},
-  {r:'Pares hoy', k:5, t:'n', a:'der'}, {r:'Salió 2ª sem', k:7, t:'n', a:'der'},
-  {r:'Pendiente', k:8, t:'n', a:'der'}, {r:'Órdenes', k:9, t:'n', a:'der'},
-  {r:'Tiendas', k:13, t:'n', a:'der'}, {r:'Pedido más antiguo', k:11, t:'n', a:'cen'}
+  {r:'CÃ³digo', k:0, t:'s'}, {r:'Marca', k:1, t:'s'}, {r:'Colec.', k:2, t:'s', a:'cen'},
+  {r:'Modelo', k:12, t:'s'}, {r:'LlegÃ³', k:14, t:'s', a:'cen'},
+  {r:'Pares hoy', k:5, t:'n', a:'der'}, {r:'SaliÃ³ 2Âª sem', k:7, t:'n', a:'der'},
+  {r:'Pendiente', k:8, t:'n', a:'der'}, {r:'Ã“rdenes', k:9, t:'n', a:'der'},
+  {r:'Tiendas', k:13, t:'n', a:'der'}, {r:'Pedido mÃ¡s antiguo', k:11, t:'n', a:'cen'}
 ];
 var COLS_SP = [
-  {r:'Código', k:0, t:'s'}, {r:'Marca', k:1, t:'s'}, {r:'Colec.', k:2, t:'s', a:'cen'},
-  {r:'Modelo', k:12, t:'s'}, {r:'Llegó', k:14, t:'s', a:'cen'},
-  {r:'Llegó con', k:4, t:'n', a:'der'}, {r:'Pares hoy', k:5, t:'n', a:'der'},
-  {r:'Salió 1ª sem', k:6, t:'n', a:'der'}, {r:'Salió 2ª sem', k:7, t:'n', a:'der'}
+  {r:'CÃ³digo', k:0, t:'s'}, {r:'Marca', k:1, t:'s'}, {r:'Colec.', k:2, t:'s', a:'cen'},
+  {r:'Modelo', k:12, t:'s'}, {r:'LlegÃ³', k:14, t:'s', a:'cen'},
+  {r:'LlegÃ³ con', k:4, t:'n', a:'der'}, {r:'Pares hoy', k:5, t:'n', a:'der'},
+  {r:'SaliÃ³ 1Âª sem', k:6, t:'n', a:'der'}, {r:'SaliÃ³ 2Âª sem', k:7, t:'n', a:'der'}
 ];
 
 function celdasCP(r){
   return '<td style="color:#f8fafc;">' + r[0] + '</td>'
     + '<td>' + r[1] + '</td>'
     + '<td class="cen" style="color:#94a3b8;">' + r[2] + '</td>'
-    + '<td style="color:#94a3b8;">' + (r[12] || '') + '</td>'
+    + '<td class="mod" style="color:#94a3b8;">' + (r[12] || '') + '</td>'
     + '<td class="cen" style="color:#94a3b8;">' + r[3] + '</td>'
     + '<td class="der" style="color:#f8fafc;">' + mil(r[5]) + '</td>'
     + '<td class="der" style="color:' + (r[7] <= 0.2 ? '#f87171' : '#fbbf24') + ';">' + pc(r[7]) + '</td>'
@@ -162,7 +177,7 @@ function celdasSP(r){
   return '<td style="color:#f8fafc;">' + r[0] + '</td>'
     + '<td>' + r[1] + '</td>'
     + '<td class="cen" style="color:#94a3b8;">' + r[2] + '</td>'
-    + '<td style="color:#94a3b8;">' + (r[12] || '') + '</td>'
+    + '<td class="mod" style="color:#94a3b8;">' + (r[12] || '') + '</td>'
     + '<td class="cen" style="color:#94a3b8;">' + r[3] + '</td>'
     + '<td class="der">' + mil(r[4]) + '</td>'
     + '<td class="der" style="color:#f8fafc;">' + mil(r[5]) + '</td>'
@@ -181,7 +196,7 @@ function montar(id, datos, cols, celdas, iniCol){
       return '<th class="ord ' + (c.a || '') + '" data-i="' + i + '"'
         + (act ? ' style="color:#f8fafc;"' : '') + '>' + c.r
         + '<span style="margin-left:4px; opacity:' + (act ? '1' : '.25') + ';">'
-        + (act ? (orden.desc ? '▼' : '▲') : '▼') + '</span></th>';
+        + (act ? (orden.desc ? 'â–¼' : 'â–²') : 'â–¼') + '</span></th>';
     }).join('');
     var c = cols[orden.i], s = orden.desc ? -1 : 1;
     var copia = datos.slice().sort(function(a, b){
@@ -194,7 +209,7 @@ function montar(id, datos, cols, celdas, iniCol){
       th.onclick = function(){
         var i = Number(th.dataset.i);
         /* Volver a la misma columna da vuelta el orden; una columna nueva arranca
-           por lo que se quiere ver primero: los números grandes y los días viejos. */
+           por lo que se quiere ver primero: los nÃºmeros grandes y los dÃ­as viejos. */
         if (i === orden.i) orden.desc = !orden.desc;
         else { orden.i = i; orden.desc = cols[i].t === 'n'; }
         pintar();
@@ -204,7 +219,7 @@ function montar(id, datos, cols, celdas, iniCol){
   pintar();
 }
 
-montar('conped', CP, COLS_CP, celdasCP, 10);   // arranca por el pedido más antiguo
+montar('conped', CP, COLS_CP, celdasCP, 10);   // arranca por el pedido mÃ¡s antiguo
 montar('sinped', SP, COLS_SP, celdasSP, 6);    // arranca por los pares parados
 </script>
 </body>
