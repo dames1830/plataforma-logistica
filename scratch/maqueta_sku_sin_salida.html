@@ -6,11 +6,18 @@
 <title>Maqueta &mdash; SKUs sin salida</title>
 <!--
   MAQUETA, todavia no es un modulo. Datos reales del 12-ago-2026.
-  Tres fuentes cruzadas, que no se hablan entre si:
-    * fotos de stock (activo + reserva) del 02-ene al 12-ago -> cuanto salio
-    * archivos de picking del 20-jul al 11-ago               -> cuanto se pico
-    * detalle de orden por semana                            -> cuanto se pidio
+
+  DOS FUENTES, y nada mas:
+    * fotos de stock (activo + reserva), 182 dias del 02-ene al 12-ago
+        -> cuando llego y con cuanto, cuanto salio cada semana, cuanto se pico
+           desde que llego, cuando fue el ultimo pick y cuanto queda hoy.
+           ESTAS YA LLEGAN SOLAS: las baja y las guarda el robot.
+    * detalle de orden (Creada y Parcialmente asignado)
+        -> el pendiente, las ordenes, las tiendas y el pedido mas antiguo.
+           ESTE TODAVIA SE BAJA A MANO.
+
   PENDIENTE = Cantidad solicitada - Cantidad asignada, la regla de Daniel.
+  Y `llego + repuesto - picado = pares hoy` cierra en las 39 filas.
 -->
 <style>
   :root { --primary:#4f46e5; --bg-dark:#0f172a; --text-main:#f8fafc;
