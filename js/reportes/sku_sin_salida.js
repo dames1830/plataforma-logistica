@@ -191,6 +191,9 @@ export const montarSinSalida = function (RAIZ, OPC) {
     <span style="margin-left:auto; font-size:0.7rem; color:var(--text-muted);">
       al ${ddmm(P.fecha)} &middot; ${esc(P.hora || '')}
     </span>
+    ${OPC.alExportar ? `<button id="sss_xls" class="btn" style="width:auto; background:#10b981;
+        padding:0.45rem 0.9rem; font-size:0.72rem; font-weight:800; border-radius:8px;">
+        📥 EXPORTAR</button>` : ''}
   </div>
 
   <div class="tarjetas">
@@ -238,7 +241,42 @@ export const montarSinSalida = function (RAIZ, OPC) {
 
     montarTabla(RAIZ, 'cp', cp, COLS_CP, celdasCP, 13);   // arranca por el pedido más antiguo
     montarTabla(RAIZ, 'sp', sp, COLS_SP, celdasSP, 8);    // arranca por los pares parados
+
+    /* EXPORTAR. El módulo no arma el archivo —no conoce ExcelJS ni tiene por qué—:
+       avisa hacia afuera con las filas YA ORDENADAS como se están viendo. Si el
+       Excel saliera en otro orden que la pantalla, el que lo abre pensaría que son
+       dos reportes distintos. */
+    const btn = RAIZ.querySelector('#sss_xls');
+    if (btn && OPC.alExportar) {
+        btn.onclick = async () => {
+            const antes = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '⌛ GENERANDO...';
+            try {
+                await OPC.alExportar({
+                    paquete: P,
+                    conPedido: { cols: COLS_CP, filas: ordenadas(cp, COLS_CP, 13) },
+                    sinPedido: { cols: COLS_SP, filas: ordenadas(sp, COLS_SP, 8) }
+                });
+            } catch (e) {
+                console.warn('[SIN SALIDA] no se pudo exportar:', e && e.message);
+            }
+            btn.disabled = false;
+            btn.innerHTML = antes;
+        };
+    }
 };
+
+
+/** Las filas en el mismo orden en que arrancó el cuadro. */
+function ordenadas(datos, cols, iniCol) {
+    const c = cols[iniCol];
+    return datos.slice().sort((a, b) => {
+        const x = a[c.k], y = b[c.k];
+        if (c.t === 'n') return Number(y) - Number(x);
+        return String(y == null ? '' : y).localeCompare(String(x == null ? '' : x), 'es');
+    });
+}
 
 
 function montarTabla(RAIZ, id, datos, cols, celdas, iniCol) {

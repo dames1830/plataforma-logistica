@@ -1,22 +1,22 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0198';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0199';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0198';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0198';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0198';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0198';
-import * as metasService from '../services_v245/metasService.js?v=29.0198';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0198';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0198';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0198';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0198';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0198';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0198';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0198';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0198';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0198';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0198';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0198';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0198';
+import * as adminService from '../services_v245/adminService.js?v=29.0199';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0199';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0199';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0199';
+import * as metasService from '../services_v245/metasService.js?v=29.0199';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0199';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0199';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0199';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0199';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0199';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0199';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0199';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0199';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0199';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0199';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0199';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0199';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -373,7 +373,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0198';
+const VERSION = '29.0199';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4275,7 +4275,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0198');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0199');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15231,7 +15231,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0198 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0199 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25887,7 +25887,84 @@ window.showCellModal = function(htmlContent) {
         </div>`;
       return;
     }
-    montarSinSalida(caja, { paquete: paq });
+    montarSinSalida(caja, { paquete: paq, alExportar: exportarSinSalida });
+  };
+
+  /* ── EL EXCEL DE SKUs SIN SALIDA ───────────────────────────────────────────
+   *
+   * Dos hojas, una por cuadro, más el resumen. Daniel venía trabajando esto como
+   * un Excel de tres hojas antes de que fuera pantalla, así que el archivo es el
+   * formato que ya conoce.
+   *
+   * LAS FILAS LLEGAN YA ORDENADAS desde el módulo, en el mismo orden en que se
+   * están viendo. Si el Excel saliera ordenado de otra forma, el que lo abre
+   * pensaría que son dos reportes distintos.
+   *
+   * LAS COLUMNAS COMPUESTAS SE PARTEN. En pantalla "Último pick" dice «27-07 (17
+   * días)» porque es una sola mirada; en Excel eso no se puede ni ordenar ni
+   * sumar, así que va la fecha por un lado y los días por otro. Lo mismo con el
+   * pedido más antiguo. Y la fecha va en AAAA-MM-DD: como texto, es el único
+   * formato que ordena bien.
+   *
+   * El que NUNCA salió lleva la palabra y los días en blanco, no el 9999 que usa
+   * la pantalla por dentro para dejarlo arriba: un 9999 en una celda se lee como
+   * un dato, no como un centinela. */
+  const exportarSinSalida = async ({ paquete, conPedido, sinPedido }) => {
+    const wb = new ExcelJS.Workbook();
+
+    const cabecera = (ws) => {
+      const c = ws.getRow(1);
+      c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      c.eachCell(x => { x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; });
+      ws.views = [{ state: 'frozen', ySplit: 1 }];
+      ws.columns.forEach(col => {
+        let a = 10;
+        col.eachCell({ includeEmpty: false }, x => { a = Math.max(a, String(x.value == null ? '' : x.value).length + 2); });
+        col.width = Math.min(a, 45);
+      });
+    };
+    const nunca = (f) => (f.ultima_salida ? f.ultima_salida : 'nunca');
+    const diasSin = (f) => (f.ultima_salida ? f.dias_sin_salir : '');
+
+    const r = wb.addWorksheet('Resumen');
+    r.addRow(['SKUs sin salida', 'Valor']);
+    [['Fecha del estudio', paquete.fecha + ' ' + (paquete.hora || '')],
+     ['Temporadas', (paquete.temporadas || []).join(', ')],
+     ['SKUs sin salida', paquete.skus],
+     ['De cuántos medidos', paquete.medidos],
+     ['Pares parados', paquete.pares_parados],
+     ['Con pedido sin asignar · SKUs', paquete.con_pedido.skus],
+     ['Con pedido sin asignar · pares parados', paquete.con_pedido.pares_parados],
+     ['Con pedido sin asignar · pares pedidos', paquete.con_pedido.pedidos],
+     ['Pedido más antiguo (días)', paquete.con_pedido.mas_viejo_dias],
+     ['Sin ningún pedido · SKUs', paquete.sin_pedido.skus],
+     ['Sin ningún pedido · pares parados', paquete.sin_pedido.pares_parados],
+     ['Fotos de stock usadas', (paquete.fotos ? paquete.fotos.dias + ' días, del ' + paquete.fotos.desde + ' al ' + paquete.fotos.hasta : '')]
+    ].forEach(f => r.addRow(f));
+    cabecera(r);
+
+    const a = wb.addWorksheet('Se pidieron y no se asignaron');
+    a.addRow(['Código', 'Marca', 'Colección', 'Modelo', 'Llegó', 'Último pick', 'Días sin salir',
+              'Pares hoy', 'Picado', 'Pedido', 'Salió 2ª sem %', 'Pendiente', 'Órdenes', 'Tiendas',
+              'Pedido más antiguo', 'Días esperando']);
+    conPedido.filas.forEach(f => a.addRow([f.cod, f.marca, f.coleccion, f.modelo, f.llegada,
+      nunca(f), diasSin(f), f.hoy, f.picado, f.solicitado, f.salio_sem2, f.pendiente,
+      f.ordenes, f.tiendas, f.pedido_viejo, f.dias_esperando]));
+    cabecera(a);
+
+    const b = wb.addWorksheet('Sin ningún pedido');
+    b.addRow(['Código', 'Marca', 'Colección', 'Modelo', 'Llegó', 'Último pick', 'Días sin salir',
+              'Llegó con', 'Repuesto', 'Picado', 'Pares hoy', 'Salió 1ª sem %', 'Salió 2ª sem %']);
+    sinPedido.filas.forEach(f => b.addRow([f.cod, f.marca, f.coleccion, f.modelo, f.llegada,
+      nunca(f), diasSin(f), f.llego_con, f.repuesto, f.picado, f.hoy, f.salio_sem1, f.salio_sem2]));
+    cabecera(b);
+
+    const buf = await wb.xlsx.writeBuffer();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    link.download = `SKUs_sin_salida_${paquete.fecha}.xlsx`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
   };
 
   /** Cambia un filtro y redibuja. El Pareto no depende de esto, pero se rehace igual:
