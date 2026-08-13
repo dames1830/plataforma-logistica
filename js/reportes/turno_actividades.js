@@ -690,7 +690,7 @@ export const montarTurno = function (RAIZ, OPC) {
     if (inp) inp.value = '';
     /* Se REDIBUJA. Soltar sin rehacer deja el campo con el número viejo mientras
        el bueno vuelve por detrás, y parece roto de otra manera. */
-    pintar();
+    pintarYGuardar();
     pintarInfoAuto();
   }
 
@@ -728,13 +728,13 @@ export const montarTurno = function (RAIZ, OPC) {
         if (res.fecha) S.fecha = res.fecha;
         if (res.hora) { S.ahora = res.hora; mandaLaFoto = true; }
       }
-      pintar();
+      pintarYGuardar();
     } catch (err) {
       /* El archivo no se pudo leer: se vuelve solo al automático, en vez de dejar
          el avance en blanco por un archivo equivocado. */
       STOCK[id] = null;
       infoSlot(id, '<span style="color:var(--bad)">No se pudo leer: ' + esc(err.message) + '</span>');
-      pintar();
+      pintarYGuardar();
     }
   }
 
@@ -748,6 +748,34 @@ export const montarTurno = function (RAIZ, OPC) {
 
      El Buffer C no pasa por acá: su avance sale de comparar la foto del
      arranque contra la que se cargue, y de eso se encarga aplicarStock(). */
+  /* ─────────────── LO QUE YA QUEDÓ FIJADO NO SE VUELVE A CALCULAR ───────────────
+   *
+   * Lo fijó Daniel el 13-ago-2026, y son dos reglas distintas:
+   *
+   *   LA META es lo que salió cuando se PROCESÓ. *"Yo proceso tareas veinte mil y
+   *   eso tiene que ser la meta. Yo proceso, él va a hacer sesenta paletas, y esa
+   *   es la meta de paletas."* Una vez que quedó registrada no se toca más — y
+   *   reprocesar el análisis de una jornada que ya tiene meta *"nunca pasa"*.
+   *
+   *   EL AVANCE se recalcula cada hora mientras el turno corre, y **se cierra a
+   *   las 06:30 con la jornada**. Una jornada cerrada muestra lo que se midió esa
+   *   noche; no se vuelve a calcular porque alguien la abra después.
+   *
+   * SIN ESTO, MIRAR CAMBIABA LOS DATOS. El 13-ago Daniel abrió la jornada del 12
+   * a las 07:30 y los números se movieron solos: el reporte los recalculó contra
+   * lo que había en ese momento y —peor— los guardó encima. Ver el porqué de que
+   * `guardar()` ya no viva adentro de `pintar()`.
+   *
+   * Escribir a mano sigue mandando sobre las dos: el campo queda marcado en
+   * `aMano` y vaciarlo devuelve el automático. */
+  function congelado(p, campo) {
+    var cerrada = !!(OPC.fuentes && OPC.fuentes.jornadaCerrada);
+    /* La meta se congela apenas hay una; el avance, solo cuando la jornada cerró.
+       Mientras el turno corre el avance TIENE que seguir subiendo cada hora. */
+    if (campo === 'meta') return p.meta > 0;
+    return cerrada && p.av > 0;
+  }
+
   function aplicarFuentes() {
     var F = OPC.fuentes || {};
     S.procs.forEach(function (p) {
@@ -757,8 +785,8 @@ export const montarTurno = function (RAIZ, OPC) {
       /* Lo que Daniel escribió a mano MANDA. Sin esto la fuente lo volvía a pisar
          en el dibujado siguiente y parecía que el número se borraba solo. */
       var m = p.aMano || {};
-      if (typeof f.meta === 'number' && !m.meta) p.meta = Math.round(f.meta);
-      if (typeof f.avance === 'number' && !m.av) p.av = Math.round(f.avance);
+      if (typeof f.meta === 'number' && !m.meta && !congelado(p, 'meta')) p.meta = Math.round(f.meta);
+      if (typeof f.avance === 'number' && !m.av && !congelado(p, 'av')) p.av = Math.round(f.avance);
       if (f.unidad) p.u = f.unidad;
       p.auto = true;
     });
@@ -811,11 +839,12 @@ export const montarTurno = function (RAIZ, OPC) {
     S.procs.forEach(function (p) {
       if (p.fuente !== 'bufferC') return;
       var m = p.aMano || {};
-      if (meta > 0 && !m.meta) { p.meta = Math.round(meta); p.u = 'pares'; p.auto = true; }
-      if (b && !m.av) p.av = Math.round(av);
+      if (meta > 0 && !m.meta && !congelado(p, 'meta')) { p.meta = Math.round(meta); }
+      if (meta > 0 && !m.meta) { p.u = 'pares'; p.auto = true; }
+      if (b && !m.av && !congelado(p, 'av')) p.av = Math.round(av);
       /* Los que salieron del C y no llegaron a destino NO se esconden: si no se
          vieran, tres horas de trabajo parecerían no haber pasado. */
-      p.pend = (b && !m.av && medible) ? Math.round(sinDestino) : 0;
+      p.pend = (b && !m.av && medible && !congelado(p, 'av')) ? Math.round(sinDestino) : p.pend || 0;
     });
   }
 
@@ -857,8 +886,23 @@ export const montarTurno = function (RAIZ, OPC) {
     }
     pintarAnillos();
     pintarGantt();
-    guardar();
   }
+
+  /* MIRAR NO ES CAMBIAR, y por eso `guardar()` ya no vive adentro de `pintar()`.
+   *
+   * Estaba al final del dibujado, así que CUALQUIER redibujado escribía en el
+   * servidor. Abrir una jornada pasada alcanzaba: se dibujaba con lo guardado
+   * —que se veía bien—, llegaban por detrás las fuentes que se piden solas, se
+   * volvía a dibujar con los números recalculados, y esos números quedaban
+   * guardados encima de los verdaderos. Daniel lo cazó el 13-ago-2026: *"he
+   * filtrado el doce, me estaba saliendo bien, pero después de unos segundos se
+   * ha vuelto a regresar"*. En el servidor se veía igual de claro: el registro
+   * del 12-ago figuraba reescrito a las 07:30 sin que nadie tocara nada.
+   *
+   * Ahora se guarda solo cuando hay una acción de verdad: escribir un campo,
+   * agregar o borrar una actividad, cargar una foto de stock a mano o volver al
+   * automático. Montar la pantalla NO guarda. */
+  function pintarYGuardar(foco) { pintar(foco); guardar(); }
 
   escuchar('input', function (e) {
     var t = e.target;
@@ -878,24 +922,24 @@ export const montarTurno = function (RAIZ, OPC) {
       else S.procs[i].aMano[k] = true;
       /* Al soltar el campo hay que REDIBUJARLO ENTERO para que se vea el numero
          que devuelve la fuente; el refresco liviano no toca los campos. */
-      if (t.value === '' && S.procs[i].fuente) { S.procs[i][k] = 0; pintar(); return; }
+      if (t.value === '' && S.procs[i].fuente) { S.procs[i][k] = 0; pintarYGuardar(); return; }
     }
     S.procs[i][k] = k === 'cuenta' ? t.checked
       : (k === 'meta' || k === 'av') ? (t.value === '' ? 0 : Number(t.value))
       : t.value;
-    pintar({ t: t.getAttribute('data-t'), k: k, i: i, p: (t.selectionStart == null ? 0 : t.selectionStart) });
+    pintarYGuardar({ t: t.getAttribute('data-t'), k: k, i: i, p: (t.selectionStart == null ? 0 : t.selectionStart) });
   });
 
   escuchar('click', function (e) {
     var d = e.target.getAttribute && e.target.getAttribute('data-del');
-    if (d !== null && d !== undefined) { S.procs.splice(Number(d), 1); pintar(); return; }
+    if (d !== null && d !== undefined) { S.procs.splice(Number(d), 1); pintarYGuardar(); return; }
     if (e.target.id === 'ta_b_add' || e.target.id === 'ta_b_add2') {
       /* `cuenta: true` no es un detalle: sin él la actividad nueva nacía sin la
          marca de "tiene meta", salía en el Gantt y NO en el Cumplimiento. El
          relleno solo corre al montar la pantalla, así que aparecía
          recién al recargar. */
       S.procs.push({ n: 'Actividad nueva', u: 'unidades', meta: 0, av: 0, pi: '', pf: '', ri: '', rf: '', cuenta: true });
-      pintar();
+      pintarYGuardar();
       /* El cursor queda en la tabla desde la que se apretó el botón: si no,
          agregar desde Cumplimiento saltaba de vuelta al Gantt. */
       var tabla = e.target.id === 'ta_b_add2' ? 'c' : 'h';
