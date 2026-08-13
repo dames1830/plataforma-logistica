@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0190';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0191';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0190';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0190';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0190';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0190';
-import * as metasService from '../services_v245/metasService.js?v=29.0190';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0190';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0190';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0190';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0190';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0190';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0190';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0190';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0190';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0190';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0190';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0190';
+import * as adminService from '../services_v245/adminService.js?v=29.0191';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0191';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0191';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0191';
+import * as metasService from '../services_v245/metasService.js?v=29.0191';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0191';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0191';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0191';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0191';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0191';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0191';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0191';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0191';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0191';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0191';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0191';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0190';
+const VERSION = '29.0191';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0190');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0191');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15160,7 +15160,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0190 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0191 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23915,7 +23915,17 @@ window.showCellModal = function(htmlContent) {
       ['Color', a.color || '—'],
       ['Llegó el', kpiFechaCorta(a.llegada)],
       ['Última foto', kpiFechaCorta(a.curva[a.curva.length - 1][3])]]],
-    puntos: a.curva.map(c => ({ s: c[0], queda: c[2], pares: c[1], fecha: kpiFechaCorta(c[3]) }))
+    puntos: a.curva.map(c => ({ s: c[0], queda: c[2], pares: c[1], fecha: kpiFechaCorta(c[3]) })),
+    // LA SEMANA DEL CALENDARIO, DEBAJO DEL EJE. Acá se decía que "no hace falta, porque
+    // en un artículo suelto la semana 1 es una sola" — y es al revés: justamente por eso
+    // es EXACTA, un número y no el rango que sale en la curva del grupo. Daniel lo pidió
+    // el 12-ago-2026 mirando el 5615447: el eje decía 0, 1, 2, 3 y él necesitaba saber de
+    // qué semana del año estaba hablando. Cada punto ya trae su fecha; sale de ahí.
+    calendario: a.curva.reduce((m, c) => {
+      const w = kpiSemanaDe(c[3]);
+      if (w) m[c[0]] = w;
+      return m;
+    }, {})
   });
 
   // Toleran que no haya número. Con los filtros puede quedar un conjunto sin ningún
@@ -24357,9 +24367,24 @@ window.showCellModal = function(htmlContent) {
     const lineaPic = PIC.map((p,i)=>`${i?'L':'M'}${x(p.s).toFixed(1)},${yc(p.v).toFixed(1)}`).join(' ');
     const areaPic  = `${lineaPic} L${x(MAXS).toFixed(1)},${yc(0).toFixed(1)} L${x(0).toFixed(1)},${yc(0).toFixed(1)} Z`;
     const puntosPic = PIC.map(p=>`<circle cx="${x(p.s).toFixed(1)}" cy="${yc(p.v).toFixed(1)}" r="${p.ingreso?6:(clave.has(p.s)||p.s===0?5:3.5)}" fill="${p.ingreso?AMBAR:NARANJA}" stroke="#111827" stroke-width="2"/>`).join('');
-    const valsPic = PIC.filter(p=>p.s>0).map(p=> p.ingreso
-      ? `<text x="${x(p.s).toFixed(1)}" y="${(yc(p.v)-13).toFixed(1)}" text-anchor="middle" fill="${AMBAR}" font-size="10" font-weight="800">+${n(p.ingreso)} entraron</text>`
-      : etiqueta(x(p.s), yc(p.v), clave.has(p.s), d1(p.v)+'%', n(p.pares))).join('');
+    // LA SEMANA 0 NO ES UN PICKING: ES LA LLEGADA, y ahora lo dice. El punto arrancaba
+    // en cero y sin etiqueta, así que se leía como "esa semana no se picó nada" cuando
+    // lo que significa es que ahí empieza a contarse. Los pares que llegaron estaban en
+    // la pantalla —la tarjeta y la franja de abajo— pero no en el gráfico, y Daniel
+    // preguntó por qué el 12-ago-2026: "¿por qué no me muestra el ingreso de los mil?".
+    //
+    // No se dibuja como punto de la curva a propósito: valdría 100% y el eje tendría que
+    // llegar hasta ahí, con lo que el pico real —8,3% en este caso— quedaría aplastado
+    // contra el piso. La etiqueta lo dice sin tocar la escala.
+    //
+    // Va anclada al comienzo y no centrada: en x=0 la mitad del texto se saldría por la
+    // izquierda y se montaría con los porcentajes del eje.
+    const origen = /ENTRARON/i.test(D.llegadaFranja || '') ? 'entraron' : 'llegaron';
+    const valsPic = PIC.map(p => p.s === 0
+      ? `<text x="${(x(0)+2).toFixed(1)}" y="${(yc(0)-13).toFixed(1)}" text-anchor="start" fill="${AMBAR}" font-size="10" font-weight="800">${origen} ${n(D.llegada)}</text>`
+      : (p.ingreso
+        ? `<text x="${x(p.s).toFixed(1)}" y="${(yc(p.v)-13).toFixed(1)}" text-anchor="middle" fill="${AMBAR}" font-size="10" font-weight="800">+${n(p.ingreso)} entraron</text>`
+        : etiqueta(x(p.s), yc(p.v), clave.has(p.s), d1(p.v)+'%', n(p.pares)))).join('');
     const gridPic = [0,TOPE/3,TOPE*2/3,TOPE].map(v=>
       `<line x1="${X0}" y1="${yc(v).toFixed(1)}" x2="${X1}" y2="${yc(v).toFixed(1)}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>`
       + `<text x="${X0-10}" y="${(yc(v)+4).toFixed(1)}" text-anchor="end" fill="var(--text-muted)" font-size="11">${v.toFixed(0)}%</text>`).join('');
