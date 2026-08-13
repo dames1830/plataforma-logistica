@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Prueba del buscador del Pareto</title>
+<!--
+  BANCO DE PRUEBAS SIN LOGIN. Saca window.__paretoBuscar de dashboard_v28.js con las
+  llaves contadas, arma una tabla con la misma forma que la real y comprueba que el pie
+  se rehace con lo que queda a la vista. Si alguien lo toca y el total deja de cuadrar,
+  esta pagina lo dice.
+-->
+<style>
+  :root { --text-main:#f8fafc; --text-muted:#94a3b8; --border:rgba(255,255,255,0.1); }
+  body { margin:0; padding:1.6rem; background:#0f172a; color:#f8fafc;
+         font-family:'Segoe UI',system-ui,sans-serif; font-size:0.82rem; }
+  table { border-collapse:collapse; margin:0.8rem 0; font-size:0.75rem; }
+  td, th { padding:0.3rem 0.6rem; border-bottom:1px solid rgba(255,255,255,0.06); text-align:left; }
+  input { background:#101a2c; color:#f8fafc; border:1px solid var(--border); border-radius:8px;
+          padding:0.34rem 0.65rem; font-size:0.75rem; font-weight:700; min-width:20rem;
+          font-family:inherit; }
+  .ok { color:#34d399; } .mal { color:#f87171; font-weight:800; }
+  #res { margin-top:1.2rem; line-height:1.9; }
+</style>
+</head>
+<body>
+<h3 style="margin:0 0 1rem; font-size:0.95rem;">Buscador del Pareto &mdash; banco de pruebas</h3>
+
+<input id="pareto_buscar" type="search" autocomplete="off"
+       placeholder="Buscar art&iacute;culo: c&oacute;digo, marca o modelo"
+       oninput="window.__paretoBuscar(this.value)">
+
+<div style="margin-top:0.8rem;">Los <span id="pareto_cuenta">?</span> art&iacute;culos, clasificados</div>
+
+<table>
+  <thead><tr><th>#</th><th>C&oacute;digo</th><th>Colec.</th><th>Marca</th><th>Modelo</th>
+    <th>Lleg&oacute;</th><th>Falta picar</th></tr></thead>
+  <tbody id="cuerpo"></tbody>
+  <tfoot><tr style="font-weight:800;">
+    <td colspan="5" id="pareto_tf_rot">?</td>
+    <td id="pareto_tf_llego">?</td>
+    <td id="pareto_tf_hoy">?</td>
+    <td id="pareto_tf_pct">?</td>
+  </tr></tfoot>
+</table>
+
+<div id="res">Cargando la funci&oacute;n desde <b>dashboard_v28.js</b>&hellip;</div>
+
+<script>
+const A = [
+  {cod:'8816454', temp:'2026-Q4', marca:'North Star', modelo:'Laces · Court 86', color:'Black',  llego:4685, hoy:3840},
+  {cod:'4816345', temp:'2026-Q3', marca:'North Star', modelo:'Urban (Yung Fashion) · Potosí', color:'Black', llego:2748, hoy:2748},
+  {cod:'4811345', temp:'2026-Q3', marca:'North Star', modelo:'Urban (Yung Fashion) · Potosí', color:'White', llego:2722, hoy:2722},
+  {cod:'8216975', temp:'2026-Q4', marca:'Bata',       modelo:'Derby · Lima', color:'Black',      llego:1825, hoy:1825},
+  {cod:'3811573', temp:'2026-Q4', marca:'Bubblegummers', modelo:'Casual Girls · Aticuss', color:'White', llego:1797, hoy:1797},
+  {cod:'5616447', temp:'2026-Q4', marca:'Bata',       modelo:'Flat · Irma', color:'Black',       llego:1500, hoy:1413}
+];
+
+const kpiN  = v => (v === null || v === undefined || isNaN(v)) ? '—' : Math.round(v).toLocaleString('es-PE');
+const kpiD1 = v => (v === null || v === undefined || isNaN(v)) ? '—'
+  : v.toLocaleString('es-PE',{minimumFractionDigits:1,maximumFractionDigits:1});
+
+document.getElementById('cuerpo').innerHTML = A.map((a,i) => `
+  <tr data-b="${[a.cod, a.temp, a.marca, a.modelo, a.color].join(' ').toLowerCase()
+              .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/"/g,'')}"
+      data-llego="${a.llego}" data-hoy="${a.hoy}">
+    <td>${i+1}</td><td>${a.cod}</td><td>${a.temp}</td><td>${a.marca}</td>
+    <td>${a.modelo} · ${a.color}</td><td>${a.llego}</td><td>${a.hoy}</td>
+  </tr>`).join('');
+
+function recortar(txt, firma) {
+  const i = txt.indexOf(firma);
+  if (i < 0) throw new Error('No se encontró ' + firma);
+  let n = 0, dentro = false;
+  for (let j = i; j < txt.length; j++) {
+    if (txt[j] === '{') { n++; dentro = true; }
+    else if (txt[j] === '}') { n--; if (dentro && n === 0) return txt.slice(i, j + 1); }
+  }
+  throw new Error('Llaves sin cerrar');
+}
+
+const casos = [
+  ['',                 6, 15277, 14345],
+  ['4816345',          1,  2748,  2748],
+  ['north star',       3, 10155,  9310],
+  ['NORTH STAR',       3, 10155,  9310],
+  ['potosi',           2,  5470,  5470],
+  ['potosí',           2,  5470,  5470],
+  ['star potosi',      2,  5470,  5470],
+  ['potosi star',      2,  5470,  5470],
+  ['bata',             2,  3325,  3238],
+  ['no existe nada',   0,     0,     0]
+];
+
+fetch('../js/views/dashboard_v28.js').then(r => r.text()).then(txt => {
+  const src = recortar(txt, 'window.__paretoBuscar = (txt) => {');
+  eval(src.replace('window.__paretoBuscar = ', 'window.__paretoBuscar = '));
+  let malas = 0;
+  const filas = casos.map(([q, nEsp, llEsp, hoEsp]) => {
+    window.__paretoBuscar(q);
+    const vis = [...document.querySelectorAll('#cuerpo tr')].filter(f => f.style.display !== 'none');
+    const ll = vis.reduce((s,f) => s + Number(f.dataset.llego), 0);
+    const ho = vis.reduce((s,f) => s + Number(f.dataset.hoy), 0);
+    const pieLl = document.getElementById('pareto_tf_llego').textContent;
+    const cuenta = document.getElementById('pareto_cuenta').textContent;
+    const bien = vis.length === nEsp && ll === llEsp && ho === hoEsp
+                 && pieLl === kpiN(llEsp) && cuenta === kpiN(nEsp);
+    if (!bien) malas++;
+    return `<div class="${bien ? 'ok' : 'mal'}">${bien ? '✓' : '✗'} "${q || '(vacío)'}" → `
+         + `${vis.length} filas (esperado ${nEsp}) · llegó ${ll} (${llEsp}) · `
+         + `falta ${ho} (${hoEsp}) · pie dice "${pieLl}" · cuenta "${cuenta}"</div>`;
+  });
+  window.__paretoBuscar('');
+  document.getElementById('res').innerHTML =
+    `<b>${malas ? '<span class="mal">' + malas + ' CASOS MAL</span>' : '<span class="ok">Los ' + casos.length + ' casos pasan</span>'}</b>`
+    + filas.join('');
+}).catch(e => {
+  document.getElementById('res').innerHTML = '<span class="mal">No se pudo montar: ' + e.message + '</span>';
+});
+</script>
+</body>
+</html>
