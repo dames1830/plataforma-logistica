@@ -58,6 +58,19 @@ const A = [
 const kpiN  = v => (v === null || v === undefined || isNaN(v)) ? '—' : Math.round(v).toLocaleString('es-PE');
 const kpiD1 = v => (v === null || v === undefined || isNaN(v)) ? '—'
   : v.toLocaleString('es-PE',{minimumFractionDigits:1,maximumFractionDigits:1});
+const KPI_AZUL = '#3987e5';
+// El estado real del modulo: el paquete entero y el filtro. El cuadro solo dibuja
+// las marcas propias, asi que el Adidas esta en el paquete y NO en la tabla.
+let kpiFiltro = { marcas: [], meses: [], semanas: [], minimo: 0 };
+const kpiPaquete = { articulos: A.map(a => ({
+    cod:a.cod, coleccion:a.temp, marca:a.marca, modelo:a.modelo, color:a.color,
+    hoy:a.hoy, propia:true })).concat([
+  { cod:'8892504', coleccion:'2026-Q3', marca:'Adidas', modelo:'Tennis · Response Runner 2',
+    color:'Light Grey', hoy:1148, propia:false },
+  { cod:'9999001', coleccion:'2026-Q3', marca:'Bata', modelo:'Agotado · Ninguno',
+    color:'Black', hoy:0, propia:true }
+]) };
+window.__kpiFiltro = (campo, valor) => { kpiFiltro.marcas = [valor]; window.__ultimoFiltro = campo + '=' + valor; };
 
 document.getElementById('cuerpo').innerHTML = A.map((a,i) => `
   <tr data-b="${[a.cod, a.temp, a.marca, a.modelo, a.color].join(' ').toLowerCase()
@@ -91,13 +104,24 @@ const casos = [
   ['no existe nada',   0,     0,     0]
 ];
 
+/* Los tres casos del aviso: un artículo que existe pero es de terceros, uno que
+   existe pero está en cero, y uno que no existe en ningún lado. Un cero mudo no
+   es una respuesta: Daniel busco el 8892504 y el cuadro no le dijo nada. */
+const AVISOS = [
+  ['8892504', ['8892504', 'Adidas', 'solo marca propia', 'Marcar Adidas']],
+  ['9999001', ['9999001', 'cero pares']],
+  ['zzzz',    ['No hay ningún artículo con eso']]
+];
+
 fetch('../js/views/dashboard_v28.js').then(r => r.text()).then(txt => {
   const src = recortar(txt, 'window.__paretoBuscar = (txt) => {');
   eval(src.replace('window.__paretoBuscar = ', 'window.__paretoBuscar = '));
   let malas = 0;
   const filas = casos.map(([q, nEsp, llEsp, hoEsp]) => {
     window.__paretoBuscar(q);
-    const vis = [...document.querySelectorAll('#cuerpo tr')].filter(f => f.style.display !== 'none');
+    // Solo las filas de artículo: la del aviso "no hay resultados" no es un resultado.
+    // Es la misma regla que usa el buscador, que recorre `tbody tr[data-b]`.
+    const vis = [...document.querySelectorAll('#cuerpo tr[data-b]')].filter(f => f.style.display !== 'none');
     const ll = vis.reduce((s,f) => s + Number(f.dataset.llego), 0);
     const ho = vis.reduce((s,f) => s + Number(f.dataset.hoy), 0);
     const pieLl = document.getElementById('pareto_tf_llego').textContent;
@@ -109,9 +133,29 @@ fetch('../js/views/dashboard_v28.js').then(r => r.text()).then(txt => {
          + `${vis.length} filas (esperado ${nEsp}) · llegó ${ll} (${llEsp}) · `
          + `falta ${ho} (${hoEsp}) · pie dice "${pieLl}" · cuenta "${cuenta}"</div>`;
   });
+  // Los avisos cuando no hay resultados
+  const filasAviso = AVISOS.map(([q, esperados]) => {
+    window.__paretoBuscar(q);
+    const fila = document.querySelector('tr[data-sinresultado]');
+    const txt = fila ? fila.innerText.replace(/\s+/g, ' ').trim() : '(no salió ningún aviso)';
+    const faltan = esperados.filter(e => txt.indexOf(e) < 0);
+    if (faltan.length) malas++;
+    return `<div class="${faltan.length ? 'mal' : 'ok'}">${faltan.length ? '✗' : '✓'} `
+         + `buscando "${q}" → ${txt}${faltan.length ? ' — falta: ' + faltan.join(', ') : ''}</div>`;
+  });
+  // Y que el enlace de la marca de verdad aplique el filtro
+  window.__paretoBuscar('8892504');
+  const enlace = document.querySelector('tr[data-sinresultado] a');
+  if (enlace) enlace.click();
+  const aplico = window.__ultimoFiltro === 'marca=Adidas';
+  if (!aplico) malas++;
+  filasAviso.push(`<div class="${aplico ? 'ok' : 'mal'}">${aplico ? '✓' : '✗'} `
+    + `el enlace aplica el filtro de marca → ${window.__ultimoFiltro || '(no hizo nada)'}</div>`);
+  filas.push(...filasAviso);
+
   window.__paretoBuscar('');
   document.getElementById('res').innerHTML =
-    `<b>${malas ? '<span class="mal">' + malas + ' CASOS MAL</span>' : '<span class="ok">Los ' + casos.length + ' casos pasan</span>'}</b>`
+    `<b>${malas ? '<span class="mal">' + malas + ' CASOS MAL</span>' : '<span class="ok">Los ' + filas.length + ' casos pasan</span>'}</b>`
     + filas.join('');
 }).catch(e => {
   document.getElementById('res').innerHTML = '<span class="mal">No se pudo montar: ' + e.message + '</span>';

@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0194';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0195';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0194';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0194';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0194';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0194';
-import * as metasService from '../services_v245/metasService.js?v=29.0194';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0194';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0194';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0194';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0194';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0194';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0194';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0194';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0194';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0194';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0194';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0194';
+import * as adminService from '../services_v245/adminService.js?v=29.0195';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0195';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0195';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0195';
+import * as metasService from '../services_v245/metasService.js?v=29.0195';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0195';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0195';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0195';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0195';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0195';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0195';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0195';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0195';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0195';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0195';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0195';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0194';
+const VERSION = '29.0195';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0194');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0195');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15218,7 +15218,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0194 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0195 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25868,6 +25868,42 @@ window.showCellModal = function(htmlContent) {
     poner('pareto_tf_llego', kpiN(llego));
     poner('pareto_tf_hoy', kpiN(hoy));
     poner('pareto_tf_pct', llego ? kpiD1(hoy / llego * 100) + '%' : '—');
+
+    /* UN CERO MUDO NO ES UNA RESPUESTA. Daniel buscó el 8892504 el 13-ago-2026 y el
+     * cuadro le devolvió cero: el artículo existe, tiene 1.148 pares parados y 1.136
+     * pedidos sin atender, pero es Adidas y **sin marca elegida el cuadro muestra solo
+     * marca propia**. Esa regla está puesta a propósito —las de terceros entran y salen
+     * casi enteras y mezclarlas hace parecer que el almacén rota mejor de lo que rota—
+     * pero era invisible: 65 artículos de los 332 con stock quedaban afuera sin decirlo.
+     *
+     * Así que cuando la búsqueda no encuentra nada, se busca igual en TODO el paquete y
+     * se dice por qué no está. Con el enlace para arreglarlo de un clic. */
+    const antes = tabla.querySelector('tr[data-sinresultado]');
+    if (antes) antes.remove();
+    if (!vis && pal.length) {
+      const P = kpiPaquete;
+      const escondido = (P && P.articulos || []).find(a => pal.every(p =>
+        limpia([a.cod, a.coleccion, a.marca, a.modelo, a.color].join(' ')).indexOf(p) >= 0));
+      const cols = tabla.querySelectorAll('thead th').length || 12;
+      let msg = 'No hay ningún artículo con eso.';
+      if (escondido) {
+        const m = escondido.marca;
+        msg = !escondido.propia && !(kpiFiltro.marcas || []).length
+          ? `<b style="color:#fff;">${escondido.cod} · ${m}</b> sí está en el estudio, pero el `
+            + `cuadro muestra <b>solo marca propia</b> mientras no se elija ninguna. `
+            + `<a href="#" onclick="window.__kpiFiltro('marca','${m}');return false;" `
+            + `style="color:${KPI_AZUL}; font-weight:800;">Marcar ${m} y verlo</a>`
+          : escondido.hoy === 0
+          ? `<b style="color:#fff;">${escondido.cod} · ${m}</b> está en el estudio pero hoy `
+            + `tiene <b>cero pares</b>: este cuadro solo lista lo que queda en el almacén.`
+          : `<b style="color:#fff;">${escondido.cod} · ${m}</b> está en el estudio pero queda `
+            + `fuera de los filtros de arriba.`;
+      }
+      const tb = tabla.querySelector('tbody');
+      if (tb) tb.insertAdjacentHTML('beforeend',
+        `<tr data-sinresultado="1"><td colspan="${cols}" style="padding:1rem 0.8rem; `
+        + `color:var(--text-muted); font-size:0.76rem; line-height:1.7;">${msg}</td></tr>`);
+    }
   };
 
   /**
