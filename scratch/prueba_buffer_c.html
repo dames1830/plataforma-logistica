@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Prueba del avance de Limpieza de Buffer C</title>
+<!--
+  BANCO DE PRUEBAS SIN LOGIN, contra el servidor de verdad.
+
+  Monta el modulo del turno con las fotos REALES de la noche del 12-ago-2026 y
+  comprueba la regla que fijo Daniel: avance es lo que salio del Buffer C y se ve
+  llegar a otra ubicacion del activo. Lo que quedo en un LPN sin matricular no es
+  avance, pero se muestra al lado.
+
+  El ayudante que arma la linea de base -fueraDelBufferC- se SACA de dashboard_v28.js
+  con las llaves contadas, no se copia: si alguien lo toca, esta pagina lo dice.
+-->
+<style>
+  body { margin:0; padding:1.6rem; background:#0f172a; color:#f8fafc;
+         font-family:'Segoe UI',system-ui,sans-serif; font-size:0.84rem; }
+  #caja { max-width:1180px; margin:1.2rem 0; }
+  #res { margin-top:1.4rem; line-height:2; max-width:1180px; }
+  .ok { color:#34d399; } .mal { color:#f87171; font-weight:800; }
+  b { color:#fff; }
+</style>
+</head>
+<body>
+<h3 style="margin:0 0 0.4rem; font-size:0.95rem;">Avance de Limpieza de Buffer C &mdash; banco de pruebas</h3>
+<div id="res">Trayendo las fotos del servidor&hellip;</div>
+<div id="caja"></div>
+
+<script type="module">
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+const DIA = '2026-08-12';
+const res = document.getElementById('res');
+
+const traer = async (area, fecha) => {
+  const r = await fetch(`${API}/${area}?date=${fecha || 'MASTER'}&t=${Date.now()}`);
+  return (await r.json()).data;
+};
+
+function recortar(txt, firma) {
+  const i = txt.indexOf(firma);
+  if (i < 0) throw new Error('No se encontró ' + firma);
+  let n = 0, dentro = false;
+  for (let j = i; j < txt.length; j++) {
+    if (txt[j] === '{') { n++; dentro = true; }
+    else if (txt[j] === '}') { n--; if (dentro && n === 0) return txt.slice(i, j + 1); }
+  }
+  throw new Error('Llaves sin cerrar');
+}
+
+try {
+  const fuenteJs = await (await fetch('../js/views/dashboard_v28.js')).text();
+  const src = recortar(fuenteJs, 'const fueraDelBufferC = (filas, bufferC) => {');
+  const fueraDelBufferC = eval('(' + src.replace('const fueraDelBufferC = ', '') + ')');
+
+  const [arranque, hora, activo19] = await Promise.all([
+    traer('buffer_c_arranque', DIA), traer('layout_stock_hora'), traer('almacenaje_activo')
+  ]);
+
+  const bcArr = arranque.detalle;
+  // La foto de ahora, con la misma regla que usa la pantalla
+  const bcAhora = {};
+  const actAhora = {};
+  hora.forEach(f => {
+    const u = String((Array.isArray(f) ? f[3] : (f['Ubicación'] || '')) || '').trim().toUpperCase();
+    const a = String((Array.isArray(f) ? f[1] : f['Artículo']) || '').trim();
+    const q = parseFloat(String((Array.isArray(f) ? f[4] : f['Cantidad actual']) || 0).replace(/,/g, '')) || 0;
+    if (!a || q <= 0) return;
+    actAhora[a] = (actAhora[a] || 0) + q;
+    if (u.startsWith('CDBUFFER-C')) bcAhora[a] = (bcAhora[a] || 0) + q;
+  });
+
+  const fueraArr = fueraDelBufferC(activo19, bcArr);
+  const fueraAhora = Object.keys(bcArr).reduce((o, a) => {
+    const f = (actAhora[a] || 0) - (bcAhora[a] || 0);
+    if (f > 0) o[a] = f;
+    return o;
+  }, {});
+
+  const fuentes = {
+    arranqueBufferC: { hora: arranque.hora, fecha: DIA, bufferC: bcArr, fuera: fueraArr },
+    ahoraBufferC: {
+      hora: '', bufferC: bcAhora, fuera: fueraAhora, lineas: hora.length,
+      totalC: Object.keys(bcAhora).reduce((s, a) => s + bcAhora[a], 0)
+    }
+  };
+
+  const { montarTurno } = await import('../js/reportes/turno_actividades.js');
+  montarTurno(document.getElementById('caja'), { estado: null, fuentes, fecha: DIA, alGuardar: () => {} });
+
+  await new Promise(r => setTimeout(r, 600));
+  /* Se lee del documento entero y no de #caja: montarTurno reemplaza ese nodo, así
+     que buscarlo por id después de montar devuelve null. */
+  const texto = document.body.innerText;
+  /* Se leen del RECUADRO de arriba, que es lo que Daniel mira, y no de las celdas de
+     la tabla: ahí el orden de los input puede cambiar y la prueba dejaría de medir lo
+     que se ve. */
+  const mCard = /Limpieza de Buffer C\s*\n\s*([\d.,]+)\s+de\s+([\d.,]+)/.exec(texto);
+  const limpiar = s => Number(String(s || '0').replace(/[.,]/g, ''));
+  const av = limpiar(mCard && mCard[1]), meta = limpiar(mCard && mCard[2]);
+  const mPend = /\+([\d.,]+)\s*en LPN sin matricular/.exec(texto);
+  const pend = mPend ? Number(mPend[1].replace(/[.,]/g, '')) : 0;
+
+  const ESP = { meta: 1769, av: 138, pend: 972 };
+  const bien = meta === ESP.meta && av === ESP.av && pend === ESP.pend;
+  res.innerHTML =
+    `<b>${bien ? '<span class="ok">Los 3 números dan exacto</span>' : '<span class="mal">NO CUADRA</span>'}</b><br>`
+    + `Meta &nbsp; <b>${meta}</b> (esperado ${ESP.meta}) ${meta === ESP.meta ? '<span class="ok">✓</span>' : '<span class="mal">✗</span>'}<br>`
+    + `Avance <b>${av}</b> (esperado ${ESP.av} &mdash; solo lo que llegó a otra ubicación) ${av === ESP.av ? '<span class="ok">✓</span>' : '<span class="mal">✗</span>'}<br>`
+    + `En LPN sin matricular <b>${pend}</b> (esperado ${ESP.pend}) ${pend === ESP.pend ? '<span class="ok">✓</span>' : '<span class="mal">✗</span>'}<br>`
+    + `<br>Con la regla vieja el avance era <b>1110</b>: ${1110 - ESP.av} pares de más.`;
+} catch (e) {
+  res.innerHTML = '<span class="mal">Falló: ' + e.message + '</span>';
+  console.error(e);
+}
+</script>
+</body>
+</html>

@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0192';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0193';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0192';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0192';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0192';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0192';
-import * as metasService from '../services_v245/metasService.js?v=29.0192';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0192';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0192';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0192';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0192';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0192';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0192';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0192';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0192';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0192';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0192';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0192';
+import * as adminService from '../services_v245/adminService.js?v=29.0193';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0193';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0193';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0193';
+import * as metasService from '../services_v245/metasService.js?v=29.0193';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0193';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0193';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0193';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0193';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0193';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0193';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0193';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0193';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0193';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0193';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0193';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0192';
+const VERSION = '29.0193';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0192');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0193');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5860,7 +5860,27 @@ const fuentesDelTurno = async (dia) => {
             if (stock && stock.length) foto = fotoBufferCDe(stock);
         } catch (e) { console.warn('[TURNO] Buffer C del stock:', e); }
     }
-    if (foto && foto.detalle) F.arranqueBufferC = { hora: foto.hora, fecha: foto.fecha, bufferC: foto.detalle };
+    /* LA LÍNEA DE BASE: lo que esos mismos SKU tenían fuera del Buffer C al arrancar.
+     *
+     * Desde v29.0193 la trae la propia foto del robot (`fuera`). Para las jornadas
+     * anteriores a ese cambio —y para esta noche, cuya foto ya se guardó sin ella— se
+     * reconstruye del stock activo del servidor, que durante la noche ES la foto de las
+     * 19:00: el robot recién la pisa a las 06:00.
+     *
+     * Si no se consigue, el avance vuelve a la regla vieja —todo lo que salió del C—
+     * en vez de quedarse sin número. */
+    let fueraArranque = (foto && foto.fuera) || null;
+    if (!fueraArranque && foto && foto.detalle && hoy === getLogicalDate()) {
+        try {
+            const stock = (dataStore.almacenaje_activo || []).length
+                ? dataStore.almacenaje_activo
+                : await leerArea('almacenaje_activo');
+            if (stock && stock.length) fueraArranque = fueraDelBufferC(stock, foto.detalle);
+        } catch (e) { console.warn('[TURNO] Base de fuera del Buffer C:', e); }
+    }
+    if (foto && foto.detalle) F.arranqueBufferC = {
+        hora: foto.hora, fecha: foto.fecha, bufferC: foto.detalle, fuera: fueraArranque
+    };
 
     /* ── LA FOTO DE AHORA, SIN CARGAR NADA A MANO ─────────────────────────────
      *
@@ -5909,6 +5929,14 @@ const fuentesDelTurno = async (dia) => {
             F.ahoraBufferC = {
                 hora: horaAhora,
                 bufferC: bcAhora,
+                /* Lo que hay fuera del C AHORA, para los mismos SKU. `actAhora` es el
+                   total del SKU en toda la zona activa, así que lo de afuera es el
+                   total menos lo que sigue en el C. */
+                fuera: Object.keys(foto && foto.detalle ? foto.detalle : bcAhora).reduce((o, a) => {
+                    const f = (actAhora[a] || 0) - (bcAhora[a] || 0);
+                    if (f > 0) o[a] = f;
+                    return o;
+                }, {}),
                 totalC: Object.keys(bcAhora).reduce((s, a) => s + bcAhora[a], 0),
                 lineas: stockAhora.filas.length
             };
@@ -6078,6 +6106,32 @@ const fotoBufferCDe = (filas) => {
         detalle[art] = (detalle[art] || 0) + q;
     });
     return { hora: '', fecha: getLogicalDate(), detalle };
+};
+
+/**
+ * Los pares que los SKU del Buffer C tienen FUERA de esa zona, dentro del activo.
+ *
+ * Es la línea de base del avance de Limpieza de Buffer C: sin ella no se puede
+ * distinguir un par que llegó a su destino de uno que quedó en una caja sin
+ * matricular. Y hace falta la base y no solo la foto de ahora, porque un SKU puede
+ * estar en el Buffer C y en el mezzanine a la vez: sin el punto de partida, lo que
+ * ya estaba afuera se contaría como destino.
+ *
+ * Solo se miran los SKU que están en la foto del Buffer C — los demás no hacen falta
+ * y serían 30.000 entradas de más.
+ */
+const fueraDelBufferC = (filas, bufferC) => {
+    const out = {};
+    if (!bufferC) return out;
+    (filas || []).forEach(f => {
+        const ubi = String((Array.isArray(f) ? f[3] : (f['Ubicación'] || f['Ubicacion'] || '')) || '').trim().toUpperCase();
+        if (ubi.startsWith('CDBUFFER-C')) return;
+        const art = String((Array.isArray(f) ? f[1] : f['Artículo']) || '').trim();
+        if (!art || bufferC[art] === undefined) return;
+        const q = parseFloat(String((Array.isArray(f) ? f[4] : f['Cantidad actual']) || 0).replace(/,/g, '')) || 0;
+        if (q > 0) out[art] = (out[art] || 0) + q;
+    });
+    return out;
 };
 
 /**
@@ -15160,7 +15214,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0192 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0193 | MOBILE PORTAL
                             </div>
                     </div>
 

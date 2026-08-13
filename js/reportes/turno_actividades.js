@@ -356,7 +356,12 @@ export const montarTurno = function (RAIZ, OPC) {
         '<div class="hole" style="color:' + COLOR[c.tono] + '">' + (c.pct === null ? '—' : c.pct + '%') + '</div></div>' +
         '<div class="rn">' + rotulo(p) + '</div>' +
         '<div class="rq">' + nf(c.av) + (c.meta ? ' de ' + nf(c.meta) : ' · <span style="opacity:.65">sin meta</span>') +
-        '<br>' + esc(p.u || '') + '</div></div>';
+        '<br>' + esc(p.u || '') +
+        /* Lo que salió del Buffer C y todavía no llegó a destino. Va al lado del
+           avance y no adentro: no es avance, pero tampoco es cero trabajo. */
+        (p.pend ? '<br><span style="color:#fbbf24; font-size:.92em;">+' + nf(p.pend) +
+                  ' en LPN sin matricular</span>' : '') +
+        '</div></div>';
     });
     $('#ta_rings').innerHTML = anillos;
   }
@@ -489,8 +494,12 @@ export const montarTurno = function (RAIZ, OPC) {
     if (!a || !a.bufferC) return null;
     var m = new Map();
     Object.keys(a.bufferC).forEach(function (k) { m.set(k, a.bufferC[k]); });
+    /* Los pares que cada SKU tiene FUERA del Buffer C. Puede no venir —una jornada
+       cerrada no lo guarda— y ahí el avance vuelve a la regla vieja. */
+    var fu = null;
+    if (a.fuera) { fu = new Map(); Object.keys(a.fuera).forEach(function (k) { fu.set(k, a.fuera[k]); }); }
     return {
-      tipo: 'activo', bufferC: m, buffer: new Map(),
+      tipo: 'activo', bufferC: m, buffer: new Map(), fuera: fu,
       totalC: a.totalC || 0, totalB: 0, lineas: a.lineas || 0,
       hora: a.hora || '', auto: true
     };
@@ -520,19 +529,26 @@ export const montarTurno = function (RAIZ, OPC) {
     var iQ = cab.findIndex(function (c) { return /^Cantidad actual/i.test(c); });
     var iA = cab.findIndex(function (c) { return /^Art/i.test(c); });
     if (iU < 0 || iQ < 0 || iA < 0) throw new Error('faltan las columnas Artículo, Ubicación o Cantidad actual');
-    var bufferC = new Map(), buffer = new Map(), totalC = 0, totalB = 0, lineas = 0;
+    /* `fuera` son los pares de cada SKU en CUALQUIER ubicación que no sea del Buffer C.
+       Antes el bucle se saltaba todo lo que no fuera CDBUFFER y con eso alcanzaba, pero
+       el avance ahora necesita saber si lo que bajó del C apareció en otro lado. */
+    var bufferC = new Map(), buffer = new Map(), fuera = new Map();
+    var totalC = 0, totalB = 0, lineas = 0;
     for (var k = 1; k < l.length; k++) {
       if (!l[k]) continue;
       var c = l[k].split(sep);
       var u = String(c[iU] || '').trim().toUpperCase();
-      if (u.indexOf('CDBUFFER') !== 0) continue;
       var q = num(c[iQ]); if (q <= 0) continue;
-      var a = String(c[iA] || '').trim();
-      lineas++;
-      buffer.set(a, (buffer.get(a) || 0) + q); totalB += q;
-      if (u.indexOf('CDBUFFER-C') === 0) { bufferC.set(a, (bufferC.get(a) || 0) + q); totalC += q; }
+      var a = String(c[iA] || '').trim(); if (!a) continue;
+      if (u.indexOf('CDBUFFER-C') === 0) {
+        bufferC.set(a, (bufferC.get(a) || 0) + q); totalC += q;
+      } else {
+        fuera.set(a, (fuera.get(a) || 0) + q);
+      }
+      if (u.indexOf('CDBUFFER') === 0) { lineas++; buffer.set(a, (buffer.get(a) || 0) + q); totalB += q; }
     }
-    return { tipo: 'activo', bufferC: bufferC, buffer: buffer, totalC: totalC, totalB: totalB, lineas: lineas };
+    return { tipo: 'activo', bufferC: bufferC, buffer: buffer, fuera: fuera,
+             totalC: totalC, totalB: totalB, lineas: lineas };
   }
 
   /* ── EL EXCEL DE RESERVA, ABIERTO COMO LO QUE ES: UN ZIP ───────────────────
@@ -748,14 +764,46 @@ export const montarTurno = function (RAIZ, OPC) {
     });
   }
 
+  /* AVANCE ES LO QUE SALIÓ DEL C **Y SE VE LLEGAR A OTRO LADO**.
+   *
+   * Lo fijó Daniel el 12-ago-2026. Hasta esa noche bastaba con que el par
+   * desapareciera de la zona C, y eso daba 1.110 de 1.769 en tres horas y media:
+   * de esos, solo 138 aparecían en otra ubicación del activo. Los otros 972 estaban
+   * encajados en un LPN todavía sin matricular — salieron del sistema en el C pero
+   * no llegaron a ningún destino, y contarlos infla el avance con trabajo a medias.
+   *
+   * SE REGULARIZA SOLO: cuando el LPN se matricula, la corrida de la hora siguiente
+   * ve esos pares en su ubicación nueva y el avance sube. No se pierde nada, se
+   * cuenta cuando llega. Daniel: *"voy a decir a los chicos que no dejen pendiente
+   * LPNs cargados para que yo pueda ver el avance real"*.
+   *
+   * HACE FALTA LA LÍNEA DE BASE. Un SKU puede estar en el C y en el mezzanine a la
+   * vez, así que "aparecer fuera del C" no alcanza: hay que comparar contra lo que
+   * ese SKU ya tenía fuera al arrancar el turno. Si esa base no llega —una jornada
+   * vieja no la guardó— se vuelve a la regla anterior, que es la única medible con
+   * lo que hay.
+   *
+   * NO SE MIRA LA RESERVA. El Buffer C es justamente lo que se BAJA de reserva:
+   * contar un par como avance porque aparece arriba sería darle la vuelta al
+   * circuito. Todo esto se mide dentro del stock activo.
+   */
   function aplicarStock() {
     /* La cargada a mano primero; si no hay, la que publica el robot cada hora. */
     var b = STOCK['now-activo'] || AUTO;
-    var meta = 0, av = 0;
+    var base = ARRANQUE.fuera || null;
+    var meta = 0, av = 0, sinDestino = 0, medible = !!(b && b.fuera && base);
     Object.keys(ARRANQUE.bufferC).forEach(function (art) {
       var x = ARRANQUE.bufferC[art];
       meta += x;
-      if (b) { var y = b.bufferC.get(art) || 0; if (x > y) av += x - y; }
+      if (!b) return;
+      var y = b.bufferC.get(art) || 0;
+      if (x <= y) return;
+      var bajo = x - y;
+      if (!medible) { av += bajo; return; }
+      var subio = (b.fuera.get(art) || 0) - (base[art] || 0);
+      var conDestino = Math.max(0, Math.min(bajo, subio));
+      av += conDestino;
+      sinDestino += bajo - conDestino;
     });
     /* LA META SE MUESTRA SIEMPRE, aunque todavía no se haya cargado la foto de
        ahora: es lo que había en el Buffer C al arrancar el turno y lo publica el
@@ -765,6 +813,9 @@ export const montarTurno = function (RAIZ, OPC) {
       var m = p.aMano || {};
       if (meta > 0 && !m.meta) { p.meta = Math.round(meta); p.u = 'pares'; p.auto = true; }
       if (b && !m.av) p.av = Math.round(av);
+      /* Los que salieron del C y no llegaron a destino NO se esconden: si no se
+         vieran, tres horas de trabajo parecerían no haber pasado. */
+      p.pend = (b && !m.av && medible) ? Math.round(sinDestino) : 0;
     });
   }
 
