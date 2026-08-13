@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta &mdash; SKUs sin salida</title>
+<!--
+  MAQUETA, todavia no es un modulo. Daniel la pidio el 12-ago-2026 para decidir
+  despues en que pantalla va. Los datos son REALES, del 12-ago-2026:
+  fotos de stock del 02-ene al 12-ago y archivos de picking del 27-jul al 11-ago.
+-->
+<style>
+  :root { --primary:#4f46e5; --bg-dark:#0f172a; --text-main:#f8fafc;
+          --text-muted:#94a3b8; --border:rgba(255,255,255,0.1); }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:1.6rem; background:var(--bg-dark); color:var(--text-main);
+         font-family:'Segoe UI',system-ui,sans-serif; }
+  .wrap { max-width:1180px; margin:0 auto; }
+  .cab { display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+         padding-bottom:0.9rem; margin-bottom:1.2rem;
+         border-bottom:1px solid rgba(255,255,255,0.05); }
+  h1 { font-size:1rem; font-weight:800; letter-spacing:0.4px; margin:0; }
+  .maq { font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;
+         color:#fbbf24; border:1px solid rgba(245,158,11,0.4); border-radius:6px;
+         padding:3px 8px; }
+  .tarjetas { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:1.2rem; }
+  .t { flex:1; min-width:150px; background:rgba(255,255,255,0.03);
+       border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:0.9rem 1.1rem; }
+  .t .r { font-size:0.62rem; letter-spacing:0.8px; text-transform:uppercase;
+          color:var(--text-muted); margin-bottom:0.35rem; }
+  .t .v { font-size:1.6rem; font-weight:800; line-height:1.1; }
+  .t .p { font-size:0.7rem; color:#64748b; margin-top:0.3rem; }
+  table { width:100%; border-collapse:collapse; font-size:0.78rem; color:#d1d5db; }
+  thead tr { background:#1e293b; }
+  th { padding:0.6rem 0.7rem; font-weight:700; color:var(--text-muted);
+       font-size:0.68rem; letter-spacing:0.4px; text-transform:uppercase; white-space:nowrap; }
+  td { padding:0.5rem 0.7rem; border-bottom:1px solid rgba(255,255,255,0.04); white-space:nowrap; }
+  tbody tr:nth-child(even) { background:rgba(255,255,255,0.02); }
+  .der { text-align:right; } .cen { text-align:center; }
+  .pie { margin-top:1rem; font-size:0.72rem; color:#64748b; line-height:1.8; }
+  .caja { background:#101a2c; color:var(--text-main); border:1px solid var(--border);
+          border-radius:8px; padding:0.34rem 0.65rem; font-size:0.75rem; font-weight:700;
+          cursor:pointer; font-family:inherit; display:flex; align-items:center;
+          gap:0.45rem; min-width:9.5rem; justify-content:space-between; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="cab">
+    <h1>SKUs sin salida</h1>
+    <span class="maq">Maqueta</span>
+    <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
+      <span style="font-size:0.62rem; font-weight:800; letter-spacing:1px;
+                   text-transform:uppercase; color:var(--text-muted);">Temporadas</span>
+      <button class="caja"><span>4 temporadas</span><span style="font-size:0.6rem; opacity:0.75;">&#9660;</span></button>
+    </div>
+  </div>
+
+  <div class="tarjetas">
+    <div class="t" style="border-left:3px solid #f472b6;">
+      <div class="r">SKUs sin salida</div><div class="v">43</div>
+      <div class="p">de 486 medidos &middot; 8,8%</div></div>
+    <div class="t" style="border-left:3px solid #fbbf24;">
+      <div class="r">Pares parados</div><div class="v">17,151</div>
+      <div class="p">no salieron en 2 semanas</div></div>
+    <div class="t" style="border-left:3px solid #60a5fa;">
+      <div class="r">Sin ning&uacute;n pedido</div><div class="v">13</div>
+      <div class="p">6,121 pares &middot; nadie los pidi&oacute;</div></div>
+    <div class="t" style="border-left:3px solid #34d399;">
+      <div class="r">Pedido no atendido</div><div class="v" style="color:#34d399;">0</div>
+      <div class="p">picking no es la causa</div></div>
+  </div>
+
+  <div style="overflow-x:auto;">
+  <table>
+    <thead><tr>
+      <th>C&oacute;digo</th><th>Marca</th><th>Colec.</th><th>Modelo</th>
+      <th class="cen">Lleg&oacute;</th><th class="der">Lleg&oacute; con</th>
+      <th class="der">Pares hoy</th><th class="der">Sali&oacute; 1&ordf; sem</th>
+      <th class="der">Sali&oacute; 2&ordf; sem</th><th class="der">Pedido</th>
+      <th class="der">Picado</th><th class="cen">Parado</th>
+    </tr></thead>
+    <tbody id="cuerpo"></tbody>
+  </table>
+  </div>
+
+  <div class="pie">
+    Temporadas 2026-Q3, 2026-Q4, 2027-Q1 y 2027-Q2, con dos semanas cumplidas en el
+    almac&eacute;n. La salida se mide con las fotos de stock &mdash;activo m&aacute;s
+    reserva&mdash; del 2 de enero al 12 de agosto de 2026; el pedido, con los archivos
+    de picking del 27 de julio al 11 de agosto.
+    <br>A la segunda semana deber&iacute;a haber salido entre el 50% y el 60%.
+    <br><b style="color:#94a3b8;">Quedan aparte 146 SKUs</b> que recibieron m&aacute;s
+    mercader&iacute;a dentro de sus dos primeras semanas: con el stock subiendo en el
+    medio, la resta no significa nada.
+  </div>
+</div>
+
+<script>
+var D = [["4816345", "North Star", "2026-Q3", "18-07", 432, 2748, 0.0, 0.0, 0, 0, 1, "Urban (Yung Fashion) · Potosi", "Footwear"], ["4811345", "North Star", "2026-Q3", "18-07", 528, 2722, 0.0, 0.0, 0, 0, 1, "Urban (Yung Fashion) · Potosi", "Footwear"], ["5616447", "Bata", "2026-Q4", "22-07", 1500, 1413, 0.1, 5.6, 512, 512, 1, "Flat · Irma", "Footwear"], ["8514900", "Bata", "2026-Q3", "31-07", 1190, 1189, 0.1, 0.1, 1, 1, 5, "Laces · Los Angeles", "Footwear"], ["8892504", "Adidas", "2026-Q3", "21-07", 1159, 1148, 0.9, 0.9, 11, 11, 16, "Tennis · Response Runner 2", "Footwear"], ["5896558", "Adidas", "2026-Q3", "21-07", 1130, 1119, 1.0, 1.0, 11, 11, 16, "Tennis · Run 60S 4.0", "Footwear"], ["8819807", "Power", "2026-Q3", "16-07", 1040, 1102, 0.0, 8.1, 1816, 1816, 1, "'- Cancha · Navy/Azul Marino", "Footwear"], ["7646807", "Bata", "2026-Q4", "24-07", 1545, 1100, 0.0, 0.0, 445, 445, 1, "Sandal Height 7 · Agata", "Footwear"], ["5615447", "Bata", "2026-Q4", "22-07", 1000, 913, 0.1, 8.4, 512, 512, 1, "- Irma · Burgundy", "Footwear"], ["8899503", "Adidas", "2026-Q3", "21-07", 922, 911, 1.2, 1.2, 11, 11, 16, "Tennis · Galaxy 8 M", "Footwear"], ["8014822", "Bata", "2026-Q3", "30-07", 442, 442, 0.0, 0.0, 0, 0, 13, "Casual · Rooney", "Footwear"], ["1816303", "Bubblegummers", "2026-Q3", "04-06", 1233, 401, 0.0, 0.0, 42, 42, 1, "Sport Boys · Everglade", "Footwear"], ["8892493", "Power", "2026-Q3", "24-06", 1392, 256, 0.0, 0.0, 206, 206, 1, "Fitness · Journey", "Footwear"], ["2815311", "Bubblegummers", "2026-Q3", "01-08", 257, 240, 1.9, 6.6, 80, 80, 1, "Sport Girls · Speed Lite", "Footwear"], ["1819428", "Bubblegummers", "2026-Q3", "01-08", 205, 191, 2.4, 6.8, 77, 77, 1, "Sport Girls · Speed Lite", "Footwear"], ["1815311", "Bubblegummers", "2026-Q3", "01-08", 205, 191, 2.4, 6.8, 77, 77, 1, "Sport Girls · Speed Lite", "Footwear"], ["5515192", "Bata", "2026-Q4", "07-07", 876, 152, 0.1, 0.1, 609, 609, 7, "Ballerinas · Eva", "Footwear"], ["9998404", "North Star", "2026-Q4", "25-05", 300, 106, 0.0, 0.0, 60, 60, 8, "Women · Tripack Print Beige", "Non Footwear"], ["5516192", "Bata", "2026-Q4", "07-07", 684, 100, 0.1, 0.1, 491, 491, 5, "Ballerinas · Eva", "Footwear"], ["9896406", "Bata", "2026-Q3", "20-04", 300, 88, 0.0, 0.0, 0, 0, 19, "Men · Bipack Print Mid Mn", "Non Footwear"], ["9918203", "Weinbrenner", "2026-Q3", "18-07", 200, 80, 0.0, 0.0, 120, 120, 1, "Polar · Yaupi Wm", "Non Footwear"], ["2011338", "Bubblegummers", "2026-Q4", "03-03", 1324, 61, 0.0, 0.0, 2, 2, 2, "Boots And Booties Girls · Gunter", "Footwear"], ["8016822", "Bata", "2026-Q3", "30-07", 60, 60, 0.0, 0.0, 0, 0, 13, "Casual · Rooney", "Footwear"], ["5892901", "Skechers", "2026-Q3", "31-03", 420, 54, 0.0, 0.0, 1097, 1096, 1, "'- Edgeride · Nude Tones/Tonos Desnudos", "Footwear"], ["9919203", "Weinbrenner", "2026-Q3", "18-07", 200, 54, 0.0, 0.0, 146, 146, 1, "Polar · Yaupi Wm", "Non Footwear"], ["5896968", "Skechers", "2026-Q3", "31-03", 468, 51, 0.0, 0.0, 0, 0, 19, "Aerobics · Summits", "Footwear"], ["9896405", "Bata", "2026-Q3", "20-04", 400, 51, 0.0, 0.0, 10, 10, 8, "Men · Bipack Basic Mid Mn", "Non Footwear"], ["9817223", "Weinbrenner", "2026-Q3", "18-07", 180, 35, 0.0, 0.0, 145, 145, 1, "Polar · Yaupi", "Non Footwear"], ["8014949", "Bata", "2026-Q3", "02-02", 371, 30, 0.0, 0.0, 13, 13, 4, "Outdoor Rugged · Tonka", "Footwear"], ["1011338", "Bubblegummers", "2026-Q4", "03-03", 1328, 30, 0.0, 0.0, 1, 1, 7, "Boots And Booties Girls · Gunter", "Footwear"], ["9818223", "Weinbrenner", "2026-Q3", "18-07", 150, 28, 0.0, 0.0, 122, 122, 1, "Polar · Yaupi", "Non Footwear"], ["5895900", "Skechers", "2026-Q3", "31-03", 420, 27, 0.0, 0.0, 612, 612, 2, "'- Edgeride · Pink/Rosa", "Footwear"], ["8013949", "Bata", "2026-Q3", "02-02", 931, 23, 0.0, 0.0, 10, 10, 1, "Outdoor Rugged · Tonka", "Footwear"], ["9816200", "Weinbrenner", "2026-Q3", "16-02", 1, 17, 0.0, 0.0, 7, 7, 1, "Jacket · Martigny", "Non Footwear"], ["8896598", "Adidas", "2026-Q3", "05-06", 517, 7, 0.0, 0.0, 0, 0, 19, "Tennis · Runfalcon 5", "Footwear"], ["8811771", "Puma", "2026-Q3", "13-03", 24, 6, 0.0, 0.0, 3, 3, 1, "'- Puma Shuffle · White/Blanco", "Footwear"], ["5896985", "Skechers", "2026-Q3", "31-03", 384, 2, 0.0, 0.0, 0, 0, 61, "Aerobics · Summits", "Footwear"], ["5890803", "Puma", "2026-Q3", "28-03", 264, 2, 0.0, 0.0, 60, 60, 16, "Basketball · Milenio Tech", "Footwear"], ["9916212", "Weinbrenner", "2026-Q3", "02-04", 100, 1, 0.0, 0.0, 0, 0, 19, "Polar · Alpamayo Wm", "Non Footwear"], ["9917200", "Weinbrenner", "2026-Q3", "25-03", 150, 0, 0.0, 0.0, 0, 0, 21, "Parkas Outdoor · Hagen Wm", "Non Footwear"], ["8892965", "Skechers", "2026-Q3", "31-03", 396, 0, 0.0, 0.0, 0, 0, 29, "Baby Football (Mini Football) · Track", "Footwear"], ["5892905", "Skechers", "2026-Q3", "31-03", 420, 0, 0.0, 0.0, 0, 0, 64, "Aerobics · Edgeride", "Footwear"], ["4615303", "Bubblegummers", "2026-Q4", "27-03", 1, 0, 0.0, 0.0, 0, 0, 138, "Sandals Girls · Hilda", "Footwear"]];
+var mil = function(n){ return n.toLocaleString('es-PE'); };
+var pc  = function(v){ return v <= 0.2 ? 'nada' : v.toFixed(1).replace('.', ',') + '%'; };
+document.getElementById('cuerpo').innerHTML = D.map(function(r){
+  var sinped = r[8] === 0;
+  return '<tr>'
+    + '<td style="color:#f8fafc;">' + r[0] + '</td>'
+    + '<td>' + r[1] + '</td>'
+    + '<td class="cen" style="color:#94a3b8;">' + r[2] + '</td>'
+    + '<td style="color:#94a3b8;">' + (r[11] || '') + '</td>'
+    + '<td class="cen" style="color:#94a3b8;">' + r[3] + '</td>'
+    + '<td class="der">' + mil(r[4]) + '</td>'
+    + '<td class="der" style="color:#f8fafc;">' + mil(r[5]) + '</td>'
+    + '<td class="der" style="color:' + (r[6] <= 0.2 ? '#f87171' : '#fbbf24') + ';">' + pc(r[6]) + '</td>'
+    + '<td class="der" style="color:' + (r[7] <= 0.2 ? '#f87171' : '#fbbf24') + ';">' + pc(r[7]) + '</td>'
+    + '<td class="der" style="color:' + (sinped ? '#f87171' : '#d1d5db') + ';">'
+      + (sinped ? 'sin pedido' : mil(r[8])) + '</td>'
+    + '<td class="der" style="color:' + (sinped ? '#475569' : '#34d399') + ';">'
+      + (sinped ? '\u2014' : mil(r[9])) + '</td>'
+    + '<td class="cen" style="color:#94a3b8;">' + r[10] + (r[10] === 1 ? ' d\u00eda' : ' d\u00edas') + '</td>'
+    + '</tr>';
+}).join('');
+</script>
+</body>
+</html>
