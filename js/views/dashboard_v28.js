@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0189';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0196';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0189';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0189';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0189';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0189';
-import * as metasService from '../services_v245/metasService.js?v=29.0189';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0189';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0189';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0189';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0189';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0189';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0189';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0189';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0189';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0189';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0189';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0189';
+import * as adminService from '../services_v245/adminService.js?v=29.0196';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0196';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0196';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0196';
+import * as metasService from '../services_v245/metasService.js?v=29.0196';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0196';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0196';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0196';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0196';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0196';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0196';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0196';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0196';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0196';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0196';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0196';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0189';
+const VERSION = '29.0196';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0189');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0196');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5860,7 +5860,27 @@ const fuentesDelTurno = async (dia) => {
             if (stock && stock.length) foto = fotoBufferCDe(stock);
         } catch (e) { console.warn('[TURNO] Buffer C del stock:', e); }
     }
-    if (foto && foto.detalle) F.arranqueBufferC = { hora: foto.hora, fecha: foto.fecha, bufferC: foto.detalle };
+    /* LA LÍNEA DE BASE: lo que esos mismos SKU tenían fuera del Buffer C al arrancar.
+     *
+     * Desde v29.0193 la trae la propia foto del robot (`fuera`). Para las jornadas
+     * anteriores a ese cambio —y para esta noche, cuya foto ya se guardó sin ella— se
+     * reconstruye del stock activo del servidor, que durante la noche ES la foto de las
+     * 19:00: el robot recién la pisa a las 06:00.
+     *
+     * Si no se consigue, el avance vuelve a la regla vieja —todo lo que salió del C—
+     * en vez de quedarse sin número. */
+    let fueraArranque = (foto && foto.fuera) || null;
+    if (!fueraArranque && foto && foto.detalle && hoy === getLogicalDate()) {
+        try {
+            const stock = (dataStore.almacenaje_activo || []).length
+                ? dataStore.almacenaje_activo
+                : await leerArea('almacenaje_activo');
+            if (stock && stock.length) fueraArranque = fueraDelBufferC(stock, foto.detalle);
+        } catch (e) { console.warn('[TURNO] Base de fuera del Buffer C:', e); }
+    }
+    if (foto && foto.detalle) F.arranqueBufferC = {
+        hora: foto.hora, fecha: foto.fecha, bufferC: foto.detalle, fuera: fueraArranque
+    };
 
     /* ── LA FOTO DE AHORA, SIN CARGAR NADA A MANO ─────────────────────────────
      *
@@ -5909,6 +5929,14 @@ const fuentesDelTurno = async (dia) => {
             F.ahoraBufferC = {
                 hora: horaAhora,
                 bufferC: bcAhora,
+                /* Lo que hay fuera del C AHORA, para los mismos SKU. `actAhora` es el
+                   total del SKU en toda la zona activa, así que lo de afuera es el
+                   total menos lo que sigue en el C. */
+                fuera: Object.keys(foto && foto.detalle ? foto.detalle : bcAhora).reduce((o, a) => {
+                    const f = (actAhora[a] || 0) - (bcAhora[a] || 0);
+                    if (f > 0) o[a] = f;
+                    return o;
+                }, {}),
                 totalC: Object.keys(bcAhora).reduce((s, a) => s + bcAhora[a], 0),
                 lineas: stockAhora.filas.length
             };
@@ -5926,6 +5954,10 @@ const fuentesDelTurno = async (dia) => {
                 horaAhora = bc.hora || '';
                 F.ahoraBufferC = {
                     hora: horaAhora, bufferC: bcAhora,
+                    /* La misma línea de base, pero del cierre. La guarda el robot desde
+                       v29.0194; sin ella la jornada cerrada vuelve a la regla vieja y
+                       mostraría un avance distinto al que se vio durante la noche. */
+                    fuera: bc.fuera || null,
                     totalC: Object.keys(bcAhora).reduce((s, a) => s + (bcAhora[a] || 0), 0),
                     lineas: 0, cerrada: true
                 };
@@ -6078,6 +6110,32 @@ const fotoBufferCDe = (filas) => {
         detalle[art] = (detalle[art] || 0) + q;
     });
     return { hora: '', fecha: getLogicalDate(), detalle };
+};
+
+/**
+ * Los pares que los SKU del Buffer C tienen FUERA de esa zona, dentro del activo.
+ *
+ * Es la línea de base del avance de Limpieza de Buffer C: sin ella no se puede
+ * distinguir un par que llegó a su destino de uno que quedó en una caja sin
+ * matricular. Y hace falta la base y no solo la foto de ahora, porque un SKU puede
+ * estar en el Buffer C y en el mezzanine a la vez: sin el punto de partida, lo que
+ * ya estaba afuera se contaría como destino.
+ *
+ * Solo se miran los SKU que están en la foto del Buffer C — los demás no hacen falta
+ * y serían 30.000 entradas de más.
+ */
+const fueraDelBufferC = (filas, bufferC) => {
+    const out = {};
+    if (!bufferC) return out;
+    (filas || []).forEach(f => {
+        const ubi = String((Array.isArray(f) ? f[3] : (f['Ubicación'] || f['Ubicacion'] || '')) || '').trim().toUpperCase();
+        if (ubi.startsWith('CDBUFFER-C')) return;
+        const art = String((Array.isArray(f) ? f[1] : f['Artículo']) || '').trim();
+        if (!art || bufferC[art] === undefined) return;
+        const q = parseFloat(String((Array.isArray(f) ? f[4] : f['Cantidad actual']) || 0).replace(/,/g, '')) || 0;
+        if (q > 0) out[art] = (out[art] || 0) + q;
+    });
+    return out;
 };
 
 /**
@@ -15160,7 +15218,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0189 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0196 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23915,7 +23973,17 @@ window.showCellModal = function(htmlContent) {
       ['Color', a.color || '—'],
       ['Llegó el', kpiFechaCorta(a.llegada)],
       ['Última foto', kpiFechaCorta(a.curva[a.curva.length - 1][3])]]],
-    puntos: a.curva.map(c => ({ s: c[0], queda: c[2], pares: c[1], fecha: kpiFechaCorta(c[3]) }))
+    puntos: a.curva.map(c => ({ s: c[0], queda: c[2], pares: c[1], fecha: kpiFechaCorta(c[3]) })),
+    // LA SEMANA DEL CALENDARIO, DEBAJO DEL EJE. Acá se decía que "no hace falta, porque
+    // en un artículo suelto la semana 1 es una sola" — y es al revés: justamente por eso
+    // es EXACTA, un número y no el rango que sale en la curva del grupo. Daniel lo pidió
+    // el 12-ago-2026 mirando el 5615447: el eje decía 0, 1, 2, 3 y él necesitaba saber de
+    // qué semana del año estaba hablando. Cada punto ya trae su fecha; sale de ahí.
+    calendario: a.curva.reduce((m, c) => {
+      const w = kpiSemanaDe(c[3]);
+      if (w) m[c[0]] = w;
+      return m;
+    }, {})
   });
 
   // Toleran que no haya número. Con los filtros puede quedar un conjunto sin ningún
@@ -23931,6 +23999,9 @@ window.showCellModal = function(htmlContent) {
                        'séptima', 'octava', 'novena', 'décima'];
   const kpiOrdinal = k => KPI_ORDINAL[k] || `semana ${k}`;
   const KPI_AZUL='#3987e5', KPI_NARANJA='#d95926', KPI_AMBAR='#fbbf24', KPI_PARES='rgba(248,250,252,0.55)';
+  /* La opción "Solo marca propia" del filtro de marca. Empieza con dos guiones bajos
+     para que no pueda chocar nunca con el nombre de una marca del Maestro. */
+  const KPI_PROPIAS = '__propias';
 
   // ── EL CÁLCULO ────────────────────────────────────────────────────────────────────
   //
@@ -24039,12 +24110,24 @@ window.showCellModal = function(htmlContent) {
   const kpiAplicarFiltro = (articulos, filtro, conReposicion) => {
     const f = filtro || {};
     const marcas = f.marcas || [], meses = f.meses || [], semanas = f.semanas || [];
+    // SOLO MARCA PROPIA ES UNA OPCIÓN DEL FILTRO, YA NO EL COMPORTAMIENTO POR DEFECTO.
+    const soloPropias = marcas.indexOf(KPI_PROPIAS) >= 0;
+    const sueltas = marcas.filter(m => m !== KPI_PROPIAS);
     return (articulos || []).filter(a =>
          (conReposicion || !a.rep)
-      // Sin marcas marcadas se miran solo las propias: las de terceros entran y salen
-      // casi enteras y mezclarlas hace parecer que el almacén rota mejor de lo que rota.
-      // Con marcas marcadas mandan ésas, sean propias o no.
-      && (marcas.length ? marcas.indexOf(a.marca) >= 0 : a.propia)
+      /* SIN NADA MARCADO ENTRAN TODAS, propias y terceros. Hasta el 13-ago-2026 entraban
+       * solo las propias y las de terceros desaparecían sin que la pantalla lo dijera:
+       * 65 artículos de los 332 con stock, con 14.752 pares parados —Adidas 33, Puma 27,
+       * Skechers 5—. Daniel buscó un Adidas en el Pareto, no salió, y lo zanjó: "¿cómo
+       * mido todos los SKUs si no me los pones? Tienen que estar sí o sí".
+       *
+       * El motivo de la regla vieja era bueno y sigue estando: Puma y Adidas se van casi
+       * enteros —96% en dos semanas contra el 48% de Bubblegummers—, así que mezclarlos
+       * mueve la curva del 58,2% al 63,3% sin que el almacén haya rotado mejor. Por eso
+       * no se borró: pasó a ser 'Solo marca propia', la primera opción del filtro de
+       * marca. Lo que no puede pasar es que esconda artículos sin avisar. */
+      && (!marcas.length ? true
+          : ((soloPropias && a.propia) || sueltas.indexOf(a.marca) >= 0))
       && (!f.minimo || a.entro >= f.minimo)
       // El mes es el de la LLEGADA, no el de la foto: "los nuevos de mayo" son los que
       // nacieron en mayo, y después se los sigue hasta donde lleguen.
@@ -24264,8 +24347,12 @@ window.showCellModal = function(htmlContent) {
         ${comboVarios('semana', semanas.map(w => [w, `Semana ${w} (${cuentaSemana[w]})`]), semanasSel,
                       resumenSel(semanasSel, 'Todas las semanas',
                                  w => `Semana ${w} (${cuentaSemana[w] || 0})`, 'semanas'))}
-        ${comboVarios('marca', marcas.map(m => [m, m]), marcasSel,
-                      resumenSel(marcasSel, 'Todas las marcas', m => m, 'marcas'))}
+        ${/* "Solo marca propia" va PRIMERA y es una opción más, no el comportamiento
+              por defecto. Antes las de terceros no salían y la pantalla no lo decía. */''}
+        ${comboVarios('marca', [[KPI_PROPIAS, 'Solo marca propia']].concat(marcas.map(m => [m, m])),
+                      marcasSel,
+                      resumenSel(marcasSel, 'Todas las marcas',
+                                 m => (m === KPI_PROPIAS ? 'Solo marca propia' : m), 'marcas'))}
         ${combo('minimo', TOPES, filtro.minimo || 0)}
         ${hayFiltro ? `
           <button onclick="window.__kpiFiltro('limpiar')" class="btn"
@@ -24357,9 +24444,24 @@ window.showCellModal = function(htmlContent) {
     const lineaPic = PIC.map((p,i)=>`${i?'L':'M'}${x(p.s).toFixed(1)},${yc(p.v).toFixed(1)}`).join(' ');
     const areaPic  = `${lineaPic} L${x(MAXS).toFixed(1)},${yc(0).toFixed(1)} L${x(0).toFixed(1)},${yc(0).toFixed(1)} Z`;
     const puntosPic = PIC.map(p=>`<circle cx="${x(p.s).toFixed(1)}" cy="${yc(p.v).toFixed(1)}" r="${p.ingreso?6:(clave.has(p.s)||p.s===0?5:3.5)}" fill="${p.ingreso?AMBAR:NARANJA}" stroke="#111827" stroke-width="2"/>`).join('');
-    const valsPic = PIC.filter(p=>p.s>0).map(p=> p.ingreso
-      ? `<text x="${x(p.s).toFixed(1)}" y="${(yc(p.v)-13).toFixed(1)}" text-anchor="middle" fill="${AMBAR}" font-size="10" font-weight="800">+${n(p.ingreso)} entraron</text>`
-      : etiqueta(x(p.s), yc(p.v), clave.has(p.s), d1(p.v)+'%', n(p.pares))).join('');
+    // LA SEMANA 0 NO ES UN PICKING: ES LA LLEGADA, y ahora lo dice. El punto arrancaba
+    // en cero y sin etiqueta, así que se leía como "esa semana no se picó nada" cuando
+    // lo que significa es que ahí empieza a contarse. Los pares que llegaron estaban en
+    // la pantalla —la tarjeta y la franja de abajo— pero no en el gráfico, y Daniel
+    // preguntó por qué el 12-ago-2026: "¿por qué no me muestra el ingreso de los mil?".
+    //
+    // No se dibuja como punto de la curva a propósito: valdría 100% y el eje tendría que
+    // llegar hasta ahí, con lo que el pico real —8,3% en este caso— quedaría aplastado
+    // contra el piso. La etiqueta lo dice sin tocar la escala.
+    //
+    // Va anclada al comienzo y no centrada: en x=0 la mitad del texto se saldría por la
+    // izquierda y se montaría con los porcentajes del eje.
+    const origen = /ENTRARON/i.test(D.llegadaFranja || '') ? 'entraron' : 'llegaron';
+    const valsPic = PIC.map(p => p.s === 0
+      ? `<text x="${(x(0)+2).toFixed(1)}" y="${(yc(0)-13).toFixed(1)}" text-anchor="start" fill="${AMBAR}" font-size="10" font-weight="800">${origen} ${n(D.llegada)}</text>`
+      : (p.ingreso
+        ? `<text x="${x(p.s).toFixed(1)}" y="${(yc(p.v)-13).toFixed(1)}" text-anchor="middle" fill="${AMBAR}" font-size="10" font-weight="800">+${n(p.ingreso)} entraron</text>`
+        : etiqueta(x(p.s), yc(p.v), clave.has(p.s), d1(p.v)+'%', n(p.pares)))).join('');
     const gridPic = [0,TOPE/3,TOPE*2/3,TOPE].map(v=>
       `<line x1="${X0}" y1="${yc(v).toFixed(1)}" x2="${X1}" y2="${yc(v).toFixed(1)}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>`
       + `<text x="${X0-10}" y="${(yc(v)+4).toFixed(1)}" text-anchor="end" fill="var(--text-muted)" font-size="11">${v.toFixed(0)}%</text>`).join('');
@@ -25785,6 +25887,42 @@ window.showCellModal = function(htmlContent) {
     poner('pareto_tf_llego', kpiN(llego));
     poner('pareto_tf_hoy', kpiN(hoy));
     poner('pareto_tf_pct', llego ? kpiD1(hoy / llego * 100) + '%' : '—');
+
+    /* UN CERO MUDO NO ES UNA RESPUESTA. Daniel buscó el 8892504 el 13-ago-2026 y el
+     * cuadro le devolvió cero: el artículo existe, tiene 1.148 pares parados y 1.136
+     * pedidos sin atender, pero es Adidas y **sin marca elegida el cuadro muestra solo
+     * marca propia**. Esa regla está puesta a propósito —las de terceros entran y salen
+     * casi enteras y mezclarlas hace parecer que el almacén rota mejor de lo que rota—
+     * pero era invisible: 65 artículos de los 332 con stock quedaban afuera sin decirlo.
+     *
+     * Así que cuando la búsqueda no encuentra nada, se busca igual en TODO el paquete y
+     * se dice por qué no está. Con el enlace para arreglarlo de un clic. */
+    const antes = tabla.querySelector('tr[data-sinresultado]');
+    if (antes) antes.remove();
+    if (!vis && pal.length) {
+      const P = kpiPaquete;
+      const escondido = (P && P.articulos || []).find(a => pal.every(p =>
+        limpia([a.cod, a.coleccion, a.marca, a.modelo, a.color].join(' ')).indexOf(p) >= 0));
+      const cols = tabla.querySelectorAll('thead th').length || 12;
+      let msg = 'No hay ningún artículo con eso.';
+      if (escondido) {
+        const m = escondido.marca;
+        msg = !escondido.propia && (kpiFiltro.marcas || []).indexOf(KPI_PROPIAS) >= 0
+          ? `<b style="color:#fff;">${escondido.cod} · ${m}</b> sí está, pero el filtro `
+            + `de marca está en <b>Solo marca propia</b> y ${m} es de terceros. `
+            + `<a href="#" onclick="window.__kpiFiltro('marca','${KPI_PROPIAS}');return false;" `
+            + `style="color:${KPI_AZUL}; font-weight:800;">Quitar ese filtro y verlo</a>`
+          : escondido.hoy === 0
+          ? `<b style="color:#fff;">${escondido.cod} · ${m}</b> está en el estudio pero hoy `
+            + `tiene <b>cero pares</b>: este cuadro solo lista lo que queda en el almacén.`
+          : `<b style="color:#fff;">${escondido.cod} · ${m}</b> está en el estudio pero queda `
+            + `fuera de los filtros de arriba.`;
+      }
+      const tb = tabla.querySelector('tbody');
+      if (tb) tb.insertAdjacentHTML('beforeend',
+        `<tr data-sinresultado="1"><td colspan="${cols}" style="padding:1rem 0.8rem; `
+        + `color:var(--text-muted); font-size:0.76rem; line-height:1.7;">${msg}</td></tr>`);
+    }
   };
 
   /**
