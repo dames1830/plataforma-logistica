@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0188';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0189';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0188';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0188';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0188';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0188';
-import * as metasService from '../services_v245/metasService.js?v=29.0188';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0188';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0188';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0188';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0188';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0188';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0188';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0188';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0188';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0188';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0188';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0188';
+import * as adminService from '../services_v245/adminService.js?v=29.0189';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0189';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0189';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0189';
+import * as metasService from '../services_v245/metasService.js?v=29.0189';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0189';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0189';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0189';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0189';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0189';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0189';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0189';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0189';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0189';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0189';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0189';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0188';
+const VERSION = '29.0189';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0188');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0189');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15160,7 +15160,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0188 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0189 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24650,9 +24650,15 @@ window.showCellModal = function(htmlContent) {
     // fijos arriba del Pareto; Daniel pidió sacarlos y poder ver ese mismo reporte de
     // cualquiera de los del cuadro. Las curvas de todos ya vienen en el paquete, así que
     // el clic no le pide nada al servidor.
+    // `data-b` es lo que mira el buscador y `data-llego`/`data-hoy` lo que le permite
+    // rehacer el total con lo que queda a la vista: sin esos números habría que leerlos
+    // de las celdas ya formateadas —con puntos de miles— y el pie dejaría de cuadrar.
     const filas = A.map((a,i)=>`
       <tr class="kpi-fila" onclick="window.__verEvolucionArticulo('${a.cod}')"
           title="Ver el historial de ${a.cod}"
+          data-b="${[a.cod, a.temp, a.marca, a.modelo, a.color].join(' ').toLowerCase()
+                    .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/"/g,'')}"
+          data-llego="${a.llego}" data-hoy="${a.hoy}"
           style="border-top:1px solid rgba(255,255,255,0.05); cursor:pointer; ${clase[i]===0?'background:rgba(217,89,38,0.04);':''}">
         <td style="padding:0.35rem 0.7rem; color:rgba(255,255,255,0.4);">${i+1}</td>
         <td style="padding:0.35rem 0.7rem;"><span style="display:inline-block; min-width:17px; text-align:center; border-radius:5px; padding:1px 4px; font-weight:900; font-size:0.68rem; color:#0f172a; background:${CLS[clase[i]].col};">${CLS[clase[i]].k}</span></td>
@@ -24708,9 +24714,19 @@ window.showCellModal = function(htmlContent) {
 
       <div style="margin-top:1.3rem; display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
         <div style="font-size:0.72rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted);">
-          Los ${A.length} artículos, clasificados
+          Los <span id="pareto_cuenta">${A.length}</span> artículos, clasificados
           <span style="text-transform:none; letter-spacing:0; font-weight:600; color:${KPI_AZUL};">· clic en una fila para ver su historial</span>
         </div>
+        <!-- EL BUSCADOR VA AL MEDIO, y filtra sobre el DOM en vez de redibujar la vista:
+             cada tecla vuelve a llamar a renderKpiPicking y el cursor se perdería en la
+             primera letra. Rehace el pie con lo que queda visible, porque un total que
+             no cuadra con las filas de arriba tira abajo el cuadro entero. -->
+        <input id="pareto_buscar" type="search" autocomplete="off"
+               placeholder="Buscar artículo: código, marca o modelo"
+               oninput="window.__paretoBuscar(this.value)"
+               style="background:#101a2c; color:var(--text-main); border:1px solid var(--border);
+                      border-radius:8px; padding:0.34rem 0.65rem; font-size:0.75rem;
+                      font-weight:700; font-family:inherit; min-width:17rem; flex:0 1 22rem;">
         <div style="font-size:0.7rem; color:var(--text-muted);">
           <span style="color:${NARANJA};">▲</span> los <b style="color:#fff;">${altos.length}</b> que siguen con más del 20% de su llegada ·
           <b style="color:#fff;">${n(TQA)}</b> pares
@@ -24735,10 +24751,10 @@ window.showCellModal = function(htmlContent) {
           </tr></thead>
           <tbody>${filas}</tbody>
           <tfoot><tr style="border-top:1px solid rgba(255,255,255,0.18); font-weight:800; color:rgba(255,255,255,0.75);">
-            <td style="${tf}" colspan="9">Total de los ${A.length}</td>
-            <td style="${tf} text-align:right;">${n(TL)}</td>
-            <td style="${tf} text-align:right; color:${NARANJA};">${n(TQ)}</td>
-            <td style="${tf} text-align:right;">${d1(TQ/TL*100)}%</td>
+            <td style="${tf}" colspan="9" id="pareto_tf_rot">Total de los ${A.length}</td>
+            <td style="${tf} text-align:right;" id="pareto_tf_llego">${n(TL)}</td>
+            <td style="${tf} text-align:right; color:${NARANJA};" id="pareto_tf_hoy">${n(TQ)}</td>
+            <td style="${tf} text-align:right;" id="pareto_tf_pct">${d1(TQ/TL*100)}%</td>
           </tr></tfoot>
         </table>
       </div>
@@ -25727,6 +25743,48 @@ window.showCellModal = function(htmlContent) {
     kpiMenuAbierto = (kpiMenuAbierto === campo) ? '' : campo;
     const c = document.querySelector('[data-vista="kpi-picking"]');
     if (c) renderKpiPicking(c);
+  };
+
+  /**
+   * EL BUSCADOR DEL PARETO. Lo pidió Daniel el 12-ago-2026: "un filtro ahí en el medio
+   * para poder filtrar por artículo". Busca por código, colección, marca, modelo y color.
+   *
+   * FILTRA EL DIBUJO, NO REDIBUJA LA VISTA. Los otros filtros de la barra llaman a
+   * renderKpiPicking, que rehace el panel entero; hacer eso en cada tecla dejaría el
+   * cursor afuera de la caja en la primera letra.
+   *
+   * EL PUESTO NO SE RENUMERA. Que un artículo siga diciendo 37 con el filtro puesto es
+   * el dato —es el 37 del Pareto—; renumerarlo desde 1 lo haría parecer el más grande.
+   *
+   * Y EL PIE SE REHACE CON LO QUE QUEDA A LA VISTA. Un total que no cuadra con las filas
+   * de arriba tira abajo el cuadro entero: Daniel las suma a mano.
+   */
+  window.__paretoBuscar = (txt) => {
+    const limpia = (s) => String(s || '').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '');
+    // Cada palabra por separado y todas tienen que estar: "star potosi" encuentra igual
+    // que "potosi star", que es como se busca cuando uno no recuerda el orden.
+    const pal = limpia(txt).trim().split(/\s+/).filter(Boolean);
+    const pie = document.getElementById('pareto_tf_rot');
+    const tabla = pie && pie.closest('table');
+    if (!tabla) return;
+    let vis = 0, llego = 0, hoy = 0;
+    tabla.querySelectorAll('tbody tr[data-b]').forEach(f => {
+      const ok = !pal.length || pal.every(p => f.dataset.b.indexOf(p) >= 0);
+      f.style.display = ok ? '' : 'none';
+      if (ok) {
+        vis++;
+        llego += Number(f.dataset.llego) || 0;
+        hoy += Number(f.dataset.hoy) || 0;
+      }
+    });
+    const poner = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    poner('pareto_cuenta', kpiN(vis));
+    poner('pareto_tf_rot', pal.length ? `Total de los ${kpiN(vis)} que coinciden`
+                                      : `Total de los ${kpiN(vis)}`);
+    poner('pareto_tf_llego', kpiN(llego));
+    poner('pareto_tf_hoy', kpiN(hoy));
+    poner('pareto_tf_pct', llego ? kpiD1(hoy / llego * 100) + '%' : '—');
   };
 
   /**
