@@ -61,7 +61,10 @@ const kpiD1 = v => (v === null || v === undefined || isNaN(v)) ? '—'
 const KPI_AZUL = '#3987e5';
 // El estado real del modulo: el paquete entero y el filtro. El cuadro solo dibuja
 // las marcas propias, asi que el Adidas esta en el paquete y NO en la tabla.
-let kpiFiltro = { marcas: [], meses: [], semanas: [], minimo: 0 };
+// Con "Solo marca propia" puesto: es el unico caso en que el cuadro esconde una
+// marca de terceros. Sin filtro entran todas, asi que ahi no hay nada que avisar.
+const KPI_PROPIAS = '__propias';
+let kpiFiltro = { marcas: [KPI_PROPIAS], meses: [], semanas: [], minimo: 0 };
 const kpiPaquete = { articulos: A.map(a => ({
     cod:a.cod, coleccion:a.temp, marca:a.marca, modelo:a.modelo, color:a.color,
     hoy:a.hoy, propia:true })).concat([
@@ -70,7 +73,12 @@ const kpiPaquete = { articulos: A.map(a => ({
   { cod:'9999001', coleccion:'2026-Q3', marca:'Bata', modelo:'Agotado · Ninguno',
     color:'Black', hoy:0, propia:true }
 ]) };
-window.__kpiFiltro = (campo, valor) => { kpiFiltro.marcas = [valor]; window.__ultimoFiltro = campo + '=' + valor; };
+// Imita al de verdad: volver a tocar una opción ya marcada la quita.
+window.__kpiFiltro = (campo, valor) => {
+  const i = kpiFiltro.marcas.indexOf(valor);
+  if (i >= 0) kpiFiltro.marcas.splice(i, 1); else kpiFiltro.marcas.push(valor);
+  window.__ultimoFiltro = campo + '=' + valor + ' -> [' + kpiFiltro.marcas.join(',') + ']';
+};
 
 document.getElementById('cuerpo').innerHTML = A.map((a,i) => `
   <tr data-b="${[a.cod, a.temp, a.marca, a.modelo, a.color].join(' ').toLowerCase()
@@ -108,7 +116,7 @@ const casos = [
    existe pero está en cero, y uno que no existe en ningún lado. Un cero mudo no
    es una respuesta: Daniel busco el 8892504 y el cuadro no le dijo nada. */
 const AVISOS = [
-  ['8892504', ['8892504', 'Adidas', 'solo marca propia', 'Marcar Adidas']],
+  ['8892504', ['8892504', 'Adidas', 'Solo marca propia', 'Quitar ese filtro']],
   ['9999001', ['9999001', 'cero pares']],
   ['zzzz',    ['No hay ningún artículo con eso']]
 ];
@@ -147,10 +155,11 @@ fetch('../js/views/dashboard_v28.js').then(r => r.text()).then(txt => {
   window.__paretoBuscar('8892504');
   const enlace = document.querySelector('tr[data-sinresultado] a');
   if (enlace) enlace.click();
-  const aplico = window.__ultimoFiltro === 'marca=Adidas';
+  // El enlace tiene que QUITAR "Solo marca propia", que es lo que lo estaba escondiendo
+  const aplico = kpiFiltro.marcas.indexOf(KPI_PROPIAS) < 0;
   if (!aplico) malas++;
   filasAviso.push(`<div class="${aplico ? 'ok' : 'mal'}">${aplico ? '✓' : '✗'} `
-    + `el enlace aplica el filtro de marca → ${window.__ultimoFiltro || '(no hizo nada)'}</div>`);
+    + `el enlace quita el filtro que lo escondía → ${window.__ultimoFiltro || '(no hizo nada)'}</div>`);
   filas.push(...filasAviso);
 
   window.__paretoBuscar('');

@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0195';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0196';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0195';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0195';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0195';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0195';
-import * as metasService from '../services_v245/metasService.js?v=29.0195';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0195';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0195';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0195';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0195';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0195';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0195';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0195';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0195';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0195';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0195';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0195';
+import * as adminService from '../services_v245/adminService.js?v=29.0196';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0196';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0196';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0196';
+import * as metasService from '../services_v245/metasService.js?v=29.0196';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0196';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0196';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0196';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0196';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0196';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0196';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0196';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0196';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0196';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0196';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0196';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0195';
+const VERSION = '29.0196';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0195');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0196');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15218,7 +15218,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0195 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0196 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23999,6 +23999,9 @@ window.showCellModal = function(htmlContent) {
                        'séptima', 'octava', 'novena', 'décima'];
   const kpiOrdinal = k => KPI_ORDINAL[k] || `semana ${k}`;
   const KPI_AZUL='#3987e5', KPI_NARANJA='#d95926', KPI_AMBAR='#fbbf24', KPI_PARES='rgba(248,250,252,0.55)';
+  /* La opción "Solo marca propia" del filtro de marca. Empieza con dos guiones bajos
+     para que no pueda chocar nunca con el nombre de una marca del Maestro. */
+  const KPI_PROPIAS = '__propias';
 
   // ── EL CÁLCULO ────────────────────────────────────────────────────────────────────
   //
@@ -24107,12 +24110,24 @@ window.showCellModal = function(htmlContent) {
   const kpiAplicarFiltro = (articulos, filtro, conReposicion) => {
     const f = filtro || {};
     const marcas = f.marcas || [], meses = f.meses || [], semanas = f.semanas || [];
+    // SOLO MARCA PROPIA ES UNA OPCIÓN DEL FILTRO, YA NO EL COMPORTAMIENTO POR DEFECTO.
+    const soloPropias = marcas.indexOf(KPI_PROPIAS) >= 0;
+    const sueltas = marcas.filter(m => m !== KPI_PROPIAS);
     return (articulos || []).filter(a =>
          (conReposicion || !a.rep)
-      // Sin marcas marcadas se miran solo las propias: las de terceros entran y salen
-      // casi enteras y mezclarlas hace parecer que el almacén rota mejor de lo que rota.
-      // Con marcas marcadas mandan ésas, sean propias o no.
-      && (marcas.length ? marcas.indexOf(a.marca) >= 0 : a.propia)
+      /* SIN NADA MARCADO ENTRAN TODAS, propias y terceros. Hasta el 13-ago-2026 entraban
+       * solo las propias y las de terceros desaparecían sin que la pantalla lo dijera:
+       * 65 artículos de los 332 con stock, con 14.752 pares parados —Adidas 33, Puma 27,
+       * Skechers 5—. Daniel buscó un Adidas en el Pareto, no salió, y lo zanjó: "¿cómo
+       * mido todos los SKUs si no me los pones? Tienen que estar sí o sí".
+       *
+       * El motivo de la regla vieja era bueno y sigue estando: Puma y Adidas se van casi
+       * enteros —96% en dos semanas contra el 48% de Bubblegummers—, así que mezclarlos
+       * mueve la curva del 58,2% al 63,3% sin que el almacén haya rotado mejor. Por eso
+       * no se borró: pasó a ser 'Solo marca propia', la primera opción del filtro de
+       * marca. Lo que no puede pasar es que esconda artículos sin avisar. */
+      && (!marcas.length ? true
+          : ((soloPropias && a.propia) || sueltas.indexOf(a.marca) >= 0))
       && (!f.minimo || a.entro >= f.minimo)
       // El mes es el de la LLEGADA, no el de la foto: "los nuevos de mayo" son los que
       // nacieron en mayo, y después se los sigue hasta donde lleguen.
@@ -24332,8 +24347,12 @@ window.showCellModal = function(htmlContent) {
         ${comboVarios('semana', semanas.map(w => [w, `Semana ${w} (${cuentaSemana[w]})`]), semanasSel,
                       resumenSel(semanasSel, 'Todas las semanas',
                                  w => `Semana ${w} (${cuentaSemana[w] || 0})`, 'semanas'))}
-        ${comboVarios('marca', marcas.map(m => [m, m]), marcasSel,
-                      resumenSel(marcasSel, 'Todas las marcas', m => m, 'marcas'))}
+        ${/* "Solo marca propia" va PRIMERA y es una opción más, no el comportamiento
+              por defecto. Antes las de terceros no salían y la pantalla no lo decía. */''}
+        ${comboVarios('marca', [[KPI_PROPIAS, 'Solo marca propia']].concat(marcas.map(m => [m, m])),
+                      marcasSel,
+                      resumenSel(marcasSel, 'Todas las marcas',
+                                 m => (m === KPI_PROPIAS ? 'Solo marca propia' : m), 'marcas'))}
         ${combo('minimo', TOPES, filtro.minimo || 0)}
         ${hayFiltro ? `
           <button onclick="window.__kpiFiltro('limpiar')" class="btn"
@@ -25888,11 +25907,11 @@ window.showCellModal = function(htmlContent) {
       let msg = 'No hay ningún artículo con eso.';
       if (escondido) {
         const m = escondido.marca;
-        msg = !escondido.propia && !(kpiFiltro.marcas || []).length
-          ? `<b style="color:#fff;">${escondido.cod} · ${m}</b> sí está en el estudio, pero el `
-            + `cuadro muestra <b>solo marca propia</b> mientras no se elija ninguna. `
-            + `<a href="#" onclick="window.__kpiFiltro('marca','${m}');return false;" `
-            + `style="color:${KPI_AZUL}; font-weight:800;">Marcar ${m} y verlo</a>`
+        msg = !escondido.propia && (kpiFiltro.marcas || []).indexOf(KPI_PROPIAS) >= 0
+          ? `<b style="color:#fff;">${escondido.cod} · ${m}</b> sí está, pero el filtro `
+            + `de marca está en <b>Solo marca propia</b> y ${m} es de terceros. `
+            + `<a href="#" onclick="window.__kpiFiltro('marca','${KPI_PROPIAS}');return false;" `
+            + `style="color:${KPI_AZUL}; font-weight:800;">Quitar ese filtro y verlo</a>`
           : escondido.hoy === 0
           ? `<b style="color:#fff;">${escondido.cod} · ${m}</b> está en el estudio pero hoy `
             + `tiene <b>cero pares</b>: este cuadro solo lista lo que queda en el almacén.`
