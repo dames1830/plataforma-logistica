@@ -1,21 +1,22 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0197';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0198';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0197';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0197';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0197';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0197';
-import * as metasService from '../services_v245/metasService.js?v=29.0197';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0197';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0197';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0197';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0197';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0197';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0197';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0197';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0197';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0197';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0197';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0197';
+import * as adminService from '../services_v245/adminService.js?v=29.0198';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0198';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0198';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0198';
+import * as metasService from '../services_v245/metasService.js?v=29.0198';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0198';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0198';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0198';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0198';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0198';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0198';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0198';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0198';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0198';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0198';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0198';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0198';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +373,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0197';
+const VERSION = '29.0198';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4275,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0197');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0198');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15230,7 +15231,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0197 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0198 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25829,7 +25830,64 @@ window.showCellModal = function(htmlContent) {
       ${kpiBarraFiltros(P, R, kpiFiltro)}
       ${R && R.grupoFijo ? kpiBloque(kpiDeGrupo(P, R, kpiFiltro)) : ''}
       ${kpiPareto(P, kpiFiltro)}
+      <div class="glass-panel" style="padding:1.4rem 1.6rem; margin-top:1.4rem;" id="kpi_sin_salida"></div>
     `);
+    pintarSinSalida(container);
+  };
+
+  /* ── SKUs SIN SALIDA, al final de KPI Picking ──────────────────────────────
+   *
+   * Daniel lo puso acá el 13-ago-2026: *"la pones acá, KPI Picking"*. Va al lado
+   * de la Evolución del artículo porque son la misma pregunta mirada al revés
+   * —aquella dice cuánto tarda un código en agotarse, ésta señala los que no
+   * arrancaron— y las dos salen del mismo motor de fotos de stock.
+   *
+   * SE PIDE APARTE Y NO FRENA LA PANTALLA. El estudio de la evolución ya está
+   * dibujado cuando esto sale a buscar su paquete: si el robot todavía no lo
+   * publicó, o el servidor tarda, el resto del reporte no se entera. */
+  const AREA_SIN_SALIDA = 'sku_sin_salida';
+
+  const pintarSinSalida = async (container) => {
+    const caja = container.querySelector('#kpi_sin_salida');
+    if (!caja) return;
+    caja.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem;">
+        Trayendo los SKUs sin salida...</div>`;
+
+    let paq = null;
+    try {
+      const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+      const res = await fetch(`${base}/api/logistics/${AREA_SIN_SALIDA}?date=MASTER&t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const p = cuerpo && cuerpo.data;
+        // El backend guarda las áreas como lista de filas; ésta es un objeto solo,
+        // así que según cómo haya viajado puede llegar envuelto en un arreglo.
+        paq = Array.isArray(p) ? p[0] : p;
+        // Se exige `con_pedido`: un paquete sin eso no es un estudio a medias,
+        // es una pantalla en blanco con tarjetas en cero, que miente peor.
+        if (!paq || !paq.con_pedido || !paq.sin_pedido) paq = null;
+      }
+    } catch (e) {
+      console.warn('[SIN SALIDA] no se pudo traer:', e && e.message);
+    }
+
+    // Al volver de la espera la pantalla puede haber cambiado de pestaña.
+    if (!caja.isConnected) return;
+
+    if (!paq) {
+      caja.innerHTML = `
+        <div style="text-align:center; color:var(--text-muted); padding:1.2rem;">
+          <div style="font-size:1.6rem; margin-bottom:0.4rem;">📦</div>
+          <h4 style="margin:0 0 0.4rem; color:var(--text-main); font-weight:800;">
+            Todavía no hay estudio de SKUs sin salida</h4>
+          <p style="margin:0 auto; max-width:56ch; font-size:0.8rem; line-height:1.6;">
+            Lo arma el robot cruzando las fotos de stock con el detalle de orden.
+            Si ya corrió y esto sigue vacío, conviene mirar el registro de la corrida.
+          </p>
+        </div>`;
+      return;
+    }
+    montarSinSalida(caja, { paquete: paq });
   };
 
   /** Cambia un filtro y redibuja. El Pareto no depende de esto, pero se rehace igual:
