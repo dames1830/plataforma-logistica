@@ -1,21 +1,21 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0191';
+import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0192';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0191';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0191';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0191';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0191';
-import * as metasService from '../services_v245/metasService.js?v=29.0191';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0191';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0191';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0191';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0191';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0191';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0191';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0191';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0191';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0191';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0191';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0191';
+import * as adminService from '../services_v245/adminService.js?v=29.0192';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0192';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0192';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0192';
+import * as metasService from '../services_v245/metasService.js?v=29.0192';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0192';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0192';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0192';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0192';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0192';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0192';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0192';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0192';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0192';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0192';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0192';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -372,7 +372,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0191';
+const VERSION = '29.0192';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4274,7 +4274,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0191');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0192');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15160,7 +15160,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0191 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0192 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25060,13 +25060,69 @@ window.showCellModal = function(htmlContent) {
      en el período se lee de una sola vez.
      -------------------------------------------------------------------------- */
 
-  // LAS FECHAS SE ELIGEN DE A UNA, MARCÁNDOLAS, como en la maqueta: un botón por
-  // jornada y "Todas" para volver al conjunto. Vacío quiere decir todas.
+  // LAS FECHAS SE ELIGEN DE A VARIAS, DENTRO DE UNA CAJA. Vacío quiere decir todas.
   //
-  // Antes eran dos desplegables DE/HASTA, y con nueve jornadas sueltas —que no
-  // son días seguidos— elegir tres días concretos obligaba a abarcar todo el
-  // tramo del medio.
+  // Antes eran dos desplegables DE/HASTA, y con nueve días sueltos —que no son
+  // días seguidos— elegir tres concretos obligaba a abarcar todo el tramo del
+  // medio. Se pasó a un botón por fecha, y con trece la fila ya ocupaba el ancho
+  // entero: cada archivo nuevo le agrega otro botón y a fin de año son sesenta.
+  // Daniel lo pidió el 12-ago-2026: "en vez que las fechas salgan ahí a la vista
+  // todas y se estén llenando todo el campo, quiero un filtro de fechas".
+  //
+  // La caja mide siempre lo mismo. Es el MISMO control que el de mes y marca de
+  // KPI Picking —cerrada como cualquier desplegable, y adentro la lista con ✓—,
+  // así que las dos pantallas se manejan igual.
   const pickFiltro = { seg: 'calzado', fechas: [] };
+
+  // Vive acá y no en el DOM porque cada clic redibuja la vista entera: guardándolo
+  // en el DOM, el menú se cerraría al marcar la primera fecha y habría que abrirlo
+  // de nuevo para cada una.
+  let pickMenuAbierto = false;
+
+  /**
+   * El filtro de fechas. `conPicking` es opcional: cuando viene, las fechas que
+   * no tienen archivo de picking se marcan como tales.
+   */
+  const comboFechas = (todos, conPicking) => {
+    const sel = pickFiltro.fechas;
+    const corta = (d) => nDia(d).slice(0, 5);
+    const rotulo = !sel.length ? 'Todas las fechas'
+                 : sel.length === 1 ? corta(sel[0])
+                 : `${sel.length} fechas`;
+    const CAJA = 'background:#101a2c; color:var(--text-main); border:1px solid var(--border);'
+               + ' border-radius:8px; padding:0.34rem 0.65rem; font-size:0.75rem;'
+               + ' font-weight:700; cursor:pointer; font-family:inherit;';
+    const filas = [['', sel.length ? 'Quitar todas' : 'Todas']]
+      .concat(todos.map(d => [d, corta(d)]));
+    return `
+      <div style="position:relative;">
+        <button data-pickmenu="1" style="${CAJA} display:flex; align-items:center; gap:0.45rem; min-width:9.5rem; justify-content:space-between;">
+          <span>${rotulo}</span>
+          <span style="font-size:0.6rem; opacity:0.75;">${pickMenuAbierto ? '▲' : '▼'}</span>
+        </button>
+        ${!pickMenuAbierto ? '' : `
+        <div data-pickcerrar="1" title="cerrar"
+             style="position:fixed; top:0; left:0; right:0; bottom:0; z-index:39;"></div>
+        <div style="position:absolute; z-index:40; top:calc(100% + 4px); right:0; min-width:100%;
+                    background:#101a2c; border:1px solid var(--border); border-radius:8px;
+                    padding:0.25rem; max-height:16rem; overflow:auto; box-shadow:0 8px 22px rgba(0,0,0,0.5);">
+          ${filas.map(([v, t]) => {
+            const on = v ? sel.indexOf(v) >= 0 : !sel.length;
+            // Sin archivo de picking la fecha igual está, y ahora lo dice con
+            // todas las letras: antes era un punto amarillo que había que adivinar.
+            const soloAlm = v && conPicking && !conPicking.has(v);
+            return `<div data-fecha="${v}"
+                         style="display:flex; align-items:center; gap:0.45rem; padding:0.3rem 0.5rem;
+                                border-radius:6px; font-size:0.73rem; font-weight:700; white-space:nowrap;
+                                cursor:pointer; color:${on ? 'var(--text-main)' : (soloAlm ? '#fbbf24' : 'var(--text-muted)')};
+                                background:${on && v ? 'rgba(79,70,229,0.18)' : 'transparent'};">
+                      <span style="width:0.85rem; color:#818cf8;">${on ? '✓' : ''}</span>${t}
+                      ${soloAlm ? '<span style="margin-left:auto; padding-left:0.9rem; font-size:0.65rem; color:#fbbf24;">solo almacenaje</span>' : ''}
+                    </div>`;
+          }).join('')}
+        </div>`}
+      </div>`;
+  };
 
   const tarjetaPick = (rotulo, valor, pie, color) => `
     <div style="flex:1; min-width:150px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-left:3px solid ${color}; border-radius:12px; padding:0.9rem 1.1rem;">
@@ -25286,12 +25342,8 @@ window.showCellModal = function(htmlContent) {
 
     const barra = `
       <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:1rem; padding-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-        <span style="font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); margin-right:4px;">Jornadas</span>
-        <button data-fecha="" style="background:${!pickFiltro.fechas.length ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${!pickFiltro.fechas.length ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${!pickFiltro.fechas.length ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:5px 12px; border-radius:7px; font-size:0.72rem; font-weight:800; cursor:pointer; font-family:inherit;">Todas</button>
-        ${todos.map(d => {
-          const on = pickFiltro.fechas.indexOf(d) >= 0;
-          return `<button data-fecha="${d}" style="background:${on ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${on ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${on ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:5px 11px; border-radius:7px; font-size:0.72rem; font-weight:700; cursor:pointer; font-family:inherit;">${nDia(d).slice(0, 5)}</button>`;
-        }).join('')}
+        <span style="font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); margin-right:4px;">Fechas</span>
+        ${comboFechas(todos)}
         ${sinCrono ? `<span style="font-size:0.7rem; color:#fbbf24; margin-left:8px;">⚠️ ${sinCrono} sin cronómetro: vuelva a subir ${sinCrono === 1 ? 'ese archivo' : 'esos archivos'}.</span>` : ''}
       </div>`;
 
@@ -25305,6 +25357,12 @@ window.showCellModal = function(htmlContent) {
         if (!f) pickFiltro.fechas = [];
         else if (pickFiltro.fechas.indexOf(f) >= 0) pickFiltro.fechas = pickFiltro.fechas.filter(x => x !== f);
         else pickFiltro.fechas = pickFiltro.fechas.concat([f]);
+        renderPrepackPicking(container);
+      };
+    });
+    container.querySelectorAll('[data-pickmenu],[data-pickcerrar]').forEach(b => {
+      b.onclick = () => {
+        pickMenuAbierto = b.hasAttribute('data-pickmenu') ? !pickMenuAbierto : false;
         renderPrepackPicking(container);
       };
     });
@@ -25399,15 +25457,9 @@ window.showCellModal = function(htmlContent) {
     const cabecera = `
       <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:1.2rem; padding-bottom:0.9rem; border-bottom:1px solid rgba(255,255,255,0.05);">
         <div style="display:flex; gap:8px;">${botonSeg('calzado')}${botonSeg('no_calzado')}${botonSeg('todo')}</div>
-        <div style="display:flex; align-items:center; gap:6px; margin-left:auto; flex-wrap:wrap;">
-          <button data-fecha="" style="background:${!pickFiltro.fechas.length ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${!pickFiltro.fechas.length ? '#fff' : 'rgba(255,255,255,0.6)'}; border:1px solid ${!pickFiltro.fechas.length ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding:5px 12px; border-radius:7px; font-size:0.72rem; font-weight:800; cursor:pointer; font-family:inherit;">Todas</button>
-          ${todos.map(d => {
-            const on = pickFiltro.fechas.indexOf(d) >= 0;
-            // Sin picking, la jornada igual está: se marca con un punto para que
-            // se entienda por qué el resto del reporte sale vacío al elegirla.
-            const soloAlm = !conPicking.has(d);
-            return `<button data-fecha="${d}" title="${soloAlm ? 'Solo almacenaje: esta jornada no tiene archivo de picking' : ''}" style="background:${on ? 'var(--primary)' : 'rgba(255,255,255,0.04)'}; color:${on ? '#fff' : (soloAlm ? '#fbbf24' : 'rgba(255,255,255,0.6)')}; border:1px solid ${on ? 'var(--primary)' : (soloAlm ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.1)')}; padding:5px 11px; border-radius:7px; font-size:0.72rem; font-weight:700; cursor:pointer; font-family:inherit;">${nDia(d).slice(0, 5)}${soloAlm ? ' •' : ''}</button>`;
-          }).join('')}
+        <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
+          <span style="font-size:0.62rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted);">Fechas</span>
+          ${comboFechas(todos, conPicking)}
         </div>
       </div>`;
 
@@ -25637,6 +25689,12 @@ window.showCellModal = function(htmlContent) {
         if (!f) pickFiltro.fechas = [];
         else if (pickFiltro.fechas.indexOf(f) >= 0) pickFiltro.fechas = pickFiltro.fechas.filter(x => x !== f);
         else pickFiltro.fechas = pickFiltro.fechas.concat([f]);
+        renderReportePicking(container);
+      };
+    });
+    container.querySelectorAll('[data-pickmenu],[data-pickcerrar]').forEach(b => {
+      b.onclick = () => {
+        pickMenuAbierto = b.hasAttribute('data-pickmenu') ? !pickMenuAbierto : false;
         renderReportePicking(container);
       };
     });
