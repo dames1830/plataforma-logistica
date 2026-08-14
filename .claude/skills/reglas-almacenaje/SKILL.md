@@ -1,6 +1,6 @@
 ---
 name: reglas-almacenaje
-description: Las reglas que deciden CUÁNTO baja al piso y DÓNDE va cada artículo en las tareas de almacenaje. Úsala antes de tocar processAlmacenajeTasks, casoDelItem, calcularSugerenciaDeItem, planificarPorTalla o planificarAlmacenaje, o cuando una tarea salga con un destino, una cantidad o un "Paletizar" que no se entienda. Cubre el buffer A/B/C/D, el código nuevo, el escolar, y el trato aparte de Adidas, Puma y Skechers.
+description: Las reglas que deciden si un artículo es CÓDIGO NUEVO o REPOSICIÓN, CUÁNTO baja al piso y DÓNDE va en las tareas de almacenaje. Úsala antes de tocar processAlmacenajeTasks, casoDelItem, calcularSugerenciaDeItem, planificarPorTalla, planificarAlmacenaje o cargarContextoSugerencia, o cuando una tarea salga con un destino, una cantidad o un "Paletizar" que no se entienda. Cubre el corte de los 20 pares, los dos caminos completos, el buffer A/B/C/D, la capacidad de cada cuerpo, qué columna le toca a cada marca, el escolar, y el trato aparte de Adidas, Puma y Skechers.
 ---
 
 # Reglas de almacenaje
@@ -9,82 +9,311 @@ Las dictó Daniel. **No son deducibles del código ni de los datos** — vienen 
 trabaja en el almacén, y varias tienen una excepción que parece un error hasta que se sabe
 el motivo. Antes de "corregir" algo que acá figure, preguntar.
 
+**Esto tiene que estar fino.** Si el papel sale mal, el operario no sabe dónde ni cuánto
+almacenar, y el error se multiplica por cada tarea de la noche.
+
 ## Dónde vive cada cosa
 
 | Qué decide | Archivo | Función |
 |---|---|---|
+| Nuevo o reposición | `js/views/dashboard_v28.js` | `casoDelItem` |
 | Cuánto baja al piso | `js/services_v245/tallasService.js` | `planificarPorTalla` |
-| El caso de cada artículo | `js/views/dashboard_v28.js` | `casoDelItem` |
 | Dónde va | `js/services_v245/zonasService.js` | `planificarAlmacenaje` |
-| Une las dos y arma el papel | `js/views/dashboard_v28.js` | `calcularSugerenciaDeItem`, `filasDelPapel` |
+| Qué hay en el almacén | `js/views/dashboard_v28.js` | `cargarContextoSugerencia` |
+| Une todo y arma el papel | `js/views/dashboard_v28.js` | `calcularSugerenciaDeItem`, `filasDelPapel` |
 
 **El archivo que corre es `dashboard_v28.js`.** `almacenaje_module.js` es código muerto y
 engaña: tiene funciones con el mismo nombre que no se ejecutan.
 
-**Primero CUÁNTO, después DÓNDE.** De la zona sale la densidad del cuerpo, de la densidad
+## El flujo de una sola mirada
+
+```
+ZONA BUFFER  (A · B · D — la C es prepack y NO entra al circuito)
+      |
+   un artículo, con los pares que llegaron
+      |
+   [ los seis casos que se resuelven antes — ver más abajo ]
+      |
+   ¿CUÁNTO TIENE ESTE ARTÍCULO EN EL ALMACÉN?   ← activo + reserva
+      |                                            lo que llega NO entra en la cuenta
+      +---------------------------+
+      |                           |
+  20 pares o más           de 19 para abajo, o cero
+   REPOSICIÓN                CÓDIGO NUEVO
+```
+
+**Primero CUÁNTO, después DÓNDE.** De la zona sale la capacidad del cuerpo, de la capacidad
 sale cuántos pares bajan, y recién con esos pares se piden cuerpos. Al revés se reserva
 lugar de más.
 
-## 1. Cuánto baja: manda el ORIGEN, no la marca
+## 1. La pregunta que parte todo: 20 PARES
 
-La sub-zona del buffer dice de dónde vino la mercadería, y eso decide más que la marca.
+Daniel, 14-ago-2026:
 
-| Origen | Qué es | Cuánto baja |
+> *"Si llega a mil y tienes más de veinte, igual o más de veinte, ya es un código de
+> reposición. Pero si llega a mil y tienes menos de veinte, o sea, diecinueve para abajo, es
+> un código nuevo, y le tenemos que dar el trato de un código nuevo."*
+
+**Se cuenta lo que el artículo TIENE en el almacén: activo + reserva.** Cero también cae en
+código nuevo — es la primera vez que ese código pisa el almacén.
+
+**Lo que llega no interviene.** Un lote de 1.000 pares no convierte a un artículo en
+reposición, y un lote de 10 no lo convierte en código nuevo.
+
+### No confundir con el OTRO corte de 20
+
+Son dos reglas distintas y se parecen:
+
+| Corte | Qué decide | Valor |
 |---|---|---|
-| `CDBUFFER-A` | Recepción: importado o nacional | Según sea código nuevo o reposición — ver abajo |
-| `CDBUFFER-B` | Bajó de reserva por pedido o replenishment | **Todo**, *si de verdad bajó de arriba* |
-| `CDBUFFER-C` | Prepack | **No entra al circuito.** Se pica por caja, no por par |
-| `CDBUFFER-D` | Catálogo | **Todo**, a la columna 8 del MZN03, sin mirar marca ni temporada |
+| **20 pares** (esta) | código nuevo o reposición | siempre 20, en todas las zonas |
+| `saldoMenorA` | si va a la **columna de saldos** | **20 en el SEL**, **80 en los tres mezzanines** |
 
-### El buffer B no se cree solo por la letra
+El segundo está configurado y funciona; el primero **todavía no está escrito en el código**
+— ver "Lo que el código todavía no hace".
+
+## 2. Camino CÓDIGO NUEVO — siete pasos
+
+1. **CUÁNTO BAJA — el 60% de lo que llega.** Sale del estudio de los 81 códigos que entraron
+   en mayo de 2026: la primera semana se picó el 43,4% y la segunda el 21,3% —64,7% entre las
+   dos— y de la tercera en adelante se planta en 1,2%. Es el colchón de dos semanas.
+
+   **Redondeo y piso son dos cosas distintas**, y confundirlas costó una versión:
+
+   - **Redondeo** — llevar el objetivo al cuerpo entero más cercano. El código nuevo **no** lo
+     usa (`sinCandado: true`): *"no importa si me ocupa un cuerpo, dos cuerpos o tres cuerpos,
+     pero el sesenta por ciento tiene que quedarse abajo"*.
+   - **Piso** — si todo lo que hay entra en un cuerpo, **baja entero**. Vale siempre. Un cuerpo
+     no se comparte entre dos artículos, así que sacarle el 40% a una llegada chica deja el
+     cuerpo casi vacío y manda a reserva una caja que hay que volver a bajar. *"Si un código
+     nuevo llega con trescientos, no vayas a separar el sesenta por ciento, porque sabes que
+     esos trescientos sí entran en un cuerpo."*
+
+   Antes eran 3 cuerpos fijos. Se cambió porque el cuerpo no se estira con la llegada: con
+   cuerpos de 330, una llegada típica de 1.082 dejaba abajo el 91% y una de 2.519 el 39%.
+
+2. **EL RESTO SUBE A RESERVA.** El 40% se paletiza. **Solo suben cajas cerradas.**
+
+3. **LA ZONA — la manda la marca.** Ver la tabla de "Por qué va en esa columna".
+
+4. **LA COLUMNA — la temporada, y dentro, su marca.** Un código nuevo es temporada **actual**.
+   Y dentro de esa franja, solo las columnas de su marca: el MZN01 lo comparten Power,
+   Bubblegummers y B.G Licenses.
+
+5. **LA CAPACIDAD — la serie y la zona.** El primer dígito del código es la serie, y de ahí
+   sale cuántos pares entran en un cuerpo de esa zona.
+
+6. **CUÁNTOS Y CUÁLES — pares ÷ capacidad.** Se toman cuerpos **vacíos**, los más seguidos
+   que haya; si uno está ocupado se salta al siguiente, y de todas las tandas posibles se
+   elige la que ocupa el tramo más corto. **Un código nuevo no comparte cuerpo**: llegó
+   mercadería de verdad y tiene que entrar entera. (Los saldos sí comparten — ver más abajo.)
+
+7. **SI NO HAY LUGAR — Revisar Slotting.** No es un consejo, es una compuerta: sin ubicación
+   no se almacena. El operario **no improvisa**.
+
+## 3. Camino REPOSICIÓN — cinco pasos
+
+1. **CUÁNTO BAJA — hasta completar 2 cuerpos.** Ya salió antes y viene por su segundo lote;
+   no se le calcula porcentaje.
+
+2. **DÓNDE — a sus mismos cuerpos.** No se pregunta zona ni columna: el artículo ya tiene su
+   lugar y ahí vuelve. **Un cuerpo cuenta como suyo desde 20 pares** (`MINIMO_PARA_SER_CASA`).
+
+   Por qué ese mínimo: alcanzaba **una línea de stock —un par—** para que un cuerpo contara
+   como casa. Pasó con el `5811379`: vive en `MZN02-11-05` con 215 pares y tenía UN par en
+   `MZN03-05-01` y otro en `MZN03-07-01`; el sistema le creyó las tres casas y mandó la mitad
+   del artículo a cuerpos que no eran suyos.
+
+3. **¿LE ENTRA? — capacidad menos lo que ya hay.** Se descuenta **todo** lo que hay adentro,
+   sea suyo o de otro artículo. Se tolera hasta un **10% de más** (`HOLGURA`) antes de abrir
+   otro cuerpo: la capacidad es un percentil 75, no un límite físico.
+
+   Esta pregunta antes no se hacía: se devolvían sus cuerpos y listo. El operario llegaba con
+   500 pares a un cuerpo que ya tenía 300 de los suyos.
+
+4. **SI NO LE ENTRA — se abren los que falten.** Primero en sus mismas columnas —si el suyo
+   está lleno, lo natural es el de al lado— y después en el resto de su franja. `elegirCuerpos`
+   **junta libres de varias columnas**: antes exigía que una sola columna tuviera todos los
+   cuerpos necesarios, así que con el mezzanine cargado derivaba a Slotting habiendo lugar.
+
+5. **SI NO HAY LUGAR — Revisar Slotting.** Mismo criterio.
+
+**Por qué tiene menos pasos que el otro camino:** la reposición no elige zona, ni columna, ni
+cuerpo. Todo eso ya quedó decidido la primera vez que el artículo entró al almacén. Solo mide
+si le entra y, si no, le agrega cuerpos al lado.
+
+## 4. Lo que se resuelve ANTES de la pregunta
+
+Seis casos no llegan a la bifurcación porque su destino ya está decidido. Se preguntan en
+este orden:
+
+| Caso | Cuánto baja | Dónde va |
+|---|---|---|
+| **Escolar** (cualquier marca) | 50 pares, el resto arriba | la columna de escolar de su zona |
+| **Buffer D** · catálogo | todo | `MZN03` columna 8 |
+| **Buffer B** · bajó de reserva | todo | sus cuerpos |
+| **No es calzado** | todo, nada a reserva | `MZN04`, **sin ubicación exacta** |
+| **Ojotas** (Gender RIMS `06 OTHERS`) | según el caso | manda la **subcategoría**, no la marca |
+| **Adidas · Puma · Skechers** | todo, nada a reserva | la zona de la marca, sin cuerpo |
+
+### El origen: qué significa cada sub-zona del buffer
+
+| Origen | Qué es |
+|---|---|
+| `CDBUFFER-A` | Recepción: importado o nacional. Va al camino normal |
+| `CDBUFFER-B` | Bajó de reserva por pedido o replenishment — **si de verdad bajó de arriba** |
+| `CDBUFFER-C` | Prepack. **No entra al circuito.** Se pica por caja, no por par |
+| `CDBUFFER-D` | Catálogo. Columna 8 del MZN03, sin mirar marca ni temporada |
+
+### El buffer B NO se cree por la letra — y hoy se le está creyendo
 
 El 05-ago-2026 el buffer A se llenó y recepción metió mercadería **nueva** en el B. No fue
 descuido: no había otro lado. Va a volver a pasar.
 
-Como el B significa "bajó de reserva", esos códigos nuevos se almacenaban enteros. Antes de
-creerle a la letra hay que preguntar **de dónde habría bajado**: lo que baja de reserva
-estuvo antes en algún lado, así que un artículo **sin un solo par en el piso y sin un solo
-par en reserva no pudo haber bajado de ninguna parte**. Ese cae a la regla del código nuevo.
+**La letra no es prueba de nada.** Daniel, 14-ago-2026: *"¿Qué pasa si por error recepción mete
+lo que llegó de importación en el buffer B, y da la casualidad que ese es código nuevo? Lo vas
+a tratar como código de reposición. Ahí estás mal."*
 
-De 41 códigos en el B ese día, 37 tenían piso o reserva y 4 no tenían nada.
+**La cuenta que hay hoy no alcanza.** El código pregunta si lo que llega es menor o igual a lo
+que hay en reserva (`pares <= enReserva`), y solo entonces le cree al B. Suena razonable y **en
+la práctica no filtra nada**, medido sobre el buffer del 14-ago-2026:
 
-### Código nuevo: el 60%, salvo que entre en un cuerpo
+- **38 de 41** artículos del buffer B pasan la prueba y se bajan enteros.
+- La reserva es en promedio **89 veces** lo que llega. El caso más ajustado es 2,1 veces.
+- La prueba solo salta si llega **más que TODA la reserva**. Con reservas de 300 a 3.500 pares
+  y llegadas de 1 a 360, es prácticamente imposible que salte.
 
-Un código nuevo deja abajo el **60% de lo que llega**. Sale del estudio de los 81 códigos
-que entraron en mayo de 2026: la primera semana se picó el 43,4% y la segunda el 21,3%
-—64,7% entre las dos— y de la tercera en adelante se planta en 1,2%.
+Se escribió por el `8816454` —lo cazó Daniel en el papel—: llegaron 3.274 pares con 60 en
+reserva. Ese caso extremo sí lo agarra; ningún otro.
 
-**Redondeo y piso son dos cosas distintas**, y confundirlas costó una versión:
+**Y hay un segundo agujero, peor:** la comparación usa el **total del buffer del artículo**
+—sumando A y B—, y basta con que el artículo tenga algo en el B para que **todo lo del A entre
+como si hubiera bajado de reserva**. La nota vieja decía que un artículo no aparece en A y en B
+a la vez ("cero casos de 141", 04-ago); **el 14-ago había 5**, y dos de ellos arrastraron
+**692 pares de recepción** tratados como replenishment.
 
-- **Redondeo** — llevar el objetivo al cuerpo entero más cercano. El código nuevo **no** lo
-  usa (`sinCandado: true`): *"no importa si me ocupa un cuerpo, dos cuerpos o tres cuerpos,
-  pero el sesenta por ciento tiene que quedarse abajo"*.
-- **Piso** — si todo lo que hay entra en un cuerpo, **baja entero**. Vale siempre. Un cuerpo
-  no se comparte entre dos artículos, así que sacarle el 40% a una llegada chica deja el
-  cuerpo casi vacío y manda a reserva una caja que hay que volver a bajar. *"Si un código
-  nuevo llega con trescientos, no vayas a separar el sesenta por ciento, porque sabes que
-  esos trescientos sí entran en un cuerpo."*
+**Lo que corresponde: dos decisiones separadas.** Hoy la letra B decide las dos a la vez y por
+eso se salta la clasificación entera.
 
-Antes eran 3 cuerpos fijos. Se cambió porque el cuerpo no se estira con la llegada: con
-cuerpos de 330, una llegada típica de 1.082 dejaba abajo el 91% y una de 2.519 el 39%.
+| Decisión | Quién la manda |
+|---|---|
+| **¿Se devuelve algo al rack?** | Si de verdad bajó de reserva: **no**. Es la posta del replenishment |
+| **¿Es código nuevo o reposición?** | **Siempre** el stock del artículo: activo + reserva, corte en 20 |
 
-**Reposición de fábrica** (ya tiene cuerpo en su franja) → 2 cuerpos. Esa no cambió.
+El replenishment de verdad sigue protegido: si bajaron 200 de una reserva de 500, va todo al
+piso y no se le devuelve nada al rack. Lo que falta es **saber** que bajó, en vez de adivinarlo
+— ver `cadena-de-modulos`: el módulo anterior tiene que dejar constancia de lo que mandó bajar.
 
 ### El escolar manda sobre todo lo demás
 
-50 pares al piso y el resto a reserva, *"así sea nuevo, reposición, lo que sea"*. Se
-pregunta **antes** que cualquier otra regla, incluso antes que el buffer B.
+50 pares al piso y el resto a reserva, *"así sea nuevo, reposición, lo que sea"*. Se pregunta
+**antes** que cualquier otra regla, incluso antes que el buffer B — excepción consciente a "no
+contradecir al replenishment": el tope lo puso Daniel después y es más chico.
 
-## 2. Adidas, Puma y Skechers: el trato aparte
+Hizo falta un modo nuevo en `tallasService`, **`pares`** (tope fijo), porque 50 pares no llenan
+ni un sexto de un cuerpo y "1 cuerpo" habría bajado veinte veces de más.
+
+**Cada marca guarda su escolar en SU zona**, no todo en `SEL-14`: Bata → `SEL-14` · Power y
+B.G Licenses → MZN01 · North Star → MZN02.
+
+### Los saldos SÍ comparten cuerpo
+
+Son cientos de artículos con diez pares cada uno: darle un cuerpo propio a cada uno pediría
+748 cuerpos y el selectivo tiene 284. Compartiendo entran en 26. Se busca el que **mejor lo
+reciba** —el más lleno de los que todavía le dan, para consolidar— y un cuerpo vacío es el
+último recurso.
+
+**Al contar choques de cuerpos hay que sacar la franja de saldos**, o salen decenas de falsos
+positivos.
+
+## 5. Cuánto entra en un cuerpo
+
+Lo manda la **serie** (primer dígito del código) y la **zona**. Valores publicados al
+14-ago-2026 — **la fuente viva es la configuración publicada**, clave `zonas` del área `config`,
+y se edita en Análisis SKU → Zonas de Almacenaje. Si esta tabla y la configuración no coinciden,
+manda la configuración.
+
+| Zona | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| SEL | 830 | 740 | — | — | — | 548 | 400 | 330 | 380 | — |
+| MZN01 | 700 | 610 | 570 | 400 | 284 | 372 | — | — | 347 | — |
+| MZN02 | — | — | — | — | 352 | 330 | 298 | — | 300 | — |
+| MZN03 | — | — | 332 | 338 | 170 | 260 | 159 | 180 | 233 | — |
+| MZN04 | — | — | — | — | — | 289 | 190 | — | 347 | 192 |
+
+Donde dice — se usa el respaldo de **300**.
+
+**Se mide con el PERCENTIL 75, no con el máximo.** El máximo son casos raros y da el doble de
+lo que entra de verdad. Daniel validó dos puntos y los dos caen en el p75: adulto en el
+selectivo dijo 300-330, y Weinbrenner en MZN03 dijo 210-240.
+
+**Dos avisos sobre esta tabla:**
+
+- **No es un límite físico.** Es un percentil, y encima se tolera un 10% de más. Un cuerpo
+  puede quedar al 110% en el papel y no entrar en la realidad.
+- **Cuando el cuerpo ya tiene mercadería, el sistema NO usa la serie del artículo que llega:
+  usa la del que más pesa adentro.** Así un serie 4 puede terminar medido con la capacidad de
+  un serie 8. **Pendiente de revisar con Daniel**, que el 14-ago señaló que de la serie 4
+  entran más de 400 pares en el MZN02 y la tabla dice 352.
+
+## 6. Por qué va en esa columna
+
+Deciden dos cosas: **de quién es** la columna y **qué temporada lleva**. Valores publicados al
+14-ago-2026; misma advertencia que arriba, manda la configuración.
+
+| Marca | Zona | Sus columnas |
+|---|---|---|
+| Bata | SEL | toda la zona |
+| Power | MZN01 | 1 – 9 |
+| Bubblegummers | MZN01 | 10 – 23 |
+| B.G Licenses | MZN01 | 24 |
+| North Star | MZN02 | toda la zona |
+| Bata Industrials | MZN03 | 1 – 5 |
+| Marie Claire | MZN03 | 6, 7 |
+| Skechers | MZN03 | 9 – 11 |
+| Adidas | MZN03 | 12 – 15 |
+| Puma | MZN03 | 16, 17 |
+| Weinbrenner | MZN03 | 18 – 24 |
+
+| Zona | actual | anterior | saldos | otras |
+|---|---|---|---|---|
+| SEL | 4 – 13 | 3 | 1, 2 | escolar: 14 |
+| MZN01 | 4, 7, 8, 10 – 21, 24 | 1, 22 | 2, 3, 23 | |
+| MZN02 | 7, 8, 11, 12, 15, 16, 19, 20, 23, 24 | 4 | 1, 2, 3 | |
+| MZN03 | 4, 5, 9 – 17, 20 – 24 | 2, 3, 7, 19 | 1, 6, 18 | catálogo: 8 |
+
+**Columnas bloqueadas** (fuera de circulación, ya descontadas arriba): MZN01 la 5, 6 y 9 ·
+MZN02 la 5, 6, 9, 10, 13, 14, 17, 18, 21 y 22. **Cuando Daniel dice "fila" quiere decir
+COLUMNA.**
+
+**Cuántos cuerpos tiene cada columna:** el selectivo llega a 22 —los cuerpos 11 y 22 de las
+columnas 2-13 son el paso del elevador, ya configurado como pasillo—; los mezzanines llegan a
+**20**, salvo las columnas 2, 3, 22 y 23 del MZN01 y las 2, 3 y 23 del MZN02, que se quedan en
+17. El layout publicado es la fuente de verdad de la forma del almacén.
+
+**B.G Licenses ES Bubblegummers** — la misma marca, solo que la licencia trae dibujitos
+licenciados. Su temporada **actual** se queda sola en la 24; su **anterior y sus saldos** van a
+las columnas de Bubblegummers. Sin eso no tenían a dónde ir: le toca una sola columna y es de
+actual, así que caían en el respaldo y terminaban mezclados con la temporada actual, sin aviso.
+Va en la tabla `COMPARTE_COLUMNAS` de `zonasService.js`.
+
+**Marie Claire tiene el problema inverso y sigue abierto:** sus columnas son anterior y saldos,
+sin ninguna de actual. Hoy no se dispara porque no tiene nada en el buffer, pero el día que
+llegue algo de temporada actual va a caer en el respaldo.
+
+**Un cuerpo = un artículo.** Dos artículos en un cuerpo es un problema para Slotting, salvo
+curvas rotas, temporada antigua o la franja de saldos.
+
+## 7. Adidas, Puma y Skechers: el trato aparte
 
 Las tres viven en el mezzanine 3 y se trabajan distinto del resto. Regla de Daniel del
 05-ago-2026, y las tres partes van juntas.
 
 ### No mandan nada a reserva, llegue lo que llegue
 
-Las tres van con `modo: 'todo'`. **Y eso le gana al caso**: un Puma nuevo caía en la regla
-del 60% y se le paletizaba el 40% teniendo cuerpos libres. El único que sigue mandando por
-encima es el escolar, porque se pregunta antes.
+Van con `modo: 'todo'`. **Y eso le gana al caso**: un Puma nuevo caía en la regla del 60% y se
+le paletizaba el 40% teniendo cuerpos libres. El único que sigue mandando por encima es el
+escolar, porque se pregunta antes.
 
 ### El destino es la COLUMNA, no el cuerpo
 
@@ -93,71 +322,69 @@ antes    MZN03-13-07, MZN03-13-08, MZN03-14-02, MZN03-14-03...
 ahora    MZN03 · ZONA ADIDAS
 ```
 
-Sus columnas son propias y nadie más entra ahí, así que nombrar el cuerpo no le ahorra un
-paso al operario: le llena el papel de renglones. Una llegada de Adidas se reparte en seis o
-siete cuerpos y salía una ubicación distinta por talla. *"La ubicación exacta es muy
-complicada de que el operario entienda."*
-
-| Marca | Columnas del MZN03 | Sale como |
-|---|---|---|
-| Skechers | 9, 10, 11 | `MZN03 · ZONA SKECHERS` |
-| Adidas | 12, 13, 14, 15 | `MZN03 · ZONA ADIDAS` |
-| Puma | 16, 17 | `MZN03 · ZONA PUMA` |
+Sus columnas son propias y nadie más entra ahí, así que nombrar el cuerpo no le ahorra un paso
+al operario: le llena el papel de renglones. *"La ubicación exacta es muy complicada de que el
+operario entienda."*
 
 **Se llegó acá por descarte y el camino conviene no repetirlo.** Primero se probó el rango de
-columnas (`MZN03 · Col 12-15`): rechazado, porque el operario lee ubicaciones todo el día y
-una que se escribe distinta lo hace frenar. Después la primera columna de la marca
-(`MZN03-12`), y ahí Daniel encontró el agujero: si es siempre la primera, **¿cuándo diría 13,
-14 o 15? Nunca.** Y no era teórico — mandaba Skechers a la columna 9, que ese día tenía sus
-20 cuerpos ocupados.
+columnas (`MZN03 · Col 12-15`): rechazado, porque el operario lee ubicaciones todo el día y una
+que se escribe distinta lo hace frenar. Después la primera columna de la marca (`MZN03-12`), y
+ahí Daniel encontró el agujero: si es siempre la primera, **¿cuándo diría 13, 14 o 15? Nunca.**
+Y no era teórico — mandaba Skechers a la columna 9, que ese día tenía sus 20 cuerpos ocupados.
 
-Elegir "la columna con más lugar" tampoco va: dentro de su zona el operario ya sabe acomodar,
-y una columna calculada envejece mal, porque el papel se imprime a las 19:00 y se trabaja
-toda la noche. **La zona de la marca dice todo lo que hace falta y no miente nunca.**
+Elegir "la columna con más lugar" tampoco va: dentro de su zona el operario ya sabe acomodar, y
+una columna calculada envejece mal, porque el papel se imprime a las 19:00 y se trabaja toda la
+noche. **La zona de la marca dice todo lo que hace falta y no miente nunca.**
 
-La lista `MARCAS_SIN_CUERPO` va **escrita a mano**, no derivada de "las marcas de modo
-todo", aunque hoy sean las mismas tres. Son dos reglas que coinciden por casualidad: una
-dice CUÁNTO baja, la otra CÓMO se nombra el destino. Atarlas haría que agregar una marca al
-modo `'todo'` le borrara la ubicación exacta sin que nadie lo pidiera.
+La lista `MARCAS_SIN_CUERPO` va **escrita a mano**, no derivada de "las marcas de modo todo",
+aunque hoy sean las mismas tres. Son dos reglas que coinciden por casualidad: una dice CUÁNTO
+baja, la otra CÓMO se nombra el destino. Atarlas haría que agregar una marca al modo `'todo'`
+le borrara la ubicación exacta sin que nadie lo pidiera.
 
 ### Nunca van a Slotting
 
 Si la zona está llena, el papel **manda igual**. El operario almacena lo que entra y lo que
-sobra se queda en el buffer hasta la corrida siguiente. *"Tú mandas nada más, y si no entra
-lo voy a dejar en buffer. Yo decido qué artículos se quedan."*
-
-Por eso se reemplaza el plan entero sin mirar si quedaban cuerpos libres. Antes, sin
-cuerpos, el artículo se iba a Slotting y no salía en ninguna tarea.
+sobra se queda en el buffer hasta la corrida siguiente. *"Tú mandas nada más, y si no entra lo
+voy a dejar en buffer. Yo decido qué artículos se quedan."*
 
 ### El buffer D queda afuera de todo esto
 
-Lo que llega por catálogo va a la **columna 8** del MZN03, mezclando las tres marcas, y no a
-las columnas de la suya. **Un Puma que viene por el D no vuelve a la 16 ni aunque ya viva
-ahí.** Sin ese filtro el papel diría `ZONA PUMA`, justo al revés de lo que corresponde.
+Lo que llega por catálogo va a la **columna 8** del MZN03, mezclando las tres marcas, y no a las
+columnas de la suya. **Un Puma que viene por el D no vuelve a la 16 ni aunque ya viva ahí.** Sin
+ese filtro el papel diría `ZONA PUMA`, justo al revés de lo que corresponde.
 
-## 3. Dónde va el resto de las marcas
+## 8. Lo que el código TODAVÍA NO HACE
 
-1. **¿Es OTHERS?** Manda la subcategoría, no la marca.
-2. **¿No es calzado?** (`G. Gender`, no `Gender RIMS`) → mezzanine 4, y ahí se entrega **sin
-   ubicación**: sin columna, sin cuerpo, sin nivel. Y nada sube a reserva.
-3. **La zona sale de la marca**, y las columnas también cuando la marca las tiene repartidas
-   (MZN01 lo comparten Power, Bubblegummers y B.G Licenses).
+Medido el 14-ago-2026 contra las tareas y el stock de producción. **Están abiertos:**
 
-   **B.G Licenses ES Bubblegummers** — la misma marca, solo que la licencia trae dibujitos
-   licenciados. Su temporada **actual** se queda sola en la 24; su **anterior y sus saldos**
-   van a las columnas de Bubblegummers (la 22 y la 23). Sin eso no tenían a dónde ir: le toca
-   una sola columna y es de actual, así que caían en el respaldo y terminaban mezclados con
-   la temporada actual, sin aviso. Va en la tabla `COMPARTE_COLUMNAS` de `zonasService.js`.
+1. **El corte de los 20 pares no existe.** `casoDelItem` pregunta *¿tiene un cuerpo en la franja
+   que le toca?*, nunca cuántos pares tiene. Y `casaDe` tiene un agujero: el corte de 20 está
+   escrito, pero **si ningún cuerpo llega a 20 igual le da casa con el más cargado, aunque tenga
+   1 par**. Con casa, pasa a reposición.
 
-   **Marie Claire tiene el problema inverso y sigue abierto:** sus columnas (6 y 7 del MZN03)
-   son anterior y saldos, sin ninguna de actual. Hoy no se dispara porque no tiene nada en el
-   buffer, pero el día que llegue algo de temporada actual va a caer en el respaldo.
-4. **Reposición:** si el artículo ya vive en el almacén va a sus mismos cuerpos. Si no le
-   entra, se le abren los que falten empezando por sus columnas.
-5. **Si no hay lugar, no se improvisa:** va a Slotting — salvo las tres marcas de arriba.
+   Comprobado: el `2816305` llegó con 90 pares teniendo **5 en el almacén** y salió como
+   reposición a `MZN01-22-11`, columna de temporada **anterior**.
 
-Las tallas se reparten llenando un cuerpo hasta su capacidad antes de pasar al siguiente, de
-menor a mayor. **El destino es el cuerpo, no el nivel.**
+2. **La reserva no entra en la cuenta.** La regla es activo + reserva; el sistema solo mira el
+   activo. Un artículo con 3 pares abajo y 800 arriba no se distingue de uno que nunca entró.
+
+3. **El destino no respeta el camino elegido.** `planificarAlmacenaje` toma el atajo de
+   reposición mirando **solo `art.yaTiene`**, sin consultar qué decidió `casoDelItem`. El cálculo
+   puede decir "código nuevo, baja el 60%" y mandar igual esos pares al cuerpo viejo del saldo.
+
+4. **Los cuerpos ya prometidos no se marcan ocupados.** El bloque de `cargarContextoSugerencia`
+   busca `art.sugerencia`, un dato que **nadie escribe** en todo el proyecto. Lo que sí se graba
+   es `i.destino` como texto (`SEL-07-13`). Por eso la segunda corrida de un turno manda otro
+   artículo a un cuerpo que la primera ya prometió: el 12-ago las corridas de las 14:01 y las
+   00:11 se pisaron en siete cuerpos de la columna 8 del MZN02.
+
+5. **El corte de saldos mide lo que llega, no lo que hay.** `franjaDeArticulo` compara
+   `saldoMenorA` contra los pares del buffer.
+
+6. **Al buffer B se le cree por la letra.** La prueba `pares <= enReserva` no filtra: pasan 38
+   de 41. Y suma A + B, así que la mercadería de recepción entra como replenishment si el
+   artículo tiene aunque sea un par en el B. **La clasificación nuevo/reposición nunca llega a
+   hacerse para esos artículos.** Detalle arriba, en "El buffer B NO se cree por la letra".
 
 ## Trampas conocidas
 
@@ -167,8 +394,16 @@ menor a mayor. **El destino es el cuerpo, no el nivel.**
 - **Un dato del maestro que falta no se ve como falta:** sale `S/M`, `S/G`, `S/C`. Si una
   tarea dice `S/M`, el artículo no está en el Maestro **publicado en el servidor** — que es
   el que vale, no el `.xlsx` de OneDrive.
+- **La talla sale de `extractTalla()` y de ningún otro lado.** Hubo dos expresiones distintas
+  —una aceptaba letras y la otra no— y el papel salía con todo al piso y el destino en guion,
+  sin ningún aviso. Eran 42 de 187 líneas del buffer.
+- **El stock es una foto y envejece.** Se publica a las 19:00 y las tareas nacen a medianoche:
+  son cinco horas de turno ya trabajado que el cálculo no ve.
 - **Compilar no es probar.** `node --check` no ve un identificador mal escrito dentro de un
   template de HTML. Repasar los nombres nuevos antes de desplegar.
 - **El caché de la configuración:** si se agrega un campo con valor de fábrica nuevo, hay que
   subirle la versión a `CACHE_KEY` (`config_zonas_v5`) o las PC con caché viejo se quedan sin
   él para siempre.
+- **Republicar la configuración va DESPUÉS del despliegue, nunca antes.** Publicar una
+  configuración que el código viejo no entiende es pedir problemas. Al publicar se relee el
+  cajón `config` completo y se reemplaza solo la clave propia: comparte lugar con la jornada.
