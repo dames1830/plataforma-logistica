@@ -36,7 +36,7 @@ decisión al operario?**
         ▲                                                     │                  │
         │                                                     ▼                  ▼
    Topes / Factores                                       SLOTTING          el operario
-   (Análisis SKU)                                      (no existe aún)         ejecuta
+   (Análisis SKU)                                    cuerpos por revisar        ejecuta
 ```
 
 | Módulo | Qué decide | De qué depende | Dónde vive |
