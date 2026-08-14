@@ -103,15 +103,34 @@ La primera vez que los dos números se separen, nadie va a saber cuál creer.
 
 | Módulo | NO debe saber |
 |---|---|
-| **Análisis Buffer** | de cuerpos: ni capacidad, ni llenado, ni compensación entre tallas. Solo baja lo que se pidió |
+| **Análisis Buffer** | *(ver abajo: SÍ sabe de cuerpos)* |
 | **Replenishment** | dónde se va a guardar. Solo dice qué y cuánto |
 | **Procesar Tareas** | por qué bajó esa mercadería. Solo dónde ponerla |
 | **La hoja del operario** | nada del cálculo. Solo las cinco casillas |
 
-**La única excepción viva:** el llenado de cuerpo del Replenishment, que sí pasa por encima del
-tope cuando el piso proyectado queda bajo el 95% de lo que entra en el cuerpo. Está justificada
-y documentada —un cuerpo a medio llenar vive así hasta que el artículo se agote— pero es una
-excepción consciente, no permiso general para mezclar responsabilidades.
+### El Análisis Buffer SÍ sabe de cuerpos, y tiene que saber
+
+Acá había una regla mal escrita —*"el buffer no sabe de cuerpos y así debe quedar"*— que Daniel
+corrigió el 14-ago-2026 con el caso completo:
+
+> *"Comercial le manda cien pares. Analiza el stock activo y encuentra cincuenta, dice: me
+> faltan cincuenta para llegar a los cien, entonces lo busco en reserva. Y cuando lo encuentra
+> no baja solamente cincuenta: va a bajar cincuenta más su tope de esa serie y de esa marca.
+> Pero ahí tiene que calcular que su tope tampoco rebalse el cuerpo, los dos cuerpos."*
+
+Y el porqué de fondo, que es lo que lo cierra: **el pedido de comercial también es una
+reposición**. Un código nuevo nunca se manda entero a reserva — baja el 60% al activo y el 40%
+queda arriba. Ese 40% es justo lo que el Análisis Buffer va bajando de a poco. Cuando el activo
+se agota empieza a tirar de la reserva, y ahí hay que **llenar dos cuerpos**.
+
+Un buffer que ignora el cuerpo baja números que dejan cuerpos a medias, y **un cuerpo ocupado
+al 10% bloquea las tareas de mañana por falta de espacio**. Medido el 14-ago: 15 artículos
+dejaban un cuerpo a menos de la mitad, varios al 2%.
+
+**El peligro real no era el conocimiento, era la DUPLICACIÓN.** El buffer tiene que leer la
+capacidad y las franjas de la **misma configuración** que usa el almacenaje —`zonasService`—,
+nunca de una copia propia. Dos tablas de capacidad se separan a la primera, y el día que pase
+nadie va a saber cuál creer.
 
 ## 6. Vocabulario que no se puede mezclar
 
