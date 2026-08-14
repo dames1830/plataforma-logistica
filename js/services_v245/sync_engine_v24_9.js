@@ -105,7 +105,46 @@ export async function initSync(force = false) {
     })();
     return initPromise;
 }
+/* ══════════════════════════════════════════════════════════════════════════════
+ * EL CANDADO DE SUBIDA, Y POR QUÉ NECESITA DOS SEGUROS
+ *
+ * Mientras hay algo subiendo no se baja nada: sería pisar lo que esta PC está por mandar.
+ * La idea es sana. Lo que faltaba era una forma de soltar el candado si la subida nunca
+ * termina.
+ *
+ * El 14-ago-2026 Daniel reportó que los cambios de estado de las tareas no le llegaban: el
+ * asistente finalizó la Tarea 2 del 13-ago, el servidor la tenía Finalizada a las 06:35, y su
+ * pantalla seguía mostrando lo viejo. Recargar la página lo arreglaba.
+ *
+ * La causa: `fetch` no tenía tiempo límite. Con Render dormido, la red cortada un segundo o
+ * la laptop suspendida, una sola subida se quedaba esperando para siempre; el contador nunca
+ * volvía a cero y ESA PC NO DESCARGABA NADA MÁS hasta recargar. Y encima el radar seguía
+ * corriendo cada 30 segundos, entrando y saliendo al instante: de ahí el ícono parpadeando en
+ * amarillo y verde que Daniel veía abajo a la derecha.
+ *
+ *   TIEMPO LÍMITE   la subida se aborta a los 30 s. El `finally` corre igual, así que el
+ *                   contador baja y la PC vuelve a sincronizar.
+ *   SEGURO DE FONDO  si el candado lleva más de 2 minutos puesto —por un camino que nadie
+ *                   previó— se suelta solo. Ninguna subida legítima tarda eso, y una PC que
+ *                   no sincroniza es mucho peor que una subida perdida.
+ * ══════════════════════════════════════════════════════════════════════════════ */
 export let pendingPushes = 0;
+let candadoDesde = 0;
+const TIMEOUT_PUSH = 30000;
+const CANDADO_MAX  = 120000;
+
+/** true si el candado está puesto de verdad. Si estaba trabado, lo suelta y devuelve false. */
+export function candadoPuesto() {
+    if (pendingPushes <= 0) return false;
+    if (candadoDesde && Date.now() - candadoDesde > CANDADO_MAX) {
+        console.warn(`⚠️ [PULSE] El candado de subida llevaba `
+            + `${Math.round((Date.now() - candadoDesde) / 1000)} s puesto: se suelta para poder sincronizar.`);
+        pendingPushes = 0;
+        candadoDesde = 0;
+        return false;
+    }
+    return true;
+}
 
 /** Devuelve las tareas con sus items expandidos. Las que ya vienen sueltas se dejan igual. */
 function descomprimirTareas(data) {
@@ -160,7 +199,7 @@ export async function traerAreaFresca(area) {
 }
 
 export async function pullGlobal(requestedAreas = null, force = false) {
-    if (pendingPushes > 0 && !force) {
+    if (!force && candadoPuesto()) {
         console.log("🚫 [PULSE] Sincronización omitida por empuje pendiente.");
         return syncStore;
     }
@@ -256,6 +295,10 @@ export async function pullGlobal(requestedAreas = null, force = false) {
 export async function pushChange(area, data, date = null) {
     if (!data) return;
     pendingPushes++;
+    if (pendingPushes === 1) candadoDesde = Date.now();
+    // El reloj que evita que una subida colgada deje a esta PC sin sincronizar
+    const corte = new AbortController();
+    const reloj = setTimeout(() => corte.abort(), TIMEOUT_PUSH);
     try {
         let payload = data;
         if (area === 'almacenaje_tasks' || area === 'almacenaje_tasks_history') {
@@ -299,16 +342,26 @@ export async function pushChange(area, data, date = null) {
         const res = await fetch(url, {
             method: method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: corte.signal
         });
 
         const result = await res.json();
         if (!res.ok || result.status === 'error') throw new Error(result.message || 'Error en servidor');
         return true;
     } catch (err) {
+        if (err && err.name === 'AbortError') {
+            console.error(`❌ [PULSE] ${area}: el servidor no contestó en ${TIMEOUT_PUSH / 1000} s. `
+                + `El cambio quedó guardado en esta PC y se reintenta en la próxima subida.`);
+            throw new Error('El servidor no contestó a tiempo');
+        }
         console.error(`❌ Push error ${area}:`, err);
         throw err;
     } finally {
-        pendingPushes--;
+        clearTimeout(reloj);
+        // Nunca por debajo de cero: si alguna vez se descontara de más, el candado quedaría
+        // suelto para siempre y dos PC podrían pisarse.
+        pendingPushes = Math.max(0, pendingPushes - 1);
+        if (pendingPushes === 0) candadoDesde = 0;
     }
 }
