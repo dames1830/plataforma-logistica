@@ -1127,13 +1127,28 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}, o
             return false;
         });
 
-        /* Si NINGUNO de sus cuerpos quedó limpio, el artículo no tiene casa utilizable: se cae
-         * del atajo y sigue el camino normal, que le va a buscar un cuerpo vacío de su franja.
-         * Si no hay, termina en Slotting, que es exactamente lo que corresponde. */
+        /* SI NINGUNO DE SUS CUERPOS QUEDÓ LIMPIO, LA TAREA SE BLOQUEA. No se le busca otro
+         * cuerpo.
+         *
+         * Daniel, 14-ago-2026: *"lo que tienes que hacer es bloquear la tarea, y ahí tiene que
+         * entrar — para eso están las tareas de slotting. El slotting va, entra, soluciona, y
+         * ahí entra el almacenaje. Así de simple"*.
+         *
+         * Es el orden correcto y además el barato. El artículo YA TIENE su cuerpo; lo que está
+         * mal es que hay un intruso adentro. Mudarlo a otro lado sería gastar un cuerpo vacío
+         * —en el MZN01 quedan cinco— para tapar un problema que se arregla sacando veinte
+         * pares. Slotting limpia, y a la noche siguiente la tarea sale sola y va a su lugar de
+         * siempre.
+         *
+         * El operario no almacena esto: el papel lo imprime con el aviso, igual que cualquier
+         * otro caso de Slotting. */
         if (!suyosLimpios.length) {
-            const plan = planificarAlmacenaje({ ...art, yaTiene: [] },
-                                              ocupadosPorZona, libresPorZona, ocupantesPorZona);
-            return { ...plan, mezclados, saleDeSuCuerpo: true };
+            const conQuien = mezclados.flatMap(m => m.otros);
+            return paso('slotting',
+                `Su cuerpo tiene ${conQuien.length > 1 ? 'otros artículos' : 'otro artículo'} adentro `
+                + `(${conQuien.join(', ')}). Slotting lo tiene que limpiar antes.`,
+                { zona: zonaRep, cuerpos: [], cuantos: 0, porCuerpo: porCuerpoRep,
+                  mezclados, bloqueadoPorMezcla: true });
         }
 
         // Lo que le queda a cada cuerpo suyo. Si no figura en el mapa es porque está vacío

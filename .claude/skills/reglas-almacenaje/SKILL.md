@@ -381,6 +381,19 @@ asusta y que no significa nada.
 Vive en `FRANJAS_QUE_COMPARTEN` y `columnaAdmiteVariosArticulos()` de `zonasService.js`. Una
 columna que lleva dos franjas comparte si **cualquiera** de las dos lo permite.
 
+**Y si el cuerpo propio de un artículo está sucio, LA TAREA SE BLOQUEA.** No se le busca otro
+cuerpo. Daniel, 14-ago-2026: *"lo que tienes que hacer es bloquear la tarea, y ahí tiene que
+entrar — para eso están las tareas de slotting. El slotting va, entra, soluciona, y ahí entra
+el almacenaje. Así de simple"*.
+
+Es el orden correcto y además el barato: el artículo YA TIENE su cuerpo, lo que sobra es el
+intruso. Mudarlo sería gastar un cuerpo vacío —en el MZN01 quedan cinco— para tapar un
+problema que se arregla sacando veinte pares. Slotting limpia, y a la noche siguiente la tarea
+sale sola y va a su lugar de siempre.
+
+El papel lo imprime con el aviso de Slotting, igual que cualquier otro caso trabado: el
+operario no almacena eso.
+
 **Lo que sí es problema aterriza en el módulo de Slotting**, que arma tareas de ~300 pares con
 lo que hay que sacar. Ver `cadena-de-modulos`.
 
