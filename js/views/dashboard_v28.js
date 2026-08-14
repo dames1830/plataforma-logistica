@@ -1,22 +1,24 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0207';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0208';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0207';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0207';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0207';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0207';
-import * as metasService from '../services_v245/metasService.js?v=29.0207';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0207';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0207';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0207';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0207';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0207';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0207';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0207';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0207';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0207';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0207';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0207';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0207';
+import * as adminService from '../services_v245/adminService.js?v=29.0208';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0208';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0208';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0208';
+import * as metasService from '../services_v245/metasService.js?v=29.0208';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0208';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0208';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0208';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0208';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0208';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0208';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0208';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0208';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0208';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0208';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0208';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0208';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0208';
+import { montarSlotting } from './slotting.js?v=29.0208';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -373,7 +375,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0207';
+const VERSION = '29.0208';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2170,6 +2172,10 @@ const TABS = [
     { id: 'sugerencia', label: 'Sugerencia (prueba)', icon: '🧭', oculta: true },
     { id: 'config_tareas', label: 'Config. Tareas', icon: '⚙️' }
   ]},
+  /* SLOTTING VA COMO MÓDULO PRINCIPAL, no colgado de Inventario. Lo pidió así Daniel el
+   * 14-ago-2026, y tiene sentido: no es una vista de consulta, es el lugar donde el equipo
+   * trabaja los problemas que encuentra el cálculo de almacenaje todas las noches. */
+  { id: 'slotting', label: 'Slotting', icon: '🧩', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
     { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
@@ -2867,6 +2873,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
     else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'Gestión de Almacenaje');
     else if (currentTab === 'descargas') await renderDescargasInventario(contentArea);
+    else if (currentTab === 'slotting') await renderSlotting(contentArea);
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -4397,7 +4404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0207');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0208');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15364,7 +15371,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0207 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0208 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16851,6 +16858,124 @@ const renderRFSection = (container) => {
    * manda otro artículo al mismo lugar. Y si la tarea se borra, desaparece de esta lista sola
    * — no hay ninguna reserva que limpiar a mano.
    */
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * EL BARRIDO DEL ALMACÉN PARA SLOTTING
+   *
+   * Daniel, 14-ago-2026: *"apenas el robot cargue el stock de reserva y activo a las siete,
+   * que en automático haga los cruces y vaya sacando, por ejemplo, en Bata selectivo, este
+   * cuerpo ocupa varios artículos, y que vaya sacando la cantidad, la marca, temporada, todo,
+   * para que el equipo de slotting vaya de frente a ese artículo"*.
+   *
+   * NO ES LO MISMO QUE LO QUE ENCUENTRA LA TAREA. La tarea solo se topa con los cuerpos de los
+   * artículos que llegaron al buffer esa noche — un puñado. Esto barre el almacén entero, así
+   * que encuentra también los que nadie va a tocar en meses, que son justamente los que se
+   * quedan mezclados para siempre.
+   *
+   * QUÉ CUENTA COMO PROBLEMA: más de un artículo en un cuerpo, y solo donde la franja exige un
+   * cuerpo por artículo — la actual. En anterior, saldos, escolar y catálogo se comparte a
+   * propósito y no hay nada que revisar. Ver columnaAdmiteVariosArticulos.
+   *
+   * EL MZN04 QUEDA FUERA. No sigue las reglas de cuerpo ni de columna y mezcla artículos por
+   * diseño: listarlo sería darle al equipo cientos de "problemas" que no lo son.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const barrerCuerposMezclados = async () => {
+    await zonasService.cargarZonas();
+    await rescatarMaestro();
+
+    let stock = await getAreaData('almacenaje_activo');
+    if (!stock || !stock.length) {
+      const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+      const res = await fetch(`${base}/api/logistics/almacenaje_activo?t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        if (Array.isArray(datos)) stock = datos;
+      }
+    }
+    if (!stock || !stock.length) throw new Error('No se pudo leer el Stock Activo.');
+
+    // El Maestro, para que el hallazgo salga con marca, temporada y categoría
+    const ficha = new Map();
+    (dataStore.articulos || []).forEach(row => {
+      const raw = Array.isArray(row) ? row : Object.values(row);
+      const s7 = String(raw[1] || '').trim().substring(0, 7);
+      if (s7 && !ficha.has(s7)) ficha.set(s7, {
+        marca: String(raw[13] || '').trim(),
+        temporada: String(raw[14] || raw[9] || '').trim(),
+        categoria: String(raw[3] || '').trim()
+      });
+    });
+
+    // Quién vive en cada cuerpo, y con cuántos pares
+    const cuerpos = new Map();
+    stock.forEach(row => {
+      const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
+      if (!ubi || ubi.startsWith('CDBUFFER')) return;
+      const p = ubi.split('-');
+      const zona = p[0];
+      if (!zonasService.zonasActual().zonas[zona]) return;
+      if (zonasService.esZonaSinUbicacion(zona)) return;          // el MZN04 no entra
+      const col = parseInt(p[1], 10), cue = parseInt(p[2], 10);
+      if (!col || !cue) return;
+      const raw = Array.isArray(row) ? row : Object.values(row);
+      const s7 = String(raw[1] || '').trim().substring(0, 7);
+      const qty = parseFloat(String(row['Cantidad actual'] || row['Cantidad'] || 0).replace(/,/g, '')) || 0;
+      if (!s7 || qty <= 0) return;
+      const k = `${zona}|${col}|${cue}`;
+      if (!cuerpos.has(k)) cuerpos.set(k, new Map());
+      const m = cuerpos.get(k);
+      m.set(s7, (m.get(s7) || 0) + qty);
+    });
+
+    const hallazgos = [];
+    cuerpos.forEach((m, k) => {
+      if (m.size <= 1) return;
+      const [zona, col, cue] = k.split('|');
+      if (zonasService.columnaAdmiteVariosArticulos(zona, +col)) return;
+      const items = [...m.entries()].map(([s7, pares]) => {
+        const f = ficha.get(s7) || {};
+        return { sku7: s7, pares, marca: f.marca || '', temporada: f.temporada || '', categoria: f.categoria || '' };
+      });
+      const marcas = [...new Set(items.map(i => i.marca).filter(Boolean))];
+      hallazgos.push({
+        tipo: 'mezcla', zona, columna: +col, cuerpo: +cue,
+        articulos: items.map(i => i.sku7), items,
+        detalle: `${items.length} artículos${marcas.length > 1 ? ` de ${marcas.length} marcas distintas` : ''}`
+      });
+    });
+
+    console.log(`[Slotting] barrido: ${cuerpos.size} cuerpos con stock, ${hallazgos.length} con más de un artículo donde no corresponde.`);
+    return await slottingService.registrarHallazgos(hallazgos);
+  };
+
+  const renderSlotting = async (container) => {
+    contentSubtitle.textContent = 'Cuerpos por revisar';
+    container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">
+        Cargando lo que hay por revisar...</div>`;
+    const cajon = await slottingService.traerHallazgos();
+    montarSlotting(container, {
+      cajon,
+      svc: slottingService,
+      alGuardar: async (c) => {
+        try { await slottingService.guardarHallazgos(c); }
+        catch (e) { showPremiumAlert('NO SE PUDO GUARDAR', e.message || String(e), 'error'); }
+      },
+      alBarrer: async () => {
+        try {
+          const r = await barrerCuerposMezclados();
+          showPremiumAlert('ALMACÉN REVISADO',
+            `Se encontraron <b>${r.total}</b> cuerpos con más de un artículo.<br>`
+            + `${r.nuevos} nuevos · ${r.repetidos} que ya estaban`
+            + (r.reabiertos ? ` · <b>${r.reabiertos} que volvieron a aparecer</b>` : ''), 'success');
+          return await slottingService.traerHallazgos();
+        } catch (e) {
+          showPremiumAlert('NO SE PUDO REVISAR', e.message || String(e), 'error');
+          return null;
+        }
+      }
+    });
+  };
+
   const cargarContextoSugerencia = async (tareasAbiertas) => {
     await zonasService.cargarZonas();
     await tallasService.cargarTallas();
@@ -23562,6 +23687,23 @@ window.showCellModal = function(htmlContent) {
           }
         } catch (e) {
           console.warn('[Almacenaje] no se pudo grabar el papel en las tareas:', e && e.message);
+        }
+
+        /* Y SE LE PASA LA POSTA A SLOTTING.
+         *
+         * El barrido corre acá porque es cuando el stock de la noche ya está publicado y la
+         * pantalla lo tiene en la mano. Encuentra los cuerpos con más de un artículo en las
+         * franjas que piden uno solo, y los deja registrados con marca, temporada y pares.
+         *
+         * VA EN UN try APARTE Y SIN CORTAR NADA: si Slotting falla, las tareas ya están
+         * creadas y el turno tiene que poder trabajar igual. Es la misma decisión que se tomó
+         * con el papel grabado. */
+        try {
+          const r = await barrerCuerposMezclados();
+          console.log(`[Slotting] ${r.total} cuerpos mezclados registrados `
+                    + `(${r.nuevos} nuevos, ${r.repetidos} repetidos, ${r.reabiertos} reabiertos).`);
+        } catch (e) {
+          console.warn('[Slotting] no se pudo registrar los cuerpos mezclados:', e && e.message);
         }
 
         // Animar la barra de progreso de 0% a 100% de manera fluida y mostrar el mensaje final
