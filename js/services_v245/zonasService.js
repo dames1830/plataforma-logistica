@@ -108,7 +108,11 @@ export const zonasPorDefecto = () => ({
             // punta —el stock lo confirma: cero pares en las tres— y no se pueden usar.
             columnasBloqueadas: [5, 6, 9],
             franjas: { ...rango(1, 3, 'anterior'), ...rango(4, 20, 'actual'),
-                       ...rango(21, 23, 'anterior'), 24: 'actual' }
+                       ...rango(21, 23, 'anterior'), 24: 'actual' },
+            /* La 1 es de Power y es su única de temporada anterior: no se le cambia la franja,
+             * se le suma el escolar. Daniel, 14-ago-2026: "el escolar de la marca Power puede
+             * ir en el mezzanine uno punto cero uno". */
+            franjasExtra: { 1: 'escolar' }
         },
         MZN02: {
             etiqueta: 'Mezzanine 2',
@@ -123,7 +127,11 @@ export const zonasPorDefecto = () => ({
             // Quedan en uso solo 1, 2, 3, 4, 7, 8, 11, 12, 15, 16, 19 y 20 — y son
             // exactamente las que tienen stock hoy, así que la lista cierra con el almacén.
             columnasBloqueadas: [5, 6, 9, 10, 13, 14, 17, 18, 21, 22],
-            franjas: { ...rango(1, 5, 'anterior'), ...rango(6, 24, 'actual') }
+            franjas: { ...rango(1, 5, 'anterior'), ...rango(6, 24, 'actual') },
+            /* La 4 es la única de temporada anterior que le queda al MZN02 con las columnas
+             * bloqueadas, así que el escolar de North Star se le suma en vez de reemplazarla.
+             * Daniel, 14-ago-2026: "ahí puede ir el escolar con las temporadas anteriores". */
+            franjasExtra: { 4: 'escolar' }
         },
         // Sin reglas todavía. Daniel las carga desde este mismo módulo cuando las ordene:
         // mientras 'activa' esté en false, la sugerencia avisa en vez de inventar.
@@ -288,6 +296,28 @@ const normalizar = (crudo) => {
             }
         });
 
+        /* UNA COLUMNA QUE ADEMÁS SIRVE PARA OTRA COSA.
+         *
+         * Daniel, 14-ago-2026: el escolar de Power va a la columna 1 del MZN01 y el de North
+         * Star a la 4 del MZN02 —"ahí puede ir el escolar con las temporadas anteriores"—. Las
+         * dos son la ÚNICA columna de temporada anterior de su marca, así que cambiarles la
+         * franja las dejaría sin dónde poner lo anterior.
+         *
+         * Va como campo aparte y no cambiando `franjas` a una lista, a propósito: `franjas` la
+         * leen diez sitios —los dos mapas de calor, la capacidad de los saldos, el respaldo de
+         * marca— y todos esperan un solo valor por columna. Acá se agrega lo que la columna
+         * ADMITE ADEMÁS, sin tocarle lo que la columna ES. */
+        const extra = {};
+        const oExtra = (v.franjasExtra && typeof v.franjasExtra === 'object')
+            ? v.franjasExtra : (d.franjasExtra || {});
+        Object.keys(oExtra).forEach(k => {
+            const col = Number(k);
+            if (Number.isInteger(col) && col >= 1 && col <= 99 && FRANJAS[oExtra[k]]
+                && franjas[col] && franjas[col] !== oExtra[k]) {
+                extra[col] = oExtra[k];
+            }
+        });
+
         // Las columnas que no llegan al tope de la zona. En MZN01 la mayoría tiene 20
         // cuerpos y cuatro se quedan en 17.
         const cpc = {};
@@ -316,7 +346,8 @@ const normalizar = (crudo) => {
             pasillos: Array.isArray(v.pasillos) ? v.pasillos.filter(p =>
                 p && Number.isFinite(Number(p.desdeCol)) && Array.isArray(p.cuerpos)) : d.pasillos,
             columnasBloqueadas: bloq,
-            franjas
+            franjas,
+            franjasExtra: extra
         };
     });
 
@@ -777,9 +808,25 @@ export const columnasDeFranja = (zona, franja) => {
     const z = zonasActual().zonas[zona];
     if (!z) return [];
     const bloq = z.columnasBloqueadas || [];
-    return Object.keys(z.franjas)
-        .filter(c => z.franjas[c] === franja)
-        .map(Number).filter(c => !bloq.includes(c)).sort((a, b) => a - b);
+    const extra = z.franjasExtra || {};
+    // Las que SON de esa franja, más las que ADEMÁS la admiten (ver franjasExtra)
+    const cols = new Set();
+    Object.keys(z.franjas).forEach(c => { if (z.franjas[c] === franja) cols.add(Number(c)); });
+    Object.keys(extra).forEach(c => { if (extra[c] === franja) cols.add(Number(c)); });
+    return [...cols].filter(c => !bloq.includes(c)).sort((a, b) => a - b);
+};
+
+/**
+ * ¿Esta columna sirve para esa franja? Mira lo que la columna ES y lo que ADMITE ADEMÁS.
+ *
+ * Hace falta aparte de `franjaDeColumna` porque esa devuelve un solo valor —el principal— y
+ * lo usan los mapas de calor, donde una columna tiene que pintarse de un color y no de dos.
+ */
+export const columnaSirveParaFranja = (zona, columna, franja) => {
+    const z = zonasActual().zonas[zona];
+    if (!z) return false;
+    const col = Number(columna);
+    return z.franjas[col] === franja || (z.franjasExtra || {})[col] === franja;
 };
 
 /** ¿Ese cuerpo es paso del elevador? Entonces no existe como ubicación de almacenaje. */
