@@ -479,7 +479,15 @@ export const columnasDeMarca = (marca) => {
  * el papel dijera nada.
  */
 const COMPARTE_COLUMNAS = {
-    'B.G LICENSES': { con: 'Bubblegummers', franjas: ['anterior', 'saldos'] }
+    /* B.G Licenses ES Bubblegummers: la misma marca, solo que la licencia trae dibujitos
+     * licenciados. Le toca una sola columna propia —la 24, de temporada actual—, así que todo
+     * lo demás lo guarda en las de Bubblegummers.
+     *
+     * El ESCOLAR se agregó el 14-ago-2026, a pedido de Daniel: *"si llega escolar de
+     * Bubblegummers licencia, que se ponga en el sitio de escolar de Bubblegummers, que es lo
+     * mismo"*. Sin esto no tenía a dónde ir —la columna de escolar del MZN01 es la 21 y es de
+     * Bubblegummers— y caía en el respaldo, mezclado con la temporada actual. */
+    'B.G LICENSES': { con: 'Bubblegummers', franjas: ['anterior', 'saldos', 'escolar'] }
 };
 
 /**
