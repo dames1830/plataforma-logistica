@@ -222,16 +222,33 @@ export const zonasPorDefecto = () => ({
      * Con el máximo habrían salido 604 y 321, y el sistema mandaría a llenar cuerpos que
      * no cierran.
      */
+    /*
+     * EL MEZZANINE 2 NO VA POR SERIE: SON 480 PARA TODA LA ZONA.
+     *
+     * Los demás números salen del percentil 75 de los cuerpos que tienen un solo artículo.
+     * Los del MZN02 no: los midió Daniel en el piso el 14-ago-2026 y son 480 parejo, sin
+     * importar la serie —la zona es de North Star casi entera, 62.783 de 62.788 pares—.
+     *
+     * La medida vale más que el percentil. El p75 dice cuánto SUELE haber adentro, y eso es
+     * menos que lo que ENTRA: un cuerpo a medio llenar arrastra la medición hacia abajo. Con
+     * los 259-352 que había acá, un artículo de 960 pares pedía cuatro cuerpos donde entran
+     * en dos.
+     *
+     * Se dejan las series escritas Y el respaldo en 480 a propósito: las primeras para que se
+     * vean en la pantalla de configuración, el segundo para que una serie que hoy no está en
+     * la zona no caiga en los 300 genéricos.
+     */
     densidad: {
         SEL:   { 5: 548, 6: 277, 7: 136, 8: 326 },
         MZN01: { 0: 642, 1: 426, 2: 386, 3: 332, 4: 284, 5: 372, 8: 347 },
-        MZN02: { 4: 352, 5: 279, 6: 298, 8: 259 },
+        MZN02: { 4: 480, 5: 480, 6: 480, 8: 480 },
         MZN03: { 2: 332, 3: 338, 4: 170, 5: 260, 6: 159, 7: 139, 8: 233 },
         MZN04: { 5: 289, 6: 190, 8: 347, 9: 192 }
     },
 
-    /** Cuando no hay medición para esa serie en esa zona. Es el p75 de todo el almacén. */
-    densidadRespaldo: { SEL: 300, MZN01: 300, MZN02: 300, MZN03: 300, MZN04: 300 },
+    /** Cuando no hay medición para esa serie en esa zona. Es el p75 de todo el almacén,
+     *  salvo el MZN02, que va con su medida real. */
+    densidadRespaldo: { SEL: 300, MZN01: 300, MZN02: 480, MZN03: 300, MZN04: 300 },
 
     /** La categoría que no sigue a su marca. */
     categoriaOthers: '06 OTHERS'
