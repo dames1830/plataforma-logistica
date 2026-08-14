@@ -829,6 +829,41 @@ export const columnaSirveParaFranja = (zona, columna, franja) => {
     return z.franjas[col] === franja || (z.franjasExtra || {})[col] === franja;
 };
 
+/* ══════════════════════════════════════════════════════════════════════════════
+ * UN CUERPO, UN ARTÍCULO — Y DÓNDE SÍ SE PUEDE COMPARTIR
+ *
+ * Regla de Daniel del 14-ago-2026, cuando vio que el sistema mandaba mercadería a cuerpos que
+ * ya tenían hasta veinte artículos distintos adentro: *"hay que ser bien estricto con eso, y
+ * para no llegar a eso debe respetarse cuerpo-artículo. Todos los cuerpos deberían ser cuerpo-
+ * artículo, salvo los mixtos o las temporadas anteriores o escolar"*.
+ *
+ * Así que la exigencia va por FRANJA, no por zona:
+ *
+ *   actual     ESTRICTA. Es la zona viva de cada marca y es donde se pica todo el día; dos
+ *              artículos en un cuerpo le cuestan tiempo al picker en cada pedido.
+ *   anterior   comparte. Son saldos que envejecen juntos y no vale la pena darles un cuerpo
+ *   saldos     comparte. Ya lo hacía: cientos de artículos de diez pares
+ *   escolar    comparte. Curvas cortas y poco volumen por código
+ *   catalogo   comparte. La columna 8 del MZN03 mezcla las tres marcas por definición
+ *
+ * Medido el 14-ago sobre el almacén: la franja actual tiene 661 cuerpos con un solo artículo y
+ * 284 compartidos —el 30%—; las otras cuatro van del 74% al 100% de compartido, que es
+ * exactamente lo que dice la regla.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+const FRANJAS_QUE_COMPARTEN = ['anterior', 'saldos', 'escolar', 'catalogo'];
+
+/** ¿En esta columna se puede poner más de un artículo por cuerpo? */
+export const columnaAdmiteVariosArticulos = (zona, columna) => {
+    const z = zonasActual().zonas[zona];
+    if (!z) return true;                       // sin reglas no se bloquea nada
+    const col = Number(columna);
+    const propia = z.franjas[col];
+    const extra = (z.franjasExtra || {})[col];
+    // Alcanza con que UNA de sus franjas permita compartir: una columna que lleva temporada
+    // anterior y escolar comparte por las dos.
+    return FRANJAS_QUE_COMPARTEN.includes(propia) || FRANJAS_QUE_COMPARTEN.includes(extra);
+};
+
 /** ¿Ese cuerpo es paso del elevador? Entonces no existe como ubicación de almacenaje. */
 export const esPasillo = (zona, columna, cuerpo) => {
     const z = zonasActual().zonas[zona];
@@ -1029,7 +1064,7 @@ export const resolverZona = (art) => {
  */
 const HOLGURA = 0.10;
 
-export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) => {
+export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}, ocupantesPorZona = {}) => {
     const cfg = zonasActual();
     const paso = (estado, motivo, extra) => ({ estado, motivo, ...extra });
 
@@ -1071,9 +1106,39 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
         const zonaRep = art.yaTiene[0].zona;
         const porCuerpoRep = densidadDe(zonaRep, serieDe(art.sku7));
         const libresRep = libresPorZona[zonaRep];
+
+        /* UN CUERPO, UN ARTÍCULO: SUS CUERPOS COMPARTIDOS NO CUENTAN COMO SUYOS.
+         *
+         * Antes alcanzaba con que entrara. El 14-ago-2026 Daniel vio el resultado —el 2816305
+         * mandado a un cuerpo con VEINTE artículos adentro— y cortó por lo sano: *"hay que ser
+         * bien estricto con eso"*. En la franja actual un cuerpo lleva un artículo y punto; en
+         * anterior, saldos, escolar y catálogo se sigue compartiendo, que es como se trabaja.
+         *
+         * El cuerpo compartido no se descarta en silencio: sale en `mezclados` para que quien
+         * llame lo mande a Slotting. Ver `hallazgosDeMezcla` en dashboard_v28.js. */
+        const quienVive = ocupantesPorZona[zonaRep];
+        const mezclados = [];
+        const suyosLimpios = !quienVive ? art.yaTiene : art.yaTiene.filter(c => {
+            if (columnaAdmiteVariosArticulos(zonaRep, c.columna)) return true;
+            const dentro = quienVive.get(`${c.columna}-${c.cuerpo}`);
+            const otros = dentro ? [...dentro].filter(s => s !== art.sku7) : [];
+            if (!otros.length) return true;
+            mezclados.push({ zona: zonaRep, columna: c.columna, cuerpo: c.cuerpo, otros });
+            return false;
+        });
+
+        /* Si NINGUNO de sus cuerpos quedó limpio, el artículo no tiene casa utilizable: se cae
+         * del atajo y sigue el camino normal, que le va a buscar un cuerpo vacío de su franja.
+         * Si no hay, termina en Slotting, que es exactamente lo que corresponde. */
+        if (!suyosLimpios.length) {
+            const plan = planificarAlmacenaje({ ...art, yaTiene: [] },
+                                              ocupadosPorZona, libresPorZona, ocupantesPorZona);
+            return { ...plan, mezclados, saleDeSuCuerpo: true };
+        }
+
         // Lo que le queda a cada cuerpo suyo. Si no figura en el mapa es porque está vacío
         // —el mapa solo trae los cuerpos con stock—, así que entra uno entero.
-        const capsSuyos = art.yaTiene.map(c => {
+        const capsSuyos = suyosLimpios.map(c => {
             const v = libresRep && libresRep.get(`${c.columna}-${c.cuerpo}`);
             return v === undefined ? porCuerpoRep : Math.max(0, v);
         });

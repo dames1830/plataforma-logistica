@@ -1,22 +1,22 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0206';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0207';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0206';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0206';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0206';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0206';
-import * as metasService from '../services_v245/metasService.js?v=29.0206';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0206';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0206';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0206';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0206';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0206';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0206';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0206';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0206';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0206';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0206';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0206';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0206';
+import * as adminService from '../services_v245/adminService.js?v=29.0207';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0207';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0207';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0207';
+import * as metasService from '../services_v245/metasService.js?v=29.0207';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0207';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0207';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0207';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0207';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0207';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0207';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0207';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0207';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0207';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0207';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0207';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0207';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -373,7 +373,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0206';
+const VERSION = '29.0207';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4397,7 +4397,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0206');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0207');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15364,7 +15364,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0206 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0207 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17068,6 +17068,28 @@ const renderRFSection = (container) => {
       (libres[zn] = libres[zn] || new Map()).set(`${+col}-${+cue}`, Math.max(0, Math.round(cap - d.pares)));
     });
 
+    /* QUIÉNES VIVEN EN CADA CUERPO, para poder exigir un cuerpo un artículo.
+     *
+     * `libres` dice cuánto espacio queda; esto dice CON QUIÉN se comparte, que es otra
+     * pregunta. Sin esto, la reposición mandaba a un cuerpo con veinte artículos adentro
+     * siempre que entrara — ver columnaAdmiteVariosArticulos en zonasService.
+     *
+     * EL MEZZANINE 4 QUEDA FUERA. No sigue las reglas de cuerpo ni de columna, se entrega sin
+     * ubicación exacta y mezcla artículos por diseño: contarlo acá ensucia el dato y no
+     * cambia ninguna decisión. */
+    const ocupantes = {};
+    paresEnCuerpo.forEach((cuerpos, s7) => {
+      cuerpos.forEach((q, k) => {
+        if (!(q > 0)) return;
+        const [zn, col, cue] = k.split('|');
+        if (zonasService.esZonaSinUbicacion(zn)) return;
+        const porZona = (ocupantes[zn] = ocupantes[zn] || new Map());
+        const clave = `${+col}-${+cue}`;
+        if (!porZona.has(clave)) porZona.set(clave, new Set());
+        porZona.get(clave).add(s7);
+      });
+    });
+
     // Los cuerpos ya prometidos a otras tareas abiertas también están ocupados
     (tareasAbiertas || []).forEach(t => (t.items || []).forEach(art => {
       const s = art && art.sugerencia;
@@ -17092,7 +17114,7 @@ const renderRFSection = (container) => {
     });
 
     return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe, origenDe, libres,
-             mandadoABajar };
+             ocupantes, mandadoABajar };
   };
 
   /**
@@ -17518,7 +17540,8 @@ const renderRFSection = (container) => {
     let cant = planificar(caso.regla);
     let alPiso = cant ? cant.alPiso : pares;
     let aReserva = cant ? cant.aReserva : 0;
-    let plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados, ctx.libres);
+    let plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados,
+                                                 ctx.libres, ctx.ocupantes);
 
     // LAS TRES DEL MEZZANINE 3 SE ENTREGAN CON LA COLUMNA, NO CON EL CUERPO.
     //
