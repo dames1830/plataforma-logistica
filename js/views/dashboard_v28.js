@@ -1,22 +1,22 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0199';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0200';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0199';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0199';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0199';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0199';
-import * as metasService from '../services_v245/metasService.js?v=29.0199';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0199';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0199';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0199';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0199';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0199';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0199';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0199';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0199';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0199';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0199';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0199';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0199';
+import * as adminService from '../services_v245/adminService.js?v=29.0200';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0200';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0200';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0200';
+import * as metasService from '../services_v245/metasService.js?v=29.0200';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0200';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0200';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0200';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0200';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0200';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0200';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0200';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0200';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0200';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0200';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0200';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0200';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -373,7 +373,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0199';
+const VERSION = '29.0200';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3652,6 +3652,127 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
   };
 
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * LA FILA DEL REPLENISHMENT: YA NO SE SUBE, SE TRAE
+   *
+   * Antes acá había un importador más: se procesaba el Replenishment, se bajaba el Excel y
+   * esa misma hoja se volvía a subir en esta fila. Ahora la corrida queda publicada en el
+   * servidor (ver publicarCorridaReplenishment) y esto solo pregunta si se trae.
+   *
+   * LA PREGUNTA ES EL PUNTO, y no un paso de más. Daniel decide cada noche si baja la
+   * reposición o no, porque hoy falta espacio en el almacén y la prioridad es el pedido de
+   * comercial, que sí o sí hay que despachar. Traerlo solo le sacaría una decisión que es
+   * suya: *"yo decido si se procesa o no se procesa"*.
+   *
+   * Al traerla se guarda en el área de siempre y con el formato de siempre —pares
+   * [código, cantidad]— así que el motor del buffer no cambia ni una línea: sigue leyendo
+   * lo mismo, solo que ya nadie tuvo que subir un archivo.
+   *
+   * Si no hay corrida de hoy se ofrece la última, PERO CON SU FECHA A LA VISTA. Una lista de
+   * hace dos días manda a bajar contra un stock que ya no existe, y eso tiene que verse.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const renderReplenishmentNube = (container) => {
+    const div = document.createElement('div');
+    div.id = 'wrap_repl_nube';
+    div.style.width = '100%';
+    container.appendChild(div);
+
+    const fila = (color, icono, estado, detalle, acciones, nota) => `
+      <div style="background:rgba(15,23,42,0.4); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; border-left:4px solid ${color};">
+          <div style="display:flex; align-items:center; gap:1.2rem;">
+              <div style="width:36px; height:36px; background:rgba(255,255,255,0.03); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${color}; border:1px solid rgba(255,255,255,0.05);">${icono}</div>
+              <div style="display:flex; flex-direction:column;">
+                  <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">REPLENISHMENT</span>
+                  <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
+                      <span style="color:${color}; font-weight:700; font-size:0.85rem;">${estado}</span>
+                      ${detalle ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                                   <span style="color:var(--text-muted); font-size:0.75rem;">${detalle}</span>` : ''}
+                  </div>
+              </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+              ${nota ? `<div style="text-align:right; font-size:0.7rem; color:var(--text-muted); line-height:1.5;">${nota}</div>` : ''}
+              <div style="display:flex; gap:0.4rem;">${acciones || ''}</div>
+          </div>
+      </div>`;
+
+    const btn = (id, texto, fondo, borde, color) => `
+      <button id="${id}" style="background:${fondo}; color:${color}; border:1px solid ${borde}; padding:0.45rem 1rem; border-radius:6px; cursor:pointer; font-size:0.7rem; font-weight:800; letter-spacing:0.5px; transition:all 0.2s;" onmouseover="this.style.opacity='0.82'" onmouseout="this.style.opacity='1'">${texto}</button>`;
+
+    div.innerHTML = fila('#64748b', '🔄', 'CONSULTANDO...', '', '', '');
+
+    (async () => {
+      let cajon = {};
+      try {
+        const res = await fetch(`${_urlReplDia()}&t=${Date.now()}`);
+        if (res.ok) {
+          const cuerpo = await res.json();
+          const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+          if (datos && typeof datos === 'object' && !Array.isArray(datos)) cajon = datos;
+        }
+      } catch (e) { console.warn('[REPL] no se pudo consultar las corridas:', e && e.message); }
+
+      const traido = Array.isArray(dataStore.tallas) && dataStore.tallas.length > 0;
+      const fechas = Object.keys(cajon).sort();
+      const hoy = getLogicalDate();
+      const deHoy = cajon[hoy];
+      const ultima = fechas.length ? cajon[fechas[fechas.length - 1]] : null;
+
+      const num = (n) => Number(n || 0).toLocaleString('es-PE');
+      const resumen = (c) => `${num(c.skus)} SKU · ${num(c.pares)} pares`
+        + (c.quebrados ? ` · <b style="color:#ef4444;">${num(c.quebrados)} quebrados</b>` : '')
+        + (c.porQuebrar ? ` · <b style="color:#f59e0b;">${num(c.porQuebrar)} por quebrar</b>` : '');
+
+      if (traido) {
+        div.innerHTML = fila('#22c55e', '✅', 'TRAÍDO',
+          `${num(dataStore.tallas.length)} SKU en el análisis`,
+          btn('repl_quitar', 'QUITAR', 'rgba(239,68,68,0.1)', '#ef4444', '#ef4444'),
+          'Ya entra como fuente del análisis.<br>Se puede quitar si esta noche no se baja.');
+      } else if (deHoy) {
+        div.innerHTML = fila('#38bdf8', '🔄', 'LISTO PARA TRAER', resumen(deHoy),
+          btn('repl_traer', 'TRAER', 'var(--primary)', 'transparent', '#fff'),
+          `Corrió hoy a las <b>${String(deHoy.generado || '').substring(11, 16)}</b>`);
+      } else if (ultima) {
+        div.innerHTML = fila('#f59e0b', '🕘', 'NO CORRIÓ HOY',
+          `El último es del <b>${ultima.fecha}</b> · ${resumen(ultima)}`,
+          btn('repl_traer_viejo', `TRAER EL DEL ${String(ultima.fecha).substring(8, 10)}`, 'rgba(245,158,11,0.12)', '#f59e0b', '#f59e0b'),
+          'Ojo: es de otro día.<br>Manda a bajar contra un stock que ya cambió.');
+      } else {
+        div.innerHTML = fila('#64748b', '🔄', 'SIN CORRIDAS', '', '',
+          'Se publica sola al procesar<br><b>Análisis SKU → Replenishment</b>');
+      }
+
+      const traer = async (corrida) => {
+        if (!corrida || !Array.isArray(corrida.lista) || !corrida.lista.length) {
+          showPremiumAlert('SIN DATOS', 'Esa corrida no tiene ningún código para bajar.', 'info');
+          return;
+        }
+        try {
+          await guardarAreaManual('tallas', corrida.lista, user.username);
+          showPremiumAlert('REPLENISHMENT TRAÍDO',
+            `Entraron <b>${num(corrida.skus)} SKU</b> con <b>${num(corrida.pares)} pares</b>, `
+            + `de la corrida del <b>${corrida.fecha}</b>. Ya entra en el análisis del buffer.`, 'success');
+        } catch (e) {
+          showPremiumAlert('NO SE PUDO TRAER', e.message || String(e), 'error');
+        }
+        renderTabContent();
+      };
+
+      const bt = document.getElementById('repl_traer');
+      if (bt) bt.addEventListener('click', () => traer(deHoy));
+      const bv = document.getElementById('repl_traer_viejo');
+      if (bv) bv.addEventListener('click', () => traer(ultima));
+      const bq = document.getElementById('repl_quitar');
+      if (bq) bq.addEventListener('click', async () => {
+        if (await showPremiumConfirm('QUITAR EL REPLENISHMENT',
+              '¿Sacar la reposición del análisis? El pedido de comercial y las otras solicitudes no se tocan.', 'danger')) {
+          await clearAreaData('tallas', user.username);
+          renderTabContent();
+        }
+      });
+    })();
+  };
+
   let activeBufferSub = 'reportes';
   const renderBufferTab = async () => {
     contentSubtitle.textContent = "Análisis de Reposición";
@@ -3753,7 +3874,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
         renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.xlsx', 'OTRAS SOLICITUDES');
         renderMaestroNube(wrap);
-        renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx', 'REPLENISHMENT');
+        // El Replenishment ya no se sube: se trae del servidor. Ver renderReplenishmentNube.
+        renderReplenishmentNube(wrap);
         renderUploadArea(wrap, 'validar_reserva', dataStore.validar_reserva, '.xlsx', 'VALIDAR RESERVA');
         renderUploadArea(wrap, 'validar_activo', dataStore.validar_activo, '.csv', 'VALIDAR ACTIVO');
         renderUploadArea(wrap, 'validar_lpn', dataStore.validar_lpn, '.csv', 'VALIDAR LPN');
@@ -4275,7 +4397,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0199');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0200');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5710,6 +5832,17 @@ const leerArea = async (area, dia) => {
  * la trampa que dejó al tablero sin número de semana el 11-ago. */
 const AREA_STOCK_DE_LA_HORA = 'layout_stock_hora';
 const AREA_RESERVA_DE_LA_HORA = 'reserva_hora';
+
+/* LAS CORRIDAS DEL REPLENISHMENT, una por día y hasta siete.
+ *
+ * Va acá arriba, al nivel del módulo, y no al lado del Replenishment: lo escribe el módulo
+ * de Análisis SKU y lo lee la Zona Buffer, que son dos funciones distintas. Declarándolo
+ * junto a quien lo escribe, quien lo lee no lo vería — la misma trampa que avisa el
+ * comentario de acá arriba. */
+const AREA_REPL_DIA = 'replenishment_dia';
+const DIAS_REPL_GUARDADOS = 7;
+const _urlReplDia = () =>
+  `${window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com'}/api/logistics/${AREA_REPL_DIA}?date=MASTER`;
 
 /**
  * Trae un cajón de la hora, o null si lo que hay no sirve para medir.
@@ -15231,7 +15364,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0199 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0200 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16741,6 +16874,51 @@ const renderRFSection = (container) => {
       } catch (e) { console.warn('[Sugerencia] no se pudo traer el stock activo:', e && e.message); }
     }
 
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * QUÉ MANDÓ BAJAR EL REPLENISHMENT — para dejar de adivinarlo.
+     *
+     * La sub-zona del buffer NO es prueba de nada. `CDBUFFER-B` quiere decir "bajó de
+     * reserva", pero cuando el A se llena recepción deja mercadería NUEVA en el B, y eso va
+     * a volver a pasar. La prueba que había —¿llega menos de lo que hay en reserva?— no
+     * filtra: sobre el buffer del 14-ago-2026 pasaban 38 de 41 artículos, porque la reserva
+     * es en promedio 89 veces lo que llega. El caso más ajustado era 2,1 veces.
+     *
+     * Ahora se le pregunta al módulo que lo decidió. Replenishment publica su corrida (ver
+     * publicarCorridaReplenishment) y acá se lee: si el artículo está en la lista, bajó de
+     * reserva de verdad y no se le devuelve nada al rack. Si no está, entró por la puerta y
+     * sigue el camino normal.
+     *
+     * SE MIRAN DOS DÍAS, no uno. La mercadería que Replenishment mandó bajar anoche puede
+     * seguir en el buffer esta madrugada, y sigue siendo reposición.
+     *
+     * SI NO HAY NINGUNA CORRIDA PUBLICADA se devuelve null y `casoDelItem` se queda con la
+     * prueba vieja. Es a propósito: mientras el robot no publique, el sistema tiene que
+     * seguir trabajando como hasta ahora en vez de tratar todo el buffer B como recepción.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    let mandadoABajar = null;
+    try {
+      const res = await fetch(`${_urlReplDia()}&t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const cajon = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        if (cajon && typeof cajon === 'object' && !Array.isArray(cajon)) {
+          const dias = Object.keys(cajon).sort().slice(-2);
+          if (dias.length) {
+            mandadoABajar = new Map();
+            dias.forEach(d => {
+              (((cajon[d] || {}).lista) || []).forEach(par => {
+                const s7 = String((Array.isArray(par) ? par[0] : '') || '').trim().substring(0, 7);
+                const q = Number(Array.isArray(par) ? par[1] : 0) || 0;
+                if (s7 && q > 0) mandadoABajar.set(s7, (mandadoABajar.get(s7) || 0) + q);
+              });
+            });
+            console.log(`[Sugerencia] Replenishment: ${mandadoABajar.size} artículos mandados a bajar `
+                      + `en ${dias.length} corrida(s) (${dias.join(', ')}).`);
+          }
+        }
+      }
+    } catch (e) { console.warn('[Sugerencia] no se pudo leer las corridas de Replenishment:', e && e.message); }
+
     // La reserva se pide DIRECTO: getAreaData no consulta la nube para las áreas que
     // empiezan con 'analisis_sku', así que en una PC que no subió el archivo daría cero.
     let reservaRaw = [];
@@ -16913,7 +17091,8 @@ const renderRFSection = (container) => {
       reservaDe.set(prod.substring(0, 7), (reservaDe.get(prod.substring(0, 7)) || 0) + q);
     });
 
-    return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe, origenDe, libres };
+    return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe, origenDe, libres,
+             mandadoABajar };
   };
 
   /**
@@ -17192,7 +17371,29 @@ const renderRFSection = (container) => {
       // reserva. Si llega más, entró por la puerta, deje recepción en el A o en el B.
       const enReserva = Number(ctx.reservaDe && ctx.reservaDe.get(s7)) || 0;
 
-      if (pares <= enReserva) {
+      /* PRIMERO SE LE PREGUNTA AL MÓDULO QUE LO DECIDIÓ.
+       *
+       * La cuenta de acá abajo sonaba razonable y no filtraba nada: medida sobre el buffer
+       * del 14-ago-2026, pasaban 38 de 41 artículos, porque la reserva es en promedio 89
+       * veces lo que llega y solo salta si llega MÁS QUE TODA la reserva. Así, un código
+       * nuevo que recepción dejó en el B —cosa que pasa cuando el A se llena— se almacenaba
+       * entero como si fuera reposición, y la clasificación de nuevo o reposición no llegaba
+       * a hacerse nunca.
+       *
+       * Replenishment ahora publica qué mandó bajar. Si el artículo está en esa lista, bajó
+       * de reserva y no se le devuelve nada al rack —esa es la posta del módulo anterior y
+       * no se discute—. Si NO está, entró por la puerta: sigue de largo y se decide como
+       * cualquier otra mercadería.
+       *
+       * Mientras no haya ninguna corrida publicada, `mandadoABajar` viene en null y manda la
+       * prueba vieja. Ver el skill `cadena-de-modulos`. */
+      if (ctx.mandadoABajar) {
+        if (ctx.mandadoABajar.has(s7)) {
+          return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
+                   motivo: 'Replenishment lo mandó bajar: se almacena todo, no vuelve al rack.' };
+        }
+        // Está en el B pero nadie lo mandó bajar: lo dejó recepción. Sigue de largo.
+      } else if (pares <= enReserva) {
         return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
                  motivo: 'Bajó de reserva por pedido o replenishment: se almacena todo.' };
       }
@@ -19714,6 +19915,92 @@ const renderRFSection = (container) => {
     return (i.qAct || 0) + bajar;
   };
 
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * LA CORRIDA DEL REPLENISHMENT, AL SERVIDOR
+   *
+   * Hasta acá el análisis terminaba en un Excel: se bajaba, y esa misma hoja se volvía a
+   * subir a mano en Archivo Zona Buffer. El buffer recibía código y cantidad SIN SABER DE
+   * DÓNDE SALIERON —una lista de números sin remitente—, y por eso Procesar Tareas tenía que
+   * adivinar por la letra de la ubicación si algo había bajado de reserva o si lo había
+   * dejado recepción. Esa adivinanza no filtra: sobre el buffer del 14-ago-2026 pasaban 38
+   * de 41 artículos, porque la reserva es en promedio 89 veces lo que llega.
+   *
+   * Con la corrida guardada, el buffer la trae solo y Procesar Tareas puede SABER qué se
+   * mandó bajar en vez de deducirlo. Ver el skill `cadena-de-modulos`: el módulo anterior
+   * deja constancia de lo que decidió, el siguiente la lee.
+   *
+   * VA LA SOLICITUD, NO EL TOPE. El tope recortado a lo que existe en el almacén — el mismo
+   * número que lleva la hoja "Para Zona Buffer" del Excel y en el mismo formato que espera
+   * el motor: código y cantidad, en ese orden y leídos POR POSICIÓN.
+   *
+   * SIN LOS FILTROS DE PANTALLA. El Excel exporta lo que se está mirando en la tabla; esto
+   * es la corrida completa, que es lo que hay que bajar.
+   *
+   * SIETE DÍAS, DOMINGO INCLUIDO. Regla de Daniel del 14-ago-2026: *"siete días a la semana,
+   * de lunes a domingo, aunque domingo no se trabaje, pero igual guárdalo, porque ahí
+   * domingo siempre se va a venir"*.
+   *
+   * Si el servidor no contesta no se rompe nada: el Excel se sigue pudiendo bajar y subir a
+   * mano como siempre. Por eso no se espera al envío para pintar la pantalla.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const publicarCorridaReplenishment = async (items) => {
+    try {
+      const lista = (items || [])
+        .map(i => [String(i.sku || '').trim(), Math.round(solicitudDe(i))])
+        .filter(p => p[0] && p[1] > 0);
+      if (!lista.length) {
+        console.log('[REPL] La corrida no pide bajar nada: no se publica.');
+        return false;
+      }
+
+      const fecha = getLogicalDate();
+      const corrida = {
+        fecha,
+        generado: selloLocalTarea(),
+        skus:        lista.length,
+        pares:       lista.reduce((a, p) => a + p[1], 0),
+        quebrados:   (items || []).filter(i => i.estado === 'QUEBRADO').length,
+        porQuebrar:  (items || []).filter(i => i.estado === 'POR QUEBRAR').length,
+        lista
+      };
+
+      /* Se relee el cajón entero antes de escribir: guarda una corrida por día y no puede
+         pisar las de los otros días. Si el servidor no contesta, se manda solo la de hoy —
+         se pierde el histórico, no la corrida, que es lo que importa. */
+      let cajon = {};
+      try {
+        const res = await fetch(`${_urlReplDia()}&t=${Date.now()}`);
+        if (res.ok) {
+          const cuerpo = await res.json();
+          const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+          if (datos && typeof datos === 'object' && !Array.isArray(datos)) cajon = datos;
+        }
+      } catch (e) { /* se sigue con el cajón vacío */ }
+
+      cajon[fecha] = corrida;
+
+      /* Rotación: se quedan los 7 días más recientes. Las fechas son 'YYYY-MM-DD', así que
+         ordenan bien como texto y no hace falta convertirlas a Date. */
+      const recortado = {};
+      Object.keys(cajon).sort().slice(-DIAS_REPL_GUARDADOS).forEach(k => { recortado[k] = cajon[k]; });
+
+      const res = await fetch(_urlReplDia(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recortado)
+      });
+      if (!res.ok) throw new Error('El servidor respondió ' + res.status);
+
+      console.log(`[REPL] ✅ Corrida del ${fecha} publicada: ${corrida.skus} SKU, `
+                + `${corrida.pares.toLocaleString('es-PE')} pares `
+                + `(${corrida.quebrados} quebrados, ${corrida.porQuebrar} por quebrar).`);
+      return true;
+    } catch (e) {
+      console.warn('[REPL] ⚠️ No se pudo publicar la corrida; el Excel se sigue pudiendo subir a mano:', e && e.message);
+      return false;
+    }
+  };
+
   // ── renderWithItems: construye la UI completa con los items ya procesados ──
   const _replRenderWithItems = (container, items, umbral, activo, reserva) => {
 
@@ -20407,6 +20694,17 @@ const renderRFSection = (container) => {
       } catch(e) {
         console.warn('[REPL] localStorage lleno, cache solo en sesión', e);
       }
+
+      /* Y AL SERVIDOR, PARA QUE EL BUFFER LA PUEDA TRAER SOLO.
+       *
+       * Va acá y NO en la rama del caché: un análisis guardado en el navegador puede ser de
+       * hace dos días, y publicarlo como la corrida de hoy pondría al buffer a bajar contra
+       * un stock que ya no existe. Es el mismo cuidado que toma publicarMetaDelBuffer.
+       *
+       * Sin await: la pantalla no espera al servidor. Si el envío falla, el Excel se sigue
+       * pudiendo bajar y subir a mano igual que siempre. */
+      publicarCorridaReplenishment(items);
+
       _replRenderWithItems(container, items, umbral, activo, reserva);
     };
 

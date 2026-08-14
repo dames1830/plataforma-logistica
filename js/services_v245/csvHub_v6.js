@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0199';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0200';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -157,7 +157,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0199';
+const VERSION = '29.0200';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -665,6 +665,24 @@ export const traerMaestroPublicado = async () => {
     await saveToDB(MAESTRO_AREA, filas);
     localStorage.setItem(MAESTRO_CACHE_KEY, JSON.stringify(ficha));
     return { origen: 'servidor', filas: filas.length, ficha };
+};
+
+/**
+ * GUARDA DATOS EN UN ÁREA CUANDO NO HAY ARCHIVO QUE SUBIR.
+ *
+ * Mismo camino que `parseFile` —memoria, base local, meta de carga y publicación de la
+ * demanda— pero para filas que arma el propio sistema. Lo usa la Zona Buffer cuando la
+ * corrida del Replenishment se trae del servidor en vez de bajarse en un Excel y volver a
+ * subirse a mano.
+ *
+ * Las filas tienen que venir en el MISMO formato que dejaría el archivo, porque las lee el
+ * mismo motor: para el replenishment, pares `[código, cantidad]` en ese orden, que es como
+ * los lee `rawDemand['REPLENISHMENT']` —por posición, no por nombre de columna—.
+ */
+export const guardarAreaManual = async (area, filas, username = 'sistema') => {
+    if (!area || !Array.isArray(filas)) throw new Error('Área o filas inválidas');
+    await persistToDatabase(area, filas, username);
+    return filas;
 };
 
 export const parseFile = (file, area) => {
