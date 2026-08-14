@@ -349,8 +349,40 @@ Va en la tabla `COMPARTE_COLUMNAS` de `zonasService.js`.
 sin ninguna de actual. Hoy no se dispara porque no tiene nada en el buffer, pero el día que
 llegue algo de temporada actual va a caer en el respaldo.
 
-**Un cuerpo = un artículo.** Dos artículos en un cuerpo es un problema para Slotting, salvo
-curvas rotas, temporada antigua o la franja de saldos.
+## Un cuerpo, un artículo — y dónde NO aplica
+
+**La exigencia va por FRANJA, no por zona.** Daniel, 14-ago-2026: *"hay que ser bien estricto
+con eso, y para no llegar a eso debe respetarse cuerpo-artículo. Todos los cuerpos deberían ser
+cuerpo-artículo, salvo los mixtos o las temporadas anteriores o escolar"*.
+
+| Franja | ¿Puede haber varios artículos en un cuerpo? |
+|---|---|
+| **actual** | **NO.** Es la zona viva de cada marca y donde se pica todo el día |
+| anterior | sí — envejecen juntos y no vale un cuerpo cada uno |
+| saldos | sí — cientos de artículos de diez pares |
+| escolar | sí — curvas cortas y poco volumen por código |
+| catálogo | sí — la columna 8 del MZN03 mezcla las tres marcas por diseño |
+
+**En el selectivo eso quiere decir, en concreto** —y conviene tenerlo a mano porque es donde
+más se confunde—:
+
+| Columnas | Qué son | |
+|---|---|---|
+| **1 y 2** | saldos y mixtos | **fuera** del control |
+| **3** | temporada anterior — van todas las temporadas anteriores juntas | **fuera** |
+| **4 a 13** | temporada actual | **acá sí: un cuerpo, un artículo** |
+| **14** | escolar | **fuera** |
+
+Medido el 14-ago-2026 sobre el selectivo: hay **110 cuerpos** con más de un artículo, pero
+**solo 37 son un problema** — los de las columnas 4 a 13. Los otros 73 están en saldos,
+anterior y escolar, donde compartir es como se trabaja. Contarlos todos daría un número que
+asusta y que no significa nada.
+
+Vive en `FRANJAS_QUE_COMPARTEN` y `columnaAdmiteVariosArticulos()` de `zonasService.js`. Una
+columna que lleva dos franjas comparte si **cualquiera** de las dos lo permite.
+
+**Lo que sí es problema aterriza en el módulo de Slotting**, que arma tareas de ~300 pares con
+lo que hay que sacar. Ver `cadena-de-modulos`.
 
 ## 7. Adidas, Puma y Skechers: el trato aparte
 
