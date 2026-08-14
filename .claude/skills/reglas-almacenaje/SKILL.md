@@ -235,26 +235,45 @@ manda la configuración.
 
 | Zona | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| SEL | 830 | 740 | — | — | — | 548 | 400 | 330 | 380 | — |
+| **SEL** | 830 | 740 | — | — | **330** | **330** | **330** | **330** | **330** | **330** |
 | MZN01 | 700 | 610 | 570 | 400 | 284 | 372 | — | — | 347 | — |
-| MZN02 | — | — | — | — | 352 | 330 | 298 | — | 300 | — |
+| **MZN02** | **480** | **480** | **480** | **480** | **480** | **480** | **480** | **480** | **480** | **480** |
 | MZN03 | — | — | 332 | 338 | 170 | 260 | 159 | 180 | 233 | — |
 | MZN04 | — | — | — | — | — | 289 | 190 | — | 347 | 192 |
 
-Donde dice — se usa el respaldo de **300**.
+Donde dice — se usa el respaldo de la zona: **300**, salvo el MZN02 que va con **480**.
 
-**Se mide con el PERCENTIL 75, no con el máximo.** El máximo son casos raros y da el doble de
-lo que entra de verdad. Daniel validó dos puntos y los dos caen en el p75: adulto en el
-selectivo dijo 300-330, y Weinbrenner en MZN03 dijo 210-240.
+### Lo medido le gana al percentil
 
-**Dos avisos sobre esta tabla:**
+Las filas en negrita **las midió Daniel en el piso el 14-ago-2026**. Las demás siguen saliendo
+del percentil 75 de los cuerpos que tienen un solo artículo.
 
-- **No es un límite físico.** Es un percentil, y encima se tolera un 10% de más. Un cuerpo
-  puede quedar al 110% en el papel y no entrar en la realidad.
+**El percentil dice cuánto SUELE haber adentro, no cuánto ENTRA**, y esas son dos cosas
+distintas: un cuerpo a medio llenar arrastra la medición. Los dos errores que salieron de ahí
+iban en direcciones opuestas y los dos costaban caro:
+
+| Zona | Decía | Entra | Qué pasaba |
+|---|---|---|---|
+| MZN02 | 259-352 | **480** | pedía cuerpos de más — 23 donde entraban 16, solo en las tareas de un día |
+| SEL | 548 y 400 | **330** | mandaba al operario con mercadería que no cabía |
+
+El del selectivo es **la queja que trajo Daniel del piso**: *"la tarea le indica almacenarlo en
+cierto lugar, pero ya está ocupado ese espacio"*. Medido sobre las tareas vivas de ese día, 5 de
+16 destinos del selectivo se pasaban — el peor, **412 pares a un cuerpo vacío del que el sistema
+creía que aguantaba 548**.
+
+**En el MZN02 la serie no parte nada:** son 480 parejo. La zona es de North Star casi entera
+—62.783 de 62.788 pares—, así que no hay contra qué diferenciar.
+
+**Dos avisos que siguen en pie:**
+
+- **La tolerancia del 10% sigue viva.** Aun con la capacidad correcta, un cuerpo puede quedar
+  al 110% en el papel.
 - **Cuando el cuerpo ya tiene mercadería, el sistema NO usa la serie del artículo que llega:
-  usa la del que más pesa adentro.** Así un serie 4 puede terminar medido con la capacidad de
-  un serie 8. **Pendiente de revisar con Daniel**, que el 14-ago señaló que de la serie 4
-  entran más de 400 pares en el MZN02 y la tabla dice 352.
+  usa la del que más pesa adentro.** Con el MZN02 parejo eso deja de importar ahí, pero en las
+  demás zonas sigue: un serie 4 puede terminar medido con la capacidad de un serie 8.
+
+**Sin medir todavía:** las series 2 y 3 del selectivo, que caen en el respaldo de 300.
 
 ## 6. Por qué va en esa columna
 
