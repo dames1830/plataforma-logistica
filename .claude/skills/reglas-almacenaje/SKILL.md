@@ -149,7 +149,7 @@ este orden:
 
 | Caso | Cuánto baja | Dónde va |
 |---|---|---|
-| **Escolar** (cualquier marca) | 50 pares, el resto arriba | la columna de escolar de su zona |
+| **Escolar** (cualquier marca) | 50 pares **de cada talla**, el resto arriba | la columna de escolar de su marca |
 | **Buffer D** · catálogo | todo | `MZN03` columna 8 |
 | **Buffer B** · bajó de reserva | todo | sus cuerpos |
 | **No es calzado** | todo, nada a reserva | `MZN04`, **sin ubicación exacta** |
@@ -206,15 +206,44 @@ piso y no se le devuelve nada al rack. Lo que falta es **saber** que bajó, en v
 
 ### El escolar manda sobre todo lo demás
 
-50 pares al piso y el resto a reserva, *"así sea nuevo, reposición, lo que sea"*. Se pregunta
-**antes** que cualquier otra regla, incluso antes que el buffer B — excepción consciente a "no
-contradecir al replenishment": el tope lo puso Daniel después y es más chico.
+Se pregunta **antes** que cualquier otra regla, incluso antes que el buffer B — excepción
+consciente a "no contradecir al replenishment": el tope lo puso Daniel después y es más chico.
+Vale *"así sea nuevo, reposición, lo que sea"*.
 
-Hizo falta un modo nuevo en `tallasService`, **`pares`** (tope fijo), porque 50 pares no llenan
-ni un sexto de un cuerpo y "1 cuerpo" habría bajado veinte veces de más.
+**Tienen que quedar 50 pares DE CADA TALLA en el activo.** Dos cosas que conviene no volver a
+confundir, porque estuvieron mal entendidas del 05 al 14-ago-2026:
 
-**Cada marca guarda su escolar en SU zona**, no todo en `SEL-14`: Bata → `SEL-14` · Power y
-B.G Licenses → MZN01 · North Star → MZN02.
+| | |
+|---|---|
+| **Por talla, no del artículo** | *"De la talla treinta, cincuenta pares; de la treinta y uno, cincuenta; treinta y dos, cincuenta"*. Un artículo de 9 tallas baja hasta 450, no 50 |
+| **Es un objetivo, no una cantidad a bajar** | *"Si ya tiene diez, solo tendrías que reponer cuarenta. Si ya tienes cuarenta, solo tendrías que reponer diez"*. Una talla que ya llegó a 50 no recibe nada |
+
+**Cómo se veía el error, y por qué nadie lo vio:** estaba puesto como tope del artículo entero
+y repartido entre las tallas, así que a cada una le tocaban 5 o 6 pares —menos de una caja— y
+el redondeo terminaba bajando **una caja por talla**. La cuenta cerraba sola: con 9 tallas
+bajaban 90, con 19 tallas 304, y con 5 tallas daba 50 justo. Salió al pedir el papel de un
+caso concreto.
+
+Va con el modo **`paresPorTalla`** de `tallasService`, que **no es** el modo `pares` —ese fija
+el tope del artículo entero—. Queda fuera del reparto de lo que falta: si una talla no tiene
+buffer para llegar a 50, la que sobra **no** se lo compensa.
+
+**Cada marca guarda su escolar en SU columna:**
+
+| Marca | Columna |
+|---|---|
+| Bata | `SEL-14` |
+| Bubblegummers | `MZN01-21` |
+| B.G Licenses | `MZN01-21` — la misma, vía `COMPARTE_COLUMNAS` |
+| Power | `MZN01-01` |
+| North Star | `MZN02-04` |
+
+**Las dos últimas llevan DOS franjas.** La 1 del MZN01 y la 4 del MZN02 son de temporada
+anterior *y además* de escolar: son la única columna de anterior que le queda a esa marca, así
+que cambiarles la franja las dejaría sin dónde poner lo viejo. Se resuelve con `franjasExtra`
+por zona —lo que la columna **admite además**, sin tocarle lo que la columna **es**— y con
+`columnaSirveParaFranja()`. **`franjasExtra` todavía no tiene pantalla de edición**: se carga
+publicando la configuración.
 
 ### Los saldos SÍ comparten cuerpo
 
