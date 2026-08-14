@@ -239,7 +239,18 @@ export const zonasPorDefecto = () => ({
      * la zona no caiga en los 300 genéricos.
      */
     densidad: {
-        SEL:   { 5: 548, 6: 277, 7: 136, 8: 326 },
+        /* SELECTIVO: DE LA SERIE 4 PARA ARRIBA SON 330, medido por Daniel el 14-ago-2026.
+         *
+         * Este es el que más daño hacía, y en la dirección contraria al MZN02: el percentil
+         * decía 548 para la serie 5 y 400 para la 6, o sea MÁS de lo que entra. El sistema
+         * mandaba al operario con mercadería que no cabía. Medido sobre las tareas vivas de
+         * ese día, 5 de 16 destinos del selectivo se pasaban —el peor, 412 pares a un cuerpo
+         * vacío del que el sistema creía que aguantaba 548—. Es exactamente la queja que
+         * trajo Daniel del piso: "la tarea dice que lo almacene ahí y ya está ocupado".
+         *
+         * Las series 0 y 1 se quedan como estaban: son calzado chico y entran muchos más.
+         * Las series 2 y 3 siguen sin medir y caen en el respaldo. */
+        SEL:   { 0: 830, 1: 740, 4: 330, 5: 330, 6: 330, 7: 330, 8: 330, 9: 330 },
         MZN01: { 0: 642, 1: 426, 2: 386, 3: 332, 4: 284, 5: 372, 8: 347 },
         MZN02: { 4: 480, 5: 480, 6: 480, 8: 480 },
         MZN03: { 2: 332, 3: 338, 4: 170, 5: 260, 6: 159, 7: 139, 8: 233 },
