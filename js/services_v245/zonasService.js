@@ -102,7 +102,7 @@ export const zonasPorDefecto = () => ({
             // cuatro se quedan en 17.
             cuerpos: 20,
             cuerposPorColumna: { 2: 17, 3: 17, 22: 17, 23: 17 },
-            saldoMenorA: 80,
+            saldoMenorA: 20,
             pasillos: [],
             // Sacadas de circulación por Daniel el 05-ago-2026. Están vacías de punta a
             // punta —el stock lo confirma: cero pares en las tres— y no se pueden usar.
@@ -117,7 +117,7 @@ export const zonasPorDefecto = () => ({
             // Igual que MZN01: el tope es 20, con tres columnas que se quedan en 17
             cuerpos: 20,
             cuerposPorColumna: { 2: 17, 3: 17, 23: 17 },
-            saldoMenorA: 80,
+            saldoMenorA: 20,
             pasillos: [],
             // Sacadas de circulación por Daniel el 05-ago-2026, vacías de punta a punta.
             // Quedan en uso solo 1, 2, 3, 4, 7, 8, 11, 12, 15, 16, 19 y 20 — y son
@@ -137,7 +137,7 @@ export const zonasPorDefecto = () => ({
             // mirando el layout — "los mezzanines tienen 20 cuerpos, el de 22 es el
             // selectivo"— después de que esta configuración diera 528 ubicaciones.
             cuerpos: 20,
-            saldoMenorA: 80,
+            saldoMenorA: 20,
             pasillos: [],
             franjas: {}
         },
@@ -150,7 +150,7 @@ export const zonasPorDefecto = () => ({
             // Las columnas cortas salieron de medir el stock: son las mismas cuatro que
             // en MZN01. Ver [[mezzanine-4-como-funciona]].
             cuerposPorColumna: { 2: 17, 3: 17, 22: 17, 23: 17 },
-            saldoMenorA: 80,
+            saldoMenorA: 20,
             pasillos: [],
             franjas: {}
         }
@@ -716,6 +716,12 @@ export const franjaDeArticulo = (art, zona) => {
     if (art.origen === 'D' && columnasDeFranja(zona, 'catalogo').length) return 'catalogo';
     const esEscolar = String(art.genderRims || '').toUpperCase().includes('SCHOOL');
     if (esEscolar && columnasDeFranja(zona, 'escolar').length) return 'escolar';
+    /* EL CORTE DE SALDO ES 20 EN TODAS LAS ZONAS. Daniel, 14-ago-2026: *"el saldo es para el
+     * uno, el dos y parte del tres. Menos de veinte es un saldo; igual o mayor a veinte ya no"*.
+     * Los mezzanines tenían 80 y era un número inventado: con ese corte, un artículo con 60
+     * pares de temporada actual se iba a la columna de saldos. Es el MISMO 20 con el que se
+     * decide si un código es nuevo o reposición, y eso no es casualidad — las dos preguntas
+     * miran lo mismo: si al artículo le queda algo de verdad en el almacén. */
     if (Number(art.pares) < z.saldoMenorA && columnasDeFranja(zona, 'saldos').length) return 'saldos';
     return art.esTemporadaActual ? 'actual' : 'anterior';
 };
