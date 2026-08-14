@@ -1,24 +1,24 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0208';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0209';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0208';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0208';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0208';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0208';
-import * as metasService from '../services_v245/metasService.js?v=29.0208';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0208';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0208';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0208';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0208';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0208';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0208';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0208';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0208';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0208';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0208';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0208';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0208';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0208';
-import { montarSlotting } from './slotting.js?v=29.0208';
+import * as adminService from '../services_v245/adminService.js?v=29.0209';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0209';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0209';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0209';
+import * as metasService from '../services_v245/metasService.js?v=29.0209';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0209';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0209';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0209';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0209';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0209';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0209';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0209';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0209';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0209';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0209';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0209';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0209';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0209';
+import { montarSlotting } from './slotting.js?v=29.0209';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -375,7 +375,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0208';
+const VERSION = '29.0209';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4404,7 +4404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0208');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0209');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15371,7 +15371,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0208 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0209 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16859,26 +16859,56 @@ const renderRFSection = (container) => {
    * — no hay ninguna reserva que limpiar a mano.
    */
   /* ══════════════════════════════════════════════════════════════════════════════
-   * EL BARRIDO DEL ALMACÉN PARA SLOTTING
+   * EL BARRIDO QUE ARMA LAS TAREAS DE SLOTTING
    *
-   * Daniel, 14-ago-2026: *"apenas el robot cargue el stock de reserva y activo a las siete,
-   * que en automático haga los cruces y vaya sacando, por ejemplo, en Bata selectivo, este
-   * cuerpo ocupa varios artículos, y que vaya sacando la cantidad, la marca, temporada, todo,
-   * para que el equipo de slotting vaya de frente a ese artículo"*.
+   * Daniel, 14-ago-2026: *"el cuerpo veinte está con dos artículos: quien tenga más cantidad,
+   * le pertenece a ese artículo. El B hay que sacarlo, entonces ahí tiene veinte ya por sacar,
+   * y así que vaya acumulando"*.
    *
-   * NO ES LO MISMO QUE LO QUE ENCUENTRA LA TAREA. La tarea solo se topa con los cuerpos de los
-   * artículos que llegaron al buffer esa noche — un puñado. Esto barre el almacén entero, así
-   * que encuentra también los que nadie va a tocar en meses, que son justamente los que se
-   * quedan mezclados para siempre.
+   * ── QUIÉN SE QUEDA CON EL CUERPO ─────────────────────────────────────────────
    *
-   * QUÉ CUENTA COMO PROBLEMA: más de un artículo en un cuerpo, y solo donde la franja exige un
-   * cuerpo por artículo — la actual. En anterior, saldos, escolar y catálogo se comparte a
-   * propósito y no hay nada que revisar. Ver columnaAdmiteVariosArticulos.
+   * Primero se le pregunta a las TAREAS, no al stock. Daniel: *"si el procesar tareas te dijo
+   * almacena en el cuerpo uno el artículo A, y mañana aparece en el cuerpo uno otro artículo
+   * adicional, quiere decir que el operario agarró veinte pares y puso el artículo B ahí. El
+   * slotting tendría que ver de dónde vino: el A vino de una tarea, el B no vino de ninguna,
+   * entonces por error o porque su cuerpo ya estaba lleno lo puso ahí"*.
    *
-   * EL MZN04 QUEDA FUERA. No sigue las reglas de cuerpo ni de columna y mezcla artículos por
-   * diseño: listarlo sería darle al equipo cientos de "problemas" que no lo son.
+   *   1. Si UNO de los artículos llegó ahí por una tarea de almacenaje, ese se queda. El
+   *      sistema lo mandó a ese cuerpo y el módulo anterior no se contradice.
+   *   2. Si llegaron VARIOS por tarea, o NINGUNO, manda el que más pares tiene. Mover al que
+   *      menos hay es el trabajo más barato y el que menos molesta al piso.
+   *
+   * Cada línea sale diciendo si el artículo vino por tarea o apareció solo, que es la
+   * diferencia entre "estaba previsto y hay que reacomodar" y "alguien lo puso donde no iba".
+   *
+   * ── EL ALCANCE ───────────────────────────────────────────────────────────────
+   *
+   * SOLO EL SELECTIVO POR AHORA: *"hagamos un ejemplo solo con selectivo primero, después
+   * metemos lo de los mezzanines"*. La zona sale por parámetro para que sumar MZN01 y MZN02
+   * sea cambiar una lista.
+   *
+   * SOLO DONDE LA FRANJA EXIGE UN CUERPO POR ARTÍCULO —la actual—. En anterior, saldos,
+   * escolar y catálogo se comparte a propósito. El MZN04 no entra nunca.
    * ══════════════════════════════════════════════════════════════════════════════ */
-  const barrerCuerposMezclados = async () => {
+  const ZONAS_SLOTTING = ['SEL'];
+
+  /** Qué artículos mandó el sistema a cada cuerpo, según las tareas de almacenaje. */
+  const destinosDeLasTareas = () => {
+    const mapa = new Map();
+    (almacenajeTasksCache || []).forEach(t => (t.items || []).forEach(art => {
+      const s7 = String(art.sku7 || '').trim();
+      if (!s7) return;
+      (art.items || []).forEach(i => {
+        const d = String(i.destino || '').trim().toUpperCase();
+        if (!/^[A-Z0-9]+-\d{2}-\d{2}$/.test(d)) return;
+        if (!mapa.has(d)) mapa.set(d, new Set());
+        mapa.get(d).add(s7);
+      });
+    }));
+    return mapa;
+  };
+
+  const barrerParaSlotting = async (zonas = ZONAS_SLOTTING) => {
     await zonasService.cargarZonas();
     await rescatarMaestro();
 
@@ -16894,17 +16924,18 @@ const renderRFSection = (container) => {
     }
     if (!stock || !stock.length) throw new Error('No se pudo leer el Stock Activo.');
 
-    // El Maestro, para que el hallazgo salga con marca, temporada y categoría
+    // El Maestro, para que la tarea salga con marca y temporada y el equipo vaya derecho
     const ficha = new Map();
     (dataStore.articulos || []).forEach(row => {
       const raw = Array.isArray(row) ? row : Object.values(row);
       const s7 = String(raw[1] || '').trim().substring(0, 7);
       if (s7 && !ficha.has(s7)) ficha.set(s7, {
         marca: String(raw[13] || '').trim(),
-        temporada: String(raw[14] || raw[9] || '').trim(),
-        categoria: String(raw[3] || '').trim()
+        temporada: String(raw[14] || raw[9] || '').trim()
       });
     });
+
+    const mandados = destinosDeLasTareas();
 
     // Quién vive en cada cuerpo, y con cuántos pares
     const cuerpos = new Map();
@@ -16913,61 +16944,76 @@ const renderRFSection = (container) => {
       if (!ubi || ubi.startsWith('CDBUFFER')) return;
       const p = ubi.split('-');
       const zona = p[0];
-      if (!zonasService.zonasActual().zonas[zona]) return;
-      if (zonasService.esZonaSinUbicacion(zona)) return;          // el MZN04 no entra
+      if (!zonas.includes(zona)) return;
+      if (zonasService.esZonaSinUbicacion(zona)) return;
       const col = parseInt(p[1], 10), cue = parseInt(p[2], 10);
       if (!col || !cue) return;
       const raw = Array.isArray(row) ? row : Object.values(row);
       const s7 = String(raw[1] || '').trim().substring(0, 7);
       const qty = parseFloat(String(row['Cantidad actual'] || row['Cantidad'] || 0).replace(/,/g, '')) || 0;
       if (!s7 || qty <= 0) return;
-      const k = `${zona}|${col}|${cue}`;
-      if (!cuerpos.has(k)) cuerpos.set(k, new Map());
-      const m = cuerpos.get(k);
-      m.set(s7, (m.get(s7) || 0) + qty);
+      const k = `${zona}-${String(col).padStart(2, '0')}-${String(cue).padStart(2, '0')}`;
+      if (!cuerpos.has(k)) cuerpos.set(k, { zona, col, m: new Map() });
+      cuerpos.get(k).m.set(s7, (cuerpos.get(k).m.get(s7) || 0) + qty);
     });
 
-    const hallazgos = [];
-    cuerpos.forEach((m, k) => {
-      if (m.size <= 1) return;
-      const [zona, col, cue] = k.split('|');
-      if (zonasService.columnaAdmiteVariosArticulos(zona, +col)) return;
-      const items = [...m.entries()].map(([s7, pares]) => {
+    // Y de cada cuerpo mezclado salen las líneas por sacar
+    const lineas = [];
+    let mezclados = 0, porTarea = 0;
+    cuerpos.forEach((c, k) => {
+      if (c.m.size <= 1) return;
+      if (zonasService.columnaAdmiteVariosArticulos(c.zona, c.col)) return;
+      mezclados++;
+
+      const orden = [...c.m.entries()].sort((a, b) => b[1] - a[1]);
+      const conTarea = (mandados.get(k) || new Set());
+      const mandadosAca = orden.filter(([s7]) => conTarea.has(s7));
+
+      // Manda la tarea si hay UNO solo; si hay varios o ninguno, el que más pares tiene
+      const elegido = (mandadosAca.length === 1) ? mandadosAca[0] : orden[0];
+      if (mandadosAca.length === 1) porTarea++;
+
+      orden.forEach(([s7, pares]) => {
+        if (s7 === elegido[0]) return;
         const f = ficha.get(s7) || {};
-        return { sku7: s7, pares, marca: f.marca || '', temporada: f.temporada || '', categoria: f.categoria || '' };
-      });
-      const marcas = [...new Set(items.map(i => i.marca).filter(Boolean))];
-      hallazgos.push({
-        tipo: 'mezcla', zona, columna: +col, cuerpo: +cue,
-        articulos: items.map(i => i.sku7), items,
-        detalle: `${items.length} artículos${marcas.length > 1 ? ` de ${marcas.length} marcas distintas` : ''}`
+        lineas.push({
+          ubi: k, sku7: s7, pares: Math.round(pares),
+          marca: f.marca || '', temporada: f.temporada || '',
+          dueno: elegido[0], duenoPares: Math.round(elegido[1]),
+          // De dónde salió el que hay que sacar: previsto o puesto a mano
+          vinoPorTarea: conTarea.has(s7),
+          duenoPorTarea: mandadosAca.length === 1
+        });
       });
     });
 
-    console.log(`[Slotting] barrido: ${cuerpos.size} cuerpos con stock, ${hallazgos.length} con más de un artículo donde no corresponde.`);
-    return await slottingService.registrarHallazgos(hallazgos);
+    console.log(`[Slotting] ${zonas.join('+')}: ${cuerpos.size} cuerpos con stock, ${mezclados} mezclados `
+              + `(${porTarea} con dueño decidido por la tarea), ${lineas.length} líneas y `
+              + `${lineas.reduce((a, l) => a + l.pares, 0)} pares por sacar.`);
+
+    return await slottingService.publicarCorrida(getLogicalDate(), lineas, zonas.join('+'));
   };
 
   const renderSlotting = async (container) => {
-    contentSubtitle.textContent = 'Cuerpos por revisar';
+    contentSubtitle.textContent = 'Tareas de ordenamiento';
     container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">
-        Cargando lo que hay por revisar...</div>`;
-    const cajon = await slottingService.traerHallazgos();
+        Cargando las tareas...</div>`;
+    const cajon = await slottingService.traerTareas();
     montarSlotting(container, {
       cajon,
       svc: slottingService,
       alGuardar: async (c) => {
-        try { await slottingService.guardarHallazgos(c); }
+        try { await slottingService.guardarTareas(c); }
         catch (e) { showPremiumAlert('NO SE PUDO GUARDAR', e.message || String(e), 'error'); }
       },
       alBarrer: async () => {
         try {
-          const r = await barrerCuerposMezclados();
+          const corrida = await barrerParaSlotting();
           showPremiumAlert('ALMACÉN REVISADO',
-            `Se encontraron <b>${r.total}</b> cuerpos con más de un artículo.<br>`
-            + `${r.nuevos} nuevos · ${r.repetidos} que ya estaban`
-            + (r.reabiertos ? ` · <b>${r.reabiertos} que volvieron a aparecer</b>` : ''), 'success');
-          return await slottingService.traerHallazgos();
+            `<b>${corrida.cuerpos}</b> cuerpos con más de un artículo.<br>`
+            + `${corrida.pares.toLocaleString('es-PE')} pares por sacar en <b>${corrida.tareas.length}</b> tareas.`,
+            'success');
+          return await slottingService.traerTareas();
         } catch (e) {
           showPremiumAlert('NO SE PUDO REVISAR', e.message || String(e), 'error');
           return null;
@@ -23689,22 +23735,19 @@ window.showCellModal = function(htmlContent) {
           console.warn('[Almacenaje] no se pudo grabar el papel en las tareas:', e && e.message);
         }
 
-        /* Y SE LE PASA LA POSTA A SLOTTING.
+        /* SLOTTING NO SE DISPARA ACÁ.
          *
-         * El barrido corre acá porque es cuando el stock de la noche ya está publicado y la
-         * pantalla lo tiene en la mano. Encuentra los cuerpos con más de un artículo en las
-         * franjas que piden uno solo, y los deja registrados con marca, temporada y pares.
+         * Estuvo colgado de este punto un rato y Daniel lo corrigió el 14-ago-2026: el barrido
+         * va con el STOCK, no con las tareas. *"No es al procesar tareas: cuando el robot
+         * cargue el stock activo y reserva, que agarre el stock activo y comience a
+         * verificar"*.
          *
-         * VA EN UN try APARTE Y SIN CORTAR NADA: si Slotting falla, las tareas ya están
-         * creadas y el turno tiene que poder trabajar igual. Es la misma decisión que se tomó
-         * con el papel grabado. */
-        try {
-          const r = await barrerCuerposMezclados();
-          console.log(`[Slotting] ${r.total} cuerpos mezclados registrados `
-                    + `(${r.nuevos} nuevos, ${r.repetidos} repetidos, ${r.reabiertos} reabiertos).`);
-        } catch (e) {
-          console.warn('[Slotting] no se pudo registrar los cuerpos mezclados:', e && e.message);
-        }
+         * Y tiene razón de fondo: procesar tareas mira lo que llegó al buffer esa noche, que
+         * es un puñado de artículos. Slotting tiene que mirar el almacén entero, porque los
+         * cuerpos que nadie va a tocar en meses son justamente los que se quedan mezclados.
+         *
+         * Hoy se dispara con el botón BUSCAR AHORA de Slotting → Tareas. Falta que lo corra el
+         * robot después de publicar el stock. */
 
         // Animar la barra de progreso de 0% a 100% de manera fluida y mostrar el mensaje final
         let currentPct = 0;

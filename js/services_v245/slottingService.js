@@ -1,70 +1,57 @@
 /**
- * SLOTTING — DONDE ATERRIZA LO QUE EL CÁLCULO ENCUENTRA ROTO
+ * SLOTTING — TAREAS PARA ORDENAR EL ALMACÉN
  *
- * Pedido de Daniel el 01-ago-2026 y construido el 14-ago. Hasta ahora, cuando la tarea de
- * almacenaje se topaba con un problema —un cuerpo con dos artículos, un código sin dónde ir—
- * lo resolvía como podía y **el hallazgo se perdía**. A la noche siguiente reaparecía igual,
- * porque nadie lo había anotado en ningún lado.
- *
- * Daniel, 14-ago-2026: *"crea el módulo slotting y esas casuísticas, esos problemas los vas
- * pasando a ese módulo. Ya sabes que todo debe estar conectado, ningún módulo debe estar
- * independiente, porque uno depende de otro"*.
- *
- * Este archivo NO decide nada: guarda, lee y cuenta. Quien encuentra los problemas es el
- * cálculo de la tarea (ver `hallazgosDeMezcla` en dashboard_v28.js) y quien los muestra es la
- * pantalla. Es el mismo reparto que tienen los demás servicios.
+ * Pedido de Daniel el 01-ago-2026 y construido el 14-ago. Hasta ahora, cuando el cálculo de
+ * almacenaje se topaba con un cuerpo que tenía dos artículos, lo resolvía como podía y **el
+ * problema se perdía**: a la noche siguiente reaparecía igual porque nadie lo había anotado.
  *
  * ══════════════════════════════════════════════════════════════════════════════
- * LO QUE SE GUARDA, Y LO QUE NO SE PISA
+ * NO SON HALLAZGOS PARA MIRAR: SON TAREAS PARA TRABAJAR
  *
- * La ubicación es la clave: `MZN02-20-19`. Un cuerpo con problema es UN registro, aunque
- * aparezca veinte noches seguidas.
+ * Daniel, 14-ago-2026: *"en el cuerpo veinte está el artículo X, pero también está el B. Quien
+ * tenga más cantidad, le pertenece a ese artículo. Si el X tiene doscientos y el B tiene
+ * veinte, ese cuerpo le pertenece al X. El B hay que sacarlo, entonces ahí tiene veinte ya por
+ * sacar, y así que vaya acumulando"*.
  *
- * Al registrar de nuevo un hallazgo que ya existe se actualiza lo que cambia solo —cuándo se
- * vio por última vez, cuántas veces, qué artículos hay hoy adentro— y **NUNCA el estado ni la
- * nota**: eso lo escribe la persona que lo está revisando y el robot no se lo puede llevar
- * puesto.
+ * De ahí salen las tres reglas del módulo:
  *
- * Con una excepción que importa: si un hallazgo estaba RESUELTO y vuelve a aparecer, vuelve a
- * pendiente. Que el problema haya vuelto es información, no ruido — y si se quedara en
- * "resuelto" el módulo mentiría.
+ *   EL DUEÑO ES EL QUE MÁS PARES TIENE. No el más antiguo ni el de la marca de la columna:
+ *   el que más ocupa. Mover al que menos hay es el trabajo más barato.
+ *
+ *   LO DEL RESTO SE SACA. Cada artículo que no es el dueño se convierte en una línea de
+ *   trabajo: sacar N pares de tal ubicación.
+ *
+ *   SE ACUMULA EN TAREAS. Las líneas se juntan hasta llegar a un volumen de trabajo —300
+ *   pares por defecto—, ordenadas por ubicación para que el operario recorra una columna por
+ *   vez y no cruce el almacén de ida y vuelta.
+ *
+ * Este archivo NO decide nada ni sale a buscar datos: guarda, lee y cuenta. Quien encuentra
+ * los cuerpos es `barrerParaSlotting` en dashboard_v28.js, y quien los muestra es la pantalla.
  * ══════════════════════════════════════════════════════════════════════════════
  */
 
-const AREA = 'slotting_hallazgos';
+const AREA = 'slotting_tareas';
 const _url = () =>
     `${window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com'}/api/logistics/${AREA}?date=MASTER`;
 
-/** Los estados por los que pasa un hallazgo. El orden es el del avance. */
+/** Cuántos pares junta una tarea antes de cerrarla. */
+export const PARES_POR_TAREA = 300;
+
+/** Los estados por los que pasa una tarea. El orden es el del avance. */
 export const ESTADOS = {
-    pendiente: { etiqueta: 'Por revisar', color: '#f59e0b' },
-    proceso:   { etiqueta: 'En proceso',  color: '#3b82f6' },
-    resuelto:  { etiqueta: 'Resuelto',    color: '#22c55e' }
+    pendiente: { etiqueta: 'Por hacer',  color: '#f59e0b' },
+    proceso:   { etiqueta: 'En proceso', color: '#3b82f6' },
+    hecha:     { etiqueta: 'Hecha',      color: '#22c55e' }
 };
 
-/** Qué clase de problema es. Nace con uno solo; la idea es que entren más sin rehacer nada. */
-export const TIPOS = {
-    mezcla: {
-        etiqueta: 'Dos o más artículos en un cuerpo',
-        detalle: 'La franja pide un cuerpo por artículo y hay más de uno adentro.'
-    },
-    sin_lugar: {
-        etiqueta: 'Sin cuerpo donde almacenar',
-        detalle: 'El artículo llegó al buffer y no hay lugar en las columnas que le tocan.'
-    }
-};
-
-/** La fecha y hora de acá, nunca toISOString: devuelve UTC y a las 19:00 ya es otro día. */
+/** La fecha y hora de acá. Nunca toISOString: devuelve UTC y a las 19:00 ya es otro día. */
 const sello = () => {
     const d = new Date(), dd = (n) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${dd(d.getMonth() + 1)}-${dd(d.getDate())} `
          + `${dd(d.getHours())}:${dd(d.getMinutes())}`;
 };
 
-const soloDia = (txt) => String(txt || '').substring(0, 10);
-
-/** Lo guardado. Devuelve {} si no hay nada o si el servidor no contesta. */
-export const traerHallazgos = async () => {
+export const traerTareas = async () => {
     try {
         const res = await fetch(`${_url()}&t=${Date.now()}`);
         if (!res.ok) return {};
@@ -77,11 +64,9 @@ export const traerHallazgos = async () => {
     }
 };
 
-/** Escribe el cajón entero. Quien llama ya lo releyó y lo modificó. */
-export const guardarHallazgos = async (cajon) => {
+export const guardarTareas = async (cajon) => {
     const res = await fetch(_url(), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cajon || {})
     });
     if (!res.ok) throw new Error('El servidor respondió ' + res.status);
@@ -89,99 +74,86 @@ export const guardarHallazgos = async (cajon) => {
 };
 
 /**
- * REGISTRA LO QUE ENCONTRÓ LA CORRIDA. Es la puerta de entrada del módulo.
+ * ARMA LAS TAREAS a partir de las líneas por sacar.
  *
- * `nuevos` son objetos { tipo, zona, columna, cuerpo, articulos[], detalle }. Se relee el
- * cajón, se mezcla y se guarda: si dos PC corren tareas casi a la vez, ninguna pierde lo de
- * la otra.
- *
- * Devuelve un resumen para poder avisarlo en pantalla sin volver a leer.
+ * Se ordenan por ubicación y se van juntando hasta el tope. Una línea sola más grande que el
+ * tope se queda sola en su tarea: partir la mercadería de un cuerpo entre dos operarios es
+ * peor que una tarea grande.
  */
-export const registrarHallazgos = async (nuevos) => {
-    const lista = (nuevos || []).filter(h => h && h.zona && h.columna && h.cuerpo);
-    if (!lista.length) return { nuevos: 0, repetidos: 0, reabiertos: 0, total: 0 };
-
-    const cajon = await traerHallazgos();
-    const ahora = sello();
-    let nCrea = 0, nRep = 0, nReab = 0;
-
-    lista.forEach(h => {
-        const id = `${h.zona}-${String(h.columna).padStart(2, '0')}-${String(h.cuerpo).padStart(2, '0')}`;
-        const arts = [...new Set((h.articulos || []).map(String))].sort();
-        const previo = cajon[id];
-
-        /* LOS DATOS DEL ARTÍCULO VIAJAN CON EL HALLAZGO.
-         *
-         * Daniel, 14-ago-2026: *"que vaya sacando la cantidad, la marca, temporada, todo, para
-         * que el equipo de slotting vaya de frente a ese artículo"*. Sin eso, quien abre el
-         * módulo tiene una ubicación y nada más, y le toca ir a buscar a otra pantalla qué hay
-         * ahí adentro — que es justo el trabajo que este módulo tiene que ahorrarle. */
-        const items = (h.items || []).map(i => ({
-            sku7: String(i.sku7 || ''), pares: Math.round(Number(i.pares) || 0),
-            marca: String(i.marca || ''), temporada: String(i.temporada || ''),
-            categoria: String(i.categoria || '')
-        })).sort((a, b) => b.pares - a.pares);
-
-        if (!previo) {
-            cajon[id] = {
-                id, tipo: h.tipo || 'mezcla',
-                zona: h.zona, columna: Number(h.columna), cuerpo: Number(h.cuerpo),
-                articulos: arts, items, detalle: h.detalle || '',
-                visto: ahora, ultimo: ahora, ultimoContado: ahora, veces: 1,
-                estado: 'pendiente', nota: ''
-            };
-            nCrea++;
-            return;
-        }
-
-        // Ya estaba: se actualiza lo que cambia solo y se respeta lo que escribió la persona
-        previo.ultimo = ahora;
-        previo.articulos = arts;
-        previo.items = items;
-        previo.detalle = h.detalle || previo.detalle;
-        // Una vez por día, no una por corrida: dos corridas en el mismo turno no son dos
-        // apariciones del problema, es el mismo problema visto dos veces.
-        if (soloDia(previo.ultimoContado) !== soloDia(ahora)) {
-            previo.veces = (Number(previo.veces) || 1) + 1;
-            previo.ultimoContado = ahora;
-        }
-        if (previo.estado === 'resuelto') { previo.estado = 'pendiente'; previo.reabierto = ahora; nReab++; }
-        else nRep++;
+export const armarTareas = (lineas, tope = PARES_POR_TAREA) => {
+    const orden = [...(lineas || [])].sort((a, b) => String(a.ubi).localeCompare(String(b.ubi)));
+    const tareas = [];
+    let actual = [], suma = 0;
+    orden.forEach(l => {
+        const p = Math.round(Number(l.pares) || 0);
+        if (suma > 0 && suma + p > tope) { tareas.push({ lineas: actual, pares: suma }); actual = []; suma = 0; }
+        actual.push(l); suma += p;
     });
-
-    // Y el sello de la corrida, para que la pantalla pueda decir de cuándo son los datos
-    cajon.__corrida = ahora;
-
-    await guardarHallazgos(cajon);
-    return { nuevos: nCrea, repetidos: nRep, reabiertos: nReab, total: lista.length };
-};
-
-/** Los hallazgos como lista, sin la marca de corrida y ordenados: lo pendiente primero. */
-export const comoLista = (cajon) => {
-    const orden = { pendiente: 0, proceso: 1, resuelto: 2 };
-    return Object.keys(cajon || {})
-        .filter(k => k !== '__corrida')
-        .map(k => cajon[k])
-        .filter(h => h && h.id)
-        .sort((a, b) => (orden[a.estado] ?? 0) - (orden[b.estado] ?? 0)
-                     || (b.veces || 0) - (a.veces || 0)
-                     || String(a.id).localeCompare(String(b.id)));
+    if (actual.length) tareas.push({ lineas: actual, pares: suma });
+    return tareas;
 };
 
 /**
- * EL AVANCE, que es lo que Daniel pidió ver: *"100 cuerpos por revisar, hicieron 60 → 60%"*.
+ * GUARDA LA CORRIDA DEL DÍA.
  *
- * Cuenta sobre el total del módulo, no sobre lo de hoy: la pregunta es cuánto lleva revisado
- * el equipo, y un hallazgo de la semana pasada sin tocar sigue siendo trabajo pendiente.
+ * Las tareas se rehacen en cada barrido —el almacén cambió y el reparto de ayer ya no
+ * corresponde— PERO lo que el equipo marcó como hecho no se toca: esas líneas ya no están
+ * mezcladas, así que el barrido siguiente no las va a volver a encontrar. Si alguna vuelve a
+ * aparecer es porque el problema volvió, y entonces sí corresponde que salga de nuevo.
+ *
+ * Se guarda por jornada: `2026-08-14`. Así se puede ver qué se hizo cada día sin que una
+ * corrida pise la anterior.
  */
-export const resumen = (cajon) => {
-    const lista = comoLista(cajon);
-    const por = { pendiente: 0, proceso: 0, resuelto: 0 };
-    lista.forEach(h => { por[h.estado] = (por[h.estado] || 0) + 1; });
-    const total = lista.length;
+export const publicarCorrida = async (fecha, lineas, zona) => {
+    const cajon = await traerTareas();
+    const tareas = armarTareas(lineas);
+    const previo = cajon[fecha];
+    // Lo ya trabajado se respeta: se busca por la firma de la línea, no por el número de tarea
+    const hechas = new Map();
+    (previo && previo.tareas || []).forEach((t, i) => {
+        if (t.estado && t.estado !== 'pendiente') {
+            (t.lineas || []).forEach(l => hechas.set(`${l.ubi}|${l.sku7}`, t.estado));
+        }
+    });
+
+    cajon[fecha] = {
+        fecha, zona: zona || 'SEL', generado: sello(),
+        cuerpos: [...new Set(lineas.map(l => l.ubi))].length,
+        pares: lineas.reduce((a, l) => a + (Number(l.pares) || 0), 0),
+        tareas: tareas.map((t, i) => {
+            // Si TODAS sus líneas ya estaban trabajadas, la tarea nace con ese estado
+            const est = t.lineas.map(l => hechas.get(`${l.ubi}|${l.sku7}`)).filter(Boolean);
+            return {
+                n: i + 1, pares: t.pares, lineas: t.lineas,
+                estado: (est.length === t.lineas.length && est.length) ? est[0] : 'pendiente',
+                nota: ''
+            };
+        })
+    };
+
+    // Se guardan 30 días: alcanza para ver el avance del mes y no crece sin control
+    const dias = Object.keys(cajon).sort();
+    if (dias.length > 30) dias.slice(0, dias.length - 30).forEach(d => delete cajon[d]);
+
+    await guardarTareas(cajon);
+    return cajon[fecha];
+};
+
+/** El avance de una corrida: cuántas tareas hechas de cuántas. */
+export const resumen = (corrida) => {
+    const tareas = (corrida && corrida.tareas) || [];
+    const por = { pendiente: 0, proceso: 0, hecha: 0 };
+    tareas.forEach(t => { por[t.estado] = (por[t.estado] || 0) + 1; });
+    const total = tareas.length;
     return {
         total, ...por,
-        avance: total ? Math.round(por.resuelto / total * 100) : 0,
-        corrida: (cajon && cajon.__corrida) || ''
+        avance: total ? Math.round(por.hecha / total * 100) : 0,
+        pares: (corrida && corrida.pares) || 0,
+        cuerpos: (corrida && corrida.cuerpos) || 0,
+        generado: (corrida && corrida.generado) || '',
+        zona: (corrida && corrida.zona) || ''
     };
 };
+
+/** Las fechas guardadas, de la más nueva a la más vieja. */
+export const fechasDe = (cajon) => Object.keys(cajon || {}).sort().reverse();
