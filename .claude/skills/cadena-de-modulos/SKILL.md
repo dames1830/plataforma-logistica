@@ -46,7 +46,7 @@ decisión al operario?**
 | **Replenishment** | qué reponer y cuánto, para lo que nadie pidió | de los **topes** de Análisis SKU | Análisis SKU → Replenishment |
 | **Análisis Buffer** | **qué baja de reserva y cuánto** | de los tres de arriba | Zona Buffer → Análisis Buffer |
 | **Procesar Tareas** | dónde poner lo que ya está en el buffer | del buffer, del stock y de las zonas | Almacenaje → Tareas Día |
-| **Slotting** | qué hacer con lo que no tiene lugar | de Procesar Tareas | **NO EXISTE TODAVÍA** |
+| **Slotting** | qué hacer con lo que no tiene lugar | de Procesar Tareas | módulo principal (14-ago-2026) |
 
 **Procesar Tareas solo EJECUTA.** No vuelve a decidir qué bajar: eso ya se decidió antes.
 
@@ -160,7 +160,31 @@ Y el orden importa: **vencer → cerrar → ajustar → contar**. Cambiarlo romp
 
 Medido el 14-ago-2026 contra producción.
 
-### Slotting no existe, y la cadena termina en el aire
+### Slotting YA EXISTE (14-ago-2026) — lo que falta es el resto de los hallazgos
+
+Se construyó como **módulo principal**, no colgado de Inventario: no es una vista de consulta,
+es donde el equipo trabaja. Vive en `js/services_v245/slottingService.js` (guardar, leer,
+contar), `js/views/slotting.js` (la pantalla) y el barrido en `dashboard_v28.js`.
+
+**Recibe la posta sola.** Al procesar tareas se barre el almacén entero y se registran los
+cuerpos con más de un artículo donde la franja pide uno solo. Va en un `try` aparte: si
+Slotting falla, las tareas ya están creadas y el turno trabaja igual.
+
+**El barrido es del almacén completo, no de lo que llegó al buffer.** Los cuerpos que nadie va
+a tocar en meses son justamente los que se quedan mezclados para siempre, y solo aparecen
+barriendo todo. Sobre el stock del 14-ago encontraba 284.
+
+**Lo que la persona escribe no se pisa nunca:** al volver a registrar un hallazgo se actualiza
+lo que cambia solo —cuándo se vio, cuántas veces, qué hay adentro— y nunca el estado ni la
+nota. Con una excepción: si estaba **resuelto** y vuelve a aparecer, **vuelve a pendiente** —
+dejarlo en resuelto sería mentir.
+
+**Falta el segundo tipo de hallazgo:** los códigos que llegan al buffer y **no tienen dónde ir**.
+El tipo ya está declarado (`sin_lugar`) pero nadie lo registra todavía. Es el que más rinde,
+porque el sistema lo sabe a las 19:00 y hoy se descubre a las 02:00 con el operario parado en
+el pasillo.
+
+### Cómo era antes, y por qué se construyó
 
 El papel imprime **"Revisar Slotting"** cuando un artículo no tiene dónde ir, y **no hay ningún
 módulo donde eso aterrice**. Ni pantalla, ni maqueta, ni registro: el hallazgo se pierde y el
