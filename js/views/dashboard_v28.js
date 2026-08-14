@@ -1,22 +1,22 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0205';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0206';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0205';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0205';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0205';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0205';
-import * as metasService from '../services_v245/metasService.js?v=29.0205';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0205';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0205';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0205';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0205';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0205';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0205';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0205';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0205';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0205';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0205';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0205';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0205';
+import * as adminService from '../services_v245/adminService.js?v=29.0206';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0206';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0206';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0206';
+import * as metasService from '../services_v245/metasService.js?v=29.0206';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0206';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0206';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0206';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0206';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0206';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0206';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0206';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0206';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0206';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0206';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0206';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0206';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -373,7 +373,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0205';
+const VERSION = '29.0206';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4397,7 +4397,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0205');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0206');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15364,7 +15364,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0205 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0206 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17269,19 +17269,30 @@ const renderRFSection = (container) => {
   };
 
   /**
-   * EL ESCOLAR BAJA CON CUENTAGOTAS: 50 PARES Y NADA MÁS.
+   * EL ESCOLAR: 50 PARES DE CADA TALLA EN EL PISO.
    *
-   * Regla de Daniel del 05-ago-2026, para el calzado escolar de CUALQUIER marca — Bata,
-   * North Star, Power, B.G Licenses, todas. No importa si es código nuevo o reposición, ni
-   * cuánto llegue: al piso bajan 50 pares y el resto sube a reserva. Si llegan 300, bajan 50
-   * y suben 250.
+   * Regla de Daniel, para el calzado escolar de CUALQUIER marca — Bata, North Star, Power,
+   * B.G Licenses, todas. No importa si es código nuevo o reposición.
    *
-   * Se mide en PARES y no en cuerpos a propósito: 50 pares no llenan ni un sexto de un cuerpo
-   * del selectivo, así que "un cuerpo" sería veinte veces más de lo que se quiere abajo.
+   * DOS COSAS QUE ESTUVIERON MAL ENTENDIDAS DESDE EL 05-ago-2026, y las dos las corrigió
+   * Daniel el 14-ago mirando el papel:
+   *
+   *   1. Son 50 POR TALLA, no 50 del artículo. *"De la talla treinta, cincuenta pares; de la
+   *      treinta y uno, cincuenta; treinta y dos, cincuenta"*. Estaba puesto como tope del
+   *      artículo entero y repartido entre las tallas, así que a cada una le tocaban 5 o 6
+   *      pares —menos de una caja—; el redondeo terminaba bajando una caja por talla y la
+   *      cuenta cerraba sola. Con 9 tallas bajaban 90 en vez de 450.
+   *
+   *   2. Es un OBJETIVO DE PISO, no una cantidad a bajar. *"Si ya tiene diez, solo tendrías
+   *      que reponer cuarenta. Si ya tienes cuarenta, solo tendrías que reponer diez"*. De
+   *      eso se encarga `planificarPorTalla`, que descuenta lo que ya hay: `falta = objetivo
+   *      − piso`. Una talla que ya llegó a 50 no recibe nada.
+   *
+   * Va con el modo `paresPorTalla`, que existe para esto y NO es el modo `pares`.
    *
    * El escolar se reconoce por el Gender RIMS ('05 SCHOOL'), el mismo campo con el que
-   * franjaDeArticulo ya lo manda a su columna — la 14 del selectivo, que lleva escolar de
-   * cualquier temporada.
+   * franjaDeArticulo lo manda a su columna: la 14 del selectivo, la 21 del MZN01 para
+   * Bubblegummers y B.G Licenses, la 1 para Power y la 4 del MZN02 para North Star.
    */
   const PARES_ESCOLAR = 50;
   const esEscolar = (genderRims) =>
@@ -17336,8 +17347,8 @@ const renderRFSection = (container) => {
     // SCHOOL manda la regla del mezzanine 4, que se pregunta más abajo... por eso este bloque
     // NO se aplica cuando la zona es la que va sin ubicación.
     if (esEscolar(datos.genderRims) && !zonasService.esZonaSinUbicacion(zona)) {
-      return { nombre: 'escolar', regla: { modo: 'pares', valor: PARES_ESCOLAR },
-               motivo: `Es escolar: al piso van ${PARES_ESCOLAR} pares y el resto sube a reserva.` };
+      return { nombre: 'escolar', regla: { modo: 'paresPorTalla', valor: PARES_ESCOLAR },
+               motivo: `Es escolar: tienen que quedar ${PARES_ESCOLAR} pares de CADA TALLA en el piso; el resto sube a reserva.` };
     }
 
     if (origen && origen.has('D')) {
