@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Maqueta · El papel de Slotting</title>
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; background: #58585b; }
+  body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #000; }
+
+  /* --- el rótulo de cada opción, solo para elegir: no se imprime --- */
+  .rotulo { width: 210mm; margin: 10mm auto 3mm; color: #fff;
+            font: 700 15px/1.5 system-ui, sans-serif; }
+  .rotulo small { display: block; font-weight: 400; color: #cbd5e1; font-size: 13px; margin-top: 3px; }
+  .barra { position: sticky; top: 0; z-index: 9; background: #1e293b; color: #e2e8f0;
+           padding: 12px 16px; font: 600 13px/1.6 system-ui, sans-serif; text-align: center; }
+
+  /* --- la hoja, idéntica a la de almacenaje --- */
+  .pg { width: 210mm; height: 297mm; padding: 9mm 7mm; background: #fff;
+        margin: 0 auto 6mm; position: relative; overflow: hidden; }
+  .t1 { text-align: center; font-size: 26pt; font-weight: 700; line-height: 1.05; }
+  .t2 { text-align: center; font-size: 10.5pt; margin-top: 1mm; }
+  .cartel { border: 2.2px solid #000; margin-top: 2.5mm; padding: 1.2mm 2mm; text-align: center; }
+  .cartel b { display: block; font-size: 13pt; }
+  .cartel span { font-size: 8.5pt; }
+  table { width: 100%; border-collapse: collapse; }
+  .firmas { margin-top: 3mm; font-size: 10.5pt; }
+  .firmas td { border: 1px solid #888780; height: 8mm; padding: 0 2mm; }
+  .firmas .rot { background: #F1EFE8; font-weight: 400; white-space: nowrap; }
+  .det { margin-top: 3mm; font-size: 10.5pt; }
+  .det th { background: #2C2C2A; color: #fff; font-weight: 700; font-size: 10.5pt;
+            border: 1px solid #888780; height: 7mm; text-align: center; }
+  .det td { border: 1px solid #888780; height: 6.4mm; text-align: center; padding: 0 1mm; }
+  .det td.g { background: #F1EFE8; font-weight: 700; }
+  .det td.b { font-weight: 700; }
+  .det tr.tot td { background: #B4B2A9; font-weight: 700; height: 7mm; }
+  .det tr.tt td { background: #2C2C2A; color: #fff; font-weight: 700; height: 8mm; font-size: 12pt; }
+
+  /* --- lo propio de cada opción --- */
+  .banda td { background: #2C2C2A; color: #fff; font-weight: 700; text-align: left;
+              height: 7mm; font-size: 11.5pt; letter-spacing: .5px; }
+  .grande td { height: 11mm; font-size: 13pt; }
+  .grande td.dest { font-size: 14pt; font-weight: 700; }
+  .tick { width: 6mm; }
+  .tick div { width: 4.6mm; height: 4.6mm; border: 1.4px solid #000; margin: 0 auto; }
+  .vacio { background: #fff; }
+  .flecha { font-size: 13pt; font-weight: 700; }
+  .nota { margin-top: 2.5mm; border: 1px solid #888780; height: 12mm; font-size: 9pt;
+          padding: 1mm 2mm; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="barra">
+  MAQUETA · tres formas de imprimir las tareas de Slotting. Los datos son los de la corrida real del 14-ago.
+  <button onclick="window.print()" style="background:#4f46e5;color:#fff;border:0;border-radius:8px;padding:7px 18px;font:700 13px system-ui;cursor:pointer;margin-left:10px;">🖨️ Imprimir</button>
+</div>
+
+<!-- ══════════════════════════════ OPCIÓN A ══════════════════════════════ -->
+<div class="rotulo">OPCIÓN A · Igual que el papel de almacenaje
+  <small>Las mismas siete columnas, el mismo encabezado y las mismas firmas. Una tarea por hoja.
+  Lo que cambia son los títulos: acá se saca, no se almacena.</small></div>
+
+<div class="pg">
+  <div class="t1">SLOTTING · TAREA 1</div>
+  <div class="t2">14/08/2026 · Selectivo · 1 línea · 283 pares</div>
+
+  <div class="cartel">
+    <b>ESTA TAREA TIENE DESTINO</b>
+    <span>Lo que sacás va al cuerpo que dice la última columna. No lo dejes en el piso.</span>
+  </div>
+
+  <table class="det">
+    <thead><tr>
+      <th style="width:18%">De dónde</th><th style="width:16%">SKU</th>
+      <th style="width:11%">Pares</th><th style="width:14%">Marca</th>
+      <th style="width:14%">Temporada</th><th style="width:27%">A dónde va</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="b">SEL-03-18</td><td>8243844</td><td class="b">283</td>
+          <td>Bata</td><td>T. Actual</td><td class="g">SEL-05-15</td></tr>
+      <tr class="tot"><td colspan="2">Total tarea 1</td><td>283</td><td colspan="3"></td></tr>
+    </tbody>
+  </table>
+
+  <table class="firmas">
+    <tr><td class="rot">Operario</td><td></td><td class="rot">Inicio</td><td style="width:22mm"></td>
+        <td class="rot">Término</td><td style="width:22mm"></td></tr>
+    <tr><td class="rot">Revisado por</td><td colspan="5"></td></tr>
+  </table>
+
+  <div class="nota">Observaciones:</div>
+</div>
+
+<!-- ══════════════════════════════ OPCIÓN B ══════════════════════════════ -->
+<div class="rotulo">OPCIÓN B · Por ruta, con la columna del almacén como banda
+  <small>Menos columnas y letra más grande. Las líneas van agrupadas por columna del almacén,
+  así el operario recorre una columna por vez y no cruza el pasillo de ida y vuelta.
+  La marca y la temporada salen del papel: si dice SEL-05-15, eso ya está adentro.</small></div>
+
+<div class="pg">
+  <div class="t1">SLOTTING · TAREA 3</div>
+  <div class="t2">14/08/2026 · Selectivo · 4 líneas · 204 pares</div>
+
+  <table class="det grande">
+    <thead><tr>
+      <th style="width:26%">De dónde</th><th style="width:22%">Sacar</th>
+      <th style="width:14%">Pares</th><th style="width:38%">A dónde va</th>
+    </tr></thead>
+    <tbody>
+      <tr class="banda"><td colspan="4">COLUMNA SEL-05</td></tr>
+      <tr><td class="b">SEL-05-01</td><td>8517900</td><td class="b">160</td>
+          <td class="dest">— a criterio —</td></tr>
+      <tr><td class="b">SEL-05-01</td><td>5610437</td><td class="b">44</td>
+          <td class="dest">— a criterio —</td></tr>
+      <tr class="banda"><td colspan="4">COLUMNA SEL-14</td></tr>
+      <tr><td class="b">SEL-14-01</td><td>8566849</td><td class="b">19</td>
+          <td class="dest g">SEL-14-02</td></tr>
+      <tr class="banda"><td colspan="4">COLUMNA SEL-12</td></tr>
+      <tr><td class="b">SEL-12-20</td><td>6016213</td><td class="b">13</td>
+          <td class="dest g">SEL-12-19</td></tr>
+      <tr class="tt"><td colspan="2">TOTAL DE LA TAREA</td><td>236</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <table class="firmas">
+    <tr><td class="rot">Operario</td><td></td><td class="rot">Inicio</td><td style="width:22mm"></td>
+        <td class="rot">Término</td><td style="width:22mm"></td></tr>
+  </table>
+
+  <div class="nota">Observaciones:</div>
+</div>
+
+<!-- ══════════════════════════════ OPCIÓN C ══════════════════════════════ -->
+<div class="rotulo">OPCIÓN C · Con control de lo que se sacó de verdad
+  <small>Como la A, más dos casillas en blanco al final de cada línea: el tilde de hecho y
+  cuántos pares sacó realmente. El stock del papel es la foto de las 19:00, así que lo que hay
+  en el cuerpo a las 2 de la mañana puede ser otro, y hoy eso se pierde.</small></div>
+
+<div class="pg">
+  <div class="t1">SLOTTING · TAREA 2</div>
+  <div class="t2">14/08/2026 · Selectivo · 3 líneas · 221 pares</div>
+
+  <div class="cartel">
+    <b>ANOTÁ LO QUE SACASTE DE VERDAD</b>
+    <span>Si en el cuerpo hay menos de lo que dice el papel, escribí lo que encontraste.</span>
+  </div>
+
+  <table class="det">
+    <thead><tr>
+      <th style="width:6%">✓</th><th style="width:18%">De dónde</th><th style="width:16%">SKU</th>
+      <th style="width:11%">Pares</th><th style="width:12%">Marca</th>
+      <th style="width:22%">A dónde va</th><th style="width:15%">Sacados</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-04-13</td><td>5813997</td>
+          <td class="b">189</td><td>Bata</td><td class="g">SEL-04-12</td><td class="vacio"></td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-14-01</td><td>8566849</td>
+          <td class="b">19</td><td>Bata</td><td class="g">SEL-14-02</td><td class="vacio"></td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-12-20</td><td>6016213</td>
+          <td class="b">13</td><td>Bata</td><td class="g">SEL-12-19</td><td class="vacio"></td></tr>
+      <tr class="tt"><td colspan="3">TOTAL DE LA TAREA</td><td>221</td><td colspan="2"></td><td class="vacio"></td></tr>
+    </tbody>
+  </table>
+
+  <table class="firmas">
+    <tr><td class="rot">Operario</td><td></td><td class="rot">Inicio</td><td style="width:22mm"></td>
+        <td class="rot">Término</td><td style="width:22mm"></td></tr>
+    <tr><td class="rot">Revisado por</td><td colspan="5"></td></tr>
+  </table>
+
+  <div class="nota">Observaciones:</div>
+</div>
+
+</body>
+</html>

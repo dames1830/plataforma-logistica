@@ -236,6 +236,59 @@ artículo"— y la mercadería mal ubicada que el cálculo detecta de paso. Dani
 pestaña **Inventario**, con **estado y porcentaje de avance**: *"100 cuerpos por revisar,
 hicieron 60 → 60% hoy"*. El módulo tiene que aguantar tipos de hallazgo nuevos sin rehacerse.
 
+### NINGÚN MÓDULO SABE LO QUE SE MUEVE — el agujero de fondo
+
+Regla de Daniel, 14-ago-2026, y es la que ordena todas las de abajo:
+
+> *"Slotting, así como los demás módulos, debe enterarse de qué es lo que hacen los otros
+> módulos. Todos los módulos deben estar sincronizados, sabiendo lo que se mueve: ingresos o
+> salidas."*
+
+**Hoy cada módulo decide contra la foto de stock de las 19:00**, y esa foto no sabe nada de lo
+que pasó después. Todo lo que se movió en el turno —lo que el almacenaje bajó, lo que picking
+sacó, lo que Slotting mudó— es invisible hasta que el robot publique la foto siguiente.
+
+**Los cuatro cruces que faltan, en orden de lo que duelen:**
+
+| Quién | Tiene que saber de | Qué pasa hoy |
+|---|---|---|
+| **Slotting** | los cuerpos que **Procesar Tareas** prometió esa noche | manda un intruso a un cuerpo que la tarea de almacenaje ya reservó, y los dos llegan al mismo lugar |
+| **Procesar Tareas** | los cuerpos que **Slotting** va a liberar | los ve ocupados y deriva a Slotting habiendo lugar mañana — el huevo y la gallina que trabó la tarea de Bata |
+| **Los dos** | lo que **picking** sacó en el turno | un cuerpo puede estar vacío desde las 23:00 y el cálculo de medianoche lo cree lleno |
+| **La foto siguiente** | lo que **Slotting** ya ejecutó | entre que se ejecuta y el robot publica, el barrido vuelve a encontrar el mismo hallazgo |
+
+**La pieza que falta es una sola: un registro de MOVIMIENTOS COMPROMETIDOS**, con lo que cada
+módulo mandó mover y todavía no se refleja en el stock. Sobre la foto se le suman las entradas y
+se le restan las salidas, y recién sobre ese resultado se decide. Es la misma forma que ya se
+usó para el Replenishment —publicar la corrida en vez de adivinarla— aplicada a las ubicaciones.
+
+**El parche que hay hoy no alcanza:** `destinosDeLasTareas()` lee los destinos grabados en las
+tareas, pero solo eso —ni las salidas de picking, ni lo ejecutado de Slotting— y encima
+`cargarContextoSugerencia` **solo mira las tareas no Finalizadas**, así que una tarea trabajada a
+las 23:00 desaparece de la cuenta justo cuando su mercadería ya está en el cuerpo.
+
+### NADA QUEDA A CRITERIO DEL OPERARIO
+
+Daniel, 14-ago-2026: *"nada debe quedar a criterio del operario, el sistema lo debe controlar
+todo"*. Vale para la hoja de Slotting igual que para la de almacenaje: **toda línea sale con su
+cuerpo de destino**, no solo las del arrastre.
+
+**Y se puede.** Medido sobre el selectivo con el stock del 14-ago-2026, las **51 líneas** del
+barrido encuentran destino con las reglas que ya existen:
+
+| A dónde va | Líneas | Pares |
+|---|---|---|
+| a su propio cuerpo — junta la familia | 23 | 1.211 |
+| a la columna de **saldo grande** (`SEL-04`) | 25 | 1.759 |
+| a la columna de saldos | 3 | 41 |
+| **sin lugar** | **0** | **0** |
+
+**La banda del saldo grande es lo que lo hace posible.** Sin ella, los 25 intrusos de 20 a 199
+pares pedían un cuerpo entero de la franja actual, y ahí no hay ninguno libre.
+
+Si alguna vez una línea no tiene destino, **no sale en el papel**: queda retenida hasta que lo
+tenga. Una línea sin destino le devuelve la decisión al operario, que es justo lo que no se puede.
+
 ### Procesar Tareas no se pasa la posta a sí mismo
 
 Los cuerpos que una tarea ya prometió **no se marcan como ocupados** para la corrida siguiente:

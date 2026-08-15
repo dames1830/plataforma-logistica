@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>El papel de Slotting · B con las casillas de la C</title>
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; background: #58585b; }
+  body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #000; }
+
+  .barra { position: sticky; top: 0; z-index: 9; background: #1e293b; color: #e2e8f0;
+           padding: 12px 16px; font: 600 13px/1.6 system-ui, sans-serif; text-align: center; }
+  .barra button { background:#4f46e5; color:#fff; border:0; border-radius:8px;
+                  padding:7px 18px; font:700 13px system-ui; cursor:pointer; margin-left:10px; }
+  .rotulo { width: 210mm; margin: 10mm auto 3mm; color: #fff;
+            font: 700 15px/1.5 system-ui, sans-serif; }
+  .rotulo small { display:block; font-weight:400; color:#cbd5e1; font-size:13px; margin-top:3px; }
+
+  .pg { width: 210mm; height: 297mm; padding: 9mm 7mm; background: #fff;
+        margin: 0 auto 6mm; position: relative; overflow: hidden; }
+  .t1 { text-align: center; font-size: 26pt; font-weight: 700; line-height: 1.05; }
+  .t2 { text-align: center; font-size: 10.5pt; margin-top: 1mm; }
+  .cartel { border: 2.2px solid #000; margin-top: 2.5mm; padding: 1.2mm 2mm; text-align: center; }
+  .cartel b { display: block; font-size: 13pt; }
+  .cartel span { font-size: 8.5pt; }
+  table { width: 100%; border-collapse: collapse; }
+  .firmas { margin-top: 3mm; font-size: 10.5pt; }
+  .firmas td { border: 1px solid #888780; height: 8mm; padding: 0 2mm; }
+  .firmas .rot { background: #F1EFE8; font-weight: 400; white-space: nowrap; }
+
+  .det { margin-top: 3mm; }
+  .det th { background: #2C2C2A; color: #fff; font-weight: 700; font-size: 10.5pt;
+            border: 1px solid #888780; height: 7mm; text-align: center; }
+  .det td { border: 1px solid #888780; height: 11mm; text-align: center;
+            padding: 0 1mm; font-size: 13pt; }
+  .det td.b { font-weight: 700; }
+  .det td.dest { background: #F1EFE8; font-weight: 700; font-size: 15pt; }
+  .det tr.tt td { background: #2C2C2A; color: #fff; font-weight: 700; height: 9mm; font-size: 12pt; }
+  .banda td { background: #2C2C2A; color: #fff; font-weight: 700; text-align: left;
+              height: 7.5mm; font-size: 12pt; letter-spacing: 1px; }
+  .tick div { width: 5.4mm; height: 5.4mm; border: 1.6px solid #000; margin: 0 auto; }
+  .vacio { background: #fff; }
+  .nota { margin-top: 2.5mm; border: 1px solid #888780; height: 12mm; font-size: 9pt;
+          padding: 1mm 2mm; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="barra">
+  EL PAPEL DE SLOTTING · la estructura de la B con las casillas de la C. Datos reales de la corrida del selectivo.
+  <button onclick="window.print()">🖨️ Imprimir</button>
+</div>
+
+<div class="rotulo">Así saldría
+  <small>Seis columnas. La banda negra anuncia en qué columna del almacén está trabajando, y
+  cada tarea entra en una o dos: van ordenadas por ubicación para que no cruce el pasillo.
+  Ninguna línea dice "a criterio" — todas llevan su cuerpo de destino.</small></div>
+
+<!-- ═══════════════════════════ TAREA 1 ═══════════════════════════ -->
+<div class="pg">
+  <div class="t1">SLOTTING · TAREA 1</div>
+  <div class="t2">14/08/2026 · Selectivo · 3 líneas · 202 pares</div>
+
+  <div class="cartel">
+    <b>ANOTÁ LO QUE SACASTE DE VERDAD</b>
+    <span>Si en el cuerpo hay menos de lo que dice el papel, escribí lo que encontraste.</span>
+  </div>
+
+  <table class="det">
+    <thead><tr>
+      <th style="width:7%">✓</th>
+      <th style="width:23%">De dónde</th>
+      <th style="width:19%">Sacar</th>
+      <th style="width:12%">Pares</th>
+      <th style="width:26%">A dónde va</th>
+      <th style="width:13%">Sacados</th>
+    </tr></thead>
+    <tbody>
+      <tr class="banda"><td colspan="6">COLUMNA SEL-05</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-05-01</td><td>8517900</td>
+          <td class="b">142</td><td class="dest">SEL-11-01</td><td class="vacio"></td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-05-01</td><td>5610437</td>
+          <td class="b">25</td><td class="dest">SEL-04-07</td><td class="vacio"></td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-05-12</td><td>5616437</td>
+          <td class="b">35</td><td class="dest">SEL-04-04</td><td class="vacio"></td></tr>
+      <tr class="tt"><td colspan="3">TOTAL DE LA TAREA</td><td>202</td><td></td><td class="vacio"></td></tr>
+    </tbody>
+  </table>
+
+  <table class="firmas">
+    <tr><td class="rot">Operario</td><td></td><td class="rot">Inicio</td><td style="width:22mm"></td>
+        <td class="rot">Término</td><td style="width:22mm"></td></tr>
+    <tr><td class="rot">Revisado por</td><td colspan="5"></td></tr>
+  </table>
+
+  <div class="nota">Observaciones:</div>
+</div>
+
+<!-- ═══════════════════════════ TAREA 2 ═══════════════════════════ -->
+<div class="pg">
+  <div class="t1">SLOTTING · TAREA 2</div>
+  <div class="t2">14/08/2026 · Selectivo · 4 líneas · 248 pares</div>
+
+  <div class="cartel">
+    <b>ANOTÁ LO QUE SACASTE DE VERDAD</b>
+    <span>Si en el cuerpo hay menos de lo que dice el papel, escribí lo que encontraste.</span>
+  </div>
+
+  <table class="det">
+    <thead><tr>
+      <th style="width:7%">✓</th>
+      <th style="width:23%">De dónde</th>
+      <th style="width:19%">Sacar</th>
+      <th style="width:12%">Pares</th>
+      <th style="width:26%">A dónde va</th>
+      <th style="width:13%">Sacados</th>
+    </tr></thead>
+    <tbody>
+      <tr class="banda"><td colspan="6">COLUMNA SEL-06</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01</td><td>6616312</td>
+          <td class="b">114</td><td class="dest">SEL-04-07</td><td class="vacio"></td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01</td><td>6516993</td>
+          <td class="b">57</td><td class="dest">SEL-04-17</td><td class="vacio"></td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-09</td><td>6616328</td>
+          <td class="b">52</td><td class="dest">SEL-04-06</td><td class="vacio"></td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-13</td><td>5616331</td>
+          <td class="b">25</td><td class="dest">SEL-04-14</td><td class="vacio"></td></tr>
+      <tr class="tt"><td colspan="3">TOTAL DE LA TAREA</td><td>248</td><td></td><td class="vacio"></td></tr>
+    </tbody>
+  </table>
+
+  <table class="firmas">
+    <tr><td class="rot">Operario</td><td></td><td class="rot">Inicio</td><td style="width:22mm"></td>
+        <td class="rot">Término</td><td style="width:22mm"></td></tr>
+    <tr><td class="rot">Revisado por</td><td colspan="5"></td></tr>
+  </table>
+
+  <div class="nota">Observaciones:</div>
+</div>
+
+</body>
+</html>
