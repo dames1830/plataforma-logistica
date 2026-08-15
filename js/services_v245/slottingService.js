@@ -76,18 +76,55 @@ export const guardarTareas = async (cajon) => {
 /**
  * ARMA LAS TAREAS a partir de las líneas por sacar.
  *
- * Se ordenan por ubicación y se van juntando hasta el tope. Una línea sola más grande que el
- * tope se queda sola en su tarea: partir la mercadería de un cuerpo entre dos operarios es
- * peor que una tarea grande.
+ * ══════════════════════════════════════════════════════════════════════════════
+ * LA UNIDAD ES EL CUERPO, NO EL PAR. Un cuerpo NUNCA se parte entre dos tareas.
+ *
+ * Decisión de Daniel del 14-ago-2026, después de medir las dos formas sobre la corrida real
+ * —252 cuerpos mezclados, 1.106 líneas, 22.259 pares—:
+ *
+ *              por pares (como estaba)      por cuerpo
+ *   tareas               86                     94
+ *   mediana             269 pares              248 pares
+ *   la más grande       300                    478
+ *   CUERPOS PARTIDOS     27 (11%)               0
+ *
+ * Los 27 cuerpos partidos son el problema: el operario sacaba la mitad de los intrusos en una
+ * tarea y la otra mitad quedaba para otra, quizás de otro día u otra persona. Mientras tanto
+ * ese cuerpo **no sirve para nada** —sigue mezclado— y la tarea de almacenaje que lo estaba
+ * esperando sigue bloqueada. **La unidad de valor es el cuerpo limpio; medio cuerpo limpio no
+ * entrega nada.**
+ *
+ * El tope pasa a ser una GUÍA DE CARGA, no un corte: se juntan cuerpos enteros mientras entren,
+ * y un cuerpo que por sí solo se pasa del tope se queda solo en su tarea. Con los datos del
+ * 14-ago eso son 4 de 252 cuerpos, el mayor de 478 pares.
+ *
+ * Sale barato porque casi todos los cuerpos son chicos: limpiar uno cuesta 72 pares de mediana
+ * y el 35% se limpian con 50 o menos.
+ *
+ * La regla ya existía para una línea suelta —"partir la mercadería de un cuerpo entre dos
+ * operarios es peor que una tarea grande"—; esto la extiende al cuerpo entero, que es lo que
+ * siempre quiso decir.
+ * ══════════════════════════════════════════════════════════════════════════════
  */
 export const armarTareas = (lineas, tope = PARES_POR_TAREA) => {
-    const orden = [...(lineas || [])].sort((a, b) => String(a.ubi).localeCompare(String(b.ubi)));
+    // Primero se juntan las líneas de cada cuerpo, para no poder partirlo ni por error
+    const porCuerpo = new Map();
+    (lineas || []).forEach(l => {
+        const k = String(l.ubi || '');
+        if (!porCuerpo.has(k)) porCuerpo.set(k, []);
+        porCuerpo.get(k).push(l);
+    });
+
+    // Y los cuerpos se recorren en orden de ubicación, para que el operario haga una columna
+    // por vez y no cruce el almacén de ida y vuelta.
+    const orden = [...porCuerpo.keys()].sort((a, b) => a.localeCompare(b));
     const tareas = [];
     let actual = [], suma = 0;
-    orden.forEach(l => {
-        const p = Math.round(Number(l.pares) || 0);
+    orden.forEach(k => {
+        const grupo = porCuerpo.get(k);
+        const p = grupo.reduce((a, l) => a + Math.round(Number(l.pares) || 0), 0);
         if (suma > 0 && suma + p > tope) { tareas.push({ lineas: actual, pares: suma }); actual = []; suma = 0; }
-        actual.push(l); suma += p;
+        actual.push(...grupo); suma += p;
     });
     if (actual.length) tareas.push({ lineas: actual, pares: suma });
     return tareas;
