@@ -1,24 +1,24 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0214';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0215';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0214';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0214';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0214';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0214';
-import * as metasService from '../services_v245/metasService.js?v=29.0214';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0214';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0214';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0214';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0214';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0214';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0214';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0214';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0214';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0214';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0214';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0214';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0214';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0214';
-import { montarSlotting } from './slotting.js?v=29.0214';
+import * as adminService from '../services_v245/adminService.js?v=29.0215';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0215';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0215';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0215';
+import * as metasService from '../services_v245/metasService.js?v=29.0215';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0215';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0215';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0215';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0215';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0215';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0215';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0215';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0215';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0215';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0215';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0215';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0215';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0215';
+import { montarSlotting } from './slotting.js?v=29.0215';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -375,7 +375,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0214';
+const VERSION = '29.0215';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4404,7 +4404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0214');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0215');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15371,7 +15371,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0214 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0215 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17067,6 +17067,27 @@ const renderRFSection = (container) => {
       casaNueva.get(s7).add(k);
     }));
 
+    /* SOLO SE ARRASTRA UN RESTO, NO UNA MUDANZA. Este candado apareció al correr el barrido
+     * contra los datos de verdad: sin él salían líneas de 612, 573 y 553 pares — un artículo
+     * que vive en tres cuerpos del MZN02 y al que la tarea le nombró otro. Eso no es lo que
+     * dijo Daniel; eso es mover el artículo entero, y además a un cuerpo donde no entra.
+     *
+     * La regla nace del corte de los 20: un artículo pasa a CÓDIGO NUEVO cuando tiene 19 pares
+     * o menos en todo el almacén, y el resto que deja atrás es justamente eso. Así que si lo
+     * que tiene fuera de sus cuerpos nuevos llega a 20, no es un resto y no se toca.
+     *
+     * Lo que queda afuera por este candado —los artículos de reposición repartidos en varios
+     * cuerpos, 233 medidos el 14-ago— cae bajo el mismo principio de "toda la familia junta",
+     * pero por otro camino: no están esperando una llegada que los consolide. Falta que Daniel
+     * decida si quieren tarea propia. */
+    const CORTE_CODIGO_NUEVO = 20;
+    const fueraDeSuCasa = new Map();
+    casaNueva.forEach((suyos, s7) => {
+      let n = 0;
+      cuerpos.forEach((c, k) => { if (!suyos.has(k)) n += (c.m.get(s7) || 0); });
+      fueraDeSuCasa.set(s7, n);
+    });
+
     /* NO SE DUPLICA CON LAS DE ARRIBA. Un resto que está en un cuerpo mezclado YA salió como
      * línea del barrido, sin destino. Si además hay que arrastrarlo, no se agrega otra línea:
      * se le completa el destino a la que ya está. Sin esto el operario recibía la misma
@@ -17076,6 +17097,7 @@ const renderRFSection = (container) => {
 
     let arrastres = 0;
     casaNueva.forEach((suyos, s7) => {
+      if ((fueraDeSuCasa.get(s7) || 0) >= CORTE_CODIGO_NUEVO) return;   // es mudanza, no resto
       // A dónde se lo lleva: si la tarea le dio más de un cuerpo, al primero. El equipo
       // termina de acomodar adentro, que para eso son 300 pares como mucho.
       const aDonde = [...suyos].sort()[0];

@@ -403,6 +403,17 @@ vez de agregar otra. Sin eso el operario recibía la misma mercadería dos veces
 **EL BARRIDO CORRE DESPUÉS DE ARMAR LAS TAREAS, no antes.** El destino no existe hasta que
 `calcularSugerenciaDeItem` eligió los cuerpos.
 
+**SE ARRASTRA UN RESTO, NO UNA MUDANZA — y ese candado costó descubrirlo.** La primera versión
+arrastraba todo lo que el artículo tuviera fuera de sus cuerpos nuevos, y corriéndola contra los
+datos de verdad salían líneas de **612, 573 y 553 pares**: un artículo que vive en tres cuerpos
+del MZN02 y al que la tarea le nombró otro. Eso no es juntar la familia, es mover el artículo
+entero a un cuerpo donde no entra.
+
+El candado sale del mismo corte de los 20: si lo que el artículo tiene **fuera de sus cuerpos
+nuevos llega a 20 pares, no es un resto** y no se toca. Medido sobre beta el 14-ago-2026: con el
+candado salen **22 arrastres** de 12 a 19 pares; sin él salían 118, y 71 artículos se movían de
+más.
+
 **Cuántos hay, medido sobre el stock del 14-ago-2026** — artículos con 19 pares o menos en todo
 el piso, y dónde está cada resto suyo:
 
