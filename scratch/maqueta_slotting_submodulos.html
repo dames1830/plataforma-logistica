@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Slotting · Tareas Día y KPI</title>
+<style>
+  :root { --bg-dark:#0f172a; --border:rgba(255,255,255,0.1); --primary:#4f46e5; --text-muted:#94a3b8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg-dark); color:#e2e8f0;
+         font-family:Inter,'Segoe UI',system-ui,sans-serif; padding:0 0 3rem; }
+  .barra { position:sticky; top:0; z-index:9; background:#1e293b; padding:12px 16px;
+           font:600 13px/1.6 system-ui; text-align:center; border-bottom:1px solid var(--border); }
+  .wrap { max-width:1500px; margin:0 auto; padding:0 1.2rem; }
+  .rotulo { margin:2rem 0 0.9rem; font:800 15px/1.5 system-ui; color:#fff; }
+  .rotulo small { display:block; font-weight:400; color:var(--text-muted); font-size:13px; margin-top:4px; }
+
+  .subtabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:1.1rem; }
+  .subtab { padding:0.6rem 1.1rem; font-size:0.78rem; font-weight:700; color:var(--text-muted);
+            border-bottom:2px solid transparent; cursor:pointer; white-space:nowrap; }
+  .subtab.on { color:#fff; border-bottom-color:var(--primary); }
+
+  .panel { background:rgba(30,41,59,0.35); border:1px solid var(--border);
+           border-radius:12px; padding:1.1rem 1.4rem; margin-bottom:1rem; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:0.8rem; margin-bottom:1rem; }
+  .kpi { background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px; padding:0.85rem 1rem; }
+  .kpi h4 { margin:0; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); font-weight:800; }
+  .kpi .n { font-size:1.9rem; font-weight:900; color:#fff; line-height:1.15; margin-top:2px; }
+  .kpi .n small { font-size:0.75rem; font-weight:700; color:var(--text-muted); }
+  .kpi .pie { font-size:0.68rem; color:var(--text-muted); margin-top:2px; }
+
+  table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+  thead tr { color:var(--text-muted); text-transform:uppercase; font-size:0.68rem;
+             font-weight:800; letter-spacing:0.05em; border-bottom:2px solid rgba(79,70,229,0.35); }
+  th { padding:7px 9px; text-align:left; white-space:nowrap; }
+  td { padding:10px 9px; border-bottom:1px solid rgba(255,255,255,0.04); }
+  tbody tr:hover { background:rgba(79,70,229,0.06); }
+  .c { text-align:center; }
+  .b { color:#fff; font-weight:700; }
+  .asig { color:#fff; font-weight:800; background:rgba(79,70,229,0.06); }
+  .est { font-weight:900; font-size:0.7rem; }
+  .v { color:#22c55e; } .am { color:#eab308; } .gr { color:#94a3b8; } .az { color:#60a5fa; }
+  .acc { font-size:1.05rem; cursor:pointer; background:none; border:0; padding:0 3px; }
+  .chip { display:inline-block; border-radius:20px; padding:0.3rem 0.85rem; font-size:0.7rem;
+          font-weight:800; border:1px solid var(--border); background:rgba(255,255,255,0.03);
+          color:var(--text-muted); margin-right:6px; }
+  .chip.on { background:#94a3b8; color:#0b0f19; border-color:#94a3b8; }
+  .btn { background:var(--primary); border:0; color:#fff; border-radius:8px;
+         padding:0.5rem 1.1rem; font-size:0.74rem; font-weight:800; cursor:pointer; }
+  .btn.gh { background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#e2e8f0; }
+  .nota { font-size:0.72rem; color:var(--text-muted); margin-top:0.5rem; line-height:1.6; }
+  .barraP { height:8px; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden; margin-top:0.8rem; }
+  .barraP div { height:100%; background:linear-gradient(90deg,#22c55e,#4ade80); border-radius:10px; }
+  .mini { font-size:0.66rem; color:var(--text-muted); }
+  .bloque { background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px;
+            padding:1rem 1.2rem; margin-bottom:1rem; }
+  .bloque h3 { margin:0 0 0.8rem; font-size:0.8rem; color:#fff; letter-spacing:0.06em;
+               text-transform:uppercase; font-weight:800; }
+  .bloque table { display:block; overflow-x:auto; white-space:nowrap; }
+  .bar { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:0.74rem; }
+  .bar span:first-child { width:120px; color:var(--text-muted); }
+  .bar .t { flex:1; height:14px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; }
+  .bar .t i { display:block; height:100%; background:#4f46e5; }
+  .bar b { width:60px; text-align:right; color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="barra">MAQUETA · los dos submódulos nuevos de Slotting. Números reales de la corrida del 14-ago.</div>
+
+<div class="wrap">
+
+  <!-- ══════════════════ SUBMÓDULO 1 ══════════════════ -->
+  <div class="rotulo">SLOTTING → TAREAS DÍA · Resumen
+    <small>La misma tabla que Almacenaje → Tareas Día, con las mismas columnas, los mismos
+    estados y los mismos botones. Se hace clic en la fila para asignar y finalizar, igual que allá.</small></div>
+
+  <div class="subtabs">
+    <div class="subtab on">📋 Tareas Día</div>
+    <div class="subtab">📊 KPI Slotting</div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:0.66rem; color:var(--text-muted); font-weight:800; letter-spacing:0.12em; text-transform:uppercase;">
+          Tareas de ordenamiento · SEL+MZN01+MZN02+MZN03</div>
+        <div style="display:flex; align-items:baseline; gap:0.6rem; margin-top:0.35rem;">
+          <span style="font-size:2rem; font-weight:800; color:#fff; line-height:1;">12</span>
+          <span style="font-size:1rem; color:var(--text-muted);">de 95 tareas hechas</span>
+          <span style="font-size:1.1rem; font-weight:800; color:#22c55e;">13%</span>
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">
+          252 cuerpos por limpiar · <b style="color:#94a3b8;">22.693 pares</b> por sacar ·
+          <b style="color:#22c55e;">31 cuerpos liberados</b>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem; align-items:center;">
+        <select style="background:rgba(255,255,255,0.04); border:1px solid var(--border); color:#fff;
+                       border-radius:7px; padding:0.45rem 0.7rem; font-size:0.75rem;">
+          <option>2026-08-14</option><option>2026-08-13</option></select>
+        <button class="btn gh">🖨️ IMPRIMIR</button>
+        <button class="btn">🔍 BUSCAR AHORA</button>
+      </div>
+    </div>
+    <div class="barraP"><div style="width:13%"></div></div>
+    <div class="nota">Generado: <b style="color:#94a3b8;">2026-08-14 22:58</b> · 3 líneas quedaron retenidas sin dónde ir</div>
+  </div>
+
+  <div style="margin-bottom:0.9rem;">
+    <span class="chip on">Todas · 95</span><span class="chip">Por hacer · 71</span>
+    <span class="chip">Asignadas · 12</span><span class="chip">Hechas · 12</span>
+    <span class="chip">No trabajadas · 0</span>
+  </div>
+
+  <div class="panel" style="padding:0.4rem 0.6rem; overflow-x:auto;">
+    <table style="min-width:1150px;">
+      <thead><tr>
+        <th>Fecha</th><th>Tarea</th><th class="c">Pares</th><th class="c">Cuerpos</th>
+        <th>Zona</th><th>Asignado</th><th>Apoyo</th><th>Inicio</th><th>Término</th>
+        <th class="c">Pares/h</th><th class="c">Objetivo</th><th class="c">Estado</th><th class="c">Acciones</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>14/08/2026</td><td class="b">Slot 1</td><td class="c">287</td><td class="c">5</td>
+          <td>MZN01</td><td class="asig">MRAMOS</td><td>---</td><td>23:10</td><td>23:41</td>
+          <td class="c b" style="font-size:0.95rem;">556</td><td class="c"><span class="v" style="font-weight:900; font-size:0.7rem;">CUMPLIÓ</span></td>
+          <td class="c"><span class="est v">FINALIZADO</span></td>
+          <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444; opacity:0.3;">🗑️</button></td>
+        </tr>
+        <tr>
+          <td>14/08/2026</td><td class="b">Slot 2</td><td class="c">202</td><td class="c">2</td>
+          <td>MZN01</td><td class="asig">JCHAVEZ</td><td>LTORRES</td><td>23:15</td><td>---</td>
+          <td class="c b" style="font-size:0.95rem;">---</td><td class="c"><span class="gr" style="font-size:0.7rem;">---</span></td>
+          <td class="c"><span class="est am">ASIGNADO</span></td>
+          <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444;">🗑️</button></td>
+        </tr>
+        <tr>
+          <td>14/08/2026</td><td class="b">Slot 3</td><td class="c">231</td><td class="c">2</td>
+          <td>MZN01</td><td>---</td><td>---</td><td>---</td><td>---</td>
+          <td class="c">---</td><td class="c">---</td>
+          <td class="c"><span class="est az">CREADA</span></td>
+          <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444;">🗑️</button></td>
+        </tr>
+        <tr>
+          <td>13/08/2026</td><td class="b">Slot 9</td><td class="c">478</td><td class="c">1</td>
+          <td>MZN03</td><td>---</td><td>---</td><td>---</td><td>---</td>
+          <td class="c">---</td><td class="c">---</td>
+          <td class="c"><span class="est gr">NO TRABAJADA</span></td>
+          <td class="c"><span title="Jornada cerrada" style="opacity:0.45;">🔒</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="nota" style="margin-bottom:2rem;">
+    <b style="color:#fff;">Lo que cambia respecto de almacenaje:</b> en vez de MARCA va <b>ZONA</b>, y se
+    agrega <b>CUERPOS</b> — que es la unidad de trabajo del slotting: la tarea se mide en cuerpos
+    limpios, no en pares movidos. El resto es igual, incluidas las cuatro acciones y el candado
+    de jornada cerrada.
+  </div>
+
+  <!-- ══════════════════ SUBMÓDULO 2 ══════════════════ -->
+  <div class="rotulo">SLOTTING → KPI SLOTTING
+    <small>Sobre las tareas finalizadas. Mismo formato de tarjetas que KPI Tareas.</small></div>
+
+  <div class="subtabs">
+    <div class="subtab">📋 Tareas Día</div>
+    <div class="subtab on">📊 KPI Slotting</div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><h4>Cuerpos liberados</h4><div class="n">31</div>
+      <div class="pie">de 252 mezclados · 12%</div></div>
+    <div class="kpi"><h4>Pares movidos</h4><div class="n">2.847</div>
+      <div class="pie">de 22.693 por sacar</div></div>
+    <div class="kpi"><h4>Tareas hechas</h4><div class="n">12<small> / 95</small></div>
+      <div class="pie">13% de la corrida</div></div>
+    <div class="kpi"><h4>Pares por hora</h4><div class="n">412</div>
+      <div class="pie">promedio del equipo</div></div>
+    <div class="kpi"><h4>Minutos por cuerpo</h4><div class="n">9,4</div>
+      <div class="pie">mediana</div></div>
+    <div class="kpi"><h4>Cuerpos reincidentes</h4><div class="n" style="color:#f59e0b;">7</div>
+      <div class="pie">se limpiaron y volvieron a ensuciarse</div></div>
+  </div>
+
+  <div class="bloque">
+    <h3>Quién limpió cuánto</h3>
+    <div class="bar"><span>MRAMOS</span><div class="t"><i style="width:100%"></i></div><b>14 cuerpos</b></div>
+    <div class="bar"><span>JCHAVEZ</span><div class="t"><i style="width:64%"></i></div><b>9 cuerpos</b></div>
+    <div class="bar"><span>LTORRES</span><div class="t"><i style="width:43%"></i></div><b>6 cuerpos</b></div>
+    <div class="bar"><span>PSILVA</span><div class="t"><i style="width:14%"></i></div><b>2 cuerpos</b></div>
+    <div class="nota">Se cuenta por CUERPO liberado, no por pares: un cuerpo con 9 pares cuesta el
+      mismo viaje que uno con 300.</div>
+  </div>
+
+  <div class="bloque">
+    <h3>Avance por zona</h3>
+    <table>
+      <thead><tr><th>Zona</th><th class="c">Cuerpos mezclados</th><th class="c">Limpiados</th>
+        <th class="c">%</th><th class="c">Pares movidos</th><th class="c">Pendiente</th></tr></thead>
+      <tbody>
+        <tr><td class="b">SEL</td><td class="c">51</td><td class="c">18</td><td class="c v">35%</td><td class="c">1.402</td><td class="c">33</td></tr>
+        <tr><td class="b">MZN01</td><td class="c">62</td><td class="c">9</td><td class="c am">15%</td><td class="c">760</td><td class="c">53</td></tr>
+        <tr><td class="b">MZN02</td><td class="c">21</td><td class="c">3</td><td class="c am">14%</td><td class="c">385</td><td class="c">18</td></tr>
+        <tr><td class="b">MZN03</td><td class="c">118</td><td class="c">1</td><td class="c" style="color:#ef4444;">1%</td><td class="c">300</td><td class="c">117</td></tr>
+        <tr style="border-top:2px solid rgba(79,70,229,0.35);"><td class="b">TOTAL</td><td class="c b">252</td><td class="c b">31</td><td class="c b">12%</td><td class="c b">2.847</td><td class="c b">221</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bloque">
+    <h3>Qué se limpió, por motivo</h3>
+    <div class="bar"><span>Cuerpo mezclado</span><div class="t"><i style="width:100%"></i></div><b>26</b></div>
+    <div class="bar"><span>Junta la familia</span><div class="t"><i style="width:19%; background:#22c55e;"></i></div><b>5</b></div>
+    <div class="nota">El arrastre —juntar lo que quedó suelto de un código nuevo— se cuenta aparte
+      porque no libera un cuerpo entero, pero evita que el artículo quede partido en dos zonas.</div>
+  </div>
+
+  <div class="bloque">
+    <h3>Lo que sigue trabado</h3>
+    <table>
+      <thead><tr><th>Cuerpo</th><th>Zona</th><th class="c">Líneas</th><th class="c">Pares</th><th>Por qué no se hizo</th></tr></thead>
+      <tbody>
+        <tr><td class="b">MZN03-17-01</td><td>MZN03</td><td class="c">119</td><td class="c">224</td><td>Tarea de 5 hojas: nadie la toma</td></tr>
+        <tr><td class="b">SEL-09-14</td><td>SEL</td><td class="c">3</td><td class="c">96</td><td>3 líneas retenidas: no hay cuerpo libre en su franja</td></tr>
+        <tr><td class="b">MZN01-24-03</td><td>MZN01</td><td class="c">29</td><td class="c">104</td><td>Reincidente: se limpió el 11-ago y volvió</td></tr>
+      </tbody>
+    </table>
+    <div class="nota">Es la lista que dice dónde está el problema de verdad. Sin esto, el 88% que
+      falta es un número y nada más.</div>
+  </div>
+
+</div>
+</body>
+</html>
