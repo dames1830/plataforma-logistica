@@ -1,24 +1,24 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0217';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0218';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0217';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0217';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0217';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0217';
-import * as metasService from '../services_v245/metasService.js?v=29.0217';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0217';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0217';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0217';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0217';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0217';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0217';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0217';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0217';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0217';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0217';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0217';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0217';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0217';
-import { montarSlotting } from './slotting.js?v=29.0217';
+import * as adminService from '../services_v245/adminService.js?v=29.0218';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0218';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0218';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0218';
+import * as metasService from '../services_v245/metasService.js?v=29.0218';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0218';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0218';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0218';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0218';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0218';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0218';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0218';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0218';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0218';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0218';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0218';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0218';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0218';
+import { montarSlotting } from './slotting.js?v=29.0218';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -375,7 +375,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0217';
+const VERSION = '29.0218';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2175,7 +2175,11 @@ const TABS = [
   /* SLOTTING VA COMO MÓDULO PRINCIPAL, no colgado de Inventario. Lo pidió así Daniel el
    * 14-ago-2026, y tiene sentido: no es una vista de consulta, es el lugar donde el equipo
    * trabaja los problemas que encuentra el cálculo de almacenaje todas las noches. */
-  { id: 'slotting', label: 'Slotting', icon: '🧩', roles: ['admin', 'jefe', 'supervisor', 'encargado'] },
+  { id: 'slotting', label: 'Slotting', icon: '🧩', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'slot_tareas', label: 'Tareas Día', icon: '📋' },
+    { id: 'slot_kpi', label: 'KPI Slotting', icon: '📊' },
+    { id: 'slot_config', label: 'Config. Slotting', icon: '⚙️' }
+  ] },
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
     { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
@@ -2873,7 +2877,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
     else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'Gestión de Almacenaje');
     else if (currentTab === 'descargas') await renderDescargasInventario(contentArea);
-    else if (currentTab === 'slotting') await renderSlotting(contentArea);
+    else if (currentTab === 'slotting') await renderSlotting(contentArea, localStorage.getItem('activeSub_slotting') || 'slot_tareas');
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -4404,7 +4408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0217');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0218');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15371,7 +15375,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0217 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0218 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17257,21 +17261,65 @@ const renderRFSection = (container) => {
     return { ...corrida, retenidas };
   };
 
-  const renderSlotting = async (container) => {
-    contentSubtitle.textContent = 'Tareas de ordenamiento';
+  /**
+   * LOS OPERARIOS, con el mismo formato que usa el modal de almacenaje.
+   *
+   * Se arma acá y se le pasa a Slotting por `OPC`: la vista no sabe de adminService, y las dos
+   * pantallas nombran a la gente igual. Si el formato cambiara en un solo lado, un mismo
+   * operario aparecería con dos nombres y el KPI lo contaría dos veces.
+   */
+  const operariosParaAsignar = () => (adminService.getWorkers() || [])
+    .filter(w => w.active)
+    .map(w => {
+      const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
+      const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
+      return {
+        usuario: nom ? `${nom[0]}${ape}` : 's/n',
+        nombre: (w.nombre || w.Nombre || '').trim(),
+        turno: String(w.turno || w.Turno || '').trim().toUpperCase() === 'NOCHE' ? 'NOCHE' : 'DÍA'
+      };
+    })
+    .sort((a, b) => a.usuario.localeCompare(b.usuario));
+
+  const renderSlotting = async (container, sub) => {
+    const vista = sub === 'slot_kpi' ? 'kpi' : (sub === 'slot_config' ? 'config' : 'tareas_dia');
+    contentSubtitle.textContent = vista === 'kpi' ? 'KPI de ordenamiento'
+                                : vista === 'config' ? 'Configuración de Slotting'
+                                : 'Tareas de ordenamiento';
     container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">
-        Cargando las tareas...</div>`;
+        Cargando...</div>`;
+
+    await slottingService.cargarConfig();
     const cajon = await slottingService.traerTareas();
+
+    /* LAS TAREAS VENCEN AL CERRAR LA JORNADA, igual que en almacenaje. Se vencen al ABRIR la
+     * pantalla y no al procesar: si nadie procesa en tres días, esas tareas tienen que estar
+     * en NO TRABAJADA igual, no esperando. Solo se guarda si de verdad cambió algo. */
+    const vencidas = slottingService.vencerLasViejas(cajon, (f) => jornadaService.jornadaVencida(f));
+    if (vencidas) {
+      try { await slottingService.guardarTareas(cajon); }
+      catch (e) { console.warn('[Slotting] no se pudo guardar el vencimiento:', e && e.message); }
+      console.log(`[Slotting] ${vencidas} tarea(s) pasaron a NO TRABAJADA por jornada cerrada.`);
+    }
+
     montarSlotting(container, {
-      cajon,
+      cajon, vista,
       svc: slottingService,
+      operarios: operariosParaAsignar(),
+      jornadaVencida: (f) => jornadaService.jornadaVencida(f),
+      alertar: (t, m, tipo) => showPremiumAlert(t, m, tipo || 'info'),
+      // Devuelve true/false: la vista revierte el cambio si no llegó al servidor
       alGuardar: async (c) => {
-        try { await slottingService.guardarTareas(c); }
-        catch (e) { showPremiumAlert('NO SE PUDO GUARDAR', e.message || String(e), 'error'); }
+        try { await slottingService.guardarTareas(c); return true; }
+        catch (e) {
+          showPremiumAlert('NO SE PUDO GUARDAR', e.message || String(e), 'error');
+          return false;
+        }
       },
-      alBarrer: async () => {
+      alGuardarConfig: async (cfg) => { await slottingService.guardarConfig(cfg); },
+      alProcesar: async () => {
         try {
-          const corrida = await barrerParaSlotting();
+          const corrida = await barrerParaSlotting(slottingService.configActual().zonas);
           showPremiumAlert('ALMACÉN REVISADO',
             `<b>${corrida.cuerpos}</b> cuerpos con más de un artículo.<br>`
             + `${corrida.pares.toLocaleString('es-PE')} pares por sacar en <b>${corrida.tareas.length}</b> tareas.`
@@ -17282,7 +17330,7 @@ const renderRFSection = (container) => {
             'success');
           return await slottingService.traerTareas();
         } catch (e) {
-          showPremiumAlert('NO SE PUDO REVISAR', e.message || String(e), 'error');
+          showPremiumAlert('NO SE PUDO PROCESAR', e.message || String(e), 'error');
           return null;
         }
       }
