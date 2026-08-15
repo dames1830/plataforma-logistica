@@ -38,23 +38,26 @@ const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/confi
  * v3 = MZN01 y MZN02 bajaron de 22 a 20 cuerpos, y apareció cuerposPorColumna.
  * v4 = apareció columnasBloqueadas, con las columnas que Daniel sacó de circulación.
  * v5 = MZN03 y MZN04 bajaron de 22 a 20 cuerpos, y MZN04 estrenó cuerposPorColumna.
+ * v6 = apareció la franja 'saldoGrande' con su corte `saldoGrandeHasta`, y la columna 4 del
+ *      selectivo dejó de ser temporada anterior para ser la del saldo grande.
  */
-const CACHE_KEY = 'config_zonas_v5';
+const CACHE_KEY = 'config_zonas_v6';
 
 /**
- * Las cuatro temporadas que puede tener una columna.
+ * Las temporadas que puede tener una columna.
  *
  * `corta` es el nombre para el mapa, donde cada columna mide unos 46 píxeles. Va en la barra
  * de arriba, para que el asistente no solo vea de qué color es cada celda sino DÓNDE tiene
  * que dejar la temporada actual y dónde la anterior.
  */
 export const FRANJAS = {
-    actual:   { etiqueta: 'Temporada actual',   corta: 'ACTUAL',   color: '#3b82f6' },
-    anterior: { etiqueta: 'Temporada anterior', corta: 'ANTERIOR', color: '#ef4444' },
-    saldos:   { etiqueta: 'Saldos',             corta: 'SALDOS',   color: '#f59e0b' },
-    escolar:  { etiqueta: 'Escolar',            corta: 'ESCOLAR',  color: '#22c55e' },
-    catalogo: { etiqueta: 'Catálogo',           corta: 'CATÁLOGO', color: '#a855f7' },
-    ninguna:  { etiqueta: 'Sin uso',            corta: '',         color: '#64748b' }
+    actual:      { etiqueta: 'Temporada actual',   corta: 'ACTUAL',   color: '#3b82f6' },
+    anterior:    { etiqueta: 'Temporada anterior', corta: 'ANTERIOR', color: '#ef4444' },
+    saldos:      { etiqueta: 'Saldos',             corta: 'SALDOS',   color: '#f59e0b' },
+    saldoGrande: { etiqueta: 'Saldo grande',       corta: 'SALDO+',   color: '#fb923c' },
+    escolar:     { etiqueta: 'Escolar',            corta: 'ESCOLAR',  color: '#22c55e' },
+    catalogo:    { etiqueta: 'Catálogo',           corta: 'CATÁLOGO', color: '#a855f7' },
+    ninguna:     { etiqueta: 'Sin uso',            corta: '',         color: '#64748b' }
 };
 
 /**
@@ -86,10 +89,23 @@ export const zonasPorDefecto = () => ({
             columnas: 14,
             cuerpos: 22,
             saldoMenorA: 20,
+            /* LA BANDA DEL SALDO GRANDE, dictada por Daniel el 14-ago-2026: "los saldos que
+             * son mayores o igual a veinte se enviarán al SEL cuatro, siempre y cuando el
+             * saldo sea T. Actual". El corte de arriba —199— lo eligió él sobre los números
+             * del piso: sin tope la regla se lleva el selectivo entero, porque los 153
+             * artículos de la franja actual tienen 20 pares o más.
+             *
+             * Es la banda que faltaba entre el saldo y el artículo normal: el corte de los 20
+             * era un acantilado —con 19 pares se comparte cuerpo y con 20 se ocupa uno entero
+             * de 330—, y un artículo de 25 pares en un cuerpo completo es el desperdicio más
+             * caro que tiene el almacén.
+             *
+             * Solo el selectivo. En los mezzanines no está dictada: van con 0, que la apaga. */
+            saldoGrandeHasta: 199,
             // Los cuerpos 11 y 22 de las columnas 2 a 13 son el paso del elevador: el rack
             // se abre abajo y recién desde el nivel F cruza por encima.
             pasillos: [{ desdeCol: 2, hastaCol: 13, cuerpos: [11, 22] }],
-            franjas: { ...rango(1, 2, 'saldos'), ...rango(3, 4, 'anterior'),
+            franjas: { ...rango(1, 2, 'saldos'), 3: 'anterior', 4: 'saldoGrande',
                        ...rango(5, 13, 'actual'), 14: 'escolar' }
         },
         MZN01: {
@@ -102,13 +118,17 @@ export const zonasPorDefecto = () => ({
             // cuatro se quedan en 17.
             cuerpos: 20,
             cuerposPorColumna: { 2: 17, 3: 17, 22: 17, 23: 17 },
-            saldoMenorA: 80,
+            saldoMenorA: 20,
             pasillos: [],
             // Sacadas de circulación por Daniel el 05-ago-2026. Están vacías de punta a
             // punta —el stock lo confirma: cero pares en las tres— y no se pueden usar.
             columnasBloqueadas: [5, 6, 9],
             franjas: { ...rango(1, 3, 'anterior'), ...rango(4, 20, 'actual'),
-                       ...rango(21, 23, 'anterior'), 24: 'actual' }
+                       ...rango(21, 23, 'anterior'), 24: 'actual' },
+            /* La 1 es de Power y es su única de temporada anterior: no se le cambia la franja,
+             * se le suma el escolar. Daniel, 14-ago-2026: "el escolar de la marca Power puede
+             * ir en el mezzanine uno punto cero uno". */
+            franjasExtra: { 1: 'escolar' }
         },
         MZN02: {
             etiqueta: 'Mezzanine 2',
@@ -117,13 +137,17 @@ export const zonasPorDefecto = () => ({
             // Igual que MZN01: el tope es 20, con tres columnas que se quedan en 17
             cuerpos: 20,
             cuerposPorColumna: { 2: 17, 3: 17, 23: 17 },
-            saldoMenorA: 80,
+            saldoMenorA: 20,
             pasillos: [],
             // Sacadas de circulación por Daniel el 05-ago-2026, vacías de punta a punta.
             // Quedan en uso solo 1, 2, 3, 4, 7, 8, 11, 12, 15, 16, 19 y 20 — y son
             // exactamente las que tienen stock hoy, así que la lista cierra con el almacén.
             columnasBloqueadas: [5, 6, 9, 10, 13, 14, 17, 18, 21, 22],
-            franjas: { ...rango(1, 5, 'anterior'), ...rango(6, 24, 'actual') }
+            franjas: { ...rango(1, 5, 'anterior'), ...rango(6, 24, 'actual') },
+            /* La 4 es la única de temporada anterior que le queda al MZN02 con las columnas
+             * bloqueadas, así que el escolar de North Star se le suma en vez de reemplazarla.
+             * Daniel, 14-ago-2026: "ahí puede ir el escolar con las temporadas anteriores". */
+            franjasExtra: { 4: 'escolar' }
         },
         // Sin reglas todavía. Daniel las carga desde este mismo módulo cuando las ordene:
         // mientras 'activa' esté en false, la sugerencia avisa en vez de inventar.
@@ -137,7 +161,7 @@ export const zonasPorDefecto = () => ({
             // mirando el layout — "los mezzanines tienen 20 cuerpos, el de 22 es el
             // selectivo"— después de que esta configuración diera 528 ubicaciones.
             cuerpos: 20,
-            saldoMenorA: 80,
+            saldoMenorA: 20,
             pasillos: [],
             franjas: {}
         },
@@ -150,7 +174,7 @@ export const zonasPorDefecto = () => ({
             // Las columnas cortas salieron de medir el stock: son las mismas cuatro que
             // en MZN01. Ver [[mezzanine-4-como-funciona]].
             cuerposPorColumna: { 2: 17, 3: 17, 22: 17, 23: 17 },
-            saldoMenorA: 80,
+            saldoMenorA: 20,
             pasillos: [],
             franjas: {}
         }
@@ -222,16 +246,44 @@ export const zonasPorDefecto = () => ({
      * Con el máximo habrían salido 604 y 321, y el sistema mandaría a llenar cuerpos que
      * no cierran.
      */
+    /*
+     * EL MEZZANINE 2 NO VA POR SERIE: SON 480 PARA TODA LA ZONA.
+     *
+     * Los demás números salen del percentil 75 de los cuerpos que tienen un solo artículo.
+     * Los del MZN02 no: los midió Daniel en el piso el 14-ago-2026 y son 480 parejo, sin
+     * importar la serie —la zona es de North Star casi entera, 62.783 de 62.788 pares—.
+     *
+     * La medida vale más que el percentil. El p75 dice cuánto SUELE haber adentro, y eso es
+     * menos que lo que ENTRA: un cuerpo a medio llenar arrastra la medición hacia abajo. Con
+     * los 259-352 que había acá, un artículo de 960 pares pedía cuatro cuerpos donde entran
+     * en dos.
+     *
+     * Se dejan las series escritas Y el respaldo en 480 a propósito: las primeras para que se
+     * vean en la pantalla de configuración, el segundo para que una serie que hoy no está en
+     * la zona no caiga en los 300 genéricos.
+     */
     densidad: {
-        SEL:   { 5: 548, 6: 277, 7: 136, 8: 326 },
+        /* SELECTIVO: DE LA SERIE 4 PARA ARRIBA SON 330, medido por Daniel el 14-ago-2026.
+         *
+         * Este es el que más daño hacía, y en la dirección contraria al MZN02: el percentil
+         * decía 548 para la serie 5 y 400 para la 6, o sea MÁS de lo que entra. El sistema
+         * mandaba al operario con mercadería que no cabía. Medido sobre las tareas vivas de
+         * ese día, 5 de 16 destinos del selectivo se pasaban —el peor, 412 pares a un cuerpo
+         * vacío del que el sistema creía que aguantaba 548—. Es exactamente la queja que
+         * trajo Daniel del piso: "la tarea dice que lo almacene ahí y ya está ocupado".
+         *
+         * Las series 0 y 1 se quedan como estaban: son calzado chico y entran muchos más.
+         * Las series 2 y 3 siguen sin medir y caen en el respaldo. */
+        SEL:   { 0: 830, 1: 740, 4: 330, 5: 330, 6: 330, 7: 330, 8: 330, 9: 330 },
         MZN01: { 0: 642, 1: 426, 2: 386, 3: 332, 4: 284, 5: 372, 8: 347 },
-        MZN02: { 4: 352, 5: 279, 6: 298, 8: 259 },
+        MZN02: { 4: 480, 5: 480, 6: 480, 8: 480 },
         MZN03: { 2: 332, 3: 338, 4: 170, 5: 260, 6: 159, 7: 139, 8: 233 },
         MZN04: { 5: 289, 6: 190, 8: 347, 9: 192 }
     },
 
-    /** Cuando no hay medición para esa serie en esa zona. Es el p75 de todo el almacén. */
-    densidadRespaldo: { SEL: 300, MZN01: 300, MZN02: 300, MZN03: 300, MZN04: 300 },
+    /** Cuando no hay medición para esa serie en esa zona. Es el p75 de todo el almacén,
+     *  salvo el MZN02, que va con su medida real. */
+    densidadRespaldo: { SEL: 300, MZN01: 300, MZN02: 480, MZN03: 300, MZN04: 300 },
 
     /** La categoría que no sigue a su marca. */
     categoriaOthers: '06 OTHERS'
@@ -260,6 +312,28 @@ const normalizar = (crudo) => {
             }
         });
 
+        /* UNA COLUMNA QUE ADEMÁS SIRVE PARA OTRA COSA.
+         *
+         * Daniel, 14-ago-2026: el escolar de Power va a la columna 1 del MZN01 y el de North
+         * Star a la 4 del MZN02 —"ahí puede ir el escolar con las temporadas anteriores"—. Las
+         * dos son la ÚNICA columna de temporada anterior de su marca, así que cambiarles la
+         * franja las dejaría sin dónde poner lo anterior.
+         *
+         * Va como campo aparte y no cambiando `franjas` a una lista, a propósito: `franjas` la
+         * leen diez sitios —los dos mapas de calor, la capacidad de los saldos, el respaldo de
+         * marca— y todos esperan un solo valor por columna. Acá se agrega lo que la columna
+         * ADMITE ADEMÁS, sin tocarle lo que la columna ES. */
+        const extra = {};
+        const oExtra = (v.franjasExtra && typeof v.franjasExtra === 'object')
+            ? v.franjasExtra : (d.franjasExtra || {});
+        Object.keys(oExtra).forEach(k => {
+            const col = Number(k);
+            if (Number.isInteger(col) && col >= 1 && col <= 99 && FRANJAS[oExtra[k]]
+                && franjas[col] && franjas[col] !== oExtra[k]) {
+                extra[col] = oExtra[k];
+            }
+        });
+
         // Las columnas que no llegan al tope de la zona. En MZN01 la mayoría tiene 20
         // cuerpos y cuatro se quedan en 17.
         const cpc = {};
@@ -285,10 +359,14 @@ const normalizar = (crudo) => {
             cuerpos: _num(v.cuerpos, d.cuerpos, 1, 99),
             cuerposPorColumna: cpc,
             saldoMenorA: _num(v.saldoMenorA, d.saldoMenorA, 0, 100000),
+            // 0 apaga la banda. Una configuración publicada antes de la v29.0214 no la trae,
+            // y entonces manda el valor de fábrica: 199 en el selectivo, 0 en el resto.
+            saldoGrandeHasta: _num(v.saldoGrandeHasta, d.saldoGrandeHasta || 0, 0, 100000),
             pasillos: Array.isArray(v.pasillos) ? v.pasillos.filter(p =>
                 p && Number.isFinite(Number(p.desdeCol)) && Array.isArray(p.cuerpos)) : d.pasillos,
             columnasBloqueadas: bloq,
-            franjas
+            franjas,
+            franjasExtra: extra
         };
     });
 
@@ -451,7 +529,15 @@ export const columnasDeMarca = (marca) => {
  * el papel dijera nada.
  */
 const COMPARTE_COLUMNAS = {
-    'B.G LICENSES': { con: 'Bubblegummers', franjas: ['anterior', 'saldos'] }
+    /* B.G Licenses ES Bubblegummers: la misma marca, solo que la licencia trae dibujitos
+     * licenciados. Le toca una sola columna propia —la 24, de temporada actual—, así que todo
+     * lo demás lo guarda en las de Bubblegummers.
+     *
+     * El ESCOLAR se agregó el 14-ago-2026, a pedido de Daniel: *"si llega escolar de
+     * Bubblegummers licencia, que se ponga en el sitio de escolar de Bubblegummers, que es lo
+     * mismo"*. Sin esto no tenía a dónde ir —la columna de escolar del MZN01 es la 21 y es de
+     * Bubblegummers— y caía en el respaldo, mezclado con la temporada actual. */
+    'B.G LICENSES': { con: 'Bubblegummers', franjas: ['anterior', 'saldos', 'escolar'] }
 };
 
 /**
@@ -688,7 +774,28 @@ export const franjaDeArticulo = (art, zona) => {
     if (art.origen === 'D' && columnasDeFranja(zona, 'catalogo').length) return 'catalogo';
     const esEscolar = String(art.genderRims || '').toUpperCase().includes('SCHOOL');
     if (esEscolar && columnasDeFranja(zona, 'escolar').length) return 'escolar';
+    /* EL CORTE DE SALDO ES 20 EN TODAS LAS ZONAS. Daniel, 14-ago-2026: *"el saldo es para el
+     * uno, el dos y parte del tres. Menos de veinte es un saldo; igual o mayor a veinte ya no"*.
+     * Los mezzanines tenían 80 y era un número inventado: con ese corte, un artículo con 60
+     * pares de temporada actual se iba a la columna de saldos. Es el MISMO 20 con el que se
+     * decide si un código es nuevo o reposición, y eso no es casualidad — las dos preguntas
+     * miran lo mismo: si al artículo le queda algo de verdad en el almacén. */
     if (Number(art.pares) < z.saldoMenorA && columnasDeFranja(zona, 'saldos').length) return 'saldos';
+    /* EL SALDO GRANDE: de 20 a 199 pares Y de temporada actual. Daniel, 14-ago-2026: *"los
+     * saldos que son mayores o igual a veinte se enviarán al SEL cuatro. Todo ese selectivo
+     * puede tener más de un artículo en un cuerpo. Siempre y cuando el saldo sea T. Actual"*.
+     *
+     * LAS TRES CONDICIONES SON OBLIGATORIAS. La de temporada es la que más se olvida: un
+     * artículo de temporada anterior con 100 pares NO es saldo grande, tiene su propia
+     * columna y ahí va. Por eso la pregunta se hace después de descartar la anterior y no
+     * antes.
+     *
+     * El piso de la banda es el mismo `saldoMenorA` que decide la columna de saldos: lo que
+     * no llegó a ser saldo chico empieza a ser saldo grande, sin huecos entre las dos. */
+    const hasta = Number(z.saldoGrandeHasta) || 0;
+    if (hasta > 0 && art.esTemporadaActual
+        && Number(art.pares) <= hasta
+        && columnasDeFranja(zona, 'saldoGrande').length) return 'saldoGrande';
     return art.esTemporadaActual ? 'actual' : 'anterior';
 };
 
@@ -735,9 +842,60 @@ export const columnasDeFranja = (zona, franja) => {
     const z = zonasActual().zonas[zona];
     if (!z) return [];
     const bloq = z.columnasBloqueadas || [];
-    return Object.keys(z.franjas)
-        .filter(c => z.franjas[c] === franja)
-        .map(Number).filter(c => !bloq.includes(c)).sort((a, b) => a - b);
+    const extra = z.franjasExtra || {};
+    // Las que SON de esa franja, más las que ADEMÁS la admiten (ver franjasExtra)
+    const cols = new Set();
+    Object.keys(z.franjas).forEach(c => { if (z.franjas[c] === franja) cols.add(Number(c)); });
+    Object.keys(extra).forEach(c => { if (extra[c] === franja) cols.add(Number(c)); });
+    return [...cols].filter(c => !bloq.includes(c)).sort((a, b) => a - b);
+};
+
+/**
+ * ¿Esta columna sirve para esa franja? Mira lo que la columna ES y lo que ADMITE ADEMÁS.
+ *
+ * Hace falta aparte de `franjaDeColumna` porque esa devuelve un solo valor —el principal— y
+ * lo usan los mapas de calor, donde una columna tiene que pintarse de un color y no de dos.
+ */
+export const columnaSirveParaFranja = (zona, columna, franja) => {
+    const z = zonasActual().zonas[zona];
+    if (!z) return false;
+    const col = Number(columna);
+    return z.franjas[col] === franja || (z.franjasExtra || {})[col] === franja;
+};
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * UN CUERPO, UN ARTÍCULO — Y DÓNDE SÍ SE PUEDE COMPARTIR
+ *
+ * Regla de Daniel del 14-ago-2026, cuando vio que el sistema mandaba mercadería a cuerpos que
+ * ya tenían hasta veinte artículos distintos adentro: *"hay que ser bien estricto con eso, y
+ * para no llegar a eso debe respetarse cuerpo-artículo. Todos los cuerpos deberían ser cuerpo-
+ * artículo, salvo los mixtos o las temporadas anteriores o escolar"*.
+ *
+ * Así que la exigencia va por FRANJA, no por zona:
+ *
+ *   actual     ESTRICTA. Es la zona viva de cada marca y es donde se pica todo el día; dos
+ *              artículos en un cuerpo le cuestan tiempo al picker en cada pedido.
+ *   anterior   comparte. Son saldos que envejecen juntos y no vale la pena darles un cuerpo
+ *   saldos     comparte. Ya lo hacía: cientos de artículos de diez pares
+ *   escolar    comparte. Curvas cortas y poco volumen por código
+ *   catalogo   comparte. La columna 8 del MZN03 mezcla las tres marcas por definición
+ *
+ * Medido el 14-ago sobre el almacén: la franja actual tiene 661 cuerpos con un solo artículo y
+ * 284 compartidos —el 30%—; las otras cuatro van del 74% al 100% de compartido, que es
+ * exactamente lo que dice la regla.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+const FRANJAS_QUE_COMPARTEN = ['anterior', 'saldos', 'saldoGrande', 'escolar', 'catalogo'];
+
+/** ¿En esta columna se puede poner más de un artículo por cuerpo? */
+export const columnaAdmiteVariosArticulos = (zona, columna) => {
+    const z = zonasActual().zonas[zona];
+    if (!z) return true;                       // sin reglas no se bloquea nada
+    const col = Number(columna);
+    const propia = z.franjas[col];
+    const extra = (z.franjasExtra || {})[col];
+    // Alcanza con que UNA de sus franjas permita compartir: una columna que lleva temporada
+    // anterior y escolar comparte por las dos.
+    return FRANJAS_QUE_COMPARTEN.includes(propia) || FRANJAS_QUE_COMPARTEN.includes(extra);
 };
 
 /** ¿Ese cuerpo es paso del elevador? Entonces no existe como ubicación de almacenaje. */
@@ -940,7 +1098,7 @@ export const resolverZona = (art) => {
  */
 const HOLGURA = 0.10;
 
-export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) => {
+export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}, ocupantesPorZona = {}) => {
     const cfg = zonasActual();
     const paso = (estado, motivo, extra) => ({ estado, motivo, ...extra });
 
@@ -982,9 +1140,54 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}) =
         const zonaRep = art.yaTiene[0].zona;
         const porCuerpoRep = densidadDe(zonaRep, serieDe(art.sku7));
         const libresRep = libresPorZona[zonaRep];
+
+        /* UN CUERPO, UN ARTÍCULO: SUS CUERPOS COMPARTIDOS NO CUENTAN COMO SUYOS.
+         *
+         * Antes alcanzaba con que entrara. El 14-ago-2026 Daniel vio el resultado —el 2816305
+         * mandado a un cuerpo con VEINTE artículos adentro— y cortó por lo sano: *"hay que ser
+         * bien estricto con eso"*. En la franja actual un cuerpo lleva un artículo y punto; en
+         * anterior, saldos, escolar y catálogo se sigue compartiendo, que es como se trabaja.
+         *
+         * El cuerpo compartido no se descarta en silencio: sale en `mezclados` para que quien
+         * llame lo mande a Slotting. Ver `hallazgosDeMezcla` en dashboard_v28.js. */
+        const quienVive = ocupantesPorZona[zonaRep];
+        const mezclados = [];
+        const suyosLimpios = !quienVive ? art.yaTiene : art.yaTiene.filter(c => {
+            if (columnaAdmiteVariosArticulos(zonaRep, c.columna)) return true;
+            const dentro = quienVive.get(`${c.columna}-${c.cuerpo}`);
+            const otros = dentro ? [...dentro].filter(s => s !== art.sku7) : [];
+            if (!otros.length) return true;
+            mezclados.push({ zona: zonaRep, columna: c.columna, cuerpo: c.cuerpo, otros });
+            return false;
+        });
+
+        /* SI NINGUNO DE SUS CUERPOS QUEDÓ LIMPIO, LA TAREA SE BLOQUEA. No se le busca otro
+         * cuerpo.
+         *
+         * Daniel, 14-ago-2026: *"lo que tienes que hacer es bloquear la tarea, y ahí tiene que
+         * entrar — para eso están las tareas de slotting. El slotting va, entra, soluciona, y
+         * ahí entra el almacenaje. Así de simple"*.
+         *
+         * Es el orden correcto y además el barato. El artículo YA TIENE su cuerpo; lo que está
+         * mal es que hay un intruso adentro. Mudarlo a otro lado sería gastar un cuerpo vacío
+         * —en el MZN01 quedan cinco— para tapar un problema que se arregla sacando veinte
+         * pares. Slotting limpia, y a la noche siguiente la tarea sale sola y va a su lugar de
+         * siempre.
+         *
+         * El operario no almacena esto: el papel lo imprime con el aviso, igual que cualquier
+         * otro caso de Slotting. */
+        if (!suyosLimpios.length) {
+            const conQuien = mezclados.flatMap(m => m.otros);
+            return paso('slotting',
+                `Su cuerpo tiene ${conQuien.length > 1 ? 'otros artículos' : 'otro artículo'} adentro `
+                + `(${conQuien.join(', ')}). Slotting lo tiene que limpiar antes.`,
+                { zona: zonaRep, cuerpos: [], cuantos: 0, porCuerpo: porCuerpoRep,
+                  mezclados, bloqueadoPorMezcla: true });
+        }
+
         // Lo que le queda a cada cuerpo suyo. Si no figura en el mapa es porque está vacío
         // —el mapa solo trae los cuerpos con stock—, así que entra uno entero.
-        const capsSuyos = art.yaTiene.map(c => {
+        const capsSuyos = suyosLimpios.map(c => {
             const v = libresRep && libresRep.get(`${c.columna}-${c.cuerpo}`);
             return v === undefined ? porCuerpoRep : Math.max(0, v);
         });

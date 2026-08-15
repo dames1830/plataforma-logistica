@@ -56,9 +56,12 @@ export const MODOS = {
     porcentaje: 'Un % del stock total',
     cuerpos:    'Llenar N cuerpos',
     todo:       'Todo lo del buffer',
-    // Un tope fijo en pares, sin importar cuánto entre en un cuerpo. Lo pide el escolar:
-    // bajan 50 pares y el resto va a reserva, vengan 300 o 3.000. Ver PARES_ESCOLAR.
-    pares:      'Un tope fijo de pares'
+    // Un tope fijo en pares para el artículo entero, repartido entre sus tallas.
+    pares:      'Un tope fijo de pares',
+    /* Un tope fijo POR TALLA, que es otra cosa. Lo pide el escolar: tienen que quedar 50
+     * pares DE CADA TALLA en el piso, no 50 del artículo. Y es un objetivo, no una cantidad
+     * a bajar — si la talla ya tiene 30, se le reponen 20; si tiene 40, 10. Ver PARES_ESCOLAR. */
+    paresPorTalla: 'Un tope fijo de pares por talla'
 };
 
 export const modoPorDefecto = () => ({ modo: 'cuerpos', valor: 1 });
@@ -205,7 +208,7 @@ const normalizar = (crudo) => {
         if (!Number.isFinite(valor) || valor < 0) valor = modo === 'porcentaje' ? 50 : 1;
         if (modo === 'porcentaje') valor = Math.min(100, valor);
         if (modo === 'cuerpos') valor = Math.max(1, Math.round(valor));
-        if (modo === 'pares') valor = Math.max(0, Math.round(valor));
+        if (modo === 'pares' || modo === 'paresPorTalla') valor = Math.max(0, Math.round(valor));
         marcas[String(k).trim()] = { modo, valor };
     });
 
@@ -348,8 +351,21 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
     let objetivoArt;
     if (regla.modo === 'todo')          objetivoArt = pisoTotal + bufferTotal;
     else if (regla.modo === 'cuerpos')  objetivoArt = Math.max(1, Number(regla.valor) || 1) * paresPorCuerpo;
-    // TOPE FIJO EN PARES. No se mide en cuerpos: son los pares que tienen que quedar abajo y
-    // nada más. El escolar va así — 50 pares, lleguen 300 o 3.000.
+    /* TOPE FIJO EN PARES POR TALLA. Es el del escolar, y no es lo mismo que 'pares'.
+     *
+     * Daniel, 14-ago-2026: *"son cincuenta pares por talla en escolar. De la talla treinta,
+     * cincuenta pares; de la treinta y uno, cincuenta; treinta y dos, cincuenta"*.
+     *
+     * Estuvo mal entendido desde el 05-ago: se implementó como 50 pares para TODO el artículo
+     * y repartidos entre las tallas, así que a cada talla le tocaban 5 o 6 pares —menos de una
+     * caja— y el redondeo terminaba bajando una caja por talla. Con 9 tallas bajaban 90 en vez
+     * de 450, y con 19 tallas 304. La cuenta cerraba sola y por eso nadie la vio.
+     *
+     * El objetivo del artículo es el tope por talla POR LA CANTIDAD DE TALLAS, para que el
+     * ajuste de más abajo tenga contra qué medir; el reparto real lo hace cada fila. */
+    else if (regla.modo === 'paresPorTalla')
+                                        objetivoArt = Math.max(0, Number(regla.valor) || 0) * claves.length;
+    // TOPE FIJO EN PARES para el artículo entero, repartido entre las tallas.
     else if (regla.modo === 'pares')    objetivoArt = Math.max(0, Number(regla.valor) || 0);
     else                                objetivoArt = (bufferTotal + pisoTotal + (Number(reserva) || 0)) * ((Number(regla.valor) || 50) / 100);
 
@@ -414,7 +430,12 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
         const pis = Math.max(0, Math.round(Number(tallas[t].piso) || 0));
         // Sin perfil de tallas, se reparte parejo entre las que tiene el artículo
         const pct = (cat && suma > 0) ? (Number(cat.porcentajes[t]) || 0) / suma : 1 / claves.length;
-        const objetivo = regla.modo === 'todo' ? pis + buf : Math.round(objetivoArt * pct);
+        // 'paresPorTalla' no reparte: cada talla tiene el MISMO tope, y el porcentaje de la
+        // categoría no interviene. Es lo que hace que el escolar baje 50 de la 30, 50 de la
+        // 31 y 50 de la 32, en vez de repartirse 50 entre las tres.
+        const objetivo = regla.modo === 'todo' ? pis + buf
+                       : regla.modo === 'paresPorTalla' ? Math.max(0, Number(regla.valor) || 0)
+                       : Math.round(objetivoArt * pct);
 
         const falta = Math.max(0, objetivo - pis);
         let asignado = Math.min(buf, Math.round(falta / f) * f);
@@ -431,7 +452,13 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
     //
     // Si el artículo sigue corto y hay tallas con buffer de sobra, se les da más —de a cajas
     // enteras, y primero a las de mayor peso, que son las comerciales.
-    let faltaArt = Math.round(objetivoArt) - pisoTotal - filas.reduce((a, x) => a + x.asignado, 0);
+    /* El escolar NO entra acá. Su tope es por talla, así que si una talla no tiene buffer para
+     * llegar a los 50, la que sobra no se lo puede compensar: quedaría con 60 u 80 y el tope
+     * dejaría de significar nada. Este reparto existe para las reglas que fijan un objetivo
+     * del ARTÍCULO —el 60% del código nuevo, los 2 cuerpos de la reposición—, donde sí da lo
+     * mismo de qué talla salga el pare que falta. */
+    let faltaArt = regla.modo === 'paresPorTalla' ? 0
+                 : Math.round(objetivoArt) - pisoTotal - filas.reduce((a, x) => a + x.asignado, 0);
     if (faltaArt >= f) {
         const conSobra = filas.filter(x => x.buffer > x.asignado)
                               .sort((a, b) => b.pct - a.pct || b.buffer - a.buffer);

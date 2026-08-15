@@ -1,22 +1,24 @@
-import { parseFile, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0200';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0224';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0200';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0200';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0200';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0200';
-import * as metasService from '../services_v245/metasService.js?v=29.0200';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0200';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0200';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0200';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0200';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0200';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0200';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0200';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0200';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0200';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0200';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0200';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0200';
+import * as adminService from '../services_v245/adminService.js?v=29.0224';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0224';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0224';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0224';
+import * as metasService from '../services_v245/metasService.js?v=29.0224';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0224';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0224';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0224';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0224';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0224';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0224';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0224';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0224';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0224';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0224';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0224';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0224';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0224';
+import { montarSlotting } from './slotting.js?v=29.0224';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -373,7 +375,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0200';
+const VERSION = '29.0224';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2170,6 +2172,14 @@ const TABS = [
     { id: 'sugerencia', label: 'Sugerencia (prueba)', icon: '🧭', oculta: true },
     { id: 'config_tareas', label: 'Config. Tareas', icon: '⚙️' }
   ]},
+  /* SLOTTING VA COMO MÓDULO PRINCIPAL, no colgado de Inventario. Lo pidió así Daniel el
+   * 14-ago-2026, y tiene sentido: no es una vista de consulta, es el lugar donde el equipo
+   * trabaja los problemas que encuentra el cálculo de almacenaje todas las noches. */
+  { id: 'slotting', label: 'Slotting', icon: '🧩', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
+    { id: 'slot_tareas', label: 'Tareas Día', icon: '📋' },
+    { id: 'slot_kpi', label: 'KPI Slotting', icon: '📊' },
+    { id: 'slot_config', label: 'Config. Slotting', icon: '⚙️' }
+  ] },
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
     { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
@@ -2867,6 +2877,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
     else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'Gestión de Almacenaje');
     else if (currentTab === 'descargas') await renderDescargasInventario(contentArea);
+    else if (currentTab === 'slotting') await renderSlotting(contentArea, localStorage.getItem('activeSub_slotting') || 'slot_tareas');
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -3652,6 +3663,127 @@ export const renderDashboard = async (container, user, onLogout) => {
     });
   };
 
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * LA FILA DEL REPLENISHMENT: YA NO SE SUBE, SE TRAE
+   *
+   * Antes acá había un importador más: se procesaba el Replenishment, se bajaba el Excel y
+   * esa misma hoja se volvía a subir en esta fila. Ahora la corrida queda publicada en el
+   * servidor (ver publicarCorridaReplenishment) y esto solo pregunta si se trae.
+   *
+   * LA PREGUNTA ES EL PUNTO, y no un paso de más. Daniel decide cada noche si baja la
+   * reposición o no, porque hoy falta espacio en el almacén y la prioridad es el pedido de
+   * comercial, que sí o sí hay que despachar. Traerlo solo le sacaría una decisión que es
+   * suya: *"yo decido si se procesa o no se procesa"*.
+   *
+   * Al traerla se guarda en el área de siempre y con el formato de siempre —pares
+   * [código, cantidad]— así que el motor del buffer no cambia ni una línea: sigue leyendo
+   * lo mismo, solo que ya nadie tuvo que subir un archivo.
+   *
+   * Si no hay corrida de hoy se ofrece la última, PERO CON SU FECHA A LA VISTA. Una lista de
+   * hace dos días manda a bajar contra un stock que ya no existe, y eso tiene que verse.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const renderReplenishmentNube = (container) => {
+    const div = document.createElement('div');
+    div.id = 'wrap_repl_nube';
+    div.style.width = '100%';
+    container.appendChild(div);
+
+    const fila = (color, icono, estado, detalle, acciones, nota) => `
+      <div style="background:rgba(15,23,42,0.4); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; border-left:4px solid ${color};">
+          <div style="display:flex; align-items:center; gap:1.2rem;">
+              <div style="width:36px; height:36px; background:rgba(255,255,255,0.03); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${color}; border:1px solid rgba(255,255,255,0.05);">${icono}</div>
+              <div style="display:flex; flex-direction:column;">
+                  <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">REPLENISHMENT</span>
+                  <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
+                      <span style="color:${color}; font-weight:700; font-size:0.85rem;">${estado}</span>
+                      ${detalle ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                                   <span style="color:var(--text-muted); font-size:0.75rem;">${detalle}</span>` : ''}
+                  </div>
+              </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+              ${nota ? `<div style="text-align:right; font-size:0.7rem; color:var(--text-muted); line-height:1.5;">${nota}</div>` : ''}
+              <div style="display:flex; gap:0.4rem;">${acciones || ''}</div>
+          </div>
+      </div>`;
+
+    const btn = (id, texto, fondo, borde, color) => `
+      <button id="${id}" style="background:${fondo}; color:${color}; border:1px solid ${borde}; padding:0.45rem 1rem; border-radius:6px; cursor:pointer; font-size:0.7rem; font-weight:800; letter-spacing:0.5px; transition:all 0.2s;" onmouseover="this.style.opacity='0.82'" onmouseout="this.style.opacity='1'">${texto}</button>`;
+
+    div.innerHTML = fila('#64748b', '🔄', 'CONSULTANDO...', '', '', '');
+
+    (async () => {
+      let cajon = {};
+      try {
+        const res = await fetch(`${_urlReplDia()}&t=${Date.now()}`);
+        if (res.ok) {
+          const cuerpo = await res.json();
+          const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+          if (datos && typeof datos === 'object' && !Array.isArray(datos)) cajon = datos;
+        }
+      } catch (e) { console.warn('[REPL] no se pudo consultar las corridas:', e && e.message); }
+
+      const traido = Array.isArray(dataStore.tallas) && dataStore.tallas.length > 0;
+      const fechas = Object.keys(cajon).sort();
+      const hoy = getLogicalDate();
+      const deHoy = cajon[hoy];
+      const ultima = fechas.length ? cajon[fechas[fechas.length - 1]] : null;
+
+      const num = (n) => Number(n || 0).toLocaleString('es-PE');
+      const resumen = (c) => `${num(c.skus)} SKU · ${num(c.pares)} pares`
+        + (c.quebrados ? ` · <b style="color:#ef4444;">${num(c.quebrados)} quebrados</b>` : '')
+        + (c.porQuebrar ? ` · <b style="color:#f59e0b;">${num(c.porQuebrar)} por quebrar</b>` : '');
+
+      if (traido) {
+        div.innerHTML = fila('#22c55e', '✅', 'TRAÍDO',
+          `${num(dataStore.tallas.length)} SKU en el análisis`,
+          btn('repl_quitar', 'QUITAR', 'rgba(239,68,68,0.1)', '#ef4444', '#ef4444'),
+          'Ya entra como fuente del análisis.<br>Se puede quitar si esta noche no se baja.');
+      } else if (deHoy) {
+        div.innerHTML = fila('#38bdf8', '🔄', 'LISTO PARA TRAER', resumen(deHoy),
+          btn('repl_traer', 'TRAER', 'var(--primary)', 'transparent', '#fff'),
+          `Corrió hoy a las <b>${String(deHoy.generado || '').substring(11, 16)}</b>`);
+      } else if (ultima) {
+        div.innerHTML = fila('#f59e0b', '🕘', 'NO CORRIÓ HOY',
+          `El último es del <b>${ultima.fecha}</b> · ${resumen(ultima)}`,
+          btn('repl_traer_viejo', `TRAER EL DEL ${String(ultima.fecha).substring(8, 10)}`, 'rgba(245,158,11,0.12)', '#f59e0b', '#f59e0b'),
+          'Ojo: es de otro día.<br>Manda a bajar contra un stock que ya cambió.');
+      } else {
+        div.innerHTML = fila('#64748b', '🔄', 'SIN CORRIDAS', '', '',
+          'Se publica sola al procesar<br><b>Análisis SKU → Replenishment</b>');
+      }
+
+      const traer = async (corrida) => {
+        if (!corrida || !Array.isArray(corrida.lista) || !corrida.lista.length) {
+          showPremiumAlert('SIN DATOS', 'Esa corrida no tiene ningún código para bajar.', 'info');
+          return;
+        }
+        try {
+          await guardarAreaManual('tallas', corrida.lista, user.username);
+          showPremiumAlert('REPLENISHMENT TRAÍDO',
+            `Entraron <b>${num(corrida.skus)} SKU</b> con <b>${num(corrida.pares)} pares</b>, `
+            + `de la corrida del <b>${corrida.fecha}</b>. Ya entra en el análisis del buffer.`, 'success');
+        } catch (e) {
+          showPremiumAlert('NO SE PUDO TRAER', e.message || String(e), 'error');
+        }
+        renderTabContent();
+      };
+
+      const bt = document.getElementById('repl_traer');
+      if (bt) bt.addEventListener('click', () => traer(deHoy));
+      const bv = document.getElementById('repl_traer_viejo');
+      if (bv) bv.addEventListener('click', () => traer(ultima));
+      const bq = document.getElementById('repl_quitar');
+      if (bq) bq.addEventListener('click', async () => {
+        if (await showPremiumConfirm('QUITAR EL REPLENISHMENT',
+              '¿Sacar la reposición del análisis? El pedido de comercial y las otras solicitudes no se tocan.', 'danger')) {
+          await clearAreaData('tallas', user.username);
+          renderTabContent();
+        }
+      });
+    })();
+  };
+
   let activeBufferSub = 'reportes';
   const renderBufferTab = async () => {
     contentSubtitle.textContent = "Análisis de Reposición";
@@ -3753,7 +3885,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
         renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.xlsx', 'OTRAS SOLICITUDES');
         renderMaestroNube(wrap);
-        renderUploadArea(wrap, 'tallas', dataStore.tallas, '.xlsx', 'REPLENISHMENT');
+        // El Replenishment ya no se sube: se trae del servidor. Ver renderReplenishmentNube.
+        renderReplenishmentNube(wrap);
         renderUploadArea(wrap, 'validar_reserva', dataStore.validar_reserva, '.xlsx', 'VALIDAR RESERVA');
         renderUploadArea(wrap, 'validar_activo', dataStore.validar_activo, '.csv', 'VALIDAR ACTIVO');
         renderUploadArea(wrap, 'validar_lpn', dataStore.validar_lpn, '.csv', 'VALIDAR LPN');
@@ -4275,7 +4408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0200');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0224');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5710,6 +5843,17 @@ const leerArea = async (area, dia) => {
  * la trampa que dejó al tablero sin número de semana el 11-ago. */
 const AREA_STOCK_DE_LA_HORA = 'layout_stock_hora';
 const AREA_RESERVA_DE_LA_HORA = 'reserva_hora';
+
+/* LAS CORRIDAS DEL REPLENISHMENT, una por día y hasta siete.
+ *
+ * Va acá arriba, al nivel del módulo, y no al lado del Replenishment: lo escribe el módulo
+ * de Análisis SKU y lo lee la Zona Buffer, que son dos funciones distintas. Declarándolo
+ * junto a quien lo escribe, quien lo lee no lo vería — la misma trampa que avisa el
+ * comentario de acá arriba. */
+const AREA_REPL_DIA = 'replenishment_dia';
+const DIAS_REPL_GUARDADOS = 7;
+const _urlReplDia = () =>
+  `${window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com'}/api/logistics/${AREA_REPL_DIA}?date=MASTER`;
 
 /**
  * Trae un cajón de la hora, o null si lo que hay no sirve para medir.
@@ -15231,7 +15375,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0200 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0224 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16644,20 +16788,49 @@ const renderRFSection = (container) => {
     return lista;
   };
   /**
-   * A qué CUERPO va cada talla.
+   * EL CUERPO VA SURTIDO: cada cuerpo lleva una parte de CADA talla.
    *
-   * EL NIVEL NO IMPORTA. Antes esto repartía talla por nivel —la más vendida al A, que está
-   * abajo y a la mano; la que menos al C—. Daniel lo descartó el 05-ago-2026: "no importa si
-   * las tallas comerciales van en el C, en el A o en el B. La cosa es que esté bien calculado
-   * para que el operario vaya y deje la mercadería".
+   * Regla de Daniel del 14-ago-2026: *"en un cuerpo pueden ir varias tallas, surtido. Un
+   * cuerpo tiene tres niveles, así que puedes poner las más comerciales o surtirlo. La cosa
+   * es que en un cuerpo esté surtido las tallas"*.
    *
-   * Una talla puede ocupar los tres niveles del cuerpo, o quedar repartida entre ellos —la 37
-   * llena el A, la 36 entra con 50 en el B y 20 en el C—, y está bien. Lo único que no puede
-   * pasar es que se pase del CUERPO: un cuerpo lleva un solo artículo con todas sus tallas.
+   * Antes se llenaba un cuerpo entero antes de pasar al siguiente, así que cada talla caía
+   * completa en un solo cuerpo y los cuerpos quedaban desparejos. Medido sobre una llegada de
+   * 1.000 pares de Bata —600 al piso en dos cuerpos de 330—:
    *
-   * Con varios cuerpos se llena uno hasta su capacidad antes de pasar al siguiente, para que
-   * el artículo no quede desparramado.
+   *     bloque    cuerpo 1: 350 pares (106%)   cuerpo 2: 250 (76%)
+   *     surtido   cuerpo 1: 300 pares  (91%)   cuerpo 2: 300 (91%)
+   *
+   * El reparto viejo no solo desequilibraba: se pasaba del cuerpo. Las tres primeras tallas
+   * sumaban 350 en un cuerpo de 330 y entraban por la tolerancia del 10%, que está para
+   * redondeos y no para tapar un reparto mal hecho.
+   *
+   * EL NIVEL SIGUE SIN IMPORTAR. Daniel, 05-ago-2026: "no importa si las tallas comerciales
+   * van en el C, en el A o en el B. La cosa es que esté bien calculado para que el operario
+   * vaya y deje la mercadería". El destino es el CUERPO.
+   *
+   * LA TALLA NO SE PARTE, Y ES A PROPÓSITO. El reparto se hace entregando cada talla entera
+   * al cuerpo que menos lleve, no cortándola en cajas. Dos razones, y las dos pesan:
+   *
+   *   EL PAPEL. La unidad de la hoja —y de lo que se graba en la tarea— es la línea del
+   *   buffer: una ubicación, un SKU, una talla. Partir una talla en dos cuerpos obliga a
+   *   partir esa línea en dos, y la línea es la que el operario tiene delante y la que
+   *   `grabarPapelEnTareas` escribe de vuelta en la tarea. Se rompería el formato cerrado.
+   *
+   *   EL PICKING. Con la talla entera en un cuerpo, el picker va a un solo lugar a buscarla.
+   *   Partida, tiene dos ubicaciones para la misma talla.
+   *
+   * Y el equilibrio sale igual de bien. Con los 600 pares del ejemplo —tallas de 50, 150, 150,
+   * 150, 50 y 50— quedan 300 y 300, y cada cuerpo con varias tallas adentro, que es lo que
+   * pidió Daniel.
    */
+  /**
+   * EL PARÁMETRO. En true cada cuerpo va surtido; en false se vuelve al reparto por bloque,
+   * que es como salía hasta la v29.0213. Queda escrito para poder comparar una corrida contra
+   * la otra sin revertir código.
+   */
+  const SURTIDO_EN_EL_CUERPO = true;
+
   const asignarCuerpos = (filas, cuerpos, zona, capacidades) => {
     const conPiso = filas.filter(f => f.baja > 0);
     if (!conPiso.length || !cuerpos || !cuerpos.length) return {};
@@ -16677,34 +16850,55 @@ const renderRFSection = (container) => {
       ? capacidades.map(v => (Number(v) > 0 ? Number(v) : 1))
       : cuerpos.map(() => Infinity);
 
-    // SE REPARTE POR PARES, NO POR CANTIDAD DE TALLAS.
-    //
-    // Antes se armaba un hueco por cada nivel A/B/C de cada cuerpo y se metía UNA TALLA en
-    // cada hueco, sin mirar cuántos pares llevaba. Con 6 tallas y 3 cuerpos las 6 tallas
-    // entraban en los primeros 6 huecos —o sea en los dos primeros cuerpos— y el tercero
-    // quedaba vacío pero igual reservado, sin que ningún otro artículo lo pudiera usar. Y el
-    // primer cuerpo se llevaba 730 pares donde entran 326.
-    //
-    // Ahora se llena un cuerpo hasta su capacidad y recién ahí se pasa al siguiente. La talla
-    // puede quedar repartida entre los tres niveles del cuerpo, y eso está bien: lo que no se
-    // puede es pasarse del cuerpo. Es lo que dijo Daniel — el nivel no importa, el cuerpo sí.
     const destino = {};
-    let i = 0, enEste = 0;
-    orden.forEach(f => {
-      // Si lo que ya lleva más esta talla se pasa del cuerpo, y todavía quedan cuerpos, se
-      // pasa al siguiente. Se tolera la misma holgura que usa el resto del cálculo.
+
+    if (!SURTIDO_EN_EL_CUERPO || nombres.length === 1) {
+      // EL REPARTO POR BLOQUE, que es como salía hasta la v29.0213. Se llena un cuerpo hasta
+      // su capacidad y recién ahí se pasa al siguiente.
       //
-      // El "enEste > 0" de la primera condición no alcanza solo: cuando al cuerpo le quedan
-      // 26 pares y la primera talla trae 100, con el cuerpo todavía vacío no habría con qué
-      // compararlo y le entrarían los 100 igual. Por eso la segunda: una talla que por sí
-      // sola no entra tampoco se fuerza. Se pierden esos 26 de lugar, y está bien — es
-      // preferible a mandar al operario con 100 pares a un hueco de 26.
-      const noEntra = (enEste + f.baja) > caps[i] * 1.10;
-      if (noEntra && i < cuerpos.length - 1 && (enEste > 0 || f.baja > caps[i] * 1.10)) {
-        i++; enEste = 0;
-      }
-      destino[f.talla] = nombres[i];
-      enEste += f.baja;
+      // El "enEste > 0" de la condición no alcanza solo: cuando al cuerpo le quedan 26 pares y
+      // la primera talla trae 100, con el cuerpo todavía vacío no habría con qué compararlo y
+      // le entrarían los 100 igual. Por eso la segunda: una talla que por sí sola no entra
+      // tampoco se fuerza.
+      let i = 0, enEste = 0;
+      orden.forEach(f => {
+        const noEntra = (enEste + f.baja) > caps[i] * 1.10;
+        if (noEntra && i < nombres.length - 1 && (enEste > 0 || f.baja > caps[i] * 1.10)) {
+          i++; enEste = 0;
+        }
+        destino[f.talla] = nombres[i];
+        enEste += f.baja;
+      });
+      return destino;
+    }
+
+    /* EL REPARTO SURTIDO — LA TALLA MÁS GRANDE PRIMERO, AL CUERPO QUE MENOS LLEVE.
+     *
+     * De mayor a menor y no en orden de talla: es la única forma de que el equilibrio salga.
+     * Empezando por las chicas, las grandes llegan al final sin dónde entrar y hay que
+     * forzarlas. Con 150, 150, 150, 50, 50, 50 en dos cuerpos, de mayor a menor da 300 y 300;
+     * en orden de talla daba 350 y 250.
+     *
+     * NUNCA SE PIERDE UNA TALLA. Si ningún cuerpo la admite dentro de la holgura, va igual al
+     * que menos lleve: preferimos un cuerpo pasado antes que una línea de papel sin destino.
+     *
+     * LO QUE ESTO NO PUEDE ARREGLAR, y conviene saberlo antes de "mejorarlo": con tallas muy
+     * grandes el reparto perfecto no existe, porque la talla no se parte. Un hombre de 1.000
+     * pares en tres cuerpos —250, 250, 250, 70, 60, 60, 60— deja uno en 370 sobre 330, y no
+     * hay acomodo que lo evite: las cuatro tallas chicas suman 250 y hay que repartirlas entre
+     * tres cuerpos que ya tienen 250 cada uno. No es un defecto del reparto, es la aritmética.
+     * Y tampoco es nuevo: el planificador ya venía aceptando pasarse, porque `cuantos` sale de
+     * dividir por la capacidad con la misma holgura del 10%.
+     */
+    const carga = nombres.map(() => 0);
+    const porTamano = [...conPiso].sort((a, b) => b.baja - a.baja
+                                    || (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0));
+    porTamano.forEach(f => {
+      const porTurno = nombres.map((_, i) => i).sort((a, b) => carga[a] - carga[b] || a - b);
+      const i = porTurno.find(x => carga[x] + f.baja <= caps[x] * 1.10);
+      const elegido = (i === undefined) ? porTurno[0] : i;
+      destino[f.talla] = nombres[elegido];
+      carga[elegido] += f.baja;
     });
     return destino;
   };
@@ -16718,6 +16912,474 @@ const renderRFSection = (container) => {
    * manda otro artículo al mismo lugar. Y si la tarea se borra, desaparece de esta lista sola
    * — no hay ninguna reserva que limpiar a mano.
    */
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * EL BARRIDO QUE ARMA LAS TAREAS DE SLOTTING
+   *
+   * Daniel, 14-ago-2026: *"el cuerpo veinte está con dos artículos: quien tenga más cantidad,
+   * le pertenece a ese artículo. El B hay que sacarlo, entonces ahí tiene veinte ya por sacar,
+   * y así que vaya acumulando"*.
+   *
+   * ── QUIÉN SE QUEDA CON EL CUERPO ─────────────────────────────────────────────
+   *
+   * Primero se le pregunta a las TAREAS, no al stock. Daniel: *"si el procesar tareas te dijo
+   * almacena en el cuerpo uno el artículo A, y mañana aparece en el cuerpo uno otro artículo
+   * adicional, quiere decir que el operario agarró veinte pares y puso el artículo B ahí. El
+   * slotting tendría que ver de dónde vino: el A vino de una tarea, el B no vino de ninguna,
+   * entonces por error o porque su cuerpo ya estaba lleno lo puso ahí"*.
+   *
+   *   1. Si UNO de los artículos llegó ahí por una tarea de almacenaje, ese se queda. El
+   *      sistema lo mandó a ese cuerpo y el módulo anterior no se contradice.
+   *   2. Si llegaron VARIOS por tarea, o NINGUNO, manda el que más pares tiene. Mover al que
+   *      menos hay es el trabajo más barato y el que menos molesta al piso.
+   *
+   * Cada línea sale diciendo si el artículo vino por tarea o apareció solo, que es la
+   * diferencia entre "estaba previsto y hay que reacomodar" y "alguien lo puso donde no iba".
+   *
+   * ── EL ALCANCE ───────────────────────────────────────────────────────────────
+   *
+   * SOLO EL SELECTIVO POR AHORA: *"hagamos un ejemplo solo con selectivo primero, después
+   * metemos lo de los mezzanines"*. La zona sale por parámetro para que sumar MZN01 y MZN02
+   * sea cambiar una lista.
+   *
+   * SOLO DONDE LA FRANJA EXIGE UN CUERPO POR ARTÍCULO —la actual—. En anterior, saldos,
+   * escolar y catálogo se comparte a propósito. El MZN04 no entra nunca.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const ZONAS_SLOTTING = ['SEL'];
+
+  /** Qué artículos mandó el sistema a cada cuerpo, según las tareas de almacenaje. */
+  const destinosDeLasTareas = () => {
+    const mapa = new Map();
+    (almacenajeTasksCache || []).forEach(t => (t.items || []).forEach(art => {
+      const s7 = String(art.sku7 || '').trim();
+      if (!s7) return;
+      (art.items || []).forEach(i => {
+        const d = String(i.destino || '').trim().toUpperCase();
+        if (!/^[A-Z0-9]+-\d{2}-\d{2}$/.test(d)) return;
+        if (!mapa.has(d)) mapa.set(d, new Set());
+        mapa.get(d).add(s7);
+      });
+    }));
+    return mapa;
+  };
+
+  const barrerParaSlotting = async (zonas = ZONAS_SLOTTING) => {
+    await zonasService.cargarZonas();
+    await rescatarMaestro();
+
+    let stock = await getAreaData('almacenaje_activo');
+    if (!stock || !stock.length) {
+      const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+      const res = await fetch(`${base}/api/logistics/almacenaje_activo?t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        if (Array.isArray(datos)) stock = datos;
+      }
+    }
+    if (!stock || !stock.length) throw new Error('No se pudo leer el Stock Activo.');
+
+    // El Maestro, para que la tarea salga con marca y temporada y el equipo vaya derecho
+    const ficha = new Map();
+    (dataStore.articulos || []).forEach(row => {
+      const raw = Array.isArray(row) ? row : Object.values(row);
+      const s7 = String(raw[1] || '').trim().substring(0, 7);
+      if (s7 && !ficha.has(s7)) ficha.set(s7, {
+        marca: String(raw[13] || '').trim(),
+        temporada: String(raw[14] || raw[9] || '').trim()
+      });
+    });
+
+    const mandados = destinosDeLasTareas();
+
+    // Quién vive en cada cuerpo, y con cuántos pares
+    const cuerpos = new Map();
+    const detallePorArt = new Map();     // 'cuerpo|sku7' -> [{ ubi, skuFull, talla, pares }]
+    const paresEnElPiso = new Map();     // sku7 -> pares en todo el piso, para elegir su franja
+    stock.forEach(row => {
+      const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
+      if (!ubi || ubi.startsWith('CDBUFFER')) return;
+      const p = ubi.split('-');
+      const zona = p[0];
+      if (!zonas.includes(zona)) return;
+      if (zonasService.esZonaSinUbicacion(zona)) return;
+      const col = parseInt(p[1], 10), cue = parseInt(p[2], 10);
+      if (!col || !cue) return;
+      const raw = Array.isArray(row) ? row : Object.values(row);
+      const s7 = String(raw[1] || '').trim().substring(0, 7);
+      const qty = parseFloat(String(row['Cantidad actual'] || row['Cantidad'] || 0).replace(/,/g, '')) || 0;
+      if (!s7 || qty <= 0) return;
+      const k = `${zona}-${String(col).padStart(2, '0')}-${String(cue).padStart(2, '0')}`;
+      if (!cuerpos.has(k)) cuerpos.set(k, { zona, col, m: new Map() });
+      cuerpos.get(k).m.set(s7, (cuerpos.get(k).m.get(s7) || 0) + qty);
+
+      /* EL DETALLE POR SKU Y TALLA, que es lo que se imprime.
+       *
+       * Daniel, 14-ago-2026: *"debería ponerme el SKU en vez del artículo y también la columna
+       * talla, así podré saber qué tallas voy a sacar"*. Y el ORIGEN va con la ubicación
+       * COMPLETA, nivel incluido: para SACAR hay que saber exactamente dónde está. (El destino
+       * sigue siendo el cuerpo, porque al GUARDAR el nivel no importa — esa regla no cambió.)
+       *
+       * No es un lujo: el 8517900 tiene la talla 43 partida entre el nivel B y el C del mismo
+       * cuerpo, 35 pares y 10. Sin el nivel el operario la busca a ciegas. */
+      const dk = `${k}|${s7}`;
+      if (!detallePorArt.has(dk)) detallePorArt.set(dk, []);
+      detallePorArt.get(dk).push({
+        ubi, skuFull: String(raw[1] || '').trim(),
+        talla: normalizarTalla(tallaDeSku(String(raw[1] || '').trim(), String(raw[2] || '').trim())),
+        pares: Math.round(qty)
+      });
+      paresEnElPiso.set(s7, (paresEnElPiso.get(s7) || 0) + qty);
+    });
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * A DÓNDE VA CADA LÍNEA. NADA QUEDA A CRITERIO DEL OPERARIO.
+     *
+     * Daniel, 14-ago-2026: *"nada debe quedar a criterio del operario, el sistema lo debe
+     * controlar todo"*. Antes la línea decía qué sacar y ahí terminaba; el operario resolvía
+     * dónde ponerlo, que es exactamente la decisión que la cadena no le puede pasar.
+     *
+     * Se resuelve con las MISMAS reglas del almacenaje, sin copiar ninguna:
+     *
+     *   1. ¿Tiene otro cuerpo suyo? Va ahí — juntar la familia. Un cuerpo cuenta como suyo
+     *      desde 20 pares, el mismo `MINIMO_PARA_SER_CASA` de la reposición.
+     *   2. Si no, se le calcula la franja que le toca —saldos, saldo grande, anterior o
+     *      actual— con `franjaDeArticulo`, mirando lo que tiene en TODO el piso.
+     *   3. En las franjas que comparten cuerpo va al que mejor lo reciba; en la actual, a un
+     *      cuerpo libre.
+     *   4. Si no hay lugar, la línea queda RETENIDA y no sale en el papel. Una línea sin
+     *      destino le devuelve la decisión al operario, y eso es lo que no se puede.
+     *
+     * SE VA RESERVANDO A MEDIDA QUE SE ASIGNA. Sin eso, veinte líneas de saldo apuntaban al
+     * mismo cuerpo compartido y lo reventaban.
+     *
+     * Medido sobre el selectivo con el stock del 14-ago-2026: las 51 líneas encuentran destino
+     * —23 a su propio cuerpo, 25 a la columna de saldo grande y 3 a la de saldos— y ninguna
+     * queda retenida. La banda del `SEL-04` es la que lo hace posible: sin ella, los 25 del
+     * medio pedían un cuerpo entero de la franja actual, y ahí no hay ninguno libre.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    const MINIMO_PARA_SER_CASA = 20;
+    const ocupadosPorZona = {}, libresPorZona = {};
+    cuerpos.forEach((c, k) => {
+      const [, col, cue] = k.split('-');
+      const clave = `${Number(col)}-${Number(cue)}`;
+      (ocupadosPorZona[c.zona] = ocupadosPorZona[c.zona] || new Set()).add(clave);
+      const dentro = [...c.m.values()].reduce((a, b) => a + b, 0);
+      const cap = zonasService.densidadDe(c.zona, zonasService.serieDe([...c.m.keys()][0] || ''));
+      (libresPorZona[c.zona] = libresPorZona[c.zona] || new Map())
+        .set(clave, Math.max(0, cap - dentro));
+    });
+
+    const nombreDe = (zona, clave) => {
+      const [col, cue] = clave.split('-');
+      return zonasService.nombreCuerpo(zona, Number(col), Number(cue));
+    };
+
+    const destinoDe = (s7, desdeCuerpo, pares) => {
+      const f = ficha.get(s7) || {};
+      // 1. JUNTAR LA FAMILIA: otro cuerpo suyo, con 20 pares o más
+      let suyo = null;
+      cuerpos.forEach((c, k) => {
+        if (k === desdeCuerpo || suyo) return;
+        if ((c.m.get(s7) || 0) >= MINIMO_PARA_SER_CASA) suyo = k;
+      });
+      if (suyo) return { destino: suyo, motivo: 'junta la familia' };
+
+      // 2. LA FRANJA QUE LE TOCA, con las reglas de siempre
+      const art = {
+        marca: f.marca, genderRims: f.genderRims, gGender: f.gGender,
+        subcategoria: f.subcategoria, sku7: s7,
+        pares: Math.round(paresEnElPiso.get(s7) || 0),
+        esTemporadaActual: sugActuales(getLogicalDate())
+          .some(t => String(f.temporada || '').toUpperCase().includes(t))
+      };
+      const zr = zonasService.resolverZona(art);
+      if (!zr.zona || zonasService.esZonaSinUbicacion(zr.zona)) return null;
+      const franja = zonasService.franjaDeArticulo(art, zr.zona);
+      let columnas = zonasService.columnasDeFranja(zr.zona, franja);
+      const suyas = zonasService.columnasDeMarcaEnFranja(f.marca, franja);
+      if (suyas.length) {
+        const propias = columnas.filter(c => suyas.includes(c));
+        if (propias.length) columnas = propias;
+      }
+      if (!columnas.length) return null;
+
+      const ocup = ocupadosPorZona[zr.zona] || new Set();
+      const libres = libresPorZona[zr.zona];
+
+      // 3a. Las franjas que comparten: el cuerpo que mejor lo reciba
+      if (zonasService.columnaAdmiteVariosArticulos(zr.zona, columnas[0])) {
+        const r = zonasService.cuerpoQueRecibe(zr.zona, columnas, pares, ocup, libres);
+        if (r && r.cuerpos && r.cuerpos.length) {
+          const c = r.cuerpos[0];
+          const clave = `${c.columna}-${c.cuerpo}`;
+          if (libres) libres.set(clave, Math.max(0, (libres.get(clave) || 0) - pares));
+          return { destino: nombreDe(zr.zona, clave), motivo: `es ${franja}` };
+        }
+      }
+      // 3b. La franja actual: un cuerpo libre, y queda tomado
+      const r = zonasService.elegirCuerpos(zr.zona, columnas, 1, ocup);
+      if (r.completo && r.cuerpos.length) {
+        const c = r.cuerpos[0];
+        const clave = `${c.columna}-${c.cuerpo}`;
+        ocup.add(clave);
+        return { destino: nombreDe(zr.zona, clave), motivo: `su franja ${franja}` };
+      }
+      return null;   // 4. sin lugar: la línea queda retenida
+    };
+
+    // Y de cada cuerpo mezclado salen las líneas por sacar
+    const lineas = [];
+    let mezclados = 0, porTarea = 0, retenidas = 0;
+    cuerpos.forEach((c, k) => {
+      if (c.m.size <= 1) return;
+      if (zonasService.columnaAdmiteVariosArticulos(c.zona, c.col)) return;
+      mezclados++;
+
+      const orden = [...c.m.entries()].sort((a, b) => b[1] - a[1]);
+      const conTarea = (mandados.get(k) || new Set());
+      const mandadosAca = orden.filter(([s7]) => conTarea.has(s7));
+
+      // Manda la tarea si hay UNO solo; si hay varios o ninguno, el que más pares tiene
+      const elegido = (mandadosAca.length === 1) ? mandadosAca[0] : orden[0];
+      if (mandadosAca.length === 1) porTarea++;
+
+      orden.forEach(([s7, pares]) => {
+        if (s7 === elegido[0]) return;
+        const f = ficha.get(s7) || {};
+        // SIN DESTINO NO SALE. Ver el bloque de arriba: una línea que no dice a dónde va le
+        // devuelve la decisión al operario. Se cuenta para poder avisarlo, y se deja para la
+        // corrida siguiente —cuando Slotting haya hecho lugar, va a tener dónde ir—.
+        const d = destinoDe(s7, k, Math.round(pares));
+        if (!d) { retenidas++; return; }
+        lineas.push({
+          ubi: k, sku7: s7, pares: Math.round(pares),
+          marca: f.marca || '', temporada: f.temporada || '',
+          dueno: elegido[0], duenoPares: Math.round(elegido[1]),
+          llevarA: d.destino, motivo: d.motivo,
+          // El detalle que se imprime: una fila por SKU y talla, con la ubicación completa
+          detalle: (detallePorArt.get(`${k}|${s7}`) || [])
+            .slice().sort((a, b) => String(a.ubi).localeCompare(String(b.ubi))
+                                 || (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0)),
+          // De dónde salió el que hay que sacar: previsto o puesto a mano
+          vinoPorTarea: conTarea.has(s7),
+          duenoPorTarea: mandadosAca.length === 1
+        });
+      });
+    });
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * EL SEGUNDO HALLAZGO: ARRASTRAR EL RESTO. Y este viene CON DESTINO.
+     *
+     * Regla de Daniel del 14-ago-2026, y es la otra mitad del corte de los 20 pares: el mismo
+     * corte que convierte un código en nuevo es el que deja un resto huérfano en el piso.
+     *
+     *   *"Lo ideal es que esos diecinueve deberían estar en zonas de saldos. Pero a veces
+     *   Slotting no se da abasto y quedan en una zona de actual. Y tú le has dado una
+     *   ubicación a esos seiscientos pares en otro selectivo: entonces esa tiene que ser una
+     *   tarea para Slotting, mover esos diecinueve pares a la ubicación nueva."*
+     *
+     * LA FRANJA DE DONDE SALE NO IMPORTA. Acá hubo una versión que dejaba quieto lo que
+     * estaba en la columna de saldos, y Daniel la corrigió el mismo día: *"por más que esté
+     * en temporada antigua, temporada actual o en saldos, deberían moverse a donde están los
+     * seiscientos pares, para que esté toda la familia en un solo cuerpo o en dos. No puede
+     * estar en dos zonas diferentes"*.
+     *
+     * ES LA ÚNICA LÍNEA CON DESTINO, y por eso no se mezcla con las de arriba: las del cuerpo
+     * mezclado dicen qué sacar y el equipo decide adónde; esta dice las dos cosas, porque la
+     * tarea de almacenaje ya eligió el cuerpo esta misma noche.
+     *
+     * POR ESO EL BARRIDO CORRE DESPUÉS DE ARMAR LAS TAREAS y no antes: el destino no existe
+     * hasta que `calcularSugerenciaDeItem` eligió los cuerpos.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    const casaNueva = new Map();          // sku7 -> Set de cuerpos que le dio la tarea
+    mandados.forEach((skus, k) => skus.forEach(s7 => {
+      if (!casaNueva.has(s7)) casaNueva.set(s7, new Set());
+      casaNueva.get(s7).add(k);
+    }));
+
+    /* SOLO SE ARRASTRA UN RESTO, NO UNA MUDANZA. Este candado apareció al correr el barrido
+     * contra los datos de verdad: sin él salían líneas de 612, 573 y 553 pares — un artículo
+     * que vive en tres cuerpos del MZN02 y al que la tarea le nombró otro. Eso no es lo que
+     * dijo Daniel; eso es mover el artículo entero, y además a un cuerpo donde no entra.
+     *
+     * La regla nace del corte de los 20: un artículo pasa a CÓDIGO NUEVO cuando tiene 19 pares
+     * o menos en todo el almacén, y el resto que deja atrás es justamente eso. Así que si lo
+     * que tiene fuera de sus cuerpos nuevos llega a 20, no es un resto y no se toca.
+     *
+     * Lo que queda afuera por este candado —los artículos de reposición repartidos en varios
+     * cuerpos, 233 medidos el 14-ago— cae bajo el mismo principio de "toda la familia junta",
+     * pero por otro camino: no están esperando una llegada que los consolide. Falta que Daniel
+     * decida si quieren tarea propia. */
+    const CORTE_CODIGO_NUEVO = 20;
+    const fueraDeSuCasa = new Map();
+    casaNueva.forEach((suyos, s7) => {
+      let n = 0;
+      cuerpos.forEach((c, k) => { if (!suyos.has(k)) n += (c.m.get(s7) || 0); });
+      fueraDeSuCasa.set(s7, n);
+    });
+
+    /* NO SE DUPLICA CON LAS DE ARRIBA. Un resto que está en un cuerpo mezclado YA salió como
+     * línea del barrido, sin destino. Si además hay que arrastrarlo, no se agrega otra línea:
+     * se le completa el destino a la que ya está. Sin esto el operario recibía la misma
+     * mercadería dos veces, una con destino y otra sin él. */
+    const yaEstan = new Map();
+    lineas.forEach(l => yaEstan.set(`${l.ubi}|${l.sku7}`, l));
+
+    let arrastres = 0;
+    casaNueva.forEach((suyos, s7) => {
+      if ((fueraDeSuCasa.get(s7) || 0) >= CORTE_CODIGO_NUEVO) return;   // es mudanza, no resto
+      // A dónde se lo lleva: si la tarea le dio más de un cuerpo, al primero. El equipo
+      // termina de acomodar adentro, que para eso son 300 pares como mucho.
+      const aDonde = [...suyos].sort()[0];
+      cuerpos.forEach((c, k) => {
+        if (suyos.has(k)) return;                 // ya está donde tiene que estar
+        const pares = c.m.get(s7);
+        if (!pares || pares <= 0) return;
+        arrastres++;
+        const previa = yaEstan.get(`${k}|${s7}`);
+        if (previa) { previa.llevarA = aDonde; previa.motivo = 'arrastre'; return; }
+        const f = ficha.get(s7) || {};
+        lineas.push({
+          ubi: k, sku7: s7, pares: Math.round(pares),
+          marca: f.marca || '', temporada: f.temporada || '',
+          // El destino es lo que distingue a esta línea, y va explícito para que la pantalla
+          // y el papel no tengan que deducirlo.
+          llevarA: aDonde, motivo: 'arrastre',
+          detalle: (detallePorArt.get(`${k}|${s7}`) || [])
+            .slice().sort((a, b) => String(a.ubi).localeCompare(String(b.ubi))
+                                 || (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0)),
+          dueno: s7, duenoPares: Math.round(pares), vinoPorTarea: true, duenoPorTarea: true
+        });
+      });
+    });
+
+    console.log(`[Slotting] ${zonas.join('+')}: ${cuerpos.size} cuerpos con stock, ${mezclados} mezclados `
+              + `(${porTarea} con dueño decidido por la tarea), ${arrastres} restos por arrastrar, `
+              + `${retenidas} líneas retenidas sin destino, ${lineas.length} líneas y `
+              + `${lineas.reduce((a, l) => a + l.pares, 0)} pares por sacar.`);
+
+    const corrida = await slottingService.publicarCorrida(getLogicalDate(), lineas, zonas.join('+'));
+    return { ...corrida, retenidas };
+  };
+
+  /**
+   * LOS OPERARIOS, con el mismo formato que usa el modal de almacenaje.
+   *
+   * Se arma acá y se le pasa a Slotting por `OPC`: la vista no sabe de adminService, y las dos
+   * pantallas nombran a la gente igual. Si el formato cambiara en un solo lado, un mismo
+   * operario aparecería con dos nombres y el KPI lo contaría dos veces.
+   */
+  const operariosParaAsignar = () => (adminService.getWorkers() || [])
+    .filter(w => w.active)
+    .map(w => {
+      const nom = (w.nombre || w.Nombre || '').trim().toLowerCase();
+      const ape = (w.apellidos || w.Apellidos || '').trim().split(' ')[0].toLowerCase();
+      return {
+        usuario: nom ? `${nom[0]}${ape}` : 's/n',
+        nombre: (w.nombre || w.Nombre || '').trim(),
+        turno: String(w.turno || w.Turno || '').trim().toUpperCase() === 'NOCHE' ? 'NOCHE' : 'DÍA'
+      };
+    })
+    .sort((a, b) => a.usuario.localeCompare(b.usuario));
+
+  const renderSlotting = async (container, sub) => {
+    /* CONFIG. SLOTTING VA CON PERMISO PROPIO. Daniel, 15-ago-2026: *"esa configuración la voy a
+     * tener yo en permisos, para que solamente yo como administrador la vea"*. La clave es
+     * `slotting_slot_config` y se maneja desde Administración, igual que las del buffer. El
+     * admin la ve siempre; el resto, solo si se la dan. */
+    const def = TABS.find(t => t.id === 'slotting');
+    const permisos = adminService.getPermissions(user.role) || {};
+    const visibles = def.subTabs.filter(s =>
+      user.role === 'admin' || s.id !== 'slot_config' || permisos['slotting_slot_config'] === 1);
+    if (!visibles.find(s => s.id === sub)) sub = visibles[0].id;
+    localStorage.setItem('activeSub_slotting', sub);
+
+    const vista = sub === 'slot_kpi' ? 'kpi' : (sub === 'slot_config' ? 'config' : 'tareas_dia');
+    contentSubtitle.textContent = vista === 'kpi' ? 'KPI de ordenamiento'
+                                : vista === 'config' ? 'Configuración de Slotting'
+                                : 'Tareas de ordenamiento';
+
+    container.innerHTML = `
+      <nav class="sub-nav" style="display:flex; gap:1.5rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto;">
+        ${visibles.map(s => `
+          <a class="sub-nav-item slt-sub ${sub === s.id ? 'active' : ''}" data-id="${s.id}"
+             style="padding:0.5rem 0.2rem; font-size:0.85rem; white-space:nowrap; cursor:pointer;">
+            ${s.icon} ${s.label.toUpperCase()}</a>`).join('')}
+      </nav>
+      <div id="sltNivel2" style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">Cargando...</div>`;
+    container.querySelectorAll('.slt-sub').forEach(a =>
+      a.addEventListener('click', (e) => renderSlotting(container, e.currentTarget.dataset.id)));
+    const caja = container.querySelector('#sltNivel2');
+
+    await slottingService.cargarConfig();
+    const cajon = await slottingService.traerTareas();
+
+    /* LAS TAREAS VENCEN AL CERRAR LA JORNADA, igual que en almacenaje. Se vencen al ABRIR la
+     * pantalla y no al procesar: si nadie procesa en tres días, esas tareas tienen que estar
+     * en NO TRABAJADA igual, no esperando. Solo se guarda si de verdad cambió algo. */
+    const vencidas = slottingService.vencerLasViejas(cajon, (f) => jornadaService.jornadaVencida(f));
+    if (vencidas) {
+      try { await slottingService.guardarTareas(cajon); }
+      catch (e) { console.warn('[Slotting] no se pudo guardar el vencimiento:', e && e.message); }
+      console.log(`[Slotting] ${vencidas} tarea(s) pasaron a NO TRABAJADA por jornada cerrada.`);
+    }
+
+    montarSlotting(caja, {
+      cajon, vista,
+      svc: slottingService,
+      operarios: operariosParaAsignar(),
+      jornadaVencida: (f) => jornadaService.jornadaVencida(f),
+      // Una tarea finalizada solo la borra un admin, igual que en almacenaje
+      puedeBorrarFinalizadas: user.role === 'admin' || esSuperusuario(),
+      alertar: (t, m, tipo) => showPremiumAlert(t, m, tipo || 'info'),
+      // Devuelve true/false: la vista revierte el cambio si no llegó al servidor
+      alGuardar: async (c) => {
+        try { await slottingService.guardarTareas(c); return true; }
+        catch (e) {
+          showPremiumAlert('NO SE PUDO GUARDAR', e.message || String(e), 'error');
+          return false;
+        }
+      },
+      alGuardarConfig: async (cfg) => { await slottingService.guardarConfig(cfg); },
+      alProcesar: async () => {
+        /* UNA SOLA CORRIDA POR TURNO, si la configuración lo pide. El botón queda igual —no se
+         * oculta ni se apaga— y el aviso sale al apretarlo: fue la decisión de Daniel, porque
+         * un botón que desaparece hace pensar que se rompió algo.
+         *
+         * El turno es la jornada lógica de las 20:00 a las 06:30, la misma que ya usa todo el
+         * sistema; la corrida se guarda con esa fecha, así que alcanza con mirar si existe. */
+        const hoy = getLogicalDate();
+        if (slottingService.configActual().unaVezPorTurno
+            && slottingService.yaSeProcesoEsteTurno(cajon, hoy)) {
+          showPremiumAlert('SOLO UNA VEZ POR TURNO',
+            `El Slotting de la jornada del <b>${hoy}</b> ya se procesó`
+            + `${(cajon[hoy] || {}).generado ? ' a las <b>' + String((cajon[hoy] || {}).generado).slice(11) + '</b>' : ''}.`
+            + '<br><br>Volver a procesar rehace el reparto entero: las tareas que el equipo tiene '
+            + 'en la mano dejarían de existir y las empezadas cambiarían de número.'
+            + '<br><br>Si de verdad hace falta correrlo otra vez, se destilda '
+            + '<b>"Procesar solo una vez por turno"</b> en Config. Slotting.',
+            'warning');
+          return null;
+        }
+        try {
+          const corrida = await barrerParaSlotting(slottingService.configActual().zonas);
+          showPremiumAlert('ALMACÉN REVISADO',
+            `<b>${corrida.cuerpos}</b> cuerpos con más de un artículo.<br>`
+            + `${corrida.pares.toLocaleString('es-PE')} pares por sacar en <b>${corrida.tareas.length}</b> tareas.`
+            + (corrida.retenidas
+                ? `<br><br><b>${corrida.retenidas}</b> línea${corrida.retenidas > 1 ? 's' : ''} `
+                  + `quedó sin dónde ir y no salió en las tareas. Vuelve a aparecer cuando haya lugar.`
+                : ''),
+            'success');
+          return await slottingService.traerTareas();
+        } catch (e) {
+          showPremiumAlert('NO SE PUDO PROCESAR', e.message || String(e), 'error');
+          return null;
+        }
+      }
+    });
+  };
+
   const cargarContextoSugerencia = async (tareasAbiertas) => {
     await zonasService.cargarZonas();
     await tallasService.cargarTallas();
@@ -16740,6 +17402,51 @@ const renderRFSection = (container) => {
         }
       } catch (e) { console.warn('[Sugerencia] no se pudo traer el stock activo:', e && e.message); }
     }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * QUÉ MANDÓ BAJAR EL REPLENISHMENT — para dejar de adivinarlo.
+     *
+     * La sub-zona del buffer NO es prueba de nada. `CDBUFFER-B` quiere decir "bajó de
+     * reserva", pero cuando el A se llena recepción deja mercadería NUEVA en el B, y eso va
+     * a volver a pasar. La prueba que había —¿llega menos de lo que hay en reserva?— no
+     * filtra: sobre el buffer del 14-ago-2026 pasaban 38 de 41 artículos, porque la reserva
+     * es en promedio 89 veces lo que llega. El caso más ajustado era 2,1 veces.
+     *
+     * Ahora se le pregunta al módulo que lo decidió. Replenishment publica su corrida (ver
+     * publicarCorridaReplenishment) y acá se lee: si el artículo está en la lista, bajó de
+     * reserva de verdad y no se le devuelve nada al rack. Si no está, entró por la puerta y
+     * sigue el camino normal.
+     *
+     * SE MIRAN DOS DÍAS, no uno. La mercadería que Replenishment mandó bajar anoche puede
+     * seguir en el buffer esta madrugada, y sigue siendo reposición.
+     *
+     * SI NO HAY NINGUNA CORRIDA PUBLICADA se devuelve null y `casoDelItem` se queda con la
+     * prueba vieja. Es a propósito: mientras el robot no publique, el sistema tiene que
+     * seguir trabajando como hasta ahora en vez de tratar todo el buffer B como recepción.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    let mandadoABajar = null;
+    try {
+      const res = await fetch(`${_urlReplDia()}&t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const cajon = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        if (cajon && typeof cajon === 'object' && !Array.isArray(cajon)) {
+          const dias = Object.keys(cajon).sort().slice(-2);
+          if (dias.length) {
+            mandadoABajar = new Map();
+            dias.forEach(d => {
+              (((cajon[d] || {}).lista) || []).forEach(par => {
+                const s7 = String((Array.isArray(par) ? par[0] : '') || '').trim().substring(0, 7);
+                const q = Number(Array.isArray(par) ? par[1] : 0) || 0;
+                if (s7 && q > 0) mandadoABajar.set(s7, (mandadoABajar.get(s7) || 0) + q);
+              });
+            });
+            console.log(`[Sugerencia] Replenishment: ${mandadoABajar.size} artículos mandados a bajar `
+                      + `en ${dias.length} corrida(s) (${dias.join(', ')}).`);
+          }
+        }
+      }
+    } catch (e) { console.warn('[Sugerencia] no se pudo leer las corridas de Replenishment:', e && e.message); }
 
     // La reserva se pide DIRECTO: getAreaData no consulta la nube para las áreas que
     // empiezan con 'analisis_sku', así que en una PC que no subió el archivo daría cero.
@@ -16890,6 +17597,28 @@ const renderRFSection = (container) => {
       (libres[zn] = libres[zn] || new Map()).set(`${+col}-${+cue}`, Math.max(0, Math.round(cap - d.pares)));
     });
 
+    /* QUIÉNES VIVEN EN CADA CUERPO, para poder exigir un cuerpo un artículo.
+     *
+     * `libres` dice cuánto espacio queda; esto dice CON QUIÉN se comparte, que es otra
+     * pregunta. Sin esto, la reposición mandaba a un cuerpo con veinte artículos adentro
+     * siempre que entrara — ver columnaAdmiteVariosArticulos en zonasService.
+     *
+     * EL MEZZANINE 4 QUEDA FUERA. No sigue las reglas de cuerpo ni de columna, se entrega sin
+     * ubicación exacta y mezcla artículos por diseño: contarlo acá ensucia el dato y no
+     * cambia ninguna decisión. */
+    const ocupantes = {};
+    paresEnCuerpo.forEach((cuerpos, s7) => {
+      cuerpos.forEach((q, k) => {
+        if (!(q > 0)) return;
+        const [zn, col, cue] = k.split('|');
+        if (zonasService.esZonaSinUbicacion(zn)) return;
+        const porZona = (ocupantes[zn] = ocupantes[zn] || new Map());
+        const clave = `${+col}-${+cue}`;
+        if (!porZona.has(clave)) porZona.set(clave, new Set());
+        porZona.get(clave).add(s7);
+      });
+    });
+
     // Los cuerpos ya prometidos a otras tareas abiertas también están ocupados
     (tareasAbiertas || []).forEach(t => (t.items || []).forEach(art => {
       const s = art && art.sugerencia;
@@ -16913,7 +17642,8 @@ const renderRFSection = (container) => {
       reservaDe.set(prod.substring(0, 7), (reservaDe.get(prod.substring(0, 7)) || 0) + q);
     });
 
-    return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe, origenDe, libres };
+    return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe, origenDe, libres,
+             ocupantes, mandadoABajar };
   };
 
   /**
@@ -17090,19 +17820,30 @@ const renderRFSection = (container) => {
   };
 
   /**
-   * EL ESCOLAR BAJA CON CUENTAGOTAS: 50 PARES Y NADA MÁS.
+   * EL ESCOLAR: 50 PARES DE CADA TALLA EN EL PISO.
    *
-   * Regla de Daniel del 05-ago-2026, para el calzado escolar de CUALQUIER marca — Bata,
-   * North Star, Power, B.G Licenses, todas. No importa si es código nuevo o reposición, ni
-   * cuánto llegue: al piso bajan 50 pares y el resto sube a reserva. Si llegan 300, bajan 50
-   * y suben 250.
+   * Regla de Daniel, para el calzado escolar de CUALQUIER marca — Bata, North Star, Power,
+   * B.G Licenses, todas. No importa si es código nuevo o reposición.
    *
-   * Se mide en PARES y no en cuerpos a propósito: 50 pares no llenan ni un sexto de un cuerpo
-   * del selectivo, así que "un cuerpo" sería veinte veces más de lo que se quiere abajo.
+   * DOS COSAS QUE ESTUVIERON MAL ENTENDIDAS DESDE EL 05-ago-2026, y las dos las corrigió
+   * Daniel el 14-ago mirando el papel:
+   *
+   *   1. Son 50 POR TALLA, no 50 del artículo. *"De la talla treinta, cincuenta pares; de la
+   *      treinta y uno, cincuenta; treinta y dos, cincuenta"*. Estaba puesto como tope del
+   *      artículo entero y repartido entre las tallas, así que a cada una le tocaban 5 o 6
+   *      pares —menos de una caja—; el redondeo terminaba bajando una caja por talla y la
+   *      cuenta cerraba sola. Con 9 tallas bajaban 90 en vez de 450.
+   *
+   *   2. Es un OBJETIVO DE PISO, no una cantidad a bajar. *"Si ya tiene diez, solo tendrías
+   *      que reponer cuarenta. Si ya tienes cuarenta, solo tendrías que reponer diez"*. De
+   *      eso se encarga `planificarPorTalla`, que descuenta lo que ya hay: `falta = objetivo
+   *      − piso`. Una talla que ya llegó a 50 no recibe nada.
+   *
+   * Va con el modo `paresPorTalla`, que existe para esto y NO es el modo `pares`.
    *
    * El escolar se reconoce por el Gender RIMS ('05 SCHOOL'), el mismo campo con el que
-   * franjaDeArticulo ya lo manda a su columna — la 14 del selectivo, que lleva escolar de
-   * cualquier temporada.
+   * franjaDeArticulo lo manda a su columna: la 14 del selectivo, la 21 del MZN01 para
+   * Bubblegummers y B.G Licenses, la 1 para Power y la 4 del MZN02 para North Star.
    */
   const PARES_ESCOLAR = 50;
   const esEscolar = (genderRims) =>
@@ -17157,8 +17898,8 @@ const renderRFSection = (container) => {
     // SCHOOL manda la regla del mezzanine 4, que se pregunta más abajo... por eso este bloque
     // NO se aplica cuando la zona es la que va sin ubicación.
     if (esEscolar(datos.genderRims) && !zonasService.esZonaSinUbicacion(zona)) {
-      return { nombre: 'escolar', regla: { modo: 'pares', valor: PARES_ESCOLAR },
-               motivo: `Es escolar: al piso van ${PARES_ESCOLAR} pares y el resto sube a reserva.` };
+      return { nombre: 'escolar', regla: { modo: 'paresPorTalla', valor: PARES_ESCOLAR },
+               motivo: `Es escolar: tienen que quedar ${PARES_ESCOLAR} pares de CADA TALLA en el piso; el resto sube a reserva.` };
     }
 
     if (origen && origen.has('D')) {
@@ -17192,7 +17933,29 @@ const renderRFSection = (container) => {
       // reserva. Si llega más, entró por la puerta, deje recepción en el A o en el B.
       const enReserva = Number(ctx.reservaDe && ctx.reservaDe.get(s7)) || 0;
 
-      if (pares <= enReserva) {
+      /* PRIMERO SE LE PREGUNTA AL MÓDULO QUE LO DECIDIÓ.
+       *
+       * La cuenta de acá abajo sonaba razonable y no filtraba nada: medida sobre el buffer
+       * del 14-ago-2026, pasaban 38 de 41 artículos, porque la reserva es en promedio 89
+       * veces lo que llega y solo salta si llega MÁS QUE TODA la reserva. Así, un código
+       * nuevo que recepción dejó en el B —cosa que pasa cuando el A se llena— se almacenaba
+       * entero como si fuera reposición, y la clasificación de nuevo o reposición no llegaba
+       * a hacerse nunca.
+       *
+       * Replenishment ahora publica qué mandó bajar. Si el artículo está en esa lista, bajó
+       * de reserva y no se le devuelve nada al rack —esa es la posta del módulo anterior y
+       * no se discute—. Si NO está, entró por la puerta: sigue de largo y se decide como
+       * cualquier otra mercadería.
+       *
+       * Mientras no haya ninguna corrida publicada, `mandadoABajar` viene en null y manda la
+       * prueba vieja. Ver el skill `cadena-de-modulos`. */
+      if (ctx.mandadoABajar) {
+        if (ctx.mandadoABajar.has(s7)) {
+          return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
+                   motivo: 'Replenishment lo mandó bajar: se almacena todo, no vuelve al rack.' };
+        }
+        // Está en el B pero nadie lo mandó bajar: lo dejó recepción. Sigue de largo.
+      } else if (pares <= enReserva) {
         return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
                  motivo: 'Bajó de reserva por pedido o replenishment: se almacena todo.' };
       }
@@ -17242,7 +18005,10 @@ const renderRFSection = (container) => {
     // que decide si un artículo es un saldo es cuánto tiene, no cuánto se le almacena hoy.
     const franja = zonasService.franjaDeArticulo({ ...datos, pares }, zona);
     const enSuFranja = (datos.yaTiene || []).some(c =>
-      c.zona === zona && zonasService.franjaDeColumna(c.zona, c.columna) === franja);
+      // columnaSirveParaFranja y no franjaDeColumna: hay columnas que llevan dos cosas —la 1
+      // del MZN01 es de temporada anterior Y de escolar—, y con la comparación directa un
+      // escolar que ya vive ahí no se reconocía como suyo.
+      c.zona === zona && zonasService.columnaSirveParaFranja(c.zona, c.columna, franja));
 
     return enSuFranja
       ? { nombre: 'reposicion-fabrica', regla: { modo: 'cuerpos', valor: CUERPOS_REPOSICION },
@@ -17303,7 +18069,8 @@ const renderRFSection = (container) => {
     let cant = planificar(caso.regla);
     let alPiso = cant ? cant.alPiso : pares;
     let aReserva = cant ? cant.aReserva : 0;
-    let plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados, ctx.libres);
+    let plan = zonasService.planificarAlmacenaje({ ...datos, pares: alPiso }, tomados,
+                                                 ctx.libres, ctx.ocupantes);
 
     // LAS TRES DEL MEZZANINE 3 SE ENTREGAN CON LA COLUMNA, NO CON EL CUERPO.
     //
@@ -18389,6 +19156,10 @@ const renderRFSection = (container) => {
               <label style="display:block; font-size:0.64rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;" title="Por debajo de esta cantidad de pares, el artículo se trata como saldo">Es saldo con menos de</label>
               <input type="number" id="zn_saldo" min="0" value="${z.saldoMenorA}" style="width:80px; padding:7px 9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800;">
             </div>
+            <div>
+              <label style="display:block; font-size:0.64rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;" title="Un artículo de temporada actual con esta cantidad de pares o menos va a la columna de saldo grande. Poner 0 para apagar la banda.">Saldo grande hasta</label>
+              <input type="number" id="zn_saldo_grande" min="0" value="${z.saldoGrandeHasta || 0}" style="width:80px; padding:7px 9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800;">
+            </div>
             <div style="font-size:0.68rem; color:rgba(255,255,255,0.35); line-height:1.6;">
               <b style="color:rgba(255,255,255,0.6);">${totalCuerpos}</b> cuerpos de almacenaje<br>
               🚧 Paso del elevador: ${esc(pasilloTxt)}
@@ -18560,6 +19331,7 @@ const renderRFSection = (container) => {
         marcar();
       };
       container.querySelector('#zn_saldo').onchange = (e) => { z.saldoMenorA = Math.max(0, +e.target.value || 0); marcar(); };
+      container.querySelector('#zn_saldo_grande').onchange = (e) => { z.saldoGrandeHasta = Math.max(0, +e.target.value || 0); marcar(); };
 
       container.querySelectorAll('[data-marca]').forEach(s => s.onchange = () => {
         const m = s.dataset.marca;
@@ -19714,6 +20486,92 @@ const renderRFSection = (container) => {
     return (i.qAct || 0) + bajar;
   };
 
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * LA CORRIDA DEL REPLENISHMENT, AL SERVIDOR
+   *
+   * Hasta acá el análisis terminaba en un Excel: se bajaba, y esa misma hoja se volvía a
+   * subir a mano en Archivo Zona Buffer. El buffer recibía código y cantidad SIN SABER DE
+   * DÓNDE SALIERON —una lista de números sin remitente—, y por eso Procesar Tareas tenía que
+   * adivinar por la letra de la ubicación si algo había bajado de reserva o si lo había
+   * dejado recepción. Esa adivinanza no filtra: sobre el buffer del 14-ago-2026 pasaban 38
+   * de 41 artículos, porque la reserva es en promedio 89 veces lo que llega.
+   *
+   * Con la corrida guardada, el buffer la trae solo y Procesar Tareas puede SABER qué se
+   * mandó bajar en vez de deducirlo. Ver el skill `cadena-de-modulos`: el módulo anterior
+   * deja constancia de lo que decidió, el siguiente la lee.
+   *
+   * VA LA SOLICITUD, NO EL TOPE. El tope recortado a lo que existe en el almacén — el mismo
+   * número que lleva la hoja "Para Zona Buffer" del Excel y en el mismo formato que espera
+   * el motor: código y cantidad, en ese orden y leídos POR POSICIÓN.
+   *
+   * SIN LOS FILTROS DE PANTALLA. El Excel exporta lo que se está mirando en la tabla; esto
+   * es la corrida completa, que es lo que hay que bajar.
+   *
+   * SIETE DÍAS, DOMINGO INCLUIDO. Regla de Daniel del 14-ago-2026: *"siete días a la semana,
+   * de lunes a domingo, aunque domingo no se trabaje, pero igual guárdalo, porque ahí
+   * domingo siempre se va a venir"*.
+   *
+   * Si el servidor no contesta no se rompe nada: el Excel se sigue pudiendo bajar y subir a
+   * mano como siempre. Por eso no se espera al envío para pintar la pantalla.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const publicarCorridaReplenishment = async (items) => {
+    try {
+      const lista = (items || [])
+        .map(i => [String(i.sku || '').trim(), Math.round(solicitudDe(i))])
+        .filter(p => p[0] && p[1] > 0);
+      if (!lista.length) {
+        console.log('[REPL] La corrida no pide bajar nada: no se publica.');
+        return false;
+      }
+
+      const fecha = getLogicalDate();
+      const corrida = {
+        fecha,
+        generado: selloLocalTarea(),
+        skus:        lista.length,
+        pares:       lista.reduce((a, p) => a + p[1], 0),
+        quebrados:   (items || []).filter(i => i.estado === 'QUEBRADO').length,
+        porQuebrar:  (items || []).filter(i => i.estado === 'POR QUEBRAR').length,
+        lista
+      };
+
+      /* Se relee el cajón entero antes de escribir: guarda una corrida por día y no puede
+         pisar las de los otros días. Si el servidor no contesta, se manda solo la de hoy —
+         se pierde el histórico, no la corrida, que es lo que importa. */
+      let cajon = {};
+      try {
+        const res = await fetch(`${_urlReplDia()}&t=${Date.now()}`);
+        if (res.ok) {
+          const cuerpo = await res.json();
+          const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+          if (datos && typeof datos === 'object' && !Array.isArray(datos)) cajon = datos;
+        }
+      } catch (e) { /* se sigue con el cajón vacío */ }
+
+      cajon[fecha] = corrida;
+
+      /* Rotación: se quedan los 7 días más recientes. Las fechas son 'YYYY-MM-DD', así que
+         ordenan bien como texto y no hace falta convertirlas a Date. */
+      const recortado = {};
+      Object.keys(cajon).sort().slice(-DIAS_REPL_GUARDADOS).forEach(k => { recortado[k] = cajon[k]; });
+
+      const res = await fetch(_urlReplDia(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recortado)
+      });
+      if (!res.ok) throw new Error('El servidor respondió ' + res.status);
+
+      console.log(`[REPL] ✅ Corrida del ${fecha} publicada: ${corrida.skus} SKU, `
+                + `${corrida.pares.toLocaleString('es-PE')} pares `
+                + `(${corrida.quebrados} quebrados, ${corrida.porQuebrar} por quebrar).`);
+      return true;
+    } catch (e) {
+      console.warn('[REPL] ⚠️ No se pudo publicar la corrida; el Excel se sigue pudiendo subir a mano:', e && e.message);
+      return false;
+    }
+  };
+
   // ── renderWithItems: construye la UI completa con los items ya procesados ──
   const _replRenderWithItems = (container, items, umbral, activo, reserva) => {
 
@@ -20339,9 +21197,45 @@ const renderRFSection = (container) => {
         // y el cuerpo se completa con las tallas que haya, tengan objetivo propio o no.
         if (!lista.some(i => (Number(i.factor) || 0) > 0)) return;
 
+        /* LA REPOSICIÓN SON DOS CUERPOS, NO LOS QUE EL ARTÍCULO TENGA HOY.
+         *
+         * Acá estaba la desconexión que Daniel encontró el 14-ago-2026: este módulo llenaba
+         * hasta los cuerpos que el artículo YA ocupaba, y el de almacenaje reparte contra DOS
+         * cuerpos (CUERPOS_REPOSICION). Los dos hacían bien su cuenta y el resultado no
+         * cerraba: *"si tienes ciento treinta en un cuerpo y vas a bajar trescientos, vas a
+         * tener un cuerpo lleno y otro al treinta y tres por ciento"*.
+         *
+         * Medido sobre las tareas del 14-ago, 15 artículos dejaban un cuerpo a menos de la
+         * mitad —varios al 2%, un cuerpo de 400 con NUEVE pares adentro— y faltaban 5.040
+         * pares para llenarlos. Y eso encadena: cada cuerpo ocupado al 2% es un cuerpo menos
+         * para las tareas de mañana, y ahí empiezan los bloqueos por falta de espacio.
+         *
+         * Por qué DOS y no los que tenga: si el replenishment está bajando es porque el batch
+         * del código nuevo ya se agotó y el artículo pide reposición — y la reposición son dos
+         * cuerpos, la misma regla que aplica el almacenaje al repartir.
+         *
+         * PERO NUNCA MENOS DE LOS QUE YA TIENE, y esa parte importa tanto como la otra.
+         *
+         * Daniel, 14-ago-2026: *"los que tienen tres cuerpos es porque es un código nuevo
+         * todavía, y tenemos un colchón de dos semanas para que se agote. Todavía son cuerpos
+         * completos, son códigos nuevos"*.
+         *
+         * Un código nuevo bajó el 60% de su llegada y eso ocupa tres o cuatro cuerpos con todo
+         * derecho. Apuntar a dos le recortaría la reposición justo mientras está en su ventana
+         * de venta — y si se le agota UNA talla hay que reponerla igual, *"porque te lo va a
+         * estar pidiendo el buffer y el replenishment"*. Sin este máximo, al 1416802 se le
+         * bajaba 575 en vez de 1.795 teniendo cuatro cuerpos abiertos.
+         *
+         * Así que el objetivo es DOS cuerpos para el que tiene uno, y los suyos para el que ya
+         * tiene más. Nunca se le achica el piso a un artículo que todavía se está vendiendo.
+         *
+         * Si arriba no hay para llegar, se baja lo que haya: el recorte contra la reserva lo
+         * hace el reparto de abajo, que nunca asigna más de `disp`. Nunca se inventa stock. */
         const serie = zonasService.serieDe(art7);
-        let capacidad = 0;
-        cuerpos.forEach(c => { capacidad += zonasService.densidadDe(c.split('|')[0], serie); });
+        let capacidadSuya = 0;
+        cuerpos.forEach(c => { capacidadSuya += zonasService.densidadDe(c.split('|')[0], serie); });
+        const porCuerpo = zonasService.densidadDe([...cuerpos][0].split('|')[0], serie);
+        const capacidad = Math.max(porCuerpo * CUERPOS_REPOSICION, capacidadSuya);
         if (capacidad <= 0) return;
 
         // Lo que hay DENTRO de esos cuerpos, no el stock total del artículo. Se cuenta
@@ -20407,6 +21301,17 @@ const renderRFSection = (container) => {
       } catch(e) {
         console.warn('[REPL] localStorage lleno, cache solo en sesión', e);
       }
+
+      /* Y AL SERVIDOR, PARA QUE EL BUFFER LA PUEDA TRAER SOLO.
+       *
+       * Va acá y NO en la rama del caché: un análisis guardado en el navegador puede ser de
+       * hace dos días, y publicarlo como la corrida de hoy pondría al buffer a bajar contra
+       * un stock que ya no existe. Es el mismo cuidado que toma publicarMetaDelBuffer.
+       *
+       * Sin await: la pantalla no espera al servidor. Si el envío falla, el Excel se sigue
+       * pudiendo bajar y subir a mano igual que siempre. */
+      publicarCorridaReplenishment(items);
+
       _replRenderWithItems(container, items, umbral, activo, reserva);
     };
 
@@ -23228,6 +24133,20 @@ window.showCellModal = function(htmlContent) {
         } catch (e) {
           console.warn('[Almacenaje] no se pudo grabar el papel en las tareas:', e && e.message);
         }
+
+        /* SLOTTING NO SE DISPARA ACÁ.
+         *
+         * Estuvo colgado de este punto un rato y Daniel lo corrigió el 14-ago-2026: el barrido
+         * va con el STOCK, no con las tareas. *"No es al procesar tareas: cuando el robot
+         * cargue el stock activo y reserva, que agarre el stock activo y comience a
+         * verificar"*.
+         *
+         * Y tiene razón de fondo: procesar tareas mira lo que llegó al buffer esa noche, que
+         * es un puñado de artículos. Slotting tiene que mirar el almacén entero, porque los
+         * cuerpos que nadie va a tocar en meses son justamente los que se quedan mezclados.
+         *
+         * Hoy se dispara con el botón BUSCAR AHORA de Slotting → Tareas. Falta que lo corra el
+         * robot después de publicar el stock. */
 
         // Animar la barra de progreso de 0% a 100% de manera fluida y mostrar el mensaje final
         let currentPct = 0;

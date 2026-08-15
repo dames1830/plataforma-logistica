@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Slotting · Tareas Día y KPI</title>
+<style>
+  :root { --bg-dark:#0f172a; --border:rgba(255,255,255,0.1); --primary:#4f46e5; --text-muted:#94a3b8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg-dark); color:#e2e8f0;
+         font-family:Inter,'Segoe UI',system-ui,sans-serif; padding:0 0 3rem; }
+  .barra { position:sticky; top:0; z-index:9; background:#1e293b; padding:12px 16px;
+           font:600 13px/1.6 system-ui; text-align:center; border-bottom:1px solid var(--border); }
+  .wrap { max-width:1500px; margin:0 auto; padding:0 1.2rem; }
+  .rotulo { margin:2rem 0 0.9rem; font:800 15px/1.5 system-ui; color:#fff; }
+  .rotulo small { display:block; font-weight:400; color:var(--text-muted); font-size:13px; margin-top:4px; }
+
+  .subtabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:1.1rem; }
+  .subtab { padding:0.6rem 1.1rem; font-size:0.78rem; font-weight:700; color:var(--text-muted);
+            border-bottom:2px solid transparent; cursor:pointer; white-space:nowrap; }
+  .subtab.on { color:#fff; border-bottom-color:var(--primary); }
+
+  .panel { background:rgba(30,41,59,0.35); border:1px solid var(--border);
+           border-radius:12px; padding:1.1rem 1.4rem; margin-bottom:1rem; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:0.8rem; margin-bottom:1rem; }
+  .kpi { background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px; padding:0.85rem 1rem; }
+  .kpi h4 { margin:0; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); font-weight:800; }
+  .kpi .n { font-size:1.9rem; font-weight:900; color:#fff; line-height:1.15; margin-top:2px; }
+  .kpi .n small { font-size:0.75rem; font-weight:700; color:var(--text-muted); }
+  .kpi .pie { font-size:0.68rem; color:var(--text-muted); margin-top:2px; }
+
+  table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+  thead tr { color:var(--text-muted); text-transform:uppercase; font-size:0.68rem;
+             font-weight:800; letter-spacing:0.05em; border-bottom:2px solid rgba(79,70,229,0.35); }
+  th { padding:7px 9px; text-align:left; white-space:nowrap; }
+  td { padding:10px 9px; border-bottom:1px solid rgba(255,255,255,0.04); }
+  tbody tr:hover { background:rgba(79,70,229,0.06); }
+  .c { text-align:center; }
+  .b { color:#fff; font-weight:700; }
+  .asig { color:#fff; font-weight:800; background:rgba(79,70,229,0.06); }
+  .est { font-weight:900; font-size:0.7rem; }
+  .v { color:#22c55e; } .am { color:#eab308; } .gr { color:#94a3b8; } .az { color:#60a5fa; }
+  .acc { font-size:1.05rem; cursor:pointer; background:none; border:0; padding:0 3px; }
+  .chip { display:inline-block; border-radius:20px; padding:0.3rem 0.85rem; font-size:0.7rem;
+          font-weight:800; border:1px solid var(--border); background:rgba(255,255,255,0.03);
+          color:var(--text-muted); margin-right:6px; }
+  .chip.on { background:#94a3b8; color:#0b0f19; border-color:#94a3b8; }
+  .btn { background:var(--primary); border:0; color:#fff; border-radius:8px;
+         padding:0.5rem 1.1rem; font-size:0.74rem; font-weight:800; cursor:pointer; }
+  .btn.gh { background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#e2e8f0; }
+  .nota { font-size:0.72rem; color:var(--text-muted); margin-top:0.5rem; line-height:1.6; }
+  .barraP { height:8px; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden; margin-top:0.8rem; }
+  .barraP div { height:100%; background:linear-gradient(90deg,#22c55e,#4ade80); border-radius:10px; }
+  .mini { font-size:0.66rem; color:var(--text-muted); }
+  .bloque { background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px;
+            padding:1rem 1.2rem; margin-bottom:1rem; }
+  .bloque h3 { margin:0 0 0.8rem; font-size:0.8rem; color:#fff; letter-spacing:0.06em;
+               text-transform:uppercase; font-weight:800; }
+  .bloque table { display:block; overflow-x:auto; white-space:nowrap; }
+  .bar { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:0.74rem; }
+  .bar span:first-child { width:120px; color:var(--text-muted); }
+  .bar .t { flex:1; height:14px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; }
+  .bar .t i { display:block; height:100%; background:#4f46e5; }
+  .bar b { width:60px; text-align:right; color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="barra">MAQUETA · los dos submódulos nuevos de Slotting. Números reales de la corrida del 14-ago.</div>
+
+<div class="wrap">
+
+  <!-- ══════════════════ SUBMÓDULO 1 ══════════════════ -->
+  <div class="rotulo">SLOTTING → TAREAS DÍA · Resumen
+    <small>La misma tabla que Almacenaje → Tareas Día, con las mismas columnas, los mismos
+    estados y los mismos botones. Se hace clic en la fila para asignar y finalizar, igual que allá.</small></div>
+
+  <div class="subtabs">
+    <div class="subtab on">📋 Tareas Día</div>
+    <div class="subtab">📊 KPI Slotting</div>
+    <div class="subtab">⚙️ Config. Slotting</div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:0.66rem; color:var(--text-muted); font-weight:800; letter-spacing:0.12em; text-transform:uppercase;">
+          Tareas de ordenamiento · SEL+MZN01+MZN02+MZN03</div>
+        <div style="display:flex; align-items:baseline; gap:0.6rem; margin-top:0.35rem;">
+          <span style="font-size:2rem; font-weight:800; color:#fff; line-height:1;">12</span>
+          <span style="font-size:1rem; color:var(--text-muted);">de 95 tareas hechas</span>
+          <span style="font-size:1.1rem; font-weight:800; color:#22c55e;">13%</span>
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">
+          252 cuerpos por limpiar · <b style="color:#94a3b8;">22.693 pares</b> por sacar ·
+          <b style="color:#22c55e;">31 cuerpos liberados</b>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span class="mini" style="font-weight:800; letter-spacing:0.06em;">DE:</span>
+          <input type="date" value="2026-08-08" style="background:rgba(255,255,255,0.04);
+                 border:1px solid var(--border); color:#fff; border-radius:7px;
+                 padding:0.42rem 0.6rem; font-size:0.75rem;">
+          <span class="mini" style="font-weight:800; letter-spacing:0.06em;">HASTA:</span>
+          <input type="date" value="2026-08-14" style="background:rgba(255,255,255,0.04);
+                 border:1px solid var(--border); color:#fff; border-radius:7px;
+                 padding:0.42rem 0.6rem; font-size:0.75rem;">
+        </div>
+        <button class="btn gh">🖨️ IMPRIMIR</button>
+        <button class="btn">⚙️ PROCESAR SLOTTING</button>
+      </div>
+    </div>
+    <div class="barraP"><div style="width:13%"></div></div>
+    <div class="nota">Generado: <b style="color:#94a3b8;">2026-08-14 22:58</b> · 3 líneas quedaron retenidas sin dónde ir</div>
+  </div>
+
+  <div class="panel" style="padding:0.4rem 0.6rem; overflow-x:auto;">
+    <table style="min-width:1150px;">
+      <thead><tr>
+        <th>Fecha</th><th>Tarea</th><th class="c">Pares</th><th class="c">Cuerpos</th>
+        <th>Marca</th><th>Usuario1</th><th>Usuario2</th><th>Inicio</th><th>Término</th>
+        <th class="c">Productividad</th><th class="c">Objetivo</th><th class="c">Estado</th><th class="c">Acciones</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>14/08/2026</td><td class="b">Slot 1</td><td class="c">287</td><td class="c">5</td>
+          <td>Power</td><td class="asig">MRAMOS</td><td>---</td><td>23:10</td><td>23:41</td>
+          <td class="c b" style="font-size:0.95rem;">556</td>
+          <td class="c"><span class="v" style="font-weight:900; font-size:0.7rem;">CUMPLIÓ</span>
+            <div class="mini">31 min · esperado 125</div></td>
+          <td class="c"><span class="est v">FINALIZADO</span></td>
+          <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444; opacity:0.3;">🗑️</button></td>
+        </tr>
+        <tr>
+          <td>14/08/2026</td><td class="b">Slot 2</td><td class="c">202</td><td class="c">2</td>
+          <td>Bubblegummers</td><td class="asig">JCHAVEZ</td><td>LTORRES</td><td>23:15</td><td>---</td>
+          <td class="c b" style="font-size:0.95rem;">---</td><td class="c"><span class="gr" style="font-size:0.7rem;">---</span></td>
+          <td class="c"><span class="est am">ASIGNADO</span></td>
+          <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444;">🗑️</button></td>
+        </tr>
+        <tr>
+          <td>14/08/2026</td><td class="b">Slot 3</td><td class="c">231</td><td class="c">2</td>
+          <td title="La tarea toca dos marcas: Bubblegummers y B.G Licenses">Bubblegummers +</td>
+          <td>---</td><td>---</td><td>---</td><td>---</td>
+          <td class="c">---</td><td class="c">---</td>
+          <td class="c"><span class="est az">CREADA</span></td>
+          <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444;">🗑️</button></td>
+        </tr>
+        <tr>
+          <td>14/08/2026</td><td class="b">Slot 4</td><td class="c">478</td><td class="c">1</td>
+          <td>Weinbrenner</td><td class="asig">MRAMOS</td><td>JCHAVEZ</td><td>23:20</td><td>01:35</td>
+          <td class="c b" style="font-size:0.95rem;">212</td>
+          <td class="c"><span style="color:#ef4444; font-weight:900; font-size:0.7rem;">NO CUMPLIÓ</span>
+            <div class="mini">135 min · esperado 106</div></td>
+          <td class="c"><span class="est v">FINALIZADO</span></td>
+          <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444; opacity:0.3;">🗑️</button></td>
+        </tr>
+        <tr style="background:rgba(34,197,94,0.05);">
+          <td>14/08/2026</td><td class="b">Slot 5</td><td class="c">10</td><td class="c">1</td>
+          <td>Bata</td><td class="asig">PSILVA</td><td>---</td><td>00:12</td><td>00:21</td>
+          <td class="c b" style="font-size:0.95rem;">67</td>
+          <td class="c"><span class="v" style="font-weight:900; font-size:0.7rem;">CUMPLIÓ</span>
+            <div class="mini">9 min · esperado 14</div></td>
+          <td class="c"><span class="est v">FINALIZADO</span></td>
+          <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444; opacity:0.3;">🗑️</button></td>
+        </tr>
+        <tr>
+          <td>13/08/2026</td><td class="b">Slot 9</td><td class="c">104</td><td class="c">1</td>
+          <td>B.G Licenses</td><td>---</td><td>---</td><td>---</td><td>---</td>
+          <td class="c">---</td><td class="c">---</td>
+          <td class="c"><span class="est gr">NO TRABAJADA</span></td>
+          <td class="c"><span title="Jornada cerrada" style="opacity:0.45;">🔒</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="nota" style="margin-bottom:2rem;">
+    <b style="color:#fff;">Lo único que cambia respecto de almacenaje</b> es la columna
+    <b>CUERPOS</b>, que es la unidad de trabajo del slotting: la tarea se mide en cuerpos
+    limpios, no en pares movidos. Todo lo demás es igual — las mismas columnas, los mismos
+    estados, las cuatro acciones y el candado de jornada cerrada.
+    <br><br>
+    <b style="color:#fff;">Ojo con la MARCA:</b> una tarea de slotting junta varios cuerpos y
+    puede tocar más de una marca. Cuando pasa, se muestra la de más pares con un
+    <b>+</b> al lado, igual que hace el papel de almacenaje con los artículos.
+  </div>
+
+  <div class="bloque" style="margin-bottom:2rem;">
+    <h3>Cómo se calcula el objetivo</h3>
+    <div style="font-size:1.05rem; color:#fff; font-weight:700; text-align:center;
+                background:rgba(79,70,229,0.12); border:1px solid rgba(79,70,229,0.35);
+                border-radius:10px; padding:0.9rem; margin-bottom:0.9rem;">
+      tiempo esperado = <span style="color:#f59e0b;">10 min de base</span>
+      + ( pares ÷ <span style="color:#22c55e;">meta por hora</span> ) × 60
+    </div>
+    <div class="bar"><span>1 persona</span><div class="t"><i style="width:50%"></i></div><b>150 /h</b></div>
+    <div class="bar"><span>2 personas</span><div class="t"><i style="width:100%"></i></div><b>300 /h</b></div>
+    <div class="nota">
+      <b style="color:#fff;">Los 10 minutos de base son los que hacen que esto no sea absurdo.</b>
+      Daniel, 15-ago-2026: *"¿qué pasa si le toca una tarea de una unidad? Eso lo va a tener que
+      hacer en tres segundos. Es imposible"*. Con 150 por hora y sin base, un par se tendría que
+      mover en <b>24 segundos</b>; con la base, se le dan <b>10 minutos y 24 segundos</b>.
+      Mirá la fila verde: la tarea Slot 5 son 10 pares y su productividad es apenas 67 por hora,
+      pero <b>CUMPLIÓ</b> — porque lo que se compara es el TIEMPO contra el esperado, no la
+      velocidad contra la meta.
+      <br><br>
+      Los 10 minutos salen de almacenaje, que ya los usa (<code>TIEMPO_BASE_FALLBACK</code>).
+      <b style="color:#f59e0b;">Lo que queda por decidir:</b> una tarea de slotting visita varios
+      cuerpos —la Slot 1 son cinco— y en almacenaje la base es una sola por tarea. Si te parece,
+      la base puede ser <b>por cuerpo</b> en vez de por tarea; con 5 cuerpos serían 50 minutos de
+      recorrido en vez de 10. Decime cuál refleja mejor el trabajo real.
+    </div>
+  </div>
+
+  <!-- ══════════════════ EL MODAL DE ASIGNAR ══════════════════ -->
+  <div class="rotulo">Al hacer clic en una fila · Asignar tarea
+    <small>Es el MISMO modal de Almacenaje, con el mismo diseño, los mismos botones y las mismas
+    reglas. No es uno parecido: se reusa la lista de operarios activos, el formato del usuario
+    y las cuatro validaciones.</small></div>
+
+  <div style="background:rgba(0,0,0,0.55); border-radius:14px; padding:2.5rem 1rem;
+              display:flex; justify-content:center; margin-bottom:1rem;">
+    <div style="width:380px; padding:2rem; border:1px solid var(--primary); border-radius:16px;
+                background:rgba(30,41,59,0.75);">
+      <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; text-align:center;">
+        Asignar Tarea: <span style="color:var(--primary);">Slot 3</span></h3>
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+        <div>
+          <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 1 (Obligatorio)</label>
+          <select style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2);
+                  padding:0.8rem; border-radius:8px; color:#fff; font-weight:700; font-size:0.9rem;">
+            <option>Seleccionar operario...</option><option selected>mramos (Miguel)</option>
+            <option>jchavez (Jorge)</option><option>ltorres (Luis)</option></select>
+        </div>
+        <div>
+          <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 2 (Opcional)</label>
+          <select style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2);
+                  padding:0.8rem; border-radius:8px; color:#fff; font-weight:700; font-size:0.9rem;">
+            <option>Ninguno</option><option selected>ltorres (Luis)</option>
+            <option>jchavez (Jorge)</option></select>
+        </div>
+        <div style="margin-top:1rem; display:flex; gap:10px;">
+          <button class="btn" style="flex:1; padding:0.8rem;">ASIGNAR E INICIAR</button>
+          <button class="btn" style="flex:1; background:#22c55e; padding:0.8rem;">FINALIZAR</button>
+        </div>
+        <button style="background:none; border:none; color:var(--text-muted); cursor:pointer;
+                font-size:0.7rem; margin-top:0.5rem; width:100%;">Cerrar sin cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="nota" style="margin-bottom:2rem;">
+    <b style="color:#fff;">Las reglas que se reusan, todas:</b> los operarios salen de los activos
+    ordenados de la A a la Z, con el formato inicial+apellido; los dos usuarios son obligatorios;
+    no pueden ser la misma persona; no pueden ser de turnos distintos; una tarea
+    <b>FINALIZADA queda bloqueada</b> y solo se toca con el lápiz; una de jornada cerrada avisa y
+    no deja; y la asignación <b>espera la confirmación del servidor</b> — si no llega, se
+    revierte y el modal no se cierra.
+    <br><br>
+    <b style="color:#22c55e;">La que cambia respecto de almacenaje:</b> en Slotting el
+    <b>Usuario 2 es OPCIONAL de verdad</b> — el rótulo y la validación dicen lo mismo. Regla de
+    Daniel, 15-ago-2026: *"el slotting no es lo mismo que almacenar; de repente vas y mueves una,
+    dos o diez cajas, normal una sola persona"*. El Usuario 1 sigue siendo obligatorio.
+    <br><br>
+    En almacenaje el rótulo dice "Opcional" pero la validación exige los dos —*"toda tarea de
+    almacenaje se trabaja en grupo de 2"*—. Ahí queda como está: son dos módulos distintos y
+    la regla del grupo de 2 es de almacenaje, no de Slotting.
+  </div>
+
+  <!-- ══════════════════ SUBMÓDULO 2 ══════════════════ -->
+  <div class="rotulo">SLOTTING → KPI SLOTTING
+    <small>Sobre las tareas finalizadas. Mismo formato de tarjetas que KPI Tareas.</small></div>
+
+  <div class="subtabs">
+    <div class="subtab">📋 Tareas Día</div>
+    <div class="subtab on">📊 KPI Slotting</div>
+    <div class="subtab">⚙️ Config. Slotting</div>
+  </div>
+  <div class="nota" style="margin:-0.4rem 0 1rem;">Las metas de acá salen de lo que esté cargado
+    en <b style="color:#fff;">Config. Slotting</b> — no hay ningún número escrito en el código.</div>
+
+  <div class="kpis">
+    <div class="kpi"><h4>Cuerpos liberados</h4><div class="n">31</div>
+      <div class="pie">de 252 mezclados · 12%</div></div>
+    <div class="kpi"><h4>Pares movidos</h4><div class="n">2.847</div>
+      <div class="pie">de 22.693 por sacar</div></div>
+    <div class="kpi"><h4>Tareas hechas</h4><div class="n">12<small> / 95</small></div>
+      <div class="pie">13% de la corrida</div></div>
+    <div class="kpi"><h4>Pares por hora</h4><div class="n">412</div>
+      <div class="pie">promedio del equipo</div></div>
+    <div class="kpi"><h4>Minutos por cuerpo</h4><div class="n">9,4</div>
+      <div class="pie">mediana</div></div>
+    <div class="kpi"><h4>Cuerpos reincidentes</h4><div class="n" style="color:#f59e0b;">7</div>
+      <div class="pie">se limpiaron y volvieron a ensuciarse</div></div>
+  </div>
+
+  <div class="bloque">
+    <h3>Quién limpió cuánto</h3>
+    <div class="bar"><span>MRAMOS</span><div class="t"><i style="width:100%"></i></div><b>14 cuerpos</b></div>
+    <div class="bar"><span>JCHAVEZ</span><div class="t"><i style="width:64%"></i></div><b>9 cuerpos</b></div>
+    <div class="bar"><span>LTORRES</span><div class="t"><i style="width:43%"></i></div><b>6 cuerpos</b></div>
+    <div class="bar"><span>PSILVA</span><div class="t"><i style="width:14%"></i></div><b>2 cuerpos</b></div>
+    <div class="nota">Se cuenta por CUERPO liberado, no por pares: un cuerpo con 9 pares cuesta el
+      mismo viaje que uno con 300.</div>
+  </div>
+
+  <div class="bloque">
+    <h3>Avance por zona</h3>
+    <table>
+      <thead><tr><th>Zona</th><th class="c">Cuerpos mezclados</th><th class="c">Limpiados</th>
+        <th class="c">%</th><th class="c">Pares movidos</th><th class="c">Pendiente</th></tr></thead>
+      <tbody>
+        <tr><td class="b">SEL</td><td class="c">51</td><td class="c">18</td><td class="c v">35%</td><td class="c">1.402</td><td class="c">33</td></tr>
+        <tr><td class="b">MZN01</td><td class="c">62</td><td class="c">9</td><td class="c am">15%</td><td class="c">760</td><td class="c">53</td></tr>
+        <tr><td class="b">MZN02</td><td class="c">21</td><td class="c">3</td><td class="c am">14%</td><td class="c">385</td><td class="c">18</td></tr>
+        <tr><td class="b">MZN03</td><td class="c">118</td><td class="c">1</td><td class="c" style="color:#ef4444;">1%</td><td class="c">300</td><td class="c">117</td></tr>
+        <tr style="border-top:2px solid rgba(79,70,229,0.35);"><td class="b">TOTAL</td><td class="c b">252</td><td class="c b">31</td><td class="c b">12%</td><td class="c b">2.847</td><td class="c b">221</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bloque">
+    <h3>Qué se limpió, por motivo</h3>
+    <div class="bar"><span>Cuerpo mezclado</span><div class="t"><i style="width:100%"></i></div><b>26</b></div>
+    <div class="bar"><span>Junta la familia</span><div class="t"><i style="width:19%; background:#22c55e;"></i></div><b>5</b></div>
+    <div class="nota">El arrastre —juntar lo que quedó suelto de un código nuevo— se cuenta aparte
+      porque no libera un cuerpo entero, pero evita que el artículo quede partido en dos zonas.</div>
+  </div>
+
+  <div class="bloque">
+    <h3>Lo que sigue trabado</h3>
+    <table>
+      <thead><tr><th>Cuerpo</th><th>Zona</th><th class="c">Líneas</th><th class="c">Pares</th><th>Por qué no se hizo</th></tr></thead>
+      <tbody>
+        <tr><td class="b">MZN03-17-01</td><td>MZN03</td><td class="c">119</td><td class="c">224</td><td>Tarea de 5 hojas: nadie la toma</td></tr>
+        <tr><td class="b">SEL-09-14</td><td>SEL</td><td class="c">3</td><td class="c">96</td><td>3 líneas retenidas: no hay cuerpo libre en su franja</td></tr>
+        <tr><td class="b">MZN01-24-03</td><td>MZN01</td><td class="c">29</td><td class="c">104</td><td>Reincidente: se limpió el 11-ago y volvió</td></tr>
+      </tbody>
+    </table>
+    <div class="nota">Es la lista que dice dónde está el problema de verdad. Sin esto, el 88% que
+      falta es un número y nada más.</div>
+  </div>
+
+  <!-- ══════════════════ SUBMÓDULO 3 ══════════════════ -->
+  <div class="rotulo">SLOTTING → CONFIG. SLOTTING
+    <small>Acá se cargan el tiempo mínimo y la productividad, y de acá los lee todo el módulo.
+    Ningún número queda escrito en el código: si el trabajo cambia, se cambia acá y las tareas
+    de esa noche ya salen con la meta nueva.</small></div>
+
+  <div class="subtabs">
+    <div class="subtab">📋 Tareas Día</div>
+    <div class="subtab">📊 KPI Slotting</div>
+    <div class="subtab on">⚙️ Config. Slotting</div>
+  </div>
+
+  <div class="bloque">
+    <h3>Meta de productividad</h3>
+    <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-end;">
+      <div>
+        <label class="mini" style="display:block; text-transform:uppercase; font-weight:800; margin-bottom:5px;">Tiempo mínimo por tarea</label>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <input type="number" value="10" style="width:90px; background:rgba(255,255,255,0.04);
+                 border:1px solid var(--border); color:#fff; border-radius:7px;
+                 padding:0.55rem 0.7rem; font-weight:800; font-size:0.9rem;">
+          <span class="mini">minutos</span></div>
+      </div>
+      <div>
+        <label class="mini" style="display:block; text-transform:uppercase; font-weight:800; margin-bottom:5px;">Minutos extra por cuerpo adicional</label>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <input type="number" value="0" style="width:90px; background:rgba(255,255,255,0.04);
+                 border:1px solid var(--border); color:#fff; border-radius:7px;
+                 padding:0.55rem 0.7rem; font-weight:800; font-size:0.9rem;">
+          <span class="mini">minutos</span></div>
+      </div>
+      <div>
+        <label class="mini" style="display:block; text-transform:uppercase; font-weight:800; margin-bottom:5px;">Pares por hora · 1 persona</label>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <input type="number" value="150" style="width:90px; background:rgba(255,255,255,0.04);
+                 border:1px solid var(--border); color:#fff; border-radius:7px;
+                 padding:0.55rem 0.7rem; font-weight:800; font-size:0.9rem;">
+          <span class="mini">pares/h</span></div>
+      </div>
+      <div>
+        <label class="mini" style="display:block; text-transform:uppercase; font-weight:800; margin-bottom:5px;">Pares por hora · 2 personas</label>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <input type="number" value="300" style="width:90px; background:rgba(255,255,255,0.04);
+                 border:1px solid var(--border); color:#fff; border-radius:7px;
+                 padding:0.55rem 0.7rem; font-weight:800; font-size:0.9rem;">
+          <span class="mini">pares/h</span></div>
+      </div>
+    </div>
+    <div class="nota">
+      <b style="color:#fff;">Los "minutos extra por cuerpo adicional" resuelven la duda que quedaba
+      abierta.</b> En 0 la base es una sola por tarea, como en almacenaje. Poniéndole 10, una tarea
+      de cinco cuerpos se lleva 10 + 4×10 = 50 minutos de recorrido. Se prueba una semana con 0 y,
+      si las tareas de muchos cuerpos salen siempre en rojo, se le sube — sin tocar código.
+    </div>
+  </div>
+
+  <div class="bloque">
+    <h3>Cómo se arman las tareas</h3>
+    <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-end;">
+      <div>
+        <label class="mini" style="display:block; text-transform:uppercase; font-weight:800; margin-bottom:5px;">Pares por tarea</label>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <input type="number" value="300" style="width:90px; background:rgba(255,255,255,0.04);
+                 border:1px solid var(--border); color:#fff; border-radius:7px;
+                 padding:0.55rem 0.7rem; font-weight:800; font-size:0.9rem;">
+          <span class="mini">pares · es una guía, un cuerpo nunca se parte</span></div>
+      </div>
+      <div>
+        <label class="mini" style="display:block; text-transform:uppercase; font-weight:800; margin-bottom:5px;">Zonas que se barren</label>
+        <div style="display:flex; align-items:center; gap:9px; padding-top:0.4rem;">
+          <label class="mini"><input type="checkbox" checked> SEL</label>
+          <label class="mini"><input type="checkbox" checked> MZN01</label>
+          <label class="mini"><input type="checkbox" checked> MZN02</label>
+          <label class="mini"><input type="checkbox" checked> MZN03</label>
+          <label class="mini" style="opacity:0.4;"><input type="checkbox" disabled> MZN04</label>
+        </div>
+      </div>
+    </div>
+    <div class="nota">El Mezzanine 4 queda fuera siempre: no lleva calzado y no entra en ningún
+      análisis de cuerpos.</div>
+  </div>
+
+  <div style="display:flex; gap:0.6rem; margin-bottom:2rem;">
+    <button class="btn">💾 GUARDAR Y PUBLICAR</button>
+    <button class="btn gh">↩️ VOLVER A LO PUBLICADO</button>
+  </div>
+
+</div>
+</body>
+</html>

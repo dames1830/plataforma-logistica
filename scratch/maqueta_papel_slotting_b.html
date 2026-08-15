@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>El papel de Slotting</title>
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; background: #58585b; }
+  body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #000; }
+
+  .barra { position: sticky; top: 0; z-index: 9; background: #1e293b; color: #e2e8f0;
+           padding: 12px 16px; font: 600 13px/1.6 system-ui, sans-serif; text-align: center; }
+  .barra button { background:#4f46e5; color:#fff; border:0; border-radius:8px;
+                  padding:7px 18px; font:700 13px system-ui; cursor:pointer; margin-left:10px; }
+  .rotulo { width: 210mm; margin: 10mm auto 3mm; color: #fff;
+            font: 700 15px/1.5 system-ui, sans-serif; }
+  .rotulo small { display:block; font-weight:400; color:#cbd5e1; font-size:13px; margin-top:3px; }
+
+  .pg { width: 210mm; height: 297mm; padding: 9mm 7mm; background: #fff;
+        margin: 0 auto 6mm; position: relative; overflow: hidden; }
+  .t1 { text-align: center; font-size: 26pt; font-weight: 700; line-height: 1.05; }
+  .t1.cont { font-size: 18pt; }
+  /* EL NÚMERO DE PÁGINA VA ARRIBA, en la misma línea del subtítulo y a la derecha.
+     Igual que en el papel de almacenaje: el operario ve de entrada si le falta una hoja,
+     sin tener que llegar al pie. */
+  .t2 { text-align: center; font-size: 10.5pt; margin-top: 1mm; position: relative; }
+  .pagX { position: absolute; right: 0; top: -0.5mm;
+          font-size: 11pt; font-weight: 700; color: #000; }
+  table { width: 100%; border-collapse: collapse; }
+  .firmas { margin-top: 3mm; font-size: 10.5pt; }
+  .firmas td { border: 1px solid #888780; height: 10mm; padding: 0 2mm; }
+  .firmas .rot { background: #F1EFE8; font-weight: 400; white-space: nowrap; }
+
+  .det { margin-top: 3mm; }
+  .det th { border: 1px solid #888780; height: 7mm; text-align: center;
+            font-size: 10.5pt; font-weight: 700; background: #F1EFE8; }
+  .det td { border: 1px solid #888780; height: 8.5mm; text-align: center;
+            padding: 0 1mm; font-size: 12pt; }
+  .det td.b { font-weight: 700; }
+  .det td.t { font-weight: 700; font-size: 13pt; }
+  .det td.dest { background: #F1EFE8; font-weight: 700; font-size: 13pt; }
+  /* EL CORTE DE ARTÍCULO. Fondo suave para que se vea el bloque de un vistazo
+     sin gastar tinta: la impresora del almacén es en blanco y negro. */
+  .det tr.tot td { background: #E5E3DC; font-weight: 700; height: 7.5mm; font-size: 11pt; }
+  .det tr.tt td { background: #2C2C2A; color: #fff; font-weight: 700; height: 8mm; font-size: 12pt; }
+  /* La columna del almacén va ARRIBA de los títulos: primero dónde estoy parado,
+     después qué dice cada casilla. */
+  .banda th { background: #2C2C2A; color: #fff; font-weight: 700; text-align: left;
+              height: 8mm; font-size: 13pt; letter-spacing: 1.5px; padding: 0 2mm; }
+  .tick div { width: 4.6mm; height: 4.6mm; border: 1.5px solid #000; margin: 0 auto; }
+  .nota { margin-top: 2.5mm; border: 1px solid #888780; height: 12mm; font-size: 9pt;
+          padding: 1mm 2mm; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="barra">
+  EL PAPEL DE SLOTTING · con total por artículo y compaginación. Datos reales del selectivo.
+  <button onclick="window.print()">🖨️ Imprimir</button>
+</div>
+
+<div class="rotulo">Así saldría
+  <small>Al cambiar de artículo va una fila de total con fondo suave. Cuando la tarea no entra
+  en una hoja, la segunda repite el título con "(cont.)", la banda de la columna y los títulos.
+  La compaginación va ARRIBA, a la derecha del subtítulo. Las firmas van en la primera hoja,
+  el total de la tarea en la última.</small></div>
+
+<!-- ═══════════════════ TAREA 2 · HOJA 1 ═══════════════════ -->
+<div class="pg">
+  <div class="t1">SLOTTING · TAREA 2</div>
+  <div class="t2">14/08/2026 · Selectivo · 23 líneas · 248 pares<span class="pagX">Páginas 1 de 2</span></div>
+
+  <table class="firmas">
+    <tr><td class="rot" style="width:24mm">Nombres</td><td></td>
+        <td class="rot" style="width:16mm">Inicio</td><td style="width:20mm"></td>
+        <td class="rot" style="width:18mm">Término</td><td style="width:20mm"></td></tr>
+    <tr><td class="rot">Revisado por</td><td colspan="5"></td></tr>
+  </table>
+
+  <table class="det">
+    <thead>
+      <tr class="banda"><th colspan="6">COLUMNA SEL-06</th></tr>
+      <tr>
+        <th style="width:7%">✓</th>
+        <th style="width:26%">Origen</th>
+        <th style="width:24%">SKU</th>
+        <th style="width:10%">Talla</th>
+        <th style="width:10%">Pares</th>
+        <th style="width:23%">Destino</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-A-01</td><td>6516993-1-04</td><td class="t">35</td><td class="b">14</td><td class="dest">SEL-04-17</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-A-01</td><td>6516993-1-05</td><td class="t">36</td><td class="b">16</td><td class="dest">SEL-04-17</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-A-01</td><td>6516993-1-06</td><td class="t">37</td><td class="b">12</td><td class="dest">SEL-04-17</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-A-01</td><td>6516993-1-07</td><td class="t">38</td><td class="b">2</td><td class="dest">SEL-04-17</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-A-01</td><td>6516993-1-08</td><td class="t">39</td><td class="b">8</td><td class="dest">SEL-04-17</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-A-01</td><td>6516993-1-09</td><td class="t">40</td><td class="b">5</td><td class="dest">SEL-04-17</td></tr>
+      <tr class="tot"><td colspan="4">Total 6516993</td><td>57</td><td></td></tr>
+
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-B-01</td><td>6616312-1-04</td><td class="t">35</td><td class="b">11</td><td class="dest">SEL-04-07</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-C-01</td><td>6616312-1-05</td><td class="t">36</td><td class="b">47</td><td class="dest">SEL-04-07</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-C-01</td><td>6616312-1-06</td><td class="t">37</td><td class="b">22</td><td class="dest">SEL-04-07</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-C-01</td><td>6616312-1-07</td><td class="t">38</td><td class="b">6</td><td class="dest">SEL-04-07</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-C-01</td><td>6616312-1-08</td><td class="t">39</td><td class="b">22</td><td class="dest">SEL-04-07</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-01-C-01</td><td>6616312-1-09</td><td class="t">40</td><td class="b">6</td><td class="dest">SEL-04-07</td></tr>
+      <tr class="tot"><td colspan="4">Total 6616312</td><td>114</td><td></td></tr>
+
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-09-A-01</td><td>6616328-1-04</td><td class="t">35</td><td class="b">9</td><td class="dest">SEL-04-06</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-09-A-01</td><td>6616328-1-05</td><td class="t">36</td><td class="b">10</td><td class="dest">SEL-04-06</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-09-A-01</td><td>6616328-1-06</td><td class="t">37</td><td class="b">2</td><td class="dest">SEL-04-06</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-09-A-01</td><td>6616328-1-07</td><td class="t">38</td><td class="b">21</td><td class="dest">SEL-04-06</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-09-A-01</td><td>6616328-1-08</td><td class="t">39</td><td class="b">9</td><td class="dest">SEL-04-06</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-09-A-01</td><td>6616328-1-09</td><td class="t">40</td><td class="b">1</td><td class="dest">SEL-04-06</td></tr>
+      <tr class="tot"><td colspan="4">Total 6616328</td><td>52</td><td></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════ TAREA 2 · HOJA 2 ═══════════════════ -->
+<div class="pg">
+  <div class="t1 cont">SLOTTING · TAREA 2 (cont.)</div>
+  <div class="t2">14/08/2026 · Selectivo · 23 líneas · 248 pares<span class="pagX">Páginas 2 de 2</span></div>
+
+  <table class="det">
+    <thead>
+      <tr class="banda"><th colspan="6">COLUMNA SEL-06</th></tr>
+      <tr>
+        <th style="width:7%">✓</th>
+        <th style="width:26%">Origen</th>
+        <th style="width:24%">SKU</th>
+        <th style="width:10%">Talla</th>
+        <th style="width:10%">Pares</th>
+        <th style="width:23%">Destino</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-13-A-01</td><td>5616331-1-05</td><td class="t">36</td><td class="b">2</td><td class="dest">SEL-04-14</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-13-A-01</td><td>5616331-1-06</td><td class="t">37</td><td class="b">11</td><td class="dest">SEL-04-14</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-13-A-01</td><td>5616331-1-07</td><td class="t">38</td><td class="b">3</td><td class="dest">SEL-04-14</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-13-A-01</td><td>5616331-1-08</td><td class="t">39</td><td class="b">8</td><td class="dest">SEL-04-14</td></tr>
+      <tr><td class="tick"><div></div></td><td class="b">SEL-06-13-A-01</td><td>5616331-1-09</td><td class="t">40</td><td class="b">1</td><td class="dest">SEL-04-14</td></tr>
+      <tr class="tot"><td colspan="4">Total 5616331</td><td>25</td><td></td></tr>
+      <tr class="tt"><td colspan="4">TOTAL DE LA TAREA</td><td>248</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <div class="nota">Observaciones:</div>
+</div>
+
+</body>
+</html>
