@@ -1,24 +1,24 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0218';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0219';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0218';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0218';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0218';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0218';
-import * as metasService from '../services_v245/metasService.js?v=29.0218';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0218';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0218';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0218';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0218';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0218';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0218';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0218';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0218';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0218';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0218';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0218';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0218';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0218';
-import { montarSlotting } from './slotting.js?v=29.0218';
+import * as adminService from '../services_v245/adminService.js?v=29.0219';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0219';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0219';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0219';
+import * as metasService from '../services_v245/metasService.js?v=29.0219';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0219';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0219';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0219';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0219';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0219';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0219';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0219';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0219';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0219';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0219';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0219';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0219';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0219';
+import { montarSlotting } from './slotting.js?v=29.0219';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -375,7 +375,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0218';
+const VERSION = '29.0219';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4408,7 +4408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0218');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0219');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15375,7 +15375,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0218 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0219 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17282,12 +17282,33 @@ const renderRFSection = (container) => {
     .sort((a, b) => a.usuario.localeCompare(b.usuario));
 
   const renderSlotting = async (container, sub) => {
+    /* CONFIG. SLOTTING VA CON PERMISO PROPIO. Daniel, 15-ago-2026: *"esa configuración la voy a
+     * tener yo en permisos, para que solamente yo como administrador la vea"*. La clave es
+     * `slotting_slot_config` y se maneja desde Administración, igual que las del buffer. El
+     * admin la ve siempre; el resto, solo si se la dan. */
+    const def = TABS.find(t => t.id === 'slotting');
+    const permisos = adminService.getPermissions(user.role) || {};
+    const visibles = def.subTabs.filter(s =>
+      user.role === 'admin' || s.id !== 'slot_config' || permisos['slotting_slot_config'] === 1);
+    if (!visibles.find(s => s.id === sub)) sub = visibles[0].id;
+    localStorage.setItem('activeSub_slotting', sub);
+
     const vista = sub === 'slot_kpi' ? 'kpi' : (sub === 'slot_config' ? 'config' : 'tareas_dia');
     contentSubtitle.textContent = vista === 'kpi' ? 'KPI de ordenamiento'
                                 : vista === 'config' ? 'Configuración de Slotting'
                                 : 'Tareas de ordenamiento';
-    container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">
-        Cargando...</div>`;
+
+    container.innerHTML = `
+      <nav class="sub-nav" style="display:flex; gap:1.5rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto;">
+        ${visibles.map(s => `
+          <a class="sub-nav-item slt-sub ${sub === s.id ? 'active' : ''}" data-id="${s.id}"
+             style="padding:0.5rem 0.2rem; font-size:0.85rem; white-space:nowrap; cursor:pointer;">
+            ${s.icon} ${s.label.toUpperCase()}</a>`).join('')}
+      </nav>
+      <div id="sltNivel2" style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">Cargando...</div>`;
+    container.querySelectorAll('.slt-sub').forEach(a =>
+      a.addEventListener('click', (e) => renderSlotting(container, e.currentTarget.dataset.id)));
+    const caja = container.querySelector('#sltNivel2');
 
     await slottingService.cargarConfig();
     const cajon = await slottingService.traerTareas();
@@ -17302,7 +17323,7 @@ const renderRFSection = (container) => {
       console.log(`[Slotting] ${vencidas} tarea(s) pasaron a NO TRABAJADA por jornada cerrada.`);
     }
 
-    montarSlotting(container, {
+    montarSlotting(caja, {
       cajon, vista,
       svc: slottingService,
       operarios: operariosParaAsignar(),
@@ -17318,6 +17339,25 @@ const renderRFSection = (container) => {
       },
       alGuardarConfig: async (cfg) => { await slottingService.guardarConfig(cfg); },
       alProcesar: async () => {
+        /* UNA SOLA CORRIDA POR TURNO, si la configuración lo pide. El botón queda igual —no se
+         * oculta ni se apaga— y el aviso sale al apretarlo: fue la decisión de Daniel, porque
+         * un botón que desaparece hace pensar que se rompió algo.
+         *
+         * El turno es la jornada lógica de las 20:00 a las 06:30, la misma que ya usa todo el
+         * sistema; la corrida se guarda con esa fecha, así que alcanza con mirar si existe. */
+        const hoy = getLogicalDate();
+        if (slottingService.configActual().unaVezPorTurno
+            && slottingService.yaSeProcesoEsteTurno(cajon, hoy)) {
+          showPremiumAlert('SOLO UNA VEZ POR TURNO',
+            `El Slotting de la jornada del <b>${hoy}</b> ya se procesó`
+            + `${(cajon[hoy] || {}).generado ? ' a las <b>' + String((cajon[hoy] || {}).generado).slice(11) + '</b>' : ''}.`
+            + '<br><br>Volver a procesar rehace el reparto entero: las tareas que el equipo tiene '
+            + 'en la mano dejarían de existir y las empezadas cambiarían de número.'
+            + '<br><br>Si de verdad hace falta correrlo otra vez, se destilda '
+            + '<b>"Procesar solo una vez por turno"</b> en Config. Slotting.',
+            'warning');
+          return null;
+        }
         try {
           const corrida = await barrerParaSlotting(slottingService.configActual().zonas);
           showPremiumAlert('ALMACÉN REVISADO',

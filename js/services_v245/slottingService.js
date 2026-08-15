@@ -91,7 +91,17 @@ export const configPorDefecto = () => ({
     uphSolo: 150,               // pares por hora con un operario
     uphGrupo: 300,              // pares por hora con dos
     paresPorTarea: PARES_POR_TAREA,
-    zonas: ['SEL', 'MZN01', 'MZN02', 'MZN03']   // el MZN04 nunca entra: no lleva calzado
+    zonas: ['SEL', 'MZN01', 'MZN02', 'MZN03'],  // el MZN04 nunca entra: no lleva calzado
+    /* UNA SOLA CORRIDA POR TURNO. Daniel, 15-ago-2026: *"el procesar slotting solamente se
+     * tiene que dar una vez por turno"* — entre las 20:00 y las 06:30.
+     *
+     * El motivo es la posta: volver a procesar rehace el reparto entero, así que las tareas
+     * que el equipo tiene en la mano dejan de existir y las que ya empezó cambian de número.
+     * Se puede apagar desde acá para las noches en que haga falta correrlo de nuevo.
+     *
+     * EL BOTÓN NO SE OCULTA NI SE DESHABILITA, decisión suya: queda igual y al apretarlo sale
+     * el aviso. Un botón que desaparece hace pensar que se rompió algo. */
+    unaVezPorTurno: true
 });
 
 let _config = configPorDefecto();
@@ -110,9 +120,20 @@ const normalizar = (c) => {
         uphGrupo: n(c && c.uphGrupo, d.uphGrupo, 1, 100000),
         paresPorTarea: n(c && c.paresPorTarea, d.paresPorTarea, 1, 100000),
         zonas: (Array.isArray(c && c.zonas) && c.zonas.length ? c.zonas : d.zonas)
-            .filter(z => d.zonas.includes(z))
+            .filter(z => d.zonas.includes(z)),
+        unaVezPorTurno: typeof (c && c.unaVezPorTurno) === 'boolean' ? c.unaVezPorTurno : d.unaVezPorTurno
     };
 };
+
+/**
+ * ¿YA SE PROCESÓ EN ESTE TURNO?
+ *
+ * El turno es la JORNADA LÓGICA —de las 20:00 a las 06:30—, que ya la resuelve jornadaService:
+ * la corrida se guarda con esa fecha, así que alcanza con mirar si existe. No hace falta
+ * guardar una marca aparte, y así no hay dos verdades que se puedan separar.
+ */
+export const yaSeProcesoEsteTurno = (cajon, fechaLogica) =>
+    !!(cajon && cajon[fechaLogica] && (cajon[fechaLogica].tareas || []).length);
 
 export const cargarConfig = async () => {
     try {

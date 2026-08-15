@@ -83,7 +83,6 @@ export const montarSlotting = (container, OPC = {}) => {
     const liberados = lista.filter(t => svc.migrarEstado(t) === 'Finalizado')
                            .reduce((a, t) => a + cuerposDe(t), 0);
     const avance = lista.length ? Math.round(por.Finalizado / lista.length * 100) : 0;
-    const gen = ((cajon[hasta] || {}).generado) || '';
 
     container.innerHTML = `
       <div id="slt">
@@ -91,9 +90,7 @@ export const montarSlotting = (container, OPC = {}) => {
                     padding:1.1rem 1.4rem; margin-bottom:1rem;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap;">
             <div>
-              <div style="font-size:0.66rem; color:var(--text-muted); font-weight:800; letter-spacing:0.12em; text-transform:uppercase;">
-                Tareas de ordenamiento</div>
-              <div style="display:flex; align-items:baseline; gap:0.6rem; margin-top:0.35rem; flex-wrap:wrap;">
+              <div style="display:flex; align-items:baseline; gap:0.6rem; flex-wrap:wrap;">
                 <span style="font-size:2rem; font-weight:800; color:#fff; line-height:1;">${por.Finalizado}</span>
                 <span style="font-size:1rem; color:var(--text-muted);">de ${lista.length} tareas hechas</span>
                 <span style="font-size:1.1rem; font-weight:800; color:#22c55e;">${avance}%</span>
@@ -119,12 +116,6 @@ export const montarSlotting = (container, OPC = {}) => {
                       padding:0.5rem 1.1rem; border-radius:8px; font-size:0.74rem; font-weight:800;">
                 ⚙️ PROCESAR SLOTTING</button>
             </div>
-          </div>
-          <div style="height:8px; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden; margin-top:0.9rem;">
-            <div style="width:${avance}%; height:100%; background:linear-gradient(90deg,#22c55e,#4ade80); border-radius:10px;"></div>
-          </div>
-          <div style="font-size:0.68rem; color:var(--text-muted); margin-top:0.5rem;">
-            ${gen ? `Generado: <b style="color:#94a3b8;">${esc(gen)}</b>` : 'Todavía no se procesó nada.'}
           </div>
         </div>
 
@@ -164,12 +155,15 @@ export const montarSlotting = (container, OPC = {}) => {
     const real = svc.minutosReales(t);
     const esperado = Math.round(svc.minutosEsperados(t));
     const cerrada = OPC.jornadaVencida ? OPC.jornadaVencida(t.fecha) : false;
-    let objetivo = '---', color = 'var(--text-muted)', pie = '';
+    /* SOLO CUMPLIÓ O NO CUMPLIÓ. Los minutos y el esperado se fueron del cuadro por pedido de
+     * Daniel: la columna tiene que responder una sola cosa. El detalle queda en el globo de
+     * ayuda, para cuando alguien pregunte por qué. */
+    let objetivo = '---', color = 'var(--text-muted)', ayuda = '';
     if (real !== null) {
       const ok = real <= esperado;
       objetivo = ok ? 'CUMPLIÓ' : 'NO CUMPLIÓ';
       color = ok ? '#22c55e' : '#ef4444';
-      pie = `<div style="font-size:0.62rem; color:var(--text-muted); font-weight:400;">${real} min · esperado ${esperado}</div>`;
+      ayuda = `Tardó ${real} min y se esperaban ${esperado}`;
     }
     return `
       <tr class="slt-fila" data-f="${esc(t.fecha)}" data-n="${esc(t.n)}"
@@ -184,8 +178,8 @@ export const montarSlotting = (container, OPC = {}) => {
         <td style="padding:10px 9px; font-size:0.75rem; opacity:0.6;">${hora(t.inicio)}</td>
         <td style="padding:10px 9px; font-size:0.75rem; opacity:0.6;">${hora(t.termino)}</td>
         <td style="padding:10px 9px; text-align:center; color:#fff; font-weight:900; font-size:0.95rem;">${prod === null ? '---' : num(prod)}</td>
-        <td style="padding:10px 9px; text-align:center; font-size:0.7rem;">
-          <span style="color:${color}; font-weight:900;">${objetivo}</span>${pie}</td>
+        <td style="padding:10px 9px; text-align:center; font-size:0.7rem;" title="${esc(ayuda)}">
+          <span style="color:${color}; font-weight:900;">${objetivo}</span></td>
         <td style="padding:10px 9px; text-align:center;">
           <span style="color:${info.color}; font-weight:900; font-size:0.7rem;">${info.etiqueta}</span></td>
         <td style="padding:10px 9px; text-align:center;" onclick="event.stopPropagation()">
@@ -454,6 +448,22 @@ export const montarSlotting = (container, OPC = {}) => {
               </div>
             </div>
           </div>
+          <div style="margin-top:1rem; padding-top:0.9rem; border-top:1px solid var(--border);">
+            <label style="display:flex; align-items:flex-start; gap:9px; cursor:pointer;">
+              <input type="checkbox" id="cfg_unaVez" ${c.unaVezPorTurno ? 'checked' : ''} style="margin-top:3px;">
+              <span>
+                <b style="color:#fff; font-size:0.8rem;">Procesar solo una vez por turno</b>
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px; line-height:1.6; max-width:760px;">
+                  Con el tilde puesto, el Slotting se procesa una sola vez entre las 20:00 y las 06:30.
+                  El botón queda igual —no se oculta ni se apaga— y al apretarlo de nuevo sale el aviso.
+                  Sin el tilde se puede procesar las veces que haga falta.
+                  <br><b style="color:#e2e8f0;">Por qué conviene dejarlo puesto:</b> volver a procesar rehace
+                  el reparto entero, así que las tareas que el equipo tiene en la mano dejan de existir y
+                  las que ya empezó cambian de número.
+                </div>
+              </span>
+            </label>
+          </div>
         </div>
 
         <div style="display:flex; gap:0.6rem;">
@@ -475,7 +485,8 @@ export const montarSlotting = (container, OPC = {}) => {
         if (OPC.alGuardarConfig) await OPC.alGuardarConfig({
           tiempoBase: v('cfg_base'), minutosPorCuerpoExtra: v('cfg_extra'),
           uphSolo: v('cfg_solo'), uphGrupo: v('cfg_grupo'),
-          paresPorTarea: v('cfg_tope'), zonas
+          paresPorTarea: v('cfg_tope'), zonas,
+          unaVezPorTurno: container.querySelector('#cfg_unaVez').checked
         });
         avisar('CONFIGURACIÓN PUBLICADA', 'Las tareas que se procesen desde ahora usan estos números.', 'success');
       } catch (e) {
