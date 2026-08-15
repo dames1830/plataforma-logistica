@@ -182,13 +182,145 @@ export const montarSlotting = (container, OPC = {}) => {
           <span style="color:${color}; font-weight:900;">${objetivo}</span></td>
         <td style="padding:10px 9px; text-align:center;">
           <span style="color:${info.color}; font-weight:900; font-size:0.7rem;">${info.etiqueta}</span></td>
-        <td style="padding:10px 9px; text-align:center;" onclick="event.stopPropagation()">
+        <td style="padding:10px 9px; text-align:center; white-space:nowrap;" onclick="event.stopPropagation()">
           ${cerrada
             ? `<span title="Jornada cerrada: la tarea ya no se puede editar." style="font-size:1.05rem; opacity:0.45; cursor:help;">🔒</span>`
-            : `<button class="slt-reiniciar" data-f="${esc(t.fecha)}" data-n="${esc(t.n)}" title="Reiniciar tarea"
-                       style="background:none; border:none; cursor:pointer; font-size:1.05rem; color:#60a5fa;">🔄</button>`}
+            : `<button class="slt-horas" data-f="${esc(t.fecha)}" data-n="${esc(t.n)}" title="Editar horas"
+                       style="background:none; border:none; cursor:pointer; font-size:1.05rem; color:#facc15;">✏️</button>
+               <button class="slt-reiniciar" data-f="${esc(t.fecha)}" data-n="${esc(t.n)}" title="Reiniciar tarea"
+                       style="background:none; border:none; cursor:pointer; font-size:1.05rem; color:#60a5fa;">🔄</button>
+               ${(est !== 'Finalizado' || OPC.puedeBorrarFinalizadas)
+                 ? `<button class="slt-borrar" data-f="${esc(t.fecha)}" data-n="${esc(t.n)}" title="Eliminar tarea"
+                            style="background:none; border:none; cursor:pointer; font-size:1.05rem; color:#ef4444;">🗑️</button>`
+                 : `<button disabled title="Una tarea finalizada solo la puede borrar un administrador"
+                            style="background:none; border:none; cursor:not-allowed; font-size:1.05rem; color:#ef4444; opacity:0.3;">🗑️</button>`}`}
         </td>
       </tr>`;
+  }
+
+  /* ── EDITAR HORAS ──────────────────────────────────────────────────────────
+   *
+   * Van con fecha y hora juntas, no solo la hora: una tarea que empieza 23:10 y termina 01:05
+   * cruza la medianoche, y con dos horas sueltas el término quedaría ANTES del inicio y la
+   * productividad saldría en blanco o al revés.
+   */
+  const paraInput = (v) => {
+    if (!v) return '';
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return '';
+    const dd = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${dd(d.getMonth() + 1)}-${dd(d.getDate())}T${dd(d.getHours())}:${dd(d.getMinutes())}`;
+  };
+  const deInput = (v) => v ? v.replace('T', ' ') + ':00' : '';
+
+  function abrirHoras(fecha, n) {
+    const t = dameTarea(fecha, n);
+    if (!t) return;
+    const viejo = document.getElementById('slt_modal');
+    if (viejo) viejo.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'slt_modal';
+    modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8);'
+                + 'z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);';
+    modal.innerHTML = `
+      <div class="glass-panel" style="width:400px; padding:2rem; border:1px solid #facc15; border-radius:16px;">
+        <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; text-align:center;">
+          Editar horas: <span style="color:#facc15;">Slot ${esc(t.n)}</span></h3>
+        <div style="display:flex; flex-direction:column; gap:1.1rem;">
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Inicio</label>
+            <input type="datetime-local" id="slt_ini" value="${paraInput(t.inicio)}"
+                   style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2);
+                   padding:0.7rem; border-radius:8px; color:#fff; font-weight:700; font-size:0.9rem;">
+          </div>
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Término</label>
+            <input type="datetime-local" id="slt_fin" value="${paraInput(t.termino)}"
+                   style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2);
+                   padding:0.7rem; border-radius:8px; color:#fff; font-weight:700; font-size:0.9rem;">
+          </div>
+          <div style="font-size:0.68rem; color:var(--text-muted); line-height:1.5;">
+            Dejando el término en blanco la tarea vuelve a <b style="color:#e2e8f0;">ASIGNADO</b>.
+            Con los dos puestos queda <b style="color:#e2e8f0;">FINALIZADO</b> y se recalcula la productividad.
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button id="slt_guardarHoras" class="btn" style="flex:1; padding:0.8rem; font-size:0.75rem; font-weight:800;">GUARDAR</button>
+          </div>
+          <button id="slt_cerrarHoras" style="background:none; border:none; color:var(--text-muted);
+                  cursor:pointer; font-size:0.7rem; width:100%;">Cerrar sin cambios</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#slt_cerrarHoras').onclick = () => modal.remove();
+
+    modal.querySelector('#slt_guardarHoras').onclick = async () => {
+      const ini = deInput(modal.querySelector('#slt_ini').value);
+      const fin = deInput(modal.querySelector('#slt_fin').value);
+      if (fin && !ini) { avisar('FALTA EL INICIO', 'No se puede poner un término sin inicio.', 'error'); return; }
+      if (ini && fin && new Date(fin) <= new Date(ini)) {
+        avisar('LAS HORAS NO CIERRAN', 'El término tiene que ser posterior al inicio.', 'error');
+        return;
+      }
+      const previo = { inicio: t.inicio, termino: t.termino, status: t.status };
+      t.inicio = ini; t.termino = fin;
+      // El estado sigue a las horas: sin término no está finalizada, con término sí
+      if (!ini) t.status = 'Creada';
+      else t.status = fin ? 'Finalizado' : 'Asignado';
+      const ok = OPC.alGuardar ? await OPC.alGuardar(cajon) : true;
+      if (ok === false) { Object.assign(t, previo); return; }
+      modal.remove();
+      pintar();
+    };
+  }
+
+  /* ── ELIMINAR ──────────────────────────────────────────────────────────────
+   *
+   * Con confirmación propia y no con el `confirm()` del navegador: en el tablero se ve igual
+   * que el resto y no se puede saltear sin querer con un Enter.
+   */
+  function borrarTarea(fecha, n) {
+    const t = dameTarea(fecha, n);
+    if (!t) return;
+    const viejo = document.getElementById('slt_modal');
+    if (viejo) viejo.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'slt_modal';
+    modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8);'
+                + 'z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);';
+    modal.innerHTML = `
+      <div class="glass-panel" style="width:420px; padding:2rem; border:1px solid #ef4444; border-radius:16px;">
+        <h3 style="margin:0 0 1rem 0; color:#fff; font-size:1.1rem; text-align:center;">
+          ¿Eliminar la tarea <span style="color:#ef4444;">Slot ${esc(t.n)}</span>?</h3>
+        <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.6; margin-bottom:1.3rem;">
+          Son <b style="color:#e2e8f0;">${num(t.pares)} pares</b> en
+          <b style="color:#e2e8f0;">${cuerposDe(t)} cuerpo${cuerposDe(t) === 1 ? '' : 's'}</b>.
+          <br><br>Los cuerpos no se pierden: al volver a procesar el Slotting vuelven a salir,
+          porque el barrido los encuentra de nuevo en el almacén.
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button id="slt_confirmarBorrar" class="btn" style="flex:1; background:#ef4444; padding:0.8rem; font-size:0.75rem; font-weight:800;">ELIMINAR</button>
+          <button id="slt_cancelarBorrar" class="btn" style="flex:1; background:rgba(255,255,255,0.06);
+                  border:1px solid var(--border); color:#e2e8f0; padding:0.8rem; font-size:0.75rem; font-weight:800;">CANCELAR</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#slt_cancelarBorrar').onclick = () => modal.remove();
+
+    modal.querySelector('#slt_confirmarBorrar').onclick = async () => {
+      const corrida = cajon[fecha] || {};
+      const antes = corrida.tareas || [];
+      const quedan = antes.filter(x => String(x.n) !== String(n));
+      // Los totales de la corrida se rehacen: si no, la cabecera seguiría contando lo borrado
+      corrida.tareas = quedan;
+      corrida.pares = quedan.reduce((a, x) => a + (Number(x.pares) || 0), 0);
+      corrida.cuerpos = new Set(quedan.flatMap(x => (x.lineas || []).map(l => l.ubi))).size;
+      const ok = OPC.alGuardar ? await OPC.alGuardar(cajon) : true;
+      if (ok === false) { corrida.tareas = antes; return; }
+      modal.remove();
+      pintar();
+    };
   }
 
   /* ════════════════════════ EL MODAL DE ASIGNAR ════════════════════════
@@ -768,6 +900,12 @@ export const montarSlotting = (container, OPC = {}) => {
 
     /* REINICIAR devuelve la tarea a Creada y le borra la gente y las horas. Es lo mismo que
      * hace almacenaje: sirve cuando se asignó a quien no era, o cuando se finalizó de más. */
+    container.querySelectorAll('.slt-horas').forEach(b =>
+      b.addEventListener('click', () => abrirHoras(b.dataset.f, b.dataset.n)));
+
+    container.querySelectorAll('.slt-borrar').forEach(b =>
+      b.addEventListener('click', () => borrarTarea(b.dataset.f, b.dataset.n)));
+
     container.querySelectorAll('.slt-reiniciar').forEach(b =>
       b.addEventListener('click', async () => {
         const t = dameTarea(b.dataset.f, b.dataset.n);
