@@ -633,10 +633,10 @@ export const montarSlotting = (container, OPC = {}) => {
        * está en cada ubicación de la tabla —si dice SEL-05-01, es el selectivo— y las líneas
        * son un dato del cálculo, no del trabajo: al operario le importa cuántos pares mueve.
        * La marca es lo que le dice de un vistazo a qué parte del almacén va. */
+      // LA MARCA VA UNA SOLA VEZ, y va en el título. Acá estuvo repetida un rato y quedaban
+      // las dos a cinco milímetros una de otra.
       const fechaBonita = String(t.fecha).split('-').reverse().join('/');
-      const subtitulo = `<b>${esc(fechaBonita)}</b>`
-                      + (t.marca ? ` · <b>${esc(t.marca)}</b>` : '')
-                      + ` · ${num(t.pares)} pares`;
+      const subtitulo = `<b>${esc(fechaBonita)}</b> · ${num(t.pares)} pares`;
 
       // Se reparten los bloques en hojas ANTES de dibujar, así se sabe cuántas son y el
       // "Páginas 1 de 3" sale bien desde la primera. Sin esto habría que dibujar dos veces.
@@ -661,8 +661,21 @@ export const montarSlotting = (container, OPC = {}) => {
         colActual = b.col;
       });
       if (actual.length) paginas.push(actual);
-      // El cierre —total de la tarea y observaciones— va en la última; si no entra, abre una
-      if (paginas.length && libre < ALTO.total + ALTO.nota) paginas.push([]);
+
+      /* SI EL CIERRE NO ENTRA, LA HOJA NUEVA SE LLEVA EL ÚLTIMO ARTÍCULO.
+       *
+       * Daniel, 15-ago-2026: *"en la segunda hoja solamente está quedando la observación; si
+       * va a quedar así, ponle un artículo también para que no quede muy sola"*. Antes se
+       * agregaba una hoja con el total y las observaciones y nada más, y parecía un error de
+       * impresión.
+       *
+       * Solo se hace si a la hoja anterior le quedan otros bloques: si el último es el único
+       * que tiene, moverlo dejaría la anterior vacía, que es peor. */
+      if (paginas.length && libre < ALTO.total + ALTO.nota) {
+        const ultima = paginas[paginas.length - 1];
+        if (ultima.length >= 2) paginas.push([{ ...ultima.pop(), nuevaColumna: true }]);
+        else paginas.push([]);
+      }
 
       paginas.forEach((bloquesDeLaHoja, i) => {
         const primera = i === 0, ultima = i === paginas.length - 1;
