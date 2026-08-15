@@ -38,23 +38,26 @@ const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/confi
  * v3 = MZN01 y MZN02 bajaron de 22 a 20 cuerpos, y apareció cuerposPorColumna.
  * v4 = apareció columnasBloqueadas, con las columnas que Daniel sacó de circulación.
  * v5 = MZN03 y MZN04 bajaron de 22 a 20 cuerpos, y MZN04 estrenó cuerposPorColumna.
+ * v6 = apareció la franja 'saldoGrande' con su corte `saldoGrandeHasta`, y la columna 4 del
+ *      selectivo dejó de ser temporada anterior para ser la del saldo grande.
  */
-const CACHE_KEY = 'config_zonas_v5';
+const CACHE_KEY = 'config_zonas_v6';
 
 /**
- * Las cuatro temporadas que puede tener una columna.
+ * Las temporadas que puede tener una columna.
  *
  * `corta` es el nombre para el mapa, donde cada columna mide unos 46 píxeles. Va en la barra
  * de arriba, para que el asistente no solo vea de qué color es cada celda sino DÓNDE tiene
  * que dejar la temporada actual y dónde la anterior.
  */
 export const FRANJAS = {
-    actual:   { etiqueta: 'Temporada actual',   corta: 'ACTUAL',   color: '#3b82f6' },
-    anterior: { etiqueta: 'Temporada anterior', corta: 'ANTERIOR', color: '#ef4444' },
-    saldos:   { etiqueta: 'Saldos',             corta: 'SALDOS',   color: '#f59e0b' },
-    escolar:  { etiqueta: 'Escolar',            corta: 'ESCOLAR',  color: '#22c55e' },
-    catalogo: { etiqueta: 'Catálogo',           corta: 'CATÁLOGO', color: '#a855f7' },
-    ninguna:  { etiqueta: 'Sin uso',            corta: '',         color: '#64748b' }
+    actual:      { etiqueta: 'Temporada actual',   corta: 'ACTUAL',   color: '#3b82f6' },
+    anterior:    { etiqueta: 'Temporada anterior', corta: 'ANTERIOR', color: '#ef4444' },
+    saldos:      { etiqueta: 'Saldos',             corta: 'SALDOS',   color: '#f59e0b' },
+    saldoGrande: { etiqueta: 'Saldo grande',       corta: 'SALDO+',   color: '#fb923c' },
+    escolar:     { etiqueta: 'Escolar',            corta: 'ESCOLAR',  color: '#22c55e' },
+    catalogo:    { etiqueta: 'Catálogo',           corta: 'CATÁLOGO', color: '#a855f7' },
+    ninguna:     { etiqueta: 'Sin uso',            corta: '',         color: '#64748b' }
 };
 
 /**
@@ -86,10 +89,23 @@ export const zonasPorDefecto = () => ({
             columnas: 14,
             cuerpos: 22,
             saldoMenorA: 20,
+            /* LA BANDA DEL SALDO GRANDE, dictada por Daniel el 14-ago-2026: "los saldos que
+             * son mayores o igual a veinte se enviarán al SEL cuatro, siempre y cuando el
+             * saldo sea T. Actual". El corte de arriba —199— lo eligió él sobre los números
+             * del piso: sin tope la regla se lleva el selectivo entero, porque los 153
+             * artículos de la franja actual tienen 20 pares o más.
+             *
+             * Es la banda que faltaba entre el saldo y el artículo normal: el corte de los 20
+             * era un acantilado —con 19 pares se comparte cuerpo y con 20 se ocupa uno entero
+             * de 330—, y un artículo de 25 pares en un cuerpo completo es el desperdicio más
+             * caro que tiene el almacén.
+             *
+             * Solo el selectivo. En los mezzanines no está dictada: van con 0, que la apaga. */
+            saldoGrandeHasta: 199,
             // Los cuerpos 11 y 22 de las columnas 2 a 13 son el paso del elevador: el rack
             // se abre abajo y recién desde el nivel F cruza por encima.
             pasillos: [{ desdeCol: 2, hastaCol: 13, cuerpos: [11, 22] }],
-            franjas: { ...rango(1, 2, 'saldos'), ...rango(3, 4, 'anterior'),
+            franjas: { ...rango(1, 2, 'saldos'), 3: 'anterior', 4: 'saldoGrande',
                        ...rango(5, 13, 'actual'), 14: 'escolar' }
         },
         MZN01: {
@@ -343,6 +359,9 @@ const normalizar = (crudo) => {
             cuerpos: _num(v.cuerpos, d.cuerpos, 1, 99),
             cuerposPorColumna: cpc,
             saldoMenorA: _num(v.saldoMenorA, d.saldoMenorA, 0, 100000),
+            // 0 apaga la banda. Una configuración publicada antes de la v29.0214 no la trae,
+            // y entonces manda el valor de fábrica: 199 en el selectivo, 0 en el resto.
+            saldoGrandeHasta: _num(v.saldoGrandeHasta, d.saldoGrandeHasta || 0, 0, 100000),
             pasillos: Array.isArray(v.pasillos) ? v.pasillos.filter(p =>
                 p && Number.isFinite(Number(p.desdeCol)) && Array.isArray(p.cuerpos)) : d.pasillos,
             columnasBloqueadas: bloq,
@@ -762,6 +781,21 @@ export const franjaDeArticulo = (art, zona) => {
      * decide si un código es nuevo o reposición, y eso no es casualidad — las dos preguntas
      * miran lo mismo: si al artículo le queda algo de verdad en el almacén. */
     if (Number(art.pares) < z.saldoMenorA && columnasDeFranja(zona, 'saldos').length) return 'saldos';
+    /* EL SALDO GRANDE: de 20 a 199 pares Y de temporada actual. Daniel, 14-ago-2026: *"los
+     * saldos que son mayores o igual a veinte se enviarán al SEL cuatro. Todo ese selectivo
+     * puede tener más de un artículo en un cuerpo. Siempre y cuando el saldo sea T. Actual"*.
+     *
+     * LAS TRES CONDICIONES SON OBLIGATORIAS. La de temporada es la que más se olvida: un
+     * artículo de temporada anterior con 100 pares NO es saldo grande, tiene su propia
+     * columna y ahí va. Por eso la pregunta se hace después de descartar la anterior y no
+     * antes.
+     *
+     * El piso de la banda es el mismo `saldoMenorA` que decide la columna de saldos: lo que
+     * no llegó a ser saldo chico empieza a ser saldo grande, sin huecos entre las dos. */
+    const hasta = Number(z.saldoGrandeHasta) || 0;
+    if (hasta > 0 && art.esTemporadaActual
+        && Number(art.pares) <= hasta
+        && columnasDeFranja(zona, 'saldoGrande').length) return 'saldoGrande';
     return art.esTemporadaActual ? 'actual' : 'anterior';
 };
 
@@ -850,7 +884,7 @@ export const columnaSirveParaFranja = (zona, columna, franja) => {
  * 284 compartidos —el 30%—; las otras cuatro van del 74% al 100% de compartido, que es
  * exactamente lo que dice la regla.
  * ══════════════════════════════════════════════════════════════════════════════ */
-const FRANJAS_QUE_COMPARTEN = ['anterior', 'saldos', 'escolar', 'catalogo'];
+const FRANJAS_QUE_COMPARTEN = ['anterior', 'saldos', 'saldoGrande', 'escolar', 'catalogo'];
 
 /** ¿En esta columna se puede poner más de un artículo por cuerpo? */
 export const columnaAdmiteVariosArticulos = (zona, columna) => {

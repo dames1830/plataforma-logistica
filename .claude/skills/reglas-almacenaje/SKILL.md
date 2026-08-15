@@ -1,6 +1,6 @@
 ---
 name: reglas-almacenaje
-description: Las reglas que deciden si un artículo es CÓDIGO NUEVO o REPOSICIÓN, CUÁNTO baja al piso y DÓNDE va en las tareas de almacenaje. Úsala antes de tocar processAlmacenajeTasks, casoDelItem, calcularSugerenciaDeItem, planificarPorTalla, planificarAlmacenaje o cargarContextoSugerencia, o cuando una tarea salga con un destino, una cantidad o un "Paletizar" que no se entienda. Cubre el corte de los 20 pares, los dos caminos completos, el buffer A/B/C/D, la capacidad de cada cuerpo, qué columna le toca a cada marca, el escolar, y el trato aparte de Adidas, Puma y Skechers.
+description: Las reglas que deciden si un artículo es CÓDIGO NUEVO o REPOSICIÓN, CUÁNTO baja al piso y DÓNDE va en las tareas de almacenaje. Úsala antes de tocar processAlmacenajeTasks, casoDelItem, calcularSugerenciaDeItem, planificarPorTalla, planificarAlmacenaje o cargarContextoSugerencia, o cuando una tarea salga con un destino, una cantidad o un "Paletizar" que no se entienda. Cubre el corte de los 20 pares, los dos caminos completos, el buffer A/B/C/D, la capacidad de cada cuerpo, el surtido de tallas dentro del cuerpo, qué columna le toca a cada marca, el escolar, y el trato aparte de Adidas, Puma y Skechers.
 ---
 
 # Reglas de almacenaje
@@ -304,6 +304,185 @@ creía que aguantaba 548**.
 
 **Sin medir todavía:** las series 2 y 3 del selectivo, que caen en el respaldo de 300.
 
+## 5b. EL CUERPO VA SURTIDO — parámetro `surtido`
+
+Regla de Daniel, 14-ago-2026: *"en un cuerpo pueden ir varias tallas, surtido. La cosa es que
+en un cuerpo esté surtido las tallas"*. Un cuerpo tiene tres niveles y en esos tres niveles
+entra la curva entera, no un pedazo de la curva.
+
+**Qué cambia.** Cuando un artículo ocupa más de un cuerpo, cada cuerpo lleva **una parte de
+cada talla**, no un bloque de tallas seguidas.
+
+| `surtido` | Cómo reparte |
+|---|---|
+| **`true`** (nuevo) | las cajas de cada talla se reparten entre todos sus cuerpos |
+| `false` | se llena el primer cuerpo y recién ahí se pasa al siguiente — como venía |
+
+**El reparto va por CAJAS CERRADAS, igual que todo lo demás.** Las cajas de cada talla se
+entregan de a una al cuerpo que menos lleve, **rotando quién empieza en cada talla**, para que
+el sobrante impar no caiga siempre en el mismo. Sin esa rotación una talla de 15 cajas parte
+8/7 y todas las tallas le cargan la de más al primero.
+
+**Lo que se gana, medido sobre el ejemplo de los 600 pares en dos cuerpos:**
+
+| | cuerpo 1 | cuerpo 2 |
+|---|---|---|
+| bloque (hoy) | 350 pares — **106%** | 250 pares — 76% |
+| surtido | 300 pares — 91% | 300 pares — 91% |
+
+El reparto viejo no solo desequilibra: **pasa del cuerpo**. Las tres primeras tallas suman 350
+en un cuerpo de 330 y entran por la tolerancia del 10%, que está para redondeos, no para
+tapar un reparto mal hecho.
+
+**Sigue valiendo todo lo de antes:** el nivel no importa —el destino es el cuerpo—, un cuerpo
+lleva un solo artículo en la franja actual, y ninguna talla baja en unidades sueltas.
+
+**Lo que hay que decidir antes de implementarlo:** una talla pasa a tener **dos ubicaciones**
+en vez de una, así que el picking va a ver la misma talla en dos cuerpos. Consultar con Daniel
+si eso le sirve o si prefiere que las comerciales se concentren.
+
+Vive en `asignarCuerpos` de `dashboard_v28.js`.
+
+## 5c. EL RESTO QUE QUEDA ATRÁS — se arrastra al cuerpo nuevo
+
+Regla de Daniel, 14-ago-2026. Es la otra mitad del corte de los 20 pares: **el mismo corte que
+convierte un código en nuevo es el que deja un resto huérfano en el piso.**
+
+> *"Lo ideal es que esos diecinueve deberían estar en zonas de saldos, que son el selectivo uno
+> y dos. Pero a veces Slotting no se da abasto y esos diecinueve quedan en una zona de actual,
+> por ejemplo en el selectivo cinco. Y tú le has dado una ubicación a esos seiscientos pares en
+> otro selectivo: entonces esa tiene que ser una tarea para Slotting, mover esos diecinueve
+> pares a la ubicación nueva que le has dado."*
+
+### LA FRANJA DONDE ESTABA EL RESTO NO IMPORTA — SE MUEVE SIEMPRE
+
+Acá hubo una versión mal escrita que decía que el resto de la columna de saldos se quedaba
+donde estaba. **Está mal y Daniel lo corrigió el mismo día:**
+
+> *"Por más que esté en temporada antigua, temporada actual o en saldos, deberían moverse esos
+> diecinueve a donde están los seiscientos pares, para que esté toda la familia en un solo
+> cuerpo o en dos. No puede estar en dos zonas diferentes, no puede estar en zona de saldos y
+> en zona de almacenaje. Debería estar todo junto."*
+
+**La regla es una sola: TODA LA FAMILIA JUNTA.** Un artículo vive en uno o dos cuerpos, no
+repartido entre franjas. Si el almacenaje le acaba de dar cuerpos nuevos, **todo lo que ese
+artículo tenga en cualquier otro lado del piso se arrastra ahí** — de saldos, de temporada
+anterior, de escolar, de catálogo o de otra columna de actual, da igual.
+
+**Por qué:** un artículo partido entre la columna de saldos y su cuerpo nuevo se pica desde los
+dos lados, envejece en el pedazo que nadie mira, y deja ocupado un cuerpo de saldos con 19
+pares. Es el mismo mecanismo que hoy tiene **303 cuerpos inmovilizados**: el saldo envejece
+donde está porque el sistema solo decide ubicación cuando la mercadería llega, y nunca vuelve a
+mirarlo.
+
+**Ojo con el efecto secundario, que es sano:** con esta regla la columna de saldos se queda
+solo con lo que **ya no vuelve a llegar**, que es exactamente lo que un saldo es. Lo que
+todavía recibe mercadería sale de ahí solo.
+
+**LA LÍNEA DE SLOTTING NECESITA UN CAMPO QUE HOY NO TIENE: EL DESTINO.** Hoy la línea dice
+`sacar 19 pares de SEL-05-12` y ahí termina — dónde ponerlos lo decide el operario, que es
+justo lo que la cadena no permite. Para esta casuística el destino se sabe con nombre y
+apellido: es el cuerpo que la tarea de almacenaje acaba de asignar esa misma noche.
+
+**Cuántos hay, medido sobre el stock del 14-ago-2026** — artículos con 19 pares o menos en todo
+el piso, y dónde está cada resto suyo:
+
+| Zona | Restos | Pares | | Franja de donde salen | Restos | Pares |
+|---|---|---|---|---|---|---|
+| SEL | 273 | 1.819 | | actual | 687 | 2.718 |
+| MZN01 | 426 | 2.111 | | saldos | 592 | 3.388 |
+| MZN02 | 158 | 900 | | anterior | 228 | 1.049 |
+| MZN03 | 788 | 3.116 | | escolar | 95 | 484 |
+| | | | | catálogo | 43 | 307 |
+| **Total** | **1.645** | **7.946** | | **Total** | **1.645** | **7.946** |
+
+Son **1.280 artículos**, de los cuales **260 ya están partidos en más de un sitio**. Todo junto
+serían unas **27 tareas** de Slotting de 300 pares, pero no se hace de una: la tarea se dispara
+**solo cuando llega mercadería de ese código**, así que por noche son los pocos que aparezcan en
+el buffer.
+
+**Ocho de esos restos están solos en su cuerpo** —un cuerpo de 300 con 14 pares adentro— y esos
+ocho cuerpos se liberarían enteros. **El barrido de hoy no los ve**: solo mira cuerpos con más
+de un artículo. Y de los que sí ve, ninguno sale con destino.
+
+**El tamaño del pozo:** de los 2.860 artículos del piso, **1.280 tienen 19 pares o menos**.
+Casi la mitad del almacén va a pasar por esta regla tarde o temprano.
+
+**Sin resolver todavía:** los artículos de REPOSICIÓN repartidos en 3 o más cuerpos — hay
+**233** — caen bajo el mismo principio de "toda la familia junta", pero por otro camino: esos no
+están esperando una llegada que los consolide. Preguntarle a Daniel si quieren tarea propia.
+
+## 5d. EL SALDO GRANDE — `SEL-04`, y ahí se comparte cuerpo
+
+Regla de Daniel, 14-ago-2026. Es la banda que faltaba entre "saldo" y "artículo normal".
+
+> *"Los saldos que son mayores o igual a veinte se enviarán al SEL cuatro. Todo ese selectivo
+> puede tener más de un artículo en un cuerpo. Siempre y cuando el saldo sea T. Actual."*
+
+**Las tres condiciones, y tienen que darse las tres:**
+
+| | |
+|---|---|
+| **Cuánto** | de **20 a 199 pares**. Menos de 20 sigue yendo a `SEL-01` y `SEL-02` |
+| **Qué temporada** | **T. Actual**. La anterior tiene su columna y no se mezcla |
+| **Dónde** | `SEL-04`, y esa columna **admite varios artículos por cuerpo** |
+
+El corte de arriba lo eligió Daniel el 14-ago sobre los números del piso. Sin tope la regla se
+lleva el selectivo entero: los 153 artículos de la franja actual tienen 20 pares o más.
+
+**Por qué existe esta banda.** El corte de los 20 era un acantilado: con 19 pares un artículo
+comparte cuerpo, y con 20 se lleva un cuerpo entero de 330. Un artículo de 25 pares ocupando un
+cuerpo completo es el desperdicio más caro que tiene el almacén, y de ahí sale buena parte de
+los cuerpos que hoy bloquean tareas por falta de espacio.
+
+**Consecuencia que hay que asumir: la columna 4 deja de ser temporada actual.** La franja actual
+pasa de 10 columnas a 9 — de 200 cuerpos a 180.
+
+**El balance, medido sobre el stock del 14-ago-2026:**
+
+| | |
+|---|---|
+| Saldos grandes hoy | **52 artículos, 5.359 pares** |
+| Caben en | **17 cuerpos compartidos** de los 20 usables del `SEL-04` |
+| Cuerpos que tocan hoy | 38, repartidos por toda la franja actual |
+| Cuerpos de la 5-13 que quedan **vacíos** al mudarlos | **17** |
+| Hay que sacar del `SEL-04` | 11 artículos grandes, **3.373 pares** ≈ 11 cuerpos |
+
+**Neto: la franja actual pasa de CERO cuerpos libres a unos 6.**
+
+### EL INTERCAMBIO SE PAGA CON SU PROPIO HUECO
+
+Acá había escrito que la mudanza estaba trabada porque los 3.373 pares de la columna 4 no tenían
+a dónde ir. **Está mal, y lo corrigió Daniel:**
+
+> *"Claro que hay dónde ponerlos, porque al sacar del selectivo cinco al trece los saldos y
+> ponerlos al cuatro, vas a hacer hueco, y en ese hueco va lo que está en el selectivo cuatro."*
+
+**No hacen falta cuerpos vacíos de arranque: los fabrica el mismo movimiento.** Verificado sobre
+el stock del 14-ago-2026:
+
+| Paso | Qué pasa |
+|---|---|
+| **0** | El `SEL-04` ya tiene **679 pares de sitio** en tres cuerpos que hoy llevan solo saldos — `SEL-04-03`, `-04` y `-19` |
+| **1** | Con ese sitio se vacían **7 cuerpos** de las columnas 5-13 de una: `SEL-07-01`, `-07-02`, `SEL-10-10`, `-10-16`, `-10-21`, `SEL-05-21`, `SEL-09-01` |
+| **2** | Esos huecos reciben lo grande que sale del `SEL-04`, y cada cuerpo que se libera allá da más sitio para el saldo siguiente |
+| **3** | Al final se vacían **17 cuerpos** en 5-13 y se necesitan **11** para lo que salió de la 4 |
+
+El más barato de todos es `SEL-07-01` + `SEL-07-02`: son **el mismo artículo partido en dos**
+—el `7646807`, con 93 y 16 pares— así que juntarlo en la columna 4 libera dos cuerpos moviendo
+109 pares.
+
+**Lo único que importa es el ORDEN: primero el saldo sale de 5-13, después lo grande sale de la
+4.** Al revés no arranca.
+
+**Dónde toca:** `franjas` de la zona SEL en la configuración publicada (la 4 pasa de `actual` a
+la banda nueva), `FRANJAS_QUE_COMPARTEN` y `columnaAdmiteVariosArticulos()` de `zonasService.js`,
+y `franjaDeArticulo`, que hoy solo sabe comparar contra `saldoMenorA` y necesita las dos puntas.
+
+**Ojo con `saldoMenorA`:** sigue valiendo 20 en el SEL y 80 en los mezzanines, y sigue decidiendo
+lo mismo de siempre —quién baja a `SEL-01`/`SEL-02`—. La banda nueva es un segundo corte, no un
+reemplazo. Y **por ahora es solo del selectivo**: en los mezzanines no está dictada.
+
 ## 6. Por qué va en esa columna
 
 Deciden dos cosas: **de quién es** la columna y **qué temporada lleva**. Valores publicados al
@@ -325,7 +504,7 @@ Deciden dos cosas: **de quién es** la columna y **qué temporada lleva**. Valor
 
 | Zona | actual | anterior | saldos | otras |
 |---|---|---|---|---|
-| SEL | 4 – 13 | 3 | 1, 2 | escolar: 14 |
+| SEL | **5 – 13** | 3 | 1, 2 (menos de 20 pares) | **saldo grande: 4** · escolar: 14 |
 | MZN01 | 4, 7, 8, 10 – 21, 24 | 1, 22 | 2, 3, 23 | |
 | MZN02 | 7, 8, 11, 12, 15, 16, 19, 20, 23, 24 | 4 | 1, 2, 3 | |
 | MZN03 | 4, 5, 9 – 17, 20 – 24 | 2, 3, 7, 19 | 1, 6, 18 | catálogo: 8 |
@@ -360,6 +539,7 @@ cuerpo-artículo, salvo los mixtos o las temporadas anteriores o escolar"*.
 | **actual** | **NO.** Es la zona viva de cada marca y donde se pica todo el día |
 | anterior | sí — envejecen juntos y no vale un cuerpo cada uno |
 | saldos | sí — cientos de artículos de diez pares |
+| **saldo grande** (`SEL-04`) | sí — 20 a 199 pares de T. Actual. Ver 5d |
 | escolar | sí — curvas cortas y poco volumen por código |
 | catálogo | sí — la columna 8 del MZN03 mezcla las tres marcas por diseño |
 
@@ -368,9 +548,10 @@ más se confunde—:
 
 | Columnas | Qué son | |
 |---|---|---|
-| **1 y 2** | saldos y mixtos | **fuera** del control |
+| **1 y 2** | saldos y mixtos — menos de 20 pares | **fuera** del control |
 | **3** | temporada anterior — van todas las temporadas anteriores juntas | **fuera** |
-| **4 a 13** | temporada actual | **acá sí: un cuerpo, un artículo** |
+| **4** | saldo grande — T. Actual de 20 a 199 pares (ver 5d) | **fuera** |
+| **5 a 13** | temporada actual | **acá sí: un cuerpo, un artículo** |
 | **14** | escolar | **fuera** |
 
 Medido el 14-ago-2026 sobre el selectivo: hay **110 cuerpos** con más de un artículo, pero
@@ -474,7 +655,12 @@ Medido el 14-ago-2026 contra las tareas y el stock de producción. **Están abie
 5. **El corte de saldos mide lo que llega, no lo que hay.** `franjaDeArticulo` compara
    `saldoMenorA` contra los pares del buffer.
 
-6. **Al buffer B se le cree por la letra.** La prueba `pares <= enReserva` no filtra: pasan 38
+6. **El cuerpo no sale surtido.** `asignarCuerpos` llena un cuerpo antes de pasar al siguiente,
+   así que cada talla cae entera en un solo cuerpo y los cuerpos quedan desparejos —350 y 250
+   con capacidad de 330—. Ver la sección 5b: el parámetro `surtido` está dictado pero **todavía
+   no está escrito**.
+
+7. **Al buffer B se le cree por la letra.** La prueba `pares <= enReserva` no filtra: pasan 38
    de 41. Y suma A + B, así que la mercadería de recepción entra como replenishment si el
    artículo tiene aunque sea un par en el B. **La clasificación nuevo/reposición nunca llega a
    hacerse para esos artículos.** Detalle arriba, en "El buffer B NO se cree por la letra".

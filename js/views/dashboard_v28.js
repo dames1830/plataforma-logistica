@@ -1,24 +1,24 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0213';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0214';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0213';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0213';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0213';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0213';
-import * as metasService from '../services_v245/metasService.js?v=29.0213';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0213';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0213';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0213';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0213';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0213';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0213';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0213';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0213';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0213';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0213';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0213';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0213';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0213';
-import { montarSlotting } from './slotting.js?v=29.0213';
+import * as adminService from '../services_v245/adminService.js?v=29.0214';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0214';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0214';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0214';
+import * as metasService from '../services_v245/metasService.js?v=29.0214';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0214';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0214';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0214';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0214';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0214';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0214';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0214';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0214';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0214';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0214';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0214';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0214';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0214';
+import { montarSlotting } from './slotting.js?v=29.0214';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -375,7 +375,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0213';
+const VERSION = '29.0214';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4404,7 +4404,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0213');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0214');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15371,7 +15371,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0213 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0214 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16784,20 +16784,49 @@ const renderRFSection = (container) => {
     return lista;
   };
   /**
-   * A qué CUERPO va cada talla.
+   * EL CUERPO VA SURTIDO: cada cuerpo lleva una parte de CADA talla.
    *
-   * EL NIVEL NO IMPORTA. Antes esto repartía talla por nivel —la más vendida al A, que está
-   * abajo y a la mano; la que menos al C—. Daniel lo descartó el 05-ago-2026: "no importa si
-   * las tallas comerciales van en el C, en el A o en el B. La cosa es que esté bien calculado
-   * para que el operario vaya y deje la mercadería".
+   * Regla de Daniel del 14-ago-2026: *"en un cuerpo pueden ir varias tallas, surtido. Un
+   * cuerpo tiene tres niveles, así que puedes poner las más comerciales o surtirlo. La cosa
+   * es que en un cuerpo esté surtido las tallas"*.
    *
-   * Una talla puede ocupar los tres niveles del cuerpo, o quedar repartida entre ellos —la 37
-   * llena el A, la 36 entra con 50 en el B y 20 en el C—, y está bien. Lo único que no puede
-   * pasar es que se pase del CUERPO: un cuerpo lleva un solo artículo con todas sus tallas.
+   * Antes se llenaba un cuerpo entero antes de pasar al siguiente, así que cada talla caía
+   * completa en un solo cuerpo y los cuerpos quedaban desparejos. Medido sobre una llegada de
+   * 1.000 pares de Bata —600 al piso en dos cuerpos de 330—:
    *
-   * Con varios cuerpos se llena uno hasta su capacidad antes de pasar al siguiente, para que
-   * el artículo no quede desparramado.
+   *     bloque    cuerpo 1: 350 pares (106%)   cuerpo 2: 250 (76%)
+   *     surtido   cuerpo 1: 300 pares  (91%)   cuerpo 2: 300 (91%)
+   *
+   * El reparto viejo no solo desequilibraba: se pasaba del cuerpo. Las tres primeras tallas
+   * sumaban 350 en un cuerpo de 330 y entraban por la tolerancia del 10%, que está para
+   * redondeos y no para tapar un reparto mal hecho.
+   *
+   * EL NIVEL SIGUE SIN IMPORTAR. Daniel, 05-ago-2026: "no importa si las tallas comerciales
+   * van en el C, en el A o en el B. La cosa es que esté bien calculado para que el operario
+   * vaya y deje la mercadería". El destino es el CUERPO.
+   *
+   * LA TALLA NO SE PARTE, Y ES A PROPÓSITO. El reparto se hace entregando cada talla entera
+   * al cuerpo que menos lleve, no cortándola en cajas. Dos razones, y las dos pesan:
+   *
+   *   EL PAPEL. La unidad de la hoja —y de lo que se graba en la tarea— es la línea del
+   *   buffer: una ubicación, un SKU, una talla. Partir una talla en dos cuerpos obliga a
+   *   partir esa línea en dos, y la línea es la que el operario tiene delante y la que
+   *   `grabarPapelEnTareas` escribe de vuelta en la tarea. Se rompería el formato cerrado.
+   *
+   *   EL PICKING. Con la talla entera en un cuerpo, el picker va a un solo lugar a buscarla.
+   *   Partida, tiene dos ubicaciones para la misma talla.
+   *
+   * Y el equilibrio sale igual de bien. Con los 600 pares del ejemplo —tallas de 50, 150, 150,
+   * 150, 50 y 50— quedan 300 y 300, y cada cuerpo con varias tallas adentro, que es lo que
+   * pidió Daniel.
    */
+  /**
+   * EL PARÁMETRO. En true cada cuerpo va surtido; en false se vuelve al reparto por bloque,
+   * que es como salía hasta la v29.0213. Queda escrito para poder comparar una corrida contra
+   * la otra sin revertir código.
+   */
+  const SURTIDO_EN_EL_CUERPO = true;
+
   const asignarCuerpos = (filas, cuerpos, zona, capacidades) => {
     const conPiso = filas.filter(f => f.baja > 0);
     if (!conPiso.length || !cuerpos || !cuerpos.length) return {};
@@ -16817,34 +16846,55 @@ const renderRFSection = (container) => {
       ? capacidades.map(v => (Number(v) > 0 ? Number(v) : 1))
       : cuerpos.map(() => Infinity);
 
-    // SE REPARTE POR PARES, NO POR CANTIDAD DE TALLAS.
-    //
-    // Antes se armaba un hueco por cada nivel A/B/C de cada cuerpo y se metía UNA TALLA en
-    // cada hueco, sin mirar cuántos pares llevaba. Con 6 tallas y 3 cuerpos las 6 tallas
-    // entraban en los primeros 6 huecos —o sea en los dos primeros cuerpos— y el tercero
-    // quedaba vacío pero igual reservado, sin que ningún otro artículo lo pudiera usar. Y el
-    // primer cuerpo se llevaba 730 pares donde entran 326.
-    //
-    // Ahora se llena un cuerpo hasta su capacidad y recién ahí se pasa al siguiente. La talla
-    // puede quedar repartida entre los tres niveles del cuerpo, y eso está bien: lo que no se
-    // puede es pasarse del cuerpo. Es lo que dijo Daniel — el nivel no importa, el cuerpo sí.
     const destino = {};
-    let i = 0, enEste = 0;
-    orden.forEach(f => {
-      // Si lo que ya lleva más esta talla se pasa del cuerpo, y todavía quedan cuerpos, se
-      // pasa al siguiente. Se tolera la misma holgura que usa el resto del cálculo.
+
+    if (!SURTIDO_EN_EL_CUERPO || nombres.length === 1) {
+      // EL REPARTO POR BLOQUE, que es como salía hasta la v29.0213. Se llena un cuerpo hasta
+      // su capacidad y recién ahí se pasa al siguiente.
       //
-      // El "enEste > 0" de la primera condición no alcanza solo: cuando al cuerpo le quedan
-      // 26 pares y la primera talla trae 100, con el cuerpo todavía vacío no habría con qué
-      // compararlo y le entrarían los 100 igual. Por eso la segunda: una talla que por sí
-      // sola no entra tampoco se fuerza. Se pierden esos 26 de lugar, y está bien — es
-      // preferible a mandar al operario con 100 pares a un hueco de 26.
-      const noEntra = (enEste + f.baja) > caps[i] * 1.10;
-      if (noEntra && i < cuerpos.length - 1 && (enEste > 0 || f.baja > caps[i] * 1.10)) {
-        i++; enEste = 0;
-      }
-      destino[f.talla] = nombres[i];
-      enEste += f.baja;
+      // El "enEste > 0" de la condición no alcanza solo: cuando al cuerpo le quedan 26 pares y
+      // la primera talla trae 100, con el cuerpo todavía vacío no habría con qué compararlo y
+      // le entrarían los 100 igual. Por eso la segunda: una talla que por sí sola no entra
+      // tampoco se fuerza.
+      let i = 0, enEste = 0;
+      orden.forEach(f => {
+        const noEntra = (enEste + f.baja) > caps[i] * 1.10;
+        if (noEntra && i < nombres.length - 1 && (enEste > 0 || f.baja > caps[i] * 1.10)) {
+          i++; enEste = 0;
+        }
+        destino[f.talla] = nombres[i];
+        enEste += f.baja;
+      });
+      return destino;
+    }
+
+    /* EL REPARTO SURTIDO — LA TALLA MÁS GRANDE PRIMERO, AL CUERPO QUE MENOS LLEVE.
+     *
+     * De mayor a menor y no en orden de talla: es la única forma de que el equilibrio salga.
+     * Empezando por las chicas, las grandes llegan al final sin dónde entrar y hay que
+     * forzarlas. Con 150, 150, 150, 50, 50, 50 en dos cuerpos, de mayor a menor da 300 y 300;
+     * en orden de talla daba 350 y 250.
+     *
+     * NUNCA SE PIERDE UNA TALLA. Si ningún cuerpo la admite dentro de la holgura, va igual al
+     * que menos lleve: preferimos un cuerpo pasado antes que una línea de papel sin destino.
+     *
+     * LO QUE ESTO NO PUEDE ARREGLAR, y conviene saberlo antes de "mejorarlo": con tallas muy
+     * grandes el reparto perfecto no existe, porque la talla no se parte. Un hombre de 1.000
+     * pares en tres cuerpos —250, 250, 250, 70, 60, 60, 60— deja uno en 370 sobre 330, y no
+     * hay acomodo que lo evite: las cuatro tallas chicas suman 250 y hay que repartirlas entre
+     * tres cuerpos que ya tienen 250 cada uno. No es un defecto del reparto, es la aritmética.
+     * Y tampoco es nuevo: el planificador ya venía aceptando pasarse, porque `cuantos` sale de
+     * dividir por la capacidad con la misma holgura del 10%.
+     */
+    const carga = nombres.map(() => 0);
+    const porTamano = [...conPiso].sort((a, b) => b.baja - a.baja
+                                    || (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0));
+    porTamano.forEach(f => {
+      const porTurno = nombres.map((_, i) => i).sort((a, b) => carga[a] - carga[b] || a - b);
+      const i = porTurno.find(x => carga[x] + f.baja <= caps[x] * 1.10);
+      const elegido = (i === undefined) ? porTurno[0] : i;
+      destino[f.talla] = nombres[elegido];
+      carga[elegido] += f.baja;
     });
     return destino;
   };
@@ -16987,8 +17037,70 @@ const renderRFSection = (container) => {
       });
     });
 
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * EL SEGUNDO HALLAZGO: ARRASTRAR EL RESTO. Y este viene CON DESTINO.
+     *
+     * Regla de Daniel del 14-ago-2026, y es la otra mitad del corte de los 20 pares: el mismo
+     * corte que convierte un código en nuevo es el que deja un resto huérfano en el piso.
+     *
+     *   *"Lo ideal es que esos diecinueve deberían estar en zonas de saldos. Pero a veces
+     *   Slotting no se da abasto y quedan en una zona de actual. Y tú le has dado una
+     *   ubicación a esos seiscientos pares en otro selectivo: entonces esa tiene que ser una
+     *   tarea para Slotting, mover esos diecinueve pares a la ubicación nueva."*
+     *
+     * LA FRANJA DE DONDE SALE NO IMPORTA. Acá hubo una versión que dejaba quieto lo que
+     * estaba en la columna de saldos, y Daniel la corrigió el mismo día: *"por más que esté
+     * en temporada antigua, temporada actual o en saldos, deberían moverse a donde están los
+     * seiscientos pares, para que esté toda la familia en un solo cuerpo o en dos. No puede
+     * estar en dos zonas diferentes"*.
+     *
+     * ES LA ÚNICA LÍNEA CON DESTINO, y por eso no se mezcla con las de arriba: las del cuerpo
+     * mezclado dicen qué sacar y el equipo decide adónde; esta dice las dos cosas, porque la
+     * tarea de almacenaje ya eligió el cuerpo esta misma noche.
+     *
+     * POR ESO EL BARRIDO CORRE DESPUÉS DE ARMAR LAS TAREAS y no antes: el destino no existe
+     * hasta que `calcularSugerenciaDeItem` eligió los cuerpos.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    const casaNueva = new Map();          // sku7 -> Set de cuerpos que le dio la tarea
+    mandados.forEach((skus, k) => skus.forEach(s7 => {
+      if (!casaNueva.has(s7)) casaNueva.set(s7, new Set());
+      casaNueva.get(s7).add(k);
+    }));
+
+    /* NO SE DUPLICA CON LAS DE ARRIBA. Un resto que está en un cuerpo mezclado YA salió como
+     * línea del barrido, sin destino. Si además hay que arrastrarlo, no se agrega otra línea:
+     * se le completa el destino a la que ya está. Sin esto el operario recibía la misma
+     * mercadería dos veces, una con destino y otra sin él. */
+    const yaEstan = new Map();
+    lineas.forEach(l => yaEstan.set(`${l.ubi}|${l.sku7}`, l));
+
+    let arrastres = 0;
+    casaNueva.forEach((suyos, s7) => {
+      // A dónde se lo lleva: si la tarea le dio más de un cuerpo, al primero. El equipo
+      // termina de acomodar adentro, que para eso son 300 pares como mucho.
+      const aDonde = [...suyos].sort()[0];
+      cuerpos.forEach((c, k) => {
+        if (suyos.has(k)) return;                 // ya está donde tiene que estar
+        const pares = c.m.get(s7);
+        if (!pares || pares <= 0) return;
+        arrastres++;
+        const previa = yaEstan.get(`${k}|${s7}`);
+        if (previa) { previa.llevarA = aDonde; previa.motivo = 'arrastre'; return; }
+        const f = ficha.get(s7) || {};
+        lineas.push({
+          ubi: k, sku7: s7, pares: Math.round(pares),
+          marca: f.marca || '', temporada: f.temporada || '',
+          // El destino es lo que distingue a esta línea, y va explícito para que la pantalla
+          // y el papel no tengan que deducirlo.
+          llevarA: aDonde, motivo: 'arrastre',
+          dueno: s7, duenoPares: Math.round(pares), vinoPorTarea: true, duenoPorTarea: true
+        });
+      });
+    });
+
     console.log(`[Slotting] ${zonas.join('+')}: ${cuerpos.size} cuerpos con stock, ${mezclados} mezclados `
-              + `(${porTarea} con dueño decidido por la tarea), ${lineas.length} líneas y `
+              + `(${porTarea} con dueño decidido por la tarea), ${arrastres} restos por arrastrar, `
+              + `${lineas.length} líneas y `
               + `${lineas.reduce((a, l) => a + l.pares, 0)} pares por sacar.`);
 
     return await slottingService.publicarCorrida(getLogicalDate(), lineas, zonas.join('+'));
@@ -18798,6 +18910,10 @@ const renderRFSection = (container) => {
               <label style="display:block; font-size:0.64rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;" title="Por debajo de esta cantidad de pares, el artículo se trata como saldo">Es saldo con menos de</label>
               <input type="number" id="zn_saldo" min="0" value="${z.saldoMenorA}" style="width:80px; padding:7px 9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800;">
             </div>
+            <div>
+              <label style="display:block; font-size:0.64rem; color:rgba(255,255,255,0.45); text-transform:uppercase; font-weight:800; margin-bottom:4px;" title="Un artículo de temporada actual con esta cantidad de pares o menos va a la columna de saldo grande. Poner 0 para apagar la banda.">Saldo grande hasta</label>
+              <input type="number" id="zn_saldo_grande" min="0" value="${z.saldoGrandeHasta || 0}" style="width:80px; padding:7px 9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:7px; color:#fff; font-weight:800;">
+            </div>
             <div style="font-size:0.68rem; color:rgba(255,255,255,0.35); line-height:1.6;">
               <b style="color:rgba(255,255,255,0.6);">${totalCuerpos}</b> cuerpos de almacenaje<br>
               🚧 Paso del elevador: ${esc(pasilloTxt)}
@@ -18969,6 +19085,7 @@ const renderRFSection = (container) => {
         marcar();
       };
       container.querySelector('#zn_saldo').onchange = (e) => { z.saldoMenorA = Math.max(0, +e.target.value || 0); marcar(); };
+      container.querySelector('#zn_saldo_grande').onchange = (e) => { z.saldoGrandeHasta = Math.max(0, +e.target.value || 0); marcar(); };
 
       container.querySelectorAll('[data-marca]').forEach(s => s.onchange = () => {
         const m = s.dataset.marca;

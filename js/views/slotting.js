@@ -129,6 +129,7 @@ export const montarSlotting = (container, OPC = {}) => {
               <th style="text-align:right; padding:4px 6px; border-bottom:1px solid rgba(255,255,255,0.06);">Pares</th>
               <th style="text-align:left; padding:4px 6px; border-bottom:1px solid rgba(255,255,255,0.06);">Marca</th>
               <th style="text-align:left; padding:4px 6px; border-bottom:1px solid rgba(255,255,255,0.06);">Temporada</th>
+              <th style="text-align:left; padding:4px 6px; border-bottom:1px solid rgba(255,255,255,0.06);">A dónde va</th>
               <th style="text-align:left; padding:4px 6px; border-bottom:1px solid rgba(255,255,255,0.06);">El cuerpo queda para</th>
             </tr>
           </thead>
@@ -140,8 +141,15 @@ export const montarSlotting = (container, OPC = {}) => {
                 <td style="padding:4px 6px; text-align:right; font-family:ui-monospace,Consolas,monospace; color:#fff;">${num(l.pares)}</td>
                 <td style="padding:4px 6px; color:#cbd5e1;">${esc(l.marca) || '—'}</td>
                 <td style="padding:4px 6px; color:#94a3b8;">${esc(l.temporada) || '—'}</td>
+                <!-- EL DESTINO SOLO LO TRAE EL ARRASTRE. Las líneas del cuerpo mezclado dicen
+                     qué sacar y el equipo decide adónde; el arrastre lo sabe, porque la tarea
+                     de almacenaje ya eligió el cuerpo esa misma noche. -->
+                <td style="padding:4px 6px; font-family:ui-monospace,Consolas,monospace; color:#93c5fd; font-weight:700;">
+                  ${l.llevarA ? esc(l.llevarA) : '<span style="color:var(--text-muted); font-family:inherit; font-weight:400;">a criterio</span>'}</td>
                 <td style="padding:4px 6px; font-family:ui-monospace,Consolas,monospace; color:#22c55e;">
-                  ${esc(l.dueno)} <span style="color:var(--text-muted);">(${num(l.duenoPares)})</span></td>
+                  ${l.motivo === 'arrastre'
+                    ? '<span style="color:var(--text-muted); font-family:inherit;">junta la familia</span>'
+                    : `${esc(l.dueno)} <span style="color:var(--text-muted);">(${num(l.duenoPares)})</span>`}</td>
               </tr>`).join('')}
           </tbody>
         </table>

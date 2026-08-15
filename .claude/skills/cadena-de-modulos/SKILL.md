@@ -203,6 +203,24 @@ El tipo ya está declarado (`sin_lugar`) pero nadie lo registra todavía. Es el 
 porque el sistema lo sabe a las 19:00 y hoy se descubre a las 02:00 con el operario parado en
 el pasillo.
 
+### Y falta el tercero: ARRASTRAR EL RESTO — y este viene CON DESTINO
+
+Regla de Daniel, 14-ago-2026. Cuando el almacenaje trata un código como nuevo —19 pares o menos
+en el almacén— y le asigna cuerpos, **todo lo que ese artículo tenga en cualquier otro lado del
+piso se convierte en una línea de Slotting: moverlo al cuerpo nuevo**. La franja de donde sale
+no importa —saldos, anterior, escolar, catálogo o actual—: *"debería estar todo junto"*. Son
+1.645 restos y 7.946 pares medidos al 14-ago; el detalle en `reglas-almacenaje` sección 5c.
+
+**Es la posta de Procesar Tareas a Slotting, y hoy llega incompleta.** La línea que arma
+`barrerParaSlotting` lleva `ubi, sku7, pares, marca, temporada, dueno, duenoPares` — **no lleva
+a dónde va la mercadería**. El operario de Slotting saca 19 pares de un cuerpo y tiene que
+decidir solo dónde ponerlos, que es exactamente la pregunta 2 de la sección 9: *¿le agrega una
+decisión al operario?*
+
+Y hay una dependencia de orden que conviene no romper: **el destino existe recién cuando la
+tarea de almacenaje eligió los cuerpos**, así que el barrido de Slotting tiene que correr
+DESPUÉS de armar las tareas de la noche, no antes.
+
 ### Cómo era antes, y por qué se construyó
 
 El papel imprime **"Revisar Slotting"** cuando un artículo no tiene dónde ir, y **no hay ningún
