@@ -106,44 +106,39 @@
     <div class="nota">Generado: <b style="color:#94a3b8;">2026-08-14 22:58</b> · 3 líneas quedaron retenidas sin dónde ir</div>
   </div>
 
-  <div style="margin-bottom:0.9rem;">
-    <span class="chip on">Todas · 95</span><span class="chip">Por hacer · 71</span>
-    <span class="chip">Asignadas · 12</span><span class="chip">Hechas · 12</span>
-    <span class="chip">No trabajadas · 0</span>
-  </div>
-
   <div class="panel" style="padding:0.4rem 0.6rem; overflow-x:auto;">
     <table style="min-width:1150px;">
       <thead><tr>
         <th>Fecha</th><th>Tarea</th><th class="c">Pares</th><th class="c">Cuerpos</th>
-        <th>Zona</th><th>Asignado</th><th>Apoyo</th><th>Inicio</th><th>Término</th>
-        <th class="c">Pares/h</th><th class="c">Objetivo</th><th class="c">Estado</th><th class="c">Acciones</th>
+        <th>Marca</th><th>Usuario1</th><th>Usuario2</th><th>Inicio</th><th>Término</th>
+        <th class="c">Productividad</th><th class="c">Objetivo</th><th class="c">Estado</th><th class="c">Acciones</th>
       </tr></thead>
       <tbody>
         <tr>
           <td>14/08/2026</td><td class="b">Slot 1</td><td class="c">287</td><td class="c">5</td>
-          <td>MZN01</td><td class="asig">MRAMOS</td><td>---</td><td>23:10</td><td>23:41</td>
+          <td>Power</td><td class="asig">MRAMOS</td><td>---</td><td>23:10</td><td>23:41</td>
           <td class="c b" style="font-size:0.95rem;">556</td><td class="c"><span class="v" style="font-weight:900; font-size:0.7rem;">CUMPLIÓ</span></td>
           <td class="c"><span class="est v">FINALIZADO</span></td>
           <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444; opacity:0.3;">🗑️</button></td>
         </tr>
         <tr>
           <td>14/08/2026</td><td class="b">Slot 2</td><td class="c">202</td><td class="c">2</td>
-          <td>MZN01</td><td class="asig">JCHAVEZ</td><td>LTORRES</td><td>23:15</td><td>---</td>
+          <td>Bubblegummers</td><td class="asig">JCHAVEZ</td><td>LTORRES</td><td>23:15</td><td>---</td>
           <td class="c b" style="font-size:0.95rem;">---</td><td class="c"><span class="gr" style="font-size:0.7rem;">---</span></td>
           <td class="c"><span class="est am">ASIGNADO</span></td>
           <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444;">🗑️</button></td>
         </tr>
         <tr>
           <td>14/08/2026</td><td class="b">Slot 3</td><td class="c">231</td><td class="c">2</td>
-          <td>MZN01</td><td>---</td><td>---</td><td>---</td><td>---</td>
+          <td title="La tarea toca dos marcas: Bubblegummers y B.G Licenses">Bubblegummers +</td>
+          <td>---</td><td>---</td><td>---</td><td>---</td>
           <td class="c">---</td><td class="c">---</td>
           <td class="c"><span class="est az">CREADA</span></td>
           <td class="c"><button class="acc" style="color:#facc15;">✏️</button><button class="acc" style="color:#60a5fa;">🔄</button><button class="acc" style="color:#ef4444;">🗑️</button></td>
         </tr>
         <tr>
           <td>13/08/2026</td><td class="b">Slot 9</td><td class="c">478</td><td class="c">1</td>
-          <td>MZN03</td><td>---</td><td>---</td><td>---</td><td>---</td>
+          <td>Weinbrenner</td><td>---</td><td>---</td><td>---</td><td>---</td>
           <td class="c">---</td><td class="c">---</td>
           <td class="c"><span class="est gr">NO TRABAJADA</span></td>
           <td class="c"><span title="Jornada cerrada" style="opacity:0.45;">🔒</span></td>
@@ -153,10 +148,14 @@
   </div>
 
   <div class="nota" style="margin-bottom:2rem;">
-    <b style="color:#fff;">Lo que cambia respecto de almacenaje:</b> en vez de MARCA va <b>ZONA</b>, y se
-    agrega <b>CUERPOS</b> — que es la unidad de trabajo del slotting: la tarea se mide en cuerpos
-    limpios, no en pares movidos. El resto es igual, incluidas las cuatro acciones y el candado
-    de jornada cerrada.
+    <b style="color:#fff;">Lo único que cambia respecto de almacenaje</b> es la columna
+    <b>CUERPOS</b>, que es la unidad de trabajo del slotting: la tarea se mide en cuerpos
+    limpios, no en pares movidos. Todo lo demás es igual — las mismas columnas, los mismos
+    estados, las cuatro acciones y el candado de jornada cerrada.
+    <br><br>
+    <b style="color:#fff;">Ojo con la MARCA:</b> una tarea de slotting junta varios cuerpos y
+    puede tocar más de una marca. Cuando pasa, se muestra la de más pares con un
+    <b>+</b> al lado, igual que hace el papel de almacenaje con los artículos.
   </div>
 
   <!-- ══════════════════ SUBMÓDULO 2 ══════════════════ -->
