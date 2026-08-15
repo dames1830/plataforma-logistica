@@ -37,8 +37,13 @@
   .det td.b { font-weight: 700; }
   .det td.dest { background: #F1EFE8; font-weight: 700; font-size: 15pt; }
   .det tr.tt td { background: #2C2C2A; color: #fff; font-weight: 700; height: 9mm; font-size: 12pt; }
-  .banda td { background: #2C2C2A; color: #fff; font-weight: 700; text-align: left;
-              height: 7.5mm; font-size: 12pt; letter-spacing: 1px; }
+  /* La columna del almacén va ARRIBA de los títulos: primero dónde estoy parado,
+     después qué dice cada casilla. */
+  .banda th { background: #2C2C2A; color: #fff; font-weight: 700; text-align: left;
+              height: 8mm; font-size: 13pt; letter-spacing: 1.5px;
+              border: 1px solid #888780; padding: 0 2mm; }
+  .det thead tr:not(.banda) th { background: #F1EFE8; color: #000; }
+  .firmas td { height: 10mm; }
   .tick div { width: 5.4mm; height: 5.4mm; border: 1.6px solid #000; margin: 0 auto; }
   .vacio { background: #fff; }
   .nota { margin-top: 2.5mm; border: 1px solid #888780; height: 12mm; font-size: 9pt;
@@ -53,9 +58,9 @@
 </div>
 
 <div class="rotulo">Así saldría
-  <small>Cinco columnas. La banda negra anuncia en qué columna del almacén está trabajando, y
-  cada tarea entra en una o dos: van ordenadas por ubicación para que no cruce el pasillo.
-  Ninguna línea dice "a criterio" — todas llevan su cuerpo de destino.</small></div>
+  <small>La banda negra va arriba de todo: primero dónde está parado, después qué dice cada
+  casilla. Si una tarea toca dos columnas del almacén, la banda y los títulos se repiten para
+  la segunda. Ninguna línea dice "a criterio" — todas llevan su cuerpo de destino.</small></div>
 
 <!-- ═══════════════════════════ TAREA 1 ═══════════════════════════ -->
 <div class="pg">
@@ -63,15 +68,17 @@
   <div class="t2">14/08/2026 · Selectivo · 3 líneas · 202 pares</div>
 
   <table class="det">
-    <thead><tr>
-      <th style="width:8%">✓</th>
-      <th style="width:25%">De dónde</th>
-      <th style="width:21%">Sacar</th>
-      <th style="width:14%">Pares</th>
-      <th style="width:32%">A dónde va</th>
-    </tr></thead>
+    <thead>
+      <tr class="banda"><th colspan="5">COLUMNA SEL-05</th></tr>
+      <tr>
+        <th style="width:8%">✓</th>
+        <th style="width:25%">De dónde</th>
+        <th style="width:21%">Sacar</th>
+        <th style="width:14%">Pares</th>
+        <th style="width:32%">A dónde va</th>
+      </tr>
+    </thead>
     <tbody>
-      <tr class="banda"><td colspan="5">COLUMNA SEL-05</td></tr>
       <tr><td class="tick"><div></div></td><td class="b">SEL-05-01</td><td>8517900</td>
           <td class="b">142</td><td class="dest">SEL-11-01</td></tr>
       <tr><td class="tick"><div></div></td><td class="b">SEL-05-01</td><td>5610437</td>
@@ -83,8 +90,9 @@
   </table>
 
   <table class="firmas">
-    <tr><td class="rot">Operario</td><td></td><td class="rot">Inicio</td><td style="width:22mm"></td>
-        <td class="rot">Término</td><td style="width:22mm"></td></tr>
+    <tr><td class="rot" style="width:24mm">Nombres</td><td></td>
+        <td class="rot" style="width:16mm">Inicio</td><td style="width:20mm"></td>
+        <td class="rot" style="width:18mm">Término</td><td style="width:20mm"></td></tr>
     <tr><td class="rot">Revisado por</td><td colspan="5"></td></tr>
   </table>
 
@@ -97,15 +105,17 @@
   <div class="t2">14/08/2026 · Selectivo · 4 líneas · 248 pares</div>
 
   <table class="det">
-    <thead><tr>
-      <th style="width:8%">✓</th>
-      <th style="width:25%">De dónde</th>
-      <th style="width:21%">Sacar</th>
-      <th style="width:14%">Pares</th>
-      <th style="width:32%">A dónde va</th>
-    </tr></thead>
+    <thead>
+      <tr class="banda"><th colspan="5">COLUMNA SEL-06</th></tr>
+      <tr>
+        <th style="width:8%">✓</th>
+        <th style="width:25%">De dónde</th>
+        <th style="width:21%">Sacar</th>
+        <th style="width:14%">Pares</th>
+        <th style="width:32%">A dónde va</th>
+      </tr>
+    </thead>
     <tbody>
-      <tr class="banda"><td colspan="5">COLUMNA SEL-06</td></tr>
       <tr><td class="tick"><div></div></td><td class="b">SEL-06-01</td><td>6616312</td>
           <td class="b">114</td><td class="dest">SEL-04-07</td></tr>
       <tr><td class="tick"><div></div></td><td class="b">SEL-06-01</td><td>6516993</td>
@@ -119,8 +129,9 @@
   </table>
 
   <table class="firmas">
-    <tr><td class="rot">Operario</td><td></td><td class="rot">Inicio</td><td style="width:22mm"></td>
-        <td class="rot">Término</td><td style="width:22mm"></td></tr>
+    <tr><td class="rot" style="width:24mm">Nombres</td><td></td>
+        <td class="rot" style="width:16mm">Inicio</td><td style="width:20mm"></td>
+        <td class="rot" style="width:18mm">Término</td><td style="width:20mm"></td></tr>
     <tr><td class="rot">Revisado por</td><td colspan="5"></td></tr>
   </table>
 
