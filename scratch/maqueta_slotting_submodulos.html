@@ -94,12 +94,19 @@
           <b style="color:#22c55e;">31 cuerpos liberados</b>
         </div>
       </div>
-      <div style="display:flex; gap:0.5rem; align-items:center;">
-        <select style="background:rgba(255,255,255,0.04); border:1px solid var(--border); color:#fff;
-                       border-radius:7px; padding:0.45rem 0.7rem; font-size:0.75rem;">
-          <option>2026-08-14</option><option>2026-08-13</option></select>
+      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span class="mini" style="font-weight:800; letter-spacing:0.06em;">DE:</span>
+          <input type="date" value="2026-08-08" style="background:rgba(255,255,255,0.04);
+                 border:1px solid var(--border); color:#fff; border-radius:7px;
+                 padding:0.42rem 0.6rem; font-size:0.75rem;">
+          <span class="mini" style="font-weight:800; letter-spacing:0.06em;">HASTA:</span>
+          <input type="date" value="2026-08-14" style="background:rgba(255,255,255,0.04);
+                 border:1px solid var(--border); color:#fff; border-radius:7px;
+                 padding:0.42rem 0.6rem; font-size:0.75rem;">
+        </div>
         <button class="btn gh">🖨️ IMPRIMIR</button>
-        <button class="btn">🔍 BUSCAR AHORA</button>
+        <button class="btn">⚙️ PROCESAR SLOTTING</button>
       </div>
     </div>
     <div class="barraP"><div style="width:13%"></div></div>
@@ -156,6 +163,58 @@
     <b style="color:#fff;">Ojo con la MARCA:</b> una tarea de slotting junta varios cuerpos y
     puede tocar más de una marca. Cuando pasa, se muestra la de más pares con un
     <b>+</b> al lado, igual que hace el papel de almacenaje con los artículos.
+  </div>
+
+  <!-- ══════════════════ EL MODAL DE ASIGNAR ══════════════════ -->
+  <div class="rotulo">Al hacer clic en una fila · Asignar tarea
+    <small>Es el MISMO modal de Almacenaje, con el mismo diseño, los mismos botones y las mismas
+    reglas. No es uno parecido: se reusa la lista de operarios activos, el formato del usuario
+    y las cuatro validaciones.</small></div>
+
+  <div style="background:rgba(0,0,0,0.55); border-radius:14px; padding:2.5rem 1rem;
+              display:flex; justify-content:center; margin-bottom:1rem;">
+    <div style="width:380px; padding:2rem; border:1px solid var(--primary); border-radius:16px;
+                background:rgba(30,41,59,0.75);">
+      <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; text-align:center;">
+        Asignar Tarea: <span style="color:var(--primary);">Slot 3</span></h3>
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+        <div>
+          <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 1 (Obligatorio)</label>
+          <select style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2);
+                  padding:0.8rem; border-radius:8px; color:#fff; font-weight:700; font-size:0.9rem;">
+            <option>Seleccionar operario...</option><option selected>mramos (Miguel)</option>
+            <option>jchavez (Jorge)</option><option>ltorres (Luis)</option></select>
+        </div>
+        <div>
+          <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 2 (Obligatorio)</label>
+          <select style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2);
+                  padding:0.8rem; border-radius:8px; color:#fff; font-weight:700; font-size:0.9rem;">
+            <option>Ninguno</option><option selected>ltorres (Luis)</option>
+            <option>jchavez (Jorge)</option></select>
+        </div>
+        <div style="margin-top:1rem; display:flex; gap:10px;">
+          <button class="btn" style="flex:1; padding:0.8rem;">ASIGNAR E INICIAR</button>
+          <button class="btn" style="flex:1; background:#22c55e; padding:0.8rem;">FINALIZAR</button>
+        </div>
+        <button style="background:none; border:none; color:var(--text-muted); cursor:pointer;
+                font-size:0.7rem; margin-top:0.5rem; width:100%;">Cerrar sin cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="nota" style="margin-bottom:2rem;">
+    <b style="color:#fff;">Las reglas que se reusan, todas:</b> los operarios salen de los activos
+    ordenados de la A a la Z, con el formato inicial+apellido; los dos usuarios son obligatorios;
+    no pueden ser la misma persona; no pueden ser de turnos distintos; una tarea
+    <b>FINALIZADA queda bloqueada</b> y solo se toca con el lápiz; una de jornada cerrada avisa y
+    no deja; y la asignación <b>espera la confirmación del servidor</b> — si no llega, se
+    revierte y el modal no se cierra.
+    <br><br>
+    <b style="color:#f59e0b;">Una que quiero confirmarte:</b> en almacenaje el rótulo dice
+    "Usuario 2 (Opcional)" pero la validación lo exige igual — *"toda tarea de almacenaje se
+    trabaja en grupo de 2"*. Acá lo puse como <b>Obligatorio</b> para que el rótulo no mienta.
+    Si en Slotting una tarea la puede hacer una sola persona, decímelo y lo dejo opcional
+    de verdad.
   </div>
 
   <!-- ══════════════════ SUBMÓDULO 2 ══════════════════ -->
