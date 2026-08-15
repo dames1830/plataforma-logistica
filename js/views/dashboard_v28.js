@@ -1,24 +1,25 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0224';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0225';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0224';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0224';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0224';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0224';
-import * as metasService from '../services_v245/metasService.js?v=29.0224';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0224';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0224';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0224';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0224';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0224';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0224';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0224';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0224';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0224';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0224';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0224';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0224';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0224';
-import { montarSlotting } from './slotting.js?v=29.0224';
+import * as adminService from '../services_v245/adminService.js?v=29.0225';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0225';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0225';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0225';
+import * as metasService from '../services_v245/metasService.js?v=29.0225';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0225';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0225';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0225';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0225';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0225';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0225';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0225';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0225';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0225';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0225';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0225';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0225';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0225';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0225';
+import { montarSlotting } from './slotting.js?v=29.0225';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -375,7 +376,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0224';
+const VERSION = '29.0225';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2140,7 +2141,10 @@ const TABS = [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' },
     { id: 'reporte_picking', label: 'Reporte Picking', icon: '📈' },
     { id: 'analisis_prepack', label: 'Análisis Prepack', icon: '📦' },
-    { id: 'kpi_picking', label: 'KPI Picking', icon: '📊' }
+    { id: 'kpi_picking', label: 'KPI Picking', icon: '📊' },
+    // Rotación y Permanencia: el FSN del almacén más el aging. Lo calcula el robot con las
+    // ~180 fotos de stock —1,3 GB que el navegador no tiene— y acá solo se dibuja.
+    { id: 'rotacion', label: 'Rotación y Permanencia', icon: '🔄' }
   ]},
   { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_packing', label: 'Archivo Packing', icon: '🗂️' }
@@ -4408,7 +4412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0224');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0225');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -13489,6 +13493,9 @@ const renderRFSection = (container) => {
     } else if (tabId === 'picking' && activeSub === 'kpi_picking') {
         await new Promise(r => setTimeout(r, 0));
         renderKpiPicking(container);
+    } else if (tabId === 'picking' && activeSub === 'rotacion') {
+        await new Promise(r => setTimeout(r, 0));
+        renderRotacion(container);
     } else if (tabId === 'almacenaje' && activeSub === 'productividad') {
         await new Promise(r => setTimeout(r, 0));
         renderProductividad(container);
@@ -15375,7 +15382,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0224 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0225 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17260,6 +17267,48 @@ const renderRFSection = (container) => {
 
     const corrida = await slottingService.publicarCorrida(getLogicalDate(), lineas, zonas.join('+'));
     return { ...corrida, retenidas };
+  };
+
+  /**
+   * PICKING → ROTACIÓN Y PERMANENCIA
+   *
+   * Acá no se calcula nada: el robot muele las ~180 fotos de stock —1,3 GB en OneDrive que
+   * el navegador no tiene— y deja el resultado en el área `rotacion_permanencia`. Es el
+   * mismo reparto que los SKU sin salida y la evolución del artículo.
+   *
+   * Se pide DIRECTO y no con getAreaData: esa función cachea el área en vacío si la primera
+   * consulta falla y después no vuelve a preguntar, así que una PC que entre mientras el
+   * robot está subiendo se quedaría con la pantalla en blanco toda la jornada.
+   */
+  const renderRotacion = async (container) => {
+    contentSubtitle.textContent = 'Rotación y permanencia del inventario';
+    container.innerHTML = `<div style="padding:3rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">
+        Cargando el estudio...</div>`;
+    let datos = null;
+    try {
+      const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+      // Con ?date=MASTER, igual que se publica: el área guarda un objeto, no filas sueltas
+      const res = await fetch(`${base}/api/logistics/rotacion_permanencia?date=MASTER&t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const d = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        if (d && d.articulos) datos = d;
+      }
+    } catch (e) { console.warn('[Rotación] no se pudo leer el estudio:', e && e.message); }
+
+    if (!datos) {
+      container.innerHTML = `
+        <div class="glass-panel" style="padding:3rem; text-align:center;">
+          <div style="font-size:2.5rem; margin-bottom:0.8rem;">🔄</div>
+          <h3 style="color:#fff; margin:0 0 0.6rem 0;">Todavía no hay estudio publicado</h3>
+          <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.7; max-width:620px; margin:0 auto;">
+            Lo genera el robot con las fotos diarias de stock, junto con los demás reportes de la noche.
+            Aparece en cuanto corra <b style="color:#e2e8f0;">generar_rotacion.py</b>.
+          </p>
+        </div>`;
+      return;
+    }
+    montarRotacion(container, { datos });
   };
 
   /**
