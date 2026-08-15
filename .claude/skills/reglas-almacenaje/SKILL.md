@@ -318,10 +318,26 @@ cada talla**, no un bloque de tallas seguidas.
 | **`true`** (nuevo) | las cajas de cada talla se reparten entre todos sus cuerpos |
 | `false` | se llena el primer cuerpo y recién ahí se pasa al siguiente — como venía |
 
-**El reparto va por CAJAS CERRADAS, igual que todo lo demás.** Las cajas de cada talla se
-entregan de a una al cuerpo que menos lleve, **rotando quién empieza en cada talla**, para que
-el sobrante impar no caiga siempre en el mismo. Sin esa rotación una talla de 15 cajas parte
-8/7 y todas las tallas le cargan la de más al primero.
+**EN BETA DESDE LA v29.0214.** Vive en `asignarCuerpos` de `dashboard_v28.js`, con el
+interruptor `SURTIDO_EN_EL_CUERPO` al lado para volver al reparto viejo sin revertir código.
+
+**La talla NO se parte, y es a propósito.** El reparto entrega **la talla más grande primero al
+cuerpo que menos lleve**, en vez de cortarla en cajas. Dos razones y las dos pesan:
+
+- **El papel.** La unidad de la hoja —y de lo que `grabarPapelEnTareas` escribe de vuelta en la
+  tarea— es la línea del buffer: una ubicación, un SKU, una talla. Partir una talla obliga a
+  partir esa línea, y con eso se rompe el formato cerrado.
+- **El picking.** Con la talla entera en un cuerpo, el picker va a un solo lugar a buscarla.
+
+**De mayor a menor, no en orden de talla.** Empezando por las chicas, las grandes llegan al
+final sin dónde entrar. Con 150·150·150·50·50·50 en dos cuerpos, de mayor a menor da 300 y 300;
+en orden de talla daba 350 y 250.
+
+**Lo que esto NO puede arreglar**, antes de que a alguien se le ocurra "mejorarlo": con tallas
+muy grandes el reparto perfecto no existe. Un hombre de 1.000 pares en tres cuerpos —250, 250,
+250, 70, 60, 60, 60— deja uno en 370 sobre 330 y no hay acomodo que lo evite: las cuatro tallas
+chicas suman 250 y hay que repartirlas entre tres cuerpos que ya tienen 250. Es aritmética, no
+un defecto. Y tampoco es nuevo: `cuantos` ya venía aceptando pasarse con la misma holgura.
 
 **Lo que se gana, medido sobre el ejemplo de los 600 pares en dos cuerpos:**
 
@@ -337,11 +353,6 @@ tapar un reparto mal hecho.
 **Sigue valiendo todo lo de antes:** el nivel no importa —el destino es el cuerpo—, un cuerpo
 lleva un solo artículo en la franja actual, y ninguna talla baja en unidades sueltas.
 
-**Lo que hay que decidir antes de implementarlo:** una talla pasa a tener **dos ubicaciones**
-en vez de una, así que el picking va a ver la misma talla en dos cuerpos. Consultar con Daniel
-si eso le sirve o si prefiere que las comerciales se concentren.
-
-Vive en `asignarCuerpos` de `dashboard_v28.js`.
 
 ## 5c. EL RESTO QUE QUEDA ATRÁS — se arrastra al cuerpo nuevo
 
@@ -379,10 +390,18 @@ mirarlo.
 solo con lo que **ya no vuelve a llegar**, que es exactamente lo que un saldo es. Lo que
 todavía recibe mercadería sale de ahí solo.
 
-**LA LÍNEA DE SLOTTING NECESITA UN CAMPO QUE HOY NO TIENE: EL DESTINO.** Hoy la línea dice
-`sacar 19 pares de SEL-05-12` y ahí termina — dónde ponerlos lo decide el operario, que es
-justo lo que la cadena no permite. Para esta casuística el destino se sabe con nombre y
-apellido: es el cuerpo que la tarea de almacenaje acaba de asignar esa misma noche.
+**EN BETA DESDE LA v29.0214**, al final de `barrerParaSlotting` en `dashboard_v28.js`.
+
+**ES LA ÚNICA LÍNEA DE SLOTTING CON DESTINO** (`llevarA`). Las del cuerpo mezclado dicen qué
+sacar y el equipo decide adónde; esta dice las dos cosas, porque la tarea de almacenaje ya
+eligió el cuerpo esa misma noche. Si la tarea le dio más de un cuerpo, va al primero.
+
+**NO SE DUPLICA CON EL BARRIDO DE MEZCLAS.** Un resto que está en un cuerpo mezclado ya salió
+como línea sin destino; si además hay que arrastrarlo, se le completa el destino a esa línea en
+vez de agregar otra. Sin eso el operario recibía la misma mercadería dos veces.
+
+**EL BARRIDO CORRE DESPUÉS DE ARMAR LAS TAREAS, no antes.** El destino no existe hasta que
+`calcularSugerenciaDeItem` eligió los cuerpos.
 
 **Cuántos hay, medido sobre el stock del 14-ago-2026** — artículos con 19 pares o menos en todo
 el piso, y dónde está cada resto suyo:
@@ -475,9 +494,12 @@ El más barato de todos es `SEL-07-01` + `SEL-07-02`: son **el mismo artículo p
 **Lo único que importa es el ORDEN: primero el saldo sale de 5-13, después lo grande sale de la
 4.** Al revés no arranca.
 
-**Dónde toca:** `franjas` de la zona SEL en la configuración publicada (la 4 pasa de `actual` a
-la banda nueva), `FRANJAS_QUE_COMPARTEN` y `columnaAdmiteVariosArticulos()` de `zonasService.js`,
-y `franjaDeArticulo`, que hoy solo sabe comparar contra `saldoMenorA` y necesita las dos puntas.
+**EN BETA DESDE LA v29.0214.** Franja `saldoGrande` en `FRANJAS`, corte `saldoGrandeHasta` por
+zona, la banda dentro de `franjaDeArticulo` y la franja agregada a `FRANJAS_QUE_COMPARTEN`, todo
+en `zonasService.js`. Se edita en Análisis SKU → Zonas de Almacenaje, campo "Saldo grande hasta".
+**El `CACHE_KEY` subió a `config_zonas_v6`** — sin eso las PC con caché viejo se quedaban sin el
+campo para siempre. La configuración de beta ya está republicada con la columna 4 en la banda
+nueva; **la de producción sigue con la 4 en `actual`**.
 
 **Ojo con `saldoMenorA`:** sigue valiendo 20 en el SEL y 80 en los mezzanines, y sigue decidiendo
 lo mismo de siempre —quién baja a `SEL-01`/`SEL-02`—. La banda nueva es un segundo corte, no un
@@ -655,12 +677,7 @@ Medido el 14-ago-2026 contra las tareas y el stock de producción. **Están abie
 5. **El corte de saldos mide lo que llega, no lo que hay.** `franjaDeArticulo` compara
    `saldoMenorA` contra los pares del buffer.
 
-6. **El cuerpo no sale surtido.** `asignarCuerpos` llena un cuerpo antes de pasar al siguiente,
-   así que cada talla cae entera en un solo cuerpo y los cuerpos quedan desparejos —350 y 250
-   con capacidad de 330—. Ver la sección 5b: el parámetro `surtido` está dictado pero **todavía
-   no está escrito**.
-
-7. **Al buffer B se le cree por la letra.** La prueba `pares <= enReserva` no filtra: pasan 38
+6. **Al buffer B se le cree por la letra.** La prueba `pares <= enReserva` no filtra: pasan 38
    de 41. Y suma A + B, así que la mercadería de recepción entra como replenishment si el
    artículo tiene aunque sea un par en el B. **La clasificación nuevo/reposición nunca llega a
    hacerse para esos artículos.** Detalle arriba, en "El buffer B NO se cree por la letra".
