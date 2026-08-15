@@ -65,6 +65,12 @@ export const montarSlotting = (container, OPC = {}) => {
                         color:#fff; border-radius:7px; padding:0.4rem 0.7rem; font-size:0.75rem; cursor:pointer;">
                   ${fechas.map(f => `<option value="${f}" ${f === fecha ? 'selected' : ''}>${f}</option>`).join('')}
                 </select>` : ''}
+              ${res.total ? `
+                <button id="slt_imprimir" class="btn" style="background:rgba(255,255,255,0.06); width:auto;
+                        border:1px solid var(--border); color:#e2e8f0;
+                        padding:0.5rem 1.2rem; border-radius:8px; font-size:0.75rem; font-weight:800;">
+                  🖨️ IMPRIMIR
+                </button>` : ''}
               <button id="slt_barrer" class="btn" style="background:var(--primary); width:auto;
                       padding:0.5rem 1.2rem; border-radius:8px; font-size:0.75rem; font-weight:800;">
                 🔍 BUSCAR AHORA
@@ -160,9 +166,220 @@ export const montarSlotting = (container, OPC = {}) => {
       </div>`;
   }
 
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * EL PAPEL. Diseñado con Daniel el 14-ago-2026, mirando la maqueta y corrigiéndola.
+   *
+   * Cinco columnas más el tilde: ✓ · Origen · SKU · Talla · Pares · Destino.
+   *
+   *   EL ORIGEN VA COMPLETO, con nivel. Para SACAR hay que saber exactamente dónde está: el
+   *   8517900 tiene la talla 43 partida entre el nivel B y el C del mismo cuerpo. El DESTINO
+   *   va con el cuerpo, porque al GUARDAR el nivel no importa — regla del 05-ago.
+   *
+   *   UNA LÍNEA POR SKU Y TALLA. *"Así podré saber qué tallas voy a sacar"*.
+   *
+   *   LA BANDA DE LA COLUMNA VA ARRIBA DE LOS TÍTULOS: primero dónde estoy parado, después
+   *   qué dice cada casilla. Si la tarea toca dos columnas, se repiten las dos.
+   *
+   *   TOTAL POR ARTÍCULO con fondo suave al cambiar de código, y UN ARTÍCULO NO SE PARTE
+   *   entre dos hojas: sus filas y su total viajan juntos, igual que en el papel de almacenaje.
+   *
+   *   LA COMPAGINACIÓN VA ARRIBA, a la derecha del subtítulo.
+   *
+   * Todo en blanco y negro: la impresora del almacén es monocromática, así que los destacados
+   * van con fondo gris, nunca con color.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const CSS_PAPEL = `
+    @page { size: A4 portrait; margin: 0; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    html, body { margin: 0; padding: 0; background: #58585b; }
+    body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #000; }
+    .pg { width: 210mm; height: 297mm; padding: 9mm 7mm; background: #fff;
+          margin: 0 auto 6mm; position: relative; overflow: hidden; }
+    .t1 { text-align: center; font-size: 26pt; font-weight: 700; line-height: 1.05; }
+    .t1.cont { font-size: 18pt; }
+    .t2 { text-align: center; font-size: 10.5pt; margin-top: 1mm; position: relative; }
+    .pagX { position: absolute; right: 0; top: -0.5mm; font-size: 11pt; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; }
+    .firmas { margin-top: 3mm; font-size: 10.5pt; }
+    .firmas td { border: 1px solid #888780; height: 10mm; padding: 0 2mm; }
+    .firmas .rot { background: #F1EFE8; font-weight: 400; white-space: nowrap; }
+    .det { margin-top: 3mm; }
+    .det th { border: 1px solid #888780; height: 7mm; text-align: center;
+              font-size: 10.5pt; font-weight: 700; background: #F1EFE8; }
+    .det td { border: 1px solid #888780; height: 8.5mm; text-align: center;
+              padding: 0 1mm; font-size: 12pt; }
+    .det td.b { font-weight: 700; }
+    .det td.t { font-weight: 700; font-size: 13pt; }
+    .det td.dest { background: #F1EFE8; font-weight: 700; font-size: 13pt; }
+    .det tr.tot td { background: #E5E3DC; font-weight: 700; height: 7.5mm; font-size: 11pt; }
+    .det tr.tt td { background: #2C2C2A; color: #fff; font-weight: 700; height: 8mm; font-size: 12pt; }
+    .banda th { background: #2C2C2A; color: #fff; font-weight: 700; text-align: left;
+                height: 8mm; font-size: 13pt; letter-spacing: 1.5px; padding: 0 2mm; }
+    .tick div { width: 4.6mm; height: 4.6mm; border: 1.5px solid #000; margin: 0 auto; }
+    .nota { margin-top: 2.5mm; border: 1px solid #888780; height: 12mm; font-size: 9pt;
+            padding: 1mm 2mm; color: #555; }
+    .cierre { display: flex; align-items: center; justify-content: center; height: 100%;
+              color: #888780; font-size: 13pt; font-weight: 700; text-align: center; }
+    @media print { body { background: #fff; } .pg { margin: 0; page-break-after: always; }
+                   .pg:last-child { page-break-after: auto; } .noimp { display: none !important; } }
+    .noimp { position: sticky; top: 0; z-index: 9; background: #1e293b; color: #e2e8f0;
+             padding: 10px 14px; font: 600 13px/1.5 system-ui, sans-serif; text-align: center; }
+    .noimp button { background: #4f46e5; color: #fff; border: 0; border-radius: 8px;
+             padding: 7px 18px; font: 700 13px system-ui, sans-serif; cursor: pointer; margin-left: 10px; }`;
+
+  const CABECERA = `<tr>
+      <th style="width:7%">✓</th><th style="width:26%">Origen</th><th style="width:24%">SKU</th>
+      <th style="width:10%">Talla</th><th style="width:10%">Pares</th><th style="width:23%">Destino</th>
+    </tr>`;
+
+  /** La columna del almacén de una ubicación: 'SEL-06-01' -> 'SEL-06'. */
+  const columnaDe = (ubi) => String(ubi || '').split('-').slice(0, 2).join('-');
+
+  /**
+   * Las filas de una tarea, ya en el orden del papel y con las bandas puestas.
+   *
+   * Cada línea del barrido trae su `detalle` —una entrada por SKU y talla, con la ubicación
+   * completa—. Las tareas viejas, guardadas antes de que existiera, no lo traen: para esas se
+   * arma una sola fila con lo que hay, que es mejor que no imprimir nada.
+   */
+  function filasDelPapel(t) {
+    const bloques = [];
+    let columna = null;
+    (t.lineas || []).forEach(l => {
+      const col = columnaDe(l.ubi);
+      const det = (l.detalle && l.detalle.length)
+        ? l.detalle
+        : [{ ubi: l.ubi, skuFull: l.sku7, talla: '—', pares: l.pares }];
+      const filas = det.map(d => ({ tipo: 'det', ubi: d.ubi, sku: d.skuFull,
+                                    talla: d.talla, pares: d.pares, destino: l.llevarA || '' }));
+      filas.push({ tipo: 'tot', sku7: l.sku7, pares: l.pares });
+      // Un artículo es un BLOQUE: sus filas y su total no se separan nunca
+      bloques.push({ columna, nuevaColumna: col !== columna, col, filas });
+      columna = col;
+    });
+    return bloques;
+  }
+
+  /** El alto que ocupa cada cosa, en milímetros. Las alturas son fijas y salen del CSS. */
+  const ALTO = { det: 8.5, tot: 7.5, banda: 8, titulos: 7, tabla: 3, total: 8, nota: 14.5 };
+
+  function imprimirTareas() {
+    const corrida = cajon[fecha] || {};
+    const tareas = (corrida.tareas || []).filter(t => filtro === 'todos' || t.estado === filtro);
+    if (!tareas.length) return;
+
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8">
+      <title>Slotting · ${esc(fecha)}</title><style>${CSS_PAPEL}</style></head>
+      <body><div class="noimp">Tareas de Slotting · ${esc(fecha)}
+      <button onclick="window.print()">🖨️ Imprimir</button></div><div id="hojas"></div></body></html>`);
+    win.document.close();
+    const hojas = win.document.getElementById('hojas');
+
+    tareas.forEach(t => {
+      const bloques = filasDelPapel(t);
+      const nLineas = bloques.reduce((a, b) => a + b.filas.length - 1, 0);
+      const subtitulo = `${esc(fecha)}${corrida.zona ? ' · ' + esc(corrida.zona) : ''}`
+                      + ` · ${nLineas} líneas · ${num(t.pares)} pares`;
+
+      // Se reparten los bloques en hojas ANTES de dibujar, así se sabe cuántas son y el
+      // "Páginas 1 de 3" sale bien desde la primera. Sin esto habría que dibujar dos veces.
+      const paginas = [];
+      let actual = [], libre = 0, colActual = null;
+      const alturaUtil = (primera) => 297 - 18 - (primera ? 16 + 23 : 13) - ALTO.tabla;
+      libre = alturaUtil(true);
+      bloques.forEach(b => {
+        const cabecera = (b.col !== colActual) ? ALTO.banda + ALTO.titulos : 0;
+        const alto = cabecera + b.filas.reduce((a, f) => a + ALTO[f.tipo], 0);
+        if (actual.length && alto > libre) {
+          paginas.push(actual);
+          actual = []; colActual = null;
+          libre = alturaUtil(false) - (ALTO.banda + ALTO.titulos)
+                - b.filas.reduce((a, f) => a + ALTO[f.tipo], 0);
+          actual.push({ ...b, nuevaColumna: true });
+          colActual = b.col;
+          return;
+        }
+        libre -= alto;
+        actual.push({ ...b, nuevaColumna: b.col !== colActual });
+        colActual = b.col;
+      });
+      if (actual.length) paginas.push(actual);
+      // El cierre —total de la tarea y observaciones— va en la última; si no entra, abre una
+      if (paginas.length && libre < ALTO.total + ALTO.nota) paginas.push([]);
+
+      paginas.forEach((bloquesDeLaHoja, i) => {
+        const primera = i === 0, ultima = i === paginas.length - 1;
+        let cuerpo = '', colActual = null;
+        bloquesDeLaHoja.forEach(b => {
+          if (b.col !== colActual) {
+            if (cuerpo) cuerpo += '</tbody></table>';
+            cuerpo += `<table class="det"><thead>`
+                    + `<tr class="banda"><th colspan="6">COLUMNA ${esc(b.col)}</th></tr>`
+                    + CABECERA + `</thead><tbody>`;
+            colActual = b.col;
+          }
+          b.filas.forEach(f => {
+            cuerpo += f.tipo === 'det'
+              ? `<tr><td class="tick"><div></div></td><td class="b">${esc(f.ubi)}</td>`
+                + `<td>${esc(f.sku)}</td><td class="t">${esc(f.talla)}</td>`
+                + `<td class="b">${num(f.pares)}</td><td class="dest">${esc(f.destino)}</td></tr>`
+              : `<tr class="tot"><td colspan="4">Total ${esc(f.sku7)}</td><td>${num(f.pares)}</td><td></td></tr>`;
+          });
+        });
+        if (cuerpo) cuerpo += '</tbody></table>';
+        if (ultima) {
+          cuerpo += `<table class="det"><tbody><tr class="tt">`
+                  + `<td colspan="4">TOTAL DE LA TAREA</td><td>${num(t.pares)}</td><td></td>`
+                  + `</tr></tbody></table><div class="nota">Observaciones:</div>`;
+        }
+
+        const pg = win.document.createElement('div');
+        pg.className = 'pg';
+        pg.innerHTML =
+            `<div class="t1${primera ? '' : ' cont'}">SLOTTING · TAREA ${esc(t.n)}${primera ? '' : ' (cont.)'}</div>`
+          + `<div class="t2">${subtitulo}<span class="pagX">Páginas ${i + 1} de ${paginas.length}</span></div>`
+          + (primera ? `<table class="firmas">
+               <tr><td class="rot" style="width:24mm">Nombres</td><td></td>
+                   <td class="rot" style="width:16mm">Inicio</td><td style="width:20mm"></td>
+                   <td class="rot" style="width:18mm">Término</td><td style="width:20mm"></td></tr>
+               <tr><td class="rot">Revisado por</td><td colspan="5"></td></tr>
+             </table>` : '')
+          + cuerpo;
+        hojas.appendChild(pg);
+      });
+
+      /* LA IMPRESORA DEL ALMACÉN IMPRIME A DOBLE CARA, y eso obliga a cerrar cada tarea en
+       * un número PAR de páginas.
+       *
+       * Daniel, 15-ago-2026: *"recuerda que la impresora de mi trabajo por defecto imprime a
+       * doble cara"*. Sin esto, una tarea de una sola página deja la siguiente al dorso de su
+       * misma hoja: el operario se lleva su tarea y sin querer se lleva la del compañero, o
+       * se la deja. Y son la mayoría — casi todas las tareas entran en una hoja.
+       *
+       * Es el mismo problema que ya se había resuelto en el Excel poniendo una HOJA por tarea:
+       * ahí Excel arranca cada una en una hoja física nueva. Acá se consigue agregando una
+       * página en blanco cuando quedan impares.
+       *
+       * La hoja en blanco lleva un cartel: sin él parece un error de impresión y alguien la
+       * saca, que es justo lo que rompe el emparejado. */
+      if (paginas.length % 2 === 1) {
+        const blanca = win.document.createElement('div');
+        blanca.className = 'pg';
+        blanca.innerHTML = `<div class="cierre">Esta hoja va en blanco a propósito.<br>`
+                         + `La tarea ${esc(t.n)} termina en la página anterior.</div>`;
+        hojas.appendChild(blanca);
+      }
+    });
+  }
+
   function enganchar() {
     container.querySelectorAll('.slt-chip').forEach(b =>
       b.addEventListener('click', () => { filtro = b.dataset.f; pintar(); }));
+
+    const imp = container.querySelector('#slt_imprimir');
+    if (imp) imp.addEventListener('click', imprimirTareas);
 
     const sf = container.querySelector('#slt_fecha');
     if (sf) sf.addEventListener('change', () => { fecha = sf.value; pintar(); });
