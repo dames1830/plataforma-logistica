@@ -440,11 +440,15 @@ export const montarSlotting = (container, OPC = {}) => {
               <label style="display:block; font-size:0.64rem; color:var(--text-muted); text-transform:uppercase;
                             font-weight:800; margin-bottom:5px;">Zonas que se barren</label>
               <div style="display:flex; align-items:center; gap:11px; padding-top:0.4rem; font-size:0.72rem; color:var(--text-muted);">
-                ${['SEL', 'MZN01', 'MZN02', 'MZN03'].map(z =>
+                ${svc.ZONAS_POSIBLES.map(z =>
                   `<label style="cursor:pointer;"><input type="checkbox" class="cfg_zona" value="${z}"
                      ${c.zonas.includes(z) ? 'checked' : ''}> ${z}</label>`).join('')}
                 <label style="opacity:0.4;" title="El Mezzanine 4 no lleva calzado y queda fuera de todo análisis de cuerpos.">
                   <input type="checkbox" disabled> MZN04</label>
+              </div>
+              <div style="font-size:0.68rem; color:var(--text-muted); margin-top:6px; max-width:520px; line-height:1.6;">
+                Hoy solo el <b style="color:#e2e8f0;">selectivo</b>: los mezzanines todavía no tienen
+                reglas propias de Slotting. Se tildan el día que las tengan.
               </div>
             </div>
           </div>
@@ -623,10 +627,16 @@ export const montarSlotting = (container, OPC = {}) => {
 
     tareas.forEach(t => {
       const bloques = filasDelPapel(t);
-      const nLineas = bloques.reduce((a, b) => a + b.filas.length - 1, 0);
-      const zona = ((cajon[t.fecha] || {}).zona) || '';
-      const subtitulo = `${esc(t.fecha)}${zona ? ' · ' + esc(zona) : ''}`
-                      + ` · ${nLineas} líneas · ${num(t.pares)} pares`;
+      /* EL SUBTÍTULO: LA FECHA Y LA MARCA EN NEGRITA, Y DESPUÉS LOS PARES.
+       *
+       * Se fueron la zona y el conteo de líneas por pedido de Daniel, 15-ago-2026. La zona ya
+       * está en cada ubicación de la tabla —si dice SEL-05-01, es el selectivo— y las líneas
+       * son un dato del cálculo, no del trabajo: al operario le importa cuántos pares mueve.
+       * La marca es lo que le dice de un vistazo a qué parte del almacén va. */
+      const fechaBonita = String(t.fecha).split('-').reverse().join('/');
+      const subtitulo = `<b>${esc(fechaBonita)}</b>`
+                      + (t.marca ? ` · <b>${esc(t.marca)}</b>` : '')
+                      + ` · ${num(t.pares)} pares`;
 
       // Se reparten los bloques en hojas ANTES de dibujar, así se sabe cuántas son y el
       // "Páginas 1 de 3" sale bien desde la primera. Sin esto habría que dibujar dos veces.
@@ -683,7 +693,9 @@ export const montarSlotting = (container, OPC = {}) => {
         const pg = win.document.createElement('div');
         pg.className = 'pg';
         pg.innerHTML =
-            `<div class="t1${primera ? '' : ' cont'}">SLOTTING · TAREA ${esc(t.n)}${primera ? '' : ' (cont.)'}</div>`
+            // La marca va en el título, igual que en el papel de almacenaje
+            `<div class="t1${primera ? '' : ' cont'}">SLOTTING · TAREA ${esc(t.n)}`
+          + `${t.marca ? ' · ' + esc(String(t.marca).toUpperCase()) : ''}${primera ? '' : ' (cont.)'}</div>`
           + `<div class="t2">${subtitulo}<span class="pagX">Páginas ${i + 1} de ${paginas.length}</span></div>`
           + (primera && sinDetalle(t) ? `<div class="cartel">
                <b>ESTA HOJA SALIÓ SIN SKU NI TALLA</b>

@@ -85,13 +85,23 @@ export const migrarEstado = (t) => {
 const URL_CONFIG = () =>
     `${window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com'}/api/logistics/config`;
 
+/** Las zonas que se pueden tildar en la pantalla. El MZN04 no está: no lleva calzado. */
+export const ZONAS_POSIBLES = ['SEL', 'MZN01', 'MZN02', 'MZN03'];
+
 export const configPorDefecto = () => ({
     tiempoBase: 10,             // minutos de recorrido, iguales a los de almacenaje
     minutosPorCuerpoExtra: 0,   // 0 = una sola base por tarea
     uphSolo: 150,               // pares por hora con un operario
     uphGrupo: 300,              // pares por hora con dos
     paresPorTarea: PARES_POR_TAREA,
-    zonas: ['SEL', 'MZN01', 'MZN02', 'MZN03'],  // el MZN04 nunca entra: no lleva calzado
+    /* SOLO EL SELECTIVO. Daniel: *"hagamos un ejemplo solo con selectivo primero, después
+     * metemos lo de los mezzanines"*, y al 15-ago-2026 los mezzanines siguen sin reglas
+     * propias de Slotting. Acá estuvieron los cuatro un rato por un descuido mío y salieron
+     * tareas de mezzanine que nadie había pedido.
+     *
+     * Las otras zonas quedan disponibles en la pantalla —ver ZONAS_POSIBLES— para tildarlas
+     * el día que las reglas existan. El MZN04 no entra nunca: no lleva calzado. */
+    zonas: ['SEL'],
     /* UNA SOLA CORRIDA POR TURNO. Daniel, 15-ago-2026: *"el procesar slotting solamente se
      * tiene que dar una vez por turno"* — entre las 20:00 y las 06:30.
      *
@@ -119,8 +129,10 @@ const normalizar = (c) => {
         uphSolo: n(c && c.uphSolo, d.uphSolo, 1, 100000),
         uphGrupo: n(c && c.uphGrupo, d.uphGrupo, 1, 100000),
         paresPorTarea: n(c && c.paresPorTarea, d.paresPorTarea, 1, 100000),
+        // Se valida contra las POSIBLES, no contra las de fábrica: si no, tildar un mezzanine
+        // en la pantalla no se podría guardar nunca.
         zonas: (Array.isArray(c && c.zonas) && c.zonas.length ? c.zonas : d.zonas)
-            .filter(z => d.zonas.includes(z)),
+            .filter(z => ZONAS_POSIBLES.includes(z)),
         unaVezPorTurno: typeof (c && c.unaVezPorTurno) === 'boolean' ? c.unaVezPorTurno : d.unaVezPorTurno
     };
 };
