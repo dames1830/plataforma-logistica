@@ -21,11 +21,12 @@
         margin: 0 auto 6mm; position: relative; overflow: hidden; }
   .t1 { text-align: center; font-size: 26pt; font-weight: 700; line-height: 1.05; }
   .t1.cont { font-size: 18pt; }
-  .t2 { text-align: center; font-size: 10.5pt; margin-top: 1mm; }
-  /* El número de página va abajo de todo, siempre en el mismo lugar de la hoja */
-  .pie { position: absolute; left: 7mm; right: 7mm; bottom: 5mm;
-         text-align: center; font-size: 11pt; font-weight: 700; color: #000;
-         border-top: 1px solid #888780; padding-top: 1.8mm; }
+  /* EL NÚMERO DE PÁGINA VA ARRIBA, en la misma línea del subtítulo y a la derecha.
+     Igual que en el papel de almacenaje: el operario ve de entrada si le falta una hoja,
+     sin tener que llegar al pie. */
+  .t2 { text-align: center; font-size: 10.5pt; margin-top: 1mm; position: relative; }
+  .pagX { position: absolute; right: 0; top: -0.5mm;
+          font-size: 11pt; font-weight: 700; color: #000; }
   table { width: 100%; border-collapse: collapse; }
   .firmas { margin-top: 3mm; font-size: 10.5pt; }
   .firmas td { border: 1px solid #888780; height: 10mm; padding: 0 2mm; }
@@ -61,14 +62,14 @@
 
 <div class="rotulo">Así saldría
   <small>Al cambiar de artículo va una fila de total con fondo suave. Cuando la tarea no entra
-  en una hoja, la segunda repite el título con "(cont.)", la banda de la columna y los títulos,
-  y abajo de cada hoja va "Página X de Y". Las firmas van en la primera, el total de la tarea
-  en la última.</small></div>
+  en una hoja, la segunda repite el título con "(cont.)", la banda de la columna y los títulos.
+  La compaginación va ARRIBA, a la derecha del subtítulo. Las firmas van en la primera hoja,
+  el total de la tarea en la última.</small></div>
 
 <!-- ═══════════════════ TAREA 2 · HOJA 1 ═══════════════════ -->
 <div class="pg">
   <div class="t1">SLOTTING · TAREA 2</div>
-  <div class="t2">14/08/2026 · Selectivo · 23 líneas · 248 pares</div>
+  <div class="t2">14/08/2026 · Selectivo · 23 líneas · 248 pares<span class="pagX">Páginas 1 de 2</span></div>
 
   <table class="firmas">
     <tr><td class="rot" style="width:24mm">Nombres</td><td></td>
@@ -115,14 +116,12 @@
       <tr class="tot"><td colspan="4">Total 6616328</td><td>52</td><td></td></tr>
     </tbody>
   </table>
-
-  <div class="pie">Páginas 1 de 2</div>
 </div>
 
 <!-- ═══════════════════ TAREA 2 · HOJA 2 ═══════════════════ -->
 <div class="pg">
   <div class="t1 cont">SLOTTING · TAREA 2 (cont.)</div>
-  <div class="t2">14/08/2026 · Selectivo · 23 líneas · 248 pares</div>
+  <div class="t2">14/08/2026 · Selectivo · 23 líneas · 248 pares<span class="pagX">Páginas 2 de 2</span></div>
 
   <table class="det">
     <thead>
@@ -148,8 +147,6 @@
   </table>
 
   <div class="nota">Observaciones:</div>
-
-  <div class="pie">Páginas 2 de 2</div>
 </div>
 
 </body>
