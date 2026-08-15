@@ -552,6 +552,9 @@ export const montarSlotting = (container, OPC = {}) => {
             padding: 1mm 2mm; color: #555; }
     .cierre { display: flex; align-items: center; justify-content: center; height: 100%;
               color: #888780; font-size: 13pt; font-weight: 700; text-align: center; }
+    .cartel { border: 2.2px solid #000; margin-top: 2.5mm; padding: 1.2mm 2mm; text-align: center; }
+    .cartel b { display: block; font-size: 13pt; }
+    .cartel span { font-size: 8.5pt; }
     @media print { body { background: #fff; } .pg { margin: 0; page-break-after: always; }
                    .pg:last-child { page-break-after: auto; } .noimp { display: none !important; } }
     .noimp { position: sticky; top: 0; z-index: 9; background: #1e293b; color: #e2e8f0;
@@ -574,14 +577,23 @@ export const montarSlotting = (container, OPC = {}) => {
    * completa—. Las tareas viejas, guardadas antes de que existiera, no lo traen: para esas se
    * arma una sola fila con lo que hay, que es mejor que no imprimir nada.
    */
+  /** ¿La tarea trae el detalle por SKU y talla? Las de antes de la v29.0217 no. */
+  const sinDetalle = (t) => !((t.lineas || []).some(l => l.detalle && l.detalle.length));
+
   function filasDelPapel(t) {
     const bloques = [];
     let columna = null;
     (t.lineas || []).forEach(l => {
       const col = columnaDe(l.ubi);
+      /* SIN DETALLE SE IMPRIME LO QUE HAY, PERO CON EL CARTEL PUESTO.
+       *
+       * Las corridas de antes de la v29.0217 no guardaron el detalle, así que el origen sale
+       * sin nivel, el SKU con siete dígitos y la talla en blanco. Antes salía un guion suelto
+       * y parecía un error del sistema; ahora la hoja lo dice arriba y explica cómo se
+       * arregla, que es volver a procesar. */
       const det = (l.detalle && l.detalle.length)
         ? l.detalle
-        : [{ ubi: l.ubi, skuFull: l.sku7, talla: '—', pares: l.pares }];
+        : [{ ubi: l.ubi, skuFull: l.sku7, talla: 'S/D', pares: l.pares }];
       const filas = det.map(d => ({ tipo: 'det', ubi: d.ubi, sku: d.skuFull,
                                     talla: d.talla, pares: d.pares, destino: l.llevarA || '' }));
       filas.push({ tipo: 'tot', sku7: l.sku7, pares: l.pares });
@@ -673,6 +685,11 @@ export const montarSlotting = (container, OPC = {}) => {
         pg.innerHTML =
             `<div class="t1${primera ? '' : ' cont'}">SLOTTING · TAREA ${esc(t.n)}${primera ? '' : ' (cont.)'}</div>`
           + `<div class="t2">${subtitulo}<span class="pagX">Páginas ${i + 1} de ${paginas.length}</span></div>`
+          + (primera && sinDetalle(t) ? `<div class="cartel">
+               <b>ESTA HOJA SALIÓ SIN SKU NI TALLA</b>
+               <span>La tarea se generó con una versión anterior. Volvé a procesar el Slotting
+               para que salga con la ubicación exacta, el SKU completo y la talla.</span>
+             </div>` : '')
           + (primera ? `<table class="firmas">
                <tr><td class="rot" style="width:24mm">Nombres</td><td></td>
                    <td class="rot" style="width:16mm">Inicio</td><td style="width:20mm"></td>

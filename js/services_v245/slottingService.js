@@ -132,8 +132,23 @@ const normalizar = (c) => {
  * la corrida se guarda con esa fecha, así que alcanza con mirar si existe. No hace falta
  * guardar una marca aparte, y así no hay dos verdades que se puedan separar.
  */
-export const yaSeProcesoEsteTurno = (cajon, fechaLogica) =>
-    !!(cajon && cajon[fechaLogica] && (cajon[fechaLogica].tareas || []).length);
+export const yaSeProcesoEsteTurno = (cajon, fechaLogica) => {
+    const tareas = (cajon && cajon[fechaLogica] && cajon[fechaLogica].tareas) || [];
+    if (!tareas.length) return false;
+
+    /* LAS CORRIDAS VIEJAS NO CUENTAN, Y SE PUEDEN REHACER UNA VEZ.
+     *
+     * Las de antes de la v29.0217 no traen el detalle por SKU y talla, así que el papel les
+     * sale con el código de siete dígitos y un guion en la talla — que es justo lo que el
+     * operario necesita y no está. Bloquearlas por "una vez por turno" dejaría a Daniel sin
+     * poder arreglarlo salvo destildando la regla en la configuración.
+     *
+     * Se mira si alguna línea trae `detalle`: si ninguna lo trae, la corrida es vieja y se
+     * deja rehacer. Es una excepción de migración; en cuanto se reprocese, la regla vuelve a
+     * valer normalmente. */
+    const tieneDetalle = tareas.some(t => (t.lineas || []).some(l => l.detalle && l.detalle.length));
+    return tieneDetalle;
+};
 
 export const cargarConfig = async () => {
     try {
