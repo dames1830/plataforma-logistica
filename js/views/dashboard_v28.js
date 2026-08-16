@@ -1,25 +1,25 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0229';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0230';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0229';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0229';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0229';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0229';
-import * as metasService from '../services_v245/metasService.js?v=29.0229';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0229';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0229';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0229';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0229';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0229';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0229';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0229';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0229';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0229';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0229';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0229';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0229';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0229';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0229';
-import { montarSlotting } from './slotting.js?v=29.0229';
+import * as adminService from '../services_v245/adminService.js?v=29.0230';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0230';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0230';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0230';
+import * as metasService from '../services_v245/metasService.js?v=29.0230';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0230';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0230';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0230';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0230';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0230';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0230';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0230';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0230';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0230';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0230';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0230';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0230';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0230';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0230';
+import { montarSlotting } from './slotting.js?v=29.0230';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -376,7 +376,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0229';
+const VERSION = '29.0230';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4412,7 +4412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0229');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0230');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15382,7 +15382,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0229 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0230 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17079,6 +17079,7 @@ const renderRFSection = (container) => {
       const s7 = String(raw[1] || '').trim().substring(0, 7);
       if (s7 && !ficha.has(s7)) ficha.set(s7, {
         marca: String(raw[13] || '').trim(),
+        marcaStd: String(raw[8] || '').trim(),
         temporada: String(raw[14] || raw[9] || '').trim()
       });
     });
@@ -17606,6 +17607,10 @@ const renderRFSection = (container) => {
         genderRims: String(raw[3] || '').trim().toUpperCase(),
         subcategoria: String(raw[5] || '').trim().toUpperCase(),
         marca: String(raw[13] || '').trim(),
+        // LA SUB-MARCA, QUE DECIDE CUANTO ENTRA EN UN CUERPO. Es la columna 'MarcaStd' y NO
+        // la de al lado: ahi dice "Bata Comfit" donde 'Marcas' dice solo "Bata", y por eso el
+        // sistema nunca habia podido distinguirlo. Ver densidadMarcaStd en zonasService.
+        marcaStd: String(raw[8] || '').trim(),
         // MANDA LA COLUMNA 'Temporada' DEL MAESTRO, Y SI FALTA, LA COLECCIÓN.
         //
         // La 15 —'Temporada', con "T. Actual" o "T. Anterior"— la mantiene el sistema de
@@ -17728,7 +17733,8 @@ const renderRFSection = (container) => {
     const libres = {};
     totalDeCuerpo.forEach((d, k) => {
       const [zn, col, cue] = k.split('|');
-      const plena = zonasService.densidadDe(zn, zonasService.serieDe(d.mayor));
+      const plena = zonasService.densidadDe(zn, zonasService.serieDe(d.mayor),
+                                           (ficha.get(d.mayor) || {}).marcaStd);
       const cap = zonasService.franjaDeColumna(zn, +col) === 'saldos' ? plena * 0.5 : plena;
       (libres[zn] = libres[zn] || new Map()).set(`${+col}-${+cue}`, Math.max(0, Math.round(cap - d.pares)));
     });
@@ -18265,6 +18271,9 @@ const renderRFSection = (container) => {
       // en vez de seguir a su marca hasta una zona de calzado.
       gGender: f.gender,
       subcategoria: f.subcategoria,
+      // La sub-marca le gana a la serie al medir el cuerpo: un Bata Comfit entra 600 donde su
+      // serie diria 450. Viaja con los datos porque planificarAlmacenaje tambien la necesita.
+      marcaStd: f.marcaStd || '',
       esTemporadaActual: sugActuales(fecha).some(a => tempTxt.includes(a)),
       // La sub-zona del buffer. Solo la D cambia el destino —manda a catálogo—, así que es
       // la única que se pasa: las demás ya se resuelven en casoDelItem.
@@ -18276,7 +18285,7 @@ const renderRFSection = (container) => {
     // la densidad del cuerpo, y de la densidad sale cuántos pares bajan al piso. Pedir
     // cuerpos por los pares del buffer sería reservar lugar de más.
     const zr = zonasService.resolverZona(datos);
-    const porCuerpo = zr.zona ? zonasService.densidadDe(zr.zona, zonasService.serieDe(s7)) : 300;
+    const porCuerpo = zr.zona ? zonasService.densidadDe(zr.zona, zonasService.serieDe(s7), datos.marcaStd) : 300;
     const caso = casoDelItem(s7, datos, pares, zr.zona, ctx);
     const planificar = (regla) => tallasService.planificarPorTalla({
       marca: datos.marca,
@@ -19575,6 +19584,44 @@ const renderRFSection = (container) => {
           <div style="padding:0.75rem 1.1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,197,94,0.1); font-size:0.65rem; color:rgba(255,255,255,0.32); line-height:1.7;">
             <b style="color:rgba(255,255,255,0.5);">MEDIR DEL STOCK</b> mira los cuerpos que hoy tienen un solo artículo y se queda con el máximo por serie. Es un <b style="color:rgba(255,255,255,0.5);">piso</b>, no la capacidad: un cuerpo con 200 pares puede estar a medio llenar. Si sabe que entran más, escríbalo y mande el suyo.
           </div>
+
+          <div style="border-top:1px solid rgba(34,197,94,0.14); padding:0.9rem 1.1rem 0.4rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+              <div>
+                <h4 style="color:#22c55e; font-weight:900; margin:0; font-size:0.82rem; letter-spacing:0.8px; text-transform:uppercase;">👟 Sub-marcas que no siguen a su serie</h4>
+                <div style="font-size:0.64rem; color:rgba(34,197,94,0.55); margin-top:2px;">Columna <b>MarcaStd</b> del Maestro · le gana a la serie y a la zona · para el calzado delgado, que entra más</div>
+              </div>
+              <button id="zn_ms_add" class="btn" style="width:auto; padding:6px 14px; font-size:0.7rem; background:rgba(34,197,94,0.12); color:#22c55e; border:1px solid rgba(34,197,94,0.35); font-weight:800;">+ AGREGAR</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto; padding-bottom:0.4rem;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#eee;">
+              <thead style="background:rgba(0,0,0,0.5);">
+                <tr style="color:rgba(134,239,172,0.8); text-transform:uppercase; font-size:0.63rem; letter-spacing:0.05em;">
+                  <th style="padding:0.6rem 1.1rem; text-align:left;">Sub-marca (MarcaStd)</th>
+                  <th style="padding:0.6rem; text-align:center; width:130px;">Pares por cuerpo</th>
+                  <th style="padding:0.6rem; text-align:center; width:70px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.keys(cfg.densidadMarcaStd || {}).length ? Object.keys(cfg.densidadMarcaStd).sort().map(m => `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <td style="padding:0.4rem 1.1rem; color:#fff; font-weight:900;">${esc(m)}</td>
+                    <td style="padding:0.3rem; text-align:center;">
+                      <input type="number" data-ms="${esc(m)}" min="1" value="${cfg.densidadMarcaStd[m]}"
+                        style="width:100px; padding:5px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-size:0.76rem; font-weight:800; text-align:center;">
+                    </td>
+                    <td style="padding:0.3rem; text-align:center;">
+                      <button data-msdel="${esc(m)}" title="Quitar" style="background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:4px 10px; cursor:pointer; font-weight:800;">🗑</button>
+                    </td>
+                  </tr>`).join('') : `
+                  <tr><td colspan="3" style="padding:1rem 1.1rem; color:rgba(255,255,255,0.3); font-size:0.72rem;">Ninguna. Todas las marcas van con la capacidad de su serie.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:0.75rem 1.1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,197,94,0.1); font-size:0.65rem; color:rgba(255,255,255,0.32); line-height:1.7;">
+            Sale de la columna <b style="color:rgba(255,255,255,0.5);">MarcaStd</b> del Maestro, que es distinta de <b style="color:rgba(255,255,255,0.5);">Marcas</b>: ahí dice <i>Bata Comfit</i> donde la otra dice solo <i>Bata</i>. Lo que se escriba acá vale en cualquier zona, porque lo que decide es el grosor del zapato y no dónde esté guardado.
+          </div>
         </div>
 
         ${panelEspacioCuerpos(_zonaElegida, z.etiqueta)}
@@ -19667,6 +19714,45 @@ const renderRFSection = (container) => {
         if (Number.isFinite(v) && v > 0) cfg.densidadRespaldo[i.dataset.resp] = v;
         marcar();
       });
+
+      /* LAS SUB-MARCAS QUE NO SIGUEN A SU SERIE. La lista para elegir sale del Maestro y no
+       * se escribe a mano: si el nombre no coincide EXACTO con lo que dice `MarcaStd`, la
+       * regla no se aplica nunca y no hay forma de darse cuenta mirando la pantalla. */
+      if (!cfg.densidadMarcaStd) cfg.densidadMarcaStd = {};
+      container.querySelectorAll('[data-ms]').forEach(i => i.onchange = () => {
+        const v = parseInt(i.value, 10);
+        if (Number.isFinite(v) && v > 0) cfg.densidadMarcaStd[i.dataset.ms] = v;
+        marcar();
+      });
+      container.querySelectorAll('[data-msdel]').forEach(b => b.onclick = () => {
+        delete cfg.densidadMarcaStd[b.dataset.msdel];
+        pintar(); marcar();
+      });
+      const btnMsAdd = container.querySelector('#zn_ms_add');
+      if (btnMsAdd) btnMsAdd.onclick = () => {
+        const vistas = new Set();
+        (dataStore.articulos || []).forEach(row => {
+          const raw = Array.isArray(row) ? row : Object.values(row);
+          const m = String(raw[8] || '').trim();
+          if (m && m.toLowerCase() !== 'marcastd') vistas.add(m);
+        });
+        const libres = [...vistas].filter(m => !(m in cfg.densidadMarcaStd)).sort();
+        if (!libres.length) {
+          showPremiumAlert('SIN SUB-MARCAS NUEVAS',
+            vistas.size ? 'Todas las sub-marcas del Maestro ya están en la lista.'
+                        : 'No hay Maestro cargado en esta sesión: súbalo en Análisis SKU y vuelva a intentar.',
+            'warning');
+          return;
+        }
+        const cual = prompt('¿Cuál sub-marca? Escriba el número:\n\n'
+          + libres.map((m, n) => `${n + 1}. ${m}`).join('\n'));
+        const n = parseInt(cual, 10);
+        if (!Number.isFinite(n) || n < 1 || n > libres.length) return;
+        const pares = parseInt(prompt(`¿Cuántos pares entran en un cuerpo de ${libres[n - 1]}?`), 10);
+        if (!Number.isFinite(pares) || pares <= 0) return;
+        cfg.densidadMarcaStd[libres[n - 1]] = pares;
+        pintar(); marcar();
+      };
 
       container.querySelector('#zn_medir').onclick = async (ev) => {
         await withLoading(ev.currentTarget, '⌛ MIDIENDO...', async () => {

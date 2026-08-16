@@ -41,7 +41,7 @@ const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/confi
  * v6 = apareció la franja 'saldoGrande' con su corte `saldoGrandeHasta`, y la columna 4 del
  *      selectivo dejó de ser temporada anterior para ser la del saldo grande.
  */
-const CACHE_KEY = 'config_zonas_v6';
+const CACHE_KEY = 'config_zonas_v7';
 
 /**
  * Las temporadas que puede tener una columna.
@@ -274,7 +274,12 @@ export const zonasPorDefecto = () => ({
          *
          * Las series 0 y 1 se quedan como estaban: son calzado chico y entran muchos más.
          * Las series 2 y 3 siguen sin medir y caen en el respaldo. */
-        SEL:   { 0: 830, 1: 740, 4: 330, 5: 330, 6: 330, 7: 330, 8: 330, 9: 330 },
+         * CORREGIDO POR DANIEL EL 15-ago-2026. El selectivo entero es de Bata, y la capacidad
+         * es de la MARCA, no de una medición de un día: *"la capacidad de un cuerpo en la marca
+         * Bata fuera de la serie cero y uno es de cuatrocientos cincuenta"*. Las series 0 y 1
+         * son 700. Con esto las series 2 y 3 dejan de caer en el respaldo de 300, y el 330 del
+         * 14-ago queda atrás por corto. */
+        SEL:   { 0: 700, 1: 700, 2: 450, 3: 450, 4: 450, 5: 450, 6: 450, 7: 450, 8: 450, 9: 450 },
         MZN01: { 0: 642, 1: 426, 2: 386, 3: 332, 4: 284, 5: 372, 8: 347 },
         MZN02: { 4: 480, 5: 480, 6: 480, 8: 480 },
         MZN03: { 2: 332, 3: 338, 4: 170, 5: 260, 6: 159, 7: 139, 8: 233 },
@@ -284,6 +289,24 @@ export const zonasPorDefecto = () => ({
     /** Cuando no hay medición para esa serie en esa zona. Es el p75 de todo el almacén,
      *  salvo el MZN02, que va con su medida real. */
     densidadRespaldo: { SEL: 300, MZN01: 300, MZN02: 480, MZN03: 300, MZN04: 300 },
+
+    /* LA SUB-MARCA LE GANA A LA SERIE. Daniel, 15-ago-2026.
+     *
+     * *"De la marca Bata, categoría Comfit, entran seiscientos pares por cuerpo, porque es una
+     * categoría o es un modelo que es muy delgado, tipo sandalias, tipo alpargatas."*
+     *
+     * Es una propiedad del PRODUCTO —lo delgado que es—, no de la zona ni de la serie, así que
+     * va en un mapa plano y vale en cualquier zona donde caiga. La serie no lo puede capturar:
+     * el Comfit está repartido en las series 3 a 8, mezclado con Bata normal.
+     *
+     * SALE DE `MarcaStd`, la columna 9 del Maestro, no de `Marcas`. Ahí dice "Bata Comfit"
+     * mientras la otra dice solo "Bata" — por eso el sistema nunca lo había podido distinguir.
+     * Son 887 artículos y 11.901 pares en el selectivo al 15-ago-2026.
+     *
+     * En el mismo Maestro hay más sub-marcas —Bata Red, Bata Red Label, Bata 3d, Bata
+     * Flexible— que hoy van con la capacidad de su serie. Si alguna resulta tener otra
+     * densidad, se agrega acá y nada más. */
+    densidadMarcaStd: { 'Bata Comfit': 600 },
 
     /** La categoría que no sigue a su marca. */
     categoriaOthers: '06 OTHERS'
@@ -409,7 +432,18 @@ const normalizar = (crudo) => {
         respaldo[z] = _num((c.densidadRespaldo || {})[z], def.densidadRespaldo[z] || 330, 1, 100000);
     });
 
+    // La densidad por sub-marca: mapa plano nombre -> pares. Si la publicada no lo trae, manda
+    // la de fábrica, para que un Comfit no vuelva a medirse con la capacidad de su serie.
+    const porMarcaStd = {};
+    const srcMS = (c.densidadMarcaStd && Object.keys(c.densidadMarcaStd).length)
+      ? c.densidadMarcaStd : def.densidadMarcaStd;
+    Object.keys(srcMS || {}).forEach(m => {
+        const n = _num(srcMS[m], 0, 1, 100000);
+        if (n) porMarcaStd[String(m).trim()] = n;
+    });
+
     return { zonas, marcas, others, densidad, densidadRespaldo: respaldo,
+             densidadMarcaStd: porMarcaStd,
              categoriaOthers: String(c.categoriaOthers || def.categoriaOthers) };
 };
 
@@ -747,8 +781,12 @@ export const serieDe = (codigo) => {
 };
 
 /** Pares que entran en un cuerpo de esa zona para esa serie. */
-export const densidadDe = (zona, serie) => {
+export const densidadDe = (zona, serie, marcaStd) => {
     const cfg = zonasActual();
+    // LA SUB-MARCA MANDA SOBRE LA SERIE. Un Bata Comfit entra 600 en un cuerpo donde su serie
+    // diría 450: lo que decide cuánto entra es el grosor del zapato, y eso la serie no lo sabe.
+    const ms = String(marcaStd || '').trim();
+    if (ms && cfg.densidadMarcaStd && cfg.densidadMarcaStd[ms]) return cfg.densidadMarcaStd[ms];
     const d = cfg.densidad[zona] || {};
     const v = d[String(serie)];
     return v || cfg.densidadRespaldo[zona] || 330;
@@ -1138,7 +1176,7 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}, o
         // ya tenía 300 de los suyos y no le entraban. Un cuerpo lleva UN artículo con todas
         // sus tallas, así que no hay dónde meterlos: hay que abrirle otro.
         const zonaRep = art.yaTiene[0].zona;
-        const porCuerpoRep = densidadDe(zonaRep, serieDe(art.sku7));
+        const porCuerpoRep = densidadDe(zonaRep, serieDe(art.sku7), art.marcaStd);
         const libresRep = libresPorZona[zonaRep];
 
         /* UN CUERPO, UN ARTÍCULO: SUS CUERPOS COMPARTIDOS NO CUENTAN COMO SUYOS.
@@ -1291,17 +1329,17 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}, o
                                   ocupadosPorZona[zona] || new Set(), libresPorZona[zona]);
         if (r) {
             return paso('ok', null, {
-                zona, franja, cuantos: 1, porCuerpo: densidadDe(zona, serieDe(art.sku7)),
+                zona, franja, cuantos: 1, porCuerpo: densidadDe(zona, serieDe(art.sku7), art.marcaStd),
                 cuerpos: r.cuerpos, seguidos: true, compartido: !!r.compartido,
                 libreQueTenia: r.libreQueTenia, porOthers,
                 capacidades: [r.libreQueTenia !== undefined
-                    ? r.libreQueTenia : densidadDe(zona, serieDe(art.sku7))]
+                    ? r.libreQueTenia : densidadDe(zona, serieDe(art.sku7), art.marcaStd)]
             });
         }
     }
 
     // Paso 3: cuántos cuerpos
-    const porCuerpo = densidadDe(zona, serieDe(art.sku7));
+    const porCuerpo = densidadDe(zona, serieDe(art.sku7), art.marcaStd);
     const cuantos = Math.max(1, Math.ceil((Number(art.pares) - porCuerpo * HOLGURA) / porCuerpo));
 
     // Paso 4 y 5
