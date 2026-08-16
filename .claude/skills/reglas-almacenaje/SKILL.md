@@ -370,13 +370,17 @@ cada talla**, no un bloque de tallas seguidas.
 **EN BETA DESDE LA v29.0214.** Vive en `asignarCuerpos` de `dashboard_v28.js`, con el
 interruptor `SURTIDO_EN_EL_CUERPO` al lado para volver al reparto viejo sin revertir código.
 
-**La talla NO se parte, y es a propósito.** El reparto entrega **la talla más grande primero al
-cuerpo que menos lleve**, en vez de cortarla en cajas. Dos razones y las dos pesan:
+**HOY la talla no se parte**, y el reparto entrega la talla más grande primero al cuerpo que
+menos lleve. **Daniel lo rechazó el 15-ago-2026 y hay que cambiarlo — ver 5b-bis.**
+
+Las dos razones por las que se había escrito así, y qué pasó con cada una:
 
 - **El papel.** La unidad de la hoja —y de lo que `grabarPapelEnTareas` escribe de vuelta en la
   tarea— es la línea del buffer: una ubicación, un SKU, una talla. Partir una talla obliga a
-  partir esa línea, y con eso se rompe el formato cerrado.
-- **El picking.** Con la talla entera en un cuerpo, el picker va a un solo lugar a buscarla.
+  partir esa línea. **Sigue en pie: es el trabajo que cuesta el cambio.**
+- **El picking.** Se había escrito que con la talla entera en un cuerpo el picker va a un solo
+  lugar a buscarla. **Está al revés y lo corrigió Daniel: lo que importa es que la OLA vacíe el
+  cuerpo entero, y para eso el cuerpo tiene que tener la curva.**
 
 **De mayor a menor, no en orden de talla.** Empezando por las chicas, las grandes llegan al
 final sin dónde entrar. Con 150·150·150·50·50·50 en dos cuerpos, de mayor a menor da 300 y 300;
@@ -402,6 +406,61 @@ tapar un reparto mal hecho.
 **Sigue valiendo todo lo de antes:** el nivel no importa —el destino es el cuerpo—, un cuerpo
 lleva un solo artículo en la franja actual, y ninguna talla baja en unidades sueltas.
 
+
+## 5b-bis. MÍNIMO TRES TALLAS POR CUERPO — PENDIENTE
+
+Regla de Daniel, 15-ago-2026, después de leer las tareas de esa noche:
+
+> *"En un cuerpo me estás mandando a almacenar una talla, o máximo dos. Yo necesito que en un
+> cuerpo mínimo haya tres tallas. Mientras más surtido sería mejor, tres a cuatro tallas por
+> cuerpo. Cuando es un código nuevo, un código de reposición: el cuerpo debería estar surtido."*
+
+**EL PORQUÉ ES EL PICKING, Y NO ES EL QUE ESTABA ESCRITO.** Daniel:
+
+> *"Para que cuando llegue picking y la ola corra, la ola reconozca que en un cuerpo hay todas
+> las tallas y se puede agotar rápido y se te puede vaciar solo, no que el equipo de Slotting
+> vaya a vaciarlo con las tareas de Slotting. Debería el picking vaciar todo."*
+
+Un cuerpo con una sola talla se vacía cuando esa talla se agota, y eso puede no pasar nunca:
+queda ocupado con el resto que nadie pide y hay que ir a sacarlo con una tarea de Slotting. Un
+cuerpo con la curva se vacía solo, con el trabajo que el almacén ya hace todos los días.
+
+| | |
+|---|---|
+| **Mínimo** | **3 tallas** por cuerpo |
+| **Ideal** | 3 o 4 |
+| **No hace falta** | meter las 6 de la curva en un cuerpo — *"no te digo que las seis tallas las pongas en un cuerpo"* |
+| **A quién aplica** | código nuevo **y** reposición, por igual |
+
+**LO QUE HAY QUE ROMPER PARA LOGRARLO: la talla tiene que poder partirse.** No hay otra forma y
+conviene tenerlo claro antes de intentar acomodos. Con 6 tallas y 3 cuerpos, sin partir, salen 2
+por cuerpo y punto: es aritmética. Para 3 por cuerpo hacen falta 9 asignaciones sobre 6 tallas,
+así que 3 tallas van a vivir en dos cuerpos.
+
+**Cuánto pesa hoy, medido sobre los 48 cuerpos asignados el 15-ago-2026:**
+
+| Tallas en el cuerpo | Cuerpos | |
+|---|---|---|
+| **1** | **16** | **33%** |
+| **2** | **9** | **19%** |
+| 3 | 8 | 17% |
+| 4 | 11 | 23% |
+| 6 | 4 | 8% |
+
+**25 de 48 —el 52%— están por debajo del mínimo.**
+
+**Los dos casos que lo explican todo:**
+
+- **Talla más grande que medio cuerpo.** El `8811950` tiene tallas de 415, 405 y 395 pares en
+  cuerpos de 480: cada una se lleva un cuerpo entera y no queda sitio para acompañarla. Sin
+  partir la talla, no hay acomodo posible.
+- **El artículo ya vive disperso.** El `1815306` recibió 4 tallas de 48 pares en 4 cuerpos
+  distintos, uno por talla —192 pares ocupando cuatro cuerpos—. Ahí el problema no es el
+  reparto sino que la reposición devuelve a cuerpos que ya estaban repartidos.
+
+**Vive en `asignarCuerpos` de `dashboard_v28.js`**, junto al interruptor `SURTIDO_EN_EL_CUERPO`.
+**El papel es lo que hay que rehacer con cuidado:** una talla partida sale en dos renglones con
+la misma ubicación de origen y destinos distintos. Maqueta antes de codear.
 
 ## 5c. EL RESTO QUE QUEDA ATRÁS — se arrastra al cuerpo nuevo
 
