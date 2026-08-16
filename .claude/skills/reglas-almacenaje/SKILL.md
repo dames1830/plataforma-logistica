@@ -167,6 +167,24 @@ con el 60%. Esa noche fueron 4 casos —el `6515899`, el `6615998`, el `6616998`
    **junta libres de varias columnas**: antes exigía que una sola columna tuviera todos los
    cuerpos necesarios, así que con el mezzanine cargado derivaba a Slotting habiendo lugar.
 
+   **EL RANGO ES LA FRANJA ENTERA, NO DE SU COLUMNA HACIA ARRIBA.** Un artículo que vive en la
+   8 busca en la 5, 6, 7, 9, 10, 11, 12 y 13, no solo de la 8 en adelante. Daniel lo preguntó
+   el 15-ago-2026 y así estaba.
+
+   **EL ORDEN DENTRO DE LA FRANJA LO CONFIRMÓ DANIEL EL 15-ago-2026 Y SE QUEDA COMO ESTÁ.** No
+   es ascendente: gana el tramo de cuerpos vacíos **más pegados entre sí**, y cuando hay que
+   repartir arranca por la columna con **más libres**. Se le ofreció cambiarlo a recorrido
+   ascendente de la 5 a la 13 —llenar el almacén de izquierda a derecha— y eligió dejarlo:
+   partir el artículo en menos columnas pesa más que el orden del recorrido.
+
+   Medido sobre la tarea 24 del 15-ago, con seis vacíos en toda la franja (`SEL-05-01`,
+   `-06-01`, `-10-10`, `-10-21`, `-11-15`, `-12-16`) y tres cuerpos por abrir:
+
+   | Criterio | Salen | Columnas |
+   |---|---|---|
+   | **el de hoy** | `SEL-10-10`, `SEL-10-21`, `SEL-05-01` | **2** |
+   | ascendente | `SEL-05-01`, `SEL-06-01`, `SEL-10-10` | 3 |
+
 5. **SI NO HAY LUGAR — Revisar Slotting.** Mismo criterio.
 
 **Por qué tiene menos pasos que el otro camino:** la reposición no elige zona, ni columna, ni
