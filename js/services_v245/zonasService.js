@@ -273,7 +273,8 @@ export const zonasPorDefecto = () => ({
          * trajo Daniel del piso: "la tarea dice que lo almacene ahí y ya está ocupado".
          *
          * Las series 0 y 1 se quedan como estaban: son calzado chico y entran muchos más.
-         * Las series 2 y 3 siguen sin medir y caen en el respaldo. */
+         * Las series 2 y 3 siguen sin medir y caen en el respaldo.
+         *
          * CORREGIDO POR DANIEL EL 15-ago-2026. El selectivo entero es de Bata, y la capacidad
          * es de la MARCA, no de una medición de un día: *"la capacidad de un cuerpo en la marca
          * Bata fuera de la serie cero y uno es de cuatrocientos cincuenta"*. Las series 0 y 1

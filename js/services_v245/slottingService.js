@@ -288,27 +288,58 @@ export const guardarTareas = async (cajon) => {
  * ══════════════════════════════════════════════════════════════════════════════
  */
 export const armarTareas = (lineas, tope = PARES_POR_TAREA) => {
-    // Primero se juntan las líneas de cada cuerpo, para no poder partirlo ni por error
-    const porCuerpo = new Map();
-    (lineas || []).forEach(l => {
-        const k = String(l.ubi || '');
-        if (!porCuerpo.has(k)) porCuerpo.set(k, []);
-        porCuerpo.get(k).push(l);
-    });
+    /* LAS DE PRIORIDAD VAN APARTE Y PRIMERO. Regla de Daniel, 15-ago-2026.
+     *
+     * Una línea de prioridad es la que destraba una tarea de almacenaje: hay mercadería parada
+     * en el buffer esperando ese cuerpo. Si se mezclaran con las comunes, la tarea entera
+     * quedaría marcada por una sola línea y el asistente no sabría cuál de los cuerpos corre.
+     * Separadas, la tarea de prioridad es prioridad de punta a punta.
+     *
+     * Y van primero para que queden con los números más bajos: la lista se lee de arriba. */
+    const armar = (ls, prioridad) => {
+        // Primero se juntan las líneas de cada cuerpo, para no poder partirlo ni por error
+        const porCuerpo = new Map();
+        (ls || []).forEach(l => {
+            const k = String(l.ubi || '');
+            if (!porCuerpo.has(k)) porCuerpo.set(k, []);
+            porCuerpo.get(k).push(l);
+        });
 
-    // Y los cuerpos se recorren en orden de ubicación, para que el operario haga una columna
-    // por vez y no cruce el almacén de ida y vuelta.
-    const orden = [...porCuerpo.keys()].sort((a, b) => a.localeCompare(b));
-    const tareas = [];
-    let actual = [], suma = 0;
-    orden.forEach(k => {
-        const grupo = porCuerpo.get(k);
-        const p = grupo.reduce((a, l) => a + Math.round(Number(l.pares) || 0), 0);
-        if (suma > 0 && suma + p > tope) { tareas.push({ lineas: actual, pares: suma }); actual = []; suma = 0; }
-        actual.push(...grupo); suma += p;
+        // Y los cuerpos se recorren en orden de ubicación, para que el operario haga una columna
+        // por vez y no cruce el almacén de ida y vuelta.
+        const orden = [...porCuerpo.keys()].sort((a, b) => a.localeCompare(b));
+        const salida = [];
+        let actual = [], suma = 0;
+        const cerrar = () => {
+            if (!actual.length) return;
+            salida.push({ lineas: actual, pares: suma, prioridad, destraba: destrabaDe(actual) });
+            actual = []; suma = 0;
+        };
+        orden.forEach(k => {
+            const grupo = porCuerpo.get(k);
+            const p = grupo.reduce((a, l) => a + Math.round(Number(l.pares) || 0), 0);
+            if (suma > 0 && suma + p > tope) cerrar();
+            actual.push(...grupo); suma += p;
+        });
+        cerrar();
+        return salida;
+    };
+    const todas = lineas || [];
+    return [...armar(todas.filter(l => l && l.prioridad), true),
+            ...armar(todas.filter(l => !(l && l.prioridad)), false)];
+};
+
+/** Los pares de almacenaje que se destraban al hacer esas líneas. Sin repetir el artículo:
+ *  dos líneas del mismo cuerpo destraban la misma mercadería una sola vez. */
+const destrabaDe = (lineas) => {
+    const vistos = new Map();
+    (lineas || []).forEach(l => {
+        (l.destraba || []).forEach(d => {
+            const k = String(d.sku7 || '');
+            if (k && !vistos.has(k)) vistos.set(k, Number(d.pares) || 0);
+        });
     });
-    if (actual.length) tareas.push({ lineas: actual, pares: suma });
-    return tareas;
+    return [...vistos.entries()].map(([sku7, pares]) => ({ sku7, pares }));
 };
 
 /**
@@ -334,7 +365,7 @@ const marcaDe = (lineas) => {
     return orden[0][0] + (orden.length > 1 ? ' +' : '');
 };
 
-export const publicarCorrida = async (fecha, lineas, zona) => {
+export const publicarCorrida = async (fecha, lineas, zona, avisos) => {
     const cajon = await traerTareas();
     const tareas = armarTareas(lineas, configActual().paresPorTarea);
     const previo = cajon[fecha];
@@ -354,6 +385,10 @@ export const publicarCorrida = async (fecha, lineas, zona) => {
 
     cajon[fecha] = {
         fecha, zona: zona || 'SEL', generado: sello(),
+        /* LO QUE ALMACENAJE DEJÓ PARADO. Va en la cabecera de la corrida y no en las tareas:
+         * hay trabas que no generan tarea —cuando no queda ningún cuerpo libre no hay nada
+         * puntual que limpiar— y aun así el equipo tiene que verlas. */
+        ...(Array.isArray(avisos) && avisos.length ? { trabados: avisos } : {}),
         cuerpos: [...new Set(lineas.map(l => l.ubi))].length,
         pares: lineas.reduce((a, l) => a + (Number(l.pares) || 0), 0),
         tareas: tareas.map((t, i) => {
@@ -364,6 +399,10 @@ export const publicarCorrida = async (fecha, lineas, zona) => {
                 n: i + 1, pares: t.pares, lineas: t.lineas,
                 cuerpos: new Set(t.lineas.map(l => l.ubi)).size,
                 marca: marcaDe(t.lineas),
+                // Lo que destraba: qué artículos de almacenaje quedaron parados esperando estos
+                // cuerpos. Va en la tarea y no solo en las líneas para no tener que recorrerlas
+                // cada vez que se pinta la lista.
+                ...(t.prioridad ? { prioridad: true, destraba: t.destraba || [] } : {}),
                 status: viene ? viene.status : 'Creada',
                 u1: viene ? viene.u1 : '', u2: viene ? viene.u2 : '',
                 inicio: viene ? viene.inicio : '', termino: viene ? viene.termino : '',

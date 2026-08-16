@@ -154,10 +154,13 @@ function descomprimirTareas(data) {
         const restoredItems = t.items.map(artArr => {
             // genderRims va al final: las tareas guardadas antes de que existiera traen 7
             // campos y ahí llega undefined, que es justo lo que corresponde.
-            const [sku7, marca, gender, coleccion, bQty, zQty, cItems, genderRims] = artArr;
+            // `traba` va en el índice 8: por qué el artículo no se pudo guardar. Las tareas
+            // anteriores a la v29.0231 no lo traen y llega undefined, que es lo correcto.
+            const [sku7, marca, gender, coleccion, bQty, zQty, cItems, genderRims, traba] = artArr;
             return {
                 sku7, marca, gender, coleccion, bufferQty: bQty, zonaQty: zQty,
                 ...(genderRims ? { genderRims } : {}),
+                ...(traba && typeof traba === 'object' ? { traba } : {}),
                 items: (cItems || []).map(i => {
                     const itemObj = { skuFull: i[0], ubi: i[1], qty: i[2], talla: i[3] };
                     if (i[4] !== undefined && i[4] !== null) { itemObj.avance = i[4]; }
@@ -327,7 +330,12 @@ export async function pushChange(area, data, date = null) {
                     });
                     // El Gender RIMS se agrega al final para no mover los índices ya guardados.
                     // Sin él, las metas por detalle (01 MEN, 08 ACCESORIES...) no pueden aplicarse.
-                    return [art.sku7, art.marca, art.gender, art.coleccion, art.bufferQty, art.zonaQty, cArtItems, art.genderRims || ''];
+                    const base = [art.sku7, art.marca, art.gender, art.coleccion,
+                                  art.bufferQty, art.zonaQty, cArtItems, art.genderRims || ''];
+                    // El motivo de la traba viaja solo si existe: una tarea que salió bien
+                    // sigue pesando ocho campos, igual que siempre.
+                    if (art.traba && typeof art.traba === 'object') base.push(art.traba);
+                    return base;
                 });
                 return { ...t, items: compactItems, _comp: true };
             };

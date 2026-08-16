@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Prueba: quitar importador de la Zona Buffer</title>
+<style>
+ body{font-family:system-ui;background:#0f172a;color:#e2e8f0;padding:2rem;line-height:1.6}
+ .ok{color:#22c55e;font-weight:700} .bad{color:#ef4444;font-weight:700}
+ pre{background:#1e293b;padding:1rem;border-radius:8px;white-space:pre-wrap}
+</style></head>
+<body>
+<h1>Quitar un importador de la Zona Buffer</h1>
+<pre id="out">corriendo...</pre>
+<script type="module">
+const out = document.getElementById('out');
+const log = (t, cls='') => { out.innerHTML += `\n${cls ? `<span class="${cls}">${t}</span>` : t}`; };
+let fallos = 0;
+const chequear = (nombre, cond) => { if (cond) log(`  OK   ${nombre}`, 'ok'); else { fallos++; log(`  FALLA ${nombre}`, 'bad'); } };
+
+// ── Servidor de mentira ────────────────────────────────────────────────────────
+// { area: {data, updated_at} }. Igual que el backend: POST guarda lo que le llegue
+// (incluida una lista vacía) y GET devuelve lo último con su updated_at.
+const servidor = {};
+let romperPost = false;
+let ultimoPostVacio = null;
+
+const fetchReal = window.fetch.bind(window);
+window.fetch = async (url, opts = {}) => {
+  const u = String(url);
+  const m = u.match(/\/api\/logistics\/([^?]+)/);
+  if (!m) return new Response('{}', { status: 200 });
+  const area = m[1];
+  if ((opts.method || 'GET').toUpperCase() === 'POST') {
+    if (romperPost) return new Response('{"status":"error"}', { status: 500 });
+    const cuerpo = JSON.parse(opts.body || '[]');
+    if (Array.isArray(cuerpo) && cuerpo.length === 0) ultimoPostVacio = { area, headers: opts.headers || {} };
+    servidor[area] = { data: cuerpo, updated_at: '2026-08-16 03:00:00' };
+    return new Response('{"status":"success"}', { status: 200 });
+  }
+  const g = servidor[area];
+  return new Response(JSON.stringify(g ? { area, data: g.data, updated_at: g.updated_at }
+                                       : { area, data: [] }), { status: 200 });
+};
+
+const hub = await import('../js/services_v245/csvHub_v6.js?prueba=1');
+const { guardarAreaManual, clearAreaData, getAreaData, dataStore } = hub;
+
+const PEDIDOS = [
+  { 'Articulo': '4816309-1-12', 'Cantidad solicitada': 40, 'Cantidad asignada': 10, 'Sobrante': 'x' },
+  { 'Articulo': '5522100-2-08', 'Cantidad solicitada': 12, 'Cantidad asignada': 0,  'Sobrante': 'x' }
+];
+const limpiar = async (area) => { dataStore[area] = null; localStorage.removeItem('meta_' + area); delete servidor[area]; await clearAreaData(area, 'prueba'); dataStore[area] = null; };
+
+out.innerHTML = '';
+
+// ── A. Lo que le pasa a Daniel: cargar PEDIDOS, quitarlo, volver a mirar ───────
+log('\nA) Quitar PEDIDOS y volver a entrar a la pantalla');
+await limpiar('buffer');
+await guardarAreaManual('buffer', PEDIDOS, 'daniel');
+await new Promise(r => setTimeout(r, 60));           // la publicación va sin await
+chequear('el archivo quedó cargado', (await getAreaData('buffer'))?.length === 2);
+chequear('y publicado en el servidor', servidor.buffer?.data.length === 2);
+
+const okA = await clearAreaData('buffer', 'daniel');
+chequear('clearAreaData avisa que sí pudo', okA === true);
+chequear('el servidor quedó vacío', servidor.buffer?.data.length === 0);
+dataStore.buffer = null;                              // lo que hace el redibujado
+const traido = await getAreaData('buffer');
+chequear('al redibujar NO vuelve el archivo', traido === null || traido.length === 0);
+chequear('el rótulo de última carga se fue', !localStorage.getItem('meta_buffer'));
+
+// ── B. La cabecera del borrado ─────────────────────────────────────────────────
+log('\nB) El vaciado no fija X-Environment a mano (lo sella env.js)');
+chequear('POST vacío sin X-Environment', ultimoPostVacio && !('X-Environment' in (ultimoPostVacio.headers || {})));
+
+// ── C. Si el servidor no contesta, hay que enterarse ──────────────────────────
+log('\nC) El servidor falla al quitar');
+await limpiar('solicitud');
+await guardarAreaManual('solicitud', [['4816309-1-12', 30]], 'daniel');
+await new Promise(r => setTimeout(r, 60));
+romperPost = true;
+const okC = await clearAreaData('solicitud', 'daniel');
+romperPost = false;
+chequear('clearAreaData devuelve false (la pantalla puede avisar)', okC === false);
+
+// ── D. La computadora de al lado ─────────────────────────────────────────────
+log('\nD) Otra PC que tenía su copia guardada');
+await limpiar('buffer');
+await guardarAreaManual('buffer', PEDIDOS, 'pc-b');   // la PC B tiene copia local
+await new Promise(r => setTimeout(r, 60));
+servidor.buffer = { data: [], updated_at: '2026-08-16 04:00:00' };  // la PC A lo quitó después
+dataStore.buffer = null;
+chequear('la PC B también lo pierde', (await getAreaData('buffer')) === null);
+
+// ── E. Pero un área que nunca se publicó no puede borrar la copia buena ──────
+log('\nE) La publicación no llegó (servidor sin nada, PC con el archivo bueno)');
+await limpiar('buffer');
+await guardarAreaManual('buffer', PEDIDOS, 'daniel');
+await new Promise(r => setTimeout(r, 60));
+delete servidor.buffer;                               // el servidor nunca lo recibió
+dataStore.buffer = null;
+chequear('la PC conserva su archivo', (await getAreaData('buffer'))?.length === 2);
+
+log(`\n${fallos === 0 ? '── TODO BIEN ──' : `── ${fallos} FALLA(S) ──`}`, fallos === 0 ? 'ok' : 'bad');
+window.__RESULTADO__ = fallos === 0 ? 'TODO BIEN' : `${fallos} FALLAS`;
+</script>
+</body></html>

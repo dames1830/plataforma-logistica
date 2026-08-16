@@ -119,6 +119,8 @@ export const montarSlotting = (container, OPC = {}) => {
           </div>
         </div>
 
+        ${cartelTrabados(lista)}
+
         <div style="background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px;
                     padding:0.4rem 0.6rem; overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:0.78rem; min-width:1150px;">
@@ -148,6 +150,48 @@ export const montarSlotting = (container, OPC = {}) => {
     engancharTareas();
   }
 
+  /* EL AVISO ARRIBA DE TODO. Daniel, 15-ago-2026: *"si él no ve que diga prioridad en rojo,
+   * él no lo va a imprimir la hoja"*. El asistente entra a la pantalla antes que a la
+   * impresora, así que la urgencia tiene que estar antes que el cuadro. */
+  const cartelTrabados = (lista) => {
+    const pri = (lista || []).filter(t => t && t.prioridad && svc.migrarEstado(t) !== 'Finalizado');
+    if (!pri.length) return '';
+    const vistos = new Map();
+    pri.forEach(t => (t.destraba || []).forEach(d => {
+      if (d && d.sku7 && !vistos.has(d.sku7)) vistos.set(d.sku7, Number(d.pares) || 0);
+    }));
+    const pares = [...vistos.values()].reduce((a, b) => a + b, 0);
+    return `
+      <div style="display:flex; align-items:center; gap:10px; background:rgba(239,68,68,0.13);
+                  border:1px solid rgba(239,68,68,0.45); border-radius:9px; padding:0.6rem 0.85rem;
+                  margin-bottom:0.8rem;">
+        <span style="font-size:1.1rem;">🔴</span>
+        <div style="font-size:0.82rem; line-height:1.5;">
+          <b style="color:#ef4444; font-weight:900; letter-spacing:0.04em;">${pri.length} TAREA${
+            pri.length > 1 ? 'S' : ''} CON PRIORIDAD</b>
+          <span style="color:#cbd5e1;"> · almacenaje dejó ${num(pares)} pares parados en el buffer
+          esperando estos cuerpos. ${pri.length > 1 ? 'Imprimilas' : 'Imprimila'} y ${
+            pri.length > 1 ? 'hacelas' : 'hacela'} primero.</span>
+        </div>
+      </div>`;
+  };
+
+  /** El texto del cartel del papel: cuántos pares y de qué artículos. */
+  const paresTrabados = (t) => {
+    const d = (t && t.destraba) || [];
+    if (!d.length) return 'Hay mercadería';
+    const tot = d.reduce((a, x) => a + (Number(x.pares) || 0), 0);
+    return `El ${d.map(x => x.sku7).join(', el ')} tiene ${num(tot)} pares`;
+  };
+
+  /** Qué mercadería de almacenaje destraba esta tarea, para el globo de ayuda. */
+  const destrabaTexto = (t) => {
+    const d = (t && t.destraba) || [];
+    if (!d.length) return 'Destraba una tarea de almacenaje';
+    const tot = d.reduce((a, x) => a + (Number(x.pares) || 0), 0);
+    return `Destraba ${num(tot)} pares parados en el buffer: ${d.map(x => x.sku7).join(', ')}`;
+  };
+
   function fila(t) {
     const est = svc.migrarEstado(t);
     const info = svc.ESTADOS[est];
@@ -167,9 +211,16 @@ export const montarSlotting = (container, OPC = {}) => {
     }
     return `
       <tr class="slt-fila" data-f="${esc(t.fecha)}" data-n="${esc(t.n)}"
-          style="border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer;">
+          style="border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer;${t.prioridad
+            ? ' background:rgba(239,68,68,0.10); box-shadow:inset 4px 0 0 #ef4444;' : ''}">
         <td style="padding:10px 9px;">${esc(String(t.fecha).split('-').reverse().join('/'))}</td>
-        <td style="padding:10px 9px; color:#fff; font-weight:700;">Slot ${esc(t.n)}</td>
+        <td style="padding:10px 9px; color:#fff; font-weight:700; white-space:nowrap;">Slot ${esc(t.n)}${
+          /* AL COSTADO Y EN LA MISMA LÍNEA. Daniel, 15-ago-2026: la fila no puede crecer a dos
+             renglones ni repetir el aviso en la columna Estado — con verlo junto al número de
+             tarea alcanza. */
+          t.prioridad ? `<span style="color:#ef4444; font-weight:900; font-size:0.72rem;
+             letter-spacing:0.08em; margin-left:9px;"
+             title="${esc(destrabaTexto(t))}">🔴 PRIORIDAD</span>` : ''}</td>
         <td style="padding:10px 9px; text-align:center;">${num(t.pares)}</td>
         <td style="padding:10px 9px; text-align:center;">${cuerposDe(t)}</td>
         <td style="padding:10px 9px;">${esc(t.marca || '---')}</td>
@@ -846,6 +897,13 @@ export const montarSlotting = (container, OPC = {}) => {
                <b>ESTA HOJA SALIÓ SIN SKU NI TALLA</b>
                <span>La tarea se generó con una versión anterior. Volvé a procesar el Slotting
                para que salga con la ubicación exacta, el SKU completo y la talla.</span>
+             </div>` : '')
+          /* EL MISMO AVISO QUE EN LA PANTALLA, PORQUE LA HOJA VIAJA SOLA. El asistente
+             imprime y reparte; quien la recibe no vio el cuadro. */
+          + (primera && t.prioridad ? `<div class="cartel">
+               <b>PRIORIDAD · DESTRABA UNA TAREA DE ALMACENAJE</b>
+               <span>${esc(paresTrabados(t))} parados en el buffer que no se pudieron guardar.
+               Sacando esta mercadería, el cuerpo queda libre y la tarea se hace esta misma noche.</span>
              </div>` : '')
           + (primera ? `<table class="firmas">
                <tr><td class="rot" style="width:24mm">Nombres</td><td></td>
