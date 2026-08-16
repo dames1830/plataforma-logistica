@@ -372,13 +372,41 @@ manda la configuración.
 
 | Zona | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **SEL** | 830 | 740 | — | — | **330** | **330** | **330** | **330** | **330** | **330** |
+| **SEL** | **700** | **700** | **450** | **450** | **450** | **450** | **450** | **450** | **450** | **450** |
 | MZN01 | 700 | 610 | 570 | 400 | 284 | 372 | — | — | 347 | — |
 | **MZN02** | **480** | **480** | **480** | **480** | **480** | **480** | **480** | **480** | **480** | **480** |
 | MZN03 | — | — | 332 | 338 | 170 | 260 | 159 | 180 | 233 | — |
 | MZN04 | — | — | — | — | — | 289 | 190 | — | 347 | 192 |
 
 Donde dice — se usa el respaldo de la zona: **300**, salvo el MZN02 que va con **480**.
+
+### LA SUB-MARCA LE GANA A LA SERIE — `densidadMarcaStd`, v29.0230
+
+Regla de Daniel, 15-ago-2026:
+
+> *"De la marca Bata, categoría Comfit, entran seiscientos pares por cuerpo, porque es una
+> categoría o es un modelo que es muy delgado, tipo sandalias, tipo alpargatas."*
+
+| Sub-marca | Pares por cuerpo |
+|---|---|
+| **Bata Comfit** | **600** |
+
+**SALE DE `MarcaStd`, LA COLUMNA 9 DEL MAESTRO, NO DE `Marcas`.** Ahí dice `Bata Comfit` mientras
+la otra dice solo `Bata`, y por eso el sistema nunca lo había podido distinguir. Son **887
+artículos y 11.901 pares en el selectivo** al 15-ago-2026.
+
+**La serie no lo puede capturar**, y por eso hizo falta una dimensión nueva: el Comfit está
+repartido en las series 3 a 8, mezclado con Bata normal en todas.
+
+**Va en un mapa PLANO, sin zona.** Lo que decide es el grosor del zapato, no dónde esté guardado,
+así que vale en cualquier zona donde caiga. Se edita en Análisis SKU → Zonas de Almacenaje, en la
+tabla "Sub-marcas que no siguen a su serie", y **la lista de nombres sale del Maestro** a
+propósito: si el nombre no coincide exacto con lo que dice `MarcaStd`, la regla no se aplica
+nunca y no hay forma de darse cuenta mirando la pantalla.
+
+**En el Maestro hay más sub-marcas de Bata** —Bata Red (411 artículos), Bata Red Label (61),
+Bata 3d (35), Bata Flexible (26), Bata Explorer (10)— que hoy van con la capacidad de su serie.
+Si alguna resulta tener otra densidad, se agrega y nada más.
 
 ### Lo medido le gana al percentil
 
@@ -392,7 +420,17 @@ iban en direcciones opuestas y los dos costaban caro:
 | Zona | Decía | Entra | Qué pasaba |
 |---|---|---|---|
 | MZN02 | 259-352 | **480** | pedía cuerpos de más — 23 donde entraban 16, solo en las tareas de un día |
-| SEL | 548 y 400 | **330** | mandaba al operario con mercadería que no cabía |
+| SEL | 548 y 400 | 330 → **450** | mandaba al operario con mercadería que no cabía |
+
+**EL SELECTIVO SE CORRIGIÓ DOS VECES, Y LA SEGUNDA LA DIO DANIEL EL 15-ago-2026:** *"la capacidad
+de un cuerpo en la marca Bata fuera de la serie cero y uno es de cuatrocientos cincuenta"*. El 330
+del 14-ago salió de medir el piso **un día**; los 450 son la capacidad de la marca, y el selectivo
+entero es de Bata. Las series 0 y 1 bajan de 830 y 740 a **700**. Con esto las series 2 y 3 dejan
+de caer en el respaldo de 300.
+
+**Lo que cambia en la práctica:** una llegada de 800 pares de código nuevo pasa de necesitar
+**dos cuerpos a uno solo**. Con 330 el 60% daban 480 en dos cuerpos; con 450 esos mismos 480
+entran en uno, al 107%.
 
 El del selectivo es **la queja que trajo Daniel del piso**: *"la tarea le indica almacenarlo en
 cierto lugar, pero ya está ocupado ese espacio"*. Medido sobre las tareas vivas de ese día, 5 de
