@@ -191,6 +191,65 @@ con el 60%. Esa noche fueron 4 casos —el `6515899`, el `6615998`, el `6616998`
 cuerpo. Todo eso ya quedó decidido la primera vez que el artículo entró al almacén. Solo mide
 si le entra y, si no, le agrega cuerpos al lado.
 
+## 3b. EL CUERPO NO QUEDA A MEDIAS — v29.0229
+
+**Vale para los DOS caminos**, código nuevo y reposición. Es la regla que cierra el cálculo de
+cuánto baja, y hay que leerla junto con el 60% porque parece contradecirlo y no lo hace.
+
+Regla de Daniel, 15-ago-2026, mirando una tarea de 800 pares de Bata que dejaba dos cuerpos al
+79% y al 67%:
+
+> *"El sesenta por ciento nada más se debe bajar, pero si el sesenta por ciento se baja,
+> dejaríamos un hueco. Lo ideal sería completar los cuerpos. Tenemos que llegar al cien por
+> ciento o entre el noventa y cinco y cien por ciento del cuerpo, y romper un poco más esa
+> barrera del sesenta por ciento. Si el sesenta por ciento viene a ser quinientos pares, sí o sí
+> vas a utilizar dos cuerpos, pero para llenar esos dos cuerpos necesitas seiscientos sesenta:
+> te faltan como ciento sesenta pares más. Llénalos nada más."*
+
+**LA LÓGICA, QUE ES LO QUE HAY QUE ENTENDER ANTES QUE LA CUENTA: un cuerpo no debe quedar vacío
+ni a medias.** No es una excepción al 60% ni un ajuste fino: es el principio que decide qué se
+hace con el aire que queda adentro de un cuerpo ya tomado.
+
+| El 60% decide | Esta regla decide |
+|---|---|
+| **CUÁNTOS cuerpos se abren** — y eso no cambia | **qué se hace con el hueco** que queda adentro |
+
+**Por qué no se pierde nada bajando de más:** un cuerpo no se comparte con otro artículo, así que
+ocupar dos cuesta exactamente lo mismo con 480 pares que con 660. Dejar 180 arriba no ahorra un
+centímetro de almacén, y obliga a bajarlos después en una reposición — el mismo trabajo dos
+veces. Es el mismo razonamiento que ya justificaba el **piso** del código nuevo ("si llega con
+trescientos, no le saques el 40%, porque esos trescientos sí entran en un cuerpo"), solo que
+extendido a dos, tres o cuatro cuerpos.
+
+**Cómo se calcula:** el objetivo del artículo pasa a ser **lo que ya tiene en el piso más lo que
+de verdad entra en los cuerpos del plan** (`plan.capacidades`). En la reposición esas capacidades
+ya vienen descontadas de lo que hay dentro de cada cuerpo suyo, así que la cuenta sirve igual
+—*"si tienes cuatro cuerpos, pero en un cuerpo te falta llenar, solamente hay cien, y hay que
+llenar unos doscientos treinta más, hay que llenar, no me importa"*—.
+
+**Tres candados:**
+
+- **NUNCA RECORTA.** Si el 60% ya pasaba la capacidad, se queda como estaba. Esto solo agrega
+  pares, nunca los saca.
+- **NO SE INVENTA STOCK.** Si el buffer no alcanza para llenar, baja lo que haya.
+- **PASARSE ESTÁ BIEN.** *"Así nos pasemos diez o veinte por ciento más, hay que llenar el
+  cuerpo."* El reparto por tallas redondea a cajas, así que lo normal es terminar un poco por
+  encima del 100%.
+
+**El ejemplo de Daniel, con los números que da el código:**
+
+| | Antes | Ahora |
+|---|---|---|
+| Baja al piso | 480 | **690** |
+| Se paletiza | 320 (2 paletas) | **110 (1 paleta)** |
+| Cuerpos | 2 | 2 — los mismos |
+| Cómo quedan | 79% y 67% | **97% y 112%** |
+
+**EL PLAN SE REHACE UNA SOLA VEZ.** Con el objetivo puesto en la capacidad exacta, la cuenta de
+cuerpos da el mismo número —n cuerpos llenos divididos por la capacidad dan n—, así que la
+segunda pasada está por seguridad, no porque se espere que cambie. Vive en
+`calcularSugerenciaDeItem`, justo después del primer `planificarAlmacenaje`.
+
 ## 4. Lo que se resuelve ANTES de la pregunta
 
 Seis casos no llegan a la bifurcación porque su destino ya está decidido. Se preguntan en
