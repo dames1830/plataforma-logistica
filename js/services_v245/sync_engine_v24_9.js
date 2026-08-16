@@ -169,6 +169,11 @@ function descomprimirTareas(data) {
                     if (i[6] !== undefined && i[6] !== null) { itemObj.almacenar = i[6]; }
                     if (i[7] !== undefined && i[7] !== null) { itemObj.paletizar = i[7]; }
                     if (i[8] !== undefined && i[8] !== null && i[8] !== '') { itemObj.destino = i[8]; }
+                    // LA PALETA PARTIDA. Desde la v29.0228 una talla puede ir a dos cuerpos, y
+                    // entonces la paleta sale en dos renglones del papel. Va al final para no
+                    // mover los índices ya guardados: las tareas anteriores no lo traen y
+                    // siguen leyéndose igual, con su destino único.
+                    if (Array.isArray(i[9]) && i[9].length > 1) { itemObj.reparto = i[9]; }
                     return itemObj;
                 })
             };
@@ -314,6 +319,9 @@ export async function pushChange(area, data, date = null) {
                             base.push(i.almacenar !== undefined ? i.almacenar : null,
                                       i.paletizar !== undefined ? i.paletizar : null,
                                       i.destino !== undefined ? i.destino : '');
+                            // El corte de la paleta partida, solo si existe. Una paleta con un
+                            // destino sigue viajando con nueve campos, igual que siempre.
+                            if (Array.isArray(i.reparto) && i.reparto.length > 1) base.push(i.reparto);
                         }
                         return base;
                     });

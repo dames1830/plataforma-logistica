@@ -370,17 +370,8 @@ cada talla**, no un bloque de tallas seguidas.
 **EN BETA DESDE LA v29.0214.** Vive en `asignarCuerpos` de `dashboard_v28.js`, con el
 interruptor `SURTIDO_EN_EL_CUERPO` al lado para volver al reparto viejo sin revertir código.
 
-**HOY la talla no se parte**, y el reparto entrega la talla más grande primero al cuerpo que
-menos lleve. **Daniel lo rechazó el 15-ago-2026 y hay que cambiarlo — ver 5b-bis.**
-
-Las dos razones por las que se había escrito así, y qué pasó con cada una:
-
-- **El papel.** La unidad de la hoja —y de lo que `grabarPapelEnTareas` escribe de vuelta en la
-  tarea— es la línea del buffer: una ubicación, un SKU, una talla. Partir una talla obliga a
-  partir esa línea. **Sigue en pie: es el trabajo que cuesta el cambio.**
-- **El picking.** Se había escrito que con la talla entera en un cuerpo el picker va a un solo
-  lugar a buscarla. **Está al revés y lo corrigió Daniel: lo que importa es que la OLA vacíe el
-  cuerpo entero, y para eso el cuerpo tiene que tener la curva.**
+**LA TALLA SÍ SE PARTE, DESDE LA v29.0228.** Hasta ahí no se partía nunca, y por eso los cuerpos
+salían con una o dos tallas — ver 5b-bis.
 
 **De mayor a menor, no en orden de talla.** Empezando por las chicas, las grandes llegan al
 final sin dónde entrar. Con 150·150·150·50·50·50 en dos cuerpos, de mayor a menor da 300 y 300;
@@ -407,15 +398,15 @@ tapar un reparto mal hecho.
 lleva un solo artículo en la franja actual, y ninguna talla baja en unidades sueltas.
 
 
-## 5b-bis. MÍNIMO TRES TALLAS POR CUERPO — PENDIENTE
+## 5b-bis. MÍNIMO TRES TALLAS POR CUERPO — v29.0228
 
-Regla de Daniel, 15-ago-2026, después de leer las tareas de esa noche:
+Regla de Daniel, 15-ago-2026, leyendo las tareas de esa noche:
 
 > *"En un cuerpo me estás mandando a almacenar una talla, o máximo dos. Yo necesito que en un
 > cuerpo mínimo haya tres tallas. Mientras más surtido sería mejor, tres a cuatro tallas por
 > cuerpo. Cuando es un código nuevo, un código de reposición: el cuerpo debería estar surtido."*
 
-**EL PORQUÉ ES EL PICKING, Y NO ES EL QUE ESTABA ESCRITO.** Daniel:
+**EL PORQUÉ ES EL PICKING, y es lo contrario de lo que decía este skill antes.** Daniel:
 
 > *"Para que cuando llegue picking y la ola corra, la ola reconozca que en un cuerpo hay todas
 > las tallas y se puede agotar rápido y se te puede vaciar solo, no que el equipo de Slotting
@@ -427,40 +418,61 @@ cuerpo con la curva se vacía solo, con el trabajo que el almacén ya hace todos
 
 | | |
 |---|---|
-| **Mínimo** | **3 tallas** por cuerpo |
-| **Ideal** | 3 o 4 |
-| **No hace falta** | meter las 6 de la curva en un cuerpo — *"no te digo que las seis tallas las pongas en un cuerpo"* |
+| **Mínimo** | **3 tallas** por cuerpo (`MIN_TALLAS_POR_CUERPO`) |
+| **No hace falta** | meter las 6 de la curva — *"no te digo que las seis tallas las pongas en un cuerpo"* |
 | **A quién aplica** | código nuevo **y** reposición, por igual |
+| **Es una preferencia, no una imposición** | si repetir talla es la única forma de que entre, se repite |
 
-**LO QUE HAY QUE ROMPER PARA LOGRARLO: la talla tiene que poder partirse.** No hay otra forma y
-conviene tenerlo claro antes de intentar acomodos. Con 6 tallas y 3 cuerpos, sin partir, salen 2
-por cuerpo y punto: es aritmética. Para 3 por cuerpo hacen falta 9 asignaciones sobre 6 tallas,
-así que 3 tallas van a vivir en dos cuerpos.
+**EL PRECIO: LA PALETA SE PARTE, y Daniel lo aprobó explícitamente.** Con 6 tallas y 3 cuerpos,
+sin partir, salen 2 por cuerpo y punto — hacen falta 9 asignaciones sobre 6 tallas. Así que una
+paleta del buffer puede salir en **dos renglones del papel**, misma ubicación de origen y dos
+destinos. El corte viaja en el campo `reparto` del item; la tarea sigue guardando **un item por
+paleta**, porque el avance es de la paleta y no del renglón.
 
-**Cuánto pesa hoy, medido sobre los 48 cuerpos asignados el 15-ago-2026:**
+### Los tres pasos, y por qué el segundo control existe
 
-| Tallas en el cuerpo | Cuerpos | |
+1. **En cuántos cuerpos se parte cada talla.** `N x mínimo` menos las tallas que hay. Se
+   reparten los pedazos empezando por las tallas más grandes.
+2. **NINGÚN PEDAZO MAYOR QUE `capacidad ÷ tallasPorCuerpo`.** Contar pedazos no alcanza: el
+   `8811950` —tallas de 395, 405 y 415 pares en cuerpos de 480— cumplía la cuenta y aun así
+   dejaba **dos de sus cuatro cuerpos con dos tallas**, porque dos mitades de 200 llenan el
+   cuerpo y no queda sitio para una tercera. Con el tope de pedazo pasó a 4/4/4/3.
+3. **Cada pedazo al cuerpo que menos lleve y que todavía no tenga esa talla.**
+
+**Nunca menos de una caja por pedazo, ni más pedazos que cuerpos.** Partir 12 pares en tres deja
+al operario llevando cuatro a cada cuerpo.
+
+**El resultado, medido sobre los 48 cuerpos del 15-ago-2026:**
+
+| Tallas | Antes | Después |
 |---|---|---|
-| **1** | **16** | **33%** |
-| **2** | **9** | **19%** |
-| 3 | 8 | 17% |
-| 4 | 11 | 23% |
-| 6 | 4 | 8% |
+| 1 | 16 | 3 |
+| 2 | 9 | 3 |
+| 3 | 8 | 20 |
+| 4 | 11 | 18 |
+| 6 | 4 | 4 |
+| **Bajo el mínimo** | **25** | **6** |
 
-**25 de 48 —el 52%— están por debajo del mínimo.**
+**Los 6 que quedan no son del reparto.** Son artículos de 11 a 72 pares que la reposición
+devuelve a cuerpos donde **ya vivían dispersos** — el `1815306` recibió 4 tallas de 48 pares en
+4 cuerpos distintos. Ahí no hay nada que repartir mejor: el problema es que el artículo está
+partido de antes. Ver 5c.
 
-**Los dos casos que lo explican todo:**
+## 5b-ter. LA HOJA VA AGRUPADA POR DESTINO — v29.0228
 
-- **Talla más grande que medio cuerpo.** El `8811950` tiene tallas de 415, 405 y 395 pares en
-  cuerpos de 480: cada una se lleva un cuerpo entera y no queda sitio para acompañarla. Sin
-  partir la talla, no hay acomodo posible.
-- **El artículo ya vive disperso.** El `1815306` recibió 4 tallas de 48 pares en 4 cuerpos
-  distintos, uno por talla —192 pares ocupando cuatro cuerpos—. Ahí el problema no es el
-  reparto sino que la reposición devuelve a cuerpos que ya estaban repartidos.
+Regla de Daniel, 15-ago-2026: *"ordénalo por destino, nada más"*. El operario arma un carro por
+cuerpo y va una sola vez a cada lugar.
 
-**Vive en `asignarCuerpos` de `dashboard_v28.js`**, junto al interruptor `SURTIDO_EN_EL_CUERPO`.
-**El papel es lo que hay que rehacer con cuidado:** una talla partida sale en dos renglones con
-la misma ubicación de origen y destinos distintos. Maqueta antes de codear.
+Ordenada por talla tenía que volver al mismo cuerpo varias veces: en la Tarea14 de esa noche las
+cinco líneas del `MZN02-16-18` salían dos arriba de todo y tres al final de la hoja.
+
+**Dentro del destino se conserva el orden de siempre** —talla, después cantidad, después
+ubicación—, que es el que el operario ya conoce. **Las líneas sin destino van al final**: no son
+un viaje a ningún cuerpo. Vive en `ordenarPapel`, dentro de `filasDelPapel`, y vale para el
+papel impreso y para el Excel.
+
+**No lleva subtotales por destino.** Se ofrecieron y Daniel los rechazó: *"no me pongas su
+total, no me pongas nada"*. El único total sigue siendo el del artículo, al pie.
 
 ## 5c. EL RESTO QUE QUEDA ATRÁS — se arrastra al cuerpo nuevo
 

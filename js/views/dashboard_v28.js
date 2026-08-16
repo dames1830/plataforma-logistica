@@ -1,25 +1,25 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0227';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0228';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0227';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0227';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0227';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0227';
-import * as metasService from '../services_v245/metasService.js?v=29.0227';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0227';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0227';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0227';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0227';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0227';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0227';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0227';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0227';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0227';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0227';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0227';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0227';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0227';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0227';
-import { montarSlotting } from './slotting.js?v=29.0227';
+import * as adminService from '../services_v245/adminService.js?v=29.0228';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0228';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0228';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0228';
+import * as metasService from '../services_v245/metasService.js?v=29.0228';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0228';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0228';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0228';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0228';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0228';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0228';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0228';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0228';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0228';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0228';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0228';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0228';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0228';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0228';
+import { montarSlotting } from './slotting.js?v=29.0228';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -376,7 +376,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0227';
+const VERSION = '29.0228';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4412,7 +4412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0227');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0228');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15382,7 +15382,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0227 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0228 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -16838,7 +16838,29 @@ const renderRFSection = (container) => {
    */
   const SURTIDO_EN_EL_CUERPO = true;
 
-  const asignarCuerpos = (filas, cuerpos, zona, capacidades) => {
+  /**
+   * MÍNIMO DE TALLAS DISTINTAS EN UN CUERPO. Regla de Daniel, 15-ago-2026, leyendo las tareas
+   * de esa noche: *"en un cuerpo me estás mandando a almacenar una talla, o máximo dos. Yo
+   * necesito que en un cuerpo mínimo haya tres tallas. Mientras más surtido sería mejor, tres
+   * a cuatro tallas por cuerpo"*.
+   *
+   * EL PORQUÉ ES EL PICKING, y es lo contrario de lo que estaba escrito acá antes. Daniel:
+   * *"para que cuando llegue picking y la ola corra, la ola reconozca que en un cuerpo hay
+   * todas las tallas y se puede agotar rápido y se te puede vaciar solo, no que el equipo de
+   * Slotting vaya a vaciarlo con las tareas de Slotting"*. Un cuerpo con una sola talla se
+   * vacía cuando esa talla se agota, y eso puede no pasar nunca: queda ocupado con el resto
+   * que nadie pide y hay que ir a sacarlo a mano.
+   *
+   * Medido sobre los 48 cuerpos asignados esa noche: 16 llevaban UNA talla y 9 llevaban dos.
+   * 25 de 48 —el 52%— por debajo del mínimo.
+   *
+   * NO SON LAS SEIS DE LA CURVA: *"no te digo que las seis tallas las pongas en un cuerpo,
+   * pero sí mínimo tres"*. Con más cuerpos que eso el mínimo sube solo, porque las tallas se
+   * reparten entre todos.
+   */
+  const MIN_TALLAS_POR_CUERPO = 3;
+
+  const asignarCuerpos = (filas, cuerpos, zona, capacidades, factor) => {
     const conPiso = filas.filter(f => f.baja > 0);
     if (!conPiso.length || !cuerpos || !cuerpos.length) return {};
 
@@ -16873,39 +16895,104 @@ const renderRFSection = (container) => {
         if (noEntra && i < nombres.length - 1 && (enEste > 0 || f.baja > caps[i] * 1.10)) {
           i++; enEste = 0;
         }
-        destino[f.talla] = nombres[i];
+        destino[f.talla] = [{ nombre: nombres[i], pares: f.baja }];
         enEste += f.baja;
       });
       return destino;
     }
 
-    /* EL REPARTO SURTIDO — LA TALLA MÁS GRANDE PRIMERO, AL CUERPO QUE MENOS LLEVE.
+    /* EL REPARTO SURTIDO — CADA CUERPO CON UN MÍNIMO DE TALLAS DISTINTAS.
      *
-     * De mayor a menor y no en orden de talla: es la única forma de que el equilibrio salga.
-     * Empezando por las chicas, las grandes llegan al final sin dónde entrar y hay que
-     * forzarlas. Con 150, 150, 150, 50, 50, 50 en dos cuerpos, de mayor a menor da 300 y 300;
-     * en orden de talla daba 350 y 250.
+     * Va en tres pasos, y el primero es el que cambió el 15-ago-2026: antes la talla no se
+     * partía nunca, y con 6 tallas en 3 cuerpos salían 2 por cuerpo y punto. Para llegar al
+     * mínimo de MIN_TALLAS_POR_CUERPO hace falta que algunas tallas vivan en dos cuerpos: son
+     * N x mínimo asignaciones sobre las tallas que hay, y la diferencia sale de partir.
      *
-     * NUNCA SE PIERDE UNA TALLA. Si ningún cuerpo la admite dentro de la holgura, va igual al
+     *   1. EN CUÁNTOS CUERPOS SE PARTE CADA TALLA. Se reparten los pedazos que faltan
+     *      empezando por las tallas más grandes: son las que sobran para repartir y las que
+     *      desequilibran si se dejan enteras. Ninguna se parte en pedazos de menos de una
+     *      caja —partir 12 pares en tres deja al operario llevando cuatro a cada cuerpo—, ni
+     *      en más pedazos que cuerpos haya.
+     *
+     *   2. SE CORTAN LOS PEDAZOS, en cajas enteras. El último se queda con el resto, así la
+     *      suma cierra exacta contra lo que baja al piso.
+     *
+     *   3. CADA PEDAZO AL CUERPO QUE MENOS LLEVE Y QUE TODAVÍA NO TENGA ESA TALLA. De mayor a
+     *      menor: empezando por las chicas, las grandes llegan al final sin dónde entrar.
+     *
+     * NUNCA SE PIERDE UN PEDAZO. Si ningún cuerpo lo admite dentro de la holgura va igual al
      * que menos lleve: preferimos un cuerpo pasado antes que una línea de papel sin destino.
+     * Y el mínimo de tallas es una preferencia, no una imposición — si repetir talla es la
+     * única forma de que entre, se repite.
      *
-     * LO QUE ESTO NO PUEDE ARREGLAR, y conviene saberlo antes de "mejorarlo": con tallas muy
-     * grandes el reparto perfecto no existe, porque la talla no se parte. Un hombre de 1.000
-     * pares en tres cuerpos —250, 250, 250, 70, 60, 60, 60— deja uno en 370 sobre 330, y no
-     * hay acomodo que lo evite: las cuatro tallas chicas suman 250 y hay que repartirlas entre
-     * tres cuerpos que ya tienen 250 cada uno. No es un defecto del reparto, es la aritmética.
-     * Y tampoco es nuevo: el planificador ya venía aceptando pasarse, porque `cuantos` sale de
-     * dividir por la capacidad con la misma holgura del 10%.
+     * LO QUE ESTO NO PUEDE ARREGLAR: una talla de 415 pares en un cuerpo de 480 se lleva el
+     * cuerpo casi entera igual, y solo deja lugar para pedazos chicos de las demás. El mínimo
+     * se cumple, pero el cuerpo queda con una talla grande y dos rebanadas.
      */
-    const carga = nombres.map(() => 0);
-    const porTamano = [...conPiso].sort((a, b) => b.baja - a.baja
+    const caja = Math.max(1, Math.round(Number(factor) || 1));
+    const N = nombres.length;
+    const tallasPorCuerpo = Math.min(conPiso.length,
+      Math.max(MIN_TALLAS_POR_CUERPO, Math.ceil(conPiso.length / N)));
+
+    const trozosDe = new Map(conPiso.map(f => [f.talla, 1]));
+    const grandes = [...conPiso].sort((a, b) => b.baja - a.baja
                                     || (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0));
-    porTamano.forEach(f => {
-      const porTurno = nombres.map((_, i) => i).sort((a, b) => carga[a] - carga[b] || a - b);
-      const i = porTurno.find(x => carga[x] + f.baja <= caps[x] * 1.10);
-      const elegido = (i === undefined) ? porTurno[0] : i;
-      destino[f.talla] = nombres[elegido];
-      carga[elegido] += f.baja;
+
+    /* NO ALCANZA CON CONTAR PEDAZOS: HAY QUE MIRAR EL TAMAÑO DE CADA UNO.
+     *
+     * Un pedazo que se lleva más de lo que le toca a una talla dentro del cuerpo tapa a las
+     * demás. Con cuerpos de 480 y tres tallas cada uno, ninguno debería pasar de 160.
+     *
+     * Sin esto el 8811950 —tallas de 395, 405 y 415 pares— cumplía la cuenta de pedazos y
+     * aun así dejaba DOS de sus cuatro cuerpos con dos tallas: dos mitades de 200 llenan el
+     * cuerpo y no queda sitio para una tercera. */
+    const capMenor = Math.min(...caps.filter(c => isFinite(c) && c > 0));
+    const topePedazo = isFinite(capMenor) ? capMenor / tallasPorCuerpo : Infinity;
+    // NUNCA MENOS DE UNA CAJA POR PEDAZO, ni más pedazos que cuerpos: partir 12 pares en tres
+    // deja al operario llevando cuatro a cada cuerpo, que es justo lo que no se quiere.
+    const puedePartirse = (f) => (trozosDe.get(f.talla) || 1) < Math.min(N, Math.floor(f.baja / caja));
+    const pedazoGrande = (f) => (f.baja / (trozosDe.get(f.talla) || 1)) > topePedazo;
+
+    let faltan = N * tallasPorCuerpo - conPiso.length;
+    let repartio = true;
+    while (repartio) {
+      repartio = false;
+      for (const f of grandes) {
+        if (!puedePartirse(f)) continue;
+        if (faltan <= 0 && !pedazoGrande(f)) continue;
+        trozosDe.set(f.talla, (trozosDe.get(f.talla) || 1) + 1);
+        faltan--; repartio = true;
+      }
+    }
+
+    const piezas = [];
+    conPiso.forEach(f => {
+      const k = trozosDe.get(f.talla) || 1;
+      let queda = f.baja;
+      if (k > 1) {
+        const cada = Math.max(caja, Math.round(f.baja / k / caja) * caja);
+        for (let i = 0; i < k - 1 && queda > cada; i++) {
+          piezas.push({ talla: f.talla, pares: cada });
+          queda -= cada;
+        }
+      }
+      piezas.push({ talla: f.talla, pares: queda });
+    });
+
+    const carga = nombres.map(() => 0);
+    const tallasEn = nombres.map(() => new Set());
+    piezas.sort((a, b) => b.pares - a.pares
+                       || (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0));
+    piezas.forEach(p => {
+      const turno = nombres.map((_, i) => i).sort((a, b) => carga[a] - carga[b] || a - b);
+      const entra = (x) => carga[x] + p.pares <= caps[x] * 1.10;
+      let i = turno.find(x => !tallasEn[x].has(p.talla) && entra(x));
+      if (i === undefined) i = turno.find(x => !tallasEn[x].has(p.talla));
+      if (i === undefined) i = turno.find(entra);
+      if (i === undefined) i = turno[0];
+      (destino[p.talla] = destino[p.talla] || []).push({ nombre: nombres[i], pares: p.pares });
+      carga[i] += p.pares;
+      tallasEn[i].add(p.talla);
     });
     return destino;
   };
@@ -17735,13 +17822,34 @@ const renderRFSection = (container) => {
     //
     // Se pide que estén TODAS las líneas grabadas, no algunas: media hoja del día que se
     // generó y media de hoy sería peor que cualquiera de las dos enteras.
+    /* LA HOJA VA AGRUPADA POR DESTINO. Regla de Daniel, 15-ago-2026: el operario arma un carro
+     * por cuerpo y va una sola vez a cada lugar. Ordenada por talla tenía que volver tres veces
+     * al mismo cuerpo — en la Tarea14 de esa noche las cinco líneas del MZN02-16-18 salían dos
+     * arriba de todo y tres al final de la hoja.
+     *
+     * Dentro del destino se conserva el orden de siempre —talla, después cantidad, después
+     * ubicación—, que es el que el operario ya conoce. Las líneas sin destino (todo a reserva,
+     * o trabadas) van al final: no son un viaje a ningún cuerpo. */
+    const ordenarPapel = (fs) => fs.sort((a, b) =>
+         (a.destino ? 0 : 1) - (b.destino ? 0 : 1)
+      || String(a.destino || '').localeCompare(String(b.destino || ''))
+      || (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0)
+      || ((Number(a.qty) || 0) - (Number(b.qty) || 0))
+      || String(a.ubi).localeCompare(String(b.ubi)));
+
     if (lineas.every(l => l.almacenar !== undefined || l.destino !== undefined)) {
-      return lineas.map(l => ({
-        ubi: l.ubi, skuFull: l.skuFull, talla: l.talla, qty: l.qty,
-        marca: sug.ficha.marca || '',
-        alPiso: Number(l.almacenar) || 0,
-        aReserva: Number(l.paletizar) || 0,
-        destino: l.destino || ''
+      return ordenarPapel(lineas.flatMap(l => {
+        const base = { ubi: l.ubi, skuFull: l.skuFull, talla: l.talla, qty: l.qty,
+                       marca: sug.ficha.marca || '' };
+        // UNA PALETA PARTIDA SALE EN DOS RENGLONES. Se graba en `reparto` al generar la tarea
+        // y se vuelve a abrir acá; el paletizado va entero en el primero, porque la paleta se
+        // arma una sola vez por más que lo que baja vaya a dos cuerpos.
+        const rep = Array.isArray(l.reparto) && l.reparto.length > 1 ? l.reparto : null;
+        if (!rep) return [{ ...base, alPiso: Number(l.almacenar) || 0,
+                            aReserva: Number(l.paletizar) || 0, destino: l.destino || '' }];
+        return rep.map((r, i) => ({ ...base, alPiso: Number(r.q) || 0,
+                                    aReserva: i === 0 ? (Number(l.paletizar) || 0) : 0,
+                                    destino: r.d || '' }));
       }));
     }
 
@@ -17763,7 +17871,51 @@ const renderRFSection = (container) => {
     const pendiente = {};
     sug.cant.filas.forEach(f => { pendiente[f.talla] = { piso: f.baja, reserva: f.aReserva }; });
 
-    return lineas.map(l => {
+    /* EL REPARTO DE CADA TALLA ENTRE SUS CUERPOS, que se va gastando línea por línea.
+     *
+     * `asignarCuerpos` devuelve cuántos pares de cada talla van a cada cuerpo. Acá se le van
+     * restando los pares de cada paleta: la que cae justo en el corte entre dos cuerpos sale
+     * en DOS renglones, con la misma ubicación de origen y dos destinos. */
+    const pendienteDest = {};
+    Object.keys(sug.destinos || {}).forEach(t => {
+      const v = sug.destinos[t];
+      pendienteDest[t] = Array.isArray(v)
+        ? v.map(d => ({ nombre: d.nombre, quedan: Number(d.pares) || 0 }))
+        : [{ nombre: v, quedan: Infinity }];
+    });
+
+    // EN EL MEZZANINE 4 EL DESTINO ES LA ZONA Y NADA MÁS. No hay nivel que repartir: esas
+    // ubicaciones no están analizadas y nombrar un cuerpo sería inventarlo.
+    //
+    // Y en el mezzanine 3, para Adidas, Puma y Skechers, la zona MÁS SUS COLUMNAS: ahí sí se
+    // sabe dónde va, solo que el cuerpo lo elige el operario. Ver MARCAS_SIN_CUERPO.
+    const zonaSola = (sug.plan && sug.plan.sinUbicacion)
+      ? (sug.plan.destinoTexto || sug.plan.zona) : null;
+
+    const repartirDestino = (talla, alPiso) => {
+      if (zonaSola) return [{ destino: zonaSola, pares: alPiso }];
+      const cola = pendienteDest[talla];
+      if (!cola || !cola.length || alPiso <= 0) return [{ destino: '', pares: alPiso }];
+      const partes = [];
+      let resta = alPiso;
+      while (resta > 0 && cola.length) {
+        const d = cola[0];
+        const toma = Math.min(resta, d.quedan);
+        if (toma > 0) partes.push({ destino: d.nombre, pares: toma });
+        d.quedan -= toma;
+        resta -= toma;
+        if (d.quedan <= 0) cola.shift();
+      }
+      // Si sobran pares —el papel puede pasarse del plan por el recorte a cajas— se le suman
+      // al último cuerpo en vez de dejarlos sin destino.
+      if (resta > 0) {
+        if (partes.length) partes[partes.length - 1].pares += resta;
+        else partes.push({ destino: '', pares: resta });
+      }
+      return partes;
+    };
+
+    return ordenarPapel(lineas.flatMap(l => {
       const p = pendiente[l.talla] || { piso: 0, reserva: 0 };
       const pisoIdeal = Math.min(l.qty, Math.max(0, p.piso));
       // Lo que sobra de la línea después del piso es lo que querría subir; se baja al
@@ -17772,25 +17924,13 @@ const renderRFSection = (container) => {
       const alPiso = l.qty - aReserva;
       p.piso -= alPiso;
       p.reserva -= aReserva;
-      return {
-        ubi: l.ubi, skuFull: l.skuFull, talla: l.talla, qty: l.qty,
-        marca: sug.ficha.marca || '',
-        alPiso, aReserva,
-        // EN EL MEZZANINE 4 EL DESTINO ES LA ZONA Y NADA MÁS. No hay nivel que repartir:
-        // esas ubicaciones no están analizadas y nombrar un cuerpo sería inventarlo.
-        //
-        // Y en el mezzanine 3, para Adidas, Puma y Skechers, la zona MÁS SUS COLUMNAS: ahí sí
-        // se sabe dónde va, solo que el cuerpo lo elige el operario. Ver MARCAS_SIN_CUERPO.
-        destino: (sug.plan && sug.plan.sinUbicacion)
-          ? (sug.plan.destinoTexto || sug.plan.zona)
-          : (sug.destinos[l.talla] || '')
-      };
-    })
-    // EL CÁLCULO VA POR CANTIDAD, EL PAPEL POR UBICACIÓN. El reparto necesita empezar por la
-    // línea más chica —así se concentra en una sola—, pero el operario recorre el buffer en
-    // orden, así que la hoja se reordena antes de imprimirse.
-    .sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0)
-                 || String(a.ubi).localeCompare(String(b.ubi)));
+      const base = { ubi: l.ubi, skuFull: l.skuFull, talla: l.talla, qty: l.qty,
+                     marca: sug.ficha.marca || '' };
+      // El paletizado va entero en el primer renglón: la paleta se arma una sola vez.
+      return repartirDestino(l.talla, alPiso).map((d, i) => ({
+        ...base, alPiso: d.pares, aReserva: i === 0 ? aReserva : 0, destino: d.destino
+      }));
+    }));
   };
 
   /**
@@ -18209,7 +18349,7 @@ const renderRFSection = (container) => {
     }
 
     const destinos = (plan.estado === 'ok' || plan.estado === 'reposicion') && cant
-      ? asignarCuerpos(cant.filas, plan.cuerpos, plan.zona, plan.capacidades) : {};
+      ? asignarCuerpos(cant.filas, plan.cuerpos, plan.zona, plan.capacidades, cant.factor) : {};
 
     const meta = metasService.resolverMeta(datos.genderRims, f.gender || '', fecha);
     const minPiso = meta.metaUph > 0 ? Math.round((alPiso / meta.metaUph) * 60) : 0;
@@ -18359,6 +18499,8 @@ const renderRFSection = (container) => {
         if (i.almacenar !== undefined) linea.almacenar = i.almacenar;
         if (i.paletizar !== undefined) linea.paletizar = i.paletizar;
         if (i.destino !== undefined) linea.destino = i.destino;
+        // El corte de la paleta partida, si la talla quedó en dos cuerpos.
+        if (Array.isArray(i.reparto) && i.reparto.length > 1) linea.reparto = i.reparto;
         mapa.get(s7).push(linea);
       });
     }));
@@ -18403,12 +18545,18 @@ const renderRFSection = (container) => {
         const s = { ...s0, tareaId: t.id };
         const trabada = s.plan.estado === 'slotting' || s.plan.estado === 'sin-regla'
                      || s.plan.estado === 'sin-reglas-zona';
+        // UNA PALETA PUEDE SALIR EN VARIOS RENGLONES desde la v29.0228, cuando su talla se
+        // parte entre dos cuerpos. La tarea sigue guardando UN item por paleta —el avance es
+        // de la paleta, no del renglón— y el corte viaja en `reparto`.
         filasDelPapel(s, ctx).forEach(l => {
-          porLinea.set(claveDeLinea(l.ubi, l.skuFull, l.talla), {
-            almacenar: trabada ? 0 : l.alPiso,
-            paletizar: l.aReserva,
-            destino: trabada ? 'Revisar Slotting' : (l.destino || '')
-          });
+          const k = claveDeLinea(l.ubi, l.skuFull, l.talla);
+          const v = porLinea.get(k)
+                 || { almacenar: 0, paletizar: 0, destino: '', reparto: [] };
+          v.almacenar += trabada ? 0 : (l.alPiso || 0);
+          v.paletizar += l.aReserva || 0;
+          if (!v.destino) v.destino = trabada ? 'Revisar Slotting' : (l.destino || '');
+          if (!trabada && l.destino && l.alPiso > 0) v.reparto.push({ d: l.destino, q: l.alPiso });
+          porLinea.set(k, v);
         });
       });
       (t.items || []).forEach(art => (art.items || []).forEach(i => {
@@ -18417,6 +18565,9 @@ const renderRFSection = (container) => {
         i.almacenar = v.almacenar;
         i.paletizar = v.paletizar;
         i.destino = v.destino;
+        // Solo si de verdad se partió. Una paleta con un destino no lleva `reparto` y viaja
+        // igual que siempre: así las tareas que no se parten no pesan un byte de más.
+        if (v.reparto.length > 1) i.reparto = v.reparto; else delete i.reparto;
         grabadas++;
       }));
     });
@@ -19054,9 +19205,14 @@ const renderRFSection = (container) => {
                   const COLOR = { ok: '#3b82f6', reposicion: '#22c55e', slotting: '#ef4444' };
                   const c = COLOR[p.estado] || '#94a3b8';
                   // Qué tallas van a cada cuerpo. El nivel no se decide: lo elige el operario.
+                  // Una talla puede estar en dos cuerpos desde la v29.0228: el destino es una
+                  // lista de {nombre, pares}, no un texto suelto.
                   const porCuerpoDest = Object.keys(x.destinos || {}).length
                     ? Object.entries(x.destinos).reduce((acc, [talla, dest]) => {
-                        (acc[dest] = acc[dest] || []).push(talla); return acc;
+                        (Array.isArray(dest) ? dest : [{ nombre: dest }]).forEach(d => {
+                          (acc[d.nombre] = acc[d.nombre] || []).push(talla);
+                        });
+                        return acc;
                       }, {}) : null;
                   const detalleNiveles = porCuerpoDest
                     ? `<div style="font-size:0.63rem; color:rgba(255,255,255,0.45); margin-top:2px;">${
