@@ -1,25 +1,25 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0231';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0232';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0231';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0231';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0231';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0231';
-import * as metasService from '../services_v245/metasService.js?v=29.0231';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0231';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0231';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0231';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0231';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0231';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0231';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0231';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0231';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0231';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0231';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0231';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0231';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0231';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0231';
-import { montarSlotting } from './slotting.js?v=29.0231';
+import * as adminService from '../services_v245/adminService.js?v=29.0232';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0232';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0232';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0232';
+import * as metasService from '../services_v245/metasService.js?v=29.0232';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0232';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0232';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0232';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0232';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0232';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0232';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0232';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0232';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0232';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0232';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0232';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0232';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0232';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0232';
+import { montarSlotting } from './slotting.js?v=29.0232';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -376,7 +376,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0231';
+const VERSION = '29.0232';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4431,7 +4431,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0231');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0232');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15401,7 +15401,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0231 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0232 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17608,7 +17608,45 @@ const renderRFSection = (container) => {
     });
   };
 
-  const cargarContextoSugerencia = async (tareasAbiertas) => {
+  /**
+   * LO QUE SLOTTING YA SACÓ, SIN ESPERAR LA FOTO DEL ROBOT.
+   *
+   * Regla de Daniel, 15-ago-2026. Es la posta de vuelta: almacenaje avisa a Slotting que algo
+   * quedó trabado, y Slotting avisa a almacenaje que ya lo resolvió.
+   *
+   * No hace falta ningún dato nuevo ni esperar al corte de stock: la tarea de Slotting ya dice
+   * qué artículo se sacó de qué cuerpo, y con marcarla Finalizada alcanza. Sobre la foto de las
+   * 19:00 se descuenta eso y recién ahí se decide.
+   *
+   * Con el `SEL-04-21` del 15-ago: la foto dice 573 pares —304 del 6116913, 171 del 5516327 y
+   * 98 del 5513311—; la tarea de Slotting finalizada dice que se sacaron los dos últimos, así
+   * que almacenaje trabaja con 304 y el cuerpo queda limpio.
+   *
+   * Devuelve Map('SEL-04-21' -> Set('5516327','5513311')). Vacío si algo falla: sin esto el
+   * cálculo sigue andando con la foto tal cual, que es como venía.
+   */
+  const cuerposLimpiadosPorSlotting = async () => {
+    const salida = new Map();
+    try {
+      const cajon = await slottingService.traerTareas();
+      const hoy = getLogicalDate();
+      ((cajon && cajon[hoy] && cajon[hoy].tareas) || []).forEach(t => {
+        if (slottingService.migrarEstado(t) !== 'Finalizado') return;
+        (t.lineas || []).forEach(l => {
+          const k = String(l.ubi || '').trim().toUpperCase();
+          const s7 = String(l.sku7 || '').trim();
+          if (!k || !s7) return;
+          if (!salida.has(k)) salida.set(k, new Set());
+          salida.get(k).add(s7);
+        });
+      });
+    } catch (e) {
+      console.warn('[Sugerencia] no se pudo leer lo que Slotting ya sacó:', e && e.message);
+    }
+    return salida;
+  };
+
+  const cargarContextoSugerencia = async (tareasAbiertas, limpiadosPorSlotting) => {
     await zonasService.cargarZonas();
     await tallasService.cargarTallas();
     await cargarTablaTallasNube();
@@ -17774,6 +17812,11 @@ const renderRFSection = (container) => {
       const p = ubi.split('-');
       const col = parseInt(p[1], 10), cue = parseInt(p[2], 10);
       if (!col || !cue) return;
+      // YA NO ESTÁ: Slotting lo sacó de ahí en esta jornada. La foto todavía lo muestra porque
+      // el robot publica a las 19:00, pero el cuerpo está limpio desde que la tarea se finalizó.
+      const cuerpoTxt = `${zona}-${String(col).padStart(2, '0')}-${String(cue).padStart(2, '0')}`;
+      const sacados = limpiadosPorSlotting && limpiadosPorSlotting.get(cuerpoTxt);
+      if (sacados && s7 && sacados.has(s7)) return;
       (ocupados[zona] = ocupados[zona] || new Set()).add(`${col}-${cue}`);
       if (s7) {
         if (!paresEnCuerpo.has(s7)) paresEnCuerpo.set(s7, new Map());
@@ -18670,7 +18713,7 @@ const renderRFSection = (container) => {
   const grabarPapelEnTareas = async (tareas) => {
     if (!tareas || !tareas.length) return 0;
     const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
-    const ctx = await cargarContextoSugerencia(abiertas);
+    const ctx = await cargarContextoSugerencia(abiertas, await cuerposLimpiadosPorSlotting());
     // Sin Stock Activo no hay cálculo posible. Mejor dejar las tres columnas vacías que
     // grabar ceros, que después nadie distingue de un cálculo de verdad.
     if (!ctx.porTallaDe.size) return 0;
@@ -24721,7 +24764,7 @@ window.showCellModal = function(htmlContent) {
    * La sugerencia se calcula acá, al exportar, porque el generador de las 19:00 todavía
    * no la graba en la tarea. El día que la grabe, esto pasa a leerla en vez de calcularla.
    */
-  const exportAlmacenajeExcel = async (destino = 'excel') => {
+  const exportAlmacenajeExcel = async (destino = 'excel', soloId = null) => {
     if (!almacenajeTasksCache.length) {
       showPremiumAlert('SIN TAREAS', 'No hay tareas en el historial para exportar.', 'info');
       return;
@@ -24745,7 +24788,11 @@ window.showCellModal = function(htmlContent) {
     // Con las 48 horas de caducidad, "todas las Creadas vivas" son a lo sumo las de los dos
     // últimos días: no se acumulan para siempre.
     const todas = almacenajeTasksCache || [];
-    const tareas = todas.filter(t => t && t.status === 'Creada' && esTareaViva(t));
+    // Con `soloId` sale UNA sola hoja: es la tarea que estaba trabada y que Slotting acaba de
+    // destrabar. No entran las demás, que ya están impresas y en manos de alguien.
+    const tareas = soloId
+      ? todas.filter(t => t && t.id === soloId)
+      : todas.filter(t => t && t.status === 'Creada' && esTareaViva(t));
     const fuera = todas.filter(t => t && t.status !== 'Creada'
                                  && t.status !== 'Finalizado' && t.status !== 'Vencida').length;
     const deOtrosDias = tareas.filter(t => t.fecha < window.__almacenajeStartDate
@@ -24768,7 +24815,7 @@ window.showCellModal = function(htmlContent) {
       // Los cuerpos ya prometidos a tareas abiertas cuentan como ocupados: sin eso, dos
       // artículos de la misma corrida terminarían mandados al mismo cuerpo.
       const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
-      const ctx = await cargarContextoSugerencia(abiertas);
+      const ctx = await cargarContextoSugerencia(abiertas, await cuerposLimpiadosPorSlotting());
 
       // Sin Stock Activo no hay cálculo posible: planificarPorTalla devuelve null en cuanto
       // no conoce las tallas, y el papel saldría con la cabecera y sin una sola fila. Es
@@ -28287,6 +28334,23 @@ window.showCellModal = function(htmlContent) {
     }
   };
 
+  /* LO QUE SLOTTING YA SACÓ, PARA PINTAR LA FILA. Se pide una vez por pintada y se guarda en
+   * `window.__slotLimpios`; cuando llega, se vuelve a pintar. Sin esperar a que llegue, la
+   * tabla sale igual que siempre —con la tarea en BLOQUEADA—, así que una demora del servidor
+   * no deja la pantalla en blanco. */
+  let _pidiendoLimpios = false;
+  const refrescarLimpiosDeSlotting = (container) => {
+    if (_pidiendoLimpios) return;
+    _pidiendoLimpios = true;
+    cuerposLimpiadosPorSlotting().then(m => {
+      _pidiendoLimpios = false;
+      const antes = JSON.stringify([...(window.__slotLimpios || new Map())].map(([k, v]) => [k, [...v]]));
+      const ahora = JSON.stringify([...m].map(([k, v]) => [k, [...v]]));
+      window.__slotLimpios = m;
+      if (antes !== ahora && container && container.isConnected) window.renderAlmacenajeTareas(container);
+    }).catch(() => { _pidiendoLimpios = false; });
+  };
+
   window.renderAlmacenajeTareas = (container) => {
     window.__almacenajeContainer = container;
     // Se dispara sin esperarla: si hay algo que corregir, guarda y vuelve a dibujar sola.
@@ -29420,6 +29484,10 @@ window.showCellModal = function(htmlContent) {
         renderAlmacenajeTareas(container);
     };
 
+    // Se pide en paralelo: si hay tareas trabadas y Slotting ya las resolvió, la fila cambia
+    // sola de BLOQUEADA a REIMPRIMIR sin que nadie recargue.
+    if (!isKpi && !isDetail) refrescarLimpiosDeSlotting(container);
+
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.4rem; gap:1rem; flex-wrap:wrap;">
             ${!isKpi ? `
@@ -30535,10 +30603,38 @@ window.showCellModal = function(htmlContent) {
                                         }
                                     }
                                 }
+                                /* LA TAREA TRABADA SE VE EN SU PROPIA FILA. Regla de Daniel,
+                                   15-ago-2026: nada de botones nuevos en la cabecera —*"está
+                                   muy acumulado de botones"*—, todo dentro de la fila.
+
+                                   Y la palabra cambia sola cuando Slotting resuelve: BLOQUEADA
+                                   en rojo mientras el cuerpo siga sucio, REIMPRIMIR en verde
+                                   cuando ya está libre, y recién ahí aparece la impresora. Sin
+                                   lugar no hay nada que rehacer, así que el ícono no está. */
+                                const trabada = (t.items || []).some(a => a && a.traba);
+                                // No alcanza con que el cuerpo aparezca en una tarea de Slotting:
+                                // tienen que haber salido TODOS los intrusos. Si sacaron uno de dos,
+                                // el cuerpo sigue sucio y la tarea sigue sin poder guardarse.
+                                const libreYa = trabada && (t.items || []).some(a => {
+                                    const mz = (a && a.traba && a.traba.mezclados) || [];
+                                    if (!mz.length) return false;
+                                    return mz.every(m => {
+                                        const k = `${m.zona}-${String(m.columna).padStart(2, '0')}-${String(m.cuerpo).padStart(2, '0')}`;
+                                        const sacados = (window.__slotLimpios || new Map()).get(k);
+                                        return sacados && (m.otros || []).every(o => sacados.has(o));
+                                    });
+                                });
+                                const tinte = !trabada ? '' : (libreYa
+                                    ? ' background:rgba(34,197,94,0.09);' : ' background:rgba(239,68,68,0.08);');
                                 return `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;" onclick="window.assignTask('${t.id}')">
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;${tinte}" onclick="window.assignTask('${t.id}')">
                                     <td style="padding:10.8px 1rem;">${t.fecha.split('-').reverse().join('/')}</td>
-                                    <td style="padding:10.8px 1rem; color:#fff; font-weight:600;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}</td>
+                                    <td style="padding:10.8px 1rem; color:#fff; font-weight:600; white-space:nowrap;">${t.id.includes('_') ? t.id.split('_')[1] : t.id}${
+                                      !trabada ? '' : (libreYa
+                                        ? `<span style="color:#22c55e; font-weight:900; font-size:0.66rem; letter-spacing:0.07em; margin-left:9px;"
+                                             title="Slotting ya liberó el cuerpo: se puede rehacer la tarea">REIMPRIMIR</span>`
+                                        : `<span style="color:#ef4444; font-weight:900; font-size:0.66rem; letter-spacing:0.07em; margin-left:9px;"
+                                             title="No se pudo guardar: esperando a Slotting">BLOQUEADA</span>`)}</td>
                                     <td style="padding:10.8px 1rem; text-align:center;">${(t.status === 'Finalizado' ? getTaskTotalAvance(t) : t.qty).toLocaleString()}</td>
                                     <td style="padding:10.8px 1rem; white-space:nowrap;" title="${marcaNormalizada(t.marca)}">${marcaCorta(t.marca)}</td>
                                     <td style="padding:10.8px 1rem; color:#fff; font-weight:800; background:rgba(79,70,229,0.05);">${t.u1 || '---'}</td>
@@ -30570,6 +30666,9 @@ window.showCellModal = function(htmlContent) {
                                             ` : `
                                                 <button disabled title="Eliminar Tarea (Solo Admin)" style="background:none; border:none; cursor:not-allowed; font-size:1.1rem; color:#ef4444; opacity:0.3;">🗑️</button>
                                             `}
+                                            ${libreYa ? `
+                                                <button onclick="window.reimprimirTareaTrabada('${t.id}', this)" title="Slotting liberó el lugar: rehacer esta tarea con el almacén de ahora e imprimir la hoja" style="background:none; border:none; cursor:pointer; font-size:1.1rem; margin-left:4px;">🖨️</button>
+                                            ` : ''}
                                         `}
                                     </td>
                                 </tr>`;
@@ -30777,6 +30876,37 @@ window.showCellModal = function(htmlContent) {
     // El botón es solo el icono: el rótulo de espera va sin texto para que no se estire
     window.exportAlmacenajeExcel = (btn) => withLoading(btn, '⌛', () => exportAlmacenajeExcel());
     window.imprimirTareasAlmacenaje = (btn) => withLoading(btn, '⌛', () => exportAlmacenajeExcel('imprimir'));
+
+    /* REHACER UNA TAREA QUE SLOTTING DESTRABÓ. Regla de Daniel, 15-ago-2026.
+     *
+     * SE RECALCULA ENTERA, no solo el cuerpo que faltaba: si mientras tanto picking vació otro
+     * cuerpo mejor, la tarea tiene que aprovecharlo. Se usa el almacén de ESTE momento, con lo
+     * que Slotting ya sacó descontado de la foto de las 19:00.
+     *
+     * Y sale UNA sola hoja. Las demás tareas ya están impresas y en manos de alguien; volver a
+     * imprimirlas todas sería repartir papel repetido en mitad del turno. */
+    window.reimprimirTareaTrabada = async (id, btn) => {
+      const t = (almacenajeTasksCache || []).find(x => x && x.id === id);
+      if (!t) return;
+      await withLoading(btn, '⌛', async () => {
+        const lineas = await grabarPapelEnTareas([t]);
+        if (!lineas) {
+          showPremiumAlert('NO SE PUDO RECALCULAR',
+            'Falta el Stock Activo en esta sesión. Súbelo y vuelve a intentar.', 'warning');
+          return;
+        }
+        const sigueTrabada = (t.items || []).some(a => a && a.traba);
+        await syncEngine.pushChange('almacenaje_tasks', almacenajeTasksCache);
+        if (sigueTrabada) {
+          showPremiumAlert('SIGUE SIN LUGAR',
+            'Se recalculó con el almacén de ahora y el artículo todavía no tiene dónde ir. '
+            + 'Hace falta que Slotting libere más espacio.', 'warning');
+          renderAlmacenajeTareas(document.getElementById('content-area') || document.body);
+          return;
+        }
+        await exportAlmacenajeExcel('imprimir', id);
+      });
+    };
 
     // --- LÓGICA DE AUDITORÍA WMS ---
     // ========================================================================
