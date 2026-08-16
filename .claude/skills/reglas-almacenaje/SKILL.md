@@ -69,8 +69,39 @@ Son dos reglas distintas y se parecen:
 | **20 pares** (esta) | código nuevo o reposición | siempre 20, en todas las zonas |
 | `saldoMenorA` | si va a la **columna de saldos** | **20 en el SEL**, **80 en los tres mezzanines** |
 
-El segundo está configurado y funciona; el primero **todavía no está escrito en el código**
-— ver "Lo que el código todavía no hace".
+Los dos están escritos y funcionando. El primero vive en `casoDelItem` como
+`MINIMO_PARA_REPOSICION`, **EN BETA DESDE LA v29.0227**; hasta ahí la pregunta era otra y por
+eso el corte no se cumplía — ver "El día que el corte de los 20 se delató solo".
+
+### El día que el corte de los 20 se delató solo
+
+Hasta la v29.0226 `casoDelItem` no contaba pares. Preguntaba **si el artículo tenía un cuerpo
+en la columna que le tocaba por temporada**, y eso se parece lo suficiente como para no llamar
+la atención: un artículo con stock casi siempre tiene su cuerpo en su franja, así que la
+respuesta coincidía con la correcta por casualidad, no porque el sistema entendiera la regla.
+
+El 15-ago-2026 se rompió solo, y lo rompió el cambio del día anterior. Al pasar la columna 4
+del selectivo a `saldoGrande`, el `6110920` dejó de tener cuerpo en la franja actual y salió
+como **código nuevo teniendo 363 pares en el piso y 700 en reserva**: se le bajaron 880 pares a
+**tres cuerpos** del selectivo donde correspondían 320 a uno solo. Lo cazó Daniel leyendo la
+tarea 24.
+
+**No fue un caso aislado.** Medido sobre esa misma corrida: **17 de 41 artículos** estaban mal
+clasificados, **3.070 pares de más** en el activo y **9 cuerpos de más** pedidos en una sola
+noche — con el selectivo de temporada actual en 8 cuerpos libres y dos tareas ya trabadas por
+falta de espacio.
+
+**El arreglo cambia las dos cosas a la vez**, porque los dos defectos eran el mismo:
+
+| | Antes | Ahora |
+|---|---|---|
+| Qué se pregunta | ¿tiene cuerpo en su franja? | ¿cuántos pares tiene en el almacén? |
+| Qué se cuenta | nada | **activo + reserva** |
+
+**Ojo con la dirección del cambio: no siempre baja menos.** Un artículo con 0 pares abajo y 60
+en reserva pasa a ser reposición y su objetivo son 2 cuerpos, así que puede bajar **más** que
+con el 60%. Esa noche fueron 4 casos —el `6515899`, el `6615998`, el `6616998` y el
+`5891371`—. Es lo que corresponde: la reserva dice que ese código ya entró al almacén.
 
 ## 2. Camino CÓDIGO NUEVO — siete pasos
 
@@ -664,16 +695,17 @@ ese filtro el papel diría `ZONA PUMA`, justo al revés de lo que corresponde.
 
 Medido el 14-ago-2026 contra las tareas y el stock de producción. **Están abiertos:**
 
-1. **El corte de los 20 pares no existe.** `casoDelItem` pregunta *¿tiene un cuerpo en la franja
-   que le toca?*, nunca cuántos pares tiene. Y `casaDe` tiene un agujero: el corte de 20 está
-   escrito, pero **si ningún cuerpo llega a 20 igual le da casa con el más cargado, aunque tenga
-   1 par**. Con casa, pasa a reposición.
+1. ~~**El corte de los 20 pares no existe.**~~ **RESUELTO EN LA v29.0227** — ver "El día que el
+   corte de los 20 se delató solo". `casoDelItem` ahora mide activo + reserva y corta en 20.
 
-   Comprobado: el `2816305` llegó con 90 pares teniendo **5 en el almacén** y salió como
-   reposición a `MZN01-22-11`, columna de temporada **anterior**.
+   **Lo que queda de este punto:** `casaDe` sigue con su agujero. El corte de 20 está escrito,
+   pero **si ningún cuerpo llega a 20 igual le da casa con el más cargado, aunque tenga 1 par**.
+   Eso ya no cambia la clasificación —esa la decide el corte nuevo—, pero sí el **destino**: un
+   artículo clasificado como código nuevo puede terminar mandado a una casa de un par. Va junto
+   con el punto 3.
 
-2. **La reserva no entra en la cuenta.** La regla es activo + reserva; el sistema solo mira el
-   activo. Un artículo con 3 pares abajo y 800 arriba no se distingue de uno que nunca entró.
+2. ~~**La reserva no entra en la cuenta.**~~ **RESUELTO EN LA v29.0227**, en el mismo cambio: la
+   reserva se lee de `ctx.reservaDe` y suma igual que el piso.
 
 3. **El destino no respeta el camino elegido.** `planificarAlmacenaje` toma el atajo de
    reposición mirando **solo `art.yaTiene`**, sin consultar qué decidió `casoDelItem`. El cálculo

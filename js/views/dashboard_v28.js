@@ -1,25 +1,25 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0226';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0227';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0226';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0226';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0226';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0226';
-import * as metasService from '../services_v245/metasService.js?v=29.0226';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0226';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0226';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0226';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0226';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0226';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0226';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0226';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0226';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0226';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0226';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0226';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0226';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0226';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0226';
-import { montarSlotting } from './slotting.js?v=29.0226';
+import * as adminService from '../services_v245/adminService.js?v=29.0227';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0227';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0227';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0227';
+import * as metasService from '../services_v245/metasService.js?v=29.0227';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0227';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0227';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0227';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0227';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0227';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0227';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0227';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0227';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0227';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0227';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0227';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0227';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0227';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0227';
+import { montarSlotting } from './slotting.js?v=29.0227';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -376,7 +376,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0226';
+const VERSION = '29.0227';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4412,7 +4412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0226');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0227');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15382,7 +15382,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0226 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0227 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17821,6 +17821,13 @@ const renderRFSection = (container) => {
   const PCT_CODIGO_NUEVO     = 60;
   /** La reposición de fábrica sigue midiéndose en cuerpos: no es un código nuevo. */
   const CUERPOS_REPOSICION   = 2;
+  /**
+   * EL CORTE QUE PARTE TODO: 20 PARES EN EL ALMACÉN, ACTIVO MÁS RESERVA.
+   *
+   * Es el mismo 20 con el que la zona decide si algo es un saldo, y no es casualidad: las dos
+   * preguntas miran lo mismo, si al artículo le queda algo de verdad en el almacén.
+   */
+  const MINIMO_PARA_REPOSICION = 20;
 
   /**
    * LAS MARCAS QUE SE ENTREGAN CON LA COLUMNA Y NO CON EL CUERPO.
@@ -17918,15 +17925,15 @@ const renderRFSection = (container) => {
    *               -> TODO al piso, y sin mirar temporada ni marca.
    *
    *   CDBUFFER-A  lo dejó recepción, importado o nacional. Acá sí hay que decidir, y
-   *               depende de si el artículo ya vive en el almacén:
+   *               depende de CUÁNTO TIENE el artículo en el almacén —activo + reserva—,
+   *               nunca de cuánto llega:
    *
-   *       sin cuerpo en la franja que le toca -> CÓDIGO NUEVO, 3 cuerpos.
+   *       menos de 20 pares -> CÓDIGO NUEVO, el 60%.
    *               Comercial lo va a pedir en menos de dos días y su primer batch se lleva
-   *               el 40-50%: hay que tenerlo abajo listo. Entra acá también el artículo al
-   *               que le cambiaron la temporada y solo le quedaba un saldo: su cuerpo está
-   *               en una columna que ya no es la suya, así que arranca de cero.
+   *               el 40-50%: hay que tenerlo abajo listo. Cero pares entra acá: es la
+   *               primera vez que ese código pisa el almacén.
    *
-   *       con cuerpo en su franja -> REPOSICIÓN DE FÁBRICA, 2 cuerpos.
+   *       20 pares o más -> REPOSICIÓN DE FÁBRICA, 2 cuerpos.
    *               No es nuevo: es un código que ya salió y viene por su segundo batch.
    *
    * Un artículo no aparece en A y en B a la vez —comprobado sobre el stock del 04-ago, cero
@@ -18011,8 +18018,8 @@ const renderRFSection = (container) => {
       // Llegó más de lo que había arriba. Sigue de largo y manda la regla de siempre, que es la
       // que se habría aplicado si hubiera entrado por el A:
       //
-      //   ya tiene cuerpo en su franja  ->  reposición de fábrica, 2 cuerpos
-      //   no tiene ninguno              ->  código nuevo, el 60%
+      //   20 pares o más en el almacén  ->  reposición de fábrica, 2 cuerpos
+      //   de 19 para abajo              ->  código nuevo, el 60%
       //
       // El replenishment de verdad sigue protegido: si bajaron 200 de una reserva de 500, la
       // llegada no supera a la reserva y va todo al piso. No se le devuelve nada al rack.
@@ -18050,20 +18057,46 @@ const renderRFSection = (container) => {
                motivo: `${datos.marca} no manda nada a reserva: todo se almacena en su zona.` };
     }
 
-    // Para la prueba de saldos van los pares DEL BUFFER y no los que terminen bajando: lo
-    // que decide si un artículo es un saldo es cuánto tiene, no cuánto se le almacena hoy.
-    const franja = zonasService.franjaDeArticulo({ ...datos, pares }, zona);
-    const enSuFranja = (datos.yaTiene || []).some(c =>
-      // columnaSirveParaFranja y no franjaDeColumna: hay columnas que llevan dos cosas —la 1
-      // del MZN01 es de temporada anterior Y de escolar—, y con la comparación directa un
-      // escolar que ya vive ahí no se reconocía como suyo.
-      c.zona === zona && zonasService.columnaSirveParaFranja(c.zona, c.columna, franja));
+    /* EL CORTE DE LOS 20 PARES — ACTIVO + RESERVA, Y NO LA COLUMNA DONDE VIVE.
+     *
+     * Daniel, 14-ago-2026: *"si llega a mil y tienes más de veinte, igual o más de veinte, ya
+     * es un código de reposición. Pero si llega a mil y tienes menos de veinte, o sea,
+     * diecinueve para abajo, es un código nuevo, y le tenemos que dar el trato de un código
+     * nuevo"*.
+     *
+     * HASTA LA v29.0226 ESTA PREGUNTA ERA OTRA: si el artículo tenía un cuerpo en la columna
+     * que le tocaba por temporada. Se parecía lo suficiente como para no llamar la atención
+     * —un artículo con stock casi siempre tiene su cuerpo en su franja— y el 15-ago-2026 se
+     * delató solo. Al pasar la columna 4 del selectivo a saldo grande, el 6110920 dejó de
+     * tener cuerpo en la franja actual y salió como CÓDIGO NUEVO teniendo 363 pares en el
+     * piso y 700 en reserva: se le bajaron 880 pares a TRES cuerpos del selectivo, donde
+     * correspondían unos 320 a uno solo. Esa noche fueron 22 artículos de 46.
+     *
+     * DOS COSAS QUE NO SE PUEDEN CONFUNDIR:
+     *
+     *   LO QUE LLEGA NO INTERVIENE. Un lote de 1.000 pares no convierte a un artículo en
+     *   reposición, y uno de 10 no lo convierte en código nuevo. Por eso se mide `enElAlmacen`
+     *   y no `pares`.
+     *
+     *   LA RESERVA CUENTA IGUAL QUE EL PISO. Un artículo con 3 pares abajo y 800 arriba no es
+     *   un código nuevo: ya entró al almacén y lo que viene es su segundo lote. Mirando solo
+     *   el activo no se distinguía de uno que nunca pisó el almacén.
+     *
+     * Cero también cae en código nuevo, que es lo correcto: es la primera vez que ese código
+     * pisa el almacén.
+     */
+    const enElPiso = Object.values(ctx.porTallaDe.get(s7) || {})
+      .reduce((a, t) => a + (Number(t && t.piso) || 0), 0);
+    const enReservaHoy = Number(ctx.reservaDe && ctx.reservaDe.get(s7)) || 0;
+    const enElAlmacen = Math.round(enElPiso + enReservaHoy);
 
-    return enSuFranja
+    return enElAlmacen >= MINIMO_PARA_REPOSICION
       ? { nombre: 'reposicion-fabrica', regla: { modo: 'cuerpos', valor: CUERPOS_REPOSICION },
-          motivo: `Ya vive en la franja de "${franja}": se completa hasta ${CUERPOS_REPOSICION} cuerpos.` }
+          motivo: `Ya tiene ${enElAlmacen} pares en el almacén (${Math.round(enElPiso)} en el piso `
+                + `y ${enReservaHoy} en reserva): es reposición, se completa hasta ${CUERPOS_REPOSICION} cuerpos.` }
       : { nombre: 'codigo-nuevo', regla: { modo: 'porcentaje', valor: PCT_CODIGO_NUEVO, sinCandado: true },
-          motivo: `No tiene cuerpo en la franja de "${franja}": se le deja abajo el ${PCT_CODIGO_NUEVO}%, que es lo que se vende en las dos primeras semanas.` };
+          motivo: `Tiene ${enElAlmacen} pares en el almacén, menos de ${MINIMO_PARA_REPOSICION}: es código nuevo, `
+                + `se le deja abajo el ${PCT_CODIGO_NUEVO}%, que es lo que se vende en las dos primeras semanas.` };
   };
 
   /**
