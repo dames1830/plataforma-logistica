@@ -144,8 +144,37 @@ con el 60%. Esa noche fueron 4 casos —el `6515899`, el `6615998`, el `6616998`
 
 ## 3. Camino REPOSICIÓN — cinco pasos
 
-1. **CUÁNTO BAJA — hasta completar 2 cuerpos.** Ya salió antes y viene por su segundo lote;
+1. **CUÁNTO BAJA — hasta completar UN cuerpo.** Ya salió antes y viene por su segundo lote;
    no se le calcula porcentaje.
+
+   **ERAN DOS HASTA EL 16-ago-2026, y Daniel lo bajó a uno con el histórico en la mano.** El
+   colchón es de dos semanas en los dos caminos; lo que cambia es el tramo de la curva:
+
+   | | Colchón de 2 semanas | De un lote de 1.000 |
+   |---|---|---|
+   | Código nuevo | semanas 1 y 2, el batch grande | **60%** — 600 pares |
+   | Reposición | semanas 3 y 4, ya plantado | **7,7%** — 77 pares |
+
+   Medido sobre 135 artículos que llegaron y no recibieron reposición en el medio: la semana 1
+   se lleva el **44,3%**, la 2 el **21,1%**, y de ahí se planta — 4,5% la semana 3 y 3,2% la 4.
+
+   **Dos cuerpos eran 900 pares para cubrir 77.** Y hay algo peor: a la semana 2 al artículo ya
+   solo le quedan **346 pares** de los 1.000, así que ni siquiera tenía mercadería para llenar
+   dos cuerpos. Daniel: *"sería en vano ocupar espacio con un artículo de reposición que se va a
+   demorar en salir medio año"*.
+
+   **EN EL CUERPO NO VAN 77 PARES, VAN 450.** El colchón dice cuántos CUERPOS se abren; una vez
+   abierto se llena —ver 3b—. El artículo termina con casi tres meses de cobertura abajo en vez
+   de dos semanas, y eso está bien: lo que se ahorra es el SEGUNDO cuerpo, que no aportaba nada.
+
+   **Medido sobre las reposiciones del 15-ago-2026:** de 54 cuerpos a **42**, y 3.945 pares
+   menos al activo. Doce artículos pasan de dos cuerpos a uno.
+
+   **Por qué no se midió en semanas de cobertura, que fue el camino que se probó primero:** la
+   velocidad que publica el robot es el promedio de toda la ventana, así que mezcla el pico del
+   lanzamiento con la meseta y sale **2,6 veces más alta** que la de régimen —84 contra 32 pares
+   por semana—. Con la de régimen, ni el 1% más rápido llega a llenar un cuerpo en ninguna zona:
+   por eso el número fijo de UN cuerpo es correcto y no hace falta leer la velocidad.
 
 2. **DÓNDE — a sus mismos cuerpos.** No se pregunta zona ni columna: el artículo ya tiene su
    lugar y ahí vuelve. **Un cuerpo cuenta como suyo desde 20 pares** (`MINIMO_PARA_SER_CASA`).

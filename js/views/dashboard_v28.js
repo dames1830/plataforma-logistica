@@ -1,25 +1,25 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0232';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0233';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0232';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0232';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0232';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0232';
-import * as metasService from '../services_v245/metasService.js?v=29.0232';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0232';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0232';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0232';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0232';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0232';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0232';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0232';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0232';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0232';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0232';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0232';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0232';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0232';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0232';
-import { montarSlotting } from './slotting.js?v=29.0232';
+import * as adminService from '../services_v245/adminService.js?v=29.0233';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0233';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0233';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0233';
+import * as metasService from '../services_v245/metasService.js?v=29.0233';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0233';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0233';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0233';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0233';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0233';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0233';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0233';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0233';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0233';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0233';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0233';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0233';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0233';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0233';
+import { montarSlotting } from './slotting.js?v=29.0233';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -376,7 +376,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0232';
+const VERSION = '29.0233';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4431,7 +4431,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0232');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0233');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15401,7 +15401,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0232 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0233 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17384,9 +17384,10 @@ const renderRFSection = (container) => {
      * 269 pares para destrabar 2.982 no es lo mismo que una mezcla común de 40 que no destraba
      * nada, y en la lista las dos se veían igual.
      *
-     * SOLO EL CUERPO SUCIO GENERA TAREA. Ahí Slotting sabe exactamente qué sacar. Cuando la
-     * traba es "no hay cuerpos libres" no existe un cuerpo puntual que limpiar —hay que liberar
-     * cualquiera de esa franja—, así que sale como aviso y no como línea de trabajo.
+     * SOLO EL CUERPO SUCIO GENERA TAREA. Ahí Slotting sabe exactamente qué sacar. La otra traba
+     * se llama SIN CUERPO LIBRE y no "sin lugar": el lugar lo tiene siempre —su zona sale de la
+     * marca y su columna de la temporada—, lo que falta es un cuerpo VACÍO adentro de esa
+     * columna. Como no hay un intruso puntual que sacar, sale como aviso y no como línea.
      *
      * SE RESPETAN LAS ZONAS CONFIGURADAS: si Slotting hoy solo barre el selectivo, un trabado
      * del mezzanine no entra. Se amplía tildando la zona en Configuración, sin tocar código. */
@@ -17400,7 +17401,7 @@ const renderRFSection = (container) => {
       if (tr.zona && !zonasOk.has(tr.zona)) return;
       const s7 = String(art.sku7 || '').trim();
       avisos.push({ sku7: s7, marca: art.marca || '', pares: tr.pares,
-                    tipo: tr.tipo || 'sin-lugar', motivo: tr.motivo || '',
+                    tipo: tr.tipo || 'sin-cuerpo-libre', motivo: tr.motivo || '',
                     zona: tr.zona || '', faltan: tr.faltan || 0 });
       if (tr.tipo !== 'cuerpo-sucio') return;
 
@@ -18099,8 +18100,32 @@ const renderRFSection = (container) => {
    * resuelve planificarPorTalla; acá solo se pide el 60%.
    */
   const PCT_CODIGO_NUEVO     = 60;
-  /** La reposición de fábrica sigue midiéndose en cuerpos: no es un código nuevo. */
-  const CUERPOS_REPOSICION   = 2;
+  /**
+   * LA REPOSICIÓN ES UN CUERPO, NO DOS. Decisión de Daniel, 16-ago-2026, y sale del mismo
+   * histórico del que salió el 60% del código nuevo.
+   *
+   * EL COLCHÓN ES DE DOS SEMANAS EN LOS DOS CASOS. Lo que cambia es el tramo de la curva:
+   *
+   *   CÓDIGO NUEVO   las semanas 1 y 2, el batch grande -> 60% del lote (600 de 1.000)
+   *   REPOSICIÓN     las semanas 3 y 4, ya plantado     -> 7,7% del lote (77 de 1.000)
+   *
+   * Medido sobre 135 artículos que llegaron y no recibieron reposición en el medio: la semana 1
+   * se lleva el 44,3%, la 2 el 21,1%, y de ahí en más se planta — 4,5% la semana 3 y 3,2% la 4.
+   *
+   * DOS CUERPOS ERAN 900 PARES PARA CUBRIR 77. Y peor: a la semana 2 al artículo ya solo le
+   * quedan 346 pares de los 1.000 que llegaron, así que ni siquiera tenía mercadería para
+   * llenar dos cuerpos. Daniel: *"sería en vano ocupar espacio con un artículo de reposición
+   * que se va a demorar en salir medio año"*.
+   *
+   * EN EL CUERPO NO VAN 77 PARES, VAN 450. El colchón dice cuántos CUERPOS se abren; una vez
+   * abierto se llena, porque un cuerpo no se comparte —ver la regla 3b—. El artículo termina
+   * con casi tres meses de cobertura abajo en vez de dos semanas, y eso está bien: lo que se
+   * ahorra es el SEGUNDO cuerpo, que no aportaba nada.
+   *
+   * Ojo: la usa también el Replenishment para saber a cuánto llenar, y ahí sigue valiendo
+   * "nunca menos de los cuerpos que el artículo ya tiene".
+   */
+  const CUERPOS_REPOSICION   = 1;
   /**
    * EL CORTE QUE PARTE TODO: 20 PARES EN EL ALMACÉN, ACTIVO MÁS RESERVA.
    *
@@ -18750,7 +18775,7 @@ const renderRFSection = (container) => {
             motivo: String(s.plan.motivo || ''),
             pares: Math.round(Number(s.pares) || 0),
             zona: s.plan.zona || '',
-            tipo: s.plan.bloqueadoPorMezcla ? 'cuerpo-sucio' : 'sin-lugar',
+            tipo: s.plan.bloqueadoPorMezcla ? 'cuerpo-sucio' : 'sin-cuerpo-libre',
             mezclados: (s.plan.mezclados || []).map(m => ({
               zona: m.zona, columna: m.columna, cuerpo: m.cuerpo, otros: (m.otros || []).slice()
             })),
