@@ -1,25 +1,25 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0233';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0234';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0233';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0233';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0233';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0233';
-import * as metasService from '../services_v245/metasService.js?v=29.0233';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0233';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0233';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0233';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0233';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0233';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0233';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0233';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0233';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0233';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0233';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0233';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0233';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0233';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0233';
-import { montarSlotting } from './slotting.js?v=29.0233';
+import * as adminService from '../services_v245/adminService.js?v=29.0234';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0234';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0234';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0234';
+import * as metasService from '../services_v245/metasService.js?v=29.0234';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0234';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0234';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0234';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0234';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0234';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0234';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0234';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0234';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0234';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0234';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0234';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0234';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0234';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0234';
+import { montarSlotting } from './slotting.js?v=29.0234';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -376,7 +376,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0233';
+const VERSION = '29.0234';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4431,7 +4431,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0233');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0234');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15401,7 +15401,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0233 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0234 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17075,6 +17075,69 @@ const renderRFSection = (container) => {
     return mapa;
   };
 
+  /**
+   * ¿ESTE ARTÍCULO RECIBIÓ MERCADERÍA HACE POCO?
+   *
+   * Hace falta para NO consolidar un artículo que acaba de llegar. Un código nuevo con tres
+   * días ocupa tres cuerpos con todo derecho: es el 60% de su lote y su colchón de dos semanas
+   * — Daniel, 16-ago-2026: *"no me vayas a subir artículos que tienen tres o cuatro días en el
+   * almacén y me vayas a dejar un cuerpo nada más"*.
+   *
+   * SE MIDE DESDE LA ÚLTIMA ENTRADA, NO DESDE QUE EL CÓDIGO PISÓ EL ALMACÉN. Si a un artículo
+   * de seis meses le llegó un lote hace tres días, está igual de en su ventana que uno nuevo.
+   *
+   * DOS FUENTES, Y LA PRIMERA ES LA BUENA:
+   *
+   *   1. LAS TAREAS DE ALMACENAJE. Es la señal directa y con fecha: si hubo tarea, entró
+   *      mercadería ese día. No hay que inferir nada.
+   *   2. La curva del robot, como respaldo: una foto con más pares que la anterior es una
+   *      entrada. Cubre lo que llegó antes de que existieran las tareas.
+   *
+   * SIN NINGUNA SEÑAL, EL ARTÍCULO ES VIEJO Y SE CONSOLIDA. Al revés —proteger lo que no se
+   * conoce— dejaba fuera 41 artículos que llevaban meses quietos.
+   *
+   * Devuelve un Set con los sku7 que NO se pueden tocar.
+   */
+  const conEntradaReciente = async (semanas) => {
+    const corte = new Date(getLogicalDate() + 'T12:00:00').getTime() - semanas * 604800000;
+    const fresco = new Set();
+    const marcar = (s7, f) => {
+      const d = new Date(String(f) + 'T12:00:00').getTime();
+      if (Number.isFinite(d) && d >= corte) fresco.add(s7);
+    };
+
+    // 1. Las tareas de almacenaje: entrada directa y fechada
+    (almacenajeTasksCache || []).forEach(t => {
+      if (!t || !t.fecha) return;
+      (t.items || []).forEach(a => {
+        const s7 = String(a && a.sku7 || '').trim().substring(0, 7);
+        if (s7) marcar(s7, t.fecha);
+      });
+    });
+
+    // 2. La curva del robot, para lo anterior a las tareas
+    try {
+      const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+      const res = await fetch(`${base}/api/logistics/evolucion_articulo?t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        (datos && datos.articulos || []).forEach(a => {
+          const s7 = String(a.cod || '').trim().substring(0, 7);
+          if (!s7 || fresco.has(s7)) return;
+          let ult = a.llegada || null;
+          const c = a.curva || [];
+          // Un 5% de margen para no confundir un redondeo con una llegada de verdad
+          for (let i = 1; i < c.length; i++) if (c[i][1] > c[i - 1][1] * 1.05) ult = c[i][3];
+          if (ult) marcar(s7, ult);
+        });
+      }
+    } catch (e) { console.warn('[Slotting] no se pudo leer la evolución del artículo:', e && e.message); }
+    return fresco;
+  };
+
+  const SEMANAS_PARA_CONSOLIDAR = 2;
+
   const barrerParaSlotting = async (zonas = ZONAS_SLOTTING) => {
     await zonasService.cargarZonas();
     await rescatarMaestro();
@@ -17371,6 +17434,81 @@ const renderRFSection = (container) => {
               + `(${porTarea} con dueño decidido por la tarea), ${arrastres} restos por arrastrar, `
               + `${retenidas} líneas retenidas sin destino, ${lineas.length} líneas y `
               + `${lineas.reduce((a, l) => a + l.pares, 0)} pares por sacar.`);
+
+    /* ── UN ARTÍCULO, UN CUERPO: CONSOLIDAR LA REPOSICIÓN ──────────────────────────
+     *
+     * Regla de Daniel, 16-ago-2026, y es la consecuencia directa de bajar la reposición a un
+     * cuerpo: *"quiero que la reposición de un artículo quede con un cuerpo nada más"*, *"no
+     * importa que les hagan cincuenta, ochenta tareas de slotting, con tal que el selectivo
+     * esté impecable"*.
+     *
+     * EL PRINCIPIO QUE LO ORDENA: almacenaje solo almacena; SLOTTING deja el almacén como
+     * dicen las reglas. Toda discrepancia contra la regla es tarea de Slotting.
+     *
+     * Se queda el cuerpo MÁS CARGADO y los demás se vacían. Lo que entra en el que se queda se
+     * mueve ahí; lo que no entra SUBE A RESERVA —*"y el resto lo subes, no hay de otra"*—.
+     *
+     * UN CUERPO DE ORIGEN VA ENTERO A UN SOLO DESTINO. Sin partirlo: el operario vacía un
+     * cuerpo y lo lleva a un lugar, no a dos. Si no entra completo en el que se queda, va todo
+     * a reserva.
+     *
+     * NO SE TOCA LO QUE ACABA DE LLEGAR — ver `conEntradaReciente`. Y esto pesa mucho más de
+     * lo que parecía: medido el 16-ago-2026, de los 61 artículos con varios cuerpos en el
+     * selectivo, **48 recibieron mercadería en las últimas dos semanas** y quedan protegidos.
+     * Tiene sentido: si la franja está llena es porque acaba de entrar mercadería, no porque
+     * esté mal ordenada.
+     *
+     * SOLO DONDE LA FRANJA EXIGE UN CUERPO UN ARTÍCULO. En saldos, anterior, escolar y catálogo
+     * se comparte por diseño y no hay nada que consolidar.
+     *
+     * LO QUE DE VERDAD SALE, medido ese día: **13 artículos, 16 cuerpos liberados**, 267 pares
+     * que se mueven y 2.873 que suben a reserva —15 paletas—, unas 11 tareas. La franja pasa de
+     * 8 cuerpos vacíos a 24. Sin el filtro de recencia daban 82 cuerpos, y ese número era
+     * mentira: consolidaba artículos en plena ventana de venta. */
+    const recienLlegados = await conEntradaReciente(SEMANAS_PARA_CONSOLIDAR);
+    const porArticulo = new Map();
+    cuerpos.forEach((c, k) => {
+      if (zonasService.columnaAdmiteVariosArticulos(c.zona, c.col)) return;
+      const cue = parseInt(String(k).split('-')[2], 10);
+      c.m.forEach((pares, s7) => {
+        if (!porArticulo.has(s7)) porArticulo.set(s7, []);
+        porArticulo.get(s7).push({ k, zona: c.zona, col: c.col, cue, pares });
+      });
+    });
+
+    let consolidados = 0, aReserva = 0, recientes = 0;
+    porArticulo.forEach((suyos, s7) => {
+      if (suyos.length <= 1) return;
+      if (recienLlegados.has(s7)) { recientes++; return; }
+
+      const f = ficha.get(s7) || {};
+      const cap = zonasService.densidadDe(suyos[0].zona, zonasService.serieDe(s7), f.marcaStd);
+      const orden = [...suyos].sort((a, b) => b.pares - a.pares);
+      const sequeda = orden[0];
+      let lugar = Math.max(0, cap - sequeda.pares);
+      consolidados++;
+
+      orden.slice(1).forEach(o => {
+        const cabe = o.pares <= lugar;
+        if (cabe) lugar -= o.pares; else aReserva += o.pares;
+        lineas.push({
+          ubi: o.k, sku7: s7, pares: Math.round(o.pares),
+          marca: f.marca || '', temporada: f.temporada || '',
+          dueno: s7, duenoPares: Math.round(sequeda.pares),
+          llevarA: cabe ? sequeda.k : 'RESERVA',
+          motivo: cabe ? 'un artículo, un cuerpo' : 'excedente: sube a reserva',
+          detalle: (detallePorArt.get(`${o.k}|${s7}`) || [])
+            .slice().sort((a, b) => String(a.ubi).localeCompare(String(b.ubi))
+                                 || (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0)),
+          vinoPorTarea: false, duenoPorTarea: false
+        });
+      });
+    });
+    if (consolidados) {
+      console.log(`[Slotting] ${consolidados} artículos a consolidar en un cuerpo `
+                + `(${Math.round(aReserva)} pares suben a reserva). `
+                + `${recientes} se protegieron por recibir mercadería hace menos de ${SEMANAS_PARA_CONSOLIDAR} semanas.`);
+    }
 
     /* ── LO QUE ALMACENAJE NO PUDO GUARDAR ─────────────────────────────────────────
      *
