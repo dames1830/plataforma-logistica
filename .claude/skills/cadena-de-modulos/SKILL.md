@@ -235,8 +235,43 @@ configuradas —hoy el selectivo—. De los 18 trabados del 15-ago habrían entr
 16 son de los mezzanines. Se amplía tildando la zona en Configuración de Slotting, sin tocar
 código, pero **los mezzanines todavía no tienen reglas propias de Slotting**.
 
-**Y la posta al revés sigue rota:** Procesar Tareas no se entera de lo que Slotting va a liberar.
-Ver el cuadro de los cuatro cruces, más abajo.
+### Y la posta de vuelta también llega — v29.0232, 15-ago-2026
+
+Slotting le avisa a almacenaje que ya lo resolvió, y la tarea trabada se puede rehacer esa misma
+noche en vez de esperar a la corrida de mañana. Antes se perdía el turno entero: el 15-ago
+fueron **9.241 pares** parados hasta el día siguiente.
+
+**NO HACE FALTA NINGÚN DATO NUEVO NI ESPERAR EL CORTE DE STOCK.** La tarea de Slotting ya dice
+qué artículo se sacó de qué cuerpo; con marcarla **Finalizada** alcanza. Sobre la foto de las
+19:00 se descuenta eso y recién ahí se decide — `cuerposLimpiadosPorSlotting()`, que se le pasa
+a `cargarContextoSugerencia`.
+
+Con el `SEL-04-21` de esa noche: la foto dice 573 pares —304 del `6116913`, 171 del `5516327` y
+98 del `5513311`—; la tarea de Slotting finalizada dice que salieron los dos últimos, así que
+almacenaje trabaja con 304 y el cuerpo queda limpio.
+
+**TIENEN QUE HABER SALIDO TODOS LOS INTRUSOS.** No alcanza con que el cuerpo aparezca en una
+tarea de Slotting: si sacaron uno de dos, el cuerpo sigue sucio y la tarea sigue bloqueada.
+
+**En pantalla va todo dentro de la fila** —Daniel, 15-ago-2026: *"está muy acumulado de
+botones"*, sobre poner un botón en la cabecera—:
+
+| Estado | Cómo se ve |
+|---|---|
+| Slotting no lo resolvió | `BLOQUEADA` en rojo, fila roja suave, **sin** impresora |
+| Slotting lo resolvió | `REIMPRIMIR` en verde, fila verde suave, **aparece** la impresora |
+
+El ícono no está mientras no haya lugar, a propósito: apretarlo no haría nada y enseñaría a
+apretarlo en vano. La fila cambia sola, sin recargar.
+
+**Al apretar se recalcula la tarea ENTERA** con el almacén de ese momento, no solo el cuerpo que
+faltaba: si mientras tanto picking vació otro mejor, la tarea lo aprovecha. Y sale **una sola
+hoja** — las demás ya están impresas y en manos de alguien.
+
+**LO QUE TODAVÍA NO CIERRA:** esto cubre las trabas por **cuerpo sucio**. Las de **sin lugar**
+—no quedaba ningún cuerpo libre en la franja— siguen sin ícono, porque no hay un cuerpo puntual
+del que depender. Y los otros dos cruces del cuadro de abajo siguen abiertos: nadie sabe lo que
+picking sacó en el turno, ni lo que Slotting ejecutó vuelve a la foto hasta que el robot publique.
 
 ### Y falta el tercero: ARRASTRAR EL RESTO — y este viene CON DESTINO
 
