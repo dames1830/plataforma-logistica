@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0226';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0232';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -55,6 +55,30 @@ const loadFromDB = async (key) => {
             req.onerror = () => resolve(null);
         });
     } catch (err) { return null; }
+};
+
+/**
+ * Borra un área del IndexedDB Y ESPERA A QUE LA TRANSACCIÓN CIERRE.
+ *
+ * Antes el borrado se disparaba y se seguía de largo —`tx.objectStore(...).delete(area)`
+ * suelto—, así que quien redibujaba enseguida podía leer la copia vieja y volver a
+ * dejarla en pantalla. Un borrado que no se espera no es un borrado.
+ */
+const deleteFromDB = async (key) => {
+    try {
+        const db = await openDB();
+        await new Promise((resolve) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).delete(key);
+            tx.oncomplete = () => resolve();
+            tx.onerror    = () => resolve();
+            tx.onabort    = () => resolve();
+        });
+        return true;
+    } catch (err) {
+        console.warn(`[PULSE] Error al limpiar localmente '${key}':`, err);
+        return false;
+    }
 };
 
 /**
@@ -157,7 +181,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0226';
+const VERSION = '29.0232';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -996,31 +1020,68 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
     });
 };
 
+/**
+ * Quita un área. Devuelve `true` si quedó realmente vacía, `false` si no.
+ *
+ * LO QUE SE PUBLICA, SE DESPUBLICA.
+ *
+ * Las tres de la demanda —pedidos (`buffer`), otras solicitudes (`solicitud`) y
+ * replenishment (`tallas`)— se comparten desde el 12-ago-2026: se suben reducidas y
+ * `getAreaData` las lee DEL SERVIDOR, salteándose el IndexedDB. Esta función se quedó
+ * con la lista vieja de áreas "solo locales", así que el 🗑️ no borraba nada: limpiaba
+ * la PC, el redibujado le volvía a pedir el área al servidor —que la tenía intacta—,
+ * la bajaba y encima la reescribía en el IndexedDB. El archivo reaparecía en el mismo
+ * clic, y ni REINICIAR MEMORIA lo sacaba.
+ *
+ * Se vacía el servidor CON `await` y antes de contestar: si el POST no llegó, el
+ * redibujado la baja de vuelta y estaríamos en lo mismo. Por eso el `false` importa —
+ * la pantalla tiene que poder decir que no se pudo en vez de fingir que sí.
+ *
+ * SIN `X-Environment` A MANO, igual que al publicar (ver persistToDatabase): en pruebas
+ * la sella env.js y en producción no va cabecera. Fijarla acá escribía en producción
+ * desde beta.
+ *
+ * Es un dato compartido: quitarlo lo quita para TODAS las PC. Mismo trato que al
+ * cargarlo, que también pisa el de todas.
+ */
 export const clearAreaData = async (area, username = 'sistema') => {
     dataStore[area] = null;
     localStorage.removeItem('meta_' + area);
-    
+
+    let ok = true;
+
+    if (DEMANDA_EN_LA_NUBE[area]) {
+        try {
+            const r = await fetch(`${API_URL}/${area}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify([])
+            });
+            if (r.ok) {
+                logSystemAction(username, 'LIMPIEZA_DATOS', `Área: ${area} vaciada por el usuario (demanda compartida).`);
+            } else {
+                ok = false;
+                console.warn(`[DEMANDA] ⚠️ No se pudo vaciar '${area}' en el servidor (${r.status}): va a volver a aparecer.`);
+            }
+        } catch (e) {
+            ok = false;
+            console.warn(`[DEMANDA] ⚠️ No se pudo vaciar '${area}' en el servidor:`, e && e.message);
+        }
+    }
+
     // [MOD LOCAL] Si es del módulo de Recepción o el Maestro de Artículos, procesar 100% de manera local
     if (area.startsWith('recepcion') || area === 'articulos' || area === 'validar_reserva' || area === 'validar_activo' || area === 'validar_lpn' || area.startsWith('buffer') || area === 'solicitud' || area === 'tallas' || area.startsWith('analisis_sku')) {
-        try {
-            const db = await openDB();
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            tx.objectStore(STORE_NAME).delete(area);
-        } catch (e) {
-            console.warn(`[PULSE] Error al limpiar localmente '${area}':`, e);
-        }
-        return;
+        await deleteFromDB(area);
+        return ok;
     }
 
     try {
-        const db = await openDB();
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        tx.objectStore(STORE_NAME).delete(area);
-        
+        await deleteFromDB(area);
+
         // Enviar array vacío al servidor para "limpiar" la persistencia remota
         await fetch(`${API_URL}/${area}`, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'X-Environment': 'production'
             },
@@ -1028,8 +1089,10 @@ export const clearAreaData = async (area, username = 'sistema') => {
         });
         await logSystemAction(username, 'LIMPIEZA_DATOS', `Área: ${area} vaciada por el usuario.`);
     } catch (e) {
+        ok = false;
         console.warn(`[PULSE] No se pudo limpiar el servidor para '${area}', se limpió solo local.`, e);
     }
+    return ok;
 };
 
 /**
@@ -1130,6 +1193,13 @@ export const getAreaData = async (area, forceRefresh = false) => {
       return null;
   }
 
+  /* UN VACÍO PUBLICADO ES UN DATO, NO UNA FALLA.
+     Cuando alguien quita el archivo de pedidos, el servidor queda con una lista vacía
+     sellada con la hora del borrado. Si eso se tratara como "el servidor no contestó",
+     el respaldo de más abajo reviviría la copia de esta PC y el archivo volvería en la
+     máquina de al lado. Se anota acá y se resuelve después del try. */
+  let vacioPublicadoTs = 0;
+
   try {
      let queryURL = `${API_URL}/${area}`;
      if (currentDateFilter) queryURL += `?date=${encodeURIComponent(currentDateFilter)}`;
@@ -1138,6 +1208,17 @@ export const getAreaData = async (area, forceRefresh = false) => {
      });
      if (response.ok) {
          const serverResponse = await response.json();
+
+          /* Se mira ANTES de rechazar el formato viejo: ahí abajo el array se vacía a
+             propósito, y eso no es el servidor diciendo que no hay nada. Y solo cuenta
+             si trae `updated_at`: un área que NUNCA se publicó también llega vacía, y
+             ésa no puede borrarle su archivo a la PC que sí lo cargó. */
+          if (esAreaDeDemanda(area) && Array.isArray(serverResponse.data)
+              && serverResponse.data.length === 0 && serverResponse.updated_at) {
+              const f = fechaDelServidor(serverResponse.updated_at);
+              vacioPublicadoTs = f ? f.getTime() : 0;
+          }
+
           /* Lo que hay en el servidor para una de las tres de la demanda tiene que venir
              REDUCIDO. Si no, es de antes de que esto existiera —el archivo de pedidos
              entero del 23-jun sigue ahí— y usarlo sería darle al motor un archivo de hace
@@ -1170,6 +1251,20 @@ export const getAreaData = async (area, forceRefresh = false) => {
           }
      }
   } catch (err) { console.warn(`Backend lento o vacío para '${area}'.`); }
+
+  /* SI LO QUITARON, SE QUITA ACÁ TAMBIÉN.
+     El vacío del servidor le gana a la copia local solo si es IGUAL O MÁS NUEVO que
+     ella. Al revés —el archivo se cargó recién y la publicación no llegó— manda la PC,
+     que es la que tiene el bueno. Se limpia el IndexedDB de paso: si no, esta misma
+     comprobación habría que hacerla en cada pantalla que lea el área. */
+  const tsLocal = (getUploadMeta(area) || {}).ts || 0;
+  if (vacioPublicadoTs && vacioPublicadoTs >= tsLocal) {
+      console.warn(`[DEMANDA] '${area}' está vacía en el servidor: se quitó también de esta PC.`);
+      dataStore[area] = null;
+      localStorage.removeItem('meta_' + area);
+      await deleteFromDB(area);
+      return null;
+  }
 
   // El respaldo de las que vienen de la nube: se saltaron el IndexedDB para ir al servidor,
   // así que si el servidor no contestó hay que volver por él. Sin esto, quedarse sin internet
