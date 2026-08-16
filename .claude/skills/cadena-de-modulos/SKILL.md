@@ -198,10 +198,45 @@ lo que cambia solo —cuándo se vio, cuántas veces, qué hay adentro— y nunc
 nota. Con una excepción: si estaba **resuelto** y vuelve a aparecer, **vuelve a pendiente** —
 dejarlo en resuelto sería mentir.
 
-**Falta el segundo tipo de hallazgo:** los códigos que llegan al buffer y **no tienen dónde ir**.
-El tipo ya está declarado (`sin_lugar`) pero nadie lo registra todavía. Es el que más rinde,
-porque el sistema lo sabe a las 19:00 y hoy se descubre a las 02:00 con el operario parado en
-el pasillo.
+### El segundo tipo de hallazgo YA LLEGA — v29.0231, 15-ago-2026
+
+Era el que más rendía y estaba sin hacer: el papel de almacenaje imprimía **"Revisar Slotting"**
+y ahí moría. Slotting armaba su corrida barriendo cuerpos mezclados y **nunca se enteraba de que
+había mercadería parada esperándolo**. Medido sobre la corrida del 15-ago-2026: **18 artículos y
+9.241 pares** parados, contra 9 tareas de Slotting que no tenían relación con ninguno de ellos.
+
+**Lo primero que faltaba no era el aviso: era el MOTIVO.** Se perdía. Ni el operario ni Slotting
+sabían si el cuerpo estaba sucio, si no quedaban cuerpos libres o si la marca no tenía columnas
+— tanto que al querer reconstruir por qué se trabó la Tarea 25 de esa noche **no se pudo**. Ahora
+se graba en el artículo de la tarea, campo `traba`: motivo, pares parados, cuerpo y quién está
+adentro.
+
+**Los dos casos van distinto, y la diferencia importa:**
+
+| Traba | Qué produce | Por qué |
+|---|---|---|
+| **cuerpo sucio** | tarea de Slotting de verdad, con líneas y destino | se sabe exactamente qué sacar |
+| **sin lugar** | aviso en la cabecera de la corrida | no hay un cuerpo puntual que limpiar: hay que liberar cualquiera de la franja |
+
+**Lo que ordena la prioridad son los PARES PARADOS.** Mover 269 pares para destrabar 2.982 no es
+lo mismo que una mezcla común de 40 que no destraba nada, y en la lista las dos se veían igual.
+
+**No se duplica:** si el barrido ya encontró esa línea por su cuenta, se le agrega la prioridad
+en vez de agregar otra. El operario no puede recibir dos veces la misma mercadería.
+
+**Se ve en tres lugares**, y los tres hacen falta —Daniel, 15-ago-2026: *"si él no ve que diga
+prioridad en rojo, él no va a imprimir la hoja"*—: cartel arriba del cuadro, la palabra
+`PRIORIDAD` en rojo al costado del número de tarea **en la misma línea** (no en dos renglones, y
+sin repetirlo en la columna Estado), y el mismo cartel en la hoja impresa, porque la hoja viaja
+sola y quien la recibe no vio la pantalla.
+
+**LO QUE SIGUE ABIERTO: las zonas.** Solo entran las trabas de las zonas que Slotting tiene
+configuradas —hoy el selectivo—. De los 18 trabados del 15-ago habrían entrado **2**; los otros
+16 son de los mezzanines. Se amplía tildando la zona en Configuración de Slotting, sin tocar
+código, pero **los mezzanines todavía no tienen reglas propias de Slotting**.
+
+**Y la posta al revés sigue rota:** Procesar Tareas no se entera de lo que Slotting va a liberar.
+Ver el cuadro de los cuatro cruces, más abajo.
 
 ### Y falta el tercero: ARRASTRAR EL RESTO — y este viene CON DESTINO
 
