@@ -40,8 +40,11 @@ const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/confi
  * v5 = MZN03 y MZN04 bajaron de 22 a 20 cuerpos, y MZN04 estrenó cuerposPorColumna.
  * v6 = apareció la franja 'saldoGrande' con su corte `saldoGrandeHasta`, y la columna 4 del
  *      selectivo dejó de ser temporada anterior para ser la del saldo grande.
+ * v7 = apareció `densidadMarcaStd`: el Bata Comfit entra 600 donde su serie diría 450.
+ * v8 = apareció `densidadColumna`: el MZN01-24 entra 800, y la columna le gana a la serie
+ *      y a la sub-marca porque es la medida del mueble.
  */
-const CACHE_KEY = 'config_zonas_v7';
+const CACHE_KEY = 'config_zonas_v8';
 
 /**
  * Las temporadas que puede tener una columna.
@@ -307,7 +310,32 @@ export const zonasPorDefecto = () => ({
      * En el mismo Maestro hay más sub-marcas —Bata Red, Bata Red Label, Bata 3d, Bata
      * Flexible— que hoy van con la capacidad de su serie. Si alguna resulta tener otra
      * densidad, se agrega acá y nada más. */
-    densidadMarcaStd: { 'Bata Comfit': 600 },
+    /* 700 DESDE EL 18-ago-2026. Daniel lo subió de 600 mirando el cuerpo `SEL-06-13`, que
+       tenía 687 pares de un solo Comfit —el 5553848— y seguía recibiendo. Los 600 salían de
+       su primera estimación del 15-ago; esta es la medida con el cuerpo cargado a la vista. */
+    densidadMarcaStd: { 'Bata Comfit': 700 },
+
+    /* LA COLUMNA LE GANA A TODO. Daniel, 17-ago-2026:
+     *
+     *   *"Para el mezzanine uno, fila veinticuatro, donde está B.G Licenses, la capacidad de
+     *   cada cuerpo es más o menos de ochocientos pares. Solo entran en el mezzanine uno fila
+     *   veinticuatro, que es solamente para la marca B.G Licenses. No sirve para otras
+     *   columnas ni para otras filas."*
+     *
+     * Es una medida del MUEBLE, no del zapato ni de la marca, así que le gana a la serie y a
+     * la sub-marca: en esa columna entran 800 y no hay más que discutir. Por eso va por zona y
+     * columna, y por eso el alcance es exactamente el que él dictó — una sola columna.
+     *
+     * NO SE PODÍA EXPRESAR CON LO QUE HABÍA. La densidad por serie es de toda la zona, y el
+     * MZN01 lo comparten Power y Bubblegummers; `densidadMarcaStd` va por `MarcaStd` del
+     * Maestro, donde esta marca aparece con SEIS nombres distintos —Licenses, Disney, Marvel,
+     * Bubblegummers/Disney, Bubblegummers/Marvel y Bubblegummers/Universal—, así que no hay un
+     * nombre al que colgarle el número.
+     *
+     * Lo que cambia, medido sobre la tarea 10 del 17-ago (artículo 2811556, 865 pares del
+     * buffer, reposición de un cuerpo): con 570 bajaban 545 y subían 320 en dos paletas; con
+     * 800 bajan 765 y sube una sola paleta de 100. El cuerpo queda en 797 de 800. */
+    densidadColumna: { MZN01: { 24: 800 } },
 
     /** La categoría que no sigue a su marca. */
     categoriaOthers: '06 OTHERS'
@@ -443,8 +471,25 @@ const normalizar = (crudo) => {
         if (n) porMarcaStd[String(m).trim()] = n;
     });
 
+    /* La capacidad por columna, igual que la de sub-marca: si la publicada no la trae, manda
+       la de fábrica, para que el MZN01-24 no vuelva a medirse con la capacidad de la zona. */
+    const porColumna = {};
+    const srcCol = (c.densidadColumna && Object.keys(c.densidadColumna).length)
+      ? c.densidadColumna : def.densidadColumna;
+    Object.keys(srcCol || {}).forEach(z => {
+        Object.keys(srcCol[z] || {}).forEach(col => {
+            const n = _num(srcCol[z][col], 0, 1, 100000);
+            const cn = _num(col, 0, 1, 999);
+            if (n && cn) {
+                if (!porColumna[z]) porColumna[z] = {};
+                porColumna[z][cn] = n;
+            }
+        });
+    });
+
     return { zonas, marcas, others, densidad, densidadRespaldo: respaldo,
              densidadMarcaStd: porMarcaStd,
+             densidadColumna: porColumna,
              categoriaOthers: String(c.categoriaOthers || def.categoriaOthers) };
 };
 
@@ -782,8 +827,14 @@ export const serieDe = (codigo) => {
 };
 
 /** Pares que entran en un cuerpo de esa zona para esa serie. */
-export const densidadDe = (zona, serie, marcaStd) => {
+export const densidadDe = (zona, serie, marcaStd, columna) => {
     const cfg = zonasActual();
+    // LA COLUMNA MANDA SOBRE TODO: es la medida del mueble. Si esa columna tiene su propia
+    // capacidad, ahí entra eso y no hay serie ni sub-marca que valga. Ver `densidadColumna`.
+    const col = Number(columna);
+    if (col && cfg.densidadColumna && cfg.densidadColumna[zona] && cfg.densidadColumna[zona][col]) {
+        return cfg.densidadColumna[zona][col];
+    }
     // LA SUB-MARCA MANDA SOBRE LA SERIE. Un Bata Comfit entra 600 en un cuerpo donde su serie
     // diría 450: lo que decide cuánto entra es el grosor del zapato, y eso la serie no lo sabe.
     const ms = String(marcaStd || '').trim();
@@ -791,6 +842,39 @@ export const densidadDe = (zona, serie, marcaStd) => {
     const d = cfg.densidad[zona] || {};
     const v = d[String(serie)];
     return v || cfg.densidadRespaldo[zona] || 330;
+};
+
+/**
+ * LA CAPACIDAD QUE LE TOCA A UN ARTÍCULO ANTES DE SABER EN QUÉ CUERPO VA.
+ *
+ * El objetivo del piso se calcula antes de elegir los cuerpos —primero CUÁNTO, después
+ * DÓNDE—, así que ahí todavía no hay columna que consultar. Pero sí se sabe cuáles son sus
+ * columnas candidatas: las de su franja, y dentro de esas las de su marca.
+ *
+ * Si TODAS esas columnas tienen la misma capacidad propia, esa es la del artículo — es el
+ * caso de B.G Licenses, que en temporada actual tiene una sola columna, la 24 del MZN01, con
+ * sus 800. Si las candidatas no coinciden entre sí, no se puede decidir de antemano y manda
+ * la de siempre: la sub-marca o la serie.
+ */
+export const capacidadDeArticulo = (art, zona) => {
+    const cfg = zonasActual();
+    const porCol = (cfg.densidadColumna || {})[zona];
+    const normal = densidadDe(zona, serieDe(art && art.sku7), art && art.marcaStd);
+    if (!porCol) return normal;
+
+    const franja = franjaDeArticulo(art, zona);
+    if (!franja) return normal;
+    let columnas = columnasDeFranja(zona, franja);
+    const suyas = columnasDeMarcaEnFranja(art && art.marca, franja);
+    if (suyas.length) {
+        const propias = columnas.filter(c => suyas.includes(c));
+        if (propias.length) columnas = propias;
+    }
+    if (!columnas.length) return normal;
+
+    const caps = columnas.map(c => porCol[Number(c)]).filter(Boolean);
+    if (caps.length !== columnas.length) return normal;      // alguna no tiene capacidad propia
+    return caps.every(v => v === caps[0]) ? caps[0] : normal; // o no se ponen de acuerdo
 };
 
 /**
@@ -1177,7 +1261,10 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}, o
         // ya tenía 300 de los suyos y no le entraban. Un cuerpo lleva UN artículo con todas
         // sus tallas, así que no hay dónde meterlos: hay que abrirle otro.
         const zonaRep = art.yaTiene[0].zona;
-        const porCuerpoRep = densidadDe(zonaRep, serieDe(art.sku7), art.marcaStd);
+        // La columna de su propio cuerpo, por si esa columna tiene capacidad propia — el
+        // MZN01-24 entra 800 y su serie diría 570.
+        const porCuerpoRep = densidadDe(zonaRep, serieDe(art.sku7), art.marcaStd,
+                                        art.yaTiene[0].columna);
         const libresRep = libresPorZona[zonaRep];
 
         /* UN CUERPO, UN ARTÍCULO: SUS CUERPOS COMPARTIDOS NO CUENTAN COMO SUYOS.
@@ -1330,17 +1417,17 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}, o
                                   ocupadosPorZona[zona] || new Set(), libresPorZona[zona]);
         if (r) {
             return paso('ok', null, {
-                zona, franja, cuantos: 1, porCuerpo: densidadDe(zona, serieDe(art.sku7), art.marcaStd),
+                zona, franja, cuantos: 1, porCuerpo: capacidadDeArticulo(art, zona),
                 cuerpos: r.cuerpos, seguidos: true, compartido: !!r.compartido,
                 libreQueTenia: r.libreQueTenia, porOthers,
                 capacidades: [r.libreQueTenia !== undefined
-                    ? r.libreQueTenia : densidadDe(zona, serieDe(art.sku7), art.marcaStd)]
+                    ? r.libreQueTenia : capacidadDeArticulo(art, zona)]
             });
         }
     }
 
     // Paso 3: cuántos cuerpos
-    const porCuerpo = densidadDe(zona, serieDe(art.sku7), art.marcaStd);
+    const porCuerpo = capacidadDeArticulo(art, zona);
     const cuantos = Math.max(1, Math.ceil((Number(art.pares) - porCuerpo * HOLGURA) / porCuerpo));
 
     // Paso 4 y 5

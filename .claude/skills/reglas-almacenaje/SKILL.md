@@ -453,7 +453,11 @@ Regla de Daniel, 15-ago-2026:
 
 | Sub-marca | Pares por cuerpo |
 |---|---|
-| **Bata Comfit** | **600** |
+| **Bata Comfit** | **700** |
+
+**SUBIÓ DE 600 A 700 EL 18-ago-2026.** Los 600 fueron su primera estimación del 15-ago; el
+número nuevo salió de mirar un cuerpo cargado de verdad — el `SEL-06-13` tenía **687 pares**
+de un solo Comfit, el `5553848`, y el sistema le seguía mandando más.
 
 **SALE DE `MarcaStd`, LA COLUMNA 9 DEL MAESTRO, NO DE `Marcas`.** Ahí dice `Bata Comfit` mientras
 la otra dice solo `Bata`, y por eso el sistema nunca lo había podido distinguir. Son **887
