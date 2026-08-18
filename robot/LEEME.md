@@ -33,6 +33,8 @@ Si imprime la línea, está el nuevo. Si no imprime nada, es el viejo.
 | `generar_rotacion.py` | Rotación y Permanencia — el FSN del almacén más el aging. Publica el área `rotacion_permanencia`. |
 | `generar_slotting.py` | El armador del Slotting de las 19:00. Acá está porque llama a los reportes de estudio al final de la corrida. |
 | `horario_robot.py` | **Quién decide a qué hora corre cada tarea.** Lee el horario que Daniel pone en la web. Ver abajo. |
+| `generar_respaldo.py` | La copia de seguridad de los datos. Baja las 63 áreas de producción y las deja en un zip fechado. Ver abajo. |
+| `respaldo.bat` | Lo que dispara el Programador de Windows para el respaldo. |
 
 ## El horario lo manda la web (18-ago-2026)
 
@@ -59,7 +61,8 @@ python C:\wms_scraping\horario_robot.py ancla_noche || exit /b 0
 python C:\wms_scraping\wms_automation_final.py
 ```
 
-Las tareas son `ancla_noche`, `ancla_manana`, `stock_hora`, `picking_hora` y `reportes`.
+Las tareas son `ancla_noche`, `ancla_manana`, `stock_hora`, `picking_hora`, `reportes` y
+`respaldo`.
 
 ### Lo que hay que cambiar en el servidor, UNA sola vez
 
@@ -122,3 +125,56 @@ y del Maestro. Todo lo demás lo resuelve solo, a propósito: el servidor puede 
 versión más vieja de ese archivo, y depender de sus funciones chicas hace que el estudio se
 caiga por un cambio que no es suyo. Si algún día faltara un lector, avisa con nombre en vez
 de reventar con un `AttributeError`.
+
+---
+
+## El respaldo de los datos (18-ago-2026)
+
+Corre a las 23:00, de lunes a sábado, y la hora se cambia desde la web como las demás.
+
+**Por qué existe.** Antes el respaldo se hacía a mano, creando carpetas `Punto_Restauracion_*`.
+Al revisarlas el 18-ago aparecieron dos problemas: el ritmo se había apagado solo —50 puntos en
+junio, 14 en julio, 2 en agosto— y, peor, guardaban la base **local**, con 24 áreas y datos
+hasta el 26-may, cuando producción tenía 63 áreas al día. El código sí quedaba bien guardado;
+los datos no.
+
+**Qué guarda.** Las 63 áreas de producción, una por archivo `.json`, bajadas por la misma API
+que usa la web. Quedan en `C:\wms_scraping\respaldos\Respaldo_AAAAMMDD_HHMM.zip`.
+
+Pesan poco: 158 MB de datos comprimen a **9,5 MB**, así que 30 días ocupan unos 285 MB. La
+rotación borra sola lo que pasa de 30 días, leyendo la fecha **del nombre** y no la del archivo
+—copiar la carpeta a otro disco cambia las fechas y borraría lo que no toca.
+
+**El código no se respalda acá, a propósito**: ya vive en GitHub, con historial. Lo que no está
+en ningún otro lado son los datos.
+
+### Cómo probarlo sin esperar a las 23:00
+
+```powershell
+python C:\wms_scraping\generar_respaldo.py --probar
+python C:\wms_scraping\generar_respaldo.py --salida C:\temp\prueba
+```
+
+### Lo que hay que hacer en el servidor, UNA sola vez
+
+Bajar los dos archivos nuevos y crear la tarea de Windows:
+
+```powershell
+cd C:\wms_scraping
+curl.exe -L -o generar_respaldo.py https://dames1830.github.io/plataforma-logistica/robot/generar_respaldo.py
+curl.exe -L -o respaldo.bat https://dames1830.github.io/plataforma-logistica/robot/respaldo.bat
+curl.exe -L -o horario_robot.py https://dames1830.github.io/plataforma-logistica/robot/horario_robot.py
+
+schtasks /Create /TN "Robot Respaldo" /TR "C:\wms_scraping\respaldo.bat" /SC MINUTE /MO 10 /ST 00:00 /RU SYSTEM /F
+```
+
+Igual que las demás: despierta cada 10 minutos y `horario_robot.py` decide si le toca.
+
+### Si algo sale mal
+
+El script devuelve **2** cuando el respaldo se hizo pero alguna área quedó fuera, y **1** si no
+se pudo hacer nada. No es lo mismo un respaldo incompleto que ninguno, y el LEEME de adentro
+del zip lista qué áreas faltaron.
+
+Mientras escribe usa un `.parcial` y recién al terminar lo renombra: un zip a medio escribir
+no debe parecer un respaldo bueno si el robot se corta en el medio.

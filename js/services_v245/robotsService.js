@@ -57,7 +57,9 @@ export const TAREAS = [
     { id: 'picking_hora', tipo: 'cada', etiqueta: 'Picking por hora',
       detalle: 'el avance del picking', area: 'picking_dias' },
     { id: 'reportes', tipo: 'diaria', etiqueta: 'Reportes diarios',
-      detalle: 'los dos archivos del día que cerró', area: null }
+      detalle: 'los dos archivos del día que cerró', area: null },
+    { id: 'respaldo', tipo: 'diaria', etiqueta: 'Respaldo de datos',
+      detalle: 'la copia de seguridad de las 63 áreas', area: null }
 ];
 
 /** Cada cuánto puede correr una tarea de las que se repiten. */
@@ -84,7 +86,8 @@ export const robotsPorDefecto = () => ({
     ancla_manana: { activa: true, hora: '07:00', dias: { ...LUN_A_SAB } },
     stock_hora:   { activa: true, minuto: 30, cadaMin: 60, dias: { ...TODOS } },
     picking_hora: { activa: true, minuto: 50, cadaMin: 60, dias: { ...TODOS } },
-    reportes:     { activa: true, hora: '08:00', dias: { ...LUN_A_SAB } }
+    reportes:     { activa: true, hora: '08:00', dias: { ...LUN_A_SAB } },
+    respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } }
 });
 
 const _hhmm = (v, respaldo) => {

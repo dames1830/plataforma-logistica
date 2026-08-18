@@ -63,8 +63,12 @@ DE_FABRICA = {
     'picking_hora': {'activa': True, 'minuto': 50, 'cadaMin': 60, 'dias': {d: True for d in DIAS}},
     'reportes':     {'activa': True, 'hora': '08:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # El respaldo va al final del dia, cuando la corrida de las 19:00 ya termino
+    # y nadie esta escribiendo. La hora se cambia desde la web como las demas.
+    'respaldo':     {'activa': True, 'hora': '23:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
+                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
 }
-DIARIAS = ('ancla_noche', 'ancla_manana', 'reportes')
+DIARIAS = ('ancla_noche', 'ancla_manana', 'reportes', 'respaldo')
 
 
 def _leer_web(timeout=20):
