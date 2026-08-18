@@ -35,10 +35,12 @@ $REVERTIR = Join-Path $RAIZ 'REVERTIR_HORARIOS.ps1'
 # Los nombres son los REALES del servidor, leidos el 18-ago-2026. Ojo con el ultimo:
 # la tarea de los reportes diarios no se llama "Reportes diarios" sino por lo que baja.
 $MAPA = [ordered]@{
-  'Robot Oracle WMS'                  = 'ancla_noche,ancla_manana'
-  'Stock por hora'                    = 'stock_hora'
-  'Picking por hora'                  = 'picking_hora'
-  'Picking y Detalle Orden de ayer'   = 'reportes'
+  'Robot Oracle WMS'                = 'ancla_noche,ancla_manana'
+  'Stock por hora'                  = 'stock_hora'
+  'Picking por hora'                = 'picking_hora'
+  # OJO: la de los reportes NO se llama "Reportes diarios". Se llama por lo que
+  # baja. Nombre leido del servidor el 18-ago-2026.
+  'Picking y Detalle Orden de ayer' = 'reportes'
 }
 
 Write-Host ''
