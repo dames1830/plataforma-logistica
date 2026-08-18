@@ -409,6 +409,41 @@ manda la configuración.
 
 Donde dice — se usa el respaldo de la zona: **300**, salvo el MZN02 que va con **480**.
 
+**Y una excepción por COLUMNA que la tabla no puede expresar: el `MZN01-24` entra 800.** Ver
+abajo, "La columna 24 del MZN01 entra 800".
+
+### LA COLUMNA 24 DEL MZN01 ENTRA 800 — dictada el 17-ago-2026, TODAVÍA SIN IMPLEMENTAR
+
+Regla de Daniel, mirando la tarea 10 de esa noche:
+
+> *"Para el mezzanine uno, fila veinticuatro, donde está B.G Licenses, la capacidad de cada
+> cuerpo es más o menos de ochocientos pares. Esa es la capacidad para esa zona."*
+
+**Es una capacidad POR COLUMNA, y ese concepto hoy no existe.** La configuración tiene
+capacidad por zona + serie (`densidad`) y por sub-marca (`densidadMarcaStd`); ninguna de las
+dos sirve acá:
+
+| Dónde se podría poner | Por qué no sirve |
+|---|---|
+| `densidad` MZN01 serie 2 | el MZN01 lo comparten Power y Bubblegummers: les subiría la capacidad a ellos también |
+| `densidadMarcaStd` | va por `MarcaStd` del Maestro, y esta marca aparece con **seis** valores distintos: `Licenses` (698), `Disney` (429), `Marvel` (217), `Bubblegummers/Disney` (116), `Bubblegummers/Marvel` (71) y `Bubblegummers/Universal` (10) |
+
+Lo que corresponde es una tabla de **capacidad por columna** —`densidadColumna: { MZN01: { 24: 800 } }`—
+que le gane a la serie y a la sub-marca. Es coherente con el resto: los cuerpos de una misma
+columna son físicamente iguales, y ya hay precedente de una dimensión que le gana a la serie.
+
+**Cuánto cambia, medido sobre la tarea 10 del 17-ago-2026** (artículo `2811556`, 865 pares del
+buffer, 32 en el piso, reposición de un cuerpo), corriendo `planificarPorTalla` de verdad:
+
+| Capacidad del cuerpo | Al piso | A reserva | Paletas |
+|---|---|---|---|
+| 570 — lo que dice la configuración | 545 | 320 | 2 |
+| **800 — la real** | **765** | **100** | **1** |
+
+**Sin medir todavía:** si los 800 valen para toda la columna 24 o para toda la zona del MZN01
+donde vive la marca. Daniel dijo "esa zona" hablando de la fila 24 — y en su vocabulario
+**fila quiere decir columna**.
+
 ### LA SUB-MARCA LE GANA A LA SERIE — `densidadMarcaStd`, v29.0230
 
 Regla de Daniel, 15-ago-2026:
