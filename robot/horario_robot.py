@@ -195,20 +195,28 @@ def le_toca(tarea, ahora=None, anotar=True):
 
 def main():
     if len(sys.argv) < 2:
-        print('Uso: python horario_robot.py <tarea> [--probar]')
+        print('Uso: python horario_robot.py <tarea>[,<tarea>...] [--probar]')
         print('Tareas:', ', '.join(DE_FABRICA))
         return 2
 
-    tarea = sys.argv[1]
-    if tarea not in DE_FABRICA:
-        print(f'No conozco la tarea "{tarea}". Son: {", ".join(DE_FABRICA)}')
+    tareas = [t.strip() for t in sys.argv[1].split(',') if t.strip()]
+    desconocidas = [t for t in tareas if t not in DE_FABRICA]
+    if desconocidas:
+        print(f'No conozco: {", ".join(desconocidas)}. Son: {", ".join(DE_FABRICA)}')
         return 2
 
-    # --probar no deja marca: sirve para ver que decidiria sin gastar la corrida
+    # VARIAS TAREAS EN UNA LLAMADA, y hace falta: el ancla es UNA sola tarea de Windows con
+    # dos horarios -07:00 y 19:00-, que acá son `ancla_manana` y `ancla_noche`. Corre si a
+    # cualquiera de las dos le toca, y la marca la deja SOLO la que disparó.
     solo_probar = '--probar' in sys.argv
-    toca, motivo = le_toca(tarea, anotar=not solo_probar)
-    print(f'[HORARIO] {datetime.now():%Y-%m-%d %H:%M} · {tarea} · {motivo}')
-    return 0 if toca else 1
+    alguna = False
+    for t in tareas:
+        toca, motivo = le_toca(t, anotar=not solo_probar)
+        print(f'[HORARIO] {datetime.now():%Y-%m-%d %H:%M} · {t} · {motivo}')
+        if toca:
+            alguna = True
+            break            # con una que toque alcanza; no se gastan las marcas de las otras
+    return 0 if alguna else 1
 
 
 if __name__ == '__main__':
