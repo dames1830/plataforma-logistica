@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0235';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0236';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -181,7 +181,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0235';
+const VERSION = '29.0236';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1458,6 +1458,35 @@ export const saveBufferConfig = async (config) => {
     return { status: 'error', message: 'Error al guardar la configuración local' };
 };
 
+/**
+ * LAS ZONAS DE LA MERCADERÍA QUE SE PICA. Es la lista de siempre, sacada acá afuera
+ * para que la use también el reporte del turno: hasta v29.0235 el análisis medía el
+ * stock de un código SOLO en estas zonas y el avance de la separación lo medía en
+ * TODAS las ubicaciones del almacén, así que se restaban dos cosas distintas y el
+ * turno arrancaba con avance sin que nadie moviera nada. Ver `esZonaDeDestino`.
+ */
+export const ZONAS_ACTIVAS = ['MZN01', 'MZN04', 'CDBUFFER', 'MZN03', 'MZN02', 'SEL', 'AND', 'PARED'];
+
+/** Si esa ubicación —o área— es una de las que se pican. */
+export const esZonaActiva = (ubi) => {
+    const u = String(ubi || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!u || u === 'MATE') return false;
+    return ZONAS_ACTIVAS.some(w => u.includes(w));
+};
+
+/**
+ * Si esa ubicación es DESTINO de la separación, o sea zona activa que NO es el buffer.
+ *
+ * Separar es sacar del buffer y llevarlo a su sitio, así que lo que sigue en el buffer
+ * —o lo que ACABA DE LLEGAR a él— no está separado. La noche del 17-ago-2026 entraron
+ * 208 unidades al `CDBUFFER-A` entre las 19:07 y las 20:35, casi todas del artículo
+ * 8811350, y el reporte las contó como trabajo hecho.
+ */
+export const esZonaDeDestino = (ubi) => {
+    const u = String(ubi || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return esZonaActiva(u) && !u.includes('CDBUFFER');
+};
+
 export const calculateBufferPallets = (configOverride = null) => {
     const activo = dataStore.buffer_activo;
     const reserva = dataStore.buffer_reserva;
@@ -1982,18 +2011,24 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     // Mapa de Stock Activo para columna QTY ACTIVO (Solo zonas de Picking autorizadas)
+    /* Y al lado el mismo mapa SIN EL BUFFER, que es la línea de base con la que el
+       reporte del turno mide la separación: lo que está en el buffer todavía hay que
+       sacarlo. Se llenan en la misma pasada para que nunca queden de fotos distintas. */
     const activeStockMap = {};
+    const destinoStockMap = {};
     activo.forEach(f => {
         const rawF = Array.isArray(f) ? f : Object.values(f);
         let area = String(rawF[0] || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (area === 'MATE') return; // EXCLUIR MATE SEGÚN INDICACIÓN
-        
+
         const isLevel1 = activeWhitelist.some(w => area.includes(w));
         if (!isLevel1) return; // Omitir si no pertenece a zona de picking activa
 
         let sku = String(rawF[1] || '').trim(); // SKU en Columna B (índice 1)
         let qty = parseFloat(rawF[4]) || 0;     // Cantidad en Columna E (índice 4)
-        if (sku) activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
+        if (!sku) return;
+        activeStockMap[sku] = (activeStockMap[sku] || 0) + qty;
+        if (!area.includes('CDBUFFER')) destinoStockMap[sku] = (destinoStockMap[sku] || 0) + qty;
     });
 
     let detallePallets = [];
@@ -2032,7 +2067,8 @@ export const calculateBufferPallets = (configOverride = null) => {
                                 'DESCRIPCION': String(item['DESCRIPCION'] || '').trim(),
                                 'RQ': dSrc.qty,
                                 'QTY ACTIVO': activeStockMap[sku] || 0,
-                                'QTY RESERVA': qty, 
+                                'QTY DESTINO': destinoStockMap[sku] || 0,
+                                'QTY RESERVA': qty,
                                 'QTY BUFFER': Math.round(attributedUnits),
                                 'QTY EXTRA': 0,
                                 'NIVEL': String(item['NIVEL'] || '').trim().toUpperCase(),
@@ -2180,6 +2216,7 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'DESCRIPCION': String(f['DESCRIPCION'] || '').trim(),
                     'RQ': 0,
                     'QTY ACTIVO': activeStockMap[sku] || 0,
+                    'QTY DESTINO': destinoStockMap[sku] || 0,
                     'QTY RESERVA': parseFloat(f['CANTIDAD']) || 0,
                     'QTY BUFFER': 0,
                     'QTY EXTRA': 0,
