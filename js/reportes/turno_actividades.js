@@ -776,6 +776,27 @@ export const montarTurno = function (RAIZ, OPC) {
     return cerrada && p.av > 0;
   }
 
+  /**
+   * UN AVANCE NO PUEDE ACHICARSE. Regla de Daniel, y la trajo él mismo el 18-ago-2026:
+   * *"hace un rato tenía en Limpieza de Buffer C novecientos ocho en avance, pero ahora veo
+   * que ha bajado a ochocientos treinta y dos"*.
+   *
+   * Las tres cuentas automáticas comparan la foto del arranque contra la de la hora, y esa
+   * resta SE PUEDE TAPAR: si al mismo artículo le entra mercadería nueva, lo que figura como
+   * "salió" se achica aunque el trabajo ya esté hecho. Esa noche entraron 213 pares al Buffer
+   * C después del arranque; 75 eran de artículos que ya estaban, y son exactamente los 76 que
+   * el avance perdió.
+   *
+   * El trabajo hecho no se deshace porque llegue mercadería nueva, así que dentro de una
+   * jornada el avance solo puede subir. Al cambiar de fecha se recarga el estado de esa
+   * jornada, así que el tope es por turno y no se arrastra al día siguiente.
+   */
+  function noRetrocede(p, nuevo) {
+    var n = Math.round(Number(nuevo) || 0);
+    var previo = Math.round(Number(p.av) || 0);
+    return Math.max(n, previo);
+  }
+
   function aplicarFuentes() {
     var F = OPC.fuentes || {};
     S.procs.forEach(function (p) {
@@ -786,7 +807,7 @@ export const montarTurno = function (RAIZ, OPC) {
          en el dibujado siguiente y parecía que el número se borraba solo. */
       var m = p.aMano || {};
       if (typeof f.meta === 'number' && !m.meta && !congelado(p, 'meta')) p.meta = Math.round(f.meta);
-      if (typeof f.avance === 'number' && !m.av && !congelado(p, 'av')) p.av = Math.round(f.avance);
+      if (typeof f.avance === 'number' && !m.av && !congelado(p, 'av')) p.av = noRetrocede(p, f.avance);
       if (f.unidad) p.u = f.unidad;
       p.auto = true;
     });
@@ -841,7 +862,7 @@ export const montarTurno = function (RAIZ, OPC) {
       var m = p.aMano || {};
       if (meta > 0 && !m.meta && !congelado(p, 'meta')) { p.meta = Math.round(meta); }
       if (meta > 0 && !m.meta) { p.u = 'pares'; p.auto = true; }
-      if (b && !m.av && !congelado(p, 'av')) p.av = Math.round(av);
+      if (b && !m.av && !congelado(p, 'av')) p.av = noRetrocede(p, av);
       /* Los que salieron del C y no llegaron a destino NO se esconden: si no se
          vieran, tres horas de trabajo parecerían no haber pasado. */
       p.pend = (b && !m.av && medible && !congelado(p, 'av')) ? Math.round(sinDestino) : p.pend || 0;
