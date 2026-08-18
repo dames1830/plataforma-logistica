@@ -18,3 +18,7 @@ backend/*.sqlite
 # SO
 .DS_Store
 local_beta/
+
+# Estado local del robot: se genera solo en el servidor, no va al repo
+robot/horario_cache.json
+robot/horario_corridas.json
