@@ -1,0 +1,237 @@
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * LOS HORARIOS DEL ROBOT — Configuración → Parámetros
+ * ══════════════════════════════════════════════════════════════════════════════
+ *
+ * Daniel, 18-ago-2026: *"quiero que la hora del robot, tanto el stock ancla como los stocks de
+ * avance, se pueda modificar desde la web. Yo cambio en la web y el robot se tiene que adaptar
+ * a lo que yo digo"*. Y los días también: *"ahorita no está el domingo, pero si un domingo
+ * venimos a trabajar lo pongo como un check"*.
+ *
+ * SE DA VUELTA EL RELOJ, y esa es toda la idea. Hasta hoy la hora vivía en el Programador de
+ * tareas de Windows del servidor, así que cambiarla era entrar con un `.bat` —el ancla pasó de
+ * 06:00 a 07:00 el 13-ago y hubo que hacerlo a mano—. Ahora Windows solo DESPIERTA al robot
+ * cada 10 minutos y el robot pregunta acá si le toca. La hora pasa a ser un dato de la
+ * plataforma, como la jornada o las capacidades.
+ *
+ * EL ROBOT LEE ESTO, ASÍ QUE EL FORMATO ES UN CONTRATO. Si se le agrega un campo, el robot
+ * viejo tiene que seguir andando: por eso todo lo que falta se rellena con el valor de fábrica
+ * y nada se da por presente.
+ *
+ * Vive en el área `config`, clave `robots`, al lado de `jornada`, `zonas` y `tallas`. Al
+ * guardar se relee el cajón entero y se reemplaza SOLO esta clave.
+ */
+
+const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics/config';
+const CACHE_KEY = 'config_robots_v1';
+
+/** Los días, en el orden en que se leen en la pantalla. `dom` va último a propósito. */
+export const DIAS = [
+    { id: 'lun', letra: 'L', nombre: 'lunes' },
+    { id: 'mar', letra: 'M', nombre: 'martes' },
+    { id: 'mie', letra: 'X', nombre: 'miércoles' },
+    { id: 'jue', letra: 'J', nombre: 'jueves' },
+    { id: 'vie', letra: 'V', nombre: 'viernes' },
+    { id: 'sab', letra: 'S', nombre: 'sábado' },
+    { id: 'dom', letra: 'D', nombre: 'domingo' }
+];
+
+/**
+ * LAS CINCO TAREAS DEL SERVIDOR, con lo que hacían al 18-ago-2026.
+ *
+ * `tipo` dice cómo se lee la hora, y hay dos formas que no se pueden mezclar:
+ *   'diaria'  corre UNA vez, a la hora exacta        -> `hora`
+ *   'cada'    corre varias veces, al minuto que diga -> `minuto` + `cadaMin`
+ *
+ * El ancla va partida en dos —noche y mañana— porque tienen horas distintas y Daniel puede
+ * querer días distintos: un domingo de trabajo quizá necesite la foto de la noche y no la de
+ * la mañana.
+ */
+export const TAREAS = [
+    { id: 'ancla_noche', tipo: 'diaria', etiqueta: 'Stock ancla · noche',
+      detalle: 'la foto sobre la que se calcula todo el turno', area: 'almacenaje_activo' },
+    { id: 'ancla_manana', tipo: 'diaria', etiqueta: 'Stock ancla · mañana',
+      detalle: 'la foto del día que empieza', area: 'almacenaje_activo' },
+    { id: 'stock_hora', tipo: 'cada', etiqueta: 'Stock por hora',
+      detalle: 'el avance del turno: activo y reserva', area: 'layout_stock_hora' },
+    { id: 'picking_hora', tipo: 'cada', etiqueta: 'Picking por hora',
+      detalle: 'el avance del picking', area: 'picking_dias' },
+    { id: 'reportes', tipo: 'diaria', etiqueta: 'Reportes diarios',
+      detalle: 'los dos archivos del día que cerró', area: null }
+];
+
+/** Cada cuánto puede correr una tarea de las que se repiten. */
+export const CADA = [
+    { min: 30, texto: 'cada 30 minutos' },
+    { min: 60, texto: 'cada 1 hora' },
+    { min: 120, texto: 'cada 2 horas' },
+    { min: 180, texto: 'cada 3 horas' },
+    { min: 360, texto: 'cada 6 horas' }
+];
+
+const LUN_A_SAB = { lun: true, mar: true, mie: true, jue: true, vie: true, sab: true, dom: false };
+const TODOS = { lun: true, mar: true, mie: true, jue: true, vie: true, sab: true, dom: true };
+
+/**
+ * LO QUE HACÍA EL SERVIDOR AL 18-ago-2026, tal cual. Es el punto de partida y también el
+ * respaldo: si la publicada no trae una tarea, vale esto y el robot no se queda sin horario.
+ *
+ * El domingo apagado en las tres diarias es la máscara `dias=126` de las tareas de Windows
+ * (2+4+8+16+32+64 = lunes a sábado). Las dos "por hora" sí corrían todos los días.
+ */
+export const robotsPorDefecto = () => ({
+    ancla_noche:  { activa: true, hora: '19:00', dias: { ...LUN_A_SAB } },
+    ancla_manana: { activa: true, hora: '07:00', dias: { ...LUN_A_SAB } },
+    stock_hora:   { activa: true, minuto: 30, cadaMin: 60, dias: { ...TODOS } },
+    picking_hora: { activa: true, minuto: 50, cadaMin: 60, dias: { ...TODOS } },
+    reportes:     { activa: true, hora: '08:00', dias: { ...LUN_A_SAB } }
+});
+
+const _hhmm = (v, respaldo) => {
+    const m = String(v == null ? '' : v).trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return respaldo;
+    const h = Number(m[1]), mi = Number(m[2]);
+    if (h < 0 || h > 23 || mi < 0 || mi > 59) return respaldo;
+    return String(h).padStart(2, '0') + ':' + m[2];
+};
+
+const _entre = (v, respaldo, min, max) => {
+    const n = Number(v);
+    return (Number.isFinite(n) && n >= min && n <= max) ? Math.round(n) : respaldo;
+};
+
+const _dias = (v, respaldo) => {
+    const out = {};
+    DIAS.forEach(d => {
+        out[d.id] = (v && typeof v === 'object' && d.id in v) ? !!v[d.id] : !!respaldo[d.id];
+    });
+    return out;
+};
+
+/** Deja la configuración con todas las tareas y todos los campos, sin inventar nada. */
+export const normalizar = (cfg) => {
+    const def = robotsPorDefecto();
+    const c = (cfg && typeof cfg === 'object') ? cfg : {};
+    const out = {};
+    TAREAS.forEach(t => {
+        const d = def[t.id];
+        const v = (c[t.id] && typeof c[t.id] === 'object') ? c[t.id] : {};
+        const base = { activa: ('activa' in v) ? !!v.activa : d.activa, dias: _dias(v.dias, d.dias) };
+        if (t.tipo === 'diaria') {
+            base.hora = _hhmm(v.hora, d.hora);
+        } else {
+            base.minuto = _entre(v.minuto, d.minuto, 0, 59);
+            // Solo los valores que la pantalla ofrece: un "cada 7 minutos" escrito a mano
+            // dejaría al robot corriendo todo el día.
+            base.cadaMin = CADA.some(x => x.min === Number(v.cadaMin)) ? Number(v.cadaMin) : d.cadaMin;
+        }
+        out[t.id] = base;
+    });
+    return out;
+};
+
+let _robots = null;
+
+const leerCache = () => {
+    try {
+        const txt = localStorage.getItem(CACHE_KEY);
+        return txt ? normalizar(JSON.parse(txt)) : null;
+    } catch (e) { return null; }
+};
+
+const escribirCache = (cfg) => {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(cfg)); } catch (e) { /* sin caché se sigue igual */ }
+};
+
+export const robotsActual = () => {
+    if (_robots) return _robots;
+    const local = leerCache();
+    if (local) { _robots = local; return _robots; }
+    return robotsPorDefecto();
+};
+
+export const cargarRobots = async () => {
+    try {
+        const res = await fetch(`${API_URL}?t=${Date.now()}`);
+        if (res.ok) {
+            const cuerpo = await res.json();
+            const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+            if (datos && typeof datos === 'object' && datos.robots) {
+                _robots = normalizar(datos.robots);
+                escribirCache(_robots);
+                return _robots;
+            }
+        }
+    } catch (e) {
+        console.warn('[Robots] no se pudo traer el horario publicado:', e && e.message);
+    }
+    _robots = leerCache() || robotsPorDefecto();
+    return _robots;
+};
+
+/** Publica para el servidor. Se relee `config` y se reemplaza SOLO la clave `robots`. */
+export const guardarRobots = async (nueva) => {
+    const cfg = normalizar(nueva);
+    _robots = cfg;
+    escribirCache(cfg);
+
+    let cajon = {};
+    try {
+        const res = await fetch(`${API_URL}?t=${Date.now()}`);
+        if (res.ok) {
+            const cuerpo = await res.json();
+            const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+            if (datos && typeof datos === 'object' && !Array.isArray(datos)) cajon = datos;
+        }
+    } catch (e) { /* si no se puede releer, se manda solo lo de robots */ }
+
+    const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...cajon, robots: cfg })
+    });
+    if (!res.ok) throw new Error('El servidor respondió ' + res.status);
+    return cfg;
+};
+
+/**
+ * ¿LE TOCA CORRER A ESTA TAREA EN ESTE MOMENTO? La misma cuenta que hace el robot en el
+ * servidor, escrita una sola vez para que las dos puntas no se separen.
+ *
+ * `ventanaMin` es cuánto abarca cada despertar: el robot se levanta cada 10 minutos, así que
+ * una hora puesta a las 19:00 se atiende si el reloj está entre 19:00 y 19:09. Sin ventana,
+ * un despertar a las 19:01 se saltaría la corrida para siempre.
+ */
+export const leToca = (tarea, cfg, momento, ventanaMin = 10) => {
+    const t = TAREAS.find(x => x.id === tarea);
+    const c = (cfg || robotsActual())[tarea];
+    if (!t || !c || !c.activa) return false;
+
+    const ahora = momento instanceof Date ? momento : new Date();
+    if (!c.dias[DIAS[(ahora.getDay() + 6) % 7].id]) return false;   // getDay(): 0 = domingo
+
+    const minutosDelDia = ahora.getHours() * 60 + ahora.getMinutes();
+    if (t.tipo === 'diaria') {
+        const [h, m] = String(c.hora).split(':').map(Number);
+        const objetivo = h * 60 + m;
+        return minutosDelDia >= objetivo && minutosDelDia < objetivo + ventanaMin;
+    }
+    // Las que se repiten: cada `cadaMin` a partir de medianoche, al minuto que diga
+    const cada = Math.max(1, Number(c.cadaMin) || 60);
+    const desde = Number(c.minuto) || 0;
+    for (let base = desde; base < 24 * 60; base += cada) {
+        if (minutosDelDia >= base && minutosDelDia < base + ventanaMin) return true;
+    }
+    return false;
+};
+
+/** Texto corto de cuándo corre, para la pantalla y para el papel. */
+export const comoCorre = (tarea, cfg) => {
+    const t = TAREAS.find(x => x.id === tarea);
+    const c = (cfg || robotsActual())[tarea];
+    if (!t || !c) return '';
+    if (!c.activa) return 'apagada';
+    if (t.tipo === 'diaria') return `todos los días a las ${c.hora}`;
+    const cada = CADA.find(x => x.min === c.cadaMin);
+    return `${cada ? cada.texto : 'cada ' + c.cadaMin + ' min'}, al minuto ${c.minuto}`;
+};

@@ -1,25 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia, esZonaDeDestino } from '../services_v245/csvHub_v6.js?v=29.0243';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia, esZonaDeDestino } from '../services_v245/csvHub_v6.js?v=29.0244';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0243';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0243';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0243';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0243';
-import * as metasService from '../services_v245/metasService.js?v=29.0243';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0243';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0243';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0243';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0243';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0243';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0243';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0243';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0243';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0243';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0243';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0243';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0243';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0243';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0243';
-import { montarSlotting } from './slotting.js?v=29.0243';
+import * as adminService from '../services_v245/adminService.js?v=29.0244';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0244';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0244';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0244';
+import * as metasService from '../services_v245/metasService.js?v=29.0244';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0244';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0244';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0244';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0244';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0244';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0244';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0244';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0244';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0244';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0244';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0244';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0244';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0244';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0244';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0244';
+import { montarSlotting } from './slotting.js?v=29.0244';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -376,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0243';
+const VERSION = '29.0244';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4463,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0243');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0244');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -9256,9 +9257,183 @@ const renderRFSection = (container) => {
     };
   };
 
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════
+   * CONFIGURACIÓN → PARÁMETROS: LOS HORARIOS DEL ROBOT
+   * ══════════════════════════════════════════════════════════════════════════════
+   *
+   * Daniel, 18-ago-2026: *"yo cambio en la web y el robot se tiene que adaptar a lo que yo
+   * digo"*. Hasta hoy la hora vivía en el Programador de tareas de Windows del servidor y
+   * cambiarla era entrar con un `.bat`. Acá se edita y el robot obedece en la vuelta
+   * siguiente — se despierta cada 10 minutos y pregunta.
+   *
+   * LA ÚLTIMA CORRIDA NO SE GUARDA EN NINGÚN LADO, y no hace falta: cada tarea deja su huella
+   * al publicar su área, así que la hora de esa publicación ES la última corrida. Se lee de
+   * `/api/sync/versiones`, que devuelve las marcas de todas las áreas en una sola llamada
+   * diminuta. Los Reportes diarios no publican área —dejan los CSV en Descargas— y por eso son
+   * la única fila sin ese dato.
+   */
+  const renderHorariosRobot = async (caja) => {
+    /* Propio y no el de más abajo: los `esc` del archivo viven dentro de otras funciones y
+       desde acá no se ven. `node --check` no lo caza —es un nombre válido en tiempo de
+       compilación— y revienta recién al pintar la pantalla. */
+    const esc = (s) => String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    caja.innerHTML = `<div class="glass-panel" style="padding:2rem; text-align:center; color:var(--text-muted);">
+        <div style="font-size:1.4rem;">⏳</div>Trayendo los horarios…</div>`;
+
+    let cfg;
+    try { cfg = await robotsService.cargarRobots(); }
+    catch (e) { cfg = robotsService.robotsActual(); }
+
+    // Cuándo corrió cada una por última vez, sacado de la marca de su área
+    let versiones = {};
+    try {
+      const r = await fetch(`${API_BASE}/sync/versiones?t=${Date.now()}`);
+      if (r.ok) { const j = await r.json(); versiones = (j && j.versiones) || {}; }
+    } catch (e) { /* sin esto la pantalla sirve igual, solo que sin la última corrida */ }
+
+    const cuando = (sello) => {
+      if (!sello) return { txt: '—', color: 'var(--text-muted)' };
+      /* `updated_at` YA VIENE EN HORA DE LIMA: no se le resta nada ni se pasa por
+         toISOString(), que volvería a moverla. */
+      const d = new Date(String(sello).replace(' ', 'T'));
+      if (isNaN(d)) return { txt: String(sello), color: 'var(--text-muted)' };
+      const horas = (Date.now() - d.getTime()) / 3600000;
+      const hh = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      const hoy = getLogicalDate() === (String(sello).slice(0, 10));
+      return { txt: (hoy ? 'hoy ' : String(sello).slice(8, 10) + '/' + String(sello).slice(5, 7) + ' ') + hh,
+               color: horas <= 26 ? '#4ade80' : '#f59e0b' };
+    };
+
+    const filas = robotsService.TAREAS.map(t => {
+      const c = cfg[t.id];
+      const u = cuando(t.area ? versiones[t.area] : null);
+      const dias = robotsService.DIAS.map(d => `
+        <td style="text-align:center; padding:0.7rem 0.3rem;">
+          <input type="checkbox" data-t="${t.id}" data-d="${d.id}" ${c.dias[d.id] ? 'checked' : ''}
+                 title="${d.nombre}" style="width:16px; height:16px; cursor:pointer;">
+        </td>`).join('');
+      const hora = t.tipo === 'diaria'
+        ? `<input type="time" data-t="${t.id}" data-campo="hora" value="${esc(c.hora)}"
+                  style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:6px;
+                         color:#fff; padding:0.35rem 0.5rem; font-family:monospace; font-size:0.85rem;">`
+        : `<div style="display:flex; align-items:center; gap:0.4rem;">
+             <span style="color:var(--text-muted); font-size:0.8rem;">minuto</span>
+             <input type="number" min="0" max="59" data-t="${t.id}" data-campo="minuto" value="${c.minuto}"
+                    style="width:60px; background:rgba(0,0,0,0.3); border:1px solid var(--border);
+                           border-radius:6px; color:#fff; padding:0.35rem; font-family:monospace; font-size:0.85rem;">
+           </div>`;
+      const cada = t.tipo === 'cada'
+        ? `<select data-t="${t.id}" data-campo="cadaMin"
+                   style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:6px;
+                          color:#fff; padding:0.35rem; font-size:0.8rem;">
+             ${robotsService.CADA.map(x => `<option value="${x.min}" ${x.min === c.cadaMin ? 'selected' : ''}>${x.texto}</option>`).join('')}
+           </select>`
+        : `<span style="color:var(--text-muted); font-size:0.8rem;">una vez</span>`;
+
+      return `<tr style="border-top:1px solid var(--border);">
+        <td style="padding:0.7rem 1rem;">
+          <label style="display:flex; align-items:center; gap:0.6rem; cursor:pointer;">
+            <input type="checkbox" data-t="${t.id}" data-campo="activa" ${c.activa ? 'checked' : ''}
+                   title="Prendida o apagada" style="width:16px; height:16px; cursor:pointer;">
+            <span>
+              <span style="color:#fff; font-weight:600; font-size:0.85rem;">${esc(t.etiqueta)}</span><br>
+              <span style="color:var(--text-muted); font-size:0.75rem;">${esc(t.detalle)}</span>
+            </span>
+          </label>
+        </td>
+        <td style="padding:0.7rem 1rem;">${hora}</td>
+        <td style="padding:0.7rem 1rem;">${cada}</td>
+        ${dias}
+        <td style="padding:0.7rem 1rem; font-family:monospace; font-size:0.8rem; color:${u.color};">${u.txt}</td>
+      </tr>`;
+    }).join('');
+
+    caja.innerHTML = `
+      <div class="glass-panel" style="padding:1.5rem; border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:0.6rem; margin-bottom:1.2rem;">
+          <div>
+            <h3 style="margin:0; color:#fff; font-size:1rem; font-weight:800; letter-spacing:1px;">⏰ HORARIOS DEL ROBOT</h3>
+            <div style="color:var(--text-muted); font-size:0.78rem; margin-top:0.25rem;">
+              El servidor pregunta cada 10 minutos. Lo que cambie acá se aplica en la vuelta siguiente.
+            </div>
+          </div>
+          <div id="rob_estado" style="font-size:0.78rem; color:var(--text-muted);"></div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; min-width:760px;">
+            <thead>
+              <tr style="background:rgba(255,255,255,0.03);">
+                <th style="text-align:left; padding:0.6rem 1rem; color:var(--text-muted); font-size:0.72rem; font-weight:700;">TAREA</th>
+                <th style="text-align:left; padding:0.6rem 1rem; color:var(--text-muted); font-size:0.72rem; font-weight:700;">HORA</th>
+                <th style="text-align:left; padding:0.6rem 1rem; color:var(--text-muted); font-size:0.72rem; font-weight:700;">CADA CUÁNTO</th>
+                ${robotsService.DIAS.map(d => `<th style="padding:0.6rem 0.3rem; color:${d.id === 'dom' ? '#f59e0b' : 'var(--text-muted)'}; font-size:0.72rem; font-weight:700;">${d.letra}</th>`).join('')}
+                <th style="text-align:left; padding:0.6rem 1rem; color:var(--text-muted); font-size:0.72rem; font-weight:700;">ÚLTIMA CORRIDA</th>
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:1.2rem; padding:0.9rem 1rem; background:rgba(245,158,11,0.08);
+                    border:1px solid rgba(245,158,11,0.3); border-radius:10px; color:#fcd34d; font-size:0.8rem; line-height:1.6;">
+          El <b>stock ancla</b> y los <b>reportes diarios</b> usan la misma sesión de Oracle, que no admite dos a la vez.
+          Si quedan a la misma hora, el segundo espera a que el primero termine.
+          Y mover el ancla dentro del turno cambia lo que mide: esa foto ya trae trabajo hecho adentro.
+        </div>
+
+        <div style="display:flex; gap:0.7rem; margin-top:1.2rem; flex-wrap:wrap;">
+          <button id="rob_guardar" class="btn" style="background:var(--primary); color:#000; padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">GUARDAR HORARIOS</button>
+          <button id="rob_fabrica" class="btn" style="background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#e2e8f0; padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">↩️ VOLVER A LO DE FÁBRICA</button>
+        </div>
+      </div>`;
+
+    const leerPantalla = () => {
+      const out = JSON.parse(JSON.stringify(cfg));
+      caja.querySelectorAll('[data-t]').forEach(el => {
+        const t = el.dataset.t, campo = el.dataset.campo, dia = el.dataset.d;
+        if (!out[t]) return;
+        if (dia) out[t].dias[dia] = el.checked;
+        else if (campo === 'activa') out[t].activa = el.checked;
+        else if (campo === 'minuto' || campo === 'cadaMin') out[t][campo] = Number(el.value);
+        else if (campo) out[t][campo] = el.value;
+      });
+      return out;
+    };
+
+    const est = caja.querySelector('#rob_estado');
+    caja.querySelectorAll('[data-t]').forEach(el => el.addEventListener('change', () => {
+      est.innerHTML = '<span style="color:#facc15;">Hay cambios sin guardar</span>';
+    }));
+
+    caja.querySelector('#rob_guardar').onclick = async () => {
+      const btn = caja.querySelector('#rob_guardar');
+      const rotulo = btn.textContent;
+      btn.disabled = true; btn.textContent = '⌛ GUARDANDO...';
+      try {
+        await robotsService.guardarRobots(leerPantalla());
+        est.innerHTML = '<span style="color:#4ade80;">Guardado. El robot lo toma en la vuelta siguiente.</span>';
+        showPremiumAlert('HORARIOS GUARDADOS',
+          'El servidor los va a leer en su próxima vuelta, que es como mucho en 10 minutos.', 'success');
+      } catch (e) {
+        showPremiumAlert('NO SE PUDO GUARDAR', (e && e.message) || String(e), 'error');
+        est.innerHTML = '<span style="color:#f87171;">No llegó al servidor</span>';
+      }
+      btn.disabled = false; btn.textContent = rotulo;
+    };
+
+    caja.querySelector('#rob_fabrica').onclick = () => {
+      cfg = robotsService.robotsPorDefecto();
+      renderHorariosRobot(caja);
+    };
+  };
+
   const renderConfigTab = async () => {
     contentSubtitle.textContent = "Panel de Control Técnico";
-    if (!activeConfigSub || activeConfigSub === 'parametros') activeConfigSub = 'reportes';
+    if (!activeConfigSub) activeConfigSub = 'reportes';
     contentArea.innerHTML = `
         <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
           <a class="sub-nav-item ${activeConfigSub==='reportes'?'active':''}" data-s="reportes" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">📊 REPORTES</a>
@@ -9545,6 +9720,8 @@ const renderRFSection = (container) => {
         };
 
         bindTableEvents();
+    } else if (activeConfigSub === 'parametros') {
+        await renderHorariosRobot(document.getElementById('configContent'));
     } else if (activeConfigSub === 'archivos_nube') {
         // Se vuelve a revisar acá y no solo al pintar la barra: si alguien llega con la
         // sección guardada de antes y ya no tiene el permiso, no debe poder publicar.
@@ -15576,7 +15753,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0243 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0244 | MOBILE PORTAL
                             </div>
                     </div>
 
