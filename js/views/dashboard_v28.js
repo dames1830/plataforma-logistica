@@ -1,25 +1,25 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia, esZonaDeDestino } from '../services_v245/csvHub_v6.js?v=29.0241';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia, esZonaDeDestino } from '../services_v245/csvHub_v6.js?v=29.0242';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0241';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0241';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0241';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0241';
-import * as metasService from '../services_v245/metasService.js?v=29.0241';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0241';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0241';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0241';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0241';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0241';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0241';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0241';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0241';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0241';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0241';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0241';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0241';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0241';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0241';
-import { montarSlotting } from './slotting.js?v=29.0241';
+import * as adminService from '../services_v245/adminService.js?v=29.0242';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0242';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0242';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0242';
+import * as metasService from '../services_v245/metasService.js?v=29.0242';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0242';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0242';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0242';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0242';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0242';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0242';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0242';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0242';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0242';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0242';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0242';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0242';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0242';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0242';
+import { montarSlotting } from './slotting.js?v=29.0242';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -376,7 +376,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0241';
+const VERSION = '29.0242';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4087,9 +4087,27 @@ export const renderDashboard = async (container, user, onLogout) => {
          * traen LPN, igual que hace la validación del Buffer KPI. */
         const vistas = new Set();
         const paletas = [];
+        /* QUÉ CÓDIGO TRAE CADA PALETA, que es lo que faltaba para medir bien la separación.
+         *
+         * Daniel, 18-ago-2026: *"la separación de mercadería viene de lo que baja el buffer.
+         * Si en el buffer C moví el código X a otro sitio, ya me lo estás tomando como
+         * separación porque justo hay ese código en el plan. Deberías hacer un doble filtro:
+         * que sea el código X, pero que BAJE DE RESERVA"*.
+         *
+         * Hasta acá el plan guardaba los códigos por un lado y las paletas por otro, sin
+         * decir qué paleta traía qué código, así que no había forma de cruzarlos. Con esta
+         * lista sí: de las paletas pedidas para un código, las que ya no están arriba son
+         * las que bajaron, y esos son los pares que pueden contar como separados.
+         *
+         * Va aparte de `paletas` y no adentro: aquella cuenta LPN ÚNICOS —una paleta trae
+         * varios códigos— y es lo que mide la Bajada de paletas. Mezclarlas rompería esa. */
+        const porPaleta = [];
         planificadas.forEach(p => {
           const lpn = String(p.LPN || '').trim().toUpperCase();
           const ubi = String(p.UBICACIONES || '').trim().toUpperCase();
+          const sku = String(p.SKU || '').trim();
+          const q = Number(p['QTY BUFFER']) || 0;
+          if (lpn && sku && q > 0) porPaleta.push({ lpn, sku, q: Math.round(q) });
           const llave = lpn || ubi;
           if (!llave || vistas.has(llave)) return;
           vistas.add(llave);
@@ -4103,10 +4121,11 @@ export const renderDashboard = async (container, user, onLogout) => {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
           const r = await fetch(`${base}/api/logistics/plan_buffer?date=${fecha}`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fecha, codigos, paletas })
+            body: JSON.stringify({ fecha, codigos, paletas, porPaleta })
           });
           console.log(r.ok
-            ? `[BH] ✅ Plan del buffer publicado (${fecha}): ${codigos.length} códigos, ${paletas.length} paletas.`
+            ? `[BH] ✅ Plan del buffer publicado (${fecha}): ${codigos.length} códigos, ${paletas.length} paletas, `
+              + `${porPaleta.length} líneas paleta-código.`
             : `[BH] ⚠️ El plan del buffer no se pudo publicar (${r.status}).`);
         }
       } catch (e) {
@@ -4444,7 +4463,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0241');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0242');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6274,6 +6293,49 @@ const fuentesDelTurno = async (dia) => {
             const porDestino = !!destAhora;
             const activo = destAhora || actAhora;
 
+            /* ── EL DOBLE FILTRO: subió en el piso Y BAJÓ DE RESERVA ──────────────
+             *
+             * Daniel, 18-ago-2026: *"si en el buffer C moví el código X a otro sitio, ya me
+             * lo estás tomando como separación porque justo hay ese código en el plan.
+             * Deberías hacer un doble filtro: que sea el código X, pero que baje de reserva"*.
+             *
+             * Tenía razón, y la cuenta vieja sumaba de más por tres lados: lo que bajó del
+             * Buffer C —que YA se cuenta en Limpieza de Buffer C, así que el mismo par valía
+             * dos veces—, lo que llegó de recepción y cualquier movimiento interno.
+             *
+             * Ahora, por código, el tope es lo que de verdad bajó de arriba: de las paletas
+             * que el análisis pidió para ese código, las que ya no están en el reporte de
+             * reserva. Es el mismo criterio que usa la Bajada de paletas —"ya no está
+             * arriba", no "desapareció"—, así que las dos filas cuentan lo mismo.
+             *
+             * SIN EL DATO NO SE INVENTA: los planes anteriores a v29.0242 no traen
+             * `porPaleta`, y con la jornada cerrada no hay foto de reserva de la hora. En los
+             * dos casos se sigue midiendo como antes y se avisa por consola, que es preferible
+             * a mostrar un cero que parece trabajo no hecho. */
+            const porPaleta = Array.isArray(plan.porPaleta) ? plan.porPaleta : null;
+            let bajoDeReserva = null;
+            /* Los códigos que NO figuran en ninguna paleta con LPN quedan fuera del filtro:
+               sin LPN no hay forma de saber si bajaron, y darles cero sería contar como no
+               trabajado algo que quizás se hizo. Es el mismo criterio que ya usa la Bajada
+               de paletas con las filas sin LPN. */
+            let conPaleta = null;
+            if (porPaleta && porPaleta.length && palArriba) {
+              bajoDeReserva = {};
+              conPaleta = new Set();
+              porPaleta.forEach(r => {
+                const lpn = String((r && r.lpn) || '').trim().toUpperCase();
+                const sku = String((r && r.sku) || '').trim();
+                if (!lpn || !sku) return;
+                conPaleta.add(sku);
+                if (palArriba.has(lpn)) return;          // sigue arriba: todavía no bajó
+                bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + (Number(r.q) || 0);
+              });
+            } else {
+              console.warn('[TURNO] Separación: sin el cruce contra la reserva '
+                + (porPaleta ? '(no hay foto de reserva de la hora)' : '(el plan no trae porPaleta)')
+                + '. Se mide solo por lo que subió al piso, que cuenta de más.');
+            }
+
             /* LOS PLANES PUBLICADOS ANTES DE v29.0236 no traen `iniDestino`. En vez de
              * dejar la noche sin número —o peor, contar de más— se reconstruye del
              * `almacenaje_activo`, que durante el turno ES la misma foto de las 19:00
@@ -6316,7 +6378,12 @@ const fuentesDelTurno = async (dia) => {
                        todo en el buffer, que es justamente lo que falta separar—. */
                     if ((actAhora || activo)[sku] !== undefined) cruzan++;
                     const subio = Math.max(0, (activo[sku] || 0) - baseDe(p, sku));
-                    separadas += Math.min(aBajar, subio);
+                    // El doble filtro: no puede contar como separado más de lo que bajó de
+                    // arriba para ese código. Sin el cruce disponible, manda solo lo de antes.
+                    const tope = (bajoDeReserva && conPaleta.has(sku))
+                      ? Math.min(aBajar, bajoDeReserva[sku] || 0)
+                      : aBajar;
+                    separadas += Math.min(tope, subio);
                 });
 
                 if (cruzan < codigos.length * 0.5) {
@@ -15471,7 +15538,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0241 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0242 | MOBILE PORTAL
                             </div>
                     </div>
 
