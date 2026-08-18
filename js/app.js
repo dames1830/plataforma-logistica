@@ -1,8 +1,9 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0249';
-import * as adminService from './services_v245/adminService.js?v=29.0249';
+import { getSession, logout } from './services_v245/auth.js?v=29.0250';
+import * as adminService from './services_v245/adminService.js?v=29.0250';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0250';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -345,7 +346,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0249';
+      this.APP_VERSION = 'v29.0250';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -570,6 +571,9 @@ class App {
     // tiempo que la persona tarda en escribir. Va también cuando hay sesión guardada, porque
     // en ese caso el dashboard se importa igual apenas termina de sincronizar.
     this.adelantarDashboard();
+    // Deja ordenables las 79 tablas de la plataforma. Va aqui y no en cada vista
+    // porque las tablas se insertan con innerHTML desde 312 sitios distintos.
+    observarTablas();
     try {
         if (this.root) {
             // [CRÍTICO] Limpiar clases heredadas para evitar bugs de desbordamiento de scroll y franjas horizontales
