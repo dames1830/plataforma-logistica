@@ -47,8 +47,11 @@
       log.map(l => '  ' + l).join('\n');
   };
 
-  const svc = await import('../js/services_v245/slottingService.js?v=prueba');
-  const { montarSlotting } = await import('../js/views/slotting.js?v=prueba');
+  // Sello unico en cada carga: sin esto el navegador se queda con el modulo viejo en cache
+  // y una prueba puede "pasar" contra el codigo de hace media hora.
+  const sello = String(Date.now());
+  const svc = await import('../js/services_v245/slottingService.js?v=' + sello);
+  const { montarSlotting } = await import('../js/views/slotting.js?v=' + sello);
 
   const cajon = {
     '2026-08-17': {
@@ -72,8 +75,12 @@
 
   const espera = (ms) => new Promise(r => setTimeout(r, ms));
 
+  // La jornada de hoy se puede cambiar por la URL: #2026-08-18 para probar un dia SIN corrida
+  const jornadaHoy = (location.hash || '#2026-08-17').slice(1);
+  log.push('jornada de hoy: ' + jornadaHoy + (cajon[jornadaHoy] ? ' (tiene corrida)' : ' (SIN corrida)'));
+
   montarSlotting(document.getElementById('caja'), {
-    cajon, vista: 'tareas_dia', svc,
+    cajon, vista: 'tareas_dia', svc, jornadaHoy,
     operarios: [{ usuario: 'scasahuaman', nombre: 'S. Casahuaman', turno: 'noche' },
                 { usuario: 'pmurayari', nombre: 'P. Murayari', turno: 'noche' }],
     jornadaVencida: () => false,

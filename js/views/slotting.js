@@ -38,9 +38,23 @@ export const montarSlotting = (container, OPC = {}) => {
   const operarios = OPC.operarios || [];
 
   const todasLasFechas = svc.fechasDe(cajon);
-  // El rango arranca en la jornada más nueva, que es lo que se trabaja esta noche
-  let hasta = todasLasFechas[0] || '';
-  let desde = todasLasFechas[0] || '';
+  /* EL RANGO ARRANCA EN LA JORNADA DE HOY, NO EN LA ÚLTIMA GUARDADA.
+   *
+   * Daniel, 18-ago-2026: *"que aparezca siempre la fecha del turno. Mi turno empezó el 17 y
+   * sigo en el 17: que aparezca eso filtrado. Cuando termine mi turno, a las seis y media,
+   * recién ahí cambia"*.
+   *
+   * Es la fecha lógica, la misma que usa todo el resto: cambia a las 06:30 y no a medianoche,
+   * así que el turno noche ve su jornada entera sin tocar el filtro. Antes arrancaba en
+   * `fechasDe(cajon)[0]` —la corrida más nueva que hubiera guardada—, y eso miente de dos
+   * maneras: si todavía no se procesó, muestra la de anteayer como si fuera de esta noche; y
+   * a las 07:00, con la jornada ya cambiada, seguía mostrando la que acababa de cerrar.
+   *
+   * Si no llega la fecha de hoy —el módulo no lee del servidor, se la pasa quien lo monta— se
+   * cae a la última guardada, que es como venía. */
+  const jornadaHoy = OPC.jornadaHoy || '';
+  let hasta = jornadaHoy || todasLasFechas[0] || '';
+  let desde = jornadaHoy || todasLasFechas[0] || '';
 
   const esc = (s) => String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
