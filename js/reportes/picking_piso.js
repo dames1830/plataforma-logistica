@@ -151,7 +151,7 @@ export const calcularBalance = ({ tareas, dias, esCalzado, marcaDe, diaDeTarea, 
     // `picadoBruto` es el picking CON prepack. No se muestra, pero de ahí sale
     // cuánto quedó fuera: se mide contra la columna ya redondeada, no contra el
     // reparto, para que restar a mano dé exactamente el total del cuadro.
-    const picadoPares = new Map(), picadoCajas = new Map(), picadoBruto = new Map();
+    const picadoPares = new Map(), picadoBruto = new Map();
     const diasRepartidos = [];
     dias.forEach(({ dia, resumen }) => {
         const c = resumen && resumen.seg && resumen.seg.calzado;
@@ -164,10 +164,6 @@ export const calcularBalance = ({ tareas, dias, esCalzado, marcaDe, diaDeTarea, 
             picadoBruto.set(m, (picadoBruto.get(m) || 0) + x.pares);
             picadoPares.set(m, (picadoPares.get(m) || 0) + (x.pares - pre));
         });
-        (c.marcas_cajas || []).forEach(x => {
-            const m = normalizar(x.nom) || 'Sin marca';
-            picadoCajas.set(m, (picadoCajas.get(m) || 0) + x.cajas);
-        });
     });
 
     // El picado se REDONDEA acá, en la fila, y el total se suma de las filas ya
@@ -178,16 +174,14 @@ export const calcularBalance = ({ tareas, dias, esCalzado, marcaDe, diaDeTarea, 
     const filas = marcas.map(m => {
         const a = almacenado.get(m) || 0;
         const p = Math.round(picadoPares.get(m) || 0);
-        const pc = picadoCajas.get(m) || 0;
-        return { marca: m, almacenado: a, picado: p, picadoCajas: pc, dif: a - p };
+        return { marca: m, almacenado: a, picado: p, dif: a - p };
     }).filter(f => f.almacenado || f.picado)
       .sort((x, y) => (y.almacenado + y.picado) - (x.almacenado + x.picado));
 
     const tot = filas.reduce((s, f) => ({
         almacenado: s.almacenado + f.almacenado,
-        picado: s.picado + f.picado,
-        picadoCajas: s.picadoCajas + f.picadoCajas
-    }), { almacenado: 0, picado: 0, picadoCajas: 0 });
+        picado: s.picado + f.picado
+    }), { almacenado: 0, picado: 0 });
 
     const bruto = [...picadoBruto.values()].reduce((s, v) => s + v, 0);
 
