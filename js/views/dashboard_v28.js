@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0248';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0249';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0248';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0248';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0248';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0248';
-import * as metasService from '../services_v245/metasService.js?v=29.0248';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0248';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0248';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0248';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0248';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0248';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0248';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0248';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0248';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0248';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0248';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0248';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0248';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0248';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0248';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0248';
-import { montarSlotting } from './slotting.js?v=29.0248';
+import * as adminService from '../services_v245/adminService.js?v=29.0249';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0249';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0249';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0249';
+import * as metasService from '../services_v245/metasService.js?v=29.0249';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0249';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0249';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0249';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0249';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0249';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0249';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0249';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0249';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0249';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0249';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0249';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0249';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0249';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0249';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0249';
+import { montarSlotting } from './slotting.js?v=29.0249';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0248';
+const VERSION = '29.0249';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0248');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0249');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5931,6 +5931,31 @@ const _urlReplDia = () =>
  *   - y posterior al arranque del turno, o estaríamos midiendo el avance de la noche
  *     contra una foto de antes de que empezara.
  */
+/**
+ * EL MOMENTO EN QUE ESA JORNADA CERRÓ. Una foto posterior ya no la mide.
+ *
+ * Sale de `nocheSalida` de la configuración —06:30— sumado al día siguiente de la
+ * fecha de la jornada. Si la configuración todavía no está cargada se cae a 12 horas
+ * después del arranque, que cubre el turno entero (19:00 → 06:30 son 11,5) sin
+ * depender de nada: el corte tiene que valer aunque la pantalla se monte antes de
+ * que llegue la configuración, que es justo cuando estas cosas fallan.
+ */
+const finDeLaJornada = (fecha, arranque) => {
+    try {
+        const salida = String(jornadaService.horarioDe(fecha).nocheSalida || '');
+        const [h, m] = salida.split(':').map(Number);
+        if (!isNaN(h)) {
+            const d = new Date(String(fecha) + 'T00:00:00');
+            d.setDate(d.getDate() + 1);
+            d.setHours(h, m || 0, 0, 0);
+            if (!isNaN(d)) return d;
+        }
+    } catch (e) { /* se cae al respaldo */ }
+    const ini = (arranque && arranque.fecha && arranque.hora)
+        ? new Date(String(arranque.fecha) + 'T' + String(arranque.hora) + ':00') : null;
+    return (ini && !isNaN(ini)) ? new Date(ini.getTime() + 12 * 3600000) : null;
+};
+
 const traerCajonDeLaHora = async (area, arranque) => {
     try {
         const r = await fetch(`${TURNO_API}/${area}?date=MASTER&t=${Date.now()}`);
@@ -5948,9 +5973,29 @@ const traerCajonDeLaHora = async (area, arranque) => {
             ? new Date(String(arranque.fecha) + 'T' + String(arranque.hora) + ':00') : null;
         const anterior = inicio && !isNaN(inicio) && cuando && cuando < inicio;
 
-        if (horas > 3 || anterior) {
+        /* Y TAMPOCO SIRVE UNA FOTO POSTERIOR AL CIERRE DEL TURNO. Es la otra punta de
+         * la misma regla, y faltaba.
+         *
+         * A las 07:00 la corrida de la mañana REEMPLAZA los tres cajones —el stock de
+         * la hora, la reserva de la hora y `analisis_sku_reserva`— con el estado de las
+         * 07:00. Sin este corte, a las 07:20 la noche del 17-ago se recalculaba contra
+         * el almacén de esta mañana: la Limpieza de Buffer C se desplomó de 796 a 3 y
+         * la Bajada de paletas de 47 a 46, y encima quedó guardado encima de lo bueno.
+         * Daniel: *"he puesto la fecha diecisiete y pasados unos diez o veinte segundos
+         * se han reseteado, y este problema yo he dicho muchas veces"*.
+         *
+         * Con el corte, una jornada terminada solo se puede medir con las FOTOS DEL
+         * CIERRE que guarda el robot. Si esa noche no las dejó, no hay número medido y
+         * la fila se queda con lo último que se guardó: no se pisa sola, que es
+         * exactamente lo que venía fallando. */
+        const fin = finDeLaJornada((arranque && arranque.fecha) || '', arranque);
+        const posterior = fin && cuando && !isNaN(cuando) && cuando > fin;
+
+        if (horas > 3 || anterior || posterior) {
             console.warn(`[TURNO] Se descarta ${area}:`,
-                anterior ? 'es anterior al arranque del turno' : `tiene ${horas.toFixed(1)} horas`,
+                anterior ? 'es anterior al arranque del turno'
+                    : posterior ? 'es posterior al cierre del turno'
+                    : `tiene ${horas.toFixed(1)} horas`,
                 '(' + sello + ')');
             return null;
         }
@@ -15734,7 +15779,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0248 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0249 | MOBILE PORTAL
                             </div>
                     </div>
 
