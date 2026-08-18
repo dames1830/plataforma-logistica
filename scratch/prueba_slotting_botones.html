@@ -1,0 +1,94 @@
+<meta charset="utf-8">
+<title>Banco de pruebas · los botones de Slotting avisan que trabajan</title>
+<!--
+  Ejecuta el MODULO REAL (js/views/slotting.js) fuera del tablero, que pide
+  contrasena, con un `alGuardar` LENTO a proposito: dos segundos y medio.
+
+  Daniel, 18-ago-2026: *"aprieta el boton eliminar y se queda lagueado. El
+  usuario piensa que se colgo y puede estar apretando todos los botones"*.
+
+  Lo que hay que ver, y que ninguna prueba de compilacion ve:
+    1. ELIMINAR se apaga y dice ELIMINANDO mientras el servidor no contesta;
+    2. lo mismo GUARDAR HORAS y el boton de reiniciar de la fila;
+    3. si el servidor falla, la tarea vuelve a su lugar y se avisa.
+
+  El interruptor de abajo decide si el guardado sale bien o mal.
+-->
+<style>
+  body { background:#0b0e15; color:#e8ecf4; font-family: system-ui, "Segoe UI", sans-serif; margin:0; }
+  #panel { padding:10px 16px; background:#151a24; border-bottom:1px solid #242b3a;
+           font-family: ui-monospace, Consolas, monospace; font-size:12px; white-space:pre-line; }
+  .mal { color:#f87171; } .bien { color:#34d399; } .ojo { color:#fbbf24; }
+  #caja { padding:8px; }
+  label { cursor:pointer; }
+  :root { --text-muted:#94a3b8; --border:rgba(255,255,255,0.12); --primary:#00E5FF; }
+  .glass-panel { background:#151a24; }
+  .btn { border:0; border-radius:8px; color:#fff; cursor:pointer; }
+  table { width:100%; border-collapse:collapse; }
+</style>
+<div id="panel">cargando…</div>
+<div style="padding:8px 16px; background:#101520; font-size:13px;">
+  <label><input type="checkbox" id="falla"> que el servidor FALLE al guardar</label>
+  <span style="color:#94a3b8; margin-left:14px;">el guardado tarda 2,5 s a proposito</span>
+</div>
+<div id="caja"></div>
+
+<script type="module">
+  const errores = [];
+  window.onerror = (m, f, l) => { errores.push(m + ' (' + f + ':' + l + ')'); pintarPanel(); };
+  window.addEventListener('unhandledrejection', e => { errores.push('promesa: ' + e.reason); pintarPanel(); });
+
+  const log = [];
+  const pintarPanel = () => {
+    document.getElementById('panel').innerHTML =
+      (errores.length ? '<span class="mal">' + errores.length + ' ERROR(ES) DE JS: ' + errores.join(' · ') + '</span>'
+                      : '<span class="bien">sin errores de js</span>') +
+      '\n<span class="ojo">Apreta el tacho de una tarea y mira el boton mientras cuenta.</span>\n' +
+      log.map(l => '  ' + l).join('\n');
+  };
+
+  const svc = await import('../js/services_v245/slottingService.js?v=prueba');
+  const { montarSlotting } = await import('../js/views/slotting.js?v=prueba');
+
+  const cajon = {
+    '2026-08-17': {
+      fecha: '2026-08-17', zona: 'SEL', generado: '2026-08-17 20:31', cuerpos: 2, pares: 295,
+      tareas: [
+        { n: 1, pares: 295, status: 'Creada', u1: '', u2: '', inicio: '', termino: '',
+          lineas: [
+            { ubi: 'SEL-05-12', sku7: '5616437', pares: 32, marca: 'Bata', llevarA: 'SEL-04-18',
+              motivo: 'es saldoGrande', detalle: [{ ubi: 'SEL-05-12-A-01', skuFull: '5616437-1-04', talla: '35', pares: 32 }] },
+            { ubi: 'SEL-06-02', sku7: '5415302', pares: 263, marca: 'Bata', llevarA: 'SEL-10-21',
+              motivo: 'su franja actual', detalle: [{ ubi: 'SEL-06-02-C-01', skuFull: '5415302-1-05', talla: '36', pares: 263 }] }
+          ] },
+        { n: 2, pares: 108, status: 'Asignado', u1: 'scasahuaman', u2: '', inicio: '2026-08-17T21:00', termino: '',
+          lineas: [
+            { ubi: 'SEL-06-15', sku7: '5553848', pares: 108, marca: 'Bata', llevarA: 'SEL-06-13',
+              motivo: 'junta la familia', detalle: [{ ubi: 'SEL-06-15-B-01', skuFull: '5553848-1-07', talla: '38', pares: 108 }] }
+          ] }
+      ]
+    }
+  };
+
+  const espera = (ms) => new Promise(r => setTimeout(r, ms));
+
+  montarSlotting(document.getElementById('caja'), {
+    cajon, vista: 'tareas_dia', svc,
+    operarios: [{ usuario: 'scasahuaman', nombre: 'S. Casahuaman', turno: 'noche' },
+                { usuario: 'pmurayari', nombre: 'P. Murayari', turno: 'noche' }],
+    jornadaVencida: () => false,
+    alertar: (t, m, tipo) => { log.push(`aviso [${tipo}] ${t}: ${m}`); pintarPanel(); },
+    alGuardar: async () => {
+      const falla = document.getElementById('falla').checked;
+      log.push('guardando… (2,5 s)' + (falla ? ' y va a fallar' : ''));
+      pintarPanel();
+      await espera(2500);
+      log.push(falla ? 'el servidor dijo que NO' : 'guardado');
+      pintarPanel();
+      return !falla;
+    },
+    alProcesar: async () => { await espera(2500); return cajon; }
+  });
+
+  pintarPanel();
+</script>

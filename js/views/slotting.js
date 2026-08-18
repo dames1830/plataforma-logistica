@@ -313,13 +313,26 @@ export const montarSlotting = (container, OPC = {}) => {
         avisar('LAS HORAS NO CIERRAN', 'El término tiene que ser posterior al inicio.', 'error');
         return;
       }
+      // Mismo trato que el resto: el botón avisa que está trabajando y, si el servidor no
+      // contesta, vuelve atrás y lo dice en vez de quedarse mudo.
+      const btnOk = modal.querySelector('#slt_guardarHoras');
+      const btnNo = modal.querySelector('#slt_cerrarHoras');
+      const rotulo = btnOk.textContent;
+      btnOk.disabled = true; if (btnNo) btnNo.disabled = true;
+      btnOk.textContent = '⌛ GUARDANDO...';
+
       const previo = { inicio: t.inicio, termino: t.termino, status: t.status };
       t.inicio = ini; t.termino = fin;
       // El estado sigue a las horas: sin término no está finalizada, con término sí
       if (!ini) t.status = 'Creada';
       else t.status = fin ? 'Finalizado' : 'Asignado';
       const ok = OPC.alGuardar ? await OPC.alGuardar(cajon) : true;
-      if (ok === false) { Object.assign(t, previo); return; }
+      if (ok === false) {
+        Object.assign(t, previo);
+        btnOk.disabled = false; if (btnNo) btnNo.disabled = false; btnOk.textContent = rotulo;
+        avisar('NO SE PUDO GUARDAR', 'Las horas no llegaron al servidor. Vuelva a intentar.', 'error');
+        return;
+      }
       modal.remove();
       pintar();
     };
@@ -360,15 +373,39 @@ export const montarSlotting = (container, OPC = {}) => {
     modal.querySelector('#slt_cancelarBorrar').onclick = () => modal.remove();
 
     modal.querySelector('#slt_confirmarBorrar').onclick = async () => {
+      /* EL BOTÓN TIENE QUE DECIR QUE ESTÁ TRABAJANDO. Daniel, 18-ago-2026: *"no se puede
+       * quedar lagueado porque el usuario piensa que se colgó y puede estar apretando todos
+       * los botones"*. Borrar sube la corrida entera al servidor, así que hay una espera real
+       * en el medio; sin aviso, la pantalla parece muerta. Mismo trato que asignar y
+       * finalizar, que ya lo hacían. */
+      const btnOk = modal.querySelector('#slt_confirmarBorrar');
+      const btnNo = modal.querySelector('#slt_cancelarBorrar');
+      const rotulo = btnOk.textContent;
+      btnOk.disabled = true; btnNo.disabled = true;
+      btnOk.textContent = '⌛ ELIMINANDO...';
+
       const corrida = cajon[fecha] || {};
       const antes = corrida.tareas || [];
+      // Los totales viejos se guardan enteros: si el servidor no contesta hay que dejar la
+      // corrida como estaba, y con restaurar la lista de tareas no alcanzaba —la cabecera
+      // quedaba contando los pares de la tarea que no se borró—.
+      const totales = { pares: corrida.pares, cuerpos: corrida.cuerpos };
       const quedan = antes.filter(x => String(x.n) !== String(n));
       // Los totales de la corrida se rehacen: si no, la cabecera seguiría contando lo borrado
       corrida.tareas = quedan;
       corrida.pares = quedan.reduce((a, x) => a + (Number(x.pares) || 0), 0);
       corrida.cuerpos = new Set(quedan.flatMap(x => (x.lineas || []).map(l => l.ubi))).size;
+
       const ok = OPC.alGuardar ? await OPC.alGuardar(cajon) : true;
-      if (ok === false) { corrida.tareas = antes; return; }
+      if (ok === false) {
+        corrida.tareas = antes;
+        corrida.pares = totales.pares;
+        corrida.cuerpos = totales.cuerpos;
+        btnOk.disabled = false; btnNo.disabled = false; btnOk.textContent = rotulo;
+        avisar('NO SE PUDO ELIMINAR', 'La tarea sigue en su lugar: el servidor no respondió. '
+             + 'Vuelva a intentar en un momento.', 'error');
+        return;
+      }
       modal.remove();
       pintar();
     };
@@ -392,11 +429,11 @@ export const montarSlotting = (container, OPC = {}) => {
     }
     const est = svc.migrarEstado(t);
     if (est === 'Finalizado') {
-      avisar('TAREA BLOQUEADA', 'Esta tarea ya está finalizada y bloqueada. Para deshacerla, usá el botón de reiniciar (🔄).', 'warning');
+      avisar('TAREA BLOQUEADA', 'Esta tarea ya está finalizada y bloqueada. Para deshacerla, use el botón de reiniciar (🔄).', 'warning');
       return;
     }
     if (est === 'Vencida') {
-      avisar('TAREA NO TRABAJADA', 'Esta tarea venció con la jornada y ya no se puede trabajar. Volvé a procesar Slotting.', 'warning');
+      avisar('TAREA NO TRABAJADA', 'Esta tarea venció con la jornada y ya no se puede trabajar. Vuelva a procesar Slotting.', 'warning');
       return;
     }
 
@@ -483,7 +520,7 @@ export const montarSlotting = (container, OPC = {}) => {
       if (ok === false) {
         Object.assign(t, previo);
         btn.disabled = false; btn.textContent = rotulo;
-        avisar('NO SE PUDO GUARDAR', 'La asignación no llegó al servidor. Volvé a intentar.', 'error');
+        avisar('NO SE PUDO GUARDAR', 'La asignación no llegó al servidor. Vuelva a intentar.', 'error');
         return;
       }
       modal.remove();
@@ -500,7 +537,7 @@ export const montarSlotting = (container, OPC = {}) => {
       if (ok === false) {
         Object.assign(t, previo);
         fin.disabled = false; fin.textContent = 'FINALIZAR';
-        avisar('NO SE PUDO GUARDAR', 'El cierre no llegó al servidor. Volvé a intentar.', 'error');
+        avisar('NO SE PUDO GUARDAR', 'El cierre no llegó al servidor. Vuelva a intentar.', 'error');
         return;
       }
       modal.remove();
@@ -895,7 +932,7 @@ export const montarSlotting = (container, OPC = {}) => {
           + `<div class="t2">${subtitulo}<span class="pagX">Páginas ${i + 1} de ${paginas.length}</span></div>`
           + (primera && sinDetalle(t) ? `<div class="cartel">
                <b>ESTA HOJA SALIÓ SIN SKU NI TALLA</b>
-               <span>La tarea se generó con una versión anterior. Volvé a procesar el Slotting
+               <span>La tarea se generó con una versión anterior. Vuelva a procesar el Slotting
                para que salga con la ubicación exacta, el SKU completo y la talla.</span>
              </div>` : '')
           /* EL MISMO AVISO QUE EN LA PANTALLA, PORQUE LA HOJA VIAJA SOLA. El asistente
@@ -968,8 +1005,20 @@ export const montarSlotting = (container, OPC = {}) => {
       b.addEventListener('click', async () => {
         const t = dameTarea(b.dataset.f, b.dataset.n);
         if (!t) return;
+        /* Es un botón de la fila y no tiene rótulo que cambiar, así que el gesto es el
+           reloj: se apaga y gira el ícono mientras el servidor contesta. Sin esto se queda
+           igual que antes de apretarlo y no hay forma de saber si tomó el clic. */
+        const icono = b.innerHTML;
+        b.disabled = true; b.innerHTML = '⌛'; b.style.opacity = '0.6';
+        const previo = { status: t.status, u1: t.u1, u2: t.u2, inicio: t.inicio, termino: t.termino };
         t.status = 'Creada'; t.u1 = ''; t.u2 = ''; t.inicio = ''; t.termino = '';
-        if (OPC.alGuardar) await OPC.alGuardar(cajon);
+        const ok = OPC.alGuardar ? await OPC.alGuardar(cajon) : true;
+        if (ok === false) {
+          Object.assign(t, previo);
+          b.disabled = false; b.innerHTML = icono; b.style.opacity = '';
+          avisar('NO SE PUDO REINICIAR', 'La tarea quedó como estaba: el servidor no respondió.', 'error');
+          return;
+        }
         pintar();
       }));
 
