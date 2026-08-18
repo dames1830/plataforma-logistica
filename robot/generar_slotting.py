@@ -198,6 +198,23 @@ AREA_BUFFER_C = "buffer_c_arranque"
 # Son unas 1.550 paletas, 40 KB por noche, 15 MB al año.
 AREA_RESERVA_ARRANQUE = "reserva_arranque"
 
+# ── LAS FOTOS DEL CIERRE ─────────────────────────────────────────────────────
+#
+# El reporte del turno mide contra la foto de la hora mientras la jornada corre, pero
+# a las 06:30 la jornada cambia y ese cajón va con MASTER: a media mañana ya es otra
+# foto y no hay contra qué recalcular. Sin estas dos, el avance de la noche se queda
+# congelado en la última medición que alcanzó a guardar la pantalla.
+#
+# LA NOCHE DEL 17-AGO-2026 LO DEJÓ A LA VISTA: la última foto fue la de las 05:36, el
+# turno cerró a las 06:30, y la Bajada de paletas quedó clavada en 47 de 166 con la
+# separación en 97 de 2.189. Estaban escritas en la memoria del proyecto como si el
+# robot ya las guardara; el código nunca las tuvo — la corrida de la mañana decía
+# "las fotos del arranque no se tocan" y se iba sin dejar nada.
+#
+# Van con la fecha de la JORNADA QUE TERMINA, no la del día en que se corre.
+AREA_BUFFER_C_CIERRE = "buffer_c_cierre"
+AREA_RESERVA_CIERRE = "reserva_cierre"
+
 # ── NO PUBLICAR UN STOCK QUE NO SEA DE ESTA CORRIDA ──────────────────────────
 #
 # El 06-ago-2026 la descarga de las 19:00 no produjo archivo. Este generador buscó
@@ -893,6 +910,56 @@ def foto_reserva(filas_reserva):
     }
 
 
+def foto_reserva_cierre(filas_reserva, fecha):
+    """
+    La misma foto, pero del CIERRE y ABIERTA POR CÓDIGO.
+
+    El `porCodigo` no está de más: el 36% de las paletas trae más de un artículo —720
+    de 1.981 la noche del 17-ago-2026— y la separación se mide por artículo. Con solo
+    el total de la paleta habría que repartir a prorrata, y esa noche eso perdía 192
+    unidades de 2.165.
+
+    `fecha` llega de afuera porque esta foto pertenece a la jornada que TERMINÓ, y la
+    corrida que la toma ya es del día siguiente.
+    """
+    por_lpn = paletas_altas(filas_reserva)
+    por_codigo = {}
+    for f in filas_reserva:
+        if not f.get("ES_ALTO"):
+            continue
+        lpn = str(f.get("LPN") or "").strip()
+        art = str(f.get("PRODUCTO") or "").strip()
+        if not lpn or not art:
+            continue
+        try:
+            q = float(f.get("CANTIDAD") or 0)
+        except (TypeError, ValueError):
+            q = 0.0
+        if q <= 0:
+            continue
+        por_codigo.setdefault(lpn, {})
+        por_codigo[lpn][art] = por_codigo[lpn].get(art, 0) + q
+    return {
+        "fecha": fecha,
+        "hora": time.strftime("%H:%M", time.localtime()),
+        "paletas": len(por_lpn),
+        "pares": int(round(sum(por_lpn.values()))),
+        "detalle": {l: int(round(q)) for l, q in por_lpn.items()},
+        "porCodigo": {l: {a: int(round(q)) for a, q in c.items()} for l, c in por_codigo.items()},
+    }
+
+
+def jornada_que_termina():
+    """
+    La fecha de la noche que acaba de cerrar, vista desde la corrida de la mañana.
+
+    La jornada arranca a las 19:00 y termina a las 06:30 del día siguiente, así que a
+    las 07:00 la que cerró es la de AYER. Se usa el mismo corte de mediodía que
+    `es_corrida_de_la_noche()` para que las dos cuenten la misma jornada.
+    """
+    return time.strftime("%Y-%m-%d", time.localtime(time.time() - 86400))
+
+
 def datos_reserva_web(ruta):
     """
     El Stock Reserva con el MISMO formato que dejaba la carga a mano de la web
@@ -1409,7 +1476,28 @@ def run(fecha=None, ruta_act_dada=None, ruta_res_dada=None, igualmente=False):
                 log("Las paletas del arranque no se guardaron: el reporte del turno no va "
                     "a poder medir la bajada de paletas", "WARN")
         else:
+            # LA CORRIDA DE LA MAÑANA CIERRA LA NOCHE. No toca las fotos del arranque
+            # —esas son el punto de partida y pisarlas dejaría al turno sin con qué
+            # comparar— pero sí guarda las del CIERRE, que es lo que le faltaba al
+            # reporte para que una jornada terminada siga midiéndose después de las
+            # 06:30. Van con la fecha de la jornada que cerró, no la de hoy.
             log("Corrida de la mañana: las fotos del arranque no se tocan")
+            jornada = jornada_que_termina()
+
+            cierre_c = foto_buffer_c(act_web)
+            cierre_c["fecha"] = jornada
+            log("Guardando el Buffer C del cierre de la jornada %s: %s pares en %s artículos"
+                % (jornada, cierre_c["pares"], cierre_c["articulos"]))
+            if not subir_datos(AREA_BUFFER_C_CIERRE, cierre_c, fecha=jornada):
+                log("El Buffer C del cierre no se guardó: la limpieza de esa noche se "
+                    "queda con el último avance que alcanzó a medir la pantalla", "WARN")
+
+            cierre_r = foto_reserva_cierre(res_web, jornada)
+            log("Guardando las paletas del cierre: %s paletas altas, %s pares"
+                % (format(cierre_r["paletas"], ",d"), format(cierre_r["pares"], ",d")))
+            if not subir_datos(AREA_RESERVA_CIERRE, cierre_r, fecha=jornada):
+                log("Las paletas del cierre no se guardaron: la bajada de paletas y la "
+                    "separación de esa noche quedan sin avance medido", "WARN")
 
         # Y los mismos datos como Excel descargable. Se arman en la carpeta temporal y se
         # borran al terminar: en OneDrive ya están los originales de Oracle.

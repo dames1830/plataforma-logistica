@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia, esZonaDeDestino } from '../services_v245/csvHub_v6.js?v=29.0247';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0248';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0247';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0247';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0247';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0247';
-import * as metasService from '../services_v245/metasService.js?v=29.0247';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0247';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0247';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0247';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0247';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0247';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0247';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0247';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0247';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0247';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0247';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0247';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0247';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0247';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0247';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0247';
-import { montarSlotting } from './slotting.js?v=29.0247';
+import * as adminService from '../services_v245/adminService.js?v=29.0248';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0248';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0248';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0248';
+import * as metasService from '../services_v245/metasService.js?v=29.0248';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0248';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0248';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0248';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0248';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0248';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0248';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0248';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0248';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0248';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0248';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0248';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0248';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0248';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0248';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0248';
+import { montarSlotting } from './slotting.js?v=29.0248';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0247';
+const VERSION = '29.0248';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0247');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0248');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5986,6 +5986,27 @@ const paletasAltasDe = (filas) => {
 };
 
 /**
+ * Lo mismo pero abierto POR CÓDIGO: `'LPN|SKU' → pares`.
+ *
+ * Hace falta porque el 36% de las paletas trae más de un artículo (720 de 1.981 la
+ * noche del 17-ago). Repartiendo a prorrata lo que bajó de una paleta entre sus
+ * códigos, la separación de esa noche daba 1.973 en vez de 2.165: 192 unidades
+ * perdidas por una cuenta que no hacía falta aproximar.
+ */
+const altasPorCodigoDe = (filas) => {
+    const m = {};
+    (filas || []).forEach(f => {
+        if (!f || !f.ES_ALTO) return;
+        const lpn = String(f.LPN || '').trim().toUpperCase();
+        const sku = String(f.PRODUCTO || '').trim();
+        if (!lpn || !sku) return;
+        const q = parseFloat(String(f.CANTIDAD == null ? 0 : f.CANTIDAD).replace(/,/g, '')) || 0;
+        m[lpn + '|' + sku] = (m[lpn + '|' + sku] || 0) + q;
+    });
+    return m;
+};
+
+/**
  * LOS NÚMEROS QUE LLEGAN SOLOS, para la jornada de hoy.
  *
  * Cada uno sale de donde ya vivía; acá no se recalcula nada. Si una fuente falta
@@ -6127,9 +6148,20 @@ const fuentesDelTurno = async (dia) => {
      * esta. Es la salida para el día que el robot no corra. */
     const esLaDeHoy = (hoy === getLogicalDate());
     let bcAhora = null;      // {articulo: pares} del Buffer C
-    let palArriba = null;    // Set de LPN que siguen arriba
+    /* UNA PALETA NO SE VACÍA: SE LE SACA LO QUE HACE FALTA Y VUELVE ARRIBA.
+     *
+     * Hasta el 18-ago-2026 esto era un Set —"la paleta sigue arriba o no"— y por eso
+     * la noche del 17 el reporte decía 47 paletas cuando el equipo había trabajado
+     * 164: 47 se vaciaron enteras y **117 seguían arriba con menos pares**. Daniel:
+     * *"dice cuarenta y siete cuando hemos hecho ciento sesenta y cuatro"*. Su propia
+     * regla ya lo decía —*"físicamente la paleta ya bajó"*, por eso `paletasBajadas`
+     * cuenta las incompletas— pero la medición contra el stock se quedó en el criterio
+     * binario. Ahora se guardan los PARES, y bajar es tener menos que al arrancar.
+     *
+     * `codAhora` los abre por código, que es lo que necesita la separación. */
+    let palAhora = null;     // Map LPN → pares que le quedan arriba
+    let codAhora = null;     // Map 'LPN|SKU' → pares que le quedan arriba
     let actAhora = null;     // {sku: pares} en la zona activa
-    let destAhora = null;    // {sku: pares} solo en las zonas de DESTINO (sin el buffer)
     let horaAhora = '';
 
     if (esLaDeHoy) {
@@ -6138,16 +6170,11 @@ const fuentesDelTurno = async (dia) => {
             bcAhora = fotoBufferCDe(stockAhora.filas).detalle;
             horaAhora = stockAhora.hora;
             actAhora = {};
-            /* Y en la misma pasada, el mismo código PERO SOLO EN SUS ZONAS DE DESTINO
-               —zona de picking que no sea el buffer—, que es contra lo que se mide la
-               separación. `actAhora` sigue siendo el total y lo usa el Buffer C. */
-            destAhora = {};
             stockAhora.filas.forEach(f => {
                 const a = String((Array.isArray(f) ? f[1] : f['Artículo']) || '').trim();
                 if (!a) return;
                 const q = parseFloat(String((Array.isArray(f) ? f[4] : f['Cantidad actual']) || 0).replace(/,/g, '')) || 0;
                 actAhora[a] = (actAhora[a] || 0) + q;
-                if (esZonaDeDestino(ubiDeFila(f))) destAhora[a] = (destAhora[a] || 0) + q;
             });
             F.ahoraBufferC = {
                 hora: horaAhora,
@@ -6165,7 +6192,12 @@ const fuentesDelTurno = async (dia) => {
             };
         }
         const resAhora = await traerCajonDeLaHora(AREA_RESERVA_DE_LA_HORA, foto);
-        if (resAhora) palArriba = new Set(Object.keys(paletasAltasDe(resAhora.filas)).map(l => l.toUpperCase()));
+        if (resAhora) {
+            const alt = paletasAltasDe(resAhora.filas);
+            palAhora = new Map(Object.keys(alt).map(l => [l.toUpperCase(), alt[l]]));
+            const pc = altasPorCodigoDe(resAhora.filas);
+            codAhora = new Map(Object.keys(pc).map(k => [k, pc[k]]));
+        }
     } else {
         /* Jornada cerrada: lo que congeló el robot a las 06:30. Si esa noche el robot
            no corrió, no hay fotos y las tres filas quedan sin avance medido, que es lo
@@ -6185,10 +6217,28 @@ const fuentesDelTurno = async (dia) => {
                     lineas: 0, cerrada: true
                 };
             }
+            /* La foto de reserva del cierre. `detalle` son los pares por paleta y
+               `porCodigo` los abre por artículo — lo agrega el robot en la corrida de
+               la mañana desde el 18-ago-2026. Sin `porCodigo` la separación de una
+               noche vieja no se puede medir por código y queda sin número, que es
+               preferible a repartir a prorrata y perder 192 unidades sin avisar. */
             const rc = await leerArea('reserva_cierre', hoy);
-            if (rc && rc.detalle) palArriba = new Set(Object.keys(rc.detalle).map(l => l.toUpperCase()));
-            const ac = await leerArea('activo_cierre', hoy);
-            if (ac && ac.detalle) actAhora = ac.detalle;
+            if (rc && rc.detalle) {
+                palAhora = new Map(Object.keys(rc.detalle).map(l => [l.toUpperCase(), Number(rc.detalle[l]) || 0]));
+                if (rc.porCodigo) {
+                    codAhora = new Map();
+                    Object.keys(rc.porCodigo).forEach(l => {
+                        const cods = rc.porCodigo[l] || {};
+                        Object.keys(cods).forEach(sk =>
+                            codAhora.set(String(l).toUpperCase() + '|' + sk, Number(cods[sk]) || 0));
+                    });
+                }
+            }
+            /* `activo_cierre` ya no se lee: era la punta de la separación vieja, la que
+               exigía que el par apareciera en su ubicación de destino. Con la regla de
+               Daniel del 18-ago —separado es lo que bajó de reserva— sobran las dos
+               fotos del activo, y con ellas se va el pendiente de guardarlo filtrado
+               por zona. El Buffer C usa su propia foto, que sí trae `fuera`. */
         } catch (e) { console.warn('[TURNO] Fotos del cierre:', e); }
     }
 
@@ -6249,12 +6299,19 @@ const fuentesDelTurno = async (dia) => {
                 }
             }
 
-            if (pedidas.length && palArriba) {
+            if (pedidas.length && palAhora) {
                 /* Y los pares se sacan de la foto del arranque, que es donde está
                    cuánto traía cada paleta cuando todavía estaba arriba. */
                 const arranquePal = await leerArea('reserva_arranque', hoy);
-                const traia = (arranquePal && arranquePal.detalle) || {};
+                const det = (arranquePal && arranquePal.detalle) || {};
+                const traia = {};
+                Object.keys(det).forEach(l => { traia[String(l).toUpperCase()] = Number(det[l]) || 0; });
 
+                /* BAJÓ SI LE QUEDAN MENOS PARES QUE AL ARRANCAR, o si desapareció del
+                   reporte. Contar solo las que desaparecen deja fuera a la paleta que se
+                   bajó, se le sacaron las cajas del plan y volvió a su sitio — que es lo
+                   normal: la noche del 17-ago eran 117 de 164. Y los pares que se suman
+                   son los que DE VERDAD bajaron, no los que traía la paleta entera. */
                 let bajaron = 0, pares = 0;
                 pedidas.forEach(p => {
                     const lpn = String((p && p.lpn) || '').trim().toUpperCase();
@@ -6262,7 +6319,12 @@ const fuentesDelTurno = async (dia) => {
                        paletas y no ubicaciones. Son pocas y se dejan fuera antes que
                        darlas por bajadas sin saberlo. */
                     if (!lpn) return;
-                    if (!palArriba.has(lpn)) { bajaron++; pares += Number(traia[lpn]) || 0; }
+                    const antes = traia[lpn] || 0;
+                    const queda = palAhora.has(lpn) ? (palAhora.get(lpn) || 0) : 0;
+                    if (!palAhora.has(lpn) || queda < antes) {
+                        bajaron++;
+                        pares += Math.max(0, antes - queda);
+                    }
                 });
 
                 F.paletas = Object.assign({ unidad: 'paletas' }, F.paletas || {}, {
@@ -6290,168 +6352,87 @@ const fuentesDelTurno = async (dia) => {
          * se avisa por consola cuando casi nada encuentra pareja. */
         try {
             const codigos = Array.isArray(plan.codigos) ? plan.codigos : [];
-            /* LAS DOS PUNTAS TIENEN QUE MEDIR LO MISMO. Con la jornada abierta se
-             * comparan las zonas de destino contra la base sin buffer; con la jornada
-             * cerrada solo está `activo_cierre`, que llega por código y sin ubicación,
-             * así que ahí sigue la regla vieja hasta que el robot guarde el cierre ya
-             * filtrado. */
-            const porDestino = !!destAhora;
-            const activo = destAhora || actAhora;
-
-            /* ── EL DOBLE FILTRO: subió en el piso Y BAJÓ DE RESERVA ──────────────
+            /* SEPARADO ES LO QUE BAJÓ DE RESERVA, y nada más.
              *
-             * Daniel, 18-ago-2026: *"si en el buffer C moví el código X a otro sitio, ya me
-             * lo estás tomando como separación porque justo hay ese código en el plan.
-             * Deberías hacer un doble filtro: que sea el código X, pero que baje de reserva"*.
+             * Decisión de Daniel, 18-ago-2026, sobre los números de la noche del 17: el
+             * cuadro tiene que decir cuánto del plan se ejecutó, y el plan es bajar esas
+             * unidades de arriba. Hasta acá se exigía ADEMÁS que el par apareciera fuera
+             * del buffer, en su ubicación de destino, y eso dejaba la noche en 943 de
+             * 2.189 cuando de arriba habían bajado 2.165. Lo que está en el buffer
+             * esperando que lo guarden ya se separó; guardarlo es la otra actividad del
+             * turno y se mide en Almacenamiento.
              *
-             * Tenía razón, y la cuenta vieja sumaba de más por tres lados: lo que bajó del
-             * Buffer C —que YA se cuenta en Limpieza de Buffer C, así que el mismo par valía
-             * dos veces—, lo que llegó de recepción y cualquier movimiento interno.
+             * Y de paso desaparece lo que la regla anterior venía a tapar —*"al comenzar
+             * el turno ya tenía mercadería separada"*—: al arrancar, la foto de reserva
+             * es todavía la del arranque, no bajó nada de arriba y el avance da CERO sin
+             * necesidad de ningún filtro extra.
              *
-             * Ahora, por código, el tope es lo que de verdad bajó de arriba: de las paletas
-             * que el análisis pidió para ese código, las que ya no están en el reporte de
-             * reserva. Es el mismo criterio que usa la Bajada de paletas —"ya no está
-             * arriba", no "desapareció"—, así que las dos filas cuentan lo mismo.
-             *
-             * SIN EL DATO NO SE INVENTA: los planes anteriores a v29.0242 no traen
-             * `porPaleta`, y con la jornada cerrada no hay foto de reserva de la hora. En los
-             * dos casos se sigue midiendo como antes y se avisa por consola, que es preferible
-             * a mostrar un cero que parece trabajo no hecho. */
-            /* LA FUENTE BUENA ES `analisis_sku_reserva`, y estaba en el servidor desde
-             * siempre: es la foto de reserva del arranque —la misma corrida de las 19:00 que
-             * publica el stock— y trae LPN, PRODUCTO y CANTIDAD. Con eso, "qué bajó de
-             * arriba y de qué código" sale sin depender de que nadie reprocese el análisis, y
-             * cubre TODOS los códigos, no solo los que el plan alcanzó a guardar.
-             *
-             * Medido sobre el turno del 17-ago-2026: 139 paletas bajadas, 15.144 pares en 195
-             * códigos. La separación pasa de 890 a 790 — 100 pares que no habían bajado de
-             * ningún lado. */
-            let bajoDeReserva = null;
-            let conPaletaSet = null;
-            if (esLaDeHoy && palArriba) {
+             * LA FUENTE ES `analisis_sku_reserva`: la foto de reserva del arranque —la
+             * misma corrida de las 19:00 que publica el stock— con LPN, PRODUCTO y
+             * CANTIDAD. Cruzándola contra lo que queda arriba sale, artículo por
+             * artículo, cuánto bajó de verdad. */
+            let bajoDeReserva = null, enReserva = null;
+            if (palAhora && codAhora) {
               try {
                 const resIni = await leerArea(AREA_RESERVA_DEL_ARRANQUE);
                 if (Array.isArray(resIni) && resIni.length) {
-                  /* Acá NO hay excepción por código: `conPaletaSet` queda en null y el tope
-                     se aplica a todos. Un código que no figura en la foto de reserva es un
-                     código que no tenía nada arriba, así que no pudo bajar nada. */
-                  bajoDeReserva = {};
+                  bajoDeReserva = {}; enReserva = new Set();
                   resIni.forEach(f => {
-                    if (!f || f.ES_ALTO === false) return;
-                    if (!String(f.NIVEL || '').toUpperCase().includes('ALTO')) return;
+                    if (!f || !f.ES_ALTO) return;
                     const lpn = String(f.LPN || '').trim().toUpperCase();
                     const sku = String(f.PRODUCTO || '').trim();
-                    const q = Number(f.CANTIDAD) || 0;
+                    const q = parseFloat(String(f.CANTIDAD == null ? 0 : f.CANTIDAD).replace(/,/g, '')) || 0;
                     if (!lpn || !sku || q <= 0) return;
-                    if (palArriba.has(lpn)) return;      // sigue arriba: todavía no bajó
-                    bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + q;
+                    enReserva.add(sku);
+                    /* Cuánto le queda A ESA PALETA de ESE artículo: la cuenta va por las
+                       dos cosas juntas y no por paleta. El 36% de las paletas trae más de
+                       un artículo, y repartir a prorrata perdía 192 unidades esa noche. */
+                    const queda = codAhora.has(lpn + '|' + sku) ? (codAhora.get(lpn + '|' + sku) || 0) : 0;
+                    const bajo = Math.max(0, q - queda);
+                    if (bajo > 0) bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + bajo;
                   });
                 }
               } catch (e) { console.warn('[TURNO] Separación, reserva del arranque:', e); }
             }
 
-            /* RESPALDO: el `porPaleta` que guarda el plan desde v29.0242. Solo se usa si la
-               foto de reserva del arranque no está —la pisa la corrida de las 19:00, así que
-               una jornada vieja ya no la tiene—. Cubre menos códigos, pero es mejor que nada.
-               Los que no figuran en ninguna paleta con LPN quedan FUERA del filtro: sin LPN no
-               se puede saber si bajaron, y darles cero sería contar como no trabajado algo que
-               quizás se hizo. Mismo criterio que la Bajada de paletas con las filas sin LPN. */
-            const porPaleta = Array.isArray(plan.porPaleta) ? plan.porPaleta : null;
-            if (!bajoDeReserva && porPaleta && porPaleta.length && palArriba) {
-              bajoDeReserva = {};
-              conPaletaSet = new Set();
-              porPaleta.forEach(r => {
-                const lpn = String((r && r.lpn) || '').trim().toUpperCase();
-                const sku = String((r && r.sku) || '').trim();
-                if (!lpn || !sku) return;
-                conPaletaSet.add(sku);
-                if (palArriba.has(lpn)) return;          // sigue arriba: todavía no bajó
-                bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + (Number(r.q) || 0);
-              });
-            }
             if (!bajoDeReserva) {
-              console.warn('[TURNO] Separación: sin el cruce contra la reserva '
-                + '(no hay foto del arranque ni porPaleta en el plan). '
-                + 'Se mide solo por lo que subió al piso, que cuenta de más.');
-            }
-
-            /* LOS PLANES PUBLICADOS ANTES DE v29.0236 no traen `iniDestino`. En vez de
-             * dejar la noche sin número —o peor, contar de más— se reconstruye del
-             * `almacenaje_activo`, que durante el turno ES la misma foto de las 19:00
-             * con la que se planificó. */
-            let baseAncla = null;
-            if (porDestino && codigos.some(p => p && p.iniDestino === undefined)) {
-                const stock = (dataStore.almacenaje_activo || []).length
-                    ? dataStore.almacenaje_activo
-                    : await leerArea('almacenaje_activo');
-                if (Array.isArray(stock) && stock.length) {
-                    baseAncla = {};
-                    stock.forEach(f => {
-                        const a = String((Array.isArray(f) ? f[1] : f['Artículo']) || '').trim();
-                        if (!a || !esZonaDeDestino(ubiDeFila(f))) return;
-                        const q = parseFloat(String((Array.isArray(f) ? f[4] : f['Cantidad actual']) || 0).replace(/,/g, '')) || 0;
-                        baseAncla[a] = (baseAncla[a] || 0) + q;
-                    });
-                    console.log('[TURNO] Separación: el plan no trae iniDestino; ' +
-                                'la base se reconstruye de la foto del arranque.');
-                }
-            }
-
-            if (codigos.length && activo) {
-                const baseDe = (p, sku) => {
-                    if (!porDestino) return Number(p.ini) || 0;
-                    if (p.iniDestino !== undefined) return Number(p.iniDestino) || 0;
-                    if (baseAncla) return baseAncla[sku] || 0;
-                    return Number(p.ini) || 0;
-                };
-
+                /* SIN LA FOTO NO SE INVENTA UN NÚMERO. Pasa si el robot no dejó la de la
+                   hora, o si la jornada cerró y su `reserva_cierre` es anterior a que el
+                   robot empezara a guardar el detalle por código. La fila queda vacía y
+                   editable, que es preferible a un cero que parece trabajo no hecho. */
+                console.warn('[TURNO] Separación: no hay foto de reserva abierta por código para '
+                    + 'esta jornada; la fila queda sin avance medido.');
+            } else if (codigos.length) {
+                /* El tope es el plan: bajar de más para un artículo no puede tapar a otro
+                   que no se tocó. Regla de Daniel: *"me puedes pedir ochenta pero yo puedo
+                   bajar cien; la cosa es tener igual o más, nunca menos"*. */
                 let separadas = 0, aSeparar = 0, cruzan = 0;
                 codigos.forEach(p => {
                     const sku = String((p && p.sku) || '').trim();
                     const aBajar = Number(p && p.plan) || 0;
                     if (!sku || aBajar <= 0) return;
                     aSeparar += aBajar;
-                    /* El cruce se mide contra el stock COMPLETO, no contra el filtrado:
-                       la guarda existe para cazar códigos que dejaron de cruzar por
-                       formato, y un código sin nada en zona de destino es normal —está
-                       todo en el buffer, que es justamente lo que falta separar—. */
-                    if ((actAhora || activo)[sku] !== undefined) cruzan++;
-                    const subio = Math.max(0, (activo[sku] || 0) - baseDe(p, sku));
-                    // El doble filtro: no puede contar como separado más de lo que bajó de
-                    // arriba para ese código. Sin el cruce disponible, manda solo lo de antes.
-                    const tope = (bajoDeReserva && (!conPaletaSet || conPaletaSet.has(sku)))
-                      ? Math.min(aBajar, bajoDeReserva[sku] || 0)
-                      : aBajar;
-                    separadas += Math.min(tope, subio);
+                    if (enReserva.has(sku)) cruzan++;
+                    separadas += Math.min(aBajar, bajoDeReserva[sku] || 0);
                 });
-
+                /* El cruce se mide contra la foto de reserva ENTERA, no contra lo que
+                   bajó: al abrir el turno no bajó nada todavía y eso es correcto, pero un
+                   plan cuyos códigos no figuran arriba es un problema de formato y daría
+                   cero sin ningún error a la vista. Se avisa, no se apaga el número. */
                 if (cruzan < codigos.length * 0.5) {
-                    console.warn(`[TURNO] Separación: solo ${cruzan} de ${codigos.length} códigos del plan ` +
-                                 `aparecen en el stock. El avance puede estar mal; no se muestra.`);
-                } else {
-                    F.separacion = Object.assign({ unidad: 'unidades' }, F.separacion || {}, {
-                        meta: Math.round(aSeparar),
-                        avance: Math.round(separadas),
-                        hora: horaAhora
-                    });
+                    console.warn(`[TURNO] Separación: solo ${cruzan} de ${codigos.length} códigos del `
+                        + `plan figuran en la foto de reserva del arranque. Revisar que crucen.`);
                 }
+                F.separacion = Object.assign({ unidad: 'unidades' }, F.separacion || {}, {
+                    meta: Math.round(aSeparar),
+                    avance: Math.round(separadas),
+                    hora: horaAhora
+                });
             }
         } catch (e) { console.warn('[TURNO] Separación:', e); }
     }
 
     return F;
-};
-
-/**
- * La ubicación de una fila del stock, venga como objeto o como arreglo.
- *
- * En arreglo el orden es Área(0) · Artículo(1) · Descripción(2) · Ubicación(3) ·
- * Cantidad actual(4). Se cae al Área si no hay ubicación: para decidir la zona
- * alcanza igual, porque el área ya dice `CDBUFFER-A`, `MZN01`, `AND`…
- */
-const ubiDeFila = (f) => {
-    if (Array.isArray(f)) return String(f[3] || f[0] || '');
-    return String((f && (f['Ubicación'] || f['Ubicacion'] || f['Área'] || f['Area'])) || '');
 };
 
 /** El Buffer C de un stock activo, artículo por artículo. Misma cuenta que hace el robot. */
@@ -15753,7 +15734,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0247 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0248 | MOBILE PORTAL
                             </div>
                     </div>
 
