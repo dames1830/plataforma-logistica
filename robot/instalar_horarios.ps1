@@ -32,11 +32,13 @@ $REVERTIR = Join-Path $RAIZ 'REVERTIR_HORARIOS.ps1'
 
 # Que tarea de la web le corresponde a cada tarea de Windows. El ancla lleva las
 # DOS: es una sola tarea con dos horarios, y corre si a cualquiera le toca.
+# Los nombres son los REALES del servidor, leidos el 18-ago-2026. Ojo con el ultimo:
+# la tarea de los reportes diarios no se llama "Reportes diarios" sino por lo que baja.
 $MAPA = [ordered]@{
-  'Robot Oracle WMS' = 'ancla_noche,ancla_manana'
-  'Stock por hora'   = 'stock_hora'
-  'Picking por hora' = 'picking_hora'
-  'Reportes diarios' = 'reportes'
+  'Robot Oracle WMS'                  = 'ancla_noche,ancla_manana'
+  'Stock por hora'                    = 'stock_hora'
+  'Picking por hora'                  = 'picking_hora'
+  'Picking y Detalle Orden de ayer'   = 'reportes'
 }
 
 Write-Host ''
