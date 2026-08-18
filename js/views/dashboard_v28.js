@@ -1,25 +1,25 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia, esZonaDeDestino } from '../services_v245/csvHub_v6.js?v=29.0242';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia, esZonaDeDestino } from '../services_v245/csvHub_v6.js?v=29.0243';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0242';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0242';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0242';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0242';
-import * as metasService from '../services_v245/metasService.js?v=29.0242';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0242';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0242';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0242';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0242';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0242';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0242';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0242';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0242';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0242';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0242';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0242';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0242';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0242';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0242';
-import { montarSlotting } from './slotting.js?v=29.0242';
+import * as adminService from '../services_v245/adminService.js?v=29.0243';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0243';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0243';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0243';
+import * as metasService from '../services_v245/metasService.js?v=29.0243';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0243';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0243';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0243';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0243';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0243';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0243';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0243';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0243';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0243';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0243';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0243';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0243';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0243';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0243';
+import { montarSlotting } from './slotting.js?v=29.0243';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -376,7 +376,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0242';
+const VERSION = '29.0243';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4463,7 +4463,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0242');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0243');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5898,6 +5898,10 @@ const leerArea = async (area, dia) => {
  * la trampa que dejó al tablero sin número de semana el 11-ago. */
 const AREA_STOCK_DE_LA_HORA = 'layout_stock_hora';
 const AREA_RESERVA_DE_LA_HORA = 'reserva_hora';
+/* LA RESERVA DEL ARRANQUE, CON EL CÓDIGO DE CADA PALETA. La publica la corrida de las 19:00
+   junto con el stock, y es lo que permite saber QUÉ BAJÓ DE ARRIBA y de qué artículo — el
+   dato con el que la separación deja de contar lo que llegó por otro lado. */
+const AREA_RESERVA_DEL_ARRANQUE = 'analisis_sku_reserva';
 
 /* LAS CORRIDAS DEL REPLENISHMENT, una por día y hasta siete.
  *
@@ -6312,28 +6316,62 @@ const fuentesDelTurno = async (dia) => {
              * `porPaleta`, y con la jornada cerrada no hay foto de reserva de la hora. En los
              * dos casos se sigue midiendo como antes y se avisa por consola, que es preferible
              * a mostrar un cero que parece trabajo no hecho. */
-            const porPaleta = Array.isArray(plan.porPaleta) ? plan.porPaleta : null;
+            /* LA FUENTE BUENA ES `analisis_sku_reserva`, y estaba en el servidor desde
+             * siempre: es la foto de reserva del arranque —la misma corrida de las 19:00 que
+             * publica el stock— y trae LPN, PRODUCTO y CANTIDAD. Con eso, "qué bajó de
+             * arriba y de qué código" sale sin depender de que nadie reprocese el análisis, y
+             * cubre TODOS los códigos, no solo los que el plan alcanzó a guardar.
+             *
+             * Medido sobre el turno del 17-ago-2026: 139 paletas bajadas, 15.144 pares en 195
+             * códigos. La separación pasa de 890 a 790 — 100 pares que no habían bajado de
+             * ningún lado. */
             let bajoDeReserva = null;
-            /* Los códigos que NO figuran en ninguna paleta con LPN quedan fuera del filtro:
-               sin LPN no hay forma de saber si bajaron, y darles cero sería contar como no
-               trabajado algo que quizás se hizo. Es el mismo criterio que ya usa la Bajada
-               de paletas con las filas sin LPN. */
-            let conPaleta = null;
-            if (porPaleta && porPaleta.length && palArriba) {
+            let conPaletaSet = null;
+            if (esLaDeHoy && palArriba) {
+              try {
+                const resIni = await leerArea(AREA_RESERVA_DEL_ARRANQUE);
+                if (Array.isArray(resIni) && resIni.length) {
+                  /* Acá NO hay excepción por código: `conPaletaSet` queda en null y el tope
+                     se aplica a todos. Un código que no figura en la foto de reserva es un
+                     código que no tenía nada arriba, así que no pudo bajar nada. */
+                  bajoDeReserva = {};
+                  resIni.forEach(f => {
+                    if (!f || f.ES_ALTO === false) return;
+                    if (!String(f.NIVEL || '').toUpperCase().includes('ALTO')) return;
+                    const lpn = String(f.LPN || '').trim().toUpperCase();
+                    const sku = String(f.PRODUCTO || '').trim();
+                    const q = Number(f.CANTIDAD) || 0;
+                    if (!lpn || !sku || q <= 0) return;
+                    if (palArriba.has(lpn)) return;      // sigue arriba: todavía no bajó
+                    bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + q;
+                  });
+                }
+              } catch (e) { console.warn('[TURNO] Separación, reserva del arranque:', e); }
+            }
+
+            /* RESPALDO: el `porPaleta` que guarda el plan desde v29.0242. Solo se usa si la
+               foto de reserva del arranque no está —la pisa la corrida de las 19:00, así que
+               una jornada vieja ya no la tiene—. Cubre menos códigos, pero es mejor que nada.
+               Los que no figuran en ninguna paleta con LPN quedan FUERA del filtro: sin LPN no
+               se puede saber si bajaron, y darles cero sería contar como no trabajado algo que
+               quizás se hizo. Mismo criterio que la Bajada de paletas con las filas sin LPN. */
+            const porPaleta = Array.isArray(plan.porPaleta) ? plan.porPaleta : null;
+            if (!bajoDeReserva && porPaleta && porPaleta.length && palArriba) {
               bajoDeReserva = {};
-              conPaleta = new Set();
+              conPaletaSet = new Set();
               porPaleta.forEach(r => {
                 const lpn = String((r && r.lpn) || '').trim().toUpperCase();
                 const sku = String((r && r.sku) || '').trim();
                 if (!lpn || !sku) return;
-                conPaleta.add(sku);
+                conPaletaSet.add(sku);
                 if (palArriba.has(lpn)) return;          // sigue arriba: todavía no bajó
                 bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + (Number(r.q) || 0);
               });
-            } else {
+            }
+            if (!bajoDeReserva) {
               console.warn('[TURNO] Separación: sin el cruce contra la reserva '
-                + (porPaleta ? '(no hay foto de reserva de la hora)' : '(el plan no trae porPaleta)')
-                + '. Se mide solo por lo que subió al piso, que cuenta de más.');
+                + '(no hay foto del arranque ni porPaleta en el plan). '
+                + 'Se mide solo por lo que subió al piso, que cuenta de más.');
             }
 
             /* LOS PLANES PUBLICADOS ANTES DE v29.0236 no traen `iniDestino`. En vez de
@@ -6380,7 +6418,7 @@ const fuentesDelTurno = async (dia) => {
                     const subio = Math.max(0, (activo[sku] || 0) - baseDe(p, sku));
                     // El doble filtro: no puede contar como separado más de lo que bajó de
                     // arriba para ese código. Sin el cruce disponible, manda solo lo de antes.
-                    const tope = (bajoDeReserva && conPaleta.has(sku))
+                    const tope = (bajoDeReserva && (!conPaletaSet || conPaletaSet.has(sku)))
                       ? Math.min(aBajar, bajoDeReserva[sku] || 0)
                       : aBajar;
                     separadas += Math.min(tope, subio);
@@ -15538,7 +15576,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0242 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0243 | MOBILE PORTAL
                             </div>
                     </div>
 
