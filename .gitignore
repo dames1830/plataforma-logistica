@@ -22,3 +22,37 @@ local_beta/
 # Estado local del robot: se genera solo en el servidor, no va al repo
 robot/horario_cache.json
 robot/horario_corridas.json
+
+# Scripts temporales de trabajo (limpieza del 18-ago-2026).
+# Se generaban en la raiz para parchar archivos y se quedaban subidos:
+# llegaron a ser 154, entre check_end1..29, patch1..8, fix_*, inject_* y sus
+# volcados (.json/.txt). Ensuciaban toda busqueda dentro del proyecto.
+# La barra inicial ancla la regla a la raiz: no afecta js/, backend/ ni robot/.
+/check_*
+/fix_*
+/patch*
+/inject_*
+/extract*
+/analyze_*
+/refactor*
+/apply_fixes*
+/test_*
+/dump*.js
+/simulate.js
+/syntax_check*
+/compare_funcs.py
+/diagnose.py
+/find_dups.py
+/bump_version*.py
+/bump390.py
+/bump_v465.py
+/diff*.txt
+/mydiff.txt
+/out*.json
+/raw_api*.json
+/runs.json
+/tE.json
+/recent_changes.txt
+/replace*.txt
+/extracted_*
+/__pycache__/
