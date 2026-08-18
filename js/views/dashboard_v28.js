@@ -1,25 +1,25 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia, esZonaDeDestino } from '../services_v245/csvHub_v6.js?v=29.0236';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia, esZonaDeDestino } from '../services_v245/csvHub_v6.js?v=29.0237';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0236';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0236';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0236';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0236';
-import * as metasService from '../services_v245/metasService.js?v=29.0236';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0236';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0236';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0236';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0236';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0236';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0236';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0236';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0236';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0236';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0236';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0236';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0236';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0236';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0236';
-import { montarSlotting } from './slotting.js?v=29.0236';
+import * as adminService from '../services_v245/adminService.js?v=29.0237';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0237';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0237';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0237';
+import * as metasService from '../services_v245/metasService.js?v=29.0237';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0237';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0237';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0237';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0237';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0237';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0237';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0237';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0237';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0237';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0237';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0237';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0237';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0237';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0237';
+import { montarSlotting } from './slotting.js?v=29.0237';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -376,7 +376,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0236';
+const VERSION = '29.0237';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4444,7 +4444,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0236');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0237');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -15471,7 +15471,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0236 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0237 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17130,19 +17130,45 @@ const renderRFSection = (container) => {
   const ZONAS_SLOTTING = ['SEL'];
 
   /** Qué artículos mandó el sistema a cada cuerpo, según las tareas de almacenaje. */
+  /**
+   * LOS CUERPOS QUE LAS TAREAS DE ALMACENAJE YA APARTARON ESTA NOCHE.
+   *
+   * Devuelve `skus` —cuerpo → quiénes tienen tarea hacia él— y `pares` —cuerpo → cuántos
+   * pares van a llegar—. Las dos cosas hacen falta y por motivos distintos: con la primera
+   * se sabe si el cuerpo ya tiene dueño, con la segunda cuánto espacio le queda.
+   *
+   * **LA FOTO DE STOCK NO ALCANZA, Y ESTE ES EL DATO QUE LA COMPLETA.** El cuerpo apartado
+   * a las 20:00 sigue vacío en la foto de las 19:00, así que sin esto Slotting lo ve libre
+   * y lo entrega otra vez. Daniel, 17-ago-2026, con la Tarea 1 de Slotting y la Tarea 16 de
+   * almacenaje mandando las dos al `SEL-10-21`: *"estás mandando una tarea de slotting y de
+   * almacenaje hacia el mismo cuerpo, y los operarios están confundiendo"*.
+   *
+   * SE CUENTA `almacenar`, NO `qty`: lo que baja al piso es lo que ocupa el cuerpo; el resto
+   * de la línea sube a reserva. Y si la talla se repartió entre dos cuerpos (v29.0228), cada
+   * parte suma en el suyo.
+   */
   const destinosDeLasTareas = () => {
-    const mapa = new Map();
+    const skus = new Map();
+    const pares = new Map();
+    const anotar = (d, s7, q) => {
+      const c = String(d || '').trim().toUpperCase();
+      if (!/^[A-Z0-9]+-\d{2}-\d{2}$/.test(c)) return;
+      if (!skus.has(c)) skus.set(c, new Set());
+      skus.get(c).add(s7);
+      pares.set(c, (pares.get(c) || 0) + (Number(q) || 0));
+    };
     (almacenajeTasksCache || []).forEach(t => (t.items || []).forEach(art => {
       const s7 = String(art.sku7 || '').trim();
       if (!s7) return;
       (art.items || []).forEach(i => {
-        const d = String(i.destino || '').trim().toUpperCase();
-        if (!/^[A-Z0-9]+-\d{2}-\d{2}$/.test(d)) return;
-        if (!mapa.has(d)) mapa.set(d, new Set());
-        mapa.get(d).add(s7);
+        if (Array.isArray(i.reparto) && i.reparto.length > 1) {
+          i.reparto.forEach(r => anotar(r && r.d, s7, r && r.q));
+          return;
+        }
+        anotar(i.destino, s7, (i.almacenar !== undefined ? i.almacenar : i.qty));
       });
     }));
-    return mapa;
+    return { skus, pares };
   };
 
   /**
@@ -17316,6 +17342,51 @@ const renderRFSection = (container) => {
         .set(clave, Math.max(0, cap - dentro));
     });
 
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * LO QUE ALMACENAJE YA APARTÓ ESTA NOCHE TAMBIÉN OCUPA.
+     *
+     * Regla de la cadena: un módulo recibe una decisión tomada y no la contradice.
+     * Procesar Tareas eligió los cuerpos primero; Slotting los respeta.
+     *
+     * Sin esto el cuerpo apartado sigue vacío en la foto de las 19:00 y Slotting lo
+     * entrega de nuevo. El 17-ago-2026 pasó con el `SEL-10-21` —vacío en la foto,
+     * prometido a la Tarea 16 para el 6546876 y elegido por la Tarea 1 de Slotting
+     * para el 5415302—, y era el ÚNICO cuerpo libre de toda la columna 10.
+     *
+     * DOS TRATOS DISTINTOS, PORQUE SON DOS PROBLEMAS DISTINTOS:
+     *
+     *   · En la franja actual, un cuerpo es de un solo artículo: si la tarea lo apartó
+     *     para OTRO, queda ocupado y Slotting busca en otro lado.
+     *   · En las columnas que comparten cuerpo a propósito —el saldo grande, los
+     *     saldos— no se bloquea: se le DESCUENTA lo que va a llegar, para que
+     *     `cuerpoQueRecibe` no lo llene por encima de su capacidad. Ahí el problema
+     *     nunca fue el dueño, fue el espacio.
+     *
+     * Y si la tarea apartó el cuerpo PARA EL MISMO ARTÍCULO, no se toca nada: eso es
+     * juntar la familia, que es exactamente lo que las dos partes quieren.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    const apartadoPara = new Map();   // 'ZONA|col-cue' -> Set de sku7 con tarea hacia ahí
+    mandados.skus.forEach((skus, nombre) => {
+      const p = String(nombre).split('-');
+      const zona = p[0];
+      if (!zonas.includes(zona)) return;
+      const clave = `${Number(p[1])}-${Number(p[2])}`;
+      apartadoPara.set(`${zona}|${clave}`, skus);
+
+      const compartido = zonasService.columnaAdmiteVariosArticulos(zona, Number(p[1]));
+      const libres = (libresPorZona[zona] = libresPorZona[zona] || new Map());
+      if (compartido) {
+        /* El que ya estaba adentro fija la capacidad; si el cuerpo está vacío en la
+           foto se toma la del artículo que la tarea manda, que es quien lo va a llenar. */
+        const cap = libres.has(clave)
+          ? libres.get(clave)
+          : zonasService.densidadDe(zona, zonasService.serieDe([...skus][0] || ''));
+        libres.set(clave, Math.max(0, cap - (mandados.pares.get(nombre) || 0)));
+      } else {
+        (ocupadosPorZona[zona] = ocupadosPorZona[zona] || new Set()).add(clave);
+      }
+    });
+
     const nombreDe = (zona, clave) => {
       const [col, cue] = clave.split('-');
       return zonasService.nombreCuerpo(zona, Number(col), Number(cue));
@@ -17324,10 +17395,16 @@ const renderRFSection = (container) => {
     const destinoDe = (s7, desdeCuerpo, pares) => {
       const f = ficha.get(s7) || {};
       // 1. JUNTAR LA FAMILIA: otro cuerpo suyo, con 20 pares o más
+      /* Salvo que la tarea de almacenaje lo haya apartado para OTRO artículo: ahí ya
+         tiene dueño esta noche y meterle un tercero es el choque que se está evitando. */
       let suyo = null;
       cuerpos.forEach((c, k) => {
         if (k === desdeCuerpo || suyo) return;
-        if ((c.m.get(s7) || 0) >= MINIMO_PARA_SER_CASA) suyo = k;
+        if ((c.m.get(s7) || 0) < MINIMO_PARA_SER_CASA) return;
+        const p = String(k).split('-');
+        const otros = apartadoPara.get(`${p[0]}|${Number(p[1])}-${Number(p[2])}`);
+        if (otros && !otros.has(s7) && !zonasService.columnaAdmiteVariosArticulos(p[0], Number(p[1]))) return;
+        suyo = k;
       });
       if (suyo) return { destino: suyo, motivo: 'junta la familia' };
 
@@ -17383,7 +17460,7 @@ const renderRFSection = (container) => {
       mezclados++;
 
       const orden = [...c.m.entries()].sort((a, b) => b[1] - a[1]);
-      const conTarea = (mandados.get(k) || new Set());
+      const conTarea = (mandados.skus.get(k) || new Set());
       const mandadosAca = orden.filter(([s7]) => conTarea.has(s7));
 
       // Manda la tarea si hay UNO solo; si hay varios o ninguno, el que más pares tiene
@@ -17439,7 +17516,7 @@ const renderRFSection = (container) => {
      * hasta que `calcularSugerenciaDeItem` eligió los cuerpos.
      * ══════════════════════════════════════════════════════════════════════════════ */
     const casaNueva = new Map();          // sku7 -> Set de cuerpos que le dio la tarea
-    mandados.forEach((skus, k) => skus.forEach(s7 => {
+    mandados.skus.forEach((skus, k) => skus.forEach(s7 => {
       if (!casaNueva.has(s7)) casaNueva.set(s7, new Set());
       casaNueva.get(s7).add(k);
     }));
