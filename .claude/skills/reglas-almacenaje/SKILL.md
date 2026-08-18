@@ -688,6 +688,32 @@ vez de agregar otra. Sin eso el operario recibía la misma mercadería dos veces
 **EL BARRIDO CORRE DESPUÉS DE ARMAR LAS TAREAS, no antes.** El destino no existe hasta que
 `calcularSugerenciaDeItem` eligió los cuerpos.
 
+### ANTES DE MANDAR, SE MIDE EL DESTINO. Y ES TODO O NADA — 18-ago-2026
+
+Regla de Daniel, leyendo la línea del `5553848` en la tarea 2 de Slotting:
+
+> *"¿Cómo es que sacas de un cuerpo y lo mandas al otro sin calcular lo que hay en el cuerpo
+> destino? O sea, que si está lleno, igual mandas una tarea de sacar cien pares a un cuerpo
+> que ya está lleno. Eso es lo que me preocupa."*
+
+**El caso, con los números:** 108 pares del `SEL-06-15-B-01` al `SEL-06-13`. Ese cuerpo tenía
+712 pares —687 del mismo artículo y 25 de un intruso que la misma tarea saca—, y es de Bata
+Comfit, así que entra 700. **Sitio libre: 13 pares.** Habría terminado en 795.
+
+**Por qué pasaba:** "juntar la familia" devolvía el primer cuerpo suyo con 20 pares o más y ahí
+terminaba la decisión. Era el único de los cuatro caminos de destino que no consultaba el
+espacio libre — y encima **cuanto más lleno estaba el cuerpo, más seguro lo elegía**: los 687
+pares que impedían que cupiera nada eran justamente la prueba de que "ahí vive el artículo".
+
+**Y NO SE PARCIALIZA.** Daniel lo decidió el 18-ago: si no entra todo, no se mueve nada.
+Mandar la mitad deja al artículo partido igual —que es lo que la regla venía a terminar—,
+gasta el viaje del operario y encima llena el destino, así que el resto ya no puede juntarse
+ahí nunca. El resto espera a que haya lugar de verdad.
+
+Vive en `destinoDe`, dentro de `barrerParaSlotting`. Ahora exige que el resto entre completo,
+elige el cuerpo **con más lugar** en vez del primero, y **reserva el hueco** para que dos
+restos de la misma noche no cuenten con el mismo espacio.
+
 **SE ARRASTRA UN RESTO, NO UNA MUDANZA — y ese candado costó descubrirlo.** La primera versión
 arrastraba todo lo que el artículo tuviera fuera de sus cuerpos nuevos, y corriéndola contra los
 datos de verdad salían líneas de **612, 573 y 553 pares**: un artículo que vive en tres cuerpos
