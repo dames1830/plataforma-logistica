@@ -238,12 +238,18 @@ const ZONA_NOMBRE = {
  */
 export const HORAS_MIN_RANKING = 2;
 
+/* `pre` son los pares que entraron en caja de prepack, guardados APARTE dentro de
+   cada corte. El Balance del piso los tiene que descontar por marca —el prepack no
+   se almacena en mezzanine ni en selectivo— y hasta acá solo se guardaba el total
+   del día, que no alcanza para una tabla por marca. Ver `calcularBalance`. */
 const corte = (filas, clave, maestro, tope) => {
     const m = new Map();
     filas.forEach(r => {
         const k = clave(r, maestro.get(r['Código de artículo']) || SIN_DATO) || 'Sin dato';
-        const a = m.get(k) || { nom: k, lineas: 0, pares: 0 };
-        a.lineas++; a.pares += paresDeLinea(r);
+        const a = m.get(k) || { nom: k, lineas: 0, pares: 0, pre: 0 };
+        const p = paresDeLinea(r);
+        a.lineas++; a.pares += p;
+        if (esPrepack(r['Código de artículo'])) a.pre += p;
         m.set(k, a);
     });
     const lista = [...m.values()].sort((a, b) => b.pares - a.pares);
@@ -520,8 +526,8 @@ export const procesarArchivoPicking = (texto, maestro) => {
 const unir = (listas) => {
     const m = new Map();
     listas.forEach(l => (l || []).forEach(x => {
-        const a = m.get(x.nom) || { nom: x.nom, lineas: 0, pares: 0 };
-        a.lineas += x.lineas; a.pares += x.pares;
+        const a = m.get(x.nom) || { nom: x.nom, lineas: 0, pares: 0, pre: 0 };
+        a.lineas += x.lineas; a.pares += x.pares; a.pre += (x.pre || 0);
         m.set(x.nom, a);
     }));
     return [...m.values()].sort((a, b) => b.pares - a.pares);

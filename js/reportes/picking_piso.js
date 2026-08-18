@@ -105,15 +105,64 @@ export const calcularBalance = ({ tareas, dias, esCalzado, marcaDe, diaDeTarea, 
         });
     });
 
-    // Del lado del picking, las dos formas de contar. `pares` abre la caja de
-    // prepack; `cajas` la cuenta como una, que es lo que hacía la maqueta.
-    const picadoPares = new Map(), picadoCajas = new Map();
-    dias.forEach(({ resumen }) => {
+    // ── EL PREPACK NO ENTRA EN ESTE CUADRO ──────────────────────────────────
+    //
+    // Regla de Daniel, 18-ago-2026: *"que solamente lo que se almacene tanto en el
+    // selectivo como en el mezzanine me diga si estoy almacenando más o estoy
+    // picando más. Si lo vas a ensuciar con prepack, entonces no va, porque
+    // prepack no se almacena ni en mezzanine ni en selectivo"*.
+    //
+    // Y es literal: el prepack vive en CDBUFFER-C y en el andamio, que el generador
+    // de tareas deja fuera a propósito, así que del lado de **Almacena** no puede
+    // aparecer NUNCA. Del lado de **Pica** sí entraba, y pesaba entre el 24% y el
+    // 43% de los pares según el día: la brecha de −10.830 del 17-ago llevaba 7.085
+    // pares de prepack adentro, casi dos tercios. El cuadro decía que el piso se
+    // vaciaba por mercadería que jamás había bajado al piso.
+    //
+    // Solo se toca ACÁ. La productividad, el ritmo y los demás cuadros del picking
+    // siguen contando el prepack, que es trabajo real que alguien hizo.
+    const prepackDe = (c) => {
+        const m = new Map();
+        // Los días subidos desde esta versión traen el prepack POR MARCA.
+        if ((c.marcas || []).some(x => x.pre !== undefined)) {
+            (c.marcas || []).forEach(x => m.set(x.nom, Number(x.pre) || 0));
+            return { mapa: m, exacto: true };
+        }
+        // LOS DÍAS YA GUARDADOS NO LO TRAEN, y no se pueden recalcular: en la nube
+        // vive el resumen, no el archivo. Pero sí está el TOTAL del día y las dos
+        // formas de contar, y la diferencia `pares − cajas` de cada marca es
+        // exactamente lo que aportó su prepack. Repartir el total con esa llave
+        // deja el TOTAL EXACTO y la marca apenas corrida.
+        //
+        // Comprobado contra el archivo real del 14-ago: total 7.522 clavado, y la
+        // marca más grande se mueve 4 pares sobre 3.676. La única causa de error es
+        // que una marca use cajas más grandes que otra. Cuando el día se vuelve a
+        // subir pasa a ser exacto también por marca.
+        const total = (c.prepack && Number(c.prepack.pares)) || 0;
+        if (!total) return { mapa: m, exacto: true };   // sin prepack no hay nada que repartir
+        const cajas = new Map((c.marcas_cajas || []).map(x => [x.nom, x.cajas]));
+        const brecha = (c.marcas || []).map(x => ({ nom: x.nom, v: Math.max(0, x.pares - (cajas.get(x.nom) || 0)) }));
+        const suma = brecha.reduce((s, b) => s + b.v, 0);
+        if (!suma) return { mapa: m, exacto: false };
+        brecha.forEach(b => m.set(b.nom, total * b.v / suma));
+        return { mapa: m, exacto: false };
+    };
+
+    // `picadoBruto` es el picking CON prepack. No se muestra, pero de ahí sale
+    // cuánto quedó fuera: se mide contra la columna ya redondeada, no contra el
+    // reparto, para que restar a mano dé exactamente el total del cuadro.
+    const picadoPares = new Map(), picadoCajas = new Map(), picadoBruto = new Map();
+    const diasRepartidos = [];
+    dias.forEach(({ dia, resumen }) => {
         const c = resumen && resumen.seg && resumen.seg.calzado;
         if (!c) return;
+        const pp = prepackDe(c);
+        if (!pp.exacto) diasRepartidos.push(dia);
         (c.marcas || []).forEach(x => {
             const m = normalizar(x.nom) || 'Sin marca';
-            picadoPares.set(m, (picadoPares.get(m) || 0) + x.pares);
+            const pre = pp.mapa.get(x.nom) || 0;
+            picadoBruto.set(m, (picadoBruto.get(m) || 0) + x.pares);
+            picadoPares.set(m, (picadoPares.get(m) || 0) + (x.pares - pre));
         });
         (c.marcas_cajas || []).forEach(x => {
             const m = normalizar(x.nom) || 'Sin marca';
@@ -121,13 +170,18 @@ export const calcularBalance = ({ tareas, dias, esCalzado, marcaDe, diaDeTarea, 
         });
     });
 
+    // El picado se REDONDEA acá, en la fila, y el total se suma de las filas ya
+    // redondeadas: Daniel suma la columna con la calculadora y tiene que cerrar.
+    // Una marca que se queda en cero de los dos lados sale del cuadro — es una
+    // marca que solo se picaba por prepack y ya no tiene nada que decir.
     const marcas = [...new Set([...almacenado.keys(), ...picadoPares.keys()])];
     const filas = marcas.map(m => {
         const a = almacenado.get(m) || 0;
-        const p = picadoPares.get(m) || 0;
+        const p = Math.round(picadoPares.get(m) || 0);
         const pc = picadoCajas.get(m) || 0;
         return { marca: m, almacenado: a, picado: p, picadoCajas: pc, dif: a - p };
-    }).sort((x, y) => (y.almacenado + y.picado) - (x.almacenado + x.picado));
+    }).filter(f => f.almacenado || f.picado)
+      .sort((x, y) => (y.almacenado + y.picado) - (x.almacenado + x.picado));
 
     const tot = filas.reduce((s, f) => ({
         almacenado: s.almacenado + f.almacenado,
@@ -135,7 +189,13 @@ export const calcularBalance = ({ tareas, dias, esCalzado, marcaDe, diaDeTarea, 
         picadoCajas: s.picadoCajas + f.picadoCajas
     }), { almacenado: 0, picado: 0, picadoCajas: 0 });
 
-    return { filas, ...tot, no_calzado: noCalzado, vencido, jornadas: jornadas.size };
+    const bruto = [...picadoBruto.values()].reduce((s, v) => s + v, 0);
+
+    return {
+        filas, ...tot, no_calzado: noCalzado, vencido, jornadas: jornadas.size,
+        prepack_fuera: Math.round(bruto) - tot.picado,
+        dias_repartidos: diasRepartidos.sort()
+    };
 };
 
 /**
@@ -194,6 +254,8 @@ export const cuadroBalance = (B) => {
             horario; el picking, del archivo del día. <b style="color:rgba(255,255,255,0.6);">El almacenaje se cuenta
             por jornada</b>, no por fecha de calendario: una noche que arranca a las 19:00 y termina de madrugada es
             una sola jornada. No depende del segmento elegido arriba.
+            <b style="color:rgba(255,255,255,0.6);">El prepack queda fuera de los dos lados</b>: no se almacena en
+            mezzanine ni en selectivo, así que no puede contarse como salida de ahí.
           </div>
           <div style="margin-top:0.6rem; font-size:0.7rem; color:var(--text-muted);">
             <span style="color:#f59e0b;">■</span> Almacena — pares que bajaron al piso
@@ -243,9 +305,17 @@ export const cuadroBalance = (B) => {
         <div style="padding:0.8rem 1.3rem; background:rgba(0,0,0,0.25); font-size:0.68rem; color:rgba(255,255,255,0.4); line-height:1.8;">
           <b style="color:rgba(255,255,255,0.6);">% salida</b> es cuánto de lo almacenado volvió a salir picado; por encima del 100% el piso se está vaciando.
           En <b style="color:rgba(255,255,255,0.6);">Qué pasa</b> el porcentaje es otra cosa: la brecha entre los dos lados, medida sobre el mayor de ellos.
-          <br><b style="color:#fbbf24;">Ojo con la comparación:</b> acá el picking cuenta <b>pares</b>, con la caja de prepack abierta.
-          La maqueta contaba <b>cajas</b> —${F(B.picadoCajas)} en este período contra ${F(B.picado)} pares— y por eso su titular era más bajo.
-          El almacenaje siempre contó pares, así que comparar contra cajas subestimaba el picking.
+          <br><b style="color:#fbbf24;">Sin prepack:</b> quedaron fuera <b style="color:rgba(255,255,255,0.6);">${F(B.prepack_fuera)} pares</b>
+          que salieron en caja de prepack. Se pican de CDBUFFER-C y del andamio, y ninguno de los dos se llena con
+          tareas de almacenaje, así que contarlos de un solo lado hacía ver el piso más vacío de lo que está.
+          Los demás cuadros del picking sí los cuentan: es trabajo que alguien hizo.
+          ${B.dias_repartidos && B.dias_repartidos.length ? `
+          <br><span style="color:rgba(255,255,255,0.3);">En ${B.dias_repartidos.length}
+          ${B.dias_repartidos.length === 1 ? 'jornada subida' : 'jornadas subidas'} antes de este cambio
+          —${B.dias_repartidos.map(d => esc(String(d).split('-').reverse().join('/'))).join(', ')}— el prepack se
+          reparte entre las marcas por su brecha de cajas: el total sale exacto y una marca puede correrse unos
+          pocos pares. Vuelva a subir esos archivos en <b>Picking → Archivo Picking</b> y queda exacto también por
+          marca.</span>` : ''}
         </div>
       </div>`;
 };
