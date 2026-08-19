@@ -429,7 +429,7 @@ def total_paginas(page):
         return None, txt
 
 
-def esperar_resultado(page, timeout_seg=600):
+def esperar_resultado(page, timeout_seg=600, distinto_de=None):
     """Espera a que la búsqueda TRAIGA DATOS, no a que la pantalla se quede quieta.
 
     POR QUÉ NO SIRVE esperar_datos(): cuenta las filas de la página y las da por
@@ -440,6 +440,13 @@ def esperar_resultado(page, timeout_seg=600):
 
     Lo que sí prueba que llegó la data es el pie: pasa a decir "Recuperados" con la
     hora y el total de páginas. Se espera eso.
+
+    Y HAY UN SEGUNDO FALSO POSITIVO, cazado el 19-ago-2026 en la prueba en seco de
+    los pendientes: el pie de la búsqueda ANTERIOR sigue en pantalla. La de los
+    pendientes dio "96 Páginas en 0 segundos", que eran las 96 del Detalle de Orden
+    que se había buscado un minuto antes. Un resultado viejo se ve idéntico a uno
+    bueno. Por eso `distinto_de` recibe el pie de antes de apretar Buscar y se
+    espera a que CAMBIE. Sin eso, el robot exporta lo que ya estaba en la grilla.
     """
     inicio = time.time()
     aviso = 0
@@ -447,7 +454,7 @@ def esperar_resultado(page, timeout_seg=600):
         paginas, txt = total_paginas(page)
         transcurrido = int(time.time() - inicio)
 
-        if paginas:
+        if paginas and txt.strip() != (distinto_de or "").strip():
             time.sleep(3)                       # que termine de asentarse
             paginas, txt = total_paginas(page)
             log("Resultado: %s  (%ds)" % (txt, transcurrido))
@@ -754,10 +761,38 @@ def poner_estado(page, etiqueta, valor):
                            ).filter(visible=True)
     if not flechas.count():
         raise RuntimeError("No aparece la lista de '%s'" % etiqueta)
+
+    # LA LISTA ANTERIOR PUEDE HABER QUEDADO ABIERTA y se come el clic de la
+    # siguiente. Escape antes de nada: es lo que falló el 19-ago con 'A estado'.
+    try:
+        page.keyboard.press("Escape")
+        time.sleep(0.5)
+    except Exception:
+        pass
+
     flechas.first.click(timeout=10000)
-    time.sleep(1.2)
-    page.get_by_role("option", name=valor, exact=True).first.click(timeout=10000)
-    time.sleep(0.8)
+    time.sleep(1.5)
+
+    # SIN exact=True y sin acentos: el texto de la opción no tiene por qué ser
+    # igual al que escribe Oracle en el CSV. Se busca por lo que empieza.
+    opcion = page.get_by_role("option", name=re.compile(
+        "^\\s*" + re.escape(valor[:14]), re.IGNORECASE))
+    if not opcion.count():
+        hay = page.get_by_role("option")
+        nombres = []
+        for i in range(min(hay.count(), 25)):
+            try:
+                t = hay.nth(i).inner_text().strip()
+            except Exception:
+                continue
+            if t:
+                nombres.append(t)
+        log("   la lista de '%s' ofrece: %s"
+            % (etiqueta, " | ".join(nombres) if nombres else "(ninguna opción a la vista)"),
+            "WARN")
+        raise RuntimeError("La opción '%s' no está en la lista de '%s'" % (valor, etiqueta))
+    opcion.first.click(timeout=10000)
+    time.sleep(1.0)
     log("   %s = %s" % (etiqueta, valor))
 
 
@@ -812,9 +847,10 @@ def descargar_pendientes(page, destino, hasta_dia, dias=DIAS_PENDIENTES,
     if con_fotos:
         foto(page, "pendientes_filtros_puestos")
 
+    _, pie_antes = total_paginas(page)      # el pie que deja la búsqueda anterior
     ejecutar_busqueda(page)
     log("Esperando a que Oracle traiga las filas...")
-    if not esperar_resultado(page):
+    if not esperar_resultado(page, timeout_seg=420, distinto_de=pie_antes):
         wms.captura(page, "pendientes_sin_datos")
         raise TimeoutError("Los pendientes no trajeron ninguna fila")
     if con_fotos:
