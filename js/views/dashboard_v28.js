@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0267';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0268';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0267';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0267';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0267';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0267';
-import * as metasService from '../services_v245/metasService.js?v=29.0267';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0267';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0267';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0267';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0267';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0267';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0267';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0267';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0267';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0267';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0267';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0267';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0267';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0267';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0267';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0267';
-import { montarSlotting } from './slotting.js?v=29.0267';
+import * as adminService from '../services_v245/adminService.js?v=29.0268';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0268';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0268';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0268';
+import * as metasService from '../services_v245/metasService.js?v=29.0268';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0268';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0268';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0268';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0268';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0268';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0268';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0268';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0268';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0268';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0268';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0268';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0268';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0268';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0268';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0268';
+import { montarSlotting } from './slotting.js?v=29.0268';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0267';
+const VERSION = '29.0268';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4482,7 +4482,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0267');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0268');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5496,6 +5496,9 @@ export const renderDashboard = async (container, user, onLogout) => {
      */
     const mostrarImagen = (dias, filas) => {
         const ESCALA = 2;
+        // Cuanto mas grande se ve la imagen. Todo el dibujo se amplia junto, asi que
+        // subirlo o bajarlo no descuadra nada: es el unico numero que hay que tocar.
+        const ZOOM = 1.25;
         const semanas = semanasDelRango(dias);
         const variasSemanas = semanas.length > 1;
 
@@ -5524,10 +5527,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         const alto = ALTO_CAB + ALTO_TARJETAS + ALTO_2DA_LINEA + filas.length * ALTO_FILA + ALTO_PIE + MARGEN;
 
         const lienzo = document.createElement('canvas');
-        lienzo.width = ancho * ESCALA;
-        lienzo.height = alto * ESCALA;
+        lienzo.width = Math.round(ancho * ESCALA * ZOOM);
+        lienzo.height = Math.round(alto * ESCALA * ZOOM);
         const g = lienzo.getContext('2d');
-        g.scale(ESCALA, ESCALA);
+        g.scale(ESCALA * ZOOM, ESCALA * ZOOM);
         g.textBaseline = 'middle';
 
         const DIAS_TRES = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
@@ -5571,7 +5574,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         g.fillRect(0, 0, 4, ALTO_CAB - 14);
 
         const a = desdeClave(desde), b = desdeClave(hasta);
-        texto('CONTROL DE ASISTENCIA', MARGEN, 21, { color: '#ffffff', tam: 16, peso: 700 });
+        texto('CONTROL DE ASISTENCIA TURNO NOCHE', MARGEN, 21, { color: '#ffffff', tam: 16, peso: 700 });
         const cuales = variasSemanas
             ? `Semanas ${semanas[0].semana} a ${semanas[semanas.length - 1].semana}`
             : `Semana ${numeroDeSemana(a)}`;
@@ -5690,7 +5693,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         // Sin glass-panel a propósito: su desenfoque recorta lo que sobresale.
         caja.style.cssText = 'display:flex; flex-direction:column; gap:0.8rem; align-items:flex-end; max-width:95vw;';
 
-        lienzo.style.cssText = `width:${ancho}px; max-width:100%; height:auto; border-radius:8px; display:block; box-shadow:0 8px 40px rgba(0,0,0,0.6);`;
+        lienzo.style.cssText = `width:${Math.round(ancho * ZOOM)}px; max-width:100%; height:auto; border-radius:8px; display:block; box-shadow:0 8px 40px rgba(0,0,0,0.6);`;
 
         const cerrar = document.createElement('button');
         cerrar.textContent = 'Cerrar';
@@ -16108,7 +16111,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0267 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0268 | MOBILE PORTAL
                             </div>
                     </div>
 
