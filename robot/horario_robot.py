@@ -61,7 +61,10 @@ DE_FABRICA = {
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'stock_hora':   {'activa': True, 'minuto': 30, 'cadaMin': 60, 'dias': {d: True for d in DIAS}},
     'picking_hora': {'activa': True, 'minuto': 50, 'cadaMin': 60, 'dias': {d: True for d in DIAS}},
-    'reportes':     {'activa': True, 'hora': '08:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
+    # A las 06:45: el turno noche cierra 06:30 y el de la manana entra 08:00, asi que
+    # el almacen esta quieto y el dia de ayer ya cerro. Estaba a las 08:00 y eso
+    # empujaba a SKUs sin salida fuera de la manana.
+    'reportes':     {'activa': True, 'hora': '06:45', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     # El respaldo va al final del dia, cuando la corrida de las 19:00 ya termino
     # y nadie esta escribiendo. La hora se cambia desde la web como las demas.
@@ -72,8 +75,14 @@ DE_FABRICA = {
     # minutos, por eso va a las 03:00 y todos los dias, domingo incluido.
     'archivado':    {'activa': True, 'hora': '03:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': True}},
+    # SKUs sin salida va DESPUES de los reportes diarios y DESPUES del ancla de la
+    # manana: necesita el Detalle de Orden del dia que cerro y la foto de stock de
+    # hoy. Con los reportes a las 06:45 y el ancla a las 07:00, a las 07:30 ya estan
+    # los dos. Antes de esa hora el cuadro saldria con la demanda de anteayer.
+    'sin_salida':   {'activa': True, 'hora': '07:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
+                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
 }
-DIARIAS = ('ancla_noche', 'ancla_manana', 'reportes', 'respaldo', 'archivado')
+DIARIAS = ('ancla_noche', 'ancla_manana', 'reportes', 'respaldo', 'archivado', 'sin_salida')
 
 
 def _leer_web(timeout=20):

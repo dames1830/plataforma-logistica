@@ -61,7 +61,9 @@ export const TAREAS = [
     { id: 'respaldo', tipo: 'diaria', etiqueta: 'Respaldo de datos',
       detalle: 'la copia de seguridad de las 63 áreas', area: null },
     { id: 'archivado', tipo: 'diaria', etiqueta: 'Archivar tareas viejas',
-      detalle: 'manda al histórico lo que pasó de 30 días', area: null }
+      detalle: 'manda al histórico lo que pasó de 30 días', area: null },
+    { id: 'sin_salida', tipo: 'diaria', etiqueta: 'SKUs sin salida',
+      detalle: 'el cuadro de lo que llegó y no se movió', area: 'sku_sin_salida' }
 ];
 
 /** Cada cuánto puede correr una tarea de las que se repiten. */
@@ -88,9 +90,10 @@ export const robotsPorDefecto = () => ({
     ancla_manana: { activa: true, hora: '07:00', dias: { ...LUN_A_SAB } },
     stock_hora:   { activa: true, minuto: 30, cadaMin: 60, dias: { ...TODOS } },
     picking_hora: { activa: true, minuto: 50, cadaMin: 60, dias: { ...TODOS } },
-    reportes:     { activa: true, hora: '08:00', dias: { ...LUN_A_SAB } },
+    reportes:     { activa: true, hora: '06:45', dias: { ...LUN_A_SAB } },
     respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } },
-    archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } }
+    archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } },
+    sin_salida:   { activa: true, hora: '07:30', dias: { ...LUN_A_SAB } }
 });
 
 const _hhmm = (v, respaldo) => {
