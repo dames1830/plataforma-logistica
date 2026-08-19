@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0252';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0253';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0252';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0252';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0252';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0252';
-import * as metasService from '../services_v245/metasService.js?v=29.0252';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0252';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0252';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0252';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0252';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0252';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0252';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0252';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0252';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0252';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0252';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0252';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0252';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0252';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0252';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0252';
-import { montarSlotting } from './slotting.js?v=29.0252';
+import * as adminService from '../services_v245/adminService.js?v=29.0253';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0253';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0253';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0253';
+import * as metasService from '../services_v245/metasService.js?v=29.0253';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0253';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0253';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0253';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0253';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0253';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0253';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0253';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0253';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0253';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0253';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0253';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0253';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0253';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0253';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0253';
+import { montarSlotting } from './slotting.js?v=29.0253';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0252';
+const VERSION = '29.0253';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0252');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0253');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5365,13 +5365,156 @@ export const renderDashboard = async (container, user, onLogout) => {
         return Array.from(porDni.values()).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
     };
 
+    /**
+     * La inicial del motivo, no un signo de admiración a secas. Daniel manda el cuadro
+     * por WhatsApp: en una captura no hay cursor que pasar, así que la celda tiene que
+     * decir POR QUÉ sola. Los motivos salen de una lista cerrada de tres, así que caben
+     * en una letra.
+     *
+     * Se compara por el principio del texto porque "Descanso Médico" está guardado de
+     * dos formas distintas —una con el acento roto— y las dos son el mismo motivo.
+     */
+    const letraDelMotivo = (obs) => {
+        const t = String(obs || '').trim().toUpperCase();
+        if (t.startsWith('VAC')) return 'V';
+        if (t.startsWith('DESC')) return 'M';
+        if (t.startsWith('OTRO')) return 'O';
+        return '!';   // motivo nuevo que todavía no tiene letra: se ve igual, no se pierde
+    };
+
     /** El símbolo de una celda. La observación manda sobre el resto. */
     const simboloDe = (marca) => {
         if (!marca) return { s: '–', color: '#475569', titulo: 'Sin registro' };
-        if (marca.obs) return { s: '!', color: '#f59e0b', titulo: marca.obs };
+        if (marca.obs) return { s: letraDelMotivo(marca.obs), color: '#f59e0b', titulo: marca.obs };
         return marca.vino
             ? { s: '✓', color: '#22c55e', titulo: 'Asistió' }
             : { s: '✗', color: '#ef4444', titulo: 'No asistió' };
+    };
+
+    /**
+     * LA IMAGEN PARA MANDAR AL GRUPO DE WHATSAPP.
+     *
+     * Se dibuja en un canvas a mano en vez de fotografiar el HTML. Dos razones:
+     * no hace falta traer ninguna librería nueva (html2canvas y parecidas pesan y
+     * hay que bajarlas de un CDN), y así se controla el ancho exacto — el cuadro de
+     * pantalla es demasiado ancho y largo para que se lea en un celular.
+     *
+     * Va sin DNI a propósito: achica la imagen y evita mandar documentos de
+     * identidad a un grupo de WhatsApp.
+     *
+     * Se dibuja al doble de tamaño y se muestra a la mitad, si no el texto sale
+     * borroso en las pantallas de los celulares.
+     */
+    const descargarImagen = (dias, filas) => {
+        const ESCALA = 2;
+        const MARGEN = 16, ALTO_FILA = 21, ALTO_CAB = 56, ALTO_PIE = 52;
+        const ANCHO_NUM = 26, ANCHO_NOMBRE = 232, ANCHO_DIA = 34;
+
+        const ancho = MARGEN * 2 + ANCHO_NUM + ANCHO_NOMBRE + dias.length * ANCHO_DIA;
+        const alto = ALTO_CAB + filas.length * ALTO_FILA + ALTO_PIE + MARGEN;
+
+        const lienzo = document.createElement('canvas');
+        lienzo.width = ancho * ESCALA;
+        lienzo.height = alto * ESCALA;
+        const g = lienzo.getContext('2d');
+        g.scale(ESCALA, ESCALA);
+        g.textBaseline = 'middle';
+
+        const FUENTE = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+        const texto = (t, x, y, opciones) => {
+            const o = opciones || {};
+            g.fillStyle = o.color || '#c9d1d9';
+            g.font = `${o.peso || 400} ${o.tam || 11}px ${FUENTE}`;
+            g.textAlign = o.alinear || 'left';
+            g.fillText(String(t), x, y);
+        };
+
+        // Fondo
+        g.fillStyle = '#0d1117';
+        g.fillRect(0, 0, ancho, alto);
+
+        // Encabezado
+        const a = desdeClave(desde), b = desdeClave(hasta);
+        texto('CONTROL DE ASISTENCIA', MARGEN, 22, { color: '#ffffff', tam: 14, peso: 600 });
+        texto(`Semana ${numeroDeSemana(a)} · ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`,
+              MARGEN, 38, { color: '#8b949e', tam: 10.5 });
+        texto('LOGÍSTICA', ancho - MARGEN, 18, { color: '#8b949e', tam: 9, alinear: 'right' });
+        texto('DEAM1830', ancho - MARGEN, 30, { color: '#1f6feb', tam: 10, peso: 600, alinear: 'right' });
+
+        g.fillStyle = '#1f6feb';
+        g.fillRect(MARGEN, ALTO_CAB - 12, ancho - MARGEN * 2, 2);
+
+        // Encabezado de columnas
+        const xNum = MARGEN + ANCHO_NUM / 2;
+        const xNombre = MARGEN + ANCHO_NUM;
+        const xDia = (i) => MARGEN + ANCHO_NUM + ANCHO_NOMBRE + i * ANCHO_DIA + ANCHO_DIA / 2;
+        const yCab = ALTO_CAB;
+
+        texto('#', xNum, yCab, { color: '#8b949e', tam: 9.5, peso: 600, alinear: 'center' });
+        texto('OPERARIO', xNombre, yCab, { color: '#8b949e', tam: 9.5, peso: 600 });
+        dias.forEach((d, i) => {
+            texto(`${DIAS_CORTOS[d.getDay()][0].toUpperCase()} ${d.getDate()}`, xDia(i), yCab,
+                  { color: '#8b949e', tam: 9.5, peso: 600, alinear: 'center' });
+        });
+
+        // Filas
+        let vino = 0, falto = 0, obs = 0;
+        filas.forEach((f, i) => {
+            const y = ALTO_CAB + 14 + i * ALTO_FILA;
+            if (i % 2) {
+                g.fillStyle = '#10151c';
+                g.fillRect(MARGEN, y - ALTO_FILA / 2, ancho - MARGEN * 2, ALTO_FILA);
+            }
+            texto(i + 1, xNum, y, { color: '#6e7681', tam: 10, alinear: 'center' });
+
+            // El nombre se recorta si no entra, para que nunca pise las columnas de día.
+            let nombre = f.nombre;
+            g.font = `400 10.5px ${FUENTE}`;
+            while (nombre.length > 4 && g.measureText(nombre).width > ANCHO_NOMBRE - 10) {
+                nombre = nombre.slice(0, -2) + '…';
+            }
+            texto(nombre, xNombre, y, { color: '#c9d1d9', tam: 10.5 });
+
+            dias.forEach((d, k) => {
+                const m = f.marcas[claveDe(d)];
+                const info = simboloDe(m);
+                if (m) { if (m.obs) obs++; else if (m.vino) vino++; else falto++; }
+                texto(info.s, xDia(k), y, { color: info.color, tam: 12, peso: 600, alinear: 'center' });
+            });
+        });
+
+        // Pie: leyenda y totales
+        const yPie = ALTO_CAB + 14 + filas.length * ALTO_FILA + 6;
+        g.fillStyle = '#21262d';
+        g.fillRect(MARGEN, yPie, ancho - MARGEN * 2, 1);
+
+        const leyenda = [['✓', '#3fb950', 'asistió'], ['✗', '#f85149', 'faltó'],
+                         ['V', '#d29922', 'vacaciones'], ['M', '#d29922', 'médico'],
+                         ['O', '#d29922', 'otros'], ['–', '#484f58', 'sin registro']];
+        let x = MARGEN;
+        leyenda.forEach(([s, c, t]) => {
+            texto(s, x, yPie + 16, { color: c, tam: 11, peso: 600 });
+            g.font = `400 9.5px ${FUENTE}`;
+            const anchoS = g.measureText(s).width;
+            texto(t, x + anchoS + 3, yPie + 16, { color: '#8b949e', tam: 9.5 });
+            x += anchoS + 3 + g.measureText(t).width + 11;
+        });
+
+        texto(`${filas.length} operarios · ${vino} asistencias · ${falto} faltas · ${obs} observaciones`,
+              MARGEN, yPie + 34, { color: '#8b949e', tam: 9.5 });
+
+        // Descarga
+        lienzo.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const enlace = document.createElement('a');
+            enlace.href = url;
+            enlace.download = `Asistencia_S${numeroDeSemana(a)}_${desde}_al_${hasta}.png`;
+            document.body.appendChild(enlace);
+            enlace.click();
+            document.body.removeChild(enlace);
+            // Sin esto el navegador se queda con la imagen en memoria hasta recargar.
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }, 'image/png');
     };
 
     const pintar = () => {
@@ -5435,6 +5578,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <input type="date" id="fHasta" value="${hasta}" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:0.4rem 0.6rem; font-size:0.8rem;">
                         <button id="btnSemSiguiente" class="btn-secondary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">Semana siguiente ▶</button>
                         <button id="btnSemActual" class="btn-secondary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">Semana actual</button>
+                        <button id="btnImagen" class="btn-primary" style="padding:0.45rem 0.9rem; font-size:0.75rem;" title="Descarga el cuadro como imagen, listo para mandar por WhatsApp">📷 Imagen para compartir</button>
                     </div>
                 </div>
             </div>
@@ -5465,7 +5609,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:1.2rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.1); font-size:0.78rem; color:var(--text-muted);">
                     <span><strong style="color:#22c55e; font-size:1rem;">✓</strong> Asistió</span>
                     <span><strong style="color:#ef4444; font-size:1rem;">✗</strong> No asistió</span>
-                    <span><strong style="color:#f59e0b; font-size:1rem;">!</strong> Con observación <em style="opacity:0.7;">(pasa el cursor para ver el motivo)</em></span>
+                    <span><strong style="color:#f59e0b; font-size:1rem;">V</strong> Vacaciones</span>
+                    <span><strong style="color:#f59e0b; font-size:1rem;">M</strong> Descanso médico</span>
+                    <span><strong style="color:#f59e0b; font-size:1rem;">O</strong> Otros</span>
                     <span><strong style="color:#475569; font-size:1rem;">–</strong> Sin registro ese día</span>
                 </div>
             </div>`;
@@ -5480,6 +5626,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         };
         buscar('#btnSemAnterior').onclick = () => correrSemanas(-1);
         buscar('#btnSemSiguiente').onclick = () => correrSemanas(1);
+        buscar('#btnImagen').onclick = () => descargarImagen(dias, filas);
         buscar('#btnSemActual').onclick = () => {
             const l = lunesDeLaSemanaDe(desdeClave(getLogicalDate()));
             desde = claveDe(l);
@@ -15737,7 +15884,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0252 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0253 | MOBILE PORTAL
                             </div>
                     </div>
 
