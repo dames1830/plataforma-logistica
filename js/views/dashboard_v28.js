@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0254';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0255';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0254';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0254';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0254';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0254';
-import * as metasService from '../services_v245/metasService.js?v=29.0254';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0254';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0254';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0254';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0254';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0254';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0254';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0254';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0254';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0254';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0254';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0254';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0254';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0254';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0254';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0254';
-import { montarSlotting } from './slotting.js?v=29.0254';
+import * as adminService from '../services_v245/adminService.js?v=29.0255';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0255';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0255';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0255';
+import * as metasService from '../services_v245/metasService.js?v=29.0255';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0255';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0255';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0255';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0255';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0255';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0255';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0255';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0255';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0255';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0255';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0255';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0255';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0255';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0255';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0255';
+import { montarSlotting } from './slotting.js?v=29.0255';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0254';
+const VERSION = '29.0255';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0254');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0255');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5405,7 +5405,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      * Se dibuja al doble de tamaño y se muestra a la mitad, si no el texto sale
      * borroso en las pantallas de los celulares.
      */
-    const descargarImagen = (dias, filas) => {
+    const mostrarImagen = (dias, filas) => {
         const ESCALA = 2;
         const MARGEN = 16, ALTO_FILA = 17, ALTO_CAB = 56, ALTO_PIE = 52;
         const ANCHO_NUM = 26, ANCHO_NOMBRE = 232, ANCHO_DIA = 34;
@@ -5511,18 +5511,75 @@ export const renderDashboard = async (container, user, onLogout) => {
                plural(obs, 'observación', 'observaciones')].join(' · '),
               MARGEN, yPie + 34, { color: '#8b949e', tam: 9.5 });
 
-        // Descarga
-        lienzo.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            const enlace = document.createElement('a');
-            enlace.href = url;
-            enlace.download = `Asistencia_S${numeroDeSemana(a)}_${desde}_al_${hasta}.png`;
-            document.body.appendChild(enlace);
-            enlace.click();
-            document.body.removeChild(enlace);
-            // Sin esto el navegador se queda con la imagen en memoria hasta recargar.
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
-        }, 'image/png');
+        // La imagen se MUESTRA, no se descarga a ciegas.
+        //
+        // El 18-ago-2026 la descarga directa fallo: en un navegador con restricciones
+        // -el integrado, el que avisa "--no-sandbox"- el atributo download se ignora y
+        // el archivo cae con nombre de codigo y SIN la extension .png, asi que Windows
+        // no sabe con que abrirlo. Daniel bajo cuatro y no pudo ver ninguno.
+        //
+        // Mostrarla resuelve eso y ademas da el camino mas corto para lo que necesita:
+        // copiarla y pegarla en WhatsApp sin pasar por ningun archivo.
+        const nombreArchivo = `Asistencia_S${numeroDeSemana(a)}_${desde}_al_${hasta}.png`;
+
+        const fondo = document.createElement('div');
+        fondo.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:99999; display:flex; align-items:center; justify-content:center; padding:1.5rem; overflow:auto;';
+
+        const caja = document.createElement('div');
+        // Sin glass-panel a proposito: su desenfoque recorta lo que sobresale del recuadro.
+        caja.style.cssText = 'background:#161b22; border:1px solid #30363d; border-radius:12px; padding:1.2rem; max-width:95vw; max-height:95vh; display:flex; flex-direction:column; gap:0.9rem;';
+
+        lienzo.style.cssText = `width:${ancho}px; max-width:100%; height:auto; border-radius:6px; display:block;`;
+
+        const barra = document.createElement('div');
+        barra.style.cssText = 'display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;';
+        barra.innerHTML = `
+            <button id="imgCopiar" class="btn-primary" style="padding:0.5rem 1rem; font-size:0.8rem;">📋 Copiar imagen</button>
+            <button id="imgBajar" class="btn-secondary" style="padding:0.5rem 1rem; font-size:0.8rem;">⬇ Descargar</button>
+            <span id="imgAviso" style="font-size:0.75rem; color:#8b949e;">También puedes hacer clic derecho sobre la imagen y "Guardar imagen como".</span>
+            <button id="imgCerrar" class="btn-secondary" style="padding:0.5rem 1rem; font-size:0.8rem; margin-left:auto;">Cerrar</button>`;
+
+        caja.appendChild(lienzo);
+        caja.appendChild(barra);
+        fondo.appendChild(caja);
+        document.body.appendChild(fondo);
+
+        const avisar = (txt, color) => {
+            const el = fondo.querySelector('#imgAviso');
+            el.textContent = txt;
+            el.style.color = color || '#8b949e';
+        };
+        const cerrar = () => fondo.remove();
+
+        fondo.querySelector('#imgCerrar').onclick = cerrar;
+        fondo.onclick = (e) => { if (e.target === fondo) cerrar(); };
+
+        // Pegar directo en WhatsApp Web: ni archivo ni carpeta de descargas de por medio.
+        fondo.querySelector('#imgCopiar').onclick = () => {
+            lienzo.toBlob(async (blob) => {
+                try {
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    avisar('Copiada. Pégala en WhatsApp con Ctrl+V.', '#3fb950');
+                } catch (err) {
+                    avisar('Este navegador no deja copiar. Usa clic derecho sobre la imagen.', '#f59e0b');
+                }
+            }, 'image/png');
+        };
+
+        fondo.querySelector('#imgBajar').onclick = () => {
+            lienzo.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const enlace = document.createElement('a');
+                enlace.href = url;
+                enlace.download = nombreArchivo;
+                document.body.appendChild(enlace);
+                enlace.click();
+                document.body.removeChild(enlace);
+                // Sin esto el navegador se queda con la imagen en memoria hasta recargar.
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                avisar(`Se descargó como ${nombreArchivo}`, '#3fb950');
+            }, 'image/png');
+        };
     };
 
     const pintar = () => {
@@ -5586,7 +5643,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <input type="date" id="fHasta" value="${hasta}" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:0.4rem 0.6rem; font-size:0.8rem;">
                         <button id="btnSemSiguiente" class="btn-secondary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">Semana siguiente ▶</button>
                         <button id="btnSemActual" class="btn-secondary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">Semana actual</button>
-                        <button id="btnImagen" class="btn-primary" style="padding:0.45rem 0.9rem; font-size:0.75rem;" title="Descarga el cuadro como imagen, listo para mandar por WhatsApp">📷 Imagen para compartir</button>
+                        <button id="btnImagen" class="btn-primary" style="padding:0.45rem 0.9rem; font-size:0.75rem;" title="Arma la imagen del cuadro para mandarla por WhatsApp">📷 Imagen para compartir</button>
                     </div>
                 </div>
             </div>
@@ -5634,7 +5691,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         };
         buscar('#btnSemAnterior').onclick = () => correrSemanas(-1);
         buscar('#btnSemSiguiente').onclick = () => correrSemanas(1);
-        buscar('#btnImagen').onclick = () => descargarImagen(dias, filas);
+        buscar('#btnImagen').onclick = () => mostrarImagen(dias, filas);
         buscar('#btnSemActual').onclick = () => {
             const l = lunesDeLaSemanaDe(desdeClave(getLogicalDate()));
             desde = claveDe(l);
@@ -15892,7 +15949,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0254 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0255 | MOBILE PORTAL
                             </div>
                     </div>
 
