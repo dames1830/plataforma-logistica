@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0269';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0270';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0269';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0269';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0269';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0269';
-import * as metasService from '../services_v245/metasService.js?v=29.0269';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0269';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0269';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0269';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0269';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0269';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0269';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0269';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0269';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0269';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0269';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0269';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0269';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0269';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0269';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0269';
-import { montarSlotting } from './slotting.js?v=29.0269';
+import * as adminService from '../services_v245/adminService.js?v=29.0270';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0270';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0270';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0270';
+import * as metasService from '../services_v245/metasService.js?v=29.0270';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0270';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0270';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0270';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0270';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0270';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0270';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0270';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0270';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0270';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0270';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0270';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0270';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0270';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0270';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0270';
+import { montarSlotting } from './slotting.js?v=29.0270';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0269';
+const VERSION = '29.0270';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4490,7 +4490,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0269');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0270');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16119,7 +16119,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0269 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0270 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22851,6 +22851,43 @@ const renderRFSection = (container) => {
   let reservaState = { page: 1, query: '', skusArray: [], view: 'resumen' };
   let ubicacionState = { page: 1, query: '', ubisArray: [] };
   let currentLayoutZona = 'SEL';
+  /* La foto de la reserva, guardada mientras se cambia de nivel. Ver el mapa de reserva. */
+  let _reservaCache = { filas: null, sello: null, t: 0 };
+
+  /**
+   * LA FORMA DE LA RESERVA — el mismo selectivo, pero arriba.
+   *
+   * Medida el 19-ago-2026 sobre las 2.486 ubicaciones que lista el maestro del WMS
+   * (área `matriz_ubicaciones`), no supuesta:
+   *
+   *   · columnas 01 a 12 — la 13 y la 14 NO tienen niveles altos;
+   *   · 22 cuerpos, cinco niveles (D a H) y dos posiciones por nivel: 10 paletas por cuerpo;
+   *   · SOBRE EL PASILLO (cuerpo 11) solo existen F, G y H: los dos de abajo son el paso del
+   *     elevador. La columna 01 es la excepción —ahí el pasillo no cruza— y tiene los cinco;
+   *   · el cuerpo 22 solo existe en la columna 01.
+   *
+   * Esto es "la única diferencia" que marcó Daniel: abajo el pasillo no tiene ninguna
+   * ubicación y arriba sí. Las cuentas cierran: 220 + 11 × 206 = 2.486.
+   *
+   * Si algún día cambia el rack se corrige acá, y el mapa y los totales se mueven juntos.
+   */
+  const NIVELES_RESERVA = ['H', 'G', 'F', 'E', 'D'];
+  const COLS_RESERVA = 12;
+  const paletaDeReservaExiste = (col, cuerpo, nivel) => {
+      if (col < 1 || col > COLS_RESERVA || cuerpo < 1 || cuerpo > 22) return false;
+      if (cuerpo === 22 && col !== 1) return false;
+      if (cuerpo === 11 && col !== 1 && (nivel === 'D' || nivel === 'E')) return false;
+      return true;
+  };
+  /** Cuántas paletas caben en la reserva, contando solo las que existen de verdad. */
+  const espaciosDeReserva = (nivel) => {
+      const nivs = (nivel && nivel !== 'TODOS') ? [nivel] : NIVELES_RESERVA;
+      let n = 0;
+      for (let c = 1; c <= COLS_RESERVA; c++)
+          for (let b = 1; b <= 22; b++)
+              nivs.forEach(nv => { if (paletaDeReservaExiste(c, b, nv)) n += 2; });
+      return n;
+  };
   /**
    * [ZONAS] Las zonas que tienen mapa de calor: las que tienen reglas cargadas en Zonas de
    * Almacenaje. El día que se active MZN04, su mapa aparece solo.
@@ -23004,11 +23041,15 @@ const renderRFSection = (container) => {
           <div style="width:48px; height:48px; border:4px solid rgba(129,140,248,0.15); border-top-color:#818cf8; border-radius:50%; animation:spin 1s linear infinite;"></div>
           <div><h4 style="color:#fff; margin:0;">Cargando mapa de calor...</h4><p style="margin:6px 0 0; font-size:0.85rem;">Obteniendo la última versión del servidor.</p></div>
       </div>`;
+      // LA RESERVA ES OTRA ZONA DE LA MISMA LISTA. No es un mapa aparte: es el selectivo
+      // visto por encima del nivel de picking, con las mismas columnas y los mismos cuerpos.
+      const esReserva = currentLayoutZona === 'RESERVA';
+
       // EL MAPA MIRA EL STOCK DE LA HORA SI LO HAY, y solo si no, el del día.
       //
       // Es el único que lo hace. Para el resto de la aplicación el stock sigue siendo el de
       // las 19:00, que es sobre el que se calcula el Replenishment y el Slotting.
-      const stockHora = await traerStockDeLaHora();
+      const stockHora = esReserva ? null : await traerStockDeLaHora();
 
       let activoRaw = [];
       if (stockHora && stockHora.length) {
@@ -23025,8 +23066,11 @@ const renderRFSection = (container) => {
       window.__stockHoraTexto = _textoStockHora();
       let articulosRaw = dataStore.analisis_sku_maestro || dataStore.articulos || [];
 
+      // La reserva NO tiene mapa publicado: se dibuja siempre con el stock de la nube, que ya
+      // es el mismo para todas las PC. Por eso no se le pide `layout_activo_RESERVA`, que no
+      // existe y devolvería un 404 en cada apertura.
       let globalPayload = null;
-      try {
+      if (!esReserva) try {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
           const __suf = window.__verLayoutAnterior ? '_ANT' : '';
           const res = await fetch(`${base}/api/logistics/layout_activo_${currentLayoutZona || 'SEL'}${__suf}?date=MASTER&t=${Date.now()}`);
@@ -23039,13 +23083,17 @@ const renderRFSection = (container) => {
           }
       } catch(e) {}
 
-      if (!activoRaw.length || !articulosRaw.length) {
+      // La reserva sale de la nube, así que lo único que puede faltarle es el Maestro: sin él
+      // no hay temporada, y un mapa entero pintado de "anterior" se ve igual que uno bueno.
+      if (esReserva ? !articulosRaw.length : (!activoRaw.length || !articulosRaw.length)) {
           if (!globalPayload || globalPayload.totalUnits === 0) {
               container.innerHTML = `
                   <div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
                       <div style="font-size:3rem; margin-bottom:1rem; opacity:0.1;">🗺️</div>
                       <h4>Faltan Datos Base</h4>
-                      <p>Para ver el Layout, por favor carga tu <b>Archivo de Stock Activo</b> y el <b>Maestro de Artículos</b> (para las temporadas).</p>
+                      <p>${esReserva
+                          ? 'Para ver la reserva falta el <b>Maestro de Artículos</b>, que es de donde sale la temporada de cada paleta.'
+                          : 'Para ver el Layout, por favor carga tu <b>Archivo de Stock Activo</b> y el <b>Maestro de Artículos</b> (para las temporadas).'}</p>
                   </div>`;
               return;
           }
@@ -23082,7 +23130,7 @@ const renderRFSection = (container) => {
       let localUniquePadres = new Set();
       let localPayload = null;
 
-      if (activoRaw.length && articulosRaw.length) {
+      if (!esReserva && activoRaw.length && articulosRaw.length) {
             const skuTemporada = {};
             const skuGender = {};
             
@@ -23249,139 +23297,178 @@ const renderRFSection = (container) => {
           };
       }
 
+      // ══════════════════════════════════════════════════════════════════════════════════
+      // LA RESERVA — EL MISMO MAPA, PERO ARRIBA
+      //
+      // Regla de Daniel, 19-ago-2026: *"el hallado de reserva viene a ser lo mismo que el del
+      // activo. El activo está abajo y la reserva está arriba. La única diferencia son los
+      // pasillos"*. Y es exacto: encima del paso del elevador el rack sigue. Esa noche había
+      // 44 paletas en los cuerpos 11 y 22 de las columnas 02 a 13, justo donde abajo no hay
+      // ninguna ubicación. Por eso buildLayoutHTML no saltea los pasillos cuando isReserva.
+      //
+      // UN CUERPO DE RESERVA GUARDA HASTA 10 PALETAS: cinco niveles —D, E, F, G y H— por dos
+      // posiciones. La celda pinta la temporada del cuerpo entero, igual que abajo, y el
+      // globito lista cada paleta con su nivel y su posición.
+      //
+      // ARRIBA UNA COLUMNA NO ES UNA TEMPORADA, así que acá no se acusa a nadie de estar mal
+      // ubicado: no hay franjas ni desviación, solo el reparto entre actual y anterior.
+      // ══════════════════════════════════════════════════════════════════════════════════
       let reservaPayload = null;
-      let reservaRaw = dataStore.analisis_sku_reserva || dataStore.stockReserva || [];
-      let globalPayloadReserva = null;
-      try {
+      if (esReserva) {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-          const res = await fetch(`${base}/api/logistics/layout_reserva?t=${Date.now()}`);
-          if (res.ok) {
-              const payload = await res.json();
-              if (payload && payload.data && payload.data.type === 'processed') {
-                  globalPayloadReserva = payload.data;
+
+          /* La reserva de la hora la publica el robot junto con el stock del mapa; si todavía
+             no hay ninguna, se cae a la del arranque —la de las 19:00—. Las dos traen las
+             mismas columnas y las escribe el mismo robot: acá no se arma ninguna foto.
+
+             LA FOTO QUEDA GUARDADA EN MEMORIA porque cambiar de nivel vuelve a pasar por acá,
+             y son 4 MB: sin el caché, cada clic en D o en H haría esperar al asistente. Se
+             suelta a los diez minutos, que es menos de lo que tarda el robot en publicar la
+             siguiente, así que nunca se muestra una foto vieja sin saberlo. */
+          let reservaRaw = [];
+          if (_reservaCache.filas && (Date.now() - _reservaCache.t) < 10 * 60 * 1000) {
+              reservaRaw = _reservaCache.filas;
+              window.__reservaSello = _reservaCache.sello;
+          } else {
+              window.__reservaSello = null;
+              for (const area of [AREA_RESERVA_DE_LA_HORA, AREA_RESERVA_DEL_ARRANQUE]) {
+                  try {
+                      const r = await fetch(`${base}/api/logistics/${area}?t=${Date.now()}`);
+                      if (!r.ok) continue;
+                      const cuerpo = await r.json();
+                      if (Array.isArray(cuerpo && cuerpo.data) && cuerpo.data.length) {
+                          reservaRaw = cuerpo.data;
+                          window.__reservaSello = textoFechaServidor(cuerpo.updated_at) || null;
+                          _reservaCache = { filas: reservaRaw, sello: window.__reservaSello, t: Date.now() };
+                          break;
+                      }
+                  } catch (e) { console.warn('[Mapa] no se pudo traer ' + area + ':', e && e.message); }
               }
           }
-      } catch(e) {}
 
-      if (reservaRaw.length > 2 && articulosRaw.length) {
-          let localLayoutDataRes = {};
-          let localStatsRes = { 'ACTUAL': { units: 0, bad_placed: 0, padres: new Set() }, 'ANTERIOR': { units: 0, bad_placed: 0, padres: new Set() } };
-          let localTotalUnitsRes = 0;
-          let localUniquePadresRes = new Set();
-          
+          // EL NIVEL QUE SE ESTÁ MIRANDO. 'TODOS' dibuja los cinco dentro de cada cuerpo; con
+          // uno elegido, el mapa y los números de la derecha son SOLO de ese nivel.
+          const nivelVisto = window.__reservaNivel || 'TODOS';
+
+          // La temporada y el gender salen del Maestro publicado, exactamente como abajo:
+          // columna B el código, columna D el gender y columna O la temporada.
           const skuTemporada = {};
-          const skuGender = window.DEBUG_SKU_GENDER || {};
-            const idxSku = 1; // Columna B
-            const idxTemp = 14; // Columna O
-
-            articulosRaw.forEach((row, i) => {
-                if (i === 0 && Array.isArray(row) && String(row[0]).toUpperCase().includes('COD')) return;
-                
-                let sku = '', temp = '';
-                if (Array.isArray(row)) {
-                    sku = String(row[idxSku] || '').trim();
-                    temp = String(row[idxTemp] || '').trim();
-                } else {
-                    sku = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO']).trim();
-                    temp = getColSafe(row, ['TEMPORADA', 'SEASON']).trim();
-                }
-
-                if (sku) {
-                    const sku7 = sku.substring(0, 7);
-                    const tUpper = temp ? temp.toUpperCase() : 'DESCONOCIDA';
-                    if (!skuTemporada[sku7] || !skuTemporada[sku7].includes('ACTUAL')) skuTemporada[sku7] = tUpper;
-                    if (!skuTemporada[sku] || !skuTemporada[sku].includes('ACTUAL')) skuTemporada[sku] = tUpper;
-                }
-            });
-
-          const usableReserva = reservaRaw.slice(2);
-          
-          usableReserva.forEach(row => {
-              const nivel = getColSafe(row, ['NIVEL', 'IDX1']).trim().toUpperCase();
-              const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX4']).trim().toUpperCase();
-              const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX7']).trim();
-              const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX10'])) || 0;
-              
-              if (nivel !== 'ALTO') return;
-              if (!ubi || !ubi.startsWith('SEL') || cant <= 0 || !skuFull) return;
-              
-              const sku7 = skuFull.substring(0, 7);
-              const match = ubi.match(/SEL[- ]?(\d+)\D+(\d+)/);
-              if (match) {
-                  const col = parseInt(match[1], 10);
-                  const rackRow = parseInt(match[2], 10);
-                  
-                  const totalStockForPadreRes = padreStock[sku7] || 0;
-                  const isSaldo = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? totalStockForPadreRes < 80 : totalStockForPadreRes < 20;
-                  
-                  let maxColsRes = (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') ? 24 : 14;
-                  if (col >= 1 && col <= maxColsRes && rackRow >= 1 && rackRow <= 22) {
-                      if (!localLayoutDataRes[col]) localLayoutDataRes[col] = {};
-                      if (!localLayoutDataRes[col][rackRow]) localLayoutDataRes[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
-                      
-                      const cell = localLayoutDataRes[col][rackRow];
-                      cell.totalQty += cant;
-                      
-                      let temporadaRaw = skuTemporada[sku7] || skuTemporada[skuFull] || 'DESCONOCIDA';
-                      let temporadaClean = 'ANTERIOR'; 
-                      const actuales = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
-                      if (actuales.some(act => temporadaRaw.includes(act))) {
-                          temporadaClean = 'ACTUAL';
-                      }
-                      
-                      if (!cell.seasons[temporadaClean]) cell.seasons[temporadaClean] = 0;
-                      cell.seasons[temporadaClean] += cant;
-                      
-                      const existingSku = cell.skus.find(s => s.sku === skuFull);
-                      if (existingSku) existingSku.cant += cant;
-                      else cell.skus.push({ sku: skuFull, cant, temporada: temporadaClean === 'ACTUAL' ? 'T. Actual' : 'T. Anterior' });
-
-                      localUniquePadresRes.add(sku7);
-                      localTotalUnitsRes += cant;
-                      localStatsRes[temporadaClean].units += cant;
-                      localStatsRes[temporadaClean].padres.add(sku7);
-
-                      let isValid = false;
-                      const genderRaw = skuGender[skuFull] || skuGender[sku7] || '';
-                      const isSchool = genderRaw.includes('SCHOOL');
-
-                      if (currentLayoutZona === 'SEL') {
-                          if (col === 14) {
-                              if (isSchool) isValid = true;
-                          } else if (temporadaClean === 'ACTUAL') {
-                              if (col >= 5 && col <= 13) isValid = true;
-                              else if (isSaldo && [1, 2].includes(col)) isValid = true;
-                          } else if (temporadaClean === 'ANTERIOR') {
-                              if (col >= 3 && col <= 4) isValid = true;
-                              else if (isSaldo && [1, 2].includes(col)) isValid = true;
-                          }
-                      } else if (currentLayoutZona === 'MZN01' || currentLayoutZona === 'MZN02') {
-                            isValid = true;
-                        } else {
-                          isValid = true;
-                      }
-
-                      if (!isValid) {
-                          localStatsRes[temporadaClean].bad_placed += cant;
-                      }
-                  }
+          const skuGender = {};
+          articulosRaw.forEach((row, i) => {
+              if (i === 0 && Array.isArray(row) && String(row[0]).toUpperCase().includes('COD')) return;
+              let sku = '', temp = '', gender = '';
+              if (Array.isArray(row)) {
+                  sku    = String(row[1] || '').trim();
+                  temp   = String(row[14] || row[13] || '').trim();
+                  gender = String(row[3] || '').trim();
+              } else {
+                  const vals = Object.values(row);
+                  sku    = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO']).trim();
+                  temp   = getColSafe(row, ['TEMPORADA', 'SEASON']).trim() || String(vals[14] || vals[13] || '').trim();
+                  gender = getColSafe(row, ['GENDER RIMS', 'RIMS']).trim();
               }
+              if (!sku) return;
+              const sku7 = sku.substring(0, 7);
+              const tUpper = temp ? temp.toUpperCase() : 'DESCONOCIDA';
+              if (!skuTemporada[sku7] || !skuTemporada[sku7].includes('ACTUAL')) skuTemporada[sku7] = tUpper;
+              if (!skuTemporada[sku]  || !skuTemporada[sku].includes('ACTUAL'))  skuTemporada[sku]  = tUpper;
+              if (!skuGender[sku7]) skuGender[sku7] = gender ? gender.toUpperCase() : '';
+              if (!skuGender[sku])  skuGender[sku]  = gender ? gender.toUpperCase() : '';
           });
-          
-          localStatsRes['ACTUAL'].padres = Array.from(localStatsRes['ACTUAL'].padres);
-          localStatsRes['ANTERIOR'].padres = Array.from(localStatsRes['ANTERIOR'].padres);
+          window.DEBUG_SKU_GENDER = skuGender;
 
-          reservaPayload = {
+          const layoutRes = {};
+          const statsRes = { 'ACTUAL':   { units: 0, bad_placed: 0, padres: new Set() },
+                             'ANTERIOR': { units: 0, bad_placed: 0, padres: new Set() } };
+          let totalRes = 0;
+          const padresRes = new Set();
+          const paletasRes = new Set();
+          let sinLeer = 0;
+
+          reservaRaw.forEach(row => {
+              const nivelTxt = String(row.NIVEL != null ? row.NIVEL : getColSafe(row, ['NIVEL'])).trim().toUpperCase();
+              const esAlto = row.ES_ALTO === true || nivelTxt === 'ALTO';
+              if (!esAlto) return;
+
+              const ubi  = String(row.UBICACION != null ? row.UBICACION : getColSafe(row, ['UBICACI', 'LOCATION'])).trim().toUpperCase();
+              const sku  = String(row.PRODUCTO != null ? row.PRODUCTO : getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU'])).trim();
+              const cant = parseFloat(row.CANTIDAD != null ? row.CANTIDAD : getColSafe(row, ['CANTIDAD', 'QTY'])) || 0;
+              if (!ubi || !sku || cant <= 0) return;
+              if (!ubi.startsWith('SEL')) return;   // MERMA, DEV, recepción y aéreo no son reserva del selectivo
+
+              // SEL-05-08-H-02 = columna 05, cuerpo 08, nivel H, posición 02.
+              const m = ubi.match(/^SEL[- ]?(\d+)[- ]?(\d+)[- ]?([A-Z])[- ]?(\d+)$/);
+              if (!m) { sinLeer++; return; }
+              const col = parseInt(m[1], 10), cuerpo = parseInt(m[2], 10);
+              const nivel = m[3], pos = m[4];
+              if (!(col >= 1 && col <= 14 && cuerpo >= 1 && cuerpo <= 22)) { sinLeer++; return; }
+              if (nivelVisto !== 'TODOS' && nivel !== nivelVisto) return;
+
+              const sku7 = sku.substring(0, 7);
+              let temporada = 'ANTERIOR';
+              const tRaw = skuTemporada[sku7] || skuTemporada[sku] || 'DESCONOCIDA';
+              if (['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'].some(a => tRaw.includes(a))) temporada = 'ACTUAL';
+
+              if (!layoutRes[col]) layoutRes[col] = {};
+              if (!layoutRes[col][cuerpo]) layoutRes[col][cuerpo] = { totalQty: 0, skus: [], seasons: {}, paletas: {} };
+              const cell = layoutRes[col][cuerpo];
+              cell.totalQty += cant;
+              cell.seasons[temporada] = (cell.seasons[temporada] || 0) + cant;
+
+              // CADA PALETA POR SEPARADO, con su nivel y su posición. Es lo que se dibuja
+              // dentro del cuerpo y lo que contesta "el SEL-05 nivel H, ¿qué temporada es?".
+              const clave = `${nivel}-${pos}`;
+              if (!cell.paletas[clave]) cell.paletas[clave] = { qty: 0, seasons: {}, skus: [] };
+              const paleta = cell.paletas[clave];
+              paleta.qty += cant;
+              paleta.seasons[temporada] = (paleta.seasons[temporada] || 0) + cant;
+              const yaEnPaleta = paleta.skus.find(s => s.sku === sku);
+              if (yaEnPaleta) yaEnPaleta.cant += cant;
+              else paleta.skus.push({ sku, cant, temporada: temporada === 'ACTUAL' ? 'T. Actual' : 'T. Anterior' });
+
+              // ACÁ LA LÍNEA ES LA PALETA, NO EL ARTÍCULO. Abajo un cuerpo es una ubicación
+              // sola y conviene sumar el mismo código; arriba hay diez paletas y lo que se
+              // busca es en cuál está, así que cada una lleva su nivel y su posición.
+              const ubiCorta = `${nivel}-${pos}`;
+              const igual = cell.skus.find(s => s.sku === sku && s.ubi === ubiCorta);
+              if (igual) igual.cant += cant;
+              else cell.skus.push({ sku, cant, temporada: temporada === 'ACTUAL' ? 'T. Actual' : 'T. Anterior', ubi: ubiCorta });
+
+              paletasRes.add(ubi);
+              padresRes.add(sku7);
+              totalRes += cant;
+              statsRes[temporada].units += cant;
+              statsRes[temporada].padres.add(sku7);
+          });
+
+          if (sinLeer) console.warn(`[Mapa reserva] ${sinLeer} fila(s) con una ubicación que no se pudo leer.`);
+
+          // Las paletas de cada cuerpo se ordenan de la H a la D —como se ven parado abajo—
+          // y dentro del nivel por posición.
+          Object.values(layoutRes).forEach(colObj => Object.values(colObj).forEach(cell => {
+              cell.skus.sort((a, b) => String(b.ubi).localeCompare(String(a.ubi)));
+          }));
+
+          statsRes['ACTUAL'].padres   = Array.from(statsRes['ACTUAL'].padres);
+          statsRes['ANTERIOR'].padres = Array.from(statsRes['ANTERIOR'].padres);
+          window.__reservaPaletas = paletasRes.size;
+
+          reservaPayload = reservaRaw.length ? {
               type: 'processed',
-              layoutData: localLayoutDataRes,
-              stats: localStatsRes,
-              totalUnits: localTotalUnitsRes,
-              uniquePadresSize: localUniquePadresRes.size
-          };
+              layoutData: layoutRes,
+              stats: statsRes,
+              totalUnits: totalRes,
+              uniquePadresSize: padresRes.size
+          } : null;
       }
 
       const buildLayoutHTML = (layoutData, stats, totalUnits, uniquePadresSize, targetContainer, isGlobal = false, isReserva = false, hasLocalPayload = false) => {
-          const zonaLabel = isReserva ? 'SEL' : currentLayoutZona;
+          // El rótulo dice de qué son los números. Con un nivel elegido, TODO lo de la derecha
+          // es de ese nivel y solo de ese: si no lo dijera, se leerían como el total.
+          const zonaLabel = isReserva
+              ? ('RESERVA' + ((window.__reservaNivel && window.__reservaNivel !== 'TODOS')
+                  ? ' · NIVEL ' + window.__reservaNivel : ''))
+              : currentLayoutZona;
           
           window.__buildLayoutHTML = buildLayoutHTML;
           const esc = (s) => String(s == null ? '' : s)
@@ -23454,7 +23541,14 @@ const renderRFSection = (container) => {
            * La barra de temporada y el mapa usan LA MISMA función, si no dejarían de
            * coincidir columna con columna.
            */
-          const anchoDe = (c) => (!isReserva && zonasService.esColumnaBloqueada(currentLayoutZona, c))
+          //
+          // Arriba pasa lo mismo con la 13 y la 14: NO TIENEN NIVELES ALTOS. Dejadas como
+          // columnas normales quedaban en blanco y con su número al pie, que es exactamente
+          // como se ve una columna vacía — o sea, como lugar libre donde no lo hay.
+          const columnaSinUso = (c) => isReserva
+              ? (c > COLS_RESERVA)
+              : zonasService.esColumnaBloqueada(currentLayoutZona, c);
+          const anchoDe = (c) => columnaSinUso(c)
               ? 'flex:0 0 13px; min-width:13px; max-width:13px;'
               : 'flex:1 1 0; min-width:40px;';
 
@@ -23484,8 +23578,8 @@ const renderRFSection = (container) => {
               // —el operario lee las columnas por su número— pero sin una sola ubicación y con
               // el número apagado. No suma a las vacías ni a la densidad, porque no hay dónde
               // guardar nada ahí. Ver zonasService.esColumnaBloqueada.
-              if (!isReserva && zonasService.esColumnaBloqueada(currentLayoutZona, c)) {
-                  gridHtml += `<div title="Columna ${String(c).padStart(2,'0')} · bloqueada" style="display:flex; flex-direction:column; gap:2px; ${anchoDe(c)} opacity:0.28;">`;
+              if (columnaSinUso(c)) {
+                  gridHtml += `<div title="Columna ${String(c).padStart(2,'0')} · ${isReserva ? 'no tiene niveles altos' : 'bloqueada'}" style="display:flex; flex-direction:column; gap:2px; ${anchoDe(c)} opacity:0.28;">`;
                   for (let r = maxRows; r >= 1; r--) {
                       gridHtml += `<div style="height:15px; border:1px dashed rgba(255,255,255,0.10); background:repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0 3px,transparent 3px 6px);"></div>`;
                   }
@@ -23517,6 +23611,75 @@ const renderRFSection = (container) => {
 
                   if (!cellExists) {
                       gridHtml += `<div style="height:15px; visibility:hidden;"></div>`;
+                      continue;
+                  }
+
+                  // ══════════════════════════════════════════════════════════════════════
+                  // LA CELDA DE RESERVA: EL MISMO CUERPO, CON SUS PALETAS ADENTRO
+                  //
+                  // Ocupa exactamente los mismos 15 píxeles que la de abajo —si no, se
+                  // desalinearía con la columna de números de la izquierda— y adentro se
+                  // reparte en tiras: una por nivel, y cada una partida en las dos
+                  // posiciones. Con un nivel elegido queda una sola tira, bien gruesa.
+                  // ══════════════════════════════════════════════════════════════════════
+                  if (isReserva) {
+                      const nivs = (window.__reservaNivel && window.__reservaNivel !== 'TODOS')
+                          ? [window.__reservaNivel] : NIVELES_RESERVA;
+
+                      // Un cuerpo que no existe arriba se deja en blanco, igual que los
+                      // macizos de abajo: el hueco se respeta para no correr el mapa.
+                      if (!nivs.some(nv => paletaDeReservaExiste(c, logicalR, nv))) {
+                          gridHtml += `<div style="height:15px; visibility:hidden;"></div>`;
+                          continue;
+                      }
+
+                      const datosCuerpo = layoutData[c] && layoutData[c][logicalR] ? layoutData[c][logicalR] : null;
+                      let tiras = '';
+                      nivs.forEach(nv => {
+                          tiras += `<div style="display:flex; gap:1px; flex:1 1 0; min-height:0;">`;
+                          ['01', '02'].forEach(pos => {
+                              // El paso del elevador: arriba del cuerpo 11 los niveles D y E
+                              // no existen. Se rayan, no se pintan de vacío: un hueco que no
+                              // existe no es un lugar libre donde guardar.
+                              if (!paletaDeReservaExiste(c, logicalR, nv)) {
+                                  tiras += `<div title="SEL-${String(c).padStart(2,'0')}-${String(logicalR).padStart(2,'0')}-${nv}-${pos} · no existe: es el paso del elevador"
+                                      style="flex:1 1 0; height:100%; opacity:0.5;
+                                      background:repeating-linear-gradient(45deg,rgba(255,255,255,0.05) 0 3px,transparent 3px 6px);"></div>`;
+                                  return;
+                              }
+                              const pal = datosCuerpo && datosCuerpo.paletas
+                                  ? datosCuerpo.paletas[`${nv}-${pos}`] : null;
+                              if (pal) occupiedCells++;   // acá la unidad es la PALETA, no el cuerpo
+                              const nombre = `SEL-${String(c).padStart(2,'0')}-${String(logicalR).padStart(2,'0')}-${nv}-${pos}`;
+                              let bg = 'rgba(255,255,255,0.02)';
+                              let tip = `<b>${nombre}</b><br/>Vacío`;
+                              if (pal) {
+                                  const temps = Object.keys(pal.seasons);
+                                  bg = temps.length > 1
+                                      ? 'linear-gradient(135deg, #fbbf24 0%, #ec4899 100%)'
+                                      : (temps[0] === 'ACTUAL' ? '#3b82f6' : '#ef4444');
+                                  const queEs = temps.length > 1 ? 'MIXTA (dos temporadas)'
+                                      : (temps[0] === 'ACTUAL' ? 'T. Actual' : 'T. Anterior');
+                                  tip = `<b>${nombre}</b><br/>Columna ${String(c).padStart(2,'0')} · Cuerpo ${logicalR} · Nivel ${nv} · Posición ${pos}`
+                                      + `<hr style='border-color:rgba(255,255,255,0.1); margin:4px 0;'/>`
+                                      + `<b>${queEs}</b> · ${pal.qty.toLocaleString()} unid.<br/>`;
+                                  pal.skus.slice(0, 6).forEach(s => {
+                                      const g = window.DEBUG_SKU_GENDER
+                                          ? (window.DEBUG_SKU_GENDER[s.sku] || window.DEBUG_SKU_GENDER[s.sku.substring(0,7)] || '') : '';
+                                      tip += `<span style='font-size:0.75rem; color:#ccc;'>${esc(s.sku)} (${s.cant.toLocaleString()}) - ${s.temporada}${g ? ' [' + esc(g) + ']' : ''}</span><br/>`;
+                                  });
+                                  if (pal.skus.length > 6) tip += `<span style='font-size:0.75rem; color:#ccc;'>...y ${pal.skus.length - 6} más</span>`;
+                              }
+                              tiras += `<div class="layout-cell" style="flex:1 1 0; height:100%; background:${bg}; cursor:pointer;"
+                                   onmouseover="window.showTooltip(event, this.getAttribute('data-tooltip'))"
+                                   onmouseout="window.hideTooltip()"
+                                   onclick="window.showCellModal(this.getAttribute('data-tooltip'))"
+                                   data-tooltip="${tip.replace(/"/g, '&quot;')}"></div>`;
+                          });
+                          tiras += `</div>`;
+                      });
+                      gridHtml += `<div style="height:15px; display:flex; flex-direction:column; gap:1px;
+                          border:1px solid rgba(255,255,255,0.1);">${tiras}</div>`;
                       continue;
                   }
 
@@ -23577,9 +23740,14 @@ const renderRFSection = (container) => {
           }
           gridHtml += `</div></div></div>`;   // fila del mapa · ancho mínimo · scroll
 
-          window.globalLayoutData[currentLayoutZona] = localLayoutData;
+          // La reserva no alimenta a nadie más: el sugeridor de ubicación trabaja abajo.
+          if (!isReserva) window.globalLayoutData[currentLayoutZona] = localLayoutData;
             let ACTUAL_TOTAL_CELLS = 14 * 22;
-          if (!isReserva && zonasService.zonasActual().zonas[currentLayoutZona]) {
+          if (isReserva) {
+              // Arriba se cuentan PALETAS, no cuerpos, y solo las que existen de verdad:
+              // 2.486 con todos los niveles, o las del nivel que se esté mirando.
+              ACTUAL_TOTAL_CELLS = espaciosDeReserva(window.__reservaNivel);
+          } else if (zonasService.zonasActual().zonas[currentLayoutZona]) {
               // UNA SOLA FUENTE DE VERDAD: Zonas de Almacenaje. Antes cada zona contaba a su
               // manera —el selectivo por configuración y los mezzanines con un doble bucle
               // escrito a mano—, y ese bucle no sabía nada de las columnas bloqueadas, así que
@@ -23618,7 +23786,7 @@ const renderRFSection = (container) => {
           ` : '';
 
           const btnCompartir = (hasLocalPayload) ? `
-              <button title="Publica SOLO esta zona (${currentLayoutZona}) en el servidor" onclick="${isReserva ? 'window.subirLayoutReservaGlobal(this)' : 'window.subirLayoutGlobal(this)'}" style="background:rgba(59,130,246,0.15); border:1px solid #3b82f6; color:#93c5fd; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:700; display:flex; align-items:center; gap:5px; white-space:nowrap; transition:all 0.2s;">
+              <button title="Publica SOLO esta zona (${currentLayoutZona}) en el servidor" onclick="window.subirLayoutGlobal(this)" style="background:rgba(59,130,246,0.15); border:1px solid #3b82f6; color:#93c5fd; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:700; display:flex; align-items:center; gap:5px; white-space:nowrap; transition:all 0.2s;">
                   ⚡ Solo esta zona
               </button>
           ` : '';
@@ -23630,7 +23798,7 @@ const renderRFSection = (container) => {
           ` : '';
 
           const btnSincronizar = `
-              <button title="Sincronizar Datos" onclick="${isReserva ? 'window.syncLayoutReserva(this)' : 'window.syncLayoutActivo(this)'}" style="background:rgba(16, 185, 129, 0.2); border:1px solid #10b981; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+              <button title="Sincronizar Datos" onclick="window.syncLayoutActivo(this)" style="background:rgba(16, 185, 129, 0.2); border:1px solid #10b981; color:#fff; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
                   <svg id="sync-icon-svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>
               </button>
           `;
@@ -23682,7 +23850,24 @@ const renderRFSection = (container) => {
                           <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:linear-gradient(135deg, #fbbf24 0%, #ec4899 100%); border:1px solid rgba(255,255,255,0.2);"></div> Mixto</div>
                           <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1);"></div> Vacío</div>
                       </div>
-                      
+
+                      ${isReserva ? `
+                      <div style="display:flex; gap:8px; align-items:center; justify-content:center; margin-bottom:20px; flex-wrap:wrap;">
+                          <span style="font-size:0.72rem; font-weight:900; color:var(--text-muted); letter-spacing:1px;">NIVEL:</span>
+                          ${['TODOS'].concat(NIVELES_RESERVA).map(nv => {
+                              const activo = (window.__reservaNivel || 'TODOS') === nv;
+                              return `<button onclick="window.__verNivelReserva('${nv}')" style="
+                                  background:${activo ? 'rgba(59,130,246,0.22)' : 'rgba(255,255,255,0.04)'};
+                                  border:1px solid ${activo ? '#3b82f6' : 'rgba(255,255,255,0.14)'};
+                                  color:${activo ? '#fff' : '#cbd5e1'}; padding:6px 16px; border-radius:8px;
+                                  cursor:pointer; font-size:0.78rem; font-weight:900; letter-spacing:0.5px;
+                                  transition:all 0.15s;">${nv}</button>`;
+                          }).join('')}
+                          <span style="font-size:0.7rem; color:var(--text-muted); margin-left:6px;">
+                              cada nivel tiene dos paletas: posición 01 a la izquierda y 02 a la derecha
+                          </span>
+                      </div>` : ''}
+
                       <div style="display:flex; gap:10px;">
                           <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right; padding-top:1px;">
                               ${Array.from({length:maxRows}, (_,i) => maxRows-i).map(n => `<div style="height:15px; display:flex; align-items:center; justify-content:flex-end;">${n}</div>`).join('')}
@@ -23736,11 +23921,11 @@ const renderRFSection = (container) => {
                               
                               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
                                   <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                      <span style="color:var(--text-muted); font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">Ubicaciones Vacías</span>
+                                      <span style="color:var(--text-muted); font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">${isReserva ? `Paletas libres <span style="text-transform:none; font-weight:700;">(de ${ACTUAL_TOTAL_CELLS.toLocaleString()})</span>` : 'Ubicaciones Vacías'}</span>
                                       <span style="font-weight:900; color:#fff; font-size:1.2rem;">${emptyCellsCount.toLocaleString()}</span>
                                   </div>
                                   <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                      <span style="color:var(--text-muted); font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">Densidad (Unid/Ubi)</span>
+                                      <span style="color:var(--text-muted); font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">${isReserva ? 'Unid. por paleta' : 'Densidad (Unid/Ubi)'}</span>
                                       <span style="font-weight:900; color:#fff; font-size:1.2rem;">${densidad}</span>
                                   </div>
                               </div>
@@ -23753,7 +23938,7 @@ const renderRFSection = (container) => {
                           ` : ''}
                           
                           <div>
-                              <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA ${zonaLabel}</h4>
+                              <h4 style="color:#fff; font-weight:800; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">${isReserva ? '📦 REPARTO POR TEMPORADA ' : '🎯 CUMPLIMIENTO POR TEMPORADA '}${zonaLabel}</h4>
 
                               ${(!hasLocalPayload && !isReserva) ? `
                               <div style="background:rgba(250,204,21,0.09); border-left:3px solid #facc15; padding:9px 11px; margin-bottom:14px; border-radius:4px; font-size:0.72rem; color:#fde68a; line-height:1.6;">
@@ -23765,7 +23950,7 @@ const renderRFSection = (container) => {
                               <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
                                   <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:8px; font-size:0.95rem;">
                                       <span>T. Actual</span>
-                                      <span>${actualPerc}%</span>
+                                      <span>${isReserva ? '' : `${actualPerc}%`}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
@@ -23775,16 +23960,18 @@ const renderRFSection = (container) => {
                                       <span>Unidades</span>
                                       <span style="color:#fff;">${stats['ACTUAL'].units.toLocaleString()}</span>
                                   </div>
+                                  ${isReserva ? '' : `
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 6-13')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
                                       <span style="color:#ef4444;">${stats['ACTUAL'].bad_placed.toLocaleString()} mal ubicadas</span>
                                   </div>
+                                  `}
                               </div>
 
                               <div style="background:rgba(239,68,68,0.1); border-left:3px solid #ef4444; padding:10px; border-radius:4px;">
                                   <div style="display:flex; justify-content:space-between; font-weight:800; color:#ef4444; margin-bottom:8px; font-size:0.95rem;">
                                       <span>T. Anterior</span>
-                                      <span>${anteriorPerc}%</span>
+                                      <span>${isReserva ? '' : `${anteriorPerc}%`}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
@@ -23794,16 +23981,18 @@ const renderRFSection = (container) => {
                                       <span>Unidades</span>
                                       <span style="color:#fff;">${stats['ANTERIOR'].units.toLocaleString()}</span>
                                   </div>
+                                  ${isReserva ? '' : `
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 3-5')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
                                       <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString()} mal ubicadas</span>
                                   </div>
+                                  `}
                               </div>
 
                               <div style="background:rgba(139,92,246,0.1); border-left:3px solid #8b5cf6; padding:10px; border-radius:4px; margin-top:15px;">
                                   <div style="display:flex; justify-content:space-between; font-weight:800; color:#8b5cf6; margin-bottom:8px; font-size:0.95rem;">
                                       <span>TOTAL GENERAL</span>
-                                      <span>${generalPerc}%</span>
+                                      <span>${isReserva ? '' : `${generalPerc}%`}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
@@ -23813,10 +24002,12 @@ const renderRFSection = (container) => {
                                       <span>Unidades</span>
                                       <span style="color:#fff;">${statsGeneral.units.toLocaleString()}</span>
                                   </div>
+                                  ${isReserva ? '' : `
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Desviación general total')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
                                       <span style="color:#ef4444;">${statsGeneral.bad_placed.toLocaleString()} mal ubicadas</span>
                                   </div>
+                                  `}
                               </div>
                           </div>
                       </div>
@@ -23976,6 +24167,7 @@ window.showCellModal = function(htmlContent) {
               <option value="MZN01" ${currentLayoutZona === 'MZN01' ? 'selected' : ''}>LAYOUT MZN01</option>
               <option value="MZN02" ${currentLayoutZona === 'MZN02' ? 'selected' : ''}>LAYOUT MZN02</option>
               <option value="MZN03" ${currentLayoutZona === 'MZN03' ? 'selected' : ''}>LAYOUT MZN03</option>
+              <option value="RESERVA" ${currentLayoutZona === 'RESERVA' ? 'selected' : ''}>LAYOUT RESERVA</option>
           </select>
       `;
       targetContainer.appendChild(filterWrap);
@@ -23996,11 +24188,16 @@ window.showCellModal = function(htmlContent) {
       }, 100);
 
       // Si el visor está en "Anterior", forzamos mostrar el mapa global _ANT (ignoramos el local).
-      let payloadToRender = window.__verLayoutAnterior ? globalPayload : (localPayload || globalPayload);
-      let isGlobal = window.__verLayoutAnterior ? true : (!localPayload && globalPayload);
+      let payloadToRender = esReserva ? reservaPayload
+          : (window.__verLayoutAnterior ? globalPayload : (localPayload || globalPayload));
+      let isGlobal = esReserva ? false
+          : (window.__verLayoutAnterior ? true : (!localPayload && globalPayload));
 
       // Fecha del encabezado = momento real de publicación del mapa que se muestra
-      if (localPayload && !window.__verLayoutAnterior) {
+      if (esReserva) {
+          // La reserva no se publica: el encabezado dice de cuándo es la foto del robot.
+          window.__layoutHeaderTs = window.__reservaSello || null;
+      } else if (localPayload && !window.__verLayoutAnterior) {
           window.__layoutHeaderTs = 'Sin publicar · procesado ahora';
       } else if (globalPayload && globalPayload.publishedAt) {
           window.__layoutHeaderTs = 'Publicado: ' + new Date(globalPayload.publishedAt).toLocaleString('es-PE');
@@ -24014,7 +24211,7 @@ window.showCellModal = function(htmlContent) {
       // lista. Acá estaban SEL, MZN01 y MZN02 escritas a mano, y por eso MZN03 seguía
       // mostrando "Zona en Construcción" aunque ya tuviera sus seis marcas, sus franjas y
       // su grilla. El día que se active MZN04, su mapa aparece solo.
-      if (!zonasConMapa().includes(currentLayoutZona)) {
+      if (!esReserva && !zonasConMapa().includes(currentLayoutZona)) {
           activoWrap.innerHTML = `
               <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05);">
                   <div style="font-size:4rem; margin-bottom:1.5rem; opacity:0.15;">🚧</div>
@@ -24032,31 +24229,35 @@ window.showCellModal = function(htmlContent) {
                   <p style="font-size:0.95rem; max-width:600px; margin:0 auto;">La <b>versión anterior</b> es el mapa <b>publicado</b> previo (no tus archivos recién procesados). Aparece cuando publicas esta zona por <b>segunda vez</b>: el mapa que estaba pasa a ser el anterior. Publica un mapa nuevo y quedará guardado. Mientras tanto, vuelve a <b>🔵 Ver Actual</b>.</p>
               </div>
           `;
+      } else if (esReserva && !payloadToRender) {
+          // Sin foto de reserva no se dibuja un mapa vacío: se vería igual que un almacén
+          // vacío de verdad. Se dice qué falta y de quién depende.
+          activoWrap.innerHTML = `
+              <div class="glass-panel" style="padding:4rem 2rem; text-align:center; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05);">
+                  <div style="font-size:3rem; margin-bottom:1rem; opacity:0.15;">📦</div>
+                  <h4 style="color:#fff; font-size:1.3rem; margin-bottom:10px;">Todavía no hay foto de la reserva</h4>
+                  <p style="font-size:0.95rem; max-width:620px; margin:0 auto;">La reserva la publica el <b>robot</b> junto con el stock del mapa. Si el robot no corrió hoy, acá no hay nada que dibujar. Se revisa en <b>Configuración → Parámetros</b>.</p>
+              </div>
+          `;
       } else if (payloadToRender) {
           window.compartirLayoutPayload = localPayload;
-          buildLayoutHTML(payloadToRender.layoutData, payloadToRender.stats, payloadToRender.totalUnits, payloadToRender.uniquePadresSize, activoWrap, isGlobal, false, localPayload != null);
+          buildLayoutHTML(payloadToRender.layoutData, payloadToRender.stats, payloadToRender.totalUnits, payloadToRender.uniquePadresSize, activoWrap, isGlobal, esReserva, esReserva ? false : localPayload != null);
       }
-
-      // DESACTIVADO TEMPORALMENTE A PETICIÓN DEL USUARIO
-      /*
-      if (reservaPayload || globalPayloadReserva) {
-          const reservaWrap = document.createElement('div');
-          reservaWrap.id = 'layout-reserva-wrap';
-          reservaWrap.style.marginTop = '40px';
-          targetContainer.appendChild(reservaWrap);
-          
-          let resPayloadToRender = reservaPayload || globalPayloadReserva;
-          let isGlobalRes = !reservaPayload && globalPayloadReserva;
-          
-          window.compartirLayoutReservaPayload = reservaPayload;
-          buildLayoutHTML(resPayloadToRender.layoutData, resPayloadToRender.stats, resPayloadToRender.totalUnits, resPayloadToRender.uniquePadresSize, reservaWrap, isGlobalRes, true, reservaPayload != null);
-      }
-      */
     };
 
     // Alternar entre el mapa ACTUAL y el ANTERIOR
     window.__toggleVerLayout = () => {
         window.__verLayoutAnterior = !window.__verLayoutAnterior;
+        const c = window.__layoutContainer;
+        if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
+    };
+
+    /**
+     * Qué nivel de la reserva se está mirando: 'TODOS' o una letra de la D a la H.
+     * Redibuja con la foto que ya está en memoria, así que no vuelve a la red.
+     */
+    window.__verNivelReserva = (nivel) => {
+        window.__reservaNivel = nivel;
         const c = window.__layoutContainer;
         if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
     };
@@ -24188,92 +24389,7 @@ window.showCellModal = function(htmlContent) {
         }, 2500);
     };
 
-    window.subirLayoutReservaGlobal = (btn) => {
-        if (!window.compartirLayoutReservaPayload) { alert('⚠️ Primero carga los archivos para poder procesar y publicar el layout de reserva.'); return; }
-        const __label = '⚡ PROCESAR Y PUBLICAR';
-        const __bg = 'linear-gradient(135deg,#3b82f6,#6366f1)';
-        btn.innerHTML = '⏳ Publicando...';
-        btn.disabled = true;
-        const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-        fetch(`${base}/api/logistics/layout_reserva`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(window.compartirLayoutReservaPayload)
-        }).then(r => {
-            if(r.ok) {
-                btn.innerHTML = '✅ Publicado — todos lo verán';
-                btn.style.background = 'rgba(16, 185, 129, 0.95)';
-                setTimeout(() => {
-                    btn.innerHTML = __label;
-                    btn.style.background = __bg;
-                    btn.disabled = false;
-                    const c = window.__layoutContainer;
-                    if (c && typeof renderLayoutActivo === 'function') renderLayoutActivo(c);
-                }, 1800);
-            } else {
-                btn.innerHTML = '❌ Error al publicar';
-                btn.style.background = 'rgba(239, 68, 68, 0.9)';
-                setTimeout(() => {
-                    btn.innerHTML = __label;
-                    btn.style.background = __bg;
-                    btn.disabled = false;
-                }, 3000);
-            }
-        }).catch(() => {
-            btn.innerHTML = '❌ Sin conexión';
-            btn.style.background = 'rgba(239, 68, 68, 0.9)';
-            setTimeout(() => { btn.innerHTML = __label; btn.style.background = __bg; btn.disabled = false; }, 3000);
-        });
-    };
 
-    window.syncLayoutReserva = async (btn) => {
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>`;
-        btn.disabled = true;
-        btn.style.opacity = '0.7';
-        try {
-            const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
-            const res = await fetch(`${base}/api/logistics/layout_reserva?t=${Date.now()}`);
-            if (res.ok) {
-                const payload = await res.json();
-                if (payload && payload.data && payload.data.type === 'processed' && payload.data.totalUnits > 0) {
-                    const d = payload.data;
-                    const container = btn.closest('.glass-panel').parentElement.parentElement;
-                    if (container) {
-                        window.__buildLayoutHTML(d.layoutData, d.stats, d.totalUnits, d.uniquePadresSize, container, true, true, false);
-                    }
-                    btn.innerHTML = '✅';
-                    btn.style.background = 'rgba(16, 185, 129, 0.3)';
-                    setTimeout(() => {
-                        btn.innerHTML = originalHTML;
-                        btn.style.background = 'rgba(16, 185, 129, 0.2)';
-                        btn.disabled = false;
-                        btn.style.opacity = '1';
-                    }, 1500);
-                    return;
-                } else {
-                    btn.innerHTML = 'ℹ️';
-                    btn.style.background = 'rgba(251, 191, 36, 0.2)';
-                    btn.style.borderColor = '#fbbf24';
-                }
-            } else {
-                btn.innerHTML = '❌';
-                btn.style.background = 'rgba(239, 68, 68, 0.2)';
-                btn.style.borderColor = '#ef4444';
-            }
-        } catch(e) {
-            btn.innerHTML = '❌';
-            btn.style.background = 'rgba(239, 68, 68, 0.2)';
-            btn.style.borderColor = '#ef4444';
-        }
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-            btn.style.background = 'rgba(16, 185, 129, 0.2)';
-            btn.style.borderColor = '#10b981';
-            btn.disabled = false;
-            btn.style.opacity = '1';
-        }, 2500);
-    };
 
     // CSS for spin animation
     if (!document.getElementById('sync-spin-style')) {
