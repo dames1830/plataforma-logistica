@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0271';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0272';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0271';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0271';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0271';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0271';
-import * as metasService from '../services_v245/metasService.js?v=29.0271';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0271';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0271';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0271';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0271';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0271';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0271';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0271';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0271';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0271';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0271';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0271';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0271';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0271';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0271';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0271';
-import { montarSlotting } from './slotting.js?v=29.0271';
+import * as adminService from '../services_v245/adminService.js?v=29.0272';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0272';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0272';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0272';
+import * as metasService from '../services_v245/metasService.js?v=29.0272';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0272';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0272';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0272';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0272';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0272';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0272';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0272';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0272';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0272';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0272';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0272';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0272';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0272';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0272';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0272';
+import { montarSlotting } from './slotting.js?v=29.0272';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0271';
+const VERSION = '29.0272';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4490,7 +4490,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0271');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0272');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16119,7 +16119,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0271 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0272 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23135,7 +23135,7 @@ const renderRFSection = (container) => {
           ${caja('Por colección', r.por.col.length + ' colecciones', barras(r.por.col, 6))}
           ${caja('Por categoría', 'Gender RIMS', barras(r.por.rims, 10))}
           ${caja('Por tipo', 'G. Gender', barras(r.por.ggender, 6))}
-          ${caja('Por marca', 'MarcaStd', barras(r.por.marca, 8))}
+          ${caja('Por marca', 'Maestro · columna Marcas', barras(r.por.marca, 8))}
 
           ${caja('Llenado de las paletas', 'solo calzado · llena = ' + r.capacidad, `
               <div style="display:flex; height:26px; border-radius:7px; overflow:hidden; background:rgba(255,255,255,0.05); margin-bottom:11px;">
@@ -23645,8 +23645,13 @@ const renderRFSection = (container) => {
           const skuTemporada = {};
           const skuGender = {};
           // La ficha completa del artículo, para el panel de la derecha: columna C el tipo,
-          // D la categoría, I la marca y J la colección. La colección es `Coleccion PO`, no
-          // la columna llamada Temporada — ver el reporte del Maestro.
+          // D la categoría, J la colección y N la marca.
+          //
+          // OJO CON LAS DOS COLUMNAS QUE PARECEN LO MISMO, LAS DOS VECES:
+          //   · la marca es `Marcas` (col 13), NO `MarcaStd` (col 8). Difieren en 6.076 de
+          //     los 29.854 artículos: la buena junta Bata Comfit dentro de Bata, Disney y
+          //     Marvel en B.G Licenses, y No Fear y Other en Otros. Regla de Daniel.
+          //   · la colección es `Coleccion PO` (col 9), NO la columna llamada Temporada.
           const fichaArt = {};
           articulosRaw.forEach((row, i) => {
               if (i === 0 && Array.isArray(row) && String(row[0]).toUpperCase().includes('COD')) return;
@@ -23656,7 +23661,7 @@ const renderRFSection = (container) => {
                   temp      = String(row[14] || row[13] || '').trim();
                   gender    = String(row[3] || '').trim();
                   ggender   = String(row[2] || '').trim();
-                  marca     = String(row[8] || '').trim();
+                  marca     = String(row[13] || '').trim();
                   coleccion = String(row[9] || '').trim();
               } else {
                   const vals = Object.values(row);
@@ -23664,7 +23669,9 @@ const renderRFSection = (container) => {
                   temp      = getColSafe(row, ['TEMPORADA', 'SEASON']).trim() || String(vals[14] || vals[13] || '').trim();
                   gender    = getColSafe(row, ['GENDER RIMS', 'RIMS']).trim();
                   ggender   = getColSafe(row, ['G. GENDER']).trim();
-                  marca     = getColSafe(row, ['MARCASTD']).trim();
+                  // Por nombre hay que pedirla exacta: 'MarcaStd' también contiene "MARCAS"
+                  // y, como viene antes en la fila, ganaría la equivocada.
+                  marca     = String(row['Marcas'] || row['MARCAS'] || '').trim();
                   coleccion = getColSafe(row, ['COLECCION']).trim();
               }
               if (!sku) return;
