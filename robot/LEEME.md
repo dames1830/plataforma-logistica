@@ -54,6 +54,7 @@ Si imprime la línea, está el nuevo. Si no imprime nada, es el viejo.
 | `archivar.bat` | Lo que dispara el Programador de Windows para el archivado. |
 | `sku_sin_salida.py` | El cuadro de **SKUs sin salida**: lo que llegó y no se movió en dos semanas. Publica el área `sku_sin_salida`. Corre a las 07:30, DESPUÉS de los reportes diarios de las 06:45 —necesita el Detalle de Orden— y del ancla de stock de las 07:00. |
 | `sin_salida.bat` | Lo que dispara el Programador de Windows para SKUs sin salida. |
+| `picking_y_orden.py` | Las descargas del WMS: el **Avance de Picking** y el **Detalle de Orden** del día que cerró, más —desde el 19-ago-2026— **los pendientes de los últimos 90 días**. Tarea "Picking y Detalle Orden de ayer", 06:45. |
 
 ## El horario lo manda la web (18-ago-2026)
 

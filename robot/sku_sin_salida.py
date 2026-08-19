@@ -135,6 +135,17 @@ def cod7(a):
     return (a or "").split("-")[0].lstrip("0")
 
 
+def _fecha_creacion(r):
+    """La fecha de creación de la orden, o None. Viene DD/MM/AAAA con la hora atrás."""
+    f = _txt(r, "Registro de hora de creación de cabecera de orden")[:10]
+    if len(f) != 10:
+        return None
+    try:
+        return date(int(f[6:10]), int(f[3:5]), int(f[0:2]))
+    except ValueError:
+        return None
+
+
 def leer_pedidos(carpeta):
     """El pendiente por artículo, leyendo TODOS los archivos sin contar dos veces.
 
@@ -155,6 +166,7 @@ def leer_pedidos(carpeta):
     refrescarlos a mano o el pendiente antiguo envejece.
     """
     lineas = {}
+    de_archivo = {}          # de qué archivo salió cada línea, para el corte de abajo
     archivos = sorted(glob.glob(os.path.join(carpeta, "*.csv")),
                       key=lambda p: os.path.getmtime(p))
     if not archivos:
@@ -170,8 +182,47 @@ def leer_pedidos(carpeta):
                          _txt(r, "Código de artículo"),
                          _txt(r, "Instalación de destino"))
                 lineas[clave] = r      # el archivo más nuevo pisa al viejo
+                de_archivo[clave] = os.path.basename(ruta)
                 n += 1
         leidos.append((os.path.basename(ruta), n))
+
+    # ── EL ARCHIVO DE PENDIENTES MANDA DENTRO DE SU VENTANA ──────────────────
+    #
+    # Pisar por clave no alcanza. Una orden que YA SE ATENDIÓ no aparece en el
+    # archivo nuevo —justamente porque ya no está pendiente—, así que su línea
+    # vieja sobrevive y el pendiente queda pegado para siempre. Es lo que pasaba
+    # el 19-ago-2026: tres artículos mostraban 28 días de espera con un dato
+    # bajado a mano el 12-ago.
+    #
+    # La regla: si hay un `Detalle Orden Pendientes.csv`, para las fechas que él
+    # cubre ÉL es la verdad. Toda línea vieja de esas fechas que esté en uno de
+    # los dos estados que él trae —Creada y Parcialmente asignado— y que él NO
+    # traiga, es que se atendió: se tira.
+    #
+    # Las de otros estados no se tocan: el archivo de pendientes no los pide y no
+    # puede opinar sobre ellos.
+    pend_nom = [f for f in set(de_archivo.values()) if "pendiente" in f.lower()]
+    if pend_nom:
+        vivos = {k for k, v in de_archivo.items() if v in pend_nom}
+        fechas = [_fecha_creacion(lineas[k]) for k in vivos]
+        fechas = [f for f in fechas if f]
+        if fechas:
+            d0, d1 = min(fechas), max(fechas)
+            ESTADOS_ABIERTOS = ("creada", "parcialmente asignado")
+            fuera = [k for k in lineas
+                     if k not in vivos
+                     and (_fecha_creacion(lineas[k]) or d1) >= d0
+                     and (_fecha_creacion(lineas[k]) or d0) <= d1
+                     and _txt(lineas[k], "Estado de orden").strip().lower() in ESTADOS_ABIERTOS]
+            for k in fuera:
+                del lineas[k]
+            log("Pendientes al día (%s): manda del %s al %s · se cayeron %s líneas "
+                "viejas que ya se atendieron"
+                % (", ".join(sorted(pend_nom)), d0.isoformat(), d1.isoformat(),
+                   format(len(fuera), ",d")))
+    else:
+        log("No hay archivo de pendientes: el pendiente de las órdenes viejas es "
+            "el del último semanal que se haya bajado a mano", "WARN")
 
     P = defaultdict(lambda: {"pend": 0, "sol": 0, "asig": 0,
                              "ordenes": set(), "tiendas": set(), "viejo": None})
