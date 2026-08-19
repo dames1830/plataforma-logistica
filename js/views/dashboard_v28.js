@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0264';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0265';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0264';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0264';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0264';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0264';
-import * as metasService from '../services_v245/metasService.js?v=29.0264';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0264';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0264';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0264';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0264';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0264';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0264';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0264';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0264';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0264';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0264';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0264';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0264';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0264';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0264';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0264';
-import { montarSlotting } from './slotting.js?v=29.0264';
+import * as adminService from '../services_v245/adminService.js?v=29.0265';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0265';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0265';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0265';
+import * as metasService from '../services_v245/metasService.js?v=29.0265';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0265';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0265';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0265';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0265';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0265';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0265';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0265';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0265';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0265';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0265';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0265';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0265';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0265';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0265';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0265';
+import { montarSlotting } from './slotting.js?v=29.0265';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0264';
+const VERSION = '29.0265';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4145,6 +4145,21 @@ export const renderDashboard = async (container, user, onLogout) => {
             btnCalc.onclick = async () => {
                 console.log("[PULSE] Click Procesar Análisis");
 
+                // EL BOTON AVISA ANTES DE IRSE AL SERVIDOR.
+                // Antes lo primero era rescatarMaestro() -1,6 s de espera- y la barra de
+                // progreso recien se pintaba despues de validar los archivos. En esos
+                // segundos el boton se veia igual que sin tocarlo, y el usuario creia que
+                // la web se habia colgado y volvia a apretar.
+                const textoOriginal = btnCalc.innerHTML;
+                const soltarBoton = () => {
+                    btnCalc.disabled = false;
+                    btnCalc.style.opacity = '';
+                    btnCalc.innerHTML = textoOriginal;
+                };
+                btnCalc.disabled = true;
+                btnCalc.style.opacity = '0.7';
+                btnCalc.innerHTML = '⏳ PREPARANDO...';
+
                 // El Maestro se baja del publicado en la nube: acá solo hay que
                 // cargar los dos stocks.
                 await rescatarMaestro();
@@ -4152,14 +4167,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                 // VALIDACIÓN EXPLÍCITA DE ARCHIVOS (Antes de mostrar la barra de progreso)
                 if (!dataStore.buffer_activo) {
                     showPremiumAlert("Archivo Faltante", "Falta cargar el archivo de <b>STOCK ACTIVO</b> para poder realizar el análisis.", "error");
+                    soltarBoton();
                     return;
                 }
                 if (!dataStore.buffer_reserva) {
                     showPremiumAlert("Archivo Faltante", "Falta cargar el archivo de <b>STOCK RESERVA</b> para poder realizar el análisis.", "error");
+                    soltarBoton();
                     return;
                 }
                 if (!dataStore.articulos) {
                     showPremiumAlert("Falta el Maestro", "No hay ningún <b>Maestro de Artículos</b> publicado en la nube ni cargado en esta PC.<br><br>Publícalo desde <b>Configuración → Archivos Nube</b>.", "error");
+                    soltarBoton();
                     return;
                 }
 
@@ -4464,7 +4482,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0264');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0265');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12010,6 +12028,12 @@ const renderRFSection = (container) => {
             const syncBtn = document.getElementById('btn_sync_eru');
             if (syncBtn) {
                 syncBtn.onclick = async () => {
+                    // El cruce arranca yendo al servidor por el inventario: sin esto el boton
+                    // se quedaba mudo ese rato y parecia colgado.
+                    const textoOriginal = syncBtn.innerHTML;
+                    syncBtn.disabled = true;
+                    syncBtn.style.opacity = '0.7';
+                    syncBtn.innerHTML = '⏳ CRUZANDO...';
                     try {
                         // 1. Obtener datos
                         const stockActivo = await getAreaData('inventario') || [];
@@ -12164,6 +12188,10 @@ const renderRFSection = (container) => {
                     } catch(err) {
                         console.error("Error en cruce cíclico ERU:", err);
                         alert("❌ Error al procesar el cruce cíclico: " + err);
+                    } finally {
+                        syncBtn.disabled = false;
+                        syncBtn.style.opacity = '';
+                        syncBtn.innerHTML = textoOriginal;
                     }
                 };
             }
@@ -16080,7 +16108,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0264 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0265 | MOBILE PORTAL
                             </div>
                     </div>
 
