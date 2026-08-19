@@ -134,8 +134,19 @@ DIAS_PENDIENTES = 90
 #
 # SI EL RANGO TRAE ESTADOS DE MAS, NO SE ROMPE NADA: sku_sin_salida.py se queda
 # solo con las lineas donde solicitada > asignada. Lo unico que crece es el archivo.
-ESTADO_DESDE = "Creada"
-ESTADO_HASTA = "Parcialmente asignado"
+# ══ OJO: EL WMS LLAMA A LOS ESTADOS DISTINTO QUE EL EXCEL QUE EXPORTA ══
+# En la lista del panel son "Creado" y "Asign Parcial"; en el CSV salen escritos
+# "Creada" y "Parcialmente asignado". Buscar la opcion por el nombre del CSV
+# falla y no se entiende por que. Lo delato el log del 19-ago 06:24, que ahora
+# escribe QUE OPCIONES OFRECE la lista cuando no encuentra la que se le pide:
+#
+#   Creado | Asign Parcial | Asignados | En seleccion | Se... | En empaque |
+#   Empacado | Cargado | Enviado | Cancelado
+#
+# Y ese orden es el del proceso, que es justo lo que hace falta: el rango de
+# "Creado" a "Asign Parcial" son los dos primeros y nada mas.
+ESTADO_DESDE = "Creado"
+ESTADO_HASTA = "Asign Parcial"
 ARCHIVO_PENDIENTES = "Detalle Orden Pendientes.csv"
 
 # Cuánto tiene que pesar cada archivo para darlo por bueno. Los que ya están
@@ -791,9 +802,17 @@ def poner_estado(page, etiqueta, valor):
             % (etiqueta, " | ".join(nombres) if nombres else "(ninguna opción a la vista)"),
             "WARN")
         raise RuntimeError("La opción '%s' no está en la lista de '%s'" % (valor, etiqueta))
+    # SE ANOTA LO QUE SE CLICO, NO LO QUE SE PIDIO. En la prueba del 19-ago el log
+    # decia "A estado = Parcialmente asignado" cuando en la lista esa opcion ni
+    # existe: anunciaba el pedido, no el hecho. Un log que dice lo que queriamos
+    # hacer no sirve para saber que paso.
+    try:
+        elegido = opcion.first.inner_text().strip()
+    except Exception:
+        elegido = valor
     opcion.first.click(timeout=10000)
     time.sleep(1.0)
-    log("   %s = %s" % (etiqueta, valor))
+    log("   %s = %s" % (etiqueta, elegido))
 
 
 def descargar_pendientes(page, destino, hasta_dia, dias=DIAS_PENDIENTES,
