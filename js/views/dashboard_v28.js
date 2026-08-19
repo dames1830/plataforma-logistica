@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0259';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0260';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0259';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0259';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0259';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0259';
-import * as metasService from '../services_v245/metasService.js?v=29.0259';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0259';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0259';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0259';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0259';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0259';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0259';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0259';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0259';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0259';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0259';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0259';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0259';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0259';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0259';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0259';
-import { montarSlotting } from './slotting.js?v=29.0259';
+import * as adminService from '../services_v245/adminService.js?v=29.0260';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0260';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0260';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0260';
+import * as metasService from '../services_v245/metasService.js?v=29.0260';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0260';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0260';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0260';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0260';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0260';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0260';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0260';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0260';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0260';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0260';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0260';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0260';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0260';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0260';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0260';
+import { montarSlotting } from './slotting.js?v=29.0260';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0259';
+const VERSION = '29.0260';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0259');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0260');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5367,6 +5367,25 @@ export const renderDashboard = async (container, user, onLogout) => {
     })();
 
     /**
+     * EL ÚLTIMO DÍA CERRADO del rango, y los que quedaron abiertos.
+     *
+     * Las tarjetas del resumen cuentan solo ese último día, no toda la semana. Acumular
+     * daba un número que crecía sin referencia: el sábado decía "132 asistencias" y para
+     * saber si eso era bueno había que acordarse de que el máximo era 186.
+     */
+    const estadoDelRango = (dias) => {
+        let ultimo = null;
+        const abiertos = [];
+        dias.forEach(d => {
+            const reg = adminService.getAttendance(claveDe(d));
+            if (!reg || !Array.isArray(reg.data) || !reg.data.length) return;
+            if (reg.finalized === true) ultimo = d;
+            else abiertos.push(d);
+        });
+        return { ultimo, abiertos };
+    };
+
+    /**
      * Una fila por operario que aparezca en algún día del rango. No se listan todos
      * los trabajadores activos a propósito: quien no tiene ni un registro en estas
      * fechas saldría como una fila entera de guiones, que no dice nada.
@@ -5484,13 +5503,20 @@ export const renderDashboard = async (container, user, onLogout) => {
             return s;
         };
 
-        // Los totales se cuentan antes de dibujar: ahora van en el encabezado, no al pie.
-        let vino = 0, falto = 0, conObs = 0;
-        filas.forEach(f => dias.forEach(d => {
-            const m = f.marcas[claveDe(d)];
-            if (!m) return;
-            if (m.obs) conObs++; else if (m.vino) vino++; else falto++;
-        }));
+        // Las tarjetas cuentan SOLO el ultimo dia cerrado, no toda la semana. Un acumulado
+        // crece sin referencia: "132 asistencias" no dice nada sin saber que el maximo
+        // eran 186. El dia suelto se entiende solo.
+        const { ultimo } = estadoDelRango(dias);
+        let vino = 0, falto = 0, conObs = 0, gente = 0;
+        if (ultimo) {
+            const k = claveDe(ultimo);
+            filas.forEach(f => {
+                const m = f.marcas[k];
+                if (!m) return;
+                gente++;
+                if (m.obs) conObs++; else if (m.vino) vino++; else falto++;
+            });
+        }
 
         g.fillStyle = '#0d1117';
         g.fillRect(0, 0, ancho, alto);
@@ -5505,6 +5531,11 @@ export const renderDashboard = async (container, user, onLogout) => {
         texto('CONTROL DE ASISTENCIA', MARGEN, 21, { color: '#ffffff', tam: 16, peso: 700 });
         texto(`Semana ${numeroDeSemana(a)}  ·  ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`,
               MARGEN, 38, { color: '#9fb3c8', tam: 10.5 });
+        // Sin esto, quien recibe la imagen no sabe a que dia corresponden los cuatro numeros.
+        if (ultimo) {
+            texto(`RESUMEN DEL ${DIAS_TRES[ultimo.getDay()]} ${ultimo.getDate()}`,
+                  ancho - MARGEN, 44, { color: '#6e7c8c', tam: 8, peso: 700, alinear: 'right' });
+        }
         texto('LOGÍSTICA', ancho - MARGEN, 16, { color: '#8b949e', tam: 9, alinear: 'right' });
         texto('DEAM1830', ancho - MARGEN, 29, { color: '#4a9eff', tam: 11, peso: 700, alinear: 'right' });
 
@@ -5513,7 +5544,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         // Van arriba del todo y con el numero grande: la imagen se mira de reojo en el
         // celular, y asi los cuatro datos se leen sin buscar.
         const tarjetas = [
-            [filas.length, filas.length === 1 ? 'OPERARIO' : 'OPERARIOS', '#f0f6fc'],
+            [gente, gente === 1 ? 'OPERARIO' : 'OPERARIOS', '#f0f6fc'],
             [vino, vino === 1 ? 'ASISTENCIA' : 'ASISTENCIAS', '#3fb950'],
             [falto, falto === 1 ? 'FALTA' : 'FALTAS', '#f85149'],
             [conObs, conObs === 1 ? 'OBSERVACIÓN' : 'OBSERVACIONES', '#d29922']
@@ -5649,14 +5680,20 @@ export const renderDashboard = async (container, user, onLogout) => {
         const dias = diasDelRango();
         const filas = armarFilas(dias);
 
-        let totVino = 0, totFalto = 0, totObs = 0;
-        filas.forEach(f => dias.forEach(d => {
-            const m = f.marcas[claveDe(d)];
-            if (!m) return;
-            if (m.obs) totObs++;
-            else if (m.vino) totVino++;
-            else totFalto++;
-        }));
+        const { ultimo, abiertos } = estadoDelRango(dias);
+        let totVino = 0, totFalto = 0, totObs = 0, totGente = 0;
+        if (ultimo) {
+            const k = claveDe(ultimo);
+            filas.forEach(f => {
+                const m = f.marcas[k];
+                if (!m) return;
+                totGente++;
+                if (m.obs) totObs++; else if (m.vino) totVino++; else totFalto++;
+            });
+        }
+        const rotuloDia = ultimo
+            ? `${DIAS_CORTOS[ultimo.getDay()]} ${ultimo.getDate()} de ${MESES[ultimo.getMonth()]}`
+            : 'sin días cerrados';
 
         const a = desdeClave(desde), b = desdeClave(hasta);
         const rotulo = `Semana ${numeroDeSemana(a)} · ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`;
@@ -5705,8 +5742,18 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>
             </div>
 
+            ${abiertos.length ? `
+            <div style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); border-radius:8px; padding:0.7rem 1rem; margin-bottom:1rem; font-size:0.8rem; color:#fcd34d;">
+                <strong>⚠ Sin cerrar:</strong> ${abiertos.map(d => `${DIAS_CORTOS[d.getDay()]} ${d.getDate()}`).join(', ')}.
+                ${abiertos.length === 1 ? 'Ese día tiene' : 'Esos días tienen'} asistencia cargada pero la jornada no se finalizó,
+                así que no ${abiertos.length === 1 ? 'cuenta' : 'cuentan'} en el cuadro. Se cierra desde Asistencia.
+            </div>` : ''}
+
+            <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.5rem;">
+                Último día cerrado · <strong style="color:#cbd5e1;">${rotuloDia}</strong>
+            </div>
             <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem;">
-                ${tarjeta('Operarios', filas.length, '#38bdf8')}
+                ${tarjeta('Operarios', totGente, '#38bdf8')}
                 ${tarjeta('Asistencias', totVino, '#22c55e')}
                 ${tarjeta('Faltas', totFalto, '#ef4444')}
                 ${tarjeta('Observaciones', totObs, '#f59e0b')}
@@ -16001,7 +16048,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0259 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0260 | MOBILE PORTAL
                             </div>
                     </div>
 
