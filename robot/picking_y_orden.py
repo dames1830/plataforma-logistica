@@ -148,8 +148,11 @@ DIAS_PENDIENTES = 90
 # Las dos vienen en el ORDEN DEL PROCESO, que es lo que hace falta: el rango va
 # del primero al segundo y no incluye nada más. Si algún día el WMS les cambia el
 # nombre otra vez, el log dice qué ofrece la lista y se corrige acá.
-ESTADO_DESDE = "Creado"                  # como se llama en la lista "De estado"
-ESTADO_HASTA = "Parcialmente asignado"   # como se llama en la lista "A estado"
+# Se aceptan LOS DOS NOMBRES de cada estado y gana el que aparezca. El WMS los
+# escribe distinto segun la lista, y encima no siempre igual: el 19-ago-2026 la
+# de "De estado" ofrecio los cortos a las 06:24 y los largos a las 06:47.
+ESTADO_DESDE = ("Creado", "Creada")
+ESTADO_HASTA = ("Asign Parcial", "Parcialmente asignado")
 ARCHIVO_PENDIENTES = "Detalle Orden Pendientes.csv"
 
 # Cuánto tiene que pesar cada archivo para darlo por bueno. Los que ya están
@@ -792,11 +795,17 @@ def poner_estado(page, etiqueta, valor):
     flechas.first.click(timeout=10000)
     time.sleep(1.5)
 
-    # SIN exact=True y sin acentos: el texto de la opción no tiene por qué ser
-    # igual al que escribe Oracle en el CSV. Se busca por lo que empieza.
-    opcion = page.get_by_role("option", name=re.compile(
-        "^\\s*" + re.escape(valor[:14]), re.IGNORECASE))
-    if not opcion.count():
+    # SE PRUEBAN LOS DOS NOMBRES y gana el que exista. Sin exact=True: alcanza
+    # con que la opcion EMPIECE como lo que se pide.
+    candidatos = (valor,) if isinstance(valor, str) else tuple(valor)
+    opcion = None
+    for cand in candidatos:
+        loc = page.get_by_role("option", name=re.compile(
+            r"^\s*" + re.escape(cand[:14]), re.IGNORECASE))
+        if loc.count():
+            opcion = loc
+            break
+    if opcion is None:
         hay = page.get_by_role("option")
         nombres = []
         for i in range(min(hay.count(), 25)):
@@ -809,7 +818,8 @@ def poner_estado(page, etiqueta, valor):
         log("   la lista de '%s' ofrece: %s"
             % (etiqueta, " | ".join(nombres) if nombres else "(ninguna opción a la vista)"),
             "WARN")
-        raise RuntimeError("La opción '%s' no está en la lista de '%s'" % (valor, etiqueta))
+        raise RuntimeError("Ninguno de %s esta en la lista de '%s'"
+                           % (" ni ".join(candidatos), etiqueta))
     # SE ANOTA LO QUE SE CLICO, NO LO QUE SE PIDIO. En la prueba del 19-ago el log
     # decia "A estado = Parcialmente asignado" cuando en la lista esa opcion ni
     # existe: anunciaba el pedido, no el hecho. Un log que dice lo que queriamos
