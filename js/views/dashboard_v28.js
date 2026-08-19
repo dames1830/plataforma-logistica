@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0262';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0263';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0262';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0262';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0262';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0262';
-import * as metasService from '../services_v245/metasService.js?v=29.0262';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0262';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0262';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0262';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0262';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0262';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0262';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0262';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0262';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0262';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0262';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0262';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0262';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0262';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0262';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0262';
-import { montarSlotting } from './slotting.js?v=29.0262';
+import * as adminService from '../services_v245/adminService.js?v=29.0263';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0263';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0263';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0263';
+import * as metasService from '../services_v245/metasService.js?v=29.0263';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0263';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0263';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0263';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0263';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0263';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0263';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0263';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0263';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0263';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0263';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0263';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0263';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0263';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0263';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0263';
+import { montarSlotting } from './slotting.js?v=29.0263';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0262';
+const VERSION = '29.0263';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0262');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0263');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5558,13 +5558,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             ? `Semanas ${semanas[0].semana} a ${semanas[semanas.length - 1].semana}`
             : `Semana ${numeroDeSemana(a)}`;
         texto(`${cuales}  ·  ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`,
-              MARGEN, 38, { color: '#9fb3c8', tam: 10.5 });
+              MARGEN, 38, { color: '#c3d2e0', tam: 10.5 });
         // Sin esto, quien recibe la imagen no sabe a que dia corresponden los cuatro numeros.
         if (ultimo) {
             texto(`RESUMEN DEL ${DIAS_TRES[ultimo.getDay()]} ${ultimo.getDate()}`,
-                  ancho - MARGEN, 44, { color: '#6e7c8c', tam: 8, peso: 700, alinear: 'right' });
+                  ancho - MARGEN, 44, { color: '#a9bbcc', tam: 8.5, peso: 700, alinear: 'right' });
         }
-        texto('LOGÍSTICA', ancho - MARGEN, 16, { color: '#8b949e', tam: 9, alinear: 'right' });
+        texto('LOGÍSTICA', ancho - MARGEN, 16, { color: '#b6c4d2', tam: 9, alinear: 'right' });
         texto('DEAM1830', ancho - MARGEN, 29, { color: '#4a9eff', tam: 11, peso: 700, alinear: 'right' });
 
 
@@ -5587,7 +5587,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             g.roundRect(x, yTar, anchoTar, ALTO_TARJETAS - 10, 6);
             g.fill();
             texto(n, x + anchoTar / 2, yTar + 15, { color: col, tam: 19, peso: 700, alinear: 'center' });
-            texto(rot, x + anchoTar / 2, yTar + 30, { color: '#8b949e', tam: 8, peso: 600, alinear: 'center' });
+            texto(rot, x + anchoTar / 2, yTar + 30, { color: '#cbd8e4', tam: 8.5, peso: 700, alinear: 'center' });
         });
 
         // --- Encabezado de columnas: fondo propio, si no parece una fila más ------
@@ -5602,7 +5602,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         g.fillStyle = '#1c2531';
         g.fillRect(MARGEN, yCab - 9 - ALTO_2DA_LINEA, ancho - MARGEN * 2, 18 + ALTO_2DA_LINEA);
 
-        const COLOR_CAB = '#7d8ea1';
+        const COLOR_CAB = '#cbd8e4';
         texto('#', xNum, yCab - ALTO_2DA_LINEA / 2, { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' });
         texto('NOMBRES Y APELLIDOS', xNombre, yCab - ALTO_2DA_LINEA / 2, { color: COLOR_CAB, tam: 8.5, peso: 700 });
         texto('DNI', xDni, yCab - ALTO_2DA_LINEA / 2, { color: COLOR_CAB, tam: 8.5, peso: 700 });
@@ -5610,7 +5610,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         dias.forEach((d, i) => {
             if (variasSemanas) {
                 texto(DIAS_TRES[d.getDay()], xDia(i), yCab - 7, { color: COLOR_CAB, tam: 7.5, peso: 700, alinear: 'center' });
-                texto(ddmm(d), xDia(i), yCab + 3, { color: '#9fb3c8', tam: 8, peso: 700, alinear: 'center' });
+                texto(ddmm(d), xDia(i), yCab + 3, { color: '#c3d2e0', tam: 8, peso: 700, alinear: 'center' });
             } else {
                 texto(DIAS_TRES[d.getDay()], xDia(i), yCab, { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' });
             }
@@ -5623,10 +5623,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                 g.fillStyle = '#131920';
                 g.fillRect(MARGEN, y - ALTO_FILA / 2, ancho - MARGEN * 2, ALTO_FILA);
             }
-            texto(i + 1, xNum, y, { color: '#8b949e', tam: 9.5, alinear: 'center' });
+            texto(i + 1, xNum, y, { color: '#aab8c6', tam: 9.5, alinear: 'center' });
             texto(recortar(f.nombre, ANCHO_NOMBRE - 8, 10.5), xNombre, y, { color: '#f0f6fc', tam: 10.5 });
-            texto(f.dni, xDni, y, { color: '#b9c5d1', tam: 9.5 });
-            texto(recortar(cargoDe(f.dni), ANCHO_CARGO - 8, 9), xCargo, y, { color: '#8fa3b8', tam: 9 });
+            texto(f.dni, xDni, y, { color: '#f0f6fc', tam: 10.5 });
+            texto(recortar(cargoDe(f.dni), ANCHO_CARGO - 8, 10.5), xCargo, y, { color: '#f0f6fc', tam: 10.5 });
 
             dias.forEach((d, k) => {
                 const m = f.marcas[claveDe(d)];
@@ -5648,7 +5648,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             ['V', 'vacaciones', '#d29922'],
             ['M', 'descanso médico', '#d29922'],
             ['C', 'cumpleaños', '#d29922'],
-            ['ROTULO', 'CON DESCUENTO', '#6e7c8c'],
+            ['ROTULO', 'CON DESCUENTO', '#b6c4d2'],
             ['O', 'otros (justificada)', '#d29922'],
             ['✗', 'falta injustificada', '#f85149']
         ];
@@ -5656,16 +5656,16 @@ export const renderDashboard = async (container, user, onLogout) => {
         const yLey = yPie + 16;
         leyenda.forEach(([simbolo, rotulo, color]) => {
             if (simbolo === 'ROTULO') {
-                texto(rotulo, xLey, yLey, { color, tam: 7.5, peso: 700 });
-                g.font = `700 7.5px ${FUENTE}`;
+                texto(rotulo, xLey, yLey, { color, tam: 8, peso: 700 });
+                g.font = `700 8px ${FUENTE}`;
                 xLey += g.measureText(rotulo).width + 10;
                 return;
             }
             texto(simbolo, xLey, yLey, { color, tam: 10.5, peso: 700 });
             g.font = `700 10.5px ${FUENTE}`;
             const w = g.measureText(simbolo).width;
-            texto(rotulo, xLey + w + 3, yLey, { color: '#8b949e', tam: 9 });
-            g.font = `400 9px ${FUENTE}`;
+            texto(rotulo, xLey + w + 3, yLey, { color: '#d5dde5', tam: 9.5 });
+            g.font = `400 9.5px ${FUENTE}`;
             xLey += w + 3 + g.measureText(rotulo).width + 11;
         });
 
@@ -16090,7 +16090,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0262 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0263 | MOBILE PORTAL
                             </div>
                     </div>
 
