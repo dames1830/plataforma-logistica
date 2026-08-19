@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0256';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0257';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0256';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0256';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0256';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0256';
-import * as metasService from '../services_v245/metasService.js?v=29.0256';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0256';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0256';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0256';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0256';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0256';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0256';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0256';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0256';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0256';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0256';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0256';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0256';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0256';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0256';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0256';
-import { montarSlotting } from './slotting.js?v=29.0256';
+import * as adminService from '../services_v245/adminService.js?v=29.0257';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0257';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0257';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0257';
+import * as metasService from '../services_v245/metasService.js?v=29.0257';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0257';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0257';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0257';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0257';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0257';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0257';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0257';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0257';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0257';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0257';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0257';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0257';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0257';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0257';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0257';
+import { montarSlotting } from './slotting.js?v=29.0257';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0256';
+const VERSION = '29.0257';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0256');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0257');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5405,14 +5405,14 @@ export const renderDashboard = async (container, user, onLogout) => {
      */
     const mostrarImagen = (dias, filas) => {
         const ESCALA = 2;
-        const MARGEN = 16, ALTO_FILA = 17, ALTO_CAB = 62, ALTO_PIE = 66;
+        const MARGEN = 16, ALTO_FILA = 17, ALTO_CAB = 62, ALTO_PIE = 32, ALTO_TARJETAS = 52;
         const ANCHO_NUM = 24, ANCHO_NOMBRE = 196, ANCHO_DNI = 62, ANCHO_CARGO = 94, ANCHO_DIA = 32;
 
         // El cargo sale del maestro de trabajadores, cruzado por DNI. Los nombres
         // largos no entran en la columna: "AYUDANTE DE ALMACEN" son 19 caracteres y
         // lo tiene el 70% de la gente.
         const ABREVIA = {
-            'AYUDANTE DE ALMACEN': 'AYUDANTE',
+            'AYUDANTE DE ALMACEN': 'A. ALMACEN',
             'MONTACARGUISTA': 'MONTACARG.',
             'RECEPCION': 'RECEPCIÓN'
         };
@@ -5431,7 +5431,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         })();
 
         const ancho = MARGEN * 2 + ANCHO_NUM + ANCHO_NOMBRE + ANCHO_DNI + ANCHO_CARGO + dias.length * ANCHO_DIA;
-        const alto = ALTO_CAB + filas.length * ALTO_FILA + ALTO_PIE + MARGEN;
+        const alto = ALTO_CAB + ALTO_TARJETAS + filas.length * ALTO_FILA + ALTO_PIE + MARGEN;
 
         const lienzo = document.createElement('canvas');
         lienzo.width = ancho * ESCALA;
@@ -5456,6 +5456,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             return s;
         };
 
+        // Los totales se cuentan antes de dibujar: ahora van en el encabezado, no al pie.
+        let vino = 0, falto = 0, conObs = 0;
+        filas.forEach(f => dias.forEach(d => {
+            const m = f.marcas[claveDe(d)];
+            if (!m) return;
+            if (m.obs) conObs++; else if (m.vino) vino++; else falto++;
+        }));
+
         g.fillStyle = '#0d1117';
         g.fillRect(0, 0, ancho, alto);
 
@@ -5472,8 +5480,31 @@ export const renderDashboard = async (container, user, onLogout) => {
         texto('LOGÍSTICA', ancho - MARGEN, 16, { color: '#8b949e', tam: 9, alinear: 'right' });
         texto('DEAM1830', ancho - MARGEN, 29, { color: '#4a9eff', tam: 11, peso: 700, alinear: 'right' });
 
+
+        // --- Las cuatro tarjetas del resumen --------------------------------------
+        // Van arriba del todo y con el numero grande: la imagen se mira de reojo en el
+        // celular, y asi los cuatro datos se leen sin buscar.
+        const tarjetas = [
+            [filas.length, filas.length === 1 ? 'OPERARIO' : 'OPERARIOS', '#f0f6fc'],
+            [vino, vino === 1 ? 'ASISTENCIA' : 'ASISTENCIAS', '#3fb950'],
+            [falto, falto === 1 ? 'FALTA' : 'FALTAS', '#f85149'],
+            [conObs, conObs === 1 ? 'OBSERVACIÓN' : 'OBSERVACIONES', '#d29922']
+        ];
+        const yTar = ALTO_CAB - 4;
+        const huecoTar = 8;
+        const anchoTar = (ancho - MARGEN * 2 - huecoTar * 3) / 4;
+        tarjetas.forEach(([n, rot, col], i) => {
+            const x = MARGEN + i * (anchoTar + huecoTar);
+            g.fillStyle = '#161d27';
+            g.beginPath();
+            g.roundRect(x, yTar, anchoTar, ALTO_TARJETAS - 10, 6);
+            g.fill();
+            texto(n, x + anchoTar / 2, yTar + 15, { color: col, tam: 19, peso: 700, alinear: 'center' });
+            texto(rot, x + anchoTar / 2, yTar + 30, { color: '#8b949e', tam: 8, peso: 600, alinear: 'center' });
+        });
+
         // --- Encabezado de columnas: fondo propio, si no parece una fila más ------
-        const yCab = ALTO_CAB;
+        const yCab = ALTO_CAB + ALTO_TARJETAS;
         g.fillStyle = '#1c2531';
         g.fillRect(MARGEN, yCab - 9, ancho - MARGEN * 2, 18);
 
@@ -5492,7 +5523,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                                      { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' }));
 
         // --- Filas ----------------------------------------------------------------
-        let vino = 0, falto = 0, justificadas = 0, conDescuento = 0;
         filas.forEach((f, i) => {
             const y = yCab + 19 + i * ALTO_FILA;
             if (i % 2) {
@@ -5507,55 +5537,43 @@ export const renderDashboard = async (container, user, onLogout) => {
             dias.forEach((d, k) => {
                 const m = f.marcas[claveDe(d)];
                 const info = simboloDe(m);
-                if (m) {
-                    if (m.obs) { if (info.s === 'O') conDescuento++; else justificadas++; }
-                    else if (m.vino) vino++;
-                    else falto++;
-                }
                 texto(info.s, xDia(k), y, { color: info.color, tam: 11.5, peso: 700, alinear: 'center' });
             });
         });
 
-        // --- Pie: la leyenda agrupada por lo que significa para la planilla -------
+        // --- Pie: la leyenda, en una sola fila ------------------------------------
         const yPie = yCab + 19 + filas.length * ALTO_FILA + 6;
         g.fillStyle = '#21262d';
         g.fillRect(MARGEN, yPie, ancho - MARGEN * 2, 1);
 
-        // Los tres grupos no son un adorno: dicen si la ausencia se descuenta o no.
-        const grupos = [
-            { titulo: 'Sin descuento', color: '#d29922',
-              items: [['V', 'vacaciones'], ['M', 'descanso médico'], ['C', 'cumpleaños']] },
-            { titulo: 'Con descuento', color: '#d29922',
-              items: [['O', 'otros (justificada)'], ['✗', 'falta injustificada']] },
-            { titulo: '', color: '#3fb950',
-              items: [['✓', 'asistió'], ['–', 'sin registro']] }
+        // El guion no se explica: un dia en blanco ya se entiende solo. Y las tres
+        // primeras tampoco llevan rotulo, porque no descontar es lo normal; el unico
+        // aviso que hace falta es cual SI descuenta.
+        const leyenda = [
+            ['✓', 'asistió', '#3fb950'],
+            ['V', 'vacaciones', '#d29922'],
+            ['M', 'descanso médico', '#d29922'],
+            ['C', 'cumpleaños', '#d29922'],
+            ['ROTULO', 'CON DESCUENTO', '#6e7c8c'],
+            ['O', 'otros (justificada)', '#d29922'],
+            ['✗', 'falta injustificada', '#f85149']
         ];
-        let yLey = yPie + 15;
         let xLey = MARGEN;
-        grupos.forEach((gr, idx) => {
-            if (gr.titulo) {
-                texto(gr.titulo.toUpperCase(), xLey, yLey, { color: '#6e7c8c', tam: 7.5, peso: 700 });
+        const yLey = yPie + 16;
+        leyenda.forEach(([simbolo, rotulo, color]) => {
+            if (simbolo === 'ROTULO') {
+                texto(rotulo, xLey, yLey, { color, tam: 7.5, peso: 700 });
                 g.font = `700 7.5px ${FUENTE}`;
-                xLey += g.measureText(gr.titulo.toUpperCase()).width + 7;
+                xLey += g.measureText(rotulo).width + 10;
+                return;
             }
-            gr.items.forEach(([s, t]) => {
-                const col = s === '✓' ? '#3fb950' : (s === '✗' ? '#f85149' : (s === '–' ? '#484f58' : '#d29922'));
-                texto(s, xLey, yLey, { color: col, tam: 10.5, peso: 700 });
-                g.font = `700 10.5px ${FUENTE}`;
-                const w = g.measureText(s).width;
-                texto(t, xLey + w + 3, yLey, { color: '#8b949e', tam: 9 });
-                g.font = `400 9px ${FUENTE}`;
-                xLey += w + 3 + g.measureText(t).width + 10;
-            });
-            if (idx === 1) { yLey = yPie + 30; xLey = MARGEN; }
+            texto(simbolo, xLey, yLey, { color, tam: 10.5, peso: 700 });
+            g.font = `700 10.5px ${FUENTE}`;
+            const w = g.measureText(simbolo).width;
+            texto(rotulo, xLey + w + 3, yLey, { color: '#8b949e', tam: 9 });
+            g.font = `400 9px ${FUENTE}`;
+            xLey += w + 3 + g.measureText(rotulo).width + 11;
         });
-
-        const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
-        texto([plural(filas.length, 'operario', 'operarios'),
-               plural(vino, 'asistencia', 'asistencias'),
-               plural(falto, 'falta', 'faltas'),
-               plural(justificadas + conDescuento, 'observación', 'observaciones')].join('  ·  '),
-              MARGEN, yPie + 47, { color: '#8b949e', tam: 9 });
 
         // --- En pantalla, no descargada ------------------------------------------
         // El 18-ago-2026 la descarga directa fallo: en un navegador con restricciones
@@ -5676,17 +5694,12 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:1.2rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.1); font-size:0.78rem; color:var(--text-muted);">
                     <span><strong style="color:#22c55e; font-size:1rem;">✓</strong> Asistió</span>
-                    <span style="opacity:0.55;">|</span>
-                    <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; opacity:0.75;">Sin descuento:</span>
                     <span><strong style="color:#f59e0b; font-size:1rem;">V</strong> Vacaciones</span>
                     <span><strong style="color:#f59e0b; font-size:1rem;">M</strong> Descanso médico</span>
                     <span><strong style="color:#f59e0b; font-size:1rem;">C</strong> Cumpleaños</span>
-                    <span style="opacity:0.55;">|</span>
                     <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; opacity:0.75;">Con descuento:</span>
                     <span><strong style="color:#f59e0b; font-size:1rem;">O</strong> Otros (justificada)</span>
                     <span><strong style="color:#ef4444; font-size:1rem;">✗</strong> Falta injustificada</span>
-                    <span style="opacity:0.55;">|</span>
-                    <span><strong style="color:#475569; font-size:1rem;">–</strong> Sin registro ese día</span>
                 </div>
             </div>`;
 
@@ -15958,7 +15971,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0256 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0257 | MOBILE PORTAL
                             </div>
                     </div>
 
