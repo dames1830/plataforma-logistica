@@ -1,9 +1,9 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0266';
-import * as adminService from './services_v245/adminService.js?v=29.0266';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0266';
+import { getSession, logout } from './services_v245/auth.js?v=29.0267';
+import * as adminService from './services_v245/adminService.js?v=29.0267';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0267';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -346,7 +346,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0266';
+      this.APP_VERSION = 'v29.0267';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -665,7 +665,17 @@ class App {
         if (user) {
             // La MISMA dirección que precargó adelantarDashboard(), o se baja dos veces.
             const { renderDashboard } = await import(this.urlDashboard());
-            this.root.innerHTML = '';
+
+            // NO se borra la pantalla de carga antes de llamar al dashboard.
+            //
+            // renderDashboard() recien escribe en el contenedor despues de cuatro esperas
+            // al servidor -initPersistentData, initializeAdminData, los maestros y las
+            // tareas de almacenaje-, que juntas son cinco o seis segundos. Vaciarlo antes
+            // dejaba ese rato la pantalla en negro, sin barra ni mensaje, y parecia que la
+            // web se hubiera colgado justo despues de escribir la contrasena.
+            //
+            // Dejandola puesta, la barra sigue girando hasta que el dashboard la reemplaza
+            // de una sola vez con su propio innerHTML.
             await renderDashboard(this.root, user, () => {
                 this.isRendered = false;
                 logout();
