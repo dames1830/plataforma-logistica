@@ -77,9 +77,14 @@ const CSS = `
 #sss td { padding:0.5rem clamp(0.3rem, 0.55vw, 0.7rem);
           border-bottom:1px solid rgba(255,255,255,0.04); white-space:nowrap; }
 /* EL MODELO ES LA VÁLVULA. Es la única columna larga —252 px de los 1.219 que pide
-   el cuadro—, así que es la que cede cuando la pantalla no da: se parte en dos
-   renglones. Las demás son números y fechas, y partirlas se lee como un error. */
-#sss td.mod { white-space:normal; min-width:7.5rem; }
+   el cuadro—, así que es la que cede cuando la pantalla no da.
+   CEDE CORTÁNDOSE, NO PARTIÉNDOSE: partido en tres renglones estiraba la fila entera
+   y el cuadro se leía como una lista de párrafos. Ahora es UNA SOLA LÍNEA y lo que
+   no entra termina en puntos suspensivos, con el nombre completo en el globito.
+   Pedido de Daniel, 19-ago-2026. Sigue sin haber scroll horizontal. */
+#sss td.mod { white-space:nowrap; }
+#sss td.mod > span { display:block; max-width:15rem; overflow:hidden;
+                     text-overflow:ellipsis; white-space:nowrap; }
 #sss tbody tr:nth-child(even) { background:rgba(255,255,255,0.02); }
 #sss .der { text-align:right; } #sss .cen { text-align:center; }
 #sss th.ord { cursor:pointer; user-select:none; }
@@ -141,7 +146,7 @@ const celdasCP = (f) =>
     '<td style="color:var(--text-main);">' + esc(f.cod) + '</td>'
     + '<td>' + esc(f.marca) + '</td>'
     + '<td class="cen" style="color:var(--sss-gris);">' + esc(f.coleccion) + '</td>'
-    + '<td class="mod" style="color:var(--sss-gris);">' + esc(f.modelo || '') + '</td>'
+    + '<td class="mod" style="color:var(--sss-gris);"><span title="' + esc(f.modelo || '') + '">' + esc(f.modelo || '') + '</span></td>'
     + '<td class="cen" style="color:var(--sss-gris);">' + ddmm(f.llegada) + '</td>'
     + '<td class="cen">' + ultimoPick(f.ultima_salida, f.dias_sin_salir) + '</td>'
     + '<td class="der" style="color:var(--text-main);">' + mil(f.hoy) + '</td>'
@@ -161,7 +166,7 @@ const celdasSP = (f) =>
     '<td style="color:var(--text-main);">' + esc(f.cod) + '</td>'
     + '<td>' + esc(f.marca) + '</td>'
     + '<td class="cen" style="color:var(--sss-gris);">' + esc(f.coleccion) + '</td>'
-    + '<td class="mod" style="color:var(--sss-gris);">' + esc(f.modelo || '') + '</td>'
+    + '<td class="mod" style="color:var(--sss-gris);"><span title="' + esc(f.modelo || '') + '">' + esc(f.modelo || '') + '</span></td>'
     + '<td class="cen" style="color:var(--sss-gris);">' + ddmm(f.llegada) + '</td>'
     + '<td class="cen">' + ultimoPick(f.ultima_salida, f.dias_sin_salir) + '</td>'
     + '<td class="der">' + mil(f.llego_con)
