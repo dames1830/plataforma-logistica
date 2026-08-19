@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0270';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0271';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0270';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0270';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0270';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0270';
-import * as metasService from '../services_v245/metasService.js?v=29.0270';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0270';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0270';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0270';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0270';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0270';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0270';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0270';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0270';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0270';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0270';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0270';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0270';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0270';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0270';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0270';
-import { montarSlotting } from './slotting.js?v=29.0270';
+import * as adminService from '../services_v245/adminService.js?v=29.0271';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0271';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0271';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0271';
+import * as metasService from '../services_v245/metasService.js?v=29.0271';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0271';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0271';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0271';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0271';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0271';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0271';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0271';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0271';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0271';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0271';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0271';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0271';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0271';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0271';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0271';
+import { montarSlotting } from './slotting.js?v=29.0271';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0270';
+const VERSION = '29.0271';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4490,7 +4490,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0270');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0271');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16119,7 +16119,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0270 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0271 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22879,6 +22879,295 @@ const renderRFSection = (container) => {
       if (cuerpo === 11 && col !== 1 && (nivel === 'D' || nivel === 'E')) return false;
       return true;
   };
+  /**
+   * CUÁNTO CABE EN UNA PALETA DE RESERVA. Regla de Daniel, 19-ago-2026: *"si tiene más de
+   * 160 unidades la paleta, consideremos que es una paleta llena"*.
+   *
+   * NO es el `paresPorPaleta` de Configuración —que dice 200 y sirve para OTRA cosa: para
+   * calcular cuántas paletas y cuántos minutos lleva paletizar lo que sube—. Este número
+   * mide lo que YA está arriba. Si algún día se juntan, que sea a propósito.
+   *
+   * Y vale solo para CALZADO: una paleta de bolsas trae 12.000 unidades y medirla contra
+   * 160 diría que está al 7.500%.
+   */
+  const PALETA_LLENA_RESERVA = 160;
+
+  /**
+   * Los números del panel de la derecha cuando se mira la reserva.
+   *
+   * SE CUENTA EN PALETAS, no en unidades, porque la reserva es espacio. Medido en unidades,
+   * el 59% de la reserva son bolsas de empaque —115 paletas con 325.831 unidades— y taparían
+   * cualquier reparto: el calzado, que ocupa 1.851 paletas, se vería como un 37%.
+   *
+   * Una paleta se le cuenta ENTERA al artículo que más pares tiene encima. Compartir paleta
+   * es raro —63 de 2.005 el 19-ago— y repartir la paleta en fracciones daría cuadros que no
+   * cuadran, que es lo peor que le puede pasar a un reporte acá.
+   */
+  const resumenDeReserva = (filas, ficha, nivelVisto) => {
+      const CAP = PALETA_LLENA_RESERVA;
+      const vacio = { pal: 0, un: 0, arts: new Set() };
+      const paletas = new Map();
+
+      (filas || []).forEach(row => {
+          const nivelTxt = String(row.NIVEL == null ? '' : row.NIVEL).trim().toUpperCase();
+          if (!(row.ES_ALTO === true || nivelTxt === 'ALTO')) return;
+          const ubi = String(row.UBICACION == null ? '' : row.UBICACION).trim().toUpperCase();
+          const sku = String(row.PRODUCTO == null ? '' : row.PRODUCTO).trim();
+          const cant = parseFloat(row.CANTIDAD) || 0;
+          if (!ubi.startsWith('SEL') || !sku || cant <= 0) return;
+          const m = ubi.match(/^SEL[- ]?(\d+)[- ]?(\d+)[- ]?([A-Z])[- ]?(\d+)$/);
+          if (!m) return;
+          if (!paletas.has(ubi)) paletas.set(ubi, { nivel: m[3], qty: 0, lineas: new Map() });
+          const p = paletas.get(ubi);
+          const sku7 = sku.substring(0, 7);
+          p.qty += cant;
+          p.lineas.set(sku7, (p.lineas.get(sku7) || 0) + cant);
+      });
+
+      // Por nivel se cuenta SIEMPRE todo, aunque haya un nivel elegido: esa caja es
+      // justamente para comparar los cinco entre sí.
+      const porNivel = {};
+      NIVELES_RESERVA.forEach(nv => { porNivel[nv] = { pal: 0, un: 0, arts: new Set() }; });
+
+      const campos = ['temp', 'col', 'rims', 'ggender', 'marca'];
+      const por = {}; campos.forEach(c => { por[c] = new Map(); });
+      const total = { pal: 0, un: 0, arts: new Set() };
+      const llenado = { llena: 0, p75: 0, p50: 0, p25: 0, p00: 0 };
+      const fw = { pal: 0, un: 0, arts: new Set() };
+      const fwPorArt = new Map();
+
+      paletas.forEach((p, ubi) => {
+          const n = porNivel[p.nivel];
+          if (n) { n.pal++; n.un += p.qty; p.lineas.forEach((q, a) => n.arts.add(a)); }
+          if (nivelVisto && nivelVisto !== 'TODOS' && p.nivel !== nivelVisto) return;
+
+          let dueno = '', mayor = -1;
+          p.lineas.forEach((q, a) => { if (q > mayor) { mayor = q; dueno = a; } });
+          const f = ficha[dueno] || {};
+
+          total.pal++; total.un += p.qty;
+          p.lineas.forEach((q, a) => total.arts.add(a));
+
+          campos.forEach(c => {
+              // EN LA TEMPORADA, EL QUE NO ESTÁ EN EL MAESTRO CUENTA COMO ANTERIOR.
+              // Es lo mismo que hace el mapa —lo pinta de rojo—, y si acá saliera como
+              // una tercera fila, actual más anterior dejaría de dar el total y el
+              // cuadro no cerraría. En los otros repartos sí se muestra aparte, que ahí
+              // es un aviso útil: son artículos que le faltan al Maestro publicado.
+              const k = c === 'temp' ? (f.temp || 'ANTERIOR') : (f[c] || 'Sin maestro');
+              if (!por[c].has(k)) por[c].set(k, { k, pal: 0, un: 0, arts: new Set() });
+              const e = por[c].get(k);
+              e.pal++; e.un += p.qty;
+              p.lineas.forEach((q, a) => e.arts.add(a));
+          });
+
+          // El llenado: solo calzado, y contra la paleta llena de 160.
+          if (f.ggender === 'Footwear') {
+              fw.pal++; fw.un += p.qty;
+              p.lineas.forEach((q, a) => fw.arts.add(a));
+              if (!fwPorArt.has(dueno)) fwPorArt.set(dueno, { pal: 0, un: 0 });
+              const a = fwPorArt.get(dueno);
+              a.pal++; a.un += p.qty;
+              const pct = p.qty / CAP * 100;
+              if (p.qty >= CAP)   llenado.llena++;
+              else if (pct >= 75) llenado.p75++;
+              else if (pct >= 50) llenado.p50++;
+              else if (pct >= 25) llenado.p25++;
+              else                llenado.p00++;
+          }
+      });
+
+      // CUÁNTAS PALETAS SUELTA JUNTAR CADA ARTÍCULO CON SÍ MISMO. Nunca menos de cero: un
+      // artículo cuyas paletas ya vienen más cargadas que el tope no "cuesta" paletas,
+      // simplemente no suelta ninguna. Sin ese tope de cero, el nivel H —que promedia 177
+      // pares por paleta— salía liberando menos veinte.
+      let libera = 0;
+      fwPorArt.forEach(a => { libera += Math.max(0, a.pal - Math.max(1, Math.ceil(a.un / CAP))); });
+
+      const listar = (mapa) => Array.from(mapa.values())
+          .map(e => ({ k: e.k, pal: e.pal, un: Math.round(e.un), arts: e.arts.size }))
+          .sort((a, b) => b.pal - a.pal);
+
+      const salida = {
+          capacidad: CAP,
+          paletas: total.pal, unidades: Math.round(total.un), articulos: total.arts.size,
+          espacios: espaciosDeReserva(nivelVisto),
+          porNivel: {}, por: {}, llenado,
+          fw: { pal: fw.pal, un: Math.round(fw.un), arts: fw.arts.size,
+                media: fw.pal ? Math.round(fw.un / fw.pal) : 0,
+                libera, ideal: fw.pal - libera }
+      };
+      NIVELES_RESERVA.forEach(nv => {
+          salida.porNivel[nv] = { pal: porNivel[nv].pal, un: Math.round(porNivel[nv].un),
+                                  arts: porNivel[nv].arts.size, espacios: espaciosDeReserva(nv) };
+      });
+      campos.forEach(c => { salida.por[c] = listar(por[c]); });
+      return salida;
+  };
+
+  /** El panel de la derecha de la reserva. Devuelve HTML; no toca la pantalla. */
+  const panelReservaHTML = (r, nivelVisto, sello) => {
+      if (!r) return '';
+      const n = (x) => Number(x || 0).toLocaleString();
+      const esc = (t) => String(t == null ? '' : t)
+          .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+      const COLORES = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ec4899', '#10b981',
+                       '#6366f1', '#f43f5e', '#14b8a6', '#a855f7', '#eab308', '#64748b'];
+
+      const caja = (titulo, aclara, cuerpo) => `
+          <div class="glass-panel" style="padding:16px 18px; border:1px solid rgba(255,255,255,0.09);">
+              <h4 style="font-size:0.72rem; font-weight:900; letter-spacing:1.2px; color:var(--text-muted);
+                  text-transform:uppercase; margin:0 0 14px; display:flex; justify-content:space-between;
+                  align-items:center; gap:10px;">
+                  <span>${titulo}</span>
+                  <span style="color:#475569; font-weight:800; letter-spacing:0; text-transform:none;">${aclara}</span>
+              </h4>
+              ${cuerpo}
+          </div>`;
+
+      // Las barras de un reparto. Lo que no entra en el tope se agrupa al pie, con su
+      // detalle: una lista cortada sin decir qué falta se lee como si eso fuera todo.
+      const barras = (filas, tope) => {
+          const ver = filas.slice(0, tope), resto = filas.slice(tope);
+          let h = ver.map((f, i) => `
+              <div style="margin-bottom:9px;">
+                  <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:0.75rem; margin-bottom:3px; gap:8px;">
+                      <span style="font-weight:800; color:#e2e8f0;">${esc(f.k)}</span>
+                      <span style="font-weight:900; color:#fff; font-size:0.78rem; white-space:nowrap;">${n(f.pal)}
+                          <span style="font-weight:700; color:#64748b; font-size:0.7rem;">pal · ${n(f.un)} un · ${f.arts} art</span>
+                      </span>
+                  </div>
+                  <div style="height:7px; border-radius:4px; background:rgba(255,255,255,0.05); overflow:hidden;">
+                      <div style="height:100%; border-radius:4px; width:${(f.pal / (r.paletas || 1) * 100).toFixed(1)}%;
+                           background:${COLORES[i % COLORES.length]};"></div>
+                  </div>
+              </div>`).join('');
+          if (resto.length) {
+              const p = resto.reduce((a, f) => a + f.pal, 0);
+              const u = resto.reduce((a, f) => a + f.un, 0);
+              h += `<div style="font-size:0.7rem; color:#64748b; font-weight:700; padding-top:5px;
+                    border-top:1px dashed rgba(255,255,255,0.08); margin-top:8px; line-height:1.6;">
+                    y ${resto.length} más — ${n(p)} paletas · ${n(u)} unidades<br>
+                    ${resto.map(f => esc(f.k) + ' (' + f.pal + ')').join(' · ')}</div>`;
+          }
+          return h;
+      };
+
+      const buscar = (lista, clave) => lista.find(x => x.k === clave) || { pal: 0, un: 0, arts: 0 };
+      const act = buscar(r.por.temp, 'ACTUAL');
+      const ant = buscar(r.por.temp, 'ANTERIOR');
+
+      const LLEN = [
+          { k: 'llena', e: `Llena (${r.capacidad} o más)`, c: '#10b981' },
+          { k: 'p75',   e: '75 a 99%',                     c: '#84cc16' },
+          { k: 'p50',   e: '50 a 74%',                     c: '#eab308' },
+          { k: 'p25',   e: '25 a 49%',                     c: '#f59e0b' },
+          { k: 'p00',   e: 'menos del 25%',                c: '#64748b' }
+      ];
+
+      const rot = (!nivelVisto || nivelVisto === 'TODOS')
+          ? 'RESERVA · TODOS LOS NIVELES' : 'RESERVA · NIVEL ' + nivelVisto;
+
+      return `
+      <div style="flex: 0 0 calc(30% - 20px); max-width: calc(30% - 20px); display:flex; flex-direction:column; gap:14px;">
+
+          <div class="glass-panel" style="padding:16px 18px;
+               background:linear-gradient(135deg, rgba(59,130,246,0.16), rgba(139,92,246,0.14));
+               border:1px solid rgba(99,102,241,0.35);">
+              <div style="font-size:1.05rem; font-weight:900; color:#fff; letter-spacing:0.4px;">📦 ${rot}</div>
+              <div style="font-size:0.7rem; color:#93c5fd; font-weight:700; margin-top:3px;">
+                  🕒 ${sello ? esc(sello) : 'sin fecha'} · ${n(r.paletas)} de ${n(r.espacios)} paletas ocupadas (${pct(r.paletas, r.espacios)}%)
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:14px;">
+                  ${[[r.articulos, 'Artículos'], [n(r.paletas), 'Paletas'], [n(r.unidades), 'Unidades']]
+                      .map(([v, e]) => `
+                      <div style="text-align:center; background:rgba(0,0,0,0.22); border-radius:9px; padding:9px 4px;">
+                          <div style="font-size:1.35rem; font-weight:900; color:#fff; line-height:1.1;">${v}</div>
+                          <div style="font-size:0.6rem; font-weight:800; color:var(--text-muted); letter-spacing:0.6px;
+                               text-transform:uppercase; margin-top:3px;">${e}</div>
+                      </div>`).join('')}
+              </div>
+          </div>
+
+          ${caja('Temporada', 'en paletas', `
+              <div style="display:flex; height:9px; border-radius:5px; overflow:hidden; margin-bottom:8px; background:rgba(255,255,255,0.06);">
+                  <div style="width:${(act.pal / (r.paletas || 1) * 100).toFixed(1)}%; background:#3b82f6;"></div>
+                  <div style="width:${(ant.pal / (r.paletas || 1) * 100).toFixed(1)}%; background:#ef4444;"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; gap:8px;">
+                  <span style="color:#60a5fa;">● Actual ${n(act.pal)} pal · ${n(act.un)} un</span>
+                  <span style="color:#f87171;">Anterior ${n(ant.pal)} pal · ${n(ant.un)} un ●</span>
+              </div>`)}
+
+          ${caja('Por nivel', 'clic para filtrar el mapa', NIVELES_RESERVA.map(nv => {
+              const d = r.porNivel[nv], on = nivelVisto === nv;
+              return `<div onclick="window.__verNivelReserva('${nv}')" title="Ver solo el nivel ${nv}"
+                   style="display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:9px; cursor:pointer;
+                   border:1px solid ${on ? 'rgba(59,130,246,0.45)' : 'transparent'};
+                   background:${on ? 'rgba(59,130,246,0.14)' : 'transparent'};">
+                  <div style="width:20px; font-size:0.9rem; font-weight:900; color:#fff; text-align:center;">${nv}</div>
+                  <div style="flex:1; height:16px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden;">
+                      <div style="height:100%; width:${(d.pal / (d.espacios || 1) * 100).toFixed(1)}%;
+                           background:linear-gradient(90deg,#3b82f6,#6366f1);"></div>
+                  </div>
+                  <div style="width:112px; text-align:right; font-size:0.72rem; font-weight:800; color:#cbd5e1;">
+                      <b style="color:#fff; font-size:0.8rem;">${n(d.pal)}</b>/${n(d.espacios)}
+                      <span style="color:#64748b;">· ${d.arts} art</span>
+                  </div>
+              </div>`;
+          }).join('') + `
+              <div onclick="window.__verNivelReserva('TODOS')" title="Ver los cinco niveles"
+                   style="display:flex; align-items:center; gap:9px; padding:7px 9px; margin-top:6px; cursor:pointer;
+                   border-top:1px dashed rgba(255,255,255,0.1);
+                   background:${(!nivelVisto || nivelVisto === 'TODOS') ? 'rgba(59,130,246,0.14)' : 'transparent'};">
+                  <div style="width:20px; font-size:0.9rem; font-weight:900; color:#fff; text-align:center;">∑</div>
+                  <div style="flex:1; height:16px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden;">
+                      <div style="height:100%; width:${(Object.values(r.porNivel).reduce((a, d) => a + d.pal, 0) / espaciosDeReserva('TODOS') * 100).toFixed(1)}%;
+                           background:rgba(148,163,184,0.5);"></div>
+                  </div>
+                  <div style="width:112px; text-align:right; font-size:0.72rem; font-weight:800; color:#cbd5e1;">
+                      <b style="color:#fff; font-size:0.8rem;">${n(Object.values(r.porNivel).reduce((a, d) => a + d.pal, 0))}</b>/${n(espaciosDeReserva('TODOS'))}
+                      <span style="color:#64748b;">· todos</span>
+                  </div>
+              </div>`)}
+
+          ${caja('Por colección', r.por.col.length + ' colecciones', barras(r.por.col, 6))}
+          ${caja('Por categoría', 'Gender RIMS', barras(r.por.rims, 10))}
+          ${caja('Por tipo', 'G. Gender', barras(r.por.ggender, 6))}
+          ${caja('Por marca', 'MarcaStd', barras(r.por.marca, 8))}
+
+          ${caja('Llenado de las paletas', 'solo calzado · llena = ' + r.capacidad, `
+              <div style="display:flex; height:26px; border-radius:7px; overflow:hidden; background:rgba(255,255,255,0.05); margin-bottom:11px;">
+                  ${LLEN.map(l => {
+                      const c = r.llenado[l.k] || 0, p = c / (r.fw.pal || 1) * 100;
+                      return `<div title="${l.e}: ${n(c)} paletas" style="width:${p.toFixed(1)}%; background:${l.c};
+                          display:flex; align-items:center; justify-content:center; font-size:0.62rem;
+                          font-weight:900; color:rgba(0,0,0,0.62);">${p > 7 ? n(c) : ''}</div>`;
+                  }).join('')}
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px 12px; font-size:0.71rem; font-weight:800; color:#cbd5e1;">
+                  ${LLEN.map(l => `<span><i style="display:inline-block; width:9px; height:9px; border-radius:2px;
+                      margin-right:6px; background:${l.c};"></i>${l.e} <b style="color:#fff;">${n(r.llenado[l.k] || 0)}</b></span>`).join('')}
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:baseline; background:rgba(0,0,0,0.22);
+                   border-radius:9px; padding:9px 12px; margin-top:11px; gap:10px;">
+                  <span style="font-size:0.71rem; font-weight:800; color:var(--text-muted);">Densidad media · ${n(r.fw.pal)} paletas de calzado</span>
+                  <span style="font-size:1.05rem; font-weight:900; color:#fff; white-space:nowrap;">${n(r.fw.media)}
+                      <span style="font-size:0.72rem; color:var(--text-muted);">de ${r.capacidad} · ${pct(r.fw.media, r.capacidad)}%</span></span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+                   background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35);
+                   border-radius:9px; padding:9px 12px; margin-top:9px;">
+                  <span style="font-size:0.71rem; font-weight:800; color:var(--text-muted);">Si cada artículo juntara lo suyo<br>
+                      <span style="color:#64748b; font-weight:700;">${n(r.fw.pal)} paletas cabrían en ${n(r.fw.ideal)}</span></span>
+                  <span style="font-size:1.05rem; font-weight:900; color:#34d399; text-align:right; white-space:nowrap;">−${n(r.fw.libera)}<br>
+                      <span style="font-size:0.66rem; color:#6ee7b7; font-weight:800;">PALETAS LIBRES</span></span>
+              </div>`)}
+
+      </div>`;
+  };
+
   /** Cuántas paletas caben en la reserva, contando solo las que existen de verdad. */
   const espaciosDeReserva = (nivel) => {
       const nivs = (nivel && nivel !== 'TODOS') ? [nivel] : NIVELES_RESERVA;
@@ -23314,6 +23603,7 @@ const renderRFSection = (container) => {
       // ubicado: no hay franjas ni desviación, solo el reparto entre actual y anterior.
       // ══════════════════════════════════════════════════════════════════════════════════
       let reservaPayload = null;
+      let resumenReserva = null;
       if (esReserva) {
           const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
 
@@ -23354,18 +23644,28 @@ const renderRFSection = (container) => {
           // columna B el código, columna D el gender y columna O la temporada.
           const skuTemporada = {};
           const skuGender = {};
+          // La ficha completa del artículo, para el panel de la derecha: columna C el tipo,
+          // D la categoría, I la marca y J la colección. La colección es `Coleccion PO`, no
+          // la columna llamada Temporada — ver el reporte del Maestro.
+          const fichaArt = {};
           articulosRaw.forEach((row, i) => {
               if (i === 0 && Array.isArray(row) && String(row[0]).toUpperCase().includes('COD')) return;
-              let sku = '', temp = '', gender = '';
+              let sku = '', temp = '', gender = '', ggender = '', marca = '', coleccion = '';
               if (Array.isArray(row)) {
-                  sku    = String(row[1] || '').trim();
-                  temp   = String(row[14] || row[13] || '').trim();
-                  gender = String(row[3] || '').trim();
+                  sku       = String(row[1] || '').trim();
+                  temp      = String(row[14] || row[13] || '').trim();
+                  gender    = String(row[3] || '').trim();
+                  ggender   = String(row[2] || '').trim();
+                  marca     = String(row[8] || '').trim();
+                  coleccion = String(row[9] || '').trim();
               } else {
                   const vals = Object.values(row);
-                  sku    = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO']).trim();
-                  temp   = getColSafe(row, ['TEMPORADA', 'SEASON']).trim() || String(vals[14] || vals[13] || '').trim();
-                  gender = getColSafe(row, ['GENDER RIMS', 'RIMS']).trim();
+                  sku       = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'CODIGO']).trim();
+                  temp      = getColSafe(row, ['TEMPORADA', 'SEASON']).trim() || String(vals[14] || vals[13] || '').trim();
+                  gender    = getColSafe(row, ['GENDER RIMS', 'RIMS']).trim();
+                  ggender   = getColSafe(row, ['G. GENDER']).trim();
+                  marca     = getColSafe(row, ['MARCASTD']).trim();
+                  coleccion = getColSafe(row, ['COLECCION']).trim();
               }
               if (!sku) return;
               const sku7 = sku.substring(0, 7);
@@ -23374,6 +23674,15 @@ const renderRFSection = (container) => {
               if (!skuTemporada[sku]  || !skuTemporada[sku].includes('ACTUAL'))  skuTemporada[sku]  = tUpper;
               if (!skuGender[sku7]) skuGender[sku7] = gender ? gender.toUpperCase() : '';
               if (!skuGender[sku])  skuGender[sku]  = gender ? gender.toUpperCase() : '';
+              if (!fichaArt[sku7]) fichaArt[sku7] = {
+                  temp: tUpper.includes('ACTUAL') ? 'ACTUAL' : 'ANTERIOR',
+                  ggender: ggender || 'S/G',
+                  rims: gender || 'S/G',
+                  marca: marca || 'S/M',
+                  // ND y "(en blanco)" son la forma que tiene el Maestro de decir que no hay.
+                  col: (!coleccion || coleccion === 'ND' || coleccion === '(en blanco)')
+                       ? 'Sin colección' : coleccion
+              };
           });
           window.DEBUG_SKU_GENDER = skuGender;
 
@@ -23452,6 +23761,9 @@ const renderRFSection = (container) => {
           statsRes['ACTUAL'].padres   = Array.from(statsRes['ACTUAL'].padres);
           statsRes['ANTERIOR'].padres = Array.from(statsRes['ANTERIOR'].padres);
           window.__reservaPaletas = paletasRes.size;
+
+          resumenReserva = reservaRaw.length
+              ? resumenDeReserva(reservaRaw, fichaArt, nivelVisto) : null;
 
           reservaPayload = reservaRaw.length ? {
               type: 'processed',
@@ -23824,58 +24136,17 @@ const renderRFSection = (container) => {
           const brandTitle = currentLayoutZona === 'MZN01' ? 'BG Y POWER' : (currentLayoutZona === 'MZN02' ? 'NORTH STAR' : 'BATA');
           const isMZN = currentLayoutZona.startsWith('MZN');
           
-          targetContainer.innerHTML = `
-                <div style="display:flex; width:100%; gap:20px; flex-direction:row; align-items:flex-start;">
-                    <div class="glass-panel" style="padding:20px; position:relative; flex: 0 0 70%; max-width: 70%; min-width:0; overflow-x:auto; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
-                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                          <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
-                              <span style="font-size:1.5rem;">🗺️</span> 
-                              ${isReserva ? `LAYOUT RESERVA - ${brandTitle}` : `LAYOUT ${zonaLabel} - ${brandTitle}`}
-                              ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
-                              ${(!isReserva && window.__verLayoutAnterior) ? '<span style="font-size:0.65rem; background:rgba(251,191,36,0.2); color:#fbbf24; border:1px solid rgba(251,191,36,0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">VERSIÓN ANTERIOR</span>' : ''}
-                          </h3>
-                          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
-                              <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
-                                  🕒 ${timestampStr}
-                              </div>
-                              ${btnStockHora}
-                              ${btnPublicarTodas}
-                              ${btnVerVersion}
-                          </div>
-                      </div>
-                      
-                      <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:800; justify-content:center; margin-bottom:20px;">
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(255,255,255,0.2);"></div> T. Anterior</div>
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#3b82f6; border:1px solid rgba(255,255,255,0.2);"></div> T. Actual</div>
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:linear-gradient(135deg, #fbbf24 0%, #ec4899 100%); border:1px solid rgba(255,255,255,0.2);"></div> Mixto</div>
-                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1);"></div> Vacío</div>
-                      </div>
-
-                      ${isReserva ? `
-                      <div style="display:flex; gap:8px; align-items:center; justify-content:center; margin-bottom:20px; flex-wrap:wrap;">
-                          <span style="font-size:0.72rem; font-weight:900; color:var(--text-muted); letter-spacing:1px;">NIVEL:</span>
-                          ${['TODOS'].concat(NIVELES_RESERVA).map(nv => {
-                              const activo = (window.__reservaNivel || 'TODOS') === nv;
-                              return `<button onclick="window.__verNivelReserva('${nv}')" style="
-                                  background:${activo ? 'rgba(59,130,246,0.22)' : 'rgba(255,255,255,0.04)'};
-                                  border:1px solid ${activo ? '#3b82f6' : 'rgba(255,255,255,0.14)'};
-                                  color:${activo ? '#fff' : '#cbd5e1'}; padding:6px 16px; border-radius:8px;
-                                  cursor:pointer; font-size:0.78rem; font-weight:900; letter-spacing:0.5px;
-                                  transition:all 0.15s;">${nv}</button>`;
-                          }).join('')}
-                          <span style="font-size:0.7rem; color:var(--text-muted); margin-left:6px;">
-                              cada nivel tiene dos paletas: posición 01 a la izquierda y 02 a la derecha
-                          </span>
-                      </div>` : ''}
-
-                      <div style="display:flex; gap:10px;">
-                          <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right; padding-top:1px;">
-                              ${Array.from({length:maxRows}, (_,i) => maxRows-i).map(n => `<div style="height:15px; display:flex; align-items:center; justify-content:flex-end;">${n}</div>`).join('')}
-                          </div>
-                          ${gridHtml}
-                      </div>
-                  </div>
-
+          // ══════════════════════════════════════════════════════════════════════════
+          // EL PANEL DE LA DERECHA
+          //
+          // La reserva trae el suyo y reemplaza a este entero: arriba no hay cumplimiento
+          // que medir —una columna no es una temporada— y ni las ubicaciones vacías ni la
+          // densidad por ubicación dicen nada cuando la unidad es la paleta.
+          // Ver panelReservaHTML y resumenDeReserva.
+          // ══════════════════════════════════════════════════════════════════════════
+          const ladoDerecho = isReserva
+              ? panelReservaHTML(resumenReserva, window.__reservaNivel || 'TODOS', window.__reservaSello)
+              : `
                   <div style="flex: 0 0 calc(30% - 20px); max-width: calc(30% - 20px); display:flex; flex-direction:column; gap:20px;">
                       
                       <div class="glass-panel" style="padding:20px; display:flex; flex-direction:column; gap:20px; border:1px solid rgba(236, 72, 153, 0.4); box-shadow:0 0 20px rgba(236, 72, 153, 0.1);">
@@ -24074,7 +24345,61 @@ const renderRFSection = (container) => {
                           </div>
 
                       </div>
+                  </div>`;
+
+          targetContainer.innerHTML = `
+                <div style="display:flex; width:100%; gap:20px; flex-direction:row; align-items:flex-start;">
+                    <div class="glass-panel" style="padding:20px; position:relative; flex: 0 0 70%; max-width: 70%; min-width:0; overflow-x:auto; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                          <h3 style="color:#fff; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
+                              <span style="font-size:1.5rem;">🗺️</span> 
+                              ${isReserva ? `LAYOUT RESERVA - ${brandTitle}` : `LAYOUT ${zonaLabel} - ${brandTitle}`}
+                              ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
+                              ${(!isReserva && window.__verLayoutAnterior) ? '<span style="font-size:0.65rem; background:rgba(251,191,36,0.2); color:#fbbf24; border:1px solid rgba(251,191,36,0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">VERSIÓN ANTERIOR</span>' : ''}
+                          </h3>
+                          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+                              <div style="text-align:right; font-size:0.85rem; color:#60a5fa; font-weight:800; border:1px solid rgba(59, 130, 246, 0.4); padding:4px 10px; border-radius:12px; background:rgba(59, 130, 246, 0.1);">
+                                  🕒 ${timestampStr}
+                              </div>
+                              ${btnStockHora}
+                              ${btnPublicarTodas}
+                              ${btnVerVersion}
+                          </div>
+                      </div>
+                      
+                      <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:800; justify-content:center; margin-bottom:20px;">
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#ef4444; border:1px solid rgba(255,255,255,0.2);"></div> T. Anterior</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:#3b82f6; border:1px solid rgba(255,255,255,0.2);"></div> T. Actual</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:linear-gradient(135deg, #fbbf24 0%, #ec4899 100%); border:1px solid rgba(255,255,255,0.2);"></div> Mixto</div>
+                          <div style="display:flex; align-items:center; gap:5px;"><div style="width:15px; height:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1);"></div> Vacío</div>
+                      </div>
+
+                      ${isReserva ? `
+                      <div style="display:flex; gap:8px; align-items:center; justify-content:center; margin-bottom:20px; flex-wrap:wrap;">
+                          <span style="font-size:0.72rem; font-weight:900; color:var(--text-muted); letter-spacing:1px;">NIVEL:</span>
+                          ${['TODOS'].concat(NIVELES_RESERVA).map(nv => {
+                              const activo = (window.__reservaNivel || 'TODOS') === nv;
+                              return `<button onclick="window.__verNivelReserva('${nv}')" style="
+                                  background:${activo ? 'rgba(59,130,246,0.22)' : 'rgba(255,255,255,0.04)'};
+                                  border:1px solid ${activo ? '#3b82f6' : 'rgba(255,255,255,0.14)'};
+                                  color:${activo ? '#fff' : '#cbd5e1'}; padding:6px 16px; border-radius:8px;
+                                  cursor:pointer; font-size:0.78rem; font-weight:900; letter-spacing:0.5px;
+                                  transition:all 0.15s;">${nv}</button>`;
+                          }).join('')}
+                          <span style="font-size:0.7rem; color:var(--text-muted); margin-left:6px;">
+                              cada nivel tiene dos paletas: posición 01 a la izquierda y 02 a la derecha
+                          </span>
+                      </div>` : ''}
+
+                      <div style="display:flex; gap:10px;">
+                          <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right; padding-top:1px;">
+                              ${Array.from({length:maxRows}, (_,i) => maxRows-i).map(n => `<div style="height:15px; display:flex; align-items:center; justify-content:flex-end;">${n}</div>`).join('')}
+                          </div>
+                          ${gridHtml}
+                      </div>
                   </div>
+
+                  ${ladoDerecho}
               </div>
           `;
 
