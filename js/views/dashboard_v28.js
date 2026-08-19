@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0251';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0252';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0251';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0251';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0251';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0251';
-import * as metasService from '../services_v245/metasService.js?v=29.0251';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0251';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0251';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0251';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0251';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0251';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0251';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0251';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0251';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0251';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0251';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0251';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0251';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0251';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0251';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0251';
-import { montarSlotting } from './slotting.js?v=29.0251';
+import * as adminService from '../services_v245/adminService.js?v=29.0252';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0252';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0252';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0252';
+import * as metasService from '../services_v245/metasService.js?v=29.0252';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0252';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0252';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0252';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0252';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0252';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0252';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0252';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0252';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0252';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0252';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0252';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0252';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0252';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0252';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0252';
+import { montarSlotting } from './slotting.js?v=29.0252';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0251';
+const VERSION = '29.0252';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2208,7 +2208,7 @@ const TABS = [
     { id: 'asistencia', label: 'Asistencia', icon: '📅' },
     { id: 'performance', label: 'Performance', icon: '📈', subTabs: [
         { id: 'historial', label: 'Historial', icon: '📅' },
-        { id: 'graficos', label: 'KPI Gráficos', icon: '📊' },
+        { id: 'graficos', label: 'Asistencia', icon: '✅' },
         { id: 'reporte', label: 'KPI Reporte', icon: '📋' }
     ]},
     { id: 'rfs', label: 'RF´s', icon: '🔋' },
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0251');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0252');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5266,271 +5266,229 @@ export const renderDashboard = async (container, user, onLogout) => {
   let kpiEnd = getLogicalDate();
   let kpiSearch = '';
 
+  /**
+   * CONTROL DE ASISTENCIA POR RANGO DE FECHAS.
+   *
+   * Reemplaza al panel de "KPI Gráficos" (rendimiento general, evolución y top 5),
+   * que mostraba promedios acumulados de todo el histórico. Daniel necesitaba lo
+   * contrario: quién vino y quién no, día por día, en una semana concreta.
+   *
+   * Al entrar SIEMPRE se abre en la semana actual —lunes a domingo—, sin recordar
+   * el último rango consultado: lo que se mira todos los días es la semana en curso,
+   * y encontrarse con la de hace un mes obliga a corregir el filtro cada vez.
+   *
+   * Tres reglas que decidieron cómo se lee el cuadro:
+   *
+   *   ✓  vino          present === true
+   *   ✗  no vino       present === false y sin observación
+   *   !  observación   hay justification, venga o no venga
+   *   –  sin registro  ese día no se cargó todavía
+   *
+   * El guión importa: un día que aún no llegó NO es una falta. Marcarlo con ✗ diría
+   * que faltó todo el mundo. Y una falta con motivo —"Vacaciones"— tampoco es la
+   * misma falta que la de quien no avisó, por eso lleva ! y no ✗.
+   */
   const renderKPIGraphsSection = (container) => {
-    let rawLog = adminService.getPerformanceLog();
-    if (!Array.isArray(rawLog)) rawLog = [];
     if (!syncEngine.isFirstPullDone) {
         container.innerHTML = `<div class="glass-panel" style="padding:5rem; text-align:center;">
             <div class="spinner" style="margin:0 auto 1.5rem auto;"></div>
-            <h4 style="color:var(--primary); font-weight:800;">Sincronizando Performance...</h4>
-            <p style="color:var(--text-muted); font-size:0.85rem;">Obteniendo últimos registros de la nube.</p>
+            <p style="color:var(--text-muted);">Cargando asistencia...</p>
         </div>`;
         return;
     }
-    if (rawLog.length === 0) {
-        container.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center; color:var(--text-muted);">
-            <i class="fas fa-chart-line fa-3x" style="opacity:0.2; margin-bottom:1rem;"></i>
-            <h4>Sin datos de Performance</h4>
-            <p style="font-size:0.85rem;">Es necesario cerrar la asistencia de uno o más días para generar estadísticas.</p>
-            <button id="btn_retry_sync_perf" class="btn-secondary" style="margin-top:1.5rem; padding:0.5rem 1rem;">🔄 Reintentar Sincronización</button>
-        </div>`;
-        const btnRetry = document.getElementById('btn_retry_sync_perf');
-        if (btnRetry) btnRetry.onclick = async () => {
-            btnRetry.disabled = true;
-            btnRetry.innerHTML = '⌛ Sincronizando...';
-            await adminService.initializeAdminData(true);
-            renderKPIGraphsSection(container);
+
+    // --- fechas, siempre locales -------------------------------------------------
+    // Nada de toISOString(): devuelve UTC y a partir de las 19:00 de Lima ya está
+    // contando el día siguiente, que es justo cuando entra el turno noche.
+    const claveDe = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const desdeClave = (s) => { const p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+    const sumarDias = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+
+    const lunesDeLaSemanaDe = (d) => {
+        const x = new Date(d);
+        // getDay(): 0 es domingo. El lunes de la semana del domingo es 6 días atrás.
+        x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+        return x;
+    };
+
+    // Semana ISO: la del jueves manda. Sin ese ajuste, las semanas de fin de año
+    // salen corridas y el rótulo diría un número que no coincide con el calendario.
+    const numeroDeSemana = (d) => {
+        const jue = sumarDias(lunesDeLaSemanaDe(d), 3);
+        const eneUno = new Date(jue.getFullYear(), 0, 1);
+        return Math.ceil(((jue - eneUno) / 86400000 + 1) / 7);
+    };
+
+    const DIAS_CORTOS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+    const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+    const hoy = desdeClave(getLogicalDate());
+    const lunes = lunesDeLaSemanaDe(hoy);
+    let desde = claveDe(lunes);
+    let hasta = claveDe(sumarDias(lunes, 6));
+
+    const TOPE_DIAS = 62;   // dos meses: más columnas que eso no se leen en pantalla
+
+    /** Los días del rango, de a uno. */
+    const diasDelRango = () => {
+        const a = desdeClave(desde), b = desdeClave(hasta);
+        const lista = [];
+        for (let d = new Date(a); d <= b && lista.length < TOPE_DIAS; d = sumarDias(d, 1)) lista.push(new Date(d));
+        return lista;
+    };
+
+    /**
+     * Una fila por operario que aparezca en algún día del rango. No se listan todos
+     * los trabajadores activos a propósito: quien no tiene ni un registro en estas
+     * fechas saldría como una fila entera de guiones, que no dice nada.
+     */
+    const armarFilas = (dias) => {
+        const porDni = new Map();
+        dias.forEach(d => {
+            const reg = adminService.getAttendance(claveDe(d));
+            if (!reg || !Array.isArray(reg.data)) return;
+            reg.data.forEach(p => {
+                const dni = String(p.dni || '').trim();
+                if (!dni) return;
+                if (!porDni.has(dni)) {
+                    porDni.set(dni, {
+                        dni,
+                        nombre: `${(p.apellidos || '').trim()}, ${(p.nombre || '').trim()}`.replace(/^, |, $/g, ''),
+                        marcas: {}
+                    });
+                }
+                const obs = String(p.justification || '').trim();
+                porDni.get(dni).marcas[claveDe(d)] = { vino: p.present === true, obs };
+            });
+        });
+        return Array.from(porDni.values()).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    };
+
+    /** El símbolo de una celda. La observación manda sobre el resto. */
+    const simboloDe = (marca) => {
+        if (!marca) return { s: '–', color: '#475569', titulo: 'Sin registro' };
+        if (marca.obs) return { s: '!', color: '#f59e0b', titulo: marca.obs };
+        return marca.vino
+            ? { s: '✓', color: '#22c55e', titulo: 'Asistió' }
+            : { s: '✗', color: '#ef4444', titulo: 'No asistió' };
+    };
+
+    const pintar = () => {
+        // Si alguien invierte las fechas, se enderezan solas en vez de mostrar vacío.
+        if (desdeClave(desde) > desdeClave(hasta)) { const t = desde; desde = hasta; hasta = t; }
+
+        const dias = diasDelRango();
+        const filas = armarFilas(dias);
+
+        let totVino = 0, totFalto = 0, totObs = 0;
+        filas.forEach(f => dias.forEach(d => {
+            const m = f.marcas[claveDe(d)];
+            if (!m) return;
+            if (m.obs) totObs++;
+            else if (m.vino) totVino++;
+            else totFalto++;
+        }));
+
+        const a = desdeClave(desde), b = desdeClave(hasta);
+        const rotulo = `Semana ${numeroDeSemana(a)} · ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`;
+
+        const th = (txt, alinear) => `<th style="padding:10px 12px; text-align:${alinear || 'left'}; color:var(--text-muted); font-weight:700; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.25); position:sticky; top:0; z-index:2;">${txt}</th>`;
+
+        const tarjeta = (rot, valor, color) => `
+            <div class="glass-panel" style="padding:1rem 1.5rem; text-align:center; border-left:4px solid ${color}; min-width:150px;">
+                <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">${rot}</h4>
+                <h2 style="margin:0.4rem 0 0 0; font-size:1.8rem; color:${color}; font-weight:800;">${valor.toLocaleString('es-PE')}</h2>
+            </div>`;
+
+        const cuerpo = filas.length ? filas.map((f, i) => {
+            let vinoEnRango = 0;
+            const celdas = dias.map(d => {
+                const m = f.marcas[claveDe(d)];
+                const info = simboloDe(m);
+                if (m && !m.obs && m.vino) vinoEnRango++;
+                return `<td title="${String(info.titulo).replace(/"/g, '&quot;')}" style="padding:8px 12px; text-align:center; color:${info.color}; font-weight:800; font-size:1rem; border-bottom:1px solid rgba(255,255,255,0.05);">${info.s}</td>`;
+            }).join('');
+            return `<tr style="background:${i % 2 ? 'rgba(255,255,255,0.02)' : 'transparent'};">
+                <td style="padding:8px 12px; text-align:center; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.05);">${i + 1}</td>
+                <td style="padding:8px 12px; color:#e2e8f0; white-space:nowrap; border-bottom:1px solid rgba(255,255,255,0.05);">${f.nombre}</td>
+                <td style="padding:8px 12px; color:var(--text-muted); font-family:monospace; border-bottom:1px solid rgba(255,255,255,0.05);">${f.dni}</td>
+                ${celdas}
+                <td style="padding:8px 12px; text-align:center; color:#cbd5e1; font-weight:700; border-bottom:1px solid rgba(255,255,255,0.05);">${vinoEnRango}/${dias.length}</td>
+            </tr>`;
+        }).join('') : `<tr><td colspan="${dias.length + 4}" style="padding:3rem; text-align:center; color:var(--text-muted);">
+                No hay asistencia registrada en estas fechas.
+            </td></tr>`;
+
+        container.innerHTML = `
+            <div class="glass-panel animate-fade-in" style="padding:1.5rem; margin-bottom:1.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <div>
+                        <h4 style="margin:0; color:#fff; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;">🗓️ CONTROL DE ASISTENCIA</h4>
+                        <span id="rotuloSemana" style="font-size:0.8rem; color:#94a3b8;">${rotulo}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                        <button id="btnSemAnterior" class="btn-secondary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">◀ Semana anterior</button>
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Desde</label>
+                        <input type="date" id="fDesde" value="${desde}" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:0.4rem 0.6rem; font-size:0.8rem;">
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Hasta</label>
+                        <input type="date" id="fHasta" value="${hasta}" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:0.4rem 0.6rem; font-size:0.8rem;">
+                        <button id="btnSemSiguiente" class="btn-secondary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">Semana siguiente ▶</button>
+                        <button id="btnSemActual" class="btn-secondary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">Semana actual</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+                ${tarjeta('Operarios', filas.length, '#38bdf8')}
+                ${tarjeta('Asistencias', totVino, '#22c55e')}
+                ${tarjeta('Faltas', totFalto, '#ef4444')}
+                ${tarjeta('Observaciones', totObs, '#f59e0b')}
+            </div>
+
+            <div class="glass-panel" style="padding:1.5rem;">
+                <div style="overflow-x:auto; max-height:65vh;">
+                    <table class="data-table" style="width:100%; border-collapse:collapse; font-size:0.8rem; white-space:nowrap;">
+                        <thead>
+                            <tr>
+                                ${th('N°', 'center')}
+                                ${th('Operario')}
+                                ${th('DNI')}
+                                ${dias.map(d => th(`${DIAS_CORTOS[d.getDay()]} ${d.getDate()}`, 'center')).join('')}
+                                ${th('Asist.', 'center')}
+                            </tr>
+                        </thead>
+                        <tbody>${cuerpo}</tbody>
+                    </table>
+                </div>
+
+                <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:1.2rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.1); font-size:0.78rem; color:var(--text-muted);">
+                    <span><strong style="color:#22c55e; font-size:1rem;">✓</strong> Asistió</span>
+                    <span><strong style="color:#ef4444; font-size:1rem;">✗</strong> No asistió</span>
+                    <span><strong style="color:#f59e0b; font-size:1rem;">!</strong> Con observación <em style="opacity:0.7;">(pasa el cursor para ver el motivo)</em></span>
+                    <span><strong style="color:#475569; font-size:1rem;">–</strong> Sin registro ese día</span>
+                </div>
+            </div>`;
+
+        const buscar = (id) => container.querySelector(id);
+        buscar('#fDesde').onchange = (e) => { desde = e.target.value; pintar(); };
+        buscar('#fHasta').onchange = (e) => { hasta = e.target.value; pintar(); };
+        const correrSemanas = (n) => {
+            desde = claveDe(sumarDias(desdeClave(desde), 7 * n));
+            hasta = claveDe(sumarDias(desdeClave(hasta), 7 * n));
+            pintar();
         };
-        return;
-    }
-
-    const parsePct = (str) => parseFloat(str.replace('%', '')) || 0;
-    
-    const kpiStart = localStorage.getItem('kpi_analitica_date_from') || fechaLogicaMenos(7);
-    const kpiEnd = localStorage.getItem('kpi_analitica_date_to') || getLogicalDate();
-    
-    const formatDateEs = (dStr) => {
-        if (!dStr) return '';
-        const [y, m, d] = dStr.split('-');
-        return `${d}/${m}/${y}`;
+        buscar('#btnSemAnterior').onclick = () => correrSemanas(-1);
+        buscar('#btnSemSiguiente').onclick = () => correrSemanas(1);
+        buscar('#btnSemActual').onclick = () => {
+            const l = lunesDeLaSemanaDe(desdeClave(getLogicalDate()));
+            desde = claveDe(l);
+            hasta = claveDe(sumarDias(l, 6));
+            pintar();
+        };
     };
 
-    const datesMap = {};
-    rawLog.forEach(entry => {
-        if (entry.date < kpiStart || entry.date > kpiEnd) return;
-        if (!datesMap[entry.date]) datesMap[entry.date] = { sum: 0, count: 0 };
-        datesMap[entry.date].sum += parsePct(entry.rendimiento);
-        datesMap[entry.date].count++;
-    });
-    const sortedDates = Object.keys(datesMap).sort();
-    const evolutionLabels = sortedDates;
-    const evolutionData = sortedDates.map(d => Math.round(datesMap[d].sum / datesMap[d].count));
-
-
-    const globalWorkerMap = {};
-    const idxWorkers = indiceWorkersPorDni();
-    rawLog.forEach(entry => {
-        if (entry.date < kpiStart || entry.date > kpiEnd) return;
-
-        const key = (entry.dni || '').toString().trim();
-        if (!globalWorkerMap[key]) {
-            const worker = idxWorkers.get(key);
-            const currentName = worker ? `${worker.apellidos || worker.Apellidos || ''}, ${worker.nombre || worker.Nombre || ''}` : `${entry.apellidos}, ${entry.nombre}`;
-            globalWorkerMap[key] = { name: currentName, sum: 0, count: 0, tardanzas: 0, diasTrabajados: 0, faltas: 0, faltasJustificadas: 0 };
-        }
-        
-        if (entry.asistencia === 'P') {
-            globalWorkerMap[key].sum += parsePct(entry.rendimiento);
-            globalWorkerMap[key].count++;
-            globalWorkerMap[key].diasTrabajados++;
-            if (entry.puntualidad === 'NO') globalWorkerMap[key].tardanzas++;
-        } else {
-            const hasJustification = entry.justification && 
-                                   entry.justification.trim() !== '' && 
-                                   entry.justification.toUpperCase() !== 'NO';
-            if (!hasJustification) globalWorkerMap[key].faltas++;
-            else globalWorkerMap[key].faltasJustificadas++;
-        }
-    });
-
-    const workerRanking = Object.values(globalWorkerMap)
-        .filter(w => w.count > 0)
-        .map(w => ({ name: w.name, avg: Math.round(w.sum / w.count), tardanzas: w.tardanzas }))
-        .sort((a,b) => b.avg - a.avg).slice(0,5);
-
-    const tardanzasRanking = Object.values(globalWorkerMap)
-        .filter(w => w.tardanzas > 0)
-        .sort((a,b) => b.tardanzas - a.tardanzas);
-
-    const faltasRanking = Object.values(globalWorkerMap)
-        .filter(w => w.faltas > 0)
-        .sort((a,b) => b.faltas - a.faltas);
-
-    const faltasJustificadasRanking = Object.values(globalWorkerMap)
-        .filter(w => w.faltasJustificadas > 0)
-        .sort((a,b) => b.faltasJustificadas - a.faltasJustificadas);
-
-    const globalAvg = evolutionData.length ? Math.round(evolutionData.reduce((a, b) => a + b, 0) / evolutionData.length) : 0;
-    const getStatusColor = (val) => {
-        if (val >= 90) return '#22c55e';
-        if (val >= 80) return '#f59e0b';
-        return '#ef4444';
-    };
-
-    container.innerHTML = `
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
-            <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid ${getStatusColor(globalAvg)};">
-                <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Rendimiento General</h4>
-                <h2 style="margin:0.5rem 0; font-size:2.2rem; color:${getStatusColor(globalAvg)}; font-weight:800;">${globalAvg}%</h2>
-                <span style="font-size:0.7rem; background:${getStatusColor(globalAvg)}22; color:${getStatusColor(globalAvg)}; padding:2px 8px; border-radius:10px; font-weight:700;">
-                    ${globalAvg >= 90 ? 'EXCELENTE' : (globalAvg >= 80 ? 'REGULAR' : 'CRÍTICO')}
-                </span>
-            </div>
-            <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid var(--primary);">
-                <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Días Registrados</h4>
-                <h2 style="margin:0.5rem 0; font-size:2.2rem; color:#fff; font-weight:800;">${sortedDates.length}</h2>
-                <span style="font-size:0.7rem; color:var(--text-muted);">Historial acumulado</span>
-            </div>
-            <div class="glass-panel" style="padding:1.5rem; text-align:center; border-left:4px solid #fcd34d;">
-                <h4 style="margin:0; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Top Operario</h4>
-                <h2 style="margin:0.5rem 0; font-size:1.1rem; color:#fff; line-height:1.2; font-weight:700;">${(workerRanking[0] ? workerRanking[0].name : undefined) || '-'}</h2>
-                <span style="font-size:0.8rem; color:#fcd34d; font-weight:800;">⭐ ${(workerRanking[0] ? workerRanking[0].avg : undefined) || 0}%</span>
-            </div>
-        </div>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
-            <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
-                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">📈 Evolución de Rendimiento</h4>
-                <div style="height:300px; position:relative; overflow:hidden;">
-                    <canvas id="chartEvolution"></canvas>
-                </div>
-            </div>
-            <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
-                <h4 style="margin:0 0 1rem 0; color:#fff; font-size:0.9rem;">🏆 Top 5 Operarios</h4>
-                <div style="height:300px; position:relative; overflow:hidden;">
-                    <canvas id="chartRanking"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="glass-panel animate-fade-in" style="padding:1.5rem; margin-bottom:2rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:1rem;">
-                <div>
-                    <h4 style="margin:0; color:#fff; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;">📉 ANALÍTICA DE INCIDENCIAS</h4>
-                    <span style="font-size:0.75rem; color:#94a3b8; font-style:italic;">* Análisis consolidado de puntualidad y asistencia</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7); flex-wrap:wrap;">
-                     <span>📅 DE:</span>
-                     <input type="date" id="kpi_analitica_from" value="${kpiStart}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
-                     <span>HASTA:</span>
-                     <input type="date" id="kpi_analitica_to" value="${kpiEnd}" style="background:#0b1120; color:#fff; border:1px solid rgba(255,255,255,0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme:dark;" />
-                </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.2rem;">
-                <!-- COLUMNA IZQUIERDA: TARDANZAS -->
-                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #fb923c; box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), inset 0 0 10px rgba(251, 146, 60, 0.1);">
-                    <h5 style="margin:0 0 1rem 0; color:#fb923c; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">🚫</span> TARDANZAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
-                    </h5>
-                    <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
-                            <thead>
-                                <tr style="border-bottom:2px solid rgba(251, 146, 60, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N°</th>
-                                    <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">DÍAS</th>
-                                    <th style="padding:0.4rem; text-align:center; background:rgba(251, 146, 60, 0.1); color:#fb923c; font-weight:900;">TARD.</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tardanzasRanking.length ? tardanzasRanking.map((w, idx) => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:0.3rem 0.2rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
-                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">${w.name}</td>
-                                        <td style="padding:0.3rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
-                                        <td style="padding:0.3rem; text-align:center; font-weight:950; color:#fb923c; background:rgba(251, 146, 60, 0.05);">${w.tardanzas}</td>
-                                    </tr>
-                                `).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; color:#64748b;">Sin incidencias</td></tr>'}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- COLUMNA CENTRAL: FALTAS INJUSTIFICADAS -->
-                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3), inset 0 0 10px rgba(248, 113, 113, 0.1);">
-                    <h5 style="margin:0 0 1rem 0; color:#f87171; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">⚠️</span> FALTAS INJUSTIFICADAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
-                    </h5>
-                    <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
-                            <thead>
-                                <tr style="border-bottom:2px solid rgba(248, 113, 113, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N°</th>
-                                    <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">DÍAS</th>
-                                    <th style="padding:0.4rem; text-align:center; background:rgba(248, 113, 113, 0.1); color:#f87171; font-weight:900;">FALTAS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${faltasRanking.length ? faltasRanking.map((w, idx) => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:0.3rem 0.2rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
-                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">${w.name}</td>
-                                        <td style="padding:0.3rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
-                                        <td style="padding:0.3rem; text-align:center; font-weight:950; color:#f87171; background:rgba(248, 113, 113, 0.05);">${w.faltas}</td>
-                                    </tr>
-                                `).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; color:#64748b;">Sin faltas</td></tr>'}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- COLUMNA DERECHA: FALTAS JUSTIFICADAS -->
-                <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:1rem; border:2px solid #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 10px rgba(6, 182, 212, 0.1);">
-                    <h5 style="margin:0 0 1rem 0; color:#06b6d4; font-size:0.85rem; font-weight:900; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="font-size:1.1rem;">✅</span> FALTAS JUSTIFICADAS (${formatDateEs(kpiStart)} - ${formatDateEs(kpiEnd)})
-                    </h5>
-                    <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.72rem;">
-                            <thead>
-                                <tr style="border-bottom:2px solid rgba(6, 182, 212, 0.3); color:#cbd5e1;">
-                                    <th style="padding:0.4rem 0.2rem; text-align:center; width:20px;">N°</th>
-                                    <th style="padding:0.4rem; text-align:left;">OPERARIO</th>
-                                    <th style="padding:0.4rem; text-align:center;">DÍAS</th>
-                                    <th style="padding:0.4rem; text-align:center; background:rgba(6, 182, 212, 0.1); color:#06b6d4; font-weight:900;">FALTAS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${faltasJustificadasRanking.length ? faltasJustificadasRanking.map((w, idx) => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:0.3rem 0.2rem; text-align:center; color:#94a3b8; font-weight:700;">${idx + 1}</td>
-                                        <td style="padding:0.3rem 0.4rem; color:#f8fafc; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">${w.name}</td>
-                                        <td style="padding:0.3rem; text-align:center; color:#38bdf8; font-weight:700;">${w.diasTrabajados}d</td>
-                                        <td style="padding:0.3rem; text-align:center; font-weight:950; color:#06b6d4; background:rgba(6, 182, 212, 0.05);">${w.faltasJustificadas}</td>
-                                    </tr>
-                                `).join('') : '<tr><td colspan="4" style="padding:2rem; text-align:center; color:#64748b;">Sin faltas</td></tr>'}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    setTimeout(() => {
-        const fromInput = document.getElementById('kpi_analitica_from');
-        const toInput = document.getElementById('kpi_analitica_to');
-        if (fromInput) {
-            fromInput.onchange = (e) => {
-                localStorage.setItem('kpi_analitica_date_from', e.target.value);
-                renderKPIGraphsSection(container);
-            };
-        }
-        if (toInput) {
-            toInput.onchange = (e) => {
-                localStorage.setItem('kpi_analitica_date_to', e.target.value);
-                renderKPIGraphsSection(container);
-            };
-        }
-
-        const ctxEvo = (document.getElementById('chartEvolution') ? document.getElementById('chartEvolution').getContext('2d') : null);
-        const ctxRank = (document.getElementById('chartRanking') ? document.getElementById('chartRanking').getContext('2d') : null);
-        if (!ctxEvo || !ctxRank) return;
-        if (window.evoChart instanceof Chart) window.evoChart.destroy();
-        if (window.rankChart instanceof Chart) window.rankChart.destroy();
-        window.evoChart = new Chart(ctxEvo, { type: 'line', data: { labels: evolutionLabels, datasets: [{ label: 'Promedio %', data: evolutionData, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', borderWidth: 3, tension: 0.1, fill: true, pointBackgroundColor: '#fff', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8' } } }, plugins: { legend: { display: false } } } });
-        window.rankChart = new Chart(ctxRank, { type: 'bar', data: { labels: workerRanking.map(w => w.name.split(' ')[0]), datasets: [{ data: workerRanking.map(w => w.avg), backgroundColor: workerRanking.map(w => getStatusColor(w.avg)), borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, indexAxis: 'y', scales: { x: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }, y: { grid: { display: false }, ticks: { color: '#fff', font: { weight: 'bold' } } } }, plugins: { legend: { display: false } } } });
-    }, 50);
+    pintar();
   };
 
   const renderKPIReportSection = (container) => {
@@ -15779,7 +15737,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0251 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0252 | MOBILE PORTAL
                             </div>
                     </div>
 
