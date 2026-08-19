@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0260';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0261';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0260';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0260';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0260';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0260';
-import * as metasService from '../services_v245/metasService.js?v=29.0260';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0260';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0260';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0260';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0260';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0260';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0260';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0260';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0260';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0260';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0260';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0260';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0260';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0260';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0260';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0260';
-import { montarSlotting } from './slotting.js?v=29.0260';
+import * as adminService from '../services_v245/adminService.js?v=29.0261';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0261';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0261';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0261';
+import * as metasService from '../services_v245/metasService.js?v=29.0261';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0261';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0261';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0261';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0261';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0261';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0261';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0261';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0261';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0261';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0261';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0261';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0261';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0261';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0261';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0261';
+import { montarSlotting } from './slotting.js?v=29.0261';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0260';
+const VERSION = '29.0261';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0260');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0261');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5367,6 +5367,24 @@ export const renderDashboard = async (container, user, onLogout) => {
     })();
 
     /**
+     * El rango partido en semanas. Con una sola, los encabezados van "LUN", "MAR"...
+     * Con varias hace falta la fecha: veintiuna columnas diciendo LUN MAR MIE repetido
+     * no dejan saber cual es cual, y menos si el rango cruza de mes.
+     */
+    const semanasDelRango = (dias) => {
+        const grupos = [];
+        dias.forEach(d => {
+            const n = numeroDeSemana(d);
+            const ultimo = grupos[grupos.length - 1];
+            if (ultimo && ultimo.semana === n) ultimo.dias.push(d);
+            else grupos.push({ semana: n, dias: [d] });
+        });
+        return grupos;
+    };
+
+    const ddmm = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+    /**
      * EL ÚLTIMO DÍA CERRADO del rango, y los que quedaron abiertos.
      *
      * Las tarjetas del resumen cuentan solo ese último día, no toda la semana. Acumular
@@ -5460,8 +5478,15 @@ export const renderDashboard = async (container, user, onLogout) => {
      */
     const mostrarImagen = (dias, filas) => {
         const ESCALA = 2;
+        const semanas = semanasDelRango(dias);
+        const variasSemanas = semanas.length > 1;
+
         const MARGEN = 16, ALTO_FILA = 17, ALTO_CAB = 62, ALTO_PIE = 32, ALTO_TARJETAS = 52;
-        const ANCHO_NUM = 24, ANCHO_NOMBRE = 196, ANCHO_DNI = 62, ANCHO_CARGO = 94, ANCHO_DIA = 32;
+        // Con varias semanas el encabezado va en dos lineas -"LUN" arriba, "03/08" abajo-
+        // y necesita algo mas de alto y de ancho por columna.
+        const ALTO_2DA_LINEA = variasSemanas ? 10 : 0;
+        const ANCHO_NUM = 24, ANCHO_NOMBRE = 196, ANCHO_DNI = 62, ANCHO_CARGO = 94;
+        const ANCHO_DIA = variasSemanas ? 36 : 32;
 
         // El cargo sale del maestro de trabajadores, cruzado por DNI. Los nombres
         // largos no entran en la columna: "AYUDANTE DE ALMACEN" son 19 caracteres y
@@ -5478,7 +5503,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         };
 
         const ancho = MARGEN * 2 + ANCHO_NUM + ANCHO_NOMBRE + ANCHO_DNI + ANCHO_CARGO + dias.length * ANCHO_DIA;
-        const alto = ALTO_CAB + ALTO_TARJETAS + filas.length * ALTO_FILA + ALTO_PIE + MARGEN;
+        const alto = ALTO_CAB + ALTO_TARJETAS + ALTO_2DA_LINEA + filas.length * ALTO_FILA + ALTO_PIE + MARGEN;
 
         const lienzo = document.createElement('canvas');
         lienzo.width = ancho * ESCALA;
@@ -5529,7 +5554,10 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const a = desdeClave(desde), b = desdeClave(hasta);
         texto('CONTROL DE ASISTENCIA', MARGEN, 21, { color: '#ffffff', tam: 16, peso: 700 });
-        texto(`Semana ${numeroDeSemana(a)}  ·  ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`,
+        const cuales = variasSemanas
+            ? `Semanas ${semanas[0].semana} a ${semanas[semanas.length - 1].semana}`
+            : `Semana ${numeroDeSemana(a)}`;
+        texto(`${cuales}  ·  ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`,
               MARGEN, 38, { color: '#9fb3c8', tam: 10.5 });
         // Sin esto, quien recibe la imagen no sabe a que dia corresponden los cuatro numeros.
         if (ultimo) {
@@ -5563,23 +5591,30 @@ export const renderDashboard = async (container, user, onLogout) => {
         });
 
         // --- Encabezado de columnas: fondo propio, si no parece una fila más ------
-        const yCab = ALTO_CAB + ALTO_TARJETAS;
-        g.fillStyle = '#1c2531';
-        g.fillRect(MARGEN, yCab - 9, ancho - MARGEN * 2, 18);
-
+        const yCab = ALTO_CAB + ALTO_TARJETAS + ALTO_2DA_LINEA;
         const xNum = MARGEN + ANCHO_NUM / 2;
         const xNombre = MARGEN + ANCHO_NUM;
         const xDni = xNombre + ANCHO_NOMBRE;
         const xCargo = xDni + ANCHO_DNI;
-        const xDia = (i) => xCargo + ANCHO_CARGO + i * ANCHO_DIA + ANCHO_DIA / 2;
+        const xPrimerDia = xCargo + ANCHO_CARGO;
+        const xDia = (i) => xPrimerDia + i * ANCHO_DIA + ANCHO_DIA / 2;
+
+        g.fillStyle = '#1c2531';
+        g.fillRect(MARGEN, yCab - 9 - ALTO_2DA_LINEA, ancho - MARGEN * 2, 18 + ALTO_2DA_LINEA);
 
         const COLOR_CAB = '#7d8ea1';
-        texto('#', xNum, yCab, { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' });
-        texto('NOMBRES Y APELLIDOS', xNombre, yCab, { color: COLOR_CAB, tam: 8.5, peso: 700 });
-        texto('DNI', xDni, yCab, { color: COLOR_CAB, tam: 8.5, peso: 700 });
-        texto('CARGO', xCargo, yCab, { color: COLOR_CAB, tam: 8.5, peso: 700 });
-        dias.forEach((d, i) => texto(DIAS_TRES[d.getDay()], xDia(i), yCab,
-                                     { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' }));
+        texto('#', xNum, yCab - ALTO_2DA_LINEA / 2, { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' });
+        texto('NOMBRES Y APELLIDOS', xNombre, yCab - ALTO_2DA_LINEA / 2, { color: COLOR_CAB, tam: 8.5, peso: 700 });
+        texto('DNI', xDni, yCab - ALTO_2DA_LINEA / 2, { color: COLOR_CAB, tam: 8.5, peso: 700 });
+        texto('CARGO', xCargo, yCab - ALTO_2DA_LINEA / 2, { color: COLOR_CAB, tam: 8.5, peso: 700 });
+        dias.forEach((d, i) => {
+            if (variasSemanas) {
+                texto(DIAS_TRES[d.getDay()], xDia(i), yCab - 7, { color: COLOR_CAB, tam: 7.5, peso: 700, alinear: 'center' });
+                texto(ddmm(d), xDia(i), yCab + 3, { color: '#9fb3c8', tam: 8, peso: 700, alinear: 'center' });
+            } else {
+                texto(DIAS_TRES[d.getDay()], xDia(i), yCab, { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' });
+            }
+        });
 
         // --- Filas ----------------------------------------------------------------
         filas.forEach((f, i) => {
@@ -5696,9 +5731,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             : 'sin días cerrados';
 
         const a = desdeClave(desde), b = desdeClave(hasta);
-        const rotulo = `Semana ${numeroDeSemana(a)} · ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`;
+        const semanas = semanasDelRango(dias);
+        const variasSemanas = semanas.length > 1;
+        const cuales = variasSemanas
+            ? `Semanas ${semanas[0].semana} a ${semanas[semanas.length - 1].semana}`
+            : `Semana ${numeroDeSemana(a)}`;
+        const rotulo = `${cuales} · ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`;
 
-        const th = (txt, alinear) => `<th style="padding:10px 12px; text-align:${alinear || 'left'}; color:var(--text-muted); font-weight:700; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.25); position:sticky; top:0; z-index:2;">${txt}</th>`;
+        const th = (txt, alinear) => `<th style="padding:10px 12px; text-align:${alinear || 'left'}; color:var(--text-muted); font-weight:700; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.25); position:sticky; top:0; z-index:2; line-height:1.25;">${txt}</th>`;
 
         const tarjeta = (rot, valor, color) => `
             <div class="glass-panel" style="padding:1rem 1.5rem; text-align:center; border-left:4px solid ${color}; min-width:150px;">
@@ -5767,7 +5807,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 ${th('N°', 'center')}
                                 ${th('Operario')}
                                 ${th('DNI')}
-                                ${dias.map(d => th(`${DIAS_CORTOS[d.getDay()]} ${d.getDate()}`, 'center')).join('')}
+                                ${dias.map(d => th(variasSemanas
+                                    ? `${DIAS_CORTOS[d.getDay()]}<br><span style="font-size:0.92em; color:#9fb3c8;">${ddmm(d)}</span>`
+                                    : `${DIAS_CORTOS[d.getDay()]} ${d.getDate()}`, 'center')).join('')}
                                 ${th('Asist.', 'center')}
                             </tr>
                         </thead>
@@ -16048,7 +16090,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0260 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0261 | MOBILE PORTAL
                             </div>
                     </div>
 
