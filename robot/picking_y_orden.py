@@ -120,9 +120,18 @@ ETQ_ORD_HASTA = "A registro de hora de creación"
 ETQ_ORD_ESTADO_DE = "De estado"
 ETQ_ORD_ESTADO_A = "A estado"
 
-# LA SEGUNDA DESCARGA DEL DETALLE DE ORDEN: lo que sigue sin atender, mirando 90
-# días hacia atrás. Ver descargar_pendientes() para el porqué.
-DIAS_PENDIENTES = 90
+# LA SEGUNDA DESCARGA DEL DETALLE DE ORDEN: lo que sigue sin atender.
+#
+# UN AÑO HACIA ATRÁS, Y NO 90 DÍAS. Se arrancó con 90 y el 19-ago-2026 se probó una
+# corrida de 365 para ver si quedaba algo colgado. Quedaba, y mucho: 45.891 pares
+# —el 36% de todo el pendiente— son anteriores al 21 de mayo. Hay pedidos sin
+# asignar de agosto de 2025, y el bulto está en diciembre de 2025 (18.907 pares en
+# 102 líneas) y en febrero de 2026 (10.012 pares en apenas 5 líneas).
+#
+# Y NO CUESTA NADA: la corrida de 365 días tardó 7,9 minutos contra 7,4 la de 90, y
+# el archivo pesó 11,60 MB contra 12,10. El filtro es por ESTADO, no por fecha: lo
+# viejo que sigue abierto son unas pocas cientos de líneas.
+DIAS_PENDIENTES = 365
 # LOS DOS ESTADOS QUE PUEDEN TENER PENDIENTE, medido el 19-ago-2026 sobre los doce
 # archivos que hay: "Creada" (76.113 lineas, 152.698 pares) y "Parcialmente
 # asignado" (2.549 lineas, 68.563 pares). Enviado, Asignado, Empaquetado, En
