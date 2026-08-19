@@ -152,7 +152,9 @@ DIAS_PENDIENTES = 90
 # escribe distinto segun la lista, y encima no siempre igual: el 19-ago-2026 la
 # de "De estado" ofrecio los cortos a las 06:24 y los largos a las 06:47.
 ESTADO_DESDE = ("Creado", "Creada")
-ESTADO_HASTA = ("Asign Parcial", "Parcialmente asignado")
+# "Asig Parcial" SIN LA N: asi lo escribe la lista, comprobado en el log del
+# 19-ago 07:42. La variante con n estaba mal leida de una captura.
+ESTADO_HASTA = ("Asig Parcial", "Asign Parcial", "Parcialmente asignado")
 ARCHIVO_PENDIENTES = "Detalle Orden Pendientes.csv"
 
 # Cuánto tiene que pesar cada archivo para darlo por bueno. Los que ya están
