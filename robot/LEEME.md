@@ -50,6 +50,8 @@ Si imprime la línea, está el nuevo. Si no imprime nada, es el viejo.
 | `horario_robot.py` | **Quién decide a qué hora corre cada tarea.** Lee el horario que Daniel pone en la web. Ver abajo. |
 | `generar_respaldo.py` | La copia de seguridad de los datos. Baja las 63 áreas de producción y las deja en un zip fechado. Ver abajo. |
 | `respaldo.bat` | Lo que dispara el Programador de Windows para el respaldo. |
+| `archivar_tareas.py` | Manda al histórico las tareas de almacenaje que pasaron de 30 días. Ver abajo. |
+| `archivar.bat` | Lo que dispara el Programador de Windows para el archivado. |
 
 ## El horario lo manda la web (18-ago-2026)
 
@@ -76,8 +78,8 @@ python C:\wms_scraping\horario_robot.py ancla_noche || exit /b 0
 python C:\wms_scraping\wms_automation_final.py
 ```
 
-Las tareas son `ancla_noche`, `ancla_manana`, `stock_hora`, `picking_hora`, `reportes` y
-`respaldo`.
+Las tareas son `ancla_noche`, `ancla_manana`, `stock_hora`, `picking_hora`, `reportes`,
+`respaldo` y `archivado`.
 
 ### Lo que hay que cambiar en el servidor, UNA sola vez
 
@@ -193,3 +195,55 @@ del zip lista qué áreas faltaron.
 
 Mientras escribe usa un `.parcial` y recién al terminar lo renombra: un zip a medio escribir
 no debe parecer un respaldo bueno si el robot se corta en el medio.
+
+---
+
+## El archivado de tareas viejas (19-ago-2026)
+
+Corre a las **03:00 todos los días**, y la hora se cambia desde la web como las demás.
+
+**Por qué existe.** En cada arranque la web bajaba las 1.337 tareas de almacenaje, y 795
+eran de mayo, junio y julio: meses cerrados que nadie consulta desde ahí. Eran 1.342 KB de
+los 2.255 que la página espera antes de mostrarse. El área `almacenaje_tasks_history`
+existe justo para eso, pero el archivado se dejó de hacer en julio.
+
+**Por qué a las 03:00 y no antes.** El script reescribe el área entera de tareas: si
+alguien guarda una en el medio, esa tarea se pierde. Se midió que a la 01:00 el turno noche
+todavía guarda cada pocos minutos. A las 03:00 no hay movimiento.
+
+**El corte va por antigüedad, no por una fecha fija.** Se conservan los últimos 30 días y
+lo anterior se archiva. Así corriendo todas las noches las tareas activas se mantienen
+solas, en vez de volver a crecer hasta que alguien se acuerde — que es exactamente lo que
+pasó en julio.
+
+**Nunca archiva una tarea abierta**, aunque sea vieja: solo las que están `Finalizado` o
+`Vencida`. Una abierta puede estar trabajándose todavía.
+
+### El orden, que es lo que lo hace seguro
+
+1. Copia al histórico.
+2. **Comprueba** leyendo el área de vuelta. Si falta alguna, corta y no borra nada.
+3. Recién entonces las saca de las activas.
+
+Al revés —borrar y después copiar— un corte de red en el medio las perdería.
+
+### Cómo probarlo sin que toque nada
+
+```powershell
+python C:\wms_scraping\archivar_tareas.py
+python C:\wms_scraping\archivar_tareas.py --dias 60
+```
+
+Sin `--ejecutar` solo dice qué haría. El `.bat` sí lo lleva, porque en el servidor no hay
+nadie mirando.
+
+### Lo que hay que hacer en el servidor, UNA sola vez
+
+```powershell
+cd C:\wms_scraping
+curl.exe -L -o archivar_tareas.py https://raw.githubusercontent.com/dames1830/plataforma-logistica/beta/robot/archivar_tareas.py
+curl.exe -L -o archivar.bat https://raw.githubusercontent.com/dames1830/plataforma-logistica/beta/robot/archivar.bat
+curl.exe -L -o horario_robot.py https://raw.githubusercontent.com/dames1830/plataforma-logistica/beta/robot/horario_robot.py
+
+schtasks /Create /TN "Robot Archivado" /TR "C:\wms_scraping\archivar.bat" /SC MINUTE /MO 10 /ST 00:00 /RU SYSTEM /F
+```

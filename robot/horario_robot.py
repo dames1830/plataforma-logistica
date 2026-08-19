@@ -67,8 +67,13 @@ DE_FABRICA = {
     # y nadie esta escribiendo. La hora se cambia desde la web como las demas.
     'respaldo':     {'activa': True, 'hora': '23:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # El archivado reescribe el area entera de tareas: si alguien guarda una en el
+    # medio, se pierde. A la 01:00 todavia hay movimiento del turno noche cada pocos
+    # minutos, por eso va a las 03:00 y todos los dias, domingo incluido.
+    'archivado':    {'activa': True, 'hora': '03:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
+                                                               'jue': True, 'vie': True, 'sab': True, 'dom': True}},
 }
-DIARIAS = ('ancla_noche', 'ancla_manana', 'reportes', 'respaldo')
+DIARIAS = ('ancla_noche', 'ancla_manana', 'reportes', 'respaldo', 'archivado')
 
 
 def _leer_web(timeout=20):

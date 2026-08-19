@@ -16,9 +16,15 @@ archivar_tareas.py  -  Mueve las tareas de almacenaje viejas al historico.
 
   Por defecto NO TOCA NADA: hay que pasarle --ejecutar a proposito.
 
+  Lo corre el robot todas las noches a las 03:00, cuando el turno noche ya no
+  esta guardando tareas: el script reescribe el area entera, y si alguien guarda
+  en el medio esa tarea se pierde. Se comprobo que a la 01:00 hay movimiento cada
+  pocos minutos.
+
   Uso:
     python archivar_tareas.py                      -> dice que haria
-    python archivar_tareas.py --corte 2026-08-01   -> otra fecha de corte
+    python archivar_tareas.py --dias 60            -> conservar 60 dias
+    python archivar_tareas.py --corte 2026-08-01   -> una fecha fija
     python archivar_tareas.py --ejecutar           -> lo hace de verdad
 """
 
@@ -27,10 +33,16 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime, timedelta
 
 API = 'https://logistics-backend-wv0x.onrender.com'
-CORTE = '2026-08-01'          # se archiva lo ANTERIOR a esta fecha
 TIMEOUT = 180
+
+# El corte va por ANTIGUEDAD y no por una fecha fija: asi el robot lo corre todas
+# las noches y las activas se mantienen solas en los ultimos 30 dias, en vez de
+# volver a crecer hasta que alguien se acuerde. El archivado anterior se dejo de
+# hacer en julio justamente por depender de que alguien se acordara.
+DIAS_QUE_SE_QUEDAN = 30
 
 # Una tarea sin cerrar no se archiva aunque sea vieja: alguien podria estar
 # trabajandola todavia.
@@ -59,9 +71,15 @@ def clave(t):
 def main():
     args = sys.argv[1:]
     de_verdad = '--ejecutar' in args
-    corte = args[args.index('--corte') + 1] if '--corte' in args else CORTE
+    if '--corte' in args:
+        corte = args[args.index('--corte') + 1]
+        motivo = 'fecha fija'
+    else:
+        dias = int(args[args.index('--dias') + 1]) if '--dias' in args else DIAS_QUE_SE_QUEDAN
+        corte = (datetime.now() - timedelta(days=dias)).strftime('%Y-%m-%d')
+        motivo = f'se conservan los ultimos {dias} dias'
 
-    print(f'[ARCHIVAR] corte: se archiva lo anterior al {corte}')
+    print(f'[ARCHIVAR] corte: se archiva lo anterior al {corte}  ({motivo})')
     print('[ARCHIVAR] leyendo produccion...')
     activas = leer('almacenaje_tasks')
     historico = leer('almacenaje_tasks_history')

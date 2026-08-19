@@ -59,7 +59,9 @@ export const TAREAS = [
     { id: 'reportes', tipo: 'diaria', etiqueta: 'Reportes diarios',
       detalle: 'los dos archivos del día que cerró', area: null },
     { id: 'respaldo', tipo: 'diaria', etiqueta: 'Respaldo de datos',
-      detalle: 'la copia de seguridad de las 63 áreas', area: null }
+      detalle: 'la copia de seguridad de las 63 áreas', area: null },
+    { id: 'archivado', tipo: 'diaria', etiqueta: 'Archivar tareas viejas',
+      detalle: 'manda al histórico lo que pasó de 30 días', area: null }
 ];
 
 /** Cada cuánto puede correr una tarea de las que se repiten. */
@@ -87,7 +89,8 @@ export const robotsPorDefecto = () => ({
     stock_hora:   { activa: true, minuto: 30, cadaMin: 60, dias: { ...TODOS } },
     picking_hora: { activa: true, minuto: 50, cadaMin: 60, dias: { ...TODOS } },
     reportes:     { activa: true, hora: '08:00', dias: { ...LUN_A_SAB } },
-    respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } }
+    respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } },
+    archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } }
 });
 
 const _hhmm = (v, respaldo) => {
