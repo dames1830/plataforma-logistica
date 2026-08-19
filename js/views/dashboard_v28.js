@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0258';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0259';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0258';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0258';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0258';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0258';
-import * as metasService from '../services_v245/metasService.js?v=29.0258';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0258';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0258';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0258';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0258';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0258';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0258';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0258';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0258';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0258';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0258';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0258';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0258';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0258';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0258';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0258';
-import { montarSlotting } from './slotting.js?v=29.0258';
+import * as adminService from '../services_v245/adminService.js?v=29.0259';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0259';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0259';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0259';
+import * as metasService from '../services_v245/metasService.js?v=29.0259';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0259';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0259';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0259';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0259';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0259';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0259';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0259';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0259';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0259';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0259';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0259';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0259';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0259';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0259';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0259';
+import { montarSlotting } from './slotting.js?v=29.0259';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0258';
+const VERSION = '29.0259';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0258');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0259');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5618,9 +5618,10 @@ export const renderDashboard = async (container, user, onLogout) => {
         lienzo.style.cssText = `width:${ancho}px; max-width:100%; height:auto; border-radius:8px; display:block; box-shadow:0 8px 40px rgba(0,0,0,0.6);`;
 
         const cerrar = document.createElement('button');
-        cerrar.className = 'btn-secondary';
         cerrar.textContent = 'Cerrar';
-        cerrar.style.cssText = 'padding:0.5rem 1.4rem; font-size:0.8rem;';
+        cerrar.style.cssText = 'padding:0.5rem 1.4rem; font-size:0.8rem; border-radius:8px; ' +
+            'background:rgba(255,255,255,0.08); color:#e2e8f0; font-weight:600; cursor:pointer; ' +
+            'border:1px solid rgba(255,255,255,0.18); font-family:inherit;';
 
         caja.appendChild(lienzo);
         caja.appendChild(cerrar);
@@ -5630,6 +5631,16 @@ export const renderDashboard = async (container, user, onLogout) => {
         cerrar.onclick = () => fondo.remove();
         fondo.onclick = (e) => { if (e.target === fondo) fondo.remove(); };
     };
+
+    // color-scheme:dark es lo que hace que el navegador dibuje el icono del calendario
+    // en claro. Sin eso sale negro sobre fondo negro y parece que el campo no lo tuviera.
+    const ESTILO_FECHA = 'background:rgba(0,0,0,0.35); color:#e2e8f0; border:1px solid rgba(255,255,255,0.12); ' +
+                         'border-radius:8px; padding:0.42rem 0.6rem; font-size:0.78rem; color-scheme:dark; ' +
+                         'cursor:pointer; font-family:inherit;';
+    const ESTILO_BOTON = 'padding:0.42rem 0.9rem; font-size:0.78rem; border-radius:8px; ' +
+                         'background:rgba(255,255,255,0.06); color:#e2e8f0; font-weight:600; cursor:pointer; ' +
+                         'border:1px solid rgba(255,255,255,0.15); display:inline-flex; align-items:center; gap:6px; ' +
+                         'font-family:inherit; transition:background 0.15s;';
 
     const pintar = () => {
         // Si alguien invierte las fechas, se enderezan solas en vez de mostrar vacío.
@@ -5684,15 +5695,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <h4 style="margin:0; color:#fff; font-size:1.1rem; font-weight:800; letter-spacing:0.5px;">🗓️ CONTROL DE ASISTENCIA</h4>
                         <span id="rotuloSemana" style="font-size:0.8rem; color:#94a3b8;">${rotulo}</span>
                     </div>
-                    <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
-                        <button id="btnSemAnterior" class="btn-secondary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">◀ Semana anterior</button>
+                    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
                         <label style="font-size:0.75rem; color:var(--text-muted);">Desde</label>
-                        <input type="date" id="fDesde" value="${desde}" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:0.4rem 0.6rem; font-size:0.8rem;">
+                        <input type="date" id="fDesde" value="${desde}" style="${ESTILO_FECHA}">
                         <label style="font-size:0.75rem; color:var(--text-muted);">Hasta</label>
-                        <input type="date" id="fHasta" value="${hasta}" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:0.4rem 0.6rem; font-size:0.8rem;">
-                        <button id="btnSemSiguiente" class="btn-secondary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">Semana siguiente ▶</button>
-                        <button id="btnSemActual" class="btn-secondary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">Semana actual</button>
-                        <button id="btnImagen" class="btn-primary" style="padding:0.45rem 0.9rem; font-size:0.75rem;" title="Arma la imagen del cuadro para mandarla por WhatsApp">📷 Imagen para compartir</button>
+                        <input type="date" id="fHasta" value="${hasta}" style="${ESTILO_FECHA}">
+                        <button id="btnImagen" style="${ESTILO_BOTON}" title="Arma la imagen del cuadro para mandarla por WhatsApp">🖼️ Imagen</button>
                     </div>
                 </div>
             </div>
@@ -5734,20 +5742,14 @@ export const renderDashboard = async (container, user, onLogout) => {
         const buscar = (id) => container.querySelector(id);
         buscar('#fDesde').onchange = (e) => { desde = e.target.value; pintar(); };
         buscar('#fHasta').onchange = (e) => { hasta = e.target.value; pintar(); };
-        const correrSemanas = (n) => {
-            desde = claveDe(sumarDias(desdeClave(desde), 7 * n));
-            hasta = claveDe(sumarDias(desdeClave(hasta), 7 * n));
-            pintar();
-        };
-        buscar('#btnSemAnterior').onclick = () => correrSemanas(-1);
-        buscar('#btnSemSiguiente').onclick = () => correrSemanas(1);
         buscar('#btnImagen').onclick = () => mostrarImagen(dias, filas);
-        buscar('#btnSemActual').onclick = () => {
-            const l = lunesDeLaSemanaDe(desdeClave(getLogicalDate()));
-            desde = claveDe(l);
-            hasta = claveDe(sumarDias(l, 6));
-            pintar();
-        };
+
+        // Un clic en cualquier parte del campo abre el calendario, no solo en el icono:
+        // el icono es chico y obliga a apuntar.
+        ['#fDesde', '#fHasta'].forEach(sel => {
+            const campo = buscar(sel);
+            campo.onclick = () => { if (campo.showPicker) { try { campo.showPicker(); } catch (e) {} } };
+        });
     };
 
     pintar();
@@ -15999,7 +16001,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0258 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0259 | MOBILE PORTAL
                             </div>
                     </div>
 
