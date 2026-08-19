@@ -960,6 +960,19 @@ def run():
         bloqueo_wms.soltar()
         return 1
 
+    # CUANTOS DIAS MIRA HACIA ATRAS EL PENDIENTE. Todos los dias son 90, que es lo
+    # que Daniel eligio. Se puede pedir mas de una vez para revisar si quedo algo
+    # colgado de meses anteriores:  python picking_y_orden.py --dias 365
+    dias_pend = DIAS_PENDIENTES
+    for i, a in enumerate(sys.argv):
+        if a == "--dias" and i + 1 < len(sys.argv):
+            try:
+                dias_pend = max(1, int(sys.argv[i + 1]))
+            except ValueError:
+                pass
+    if dias_pend != DIAS_PENDIENTES:
+        log("Los pendientes se van a pedir de %d dias, no de %d" % (dias_pend, DIAS_PENDIENTES))
+
     ok_pick = ok_ord = ok_pend = False
     try:
         with sync_playwright() as p:
@@ -997,7 +1010,7 @@ def run():
             try:
                 ok_pend = wms.con_reintentos(
                     "Pendientes",
-                    lambda: descargar_pendientes(page, ruta_pend, dia,
+                    lambda: descargar_pendientes(page, ruta_pend, dia, dias=dias_pend,
                                                  sin_exportar=sin_exportar,
                                                  con_fotos=sin_exportar),
                     page)

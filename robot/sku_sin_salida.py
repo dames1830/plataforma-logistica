@@ -224,6 +224,31 @@ def leer_pedidos(carpeta):
         log("No hay archivo de pendientes: el pendiente de las órdenes viejas es "
             "el del último semanal que se haya bajado a mano", "WARN")
 
+    # EL PENDIENTE POR MES, para poder ver de un vistazo si quedo algo colgado de
+    # meses viejos. Un total suelto no dice nada: 144.655 pares asustan hasta que se
+    # ve que el 92% es del mes en curso.
+    porMes = defaultdict(lambda: [0, 0])
+    for r in lineas.values():
+        try:
+            s_ = float(str(_txt(r, "Cantidad solicitada") or 0).replace(",", "."))
+            a_ = float(str(_txt(r, "Cantidad asignada") or 0).replace(",", "."))
+        except ValueError:
+            continue
+        if s_ - a_ <= 0:
+            continue
+        f = _fecha_creacion(r)
+        if f:
+            m = porMes["%04d-%02d" % (f.year, f.month)]
+            m[0] += s_ - a_
+            m[1] += 1
+    if porMes:
+        tot = sum(v[0] for v in porMes.values())
+        log("Pendiente por mes de creacion:")
+        for k in sorted(porMes):
+            log("   %s  %10s pares  %7s lineas  %5.1f%%"
+                % (k, format(int(porMes[k][0]), ",d"), format(porMes[k][1], ",d"),
+                   porMes[k][0] / tot * 100))
+
     P = defaultdict(lambda: {"pend": 0, "sol": 0, "asig": 0,
                              "ordenes": set(), "tiendas": set(), "viejo": None})
     for r in lineas.values():
