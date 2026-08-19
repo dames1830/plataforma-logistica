@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0255';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0256';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0255';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0255';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0255';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0255';
-import * as metasService from '../services_v245/metasService.js?v=29.0255';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0255';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0255';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0255';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0255';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0255';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0255';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0255';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0255';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0255';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0255';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0255';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0255';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0255';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0255';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0255';
-import { montarSlotting } from './slotting.js?v=29.0255';
+import * as adminService from '../services_v245/adminService.js?v=29.0256';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0256';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0256';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0256';
+import * as metasService from '../services_v245/metasService.js?v=29.0256';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0256';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0256';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0256';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0256';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0256';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0256';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0256';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0256';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0256';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0256';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0256';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0256';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0256';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0256';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0256';
+import { montarSlotting } from './slotting.js?v=29.0256';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0255';
+const VERSION = '29.0256';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0255');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0256');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5126,6 +5126,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <option value="" style="background:#1e293b;">- SELECCIONE -</option>
                                     <option value="Descanso Médico" ${(rec && rec.justification==='Descanso Médico')?'selected':'' } style="background:#1e293b;">DESCANSO MÉDICO</option>
                                     <option value="Vacaciones" ${(rec && rec.justification==='Vacaciones')?'selected':'' } style="background:#1e293b;">VACACIONES</option>
+                                    <option value="Cumpleaños" ${(rec && rec.justification==='Cumpleaños')?'selected':'' } style="background:#1e293b;">CUMPLEAÑOS</option>
                                     <option value="Otros" ${(rec && rec.justification==='Otros')?'selected':'' } style="background:#1e293b;">OTROS</option>
                                 </select>
                             </td>
@@ -5378,6 +5379,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const t = String(obs || '').trim().toUpperCase();
         if (t.startsWith('VAC')) return 'V';
         if (t.startsWith('DESC')) return 'M';
+        if (t.startsWith('CUMPLE')) return 'C';
         if (t.startsWith('OTRO')) return 'O';
         return '!';   // motivo nuevo que todavía no tiene letra: se ve igual, no se pierde
     };
@@ -5394,23 +5396,41 @@ export const renderDashboard = async (container, user, onLogout) => {
     /**
      * LA IMAGEN PARA MANDAR AL GRUPO DE WHATSAPP.
      *
-     * Se dibuja en un canvas a mano en vez de fotografiar el HTML. Dos razones:
-     * no hace falta traer ninguna librería nueva (html2canvas y parecidas pesan y
-     * hay que bajarlas de un CDN), y así se controla el ancho exacto — el cuadro de
-     * pantalla es demasiado ancho y largo para que se lea en un celular.
-     *
-     * Va sin DNI a propósito: achica la imagen y evita mandar documentos de
-     * identidad a un grupo de WhatsApp.
+     * Se dibuja en un canvas a mano en vez de fotografiar el HTML: no hace falta
+     * traer ninguna librería de un CDN y se controla el ancho exacto, que es el
+     * problema — el cuadro de pantalla no se lee en un celular.
      *
      * Se dibuja al doble de tamaño y se muestra a la mitad, si no el texto sale
      * borroso en las pantallas de los celulares.
      */
     const mostrarImagen = (dias, filas) => {
         const ESCALA = 2;
-        const MARGEN = 16, ALTO_FILA = 17, ALTO_CAB = 56, ALTO_PIE = 52;
-        const ANCHO_NUM = 26, ANCHO_NOMBRE = 232, ANCHO_DIA = 34;
+        const MARGEN = 16, ALTO_FILA = 17, ALTO_CAB = 62, ALTO_PIE = 66;
+        const ANCHO_NUM = 24, ANCHO_NOMBRE = 196, ANCHO_DNI = 62, ANCHO_CARGO = 94, ANCHO_DIA = 32;
 
-        const ancho = MARGEN * 2 + ANCHO_NUM + ANCHO_NOMBRE + dias.length * ANCHO_DIA;
+        // El cargo sale del maestro de trabajadores, cruzado por DNI. Los nombres
+        // largos no entran en la columna: "AYUDANTE DE ALMACEN" son 19 caracteres y
+        // lo tiene el 70% de la gente.
+        const ABREVIA = {
+            'AYUDANTE DE ALMACEN': 'AYUDANTE',
+            'MONTACARGUISTA': 'MONTACARG.',
+            'RECEPCION': 'RECEPCIÓN'
+        };
+        const cargoDe = (() => {
+            const porDni = new Map();
+            (adminService.getWorkers() || []).forEach(w => {
+                const dni = String(w.dni || w.Dni || '').trim();
+                if (dni) porDni.set(dni, String(w.puesto || w.Puesto || '').trim());
+            });
+            return (dni) => {
+                // El acento roto de "RECEPCIÓN" viene así desde el maestro; se normaliza
+                // para que no salgan dos cargos donde hay uno.
+                const bruto = (porDni.get(String(dni)) || '').replace(/[^\x20-\x7EÁÉÍÓÚÑáéíóúñ]/g, '');
+                return ABREVIA[bruto.toUpperCase()] || bruto;
+            };
+        })();
+
+        const ancho = MARGEN * 2 + ANCHO_NUM + ANCHO_NOMBRE + ANCHO_DNI + ANCHO_CARGO + dias.length * ANCHO_DIA;
         const alto = ALTO_CAB + filas.length * ALTO_FILA + ALTO_PIE + MARGEN;
 
         const lienzo = document.createElement('canvas');
@@ -5429,157 +5449,140 @@ export const renderDashboard = async (container, user, onLogout) => {
             g.textAlign = o.alinear || 'left';
             g.fillText(String(t), x, y);
         };
+        const recortar = (t, limite, tam) => {
+            g.font = `400 ${tam}px ${FUENTE}`;
+            let s = String(t);
+            while (s.length > 3 && g.measureText(s).width > limite) s = s.slice(0, -2) + '…';
+            return s;
+        };
 
-        // Fondo
         g.fillStyle = '#0d1117';
         g.fillRect(0, 0, ancho, alto);
 
-        // Encabezado
-        const a = desdeClave(desde), b = desdeClave(hasta);
-        texto('CONTROL DE ASISTENCIA', MARGEN, 22, { color: '#ffffff', tam: 14, peso: 600 });
-        texto(`Semana ${numeroDeSemana(a)} · ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`,
-              MARGEN, 38, { color: '#8b949e', tam: 10.5 });
-        texto('LOGÍSTICA', ancho - MARGEN, 18, { color: '#8b949e', tam: 9, alinear: 'right' });
-        texto('DEAM1830', ancho - MARGEN, 30, { color: '#1f6feb', tam: 10, peso: 600, alinear: 'right' });
-
+        // --- Título: barra propia para que no se confunda con la tabla ------------
+        g.fillStyle = '#161d27';
+        g.fillRect(0, 0, ancho, ALTO_CAB - 14);
         g.fillStyle = '#1f6feb';
-        g.fillRect(MARGEN, ALTO_CAB - 12, ancho - MARGEN * 2, 2);
+        g.fillRect(0, 0, 4, ALTO_CAB - 14);
 
-        // Encabezado de columnas
+        const a = desdeClave(desde), b = desdeClave(hasta);
+        texto('CONTROL DE ASISTENCIA', MARGEN, 21, { color: '#ffffff', tam: 16, peso: 700 });
+        texto(`Semana ${numeroDeSemana(a)}  ·  ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`,
+              MARGEN, 38, { color: '#9fb3c8', tam: 10.5 });
+        texto('LOGÍSTICA', ancho - MARGEN, 16, { color: '#8b949e', tam: 9, alinear: 'right' });
+        texto('DEAM1830', ancho - MARGEN, 29, { color: '#4a9eff', tam: 11, peso: 700, alinear: 'right' });
+
+        // --- Encabezado de columnas: fondo propio, si no parece una fila más ------
+        const yCab = ALTO_CAB;
+        g.fillStyle = '#1c2531';
+        g.fillRect(MARGEN, yCab - 9, ancho - MARGEN * 2, 18);
+
         const xNum = MARGEN + ANCHO_NUM / 2;
         const xNombre = MARGEN + ANCHO_NUM;
-        const xDia = (i) => MARGEN + ANCHO_NUM + ANCHO_NOMBRE + i * ANCHO_DIA + ANCHO_DIA / 2;
-        const yCab = ALTO_CAB;
+        const xDni = xNombre + ANCHO_NOMBRE;
+        const xCargo = xDni + ANCHO_DNI;
+        const xDia = (i) => xCargo + ANCHO_CARGO + i * ANCHO_DIA + ANCHO_DIA / 2;
 
-        texto('#', xNum, yCab, { color: '#adbac7', tam: 9.5, peso: 600, alinear: 'center' });
-        texto('NOMBRES Y APELLIDOS', xNombre, yCab, { color: '#adbac7', tam: 9.5, peso: 600 });
-        // Solo las tres letras del dia: el numero sobra porque el titulo ya dice
-        // de que fecha a que fecha va la semana.
-        dias.forEach((d, i) => {
-            texto(DIAS_TRES[d.getDay()], xDia(i), yCab,
-                  { color: '#adbac7', tam: 9.5, peso: 600, alinear: 'center' });
-        });
+        const COLOR_CAB = '#7d8ea1';
+        texto('#', xNum, yCab, { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' });
+        texto('NOMBRES Y APELLIDOS', xNombre, yCab, { color: COLOR_CAB, tam: 8.5, peso: 700 });
+        texto('DNI', xDni, yCab, { color: COLOR_CAB, tam: 8.5, peso: 700 });
+        texto('CARGO', xCargo, yCab, { color: COLOR_CAB, tam: 8.5, peso: 700 });
+        dias.forEach((d, i) => texto(DIAS_TRES[d.getDay()], xDia(i), yCab,
+                                     { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' }));
 
-        // Filas
-        let vino = 0, falto = 0, obs = 0;
+        // --- Filas ----------------------------------------------------------------
+        let vino = 0, falto = 0, justificadas = 0, conDescuento = 0;
         filas.forEach((f, i) => {
-            const y = ALTO_CAB + 14 + i * ALTO_FILA;
+            const y = yCab + 19 + i * ALTO_FILA;
             if (i % 2) {
-                g.fillStyle = '#10151c';
+                g.fillStyle = '#131920';
                 g.fillRect(MARGEN, y - ALTO_FILA / 2, ancho - MARGEN * 2, ALTO_FILA);
             }
-            texto(i + 1, xNum, y, { color: '#8b949e', tam: 10, alinear: 'center' });
-
-            // El nombre se recorta si no entra, para que nunca pise las columnas de día.
-            let nombre = f.nombre;
-            g.font = `400 10.5px ${FUENTE}`;
-            while (nombre.length > 4 && g.measureText(nombre).width > ANCHO_NOMBRE - 10) {
-                nombre = nombre.slice(0, -2) + '…';
-            }
-            texto(nombre, xNombre, y, { color: '#f0f6fc', tam: 10.5 });
+            texto(i + 1, xNum, y, { color: '#8b949e', tam: 9.5, alinear: 'center' });
+            texto(recortar(f.nombre, ANCHO_NOMBRE - 8, 10.5), xNombre, y, { color: '#f0f6fc', tam: 10.5 });
+            texto(f.dni, xDni, y, { color: '#b9c5d1', tam: 9.5 });
+            texto(recortar(cargoDe(f.dni), ANCHO_CARGO - 8, 9), xCargo, y, { color: '#8fa3b8', tam: 9 });
 
             dias.forEach((d, k) => {
                 const m = f.marcas[claveDe(d)];
                 const info = simboloDe(m);
-                if (m) { if (m.obs) obs++; else if (m.vino) vino++; else falto++; }
-                texto(info.s, xDia(k), y, { color: info.color, tam: 12, peso: 600, alinear: 'center' });
+                if (m) {
+                    if (m.obs) { if (info.s === 'O') conDescuento++; else justificadas++; }
+                    else if (m.vino) vino++;
+                    else falto++;
+                }
+                texto(info.s, xDia(k), y, { color: info.color, tam: 11.5, peso: 700, alinear: 'center' });
             });
         });
 
-        // Pie: leyenda y totales
-        const yPie = ALTO_CAB + 14 + filas.length * ALTO_FILA + 6;
+        // --- Pie: la leyenda agrupada por lo que significa para la planilla -------
+        const yPie = yCab + 19 + filas.length * ALTO_FILA + 6;
         g.fillStyle = '#21262d';
         g.fillRect(MARGEN, yPie, ancho - MARGEN * 2, 1);
 
-        const leyenda = [['✓', '#3fb950', 'asistió'], ['✗', '#f85149', 'faltó'],
-                         ['V', '#d29922', 'vacaciones'], ['M', '#d29922', 'médico'],
-                         ['O', '#d29922', 'otros'], ['–', '#484f58', 'sin registro']];
-        let x = MARGEN;
-        leyenda.forEach(([s, c, t]) => {
-            texto(s, x, yPie + 16, { color: c, tam: 11, peso: 600 });
-            g.font = `400 9.5px ${FUENTE}`;
-            const anchoS = g.measureText(s).width;
-            texto(t, x + anchoS + 3, yPie + 16, { color: '#8b949e', tam: 9.5 });
-            x += anchoS + 3 + g.measureText(t).width + 11;
+        // Los tres grupos no son un adorno: dicen si la ausencia se descuenta o no.
+        const grupos = [
+            { titulo: 'Sin descuento', color: '#d29922',
+              items: [['V', 'vacaciones'], ['M', 'descanso médico'], ['C', 'cumpleaños']] },
+            { titulo: 'Con descuento', color: '#d29922',
+              items: [['O', 'otros (justificada)'], ['✗', 'falta injustificada']] },
+            { titulo: '', color: '#3fb950',
+              items: [['✓', 'asistió'], ['–', 'sin registro']] }
+        ];
+        let yLey = yPie + 15;
+        let xLey = MARGEN;
+        grupos.forEach((gr, idx) => {
+            if (gr.titulo) {
+                texto(gr.titulo.toUpperCase(), xLey, yLey, { color: '#6e7c8c', tam: 7.5, peso: 700 });
+                g.font = `700 7.5px ${FUENTE}`;
+                xLey += g.measureText(gr.titulo.toUpperCase()).width + 7;
+            }
+            gr.items.forEach(([s, t]) => {
+                const col = s === '✓' ? '#3fb950' : (s === '✗' ? '#f85149' : (s === '–' ? '#484f58' : '#d29922'));
+                texto(s, xLey, yLey, { color: col, tam: 10.5, peso: 700 });
+                g.font = `700 10.5px ${FUENTE}`;
+                const w = g.measureText(s).width;
+                texto(t, xLey + w + 3, yLey, { color: '#8b949e', tam: 9 });
+                g.font = `400 9px ${FUENTE}`;
+                xLey += w + 3 + g.measureText(t).width + 10;
+            });
+            if (idx === 1) { yLey = yPie + 30; xLey = MARGEN; }
         });
 
-        // "1 observaciones" se lee como error. El plural se arma segun el numero.
         const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
         texto([plural(filas.length, 'operario', 'operarios'),
                plural(vino, 'asistencia', 'asistencias'),
                plural(falto, 'falta', 'faltas'),
-               plural(obs, 'observación', 'observaciones')].join(' · '),
-              MARGEN, yPie + 34, { color: '#8b949e', tam: 9.5 });
+               plural(justificadas + conDescuento, 'observación', 'observaciones')].join('  ·  '),
+              MARGEN, yPie + 47, { color: '#8b949e', tam: 9 });
 
-        // La imagen se MUESTRA, no se descarga a ciegas.
-        //
+        // --- En pantalla, no descargada ------------------------------------------
         // El 18-ago-2026 la descarga directa fallo: en un navegador con restricciones
-        // -el integrado, el que avisa "--no-sandbox"- el atributo download se ignora y
-        // el archivo cae con nombre de codigo y SIN la extension .png, asi que Windows
-        // no sabe con que abrirlo. Daniel bajo cuatro y no pudo ver ninguno.
-        //
-        // Mostrarla resuelve eso y ademas da el camino mas corto para lo que necesita:
-        // copiarla y pegarla en WhatsApp sin pasar por ningun archivo.
-        const nombreArchivo = `Asistencia_S${numeroDeSemana(a)}_${desde}_al_${hasta}.png`;
-
+        // el atributo download se ignora y el archivo cae sin la extension .png, así
+        // que Windows no sabe con qué abrirlo. Mostrándola, Daniel la captura o la
+        // guarda con clic derecho, que sí conserva el nombre.
         const fondo = document.createElement('div');
-        fondo.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:99999; display:flex; align-items:center; justify-content:center; padding:1.5rem; overflow:auto;';
+        fondo.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; display:flex; align-items:center; justify-content:center; padding:1.5rem; overflow:auto;';
 
         const caja = document.createElement('div');
-        // Sin glass-panel a proposito: su desenfoque recorta lo que sobresale del recuadro.
-        caja.style.cssText = 'background:#161b22; border:1px solid #30363d; border-radius:12px; padding:1.2rem; max-width:95vw; max-height:95vh; display:flex; flex-direction:column; gap:0.9rem;';
+        // Sin glass-panel a propósito: su desenfoque recorta lo que sobresale.
+        caja.style.cssText = 'display:flex; flex-direction:column; gap:0.8rem; align-items:flex-end; max-width:95vw;';
 
-        lienzo.style.cssText = `width:${ancho}px; max-width:100%; height:auto; border-radius:6px; display:block;`;
+        lienzo.style.cssText = `width:${ancho}px; max-width:100%; height:auto; border-radius:8px; display:block; box-shadow:0 8px 40px rgba(0,0,0,0.6);`;
 
-        const barra = document.createElement('div');
-        barra.style.cssText = 'display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;';
-        barra.innerHTML = `
-            <button id="imgCopiar" class="btn-primary" style="padding:0.5rem 1rem; font-size:0.8rem;">📋 Copiar imagen</button>
-            <button id="imgBajar" class="btn-secondary" style="padding:0.5rem 1rem; font-size:0.8rem;">⬇ Descargar</button>
-            <span id="imgAviso" style="font-size:0.75rem; color:#8b949e;">También puedes hacer clic derecho sobre la imagen y "Guardar imagen como".</span>
-            <button id="imgCerrar" class="btn-secondary" style="padding:0.5rem 1rem; font-size:0.8rem; margin-left:auto;">Cerrar</button>`;
+        const cerrar = document.createElement('button');
+        cerrar.className = 'btn-secondary';
+        cerrar.textContent = 'Cerrar';
+        cerrar.style.cssText = 'padding:0.5rem 1.4rem; font-size:0.8rem;';
 
         caja.appendChild(lienzo);
-        caja.appendChild(barra);
+        caja.appendChild(cerrar);
         fondo.appendChild(caja);
         document.body.appendChild(fondo);
 
-        const avisar = (txt, color) => {
-            const el = fondo.querySelector('#imgAviso');
-            el.textContent = txt;
-            el.style.color = color || '#8b949e';
-        };
-        const cerrar = () => fondo.remove();
-
-        fondo.querySelector('#imgCerrar').onclick = cerrar;
-        fondo.onclick = (e) => { if (e.target === fondo) cerrar(); };
-
-        // Pegar directo en WhatsApp Web: ni archivo ni carpeta de descargas de por medio.
-        fondo.querySelector('#imgCopiar').onclick = () => {
-            lienzo.toBlob(async (blob) => {
-                try {
-                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                    avisar('Copiada. Pégala en WhatsApp con Ctrl+V.', '#3fb950');
-                } catch (err) {
-                    avisar('Este navegador no deja copiar. Usa clic derecho sobre la imagen.', '#f59e0b');
-                }
-            }, 'image/png');
-        };
-
-        fondo.querySelector('#imgBajar').onclick = () => {
-            lienzo.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                const enlace = document.createElement('a');
-                enlace.href = url;
-                enlace.download = nombreArchivo;
-                document.body.appendChild(enlace);
-                enlace.click();
-                document.body.removeChild(enlace);
-                // Sin esto el navegador se queda con la imagen en memoria hasta recargar.
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
-                avisar(`Se descargó como ${nombreArchivo}`, '#3fb950');
-            }, 'image/png');
-        };
+        cerrar.onclick = () => fondo.remove();
+        fondo.onclick = (e) => { if (e.target === fondo) fondo.remove(); };
     };
 
     const pintar = () => {
@@ -5673,10 +5676,16 @@ export const renderDashboard = async (container, user, onLogout) => {
 
                 <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:1.2rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.1); font-size:0.78rem; color:var(--text-muted);">
                     <span><strong style="color:#22c55e; font-size:1rem;">✓</strong> Asistió</span>
-                    <span><strong style="color:#ef4444; font-size:1rem;">✗</strong> No asistió</span>
+                    <span style="opacity:0.55;">|</span>
+                    <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; opacity:0.75;">Sin descuento:</span>
                     <span><strong style="color:#f59e0b; font-size:1rem;">V</strong> Vacaciones</span>
                     <span><strong style="color:#f59e0b; font-size:1rem;">M</strong> Descanso médico</span>
-                    <span><strong style="color:#f59e0b; font-size:1rem;">O</strong> Otros</span>
+                    <span><strong style="color:#f59e0b; font-size:1rem;">C</strong> Cumpleaños</span>
+                    <span style="opacity:0.55;">|</span>
+                    <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; opacity:0.75;">Con descuento:</span>
+                    <span><strong style="color:#f59e0b; font-size:1rem;">O</strong> Otros (justificada)</span>
+                    <span><strong style="color:#ef4444; font-size:1rem;">✗</strong> Falta injustificada</span>
+                    <span style="opacity:0.55;">|</span>
                     <span><strong style="color:#475569; font-size:1rem;">–</strong> Sin registro ese día</span>
                 </div>
             </div>`;
@@ -15949,7 +15958,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0255 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0256 | MOBILE PORTAL
                             </div>
                     </div>
 
