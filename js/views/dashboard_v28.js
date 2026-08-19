@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0257';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0258';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0257';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0257';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0257';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0257';
-import * as metasService from '../services_v245/metasService.js?v=29.0257';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0257';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0257';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0257';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0257';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0257';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0257';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0257';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0257';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0257';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0257';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0257';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0257';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0257';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0257';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0257';
-import { montarSlotting } from './slotting.js?v=29.0257';
+import * as adminService from '../services_v245/adminService.js?v=29.0258';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0258';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0258';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0258';
+import * as metasService from '../services_v245/metasService.js?v=29.0258';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0258';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0258';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0258';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0258';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0258';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0258';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0258';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0258';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0258';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0258';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0258';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0258';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0258';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0258';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0258';
+import { montarSlotting } from './slotting.js?v=29.0258';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0257';
+const VERSION = '29.0258';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0257');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0258');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5340,22 +5340,58 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     /**
+     * NOMBRE Y CARGO SALEN DEL MAESTRO DE TRABAJADORES, no del registro de asistencia.
+     *
+     * El registro estampa el nombre el día que se marca, así que un nombre mal escrito
+     * quedaba mal para siempre y en cada semana por separado. Leyéndolo del maestro se
+     * corrige una vez y queda bien en todo el histórico. El cargo ya funcionaba así;
+     * ahora los dos siguen el mismo criterio.
+     *
+     * Si alguien no está en el maestro —dado de baja, por ejemplo— se cae al nombre que
+     * quedó estampado: es preferible un nombre viejo que una fila en blanco.
+     */
+    const maestroDe = (() => {
+        const porDni = new Map();
+        // Hay acentos rotos en el maestro ("R?OS", "RECEPCI?N"): se limpian para que no
+        // salgan dos cargos donde hay uno, ni nombres con símbolos raros.
+        const limpiar = (t) => String(t || '').replace(/[^ -~ÁÉÍÓÚÑÜáéíóúñü]/g, '').trim();
+        (adminService.getWorkers() || []).forEach(w => {
+            const dni = String(w.dni || w.Dni || '').trim();
+            if (!dni) return;
+            porDni.set(dni, {
+                nombre: `${limpiar(w.apellidos || w.Apellidos)}, ${limpiar(w.nombre || w.Nombre)}`.replace(/^, |, $/g, ''),
+                cargo: limpiar(w.puesto || w.Puesto)
+            });
+        });
+        return (dni) => porDni.get(String(dni)) || null;
+    })();
+
+    /**
      * Una fila por operario que aparezca en algún día del rango. No se listan todos
      * los trabajadores activos a propósito: quien no tiene ni un registro en estas
      * fechas saldría como una fila entera de guiones, que no dice nada.
+     *
+     * SOLO CUENTAN LAS JORNADAS CERRADAS. Una a medio cargar daría totales
+     * provisionales, y esos números se mandan al grupo como si fueran definitivos.
+     * Al reabrir un día para corregirlo vuelve a salir con guión mientras dure la
+     * corrección, y reaparece corregido en cuanto se cierra: el cuadro lee en vivo,
+     * no guarda copia de nada.
      */
     const armarFilas = (dias) => {
         const porDni = new Map();
         dias.forEach(d => {
             const reg = adminService.getAttendance(claveDe(d));
             if (!reg || !Array.isArray(reg.data)) return;
+            if (reg.finalized !== true) return;   // sin cerrar es como sin cargar
             reg.data.forEach(p => {
                 const dni = String(p.dni || '').trim();
                 if (!dni) return;
                 if (!porDni.has(dni)) {
+                    const enMaestro = maestroDe(dni);
                     porDni.set(dni, {
                         dni,
-                        nombre: `${(p.apellidos || '').trim()}, ${(p.nombre || '').trim()}`.replace(/^, |, $/g, ''),
+                        nombre: (enMaestro && enMaestro.nombre) ||
+                                `${(p.apellidos || '').trim()}, ${(p.nombre || '').trim()}`.replace(/^, |, $/g, ''),
                         marcas: {}
                     });
                 }
@@ -5416,19 +5452,11 @@ export const renderDashboard = async (container, user, onLogout) => {
             'MONTACARGUISTA': 'MONTACARG.',
             'RECEPCION': 'RECEPCIÓN'
         };
-        const cargoDe = (() => {
-            const porDni = new Map();
-            (adminService.getWorkers() || []).forEach(w => {
-                const dni = String(w.dni || w.Dni || '').trim();
-                if (dni) porDni.set(dni, String(w.puesto || w.Puesto || '').trim());
-            });
-            return (dni) => {
-                // El acento roto de "RECEPCIÓN" viene así desde el maestro; se normaliza
-                // para que no salgan dos cargos donde hay uno.
-                const bruto = (porDni.get(String(dni)) || '').replace(/[^\x20-\x7EÁÉÍÓÚÑáéíóúñ]/g, '');
-                return ABREVIA[bruto.toUpperCase()] || bruto;
-            };
-        })();
+        const cargoDe = (dni) => {
+            const enMaestro = maestroDe(dni);
+            const bruto = (enMaestro && enMaestro.cargo) || '';
+            return ABREVIA[bruto.toUpperCase()] || bruto;
+        };
 
         const ancho = MARGEN * 2 + ANCHO_NUM + ANCHO_NOMBRE + ANCHO_DNI + ANCHO_CARGO + dias.length * ANCHO_DIA;
         const alto = ALTO_CAB + ALTO_TARJETAS + filas.length * ALTO_FILA + ALTO_PIE + MARGEN;
@@ -15971,7 +15999,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0257 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0258 | MOBILE PORTAL
                             </div>
                     </div>
 
