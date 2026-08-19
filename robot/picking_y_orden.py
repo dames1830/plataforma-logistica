@@ -134,19 +134,22 @@ DIAS_PENDIENTES = 90
 #
 # SI EL RANGO TRAE ESTADOS DE MAS, NO SE ROMPE NADA: sku_sin_salida.py se queda
 # solo con las lineas donde solicitada > asignada. Lo unico que crece es el archivo.
-# ══ OJO: EL WMS LLAMA A LOS ESTADOS DISTINTO QUE EL EXCEL QUE EXPORTA ══
-# En la lista del panel son "Creado" y "Asign Parcial"; en el CSV salen escritos
-# "Creada" y "Parcialmente asignado". Buscar la opcion por el nombre del CSV
-# falla y no se entiende por que. Lo delato el log del 19-ago 06:24, que ahora
-# escribe QUE OPCIONES OFRECE la lista cuando no encuentra la que se le pide:
+# ══ LAS DOS LISTAS DE ESTADO TIENEN NOMBRES DISTINTOS PARA LO MISMO ══
+# No es un error de tipeo: el panel del WMS escribe una cosa en "De estado" y otra
+# en "A estado", y el CSV que exporta ese mismo WMS usa los de la segunda. Salió
+# de los logs del 19-ago-2026, que listan lo que ofrece cada lista:
 #
-#   Creado | Asign Parcial | Asignados | En seleccion | Se... | En empaque |
-#   Empacado | Cargado | Enviado | Cancelado
+#   De estado:  Creado | Asign Parcial | Asignados | En seleccion | Se... |
+#               En empaque | Empacado | Cargado | Enviado | Cancelado
+#   A estado:   Creada | Parcialmente asignado | Asignado | En seleccion |
+#               Seleccionada | En empaquetado | Empaquetado | Cargado | Enviado |
+#               Cancelado
 #
-# Y ese orden es el del proceso, que es justo lo que hace falta: el rango de
-# "Creado" a "Asign Parcial" son los dos primeros y nada mas.
-ESTADO_DESDE = "Creado"
-ESTADO_HASTA = "Asign Parcial"
+# Las dos vienen en el ORDEN DEL PROCESO, que es lo que hace falta: el rango va
+# del primero al segundo y no incluye nada más. Si algún día el WMS les cambia el
+# nombre otra vez, el log dice qué ofrece la lista y se corrige acá.
+ESTADO_DESDE = "Creado"                  # como se llama en la lista "De estado"
+ESTADO_HASTA = "Parcialmente asignado"   # como se llama en la lista "A estado"
 ARCHIVO_PENDIENTES = "Detalle Orden Pendientes.csv"
 
 # Cuánto tiene que pesar cada archivo para darlo por bueno. Los que ya están
@@ -478,7 +481,12 @@ def esperar_resultado(page, timeout_seg=600, distinto_de=None):
                 visible=True).count() > 0
         except Exception:
             listo = False
-        if listo and transcurrido > 15:
+        # EL "Recuperados" DE LA BÚSQUEDA ANTERIOR TAMBIÉN CUENTA COMO CONTESTADO,
+        # y por eso este corte se disparaba a los 18 segundos con una búsqueda que
+        # todavía estaba corriendo (19-ago-2026, los pendientes). Cuando se pidió
+        # un pie distinto, esto solo vale si el pie YA cambió.
+        cambio = txt.strip() != (distinto_de or "").strip()
+        if listo and transcurrido > 15 and (distinto_de is None or cambio):
             log("Oracle contestó y no trajo ninguna fila (%s)" % txt, "ERROR")
             return 0
 
