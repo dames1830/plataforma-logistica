@@ -52,6 +52,8 @@ Si imprime la línea, está el nuevo. Si no imprime nada, es el viejo.
 | `respaldo.bat` | Lo que dispara el Programador de Windows para el respaldo. |
 | `archivar_tareas.py` | Manda al histórico las tareas de almacenaje que pasaron de 30 días. Ver abajo. |
 | `archivar.bat` | Lo que dispara el Programador de Windows para el archivado. |
+| `sku_sin_salida.py` | El cuadro de **SKUs sin salida**: lo que llegó y no se movió en dos semanas. Publica el área `sku_sin_salida`. Corre a las 07:30, DESPUÉS de los reportes diarios de las 06:45 —necesita el Detalle de Orden— y del ancla de stock de las 07:00. |
+| `sin_salida.bat` | Lo que dispara el Programador de Windows para SKUs sin salida. |
 
 ## El horario lo manda la web (18-ago-2026)
 
