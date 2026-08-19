@@ -11,6 +11,21 @@ la versión vieja.
 
 ## Cómo se actualiza el servidor
 
+> **Ojo con la rama.** `dames1830.github.io` publica desde **`main`**. Un archivo que
+> todavía está en `beta` **no está ahí**: el `curl` baja la página de error 404 —unos 9 KB de
+> HTML— y la deja con el nombre del script, así que parece que funcionó. Pasó el 18-ago-2026
+> con `generar_respaldo.py` y `respaldo.bat`, y de paso `horario_robot.py` volvió a la versión
+> vieja de `main`.
+>
+> Mientras algo esté en beta, hay que bajarlo apuntando a la rama:
+>
+> ```powershell
+> curl.exe -L -o <archivo> https://raw.githubusercontent.com/dames1830/plataforma-logistica/beta/robot/<archivo>
+> ```
+>
+> Y comprobar siempre el tamaño: si bajó ~9.379 bytes, eso es el 404, no el script.
+
+
 En una ventana de PowerShell **en el servidor**, una sola línea por archivo:
 
 ```powershell
