@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0253';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0254';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0253';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0253';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0253';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0253';
-import * as metasService from '../services_v245/metasService.js?v=29.0253';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0253';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0253';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0253';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0253';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0253';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0253';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0253';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0253';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0253';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0253';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0253';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0253';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0253';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0253';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0253';
-import { montarSlotting } from './slotting.js?v=29.0253';
+import * as adminService from '../services_v245/adminService.js?v=29.0254';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0254';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0254';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0254';
+import * as metasService from '../services_v245/metasService.js?v=29.0254';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0254';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0254';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0254';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0254';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0254';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0254';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0254';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0254';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0254';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0254';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0254';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0254';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0254';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0254';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0254';
+import { montarSlotting } from './slotting.js?v=29.0254';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0253';
+const VERSION = '29.0254';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4464,7 +4464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0253');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0254');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5407,7 +5407,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      */
     const descargarImagen = (dias, filas) => {
         const ESCALA = 2;
-        const MARGEN = 16, ALTO_FILA = 21, ALTO_CAB = 56, ALTO_PIE = 52;
+        const MARGEN = 16, ALTO_FILA = 17, ALTO_CAB = 56, ALTO_PIE = 52;
         const ANCHO_NUM = 26, ANCHO_NOMBRE = 232, ANCHO_DIA = 34;
 
         const ancho = MARGEN * 2 + ANCHO_NUM + ANCHO_NOMBRE + dias.length * ANCHO_DIA;
@@ -5420,6 +5420,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         g.scale(ESCALA, ESCALA);
         g.textBaseline = 'middle';
 
+        const DIAS_TRES = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
         const FUENTE = 'system-ui, -apple-system, "Segoe UI", sans-serif';
         const texto = (t, x, y, opciones) => {
             const o = opciones || {};
@@ -5450,11 +5451,13 @@ export const renderDashboard = async (container, user, onLogout) => {
         const xDia = (i) => MARGEN + ANCHO_NUM + ANCHO_NOMBRE + i * ANCHO_DIA + ANCHO_DIA / 2;
         const yCab = ALTO_CAB;
 
-        texto('#', xNum, yCab, { color: '#8b949e', tam: 9.5, peso: 600, alinear: 'center' });
-        texto('OPERARIO', xNombre, yCab, { color: '#8b949e', tam: 9.5, peso: 600 });
+        texto('#', xNum, yCab, { color: '#adbac7', tam: 9.5, peso: 600, alinear: 'center' });
+        texto('NOMBRES Y APELLIDOS', xNombre, yCab, { color: '#adbac7', tam: 9.5, peso: 600 });
+        // Solo las tres letras del dia: el numero sobra porque el titulo ya dice
+        // de que fecha a que fecha va la semana.
         dias.forEach((d, i) => {
-            texto(`${DIAS_CORTOS[d.getDay()][0].toUpperCase()} ${d.getDate()}`, xDia(i), yCab,
-                  { color: '#8b949e', tam: 9.5, peso: 600, alinear: 'center' });
+            texto(DIAS_TRES[d.getDay()], xDia(i), yCab,
+                  { color: '#adbac7', tam: 9.5, peso: 600, alinear: 'center' });
         });
 
         // Filas
@@ -5465,7 +5468,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 g.fillStyle = '#10151c';
                 g.fillRect(MARGEN, y - ALTO_FILA / 2, ancho - MARGEN * 2, ALTO_FILA);
             }
-            texto(i + 1, xNum, y, { color: '#6e7681', tam: 10, alinear: 'center' });
+            texto(i + 1, xNum, y, { color: '#8b949e', tam: 10, alinear: 'center' });
 
             // El nombre se recorta si no entra, para que nunca pise las columnas de día.
             let nombre = f.nombre;
@@ -5473,7 +5476,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             while (nombre.length > 4 && g.measureText(nombre).width > ANCHO_NOMBRE - 10) {
                 nombre = nombre.slice(0, -2) + '…';
             }
-            texto(nombre, xNombre, y, { color: '#c9d1d9', tam: 10.5 });
+            texto(nombre, xNombre, y, { color: '#f0f6fc', tam: 10.5 });
 
             dias.forEach((d, k) => {
                 const m = f.marcas[claveDe(d)];
@@ -5500,7 +5503,12 @@ export const renderDashboard = async (container, user, onLogout) => {
             x += anchoS + 3 + g.measureText(t).width + 11;
         });
 
-        texto(`${filas.length} operarios · ${vino} asistencias · ${falto} faltas · ${obs} observaciones`,
+        // "1 observaciones" se lee como error. El plural se arma segun el numero.
+        const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+        texto([plural(filas.length, 'operario', 'operarios'),
+               plural(vino, 'asistencia', 'asistencias'),
+               plural(falto, 'falta', 'faltas'),
+               plural(obs, 'observación', 'observaciones')].join(' · '),
               MARGEN, yPie + 34, { color: '#8b949e', tam: 9.5 });
 
         // Descarga
@@ -15884,7 +15892,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0253 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0254 | MOBILE PORTAL
                             </div>
                     </div>
 
