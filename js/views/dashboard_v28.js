@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0272';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0273';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0272';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0272';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0272';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0272';
-import * as metasService from '../services_v245/metasService.js?v=29.0272';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0272';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0272';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0272';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0272';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0272';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0272';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0272';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0272';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0272';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0272';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0272';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0272';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0272';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0272';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0272';
-import { montarSlotting } from './slotting.js?v=29.0272';
+import * as adminService from '../services_v245/adminService.js?v=29.0273';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0273';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0273';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0273';
+import * as metasService from '../services_v245/metasService.js?v=29.0273';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0273';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0273';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0273';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0273';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0273';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0273';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0273';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0273';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0273';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0273';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0273';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0273';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0273';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0273';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0273';
+import { montarSlotting } from './slotting.js?v=29.0273';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0272';
+const VERSION = '29.0273';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4490,7 +4490,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0272');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0273');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16119,7 +16119,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0272 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0273 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23026,11 +23026,13 @@ const renderRFSection = (container) => {
               ${cuerpo}
           </div>`;
 
-      // Las barras de un reparto. Lo que no entra en el tope se agrupa al pie, con su
-      // detalle: una lista cortada sin decir qué falta se lee como si eso fuera todo.
-      const barras = (filas, tope) => {
-          const ver = filas.slice(0, tope), resto = filas.slice(tope);
-          let h = ver.map((f, i) => `
+      // Las barras de un reparto. VAN TODAS LAS FILAS, ninguna agrupada al pie: Daniel
+      // reclamó que las colecciones viejas quedaran fuera del gráfico —*"se supone que
+      // deberían estar en el gráfico"*—, y tenía razón: una colección de 22 paletas es
+      // justamente la que hay que ver. La barra más chica se dibuja con un mínimo visible,
+      // porque el 1% de 2.005 paletas no se ve en pantalla.
+      const barras = (filas) => {
+          return filas.map((f, i) => `
               <div style="margin-bottom:9px;">
                   <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:0.75rem; margin-bottom:3px; gap:8px;">
                       <span style="font-weight:800; color:#e2e8f0;">${esc(f.k)}</span>
@@ -23039,19 +23041,11 @@ const renderRFSection = (container) => {
                       </span>
                   </div>
                   <div style="height:7px; border-radius:4px; background:rgba(255,255,255,0.05); overflow:hidden;">
-                      <div style="height:100%; border-radius:4px; width:${(f.pal / (r.paletas || 1) * 100).toFixed(1)}%;
+                      <div style="height:100%; border-radius:4px; min-width:3px;
+                           width:${Math.max(0.4, f.pal / (r.paletas || 1) * 100).toFixed(1)}%;
                            background:${COLORES[i % COLORES.length]};"></div>
                   </div>
               </div>`).join('');
-          if (resto.length) {
-              const p = resto.reduce((a, f) => a + f.pal, 0);
-              const u = resto.reduce((a, f) => a + f.un, 0);
-              h += `<div style="font-size:0.7rem; color:#64748b; font-weight:700; padding-top:5px;
-                    border-top:1px dashed rgba(255,255,255,0.08); margin-top:8px; line-height:1.6;">
-                    y ${resto.length} más — ${n(p)} paletas · ${n(u)} unidades<br>
-                    ${resto.map(f => esc(f.k) + ' (' + f.pal + ')').join(' · ')}</div>`;
-          }
-          return h;
       };
 
       const buscar = (lista, clave) => lista.find(x => x.k === clave) || { pal: 0, un: 0, arts: 0 };
@@ -23132,10 +23126,10 @@ const renderRFSection = (container) => {
                   </div>
               </div>`)}
 
-          ${caja('Por colección', r.por.col.length + ' colecciones', barras(r.por.col, 6))}
-          ${caja('Por categoría', 'Gender RIMS', barras(r.por.rims, 10))}
-          ${caja('Por tipo', 'G. Gender', barras(r.por.ggender, 6))}
-          ${caja('Por marca', 'Maestro · columna Marcas', barras(r.por.marca, 8))}
+          ${caja('Por colección', r.por.col.length + ' colecciones', barras(r.por.col))}
+          ${caja('Por categoría', 'Gender RIMS', barras(r.por.rims))}
+          ${caja('Por tipo', 'G. Gender', barras(r.por.ggender))}
+          ${caja('Por marca', 'Maestro · columna Marcas', barras(r.por.marca))}
 
           ${caja('Llenado de las paletas', 'solo calzado · llena = ' + r.capacidad, `
               <div style="display:flex; height:26px; border-radius:7px; overflow:hidden; background:rgba(255,255,255,0.05); margin-bottom:11px;">
