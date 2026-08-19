@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- El iconito de la pestaña. En SVG porque escala solo: nitido en los 16px de la
+       pestaña y en los 180 de un acceso directo del celular. Declararlo evita, ademas,
+       el 404 de /favicon.ico que el navegador pedia por su cuenta. -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
 
 <script>
 window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -15,7 +20,7 @@ window.addEventListener('unhandledrejection', function(event) {
 </script>
 
   <!-- ENTORNO: decide produccion vs pruebas. DEBE ir antes que cualquier otro script. -->
-  <script src="js/env.js?v=29.0261"></script>
+  <script src="js/env.js?v=29.0262"></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -256,6 +261,6 @@ window.addEventListener('unhandledrejection', function(event) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-  <script type="module" src="js/views/reportes_publicos.js?v=29.0261"></script>
+  <script type="module" src="js/views/reportes_publicos.js?v=29.0262"></script>
 </body>
 </html>
