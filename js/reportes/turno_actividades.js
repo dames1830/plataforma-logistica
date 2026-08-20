@@ -80,7 +80,13 @@ export const montarTurno = function (RAIZ, OPC) {
      seguridad ocupa su rato del turno y hay que verla en el Gantt, pero no es
      una meta —no se mide en cantidades— así que no entra a los cuadros. */
   var BASE = {
-    /* EL TURNO NO SE CONFIGURA ACÁ. Sale de la jornada que ya está en el
+    /* UN TURNO NUEVO ARRANCA TODO EN CERO. Regla de Daniel, 20-ago-2026: *"cuando
+       el turno cierre deberían todas las metas y avances estar en 0"*. Slotting
+       traía `meta: 60, av: 45` escritos acá desde la maqueta, así que cada jornada
+       nueva nacía con 45 de 60 hechos sin que nadie hubiera trabajado. Las metas y
+       los avances los ponen las fuentes o los escribe él; la plantilla NO.
+
+       EL TURNO NO SE CONFIGURA ACÁ. Sale de la jornada que ya está en el
        servidor —área `config`, clave `jornada`, que lee `jornadaService`—, donde
        hay un horario por cada día de la semana y reglas que lo pisan por
        temporada. Estos son los valores que tiene hoy el turno noche:
@@ -94,7 +100,7 @@ export const montarTurno = function (RAIZ, OPC) {
          TOTAL —día + noche de las tareas que se van finalizando—. Los de acá son
          los del corte del 10-ago-2026 que dio Daniel: 32.994 y 18.195. */
       { n: 'Almacenamiento',       u: 'pares',       meta: 0,     av: 0,     fuente: 'almacenamiento', pi: '20:30', pf: '05:45', ri: '20:30', rf: '05:45', cuenta: true, auto: true },
-      { n: 'Slotting',             u: 'tareas',      meta: 60,    av: 45,    pi: '20:30', pf: '06:00', ri: '20:30', rf: '06:00', cuenta: true },
+      { n: 'Slotting',             u: 'tareas',      meta: 0,     av: 0,     pi: '20:30', pf: '06:00', ri: '20:30', rf: '06:00', cuenta: true },
       /* AUTOMÁTICA, comparando dos fotos del stock activo. Meta = los pares que
          tenía CDBUFFER-C a las 19:00; avance = los de esa foto que ya no están
          a las 06:00. Los de acá son los reales de la noche del 10 al 11-ago:
