@@ -141,6 +141,19 @@ de esa mañana. Esa fue la causa de raíz del "se resetea".
 **2. Restar totales no sirve.** Entra mercadería nueva mientras se trabaja. El Buffer C cerró
 una noche con MÁS de lo que empezó y la resta daba −61 cuando el equipo había sacado 869.
 
+## SI EL CUADRO SE PONE EN CERO SOLO, MIRA LA FECHA ANTES QUE LOS DATOS
+
+`renderAdminTab()` redibuja la pestaña cada vez que el radar trae datos y llamaba a
+`renderActividadesSection` **sin fecha**, así que se caía a `getLogicalDate()`. Filtrar una
+jornada pasada funcionaba unos segundos y el refresco siguiente la cambiaba por la de hoy —y
+si la de hoy todavía no tiene nada guardado, la plantilla entra **toda en cero** y se pinta
+encima. Corregido en v29.0299 recordando la fecha elegida (`_turnoFecha`).
+
+**La huella para reconocerlo:** las tarjetas de arriba en cero y "sin meta", pero **los campos
+de la tabla con los números correctos** — `pintar()` refresca las tarjetas y las celdas
+calculadas, no los `input`. Si ve eso, el servidor está bien y la pantalla está mostrando otro
+día. **Comprobarlo bajando el área antes de tocar nada.**
+
 ## EL AVANCE NO RETROCEDE — así que un número inflado NO se corrige solo
 
 El avance se queda con el máximo alcanzado. **Después de arreglar una regla, el número malo
