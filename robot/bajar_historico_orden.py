@@ -24,8 +24,22 @@ creación", el mismo par de filtros que usa el robot diario.
     python bajar_historico_orden.py --desde 01-03-2026 --hasta 11-08-2026
 
   --desde / --hasta   el rango, inclusive. Sin --hasta, hasta ayer.
+  --parar-a HH:MM     se detiene solo a esa hora. Por defecto 06:30.
   --rehacer           vuelve a bajar los días que ya tienen archivo.
   --ver               con el navegador a la vista, para mirarlo trabajar.
+
+SE DETIENE SOLO ANTES DE LAS 06:45, y esto no es un adorno. Oracle no admite dos
+sesiones del mismo usuario:
+
+  · El robot de la hora SÍ cede: si encuentra el candado tomado se saltea esa
+    vuelta y vuelve en 60 minutos. Cada hora que corra este masivo es una hora
+    sin avance de picking publicado, pero no se rompe nada.
+  · El robot diario de las 06:45 NO cede: espera 15 minutos y entra igual, porque
+    si se saltea nadie baja el picking de ese día. Ahí sí habría dos sesiones a la
+    vez y lo más probable es que fallen las dos.
+
+Por eso el corte por defecto son las 06:30: alcanza para cerrar el día que esté
+bajando y soltar el candado antes de que llegue el diario.
 
 Cada día queda como `Detalle Orden 05-03.csv`, con el mismo nombre que usa el
 robot diario: son el mismo archivo y los lee el mismo código.
@@ -120,6 +134,7 @@ def descargar_dia(page, destino, dia):
 def main():
     abrir_log()
     wms.log = log
+    inicio = datetime.now()
 
     if not arg("--desde"):
         raise SystemExit("Falta --desde. Ejemplo:\n"
@@ -139,6 +154,26 @@ def main():
 
     rehacer = "--rehacer" in sys.argv
     a_la_vista = "--ver" in sys.argv
+
+    # LA HORA DE CORTE. Se detiene ANTES de empezar un dia nuevo, no en la mitad:
+    # cortar a la mitad dejaria un csv incompleto que despues nadie sabria que
+    # esta cojo. Como el archivo solo se escribe al final, el dia a medio bajar
+    # simplemente no queda y se vuelve a pedir la proxima corrida.
+    txt_corte = arg("--parar-a", "06:30")
+    try:
+        hh, mm = [int(x) for x in txt_corte.split(":")]
+        assert 0 <= hh <= 23 and 0 <= mm <= 59
+    except Exception:
+        raise SystemExit("No entendi --parar-a '%s'. Se escribe asi: --parar-a 06:30"
+                         % txt_corte)
+
+    def hora_de_parar():
+        ahora = datetime.now()
+        corte = ahora.replace(hour=hh, minute=mm, second=0, microsecond=0)
+        # Si el corte ya paso hoy, es el de manana: la corrida arranca de noche.
+        if corte <= inicio:
+            corte += timedelta(days=1)
+        return ahora >= corte
 
     base = wms._base_onedrive()
     if not base or not os.path.isdir(base):
@@ -168,13 +203,14 @@ def main():
         log("No hay nada que bajar.")
         return 0
     log("Entre 1 y 3 minutos por día: esto puede tardar horas.")
+    log("Se detiene solo a las %s para dejarle el WMS al robot diario." % txt_corte)
     log("Se puede cortar con Ctrl+C y volver a lanzarlo: sigue donde quedó.")
 
     import bloqueo_wms
     bloqueo_wms.esperar_turno(log, minutos_max=30, quien="histórico de orden")
     bloqueo_wms.tomar("histórico de orden")
 
-    ok = fallados = 0
+    ok = fallados = cortado = 0
     t0 = time.time()
     try:
         with sync_playwright() as p:
@@ -196,6 +232,13 @@ def main():
             time.sleep(15)
 
             for i, (dia, ruta) in enumerate(dias, 1):
+                if hora_de_parar():
+                    cortado = len(dias) - i + 1
+                    log("")
+                    log("SON LAS %s: me detengo para dejarle el WMS al robot "
+                        "diario. Quedaron %d dias sin bajar."
+                        % (datetime.now().strftime("%H:%M"), cortado), "WARN")
+                    break
                 log("")
                 log("--- día %d de %d · %s ---"
                     % (i, len(dias), dia.strftime("%d-%m-%Y")))
@@ -222,9 +265,10 @@ def main():
         bloqueo_wms.soltar()
 
     log("=" * 58)
-    log("LISTO en %.1f minutos · %d días bajados, %d fallados"
-        % ((time.time() - t0) / 60.0, ok, fallados))
-    if fallados:
+    log("LISTO en %.1f minutos · %d días bajados, %d fallados%s"
+        % ((time.time() - t0) / 60.0, ok, fallados,
+           ", %d sin empezar por la hora" % cortado if cortado else ""))
+    if fallados or cortado:
         log("Volvé a lanzarlo con el mismo rango: solo va a pedir los que faltan.")
     log("=" * 58)
     return 0 if ok else 1
