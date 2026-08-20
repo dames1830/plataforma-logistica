@@ -659,9 +659,21 @@ def descargar_picking(page, destino, dia, desde="0:00:00", hasta="23:59:59",
         foto(page, "picking_abierta")
     abrir_panel(page)
 
-    # La búsqueda guardada trae los estados con los que Daniel viene bajando estos
-    # archivos (De estado = Asignado, A estado = Asignados). Las fechas se ponen
-    # después, encima de lo que ella deje: si se pusieran antes, las pisa.
+    # EL PICKING NO LLEVA FILTRO DE ESTADO, y este robot tampoco se lo pone: la
+    # búsqueda guardada solo sirve para dejar el panel armado —la pantalla pide una
+    # fecha de creación obligatoria— y las fechas de selección se escriben encima,
+    # que por eso van después: puestas antes, la búsqueda guardada las pisa.
+    #
+    # ACÁ DECÍA que la búsqueda guardada traía "De estado = Asignado, A estado =
+    # Asignados". ERA FALSO, y lo corrigió Daniel el 20-ago-2026: él nunca le puso
+    # estado al bajarlo a mano. Los datos le dan la razón —el archivo del 18-ago
+    # trae Finalizada 12.857, Cancelado 7.903 y Asignado 4 a la vez, y con un
+    # filtro de un solo estado saldría uno solo—.
+    #
+    # OJO AL LEER EL ARCHIVO: "Cancelado" NO es un quiebre, es una copia. Cada pick
+    # real deja dos filas -la tarea queda Cancelado con contenedor PRE…, y la
+    # confirmación Finalizada con el contenedor real-, misma ubicación, misma
+    # persona, el mismo segundo. Se cuenta solo Finalizada.
     log("Eligiendo la búsqueda guardada '%s'..." % BUSQUEDA_PICKING)
     elegir_busqueda_guardada(page, BUSQUEDA_PICKING)
     if con_fotos:
