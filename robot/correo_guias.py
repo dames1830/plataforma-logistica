@@ -44,6 +44,7 @@ import sys
 import zipfile
 from datetime import datetime, timedelta
 import unicodedata
+import urllib.request
 import xml.etree.ElementTree as ET
 
 
@@ -56,18 +57,37 @@ def sin_tildes(t):
     t = unicodedata.normalize('NFD', str(t or '').lower())
     return ''.join(c for c in t if unicodedata.category(c) != 'Mn')
 
-# ── Qué correo es el bueno ───────────────────────────────────────────────────
-# Se llenan con lo que devuelva `--listar`. Van en minúsculas y basta con que el
-# texto esté CONTENIDO: "comercial" alcanza para "Comercial Bata <...>".
-# El asunto lo dijo Daniel el 20-ago: "Guias de Prescripciones". Se compara SIN
-# TILDES y en minusculas, asi que da igual como venga escrito: "Guías de
-# Prescripciones", "GUIAS DE PRESCRIPCIONES" o con la tilde puesta o no.
-# Vacio a proposito: el mismo archivo llega dos veces -el original de Oscar
-# Martinez Tejada y un reenvio "RV:" de Milagros Quijaite Nieto- y cualquiera de
-# los dos sirve. Filtrar por remitente dejaria el dia sin bajar si ese dia lo
-# manda otra persona.
-REMITENTE = ''
-ASUNTO = 'guias de prescripciones'
+# ── LO QUE BUSCA Y CUANDO LO BUSCA LO MANDA LA WEB ──────────────────
+# Daniel, 20-ago-2026: *"si comercial me llama y me dice que hoy lo manda a las
+# nueve, yo lo tengo que cambiar en el modulo de parametros"*. Un horario escrito
+# en el script obliga a entrar al servidor cada vez que cambia algo alla afuera.
+#
+# La cascada es la misma que la de los horarios de los robots: **la web manda, el
+# cache salva y los valores de fabrica son el ultimo respaldo**. Si no hay
+# internet el robot NO se queda quieto: trabaja con lo ultimo que leyo.
+API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/config'
+CLAVE = 'correoGuias'          # dentro del area `config`, al lado de `robots`
+
+DIAS_SEM = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom']
+
+# Lo que hacia falta al 20-ago-2026. El asunto es el que dijo Daniel; el
+# remitente va VACIO A PROPOSITO, porque el mismo archivo llega dos veces -el
+# original de Oscar Martinez Tejada y un reenvio "RV:" de Milagros Quijaite
+# Nieto- y filtrar por persona dejaria el dia sin bajar si un dia lo manda otro.
+DE_FABRICA = {
+    'activa': True,
+    'asunto': 'guias de prescripciones',
+    'remitente': '',
+    'desde': '18:00',           # el correo llega entre las 19:00 y las 20:00
+    'hasta': '23:00',
+    'diasAtras': 3,
+    'dias': {'lun': True, 'mar': True, 'mie': True, 'jue': True,
+             'vie': True, 'sab': True, 'dom': False},
+}
+
+REMITENTE = DE_FABRICA['remitente']
+ASUNTO = DE_FABRICA['asunto']
+
 
 def _base_onedrive():
     """La carpeta de OneDrive. SE BUSCA, NO SE ESCRIBE A MANO.
@@ -95,8 +115,8 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 VISTOS = os.path.join(AQUI, 'correo_guias_vistos.json')
 LOG = os.path.join(AQUI, 'logs', 'correo_guias.log')
 
+CACHE = os.path.join(AQUI, 'correo_guias_cache.json')
 NS = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
-DIAS_ATRAS = 3
 MINIMO_FILAS = 20       # un correo de guías nunca trae cuatro filas
 
 
@@ -251,8 +271,92 @@ def correos(dias, diag=False):
                 continue
 
 
+def _hhmm(v, sino):
+    """Una hora valida o la de siempre. Un "25:99" escrito a mano no puede dejar
+    al robot sin correr, ni corriendo todo el dia."""
+    try:
+        h, m = str(v).split(':')
+        if 0 <= int(h) <= 23 and 0 <= int(m) <= 59:
+            return '%02d:%02d' % (int(h), int(m))
+    except Exception:
+        pass
+    return sino
+
+
+def configuracion():
+    """La configuracion vigente: web -> cache -> fabrica. Nunca devuelve vacio."""
+    cfg, de_donde = None, ''
+    try:
+        with urllib.request.urlopen('%s?t=correo' % API, timeout=20) as r:
+            cuerpo = json.load(r)
+        datos = cuerpo.get('data', cuerpo) if isinstance(cuerpo, dict) else cuerpo
+        v = (datos or {}).get(CLAVE)
+        if isinstance(v, dict) and v:
+            cfg, de_donde = v, 'la web'
+            try:
+                json.dump({'cuando': datetime.now().isoformat(timespec='seconds'),
+                           CLAVE: v}, io.open(CACHE, 'w', encoding='utf-8'),
+                          ensure_ascii=False, indent=1)
+            except Exception:
+                pass
+    except Exception as e:
+        log('no se pudo leer la web (%s): se usa lo guardado' % type(e).__name__,
+            'WARN')
+    if cfg is None:
+        try:
+            cfg = json.load(io.open(CACHE, encoding='utf-8')).get(CLAVE)
+            de_donde = 'el cache (la web no contesto)'
+        except Exception:
+            cfg = None
+    if not isinstance(cfg, dict) or not cfg:
+        cfg, de_donde = dict(DE_FABRICA), 'los valores de fabrica'
+
+    # Nada se da por presente: lo que falte se completa con lo de fabrica.
+    out = dict(DE_FABRICA)
+    out.update({k: v for k, v in cfg.items() if v is not None})
+    out['desde'] = _hhmm(out.get('desde'), DE_FABRICA['desde'])
+    out['hasta'] = _hhmm(out.get('hasta'), DE_FABRICA['hasta'])
+    try:
+        out['diasAtras'] = max(1, min(30, int(out.get('diasAtras'))))
+    except Exception:
+        out['diasAtras'] = DE_FABRICA['diasAtras']
+    d = dict(DE_FABRICA['dias'])
+    if isinstance(cfg.get('dias'), dict):
+        d.update({k: bool(v) for k, v in cfg['dias'].items() if k in DIAS_SEM})
+    out['dias'] = d
+    return out, de_donde
+
+
+def le_toca(cfg, ahora=None):
+    """Corresponde mirar el correo ahora? Devuelve (si_o_no, por_que).
+
+    LA HORA ES LA DEL SERVIDOR, sin pasar por UTC: en Peru eso adelanta el dia a
+    las 19:00, justo en la franja en que llega este correo.
+    """
+    ahora = ahora or datetime.now()
+    if not cfg.get('activa', True):
+        return False, 'esta apagado en la web'
+    dia = DIAS_SEM[ahora.weekday()]
+    if not cfg['dias'].get(dia, True):
+        return False, 'los %s no corre' % dia
+    hm = ahora.strftime('%H:%M')
+    if cfg['desde'] <= cfg['hasta']:
+        dentro = cfg['desde'] <= hm <= cfg['hasta']
+    else:
+        # Una ventana que cruza la medianoche -de 22:00 a 02:00- son dos tramos.
+        dentro = hm >= cfg['desde'] or hm <= cfg['hasta']
+    if not dentro:
+        return False, 'son las %s y la ventana es de %s a %s' % (
+            hm, cfg['desde'], cfg['hasta'])
+    return True, 'dentro de la ventana de %s a %s' % (cfg['desde'], cfg['hasta'])
+
+
 def main():
-    dias = int(arg('--dias', DIAS_ATRAS))
+    cfg, de_donde = configuracion()
+    global REMITENTE, ASUNTO
+    REMITENTE = str(cfg.get('remitente') or '')
+    ASUNTO = str(cfg.get('asunto') or '')
+    dias = int(arg('--dias', cfg['diasAtras']))
     listar = '--listar' in sys.argv
     probar = '--probar' in sys.argv
 
@@ -261,6 +365,18 @@ def main():
     log('=' * 58)
     log('Se guarda en: %s%s' % (DESTINO, '' if os.path.isdir(DESTINO)
                                 else '   <-- ESA CARPETA NO EXISTE'))
+    log('Configuracion: de %s' % de_donde)
+    log('   asunto "%s"%s' % (ASUNTO,
+        (' \u00b7 remitente "%s"' % REMITENTE) if REMITENTE else ''))
+    log('   ventana de %s a %s \u00b7 dias: %s'
+        % (cfg['desde'], cfg['hasta'],
+           ', '.join(d for d in DIAS_SEM if cfg['dias'].get(d))))
+    # --listar y --probar se miran cuando uno quiere, sin esperar a la hora.
+    if not listar and not probar and '--ahora' not in sys.argv:
+        toca, por = le_toca(cfg)
+        if not toca:
+            log('No toca ahora: %s' % por)
+            return 1
 
     if listar:
         log('MODO LISTAR: no se guarda nada. Elegi de aca el remitente y el')
@@ -292,8 +408,10 @@ def main():
         return 0
 
     if not REMITENTE and not ASUNTO:
-        log('REMITENTE y ASUNTO estan vacios: no se guarda nada.', 'ERROR')
-        log('Corre primero:  python correo_guias.py --listar', 'ERROR')
+        log('El asunto y el remitente estan vacios en la configuracion: no se',
+            'ERROR')
+        log('guarda nada, porque entraria cualquier Excel. Ponelos en la web.',
+            'ERROR')
         return 1
 
     vistos = {}
