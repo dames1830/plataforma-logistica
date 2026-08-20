@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0295';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0296';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0295';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0295';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0295';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0295';
-import * as metasService from '../services_v245/metasService.js?v=29.0295';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0295';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0295';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0295';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0295';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0295';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0295';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0295';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0295';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0295';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0295';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0295';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0295';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0295';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0295';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0295';
-import { montarSlotting } from './slotting.js?v=29.0295';
+import * as adminService from '../services_v245/adminService.js?v=29.0296';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0296';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0296';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0296';
+import * as metasService from '../services_v245/metasService.js?v=29.0296';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0296';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0296';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0296';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0296';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0296';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0296';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0296';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0296';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0296';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0296';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0296';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0296';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0296';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0296';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0296';
+import { montarSlotting } from './slotting.js?v=29.0296';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0295';
+const VERSION = '29.0296';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4490,7 +4490,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0295');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0296');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6731,7 +6731,44 @@ const fuentesDelTurno = async (dia) => {
          * día dejaran de cruzar, esto daría CERO sin ningún error a la vista, así que
          * se avisa por consola cuando casi nada encuentra pareja. */
         try {
-            const codigos = Array.isArray(plan.codigos) ? plan.codigos : [];
+            /* ── LA SEPARACIÓN ES SOLO SOLIDPACK, Y SOLO LO QUE EL PLAN PIDE ─────
+             *
+             * Daniel, 20-ago-2026, con la pantalla en 512 y el turno sin separar nada:
+             * *"trabajamos una paleta de doscientos pares y solo separamos veinte. Por
+             * eso se llama separación. Si yo matriculara todo, ya sería una bajada nada
+             * más"*. Y el caso que lo destapó: *"en el prepack, paleta que se baja no se
+             * separa: se matricula paleta completa en el Buffer C. En el solidpack sí
+             * separamos"*.
+             *
+             * Esa noche los 512 que mostraba la pantalla eran **prepack al 100%** y el
+             * SolidPack iba en **cero** —medido antes de que él lo dijera, y él lo
+             * confirmó sin ver el número—. Faltaban los dos topes:
+             *
+             *   1. **El prepack no se separa.** Baja entero y se matricula entero, así
+             *      que es Bajada de paletas, no Separación. Sale de la meta y del
+             *      avance. La forma la fija `FORMA_PREPACK` de `picking.js`, la misma
+             *      que ya usa Replenishment para no reponerlos.
+             *   2. **De una paleta se separa lo que el plan pidió, no la paleta entera.**
+             *      Al bajarla al buffer desaparece del reporte de reserva —que solo
+             *      cubre SEL, MERMA, RECEP, INS y AEREO—, así que "bajó" daba sus 200
+             *      pares cuando el plan pedía 20. Esa noche: 1.003 contados contra 469
+             *      pedidos. El tope por paleta lo da `plan.porPaleta`, que se guarda
+             *      desde v29.0242.
+             *
+             * Si el plan es viejo y no trae `porPaleta`, se cae al comportamiento
+             * anterior —la paleta entera— y solo se aplica el filtro de prepack: es
+             * menos exacto, pero no inventa un cero. */
+            const esPrepackSku = (s) => /^\d{7}-\d-\d{5}$/.test(String(s || '').trim());
+            const codigos = (Array.isArray(plan.codigos) ? plan.codigos : [])
+                .filter(p => p && !esPrepackSku(p.sku));
+            /* Cuánto pidió el análisis de CADA paleta: 'LPN|SKU' → unidades. */
+            const pideDe = new Map();
+            (Array.isArray(plan.porPaleta) ? plan.porPaleta : []).forEach(p => {
+                if (!p) return;
+                const k = String(p.lpn || '').trim().toUpperCase() + '|' + String(p.sku || '').trim();
+                pideDe.set(k, (pideDe.get(k) || 0) + (Number(p.q) || 0));
+            });
+            const conDetalle = pideDe.size > 0;
             /* SEPARADO ES LO QUE BAJÓ DE RESERVA, y nada más.
              *
              * Decisión de Daniel, 18-ago-2026, sobre los números de la noche del 17: el
@@ -6767,8 +6804,13 @@ const fuentesDelTurno = async (dia) => {
                     /* Cuánto le queda A ESA PALETA de ESE artículo: la cuenta va por las
                        dos cosas juntas y no por paleta. El 36% de las paletas trae más de
                        un artículo, y repartir a prorrata perdía 192 unidades esa noche. */
+                    if (esPrepackSku(sku)) return;          // el prepack no se separa
                     const queda = codAhora.has(lpn + '|' + sku) ? (codAhora.get(lpn + '|' + sku) || 0) : 0;
-                    const bajo = Math.max(0, q - queda);
+                    /* El tope es lo que el plan pidió DE ESTA PALETA. Sin él, una paleta
+                       de 200 que baja al buffer para sacarle 20 cuenta 200. Una paleta
+                       que nadie pidió cuenta CERO: no es trabajo del plan. */
+                    const pedido = conDetalle ? (pideDe.get(lpn + '|' + sku) || 0) : Infinity;
+                    const bajo = Math.min(Math.max(0, q - queda), pedido);
                     if (bajo > 0) bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + bajo;
                   });
                 }
@@ -16305,7 +16347,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0295 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0296 | MOBILE PORTAL
                             </div>
                     </div>
 
