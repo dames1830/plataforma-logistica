@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0296';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0297';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0296';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0296';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0296';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0296';
-import * as metasService from '../services_v245/metasService.js?v=29.0296';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0296';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0296';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0296';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0296';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0296';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0296';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0296';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0296';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0296';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0296';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0296';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0296';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0296';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0296';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0296';
-import { montarSlotting } from './slotting.js?v=29.0296';
+import * as adminService from '../services_v245/adminService.js?v=29.0297';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0297';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0297';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0297';
+import * as metasService from '../services_v245/metasService.js?v=29.0297';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0297';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0297';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0297';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0297';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0297';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0297';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0297';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0297';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0297';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0297';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0297';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0297';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0297';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0297';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0297';
+import { montarSlotting } from './slotting.js?v=29.0297';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0296';
+const VERSION = '29.0297';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4490,7 +4490,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0296');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0297');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6542,12 +6542,15 @@ const fuentesDelTurno = async (dia) => {
     let palAhora = null;     // Map LPN → pares que le quedan arriba
     let codAhora = null;     // Map 'LPN|SKU' → pares que le quedan arriba
     let actAhora = null;     // {sku: pares} en la zona activa
+    let bufAhora = null;     // {sku: pares} MATRICULADOS en el buffer, ahora
+    let bufIni = null;       // lo mismo, al arrancar el turno
     let horaAhora = '';
 
     if (esLaDeHoy) {
         const stockAhora = await traerCajonDeLaHora(AREA_STOCK_DE_LA_HORA, foto);
         if (stockAhora) {
             bcAhora = fotoBufferCDe(stockAhora.filas).detalle;
+            bufAhora = enBufferDe(stockAhora.filas);
             horaAhora = stockAhora.hora;
             actAhora = {};
             stockAhora.filas.forEach(f => {
@@ -6578,6 +6581,15 @@ const fuentesDelTurno = async (dia) => {
             const pc = altasPorCodigoDe(resAhora.filas);
             codAhora = new Map(Object.keys(pc).map(k => [k, pc[k]]));
         }
+        /* LA LÍNEA DE BASE DEL BUFFER: lo que ya estaba matriculado al arrancar.
+           Durante la noche el `almacenaje_activo` del servidor ES la foto de las 19:00
+           —el robot recién la pisa a las 06:00—. */
+        try {
+            const st0 = (dataStore.almacenaje_activo || []).length
+                ? dataStore.almacenaje_activo
+                : await leerArea('almacenaje_activo');
+            if (st0 && st0.length) bufIni = enBufferDe(st0);
+        } catch (e) { console.warn('[TURNO] Buffer del arranque:', e); }
     } else {
         /* Jornada cerrada: lo que congeló el robot a las 06:30. Si esa noche el robot
            no corrió, no hay fotos y las tres filas quedan sin avance medido, que es lo
@@ -6731,44 +6743,35 @@ const fuentesDelTurno = async (dia) => {
          * día dejaran de cruzar, esto daría CERO sin ningún error a la vista, así que
          * se avisa por consola cuando casi nada encuentra pareja. */
         try {
-            /* ── LA SEPARACIÓN ES SOLO SOLIDPACK, Y SOLO LO QUE EL PLAN PIDE ─────
+            /* ── LA SEPARACIÓN: BAJÓ DE RESERVA **Y** ESTÁ MATRICULADO ──────────
              *
-             * Daniel, 20-ago-2026, con la pantalla en 512 y el turno sin separar nada:
-             * *"trabajamos una paleta de doscientos pares y solo separamos veinte. Por
-             * eso se llama separación. Si yo matriculara todo, ya sería una bajada nada
-             * más"*. Y el caso que lo destapó: *"en el prepack, paleta que se baja no se
-             * separa: se matricula paleta completa en el Buffer C. En el solidpack sí
-             * separamos"*.
+             * Los dos filtros los dictó Daniel el 20-ago-2026: *"voy a separar el SKU X,
+             * pero **que venga de reserva** y **sea el mismo SKU X que me pide el análisis**
+             * separar. Ese es tu filtro"*. Y encima de esos dos, el que faltaba y es el que
+             * hace que el número no se adelante:
              *
-             * Esa noche los 512 que mostraba la pantalla eran **prepack al 100%** y el
-             * SolidPack iba en **cero** —medido antes de que él lo dijera, y él lo
-             * confirmó sin ver el número—. Faltaban los dos topes:
+             *   **LA MATRÍCULA ES LA QUE CUENTA.** *"Yo lo puedo matricular en el C o en el
+             *   B. Normalmente lo hacemos en el C o en el B. Sí, eso debería sumar."*
              *
-             *   1. **El prepack no se separa.** Baja entero y se matricula entero, así
-             *      que es Bajada de paletas, no Separación. Sale de la meta y del
-             *      avance. La forma la fija `FORMA_PREPACK` de `picking.js`, la misma
-             *      que ya usa Replenishment para no reponerlos.
-             *   2. **De una paleta se separa lo que el plan pidió, no la paleta entera.**
-             *      Al bajarla al buffer desaparece del reporte de reserva —que solo
-             *      cubre SEL, MERMA, RECEP, INS y AEREO—, así que "bajó" daba sus 200
-             *      pares cuando el plan pedía 20. Esa noche: 1.003 contados contra 469
-             *      pedidos. El tope por paleta lo da `plan.porPaleta`, que se guarda
-             *      desde v29.0242.
+             * Mientras la paleta está bajada pero sin trabajar, **no figura en ninguna
+             * ubicación del buffer**: el reporte de stock la ve recién cuando se matricula.
+             * Por eso `min(bajó de reserva, matriculado en el buffer)` da CERO al abrir el
+             * turno —que era el reclamo— y sube cuando el trabajo existe de verdad.
              *
-             * Si el plan es viejo y no trae `porPaleta`, se cae al comportamiento
-             * anterior —la paleta entera— y solo se aplica el filtro de prepack: es
-             * menos exacto, pero no inventa un cero. */
-            const esPrepackSku = (s) => /^\d{7}-\d-\d{5}$/.test(String(s || '').trim());
-            const codigos = (Array.isArray(plan.codigos) ? plan.codigos : [])
-                .filter(p => p && !esPrepackSku(p.sku));
-            /* Cuánto pidió el análisis de CADA paleta: 'LPN|SKU' → unidades. */
-            const pideDe = new Map();
-            (Array.isArray(plan.porPaleta) ? plan.porPaleta : []).forEach(p => {
-                if (!p) return;
-                const k = String(p.lpn || '').trim().toUpperCase() + '|' + String(p.sku || '').trim();
-                pideDe.set(k, (pideDe.get(k) || 0) + (Number(p.q) || 0));
-            });
-            const conDetalle = pideDe.size > 0;
+             * Medir solo "bajó de reserva" convertía esta fila en una copia de Bajada de
+             * paletas: las mismas 46 paletas alimentaban las dos. Ese fue el defecto del
+             * 20-ago.
+             *
+             * LA META ES EL PLAN ENTERO, prepack incluido: *"la zona buffer dice que tengo
+             * que bajar 2398, eso debería ser mi meta"*. El prepack baja y se matricula
+             * entero —no se abre— pero es trabajo del turno y cuenta igual. */
+            const codigos = Array.isArray(plan.codigos) ? plan.codigos : [];
+            /* Lo matriculado en el buffer desde que arrancó el turno, por artículo. Si
+               falta alguna de las dos fotos no se aplica este tope y la cuenta queda como
+               antes: es menos exacta, pero no apaga el número. */
+            const matriculado = (bufAhora && bufIni)
+                ? (sku) => Math.max(0, (bufAhora[sku] || 0) - (bufIni[sku] || 0))
+                : null;
             /* SEPARADO ES LO QUE BAJÓ DE RESERVA, y nada más.
              *
              * Decisión de Daniel, 18-ago-2026, sobre los números de la noche del 17: el
@@ -6804,13 +6807,8 @@ const fuentesDelTurno = async (dia) => {
                     /* Cuánto le queda A ESA PALETA de ESE artículo: la cuenta va por las
                        dos cosas juntas y no por paleta. El 36% de las paletas trae más de
                        un artículo, y repartir a prorrata perdía 192 unidades esa noche. */
-                    if (esPrepackSku(sku)) return;          // el prepack no se separa
                     const queda = codAhora.has(lpn + '|' + sku) ? (codAhora.get(lpn + '|' + sku) || 0) : 0;
-                    /* El tope es lo que el plan pidió DE ESTA PALETA. Sin él, una paleta
-                       de 200 que baja al buffer para sacarle 20 cuenta 200. Una paleta
-                       que nadie pidió cuenta CERO: no es trabajo del plan. */
-                    const pedido = conDetalle ? (pideDe.get(lpn + '|' + sku) || 0) : Infinity;
-                    const bajo = Math.min(Math.max(0, q - queda), pedido);
+                    const bajo = Math.max(0, q - queda);
                     if (bajo > 0) bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + bajo;
                   });
                 }
@@ -6835,7 +6833,11 @@ const fuentesDelTurno = async (dia) => {
                     if (!sku || aBajar <= 0) return;
                     aSeparar += aBajar;
                     if (enReserva.has(sku)) cruzan++;
-                    separadas += Math.min(aBajar, bajoDeReserva[sku] || 0);
+                    /* min(lo que pide el plan, lo que bajó de arriba, lo que se matriculó). */
+                    const hecho = matriculado
+                        ? Math.min(bajoDeReserva[sku] || 0, matriculado(sku))
+                        : (bajoDeReserva[sku] || 0);
+                    separadas += Math.min(aBajar, hecho);
                 });
                 /* El cruce se mide contra la foto de reserva ENTERA, no contra lo que
                    bajó: al abrir el turno no bajó nada todavía y eso es correcto, pero un
@@ -6858,6 +6860,27 @@ const fuentesDelTurno = async (dia) => {
 };
 
 /** El Buffer C de un stock activo, artículo por artículo. Misma cuenta que hace el robot. */
+/**
+ * Lo que hay MATRICULADO en el buffer, por artículo, mirando TODAS las letras.
+ *
+ * La matrícula es lo que marca que la mercadería ya se trabajó: mientras la paleta
+ * está tirada esperando, no figura en ninguna ubicación del buffer. Daniel,
+ * 20-ago-2026: *"yo lo puedo matricular en el C o en el B; normalmente lo hacemos en
+ * el C o en el B. Sí, eso debería sumar"*.
+ */
+const enBufferDe = (filas) => {
+    const m = {};
+    (filas || []).forEach(f => {
+        const ubi = String((Array.isArray(f) ? f[3] : (f['Ubicación'] || f['Ubicacion'] || '')) || '').trim().toUpperCase();
+        if (!ubi.startsWith('CDBUFFER')) return;
+        const art = String((Array.isArray(f) ? f[1] : f['Artículo']) || '').trim();
+        const q = parseFloat(String((Array.isArray(f) ? f[4] : f['Cantidad actual']) || 0).replace(/,/g, '')) || 0;
+        if (!art || q <= 0) return;
+        m[art] = (m[art] || 0) + q;
+    });
+    return m;
+};
+
 const fotoBufferCDe = (filas) => {
     const detalle = {};
     (filas || []).forEach(f => {
@@ -16347,7 +16370,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0296 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0297 | MOBILE PORTAL
                             </div>
                     </div>
 
