@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0284';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0285';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0284';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0284';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0284';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0284';
-import * as metasService from '../services_v245/metasService.js?v=29.0284';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0284';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0284';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0284';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0284';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0284';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0284';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0284';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0284';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0284';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0284';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0284';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0284';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0284';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0284';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0284';
-import { montarSlotting } from './slotting.js?v=29.0284';
+import * as adminService from '../services_v245/adminService.js?v=29.0285';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0285';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0285';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0285';
+import * as metasService from '../services_v245/metasService.js?v=29.0285';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0285';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0285';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0285';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0285';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0285';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0285';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0285';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0285';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0285';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0285';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0285';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0285';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0285';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0285';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0285';
+import { montarSlotting } from './slotting.js?v=29.0285';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0284';
+const VERSION = '29.0285';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4490,7 +4490,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0284');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0285');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5053,8 +5053,13 @@ export const renderDashboard = async (container, user, onLogout) => {
   let forcedDate = getLocalDateStr(); // Default hoy (Local)
   let localState = [];
 
+  // Los cargos del turno noche que entran a la toma de asistencia. Estaba fijo en
+  // AYUDANTE DE ALMACEN, asi que los OPERADOR no aparecian aunque estuvieran
+  // cargados en la matriz de trabajadores. Para sumar otro cargo, agregarlo aca.
+  const CARGOS_ASISTENCIA = ['AYUDANTE DE ALMACEN', 'OPERADOR'];
+
   const renderAsistenciaSection = (container) => {
-    const workers = adminService.getWorkers().filter(w => w.active !== false && (w.turno === 'NOCHE' || w.Turno === 'NOCHE') && String(w.puesto || w.Puesto || '').trim().toUpperCase() === 'AYUDANTE DE ALMACEN');
+    const workers = adminService.getWorkers().filter(w => w.active !== false && (w.turno === 'NOCHE' || w.Turno === 'NOCHE') && CARGOS_ASISTENCIA.includes(String(w.puesto || w.Puesto || '').trim().toUpperCase()));
     
     const loadAttendanceState = (dateStr) => {
         const existing = adminService.getAttendance(dateStr);
@@ -16119,7 +16124,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0284 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0285 | MOBILE PORTAL
                             </div>
                     </div>
 
