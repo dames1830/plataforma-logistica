@@ -140,29 +140,90 @@ def outlook():
                          % (type(e).__name__, str(e)[:120]))
 
 
-def correos(dias):
-    """Los correos de la Bandeja de entrada de los ultimos N dias, con adjuntos."""
-    mapi = outlook()
-    bandeja = mapi.GetDefaultFolder(6)          # 6 = olFolderInbox
-    items = bandeja.Items
-    items.Sort('[ReceivedTime]', True)
-    desde = datetime.now() - timedelta(days=dias)
-    # El filtro va del lado de Outlook: recorrer miles de correos en Python es
-    # lentisimo porque cada propiedad cruza el puente COM.
+def bandejas(mapi):
+    """Las Bandejas de entrada de TODAS las cuentas configuradas, no solo la
+    predeterminada. En el servidor puede haber mas de un buzon, o el que importa
+    puede no ser el primero, y buscar solo en el default deja el robot mudo."""
+    out = []
     try:
-        items = items.Restrict("[ReceivedTime] >= '%s'"
-                               % desde.strftime('%m/%d/%Y %H:%M %p'))
+        for st in mapi.Stores:
+            try:
+                b = st.GetDefaultFolder(6)      # 6 = olFolderInbox
+                out.append((st.DisplayName, b))
+            except Exception:
+                continue
     except Exception:
         pass
-    for it in items:
+    if not out:
         try:
-            if it.Class != 43:                  # 43 = MailItem
-                continue
-            if it.Attachments.Count == 0:
-                continue
-            yield it
+            b = mapi.GetDefaultFolder(6)
+            out.append(('(cuenta predeterminada)', b))
+        except Exception as e:
+            raise SystemExit('Outlook no devolvio ninguna Bandeja de entrada '
+                             '(%s: %s). Lo mas probable es que todavia no tenga '
+                             'la cuenta configurada.' % (type(e).__name__, str(e)[:120]))
+    return out
+
+
+def correos(dias, diag=False):
+    """Los correos con adjunto de los ultimos N dias, de todas las bandejas.
+
+    EL FILTRO DE FECHA DE OUTLOOK ES QUISQUILLOSO. La primera version armaba la
+    fecha con "%H:%M %p" -hora de 24 con AM/PM pegado, o sea "16:46 PM"- y Outlook,
+    en vez de quejarse, devolvia CERO correos en silencio. Ahora va solo la fecha,
+    sin hora, que es lo que no falla; y si aun asi el Restrict no devuelve nada, se
+    recorren los ultimos correos a mano y se compara la fecha en Python.
+    """
+    mapi = outlook()
+    for nombre, bandeja in bandejas(mapi):
+        items = bandeja.Items
+        try:
+            items.Sort('[ReceivedTime]', True)
         except Exception:
+            pass
+        total = 0
+        try:
+            total = items.Count
+        except Exception:
+            pass
+        if diag:
+            log('   bandeja "%s": %s correos' % (nombre, format(total, ',d')))
+        if not total:
             continue
+
+        desde = datetime.now() - timedelta(days=dias)
+        sel = None
+        try:
+            sel = items.Restrict("[ReceivedTime] >= '%s'" % desde.strftime('%m/%d/%Y'))
+            n = sel.Count
+            if diag:
+                log('      del ultimo %d dias: %s' % (dias, format(n, ',d')))
+            if not n:
+                sel = None
+        except Exception as e:
+            if diag:
+                log('      el filtro de fecha fallo (%s), se recorre a mano'
+                    % type(e).__name__, 'WARN')
+            sel = None
+
+        # Sin filtro se recorren los mas nuevos y se corta al pasarse de fecha:
+        # estan ordenados por fecha descendente, asi que no hace falta leerlos todos.
+        recorrido = sel if sel is not None else items
+        mirados = 0
+        for it in recorrido:
+            mirados += 1
+            if sel is None and mirados > 500:
+                break
+            try:
+                if it.Class != 43:                  # 43 = MailItem
+                    continue
+                if sel is None and it.ReceivedTime.replace(tzinfo=None) < desde:
+                    break
+                if it.Attachments.Count == 0:
+                    continue
+                yield it
+            except Exception:
+                continue
 
 
 def main():
@@ -178,19 +239,29 @@ def main():
         log('MODO LISTAR: no se guarda nada. Elegi de aca el remitente y el')
         log('asunto, y ponelos arriba del script en REMITENTE y ASUNTO.')
         log('')
-        n = 0
-        for it in correos(dias):
+        log('Cuentas y bandejas que ve Outlook:')
+        n = con_excel = 0
+        for it in correos(dias, diag=True):
+            n += 1
             adj = [a.FileName for a in it.Attachments
                    if str(a.FileName).lower().endswith(('.xlsx', '.xls'))]
             if not adj:
                 continue
-            n += 1
+            con_excel += 1
             log('%-16s | %-38s | %s'
                 % (it.ReceivedTime.strftime('%d-%m %H:%M'),
                    str(it.SenderName)[:38], str(it.Subject)[:60]))
             log('%16s   adjuntos: %s' % ('', ', '.join(adj)))
         log('')
-        log('%d correos con Excel en %d dias' % (n, dias))
+        log('%d correos con adjunto en %d dias · %d de ellos con Excel'
+            % (n, dias, con_excel))
+        if not n:
+            log('')
+            log('NINGUN correo con adjunto. Lo mas probable, en orden:', 'WARN')
+            log('  1. Outlook todavia no termino de bajar el buzon.', 'WARN')
+            log('  2. La cuenta no esta configurada en ESTE Outlook.', 'WARN')
+            log('  3. El correo no cae en la Bandeja de entrada sino en una', 'WARN')
+            log('     subcarpeta o en otra cuenta.', 'WARN')
         return 0
 
     if not REMITENTE and not ASUNTO:
