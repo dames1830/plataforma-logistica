@@ -62,7 +62,11 @@ def sin_tildes(t):
 # El asunto lo dijo Daniel el 20-ago: "Guias de Prescripciones". Se compara SIN
 # TILDES y en minusculas, asi que da igual como venga escrito: "Guías de
 # Prescripciones", "GUIAS DE PRESCRIPCIONES" o con la tilde puesta o no.
-REMITENTE = ''                          # vacio = no se mira quien lo manda
+# Vacio a proposito: el mismo archivo llega dos veces -el original de Oscar
+# Martinez Tejada y un reenvio "RV:" de Milagros Quijaite Nieto- y cualquiera de
+# los dos sirve. Filtrar por remitente dejaria el dia sin bajar si ese dia lo
+# manda otra persona.
+REMITENTE = ''
 ASUNTO = 'guias de prescripciones'
 
 DESTINO = r'C:\Users\dames\OneDrive\danielames.bata\scraping Stock\Correos Picking'
@@ -317,10 +321,21 @@ def main():
                 saltados += 1
                 continue
 
-            if os.path.exists(ruta) and not probar:
-                log('   %s ya existe, no se pisa' % nombre, 'WARN')
-                saltados += 1
-                continue
+            # SI YA HAY ARCHIVO, GANA EL MAS NUEVO. El mismo dia llega dos veces
+            # -el original y un reenvio "RV:"- y con quedarse con uno alcanza. Pero
+            # si comercial manda MANANA una correccion de las guias de hoy, esa
+            # tiene que pisar: con un "no se pisa" a secas, la correccion no
+            # entraba nunca y el dia quedaba con la lista vieja.
+            if os.path.exists(ruta):
+                nace = it.ReceivedTime.replace(tzinfo=None)
+                tiene = datetime.fromtimestamp(os.path.getmtime(ruta))
+                if nace <= tiene:
+                    log('   %s ya esta y es mas nuevo que este correo (%s): se deja'
+                        % (nombre, nace.strftime('%d-%m %H:%M')))
+                    saltados += 1
+                    continue
+                log('   %s se reemplaza: llego una version mas nueva (%s)'
+                    % (nombre, nace.strftime('%d-%m %H:%M')), 'WARN')
             if probar:
                 log('   (prueba) guardaria %s  ·  %s' % (nombre, detalle))
             else:
