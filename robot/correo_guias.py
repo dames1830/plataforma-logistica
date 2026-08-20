@@ -69,7 +69,28 @@ def sin_tildes(t):
 REMITENTE = ''
 ASUNTO = 'guias de prescripciones'
 
-DESTINO = r'C:\Users\dames\OneDrive\danielames.bata\scraping Stock\Correos Picking'
+def _base_onedrive():
+    """La carpeta de OneDrive. SE BUSCA, NO SE ESCRIBE A MANO.
+
+    En la laptop el usuario de Windows es 'dames' y en el servidor
+    'Administrator'. Una ruta fija sirve en una maquina y revienta en la otra: el
+    20-ago-2026 este robot bajo el correo bien y murio al guardarlo, con "No such
+    file or directory" apuntando a C:\\Users\\dames\\... Es el mismo error que ya se
+    habia pagado el 05-ago con generar_slotting.py, de donde sale esta funcion.
+    """
+    for c in (os.environ.get('OneDrive'), os.environ.get('OneDriveCommercial'),
+              os.path.join(os.path.expanduser('~'), 'OneDrive'),
+              r'C:\Users\Administrator\OneDrive', r'C:\Users\dames\OneDrive'):
+        if not c:
+            continue
+        ruta = os.path.join(c, 'danielames.bata', 'scraping Stock')
+        if os.path.isdir(ruta):
+            return ruta
+    return os.path.join(os.path.expanduser('~'), 'OneDrive', 'danielames.bata',
+                        'scraping Stock')
+
+
+DESTINO = os.path.join(_base_onedrive(), 'Correos Picking')
 AQUI = os.path.dirname(os.path.abspath(__file__))
 VISTOS = os.path.join(AQUI, 'correo_guias_vistos.json')
 LOG = os.path.join(AQUI, 'logs', 'correo_guias.log')
@@ -238,6 +259,8 @@ def main():
     log('=' * 58)
     log('CORREO DE GUIAS · mirando %d dias hacia atras' % dias)
     log('=' * 58)
+    log('Se guarda en: %s%s' % (DESTINO, '' if os.path.isdir(DESTINO)
+                                else '   <-- ESA CARPETA NO EXISTE'))
 
     if listar:
         log('MODO LISTAR: no se guarda nada. Elegi de aca el remitente y el')
@@ -285,10 +308,12 @@ def main():
         eid = str(it.EntryID)
         if eid in vistos:
             continue
-        de = sin_tildes(str(it.SenderName or '') + ' ' +
-                        str(getattr(it, 'SenderEmailAddress', '') or ''))
+        # NO SE LEE `SenderEmailAddress`. Esa propiedad es la que dispara el
+        # cartel "Un programa intenta obtener acceso a direcciones de correo de
+        # Outlook", que se queda esperando un clic y colgaria el robot de
+        # madrugada. `SenderName` no esta protegida y alcanza de sobra.
         asunto = sin_tildes(it.Subject)
-        if REMITENTE and sin_tildes(REMITENTE) not in de:
+        if REMITENTE and sin_tildes(REMITENTE) not in sin_tildes(it.SenderName):
             continue
         if ASUNTO and sin_tildes(ASUNTO) not in asunto:
             continue
@@ -339,6 +364,7 @@ def main():
             if probar:
                 log('   (prueba) guardaria %s  ·  %s' % (nombre, detalle))
             else:
+                os.makedirs(DESTINO, exist_ok=True)
                 io.open(ruta, 'wb').write(datos)
                 log('   guardado %s  ·  %s' % (nombre, detalle))
             guardados += 1

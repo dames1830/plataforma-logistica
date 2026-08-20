@@ -14,7 +14,7 @@ const getApiBase = (defaultUrl) => {
   return defaultUrl;
 };
 const AUTH_API = getApiBase("https://logistics-backend-wv0x.onrender.com/api");
-const VERSION = '29.0292';
+const VERSION = '29.0293';
 
 /**
  * [SEGURIDAD v26.5.572] La validación la hace EL SERVIDOR.
