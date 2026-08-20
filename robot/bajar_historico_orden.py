@@ -8,11 +8,11 @@ bajó a mano. En esos, un pedido ya despachado sencillamente no aparece, así qu
 no se puede saber cuántos se atendieron: cualquier KPI por estado saldría
 diciendo que está todo abierto.
 
-EL RANGO DE ESTADOS ES IDEA DE DANIEL: *"el filtro de estado es un rango. Si pones
-de Creada hasta Cancelado te baja todos los estados que están en el medio"*. El
-primer estado de un pedido es Creada y el último Cancelado, así que ese rango los
-abarca a todos: Asignado, En selección, Seleccionada, En empaquetado, Empaquetado,
-Cargado y Enviado.
+TRAE TODOS LOS ESTADOS. Daniel propuso poner el rango "de Creada a Cancelado",
+que es correcto: son el primero y el último de la lista y abarcan todo lo del
+medio. Pero puesto a mano NO FUNCIONA -ver el comentario de `descargar_dia`-, y no
+hace falta: **el campo de estado vacío ya trae los diez**, que es como lo baja el
+robot todas las mañanas.
 
 VA DÍA POR DÍA, TAMBIÉN POR DECISIÓN DE DANIEL: *"si te bajas varios meses en un
 solo archivo va a ser muy pesado y no sé si el WMS vaya a fallar"*. Tiene razón:
@@ -61,16 +61,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import wms_automation_final as wms                    # noqa: E402
 from picking_y_orden import (                         # noqa: E402
-    abrir_log, log, abrir_pantalla, abrir_panel, limpiar_panel,
-    poner_fecha_y_hora, poner_estado, ejecutar_busqueda, esperar_resultado,
-    exportar_csv, total_paginas, PANTALLA_ORDEN, MINIMO_KB_ORDEN,
-    ETQ_ORD_DESDE, ETQ_ORD_HASTA, ETQ_ORD_ESTADO_DE, ETQ_ORD_ESTADO_A,
-    ESTADO_DESDE)
+    abrir_log, log, descargar_detalle_orden)
 from playwright.sync_api import sync_playwright       # noqa: E402
-
-# EL ÚLTIMO ESTADO DE LA LISTA. Igual que ESTADO_DESDE, se aceptan los nombres que
-# el WMS usa para lo mismo segun la lista, y gana el que aparezca.
-ESTADO_ULTIMO = ("Cancelado", "Cancelada", "Cancelados")
 
 
 def arg(nombre, por_defecto=None):
@@ -93,42 +85,26 @@ def fecha(txt, que):
 
 
 def descargar_dia(page, destino, dia):
-    """El Detalle de Orden de UN día, del primer estado al último."""
-    log("=" * 58)
-    log("DETALLE DE ORDEN · %s · TODOS LOS ESTADOS" % dia.strftime("%d-%m-%Y"))
-    log("=" * 58)
+    """El Detalle de Orden de UN día, con todos los estados.
 
-    abrir_pantalla(page, PANTALLA_ORDEN)
-    abrir_panel(page)
-    limpiar_panel(page)
+    NO HACE NADA PROPIO: llama a la misma `descargar_detalle_orden` que el robot
+    baja todas las mañanas desde el 12-ago. Ese es el punto.
 
-    f = dia.strftime("%d/%m/%Y")
-    poner_fecha_y_hora(page, ETQ_ORD_DESDE, f, "0:00:00")
-    poner_fecha_y_hora(page, ETQ_ORD_HASTA, f, "23:59:59")
+    LA PRIMERA VERSIÓN PONÍA EL RANGO DE ESTADOS A MANO -de Creada a Cancelado- y
+    NO FUNCIONÓ. Falló el 20-ago-2026 a las 00:03 con el 01-08: puso las dos
+    fechas, puso los dos estados, ejecutó la búsqueda y se quedó diez minutos
+    mirando un pie de página que seguía diciendo "5 Páginas". Un día suelto tiene
+    unas 116. Lo que pasa es lo que ya avisaba el comentario de
+    `descargar_detalle_orden`: esas listas desplegables DISPARAN LA BÚSQUEDA al
+    confirmarse, así que cuando el script apretaba Buscar la pantalla ya estaba en
+    otra cosa y el resultado que llegó era el de una búsqueda a medio filtrar.
 
-    # LOS ESTADOS VAN DESPUÉS DE LAS FECHAS. Si la lista dispara una búsqueda por
-    # su cuenta, que al menos salga con el día ya puesto y no con todo el almacén.
-    #
-    # Y SI NO SE PUEDEN PONER, NO SE CORTA: dejarlos vacíos también trae todos los
-    # estados —está comprobado el 13-ago contra el archivo que Daniel bajó a mano—,
-    # así que el día se baja igual y solo queda el aviso en el log.
-    for etq, val in ((ETQ_ORD_ESTADO_DE, ESTADO_DESDE),
-                     (ETQ_ORD_ESTADO_A, ESTADO_ULTIMO)):
-        try:
-            poner_estado(page, etq, val)
-        except Exception as e:
-            log("   no se pudo poner '%s' (%s: %s). Se deja vacío, que también "
-                "trae todos los estados." % (etq, type(e).__name__, str(e)[:120]),
-                "WARN")
-
-    _, pie_antes = total_paginas(page)
-    ejecutar_busqueda(page)
-    log("Esperando a que Oracle traiga las filas...")
-    if not esperar_resultado(page, timeout_seg=600, distinto_de=pie_antes):
-        wms.captura(page, "historico_sin_datos")
-        raise TimeoutError("El día %s no trajo ninguna fila" % dia.strftime("%d-%m-%Y"))
-
-    return exportar_csv(page, destino, MINIMO_KB_ORDEN)
+    DEJAR LOS ESTADOS VACÍOS TRAE LOS MISMOS DIEZ ESTADOS. Está comprobado el
+    13-ago contra el archivo que Daniel bajó a mano: el 12-ago dio 116 páginas,
+    unas 14.500 líneas, del orden del suyo. El rango "de Creada a Cancelado" y el
+    campo vacío llevan al mismo lugar; el vacío es el que no rompe la pantalla.
+    """
+    return descargar_detalle_orden(page, destino, dia)
 
 
 def main():
