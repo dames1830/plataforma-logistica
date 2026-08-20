@@ -1,26 +1,26 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0294';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0295';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0294';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0294';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0294';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0294';
-import * as metasService from '../services_v245/metasService.js?v=29.0294';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0294';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0294';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0294';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0294';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0294';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0294';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0294';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0294';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0294';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0294';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0294';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0294';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0294';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0294';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0294';
-import { montarSlotting } from './slotting.js?v=29.0294';
+import * as adminService from '../services_v245/adminService.js?v=29.0295';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0295';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0295';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0295';
+import * as metasService from '../services_v245/metasService.js?v=29.0295';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0295';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0295';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0295';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0295';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0295';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0295';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0295';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0295';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0295';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0295';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0295';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0295';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0295';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0295';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0295';
+import { montarSlotting } from './slotting.js?v=29.0295';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +377,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0294';
+const VERSION = '29.0295';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4490,7 +4490,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0294');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0295');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -9648,6 +9648,11 @@ const renderRFSection = (container) => {
     try { cfg = await robotsService.cargarRobots(); }
     catch (e) { cfg = robotsService.robotsActual(); }
 
+    // El correo de comercial vive en la misma area `config`, en su propia clave.
+    let cor;
+    try { cor = await robotsService.cargarCorreoGuias(); }
+    catch (e) { cor = robotsService.correoGuiasActual(); }
+
     // Cuándo corrió cada una por última vez, sacado de la marca de su área
     let versiones = {};
     try {
@@ -9750,6 +9755,124 @@ const renderRFSection = (container) => {
           <button id="rob_guardar" class="btn" style="background:var(--primary); color:#000; padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">GUARDAR HORARIOS</button>
           <button id="rob_fabrica" class="btn" style="background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#e2e8f0; padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">↩️ VOLVER A LO DE FÁBRICA</button>
         </div>
+      </div>
+
+      <!-- ── EL CORREO DE COMERCIAL ──────────────────────────────────────────
+           Va en tarjeta aparte y no como una fila mas de arriba porque su
+           horario es una VENTANA -de tal hora a tal hora- y las de arriba son
+           "una vez a las 19:00" o "cada 60 minutos". Y ademas configura QUE
+           busca, no solo cuando. -->
+      <div class="glass-panel" style="padding:1.5rem; border-radius:16px; margin-top:1.2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:0.6rem; margin-bottom:1.2rem;">
+          <div>
+            <h3 style="margin:0; color:#fff; font-size:1rem; font-weight:800; letter-spacing:1px;">📧 CORREO DE COMERCIAL · LAS GUÍAS DE PICKING</h3>
+            <div style="color:var(--text-muted); font-size:0.78rem; margin-top:0.25rem;">
+              El robot entra al Outlook del servidor, encuentra el correo y guarda el Excel en su carpeta.
+            </div>
+          </div>
+          <div id="cor_estado" style="font-size:0.78rem; color:var(--text-muted);"></div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; min-width:640px;">
+            <tbody>
+              <tr style="background:rgba(255,255,255,0.03);">
+                <td colspan="2" style="padding:0.5rem 1rem; color:var(--text-muted); font-size:0.72rem; font-weight:700; letter-spacing:0.6px;">QUÉ CORREO BUSCA</td>
+              </tr>
+              <tr style="border-top:1px solid var(--border);">
+                <td style="padding:0.7rem 1rem; width:38%;">
+                  <span style="color:#fff; font-weight:600;">Asunto</span><br>
+                  <span style="color:var(--text-muted); font-size:0.75rem;">basta con que el asunto lo contenga; no distingue tildes ni mayúsculas</span>
+                </td>
+                <td style="padding:0.7rem 1rem;">
+                  <input type="text" data-c="asunto" value="${esc(cor.asunto)}" maxlength="120"
+                         style="width:100%; max-width:380px; background:rgba(0,0,0,0.3); border:1px solid var(--border);
+                                border-radius:6px; color:#fff; padding:0.45rem 0.6rem; font-size:0.85rem;">
+                </td>
+              </tr>
+              <tr style="border-top:1px solid var(--border);">
+                <td style="padding:0.7rem 1rem;">
+                  <span style="color:#fff; font-weight:600;">Remitente</span><br>
+                  <span style="color:var(--text-muted); font-size:0.75rem;">vacío acepta de cualquiera. Hoy llega de dos personas —el original y un reenvío— y con el asunto alcanza</span>
+                </td>
+                <td style="padding:0.7rem 1rem;">
+                  <input type="text" data-c="remitente" value="${esc(cor.remitente)}" maxlength="120" placeholder="(cualquiera)"
+                         style="width:100%; max-width:380px; background:rgba(0,0,0,0.3); border:1px solid var(--border);
+                                border-radius:6px; color:#fff; padding:0.45rem 0.6rem; font-size:0.85rem;">
+                </td>
+              </tr>
+              <tr style="border-top:1px solid var(--border);">
+                <td style="padding:0.7rem 1rem;">
+                  <span style="color:#fff; font-weight:600;">Días hacia atrás</span><br>
+                  <span style="color:var(--text-muted); font-size:0.75rem;">cuántos días de correos revisa cada vez. Con 3 recupera un fin de semana</span>
+                </td>
+                <td style="padding:0.7rem 1rem;">
+                  <input type="number" data-c="diasAtras" min="1" max="30" value="${cor.diasAtras}"
+                         style="width:80px; background:rgba(0,0,0,0.3); border:1px solid var(--border);
+                                border-radius:6px; color:#fff; padding:0.45rem; font-family:monospace; font-size:0.85rem;">
+                </td>
+              </tr>
+
+              <tr style="background:rgba(255,255,255,0.03);">
+                <td colspan="2" style="padding:0.5rem 1rem; color:var(--text-muted); font-size:0.72rem; font-weight:700; letter-spacing:0.6px;">CUÁNDO LO BUSCA</td>
+              </tr>
+              <tr style="border-top:1px solid var(--border);">
+                <td style="padding:0.7rem 1rem;">
+                  <span style="color:#fff; font-weight:600;">Prendido</span><br>
+                  <span style="color:var(--text-muted); font-size:0.75rem;">apagado, el robot no mira el correo</span>
+                </td>
+                <td style="padding:0.7rem 1rem;">
+                  <input type="checkbox" data-c="activa" ${cor.activa ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer;">
+                </td>
+              </tr>
+              <tr style="border-top:1px solid var(--border);">
+                <td style="padding:0.7rem 1rem;">
+                  <span style="color:#fff; font-weight:600;">Ventana</span><br>
+                  <span style="color:var(--text-muted); font-size:0.75rem;">entre esas dos horas revisa cada vez que el servidor lo despierta. Puede cruzar la medianoche: de 22:00 a 02:00 vale</span>
+                </td>
+                <td style="padding:0.7rem 1rem;">
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="color:var(--text-muted); font-size:0.8rem;">de</span>
+                    <input type="time" data-c="desde" value="${esc(cor.desde)}"
+                           style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:6px;
+                                  color:#fff; padding:0.35rem 0.5rem; font-family:monospace; font-size:0.85rem;">
+                    <span style="color:var(--text-muted); font-size:0.8rem;">a</span>
+                    <input type="time" data-c="hasta" value="${esc(cor.hasta)}"
+                           style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:6px;
+                                  color:#fff; padding:0.35rem 0.5rem; font-family:monospace; font-size:0.85rem;">
+                  </div>
+                </td>
+              </tr>
+              <tr style="border-top:1px solid var(--border);">
+                <td style="padding:0.7rem 1rem;">
+                  <span style="color:#fff; font-weight:600;">Días de la semana</span><br>
+                  <span style="color:var(--text-muted); font-size:0.75rem;">el domingo viene apagado: comercial no manda</span>
+                </td>
+                <td style="padding:0.7rem 1rem;">
+                  <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                    ${robotsService.DIAS.map(d => `
+                      <label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer;">
+                        <input type="checkbox" data-cd="${d.id}" ${cor.dias[d.id] ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer;">
+                        <span style="color:${d.id === 'dom' ? '#f59e0b' : 'var(--text-muted)'}; font-size:0.78rem;">${d.letra}</span>
+                      </label>`).join('')}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:1.2rem; padding:0.9rem 1rem; background:rgba(96,165,250,0.08);
+                    border:1px solid rgba(96,165,250,0.3); border-radius:10px; color:#bfdbfe; font-size:0.8rem; line-height:1.6;">
+          Lo que cambies acá lo toma el robot en su próxima vuelta, <b>sin entrar al servidor</b>.
+          Si un día comercial avisa que lo manda a las 21:00, mueves la ventana y listo.
+          Si el servidor se queda sin internet, trabaja con lo último que leyó de acá.
+        </div>
+
+        <div style="display:flex; gap:0.7rem; margin-top:1.2rem; flex-wrap:wrap;">
+          <button id="cor_guardar" class="btn" style="background:var(--primary); color:#000; padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">GUARDAR CORREO</button>
+          <button id="cor_fabrica" class="btn" style="background:rgba(255,255,255,0.06); border:1px solid var(--border); color:#e2e8f0; padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">↩️ VOLVER A LO DE FÁBRICA</button>
+        </div>
       </div>`;
 
     const leerPantalla = () => {
@@ -9784,6 +9907,64 @@ const renderRFSection = (container) => {
         est.innerHTML = '<span style="color:#f87171;">No llegó al servidor</span>';
       }
       btn.disabled = false; btn.textContent = rotulo;
+    };
+
+    /* ── El correo de comercial ────────────────────────────────────────────
+       Se lee de la pantalla con `data-c` para los campos y `data-cd` para los
+       dias, que son marcas distintas de las del horario (`data-t` / `data-d`):
+       si compartieran atributo, guardar el horario arrastraria lo del correo. */
+    const leerCorreo = () => {
+      const out = JSON.parse(JSON.stringify(cor));
+      caja.querySelectorAll('[data-c]').forEach(el => {
+        const campo = el.dataset.c;
+        if (campo === 'activa') out.activa = el.checked;
+        else if (campo === 'diasAtras') out.diasAtras = Number(el.value);
+        else out[campo] = el.value;
+      });
+      caja.querySelectorAll('[data-cd]').forEach(el => { out.dias[el.dataset.cd] = el.checked; });
+      return out;
+    };
+
+    const estCor = caja.querySelector('#cor_estado');
+    caja.querySelectorAll('[data-c],[data-cd]').forEach(el => el.addEventListener('change', () => {
+      estCor.innerHTML = '<span style="color:#facc15;">Hay cambios sin guardar</span>';
+    }));
+
+    caja.querySelector('#cor_guardar').onclick = async () => {
+      const btn = caja.querySelector('#cor_guardar');
+      const rotulo = btn.textContent;
+      const nueva = leerCorreo();
+      // SIN ASUNTO NI REMITENTE ENTRARIA CUALQUIER EXCEL del buzon. Es el unico
+      // caso en que se para el guardado: dejarlo pasar ensucia la carpeta y
+      // despues nadie sabe de donde salio ese archivo.
+      if (!String(nueva.asunto || '').trim() && !String(nueva.remitente || '').trim()) {
+        showPremiumAlert('FALTA EL ASUNTO',
+          'Con el asunto y el remitente vacíos entraría cualquier Excel del buzón. ' +
+          'Pon al menos uno de los dos.', 'error');
+        return;
+      }
+      btn.disabled = true; btn.textContent = '⌛ GUARDANDO...';
+      try {
+        cor = await robotsService.guardarCorreoGuias(nueva);
+        estCor.innerHTML = '<span style="color:#4ade80;">Guardado. El robot lo toma en la vuelta siguiente.</span>';
+        showPremiumAlert('CORREO GUARDADO',
+          'El robot del servidor lo va a leer en su próxima vuelta.', 'success');
+      } catch (e) {
+        showPremiumAlert('NO SE PUDO GUARDAR', (e && e.message) || String(e), 'error');
+        estCor.innerHTML = '<span style="color:#f87171;">No llegó al servidor</span>';
+      }
+      btn.disabled = false; btn.textContent = rotulo;
+    };
+
+    caja.querySelector('#cor_fabrica').onclick = () => {
+      const d = robotsService.correoGuiasPorDefecto();
+      caja.querySelectorAll('[data-c]').forEach(el => {
+        const campo = el.dataset.c;
+        if (campo === 'activa') el.checked = d.activa;
+        else el.value = d[campo];
+      });
+      caja.querySelectorAll('[data-cd]').forEach(el => { el.checked = !!d.dias[el.dataset.cd]; });
+      estCor.innerHTML = '<span style="color:#facc15;">Valores de fábrica puestos. Falta guardar.</span>';
     };
 
     caja.querySelector('#rob_fabrica').onclick = () => {
@@ -16124,7 +16305,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0294 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0295 | MOBILE PORTAL
                             </div>
                     </div>
 

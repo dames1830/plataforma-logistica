@@ -203,6 +203,103 @@ export const guardarRobots = async (nueva) => {
     return cfg;
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   EL CORREO DE COMERCIAL
+
+   Vive en la misma área `config`, en la clave `correoGuias`, al lado de
+   `robots`. Va acá y no en un servicio aparte porque comparte todo: el mismo
+   endpoint, la misma cascada web → caché → fábrica, y la misma regla de releer
+   el cajón entero antes de guardar para no pisar lo que escribió otro.
+
+   NO ES UNA TAREA MÁS DE `robots` porque su horario es una VENTANA —de tal hora
+   a tal hora— y las tareas de `robots` son "una vez a las 19:00" o "cada 60
+   minutos". Meterla ahí obligaba a inventar un tercer tipo y tocar una pantalla
+   que ya funciona.
+   ══════════════════════════════════════════════════════════════════════════ */
+const CACHE_CORREO = 'config_correo_guias_v1';
+
+export const correoGuiasPorDefecto = () => ({
+    activa: true,
+    // El asunto que manda comercial. El remitente va VACÍO a propósito: el mismo
+    // archivo llega dos veces —el original y un reenvío "RV:"— y filtrar por
+    // persona dejaría el día sin bajar si un día lo manda otro.
+    asunto: 'Guías de Prescripciones',
+    remitente: '',
+    desde: '18:00',          // el correo llega entre las 19:00 y las 20:00
+    hasta: '23:00',
+    diasAtras: 3,
+    dias: { ...LUN_A_SAB }
+});
+
+export const normalizarCorreo = (cfg) => {
+    const d = correoGuiasPorDefecto();
+    const c = (cfg && typeof cfg === 'object') ? cfg : {};
+    return {
+        activa: ('activa' in c) ? !!c.activa : d.activa,
+        asunto: String(c.asunto == null ? d.asunto : c.asunto).slice(0, 120),
+        remitente: String(c.remitente == null ? d.remitente : c.remitente).slice(0, 120),
+        desde: _hhmm(c.desde, d.desde),
+        hasta: _hhmm(c.hasta, d.hasta),
+        diasAtras: _entre(c.diasAtras, d.diasAtras, 1, 30),
+        dias: _dias(c.dias, d.dias)
+    };
+};
+
+let _correo = null;
+
+export const correoGuiasActual = () => {
+    if (_correo) return _correo;
+    try {
+        const txt = localStorage.getItem(CACHE_CORREO);
+        if (txt) { _correo = normalizarCorreo(JSON.parse(txt)); return _correo; }
+    } catch (e) { /* sin caché se sigue igual */ }
+    return correoGuiasPorDefecto();
+};
+
+export const cargarCorreoGuias = async () => {
+    try {
+        const res = await fetch(`${API_URL}?t=${Date.now()}`);
+        if (res.ok) {
+            const cuerpo = await res.json();
+            const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+            if (datos && typeof datos === 'object') {
+                _correo = normalizarCorreo(datos.correoGuias);
+                try { localStorage.setItem(CACHE_CORREO, JSON.stringify(_correo)); } catch (e) {}
+                return _correo;
+            }
+        }
+    } catch (e) {
+        console.warn('[Correo guías] no se pudo traer la configuración:', e && e.message);
+    }
+    return correoGuiasActual();
+};
+
+/** Publica. Se relee `config` y se reemplaza SOLO la clave `correoGuias`. */
+export const guardarCorreoGuias = async (nueva) => {
+    const cfg = normalizarCorreo(nueva);
+    _correo = cfg;
+    try { localStorage.setItem(CACHE_CORREO, JSON.stringify(cfg)); } catch (e) {}
+
+    let cajon = {};
+    try {
+        const res = await fetch(`${API_URL}?t=${Date.now()}`);
+        if (res.ok) {
+            const cuerpo = await res.json();
+            const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+            if (datos && typeof datos === 'object' && !Array.isArray(datos)) cajon = datos;
+        }
+    } catch (e) { /* si no se puede releer, se manda solo lo del correo */ }
+
+    const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...cajon, correoGuias: cfg })
+    });
+    if (!res.ok) throw new Error('El servidor respondió ' + res.status);
+    return cfg;
+};
+
+
 /**
  * ¿LE TOCA CORRER A ESTA TAREA EN ESTE MOMENTO? La misma cuenta que hace el robot en el
  * servidor, escrita una sola vez para que las dos puntas no se separen.
