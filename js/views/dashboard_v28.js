@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0306';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0307';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0306';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0306';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0306';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0306';
-import * as metasService from '../services_v245/metasService.js?v=29.0306';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0306';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0306';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0306';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0306';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0306';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0306';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0306';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0306';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0306';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0306';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0306';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0306';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0306';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0306';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0306';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0306';
-import { montarSlotting } from './slotting.js?v=29.0306';
+import * as adminService from '../services_v245/adminService.js?v=29.0307';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0307';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0307';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0307';
+import * as metasService from '../services_v245/metasService.js?v=29.0307';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0307';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0307';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0307';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0307';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0307';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0307';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0307';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0307';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0307';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0307';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0307';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0307';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0307';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0307';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0307';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0307';
+import { montarSlotting } from './slotting.js?v=29.0307';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0306';
+const VERSION = '29.0307';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4497,7 +4497,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0306');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0307');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16476,7 +16476,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0306 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0307 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23250,6 +23250,245 @@ const renderRFSection = (container) => {
   const PALETA_LLENA_RESERVA = 160;
 
   /**
+   * LOS DOS CUADROS DE CONSOLIDACIÓN DE LA RESERVA.
+   *
+   * Nacieron el 21-ago-2026 de una pregunta de Daniel: *"cuántas paletas no cumplen con la
+   * capacidad de una ubicación"*. La respuesta corta es que 8 de cada 10 no llegan, y que el
+   * rack está al 90% de ubicaciones ocupadas pero al 56% de volumen. No falta rack: falta juntar.
+   *
+   * TRES REGLAS QUE COSTARON VARIAS VUELTAS Y NO SE DEBEN TOCAR:
+   *
+   * 1. Se consolida el padre con SUS PROPIAS TALLAS, nunca mezclando códigos. Lo dijo Daniel:
+   *    juntar artículos distintos en una paleta "sería un desastre para el cíclico". Cualquier
+   *    número que salga de mezclar padres es inválido aunque se vea mejor.
+   *
+   * 2. El tope de una paleta va POR ARTÍCULO, no es fijo. Con 160 para todos las cuentas daban
+   *    NEGATIVO, porque hay paletas de hasta 590 pares y la fórmula pretendía partirlas. Y al
+   *    revés: el TRUST FG tiene once paletas de exactamente 120 —esa es su paleta llena, no
+   *    160—. Acá el tope de cada padre es su propia paleta más llena vista en la foto. Es
+   *    conservador para los que nunca se han visto llenos; mejor quedarse corto que prometer.
+   *
+   * 3. Una ubicación se le cuenta ENTERA al padre que más pares tiene encima, igual que en
+   *    `resumenDeReserva`. Repartir en fracciones da cuadros que no cuadran.
+   *
+   * El padre sale del PRODUCTO (`8054009-1-43` -> `8054009`) y el género del Maestro que ya
+   * está cargado. Sin Maestro no se puede separar el calzado de las bolsas —una paleta de
+   * bolsas trae 12.000 unidades y taparía cualquier reparto—, así que ahí no se dibuja nada.
+   */
+  const _padreDeProducto = (sku) => String(sku || '').trim().split('-')[0].trim().substring(0, 7);
+
+  const consolidacionDeReserva = (filas) => {
+      const idx = indexarMaestro();
+      if (!idx || !idx.porSku || idx.porSku.size === 0) return null;
+      const esCalzado = (padre) => {
+          const m = idx.porSku.get(padre);
+          return !!m && String(m.familia || '').trim() === 'FOOTWEAR';
+      };
+
+      // Una sola pasada: cada ubicación con lo que tiene encima, padre por padre.
+      const ubis = new Map();
+      (filas || []).forEach(row => {
+          if (!row) return;
+          if (!row.ES_ALTO && !String(row.NIVEL).toUpperCase().includes('AL')) return;
+          const u = String(row.UBICACION || '').trim();
+          if (!u.startsWith('SEL-')) return;
+          const q = parseFloat(row.CANTIDAD) || 0;
+          if (q <= 0) return;
+          const p = _padreDeProducto(row.PRODUCTO);
+          if (!p) return;
+          let e = ubis.get(u);
+          if (!e) { e = { padres: new Map(), lpn: String(row.LPN || '').trim(), tallas: new Map() }; ubis.set(u, e); }
+          e.padres.set(p, (e.padres.get(p) || 0) + q);
+          if (!e.lpn) e.lpn = String(row.LPN || '').trim();
+          if (!e.tallas.has(p)) e.tallas.set(p, new Set());
+          e.tallas.get(p).add(String(row.PRODUCTO || '').split('-').pop());
+      });
+      if (!ubis.size) return null;
+
+      // Cada ubicación es del padre que más pares tiene.
+      const porCol = new Map();
+      const porPadre = new Map();
+      ubis.forEach((e, u) => {
+          const col = parseInt(u.split('-')[1], 10);
+          if (!col) return;
+          let dom = null, max = -1, total = 0;
+          e.padres.forEach((q, p) => { total += q; if (q > max) { max = q; dom = p; } });
+          let c = porCol.get(col);
+          if (!c) { c = { ocupadas: 0, fw: 0, nofw: 0, pares: 0, hasta50: 0, de51a100: 0 }; porCol.set(col, c); }
+          c.ocupadas++;
+          if (!esCalzado(dom)) { c.nofw++; return; }
+          c.fw++; c.pares += total;
+          if (total <= 50) c.hasta50++;
+          else if (total <= 100) c.de51a100++;
+          let d = porPadre.get(dom);
+          if (!d) { d = { ubic: [], tot: 0, cap: 0 }; porPadre.set(dom, d); }
+          const mio = e.padres.get(dom);
+          d.ubic.push({ u: u, col: col, lpn: e.lpn, p: Math.round(mio),
+                        t: [...(e.tallas.get(dom) || [])].sort(),
+                        ot: [...e.padres.keys()].filter(x => x !== dom) });
+          d.tot += mio;
+          if (mio > d.cap) d.cap = mio;
+      });
+
+      // Cuadro 1: la matriz, selectivo por selectivo.
+      const matriz = [];
+      for (let col = 1; col <= COLS_RESERVA; col++) {
+          let existen = 0;
+          for (let cuerpo = 1; cuerpo <= 22; cuerpo++) {
+              NIVELES_RESERVA.forEach(nv => { if (paletaDeReservaExiste(col, cuerpo, nv)) existen += 2; });
+          }
+          const c = porCol.get(col) || { ocupadas: 0, fw: 0, nofw: 0, pares: 0, hasta50: 0, de51a100: 0 };
+          matriz.push({ col: col, existen: existen, libres: existen - c.ocupadas,
+                        pct: existen ? Math.round(100 * c.ocupadas / existen) : 0,
+                        ocupadas: c.ocupadas, fw: c.fw, nofw: c.nofw, pares: c.pares,
+                        hasta50: c.hasta50, de51a100: c.de51a100 });
+      }
+
+      // Cuadro 2: los padres, ordenados por lo que devuelven.
+      const padres = [];
+      porPadre.forEach((d, padre) => {
+          if (d.ubic.length < 2 || d.cap <= 0) return;
+          const quedan = Math.max(1, Math.ceil(d.tot / d.cap));
+          const cols = {};
+          d.ubic.forEach(x => { (cols[x.col] = cols[x.col] || []).push(x); });
+          padres.push({ padre: padre, n: d.ubic.length, tot: Math.round(d.tot),
+                        cap: Math.round(d.cap), quedan: quedan,
+                        reduce: Math.max(0, d.ubic.length - quedan), cols: cols });
+      });
+      padres.sort((a, b) => (b.reduce - a.reduce) || (b.n - a.n));
+      return { matriz: matriz, padres: padres.slice(0, 15), totalPadres: padres.length };
+  };
+
+  /** El HTML de los dos cuadros. Cadena vacía si no hay con qué armarlos. */
+  const htmlConsolidacionReserva = (datos) => {
+      if (!datos) return '';
+      const mil = (n) => Math.round(n).toLocaleString('es-ES');
+      const colorOcup = (p) => p >= 97 ? '#b91c1c' : p >= 88 ? '#f97316' : p >= 75 ? '#fbbf24' : '#a3e635';
+      const colorLlen = (p) => p < 33 ? '#b91c1c' : p < 66 ? '#f97316' : p < 100 ? '#fbbf24' : '#10b981';
+      const BASE_TH = 'text-align:center;color:var(--text-muted);font-weight:700;font-size:.66rem;letter-spacing:.4px;padding:5px 9px;line-height:1.25;border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap;';
+      const BASE_TD = 'padding:3px 9px;line-height:1.25;text-align:center;font-weight:700;border-bottom:1px solid rgba(255,255,255,.04);';
+      const BASE_IZ = 'padding:3px 9px;line-height:1.25;border-bottom:1px solid rgba(255,255,255,.04);';
+      const th = (t, extra) => '<th style="' + BASE_TH + (extra || '') + '">' + t + '</th>';
+      const td = (t, extra) => '<td style="' + BASE_TD + (extra || '') + '">' + t + '</td>';
+      const tdIzq = (t, extra) => '<td style="' + BASE_IZ + (extra || '') + '">' + t + '</td>';
+      const barra = (pct, color) => '<div style="height:12px;border-radius:3px;position:relative;background:rgba(255,255,255,.06);min-width:100px;max-width:130px;margin:0 auto">'
+          + '<i style="position:absolute;left:0;top:0;bottom:0;border-radius:3px;width:' + pct + '%;background:' + color + '"></i></div>';
+      const panel = (titulo, borde, tabla) => '<div class="glass-panel" style="padding:16px 18px;margin-bottom:18px;border:1px solid ' + borde + '">'
+          + '<h3 style="margin:0 0 10px;font-size:.95rem;display:flex;align-items:center;gap:10px;color:#fff">'
+          + '<span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;box-shadow:0 0 10px #60a5fa"></span>' + titulo + '</h3>'
+          + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.78rem">' + tabla + '</table></div></div>';
+
+      const T = { existen: 0, ocupadas: 0, fw: 0, nofw: 0, libres: 0, pares: 0, hasta50: 0, de51a100: 0 };
+      const filasM = datos.matriz.map(m => {
+          Object.keys(T).forEach(k => { T[k] += m[k]; });
+          const cl = colorOcup(m.pct);
+          const cLib = m.libres <= 2 ? '#b91c1c' : m.libres <= 6 ? '#ef4444' : m.libres <= 29 ? '#f97316' : m.libres <= 50 ? '#fbbf24' : '#a3e635';
+          return '<tr' + (m.libres <= 6 ? ' style="background:rgba(239,68,68,.07)"' : '') + '>'
+              + tdIzq('SEL-' + String(m.col).padStart(2, '0')) + td(mil(m.existen)) + td(mil(m.ocupadas))
+              + td(mil(m.fw), 'color:#93c5fd') + td(mil(m.nofw), 'color:#c4b5fd') + td(m.libres, 'color:' + cLib)
+              + '<td style="padding:3px 9px;border-bottom:1px solid rgba(255,255,255,.04)">' + barra(m.pct, cl) + '</td>'
+              + td(m.pct + '%', 'color:' + cl) + td(mil(m.pares), 'color:#93c5fd')
+              + td(m.hasta50, 'color:#ef4444') + td(m.de51a100, 'color:#f97316') + '</tr>';
+      }).join('');
+      const pctT = T.existen ? Math.round(100 * T.ocupadas / T.existen) : 0;
+      const cabM = '<thead><tr>' + th('SELECTIVO', 'text-align:left') + th('EXISTEN') + th('OCUPADAS')
+          + th('FOOTWEAR', 'color:#93c5fd') + th('NO FW', 'color:#c4b5fd') + th('LIBRES', 'color:#fca5a5')
+          + th('OCUPACIÓN') + th('%') + th('PARES FW', 'color:#93c5fd')
+          + th('HASTA 50<br><span style="font-weight:400">5 cajas</span>', 'color:#fca5a5')
+          + th('51 A 100<br><span style="font-weight:400">6 a 10 cajas</span>', 'color:#fdba74') + '</tr></thead>';
+      const totM = '<tr style="background:rgba(255,255,255,.05)">' + tdIzq('<b>TOTAL</b>') + td(mil(T.existen)) + td(mil(T.ocupadas))
+          + td(mil(T.fw), 'color:#93c5fd') + td(mil(T.nofw), 'color:#c4b5fd') + td(mil(T.libres), 'color:#ef4444')
+          + '<td style="padding:3px 9px">' + barra(pctT, '#ef4444') + '</td>' + td(pctT + '%', 'color:#ef4444')
+          + td(mil(T.pares), 'color:#93c5fd') + td(mil(T.hasta50), 'color:#ef4444') + td(mil(T.de51a100), 'color:#f97316') + '</tr>';
+      const cuadro1 = panel('MATRIZ DE UBICACIONES COLUMNA POR COLUMNA', 'rgba(96,165,250,.2)',
+          cabM + '<tbody>' + filasM + totM + '</tbody>');
+      if (!datos.padres.length) return cuadro1;
+
+      const P = { n: 0, tot: 0, quedan: 0, reduce: 0 };
+      const filasP = datos.padres.map(p => {
+          P.n += p.n; P.tot += p.tot; P.quedan += p.quedan; P.reduce += p.reduce;
+          let celdas = '';
+          for (let c = 1; c <= COLS_RESERVA; c++) {
+              const L = p.cols[c];
+              if (!L) { celdas += td('·', 'color:rgba(255,255,255,.12)'); continue; }
+              const pct = Math.round(L.reduce((s, x) => s + 100 * x.p / p.cap, 0) / L.length);
+              celdas += '<td class="celda-consolida" data-padre="' + p.padre + '" data-col="' + c + '"'
+                  + ' title="clic para ver las ' + L.length + ' ubicaciones"'
+                  + ' style="padding:3px 9px;text-align:center;font-weight:700;cursor:pointer;background:rgba(255,255,255,.03);color:'
+                  + colorLlen(pct) + ';border-bottom:1px solid rgba(255,255,255,.04)">' + L.length
+                  + '<div style="font-size:.58rem;font-weight:400;line-height:1;margin-top:-1px;color:var(--text-muted)">' + pct + '%</div></td>';
+          }
+          return '<tr>' + tdIzq(p.padre) + td(p.n, 'color:#b91c1c') + td(mil(p.tot)) + td(mil(p.cap), 'color:#c4b5fd') + celdas
+              + td('<b>' + p.reduce + '</b>', 'background:rgba(16,185,129,.10);color:#10b981')
+              + td(p.quedan, 'background:rgba(16,185,129,.10);color:var(--text-muted)') + '</tr>';
+      }).join('');
+      let cabCols = '';
+      for (let c = 1; c <= COLS_RESERVA; c++) cabCols += th(String(c).padStart(2, '0'));
+      const cabP = '<thead><tr>' + th('PADRE', 'text-align:left') + th('UBIC.') + th('PARES')
+          + th('SU PALETA<br>LLENA', 'color:#c4b5fd') + cabCols
+          + th('REDUCE', 'color:#6ee7b7;background:rgba(16,185,129,.10)')
+          + th('QUEDARÍAN<br>OCUPADAS', 'background:rgba(16,185,129,.10)') + '</tr></thead>';
+      let vacias = '';
+      for (let c = 1; c <= COLS_RESERVA; c++) vacias += td('·', 'color:rgba(255,255,255,.2)');
+      const totP = '<tr style="background:rgba(255,255,255,.05)">' + tdIzq('<b>TOTAL</b>') + td(P.n, 'color:#b91c1c')
+          + td(mil(P.tot)) + td('—', 'color:var(--text-muted)') + vacias
+          + td('<b>' + P.reduce + '</b>', 'background:rgba(16,185,129,.14);color:#10b981')
+          + td(P.quedan, 'background:rgba(16,185,129,.14);color:var(--text-muted)') + '</tr>';
+      return cuadro1 + panel('PADRE POR SELECTIVO', 'rgba(96,165,250,.35)', cabP + '<tbody>' + filasP + totP + '</tbody>');
+  };
+
+  /** El clic en una celda: las ubicaciones de ese padre en ese selectivo, una por una. */
+  const engancharClicConsolidacion = (raiz, datos) => {
+      if (!raiz || !datos) return;
+      raiz.querySelectorAll('.celda-consolida').forEach(celda => {
+          celda.addEventListener('click', () => {
+              const p = datos.padres.find(x => x.padre === celda.dataset.padre);
+              if (!p) return;
+              const L = (p.cols[celda.dataset.col] || []).slice().sort((a, b) => a.p - b.p);
+              const suma = L.reduce((s, x) => s + x.p, 0);
+              const nec = Math.max(1, Math.ceil(suma / p.cap));
+              let modal = document.getElementById('modal_consolida');
+              if (!modal) {
+                  modal = document.createElement('div');
+                  modal.id = 'modal_consolida';
+                  modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;padding:24px';
+                  modal.addEventListener('click', ev => { if (ev.target === modal) modal.style.display = 'none'; });
+                  document.body.appendChild(modal);
+              }
+              const filas = L.map(x => {
+                  const r = x.p / p.cap;
+                  const col = r < .33 ? '#b91c1c' : r < .66 ? '#f97316' : r < 1 ? '#fbbf24' : '#10b981';
+                  const et = r < .33 ? 'casi vacía' : r < .66 ? 'a medias' : r < 1 ? 'casi llena' : 'LLENA';
+                  return '<tr style="border-bottom:1px solid rgba(255,255,255,.05)">'
+                      + '<td style="padding:5px 10px">' + x.u + '</td>'
+                      + '<td style="padding:5px 10px;color:#94a3b8;font-size:.74rem">' + (x.lpn || '—') + '</td>'
+                      + '<td style="padding:5px 10px;text-align:center;font-weight:700;color:' + col + '">' + x.p + '</td>'
+                      + '<td style="padding:5px 10px;text-align:center">' + (x.p / 10).toFixed(1) + '</td>'
+                      + '<td style="padding:5px 10px;text-align:center;color:' + col + '">' + Math.round(100 * r)
+                      + '% <span style="font-size:.66rem">' + et + '</span></td>'
+                      + '<td style="padding:5px 10px;font-size:.74rem">' + (x.t || []).join(', ') + '</td>'
+                      + '<td style="padding:5px 10px;font-size:.74rem;color:' + (x.ot.length ? '#fca5a5' : '#94a3b8') + '">'
+                      + (x.ot.length ? x.ot.join(', ') : '—') + '</td></tr>';
+              }).join('');
+              const cab = ['UBICACIÓN', 'LPN (paleta)', 'PARES', 'CAJAS', 'LLENA', 'TALLAS', 'COMPARTE'].map((t, i) =>
+                  '<th style="text-align:' + (i >= 2 && i <= 4 ? 'center' : 'left') + ';color:#94a3b8;font-size:.68rem;padding:5px 10px;border-bottom:1px solid rgba(255,255,255,.1)">' + t + '</th>').join('');
+              modal.innerHTML = '<div class="glass-panel" style="max-width:900px;width:100%;max-height:82vh;overflow:auto;padding:24px;background:#0f172a">'
+                  + '<div style="display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:14px"><div>'
+                  + '<div style="font-size:1.05rem;font-weight:800;color:#fff">' + p.padre + ' · SEL-' + String(celda.dataset.col).padStart(2, '0') + '</div>'
+                  + '<div style="font-size:.78rem;margin-top:8px;color:var(--text-muted)">' + L.length + ' ubicaciones · <b style="color:#fff">'
+                  + suma.toLocaleString('es-ES') + ' pares</b> · paleta llena de este artículo: <b style="color:#fff">' + p.cap + '</b> pares<br>'
+                  + 'Aquí caben en <b style="color:#10b981">' + nec + '</b> ubicación' + (nec > 1 ? 'es' : '')
+                  + ' → se liberarían <b style="color:#10b981">' + (L.length - nec) + '</b></div></div>'
+                  + '<div style="cursor:pointer;color:var(--text-muted);font-size:1.4rem;line-height:1"'
+                  + ' onclick="document.getElementById(\'modal_consolida\').style.display=\'none\'">&times;</div></div>'
+                  + '<table style="width:100%;border-collapse:collapse;font-size:.8rem"><thead><tr>' + cab + '</tr></thead><tbody>'
+                  + filas + '</tbody></table></div>';
+              modal.style.display = 'flex';
+          });
+      });
+  };
+
+  /**
    * Los números del panel de la derecha cuando se mira la reserva.
    *
    * SE CUENTA EN PALETAS, no en unidades, porque la reserva es espacio. Medido en unidades,
@@ -25317,6 +25556,14 @@ window.showCellModal = function(htmlContent) {
                             <td style="padding:10px; color:var(--text-muted); font-size:0.8rem; text-align:right;">${s0.cantidad.toLocaleString()}</td>
                         </tr>
                     `;
+
+            // Los dos cuadros de consolidacion, debajo de las tarjetas de siempre.
+            const _consol = consolidacionDeReserva(rawReserva);
+            const _htmlConsol = htmlConsolidacionReserva(_consol);
+            if (_htmlConsol) {
+                viewContainer.insertAdjacentHTML('beforeend', _htmlConsol);
+                engancharClicConsolidacion(viewContainer, _consol);
+            }
                     for(let i=1; i<item.skus.length; i++) {
                         const si = item.skus[i];
                         rowsHtml += `
