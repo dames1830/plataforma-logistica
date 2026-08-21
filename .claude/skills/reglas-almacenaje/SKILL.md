@@ -1097,3 +1097,33 @@ por talla (`Tarea5` +41, `2026-08-12_Tarea16` +20).
 se graba al generar la ola y los datos de ese momento ya no están, así que leyendo el código no
 se puede cerrar. **Lo que sí se puede hacer es que no vuelva a pasar callado:** al grabar el
 papel, comprobar por talla que ningún escolar pase de `50 - lo que ya hay en zona` y avisar.
+
+## UNA TAREA DE FOOTWEAR NO MEZCLA CÓDIGO NUEVO CON REPOSICIÓN
+
+Regla de Daniel, 21-ago-2026, al ver una hoja de muestra con los dos casos juntos:
+*"nunca una tarea debe tener reposición y código nuevo. En el caso de footwear no debe tener"*.
+
+**Vale solo para FOOTWEAR.** En accesorios y en los demás gender pueden ir mezclados sin
+problema — ahí no se trabaja igual.
+
+Si una ola arma una tarea de footwear con artículos de los dos casos, **hay que partirla en
+dos**: una de reposición y otra de código nuevo. No es un detalle de la hoja impresa: es cómo
+se reparte el trabajo.
+
+**Todavía no está implementado.** Al 21-ago-2026 el generador no lo comprueba, y el caso
+(`casoDelItem` -> `codigo-nuevo` / `reposicion-buffer` / `reposicion-fabrica` / `escolar` /
+`catalogo`) **ni siquiera se guarda en la tarea**: se calcula al generar la ola y se pierde.
+Para poder separar las tareas —y para imprimir el caso en la hoja— hay que grabarlo junto al
+papel, al lado de `almacenar`, `paletizar` y `destino`.
+
+### Y de paso, lo que la hoja impresa SÍ lleva y conviene no olvidar
+
+- **Solo las líneas del buffer.** Las del selectivo se guardan en la tarea para saber cuánto
+  hay ya en el piso —el descuento del escolar sale de ahí— pero **no se imprimen**: tienen
+  Almacenar 0, Paletizar 0 y sin destino, y al operario no le dicen nada. Ver `lineasBufferDe`,
+  que solo mete lo que empieza con `CDBUFFER`.
+- **Subtotal por artículo** (`<tr class="tot">`: *Total {sku7}*, con pares, piso, reserva y
+  cuántas paletas) y el **TOTAL DE LA TAREA** al final.
+- **Un código nuevo no llega de a cien pares.** Daniel: *"por lo general llegan a partir de
+  mil o quinientos"*. Puede haber un parcial chico, pero al probar o maquetar hay que usar
+  volúmenes de verdad o el papel engaña.
