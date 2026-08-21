@@ -41,6 +41,7 @@ import json
 import os
 import re
 import sys
+import traceback
 import zipfile
 from datetime import datetime, timedelta
 import unicodedata
@@ -490,12 +491,50 @@ def main():
                            'asunto': str(it.Subject)[:80], 'archivo': nombre}
 
     if not probar:
-        json.dump(vistos, io.open(VISTOS, 'w', encoding='utf-8'),
-                  ensure_ascii=False, indent=1)
+        """La lista de vistos es CONTABILIDAD, no el trabajo. Si no se puede
+        escribir, se avisa y se sigue: el correo ya se guardo y tirar la corrida
+        entera por esto seria perder el dia. La noche del 20-ago-2026 un
+        PermissionError aca mataba la tarea DESPUES de haber hecho todo bien
+        -la carpeta habia quedado de cuando la tarea corria como SYSTEM-."""
+        try:
+            json.dump(vistos, io.open(VISTOS, 'w', encoding='utf-8'),
+                      ensure_ascii=False, indent=1)
+        except Exception as e:
+            log('No se pudo guardar la lista de vistos (%s: %s). El correo SI se '
+                'guardo; la proxima corrida volvera a mirar los mismos mensajes. '
+                'Se arregla con:  icacls %s /grant "%%USERNAME%%:(OI)(CI)F" /T'
+                % (type(e).__name__, str(e)[:90], AQUI), 'AVISO')
     log('')
     log('LISTO · %d guardados · %d salteados' % (guardados, saltados))
     return 0
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    """NADA SE MUERE EN SILENCIO.
+
+    `raise SystemExit('mensaje')` escribe el mensaje por *stderr* y sale con
+    codigo 1. Corriendo a mano se ve en pantalla; corriendo como TAREA no lo ve
+    NADIE: la noche del 20-ago-2026 la tarea termino con `Last Result: 1` y
+    `correo_guias.log` sin una sola linea nueva, y costo horas encontrar que el
+    problema era que no podia hablar con Outlook.
+
+    Ahora todo -el mensaje de SystemExit y cualquier error no previsto- queda
+    escrito en el log antes de salir. Un robot que falla tiene que dejar dicho
+    por que.
+    """
+    try:
+        codigo = main()
+    except SystemExit as e:
+        codigo = e.code
+        if isinstance(codigo, str):        # SystemExit('mensaje')
+            log(codigo, 'ERROR')
+            codigo = 1
+    except KeyboardInterrupt:
+        log('Cortado a mano.', 'AVISO')
+        codigo = 1
+    except Exception:
+        log('SE CAYO SIN AVISAR:', 'ERROR')
+        for linea in traceback.format_exc().rstrip().splitlines():
+            log('   ' + linea, 'ERROR')
+        codigo = 1
+    sys.exit(codigo)
