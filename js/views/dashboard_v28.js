@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0311';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0312';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0311';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0311';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0311';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0311';
-import * as metasService from '../services_v245/metasService.js?v=29.0311';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0311';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0311';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0311';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0311';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0311';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0311';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0311';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0311';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0311';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0311';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0311';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0311';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0311';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0311';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0311';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0311';
-import { montarSlotting } from './slotting.js?v=29.0311';
+import * as adminService from '../services_v245/adminService.js?v=29.0312';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0312';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0312';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0312';
+import * as metasService from '../services_v245/metasService.js?v=29.0312';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0312';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0312';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0312';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0312';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0312';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0312';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0312';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0312';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0312';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0312';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0312';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0312';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0312';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0312';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0312';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0312';
+import { montarSlotting } from './slotting.js?v=29.0312';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0311';
+const VERSION = '29.0312';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1861,6 +1861,34 @@ const diaDelSello = (jornada, hora) => {
     let dia = (hora < jornadaService.horarioDe(jornada).nocheSalida) ? sumarUnDia(jornada) : jornada;
     if (new Date(`${dia}T${hora}:00`).getTime() > Date.now()) dia = restarUnDia(dia);
     return dia;
+};
+
+/**
+ * UNA TAREA NO PUEDE HABER EMPEZADO ANTES DE QUE SU OLA EXISTIERA.
+ *
+ * El 21-ago-2026 Daniel vio PENDIENTE 1.104 de Bubblegummers con TODO finalizado. Era la
+ * `2026-08-20_Tarea12`: decía haber empezado a las 02:30 del 20, pero su ola se creó a las
+ * 19:44 de ese mismo día. Diecisiete horas antes de existir. Se había trabajado a las 02:30
+ * del **21**; con la fecha corrida un día, la regla de la jornada la mandaba a la noche del
+ * 19 —fuera del rango— y sus pares figuraban sin almacenar.
+ *
+ * El operario solo escribe una HORA; la fecha la deduce el sistema. Y le falta este tope:
+ * si la fecha deducida cae antes de la ola, la hora es de la madrugada SIGUIENTE.
+ *
+ * Medido sobre las 863 tareas del servidor: arregla las 75 imposibles y **no toca ninguna de
+ * las 585 correctas**. Ojo con lo que NO sirve: deducir la fecha de `t.fecha` a secas arregla
+ * las 75 pero rompe 59 legítimas —las que el turno de hoy trabaja de la ola de ayer, porque
+ * una tarea vive 48 horas—. Hacia adelante sí, hacia atrás nunca.
+ *
+ * De yapa destraba la ventana de corregir: como se apoya en la hora que la tarea YA tiene
+ * (`jornadaYaRegistrada`), una fecha mala se reescribía idéntica y no había forma de
+ * arreglarla a mano. Con este tope, sí.
+ */
+const noAntesDeLaOla = (tarea, dia, hora) => {
+    const ola = tarea && tarea.fechaProcesado ? new Date(tarea.fechaProcesado) : null;
+    if (!ola || isNaN(ola.getTime()) || !dia || !hora) return dia;
+    const sello = new Date(`${dia}T${hora}:00`);
+    return (!isNaN(sello.getTime()) && sello.getTime() < ola.getTime()) ? sumarUnDia(dia) : dia;
 };
 
 /**
@@ -4497,7 +4525,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0311');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0312');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16476,7 +16504,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0311 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0312 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -34180,7 +34208,9 @@ window.showCellModal = function(htmlContent) {
             tarea.u2 = u2 || '';
 
             // El día del calendario lo decide la hora escrita, no el reloj de quien la escribe.
-            const diaInicio = newStart ? diaDelSello(jornadaBase, newStart) : null;
+            const diaInicio = newStart
+                ? noAntesDeLaOla(tarea, diaDelSello(jornadaBase, newStart), newStart)
+                : null;
 
             if (newStart) {
                 tarea.inicio = `${diaInicio}T${newStart}:00`;

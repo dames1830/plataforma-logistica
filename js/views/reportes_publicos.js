@@ -11,13 +11,13 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0311';
+} from '../services_v245/csvHub_v6.js?v=29.0312';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0311';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0311';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0311';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0311';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0311';
+import * as adminService from '../services_v245/adminService.js?v=29.0312';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0312';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0312';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0312';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0312';
 
 /**
  * El día operativo, no el del calendario.
@@ -288,7 +288,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0311</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0312</span>
     </div>`;
 
   buildTabNav();

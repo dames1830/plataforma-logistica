@@ -327,6 +327,22 @@ export const montarSlotting = (container, OPC = {}) => {
         avisar('LAS HORAS NO CIERRAN', 'El término tiene que ser posterior al inicio.', 'error');
         return;
       }
+
+      // UNA TAREA NO PUEDE EMPEZAR ANTES DE QUE SU OLA EXISTIERA.
+      // El 21-ago-2026: la 2026-08-20_Tarea12 decia haber empezado a las 02:30 del 20 y su
+      // ola se creo a las 19:44 de ese dia. Se trabajo a las 02:30 del 21. Con la fecha
+      // corrida un dia, sus 1.104 pares figuraban sin almacenar aunque estaba finalizada.
+      // Acá la fecha la elige una persona en el campo, asi que no se corrige sola: se avisa.
+      // La ventana de editar horas del dashboard si la corrige, porque alli solo se escribe
+      // la hora y la fecha la deduce el sistema. Ver noAntesDeLaOla en dashboard_v28.js.
+      const olaCreada = t && t.fechaProcesado ? new Date(t.fechaProcesado) : null;
+      if (ini && olaCreada && !isNaN(olaCreada.getTime()) && new Date(ini) < olaCreada) {
+        avisar('LA HORA ES ANTERIOR A LA OLA',
+               'Esta tarea se genero el ' + olaCreada.toLocaleString('es-PE') +
+               '. No pudo empezar antes. Revisa el DIA: si el trabajo fue de madrugada, ' +
+               'corresponde al dia siguiente.', 'error');
+        return;
+      }
       // Mismo trato que el resto: el botón avisa que está trabajando y, si el servidor no
       // contesta, vuelve atrás y lo dice en vez de quedarse mudo.
       const btnOk = modal.querySelector('#slt_guardarHoras');
