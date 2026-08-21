@@ -20,6 +20,9 @@ backend/*.sqlite
 local_beta/
 
 # Estado local del robot: se genera solo en el servidor, no va al repo
+robot/logs/
+robot/correo_guias_vistos.json
+robot/correo_guias_cache.json
 robot/horario_cache.json
 robot/horario_corridas.json
 

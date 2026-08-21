@@ -1,8 +1,0 @@
-2026-08-20 [23:50:41] [INFO ] ==========================================================
-2026-08-20 [23:50:41] [INFO ] CORREO DE GUIAS · mirando 3 dias hacia atras
-2026-08-20 [23:50:41] [INFO ] ==========================================================
-2026-08-20 [23:50:41] [INFO ] Se guarda en: C:\Users\dames\OneDrive\danielames.bata\scraping Stock\Correos Picking
-2026-08-20 [23:50:41] [INFO ] Configuracion: de los valores de fabrica
-2026-08-20 [23:50:41] [INFO ]    asunto "guias de prescripciones"
-2026-08-20 [23:50:41] [INFO ]    ventana de 18:00 a 23:00 · dias: lun, mar, mie, jue, vie, sab
-2026-08-20 [23:50:41] [ERROR] Falta pywin32. Instalalo con:  pip install pywin32
