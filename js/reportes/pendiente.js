@@ -16,6 +16,9 @@
  * OPC = {
  *   datos:          lo que publico el robot, o null si esa fecha no tiene nada
  *   fecha:          'AAAA-MM-DD'
+ *   fechas:         los dias que el servidor tiene guardados. El calendario no
+ *                   deja elegir fuera de ahi: el servidor conserva UN MES de este
+ *                   cuadro y el resto se borra solo.
  *   alCambiarFecha: (nueva) => {}
  *   alDescargar:    () => {}        // baja el Excel del modulo Descargas
  * }
@@ -91,7 +94,7 @@ export function montarPendiente(raiz, OPC) {
     const d = O.datos;
     const fecha = O.fecha || (d && d.fecha) || '';
 
-    raiz.innerHTML = `<div id="pend">${estilos()}${cuerpo(d, fecha)}</div>`;
+    raiz.innerHTML = `<div id="pend">${estilos()}${cuerpo(d, fecha, O.fechas)}</div>`;
 
     const cal = raiz.querySelector('#pend_fecha');
     if (cal) cal.addEventListener('change', () => {
@@ -131,7 +134,8 @@ export function montarPendiente(raiz, OPC) {
 
 /* ── EL CUERPO ─────────────────────────────────────────────────────────────── */
 
-function cuerpo(d, fecha) {
+function cuerpo(d, fecha, dias) {
+    dias = Array.isArray(dias) ? dias.slice().sort().reverse() : [];
     const cab = `
       <div class="pend-head">
         <div>
@@ -141,7 +145,14 @@ function cuerpo(d, fecha) {
               : 'lo arma el robot cuando llega el correo de comercial'}</div>
         </div>
         <div class="pend-acc">
-          <input type="date" id="pend_fecha" value="${esc(fecha)}">
+          <div class="pend-cal">
+            <input type="date" id="pend_fecha" value="${esc(fecha)}"
+                   ${dias.length ? `min="${esc(dias[dias.length - 1])}" max="${esc(dias[0])}"` : ''}>
+            ${dias.length
+                ? `<span class="pend-guardados">${nf(dias.length)} ${dias.length === 1
+                    ? 'día guardado' : 'días guardados'}</span>`
+                : ''}
+          </div>
           <button id="pend_bajar" class="pend-btn"${d ? '' : ' disabled'}>📥 DESCARGAR EXCEL</button>
         </div>
       </div>`;
@@ -238,7 +249,9 @@ function estilos() {
       flex-wrap:wrap;gap:12px;margin-bottom:16px}
     #pend h2{font-size:1.2rem;font-weight:800;margin:0;color:#fff}
     #pend .pend-sub{color:var(--text-muted);font-size:.8rem}
-    #pend .pend-acc{display:flex;gap:8px;align-items:center}
+    #pend .pend-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    #pend .pend-cal{display:flex;flex-direction:column;gap:2px}
+    #pend .pend-guardados{font-size:.68rem;color:var(--text-muted);padding-left:2px}
     #pend input[type=date]{background:rgba(0,0,0,.3);border:1px solid var(--border);
       border-radius:8px;color:#fff;padding:8px 10px;font-size:.82rem}
     #pend .pend-btn{background:var(--primary);color:#0b1020;border:0;border-radius:9px;

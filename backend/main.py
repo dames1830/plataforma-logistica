@@ -364,10 +364,26 @@ def init_db(ruta: Optional[str] = None):
     conn.close()
     prune_old_snapshots(ruta)
 
+# CUÁNTOS DÍAS GUARDA CADA ÁREA CON FECHA.
+#
+# Por defecto son 2, que alcanza para lo que solo se mira en el momento. Pero hay
+# cuadros que valen como historia y ahí 2 días no sirven.
+#
+# `pendiente_despacho` guarda UN MES por pedido de Daniel (21-ago-2026): *"que cada
+# vez que se procese el pendiente se quede guardado en el servidor por un mes, y
+# cada mes lo vas chancando"*. Y no cuesta nada: un día pesa 12 KB, así que el mes
+# entero son 372 KB contra el disco de 1 GB del servidor —el 0,03%—.
+RETENCION_SNAPSHOTS = {
+    'pendiente_despacho': 31,
+}
+RETENCION_POR_DEFECTO = 2
+
+
 def prune_old_snapshots(ruta: Optional[str] = None):
     """
-    Conserva solo los 2 snapshots más recientes para cada área que no sea singleton
-    para evitar que el tamaño de la base de datos sature el disco del servidor.
+    Conserva los snapshots más recientes de cada área que no sea singleton, para que
+    el tamaño de la base no sature el disco del servidor. Cuántos, lo dice
+    RETENCION_SNAPSHOTS; el resto se queda con los 2 de siempre.
     """
     try:
         conn = sqlite3.connect(ruta or db_path())
@@ -383,9 +399,9 @@ def prune_old_snapshots(ruta: Optional[str] = None):
             cursor.execute("SELECT snapshot_date FROM logistics_snapshots WHERE area_id = ? ORDER BY snapshot_date DESC", (area,))
             dates = [r[0] for r in cursor.fetchall()]
             
-            # Conservar solo los últimos 2 snapshots
-            if len(dates) > 2:
-                to_delete = dates[2:]
+            tope = RETENCION_SNAPSHOTS.get(area, RETENCION_POR_DEFECTO)
+            if len(dates) > tope:
+                to_delete = dates[tope:]
                 placeholders = ','.join(['?'] * len(to_delete))
                 cursor.execute(f"DELETE FROM logistics_snapshots WHERE area_id = ? AND snapshot_date IN ({placeholders})", [area] + to_delete)
                 print(f"[PULSE] Borrados {len(to_delete)} snapshots antiguos del área {area}")
