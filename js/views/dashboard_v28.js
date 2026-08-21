@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0307';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0308';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0307';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0307';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0307';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0307';
-import * as metasService from '../services_v245/metasService.js?v=29.0307';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0307';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0307';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0307';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0307';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0307';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0307';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0307';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0307';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0307';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0307';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0307';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0307';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0307';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0307';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0307';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0307';
-import { montarSlotting } from './slotting.js?v=29.0307';
+import * as adminService from '../services_v245/adminService.js?v=29.0308';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0308';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0308';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0308';
+import * as metasService from '../services_v245/metasService.js?v=29.0308';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0308';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0308';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0308';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0308';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0308';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0308';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0308';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0308';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0308';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0308';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0308';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0308';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0308';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0308';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0308';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0308';
+import { montarSlotting } from './slotting.js?v=29.0308';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0307';
+const VERSION = '29.0308';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4497,7 +4497,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0307');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0308');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16476,7 +16476,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0307 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0308 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25556,14 +25556,6 @@ window.showCellModal = function(htmlContent) {
                             <td style="padding:10px; color:var(--text-muted); font-size:0.8rem; text-align:right;">${s0.cantidad.toLocaleString()}</td>
                         </tr>
                     `;
-
-            // Los dos cuadros de consolidacion, debajo de las tarjetas de siempre.
-            const _consol = consolidacionDeReserva(rawReserva);
-            const _htmlConsol = htmlConsolidacionReserva(_consol);
-            if (_htmlConsol) {
-                viewContainer.insertAdjacentHTML('beforeend', _htmlConsol);
-                engancharClicConsolidacion(viewContainer, _consol);
-            }
                     for(let i=1; i<item.skus.length; i++) {
                         const si = item.skus[i];
                         rowsHtml += `
@@ -25776,6 +25768,25 @@ window.showCellModal = function(htmlContent) {
                     </div>
                 </div>
             `;
+
+            // Los dos cuadros de consolidacion, debajo de las tarjetas de siempre.
+            const _consol = consolidacionDeReserva(rawReserva);
+            const _htmlConsol = htmlConsolidacionReserva(_consol);
+            if (_htmlConsol) {
+                viewContainer.insertAdjacentHTML('beforeend', _htmlConsol);
+                engancharClicConsolidacion(viewContainer, _consol);
+            } else {
+                // Antes esto fallaba en silencio y no se entendia por que no salian.
+                viewContainer.insertAdjacentHTML('beforeend',
+                    '<div class="glass-panel" style="padding:16px 18px;margin-bottom:18px;border:1px solid rgba(251,191,36,.3)">'
+                  + '<b style="color:#fbbf24">Los cuadros de consolidacion no se pueden armar.</b>'
+                  + '<div style="color:var(--text-muted);font-size:.8rem;margin-top:6px">'
+                  + 'Hace falta el Maestro de articulos cargado para separar el calzado de las bolsas. '
+                  + 'Sin el, una paleta de bolsas con 12.000 unidades taparia todo el reparto.<br>'
+                  + 'Filas de reserva leidas: <b>' + (rawReserva || []).length + '</b> · '
+                  + 'articulos en el Maestro: <b>' + ((indexarMaestro() || {}).porSku || new Map()).size + '</b>'
+                  + '</div></div>');
+            }
 
             // Draw History Line Chart
             if (historyData.length > 0) {
