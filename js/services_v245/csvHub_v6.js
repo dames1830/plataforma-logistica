@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0312';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0313';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -181,7 +181,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0312';
+const VERSION = '29.0313';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -334,6 +334,62 @@ export const saveReservaHistoryRecord = async (record) => {
         console.warn('[RH] ⚠️ Error sincronizando con servidor:', e);
     }
     return null;
+};
+
+// --- FOTOS DE RESERVA: una por dia, la del ancla de la noche ---
+/**
+ * LA FOTO CHICA DE LA RESERVA. Pedida por Daniel el 21-ago-2026 para poder mirar dias
+ * pasados en Analisis Reserva con un calendario.
+ *
+ * NO se guardan las 18.947 filas crudas —serian 4 MB por dia, 120 al mes, y el disco del
+ * servidor tiene ~500 MB libres: se llenaria en cuatro meses—. Se guarda el RESULTADO ya
+ * calculado de los dos cuadros: 25 KB por dia, 0,7 MB al mes. Alcanza para redibujarlos
+ * enteros, clic en las celdas incluido.
+ *
+ * El precio, y hay que saberlo: si algun dia hace falta una pregunta NUEVA sobre un dia
+ * viejo —por marca, por temporada—, no se va a poder. Eso solo estaria en la foto cruda.
+ *
+ * UNA SOLA POR DIA, la del ancla de la NOCHE. Regla de Daniel: *"en la mañana no quiero
+ * que se actualice, solo en la noche"*. La hora sale de Configuracion -> Parametros
+ * (`robotsService`), nunca escrita aca: el la cambia y esto la sigue.
+ */
+const RESERVA_FOTOS_LOCAL_KEY = 'logistics_reserva_fotos_v1';
+
+export const fetchFotosReserva = async (force = false) => {
+    try {
+        await syncEngine.pullGlobal(['reserva_fotos'], force);
+    } catch(e) {
+        console.warn('[RF] No se pudo descargar las fotos de reserva:', e);
+    }
+    const list = syncEngine.syncStore.reserva_fotos || [];
+    if (Array.isArray(list) && list.length > 0) {
+        localStorage.setItem(RESERVA_FOTOS_LOCAL_KEY, JSON.stringify(list));
+        return list;
+    }
+    try {
+        const local = JSON.parse(localStorage.getItem(RESERVA_FOTOS_LOCAL_KEY) || '[]');
+        return Array.isArray(local) ? local : [];
+    } catch(e) { return []; }
+};
+
+/** Guarda la foto de un dia. Si ya habia una de ese dia, la reemplaza. */
+export const guardarFotoReserva = async (foto) => {
+    if (!foto || !foto.fecha) return null;
+    try {
+        const actuales = syncEngine.syncStore.reserva_fotos || [];
+        const lista = actuales.filter(f => f && f.fecha !== foto.fecha);
+        lista.unshift({ ...foto, guardado: new Date().toISOString() });
+        // Tres meses de colchon y no mas: a 25 KB por dia son unos 2 MB.
+        lista.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+        while (lista.length > 92) lista.pop();
+        syncEngine.syncStore.reserva_fotos = lista;
+        localStorage.setItem(RESERVA_FOTOS_LOCAL_KEY, JSON.stringify(lista));
+        const ok = await syncEngine.pushChange('reserva_fotos', lista);
+        return ok ? foto.fecha : null;
+    } catch(e) {
+        console.warn('[RF] No se pudo guardar la foto de reserva:', e);
+        return null;
+    }
 };
 
 export const fetchReservaHistory = async (force = false) => {

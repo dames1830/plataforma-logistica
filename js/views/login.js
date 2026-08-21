@@ -1,4 +1,4 @@
-import { login as authLogin } from '../services_v245/auth.js?v=29.0312';
+import { login as authLogin } from '../services_v245/auth.js?v=29.0313';
 
 export const renderLogin = (container, onLoginSuccess) => {
   // Establecer clase para el diseño degradado premium claro (inspirado en la referencia)
@@ -61,7 +61,7 @@ export const renderLogin = (container, onLoginSuccess) => {
       
       </form>
       <div style="text-align: center; margin-top: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 600; letter-spacing: 0.05em;">
-        SYSTEM BUILD: v29.0312 | SECURE SYNC
+        SYSTEM BUILD: v29.0313 | SECURE SYNC
       </div>
     </div>
   `;

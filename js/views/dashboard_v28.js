@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0312';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0313';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0312';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0312';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0312';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0312';
-import * as metasService from '../services_v245/metasService.js?v=29.0312';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0312';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0312';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0312';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0312';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0312';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0312';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0312';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0312';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0312';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0312';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0312';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0312';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0312';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0312';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0312';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0312';
-import { montarSlotting } from './slotting.js?v=29.0312';
+import * as adminService from '../services_v245/adminService.js?v=29.0313';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0313';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0313';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0313';
+import * as metasService from '../services_v245/metasService.js?v=29.0313';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0313';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0313';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0313';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0313';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0313';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0313';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0313';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0313';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0313';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0313';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0313';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0313';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0313';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0313';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0313';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0313';
+import { montarSlotting } from './slotting.js?v=29.0313';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0312';
+const VERSION = '29.0313';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4525,7 +4525,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0312');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0313');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16504,7 +16504,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0312 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0313 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23466,6 +23466,47 @@ const renderRFSection = (container) => {
   };
 
   /** El clic en una celda: las ubicaciones de ese padre en ese selectivo, una por una. */
+  /**
+   * DE QUE DIA ES LA FOTO QUE HAY AHORA MISMO EN LA RESERVA.
+   *
+   * Se guarda UNA sola foto por dia, la del ancla de la NOCHE. Regla de Daniel, 21-ago-2026:
+   * *"en la mañana no quiero que se actualice, solo en la noche nada mas"*.
+   *
+   * LA HORA NO ESTA ESCRITA ACA. Sale de Configuracion -> Parametros (`ancla_noche`), que es
+   * donde Daniel la cambia: *"la cosa es que siempre tiene que mirar a la hora de la interfaz.
+   * No es una hora fija, porque yo lo puedo cambiar"*. Si la mueve a las 20:00, esto la sigue
+   * sin tocar una linea. Si apaga el dia en los checks, ese dia no hay foto y el calendario
+   * lo muestra vacio, que es la verdad.
+   *
+   * Antes del ancla, lo que hay cargado sigue siendo la foto de ANOCHE: por eso el dia
+   * retrocede uno. Devuelve null si hoy no toca ancla de noche.
+   */
+  const diaDeLaFotoDeReserva = (ahora) => {
+      const cfg = robotsService.robotsActual() || {};
+      const noche = cfg.ancla_noche || {};
+      if (noche.activa === false) return null;
+      const hhmm = String(noche.hora || '19:00');
+      const m = hhmm.match(/^(\d{1,2}):(\d{2})$/);
+      if (!m) return null;
+      const corte = (parseInt(m[1], 10) * 60) + parseInt(m[2], 10);
+      const ref = ahora instanceof Date ? ahora : new Date();
+      const ahoraMin = (ref.getHours() * 60) + ref.getMinutes();
+      const dia = new Date(ref);
+      if (ahoraMin < corte) dia.setDate(dia.getDate() - 1);
+      const dd = (n) => String(n).padStart(2, '0');
+      const fecha = `${dia.getFullYear()}-${dd(dia.getMonth() + 1)}-${dd(dia.getDate())}`;
+      // Los dias apagados en los checks no tienen ancla, asi que no tienen foto.
+      const clave = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'][dia.getDay()];
+      if (noche.dias && noche.dias[clave] === false) return null;
+      return { fecha, hora: hhmm };
+  };
+
+  /** Lo que se guarda: el resultado ya calculado, no las 18.947 filas. Unos 25 KB. */
+  const fotoChicaDeReserva = (datos, sello) => (!datos || !sello) ? null : ({
+      fecha: sello.fecha, hora: sello.hora,
+      matriz: datos.matriz, padres: datos.padres, totalPadres: datos.totalPadres
+  });
+
   const engancharClicConsolidacion = (raiz, datos) => {
       if (!raiz || !datos) return;
       raiz.querySelectorAll('.celda-consolida').forEach(celda => {
@@ -25711,20 +25752,83 @@ window.showCellModal = function(htmlContent) {
 
             const rowStyle = "display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);";
 
-            // Los dos cuadros de consolidacion. Se calculan ANTES y se meten DENTRO de la
-            // plantilla: agregarlos despues con insertAdjacentHTML no se dibujaba nunca.
+            // ─────────────────────────────────────────────────────────────────────
+            // LOS DOS CUADROS, CON SU CALENDARIO.
+            //
+            // Se guarda UNA foto por dia —la del ancla de la NOCHE, a la hora que diga
+            // Configuracion → Parametros— y el calendario deja abrir cualquiera de las
+            // guardadas. Al elegir un dia pasado los cuadros se redibujan desde esa foto,
+            // clic en las celdas incluido: la foto lleva el detalle de cada ubicacion.
+            //
+            // Se calcula ANTES y se mete DENTRO de la plantilla con ${_htmlConsol}: agregarlo
+            // despues con insertAdjacentHTML no se dibujaba nunca, y costo cuatro intentos.
+            // ─────────────────────────────────────────────────────────────────────
             let _htmlConsol = '', _consol = null;
             try {
-                _consol = consolidacionDeReserva(rawReserva);
-                _htmlConsol = htmlConsolidacionReserva(_consol);
-                if (!_htmlConsol) {
+                let _fotos = [];
+                try { _fotos = await fetchFotosReserva(); } catch (e) { _fotos = []; }
+                if (!Array.isArray(_fotos)) _fotos = [];
+
+                const _sello = diaDeLaFotoDeReserva(new Date());
+                const _hoy = _sello ? _sello.fecha : null;
+                const _elegida = window.__reservaFotoFecha || _hoy;
+                const _viendoHoy = !_hoy || _elegida === _hoy;
+
+                if (_viendoHoy) {
+                    _consol = consolidacionDeReserva(rawReserva);
+                    // La de hoy se guarda sola, una sola vez: si ya hay foto de este dia,
+                    // no se vuelve a escribir. Asi el calendario se llena sin que nadie haga nada.
+                    if (_consol && _sello && !_fotos.some(f => f && f.fecha === _sello.fecha)) {
+                        const _f = fotoChicaDeReserva(_consol, _sello);
+                        if (_f) { guardarFotoReserva(_f).catch(() => {}); _fotos = [_f, ..._fotos]; }
+                    }
+                } else {
+                    _consol = _fotos.find(f => f && f.fecha === _elegida) || null;
+                }
+
+                window.setReservaFotoFecha = (f) => {
+                    window.__reservaFotoFecha = f || null;
+                    renderAnalisisReserva(container);
+                };
+
+                const _guardadas = _fotos.map(f => f && f.fecha).filter(Boolean).sort();
+                const _rotulo = _guardadas.length
+                    ? `${_guardadas.length} día${_guardadas.length === 1 ? '' : 's'} guardado${_guardadas.length === 1 ? '' : 's'}`
+                      + (_guardadas.length > 1 ? ` · del ${_guardadas[0]} al ${_guardadas[_guardadas.length - 1]}` : '')
+                    : 'todavía no hay días guardados';
+
+                const _cal = '<div class="glass-panel" style="padding:12px 16px;margin-bottom:18px;display:flex;'
+                    + 'align-items:center;gap:14px;flex-wrap:wrap;border:1px solid rgba(0,229,255,.25)">'
+                    + '<div style="display:flex;align-items:center;background:rgba(0,0,0,.45);border:1px solid #00E5FF59;'
+                    + 'border-radius:8px;padding:3px 10px;gap:8px">'
+                    + '<span style="font-size:.6rem;color:#00E5FF;font-weight:800;letter-spacing:.5px">DÍA</span>'
+                    + `<input type="date" value="${_elegida || ''}" ${_guardadas.length ? `min="${_guardadas[0]}"` : ''} `
+                    + `${_hoy ? `max="${_hoy}"` : ''} onchange="window.setReservaFotoFecha(this.value)" `
+                    + 'style="background:transparent;border:none;color:#fff;font-size:.72rem;font-weight:700;'
+                    + 'outline:none;cursor:pointer;color-scheme:dark"></div>'
+                    + (_viendoHoy
+                        ? `<span style="font-size:.7rem;color:#10b981;font-weight:700">HOY · foto de las ${_sello ? _sello.hora : '--:--'}</span>`
+                        : '<span style="font-size:.7rem;color:#fbbf24;font-weight:700">FOTO GUARDADA</span>'
+                          + ' <span onclick="window.setReservaFotoFecha(null)" style="cursor:pointer;font-size:.68rem;'
+                          + 'color:#00E5FF;text-decoration:underline">volver a hoy</span>')
+                    + `<span style="font-size:.68rem;color:var(--text-muted)">${_rotulo}</span></div>`;
+
+                if (_consol) {
+                    _htmlConsol = _cal + htmlConsolidacionReserva(_consol);
+                } else if (!_viendoHoy) {
+                    _htmlConsol = _cal + '<div class="glass-panel" style="padding:16px 18px;border:1px solid rgba(251,191,36,.35)">'
+                        + `<b style="color:#fbbf24">No hay foto guardada del ${_elegida}.</b>`
+                        + '<div style="color:var(--text-muted);font-size:.8rem;margin-top:6px;line-height:1.6">'
+                        + 'Se guarda una por día, en el ancla de la noche. Los días anteriores a que esto empezara '
+                        + 'a funcionar no tienen foto y no se pueden reconstruir.</div></div>';
+                } else {
                     const _n = ((indexarMaestro() || {}).porSku || new Map()).size;
-                    _htmlConsol = '<div class="glass-panel" style="padding:16px 18px;margin-bottom:18px;border:1px solid rgba(251,191,36,.35)">'
-                      + '<b style="color:#fbbf24">Los cuadros de consolidacion no se pueden armar.</b>'
-                      + '<div style="color:var(--text-muted);font-size:.8rem;margin-top:6px;line-height:1.6">'
-                      + 'Filas de reserva leidas: <b style="color:#fff">' + (rawReserva || []).length + '</b><br>'
-                      + 'Articulos en el Maestro: <b style="color:#fff">' + _n + '</b> — sin Maestro no se separa el calzado de las bolsas.'
-                      + '</div></div>';
+                    _htmlConsol = _cal + '<div class="glass-panel" style="padding:16px 18px;border:1px solid rgba(251,191,36,.35)">'
+                        + '<b style="color:#fbbf24">Los cuadros de consolidacion no se pueden armar.</b>'
+                        + '<div style="color:var(--text-muted);font-size:.8rem;margin-top:6px;line-height:1.6">'
+                        + `Filas de reserva leidas: <b style="color:#fff">${(rawReserva || []).length}</b><br>`
+                        + `Articulos en el Maestro: <b style="color:#fff">${_n}</b> — sin Maestro no se separa el calzado de las bolsas.`
+                        + '</div></div>';
                 }
             } catch (e) {
                 console.error('[consolidacion reserva]', e);
