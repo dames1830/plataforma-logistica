@@ -97,9 +97,35 @@ export function montarPendiente(raiz, OPC) {
     if (cal) cal.addEventListener('change', () => {
         if (cal.value && typeof O.alCambiarFecha === 'function') O.alCambiarFecha(cal.value);
     });
+    /**
+     * EL BOTÓN TIENE QUE AVISAR QUE ESTÁ TRABAJANDO.
+     *
+     * Regla de Daniel, y la repitió el 21-ago-2026 con este botón: *"cuando aprieto
+     * un botón, tiene que hacer un movimiento, porque si no pienso que no funciona
+     * o que se colgó la página"*. El Excel tarda dos o tres segundos en buscarse y
+     * bajarse; en ese rato la pantalla se veía muerta y él ya estaba escribiéndome.
+     *
+     * Y SIEMPRE VUELVE A SU ESTADO, salga bien o mal. Un botón que se queda en
+     * "BAJANDO..." para siempre es peor que uno que no avisa: ahí sí no se puede
+     * volver a intentar. Por eso el `finally`.
+     */
     const bajar = raiz.querySelector('#pend_bajar');
-    if (bajar) bajar.addEventListener('click', () => {
-        if (typeof O.alDescargar === 'function') O.alDescargar();
+    if (bajar) bajar.addEventListener('click', async () => {
+        if (typeof O.alDescargar !== 'function' || bajar.disabled) return;
+        const antes = bajar.innerHTML;
+        bajar.disabled = true;
+        bajar.innerHTML = '<span class="pend-giro"></span> BAJANDO...';
+        try {
+            await O.alDescargar();
+            bajar.innerHTML = '✅ LISTO';
+            setTimeout(() => { bajar.innerHTML = antes; bajar.disabled = false; }, 1600);
+        } catch (e) {
+            /* Quien monta el módulo ya le avisó al usuario qué pasó. Acá lo único
+               que falta es devolverle el botón para que pueda reintentar. */
+            console.warn('[PENDIENTE] no se pudo bajar el Excel:', e && e.message);
+            bajar.innerHTML = antes;
+            bajar.disabled = false;
+        }
     });
 }
 
@@ -217,7 +243,13 @@ function estilos() {
       border-radius:8px;color:#fff;padding:8px 10px;font-size:.82rem}
     #pend .pend-btn{background:var(--primary);color:#0b1020;border:0;border-radius:9px;
       padding:9px 16px;font-weight:800;font-size:.78rem;letter-spacing:.4px;cursor:pointer}
-    #pend .pend-btn:disabled{opacity:.4;cursor:not-allowed}
+    #pend .pend-btn:disabled{opacity:.75;cursor:progress}
+    /* La ruedita del botón mientras trabaja. Va acá y no en el CSS del tablero
+       porque #pend se lleva su estilo puesto y se puede probar suelto. */
+    #pend .pend-giro{display:inline-block;width:11px;height:11px;vertical-align:-1px;
+      border:2px solid rgba(11,16,32,.25);border-left-color:#0b1020;border-radius:50%;
+      animation:pend-giro .7s linear infinite;margin-right:5px}
+    @keyframes pend-giro{to{transform:rotate(360deg)}}
 
     #pend .pend-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
       gap:12px;margin-bottom:16px}
