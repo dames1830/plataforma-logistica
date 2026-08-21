@@ -97,9 +97,17 @@ export function montarPendiente(raiz, OPC) {
     raiz.innerHTML = `<div id="pend">${estilos()}${cuerpo(d, fecha, O.fechas)}</div>`;
 
     const cal = raiz.querySelector('#pend_fecha');
-    if (cal) cal.addEventListener('change', () => {
-        if (cal.value && typeof O.alCambiarFecha === 'function') O.alCambiarFecha(cal.value);
-    });
+    if (cal) {
+        cal.addEventListener('change', () => {
+            if (cal.value && typeof O.alCambiarFecha === 'function') O.alCambiarFecha(cal.value);
+        });
+        /* CLIC EN CUALQUIER PARTE DEL CAMPO ABRE EL CALENDARIO, no solo en el iconito.
+           El de fábrica es chiquito y hay que apuntarle; así el campo entero es el
+           botón. Mismo recurso que ya usa el filtro de fechas de los reportes. */
+        cal.addEventListener('click', () => {
+            if (cal.showPicker) { try { cal.showPicker(); } catch (e) { /* el navegador no lo deja */ } }
+        });
+    }
     /**
      * EL BOTÓN TIENE QUE AVISAR QUE ESTÁ TRABAJANDO.
      *
@@ -252,8 +260,22 @@ function estilos() {
     #pend .pend-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     #pend .pend-cal{display:flex;flex-direction:column;gap:2px}
     #pend .pend-guardados{font-size:.68rem;color:var(--text-muted);padding-left:2px}
+    /* EL CALENDARIO TIENE QUE VERSE Y TIENE QUE INVITAR A APRETARLO.
+       La propiedad color-scheme:dark es lo que pinta de blanco el iconito que trae
+       el navegador: sin eso queda gris oscuro sobre fondo oscuro y no se ve. Daniel,
+       21-ago-2026: "por que no le has puesto el icono de calendario? Como voy a
+       cambiar de fecha?". Y se agranda, porque el de fabrica es diminuto.
+       OJO: nada de comillas invertidas aca adentro, que esto vive dentro de una
+       plantilla de texto y la cortan. */
     #pend input[type=date]{background:rgba(0,0,0,.3);border:1px solid var(--border);
-      border-radius:8px;color:#fff;padding:8px 10px;font-size:.82rem}
+      border-radius:8px;color:#fff;padding:8px 10px;font-size:.82rem;font-weight:700;
+      color-scheme:dark;cursor:pointer;letter-spacing:.3px}
+    #pend input[type=date]:hover{border-color:var(--primary);background:rgba(129,140,248,.12)}
+    #pend input[type=date]::-webkit-calendar-picker-indicator{
+      cursor:pointer;opacity:1;transform:scale(1.35);margin-left:6px;
+      filter:invert(64%) sepia(38%) saturate(1400%) hue-rotate(207deg) brightness(102%)}
+    #pend input[type=date]:hover::-webkit-calendar-picker-indicator{
+      filter:invert(88%) sepia(20%) saturate(900%) hue-rotate(200deg) brightness(115%)}
     #pend .pend-btn{background:var(--primary);color:#0b1020;border:0;border-radius:9px;
       padding:9px 16px;font-weight:800;font-size:.78rem;letter-spacing:.4px;cursor:pointer}
     #pend .pend-btn:disabled{opacity:.75;cursor:progress}
