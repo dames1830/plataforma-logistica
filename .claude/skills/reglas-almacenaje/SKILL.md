@@ -1026,3 +1026,74 @@ Medido el 14-ago-2026 contra las tareas y el stock de producción. **Están abie
 - **Republicar la configuración va DESPUÉS del despliegue, nunca antes.** Publicar una
   configuración que el código viejo no entiende es pedir problemas. Al publicar se relee el
   cajón `config` completo y se reemplaza solo la clave propia: comparte lugar con la jornada.
+
+## CÓMO COMPROBAR UNA TAREA SIN ADIVINAR (21-ago-2026)
+
+Daniel: *"revisa bien, guarda tu skill para que no tengas que estar adivinando"*. Esto es el
+procedimiento, medido y funcionando.
+
+### Los datos se leen SIN SESIÓN
+
+El sync pide las áreas sin token. No hace falta entrar a la web ni pedirle capturas a Daniel:
+
+    https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks
+    .../analisis_sku_reserva     .../articulos
+
+`?date=YYYY-MM-DD` **no sirve para mirar días pasados**: la reserva solo guarda la foto de hoy.
+
+### El item de una tarea es un ARRAY, y este es el mapa
+
+Cuesta media hora deducirlo cada vez. `t.items` es una lista de GRUPOS, y cada grupo es:
+
+    [0] sku7   [1] marca   [2] gender   [3] coleccion   [4] bufferQty   [5] zonaQty
+    [6] items  [7] genderRims   [8] traba
+
+Y cada línea de `[6]`:
+
+    [0] skuFull   [1] ubi (buffer u origen)   [2] qty   [3] talla   [4] avance
+    [5] qtyInitial   [6] ALMACENAR   [7] PALETIZAR   [8] destino   [9] reparto
+
+Los índices 6-8 son **el papel grabado**: lo que se imprimió el día que se generó. `filasDelPapel`
+los devuelve tal cual si están todos, así que **es lo que el operario tuvo en la mano**.
+
+Las líneas cuyo `ubi` ya es la zona (`SEL-14-08-C-01`) **no vienen del buffer**: son lo que YA
+había en el piso. Sirven para el descuento, no se almacenan.
+
+### Cómo se mide si una tarea de escolar cumple
+
+Por TALLA, no por línea ni por artículo:
+
+    ya_en_zona = suma de qty de las líneas cuyo ubi es SEL-<col>-<cuerpo>-[ABC]-
+    almacenado = suma de ALMACENAR de las líneas de buffer de esa talla
+    debería    = max(0, 50 - ya_en_zona)
+    exceso     = almacenado - debería
+
+**Medido sobre las 863 tareas del servidor: 92 artículos escolares, 89 cumplen, 3 se pasan**
+(311 pares de más). O sea que **la regla está implementada y funciona** —`casoDelItem` la
+pregunta primero y devuelve `{modo:'paresPorTalla', valor:50}`, que corta en 50 sí o sí—.
+
+### El caso que no cierra, y lo que YA se descartó
+
+`2026-08-20_Tarea4`, artículo **8266877** (Bata, `05 SCHOOL`), talla 39: tenía **11 en zona**,
+debía almacenar **39**, y almacenó **289** repartidos en tres líneas de buffer (137 + 140 + 12).
+Bajo la regla del escolar **289 es imposible**: el tope corta en 50.
+
+Descartado al revisar, para no repetirlo:
+
+- **No es que falte el `genderRims`**: el grupo guardado trae `05 SCHOOL` en el índice 7.
+- **No es la excepción de zona**: `esZonaSinUbicacion` solo es cierta para `ZONA_NO_CALZADO`
+  (MZN04), y esto es calzado.
+- **No es `planificarPorTalla`**: con `paresPorTalla` el asignado sale de
+  `min(buffer, redondeo(50 - piso))`, que nunca pasa de 50.
+- **No es el reparto por líneas**: `filasDelPapel` reparte lo que le toca a la TALLA entre sus
+  líneas; no puede inventar pares.
+- **No es la regla mal entendida**: la `Tarea5` de la misma ola SÍ la aplica —talla 40 con 222
+  en buffer baja 52 y paletiza 170—, y sus líneas sí se suman entre ellas.
+
+Los otros dos excesos son **redondeo a caja**, no el mismo defecto: se pasan de 2 a 13 pares
+por talla (`Tarea5` +41, `2026-08-12_Tarea16` +20).
+
+**Lo que queda por averiguar:** por qué a esa tarea no le corrió la rama del escolar. El papel
+se graba al generar la ola y los datos de ese momento ya no están, así que leyendo el código no
+se puede cerrar. **Lo que sí se puede hacer es que no vuelva a pasar callado:** al grabar el
+papel, comprobar por talla que ningún escolar pase de `50 - lo que ya hay en zona` y avisar.
