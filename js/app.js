@@ -1,9 +1,9 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0310';
-import * as adminService from './services_v245/adminService.js?v=29.0310';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0310';
+import { getSession, logout } from './services_v245/auth.js?v=29.0311';
+import * as adminService from './services_v245/adminService.js?v=29.0311';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0311';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -346,7 +346,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0310';
+      this.APP_VERSION = 'v29.0311';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está

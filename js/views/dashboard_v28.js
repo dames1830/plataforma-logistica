@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0310';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0311';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0310';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0310';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0310';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0310';
-import * as metasService from '../services_v245/metasService.js?v=29.0310';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0310';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0310';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0310';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0310';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0310';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0310';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0310';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0310';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0310';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0310';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0310';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0310';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0310';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0310';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0310';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0310';
-import { montarSlotting } from './slotting.js?v=29.0310';
+import * as adminService from '../services_v245/adminService.js?v=29.0311';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0311';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0311';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0311';
+import * as metasService from '../services_v245/metasService.js?v=29.0311';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0311';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0311';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0311';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0311';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0311';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0311';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0311';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0311';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0311';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0311';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0311';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0311';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0311';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0311';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0311';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0311';
+import { montarSlotting } from './slotting.js?v=29.0311';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0310';
+const VERSION = '29.0311';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4497,7 +4497,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0310');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0311');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16476,7 +16476,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0310 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0311 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25707,90 +25707,14 @@ window.showCellModal = function(htmlContent) {
             }
 
             viewContainer.innerHTML = `
-                <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;">
-                    <!-- TARJETA 1: DISTRIBUCIÓN DE SKUS -->
-                    <div class="glass-panel" style="flex:0 0 calc(33.333% - 14px); padding:20px; border-top:4px solid #fbbf24; box-shadow:0 0 15px rgba(251,191,36,0.05);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <div style="font-size:0.9rem; color:var(--text-muted); font-weight:800; letter-spacing:1px;">SKUS POR PALETAS</div>
-                            <div style="font-size:0.8rem; color:rgba(255,255,255,0.3);">Total: ${totalSkus}</div>
-                        </div>
-                        
-                        <div style="${rowStyle}">
-                            <div style="font-size:0.85rem; color:#fff;">SKU con 1 Paleta</div>
-                            ${renderBar(skuDist['1'], totalSkus, '#10b981')}
-                        </div>
-                        <div style="${rowStyle}">
-                            <div style="font-size:0.85rem; color:#fff;">SKU con 2 a 5 paletas</div>
-                            ${renderBar(skuDist['2_5'], totalSkus, '#fbbf24')}
-                        </div>
-                        <div style="${rowStyle}">
-                            <div style="font-size:0.85rem; color:#fff;">SKU con 6 a 8 paletas</div>
-                            ${renderBar(skuDist['6_8'], totalSkus, '#f97316')}
-                        </div>
-                        <div style="${rowStyle}">
-                            <div style="font-size:0.85rem; color:#fff;">SKU con 9 a 12 paletas</div>
-                            ${renderBar(skuDist['9_12'], totalSkus, '#ef4444')}
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px;">
-                            <div style="font-size:0.85rem; color:#fff;">SKU > 13 Paletas</div>
-                            ${renderBar(skuDist['13_plus'], totalSkus, '#b91c1c')}
-                        </div>
-                    </div>
-
-                    <!-- TARJETA 2: DISTRIBUCIÓN DE UBICACIONES -->
-                    <div class="glass-panel" style="flex:0 0 calc(33.333% - 14px); padding:20px; border-top:4px solid #60a5fa; box-shadow:0 0 15px rgba(96,165,250,0.05);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <div style="font-size:0.9rem; color:var(--text-muted); font-weight:800; letter-spacing:1px;">UBICACIONES POR SKUS</div>
-                            <div style="font-size:0.8rem; color:rgba(255,255,255,0.3);">Total: ${totalUbis}</div>
-                        </div>
-                        
-                        <div style="${rowStyle}">
-                            <div style="font-size:0.85rem; color:#fff;">Ubicación con 1 SKU</div>
-                            ${renderBar(ubiDist['1'], totalUbis, '#10b981')}
-                        </div>
-                        <div style="${rowStyle}">
-                            <div style="font-size:0.85rem; color:#fff;">Ubicación con 2 a 5 SKUs</div>
-                            ${renderBar(ubiDist['2_5'], totalUbis, '#fbbf24')}
-                        </div>
-                        <div style="${rowStyle}">
-                            <div style="font-size:0.85rem; color:#fff;">Ubicación con 6 a 10 SKUs</div>
-                            ${renderBar(ubiDist['6_10'], totalUbis, '#f97316')}
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px;">
-                            <div style="font-size:0.85rem; color:#fff;">Ubicación > 11 SKUs</div>
-                            ${renderBar(ubiDist['11_plus'], totalUbis, '#ef4444')}
-                        </div>
-                    </div>
+                <!-- Las tarjetas de SKUs/Ubicaciones, la evolucion historica y los dos
+                     graficos de Top 10 se quitaron el 21-ago-2026: Daniel se queda con
+                     los dos cuadros de consolidacion y nada mas. El codigo que dibuja
+                     esos graficos sigue abajo, protegido con if(ctx...), asi que no
+                     revienta al no encontrar sus canvas; volver atras es reponer el HTML. -->
+                <div style="width:70%; margin:0 auto;">
+                    ${_htmlConsol}
                 </div>
-
-                <div class="glass-panel" style="margin-bottom:20px; padding:20px; position:relative; min-height:300px; border:1px solid rgba(236,72,153,0.2); box-shadow:inset 0 0 20px rgba(236,72,153,0.05);">
-
-
-                    <h3 style="color:#fff; margin-top:0; font-size:1rem; margin-bottom:1rem; display:flex; align-items:center; gap:10px;">
-                        <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ec4899; box-shadow:0 0 10px #ec4899;"></span>
-                        EVOLUCIÓN HISTÓRICA POR DÍA
-                    </h3>
-                    <div style="height:250px; width:100%;">
-                        <canvas id="reservaHistoryChart"></canvas>
-                    </div>
-                    ${historyData.length === 0 ? '<div style="position:absolute; top:0; left:0; right:0; bottom:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); color:var(--text-muted); font-weight:800;">No hay datos históricos disponibles aún. Sube un archivo hoy.</div>' : ''}
-                </div>
-
-                <div style="display:flex; gap:20px; flex-wrap:wrap;">
-                    <div class="glass-panel" style="flex:1; min-width:400px; padding:20px; border:1px solid rgba(251,191,36,0.2);">
-                        <h3 style="color:#fff; margin-top:0; font-size:1rem; margin-bottom:1rem;">Top 10 SKUs Fragmentados</h3>
-                        <div style="height:250px; width:100%;">
-                            <canvas id="topSkusChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="glass-panel" style="flex:1; min-width:400px; padding:20px; border:1px solid rgba(244,63,94,0.2);">
-                        <h3 style="color:#fff; margin-top:0; font-size:1rem; margin-bottom:1rem;">Top 10 Ubicaciones Mixtas</h3>
-                        <div style="height:250px; width:100%;">
-                            <canvas id="topUbisChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                ${_htmlConsol}
             `;
 
             engancharClicConsolidacion(viewContainer, _consol);
