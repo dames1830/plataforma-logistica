@@ -40,6 +40,7 @@ import io
 import json
 import os
 import re
+import subprocess
 import sys
 import traceback
 import zipfile
@@ -506,6 +507,36 @@ def main():
                 % (type(e).__name__, str(e)[:90], AQUI), 'AVISO')
     log('')
     log('LISTO · %d guardados · %d salteados' % (guardados, saltados))
+
+    """Y SI ENTRO UN CORREO NUEVO, SE ARMA EL PENDIENTE.
+
+    Va disparado por el correo y no por una hora fija, y eso es a proposito: la
+    foto del WMS tiene que ser POSTERIOR al correo. El 20-ago-2026 se midio que el
+    robot baja el pendiente a las 06:57 y el correo llega a las 19:00; con la foto
+    de la mañana faltaban 277 ordenes -las nacidas durante el dia, entre ellas las
+    del correo de esa misma tarde- y sobraban 492 ya cerradas.
+
+    Va en un proceso aparte para que una caida de aquel NO se lleve puesto a este:
+    el correo ya quedo guardado, que es lo que no se puede perder. Su salida se
+    lee en `logs/armar_pendiente.log`.
+    """
+    if guardados and not probar:
+        armador = os.path.join(AQUI, 'armar_pendiente.py')
+        if not os.path.isfile(armador):
+            log('No esta armar_pendiente.py, no se arma el pendiente.', 'AVISO')
+        else:
+            log('')
+            log('Entro correo nuevo: se arma el pendiente de despacho...')
+            try:
+                r = subprocess.run([sys.executable, armador], timeout=1800)
+                log('Pendiente de despacho: %s'
+                    % ('armado' if r.returncode == 0 else
+                       'FALLO (codigo %s), ver logs/armar_pendiente.log' % r.returncode),
+                    'INFO' if r.returncode == 0 else 'ERROR')
+            except Exception as e:
+                log('No se pudo arrancar armar_pendiente.py (%s: %s)'
+                    % (type(e).__name__, str(e)[:120]), 'ERROR')
+
     return 0
 
 

@@ -1,26 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0300';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0301';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0300';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0300';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0300';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0300';
-import * as metasService from '../services_v245/metasService.js?v=29.0300';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0300';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0300';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0300';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0300';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0300';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0300';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0300';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0300';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0300';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0300';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0300';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0300';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0300';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0300';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0300';
-import { montarSlotting } from './slotting.js?v=29.0300';
+import * as adminService from '../services_v245/adminService.js?v=29.0301';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0301';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0301';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0301';
+import * as metasService from '../services_v245/metasService.js?v=29.0301';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0301';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0301';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0301';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0301';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0301';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0301';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0301';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0301';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0301';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0301';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0301';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0301';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0301';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0301';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0301';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0301';
+import { montarSlotting } from './slotting.js?v=29.0301';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -377,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0300';
+const VERSION = '29.0301';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2187,6 +2188,10 @@ const TABS = [
   ] },
   { id: 'buffer', label: 'Zona Buffer', icon: '⏳', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'maestros', label: 'Archivo Zona Buffer', icon: '🗂️' },
+    /* PENDIENTE va acá y no primero: lo pidió Daniel el 20-ago-2026 —*"que el
+       submódulo pendiente esté después de Archivo Zona Buffer"*—. Primero los
+       archivos, después sale el pendiente, y sobre él corre el análisis. */
+    { id: 'pendiente', label: 'Pendiente', icon: '📦' },
     { id: 'reportes', label: 'Análisis Buffer', icon: '📉' },
     { id: 'historial_buffer', label: 'Historial Buffer', icon: '📅' },
     { id: 'kpi_buffer', label: 'Buffer KPI', icon: '📊' },
@@ -3922,6 +3927,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         renderUploadArea(wrap, 'validar_reserva', dataStore.validar_reserva, '.xlsx', 'VALIDAR RESERVA');
         renderUploadArea(wrap, 'validar_activo', dataStore.validar_activo, '.csv', 'VALIDAR ACTIVO');
         renderUploadArea(wrap, 'validar_lpn', dataStore.validar_lpn, '.csv', 'VALIDAR LPN');
+    } else if (activeBufferSub === 'pendiente') {
+        await renderPendienteSection(buf);
     } else if (activeBufferSub === 'historial_buffer') {
         renderBufferHistory(buf);
     } else if (activeBufferSub === 'kpi_buffer') {
@@ -4490,7 +4497,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0300');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0301');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6943,6 +6950,73 @@ const fueraDelBufferC = (filas, bufferC) => {
  * los números escritos a mano— así que el marco no le quita nada.
  */
 let turnoGuardando = null;
+/* ══════════════════════════════════════════════════════════════════════════
+   ZONA BUFFER → PENDIENTE
+
+   Lo que comercial mandó por correo y el CD todavía no atendió. Acá NO se calcula
+   nada: los números los publica `robot/armar_pendiente.py` en el área
+   `pendiente_despacho`, y el dibujo vive en `js/reportes/pendiente.js`.
+
+   Por qué el cálculo va en el robot y no acá: necesita los 75 correos de comercial
+   y el Detalle de Orden del WMS —13 MB—, que viven en OneDrive del servidor y el
+   navegador no puede leer.
+   ══════════════════════════════════════════════════════════════════════════ */
+const PENDIENTE_AREA = 'pendiente_despacho';
+
+/* La fecha elegida se recuerda, por lo mismo que en Actividades: `renderBufferTab`
+   vuelve a dibujar sin fecha y sin esto el cuadro se cae a la jornada de hoy. */
+let _pendFecha = null;
+
+const renderPendienteSection = async (container, dia) => {
+    if (!container) return;
+    const fecha = dia || _pendFecha || getLogicalDate();
+    _pendFecha = fecha;
+
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:3rem; color:var(--text-muted);">
+        <div style="width:26px; height:26px; border:3px solid rgba(99,102,241,0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:0.85rem;">Trayendo el pendiente...</span>
+      </div>`;
+
+    let datos = null;
+    try {
+        datos = await leerArea(PENDIENTE_AREA, fecha);
+    } catch (e) {
+        console.warn('[PENDIENTE] no se pudo traer el área:', e && e.message);
+    }
+    // La pestaña pudo cambiar mientras se buscaban los datos.
+    if (!container.isConnected || activeBufferSub !== 'pendiente') return;
+
+    montarPendiente(container, {
+        datos: datos,
+        fecha: fecha,
+        alCambiarFecha: (nueva) => renderPendienteSection(container, nueva),
+        /**
+         * EL EXCEL NO SE ARMA ACÁ. Lo deja el robot en Descargas junto al Slotting y
+         * los stocks, con `tipo: 'Pendiente'` —el servidor guarda siete de cada tipo,
+         * así que no le pelea el cupo a los otros—. Acá solo se busca y se baja.
+         */
+        alDescargar: async () => {
+            try {
+                const { archivos } = await listarArchivos('descargas');
+                const suyo = (archivos || []).find(a =>
+                    String(a.tipo || '').toLowerCase() === 'pendiente' && a.fecha === fecha);
+                if (!suyo) {
+                    alert('Todavía no está el Excel del ' + fecha + ' en Descargas.
+
+'
+                        + 'Lo sube el robot junto con el pendiente. Si el pendiente ya se ve '
+                        + 'en pantalla y el archivo no está, revisar el log del robot.');
+                    return;
+                }
+                await descargarArchivo('descargas', suyo);
+            } catch (e) {
+                alert('No se pudo bajar el Excel: ' + (e && e.message ? e.message : e));
+            }
+        }
+    });
+};
+
 /**
  * LA FECHA QUE ELIGIÓ DANIEL MANDA, y el refresco no se la puede pisar.
  *
@@ -10091,6 +10165,7 @@ const renderRFSection = (container) => {
         ];
 
         const availableSubBuffer = [
+            { id: 'pendiente', label: 'Pendiente' },
             { id: 'historial_buffer', label: 'Historial Buffer' },
             { id: 'analisis_buffer', label: 'Análisis Buffer' }
         ];
@@ -16386,7 +16461,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0300 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0301 | MOBILE PORTAL
                             </div>
                     </div>
 
