@@ -1127,3 +1127,69 @@ papel, al lado de `almacenar`, `paletizar` y `destino`.
 - **Un código nuevo no llega de a cien pares.** Daniel: *"por lo general llegan a partir de
   mil o quinientos"*. Puede haber un parcial chico, pero al probar o maquetar hay que usar
   volúmenes de verdad o el papel engaña.
+
+## EL DESTINO SE ELIGE POR ARTICULO Y NUNCA JUNTA — pendiente, 21-ago-2026
+
+Daniel, mirando la `2026-08-20_Tarea7`: *"¿por qué mandas la talla 44 a un cuerpo que no
+está? Eso yo no te lo tengo que decir, eso tú lo tienes que saber en base a las reglas que ya
+tenemos"*. Tiene razon y hay que implementarlo.
+
+**El caso, medido:** el articulo `8246844` (Bata, 01 MEN) vive en tres cuerpos —`SEL-07-15`
+con 410 pares, `SEL-06-18` con 242 y `SEL-07-14` con 153—. La tarea trae 18 pares de la
+**talla 44** y los manda al `SEL-07-15`, que tiene **8** de esa talla. El `SEL-07-14` tiene
+**26** de la talla 44 y es el cuerpo mas vacio de los tres.
+
+**Por que pasa:** el destino se resuelve **por ARTICULO** —el cuerpo donde tiene mas— y no se
+mira nunca en que cuerpo vive esa TALLA. Y no hay ninguna regla que empuje a juntar: cada ola
+engorda el cuerpo mayor y los chicos se quedan ahi para siempre.
+
+**LA REGLA QUE FALTA:**
+> Si el articulo ya vive en varios cuerpos, lo nuevo de una talla va **al cuerpo que ya tiene
+> esa talla**, si entra. Y si hay que elegir, se alimenta el que permita **vaciar** otro, no el
+> que ya es el mas grande.
+
+Se toca en `planificarAlmacenaje` / `asignarCuerpos` (`zonasService.js`). **Cambia el destino
+de TODAS las tareas, no solo del escolar**, asi que no se sube a minutos de una corrida.
+
+### Lo que NO es el problema, ya medido — no volver a revisarlo
+
+Se midio sobre `almacenaje_activo` (30.710 filas, se baja sin sesion de la API):
+
+- **La regla "un cuerpo, un articulo" SE CUMPLE.** En las columnas 5 a 13 —las de temporada
+  actual, el unico tramo donde es estricta— hay **173 cuerpos con stock y 160 tienen un solo
+  articulo**. Solo 13 estan mezclados (8%); el peor es `SEL-08-08` con cuatro.
+  **Que un articulo use varios cuerpos NO viola esa regla:** la regla es que un CUERPO no
+  tenga varios articulos, no al reves. Me equivoque midiendolo al reves la primera vez.
+- **Estar repartido casi siempre es legitimo.** 56 de 116 articulos estan en 2+ cuerpos, pero
+  midiendo contra el tope observado de cada articulo, **solo 7 cabrian en menos cuerpos** y
+  liberarian **7 cuerpos**. El resto esta repartido porque no entra en uno.
+  El `8246844`: 805 pares, tope observado 410 -> necesita 2, usa 3.
+
+O sea que el problema **no es el reparto en si**, es **a cual de sus cuerpos se le echa lo
+nuevo**. Es mucho mas chico de lo que parece y mucho mas facil de arreglar.
+
+## LA HOJA IMPRESA — lo acordado con Daniel el 21-ago-2026
+
+Revisado hoja por hoja contra maquetas. **Lo aprobado y por que:**
+
+| | |
+|---|---|
+| **Orden por ORIGEN** | Agrupada por la ubicacion del buffer, no por destino. Medido en la Tarea5: el operario pasa de **19 cambios de sitio a 8**. Lo pidieron los operarios; el orden por destino era una decision de Daniel del 15-ago que el mismo revirtio |
+| **Banda por articulo** | Una franja antes de sus renglones con **articulo · gender RIMS · caso**. Gris para reposicion, **NEGRA para codigo nuevo** —se ve sin leer— |
+| **Columna "En el cuerpo"** | Lo que ya hay de esa talla **en el cuerpo destino**. NO el total del SKU: el `8246844` tiene 174 de la talla 42 pero **cero** en el cuerpo al que va. En rojo cuando es cero |
+| **Asterisco + nota al pie** | El `*` va pegado al **SKU**, nunca en una celda de numero: *"cuando te lo bajas en Excel interrumpe la suma"*. Al pie, una tablita con **ubicacion, SKU, talla y cantidad** de lo que hay fuera del cuerpo destino |
+
+**Descartado y por que**, para no volver a proponerlo:
+- Segunda columna "Total activo": *"es lo mismo salvo para los que tienen diferencia"* — y para
+  esa diferencia ya esta el asterisco.
+- El gender como columna propia: paga cuatro columnas de ancho por un dato que no cambia
+  dentro del articulo.
+- El renglon amarillo listando los otros cuerpos: demasiado texto, ensucia.
+- Un aviso de "articulo repartido" en la hoja: el operario **no puede accionarlo**; eso es
+  trabajo de Slotting.
+
+**Y lo que la hoja YA hacia bien y yo mostre mal cuatro veces** —si se maqueta, copiar del
+codigo, no rehacerlo—: solo imprime las lineas del buffer; el subtitulo es
+`fecha · primer articulo + · N articulos` (Daniel pidio dejar **solo la fecha**); la
+**paginacion ya existe** (`.pagX`, sale solo si hay mas de una hoja, y Daniel la quiere en la
+**esquina superior derecha**); hay **subtotal por articulo** y total de la tarea.
