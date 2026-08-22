@@ -1,29 +1,29 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0329';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0330';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0329';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0329';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0329';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0329';
-import * as metasService from '../services_v245/metasService.js?v=29.0329';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0329';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0329';
+import * as adminService from '../services_v245/adminService.js?v=29.0330';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0330';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0330';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0330';
+import * as metasService from '../services_v245/metasService.js?v=29.0330';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0330';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0330';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
-         consolidacionDeReserva, fotoChicaDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0329';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0329';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0329';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0329';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0329';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0329';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0329';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0329';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0329';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0329';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0329';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0329';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0329';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0329';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0329';
-import { montarSlotting } from './slotting.js?v=29.0329';
+         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto } from '../reportes/reserva_consolidacion.js?v=29.0330';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0330';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0330';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0330';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0330';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0330';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0330';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0330';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0330';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0330';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0330';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0330';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0330';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0330';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0330';
+import { montarSlotting } from './slotting.js?v=29.0330';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -380,7 +380,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0329';
+const VERSION = '29.0330';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4682,7 +4682,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0329');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0330');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16914,7 +16914,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0329 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0330 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24214,25 +24214,10 @@ const renderRFSection = (container) => {
    * Antes del ancla, lo que hay cargado sigue siendo la foto de ANOCHE: por eso el dia
    * retrocede uno. Devuelve null si hoy no toca ancla de noche.
    */
-  const diaDeLaFotoDeReserva = (ahora) => {
-      const cfg = robotsService.robotsActual() || {};
-      const noche = cfg.ancla_noche || {};
-      if (noche.activa === false) return null;
-      const hhmm = String(noche.hora || '19:00');
-      const m = hhmm.match(/^(\d{1,2}):(\d{2})$/);
-      if (!m) return null;
-      const corte = (parseInt(m[1], 10) * 60) + parseInt(m[2], 10);
-      const ref = ahora instanceof Date ? ahora : new Date();
-      const ahoraMin = (ref.getHours() * 60) + ref.getMinutes();
-      const dia = new Date(ref);
-      if (ahoraMin < corte) dia.setDate(dia.getDate() - 1);
-      const dd = (n) => String(n).padStart(2, '0');
-      const fecha = `${dia.getFullYear()}-${dd(dia.getMonth() + 1)}-${dd(dia.getDate())}`;
-      // Los dias apagados en los checks no tienen ancla, asi que no tienen foto.
-      const clave = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'][dia.getDay()];
-      if (noche.dias && noche.dias[clave] === false) return null;
-      return { fecha, hora: hhmm };
-  };
+  /* El sello vive en `reserva_consolidacion.js`, que es el archivo que corre tambien el
+     robot del ancla. Aca solo se le pasa la configuracion, que la pantalla ya tiene leida. */
+  const diaDeLaFotoDeReserva = (ahora) =>
+      selloDeLaFoto(ahora, (robotsService.robotsActual() || {}).ancla_noche);
 
   /** Lo que se guarda: el resultado ya calculado, no las 18.947 filas. Unos 25 KB. */
   const engancharClicConsolidacion = (raiz, datos) => {

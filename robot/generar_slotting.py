@@ -1567,6 +1567,32 @@ def run(fecha=None, ruta_act_dada=None, ruta_res_dada=None, igualmente=False):
         log("No se pudo actualizar rotación y permanencia: %s: %s"
             % (type(e).__name__, str(e)[:200]), "WARN")
 
+    # ── LA FOTO DEL DIA DE LA RESERVA ─────────────────────────────────────────
+    # Va al final y DESPUES de que los stocks quedaron publicados: la foto se arma con
+    # el stock de reserva que hay en el SERVIDOR, asi que corriendo antes guardaria la
+    # de anoche con la fecha de hoy.
+    #
+    # Antes esto lo hacia el navegador, y solo cuando alguien entraba a Analisis
+    # Reserva: el dia que nadie abriera esa pantalla quedaba un agujero en el
+    # calendario, y no se recuperaba porque el stock ya lo habia pisado el del dia
+    # siguiente. Daniel, 22-ago-2026: *"que el robot guarde la foto al terminar el
+    # ancla, se tiene que guardar eso"*.
+    #
+    # NO cambia el codigo de salida, igual que la evolucion y la rotacion: es un
+    # historico de estudio, no algo que el turno necesite esta noche. Y no pisa una
+    # foto que ya este.
+    try:
+        log("Guardando la foto del dia de la reserva...")
+        import subprocess
+        r = subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "foto_reserva.py")],
+                           timeout=900)
+        log("Foto de reserva: %s" % ("guardada" if r.returncode == 0
+            else "no se pudo, ver logs/foto_reserva.log"),
+            "INFO" if r.returncode == 0 else "WARN")
+    except Exception as e:
+        log("No se pudo guardar la foto de reserva: %s: %s"
+            % (type(e).__name__, str(e)[:200]), "WARN")
+
     mb = os.path.getsize(final) / (1024.0 * 1024.0)
     log("=" * 58)
     log("LISTO en %.1f minutos - %.2f MB" % ((time.time() - inicio) / 60.0, mb))

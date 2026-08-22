@@ -191,6 +191,41 @@ export const consolidacionDeReserva = (filas, idx) => {
 };
 
 
+/**
+ * DE QUE DIA ES LA FOTO QUE HAY AHORA MISMO EN LA RESERVA.
+ *
+ * Se guarda UNA sola foto por dia, la del ancla de la NOCHE. Regla de Daniel, 21-ago-2026:
+ * *"en la mañana no quiero que se actualice, solo en la noche nada mas"*.
+ *
+ * LA HORA NO ESTA ESCRITA ACA. Entra por parametro desde Configuracion -> Parametros
+ * (`ancla_noche`), que es
+ * donde Daniel la cambia: *"la cosa es que siempre tiene que mirar a la hora de la interfaz.
+ * No es una hora fija, porque yo lo puedo cambiar"*. Si la mueve a las 20:00, esto la sigue
+ * sin tocar una linea. Si apaga el dia en los checks, ese dia no hay foto y el calendario
+ * lo muestra vacio, que es la verdad.
+ *
+ * Antes del ancla, lo que hay cargado sigue siendo la foto de ANOCHE: por eso el dia
+ * retrocede uno. Devuelve null si hoy no toca ancla de noche.
+ */
+export const selloDeLaFoto = (ahora, anclaNoche) => {
+    const noche = anclaNoche || {};
+    if (noche.activa === false) return null;
+    const hhmm = String(noche.hora || '19:00');
+    const m = hhmm.match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return null;
+    const corte = (parseInt(m[1], 10) * 60) + parseInt(m[2], 10);
+    const ref = ahora instanceof Date ? ahora : new Date();
+    const ahoraMin = (ref.getHours() * 60) + ref.getMinutes();
+    const dia = new Date(ref);
+    if (ahoraMin < corte) dia.setDate(dia.getDate() - 1);
+    const dd = (n) => String(n).padStart(2, '0');
+    const fecha = `${dia.getFullYear()}-${dd(dia.getMonth() + 1)}-${dd(dia.getDate())}`;
+    // Los dias apagados en los checks no tienen ancla, asi que no tienen foto.
+    const clave = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'][dia.getDay()];
+    if (noche.dias && noche.dias[clave] === false) return null;
+    return { fecha, hora: hhmm };
+};
+
 export const fotoChicaDeReserva = (datos, sello) => (!datos || !sello) ? null : ({
     fecha: sello.fecha, hora: sello.hora,
     matriz: datos.matriz, padres: datos.padres, totalPadres: datos.totalPadres,
