@@ -114,14 +114,15 @@ def publicar(area, datos, intentos=3):
 # ══════════════════════════════════════════════════════════════════════════════
 
 CALCULAR_JS = """
-async ([urlModulo, filasReserva, maestro, anclaNoche]) => {
+async ([urlModulo, filasReserva, maestro, anclaNoche, fotos]) => {
     let mod;
     try {
         mod = await import(urlModulo);
     } catch (e) {
         return { error: 'No se pudo cargar reserva_consolidacion.js: ' + (e && e.message ? e.message : e) };
     }
-    for (const f of ['indicePorSku', 'consolidacionDeReserva', 'fotoChicaDeReserva', 'selloDeLaFoto']) {
+    for (const f of ['indicePorSku', 'consolidacionDeReserva', 'fotoChicaDeReserva',
+                     'selloDeLaFoto', 'cierreDeFragmentados']) {
         if (typeof mod[f] !== 'function') return { error: 'El modulo cargo pero no exporta ' + f };
     }
     try {
@@ -138,9 +139,20 @@ async ([urlModulo, filasReserva, maestro, anclaNoche]) => {
         const foto = mod.fotoChicaDeReserva(datos, sello);
         if (!foto) return { error: 'No se pudo armar la foto' };
 
+        /* EL CIERRE DEL TURNO. Si ya hay una foto de ese dia -la de las 19:20- y todavia
+           no tiene cierre, esta corrida es la de la mañana: se miden LOS MISMOS padres que
+           se guardaron anoche contra el stock de ahora. Ver cierreDeFragmentados. */
+        const guardada = (fotos || []).find(f => f && f.fecha === sello.fecha);
+        let cierre = null;
+        if (guardada && !guardada.cierre && (guardada.fragmentados || []).length) {
+            cierre = mod.cierreDeFragmentados(guardada.fragmentados, datos.padresTodos);
+        }
+
         return { ok: true, sello: sello, foto: foto, skus: porSku.size,
                  footwear: datos.matriz.reduce((s, c) => s + c.fw, 0),
-                 reducen: datos.fragTotal, ubicFrag: datos.fragUbic };
+                 reducen: datos.fragTotal, ubicFrag: datos.fragUbic,
+                 yaEstaba: !!guardada, cierre: cierre,
+                 metaGuardada: guardada ? (guardada.fragmentados || []).reduce((s, p) => s + (p.reduce || 0), 0) : 0 };
     } catch (e) {
         return { error: 'El calculo fallo: ' + (e && e.message ? e.message : e) };
     }
@@ -174,6 +186,9 @@ def main():
                          'puede separar el calzado de las bolsas, y una paleta de bolsas de '
                          '12.000 unidades taparia cualquier reparto.'
                          % (len(maestro) if isinstance(maestro, list) else '0', MINIMO_MAESTRO))
+    fotos = traer(AREA_FOTOS)
+    if not isinstance(fotos, list):
+        fotos = []
     cfg = traer(AREA_CONFIG) or {}
     ancla = (cfg.get('robots') or {}).get('ancla_noche') or {}
     log('reserva %s filas  ·  Maestro %s articulos  ·  ancla de la noche %s'
@@ -187,7 +202,10 @@ def main():
         nav = p.chromium.launch(headless=not a_la_vista)
         page = nav.new_page()
         page.goto(sitio, wait_until='domcontentloaded', timeout=120000)
-        r = page.evaluate(CALCULAR_JS, [modulo, reserva, maestro, ancla])
+        r = page.evaluate(CALCULAR_JS, [modulo, reserva, maestro, ancla,
+                                        [{'fecha': f.get('fecha'),
+                                          'fragmentados': f.get('fragmentados') or [],
+                                          'cierre': f.get('cierre')} for f in fotos if f]])
         nav.close()
     if not r or r.get('error'):
         raise SystemExit((r or {}).get('error', 'el calculo no devolvio nada'))
@@ -206,12 +224,37 @@ def main():
         % (format(r.get('reducen', 0), ',d'), format(r.get('ubicFrag', 0), ',d')))
     log('')
 
-    # ── Y se guarda, si falta ─────────────────────────────────────────────────
-    fotos = traer(AREA_FOTOS)
-    if not isinstance(fotos, list):
-        fotos = []
-    if any(f and f.get('fecha') == sello['fecha'] for f in fotos):
-        log('El %s ya tiene su foto guardada: no se toca. Una sola por dia.' % sello['fecha'])
+    # ── EL CIERRE DEL TURNO, si esta es la corrida de la mañana ───────────────
+    #
+    # La foto del dia ya existe -la guardo el ancla de la noche- y todavia no tiene cierre:
+    # entonces esta corrida es la de las 07:00 y lo que se mide es cuanto consolido el turno.
+    # La foto en si NO se toca: el detalle que se ve en pantalla sigue siendo el de las 19:20,
+    # como pidio Daniel. Lo unico que se agrega es la cabecera.
+    if r.get('yaEstaba'):
+        cierre = r.get('cierre')
+        if not cierre:
+            log('El %s ya tiene su foto y su cierre: no hay nada que hacer.' % sello['fecha'])
+            return 0
+        meta = r.get('metaGuardada') or 0
+        hechas = max(0, meta - (cierre.get('reduce') or 0))
+        cierre['hora'] = datetime.now().strftime('%H:%M')
+        cierre['medido'] = datetime.now().isoformat(timespec='seconds')
+        log('   cierre del turno   %s de %s ubicaciones liberadas (%d%%)'
+            % (format(hechas, ',d'), format(meta, ',d'),
+               round(100.0 * hechas / meta) if meta else 0))
+        if probar:
+            log('MODO PROBAR: aca se habria guardado el cierre del %s.' % sello['fecha'])
+            return 0
+        lista = []
+        for f in fotos:
+            if f and f.get('fecha') == sello['fecha']:
+                f = dict(f)
+                f['cierre'] = cierre
+            lista.append(f)
+        if not publicar(AREA_FOTOS, lista):
+            return 1
+        log('Cierre guardado en la foto del %s' % sello['fecha'])
+        log('LISTO')
         return 0
 
     if probar:

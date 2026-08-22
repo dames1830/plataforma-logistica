@@ -23,7 +23,7 @@
  * 43. El ultimo tramo del SKU es un indice, y la talla de verdad viene al final de la
  * descripcion -`...BATA INDUSTRIALS-1-43`-. Se usa `extractTalla`, que es la que ya
  * resuelve esto en toda la plataforma; escribir otra aca seria tener dos verdades. */
-import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0333';
+import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0334';
 
 export const NIVELES_RESERVA = ['H', 'G', 'F', 'E', 'D'];
 export const COLS_RESERVA = 12;
@@ -207,8 +207,13 @@ export const consolidacionDeReserva = (filas, idx) => {
                  ubic: ubic };
     }).slice(0, 30);
 
+    /* `padresTodos` es la lista COMPLETA en tres numeros -padre, ubicaciones, reduce-, para
+       poder buscar CUALQUIERA por su codigo. La necesita el cierre del turno: a las 07:00 hay
+       que medir los MISMOS 30 padres que se guardaron a las 19:20, y esos no son los 30
+       primeros de la mañana. Son ~353 filas de tres numeros; no se guarda en la foto. */
     return { matriz: matriz, padres: padres.slice(0, 15), totalPadres: padres.length,
-             fragmentados: fragmentados, fragTotal: conReduce.length, fragUbic: ubicFrag };
+             fragmentados: fragmentados, fragTotal: conReduce.length, fragUbic: ubicFrag,
+             padresTodos: padres.map(p => [p.padre, p.n, p.reduce]) };
 };
 
 
@@ -245,6 +250,40 @@ export const selloDeLaFoto = (ahora, anclaNoche) => {
     const clave = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'][dia.getDay()];
     if (noche.dias && noche.dias[clave] === false) return null;
     return { fecha, hora: hhmm };
+};
+
+/**
+ * EL CIERRE DEL TURNO NOCHE — cuanto se consolido de verdad.
+ *
+ * Idea de Daniel, 22-ago-2026: *"tu meta es el stock ancla de la noche y tu avance es el
+ * stock ancla del dia siguiente, de las siete de la mañana"*. Y tiene razon: entre las 19:20
+ * y las 07:00 el almacen **no recibe mercaderia**, asi que lo que baje en ese rato es trabajo
+ * del turno. Comparar un dia contra otro no sirve: ahi el numero tambien sube cuando llega
+ * importacion y se acomoda fragmentada, y el avance iria para atras sin que nadie hiciera
+ * nada mal.
+ *
+ * SE MIDEN LOS MISMOS PADRES, no los 30 de la mañana. Si un articulo se consolido bien, a
+ * las 07:00 ya no esta entre los mas fragmentados —justamente porque se arreglo— y medir la
+ * lista nueva diria que no paso nada.
+ *
+ * UN PADRE QUE YA NO FIGURA quedo con una sola ubicacion o sin nada que reducir: cuenta como
+ * `reduce` cero, que es la verdad.
+ *
+ * @param {Array} guardados  los `fragmentados` de la foto de las 19:20
+ * @param {Array} deAhora    el `padresTodos` de la corrida de las 07:00
+ */
+export const cierreDeFragmentados = (guardados, deAhora) => {
+    if (!Array.isArray(guardados) || !guardados.length) return null;
+    const mapa = new Map((deAhora || []).map(x => [x[0], { n: x[1], reduce: x[2] }]));
+    let ubic = 0, reduce = 0, siguen = 0;
+    guardados.forEach(g => {
+        const h = mapa.get(g.padre);
+        // Sin rastro: quedo en una sola ubicacion. Una, no cero: el articulo sigue existiendo.
+        ubic += h ? h.n : 1;
+        reduce += h ? h.reduce : 0;
+        if (h && h.reduce > 0) siguen++;
+    });
+    return { ubic: ubic, reduce: reduce, arts: siguen };
 };
 
 export const fotoChicaDeReserva = (datos, sello) => (!datos || !sello) ? null : ({
