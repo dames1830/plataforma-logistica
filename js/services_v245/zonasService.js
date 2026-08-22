@@ -365,9 +365,18 @@ export const zonasPorDefecto = () => ({
      * 336 y el North Star deportivo 522, siendo los dos deportivos — el primero es bota de
      * trabajo. El tipo solo no alcanzaba.
      *
-     * La clave es 'Marca|TIPO', con la marca tal cual la escribe la columna `Marcas` del
-     * Maestro. Los numeros son el percentil 75 de lo medido: por encima del cuerpo tipico,
-     * por debajo del caso raro que ensuciaria el promedio.
+     * LA CLAVE PUEDE LLEVAR EL GENDER, y ahi esta lo fino. Daniel, 22-ago-2026: *"falta
+     * Weinbrenner kids. He visto Weinbrenner con tallas de 30, 31, 32, y ahi no va a entrar
+     * doscientos sesenta, ahi entraria mas, porque al ser pequeño tiene mas capacidad"*.
+     * Tenia razon y la medicion lo confirma — Weinbrenner deportivo entra 339 de adulto y
+     * 510 de kids—, pero NO SIEMPRE PARA EL MISMO LADO: el Power school entra 300 contra 423
+     * del adulto, y el Bubblegummers school 120 contra 589 del kids. Por eso el numero se
+     * mide, no se deduce.
+     *
+     * Se prueba primero 'Marca|TIPO|GENDER' y despues 'Marca|TIPO'. La marca va tal cual la
+     * escribe la columna `Marcas` del Maestro y el gender tal cual `Gender RIMS`. Los numeros
+     * son el percentil 75 de lo medido: por encima del cuerpo tipico, por debajo del caso
+     * raro que ensuciaria el promedio.
      * ══════════════════════════════════════════════════════════════════════════════ */
     densidadMarcaTipo: {},
 
@@ -381,6 +390,12 @@ export const zonasPorDefecto = () => ({
      * VA CON LA ZONA A PROPOSITO. Un cuerpo del MZN03 aguanta ~230 y uno del MZN01 ~690:
      * si el mismo articulo cambia de zona, la medida vieja no vale. Sin zona que coincida,
      * cae a la de su marca y tipo.
+     *
+     * SOLO ENTRAN LAS MEDIDAS CONFIRMADAS, y esto costo un susto: la primera version publico
+     * el articulo 7016610 de Marie Claire con capacidad 1 par. No es que entre un par — es
+     * que en 105 dias nunca tuvo mas de uno, y ese cuerpo habria quedado bloqueado. Una
+     * medida cuenta solo si ese dia al articulo le SOBRABA mercaderia fuera del cuerpo: ahi
+     * el cuerpo fue el limite y el numero significa algo. De 1.360 medidas quedaron 1.087.
      *
      * ES UN PISO, NO UN TECHO. Que se le hayan visto 348 significa que 348 entran seguro;
      * pueden entrar mas y no haberse dado nunca. Para lo que sirve esto —no mandar
@@ -863,10 +878,42 @@ export const zonaDeOthers = (subcategoria) => {
  */
 export const TIPOS_CALZADO = ['BOTA', 'DEPORTIVO', 'SANDALIA', 'ZAPATO'];
 
+/**
+ * EL RANGO DE TALLA — lo que de verdad decide cuánto entra.
+ *
+ * Daniel lo venía diciendo desde el principio: *"he visto Weinbrenner con tallas de 30, 31,
+ * 32, y ahí no va a entrar doscientos sesenta, ahí entraría más, porque al ser pequeño tiene
+ * más capacidad"*. La medición le da la razón y con una limpieza que ninguna otra regla
+ * conseguía — dentro de DEPORTIVO, por rango de talla:
+ *
+ *      18-25 → 831      31-35 → 543      40-44 → 311
+ *      26-30 → 580      36-39 → 447
+ *
+ * Y ADEMÁS DESTAPA LO QUE EL MAESTRO NO DICE. El Power 2816964 es talla 28 y entra 700, pero
+ * su `Gender RIMS` dice '04 SPORT', igual que una zapatilla de hombre. Por eso agrupar por
+ * gender fallaba: la talla no se puede equivocar, el gender sí.
+ *
+ * Los cortes son los del calzado: bebé, chico, escolar, dama, hombre.
+ */
+export const rangoDeTalla = (talla) => {
+    const n = parseFloat(talla);
+    if (!isFinite(n) || n <= 0) return null;
+    if (n < 26) return '18-25';
+    if (n < 31) return '26-30';
+    if (n < 36) return '31-35';
+    if (n < 40) return '36-39';
+    if (n < 45) return '40-44';
+    return '45+';
+};
+
 export const tipoDeCalzado = (subcategoria, categoria) => {
     const u = (String(subcategoria || '') + ' ' + String(categoria || '')).toUpperCase();
     if (!u.trim()) return null;
-    if (u.includes('BOOT') || u.includes('BOTA')) return 'BOTA';
+    /* 'OUTDOOR HEIGHT CUT' ES CAÑA ALTA, o sea bota, y son 250 articulos que estaban
+       contados como deportivos porque su categoria dice SPORT. Los trajo Daniel el
+       22-ago-2026: *"hay botas tambien en Weinbrenner"*. OJO: 'HEIGHT 3/5/7' a secas es
+       altura de TACO —wedge, sandalia— y esa no es bota. Por eso se pide 'HEIGHT CUT'. */
+    if (u.includes('BOOT') || u.includes('BOTA') || u.includes('HEIGHT CUT')) return 'BOTA';
     if (u.includes('THONG') || u.includes('SANDAL') || u.includes('PLASTIC')) return 'SANDALIA';
     if (u.includes('SPORT') || u.includes('TENNIS') || u.includes('TRAINING')
         || u.includes('CANVAS') || u.includes('GYMNAST')) return 'DEPORTIVO';
@@ -973,11 +1020,26 @@ export const densidadDe = (zona, serie, marcaStd, columna, tipo, art) => {
        MZN01-24 en 800— y una regla general no puede pisar una medida puntual. La serie sí:
        ahí un solo número vale para media zona y es el que estaba mandando de más. */
     const tc = String(tipo || '').trim().toUpperCase();
-    // LA MARCA Y EL TIPO JUNTOS. Dos deportivos de marcas distintas no entran igual.
+    /* LA MARCA Y EL TIPO JUNTOS, y si la hay, la medida de ese gender. Dos deportivos de
+       marcas distintas no entran igual, y dentro de una marca el de chico tampoco entra como
+       el de adulto. Primero la regla con gender, que es la mas fina. */
     const ma = String((art && art.marca) || '').trim();
-    if (tc && ma && cfg.densidadMarcaTipo) {
-        const v = cfg.densidadMarcaTipo[ma + '|' + tc];
-        if (v) return v;
+    const ra = rangoDeTalla(art && art.talla);
+    if (tc && cfg.densidadMarcaTipo) {
+        /* De lo más fino a lo más general, y el primero que exista manda:
+         *   'Bata|ZAPATO|40-44'  la marca, el tipo y el tamaño de la caja
+         *   'ZAPATO|40-44'       el tipo y el tamaño, sin importar la marca
+         *   'Bata|ZAPATO'        la marca y el tipo, cuando no se conoce la talla
+         * Se guardan en el mismo mapa porque son la misma clase de regla: una medición
+         * agrupada. Lo que cambia es cuánto se sabe del artículo. */
+        const claves = [];
+        if (ma && ra) claves.push(ma + '|' + tc + '|' + ra);
+        if (ra) claves.push(tc + '|' + ra);
+        if (ma) claves.push(ma + '|' + tc);
+        for (const k of claves) {
+            const v = cfg.densidadMarcaTipo[k];
+            if (v) return v;
+        }
     }
     if (tc && cfg.densidadTipo && cfg.densidadTipo[tc]) return cfg.densidadTipo[tc];
     const d = cfg.densidad[zona] || {};
@@ -1001,7 +1063,9 @@ export const capacidadDeArticulo = (art, zona) => {
     const cfg = zonasActual();
     const porCol = (cfg.densidadColumna || {})[zona];
     const normal = densidadDe(zona, serieDe(art && art.sku7), art && art.marcaStd, null,
-                              tipoDeCalzado(art && art.subcategoria, art && art.categoria), art);
+                              tipoDeCalzado(art && art.subcategoria, art && art.categoria),
+                              { sku7: art && art.sku7, marca: art && art.marca,
+                                talla: art && art.talla });
     if (!porCol) return normal;
 
     const franja = franjaDeArticulo(art, zona);

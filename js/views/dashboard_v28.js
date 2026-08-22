@@ -1,30 +1,30 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0342';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0343';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0342';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0342';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0342';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0342';
-import * as metasService from '../services_v245/metasService.js?v=29.0342';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0342';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0342';
+import * as adminService from '../services_v245/adminService.js?v=29.0343';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0343';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0343';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0343';
+import * as metasService from '../services_v245/metasService.js?v=29.0343';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0343';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0343';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0342';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0342';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0342';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0342';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0342';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0342';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0342';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0342';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0342';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0342';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0342';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0342';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0342';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0342';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0342';
-import { montarSlotting } from './slotting.js?v=29.0342';
+         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0343';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0343';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0343';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0343';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0343';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0343';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0343';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0343';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0343';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0343';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0343';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0343';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0343';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0343';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0343';
+import { montarSlotting } from './slotting.js?v=29.0343';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -381,7 +381,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0342';
+const VERSION = '29.0343';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4683,7 +4683,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0342');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0343');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16915,7 +16915,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0342 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0343 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18751,9 +18751,18 @@ const renderRFSection = (container) => {
         // columna 6 del Maestro; la 5 es la categoria y sirve de respaldo. Ver tipoDeCalzado.
         subcategoria: String(raw[5] || '').trim().toUpperCase(),
         categoria: String(raw[4] || '').trim().toUpperCase(),
+        // EL GENDER, que dentro de una misma marca separa el de chico del de adulto: un
+        // Weinbrenner deportivo entra 339 de adulto y 510 de kids. Ver densidadMarcaTipo.
+        genderRims: String(raw[3] || '').trim(),
         temporada: String(raw[14] || raw[9] || '').trim()
       });
     });
+
+    /** La talla media ponderada de un articulo, o null si no se le pudo leer ninguna. */
+    const tallaMediaDe = (s7) => {
+      const a = tallaDeArt.get(s7);
+      return (a && a.pares) ? (a.suma / a.pares) : null;
+    };
 
     const mandados = destinosDeLasTareas();
 
@@ -18761,6 +18770,11 @@ const renderRFSection = (container) => {
     const cuerpos = new Map();
     const detallePorArt = new Map();     // 'cuerpo|sku7' -> [{ ubi, skuFull, talla, pares }]
     const paresEnElPiso = new Map();     // sku7 -> pares en todo el piso, para elegir su franja
+    /* LA TALLA MEDIA DE CADA ARTICULO, que es lo que decide cuanto entra en un cuerpo. Se
+       saca del MISMO stock que se esta barriendo, no del Maestro: el Maestro no la trae, y
+       ademas se equivoca de gender —el Power 2816964 es talla 28 y figura como 04 SPORT—.
+       Ponderada por pares: la talla que mas hay es la que llena el cuerpo. */
+    const tallaDeArt = new Map();        // sku7 -> { suma, pares }
     stock.forEach(row => {
       const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
       if (!ubi || ubi.startsWith('CDBUFFER')) return;
@@ -18795,6 +18809,13 @@ const renderRFSection = (container) => {
         pares: Math.round(qty)
       });
       paresEnElPiso.set(s7, (paresEnElPiso.get(s7) || 0) + qty);
+      const _ta = parseFloat(normalizarTalla(tallaDeSku(String(raw[1] || '').trim(),
+                                                        String(raw[2] || '').trim())));
+      if (isFinite(_ta) && _ta > 0) {
+        const acc = tallaDeArt.get(s7) || { suma: 0, pares: 0 };
+        acc.suma += _ta * qty; acc.pares += qty;
+        tallaDeArt.set(s7, acc);
+      }
     });
 
     /* ══════════════════════════════════════════════════════════════════════════════
@@ -18844,7 +18865,8 @@ const renderRFSection = (container) => {
                                           fMayor.marcaStd, c.col,
                                           zonasService.tipoDeCalzado(fMayor.subcategoria,
                                                                      fMayor.categoria),
-                                          { sku7: s7Mayor, marca: fMayor.marca });
+                                          { sku7: s7Mayor, marca: fMayor.marca,
+                                            talla: tallaMediaDe(s7Mayor) });
       (libresPorZona[c.zona] = libresPorZona[c.zona] || new Map())
         .set(clave, Math.max(0, cap - dentro));
     });
@@ -18891,7 +18913,8 @@ const renderRFSection = (container) => {
           ? libres.get(clave)
           : zonasService.densidadDe(zona, zonasService.serieDe(primero), fp.marcaStd, null,
                                     zonasService.tipoDeCalzado(fp.subcategoria, fp.categoria),
-                                    { sku7: primero, marca: fp.marca });
+                                    { sku7: primero, marca: fp.marca,
+                                      talla: tallaMediaDe(String(primero).substring(0, 7)) });
         libres.set(clave, Math.max(0, cap - (mandados.pares.get(nombre) || 0)));
       } else {
         (ocupadosPorZona[zona] = ocupadosPorZona[zona] || new Set()).add(clave);
@@ -19168,7 +19191,8 @@ const renderRFSection = (container) => {
       const cap = zonasService.densidadDe(suyos[0].zona, zonasService.serieDe(s7), f.marcaStd,
                                           null, zonasService.tipoDeCalzado(f.subcategoria,
                                                                            f.categoria),
-                                          { sku7: s7, marca: f.marca });
+                                          { sku7: s7, marca: f.marca,
+                                            talla: tallaMediaDe(s7) });
       const orden = [...suyos].sort((a, b) => b.pares - a.pares);
       const sequeda = orden[0];
       let lugar = Math.max(0, cap - sequeda.pares);
@@ -21978,7 +22002,7 @@ const renderRFSection = (container) => {
                 ${Object.keys(cfg.densidadMarcaTipo || {}).length ? Object.keys(cfg.densidadMarcaTipo).sort().map(k => `
                   <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
                     <td style="padding:0.4rem 1.1rem; color:#fff; font-weight:900;">${esc(k.split('|')[0])}</td>
-                    <td style="padding:0.4rem 0.6rem; color:rgba(255,255,255,0.45); font-weight:800; font-size:0.7rem;">${esc(k.split('|')[1] || '')}</td>
+                    <td style="padding:0.4rem 0.6rem; color:rgba(255,255,255,0.45); font-weight:800; font-size:0.7rem;">${esc(k.split('|')[1] || '')}${k.split('|')[2] ? `<span style="color:rgba(255,255,255,0.28); font-weight:700;"> · ${esc(k.split('|')[2])}</span>` : ''}</td>
                     <td style="padding:0.3rem; text-align:center;">
                       <input type="number" data-mt="${esc(k)}" min="1" value="${cfg.densidadMarcaTipo[k]}"
                         style="width:110px; padding:5px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-size:0.76rem; font-weight:800; text-align:center;">
