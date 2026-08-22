@@ -1149,11 +1149,25 @@ Si una ola arma una tarea de footwear con artículos de los dos casos, **hay que
 dos**: una de reposición y otra de código nuevo. No es un detalle de la hoja impresa: es cómo
 se reparte el trabajo.
 
-**Todavía no está implementado.** Al 21-ago-2026 el generador no lo comprueba, y el caso
-(`casoDelItem` -> `codigo-nuevo` / `reposicion-buffer` / `reposicion-fabrica` / `escolar` /
-`catalogo`) **ni siquiera se guarda en la tarea**: se calcula al generar la ola y se pierde.
-Para poder separar las tareas —y para imprimir el caso en la hoja— hay que grabarlo junto al
-papel, al lado de `almacenar`, `paletizar` y `destino`.
+**HECHO el 21-ago-2026 (v29.0323).** Y no hizo falta grabar el caso en la tarea, como decía
+esta nota: `calcularSugerenciaDeItem` ya lo devuelve en `caso`, calculado con el contexto de la
+corrida. Se lo pregunta a ÉL —`clasificarCasosDeLaOla`— y no se escribe una segunda regla:
+tener el "menos de 20 pares es nuevo" en dos lados es garantía de que un día una mienta.
+
+**Dónde estaba la mezcla.** Los artículos grandes —los que solos pasan el tamaño de tarea— ya
+iban uno por tarea, así que ahí nunca hubo problema. Los CHICOS se juntaban por marca hasta
+llenar el tamaño, en el orden en que venían y sin mirar el caso: un código nuevo de 80 pares
+terminaba pegado a una reposición de 150. Ahora se arman **dos corrientes** —nuevos y el
+resto— y cada una completa su propio tamaño.
+
+**Salen más tareas y más chicas.** Es el precio de la regla y es a propósito.
+
+**La red:** si no se puede clasificar —falta el Stock Activo, falla el cálculo— las dos
+corrientes se vuelven una y la ola sale exactamente como salía antes. Nunca se cae la
+generación por esto; es la misma opción B con la que se graba el papel.
+
+**El escolar viaja con las reposiciones**, no con los nuevos: la regla dice "reposición y
+código nuevo", y el escolar es su propio caso.
 
 ### Y de paso, lo que la hoja impresa SÍ lleva y conviene no olvidar
 

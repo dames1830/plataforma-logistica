@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0322';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0323';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0322';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0322';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0322';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0322';
-import * as metasService from '../services_v245/metasService.js?v=29.0322';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0322';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0322';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0322';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0322';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0322';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0322';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0322';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0322';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0322';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0322';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0322';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0322';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0322';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0322';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0322';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0322';
-import { montarSlotting } from './slotting.js?v=29.0322';
+import * as adminService from '../services_v245/adminService.js?v=29.0323';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0323';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0323';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0323';
+import * as metasService from '../services_v245/metasService.js?v=29.0323';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0323';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0323';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0323';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0323';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0323';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0323';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0323';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0323';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0323';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0323';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0323';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0323';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0323';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0323';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0323';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0323';
+import { montarSlotting } from './slotting.js?v=29.0323';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0322';
+const VERSION = '29.0323';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4679,7 +4679,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0322');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0323');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16911,7 +16911,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0322 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0323 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -20627,6 +20627,43 @@ const renderRFSection = (container) => {
    * Devuelve cuántas líneas quedaron grabadas. Si algo falla, las tareas ya existen igual: por
    * eso es un paso aparte y no parte del generador.
    */
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * EL CASO DE CADA ARTÍCULO, ANTES DE ARMAR LAS TAREAS.
+   *
+   * Hace falta para una sola cosa: que una tarea de FOOTWEAR no mezcle código nuevo con
+   * reposición. Regla de Daniel, 21-ago-2026: *"nunca una tarea debe tener reposición y
+   * código nuevo. En el caso de footwear no debe tener"*. Si la ola arma una con los dos,
+   * hay que partirla en dos — no es un detalle del papel, es cómo se reparte el trabajo.
+   *
+   * NO SE ESCRIBE UNA SEGUNDA REGLA. Se llama a `calcularSugerenciaDeItem`, que es la que
+   * decide, y se le lee el `caso`. Escribir acá un "menos de 20 pares es nuevo" sería tener
+   * la misma regla en dos lados, y el día que una cambie la otra queda mintiendo.
+   *
+   * `tomados` va en una copia de usar y tirar: la clasificación no puede quedarse con los
+   * cuerpos que después necesita el papel de verdad. Al caso no le afecta —no depende de qué
+   * cuerpo toque— pero prestado a medias sería una bomba esperando.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const clasificarCasosDeLaOla = async (arts, fecha) => {
+    const casos = new Map();
+    if (!arts || !arts.length) return casos;
+    const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
+    const ctx = await cargarContextoSugerencia(abiertas, await cuerposLimpiadosPorSlotting());
+    if (!ctx.porTallaDe.size) return casos;      // sin Stock Activo no se puede saber
+
+    const tomados = {};
+    Object.keys(ctx.ocupados).forEach(z => { tomados[z] = new Set(ctx.ocupados[z]); });
+    arts.forEach(a => {
+      const s7 = String(a && a.sku7 || '').trim();
+      if (!s7 || casos.has(s7)) return;
+      try {
+        const s = calcularSugerenciaDeItem(a, fecha, ctx, tomados);
+        const n = (s && s.caso && s.caso.nombre) || '';
+        if (n) casos.set(s7, n);
+      } catch (e) { /* un artículo sin caso queda sin clasificar y no parte nada */ }
+    });
+    return casos;
+  };
+
   const grabarPapelEnTareas = async (tareas) => {
     if (!tareas || !tareas.length) return 0;
     const abiertas = (almacenajeTasksCache || []).filter(t => t && t.status !== 'Finalizado');
@@ -27205,6 +27242,21 @@ window.showCellModal = function(htmlContent) {
             byMarca[marcaArt].push(art);
         });
 
+        /* EL CASO DE CADA ARTÍCULO, PARA NO MEZCLAR. Se pide UNA vez para toda la ola.
+         *
+         * Con red: si el Stock Activo no está o el cálculo falla, `casos` viene vacío, nadie
+         * se parte y la ola sale como salía. Nunca se cae la generación por esto — es la
+         * misma opción B con la que se graba el papel: las tareas existen igual. */
+        let casosDeLaOla = new Map();
+        try {
+          casosDeLaOla = await clasificarCasosDeLaOla(eligibleArticulos, logicalDate);
+          console.log(`[Almacenaje] caso clasificado para ${casosDeLaOla.size} de ${eligibleArticulos.length} artículos`);
+        } catch (e) {
+          console.warn('[Almacenaje] no se pudo clasificar el caso; la ola se arma sin separar '
+                     + 'código nuevo de reposición:', e && e.message);
+        }
+        const esCodigoNuevo = (a) => casosDeLaOla.get(String(a && a.sku7 || '').trim()) === 'codigo-nuevo';
+
         const finalTasks = [];
         
         // --- LOS NÚMEROS NO SE REPITEN ENTRE TAREAS VIVAS ---
@@ -27309,16 +27361,32 @@ window.showCellModal = function(htmlContent) {
                 finalTasks.push({ id: getNextFreeId(), marca: marca, qty: a.bufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [a], creador: user.username, fechaProcesado: new Date().toISOString() });
             });
 
-            let currentGroup = [];
-            let currentBufferQty = 0;
-            smallNormals.forEach((art, index) => {
-                currentGroup.push(art);
-                currentBufferQty += art.bufferQty;
-                if (currentBufferQty >= tamanoTarea || index === smallNormals.length - 1) {
-                    finalTasks.push({ id: getNextFreeId(), marca: marca, qty: currentBufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [...currentGroup], creador: user.username, fechaProcesado: new Date().toISOString() });
-                    currentGroup = [];
-                    currentBufferQty = 0;
-                }
+            /* CÓDIGO NUEVO Y REPOSICIÓN NO VIAJAN EN LA MISMA TAREA.
+             *
+             * Los grandes ya iban solos —un artículo por tarea— así que ahí nunca hubo mezcla.
+             * El problema estaba acá: los chicos se juntaban hasta llenar el tamaño de tarea
+             * en el orden en que venían, sin mirar el caso, y un código nuevo de 80 pares
+             * terminaba pegado a una reposición de 150.
+             *
+             * Se arma cada corriente por separado y cada una completa su propio tamaño. Salen
+             * más tareas y más chicas: es el precio de la regla, y es a propósito.
+             *
+             * Si no se pudo clasificar —sin Stock Activo—, `esCodigoNuevo` da false para todos
+             * y las dos corrientes se vuelven una sola: exactamente el comportamiento de antes. */
+            const corrientes = [smallNormals.filter(a => esCodigoNuevo(a)),
+                                smallNormals.filter(a => !esCodigoNuevo(a))];
+            corrientes.forEach(corriente => {
+                let currentGroup = [];
+                let currentBufferQty = 0;
+                corriente.forEach((art, index) => {
+                    currentGroup.push(art);
+                    currentBufferQty += art.bufferQty;
+                    if (currentBufferQty >= tamanoTarea || index === corriente.length - 1) {
+                        finalTasks.push({ id: getNextFreeId(), marca: marca, qty: currentBufferQty, status: 'Creada', u1: '', u2: '', inicio: '', termino: '', items: [...currentGroup], creador: user.username, fechaProcesado: new Date().toISOString() });
+                        currentGroup = [];
+                        currentBufferQty = 0;
+                    }
+                });
             });
         });
 
