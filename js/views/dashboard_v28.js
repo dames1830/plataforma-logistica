@@ -1,29 +1,29 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0335';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0336';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0335';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0335';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0335';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0335';
-import * as metasService from '../services_v245/metasService.js?v=29.0335';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0335';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0335';
+import * as adminService from '../services_v245/adminService.js?v=29.0336';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0336';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0336';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0336';
+import * as metasService from '../services_v245/metasService.js?v=29.0336';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0336';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0336';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
-         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto } from '../reportes/reserva_consolidacion.js?v=29.0335';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0335';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0335';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0335';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0335';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0335';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0335';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0335';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0335';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0335';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0335';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0335';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0335';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0335';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0335';
-import { montarSlotting } from './slotting.js?v=29.0335';
+         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto } from '../reportes/reserva_consolidacion.js?v=29.0336';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0336';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0336';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0336';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0336';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0336';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0336';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0336';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0336';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0336';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0336';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0336';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0336';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0336';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0336';
+import { montarSlotting } from './slotting.js?v=29.0336';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -380,7 +380,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0335';
+const VERSION = '29.0336';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4682,7 +4682,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0335');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0336');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16914,7 +16914,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0335 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0336 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24060,8 +24060,71 @@ const renderRFSection = (container) => {
    * está cargado. Sin Maestro no se puede separar el calzado de las bolsas —una paleta de
    * bolsas trae 12.000 unidades y taparía cualquier reparto—, así que ahí no se dibuja nada.
    */
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * LA TENDENCIA DE UBICACIONES OCUPADAS
+   *
+   * Va DENTRO del cuadro de la matriz, debajo de la tabla, con los dias que haya guardados.
+   * Daniel eligio este acabado el 22-ago-2026: curva suave violeta, todos los numeros a la
+   * vista, y LOS PUNTOS EN ROJO -*"con los puntos que sean rojo"*-. El rojo de los puntos no
+   * es decoracion: es el mismo rojo del techo, y marca que cada dia medido acerca la curva a el.
+   *
+   * SIN LEYENDA A PROPOSITO. La raya punteada de arriba es el tope -las ubicaciones que
+   * existen- y la curva sube hacia ella. Daniel: *"el grafico debe ser intuitivo"*.
+   *
+   * EL EJE ARRANCA EN CERO, y eso no es un detalle: arrancando en 1.900 la misma subida se
+   * veria el triple de empinada. En comite eso se lo voltean. La pendiente que se ve es la real.
+   *
+   * Se dibuja con dos dias o mas. Con uno solo no hay tendencia que mostrar.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const graficoTendencia = (serie, tope) => {
+      if (!Array.isArray(serie) || serie.length < 2 || !tope) return '';
+      const W = 1180, ALTO = 200, PL = 46, PR = 16, PT = 24, PB = 26;
+      const x0 = PL, x1 = W - PR, y0 = PT, y1 = ALTO - PB;
+      const n = serie.length, dx = (x1 - x0) / (n - 1);
+      const ye = (v) => y1 - (y1 - y0) * v / tope;
+      const px = (i) => x0 + i * dx;
+      const num = (v) => Math.round(v).toLocaleString('es-ES');
+
+      /* La curva: cada tramo con dos manijas a media distancia. Da la ondulacion SIN inventar
+         valores — la linea pasa exactamente por cada dia medido. */
+      let d = 'M ' + px(0).toFixed(1) + ' ' + ye(serie[0][1]).toFixed(1);
+      for (let i = 1; i < n; i++) {
+          const cx = ((px(i - 1) + px(i)) / 2).toFixed(1);
+          d += ' C ' + cx + ' ' + ye(serie[i - 1][1]).toFixed(1)
+             + ' ' + cx + ' ' + ye(serie[i][1]).toFixed(1)
+             + ' ' + px(i).toFixed(1) + ' ' + ye(serie[i][1]).toFixed(1);
+      }
+
+      let s = '<defs><linearGradient id="gTendRes" x1="0" y1="0" x2="0" y2="1">'
+            + '<stop offset="0%" stop-color="#a78bfa" stop-opacity=".42"/>'
+            + '<stop offset="100%" stop-color="#818cf8" stop-opacity="0"/></linearGradient></defs>';
+      for (let i = 1; i <= 3; i++) {
+          const y = (y1 - (y1 - y0) * i / 4).toFixed(1);
+          s += '<line x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y
+             + '" stroke="rgba(255,255,255,.055)"/>';
+      }
+      s += '<line x1="' + x0 + '" y1="' + ye(tope).toFixed(1) + '" x2="' + x1 + '" y2="' + ye(tope).toFixed(1)
+         + '" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="5 4" opacity=".45"/>'
+         + '<text x="' + (x0 - 7) + '" y="' + (ye(tope) + 3).toFixed(1)
+         + '" fill="#94a3b8" font-size="10" font-weight="700" text-anchor="end">' + num(tope) + '</text>'
+         + '<path d="' + d + ' L ' + px(n - 1).toFixed(1) + ' ' + y1 + ' L ' + px(0).toFixed(1) + ' ' + y1
+         + ' Z" fill="url(#gTendRes)"/>'
+         + '<path d="' + d + '" fill="none" stroke="#a78bfa" stroke-width="2.6" stroke-linecap="round"/>';
+      serie.forEach(([f, v], i) => {
+          const u = i === n - 1, X = px(i).toFixed(1), Y = ye(v).toFixed(1);
+          s += '<circle cx="' + X + '" cy="' + Y + '" r="' + (u ? '5' : '3.6')
+             + '" fill="#f87171" stroke="#0f172a" stroke-width="2"/>'
+             + '<text x="' + X + '" y="' + (ye(v) - 11).toFixed(1) + '" fill="' + (u ? '#fff' : '#cbd5e1')
+             + '" font-size="' + (u ? '12.5' : '10') + '" font-weight="800" text-anchor="middle">' + num(v) + '</text>'
+             + '<text x="' + X + '" y="' + (ALTO - 8) + '" fill="#64748b" font-size="9.5"'
+             + ' text-anchor="middle">' + String(f).slice(8, 10) + '-' + String(f).slice(5, 7) + '</text>';
+      });
+      return '<div style="margin-top:10px;border-top:1px solid rgba(255,255,255,.07);padding-top:8px">'
+           + '<svg viewBox="0 0 ' + W + ' ' + ALTO + '" style="width:100%;height:auto">' + s + '</svg></div>';
+  };
+
   /** El HTML de los dos cuadros. Cadena vacía si no hay con qué armarlos. */
-  const htmlConsolidacionReserva = (datos) => {
+  const htmlConsolidacionReserva = (datos, serie) => {
       if (!datos) return '';
       const mil = (n) => Math.round(n).toLocaleString('es-ES');
       const colorOcup = (p) => p >= 97 ? '#b91c1c' : p >= 88 ? '#f97316' : p >= 75 ? '#fbbf24' : '#a3e635';
@@ -24086,11 +24149,12 @@ const renderRFSection = (container) => {
           + '<path d="M14 2v6h6" fill="#0F5132"/>'
           + '<path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="#fff"/>'
           + '</svg></span>';
-      const panel = (titulo, borde, tabla, extra, antes) => '<div class="glass-panel" style="padding:12px 18px;margin-bottom:13px;border:1px solid ' + borde + '">'
+      const panel = (titulo, borde, tabla, extra, antes, debajo) => '<div class="glass-panel" style="padding:12px 18px;margin-bottom:13px;border:1px solid ' + borde + '">'
           + '<h3 style="margin:0 0 7px;font-size:.95rem;display:flex;align-items:center;gap:10px;color:#fff">'
           + '<span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;box-shadow:0 0 10px #60a5fa"></span>' + titulo
           + (extra || '') + '</h3>' + (antes || '')
-          + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.78rem">' + tabla + '</table></div></div>';
+          + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.78rem">' + tabla + '</table></div>'
+          + (debajo || '') + '</div>';
 
       const T = { existen: 0, ocupadas: 0, fw: 0, nofw: 0, libres: 0, pares: 0, hasta50: 0, de51a100: 0 };
       const filasM = datos.matriz.map(m => {
@@ -24115,7 +24179,8 @@ const renderRFSection = (container) => {
           + '<td style="padding:3px 9px">' + barra(pctT, '#ef4444') + '</td>' + td(pctT + '%', 'color:#ef4444')
           + td(mil(T.pares), 'color:#93c5fd') + td(mil(T.hasta50), 'color:#ef4444') + td(mil(T.de51a100), 'color:#f97316') + '</tr>';
       const cuadro1 = panel('MATRIZ DE UBICACIONES COLUMNA POR COLUMNA', 'rgba(96,165,250,.2)',
-          cabM + '<tbody>' + filasM + totM + '</tbody>');
+          cabM + '<tbody>' + filasM + totM + '</tbody>', '', '',
+          graficoTendencia(serie, T.existen));
       if (!datos.padres.length) return cuadro1;
 
       const P = { n: 0, tot: 0, quedan: 0, reduce: 0 };
@@ -26642,7 +26707,18 @@ window.showCellModal = function(htmlContent) {
                     + `<span style="font-size:.68rem;color:var(--text-muted)">${_rotulo}</span></div>`;
 
                 if (_consol) {
-                    _htmlConsol = _cal + htmlConsolidacionReserva(_consol);
+                    /* LA SERIE DE LA TENDENCIA sale de las fotos guardadas, no del calculo:
+                       cada foto trae su matriz y de ahi se suman las ocupadas de ese dia. Se
+                       muestran los ultimos 14 dias que HAYA -no se rellenan huecos ni se
+                       inventan dias-, y se corta en el dia que se esta mirando: mirando el 20
+                       la curva termina el 20, no adelanta lo que paso despues. */
+                    const _serie = _fotos
+                        .filter(f => f && f.fecha && Array.isArray(f.matriz)
+                                     && (!_elegida || f.fecha <= _elegida))
+                        .map(f => [f.fecha, f.matriz.reduce((s, c) => s + (c.ocupadas || 0), 0)])
+                        .sort((a, b) => a[0] < b[0] ? -1 : 1)
+                        .slice(-14);
+                    _htmlConsol = _cal + htmlConsolidacionReserva(_consol, _serie);
                 } else if (!_viendoHoy) {
                     _htmlConsol = _cal + '<div class="glass-panel" style="padding:16px 18px;border:1px solid rgba(251,191,36,.35)">'
                         + `<b style="color:#fbbf24">No hay foto guardada del ${_elegida}.</b>`
