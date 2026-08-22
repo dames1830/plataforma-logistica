@@ -1181,7 +1181,7 @@ código nuevo", y el escolar es su propio caso.
   mil o quinientos"*. Puede haber un parcial chico, pero al probar o maquetar hay que usar
   volúmenes de verdad o el papel engaña.
 
-## EL DESTINO SE ELIGE POR ARTICULO Y NUNCA JUNTA — pendiente, 21-ago-2026
+## EL DESTINO SE ELIGE POR ARTICULO Y NUNCA JUNTA — HECHO el 22-ago-2026 (v29.0326)
 
 Daniel, mirando la `2026-08-20_Tarea7`: *"¿por qué mandas la talla 44 a un cuerpo que no
 está? Eso yo no te lo tengo que decir, eso tú lo tienes que saber en base a las reglas que ya
@@ -1196,13 +1196,27 @@ con 410 pares, `SEL-06-18` con 242 y `SEL-07-14` con 153—. La tarea trae 18 pa
 mira nunca en que cuerpo vive esa TALLA. Y no hay ninguna regla que empuje a juntar: cada ola
 engorda el cuerpo mayor y los chicos se quedan ahi para siempre.
 
-**LA REGLA QUE FALTA:**
-> Si el articulo ya vive en varios cuerpos, lo nuevo de una talla va **al cuerpo que ya tiene
-> esa talla**, si entra. Y si hay que elegir, se alimenta el que permita **vaciar** otro, no el
-> que ya es el mas grande.
+**LA REGLA, COMO LA FIJO DANIEL EL 22-ago-2026** —mas simple que la que yo habia escrito—:
+> **Si esa talla ya tiene su sitio y ese sitio no esta lleno, se queda ahi.**
+> Solo si esta lleno pasa a otro.
 
-Se toca en `planificarAlmacenaje` / `asignarCuerpos` (`zonasService.js`). **Cambia el destino
-de TODAS las tareas, no solo del escolar**, asi que no se sube a minutos de una corrida.
+**Y EL SURTIDO NO SE TOCA.** *"El equipo de almacenaje no junta nada, ellos solo almacenan.
+Vamos a hacerlo como esta hoy, repartir las tallas para que cada cuerpo tenga al menos tres."*
+La idea que yo habia anotado —alimentar el cuerpo que permita VACIAR otro— **queda descartada**:
+consolidar no es trabajo de almacenaje.
+
+**Donde vive:** `asignarCuerpos` en `dashboard_v28.js` —no en `zonasService.js`, como decia
+esta nota—. Entra como **preferencia cero** del reparto de piezas, antes de las tres que ya
+habia; las tallas que no viven en ninguno de sus cuerpos siguen el camino de siempre. El dato
+sale de `ctx.porTallaEnCuerpo`, el mismo que alimenta la nota al pie.
+
+**Entre varios cuerpos suyos gana el que MAS tiene de esa talla**: ese es su sitio, no uno
+donde quedaron ocho pares sueltos. Y `entra()` es lo que hace de "si esta lleno, pasa a otro".
+
+**DOS PEDAZOS DE LA MISMA TALLA AL MISMO CUERPO SE JUNTAN.** El surtido parte una talla en
+varios pedazos para repartirla; desde que la preferencia cero la manda a donde ya vive, esos
+pedazos caen todos en el mismo cuerpo y en el papel serian renglones identicos. Se juntan al
+final —no antes: el reparto necesita los pedazos para equilibrar la carga—.
 
 ### Lo que NO es el problema, ya medido — no volver a revisarlo
 

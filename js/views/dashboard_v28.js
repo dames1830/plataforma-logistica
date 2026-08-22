@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0325';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0326';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0325';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0325';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0325';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0325';
-import * as metasService from '../services_v245/metasService.js?v=29.0325';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0325';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0325';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0325';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0325';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0325';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0325';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0325';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0325';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0325';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0325';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0325';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0325';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0325';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0325';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0325';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0325';
-import { montarSlotting } from './slotting.js?v=29.0325';
+import * as adminService from '../services_v245/adminService.js?v=29.0326';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0326';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0326';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0326';
+import * as metasService from '../services_v245/metasService.js?v=29.0326';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0326';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0326';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0326';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0326';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0326';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0326';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0326';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0326';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0326';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0326';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0326';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0326';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0326';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0326';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0326';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0326';
+import { montarSlotting } from './slotting.js?v=29.0326';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0325';
+const VERSION = '29.0326';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4679,7 +4679,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0325');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0326');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16911,7 +16911,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0325 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0326 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18389,7 +18389,11 @@ const renderRFSection = (container) => {
    */
   const MIN_TALLAS_POR_CUERPO = 3;
 
-  const asignarCuerpos = (filas, cuerpos, zona, capacidades, factor) => {
+  /* `yaVive` es, por talla, un mapa `cuerpo -> pares` de lo que YA hay en el piso. Sale de
+   * `ctx.porTallaEnCuerpo` y es lo que hace cumplir la regla de Daniel del 22-ago-2026:
+   * *"si esa ubicación que ya tiene está llena, ahí sí pasa a la otra ubicación, pero si no,
+   * déjala ahí en su mismo sitio"*. Si no se pasa, el reparto se comporta como siempre. */
+  const asignarCuerpos = (filas, cuerpos, zona, capacidades, factor, yaVive) => {
     const conPiso = filas.filter(f => f.baja > 0);
     if (!conPiso.length || !cuerpos || !cuerpos.length) return {};
 
@@ -18515,13 +18519,54 @@ const renderRFSection = (container) => {
     piezas.forEach(p => {
       const turno = nombres.map((_, i) => i).sort((a, b) => carga[a] - carga[b] || a - b);
       const entra = (x) => carga[x] + p.pares <= caps[x] * 1.10;
-      let i = turno.find(x => !tallasEn[x].has(p.talla) && entra(x));
+
+      /* PREFERENCIA CERO: DONDE ESA TALLA YA VIVE, SI TODAVÍA LE ENTRA.
+       *
+       * Regla de Daniel, 22-ago-2026, mirando la Tarea7: el `8246844` mandaba 18 pares de la
+       * talla 44 al `SEL-07-15`, que tiene 8 de esa talla, cuando el `SEL-07-14` tiene 26.
+       * *"Si esa ubicación que ya tiene está llena, ahí sí pasa a la otra ubicación, pero si
+       * no, déjala ahí en su mismo sitio."*
+       *
+       * EL SURTIDO NO SE TOCA. Daniel fue explícito: *"el equipo de almacenaje no junta nada,
+       * ellos solo almacenan"*, y el reparto en tres tallas por cuerpo queda igual. Esto solo
+       * decide, entre los cuerpos que el artículo YA tiene, a cuál va cada pedazo — que es
+       * justo lo que antes se resolvía a ciegas.
+       *
+       * Entre varios, gana el que MÁS tiene de esa talla: ese es "su sitio", no uno donde
+       * quedaron ocho sueltos. `entra()` es el que hace de "si está lleno, pasa a la otra".
+       *
+       * Las tallas que no viven en ninguno de sus cuerpos siguen el camino de siempre. */
+      let i;
+      const suCasa = yaVive && yaVive.get(String(p.talla));
+      if (suCasa && suCasa.size) {
+        const suyos = nombres.map((_, x) => x)
+          .filter(x => suCasa.has(nombres[x]) && entra(x))
+          .sort((a, b) => (suCasa.get(nombres[b]) - suCasa.get(nombres[a])) || carga[a] - carga[b]);
+        if (suyos.length) i = suyos[0];
+      }
+      if (i === undefined) i = turno.find(x => !tallasEn[x].has(p.talla) && entra(x));
       if (i === undefined) i = turno.find(x => !tallasEn[x].has(p.talla));
       if (i === undefined) i = turno.find(entra);
       if (i === undefined) i = turno[0];
       (destino[p.talla] = destino[p.talla] || []).push({ nombre: nombres[i], pares: p.pares });
       carga[i] += p.pares;
       tallasEn[i].add(p.talla);
+    });
+
+    /* DOS PEDAZOS DE LA MISMA TALLA AL MISMO CUERPO SON UNO SOLO.
+     *
+     * El surtido parte una talla en varios pedazos para repartirla, pero desde que la
+     * preferencia cero manda la talla a donde ya vive, esos pedazos pueden terminar todos en
+     * el MISMO cuerpo: la 42 del `8246844` salia partida en tres y los tres iban al SEL-06-18.
+     * En el papel eso son tres renglones identicos y el operario hace tres viajes al mismo
+     * sitio para dejar 36, 36 y 24 pares del mismo articulo y la misma talla.
+     *
+     * Se juntan al final y no antes: el reparto necesita los pedazos para equilibrar la carga,
+     * y recien cuando ya se sabe donde cayo cada uno se puede ver cuales coinciden. */
+    Object.keys(destino).forEach(talla => {
+      const junta = new Map();
+      destino[talla].forEach(d => junta.set(d.nombre, (junta.get(d.nombre) || 0) + d.pares));
+      destino[talla] = [...junta].map(([nombre, pares]) => ({ nombre, pares }));
     });
     return destino;
   };
@@ -19640,7 +19685,13 @@ const renderRFSection = (container) => {
         const k = s7 + '|' + talla;
         if (!porTallaEnCuerpo.has(k)) porTallaEnCuerpo.set(k, new Map());
         const m = porTallaEnCuerpo.get(k);
-        m.set(ubi, (m.get(ubi) || 0) + qty);
+        /* LA LLAVE SE ARMA CON `nombreCuerpo`, NO CON LA UBICACIÓN CRUDA. Del otro lado —el
+           reparto de tallas— los cuerpos se nombran así, con dos dígitos y ceros adelante. Un
+           `SEL-7-15` del stock contra un `SEL-07-15` del reparto no cruzarían nunca, y el
+           resultado sería que "esa talla no vive en ningún lado": el defecto se vería como
+           que la regla no hace nada. */
+        const nom = zonasService.nombreCuerpo(p[0], col, cue);
+        m.set(nom, (m.get(nom) || 0) + qty);
       }
       // YA NO ESTÁ: Slotting lo sacó de ahí en esta jornada. La foto todavía lo muestra porque
       // el robot publica a las 19:00, pero el cuerpo está limpio desde que la tarea se finalizó.
@@ -20474,8 +20525,17 @@ const renderRFSection = (container) => {
       });
     }
 
+    /* DÓNDE VIVE YA CADA TALLA DE ESTE ARTÍCULO. Solo las que bajan al piso: de las demás no
+       hay nada que decidir. Ver la preferencia cero de `asignarCuerpos`. */
+    const yaVive = new Map();
+    if (ctx.porTallaEnCuerpo && cant && cant.filas) {
+      cant.filas.forEach(fl => {
+        const m = ctx.porTallaEnCuerpo.get(s7 + '|' + fl.talla);
+        if (m && m.size) yaVive.set(String(fl.talla), m);
+      });
+    }
     const destinos = (plan.estado === 'ok' || plan.estado === 'reposicion') && cant
-      ? asignarCuerpos(cant.filas, plan.cuerpos, plan.zona, plan.capacidades, cant.factor) : {};
+      ? asignarCuerpos(cant.filas, plan.cuerpos, plan.zona, plan.capacidades, cant.factor, yaVive) : {};
 
     const meta = metasService.resolverMeta(datos.genderRims, f.gender || '', fecha);
     const minPiso = meta.metaUph > 0 ? Math.round((alPiso / meta.metaUph) * 60) : 0;
