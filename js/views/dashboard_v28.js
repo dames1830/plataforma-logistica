@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0324';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0325';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0324';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0324';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0324';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0324';
-import * as metasService from '../services_v245/metasService.js?v=29.0324';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0324';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0324';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0324';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0324';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0324';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0324';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0324';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0324';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0324';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0324';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0324';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0324';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0324';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0324';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0324';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0324';
-import { montarSlotting } from './slotting.js?v=29.0324';
+import * as adminService from '../services_v245/adminService.js?v=29.0325';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0325';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0325';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0325';
+import * as metasService from '../services_v245/metasService.js?v=29.0325';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0325';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0325';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0325';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0325';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0325';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0325';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0325';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0325';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0325';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0325';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0325';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0325';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0325';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0325';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0325';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0325';
+import { montarSlotting } from './slotting.js?v=29.0325';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0324';
+const VERSION = '29.0325';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4679,7 +4679,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0324');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0325');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16911,7 +16911,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0324 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0325 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -21078,10 +21078,6 @@ const renderRFSection = (container) => {
       /* LA PAGINACION SE FUE A LA ESQUINA. Pedido de Daniel el 21-ago-2026. Iba pegada al
          subtitulo, que ahora lleva solo la fecha. */
       .pagX { position: absolute; top: 9mm; right: 7mm; font-size: 9.5pt; }
-      /* EL CERO NO VA EN ROJO: el operario trabaja con la hoja en BLANCO Y NEGRO y un rojo
-         sale gris claro, mas debil que el texto normal. Negrita con fondo se ve igual de
-         fuerte en la fotocopia. */
-      .det td.cero { font-weight: 700; background: #F1EFE8; }
       .pie { margin-top: 4mm; font-size: 9pt; }
       .pie .rot { font-weight: 700; margin-bottom: 1mm; }
       .pie td, .pie th { border: 1px solid #888780; height: 5.6mm; padding: 0 1.5mm;
@@ -21120,17 +21116,15 @@ const renderRFSection = (container) => {
       .noimp button { background: #4f46e5; color: #fff; border: 0; border-radius: 8px;
                padding: 7px 18px; font: 700 13px system-ui, sans-serif; cursor: pointer; margin-left: 10px; }`;
 
-    /* «EN EL CUERPO» — lo que YA hay de esa talla en el cuerpo destino, no el total del SKU.
+    /* SIETE COLUMNAS, Y NO OCHO. La columna «En el cuerpo» -lo que ya hay de esa talla en el
+     * cuerpo destino- se armo el 21-ago-2026 y Daniel la saco el mismo dia al verla: *"esa
+     * columna que has puesto, sacala"*. El aviso lo siguen dando el ASTERISCO pegado al SKU y
+     * la NOTA AL PIE, que dicen lo mismo sin pagar una columna de ancho.
      *
-     * Daniel, 21-ago-2026: el `8246844` tiene 174 pares de la talla 42 en el piso pero CERO en
-     * el cuerpo al que la tarea la manda. Mirando el total del SKU esa diferencia no existe, y
-     * es justo la que importa: dice si el operario va a encontrar compañía en ese cuerpo o si
-     * estrena la talla ahi.
-     *
-     * Va PEGADA A DESTINO y al final, que es como se lee: "va al SEL-07-15, que ya tiene 8".
-     * El ancho sale de Ubicacion y Destino, que eran las dos mas holgadas. */
-    const ANCHOS = ['19%', '15%', '6%', '10%', '10%', '10%', '19%', '11%'];
-    const TITULOS = ['Ubicación', 'SKU', 'Talla', 'Qty buffer', 'Almacenar', 'Paletizar', 'Destino', 'En el cuerpo'];
+     * El dato en si NO se tiro: `ctx.porTallaEnCuerpo` sigue existiendo y es lo que alimenta
+     * la nota al pie. Si algun dia la columna vuelve, el calculo ya esta. */
+    const ANCHOS = ['22%', '16%', '7%', '11%', '11%', '11%', '22%'];
+    const TITULOS = ['Ubicación', 'SKU', 'Talla', 'Qty buffer', 'Almacenar', 'Paletizar', 'Destino'];
     const cabeceraTabla = '<thead><tr>'
       + TITULOS.map((t, i) => `<th style="width:${ANCHOS[i]}">${t}</th>`).join('') + '</tr></thead>';
 
@@ -21194,17 +21188,12 @@ const renderRFSection = (container) => {
         const trabada = x.plan.estado === 'slotting' || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona';
         const fp = filasDelPapel(x, ctx);
         const items = fp.map(l => {
-          /* «EN EL CUERPO» Y EL ASTERISCO.
+          /* EL ASTERISCO: esta talla vive tambien en OTROS cuerpos, no solo en el destino.
            *
-           * `enCuerpo` es lo que YA hay de esa talla en el cuerpo al que va esta línea. Sin
-           * destino —todo a reserva, o trabada— no hay cuerpo del que hablar y va un guion:
-           * un cero ahí diría algo que no se preguntó.
-           *
-           * Sin dato de piso para ese SKU y talla, en cambio, el cero SÍ es la verdad: no
-           * tiene ni un par en ninguna parte, mucho menos en ese cuerpo. */
+           * Sin destino -todo a reserva, o trabada- no hay cuerpo con que comparar, asi que no
+           * se marca nada: el asterisco contestaria algo que nadie pregunto. */
           const dest = String(l.destino || '').trim();
           const m = ctx.porTallaEnCuerpo && ctx.porTallaEnCuerpo.get(x.sku7 + '|' + l.talla);
-          const enCuerpo = !dest ? null : (m ? (m.get(dest) || 0) : 0);
           const otros = (!dest || !m) ? []
             : [...m].filter(([u, q]) => u !== dest && q > 0)
                     .map(([u, q]) => ({ ubi: u, skuFull: l.skuFull, talla: l.talla, qty: Math.round(q) }))
@@ -21215,7 +21204,7 @@ const renderRFSection = (container) => {
             vistasPie.add(k);
             pieDeTarea.push(o);
           });
-          return { tipo: 'det', trabada, l, enCuerpo, otros };
+          return { tipo: 'det', trabada, l, otros };
         });
         // LA BANDA DEL ARTICULO. Pedido de Daniel el 21-ago-2026: el gender tiene que
         // salir en la hoja, y con varios articulos no cabe en el titulo. Va una franja
@@ -21254,9 +21243,9 @@ const renderRFSection = (container) => {
       }
 
       const filaHTML = (it) => {
-        if (it.tipo === 'aire') return '<tr class="aire"><td colspan="8"></td></tr>';
+        if (it.tipo === 'aire') return '<tr class="aire"><td colspan="7"></td></tr>';
         if (it.tipo === 'art') {
-          return `<tr class="art${it.nuevo ? ' nuevo' : ''}"><td colspan="8">ARTICULO ${esc(it.sku7)}${
+          return `<tr class="art${it.nuevo ? ' nuevo' : ''}"><td colspan="7">ARTICULO ${esc(it.sku7)}${
             it.rims ? ' &nbsp;·&nbsp; ' + esc(it.rims) : ''}${
             it.caso ? ' &nbsp;·&nbsp; ' + esc(it.caso) : ''}</td></tr>`;
         }
@@ -21271,17 +21260,15 @@ const renderRFSection = (container) => {
             <td>${esc(num(l.qty))}</td>
             <td class="g">${esc(it.trabada ? '—' : num(l.alPiso))}</td>
             <td>${esc(num(l.aReserva))}</td>
-            <td class="g">${esc(it.trabada ? 'Revisar Slotting' : num(l.destino))}</td>
-            <td${(!it.trabada && it.enCuerpo === 0) ? ' class="cero"' : ''}>${
-              esc(it.trabada || it.enCuerpo === null ? '—' : it.enCuerpo)}</td></tr>`;
+            <td class="g">${esc(it.trabada ? 'Revisar Slotting' : num(l.destino))}</td></tr>`;
         }
         const pal = it.paletas ? it.paletas + ' paleta' + (it.paletas > 1 ? 's' : '') : '—';
         if (it.tipo === 'tot') {
           return `<tr class="tot"><td colspan="3">Total ${esc(it.sku7)}</td><td>${esc(it.pares)}</td>
-                  <td>${esc(it.piso)}</td><td>${esc(it.reserva)}</td><td>${esc(pal)}</td><td></td></tr>`;
+                  <td>${esc(it.piso)}</td><td>${esc(it.reserva)}</td><td>${esc(pal)}</td></tr>`;
         }
         return `<tr class="tt"><td colspan="3">TOTAL DE LA TAREA</td><td>${esc(it.pares)}</td>
-                <td>${esc(it.piso)}</td><td>${esc(it.reserva)}</td><td>${esc(pal)}</td><td></td></tr>`;
+                <td>${esc(it.piso)}</td><td>${esc(it.reserva)}</td><td>${esc(pal)}</td></tr>`;
       };
 
       /** La parte de arriba de una página. La primera lleva los avisos y las firmas. */

@@ -1243,8 +1243,14 @@ Revisado hoja por hoja contra maquetas. **Lo aprobado y por que:**
 
 ### HECHO el 21-ago-2026 (v29.0324): las cuatro que faltaban
 
-La columna **«En el cuerpo»**, el **asterisco pegado al SKU**, la **nota al pie** y el
-**encabezado limpio** con la paginacion en la esquina superior derecha. Todo publicado.
+El **asterisco pegado al SKU**, la **nota al pie** y el **encabezado limpio** con la
+paginacion en la esquina superior derecha. Todo publicado.
+
+**LA COLUMNA «En el cuerpo» SE SACO EL MISMO DIA.** Se armo, Daniel la vio y la quito:
+*"esa columna que has puesto, sacala"*. **No volver a proponerla.** El aviso lo dan igual el
+asterisco y la nota al pie, sin pagar una columna de ancho en una hoja que ya va apretada.
+El calculo NO se tiro -`ctx.porTallaEnCuerpo` sigue vivo y es lo que alimenta la nota-, asi
+que si algun dia vuelve, esta hecho.
 
 **El dato que faltaba y hubo que construir:** `porTallaEnCuerpo` en el contexto de la
 sugerencia —llave `sku7|talla`, adentro un mapa `cuerpo -> pares`—. `porTallaDe` sabia cuanto
@@ -1252,13 +1258,12 @@ tiene el ARTICULO de esa talla en todo el piso; nadie sabia en QUE cuerpo estaba
 el PISO: lo que esta en el buffer es justamente lo que se va a bajar, y contarlo diria que el
 cuerpo ya tiene lo que todavia hay que llevarle.
 
-**El cero NO va en rojo, va en negrita con fondo.** La nota vieja decia rojo; el operario
-trabaja con la hoja en **blanco y negro** y un rojo sale gris claro, mas debil que el texto
-normal. Ver [[hoja-impresa-de-la-tarea]].
+**SIN DESTINO NO SE MARCA NADA.** Cuando la linea va entera a reserva —o esta trabada— no hay
+cuerpo con que comparar, asi que no lleva asterisco: marcaria algo que nadie pregunto.
 
-**Sin destino va un guion, no un cero.** Cuando la linea va entera a reserva —o esta trabada—
-no hay cuerpo del que hablar: un cero ahi contestaria algo que nadie pregunto. Pero si el
-articulo no tiene ni un par en el piso, el cero SI es la verdad.
+**Si algo tiene que resaltar en la hoja, NUNCA por color.** El operario trabaja con la hoja en
+**blanco y negro**: un rojo sale gris claro, mas debil que el texto normal. Va negrita, fondo o
+recuadro. Ver [[hoja-impresa-de-la-tarea]].
 
 **La nota al pie va en la ULTIMA pagina de la tarea, y se mide.** Si no entra, abre pagina
 propia y la paginacion se rehace con el total nuevo. Calcular a ojo cuantas filas caben es lo

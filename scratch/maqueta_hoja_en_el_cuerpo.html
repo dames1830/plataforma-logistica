@@ -49,9 +49,9 @@ table { width: 100%; border-collapse: collapse; }
 
 <div class="nota">
   <b>LOS CUATRO CAMBIOS DE LA HOJA</b> — todo lo demás queda igual.<br><br>
-  <b>1 · Columna «En el cuerpo».</b> Cuánto hay ya de <b>esa talla</b> en el cuerpo al que va.
-  No el total del SKU. Cuando es <b>cero</b> va en negrita y con fondo, que en blanco y negro
-  se ve igual de fuerte que un rojo.<br>
+  <b>1 · <span class="quitado">Columna «En el cuerpo»</span> — LA SACÓ DANIEL.</b> Se armó y se
+  quitó el mismo día: el aviso lo dan igual el asterisco y la nota al pie, sin pagar una
+  columna de ancho. El cálculo quedó hecho por si algún día vuelve.<br>
   <b>2 · El asterisco va pegado al SKU</b>, nunca en una celda de número: <i>"cuando te lo
   bajas en Excel interrumpe la suma"</i>.<br>
   <b>3 · La nota al pie</b>: ubicación, SKU, talla y cantidad de lo que ese artículo tiene
@@ -77,32 +77,31 @@ table { width: 100%; border-collapse: collapse; }
   <table class="det">
     <thead>
       <tr>
-        <th style="width:19%">Ubicación</th>
-        <th style="width:15%">SKU</th>
-        <th style="width:6%">Talla</th>
-        <th style="width:10%">Qty buffer</th>
-        <th style="width:10%">Almacenar</th>
-        <th style="width:10%">Paletizar</th>
-        <th style="width:19%">Destino</th>
-        <th style="width:11%">En el cuerpo</th>
+        <th style="width:22%">Ubicación</th>
+        <th style="width:16%">SKU</th>
+        <th style="width:7%">Talla</th>
+        <th style="width:11%">Qty buffer</th>
+        <th style="width:11%">Almacenar</th>
+        <th style="width:11%">Paletizar</th>
+        <th style="width:22%">Destino</th>
       </tr>
     </thead>
     <tbody>
-      <tr class="aire"><td colspan="8"></td></tr>
-      <tr class="art"><td colspan="8">ARTICULO 8246844 &nbsp;·&nbsp; 01 MEN &nbsp;·&nbsp; REPOSICION</td></tr>
-      <tr><td>CDBUFFER-B-04</td><td>8246844-1-42*</td><td class="b">42</td><td>96</td><td class="g">96</td><td>0</td><td>SEL-07-15</td><td class="cero">0</td></tr>
-      <tr><td>CDBUFFER-B-04</td><td>8246844-1-43</td><td class="b">43</td><td>64</td><td class="g">64</td><td>0</td><td>SEL-07-15</td><td>31</td></tr>
-      <tr><td>CDBUFFER-B-07</td><td>8246844-1-44*</td><td class="b">44</td><td>18</td><td class="g">18</td><td>0</td><td>SEL-07-15</td><td>8</td></tr>
-      <tr class="tot"><td colspan="3">Total 8246844</td><td>178</td><td>178</td><td>0</td><td>—</td><td></td></tr>
+      <tr class="aire"><td colspan="7"></td></tr>
+      <tr class="art"><td colspan="7">ARTICULO 8246844 &nbsp;·&nbsp; 01 MEN &nbsp;·&nbsp; REPOSICION</td></tr>
+      <tr><td>CDBUFFER-B-04</td><td>8246844-1-42*</td><td class="b">42</td><td>96</td><td class="g">96</td><td>0</td><td>SEL-07-15</td></tr>
+      <tr><td>CDBUFFER-B-04</td><td>8246844-1-43</td><td class="b">43</td><td>64</td><td class="g">64</td><td>0</td><td>SEL-07-15</td></tr>
+      <tr><td>CDBUFFER-B-07</td><td>8246844-1-44*</td><td class="b">44</td><td>18</td><td class="g">18</td><td>0</td><td>SEL-07-15</td></tr>
+      <tr class="tot"><td colspan="3">Total 8246844</td><td>178</td><td>178</td><td>0</td><td>—</td></tr>
 
-      <tr class="art nuevo"><td colspan="8">ARTICULO 5811680 &nbsp;·&nbsp; 01 MEN &nbsp;·&nbsp; CODIGO NUEVO</td></tr>
-      <tr><td>CDBUFFER-A-01</td><td>5811680-1-39</td><td class="b">39</td><td>420</td><td class="g">252</td><td>168</td><td>MZN01-04-12</td><td class="cero">0</td></tr>
-      <tr><td>CDBUFFER-A-01</td><td>5811680-1-40</td><td class="b">40</td><td>560</td><td class="g">336</td><td>224</td><td>MZN01-04-12</td><td class="cero">0</td></tr>
-      <tr><td>CDBUFFER-A-02</td><td>5811680-1-41</td><td class="b">41</td><td>620</td><td class="g">372</td><td>248</td><td>MZN01-04-12</td><td class="cero">0</td></tr>
-      <tr class="tot"><td colspan="3">Total 5811680</td><td>1.600</td><td>960</td><td>640</td><td>4 paletas</td><td></td></tr>
+      <tr class="art nuevo"><td colspan="7">ARTICULO 5811680 &nbsp;·&nbsp; 01 MEN &nbsp;·&nbsp; CODIGO NUEVO</td></tr>
+      <tr><td>CDBUFFER-A-01</td><td>5811680-1-39</td><td class="b">39</td><td>420</td><td class="g">252</td><td>168</td><td>MZN01-04-12</td></tr>
+      <tr><td>CDBUFFER-A-01</td><td>5811680-1-40</td><td class="b">40</td><td>560</td><td class="g">336</td><td>224</td><td>MZN01-04-12</td></tr>
+      <tr><td>CDBUFFER-A-02</td><td>5811680-1-41</td><td class="b">41</td><td>620</td><td class="g">372</td><td>248</td><td>MZN01-04-12</td></tr>
+      <tr class="tot"><td colspan="3">Total 5811680</td><td>1.600</td><td>960</td><td>640</td><td>4 paletas</td></tr>
 
-      <tr class="aire"><td colspan="8"></td></tr>
-      <tr class="tt"><td colspan="3">TOTAL DE LA TAREA</td><td>1.778</td><td>1.138</td><td>640</td><td>4 paletas</td><td></td></tr>
+      <tr class="aire"><td colspan="7"></td></tr>
+      <tr class="tt"><td colspan="3">TOTAL DE LA TAREA</td><td>1.778</td><td>1.138</td><td>640</td><td>4 paletas</td></tr>
     </tbody>
   </table>
 
