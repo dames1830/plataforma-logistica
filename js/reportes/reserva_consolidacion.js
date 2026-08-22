@@ -19,6 +19,12 @@
  */
 
 /* ── Las medidas del selectivo de reserva ─────────────────────────────── */
+/* LA TALLA SALE DE LA DESCRIPCION, NO DEL SKU. `8054009-1-07` no es la talla 07: es la
+ * 43. El ultimo tramo del SKU es un indice, y la talla de verdad viene al final de la
+ * descripcion -`...BATA INDUSTRIALS-1-43`-. Se usa `extractTalla`, que es la que ya
+ * resuelve esto en toda la plataforma; escribir otra aca seria tener dos verdades. */
+import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0333';
+
 export const NIVELES_RESERVA = ['H', 'G', 'F', 'E', 'D'];
 export const COLS_RESERVA = 12;
 export const paletaDeReservaExiste = (col, cuerpo, nivel) => {
@@ -104,7 +110,13 @@ export const consolidacionDeReserva = (filas, idx) => {
         e.padres.set(p, (e.padres.get(p) || 0) + q);
         if (!e.lpn) e.lpn = String(row.LPN || '').trim();
         if (!e.tallas.has(p)) e.tallas.set(p, new Set());
-        e.tallas.get(p).add(String(row.PRODUCTO || '').split('-').pop());
+        /* SI NO SE PUEDE SACAR LA TALLA, NO SE INVENTA. Hay SKU con codigo de variante de
+           cinco digitos -`5892371-1-10085`- cuya descripcion no trae la talla en ningun
+           lado: son 6 de unas 570 lineas. Poner el codigo del SKU en su lugar llenaba la
+           columna con "10085" y "08093" con cara de talla. Mejor vacio: un dato que no
+           esta se ve, uno inventado no. */
+        const ta = extractTalla(row.DESCRIPCION);
+        if (ta) e.tallas.get(p).add(ta);
     });
     if (!ubis.size) return null;
 
