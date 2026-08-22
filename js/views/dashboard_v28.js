@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0323';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0324';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0323';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0323';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0323';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0323';
-import * as metasService from '../services_v245/metasService.js?v=29.0323';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0323';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0323';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0323';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0323';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0323';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0323';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0323';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0323';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0323';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0323';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0323';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0323';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0323';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0323';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0323';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0323';
-import { montarSlotting } from './slotting.js?v=29.0323';
+import * as adminService from '../services_v245/adminService.js?v=29.0324';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0324';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0324';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0324';
+import * as metasService from '../services_v245/metasService.js?v=29.0324';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0324';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0324';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0324';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0324';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0324';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0324';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0324';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0324';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0324';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0324';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0324';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0324';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0324';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0324';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0324';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0324';
+import { montarSlotting } from './slotting.js?v=29.0324';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0323';
+const VERSION = '29.0324';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4679,7 +4679,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0323');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0324');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16911,7 +16911,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0323 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0324 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -19580,6 +19580,17 @@ const renderRFSection = (container) => {
     const casaDe = new Map();
     const paresEnCuerpo = new Map();   // art7 -> Map(zona|col|cuerpo -> pares), para el corte de abajo
     const porTallaDe = new Map();
+    /* CUÁNTO HAY DE CADA TALLA EN CADA CUERPO. `porTallaDe` sabe cuánto tiene el ARTÍCULO
+     * de esa talla en todo el piso; esto sabe en QUÉ CUERPO está.
+     *
+     * Hace falta para la columna «En el cuerpo» de la hoja impresa. Daniel, 21-ago-2026: el
+     * `8246844` tiene 174 pares de la talla 42 en el piso, pero CERO en el cuerpo al que la
+     * tarea la manda. Con el total del SKU esa diferencia no se ve, y es justo la que importa.
+     *
+     * La llave es `sku7|talla` y adentro va un mapa `cuerpo -> pares`. El cuerpo es la
+     * ubicación de piso tal cual se imprime en Destino —ZONA-COL-CUE—, así que se comparan
+     * sin traducir nada. */
+    const porTallaEnCuerpo = new Map();
     const lineasBufferDe = new Map();
     const origenDe = new Map();
     (stock || []).forEach(row => {
@@ -19620,6 +19631,17 @@ const renderRFSection = (container) => {
       const p = ubi.split('-');
       const col = parseInt(p[1], 10), cue = parseInt(p[2], 10);
       if (!col || !cue) return;
+
+      /* Va acá y no arriba a propósito: solo cuenta el PISO. Lo que está en el buffer no
+         está "en el cuerpo" —es justamente lo que se va a llevar—, y contarlo diría que el
+         cuerpo ya tiene lo que todavía hay que bajarle. */
+      if (s7 && qty > 0) {
+        const talla = talladeDesc(String(raw[1] || '').trim(), String(raw[2] || '').trim());
+        const k = s7 + '|' + talla;
+        if (!porTallaEnCuerpo.has(k)) porTallaEnCuerpo.set(k, new Map());
+        const m = porTallaEnCuerpo.get(k);
+        m.set(ubi, (m.get(ubi) || 0) + qty);
+      }
       // YA NO ESTÁ: Slotting lo sacó de ahí en esta jornada. La foto todavía lo muestra porque
       // el robot publica a las 19:00, pero el cuerpo está limpio desde que la tarea se finalizó.
       const cuerpoTxt = `${zona}-${String(col).padStart(2, '0')}-${String(cue).padStart(2, '0')}`;
@@ -19726,8 +19748,8 @@ const renderRFSection = (container) => {
       reservaDe.set(prod.substring(0, 7), (reservaDe.get(prod.substring(0, 7)) || 0) + q);
     });
 
-    return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe, origenDe, libres,
-             ocupantes, mandadoABajar, bajadoPorBuffer };
+    return { ficha, ocupados, casaDe, porTallaDe, porTallaEnCuerpo, reservaDe, lineasBufferDe,
+             origenDe, libres, ocupantes, mandadoABajar, bajadoPorBuffer };
   };
 
   /**
@@ -21053,6 +21075,18 @@ const renderRFSection = (container) => {
       .t1 { text-align: center; font-size: 26pt; font-weight: 700; line-height: 1.05; }
       .t1.cont { font-size: 18pt; }
       .t2 { text-align: center; font-size: 10.5pt; margin-top: 1mm; }
+      /* LA PAGINACION SE FUE A LA ESQUINA. Pedido de Daniel el 21-ago-2026. Iba pegada al
+         subtitulo, que ahora lleva solo la fecha. */
+      .pagX { position: absolute; top: 9mm; right: 7mm; font-size: 9.5pt; }
+      /* EL CERO NO VA EN ROJO: el operario trabaja con la hoja en BLANCO Y NEGRO y un rojo
+         sale gris claro, mas debil que el texto normal. Negrita con fondo se ve igual de
+         fuerte en la fotocopia. */
+      .det td.cero { font-weight: 700; background: #F1EFE8; }
+      .pie { margin-top: 4mm; font-size: 9pt; }
+      .pie .rot { font-weight: 700; margin-bottom: 1mm; }
+      .pie td, .pie th { border: 1px solid #888780; height: 5.6mm; padding: 0 1.5mm;
+                         text-align: center; }
+      .pie th { background: #F1EFE8; font-weight: 700; }
       .cartel { border: 2.2px solid #000; margin-top: 2.5mm; padding: 1.2mm 2mm; text-align: center; }
       .cartel b { display: block; font-size: 13pt; }
       .cartel span { font-size: 8.5pt; }
@@ -21086,8 +21120,17 @@ const renderRFSection = (container) => {
       .noimp button { background: #4f46e5; color: #fff; border: 0; border-radius: 8px;
                padding: 7px 18px; font: 700 13px system-ui, sans-serif; cursor: pointer; margin-left: 10px; }`;
 
-    const ANCHOS = ['22%', '16%', '7%', '11%', '11%', '11%', '22%'];
-    const TITULOS = ['Ubicación', 'SKU', 'Talla', 'Qty buffer', 'Almacenar', 'Paletizar', 'Destino'];
+    /* «EN EL CUERPO» — lo que YA hay de esa talla en el cuerpo destino, no el total del SKU.
+     *
+     * Daniel, 21-ago-2026: el `8246844` tiene 174 pares de la talla 42 en el piso pero CERO en
+     * el cuerpo al que la tarea la manda. Mirando el total del SKU esa diferencia no existe, y
+     * es justo la que importa: dice si el operario va a encontrar compañía en ese cuerpo o si
+     * estrena la talla ahi.
+     *
+     * Va PEGADA A DESTINO y al final, que es como se lee: "va al SEL-07-15, que ya tiene 8".
+     * El ancho sale de Ubicacion y Destino, que eran las dos mas holgadas. */
+    const ANCHOS = ['19%', '15%', '6%', '10%', '10%', '10%', '19%', '11%'];
+    const TITULOS = ['Ubicación', 'SKU', 'Talla', 'Qty buffer', 'Almacenar', 'Paletizar', 'Destino', 'En el cuerpo'];
     const cabeceraTabla = '<thead><tr>'
       + TITULOS.map((t, i) => `<th style="width:${ANCHOS[i]}">${t}</th>`).join('') + '</tr></thead>';
 
@@ -21127,9 +21170,10 @@ const renderRFSection = (container) => {
         || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona');
       const marcaTarea = t.marca || (grupo.arts[0] && grupo.arts[0].ficha.marca) || '';
       const primerArt = grupo.arts[0] ? grupo.arts[0].sku7 : '';
-      const subtitulo = String(t.fecha).split('-').reverse().join('/')
-        + ' · ' + primerArt + (grupo.arts.length > 1 ? ' +' : '')
-        + ' · ' + grupo.arts.length + ' artículo' + (grupo.arts.length > 1 ? 's' : '');
+      /* SOLO LA FECHA. Pedido de Daniel el 21-ago-2026: el artículo y el "+ N artículos" se
+         van, porque cada artículo ya tiene su banda con su nombre unas líneas más abajo. Y la
+         paginación deja de ir pegada acá: se fue a la esquina superior derecha. */
+      const subtitulo = String(t.fecha).split('-').reverse().join('/');
 
       // Las filas, antes de repartirlas. Se arman igual que en el Excel: los totales de
       // cada artículo salen de las filas de arriba y no del cálculo por talla, porque en
@@ -21141,10 +21185,38 @@ const renderRFSection = (container) => {
       // era ese artículo había que dar vuelta la hoja.
       const bloques = [];
       const totales = [];
+      /* LO QUE VA AL PIE DE LA HOJA. Una fila por (SKU, talla, otro cuerpo), sin repetir: la
+         misma talla puede venir en varias líneas del buffer y la nota diría dos veces lo
+         mismo. Se junta de toda la tarea y se imprime una sola vez, al final. */
+      const pieDeTarea = [];
+      const vistasPie = new Set();
       grupo.arts.forEach(x => {
         const trabada = x.plan.estado === 'slotting' || x.plan.estado === 'sin-regla' || x.plan.estado === 'sin-reglas-zona';
         const fp = filasDelPapel(x, ctx);
-        const items = fp.map(l => ({ tipo: 'det', trabada, l }));
+        const items = fp.map(l => {
+          /* «EN EL CUERPO» Y EL ASTERISCO.
+           *
+           * `enCuerpo` es lo que YA hay de esa talla en el cuerpo al que va esta línea. Sin
+           * destino —todo a reserva, o trabada— no hay cuerpo del que hablar y va un guion:
+           * un cero ahí diría algo que no se preguntó.
+           *
+           * Sin dato de piso para ese SKU y talla, en cambio, el cero SÍ es la verdad: no
+           * tiene ni un par en ninguna parte, mucho menos en ese cuerpo. */
+          const dest = String(l.destino || '').trim();
+          const m = ctx.porTallaEnCuerpo && ctx.porTallaEnCuerpo.get(x.sku7 + '|' + l.talla);
+          const enCuerpo = !dest ? null : (m ? (m.get(dest) || 0) : 0);
+          const otros = (!dest || !m) ? []
+            : [...m].filter(([u, q]) => u !== dest && q > 0)
+                    .map(([u, q]) => ({ ubi: u, skuFull: l.skuFull, talla: l.talla, qty: Math.round(q) }))
+                    .sort((a, b) => b.qty - a.qty);
+          otros.forEach(o => {
+            const k = o.ubi + '|' + o.skuFull + '|' + o.talla;
+            if (vistasPie.has(k)) return;
+            vistasPie.add(k);
+            pieDeTarea.push(o);
+          });
+          return { tipo: 'det', trabada, l, enCuerpo, otros };
+        });
         // LA BANDA DEL ARTICULO. Pedido de Daniel el 21-ago-2026: el gender tiene que
         // salir en la hoja, y con varios articulos no cabe en el titulo. Va una franja
         // antes de sus filas, con el codigo y su Gender RIMS. El caso -reposicion o
@@ -21182,34 +21254,41 @@ const renderRFSection = (container) => {
       }
 
       const filaHTML = (it) => {
-        if (it.tipo === 'aire') return '<tr class="aire"><td colspan="7"></td></tr>';
+        if (it.tipo === 'aire') return '<tr class="aire"><td colspan="8"></td></tr>';
         if (it.tipo === 'art') {
-          return `<tr class="art${it.nuevo ? ' nuevo' : ''}"><td colspan="7">ARTICULO ${esc(it.sku7)}${
+          return `<tr class="art${it.nuevo ? ' nuevo' : ''}"><td colspan="8">ARTICULO ${esc(it.sku7)}${
             it.rims ? ' &nbsp;·&nbsp; ' + esc(it.rims) : ''}${
             it.caso ? ' &nbsp;·&nbsp; ' + esc(it.caso) : ''}</td></tr>`;
         }
         if (it.tipo === 'det') {
           const l = it.l;
+          /* EL ASTERISCO VA PEGADO AL SKU, NUNCA EN UNA CELDA DE NUMERO. Daniel, 21-ago-2026:
+             *"cuando te lo bajas en Excel interrumpe la suma"*. Marca que ese articulo tiene
+             esa misma talla en OTROS cuerpos; cuales, lo dice la nota al pie. */
+          const otros = it.otros && it.otros.length;
           return `<tr>
-            <td>${esc(l.ubi)}</td><td>${esc(l.skuFull)}</td><td class="b">${esc(l.talla)}</td>
+            <td>${esc(l.ubi)}</td><td>${esc(l.skuFull)}${otros ? '*' : ''}</td><td class="b">${esc(l.talla)}</td>
             <td>${esc(num(l.qty))}</td>
             <td class="g">${esc(it.trabada ? '—' : num(l.alPiso))}</td>
             <td>${esc(num(l.aReserva))}</td>
-            <td class="g">${esc(it.trabada ? 'Revisar Slotting' : num(l.destino))}</td></tr>`;
+            <td class="g">${esc(it.trabada ? 'Revisar Slotting' : num(l.destino))}</td>
+            <td${(!it.trabada && it.enCuerpo === 0) ? ' class="cero"' : ''}>${
+              esc(it.trabada || it.enCuerpo === null ? '—' : it.enCuerpo)}</td></tr>`;
         }
         const pal = it.paletas ? it.paletas + ' paleta' + (it.paletas > 1 ? 's' : '') : '—';
         if (it.tipo === 'tot') {
           return `<tr class="tot"><td colspan="3">Total ${esc(it.sku7)}</td><td>${esc(it.pares)}</td>
-                  <td>${esc(it.piso)}</td><td>${esc(it.reserva)}</td><td>${esc(pal)}</td></tr>`;
+                  <td>${esc(it.piso)}</td><td>${esc(it.reserva)}</td><td>${esc(pal)}</td><td></td></tr>`;
         }
         return `<tr class="tt"><td colspan="3">TOTAL DE LA TAREA</td><td>${esc(it.pares)}</td>
-                <td>${esc(it.piso)}</td><td>${esc(it.reserva)}</td><td>${esc(pal)}</td></tr>`;
+                <td>${esc(it.piso)}</td><td>${esc(it.reserva)}</td><td>${esc(pal)}</td><td></td></tr>`;
       };
 
       /** La parte de arriba de una página. La primera lleva los avisos y las firmas. */
       const encabezado = (primera) => {
-        let h = `<div class="t1${primera ? '' : ' cont'}">${esc(nombreTarea)}${marcaTarea ? ' · ' + esc(marcaTarea) : ''}${primera ? '' : ' (cont.)'}</div>`
-              + `<div class="t2">${esc(subtitulo)}<span class="pagX"></span></div>`;
+        let h = `<span class="pagX"></span>`
+              + `<div class="t1${primera ? '' : ' cont'}">${esc(nombreTarea)}${marcaTarea ? ' · ' + esc(marcaTarea) : ''}${primera ? '' : ' (cont.)'}</div>`
+              + `<div class="t2">${esc(subtitulo)}</div>`;
         if (primera) {
           if (trabadas.length) {
             h += `<div class="cartel"><b>${trabadas.length === grupo.arts.length
@@ -21283,8 +21362,41 @@ const renderRFSection = (container) => {
       if (paginasTarea.length > 1) {
         paginasTarea.forEach((p, i) => {
           const s = p.cuerpo.querySelector('.pagX');
-          if (s) s.textContent = ` · página ${i + 1} de ${paginasTarea.length}`;
+          if (s) s.textContent = `página ${i + 1} de ${paginasTarea.length}`;
         });
+      }
+
+      /* ── LA NOTA AL PIE ──────────────────────────────────────────────────────────
+       * Dice DÓNDE está lo que el asterisco marcó: ubicación, SKU, talla y cantidad de lo que
+       * ese artículo tiene de esa talla FUERA del cuerpo al que va. Sin esto el asterisco
+       * avisa de algo y no dice de qué.
+       *
+       * Va en la ÚLTIMA página de la tarea, y si no entra abre una propia. Medirlo es la
+       * única forma: calcular a ojo cuántas filas caben es lo que llenaba de renglones sueltos
+       * la hoja siguiente. */
+      if (pieDeTarea.length) {
+        const ultima = paginasTarea[paginasTarea.length - 1];
+        const pie = doc.createElement('div');
+        pie.className = 'pie';
+        pie.innerHTML = '<div class="rot">* Este artículo tiene esa talla en OTROS cuerpos:</div>'
+          + '<table><tr><th style="width:26%">Ubicación</th><th style="width:30%">SKU</th>'
+          + '<th style="width:14%">Talla</th><th style="width:16%">Cantidad</th><th></th></tr>'
+          + pieDeTarea.map(o => `<tr><td>${esc(o.ubi)}</td><td>${esc(o.skuFull)}</td>`
+              + `<td>${esc(o.talla)}</td><td>${esc(o.qty)}</td><td></td></tr>`).join('')
+          + '</table>';
+        ultima.cuerpo.appendChild(pie);
+        if (ultima.cuerpo.scrollHeight > ALTO_UTIL) {
+          pie.remove();
+          const { pg, cuerpo } = nuevaPagina();
+          cuerpo.innerHTML = encabezado(false);
+          cuerpo.appendChild(pie);
+          paginasTarea.push({ pg, cuerpo });
+          // La paginación ya se escribió con una hoja menos: se rehace con el total nuevo.
+          paginasTarea.forEach((p, i) => {
+            const s = p.cuerpo.querySelector('.pagX');
+            if (s) s.textContent = `página ${i + 1} de ${paginasTarea.length}`;
+          });
+        }
       }
 
       // ── LA PÁGINA DE CIERRE ──────────────────────────────────────────────────────

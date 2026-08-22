@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Maqueta · la hoja con «En el cuerpo», el asterisco y la nota al pie</title>
+<style>
+/* EL CSS ES EL DE imprimirTareasWeb, copiado tal cual. Lo unico agregado va marcado. */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: #58585b; }
+body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #000; padding: 18px 0; }
+.pg { width: 210mm; min-height: 297mm; padding: 9mm 7mm; background: #fff;
+      margin: 0 auto 14px; position: relative; overflow: hidden;
+      box-shadow: 0 6px 26px rgba(0,0,0,0.4); }
+.t1 { text-align: center; font-size: 26pt; font-weight: 700; line-height: 1.05; }
+.t2 { text-align: center; font-size: 10.5pt; margin-top: 1mm; }
+table { width: 100%; border-collapse: collapse; }
+.firmas { margin-top: 3mm; font-size: 10.5pt; }
+.firmas td { border: 1px solid #888780; height: 8mm; padding: 0 2mm; }
+.firmas .rot { background: #F1EFE8; font-weight: 400; white-space: nowrap; }
+.det { margin-top: 3mm; font-size: 10.5pt; }
+.det th { background: #2C2C2A; color: #fff; font-weight: 700; font-size: 10.5pt;
+          border: 1px solid #888780; height: 7mm; text-align: center; }
+.det td { border: 1px solid #888780; height: 6.4mm; text-align: center; padding: 0 1mm; }
+.det td.g { background: #F1EFE8; font-weight: 700; }
+.det tr.art td { background: #F1EFE8; font-weight: 700; text-align: left;
+                 font-size: 11pt; height: 7mm; padding: 0 2mm; }
+.det tr.art.nuevo td { background: #2C2C2A; color: #fff; }
+.det td.b { font-weight: 700; }
+.det tr.tot td { background: #B4B2A9; font-weight: 700; height: 7mm; }
+.det tr.aire td { border: none; background: #fff; height: 2.4mm; padding: 0; }
+.det tr.tt td { background: #2C2C2A; color: #fff; font-weight: 700; height: 8mm; font-size: 12pt; }
+
+/* ── LO NUEVO ─────────────────────────────────────────────────────────── */
+.pag { position: absolute; top: 9mm; right: 7mm; font-size: 9.5pt; color: #000; }
+.det td.cero { color: #000; font-weight: 700; background: #F1EFE8; }
+.pie { margin-top: 4mm; font-size: 9pt; }
+.pie .rot { font-weight: 700; margin-bottom: 1mm; }
+.pie table { font-size: 9pt; }
+.pie td, .pie th { border: 1px solid #888780; height: 5.6mm; padding: 0 1.5mm; text-align: center; }
+.pie th { background: #F1EFE8; font-weight: 700; }
+
+.nota { max-width: 210mm; margin: 0 auto 14px; background: #2C2C2A; color: #fff;
+        padding: 1rem 1.3rem; font-size: 9.5pt; line-height: 1.7; font-family: 'Segoe UI', Arial, sans-serif; }
+.nota b { color: #fbbf24; }
+.nota .quitado { color: #f87171; text-decoration: line-through; }
+</style>
+</head>
+<body>
+
+<div class="nota">
+  <b>LOS CUATRO CAMBIOS DE LA HOJA</b> — todo lo demás queda igual.<br><br>
+  <b>1 · Columna «En el cuerpo».</b> Cuánto hay ya de <b>esa talla</b> en el cuerpo al que va.
+  No el total del SKU. Cuando es <b>cero</b> va en negrita y con fondo, que en blanco y negro
+  se ve igual de fuerte que un rojo.<br>
+  <b>2 · El asterisco va pegado al SKU</b>, nunca en una celda de número: <i>"cuando te lo
+  bajas en Excel interrumpe la suma"</i>.<br>
+  <b>3 · La nota al pie</b>: ubicación, SKU, talla y cantidad de lo que ese artículo tiene
+  <b>fuera</b> del cuerpo destino.<br>
+  <b>4 · El subtítulo queda solo con la fecha</b> —fuera el artículo y el "+ N artículos"— y
+  <b>la paginación se va a la esquina superior derecha</b>.<br><br>
+  Los números son los del <b>8246844</b> ya medidos: vive en tres cuerpos —SEL-07-15 con 410
+  pares, SEL-06-18 con 242 y SEL-07-14 con 153— y la talla 44 se manda al que tiene 8 cuando
+  otro tiene 26.
+</div>
+
+<div class="pg">
+  <div class="pag">página 1 de 1</div>
+  <div class="t1">Tarea 7 · BATA</div>
+  <div class="t2">20/08/2026</div>
+
+  <table class="firmas"><tr>
+    <td class="rot" style="width:14%">Nombres</td><td style="width:34%"></td>
+    <td class="rot" style="width:14%">Hora inicio</td><td style="width:14%"></td>
+    <td class="rot" style="width:10%">Término</td><td></td></tr>
+  </table>
+
+  <table class="det">
+    <thead>
+      <tr>
+        <th style="width:19%">Ubicación</th>
+        <th style="width:15%">SKU</th>
+        <th style="width:6%">Talla</th>
+        <th style="width:10%">Qty buffer</th>
+        <th style="width:10%">Almacenar</th>
+        <th style="width:10%">Paletizar</th>
+        <th style="width:19%">Destino</th>
+        <th style="width:11%">En el cuerpo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="aire"><td colspan="8"></td></tr>
+      <tr class="art"><td colspan="8">ARTICULO 8246844 &nbsp;·&nbsp; 01 MEN &nbsp;·&nbsp; REPOSICION</td></tr>
+      <tr><td>CDBUFFER-B-04</td><td>8246844-1-42*</td><td class="b">42</td><td>96</td><td class="g">96</td><td>0</td><td>SEL-07-15</td><td class="cero">0</td></tr>
+      <tr><td>CDBUFFER-B-04</td><td>8246844-1-43</td><td class="b">43</td><td>64</td><td class="g">64</td><td>0</td><td>SEL-07-15</td><td>31</td></tr>
+      <tr><td>CDBUFFER-B-07</td><td>8246844-1-44*</td><td class="b">44</td><td>18</td><td class="g">18</td><td>0</td><td>SEL-07-15</td><td>8</td></tr>
+      <tr class="tot"><td colspan="3">Total 8246844</td><td>178</td><td>178</td><td>0</td><td>—</td><td></td></tr>
+
+      <tr class="art nuevo"><td colspan="8">ARTICULO 5811680 &nbsp;·&nbsp; 01 MEN &nbsp;·&nbsp; CODIGO NUEVO</td></tr>
+      <tr><td>CDBUFFER-A-01</td><td>5811680-1-39</td><td class="b">39</td><td>420</td><td class="g">252</td><td>168</td><td>MZN01-04-12</td><td class="cero">0</td></tr>
+      <tr><td>CDBUFFER-A-01</td><td>5811680-1-40</td><td class="b">40</td><td>560</td><td class="g">336</td><td>224</td><td>MZN01-04-12</td><td class="cero">0</td></tr>
+      <tr><td>CDBUFFER-A-02</td><td>5811680-1-41</td><td class="b">41</td><td>620</td><td class="g">372</td><td>248</td><td>MZN01-04-12</td><td class="cero">0</td></tr>
+      <tr class="tot"><td colspan="3">Total 5811680</td><td>1.600</td><td>960</td><td>640</td><td>4 paletas</td><td></td></tr>
+
+      <tr class="aire"><td colspan="8"></td></tr>
+      <tr class="tt"><td colspan="3">TOTAL DE LA TAREA</td><td>1.778</td><td>1.138</td><td>640</td><td>4 paletas</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <div class="pie">
+    <div class="rot">* Este artículo tiene esa talla en OTROS cuerpos:</div>
+    <table>
+      <tr><th style="width:26%">Ubicación</th><th style="width:26%">SKU</th><th style="width:14%">Talla</th><th style="width:16%">Cantidad</th><th>&nbsp;</th></tr>
+      <tr><td>SEL-06-18</td><td>8246844-1-42</td><td>42</td><td>174</td><td></td></tr>
+      <tr><td>SEL-07-14</td><td>8246844-1-44</td><td>44</td><td>26</td><td></td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="nota">
+  <b>QUÉ SE VE ACÁ, Y POR QUÉ IMPORTA</b><br><br>
+  La talla <b>42</b> va al SEL-07-15 y ese cuerpo tiene <b>cero</b> de esa talla — pero el
+  artículo tiene <b>174 en el SEL-06-18</b>. El asterisco y la nota al pie lo dicen.<br><br>
+  La talla <b>44</b> va al SEL-07-15 que tiene <b>8</b>, cuando el SEL-07-14 tiene <b>26</b>.
+  Esa es exactamente la que usted marcó.<br><br>
+  <b>La hoja no lo corrige, lo muestra.</b> Corregir el destino es la otra tarea pendiente —la
+  que cambia el destino de TODAS las tareas—. Esto le pone el dato delante al operario y a
+  usted, sin tocar el cálculo.<br><br>
+  <span class="quitado">20/08/2026 · 8246844 + · 2 artículos</span> &nbsp;→&nbsp; el subtítulo
+  ahora dice <b>solo la fecha</b>, y la paginación se fue arriba a la derecha.
+</div>
+
+</body>
+</html>

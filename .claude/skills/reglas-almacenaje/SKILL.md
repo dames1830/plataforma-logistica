@@ -1241,6 +1241,29 @@ Revisado hoja por hoja contra maquetas. **Lo aprobado y por que:**
 - Un aviso de "articulo repartido" en la hoja: el operario **no puede accionarlo**; eso es
   trabajo de Slotting.
 
+### HECHO el 21-ago-2026 (v29.0324): las cuatro que faltaban
+
+La columna **«En el cuerpo»**, el **asterisco pegado al SKU**, la **nota al pie** y el
+**encabezado limpio** con la paginacion en la esquina superior derecha. Todo publicado.
+
+**El dato que faltaba y hubo que construir:** `porTallaEnCuerpo` en el contexto de la
+sugerencia —llave `sku7|talla`, adentro un mapa `cuerpo -> pares`—. `porTallaDe` sabia cuanto
+tiene el ARTICULO de esa talla en todo el piso; nadie sabia en QUE cuerpo estaba. Solo cuenta
+el PISO: lo que esta en el buffer es justamente lo que se va a bajar, y contarlo diria que el
+cuerpo ya tiene lo que todavia hay que llevarle.
+
+**El cero NO va en rojo, va en negrita con fondo.** La nota vieja decia rojo; el operario
+trabaja con la hoja en **blanco y negro** y un rojo sale gris claro, mas debil que el texto
+normal. Ver [[hoja-impresa-de-la-tarea]].
+
+**Sin destino va un guion, no un cero.** Cuando la linea va entera a reserva —o esta trabada—
+no hay cuerpo del que hablar: un cero ahi contestaria algo que nadie pregunto. Pero si el
+articulo no tiene ni un par en el piso, el cero SI es la verdad.
+
+**La nota al pie va en la ULTIMA pagina de la tarea, y se mide.** Si no entra, abre pagina
+propia y la paginacion se rehace con el total nuevo. Calcular a ojo cuantas filas caben es lo
+que llenaba de renglones sueltos la hoja siguiente.
+
 **Y lo que la hoja YA hacia bien y yo mostre mal cuatro veces** —si se maqueta, copiar del
 codigo, no rehacerlo—: solo imprime las lineas del buffer; el subtitulo es
 `fecha · primer articulo + · N articulos` (Daniel pidio dejar **solo la fecha**); la
