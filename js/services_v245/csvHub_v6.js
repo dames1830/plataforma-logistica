@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0344';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0345';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0344';
+const VERSION = '29.0345';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -378,15 +378,56 @@ export const saveReservaHistoryRecord = async (record) => {
  */
 const RESERVA_FOTOS_LOCAL_KEY = 'logistics_reserva_fotos_v1';
 
-export const fetchFotosReserva = async (force = false) => {
+/* ══════════════════════════════════════════════════════════════════════════════
+ * LAS FOTOS TIENEN QUE LLEGAR SI O SI. Tres agujeros tapados el 22-ago-2026.
+ *
+ * Daniel abrió Análisis Reserva con la versión buena —v29.0344 en el encabezado— y no
+ * había gráfico, y encima la matriz mostraba 2.383 ocupadas cuando la foto guardada del
+ * 21-08 dice 2.339. Los dos síntomas salen de lo mismo: **el navegador se quedó sin las
+ * fotos**. Sin ellas no hay serie que dibujar, y el cuadro se cae a recalcular con el
+ * stock que haya —que a esa hora ya era el de la mañana—.
+ *
+ * Había tres maneras de perderlas, y ninguna avisaba:
+ *
+ *   1. `pullGlobal` sin `force` se saltea entero si hay un empuje pendiente. Devuelve
+ *      lo que ya tenía en memoria, que puede ser nada. Ahora se pide con force.
+ *   2. Si el `localStorage` está lleno, `setItem` tira QuotaExceededError **antes del
+ *      return**, y la lista recién bajada se pierde por completo. Ahora el guardado
+ *      local va aparte: si falla, se avisa y se devuelve igual lo que se bajó.
+ *   3. Si el sincronizador igual no las trajo, se pedía la copia local y ahí terminaba.
+ *      Ahora se va a buscarlas derecho al servidor antes de rendirse.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+export const fetchFotosReserva = async (force = true) => {
     try {
         await syncEngine.pullGlobal(['reserva_fotos'], force);
     } catch(e) {
         console.warn('[RF] No se pudo descargar las fotos de reserva:', e);
     }
-    const list = syncEngine.syncStore.reserva_fotos || [];
+    let list = syncEngine.syncStore.reserva_fotos || [];
+
+    // Si el sincronizador no las trajo, se piden derecho. Es una sola llamada y solo
+    // ocurre cuando algo fallo antes.
+    if (!Array.isArray(list) || !list.length) {
+        try {
+            const r = await fetch(`${API_BASE}/logistics/reserva_fotos?z=${Date.now()}`);
+            if (r.ok) {
+                const j = await r.json();
+                const d = (j && j.data !== undefined) ? j.data : j;
+                if (Array.isArray(d) && d.length) {
+                    list = d;
+                    syncEngine.syncStore.reserva_fotos = d;
+                    console.warn('[RF] Las fotos vinieron del servidor directo: el sincronizador no las trajo.');
+                }
+            }
+        } catch(e) { console.warn('[RF] Tampoco se pudieron pedir derecho:', e); }
+    }
+
     if (Array.isArray(list) && list.length > 0) {
-        localStorage.setItem(RESERVA_FOTOS_LOCAL_KEY, JSON.stringify(list));
+        /* EL GUARDADO LOCAL NO PUEDE COSTAR LA LISTA. Son ~40 KB por día y el navegador
+           tiene un tope: el día que se pase, `setItem` tira y sin este try se perdía todo
+           lo bajado. La copia local es una comodidad, no la fuente. */
+        try { localStorage.setItem(RESERVA_FOTOS_LOCAL_KEY, JSON.stringify(list)); }
+        catch(e) { console.warn('[RF] No se pudo guardar la copia local de las fotos:', e); }
         return list;
     }
     try {
