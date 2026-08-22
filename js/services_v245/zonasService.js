@@ -337,6 +337,27 @@ export const zonasPorDefecto = () => ({
      * 800 bajan 765 y sube una sola paleta de 100. El cuerpo queda en 797 de 800. */
     densidadColumna: { MZN01: { 24: 800 } },
 
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * EL TIPO DE CALZADO. Daniel, 22-ago-2026, parado en el SEL-07-09:
+     *
+     *   *"Las botas son las que entran menos en cada ubicacion, porque son mas grandes. Las
+     *   zapatillas o los zapatos son mas chicos y puede entrar mas o menos cuatrocientos
+     *   cincuenta. Pero en las botas entran trescientos, trescientos veinte."*
+     *
+     * LO QUE DECIDE CUANTO ENTRA ES EL TAMAÑO DE LA CAJA, y eso la serie no lo sabe: la
+     * densidad por serie da 450 para casi todo el selectivo, de la 2 a la 9. Una bota y un
+     * mocasin de hombre pueden compartir serie y no entrar ni parecido.
+     *
+     * MEDIDO, no estimado. Sobre 589 ubicaciones del selectivo con UN SOLO articulo, el
+     * stock del 21-ago-2026 da por nivel (p95): bota 90, deportivo 153, sandalia 145,
+     * zapato 206. Un cuerpo tiene tres niveles, asi que por cuerpo son 270, 459, 435 y 618.
+     * Daniel cerro los numeros mirando eso.
+     *
+     * EL TIPO SALE DE `Subcategory RIMS`, la columna 6 del Maestro, que es la unica que
+     * distingue una bota: hay 27 subcategorias con BOOT/BOOTIE/BOTAS. Ver `tipoDeCalzado`.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    densidadTipo: { BOTA: 270, DEPORTIVO: 430, SANDALIA: 430, ZAPATO: 500 },
+
     /** La categoría que no sigue a su marca. */
     categoriaOthers: '06 OTHERS'
 });
@@ -487,9 +508,20 @@ const normalizar = (crudo) => {
         });
     });
 
+    /* La capacidad por tipo de calzado. Igual que las otras dos: si la publicada no la trae,
+       manda la de fábrica, para que una bota no vuelva a medirse con el número del zapato. */
+    const porTipo = {};
+    const srcTipo = (c.densidadTipo && Object.keys(c.densidadTipo).length)
+      ? c.densidadTipo : def.densidadTipo;
+    Object.keys(srcTipo || {}).forEach(k => {
+        const n = _num(srcTipo[k], 0, 1, 100000);
+        if (n) porTipo[String(k).trim().toUpperCase()] = n;
+    });
+
     return { zonas, marcas, others, densidad, densidadRespaldo: respaldo,
              densidadMarcaStd: porMarcaStd,
              densidadColumna: porColumna,
+             densidadTipo: porTipo,
              categoriaOthers: String(c.categoriaOthers || def.categoriaOthers) };
 };
 
@@ -767,6 +799,36 @@ export const zonaDeOthers = (subcategoria) => {
     return calzan.length ? calzan[0].zona : null;
 };
 
+/**
+ * EL TIPO DE CALZADO, para saber cuánto entra en un cuerpo.
+ *
+ * Sale de `Subcategory RIMS` —y de `Category RIMS` como respaldo—, que es donde el Maestro
+ * distingue una bota de un zapato. Cuatro tipos y nada más: lo que cambia la capacidad es el
+ * volumen de la caja, y en cuatro tamaños entra todo el calzado del almacén.
+ *
+ * EL ORDEN IMPORTA. Una `C26_05_SPORT BOOTS` es bota antes que deportivo: manda lo que ocupa,
+ * y lo que ocupa es la caña. Por eso la bota se pregunta primero.
+ *
+ * OJO CON BUSCAR PEDAZOS DE PALABRA: 'RAIN' parece de bota de lluvia y está adentro de
+ * 'TRAINING'. Acá se buscan solo BOOT, BOOTIE y BOTA, que no se esconden en ninguna otra.
+ *
+ * Lo que no es calzado —bolsos, medias, accesorios— devuelve null y sigue con la capacidad
+ * de siempre: no vive en el selectivo.
+ */
+export const TIPOS_CALZADO = ['BOTA', 'DEPORTIVO', 'SANDALIA', 'ZAPATO'];
+
+export const tipoDeCalzado = (subcategoria, categoria) => {
+    const u = (String(subcategoria || '') + ' ' + String(categoria || '')).toUpperCase();
+    if (!u.trim()) return null;
+    if (u.includes('BOOT') || u.includes('BOTA')) return 'BOTA';
+    if (u.includes('THONG') || u.includes('SANDAL') || u.includes('PLASTIC')) return 'SANDALIA';
+    if (u.includes('SPORT') || u.includes('TENNIS') || u.includes('TRAINING')
+        || u.includes('CANVAS') || u.includes('GYMNAST')) return 'DEPORTIVO';
+    if (u.includes('BOLSO') || u.includes('CARTERA') || u.includes('CALCETIN')
+        || u.includes('ACC.') || u.includes('MOCHILA')) return null;
+    return 'ZAPATO';
+};
+
 /** ¿Esta categoría es la que no sigue a su marca? */
 export const esOthers = (genderRims) =>
     String(genderRims || '').trim().toUpperCase().includes('OTHERS');
@@ -827,7 +889,7 @@ export const serieDe = (codigo) => {
 };
 
 /** Pares que entran en un cuerpo de esa zona para esa serie. */
-export const densidadDe = (zona, serie, marcaStd, columna) => {
+export const densidadDe = (zona, serie, marcaStd, columna, tipo) => {
     const cfg = zonasActual();
     // LA COLUMNA MANDA SOBRE TODO: es la medida del mueble. Si esa columna tiene su propia
     // capacidad, ahí entra eso y no hay serie ni sub-marca que valga. Ver `densidadColumna`.
@@ -839,6 +901,12 @@ export const densidadDe = (zona, serie, marcaStd, columna) => {
     // diría 450: lo que decide cuánto entra es el grosor del zapato, y eso la serie no lo sabe.
     const ms = String(marcaStd || '').trim();
     if (ms && cfg.densidadMarcaStd && cfg.densidadMarcaStd[ms]) return cfg.densidadMarcaStd[ms];
+    /* EL TIPO DE CALZADO LE GANA A LA SERIE, pero no a la sub-marca ni a la columna: esas dos
+       son mediciones que Daniel tomó con el cuerpo cargado a la vista —el Comfit en 700, el
+       MZN01-24 en 800— y una regla general no puede pisar una medida puntual. La serie sí:
+       ahí un solo número vale para media zona y es el que estaba mandando de más. */
+    const tc = String(tipo || '').trim().toUpperCase();
+    if (tc && cfg.densidadTipo && cfg.densidadTipo[tc]) return cfg.densidadTipo[tc];
     const d = cfg.densidad[zona] || {};
     const v = d[String(serie)];
     return v || cfg.densidadRespaldo[zona] || 330;
@@ -859,7 +927,8 @@ export const densidadDe = (zona, serie, marcaStd, columna) => {
 export const capacidadDeArticulo = (art, zona) => {
     const cfg = zonasActual();
     const porCol = (cfg.densidadColumna || {})[zona];
-    const normal = densidadDe(zona, serieDe(art && art.sku7), art && art.marcaStd);
+    const normal = densidadDe(zona, serieDe(art && art.sku7), art && art.marcaStd, null,
+                              tipoDeCalzado(art && art.subcategoria, art && art.categoria));
     if (!porCol) return normal;
 
     const franja = franjaDeArticulo(art, zona);

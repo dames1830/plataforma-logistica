@@ -1,30 +1,30 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0340';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0341';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0340';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0340';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0340';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0340';
-import * as metasService from '../services_v245/metasService.js?v=29.0340';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0340';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0340';
+import * as adminService from '../services_v245/adminService.js?v=29.0341';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0341';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0341';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0341';
+import * as metasService from '../services_v245/metasService.js?v=29.0341';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0341';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0341';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0340';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0340';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0340';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0340';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0340';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0340';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0340';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0340';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0340';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0340';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0340';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0340';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0340';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0340';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0340';
-import { montarSlotting } from './slotting.js?v=29.0340';
+         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0341';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0341';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0341';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0341';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0341';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0341';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0341';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0341';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0341';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0341';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0341';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0341';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0341';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0341';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0341';
+import { montarSlotting } from './slotting.js?v=29.0341';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -381,7 +381,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0340';
+const VERSION = '29.0341';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4683,7 +4683,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0340');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0341');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16915,7 +16915,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0340 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0341 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18747,6 +18747,10 @@ const renderRFSection = (container) => {
       if (s7 && !ficha.has(s7)) ficha.set(s7, {
         marca: String(raw[13] || '').trim(),
         marcaStd: String(raw[8] || '').trim(),
+        // LA SUBCATEGORIA DICE SI ES BOTA, y de ahi sale cuanto entra en el cuerpo. Es la
+        // columna 6 del Maestro; la 5 es la categoria y sirve de respaldo. Ver tipoDeCalzado.
+        subcategoria: String(raw[5] || '').trim().toUpperCase(),
+        categoria: String(raw[4] || '').trim().toUpperCase(),
         temporada: String(raw[14] || raw[9] || '').trim()
       });
     });
@@ -18832,8 +18836,14 @@ const renderRFSection = (container) => {
          llega. */
       const mayor = [...c.m.entries()].sort((a, b) => b[1] - a[1])[0];
       const s7Mayor = mayor ? mayor[0] : '';
+      const fMayor = ficha.get(s7Mayor) || {};
+      /* EL TIPO DE CALZADO DEL QUE MAS PESA ADENTRO. Igual que con la sub-marca: el que decide
+         cuanto entra es el ocupante, no el que llega. Un cuerpo con botas entra 270 aunque el
+         que viene sea un zapato — no van a caber mas por cambiar de dueño. */
       const cap = zonasService.densidadDe(c.zona, zonasService.serieDe(s7Mayor),
-                                          (ficha.get(s7Mayor) || {}).marcaStd, c.col);
+                                          fMayor.marcaStd, c.col,
+                                          zonasService.tipoDeCalzado(fMayor.subcategoria,
+                                                                     fMayor.categoria));
       (libresPorZona[c.zona] = libresPorZona[c.zona] || new Map())
         .set(clave, Math.max(0, cap - dentro));
     });
@@ -18874,9 +18884,12 @@ const renderRFSection = (container) => {
       if (compartido) {
         /* El que ya estaba adentro fija la capacidad; si el cuerpo está vacío en la
            foto se toma la del artículo que la tarea manda, que es quien lo va a llenar. */
+        const primero = [...skus][0] || '';
+        const fp = ficha.get(String(primero).substring(0, 7)) || {};
         const cap = libres.has(clave)
           ? libres.get(clave)
-          : zonasService.densidadDe(zona, zonasService.serieDe([...skus][0] || ''));
+          : zonasService.densidadDe(zona, zonasService.serieDe(primero), fp.marcaStd, null,
+                                    zonasService.tipoDeCalzado(fp.subcategoria, fp.categoria));
         libres.set(clave, Math.max(0, cap - (mandados.pares.get(nombre) || 0)));
       } else {
         (ocupadosPorZona[zona] = ocupadosPorZona[zona] || new Set()).add(clave);
@@ -19150,7 +19163,9 @@ const renderRFSection = (container) => {
       if (recienLlegados.has(s7)) { recientes++; return; }
 
       const f = ficha.get(s7) || {};
-      const cap = zonasService.densidadDe(suyos[0].zona, zonasService.serieDe(s7), f.marcaStd);
+      const cap = zonasService.densidadDe(suyos[0].zona, zonasService.serieDe(s7), f.marcaStd,
+                                          null, zonasService.tipoDeCalzado(f.subcategoria,
+                                                                           f.categoria));
       const orden = [...suyos].sort((a, b) => b.pares - a.pares);
       const sequeda = orden[0];
       let lugar = Math.max(0, cap - sequeda.pares);
@@ -21905,6 +21920,42 @@ const renderRFSection = (container) => {
           </div>
 
           <div style="border-top:1px solid rgba(34,197,94,0.14); padding:0.9rem 1.1rem 0.4rem;">
+            <div>
+              <h4 style="color:#22c55e; font-weight:900; margin:0; font-size:0.82rem; letter-spacing:0.8px; text-transform:uppercase;">🥾 Cuánto entra según el tipo de calzado</h4>
+              <div style="font-size:0.64rem; color:rgba(34,197,94,0.55); margin-top:2px;">Lo que decide es el tamaño de la caja · le gana a la serie · sale de <b>Subcategory RIMS</b> del Maestro</div>
+            </div>
+          </div>
+          <div style="overflow-x:auto; padding-bottom:0.4rem;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#eee;">
+              <thead style="background:rgba(0,0,0,0.5);">
+                <tr style="color:rgba(134,239,172,0.8); text-transform:uppercase; font-size:0.63rem; letter-spacing:0.05em;">
+                  <th style="padding:0.6rem 1.1rem; text-align:left;">Tipo</th>
+                  <th style="padding:0.6rem; text-align:left;">Qué entra acá</th>
+                  <th style="padding:0.6rem; text-align:center; width:150px;">Pares por cuerpo</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${[['BOTA', 'Todo lo que dice BOOT, BOOTIE o BOTAS en su subcategoría'],
+                   ['DEPORTIVO', 'Sport, tennis, training, canvas y gimnasia'],
+                   ['SANDALIA', 'Ojotas, sandalias y plástico'],
+                   ['ZAPATO', 'Todo el resto del calzado']].map(([k, dice]) => `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <td style="padding:0.4rem 1.1rem; color:#fff; font-weight:900;">${k}</td>
+                    <td style="padding:0.4rem 0.6rem; color:rgba(255,255,255,0.35); font-size:0.68rem;">${dice}</td>
+                    <td style="padding:0.3rem; text-align:center;">
+                      <input type="number" data-tipo="${k}" min="1" placeholder="—"
+                        value="${(cfg.densidadTipo || {})[k] || ''}"
+                        style="width:110px; padding:5px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-size:0.76rem; font-weight:800; text-align:center;">
+                    </td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:0.75rem 1.1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,197,94,0.1); font-size:0.65rem; color:rgba(255,255,255,0.32); line-height:1.7;">
+            La serie no sabe el tamaño de la caja: da <b style="color:rgba(255,255,255,0.5);">450</b> para casi todo el selectivo, y una bota y un mocasín de hombre pueden compartir serie sin entrar ni parecido. Medido sobre 589 ubicaciones del selectivo con un solo artículo: una bota entra <b style="color:rgba(255,255,255,0.5);">90 por nivel</b> y un zapato <b style="color:rgba(255,255,255,0.5);">206</b>. Un cuerpo son tres niveles. <b style="color:rgba(255,255,255,0.5);">La sub-marca y la columna le ganan a esto</b>, porque son mediciones de un cuerpo puntual.
+          </div>
+
+          <div style="border-top:1px solid rgba(34,197,94,0.14); padding:0.9rem 1.1rem 0.4rem;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
               <div>
                 <h4 style="color:#22c55e; font-weight:900; margin:0; font-size:0.82rem; letter-spacing:0.8px; text-transform:uppercase;">👟 Sub-marcas que no siguen a su serie</h4>
@@ -22031,6 +22082,17 @@ const renderRFSection = (container) => {
       container.querySelectorAll('[data-resp]').forEach(i => i.onchange = () => {
         const v = parseInt(i.value, 10);
         if (Number.isFinite(v) && v > 0) cfg.densidadRespaldo[i.dataset.resp] = v;
+        marcar();
+      });
+
+      /* LA CAPACIDAD POR TIPO DE CALZADO. Los cuatro tipos son fijos —lo que cambia la
+         capacidad es el volumen de la caja, y en cuatro tamaños entra todo el calzado—; lo
+         que se edita es cuántos pares entran. Vaciar el campo lo devuelve a la serie. */
+      if (!cfg.densidadTipo) cfg.densidadTipo = {};
+      container.querySelectorAll('[data-tipo]').forEach(i => i.onchange = () => {
+        const v = parseInt(i.value, 10);
+        if (Number.isFinite(v) && v > 0) cfg.densidadTipo[i.dataset.tipo] = v;
+        else delete cfg.densidadTipo[i.dataset.tipo];
         marcar();
       });
 
