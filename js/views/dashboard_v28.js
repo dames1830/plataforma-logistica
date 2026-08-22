@@ -1,29 +1,29 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0331';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0332';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0331';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0331';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0331';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0331';
-import * as metasService from '../services_v245/metasService.js?v=29.0331';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0331';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0331';
+import * as adminService from '../services_v245/adminService.js?v=29.0332';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0332';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0332';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0332';
+import * as metasService from '../services_v245/metasService.js?v=29.0332';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0332';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0332';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
-         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto } from '../reportes/reserva_consolidacion.js?v=29.0331';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0331';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0331';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0331';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0331';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0331';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0331';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0331';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0331';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0331';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0331';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0331';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0331';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0331';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0331';
-import { montarSlotting } from './slotting.js?v=29.0331';
+         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto } from '../reportes/reserva_consolidacion.js?v=29.0332';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0332';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0332';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0332';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0332';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0332';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0332';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0332';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0332';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0332';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0332';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0332';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0332';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0332';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0332';
+import { montarSlotting } from './slotting.js?v=29.0332';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -380,7 +380,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0331';
+const VERSION = '29.0332';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4682,7 +4682,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0331');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0332');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16914,7 +16914,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0331 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0332 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24074,9 +24074,22 @@ const renderRFSection = (container) => {
       const tdIzq = (t, extra) => '<td style="' + BASE_IZ + (extra || '') + '">' + t + '</td>';
       const barra = (pct, color) => '<div style="height:12px;border-radius:3px;position:relative;background:rgba(255,255,255,.06);min-width:100px;max-width:130px;margin:0 auto">'
           + '<i style="position:absolute;left:0;top:0;bottom:0;border-radius:3px;width:' + pct + '%;background:' + color + '"></i></div>';
-      const panel = (titulo, borde, tabla) => '<div class="glass-panel" style="padding:16px 18px;margin-bottom:18px;border:1px solid ' + borde + '">'
+      /* EL ICONO DE EXCEL. Daniel, 22-ago-2026: *"quiero el icono nada mas del Excel, no me
+         pongas a exportar nada, solo el icono, y que sea un icono real de Excel, que cuando
+         el mouse pase por el icono diga exportar"*. Por eso no lleva texto: el `title` es lo
+         que sale al pasar el mouse. Dibujado a mano en SVG y no una imagen de afuera: la
+         plataforma no carga nada de otro servidor. */
+      const iconoExcel = '<span id="btn_xls_frag" title="Exportar" style="margin-left:auto;cursor:pointer;'
+          + 'display:flex;align-items:center;opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
+          + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
+          + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#1D6F42"/>'
+          + '<path d="M14 2v6h6" fill="#0F5132"/>'
+          + '<path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="#fff"/>'
+          + '</svg></span>';
+      const panel = (titulo, borde, tabla, extra) => '<div class="glass-panel" style="padding:16px 18px;margin-bottom:18px;border:1px solid ' + borde + '">'
           + '<h3 style="margin:0 0 10px;font-size:.95rem;display:flex;align-items:center;gap:10px;color:#fff">'
-          + '<span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;box-shadow:0 0 10px #60a5fa"></span>' + titulo + '</h3>'
+          + '<span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;box-shadow:0 0 10px #60a5fa"></span>' + titulo
+          + (extra || '') + '</h3>'
           + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.78rem">' + tabla + '</table></div></div>';
 
       const T = { existen: 0, ocupadas: 0, fw: 0, nofw: 0, libres: 0, pares: 0, hasta50: 0, de51a100: 0 };
@@ -24173,7 +24186,8 @@ const renderRFSection = (container) => {
          que se llevan al comite. No volver a proponerlo. */
       return cuadro1
            + panel('PADRE POR SELECTIVO', 'rgba(96,165,250,.35)', cabP + '<tbody>' + filasP + totP + '</tbody>')
-           + panel('LOS ' + F.length + ' MÁS FRAGMENTADOS', 'rgba(96,165,250,.35)', cabF + '<tbody>' + filasF + totF + '</tbody>');
+           + panel('LOS ' + F.length + ' MÁS FRAGMENTADOS', 'rgba(96,165,250,.35)',
+                   cabF + '<tbody>' + filasF + totF + '</tbody>', iconoExcel);
   };
 
   /** El clic en una celda: las ubicaciones de ese padre en ese selectivo, una por una. */
@@ -24198,8 +24212,71 @@ const renderRFSection = (container) => {
       selloDeLaFoto(ahora, (robotsService.robotsActual() || {}).ancla_noche);
 
   /** Lo que se guarda: el resultado ya calculado, no las 18.947 filas. Unos 25 KB. */
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * EL EXCEL DE LOS FRAGMENTADOS
+   *
+   * Daniel, 22-ago-2026: *"al exportar me tienes que dar la informacion que esta ahi mas
+   * las ubicaciones. Dame la informacion para yo poder reducir: ir a la ubicacion, bajarla,
+   * consolidarla con las otras."*
+   *
+   * Por eso son DOS HOJAS. La primera es la tabla tal cual se ve. La segunda es el trabajo:
+   * una fila por ubicacion, con el LPN de la paleta —que es lo que el montacarguista lee—,
+   * los pares, las tallas y con quien comparte sitio.
+   *
+   * LA COLUMNA "QUE HACER" ES LA QUE LO VUELVE UTIL. Las ubicaciones de cada articulo vienen
+   * ordenadas de MENOR a MAYOR, y las primeras `reduce` van marcadas BAJAR: son las paletas
+   * mas flacas, las que hay que vaciar sobre las otras. Las demas dicen RECIBE. La cuenta de
+   * BAJAR por articulo da exactamente su REDUCE, asi que las dos hojas cierran entre si.
+   *
+   * SI SE ESTA MIRANDO UN DIA GUARDADO no hay detalle: la foto se guarda sin el, porque son
+   * unas 570 filas que triplicarian el historico. En ese caso sale solo la primera hoja y el
+   * nombre del archivo lleva la fecha de esa foto, para que no se confunda con la de hoy.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const exportarFragmentados = (datos, fecha) => {
+      const F = (datos && datos.fragmentados) || [];
+      if (!F.length) { showPremiumAlert('SIN DATOS', 'No hay artículos que reducir para exportar.', 'info'); return; }
+
+      const resumen = F.map((p, i) => ({
+          '#': i + 1,
+          'PADRE': p.padre,
+          'GENDER RIMS': p.g || '',
+          'UBICACIONES': p.n,
+          'PARES': p.tot,
+          'SU PALETA LLENA': p.cap,
+          'SELECTIVOS': p.sel,
+          'REDUCE': p.reduce,
+          'QUEDARÍAN OCUPADAS': p.quedan
+      }));
+
+      const detalle = [];
+      F.forEach((p, i) => {
+          (p.ubic || []).forEach((u, j) => {
+              detalle.push({
+                  '#': i + 1,
+                  'PADRE': p.padre,
+                  'QUÉ HACER': j < p.reduce ? 'BAJAR' : 'RECIBE',
+                  'UBICACIÓN': u.u,
+                  'SELECTIVO': u.col,
+                  'LPN': u.lpn || '',
+                  'PARES': u.p,
+                  'TALLAS': (u.t || []).join(' · '),
+                  'COMPARTE CON': (u.ot || []).join(' · ')
+              });
+          });
+      });
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumen), 'Fragmentados');
+      if (detalle.length) {
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detalle), 'Ubicaciones');
+      }
+      XLSX.writeFile(wb, `Articulo_Ubicacion_${fecha || getLogicalDate()}.xlsx`);
+  };
+
   const engancharClicConsolidacion = (raiz, datos) => {
       if (!raiz || !datos) return;
+      const btn = raiz.querySelector('#btn_xls_frag');
+      if (btn) btn.addEventListener('click', () => exportarFragmentados(datos, datos.fecha));
       raiz.querySelectorAll('.celda-consolida').forEach(celda => {
           celda.addEventListener('click', () => {
               const p = datos.padres.find(x => x.padre === celda.dataset.padre);

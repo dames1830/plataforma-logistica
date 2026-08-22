@@ -180,10 +180,19 @@ export const consolidacionDeReserva = (filas, idx) => {
     let acum = 0;
     const fragmentados = conReduce.map(p => {
         acum += p.n;
+        /* `ubic` es el detalle para IR A BUSCARLAS: ubicacion, selectivo, LPN de la
+           paleta, pares, tallas, y con quien comparte sitio. Va ORDENADO DE MENOR A
+             MAYOR, porque consolidar es mover las paletas mas flacas a las mas llenas:
+           las primeras `reduce` son las que hay que bajar.
+           NO se guarda en la foto del dia -ver fotoChicaDeReserva-: son ~570 filas y
+           triplicarian el peso del historico. Sirve para el Excel del dia. */
+        const ubic = Object.keys(p.cols).reduce((a, c) => a.concat(p.cols[c]), [])
+                           .sort((x, y) => x.p - y.p);
         return { padre: p.padre, n: p.n, tot: p.tot, cap: p.cap, quedan: p.quedan,
                  reduce: p.reduce, sel: Object.keys(p.cols).length,
                  g: (idx.porSku.get(p.padre) || {}).detalle || '',
-                 ac: ubicFrag ? Math.round(1000 * acum / ubicFrag) / 10 : 0 };
+                 ac: ubicFrag ? Math.round(1000 * acum / ubicFrag) / 10 : 0,
+                 ubic: ubic };
     }).slice(0, 30);
 
     return { matriz: matriz, padres: padres.slice(0, 15), totalPadres: padres.length,
@@ -229,7 +238,10 @@ export const selloDeLaFoto = (ahora, anclaNoche) => {
 export const fotoChicaDeReserva = (datos, sello) => (!datos || !sello) ? null : ({
     fecha: sello.fecha, hora: sello.hora,
     matriz: datos.matriz, padres: datos.padres, totalPadres: datos.totalPadres,
-    // Los 30 fragmentados van sin sus ubicaciones una por una, asi que la foto sigue chica.
-    fragmentados: datos.fragmentados, fragTotal: datos.fragTotal, fragUbic: datos.fragUbic
+    // Los 30 fragmentados van SIN su detalle de ubicaciones -son ~570 filas y triplicarian
+    // el peso-, asi que la foto del dia sigue chica. El detalle solo existe para el dia que
+    // se esta mirando en vivo, que es cuando sirve para ir a mover paletas.
+    fragmentados: (datos.fragmentados || []).map(({ ubic, ...resto }) => resto),
+    fragTotal: datos.fragTotal, fragUbic: datos.fragUbic
 });
 
