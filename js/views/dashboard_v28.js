@@ -1,29 +1,29 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0337';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0338';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0337';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0337';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0337';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0337';
-import * as metasService from '../services_v245/metasService.js?v=29.0337';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0337';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0337';
+import * as adminService from '../services_v245/adminService.js?v=29.0338';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0338';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0338';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0338';
+import * as metasService from '../services_v245/metasService.js?v=29.0338';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0338';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0338';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
-         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto } from '../reportes/reserva_consolidacion.js?v=29.0337';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0337';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0337';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0337';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0337';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0337';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0337';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0337';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0337';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0337';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0337';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0337';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0337';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0337';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0337';
-import { montarSlotting } from './slotting.js?v=29.0337';
+         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto } from '../reportes/reserva_consolidacion.js?v=29.0338';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0338';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0338';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0338';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0338';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0338';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0338';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0338';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0338';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0338';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0338';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0338';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0338';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0338';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0338';
+import { montarSlotting } from './slotting.js?v=29.0338';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -380,7 +380,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0337';
+const VERSION = '29.0338';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4682,7 +4682,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0337');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0338');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16914,7 +16914,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0337 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0338 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24143,7 +24143,27 @@ const renderRFSection = (container) => {
              + '<text x="' + X + '" y="' + (ALTO - 8) + '" fill="#64748b" font-size="9.5"'
              + ' text-anchor="middle">' + String(f).slice(8, 10) + '-' + String(f).slice(5, 7) + '</text>';
       });
-      return '<div style="margin-top:10px;border-top:1px solid rgba(255,255,255,.07);padding-top:8px">'
+      /* EL TITULO Y LA FRASE DE ARRIBA. Daniel, 22-ago-2026: *"que diga: del 11 de agosto al
+         21 de agosto, reserva ha subido 750 ubicaciones"*. Es lo unico escrito del grafico, y
+         es el numero que se lleva al comite: nadie tiene que restar de cabeza el primer punto
+         contra el ultimo.
+
+         NO ES UNA LEYENDA de las que Daniel hizo sacar -esas explicaban colores-. Esta dice
+         el dato. Y dice `subio` o `bajo` segun lo que pasó de verdad: si algun dia la reserva
+         se descarga, el texto tiene que acompañar, no quedar celebrando una subida que no fue. */
+      const dif = serie[n - 1][1] - serie[0][1];
+      const dia = (f) => String(f).slice(8, 10) + '-' + String(f).slice(5, 7);
+      const frase = dif === 0
+          ? 'Del ' + dia(serie[0][0]) + ' al ' + dia(serie[n - 1][0]) + ' la reserva quedó igual'
+          : 'Del ' + dia(serie[0][0]) + ' al ' + dia(serie[n - 1][0]) + ' la reserva '
+            + (dif > 0 ? 'subió' : 'bajó')
+            + ' <b style="color:' + (dif > 0 ? '#f87171' : '#4ade80') + ';font-weight:800">'
+            + num(Math.abs(dif)) + '</b> ubicaciones';
+      return '<div style="margin-top:10px;border-top:1px solid rgba(255,255,255,.07);padding-top:9px">'
+           + '<div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:2px">'
+           + '<span style="font-size:.72rem;font-weight:800;color:#fff;letter-spacing:.5px">'
+           + 'UBICACIONES DE RESERVA</span>'
+           + '<span style="font-size:.74rem;color:var(--text-muted)">' + frase + '</span></div>'
            + '<svg viewBox="0 0 ' + W + ' ' + ALTO + '" style="width:100%;height:auto">' + s + '</svg></div>';
   };
 
