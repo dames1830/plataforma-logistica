@@ -341,6 +341,45 @@ El replenishment de verdad sigue protegido: si bajaron 200 de una reserva de 500
 piso y no se le devuelve nada al rack. Lo que falta es **saber** que bajó, en vez de adivinarlo
 — ver `cadena-de-modulos`: el módulo anterior tiene que dejar constancia de lo que mandó bajar.
 
+### RESUELTO (21-ago-2026): el Análisis de Buffer deja constancia de lo que mandó bajar
+
+Eso que faltaba ya está. **El Análisis de Buffer publica su lista de artículos al servidor**
+—área `buffer_bajado_dia`, un cajón por día, se guardan 7— igual que lo hacía Replenishment con
+`replenishment_dia`. La sugerencia de almacenaje la lee al armar su contexto (`bajadoPorBuffer`,
+dos días hacia atrás) y `casoDelItem` la pregunta **antes que la letra del buffer**.
+
+**Por qué preguntarle al ANÁLISIS y no solo al Replenishment.** Daniel lo corrigió el
+21-ago-2026: el análisis mira **tres fuentes** —el pedido de comercial, el Replenishment y otras
+solicitudes— y Replenishment es solo una. Las otras dos no dejaban rastro en ninguna parte: el
+análisis publicaba los totales (paletas y unidades) y la lista se quedaba en el navegador de la
+PC que lo corrió.
+
+**Lo que eso provocaba.** Un artículo bajado por un pedido, con menos de 20 pares en el almacén,
+salía **CÓDIGO NUEVO**: 60% abajo y el 40% **de vuelta a reserva**. Sus palabras: *"Si el
+análisis lo baja es porque se necesita en piso activo. Es ilógico que un módulo lo baje y el
+otro módulo lo vuelva a subir."*
+
+    Si el Análisis de Buffer lo mandó bajar -por la fuente que sea-  ->  REPOSICIÓN
+                                                                         se almacena TODO,
+                                                                         no vuelve nada al rack
+
+**Va antes de mirar la letra, y es a propósito:** la letra dice dónde lo dejaron, no quién lo
+pidió. Si el A se llena y la mercadería bajada termina en otra columna, la decisión no puede
+cambiar por eso. Y no puede dar falso positivo: si está en la lista, de verdad bajó de reserva.
+
+**El escolar le sigue ganando**, como a todo lo demás.
+
+**LA TAREA NO SEPARA NADA.** Daniel, mismo día: *"la tarea tiene que agarrar todo lo que dice en
+el buffer y almacenarlo, no separes nada de lo que es picking"*. El circuito real es: de
+madrugada el montacarguista baja, los chicos separan y se matricula en el buffer; en la mañana
+picking se lleva lo suyo; a la noche se almacena lo que quedó. La ola de almacenaje toma el
+buffer entero tal como está.
+
+**Y el código nuevo queda definido por dos condiciones, no una:**
+
+1. que **nadie lo mandó bajar** —ni el Análisis de Buffer ni Replenishment—, **y**
+2. que tiene **menos de 20 pares** en el almacén (activo + reserva).
+
 ### El escolar manda sobre todo lo demás
 
 Se pregunta **antes** que cualquier otra regla, incluso antes que el buffer B — excepción

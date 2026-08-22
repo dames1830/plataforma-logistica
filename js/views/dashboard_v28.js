@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0320';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0321';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0320';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0320';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0320';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0320';
-import * as metasService from '../services_v245/metasService.js?v=29.0320';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0320';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0320';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0320';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0320';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0320';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0320';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0320';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0320';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0320';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0320';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0320';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0320';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0320';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0320';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0320';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0320';
-import { montarSlotting } from './slotting.js?v=29.0320';
+import * as adminService from '../services_v245/adminService.js?v=29.0321';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0321';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0321';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0321';
+import * as metasService from '../services_v245/metasService.js?v=29.0321';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0321';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0321';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0321';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0321';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0321';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0321';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0321';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0321';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0321';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0321';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0321';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0321';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0321';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0321';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0321';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0321';
+import { montarSlotting } from './slotting.js?v=29.0321';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0320';
+const VERSION = '29.0321';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4077,6 +4077,100 @@ export const renderDashboard = async (container, user, onLogout) => {
      *   análisis del martes sigue en el navegador el jueves, y publicarlo como meta de
      *   hoy pondría a medir el turno contra lo que se pidió bajar hace dos días.
      */
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * LA LISTA DE LO QUE EL ANÁLISIS MANDÓ BAJAR, AL SERVIDOR.
+     *
+     * Es la pieza que le faltaba a la cadena. `publicarMetaDelBuffer` —acá abajo— manda los
+     * TOTALES para el reporte del turno; esto manda QUIÉNES, que es lo que la sugerencia de
+     * almacenaje necesita para no devolver al rack algo que el buffer acaba de bajar.
+     *
+     * MISMO FILTRO QUE LA META: solo las líneas de nivel ALTO con `QTY BUFFER` > 0. Son las
+     * que de verdad bajan de reserva; el resto ya estaba abajo.
+     *
+     * SE GUARDA LA FUENTE, y no es adorno: son las tres del análisis —el pedido de comercial,
+     * el Replenishment y otras solicitudes— y saber por cuál bajó un artículo es lo que
+     * permite explicar la decisión en el papel y en el motivo de la sugerencia.
+     *
+     * Sin `await` y sin romper nada si el servidor no contesta: el análisis ya está en
+     * pantalla y esto no puede retrasarlo. Si falla, la sugerencia se queda con la prueba
+     * vieja, que es como venía trabajando.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    const publicarBajadaDelBuffer = async (res) => {
+      try {
+        const detalle = res && (res.detalle || res.detallePallets);
+        if (!Array.isArray(detalle) || !detalle.length) return false;
+
+        const porSku = new Map();
+        detalle.forEach(p => {
+          if (!p) return;
+          const nivel = String(p.NIVEL || '').toUpperCase();
+          const q = Number(p['QTY BUFFER']) || 0;
+          if (!(p.ES_ALTO === true || nivel.includes('ALTO')) || q <= 0) return;
+          const s7 = String(p.Articulo || p.SKU || '').trim().substring(0, 7);
+          if (!s7) return;
+          const fuente = String(p.FUENTE || '').trim();
+          const y = porSku.get(s7) || { q: 0, fuentes: new Set() };
+          y.q += q;
+          if (fuente) y.fuentes.add(fuente);
+          porSku.set(s7, y);
+        });
+        if (!porSku.size) {
+          console.log('[BUFFER] El análisis no mandó bajar nada de reserva: no se publica.');
+          return false;
+        }
+
+        const lista = [...porSku.entries()]
+          .map(([s7, y]) => [s7, Math.round(y.q), [...y.fuentes].join(' + ')]);
+
+        const porFuente = {};
+        detalle.forEach(p => {
+          if (!p) return;
+          const nivel = String(p.NIVEL || '').toUpperCase();
+          const q = Number(p['QTY BUFFER']) || 0;
+          if (!(p.ES_ALTO === true || nivel.includes('ALTO')) || q <= 0) return;
+          const f = String(p.FUENTE || '(sin fuente)').trim();
+          porFuente[f] = (porFuente[f] || 0) + Math.round(q);
+        });
+
+        const fecha = getLogicalDate();
+        const corrida = { fecha, generado: selloLocalTarea(),
+                          skus: lista.length,
+                          pares: lista.reduce((a, p) => a + p[1], 0),
+                          porFuente, lista };
+
+        /* Se relee el cajón entero antes de escribir: guarda una corrida por día y no puede
+           pisar las de los otros días. Misma mecánica que publicarCorridaReplenishment. */
+        let cajon = {};
+        try {
+          const r = await fetch(`${_urlBufferBajado()}&t=${Date.now()}`);
+          if (r.ok) {
+            const cuerpo = await r.json();
+            const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+            if (datos && typeof datos === 'object' && !Array.isArray(datos)) cajon = datos;
+          }
+        } catch (e) { /* se sigue con el cajón vacío */ }
+        cajon[fecha] = corrida;
+
+        const recortado = {};
+        Object.keys(cajon).sort().slice(-DIAS_REPL_GUARDADOS).forEach(k => { recortado[k] = cajon[k]; });
+
+        const envio = await fetch(_urlBufferBajado(), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(recortado)
+        });
+        if (!envio.ok) throw new Error('El servidor respondió ' + envio.status);
+
+        console.log(`[BUFFER] ✅ Bajada del ${fecha} publicada: ${corrida.skus} SKU, `
+                  + `${corrida.pares.toLocaleString('es-PE')} pares · `
+                  + Object.entries(porFuente).map(([f, q]) => `${f}: ${q.toLocaleString('es-PE')}`).join(' · '));
+        return true;
+      } catch (e) {
+        console.warn('[BUFFER] ⚠️ No se pudo publicar lo que se mandó bajar; la sugerencia '
+                   + 'de almacenaje se queda con la prueba vieja:', e && e.message);
+        return false;
+      }
+    };
+
     const publicarMetaDelBuffer = async (res, desdeCache) => {
       try {
         if (desdeCache) {
@@ -4322,6 +4416,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                await: el análisis ya está en pantalla y esto no debe
                                retrasarlo ni romperlo si el servidor no contesta. */
                             publicarMetaDelBuffer(res);
+                            /* Y QUIÉNES, no solo cuántos. Sin esta lista el almacenaje no
+                               puede saber que el buffer bajó ese artículo, y termina
+                               mandándole a reserva el 40% de algo que acaba de bajar. */
+                            publicarBajadaDelBuffer(res);
 
                         } else {
                             showPremiumAlert("Error de Maestros", "No se pudo realizar el análisis porque faltan los archivos maestros.", "error");
@@ -4581,7 +4679,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0320');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0321');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6340,6 +6438,27 @@ const AREA_REPL_DIA = 'replenishment_dia';
 const DIAS_REPL_GUARDADOS = 7;
 const _urlReplDia = () =>
   `${window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com'}/api/logistics/${AREA_REPL_DIA}?date=MASTER`;
+
+/* LO QUE EL ANÁLISIS DE BUFFER MANDÓ BAJAR, publicado igual que la corrida del
+ * Replenishment y en un cajón por día.
+ *
+ * POR QUÉ HACÍA FALTA. Hasta el 21-ago-2026 la sugerencia de almacenaje solo le podía
+ * preguntar al Replenishment, que es UNA de las tres fuentes del análisis; las otras dos
+ * —el pedido de comercial y otras solicitudes— no dejaban rastro en ninguna parte: el
+ * análisis publicaba solo los totales (paletas y unidades) y la lista de artículos se
+ * quedaba en el navegador de la PC que lo corrió.
+ *
+ * La consecuencia la vio Daniel: un artículo que el análisis bajó por un pedido, con menos
+ * de 20 pares en el almacén, salía clasificado CÓDIGO NUEVO — o sea 60% abajo y el 40%
+ * DE VUELTA A RESERVA. *"Es ilógico que un módulo lo baje y el otro módulo lo vuelva a
+ * subir"*. Si el análisis lo bajó, es porque abajo se necesita: se almacena todo.
+ *
+ * Y la tarea no separa nada: *"la tarea tiene que agarrar todo lo que dice en el buffer y
+ * almacenarlo, no separes nada de lo que es picking"*. De madrugada baja y se matricula,
+ * en la mañana picking se lleva lo suyo, y a la noche se almacena lo que quedó. */
+const AREA_BUFFER_BAJADO = 'buffer_bajado_dia';
+const _urlBufferBajado = () =>
+  `${window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com'}/api/logistics/${AREA_BUFFER_BAJADO}?date=MASTER`;
 
 /**
  * Trae un cajón de la hora, o null si lo que hay no sirve para medir.
@@ -16792,7 +16911,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0320 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0321 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -19356,6 +19475,53 @@ const renderRFSection = (container) => {
       }
     } catch (e) { console.warn('[Sugerencia] no se pudo leer las corridas de Replenishment:', e && e.message); }
 
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * Y LO QUE MANDÓ BAJAR EL ANÁLISIS DE BUFFER — LAS TRES FUENTES, NO UNA.
+     *
+     * El Replenishment de arriba es solo una de las tres que mira el análisis. Las otras dos
+     * —el pedido de comercial y otras solicitudes— también hacen bajar mercadería de reserva,
+     * y hasta el 21-ago-2026 no dejaban rastro: el análisis publicaba los totales y la lista
+     * de artículos se quedaba en el navegador de la PC que lo corrió.
+     *
+     * Daniel, 21-ago-2026: *"si el análisis lo baja es porque se necesita en piso activo. Es
+     * ilógico que un módulo lo baje y el otro módulo lo vuelva a subir"*. Sin esta lista, un
+     * artículo bajado por un pedido, con menos de 20 pares en el almacén, salía CÓDIGO NUEVO:
+     * 60% abajo y el 40% de vuelta al rack.
+     *
+     * DOS DÍAS, igual que el Replenishment: lo que bajó de madrugada sigue en el buffer hasta
+     * la noche —picking se lleva lo suyo en la mañana y recién después se almacena—, así que
+     * la corrida de anoche todavía manda sobre la ola de hoy.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    let bajadoPorBuffer = null;
+    try {
+      const res = await fetch(`${_urlBufferBajado()}&t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const cajon = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        if (cajon && typeof cajon === 'object' && !Array.isArray(cajon)) {
+          const dias = Object.keys(cajon).sort().slice(-2);
+          if (dias.length) {
+            bajadoPorBuffer = new Map();
+            dias.forEach(d => {
+              (((cajon[d] || {}).lista) || []).forEach(fila => {
+                if (!Array.isArray(fila)) return;
+                const s7 = String(fila[0] || '').trim().substring(0, 7);
+                const q = Number(fila[1]) || 0;
+                if (!s7 || q <= 0) return;
+                const y = bajadoPorBuffer.get(s7) || { pares: 0, fuentes: new Set() };
+                y.pares += q;
+                String(fila[2] || '').split('+').map(x => x.trim()).filter(Boolean)
+                  .forEach(f => y.fuentes.add(f));
+                bajadoPorBuffer.set(s7, y);
+              });
+            });
+            console.log(`[Sugerencia] Análisis de Buffer: ${bajadoPorBuffer.size} artículos `
+                      + `bajados de reserva en ${dias.length} corrida(s) (${dias.join(', ')}).`);
+          }
+        }
+      }
+    } catch (e) { console.warn('[Sugerencia] no se pudo leer lo que bajó el Análisis de Buffer:', e && e.message); }
+
     // La reserva se pide DIRECTO: getAreaData no consulta la nube para las áreas que
     // empiezan con 'analisis_sku', así que en una PC que no subió el archivo daría cero.
     let reservaRaw = [];
@@ -19561,7 +19727,7 @@ const renderRFSection = (container) => {
     });
 
     return { ficha, ocupados, casaDe, porTallaDe, reservaDe, lineasBufferDe, origenDe, libres,
-             ocupantes, mandadoABajar };
+             ocupantes, mandadoABajar, bajadoPorBuffer };
   };
 
   /**
@@ -19967,6 +20133,29 @@ const renderRFSection = (container) => {
     if (origen && origen.has('D')) {
       return { nombre: 'catalogo', regla: { modo: 'todo', valor: 0 },
                motivo: 'Viene del buffer D: va entero a la columna de catálogo.' };
+    }
+
+    /* LO QUE EL ANÁLISIS DE BUFFER BAJÓ NO VUELVE A SUBIR, VENGA DE LA FUENTE QUE VENGA.
+     *
+     * Va ANTES de mirar la letra del buffer, y eso es a propósito: la letra dice dónde lo
+     * dejaron, no quién lo pidió. Si el A se llena y la mercadería bajada termina en otra
+     * columna, la decisión no puede cambiar por eso. Lo que manda es que un módulo anterior
+     * —con todo su cálculo— decidió que ese artículo hacía falta abajo.
+     *
+     * Y no puede dar falso positivo: si está en la lista, es porque de verdad bajó de reserva.
+     *
+     * La tarea igual se arma con TODO lo que hay en el buffer, sin separar lo que picking se
+     * va a llevar: *"la tarea tiene que agarrar todo lo que dice en el buffer y almacenarlo,
+     * no separes nada de lo que es picking"*. De madrugada baja y se matricula, en la mañana
+     * picking se lleva lo suyo, y a la noche se almacena lo que quedó. */
+    const bajada = ctx.bajadoPorBuffer && ctx.bajadoPorBuffer.get(s7);
+    if (bajada) {
+      const de = bajada.fuentes && bajada.fuentes.size
+        ? [...bajada.fuentes].join(' + ') : 'el análisis';
+      return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
+               motivo: `El Análisis de Buffer lo mandó bajar por ${de} `
+                     + `(${Math.round(bajada.pares).toLocaleString('es-PE')} pares): se almacena `
+                     + `todo, no vuelve nada al rack.` };
     }
 
     if (origen && origen.has('B')) {
