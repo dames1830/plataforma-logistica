@@ -1,27 +1,27 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0319';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0320';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0319';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0319';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0319';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0319';
-import * as metasService from '../services_v245/metasService.js?v=29.0319';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0319';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0319';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0319';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0319';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0319';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0319';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0319';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0319';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0319';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0319';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0319';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0319';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0319';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0319';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0319';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0319';
-import { montarSlotting } from './slotting.js?v=29.0319';
+import * as adminService from '../services_v245/adminService.js?v=29.0320';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0320';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0320';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0320';
+import * as metasService from '../services_v245/metasService.js?v=29.0320';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0320';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0320';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0320';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0320';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0320';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0320';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0320';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0320';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0320';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0320';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0320';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0320';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0320';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0320';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0320';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0320';
+import { montarSlotting } from './slotting.js?v=29.0320';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +378,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0319';
+const VERSION = '29.0320';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3605,6 +3605,61 @@ export const renderDashboard = async (container, user, onLogout) => {
 
     const isLoaded = hasData && hasData.length > 0;
 
+    /* PEDIDOS ESTÁ EN LA NUBE, PERO CONSERVA LOS DOS BOTONES.
+     *
+     * Desde el 21-ago-2026 lo publica el robot: cuando entra el correo de comercial
+     * baja una foto del WMS, cruza y deja acá los SKU con su pendiente. Daniel:
+     * *"pon el ícono de la nube y pon la frase en la nube, pero déjame las opciones
+     * que te dije, el reemplazar el archivo o eliminarlo"*.
+     *
+     * POR ESO NO VA POR `esAreaDeLaNube()`, que es el camino de los stocks y saca el
+     * botón de subir. Acá los botones son el punto: los usa para correr el análisis
+     * SIN pedidos —solo Replenishment u Otras solicitudes— y eso tiene que poder
+     * hacerse. Es la única tarjeta que es de la nube y a la vez se puede tocar.
+     *
+     * Y cuando la quita, la tarjeta lo dice con la hora. Un "VACÍO" a secas no
+     * distingue "lo quité yo hace un rato" de "nunca hubo nada", y desde que el
+     * archivo lo pone el robot esa diferencia es la que explica un análisis sin
+     * pedidos. Ver getVacioMeta.
+     */
+    const delRobot = (area === 'buffer');
+    const vacioTs = (delRobot && !isLoaded) ? (getVacioMeta(area) || {}).ts : 0;
+    const unidades = (delRobot && isLoaded)
+        ? hasData.reduce((a, f) => a + ((Number(f['Cantidad solicitada']) || 0)
+                                      - (Number(f['Cantidad asignada']) || 0)), 0)
+        : 0;
+    /* UN PENDIENTE DE AYER NO SE PUEDE VER IGUAL QUE UNO DE HOY.
+     *
+     * Si comercial no manda el correo, el robot no arma nada y acá queda el archivo
+     * del día anterior. Eso es lo que Daniel eligió —*"sería mejor dejarlo así, con
+     * la fecha anterior"*— y es lo correcto: borrarlo dejaría al buffer sin nada que
+     * bajar. Pero entonces la tarjeta muestra un archivo viejo con toda la cara de
+     * estar al día, y el análisis saldría contra un pendiente que ya no es.
+     *
+     * La fecha sola no alcanza: hay que leerla y hacer la cuenta. Así que el estado
+     * mismo lo dice y se pone ámbar. Se compara por DÍA DE CALENDARIO, no por horas:
+     * publicado ayer 19:34 y mirado hoy 08:00 son 12 horas, pero es de ayer. */
+    const soloDia = (x) => { const d = new Date(x); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+    const diasViejo = (delRobot && isLoaded && meta && meta.ts)
+        ? Math.round((soloDia(Date.now()) - soloDia(meta.ts)) / 86400000) : 0;
+    const alDia = !(diasViejo > 0);
+    const colorEstado = delRobot ? (isLoaded ? (alDia ? '#22c55e' : '#f59e0b') : '#f59e0b')
+                                 : (isLoaded ? '#fff' : 'var(--text-muted)');
+    const textoEstado = delRobot
+        ? (isLoaded ? (alDia ? 'EN LA NUBE'
+                             : (diasViejo === 1 ? 'EN LA NUBE, PERO ES DE AYER'
+                                                : `EN LA NUBE, PERO ES DE HACE ${diasViejo} DÍAS`))
+                    : 'QUITADO DE LA NUBE')
+        : (isLoaded ? 'LISTO' : 'VACÍO');
+    const horaVacio = vacioTs
+        ? new Date(vacioTs).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false })
+        : '';
+    const detalle = delRobot
+        ? (isLoaded
+            ? `${hasData.length.toLocaleString('es-PE')} regs · ${Math.round(unidades).toLocaleString('es-PE')} unidades`
+            : (horaVacio ? `lo quitaron a las ${horaVacio}` : ''))
+        : (isLoaded ? `${hasData.length.toLocaleString()} regs` : '');
+
     // EL STOCK YA NO SE CARGA A MANO: lo publica el robot a las 19:00 y todas las PC lo
     // leen de la nube. Se deja la tarjeta a la vista —con cuántas filas hay y de cuándo
     // son— porque saber si el dato está fresco sigue importando; lo que se saca es el
@@ -3641,29 +3696,30 @@ export const renderDashboard = async (container, user, onLogout) => {
     }
 
     div.innerHTML = `
-      <div style="background:rgba(15, 23, 42, 0.4); border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s; border-left:4px solid ${isLoaded ? '#22c55e' : '#64748b'};">
+      <div style="background:rgba(15, 23, 42, 0.4); border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s; border-left:4px solid ${delRobot ? colorEstado : (isLoaded ? '#22c55e' : '#64748b')};">
           <div style="display:flex; align-items:center; gap:1.2rem;">
-              <div style="width:36px; height:36px; background:${isLoaded ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${isLoaded ? '#22c55e' : 'var(--text-muted)'}; border:1px solid ${isLoaded ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.05)'};">
-                  ${ext === '.csv' ? '📄' : '📊'}
+              <div style="width:36px; height:36px; background:${(isLoaded && !delRobot) ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${delRobot ? colorEstado : (isLoaded ? '#22c55e' : 'var(--text-muted)')}; border:1px solid ${(isLoaded && !delRobot) ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.05)'};">
+                  ${delRobot ? '☁️' : (ext === '.csv' ? '📄' : '📊')}
               </div>
               <div style="display:flex; flex-direction:column;">
                   <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${label}</span>
                   <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
-                      <span style="color:${isLoaded ? '#fff' : 'var(--text-muted)'}; font-weight:700; font-size:0.85rem;">${isLoaded ? 'LISTO' : 'VACÍO'}</span>
-                      ${isLoaded ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
-                                    <span style="color:var(--text-muted); font-size:0.75rem;">${hasData.length.toLocaleString()} regs</span>` : ''}
+                      <span style="color:${colorEstado}; font-weight:700; font-size:0.85rem;">${textoEstado}</span>
+                      ${detalle ? `<span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                                    <span style="color:var(--text-muted); font-size:0.75rem;">${detalle}</span>` : ''}
                   </div>
               </div>
           </div>
           
           <div style="display:flex; align-items:center; gap:1.5rem;">
-              <div style="text-align:right; min-width:180px;">
-                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">ÚLTIMA CARGA</div>
-                  <div style="font-size:0.75rem; color:${isLoaded ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; font-weight:700;">${dateStr}</div>
+              <div style="text-align:right; min-width:${delRobot ? '210' : '180'}px;">
+                  <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">${delRobot ? 'PUBLICADO POR EL ROBOT' : 'ÚLTIMA CARGA'}</div>
+                  <div style="font-size:0.75rem; color:${isLoaded ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; font-weight:700;">${isLoaded ? dateStr : (delRobot ? 'quitado' : dateStr)}</div>
+                  ${(delRobot && !alDia) ? `<div style="font-size:0.65rem; color:#f59e0b; font-weight:700; margin-top:2px;">comercial no mandó el correo</div>` : ''}
               </div>
               
               <div style="display:flex; gap:0.4rem;">
-                  <label title="Subir Nuevo Archivo" style="background:${isLoaded ? 'rgba(79, 70, 229, 0.1)' : 'var(--primary)'}; color:${isLoaded ? 'var(--primary)' : '#fff'}; border:1px solid ${isLoaded ? 'var(--primary)' : 'transparent'}; width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                  <label title="${delRobot ? (isLoaded ? 'Poner otro archivo en vez del que dejó el robot' : 'Poner un archivo a mano') : 'Subir Nuevo Archivo'}" style="background:${isLoaded ? 'rgba(79, 70, 229, 0.1)' : 'var(--primary)'}; color:${isLoaded ? 'var(--primary)' : '#fff'}; border:1px solid ${isLoaded ? 'var(--primary)' : 'transparent'}; width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                       <input type="file" id="up_${area}" accept="${ext}" style="display:none;">
                       ${isLoaded ? '🔄' : '📤'}
                   </label>
@@ -4525,7 +4581,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0319');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0320');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -10041,6 +10097,23 @@ const renderRFSection = (container) => {
                   </div>
                 </td>
               </tr>
+              <tr style="background:rgba(255,255,255,0.03);">
+                <td colspan="2" style="padding:0.5rem 1rem; color:var(--text-muted); font-size:0.72rem; font-weight:700; letter-spacing:0.6px;">EL PENDIENTE DE DESPACHO</td>
+              </tr>
+              <tr style="border-top:1px solid var(--border);">
+                <td style="padding:0.7rem 1rem;">
+                  <span style="color:#fff; font-weight:600;">No se arma antes de</span><br>
+                  <span style="color:var(--text-muted); font-size:0.75rem;">el correo se guarda a la hora que llegue; esto es lo que espera el <b>cruce</b>. La foto del WMS tiene que traer los pedidos del día: a las 06:57 no hay ninguno, y a las 18:30 faltan los de la tarde. Si comercial manda a las 20:15, se arma a las 20:15</span>
+                </td>
+                <td style="padding:0.7rem 1rem;">
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="time" data-c="pendienteDesde" value="${esc(cor.pendienteDesde)}"
+                           style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:6px;
+                                  color:#fff; padding:0.35rem 0.5rem; font-family:monospace; font-size:0.85rem;">
+                    <span style="color:var(--text-muted); font-size:0.75rem;">de fábrica 19:00</span>
+                  </div>
+                </td>
+              </tr>
               <tr style="border-top:1px solid var(--border);">
                 <td style="padding:0.7rem 1rem;">
                   <span style="color:#fff; font-weight:600;">Días de la semana</span><br>
@@ -10171,6 +10244,218 @@ const renderRFSection = (container) => {
     };
   };
 
+  /* ══════════════════════════════════════════════════════════════════════════
+   * LA HOJA DE LOS ROBOTS — Configuración › Información
+   *
+   * La pidió Daniel el 21-ago-2026: *"me pones una información ahí, el robot tal,
+   * su descripción, las horas o cuándo se ejecuta y qué es lo que hace, porque me
+   * olvido, tantos robots que hacemos"*. Contaba cinco y son diez: los dos que no
+   * tienen hora propia —el correo y el pendiente— no se los acordaba, y el de las
+   * 19:20 encadena por dentro otras tres cosas que él ve como reportes sueltos.
+   *
+   * LAS HORAS NO SE ESCRIBEN ACÁ, SE LEEN. Salen de la misma configuración que
+   * usa el servidor —Configuración › Parámetros— así que el día que mueva el
+   * ancla, esta hoja lo dice sola. Una página de ayuda con los horarios copiados a
+   * mano miente en cuanto alguien cambia uno, y encima nadie se entera.
+   *
+   * Va al LADO de Mantenimiento y no adentro: Mantenimiento es la Zona de Peligro
+   * —el botón que borra asistencia y performance— y esto se consulta seguido.
+   * ══════════════════════════════════════════════════════════════════════════ */
+  const INFO_ROBOTS = [
+    { id: 'ancla_noche', nombre: 'Stock ancla · noche', archivo: 'wms_automation_final.py', wms: true,
+      que: 'La foto sobre la que se calcula todo el turno. Baja Stock Activo y Stock Reserva, y encadena otras tres cosas por dentro:',
+      encadena: ['<b>Slotting</b> — la sugerencia de ubicación del día',
+                 '<b>Evolución</b> — la foto histórica de cada artículo',
+                 '<b>Rotación y Permanencia</b> — el reporte mensual'],
+      deja: 'Almacenaje, Slotting, Layout, Descargas, y el stock que leen todas las pantallas' },
+
+    { id: 'ancla_manana', nombre: 'Stock ancla · mañana', archivo: 'wms_automation_final.py', wms: true,
+      que: 'La misma foto, pero del día que empieza. Es contra la que se mide el avance de la jornada.',
+      deja: 'Las mismas pantallas, con la foto del día nuevo' },
+
+    { id: 'stock_hora', nombre: 'Stock por hora', archivo: 'stock_por_hora.py', wms: true,
+      que: 'El avance del turno: baja los dos stocks otra vez, sin armar Slotting ni reportes. Tarda unos 8 minutos.',
+      deja: 'Layout de Activo y de Reserva · el cajón de la hora' },
+
+    { id: 'picking_hora', nombre: 'Picking por hora', archivo: 'picking_por_hora.py', wms: true,
+      que: 'El avance del picking del día, hora por hora.',
+      deja: 'KPI Picking · el avance del día' },
+
+    { id: 'reportes', nombre: 'Reportes diarios', archivo: 'picking_y_orden.py', wms: true,
+      que: 'Los dos archivos del día que cerró —Avance de Picking y Detalle de Orden— más el pendiente de <b>365 días hacia atrás</b>, que es todo lo que sigue sin atenderse.',
+      deja: 'La carpeta de OneDrive; los usan los reportes de picking y el pendiente' },
+
+    { id: 'correo_guias', nombre: 'Correo de comercial', archivo: 'correo_guias.py', wms: false,
+      cuando: 'ventana',
+      que: 'Entra al Outlook del servidor, busca el correo con las guías de prescripciones y guarda el Excel. <b>No marca como leído, no mueve, no borra y no responde nada.</b> Antes de guardar abre el adjunto y comprueba que traiga una columna GUIA con filas debajo.',
+      deja: 'La carpeta <code>Correos Picking</code>' },
+
+    { id: 'pendiente', nombre: 'Pendiente de despacho', archivo: 'armar_pendiente.py', wms: true,
+      cuando: 'correo',
+      que: 'Baja del WMS una foto <b>de ese momento</b>, la cruza contra los correos de comercial y arma la lista de lo que falta despachar. Si no consigue una foto posterior al correo, <b>no publica</b>: queda el pendiente del día anterior.',
+      deja: 'Zona Buffer › Pendiente · la tarjeta PEDIDOS · el Excel en Descargas' },
+
+    { id: 'sin_salida', nombre: 'SKUs sin salida', archivo: 'sku_sin_salida.py', wms: false,
+      que: 'El cuadro de lo que llegó al almacén y no se movió.',
+      deja: 'Análisis SKU · SKUs sin salida' },
+
+    { id: 'archivado', nombre: 'Archivar tareas viejas', archivo: 'archivar_tareas.py', wms: false,
+      que: 'Manda al histórico las tareas de almacenaje que pasaron de 30 días, para que la pantalla del día no cargue con meses de espalda.',
+      deja: 'Almacenaje · Historial' },
+
+    { id: 'respaldo', nombre: 'Respaldo de datos', archivo: 'generar_respaldo.py', wms: false,
+      que: 'La copia de seguridad de las <b>63 áreas</b> del servidor. Es la que permite volver atrás si algo se rompe.',
+      deja: 'Descargas · Punto de Restauración' }
+  ];
+
+  /** Quién cede y quién entra igual. Sale de `bloqueo_wms.py`, que es el candado real. */
+  const INFO_TURNOS = [
+    { quien: 'Stock ancla (noche y mañana)', manda: true,
+      que: 'Espera 12 minutos y <b>entra igual</b>. Perder la foto del turno es peor que un cruce: no se recupera.' },
+    { quien: 'Reportes diarios', manda: true,
+      que: 'Espera 15 minutos y <b>entra igual</b>. Corre una vez al día; si se saltea, ese día no lo baja nadie.' },
+    { quien: 'Stock por hora', manda: false,
+      que: '<b>Cede.</b> Se saltea esa hora y vuelve en 60 minutos.' },
+    { quien: 'Picking por hora', manda: false,
+      que: '<b>Cede.</b> Se saltea esa hora y vuelve en 60 minutos.' },
+    { quien: 'Pendiente de despacho', manda: false,
+      que: '<b>Cede</b> — es el que más cede de todos. Espera 20 minutos, no baja nada, no publica, y <b>reintenta cada 10 minutos hasta el fin de la ventana</b>. Mientras tanto queda el pendiente del día anterior.' }
+  ];
+
+  const textoDias = (d) => {
+    if (!d) return '';
+    const on = robotsService.DIAS.filter(x => d[x.id]);
+    if (on.length === 7) return 'todos los días';
+    if (on.length === 6 && !d.dom) return 'lunes a sábado';
+    if (!on.length) return 'ningún día';
+    return on.map(x => x.id).join(' · ');
+  };
+
+  const renderInfoRobots = async (destino) => {
+    // Propia y no la de renderHorariosRobot: aquella vive DENTRO de esa funcion y
+    // desde aca no existe. Compilaria igual y reventaria recien al dibujar.
+    const esc = (s) => String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    destino.innerHTML = `<div style="text-align:center; padding:2rem;"><div class="spinner"></div>
+        <p style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Leyendo los horarios del servidor...</p></div>`;
+
+    // Se traen de la web -no del caché- para que la hoja diga lo que de verdad va a
+    // pasar esta noche. Si el servidor no contesta, las funciones de abajo caen solas
+    // al último valor leído; nunca queda en blanco.
+    let cfg, cor;
+    try { cfg = await robotsService.cargarRobots(); }
+    catch (e) { cfg = robotsService.robotsActual(); }
+    try { cor = await robotsService.cargarCorreoGuias(); }
+    catch (e) { cor = robotsService.correoGuiasActual(); }
+
+    const cuandoDe = (r) => {
+      if (r.cuando === 'ventana') {
+        return { hora: `${cor.desde} a ${cor.hasta}`, dias: `${textoDias(cor.dias)} · mira cada 10 min` };
+      }
+      if (r.cuando === 'correo') {
+        return { hora: 'lo dispara el correo', dias: `nunca antes de las ${cor.pendienteDesde}` };
+      }
+      const c = cfg[r.id];
+      if (!c) return { hora: '—', dias: '' };
+      if (!c.activa) return { hora: 'apagado', dias: textoDias(c.dias) };
+      const t = robotsService.TAREAS.find(x => x.id === r.id);
+      if (t && t.tipo === 'cada') {
+        const cada = robotsService.CADA.find(x => x.min === c.cadaMin);
+        return { hora: `${cada ? cada.texto : 'cada ' + c.cadaMin + ' min'}, al :${String(c.minuto).padStart(2, '0')}`,
+                 dias: textoDias(c.dias) };
+      }
+      return { hora: c.hora, dias: textoDias(c.dias) };
+    };
+
+    const conWms = INFO_ROBOTS.filter(r => r.wms).length;
+    const celda = 'padding:0.75rem 0.8rem; border-top:1px solid var(--border); vertical-align:top;';
+    const titulo = 'color:var(--text-muted); font-size:0.68rem; font-weight:800; letter-spacing:0.8px; padding:0.5rem 0.8rem; background:rgba(255,255,255,0.03);';
+
+    const filas = INFO_ROBOTS.map(r => {
+      const c = cuandoDe(r);
+      const apagado = c.hora === 'apagado';
+      return `
+        <tr>
+          <td style="${celda} width:22%;">
+            <span style="color:#fff; font-weight:700;">${esc(r.nombre)}</span>
+            ${r.wms ? `<span style="display:inline-block; font-size:0.6rem; font-weight:800; letter-spacing:0.5px; padding:2px 7px; border-radius:4px; margin-left:6px; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3);">WMS</span>` : ''}
+            <div style="color:#64748b; font-size:0.68rem; font-family:ui-monospace,Consolas,monospace; margin-top:2px;">${esc(r.archivo)}</div>
+          </td>
+          <td style="${celda} width:14%;">
+            <span style="font-family:ui-monospace,Consolas,monospace; color:${apagado ? '#f87171' : '#fbbf24'}; font-weight:700;">${esc(c.hora)}</span>
+            <span style="color:var(--text-muted); font-size:0.7rem; display:block; margin-top:2px;">${esc(c.dias)}</span>
+          </td>
+          <td style="${celda} width:40%; color:#cbd5e1; line-height:1.55;">
+            ${r.que}
+            ${r.encadena ? `<ul style="margin:0.4rem 0 0 1rem; padding:0; color:var(--text-muted); font-size:0.75rem; line-height:1.8;">
+                ${r.encadena.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
+          </td>
+          <td style="${celda} width:24%; color:var(--text-muted); font-size:0.72rem;">${r.deja}</td>
+        </tr>`;
+    }).join('');
+
+    const turnos = INFO_TURNOS.map(x => `
+        <tr>
+          <td style="${celda} width:34%; color:#fff; font-weight:700;">${esc(x.quien)}</td>
+          <td style="${celda} width:66%; color:#cbd5e1; line-height:1.55;">${x.que}</td>
+        </tr>`).join('');
+
+    destino.innerHTML = `
+      <div class="glass-panel" style="padding:1.4rem 1.5rem; border-radius:16px; margin-bottom:1.2rem;">
+        <h3 style="margin:0 0 0.3rem; font-size:1rem; font-weight:800; letter-spacing:1px; color:#fff;">LOS ROBOTS DEL SERVIDOR</h3>
+        <p style="color:var(--text-muted); font-size:0.78rem; line-height:1.6; margin:0 0 1.1rem;">
+          Son <b style="color:#e2e8f0;">${INFO_ROBOTS.length}</b>. Windows no sabe la hora de ninguno: solo los
+          <b style="color:#e2e8f0;">despierta cada 10 minutos</b> y cada uno le pregunta a esta plataforma si le toca.
+          Por eso las horas de este cuadro <b style="color:#e2e8f0;">no están escritas acá</b> — salen de
+          Configuración › Parámetros, que es donde usted las cambia, así que siempre dicen lo que de verdad va a pasar.
+          <br><br>
+          La marca <span style="font-size:0.6rem; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3);">WMS</span>
+          quiere decir que ese robot entra a Oracle con su usuario; son <b style="color:#e2e8f0;">${conWms}</b> de los ${INFO_ROBOTS.length}.
+          Los otros trabajan con archivos ya bajados y no se pisan con nadie.
+        </p>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.82rem; min-width:820px;">
+            <thead><tr>
+              <td style="${titulo}">ROBOT</td><td style="${titulo}">CUÁNDO</td>
+              <td style="${titulo}">QUÉ HACE</td><td style="${titulo}">DÓNDE SE VE</td>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="glass-panel" style="padding:1.4rem 1.5rem; border-radius:16px; margin-bottom:1.2rem; border:1px solid rgba(239,68,68,0.2);">
+        <h3 style="margin:0 0 0.3rem; font-size:1rem; font-weight:800; letter-spacing:1px; color:#fff;">SI DOS SE CRUZAN, ¿QUIÉN PASA PRIMERO?</h3>
+        <p style="color:var(--text-muted); font-size:0.78rem; line-height:1.6; margin:0 0 1.1rem;">
+          Oracle <b style="color:#e2e8f0;">no admite dos sesiones del mismo usuario</b>: la segunda invalida a la
+          primera, y la que estaba descargando se queda esperando un archivo que ya nadie va a generar. Por eso los
+          ${conWms} robots marcados WMS comparten un candado.
+          <br><br>
+          La regla es una sola: <b style="color:#f87171;">el que no se puede perder entra igual; el que se repite, cede.</b>
+          El candado además se vence solo a los 45 minutos, para que un robot que se murió mal no deje al resto
+          trabado para siempre.
+        </p>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.82rem; min-width:620px;">
+            <thead><tr><td style="${titulo}">ROBOT</td><td style="${titulo}">SI ENCUENTRA EL WMS OCUPADO</td></tr></thead>
+            <tbody>${turnos}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="glass-panel" style="padding:1.4rem 1.5rem; border-radius:16px;">
+        <h3 style="margin:0 0 0.3rem; font-size:1rem; font-weight:800; letter-spacing:1px; color:#fff;">DOS COSAS QUE CONVIENE SABER</h3>
+        <p style="color:var(--text-muted); font-size:0.78rem; line-height:1.6; margin:0;">
+          <b style="color:#e2e8f0;">Si la web no contesta, el robot igual corre.</b> Cada uno guarda la última
+          configuración que leyó; un problema de internet no puede dejar al almacén sin foto de stock.
+          <br><br>
+          <b style="color:#e2e8f0;">Ninguno corre dos veces.</b> Despertarse cada 10 minutos con una ventana de 10
+          podría disparar la misma corrida dos veces si algo se demora, así que cada una deja su marca y no se
+          repite dentro de la misma franja.
+        </p>
+      </div>`;
+  };
+
   const renderConfigTab = async () => {
     contentSubtitle.textContent = "Panel de Control Técnico";
     if (!activeConfigSub) activeConfigSub = 'reportes';
@@ -10180,6 +10465,7 @@ const renderRFSection = (container) => {
           <a class="sub-nav-item ${activeConfigSub==='parametros'?'active':''}" data-s="parametros" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">⚙️ PARÁMETROS</a>
           <a class="sub-nav-item ${activeConfigSub==='conexion'?'active':''}" data-s="conexion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🌐 CONEXIÓN</a>
           <a class="sub-nav-item ${activeConfigSub==='mantenimiento'?'active':''}" data-s="mantenimiento" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🛠️ MANTENIMIENTO</a>
+          <a class="sub-nav-item ${activeConfigSub==='informacion'?'active':''}" data-s="informacion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">ℹ️ INFORMACIÓN</a>
           ${puedeArchivosNube() ? `<a class="sub-nav-item ${activeConfigSub==='archivos_nube'?'active':''}" data-s="archivos_nube" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">☁️ ARCHIVOS NUBE</a>` : ''}
           <a class="sub-nav-item ${activeConfigSub==='jornada'?'active':''}" data-s="jornada" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;">🕐 JORNADA DE TRABAJO</a>
         </nav><div id="configContent"></div>`;
@@ -10480,6 +10766,8 @@ const renderRFSection = (container) => {
         renderJornadaTrabajo(document.getElementById('configContent'));
     } else if (activeConfigSub === 'parametros') {
         document.getElementById('configContent').innerHTML = `<div class="glass-panel" style="max-width:450px; padding:1.5rem;"><h4 style="font-size:0.95rem; margin-top:0;">Configuración de Motor</h4>${['include_reserva', 'include_alto'].map(k => `<label style="display:flex; justify-content:space-between; margin:0.8rem 0; font-size:0.85rem;">${k.toUpperCase().replace('_', ' ')} <input type="checkbox" checked></label>`).join('')}<button class="btn" style="font-size:0.85rem; padding:0.6rem;">GUARDAR CAMBIOS</button></div>`;
+    } else if (activeConfigSub === 'informacion') {
+        await renderInfoRobots(document.getElementById('configContent'));
     } else if (activeConfigSub === 'mantenimiento') {
         document.getElementById('configContent').innerHTML = `
             <div class="glass-panel" style="max-width:450px; padding:1.5rem; border: 1px solid rgba(239, 68, 68, 0.2);">
@@ -16504,7 +16792,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0319 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0320 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -20553,6 +20841,7 @@ const renderRFSection = (container) => {
       .det td.g { background: #F1EFE8; font-weight: 700; }
       .det tr.art td { background: #F1EFE8; font-weight: 700; text-align: left;
                        font-size: 11pt; height: 7mm; padding: 0 2mm; }
+      .det tr.art.nuevo td { background: #2C2C2A; color: #fff; }
       .det td.b { font-weight: 700; }
       .det tr.tot td { background: #B4B2A9; font-weight: 700; height: 7mm; }
       .det tr.tt td { background: #2C2C2A; color: #fff; font-weight: 700; height: 8mm; font-size: 12pt; }
@@ -20629,8 +20918,18 @@ const renderRFSection = (container) => {
         // antes de sus filas, con el codigo y su Gender RIMS. El caso -reposicion o
         // codigo nuevo- todavia NO: no se guarda en la tarea, se calcula al generar la
         // ola y se pierde. Hay que grabarlo junto al papel para poder imprimirlo.
+        // EL CASO SALE EN LA BANDA. `calcularSugerenciaDeItem` ya lo devuelve en `x.caso`
+        // —no hacia falta grabarlo, como creia—: se calcula con el contexto de la corrida,
+        // que para las tareas del dia es el correcto. CODIGO NUEVO va en banda NEGRA: es
+        // mercaderia que nunca estuvo en el almacen y ponerla mal arranca su vida torcida.
+        const CASOS = { 'codigo-nuevo': 'CODIGO NUEVO', 'reposicion-buffer': 'REPOSICION',
+                        'reposicion-fabrica': 'REPOSICION', 'escolar': 'ESCOLAR',
+                        'catalogo': 'CATALOGO', 'marca-sin-reserva': 'SIN RESERVA' };
+        const nCaso = (x.caso && x.caso.nombre) || '';
         items.unshift({ tipo: 'art', sku7: x.sku7,
-                        rims: (x.ficha && x.ficha.genderRims) || x.genderRims || '' });
+                        rims: (x.ficha && x.ficha.genderRims) || x.genderRims || '',
+                        caso: CASOS[nCaso] || (nCaso ? nCaso.toUpperCase().replace(/-/g, ' ') : ''),
+                        nuevo: nCaso === 'codigo-nuevo' });
         const tPiso = trabada ? 0 : fp.reduce((a, l) => a + (l.alPiso || 0), 0);
         const tReserva = fp.reduce((a, l) => a + (l.aReserva || 0), 0);
         const tPaletas = tallasService.paletasDe(tReserva);
@@ -20648,8 +20947,9 @@ const renderRFSection = (container) => {
 
       const filaHTML = (it) => {
         if (it.tipo === 'art') {
-          return `<tr class="art"><td colspan="7">ARTICULO ${esc(it.sku7)}${
-            it.rims ? ' &nbsp;·&nbsp; ' + esc(it.rims) : ''}</td></tr>`;
+          return `<tr class="art${it.nuevo ? ' nuevo' : ''}"><td colspan="7">ARTICULO ${esc(it.sku7)}${
+            it.rims ? ' &nbsp;·&nbsp; ' + esc(it.rims) : ''}${
+            it.caso ? ' &nbsp;·&nbsp; ' + esc(it.caso) : ''}</td></tr>`;
         }
         if (it.tipo === 'det') {
           const l = it.l;

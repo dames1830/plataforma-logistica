@@ -227,6 +227,13 @@ export const correoGuiasPorDefecto = () => ({
     remitente: '',
     desde: '18:00',          // el correo llega entre las 19:00 y las 20:00
     hasta: '23:00',
+    /* LA HORA MÁS TEMPRANA A LA QUE SE PUEDE ARMAR EL PENDIENTE, y es un PISO, no un
+       horario. El correo se guarda a la hora que llegue; lo que espera es el cruce
+       contra el WMS. Daniel, 21-ago-2026: *"por más que el correo te llegue a las
+       seis y media, normal, tú lo capturas, esperas a las siete de la noche y corres
+       interfaz de WMS"*. A las 06:57 la foto del WMS trae CERO pedidos del día, y a
+       las 18:30 todavía le faltan los de la tarde. */
+    pendienteDesde: '19:00',
     diasAtras: 3,
     dias: { ...LUN_A_SAB }
 });
@@ -240,6 +247,7 @@ export const normalizarCorreo = (cfg) => {
         remitente: String(c.remitente == null ? d.remitente : c.remitente).slice(0, 120),
         desde: _hhmm(c.desde, d.desde),
         hasta: _hhmm(c.hasta, d.hasta),
+        pendienteDesde: _hhmm(c.pendienteDesde, d.pendienteDesde),
         diasAtras: _entre(c.diasAtras, d.diasAtras, 1, 30),
         dias: _dias(c.dias, d.dias)
     };

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Maqueta · PEDIDOS lo publica el robot</title>
+<style>
+:root {
+  --primary: #4f46e5; --bg-dark: #0f172a; --text-main: #f8fafc;
+  --text-muted: #94a3b8; --border: rgba(255,255,255,0.1);
+  --danger: #ef4444; --success: #22c55e; --warning: #f59e0b;
+}
+body { background: var(--bg-dark); color: var(--text-main);
+       font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 2rem; }
+.hoja { max-width: 980px; margin: 0 auto; }
+h2 { font-size: 0.95rem; letter-spacing: 2px; text-transform: uppercase;
+     color: var(--text-muted); margin: 2.5rem 0 0.4rem; font-weight: 800; }
+h2:first-of-type { margin-top: 0; }
+.nota { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem;
+        line-height: 1.6; max-width: 760px; }
+.nota b { color: #fff; }
+.pila { display: flex; flex-direction: column; gap: 0.5rem; }
+.nuevo { position: relative; }
+.nuevo::after { content: 'NUEVO'; position: absolute; top: -8px; right: -8px;
+    background: var(--warning); color: #000; font-size: 0.55rem; font-weight: 900;
+    letter-spacing: 1px; padding: 2px 7px; border-radius: 4px; }
+table.cfg { width: 100%; border-collapse: collapse; background: rgba(15,23,42,0.4);
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+table.cfg td { padding: 0.7rem 1rem; vertical-align: top; }
+table.cfg tr + tr { border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="hoja">
+
+<h2>Zona Buffer › Archivo Zona Buffer</h2>
+<p class="nota">
+  La tarjeta de <b>PEDIDOS</b> es la única que cambia. Las otras quedan igual.
+  Pasa a la nube igual que los stocks —ícono ☁️ y <b>EN LA NUBE</b>— y dice quién la
+  publicó y a qué hora. <b>La diferencia con los stocks es a propósito: acá los dos
+  botones se quedan</b> — 🔄 para poner otro archivo y 🗑️ para quitarlo cuando quiera
+  correr solo Replenishment u Otras solicitudes.
+</p>
+
+<div class="pila">
+
+  <!-- STOCK ACTIVO: como está hoy, sin tocar -->
+  <div>
+    <div style="background:rgba(15,23,42,0.4); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; border-left:4px solid #22c55e;">
+        <div style="display:flex; align-items:center; gap:1.2rem;">
+            <div style="width:36px; height:36px; background:rgba(255,255,255,0.03); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:#22c55e; border:1px solid rgba(255,255,255,0.05);">☁️</div>
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">STOCK ACTIVO</span>
+                <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
+                    <span style="color:#22c55e; font-weight:700; font-size:0.85rem;">EN LA NUBE</span>
+                    <span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                    <span style="color:var(--text-muted); font-size:0.75rem;">128.440 regs · 21/08/2026, 19:14:02</span>
+                </div>
+            </div>
+        </div>
+        <div style="text-align:right; font-size:0.7rem; color:var(--text-muted); line-height:1.5;">
+            Ya no se sube acá.<br>Lo publica <b>el robot</b> todas las noches a las <b>19:00</b>
+        </div>
+    </div>
+  </div>
+
+  <!-- PEDIDOS: LA TARJETA QUE CAMBIA -->
+  <div class="nuevo">
+    <div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(34, 197, 94, 0.2); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #22c55e;">
+        <div style="display:flex; align-items:center; gap:1.2rem;">
+            <div style="width:36px; height:36px; background:rgba(255,255,255,0.03); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:#22c55e; border:1px solid rgba(255,255,255,0.05);">☁️</div>
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">PEDIDOS</span>
+                <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+                    <span style="color:#22c55e; font-weight:700; font-size:0.85rem;">EN LA NUBE</span>
+                    <span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                    <span style="color:var(--text-muted); font-size:0.75rem;">2.844 regs · 116.474 unidades</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:1.5rem;">
+            <div style="text-align:right; min-width:210px;">
+                <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">PUBLICADO POR EL ROBOT</div>
+                <div style="font-size:0.75rem; color:#fbbf24; font-weight:700;">21/08/2026, 19:34:11</div>
+            </div>
+
+            <div style="display:flex; gap:0.4rem;">
+                <label title="Poner otro archivo" style="background:rgba(79, 70, 229, 0.1); color:var(--primary); border:1px solid var(--primary); width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem;">🔄</label>
+                <button title="Quitar Archivo" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; width:32px; height:32px; border-radius:6px; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; justify-content:center;">🗑️</button>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- OTRAS SOLICITUDES: como está hoy -->
+  <div>
+    <div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.05); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #64748b;">
+        <div style="display:flex; align-items:center; gap:1.2rem;">
+            <div style="width:36px; height:36px; background:rgba(255, 255, 255, 0.03); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:var(--text-muted); border:1px solid rgba(255, 255, 255, 0.05);">📊</div>
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">OTRAS SOLICITUDES</span>
+                <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+                    <span style="color:var(--text-muted); font-weight:700; font-size:0.85rem;">VACÍO</span>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:1.5rem;">
+            <div style="text-align:right; min-width:180px;">
+                <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">ÚLTIMA CARGA</div>
+                <div style="font-size:0.75rem; color:rgba(255,255,255,0.2); font-weight:700;">NUNCA</div>
+            </div>
+            <div style="display:flex; gap:0.4rem;">
+                <label style="background:var(--primary); color:#fff; border:1px solid transparent; width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem;">📤</label>
+            </div>
+        </div>
+    </div>
+  </div>
+
+</div>
+
+<h2>Si comercial no manda el correo</h2>
+<p class="nota">
+  No se borra nada: queda el archivo del día anterior, que es lo que usted eligió.
+  Pero <b>la tarjeta lo dice</b>, en ámbar y con todas las letras, para que nadie
+  corra el buffer contra un pendiente viejo sin darse cuenta. Es la misma tarjeta,
+  el mismo archivo — lo único que cambia es que grita su edad.
+</p>
+
+<div class="pila">
+  <div class="nuevo">
+    <div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(34, 197, 94, 0.2); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #f59e0b;">
+        <div style="display:flex; align-items:center; gap:1.2rem;">
+            <div style="width:36px; height:36px; background:rgba(255,255,255,0.03); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:#f59e0b; border:1px solid rgba(255,255,255,0.05);">☁️</div>
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">PEDIDOS</span>
+                <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+                    <span style="color:#f59e0b; font-weight:700; font-size:0.85rem;">EN LA NUBE, PERO ES DE AYER</span>
+                    <span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                    <span style="color:var(--text-muted); font-size:0.75rem;">2.844 regs · 116.474 unidades</span>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:1.5rem;">
+            <div style="text-align:right; min-width:210px;">
+                <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">PUBLICADO POR EL ROBOT</div>
+                <div style="font-size:0.75rem; color:#fbbf24; font-weight:700;">21/08/2026, 19:34:11</div>
+                <div style="font-size:0.65rem; color:#f59e0b; font-weight:700; margin-top:2px;">comercial no mandó el correo</div>
+            </div>
+            <div style="display:flex; gap:0.4rem;">
+                <label style="background:rgba(79, 70, 229, 0.1); color:var(--primary); border:1px solid var(--primary); width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem;">🔄</label>
+                <button style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; width:32px; height:32px; border-radius:6px; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; justify-content:center;">🗑️</button>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<h2>Y cuando usted lo quita, queda así</h2>
+<p class="nota">
+  El robot no lo vuelve a poner solo dentro del mismo día salvo que comercial mande
+  una corrección. La tarjeta dice quién lo quitó y a qué hora, para que nadie se
+  pregunte por qué el análisis salió sin pedidos.
+</p>
+
+<div class="pila">
+  <div class="nuevo">
+    <div style="background:rgba(15, 23, 42, 0.4); border:1px solid rgba(255, 255, 255, 0.05); border-radius:10px; padding:0.6rem 1.2rem; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #64748b;">
+        <div style="display:flex; align-items:center; gap:1.2rem;">
+            <div style="width:36px; height:36px; background:rgba(255, 255, 255, 0.03); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:#f59e0b; border:1px solid rgba(255, 255, 255, 0.05);">☁️</div>
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">PEDIDOS</span>
+                <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+                    <span style="color:#f59e0b; font-weight:700; font-size:0.85rem;">QUITADO DE LA NUBE</span>
+                    <span style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></span>
+                    <span style="color:var(--text-muted); font-size:0.75rem;">a las 20:05</span>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:1.5rem;">
+            <div style="text-align:right; min-width:210px;">
+                <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">PUBLICADO POR EL ROBOT</div>
+                <div style="font-size:0.75rem; color:rgba(255,255,255,0.2); font-weight:700;">quitado</div>
+            </div>
+            <div style="display:flex; gap:0.4rem;">
+                <label title="Poner un archivo" style="background:var(--primary); color:#fff; border:1px solid transparent; width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem;">📤</label>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<h2>Administración › Configuración › Correo de guías</h2>
+<p class="nota">
+  Una fila nueva, debajo de la ventana que ya existe. Es la hora <b>más temprana</b>
+  a la que el robot puede bajar la foto del WMS. Si comercial manda a las 18:30, el
+  correo se guarda igual y el pendiente espera a esta hora. Si manda a las 20:15, se
+  arma a las 20:15: no espera a mañana.
+</p>
+
+<table class="cfg">
+  <tr>
+    <td>
+      <span style="color:#fff; font-weight:600;">Ventana</span><br>
+      <span style="color:var(--text-muted); font-size:0.75rem;">entre esas dos horas revisa cada vez que el servidor lo despierta. Puede cruzar la medianoche: de 22:00 a 02:00 vale</span>
+    </td>
+    <td>
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        <span style="color:var(--text-muted); font-size:0.8rem;">de</span>
+        <input type="time" value="18:00" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.35rem 0.5rem; font-family:monospace; font-size:0.85rem;">
+        <span style="color:var(--text-muted); font-size:0.8rem;">a</span>
+        <input type="time" value="23:00" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.35rem 0.5rem; font-family:monospace; font-size:0.85rem;">
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span style="color:#fff; font-weight:600;">El pendiente no se arma antes de</span>
+      <span style="background:var(--warning); color:#000; font-size:0.55rem; font-weight:900; letter-spacing:1px; padding:2px 7px; border-radius:4px; margin-left:8px;">NUEVO</span><br>
+      <span style="color:var(--text-muted); font-size:0.75rem;">la foto del WMS tiene que traer los pedidos del día. A las 06:57 no existe ninguno, y a las 18:30 todavía faltan los de la tarde</span>
+    </td>
+    <td>
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        <input type="time" value="19:00" style="background:rgba(0,0,0,0.3); border:1px solid var(--warning); border-radius:6px; color:#fff; padding:0.35rem 0.5rem; font-family:monospace; font-size:0.85rem;">
+        <span style="color:var(--text-muted); font-size:0.75rem;">de fábrica 19:00</span>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <span style="color:#fff; font-weight:600;">Días de la semana</span><br>
+      <span style="color:var(--text-muted); font-size:0.75rem;">el domingo viene apagado: comercial no manda</span>
+    </td>
+    <td>
+      <div style="display:flex; gap:1rem; flex-wrap:wrap; color:var(--text-muted); font-size:0.8rem;">
+        <label><input type="checkbox" checked> lun</label>
+        <label><input type="checkbox" checked> mar</label>
+        <label><input type="checkbox" checked> mie</label>
+        <label><input type="checkbox" checked> jue</label>
+        <label><input type="checkbox" checked> vie</label>
+        <label><input type="checkbox" checked> sab</label>
+        <label><input type="checkbox"> dom</label>
+      </div>
+    </td>
+  </tr>
+</table>
+
+</div>
+</body>
+</html>

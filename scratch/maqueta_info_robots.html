@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Maqueta · Configuración › Información · Los robots</title>
+<style>
+:root {
+  --primary: #4f46e5; --bg-dark: #0f172a; --text-main: #f8fafc;
+  --text-muted: #94a3b8; --border: rgba(255,255,255,0.1);
+  --danger: #ef4444; --success: #22c55e; --warning: #f59e0b;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg-dark); color: var(--text-main);
+       font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 1.5rem; }
+.hoja { max-width: 1100px; margin: 0 auto; }
+nav.sub { display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); }
+nav.sub a { padding:0.5rem 0.2rem; font-size:0.85rem; color:var(--text-muted);
+            text-decoration:none; font-weight:600; }
+nav.sub a.active { color:#fff; border-bottom:2px solid var(--primary); }
+.glass { background: rgba(15,23,42,0.55); border:1px solid var(--border);
+         border-radius:16px; padding:1.4rem 1.5rem; margin-bottom:1.2rem; }
+h3 { margin:0 0 0.3rem; font-size:1rem; font-weight:800; letter-spacing:1px; color:#fff; }
+.sub { color: var(--text-muted); font-size:0.78rem; line-height:1.6; margin:0 0 1.1rem; }
+.sub b { color:#e2e8f0; }
+table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+thead td { color:var(--text-muted); font-size:0.68rem; font-weight:800;
+           letter-spacing:0.8px; padding:0.5rem 0.8rem; background:rgba(255,255,255,0.03); }
+tbody td { padding:0.75rem 0.8rem; border-top:1px solid var(--border); vertical-align:top; }
+.nom { color:#fff; font-weight:700; }
+.arch { color:#64748b; font-size:0.68rem; font-family:ui-monospace, Consolas, monospace; }
+.hora { font-family:ui-monospace, Consolas, monospace; color:#fbbf24; font-weight:700;
+        white-space:nowrap; }
+.dias { color:var(--text-muted); font-size:0.7rem; display:block; margin-top:2px; }
+.que { color:#cbd5e1; line-height:1.55; }
+.deja { color:var(--text-muted); font-size:0.72rem; }
+.pill { display:inline-block; font-size:0.6rem; font-weight:800; letter-spacing:0.5px;
+        padding:2px 7px; border-radius:4px; margin-left:6px; vertical-align:middle; }
+.wms { background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+.solo { background:rgba(34,197,94,0.12); color:#4ade80; border:1px solid rgba(34,197,94,0.3); }
+.manda { color:#f87171; font-weight:700; }
+.cede { color:#4ade80; font-weight:700; }
+ul.enc { margin:0.4rem 0 0 1rem; padding:0; color:var(--text-muted); font-size:0.75rem; line-height:1.8; }
+ul.enc b { color:#cbd5e1; }
+</style>
+</head>
+<body>
+<div class="hoja">
+
+<nav class="sub">
+  <a>📊 REPORTES</a>
+  <a>⚙️ PARÁMETROS</a>
+  <a>🌐 CONEXIÓN</a>
+  <a>🛠️ MANTENIMIENTO</a>
+  <a class="active">ℹ️ INFORMACIÓN</a>
+  <a>☁️ ARCHIVOS NUBE</a>
+  <a>🕐 JORNADA DE TRABAJO</a>
+</nav>
+
+<div class="glass">
+  <h3>LOS ROBOTS DEL SERVIDOR</h3>
+  <p class="sub">
+    Son <b>diez</b>. Windows no sabe la hora de ninguno: solo los <b>despierta cada 10 minutos</b>
+    y cada uno le pregunta a esta plataforma si le toca. Por eso las horas de este cuadro
+    <b>no están escritas acá</b> — salen de Configuración › Parámetros, que es donde usted las
+    cambia, así que siempre dicen lo que de verdad va a pasar esta noche.
+    <br><br>
+    La marca <span class="pill wms">WMS</span> quiere decir que ese robot entra a Oracle con su
+    usuario. Los que no la tienen trabajan con archivos que ya están bajados y no se pisan con nadie.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <td style="width:22%;">ROBOT</td>
+        <td style="width:14%;">CUÁNDO</td>
+        <td style="width:40%;">QUÉ HACE</td>
+        <td style="width:24%;">DÓNDE SE VE</td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="nom">Stock ancla · noche</span><span class="pill wms">WMS</span>
+            <div class="arch">wms_automation_final.py</div></td>
+        <td><span class="hora">19:20</span><span class="dias">lun a sáb</span></td>
+        <td class="que">La foto sobre la que se calcula todo el turno. Baja Stock Activo y Stock
+            Reserva y encadena otras tres cosas por dentro:
+            <ul class="enc">
+              <li><b>Slotting</b> — la sugerencia de ubicación del día</li>
+              <li><b>Evolución</b> — la foto histórica de cada artículo</li>
+              <li><b>Rotación y Permanencia</b> — el reporte mensual</li>
+            </ul></td>
+        <td class="deja">Almacenaje, Slotting, Layout, Descargas, y el stock que leen todas las pantallas</td>
+      </tr>
+      <tr>
+        <td><span class="nom">Stock ancla · mañana</span><span class="pill wms">WMS</span>
+            <div class="arch">wms_automation_final.py</div></td>
+        <td><span class="hora">07:00</span><span class="dias">lun a sáb</span></td>
+        <td class="que">La misma foto, pero del día que empieza. Es contra la que se mide el
+            avance de la jornada.</td>
+        <td class="deja">Las mismas pantallas, con la foto del día nuevo</td>
+      </tr>
+      <tr>
+        <td><span class="nom">Stock por hora</span><span class="pill wms">WMS</span>
+            <div class="arch">stock_por_hora.py</div></td>
+        <td><span class="hora">cada hora, al :30</span><span class="dias">todos los días</span></td>
+        <td class="que">El avance del turno: baja los dos stocks otra vez, sin armar Slotting ni
+            reportes. Tarda unos 8 minutos.</td>
+        <td class="deja">Layout de Activo y de Reserva, el cajón de la hora</td>
+      </tr>
+      <tr>
+        <td><span class="nom">Picking por hora</span><span class="pill wms">WMS</span>
+            <div class="arch">picking_por_hora.py</div></td>
+        <td><span class="hora">cada hora, al :50</span><span class="dias">todos los días</span></td>
+        <td class="que">El avance del picking del día, hora por hora.</td>
+        <td class="deja">KPI Picking · el avance del día</td>
+      </tr>
+      <tr>
+        <td><span class="nom">Reportes diarios</span><span class="pill wms">WMS</span>
+            <div class="arch">picking_y_orden.py</div></td>
+        <td><span class="hora">06:45</span><span class="dias">lun a sáb</span></td>
+        <td class="que">Los dos archivos del día que cerró — Avance de Picking y Detalle de Orden —
+            más el pendiente de <b>365 días hacia atrás</b>, que es lo que sigue sin atenderse.</td>
+        <td class="deja">Carpeta de OneDrive; los usan los reportes de picking y el pendiente</td>
+      </tr>
+      <tr>
+        <td><span class="nom">Correo de comercial</span>
+            <div class="arch">correo_guias.py</div></td>
+        <td><span class="hora">18:00 a 23:00</span><span class="dias">lun a sáb · mira cada 10 min</span></td>
+        <td class="que">Entra al Outlook del servidor, busca el correo con las guías de
+            prescripciones y guarda el Excel. <b>No marca como leído, no mueve, no borra y no
+            responde.</b> Antes de guardar abre el adjunto y comprueba que traiga una columna
+            GUIA con filas debajo.</td>
+        <td class="deja">Carpeta <span class="arch">Correos Picking</span></td>
+      </tr>
+      <tr>
+        <td><span class="nom">Pendiente de despacho</span><span class="pill wms">WMS</span>
+            <div class="arch">armar_pendiente.py</div></td>
+        <td><span class="hora">lo dispara el correo</span><span class="dias">nunca antes de las 19:00</span></td>
+        <td class="que">Baja del WMS una foto <b>de ese momento</b>, la cruza contra los correos de
+            comercial y arma la lista de lo que falta despachar. Si no consigue una foto posterior
+            al correo, <b>no publica</b>: queda el pendiente del día anterior.</td>
+        <td class="deja">Zona Buffer › Pendiente · la tarjeta PEDIDOS · el Excel en Descargas</td>
+      </tr>
+      <tr>
+        <td><span class="nom">SKUs sin salida</span>
+            <div class="arch">sku_sin_salida.py</div></td>
+        <td><span class="hora">07:30</span><span class="dias">lun a sáb</span></td>
+        <td class="que">El cuadro de lo que llegó al almacén y no se movió.</td>
+        <td class="deja">Análisis SKU · SKUs sin salida</td>
+      </tr>
+      <tr>
+        <td><span class="nom">Archivar tareas viejas</span>
+            <div class="arch">archivar_tareas.py</div></td>
+        <td><span class="hora">03:00</span><span class="dias">todos los días</span></td>
+        <td class="que">Manda al histórico las tareas de almacenaje que pasaron de 30 días, para
+            que la pantalla del día no cargue con meses de espalda.</td>
+        <td class="deja">Almacenaje · Historial</td>
+      </tr>
+      <tr>
+        <td><span class="nom">Respaldo de datos</span>
+            <div class="arch">generar_respaldo.py</div></td>
+        <td><span class="hora">06:45</span><span class="dias">lun a sáb</span></td>
+        <td class="que">La copia de seguridad de las <b>63 áreas</b> del servidor. Es la que
+            permite volver atrás si algo se rompe.</td>
+        <td class="deja">Descargas · Punto de Restauración</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="glass" style="border-color:rgba(239,68,68,0.2);">
+  <h3>SI DOS SE CRUZAN, ¿QUIÉN PASA PRIMERO?</h3>
+  <p class="sub">
+    Oracle <b>no admite dos sesiones del mismo usuario</b>: la segunda invalida a la primera y la
+    que estaba descargando se queda esperando un archivo que ya nadie va a generar. Por eso los
+    seis robots marcados <span class="pill wms">WMS</span> comparten un candado.
+    <br><br>
+    La regla es una sola: <b class="manda">el que no se puede perder entra igual; el que se
+    repite, cede.</b> El candado además se vence solo a los 45 minutos, para que un robot que se
+    murió mal no deje al resto trabado para siempre.
+  </p>
+  <table>
+    <thead>
+      <tr><td style="width:34%;">ROBOT</td><td style="width:66%;">SI ENCUENTRA EL WMS OCUPADO</td></tr>
+    </thead>
+    <tbody>
+      <tr><td class="nom">Stock ancla (noche y mañana)</td>
+          <td class="que">Espera 12 minutos y <span class="manda">entra igual</span>. Perder la foto del turno es peor que un cruce: no se recupera.</td></tr>
+      <tr><td class="nom">Reportes diarios</td>
+          <td class="que">Espera 15 minutos y <span class="manda">entra igual</span>. Corre una vez al día; si se saltea, ese día no lo baja nadie.</td></tr>
+      <tr><td class="nom">Stock por hora</td>
+          <td class="que"><span class="cede">Cede.</span> Se saltea esa hora y vuelve en 60 minutos.</td></tr>
+      <tr><td class="nom">Picking por hora</td>
+          <td class="que"><span class="cede">Cede.</span> Se saltea esa hora y vuelve en 60 minutos.</td></tr>
+      <tr><td class="nom">Pendiente de despacho</td>
+          <td class="que"><span class="cede">Cede</span> — es el que más cede de todos. Espera 20 minutos, no baja nada, no publica, y <b>reintenta cada 10 minutos hasta las 23:00</b>. Mientras tanto queda el pendiente del día anterior.</td></tr>
+    </tbody>
+  </table>
+  <p class="sub" style="margin:1.1rem 0 0;">
+    <b>En la práctica casi no se cruzan.</b> El pendiente arranca a las 19:00 y tarda unos 6
+    minutos; el stock del turno no empieza hasta las <b>19:20</b>. El único choque posible es si
+    comercial manda el correo entre las 19:20 y las 19:45.
+  </p>
+</div>
+
+<div class="glass">
+  <h3>DOS COSAS QUE CONVIENE SABER</h3>
+  <p class="sub" style="margin:0;">
+    <b>Si la web no contesta, el robot igual corre.</b> Cada uno guarda la última configuración
+    que leyó; un problema de internet no puede dejar al almacén sin foto de stock.
+    <br><br>
+    <b>Ninguno corre dos veces.</b> Despertarse cada 10 minutos con una ventana de 10 podría
+    disparar la misma corrida dos veces si algo se demora, así que cada una deja su marca y no
+    se repite dentro de la misma franja.
+  </p>
+</div>
+
+</div>
+</body>
+</html>

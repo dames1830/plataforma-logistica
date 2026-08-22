@@ -82,6 +82,12 @@ DE_FABRICA = {
     'remitente': '',
     'desde': '18:00',           # el correo llega entre las 19:00 y las 20:00
     'hasta': '23:00',
+    # LA HORA MAS TEMPRANA A LA QUE SE PUEDE ARMAR EL PENDIENTE. La eligio Daniel el
+    # 21-ago-2026: *"por mas que el correo te llegue a las seis y media, normal, tu
+    # lo capturas, esperas a las siete de la noche y corres interfaz de WMS"*. El
+    # correo se guarda igual a la hora que llegue; lo que espera es el cruce, porque
+    # la foto del WMS tiene que traer los pedidos nacidos durante el dia.
+    'pendienteDesde': '19:00',
     'diasAtras': 3,
     'dias': {'lun': True, 'mar': True, 'mie': True, 'jue': True,
              'vie': True, 'sab': True, 'dom': False},
@@ -326,6 +332,8 @@ def configuracion():
     out.update({k: v for k, v in cfg.items() if v is not None})
     out['desde'] = _hhmm(out.get('desde'), DE_FABRICA['desde'])
     out['hasta'] = _hhmm(out.get('hasta'), DE_FABRICA['hasta'])
+    out['pendienteDesde'] = _hhmm(out.get('pendienteDesde'),
+                                  DE_FABRICA['pendienteDesde'])
     try:
         out['diasAtras'] = max(1, min(30, int(out.get('diasAtras'))))
     except Exception:
@@ -335,6 +343,24 @@ def configuracion():
         d.update({k: bool(v) for k, v in cfg['dias'].items() if k in DIAS_SEM})
     out['dias'] = d
     return out, de_donde
+
+
+def paso_la_hora(cfg, ahora=None):
+    """Ya se puede armar el pendiente? Es un PISO, no un horario.
+
+    El correo se guarda a la hora que llegue. Lo que espera es el cruce: si comercial
+    manda a las 18:30, la foto del WMS de esa hora todavia no trae los pedidos de la
+    tarde. Si manda a las 20:15, se arma a las 20:15 y no espera a nada.
+
+    Si la ventana del correo cruza la medianoche -de 22:00 a 02:00-, pasada la
+    medianoche cualquier piso de la tarde anterior ya quedo atras.
+    """
+    ahora = ahora or datetime.now()
+    hm = ahora.strftime('%H:%M')
+    piso = cfg.get('pendienteDesde') or DE_FABRICA['pendienteDesde']
+    if cfg['desde'] <= cfg['hasta']:
+        return hm >= piso
+    return hm >= piso or hm <= cfg['hasta']
 
 
 def le_toca(cfg, ahora=None):
@@ -545,7 +571,13 @@ def main():
     hay_correo_de_hoy = os.path.isfile(
         os.path.join(DESTINO, 'Guías %02d.%02d.xlsx' % (ahora.day, ahora.month)))
 
-    if (guardados or (hay_correo_de_hoy and not ya_armado)) and not probar:
+    if (guardados or (hay_correo_de_hoy and not ya_armado)) and not probar \
+            and not paso_la_hora(cfg, ahora):
+        log('')
+        log('El correo esta guardado, pero todavia no son las %s: el pendiente se '
+            'arma despues, cuando la foto del WMS ya traiga los pedidos del dia.'
+            % cfg['pendienteDesde'])
+    elif (guardados or (hay_correo_de_hoy and not ya_armado)) and not probar:
         armador = os.path.join(AQUI, 'armar_pendiente.py')
         if not os.path.isfile(armador):
             log('No esta armar_pendiente.py, no se arma el pendiente.', 'AVISO')

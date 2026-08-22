@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0319';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0320';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -117,6 +117,29 @@ export const getUploadMeta = (area) => {
     } catch(e) { return null; }
 };
 
+/* CUANDO SE QUITO, Y NO SOLO QUE ESTA VACIA.
+ *
+ * Las tres areas de la demanda se comparten, asi que una puede quedar vacia por algo
+ * que hizo otra PC. La tarjeta que dice "VACIO" a secas no distingue eso de "nunca se
+ * cargo", y desde que a PEDIDOS lo llena el robot esa diferencia importa: si el
+ * analisis sale sin pedidos, tiene que poder verse que alguien lo quito y a que hora.
+ *
+ * `meta_` no sirve para esto: se borra justamente cuando el area se vacia. */
+export const getVacioMeta = (area) => {
+    try {
+        const ts = parseInt(localStorage.getItem('vacio_' + area) || '', 10);
+        return isNaN(ts) ? null : { ts };
+    } catch(e) { return null; }
+};
+
+const marcarVacio = (area, ts) => {
+    try { localStorage.setItem('vacio_' + area, String(ts || Date.now())); } catch(e) {}
+};
+
+const olvidarVacio = (area) => {
+    try { localStorage.removeItem('vacio_' + area); } catch(e) {}
+};
+
 export const getAreaLength = async (area) => {
     if (dataStore[area] && Array.isArray(dataStore[area])) {
         return dataStore[area].length;
@@ -181,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0319';
+const VERSION = '29.0320';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -987,6 +1010,7 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
      * porque env.js la sobrescribe: es una trampa esperando a que alguien toque env.js.
      */
     if (DEMANDA_EN_LA_NUBE[area]) {
+        olvidarVacio(area);
         try {
             const reducido = DEMANDA_EN_LA_NUBE[area].reducir(payload);
             fetch(`${API_URL}/${area}`, {
@@ -1114,6 +1138,7 @@ export const clearAreaData = async (area, username = 'sistema') => {
                 body: JSON.stringify([])
             });
             if (r.ok) {
+                marcarVacio(area);
                 logSystemAction(username, 'LIMPIEZA_DATOS', `Área: ${area} vaciada por el usuario (demanda compartida).`);
             } else {
                 ok = false;
@@ -1289,6 +1314,7 @@ export const getAreaData = async (area, forceRefresh = false) => {
 
           if (serverResponse.data && Array.isArray(serverResponse.data) && serverResponse.data.length > 0) {
               dataStore[area] = serverResponse.data;
+              olvidarVacio(area);
               repartirCanonica(area, serverResponse.data);
               await saveToDB(area, serverResponse.data); // Sincronizar cache local
               if (serverResponse.updated_at) {
@@ -1316,6 +1342,9 @@ export const getAreaData = async (area, forceRefresh = false) => {
   const tsLocal = (getUploadMeta(area) || {}).ts || 0;
   if (vacioPublicadoTs && vacioPublicadoTs >= tsLocal) {
       console.warn(`[DEMANDA] '${area}' está vacía en el servidor: se quitó también de esta PC.`);
+      // Con la hora del SERVIDOR, no la de ahora: lo pudo haber quitado otra PC hace
+      // dos horas y esta recien entera de enterarse.
+      marcarVacio(area, vacioPublicadoTs);
       dataStore[area] = null;
       localStorage.removeItem('meta_' + area);
       await deleteFromDB(area);

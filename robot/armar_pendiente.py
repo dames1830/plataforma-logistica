@@ -36,7 +36,11 @@ QUE DEJA:
   1. El area `pendiente_despacho?date=AAAA-MM-DD` con los totales y los siete
      cortes que dibuja Zona Buffer -> Pendiente. Son ~300 filas de resumen, no el
      detalle: el detalle pesa 13 MB y para eso esta el Excel.
-  2. `Pendiente DD-MM-AA.xlsx` en el modulo Descargas, con dos hojas:
+  2. La tarjeta **PEDIDOS** de Zona Buffer -> Archivo, con los SKU que tienen
+     pendiente y sus cantidades solicitada y asignada. Es la misma area que antes
+     se llenaba a mano, asi que Daniel puede seguir quitandola o cambiandola: la
+     quita cuando quiere correr solo Replenishment u Otras solicitudes.
+  3. `Pendiente DD-MM-AA.xlsx` en el modulo Descargas, con dos hojas:
        Detalle  - la CARA del correo de comercial, con las mismas columnas, pero
                   la cantidad es lo que falta por atender. Decision de Daniel:
                   *"debe ser tal cual el archivo que manda comercial, solo que
@@ -85,6 +89,11 @@ except ImportError:
 WEB_DATOS_API = "https://logistics-backend-wv0x.onrender.com/api/logistics"
 WEB_ARCHIVOS_API = "https://logistics-backend-wv0x.onrender.com/api/archivos"
 AREA = "pendiente_despacho"
+# La tarjeta PEDIDOS de Zona Buffer -> Archivo. Es un area COMPARTIDA que ya
+# existia: hasta hoy la llenaba Daniel subiendo un CSV a mano y todas las PC lo
+# leian de ahi. El robot escribe en el mismo lugar y con el mismo formato, asi que
+# los botones de cambiar archivo y quitarlo siguen funcionando igual.
+AREA_PEDIDOS = "buffer"
 
 csv.field_size_limit(10 ** 7)
 
@@ -643,6 +652,72 @@ def publicar_datos(datos, intentos=3):
     return False
 
 
+def publicar_pedidos(por_sku, intentos=3):
+    """DEJA EL PENDIENTE EN LA TARJETA *PEDIDOS* DE ZONA BUFFER -> ARCHIVO.
+
+    Lo pidio Daniel el 21-ago-2026: *"una vez que el robot termine de hacer el
+    pendiente, lo tiene que publicar en la zona de buffer, en archivos de buffer"*.
+    Hasta hoy esa tarjeta se llenaba subiendo un CSV a mano.
+
+    EL FORMATO NO ES CAPRICHO. La web publica esa area REDUCIDA a tres columnas
+    -ver DEMANDA_EN_LA_NUBE en `csvHub_v6.js`- porque el archivo entero son 30
+    columnas y 50.333 filas, 58 MB, y el motor del buffer lee solo tres. Ademas hay
+    una guarda que RECHAZA lo que no venga reducido, asi que mandar el archivo
+    crudo seria como no mandar nada. Los nombres son los canonicos, los mismos que
+    busca el motor.
+
+    SOLO LOS QUE TIENEN PENDIENTE. Se publican los 2.844 SKU con solicitada mayor
+    que asignada, que son los mismos que cuenta el reporte y los mismos que van a
+    la hoja Resumen del Excel: 116.474 unidades el 21-ago. Si se mandaran todos los
+    SKU tocados -5.697- el motor daria igual, pero la tarjeta diria un numero que no
+    coincide con ningun otro lado.
+
+    NO LLEVA ?date=. Se publica igual que lo hace el navegador, sin fecha, y el
+    servidor lo guarda bajo el dia de HOY. Poner la fecha a mano abriria la puerta a
+    que el robot y la web escribieran en dos renglones distintos.
+
+    SI DANIEL LO QUITA, ESTO NO SE LO DEVUELVE EN EL ACTO: el sello dice que el
+    pendiente de hoy ya salio, asi que el robot no vuelve a armarlo salvo que entre
+    una correccion de comercial. Es lo acordado -*"quiero correr solamente
+    replenishment o solamente otras solicitudes, para eso te pido poder borrar el
+    archivo"*-.
+    """
+    filas = []
+    for s in sorted(por_sku):
+        sol, asig = por_sku[s]
+        if sol - asig <= 0:
+            continue
+        filas.append({'Código de artículo': s,
+                      'Cantidad solicitada': int(round(sol)),
+                      'Cantidad asignada': int(round(asig))})
+    if not filas:
+        log('El pendiente no tiene ni un articulo: NO se toca la tarjeta PEDIDOS.',
+            'AVISO')
+        return False
+
+    cuerpo = json.dumps(filas, ensure_ascii=False).encode('utf-8')
+    url = '%s/%s' % (WEB_DATOS_API, AREA_PEDIDOS)
+    und = sum(f['Cantidad solicitada'] - f['Cantidad asignada'] for f in filas)
+    for i in range(1, intentos + 1):
+        try:
+            p = urllib.request.Request(url, data=cuerpo, method='POST')
+            p.add_header('Content-Type', 'application/json')
+            with urllib.request.urlopen(p, timeout=300) as resp:
+                json.loads(resp.read().decode('utf-8'))
+            log('Zona Buffer > Archivo > PEDIDOS: %s articulos, %s unidades (%.1f KB)'
+                % (format(len(filas), ',d'), format(int(und), ',d'), len(cuerpo) / 1024.0))
+            return True
+        except Exception as e:
+            if i < intentos:
+                log('Intento %d: no se pudo dejar PEDIDOS (%s), se reintenta'
+                    % (i, type(e).__name__), 'AVISO')
+            else:
+                log('NO se pudo dejar el archivo en PEDIDOS (%s: %s). El pendiente SI '
+                    'quedo publicado en su submodulo; lo que falta es la tarjeta del '
+                    'buffer.' % (type(e).__name__, str(e)[:120]), 'ERROR')
+    return False
+
+
 def subir_excel(ruta, fecha, intentos=3):
     """Sube el Excel al modulo Descargas.
 
@@ -739,11 +814,12 @@ def main():
     excel(ruta, cabecera, IQ, guias, por_guia, por_sku)
     ok1 = publicar_datos(datos)
     ok2 = subir_excel(ruta, hoy)
+    ok3 = publicar_pedidos(por_sku)
     try:
         os.remove(ruta)
     except Exception:
         pass
-    if ok1 and ok2:
+    if ok1 and ok2 and ok3:
         # EL SELLO ES PARA QUE EL CORREO SEPA QUE YA NO HACE FALTA REINTENTAR.
         # `correo_guias.py` se despierta cada media hora hasta las 23:00; sin esto
         # solo volveria a armar el pendiente si entrara OTRO correo, y una noche en
@@ -757,8 +833,9 @@ def main():
                 'unico que pasa es que el correo va a volver a armarlo.'
                 % type(e).__name__, 'AVISO')
     log('')
-    log('LISTO · datos %s · excel %s' % ('OK' if ok1 else 'FALLO', 'OK' if ok2 else 'FALLO'))
-    return 0 if (ok1 and ok2) else 1
+    log('LISTO · datos %s · excel %s · pedidos %s'
+        % ('OK' if ok1 else 'FALLO', 'OK' if ok2 else 'FALLO', 'OK' if ok3 else 'FALLO'))
+    return 0 if (ok1 and ok2 and ok3) else 1
 
 
 if __name__ == '__main__':
