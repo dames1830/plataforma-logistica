@@ -1,30 +1,30 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0341';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0342';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0341';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0341';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0341';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0341';
-import * as metasService from '../services_v245/metasService.js?v=29.0341';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0341';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0341';
+import * as adminService from '../services_v245/adminService.js?v=29.0342';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0342';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0342';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0342';
+import * as metasService from '../services_v245/metasService.js?v=29.0342';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0342';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0342';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0341';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0341';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0341';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0341';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0341';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0341';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0341';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0341';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0341';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0341';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0341';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0341';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0341';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0341';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0341';
-import { montarSlotting } from './slotting.js?v=29.0341';
+         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0342';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0342';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0342';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0342';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0342';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0342';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0342';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0342';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0342';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0342';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0342';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0342';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0342';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0342';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0342';
+import { montarSlotting } from './slotting.js?v=29.0342';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -381,7 +381,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0341';
+const VERSION = '29.0342';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4683,7 +4683,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0341');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0342');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16915,7 +16915,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0341 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0342 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18843,7 +18843,8 @@ const renderRFSection = (container) => {
       const cap = zonasService.densidadDe(c.zona, zonasService.serieDe(s7Mayor),
                                           fMayor.marcaStd, c.col,
                                           zonasService.tipoDeCalzado(fMayor.subcategoria,
-                                                                     fMayor.categoria));
+                                                                     fMayor.categoria),
+                                          { sku7: s7Mayor, marca: fMayor.marca });
       (libresPorZona[c.zona] = libresPorZona[c.zona] || new Map())
         .set(clave, Math.max(0, cap - dentro));
     });
@@ -18889,7 +18890,8 @@ const renderRFSection = (container) => {
         const cap = libres.has(clave)
           ? libres.get(clave)
           : zonasService.densidadDe(zona, zonasService.serieDe(primero), fp.marcaStd, null,
-                                    zonasService.tipoDeCalzado(fp.subcategoria, fp.categoria));
+                                    zonasService.tipoDeCalzado(fp.subcategoria, fp.categoria),
+                                    { sku7: primero, marca: fp.marca });
         libres.set(clave, Math.max(0, cap - (mandados.pares.get(nombre) || 0)));
       } else {
         (ocupadosPorZona[zona] = ocupadosPorZona[zona] || new Set()).add(clave);
@@ -19165,7 +19167,8 @@ const renderRFSection = (container) => {
       const f = ficha.get(s7) || {};
       const cap = zonasService.densidadDe(suyos[0].zona, zonasService.serieDe(s7), f.marcaStd,
                                           null, zonasService.tipoDeCalzado(f.subcategoria,
-                                                                           f.categoria));
+                                                                           f.categoria),
+                                          { sku7: s7, marca: f.marca });
       const orden = [...suyos].sort((a, b) => b.pares - a.pares);
       const sequeda = orden[0];
       let lugar = Math.max(0, cap - sequeda.pares);
@@ -21956,6 +21959,44 @@ const renderRFSection = (container) => {
           </div>
 
           <div style="border-top:1px solid rgba(34,197,94,0.14); padding:0.9rem 1.1rem 0.4rem;">
+            <div>
+              <h4 style="color:#22c55e; font-weight:900; margin:0; font-size:0.82rem; letter-spacing:0.8px; text-transform:uppercase;">📐 La medida de cada marca</h4>
+              <div style="font-size:0.64rem; color:rgba(34,197,94,0.55); margin-top:2px;">Marca y tipo juntos · le gana al tipo solo · un Weinbrenner deportivo no entra como un North Star deportivo</div>
+            </div>
+          </div>
+          <div style="overflow-x:auto; padding-bottom:0.4rem;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#eee;">
+              <thead style="background:rgba(0,0,0,0.5);">
+                <tr style="color:rgba(134,239,172,0.8); text-transform:uppercase; font-size:0.63rem; letter-spacing:0.05em;">
+                  <th style="padding:0.6rem 1.1rem; text-align:left;">Marca</th>
+                  <th style="padding:0.6rem; text-align:left;">Tipo</th>
+                  <th style="padding:0.6rem; text-align:center; width:150px;">Pares por cuerpo</th>
+                  <th style="padding:0.6rem; text-align:center; width:70px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.keys(cfg.densidadMarcaTipo || {}).length ? Object.keys(cfg.densidadMarcaTipo).sort().map(k => `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <td style="padding:0.4rem 1.1rem; color:#fff; font-weight:900;">${esc(k.split('|')[0])}</td>
+                    <td style="padding:0.4rem 0.6rem; color:rgba(255,255,255,0.45); font-weight:800; font-size:0.7rem;">${esc(k.split('|')[1] || '')}</td>
+                    <td style="padding:0.3rem; text-align:center;">
+                      <input type="number" data-mt="${esc(k)}" min="1" value="${cfg.densidadMarcaTipo[k]}"
+                        style="width:110px; padding:5px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-size:0.76rem; font-weight:800; text-align:center;">
+                    </td>
+                    <td style="padding:0.3rem; text-align:center;">
+                      <button data-mtdel="${esc(k)}" title="Quitar" style="background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:4px 10px; cursor:pointer; font-weight:800;">🗑</button>
+                    </td>
+                  </tr>`).join('') : `
+                  <tr><td colspan="4" style="padding:1rem 1.1rem; color:rgba(255,255,255,0.3); font-size:0.72rem;">Todavía no hay medidas por marca. Cada marca va con la capacidad de su tipo.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:0.75rem 1.1rem; background:rgba(0,0,0,0.3); border-top:1px solid rgba(34,197,94,0.1); font-size:0.65rem; color:rgba(255,255,255,0.32); line-height:1.7;">
+            Sale de la columna <b style="color:rgba(255,255,255,0.5);">Marcas</b> del Maestro cruzada con el tipo. Es el <b style="color:rgba(255,255,255,0.5);">percentil 75</b> de lo que cada artículo de esa marca llegó a tener en un cuerpo él solo: por encima del cuerpo típico y por debajo del caso raro.
+            ${Object.keys(cfg.densidadArticulo || {}).length ? `<br><br><b style="color:#22c55e;">Y por encima de esto hay ${Object.keys(cfg.densidadArticulo).length} artículos con su medida propia</b>, que es la más fina de todas: lo que ese zapato exacto llegó a tener en un cuerpo de esa zona. Solo la columna le gana.` : ''}
+          </div>
+
+          <div style="border-top:1px solid rgba(34,197,94,0.14); padding:0.9rem 1.1rem 0.4rem;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
               <div>
                 <h4 style="color:#22c55e; font-weight:900; margin:0; font-size:0.82rem; letter-spacing:0.8px; text-transform:uppercase;">👟 Sub-marcas que no siguen a su serie</h4>
@@ -22088,6 +22129,20 @@ const renderRFSection = (container) => {
       /* LA CAPACIDAD POR TIPO DE CALZADO. Los cuatro tipos son fijos —lo que cambia la
          capacidad es el volumen de la caja, y en cuatro tamaños entra todo el calzado—; lo
          que se edita es cuántos pares entran. Vaciar el campo lo devuelve a la serie. */
+      /* LA MEDIDA POR MARCA Y TIPO. Solo se edita o se borra: las filas nacen de la
+         medicion, no se escriben a mano. Un nombre de marca que no coincida EXACTO con la
+         columna `Marcas` del Maestro no se aplicaria nunca y no habria como darse cuenta. */
+      if (!cfg.densidadMarcaTipo) cfg.densidadMarcaTipo = {};
+      container.querySelectorAll('[data-mt]').forEach(i => i.onchange = () => {
+        const v = parseInt(i.value, 10);
+        if (Number.isFinite(v) && v > 0) cfg.densidadMarcaTipo[i.dataset.mt] = v;
+        marcar();
+      });
+      container.querySelectorAll('[data-mtdel]').forEach(b => b.onclick = () => {
+        delete cfg.densidadMarcaTipo[b.dataset.mtdel];
+        pintar(); marcar();
+      });
+
       if (!cfg.densidadTipo) cfg.densidadTipo = {};
       container.querySelectorAll('[data-tipo]').forEach(i => i.onchange = () => {
         const v = parseInt(i.value, 10);

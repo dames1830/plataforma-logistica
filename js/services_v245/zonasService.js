@@ -358,6 +358,36 @@ export const zonasPorDefecto = () => ({
      * ══════════════════════════════════════════════════════════════════════════════ */
     densidadTipo: { BOTA: 270, DEPORTIVO: 430, SANDALIA: 430, ZAPATO: 500 },
 
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * LA MEDIDA DE CADA MARCA. Daniel, 22-ago-2026: *"ya que estamos haciendo las medidas
+     * para Bata, hagamos las medidas para Power, North Star y Weinbrenner tambien... igual
+     * va a pasar que una es mas grande que la otra"*. Y pasa: el Weinbrenner deportivo entra
+     * 336 y el North Star deportivo 522, siendo los dos deportivos — el primero es bota de
+     * trabajo. El tipo solo no alcanzaba.
+     *
+     * La clave es 'Marca|TIPO', con la marca tal cual la escribe la columna `Marcas` del
+     * Maestro. Los numeros son el percentil 75 de lo medido: por encima del cuerpo tipico,
+     * por debajo del caso raro que ensuciaria el promedio.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    densidadMarcaTipo: {},
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * LA MEDIDA DE UN ARTICULO PUNTUAL, la mas fina de todas.
+     *
+     * Clave 'ZONA|sku7'. Sale de recorrer los dias de stock guardados y quedarse con el
+     * maximo que ese articulo llego a tener EN UN CUERPO EL SOLO. No es una estimacion:
+     * es mercaderia que fisicamente estuvo ahi.
+     *
+     * VA CON LA ZONA A PROPOSITO. Un cuerpo del MZN03 aguanta ~230 y uno del MZN01 ~690:
+     * si el mismo articulo cambia de zona, la medida vieja no vale. Sin zona que coincida,
+     * cae a la de su marca y tipo.
+     *
+     * ES UN PISO, NO UN TECHO. Que se le hayan visto 348 significa que 348 entran seguro;
+     * pueden entrar mas y no haberse dado nunca. Para lo que sirve esto —no mandar
+     * mercaderia que no cabe— equivocarse por abajo es lo correcto.
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    densidadArticulo: {},
+
     /** La categoría que no sigue a su marca. */
     categoriaOthers: '06 OTHERS'
 });
@@ -518,10 +548,26 @@ const normalizar = (crudo) => {
         if (n) porTipo[String(k).trim().toUpperCase()] = n;
     });
 
+    /* Los dos mapas medidos. A diferencia de los otros, si la configuración publicada los
+       trae VACÍOS se respetan vacíos: son mediciones, no reglas, y el de fábrica está vacío
+       a propósito —los llena `MEDIR DEL STOCK`, no un número escrito en el código—. */
+    const porMarcaTipo = {};
+    Object.keys(c.densidadMarcaTipo || {}).forEach(k => {
+        const n = _num(c.densidadMarcaTipo[k], 0, 1, 100000);
+        if (n) porMarcaTipo[String(k).trim()] = n;
+    });
+    const porArticulo = {};
+    Object.keys(c.densidadArticulo || {}).forEach(k => {
+        const n = _num(c.densidadArticulo[k], 0, 1, 100000);
+        if (n) porArticulo[String(k).trim()] = n;
+    });
+
     return { zonas, marcas, others, densidad, densidadRespaldo: respaldo,
              densidadMarcaStd: porMarcaStd,
              densidadColumna: porColumna,
              densidadTipo: porTipo,
+             densidadMarcaTipo: porMarcaTipo,
+             densidadArticulo: porArticulo,
              categoriaOthers: String(c.categoriaOthers || def.categoriaOthers) };
 };
 
@@ -889,13 +935,34 @@ export const serieDe = (codigo) => {
 };
 
 /** Pares que entran en un cuerpo de esa zona para esa serie. */
-export const densidadDe = (zona, serie, marcaStd, columna, tipo) => {
+/**
+ * CUÁNTOS PARES ENTRAN EN UN CUERPO — la escalera completa, de lo más preciso a lo más general.
+ *
+ *   1. LA COLUMNA. Es la medida del mueble y la tomó Daniel mirándolo. Le gana a todo.
+ *   2. EL ARTÍCULO, medido en esa misma zona. Lo que ese zapato llegó a tener de verdad.
+ *   3. LA SUB-MARCA. El Bata Comfit en 700, medido con el cuerpo cargado a la vista.
+ *   4. LA MARCA Y EL TIPO. Weinbrenner deportivo 336, North Star deportivo 522.
+ *   5. EL TIPO SOLO. Una bota entra menos que un zapato, sea de quien sea.
+ *   6. LA SERIE. Un número por zona, que es con lo único que se contaba antes.
+ *   7. El respaldo de la zona.
+ *
+ * Cada escalón es más específico que el siguiente, y por eso va antes: una medición puntual
+ * no la puede pisar una regla general. `art` es opcional —{ sku7, marca }—; sin él la escalera
+ * arranca en el escalón 3 y se comporta como siempre.
+ */
+export const densidadDe = (zona, serie, marcaStd, columna, tipo, art) => {
     const cfg = zonasActual();
     // LA COLUMNA MANDA SOBRE TODO: es la medida del mueble. Si esa columna tiene su propia
     // capacidad, ahí entra eso y no hay serie ni sub-marca que valga. Ver `densidadColumna`.
     const col = Number(columna);
     if (col && cfg.densidadColumna && cfg.densidadColumna[zona] && cfg.densidadColumna[zona][col]) {
         return cfg.densidadColumna[zona][col];
+    }
+    // EL ARTÍCULO MEDIDO EN ESTA ZONA. Ver `densidadArticulo`.
+    const s7 = String((art && art.sku7) || '').trim().substring(0, 7);
+    if (s7 && cfg.densidadArticulo) {
+        const v = cfg.densidadArticulo[zona + '|' + s7];
+        if (v) return v;
     }
     // LA SUB-MARCA MANDA SOBRE LA SERIE. Un Bata Comfit entra 600 en un cuerpo donde su serie
     // diría 450: lo que decide cuánto entra es el grosor del zapato, y eso la serie no lo sabe.
@@ -906,6 +973,12 @@ export const densidadDe = (zona, serie, marcaStd, columna, tipo) => {
        MZN01-24 en 800— y una regla general no puede pisar una medida puntual. La serie sí:
        ahí un solo número vale para media zona y es el que estaba mandando de más. */
     const tc = String(tipo || '').trim().toUpperCase();
+    // LA MARCA Y EL TIPO JUNTOS. Dos deportivos de marcas distintas no entran igual.
+    const ma = String((art && art.marca) || '').trim();
+    if (tc && ma && cfg.densidadMarcaTipo) {
+        const v = cfg.densidadMarcaTipo[ma + '|' + tc];
+        if (v) return v;
+    }
     if (tc && cfg.densidadTipo && cfg.densidadTipo[tc]) return cfg.densidadTipo[tc];
     const d = cfg.densidad[zona] || {};
     const v = d[String(serie)];
@@ -928,7 +1001,7 @@ export const capacidadDeArticulo = (art, zona) => {
     const cfg = zonasActual();
     const porCol = (cfg.densidadColumna || {})[zona];
     const normal = densidadDe(zona, serieDe(art && art.sku7), art && art.marcaStd, null,
-                              tipoDeCalzado(art && art.subcategoria, art && art.categoria));
+                              tipoDeCalzado(art && art.subcategoria, art && art.categoria), art);
     if (!porCol) return normal;
 
     const franja = franjaDeArticulo(art, zona);
