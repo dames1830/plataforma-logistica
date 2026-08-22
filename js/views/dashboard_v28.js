@@ -1,27 +1,29 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0328';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0329';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0328';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0328';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0328';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0328';
-import * as metasService from '../services_v245/metasService.js?v=29.0328';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0328';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0328';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0328';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0328';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0328';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0328';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0328';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0328';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0328';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0328';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0328';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0328';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0328';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0328';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0328';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0328';
-import { montarSlotting } from './slotting.js?v=29.0328';
+import * as adminService from '../services_v245/adminService.js?v=29.0329';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0329';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0329';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0329';
+import * as metasService from '../services_v245/metasService.js?v=29.0329';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0329';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0329';
+import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
+         consolidacionDeReserva, fotoChicaDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0329';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0329';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0329';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0329';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0329';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0329';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0329';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0329';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0329';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0329';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0329';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0329';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0329';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0329';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0329';
+import { montarSlotting } from './slotting.js?v=29.0329';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -378,7 +380,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0328';
+const VERSION = '29.0329';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -624,7 +626,9 @@ const indexarMaestro = () => {
     // Se compara la referencia, no el contenido: si es el mismo arreglo, ya está armado
     if (_maestroIndexado.fuente === maestro) return _maestroIndexado.datos;
 
-    const porSku = new Map();
+    // El indice sku -> {familia, detalle} lo arma reserva_consolidacion.js, que es el mismo
+    // que corre el robot. Aca solo se le agregan las listas que la pantalla necesita ademas.
+    const porSku = indicePorSku(maestro, getCol);
     const familias = new Set();
     const detalles = new Set();
     const padres = {};
@@ -641,7 +645,6 @@ const indexarMaestro = () => {
         // Se reconoce porque trae el NOMBRE de la columna en vez de un valor.
         if (fam.includes('GENDER') || det.includes('GENDER') || det.includes('RIMS')) return;
 
-        if (sku && !porSku.has(sku)) porSku.set(sku, { familia: fam, detalle: det });
         if (!metasService.esCategoriaVacia(fam) && !metasService.pareceDetalle(fam)) familias.add(fam);
         if (!metasService.esCategoriaVacia(det)) {
             detalles.add(det);
@@ -4679,7 +4682,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0328');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0329');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16911,7 +16914,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0328 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0329 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24029,25 +24032,6 @@ const renderRFSection = (container) => {
    *
    * Si algún día cambia el rack se corrige acá, y el mapa y los totales se mueven juntos.
    */
-  const NIVELES_RESERVA = ['H', 'G', 'F', 'E', 'D'];
-  const COLS_RESERVA = 12;
-  const paletaDeReservaExiste = (col, cuerpo, nivel) => {
-      if (col < 1 || col > COLS_RESERVA || cuerpo < 1 || cuerpo > 22) return false;
-      if (cuerpo === 22 && col !== 1) return false;
-      if (cuerpo === 11 && col !== 1 && (nivel === 'D' || nivel === 'E')) return false;
-      return true;
-  };
-  /**
-   * CUÁNTO CABE EN UNA PALETA DE RESERVA. Regla de Daniel, 19-ago-2026: *"si tiene más de
-   * 160 unidades la paleta, consideremos que es una paleta llena"*.
-   *
-   * NO es el `paresPorPaleta` de Configuración —que dice 200 y sirve para OTRA cosa: para
-   * calcular cuántas paletas y cuántos minutos lleva paletizar lo que sube—. Este número
-   * mide lo que YA está arriba. Si algún día se juntan, que sea a propósito.
-   *
-   * Y vale solo para CALZADO: una paleta de bolsas trae 12.000 unidades y medirla contra
-   * 160 diría que está al 7.500%.
-   */
   const PALETA_LLENA_RESERVA = 160;
 
   /**
@@ -24076,118 +24060,6 @@ const renderRFSection = (container) => {
    * está cargado. Sin Maestro no se puede separar el calzado de las bolsas —una paleta de
    * bolsas trae 12.000 unidades y taparía cualquier reparto—, así que ahí no se dibuja nada.
    */
-  const _padreDeProducto = (sku) => String(sku || '').trim().split('-')[0].trim().substring(0, 7);
-
-  const consolidacionDeReserva = (filas) => {
-      const idx = indexarMaestro();
-      if (!idx || !idx.porSku || idx.porSku.size === 0) return null;
-      const esCalzado = (padre) => {
-          const m = idx.porSku.get(padre);
-          return !!m && String(m.familia || '').trim() === 'FOOTWEAR';
-      };
-
-      // Una sola pasada: cada ubicación con lo que tiene encima, padre por padre.
-      const ubis = new Map();
-      (filas || []).forEach(row => {
-          if (!row) return;
-          if (!row.ES_ALTO && !String(row.NIVEL).toUpperCase().includes('AL')) return;
-          const u = String(row.UBICACION || '').trim();
-          if (!u.startsWith('SEL-')) return;
-          const q = parseFloat(row.CANTIDAD) || 0;
-          if (q <= 0) return;
-          const p = _padreDeProducto(row.PRODUCTO);
-          if (!p) return;
-          let e = ubis.get(u);
-          if (!e) { e = { padres: new Map(), lpn: String(row.LPN || '').trim(), tallas: new Map() }; ubis.set(u, e); }
-          e.padres.set(p, (e.padres.get(p) || 0) + q);
-          if (!e.lpn) e.lpn = String(row.LPN || '').trim();
-          if (!e.tallas.has(p)) e.tallas.set(p, new Set());
-          e.tallas.get(p).add(String(row.PRODUCTO || '').split('-').pop());
-      });
-      if (!ubis.size) return null;
-
-      // Cada ubicación es del padre que más pares tiene.
-      const porCol = new Map();
-      const porPadre = new Map();
-      ubis.forEach((e, u) => {
-          const col = parseInt(u.split('-')[1], 10);
-          if (!col) return;
-          let dom = null, max = -1, total = 0;
-          e.padres.forEach((q, p) => { total += q; if (q > max) { max = q; dom = p; } });
-          let c = porCol.get(col);
-          if (!c) { c = { ocupadas: 0, fw: 0, nofw: 0, pares: 0, hasta50: 0, de51a100: 0 }; porCol.set(col, c); }
-          c.ocupadas++;
-          if (!esCalzado(dom)) { c.nofw++; return; }
-          c.fw++; c.pares += total;
-          if (total <= 50) c.hasta50++;
-          else if (total <= 100) c.de51a100++;
-          let d = porPadre.get(dom);
-          if (!d) { d = { ubic: [], tot: 0, cap: 0 }; porPadre.set(dom, d); }
-          const mio = e.padres.get(dom);
-          d.ubic.push({ u: u, col: col, lpn: e.lpn, p: Math.round(mio),
-                        t: [...(e.tallas.get(dom) || [])].sort(),
-                        ot: [...e.padres.keys()].filter(x => x !== dom) });
-          d.tot += mio;
-          if (mio > d.cap) d.cap = mio;
-      });
-
-      // Cuadro 1: la matriz, selectivo por selectivo.
-      const matriz = [];
-      for (let col = 1; col <= COLS_RESERVA; col++) {
-          let existen = 0;
-          for (let cuerpo = 1; cuerpo <= 22; cuerpo++) {
-              NIVELES_RESERVA.forEach(nv => { if (paletaDeReservaExiste(col, cuerpo, nv)) existen += 2; });
-          }
-          const c = porCol.get(col) || { ocupadas: 0, fw: 0, nofw: 0, pares: 0, hasta50: 0, de51a100: 0 };
-          matriz.push({ col: col, existen: existen, libres: existen - c.ocupadas,
-                        pct: existen ? Math.round(100 * c.ocupadas / existen) : 0,
-                        ocupadas: c.ocupadas, fw: c.fw, nofw: c.nofw, pares: c.pares,
-                        hasta50: c.hasta50, de51a100: c.de51a100 });
-      }
-
-      // Cuadro 2: los padres, ordenados por lo que devuelven.
-      const padres = [];
-      porPadre.forEach((d, padre) => {
-          if (d.ubic.length < 2 || d.cap <= 0) return;
-          const quedan = Math.max(1, Math.ceil(d.tot / d.cap));
-          const cols = {};
-          d.ubic.forEach(x => { (cols[x.col] = cols[x.col] || []).push(x); });
-          padres.push({ padre: padre, n: d.ubic.length, tot: Math.round(d.tot),
-                        cap: Math.round(d.cap), quedan: quedan,
-                        reduce: Math.max(0, d.ubic.length - quedan), cols: cols });
-      });
-      padres.sort((a, b) => (b.reduce - a.reduce) || (b.n - a.n));
-      /* LOS FRAGMENTADOS — el tercer cuadro. Los mismos padres, ordenados por UBICACIONES en
-       * vez de por lo que devuelven, y SOLO los que de verdad se pueden reducir.
-       *
-       * Daniel, 22-ago-2026: *"no me pongas articulos que no puedes reducir. En el comite voy
-       * a decir son treinta articulos que se pueden reducir, y me va a decir: que vas a reducir
-       * de este si me pones cero"*. Una fila con reduccion cero no es informacion, es una
-       * objecion servida.
-       *
-       * EL ACUMULADO SE CALCULA SOBRE TODOS los que reducen y recien despues se cortan 30: si
-       * se calculara sobre los 30, la linea llegaria al 100% en el ultimo y diria que con esos
-       * treinta se resuelve todo. Medido el 21-ago: los 30 primeros liberan 183 de 489.
-       *
-       * Va sin `cols` a proposito -esa es la que trae todas las ubicaciones una por una-:
-       * este cuadro no las necesita y la foto que se guarda cada dia tiene que seguir siendo
-       * chica. Ver fotoChicaDeReserva. */
-      const conReduce = padres.filter(p => p.reduce > 0)
-                              .sort((a, b) => (b.n - a.n) || (b.tot - a.tot));
-      const ubicFrag = conReduce.reduce((s, p) => s + p.n, 0);
-      let acum = 0;
-      const fragmentados = conReduce.map(p => {
-          acum += p.n;
-          return { padre: p.padre, n: p.n, tot: p.tot, cap: p.cap, quedan: p.quedan,
-                   reduce: p.reduce, sel: Object.keys(p.cols).length,
-                   g: (idx.porSku.get(p.padre) || {}).detalle || '',
-                   ac: ubicFrag ? Math.round(1000 * acum / ubicFrag) / 10 : 0 };
-      }).slice(0, 30);
-
-      return { matriz: matriz, padres: padres.slice(0, 15), totalPadres: padres.length,
-               fragmentados: fragmentados, fragTotal: conReduce.length, fragUbic: ubicFrag };
-  };
-
   /** El HTML de los dos cuadros. Cadena vacía si no hay con qué armarlos. */
   const htmlConsolidacionReserva = (datos) => {
       if (!datos) return '';
@@ -24363,13 +24235,6 @@ const renderRFSection = (container) => {
   };
 
   /** Lo que se guarda: el resultado ya calculado, no las 18.947 filas. Unos 25 KB. */
-  const fotoChicaDeReserva = (datos, sello) => (!datos || !sello) ? null : ({
-      fecha: sello.fecha, hora: sello.hora,
-      matriz: datos.matriz, padres: datos.padres, totalPadres: datos.totalPadres,
-      // Los 30 fragmentados van sin sus ubicaciones una por una, asi que la foto sigue chica.
-      fragmentados: datos.fragmentados, fragTotal: datos.fragTotal, fragUbic: datos.fragUbic
-  });
-
   const engancharClicConsolidacion = (raiz, datos) => {
       if (!raiz || !datos) return;
       raiz.querySelectorAll('.celda-consolida').forEach(celda => {
@@ -26638,7 +26503,7 @@ window.showCellModal = function(htmlContent) {
                 const _viendoHoy = !_hoy || _elegida === _hoy;
 
                 if (_viendoHoy) {
-                    _consol = consolidacionDeReserva(rawReserva);
+                    _consol = consolidacionDeReserva(rawReserva, indexarMaestro());
                     // La de hoy se guarda sola, una sola vez: si ya hay foto de este dia,
                     // no se vuelve a escribir. Asi el calendario se llena sin que nadie haga nada.
                     if (_consol && _sello && !_fotos.some(f => f && f.fecha === _sello.fecha)) {
