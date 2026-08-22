@@ -1,30 +1,30 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0343';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0344';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0343';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0343';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0343';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0343';
-import * as metasService from '../services_v245/metasService.js?v=29.0343';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0343';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0343';
+import * as adminService from '../services_v245/adminService.js?v=29.0344';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0344';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0344';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0344';
+import * as metasService from '../services_v245/metasService.js?v=29.0344';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0344';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0344';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0343';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0343';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0343';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0343';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0343';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0343';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0343';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0343';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0343';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0343';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0343';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0343';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0343';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0343';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0343';
-import { montarSlotting } from './slotting.js?v=29.0343';
+         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0344';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0344';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0344';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0344';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0344';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0344';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0344';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0344';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0344';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0344';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0344';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0344';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0344';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0344';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0344';
+import { montarSlotting } from './slotting.js?v=29.0344';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -381,7 +381,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0343';
+const VERSION = '29.0344';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4683,7 +4683,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0343');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0344');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6675,23 +6675,28 @@ const fuentesDelTurno = async (dia) => {
        la corrida de la mañana siguiente la pisaría. */
     let foto = await leerArea('buffer_c_arranque', hoy);
 
-    /* Y SI TODAVÍA NO ESTÁ GUARDADA, se saca del stock activo.
+    /* SI NO ESTÁ GUARDADA, NO HAY META. Y ESO ES LO CORRECTO.
      *
-     * Durante la noche el stock que hay en el servidor ES la foto de las 19:00: el
-     * robot recién la reemplaza a las 06:00. Así que mientras el turno corre no
-     * hace falta esperar nada — la meta sale igual.
+     * Acá había un respaldo: si la foto del día no estaba, se armaba una con el stock
+     * activo del servidor, "porque durante la noche ese stock ES la foto de las 19:00".
+     * **Ese respaldo estaba mal en todos los casos y le arruinó un reporte a Daniel.**
      *
-     * SOLO para la jornada de hoy. Para una pasada, ese stock ya es otro y daría
-     * una meta inventada; ahí, si no hay foto guardada, es mejor no mostrar meta
-     * que mostrar una equivocada. */
-    if ((!foto || !foto.detalle) && hoy === getLogicalDate()) {
-        try {
-            const stock = (dataStore.almacenaje_activo || []).length
-                ? dataStore.almacenaje_activo
-                : await leerArea('almacenaje_activo');
-            if (stock && stock.length) foto = fotoBufferCDe(stock);
-        } catch (e) { console.warn('[TURNO] Buffer C del stock:', e); }
-    }
+     * El 22-ago-2026 a las 08:09 abrió la jornada del 22 —que todavía no había
+     * empezado, el turno entra 19:00— y las cinco filas decían "sin meta" menos
+     * Limpieza de Buffer C, que mostraba **703 pares y 0%, NO ATENDIDO**. Ese 703 salía
+     * de acá: no había foto del 22 —el robot la guarda a las 19:27—, así que se armó
+     * una con el stock que hubiera, y a las 08:09 ese stock era **el de la corrida de
+     * las 07:07 de esa misma mañana**. Una meta del día siguiente, en rojo, sobre un
+     * turno que no había arrancado.
+     *
+     * Y NO SE ARREGLA MIRANDO EL RELOJ. El robot guarda la foto en la MISMA corrida que
+     * publica el stock, así que:
+     *   · antes de esa corrida, la foto no está y el stock todavía es el de ayer;
+     *   · después, la foto está y el respaldo no hace falta.
+     * No existe un momento en que el respaldo diga la verdad.
+     *
+     * Sin foto, la fila queda sin meta y editable — la regla de siempre de este cuadro:
+     * un cero se lee como trabajo no hecho, y un blanco se lee como "ponelo a mano". */
     /* LA LÍNEA DE BASE: lo que esos mismos SKU tenían fuera del Buffer C al arrancar.
      *
      * Desde v29.0193 la trae la propia foto del robot (`fuera`). Para las jornadas
@@ -7005,28 +7010,75 @@ const fuentesDelTurno = async (dia) => {
              * misma corrida de las 19:00 que publica el stock— con LPN, PRODUCTO y
              * CANTIDAD. Cruzándola contra lo que queda arriba sale, artículo por
              * artículo, cuánto bajó de verdad. */
+            /* ══════════════════════════════════════════════════════════════════
+             * LA FOTO DEL ARRANQUE TIENE QUE SER LA DE ESTA JORNADA, Y CONGELADA.
+             *
+             * Hasta la v29.0343 esta cuenta leía `analisis_sku_reserva`, que es el área
+             * VIVA. Durante la noche eso está bien —ahí adentro sigue la corrida de las
+             * 19:00—, pero a las 07:07 el robot de la mañana la pisa. Daniel abrió el
+             * cuadro de la jornada del 21-ago a las 07:27 y las dos puntas de la resta
+             * eran la misma foto, tomadas con 28 segundos de diferencia:
+             *
+             *     analisis_sku_reserva (arranque) →  22/08 07:07:23
+             *     reserva_cierre 21-08 (cierre)   →  22/08 07:07:51
+             *
+             * La resta daba CERO por construcción, y el cuadro decía que no se había
+             * separado nada. Rehecha con los archivos del WMS de esa noche: **311 de
+             * 311, el 100%** — los catorce códigos del plan bajaron.
+             *
+             * AHORA SE LEE `reserva_arranque` DE ESA FECHA, que el robot congela a las
+             * 19:00 y no vuelve a tocar. Es la misma foto que ya usa Bajada de paletas
+             * —por eso esa fila sí funcionaba— pero abierta por código: el 36% de las
+             * paletas trae más de un artículo y la separación se mide por artículo.
+             *
+             * SI NO ESTÁ, NO SE INVENTA UN NÚMERO. Solo se cae al área viva con la
+             * jornada ABIERTA, que es cuando todavía es la foto de las 19:00. Con la
+             * jornada cerrada y sin foto congelada, la fila queda sin avance medido y
+             * editable — un cero se lee como trabajo no hecho, y ese fue el daño.
+             * ══════════════════════════════════════════════════════════════════ */
             let bajoDeReserva = null, enReserva = null;
             if (palAhora && codAhora) {
+              /** Suma una fila (lpn, sku, pares del arranque) a la cuenta de lo que bajó. */
+              const sumar = (lpn, sku, q) => {
+                if (!lpn || !sku || !(q > 0)) return;
+                enReserva.add(sku);
+                /* Cuánto le queda A ESA PALETA de ESE artículo: la cuenta va por las
+                   dos cosas juntas y no por paleta. El 36% de las paletas trae más de
+                   un artículo, y repartir a prorrata perdía 192 unidades esa noche. */
+                const queda = codAhora.has(lpn + '|' + sku) ? (codAhora.get(lpn + '|' + sku) || 0) : 0;
+                const bajo = Math.max(0, q - queda);
+                if (bajo > 0) bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + bajo;
+              };
+              let congelada = null;
               try {
-                const resIni = await leerArea(AREA_RESERVA_DEL_ARRANQUE);
-                if (Array.isArray(resIni) && resIni.length) {
-                  bajoDeReserva = {}; enReserva = new Set();
-                  resIni.forEach(f => {
-                    if (!f || !f.ES_ALTO) return;
-                    const lpn = String(f.LPN || '').trim().toUpperCase();
-                    const sku = String(f.PRODUCTO || '').trim();
-                    const q = parseFloat(String(f.CANTIDAD == null ? 0 : f.CANTIDAD).replace(/,/g, '')) || 0;
-                    if (!lpn || !sku || q <= 0) return;
-                    enReserva.add(sku);
-                    /* Cuánto le queda A ESA PALETA de ESE artículo: la cuenta va por las
-                       dos cosas juntas y no por paleta. El 36% de las paletas trae más de
-                       un artículo, y repartir a prorrata perdía 192 unidades esa noche. */
-                    const queda = codAhora.has(lpn + '|' + sku) ? (codAhora.get(lpn + '|' + sku) || 0) : 0;
-                    const bajo = Math.max(0, q - queda);
-                    if (bajo > 0) bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + bajo;
-                  });
-                }
-              } catch (e) { console.warn('[TURNO] Separación, reserva del arranque:', e); }
+                const arr = await leerArea('reserva_arranque', hoy);
+                if (arr && arr.porCodigo && Object.keys(arr.porCodigo).length) congelada = arr.porCodigo;
+              } catch (e) { /* sin foto congelada */ }
+
+              if (congelada) {
+                bajoDeReserva = {}; enReserva = new Set();
+                Object.keys(congelada).forEach(lpn => {
+                  const L = String(lpn).trim().toUpperCase();
+                  const cods = congelada[lpn] || {};
+                  Object.keys(cods).forEach(sku => sumar(L, String(sku).trim(), Number(cods[sku]) || 0));
+                });
+              } else if (esLaDeHoy) {
+                try {
+                  const resIni = await leerArea(AREA_RESERVA_DEL_ARRANQUE);
+                  if (Array.isArray(resIni) && resIni.length) {
+                    bajoDeReserva = {}; enReserva = new Set();
+                    resIni.forEach(f => {
+                      if (!f || !f.ES_ALTO) return;
+                      sumar(String(f.LPN || '').trim().toUpperCase(),
+                            String(f.PRODUCTO || '').trim(),
+                            parseFloat(String(f.CANTIDAD == null ? 0 : f.CANTIDAD).replace(/,/g, '')) || 0);
+                    });
+                  }
+                } catch (e) { console.warn('[TURNO] Separación, reserva del arranque:', e); }
+              } else {
+                console.warn('[TURNO] Separación: la jornada ' + hoy + ' está cerrada y no tiene '
+                    + 'foto de arranque abierta por código. La fila queda sin avance medido.');
+              }
             }
 
             if (!bajoDeReserva) {
@@ -16915,7 +16967,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0343 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0344 | MOBILE PORTAL
                             </div>
                     </div>
 

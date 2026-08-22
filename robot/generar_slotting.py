@@ -897,8 +897,38 @@ def paletas_altas(filas_reserva):
     return por_lpn
 
 
+def por_codigo_de(filas_reserva):
+    """{LPN: {articulo: pares}} de las paletas altas. El 36% trae mas de un articulo."""
+    por = {}
+    for f in filas_reserva:
+        if not f.get("ES_ALTO"):
+            continue
+        lpn = str(f.get("LPN") or "").strip()
+        art = str(f.get("PRODUCTO") or "").strip()
+        if not lpn or not art:
+            continue
+        try:
+            q = float(f.get("CANTIDAD") or 0)
+        except (TypeError, ValueError):
+            q = 0.0
+        if q <= 0:
+            continue
+        por.setdefault(lpn, {})
+        por[lpn][art] = por[lpn].get(art, 0) + q
+    return {l: {a: int(round(q)) for a, q in c.items()} for l, c in por.items()}
+
+
 def foto_reserva(filas_reserva):
-    """La foto de las paletas altas al arrancar el turno, para medir la bajada."""
+    """
+    La foto de las paletas altas al arrancar el turno, para medir la bajada.
+
+    LLEVA `porCodigo` DESDE EL 22-ago-2026, y esa falta costo un reporte entero. La
+    separacion de mercaderia se mide por ARTICULO, y como esta foto solo traia el total
+    por paleta, la pantalla iba a buscar el arranque al area viva `analisis_sku_reserva`.
+    Durante la noche funciona; a las 07:07 el robot de la maana la pisa, y la jornada
+    cerrada quedaba restando la foto de la maana contra si misma. La noche del 21-ago
+    dio 0 de 311 cuando se habia separado el 100%.
+    """
     por_lpn = paletas_altas(filas_reserva)
     ahora = time.localtime()
     return {
@@ -907,6 +937,7 @@ def foto_reserva(filas_reserva):
         "paletas": len(por_lpn),
         "pares": int(round(sum(por_lpn.values()))),
         "detalle": {l: int(round(q)) for l, q in por_lpn.items()},
+        "porCodigo": por_codigo_de(filas_reserva),
     }
 
 
@@ -923,29 +954,13 @@ def foto_reserva_cierre(filas_reserva, fecha):
     corrida que la toma ya es del día siguiente.
     """
     por_lpn = paletas_altas(filas_reserva)
-    por_codigo = {}
-    for f in filas_reserva:
-        if not f.get("ES_ALTO"):
-            continue
-        lpn = str(f.get("LPN") or "").strip()
-        art = str(f.get("PRODUCTO") or "").strip()
-        if not lpn or not art:
-            continue
-        try:
-            q = float(f.get("CANTIDAD") or 0)
-        except (TypeError, ValueError):
-            q = 0.0
-        if q <= 0:
-            continue
-        por_codigo.setdefault(lpn, {})
-        por_codigo[lpn][art] = por_codigo[lpn].get(art, 0) + q
     return {
         "fecha": fecha,
         "hora": time.strftime("%H:%M", time.localtime()),
         "paletas": len(por_lpn),
         "pares": int(round(sum(por_lpn.values()))),
         "detalle": {l: int(round(q)) for l, q in por_lpn.items()},
-        "porCodigo": {l: {a: int(round(q)) for a, q in c.items()} for l, c in por_codigo.items()},
+        "porCodigo": por_codigo_de(filas_reserva),
     }
 
 
@@ -1470,8 +1485,10 @@ def run(fecha=None, ruta_act_dada=None, ruta_res_dada=None, igualmente=False):
 
             # Y las paletas altas, para poder medir la bajada durante la noche.
             pal = foto_reserva(res_web)
-            log("Guardando las paletas del arranque: %s paletas altas, %s pares"
-                % (format(pal["paletas"], ",d"), format(pal["pares"], ",d")))
+            log("Guardando las paletas del arranque: %s paletas altas, %s pares, "
+                "%s paletas abiertas por codigo"
+                % (format(pal["paletas"], ",d"), format(pal["pares"], ",d"),
+                   format(len(pal.get("porCodigo") or {}), ",d")))
             if not subir_datos(AREA_RESERVA_ARRANQUE, pal, fecha=pal["fecha"]):
                 log("Las paletas del arranque no se guardaron: el reporte del turno no va "
                     "a poder medir la bajada de paletas", "WARN")
