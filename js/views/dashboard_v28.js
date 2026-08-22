@@ -1,29 +1,29 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0336';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0337';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0336';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0336';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0336';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0336';
-import * as metasService from '../services_v245/metasService.js?v=29.0336';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0336';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0336';
+import * as adminService from '../services_v245/adminService.js?v=29.0337';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0337';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0337';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0337';
+import * as metasService from '../services_v245/metasService.js?v=29.0337';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0337';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0337';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
-         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto } from '../reportes/reserva_consolidacion.js?v=29.0336';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0336';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0336';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0336';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0336';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0336';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0336';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0336';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0336';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0336';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0336';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0336';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0336';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0336';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0336';
-import { montarSlotting } from './slotting.js?v=29.0336';
+         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto } from '../reportes/reserva_consolidacion.js?v=29.0337';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0337';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0337';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0337';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0337';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0337';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0337';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0337';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0337';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0337';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0337';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0337';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0337';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0337';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0337';
+import { montarSlotting } from './slotting.js?v=29.0337';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -380,7 +380,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0336';
+const VERSION = '29.0337';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4682,7 +4682,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0336');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0337');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16914,7 +16914,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0336 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0337 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24071,17 +24071,38 @@ const renderRFSection = (container) => {
    * SIN LEYENDA A PROPOSITO. La raya punteada de arriba es el tope -las ubicaciones que
    * existen- y la curva sube hacia ella. Daniel: *"el grafico debe ser intuitivo"*.
    *
-   * EL EJE ARRANCA EN CERO, y eso no es un detalle: arrancando en 1.900 la misma subida se
-   * veria el triple de empinada. En comite eso se lo voltean. La pendiente que se ve es la real.
+   * EL EJE NO ARRANCA EN CERO — Y ESO HAY QUE SABERLO. Daniel pidio mas pendiente
+   * -*"puedes hacer que el grafico tenga mas pendiente?"*- y eligio esta de tres opciones,
+   * sabiendo lo que cuesta: le mostre que arrancando desde cero la subida es la real, y que
+   * cortando el eje se ve mucho mas grande de lo que es. **Decidio cortarlo.**
+   *
+   * Por eso el piso VA ESCRITO abajo a la izquierda, igual que el tope arriba. El que mire
+   * el eje ve de donde arranca. Es lo minimo para que el dibujo no engane solo.
+   *
+   * EL PISO SE CALCULA, no esta escrito: queda un 10% del recorrido por debajo del dia mas
+   * flojo, redondeado a la centena. Con los 10 dias de agosto -de 1.589 a 2.486- da 1.500,
+   * que es el numero con el que Daniel lo aprobo. Fijarlo en 1.500 seria mentir el dia que
+   * la reserva baje de ahi: la curva se saldria del cuadro por abajo.
    *
    * Se dibuja con dos dias o mas. Con uno solo no hay tendencia que mostrar.
    * ══════════════════════════════════════════════════════════════════════════════ */
   const graficoTendencia = (serie, tope) => {
       if (!Array.isArray(serie) || serie.length < 2 || !tope) return '';
-      const W = 1180, ALTO = 200, PL = 46, PR = 16, PT = 24, PB = 26;
+      const W = 1180, ALTO = 260, PL = 46, PR = 16, PT = 24, PB = 26;
       const x0 = PL, x1 = W - PR, y0 = PT, y1 = ALTO - PB;
       const n = serie.length, dx = (x1 - x0) / (n - 1);
-      const ye = (v) => y1 - (y1 - y0) * v / tope;
+
+      /* EL PISO. Se deja un 10% del recorrido por debajo del dia mas flojo para que la curva
+         no nazca pegada al borde, y se redondea a la centena para que el numero del eje sea
+         uno que se lea. Las tres guardas de abajo no son adorno: si el redondeo quedara POR
+         ENCIMA del minimo, ese dia se dibujaria fuera del cuadro. */
+      const min = serie.reduce((m, s) => Math.min(m, s[1]), Infinity);
+      let piso = Math.round((min - (tope - min) * 0.1) / 100) * 100;
+      if (piso >= min) piso = Math.floor(min / 100) * 100 - 100;
+      if (piso < 0 || !isFinite(piso)) piso = 0;
+      if (tope - piso < 1) piso = 0;
+
+      const ye = (v) => y1 - (y1 - y0) * (v - piso) / (tope - piso);
       const px = (i) => x0 + i * dx;
       const num = (v) => Math.round(v).toLocaleString('es-ES');
 
@@ -24107,6 +24128,9 @@ const renderRFSection = (container) => {
          + '" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="5 4" opacity=".45"/>'
          + '<text x="' + (x0 - 7) + '" y="' + (ye(tope) + 3).toFixed(1)
          + '" fill="#94a3b8" font-size="10" font-weight="700" text-anchor="end">' + num(tope) + '</text>'
+         + (piso ? '<text x="' + (x0 - 7) + '" y="' + (y1 + 3)
+                 + '" fill="#64748b" font-size="10" font-weight="700" text-anchor="end">'
+                 + num(piso) + '</text>' : '')
          + '<path d="' + d + ' L ' + px(n - 1).toFixed(1) + ' ' + y1 + ' L ' + px(0).toFixed(1) + ' ' + y1
          + ' Z" fill="url(#gTendRes)"/>'
          + '<path d="' + d + '" fill="none" stroke="#a78bfa" stroke-width="2.6" stroke-linecap="round"/>';
@@ -26708,16 +26732,18 @@ window.showCellModal = function(htmlContent) {
 
                 if (_consol) {
                     /* LA SERIE DE LA TENDENCIA sale de las fotos guardadas, no del calculo:
-                       cada foto trae su matriz y de ahi se suman las ocupadas de ese dia. Se
-                       muestran los ultimos 14 dias que HAYA -no se rellenan huecos ni se
-                       inventan dias-, y se corta en el dia que se esta mirando: mirando el 20
-                       la curva termina el 20, no adelanta lo que paso despues. */
+                       cada foto trae su matriz y de ahi se suman las ocupadas de ese dia.
+                       DIEZ DIAS, que es lo que pidio Daniel: con mas, los numeros se pisan
+                       entre ellos y hay que agrandar el cuadro. No se rellenan huecos ni se
+                       inventan dias -si un dia no tiene foto, no aparece-, y se corta en el
+                       dia que se esta mirando: mirando el 20 la curva termina el 20, no
+                       adelanta lo que paso despues. */
                     const _serie = _fotos
                         .filter(f => f && f.fecha && Array.isArray(f.matriz)
                                      && (!_elegida || f.fecha <= _elegida))
                         .map(f => [f.fecha, f.matriz.reduce((s, c) => s + (c.ocupadas || 0), 0)])
                         .sort((a, b) => a[0] < b[0] ? -1 : 1)
-                        .slice(-14);
+                        .slice(-10);
                     _htmlConsol = _cal + htmlConsolidacionReserva(_consol, _serie);
                 } else if (!_viendoHoy) {
                     _htmlConsol = _cal + '<div class="glass-panel" style="padding:16px 18px;border:1px solid rgba(251,191,36,.35)">'
