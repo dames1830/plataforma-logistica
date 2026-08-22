@@ -93,6 +93,20 @@ usa la corrida de verdad: no hay dos copias del camino.
 ESTE PASO SOLO BAJA LOS ARCHIVOS. El resumen al servidor viene después, cuando
 sepamos que la descarga anda: no tiene sentido escribir el resumen de algo que
 todavía no sabemos si baja.
+
+LA FOTO FRESCA DE LA TARDE
+--------------------------
+    python picking_y_orden.py --solo-pendientes
+
+Baja SOLO el "Detalle Orden Pendientes.csv" y hasta HOY, no hasta ayer. Lo llama
+`armar_pendiente.py` en cuanto entra el correo de comercial, porque la foto de las
+06:57 no sirve para cruzar contra un correo de las 19:00: el 21-ago-2026 el
+automático publicó 31.246 unidades cuando lo real eran 116.467 —el 87% del
+pendiente son órdenes nacidas durante el día—.
+
+A esa hora el WMS lo está usando el robot del stock, así que esta bajada **cede**:
+espera 20 minutos y, si sigue ocupado, sale con código 3 sin bajar nada. Vale más
+quedarse con el pendiente de ayer que pisarlo con uno a medias.
 """
 
 import os
@@ -238,6 +252,12 @@ def dia_pedido():
             except ValueError:
                 continue
         raise SystemExit("No entendí la fecha '%s'. Se escribe asi: --dia 12-08-2026" % valor)
+    # SIN --dia, la corrida de las 08:00 baja AYER. La bajada de la tarde
+    # -`--solo-pendientes`, la que dispara el correo de comercial- tiene que
+    # llegar hasta HOY: lo que busca son justamente las ordenes nacidas durante
+    # el dia, que a las 06:57 todavia no existian.
+    if "--solo-pendientes" in sys.argv:
+        return datetime.now()
     return datetime.now() - timedelta(days=1)
 
 
@@ -935,11 +955,13 @@ def run():
 
     a_la_vista = "--ver" in sys.argv
     sin_exportar = "--sin-exportar" in sys.argv
+    solo_pend = "--solo-pendientes" in sys.argv
 
     dia = dia_pedido()
     log("=" * 58)
-    log("REPORTES DIARIOS DEL WMS · día %s%s"
-        % (dia.strftime("%d-%m-%Y"), "  (MODO PRUEBA, no exporta)" if sin_exportar else ""))
+    log("%s · día %s%s"
+        % ("PENDIENTES DEL WMS, FOTO FRESCA" if solo_pend else "REPORTES DIARIOS DEL WMS",
+           dia.strftime("%d-%m-%Y"), "  (MODO PRUEBA, no exporta)" if sin_exportar else ""))
     log("=" * 58)
 
     # En modo prueba no se reintenta: si algo falla quiero verlo ya, no dentro de
@@ -954,8 +976,20 @@ def run():
     # DÍA: si se saltea, el picking y el detalle de ese día no los baja nadie. Se
     # espera hasta 15 minutos —lo normal es que la corrida de las 06:00 ya haya
     # terminado— y si el otro sigue adentro se entra igual.
-    bloqueo_wms.esperar_turno(log, minutos_max=15, quien="reportes diarios")
-    bloqueo_wms.tomar("reportes diarios")
+    #
+    # PERO LA BAJADA DE LA TARDE SI CEDE, y por eso lleva su propia rama. Entre las
+    # 18:00 y las 23:00 el WMS lo esta usando el robot del stock -el principal a las
+    # 19:00 y el de la hora cada :30- y meterse encima le invalida la sesion. Si
+    # despues de 20 minutos sigue ocupado, esta sale SIN bajar nada y con codigo 3:
+    # `armar_pendiente.py` entonces no publica y queda el pendiente de ayer, que es
+    # la regla que puso Daniel. El correo se vuelve a despertar en media hora.
+    quien = "pendientes de la tarde" if solo_pend else "reportes diarios"
+    libre = bloqueo_wms.esperar_turno(log, minutos_max=20 if solo_pend else 15, quien=quien)
+    if solo_pend and not libre:
+        log("El WMS sigue ocupado. NO se baja la foto: vale mas quedarse con el "
+            "pendiente de ayer que pisarlo con uno a medias.", "ERROR")
+        return 3
+    bloqueo_wms.tomar(quien)
 
     base = wms._base_onedrive()
     # _base_onedrive() YA devuelve ...\\scraping Stock. Agregárselo otra vez daba
@@ -972,8 +1006,9 @@ def run():
     ruta_pick = os.path.join(base, "Picking", "Picking %d-%d.csv" % (dia.day, dia.month))
     ruta_ord = os.path.join(base, "Detalle Orden", "Detalle Orden %s.csv" % dia.strftime("%d-%m"))
     ruta_pend = os.path.join(base, "Detalle Orden", ARCHIVO_PENDIENTES)
-    log("Picking      -> %s" % ruta_pick)
-    log("Detalle Orden-> %s" % ruta_ord)
+    if not solo_pend:
+        log("Picking      -> %s" % ruta_pick)
+        log("Detalle Orden-> %s" % ruta_ord)
     log("Pendientes   -> %s" % ruta_pend)
 
     if not wms.WMS_PASSWORD or wms.WMS_PASSWORD == "TU_PASSWORD_AQUI":
@@ -1014,16 +1049,17 @@ def run():
             log("Sesión iniciada como %s" % wms.WMS_USER)
             time.sleep(15)
 
-            ok_pick = wms.con_reintentos(
-                "Avance de Picking",
-                lambda: descargar_picking(page, ruta_pick, dia,
-                                          sin_exportar=sin_exportar, con_fotos=sin_exportar),
-                page)
-            ok_ord = wms.con_reintentos(
-                "Detalle de Orden",
-                lambda: descargar_detalle_orden(page, ruta_ord, dia,
-                                                sin_exportar=sin_exportar, con_fotos=sin_exportar),
-                page)
+            if not solo_pend:
+                ok_pick = wms.con_reintentos(
+                    "Avance de Picking",
+                    lambda: descargar_picking(page, ruta_pick, dia,
+                                              sin_exportar=sin_exportar, con_fotos=sin_exportar),
+                    page)
+                ok_ord = wms.con_reintentos(
+                    "Detalle de Orden",
+                    lambda: descargar_detalle_orden(page, ruta_ord, dia,
+                                                    sin_exportar=sin_exportar, con_fotos=sin_exportar),
+                    page)
             # LOS PENDIENTES VAN AL FINAL y no cambian el resultado de la corrida:
             # es el más largo —90 días— y el único que todavía no tiene meses de
             # espalda. Si falla, los otros dos ya están bajados y el cuadro se
@@ -1046,6 +1082,10 @@ def run():
     hechos = int(bool(ok_pick)) + int(bool(ok_ord))
     log("=" * 58)
     log("Pendientes: %s" % ("bajados" if ok_pend else "NO se bajaron"))
+    if solo_pend:
+        log("LISTO en %.1f minutos" % ((time.time() - t0) / 60.0))
+        log("=" * 58)
+        return 0 if ok_pend else 1
     log("LISTO en %.1f minutos - %d de 2 %s"
         % ((time.time() - t0) / 60.0, hechos, "recorridos" if sin_exportar else "bajados"))
     log("=" * 58)

@@ -49,8 +49,17 @@ midio que el robot baja el pendiente a las 06:57 y el correo llega a las 19:00;
 con la foto de la mañana faltaban 277 ordenes -las nacidas durante el dia, entre
 ellas las del correo de esa misma tarde- y sobraban 492 ya cerradas.
 
-    python armar_pendiente.py            arma el de hoy
-    python armar_pendiente.py --probar   calcula y muestra, sin publicar nada
+ANTES DE CRUZAR SE BAJA UNA FOTO NUEVA DEL WMS. El 21-ago-2026 esto no estaba y el
+pendiente salio con la foto de las 06:57 contra un correo de las 18:32: publico
+**31.246 unidades cuando lo real eran 116.467**. Las ordenes coincidian -1.608
+contra 1.583, porque las define el correo-; lo que faltaba eran las lineas nacidas
+durante el dia, el 87% del pendiente. Ahora corre `picking_y_orden.py
+--solo-pendientes` y **no publica nada si la foto no queda posterior al correo**:
+vale mas el pendiente de ayer que uno corto encima del bueno.
+
+    python armar_pendiente.py              baja la foto, arma y publica el de hoy
+    python armar_pendiente.py --probar     calcula y muestra, sin bajar ni publicar
+    python armar_pendiente.py --sin-bajar  usa la foto que ya esta en disco
     python armar_pendiente.py --fecha 2026-08-20
 """
 
@@ -60,6 +69,7 @@ import io
 import json
 import os
 import re
+import subprocess
 import sys
 import traceback
 import urllib.parse
@@ -109,8 +119,13 @@ MAESTRO_CANDIDATOS = [
 AQUI = os.path.dirname(os.path.abspath(__file__))
 LOG = os.path.join(AQUI, 'logs', 'armar_pendiente.log')
 
+SELLO = os.path.join(AQUI, 'logs', 'pendiente_armado.txt')
+
 ESTADOS = ('Creada', 'Parcialmente asignado')
 MINIMO_CRUCE = 0.30      # si cruza menos que esto, algo se rompio: no se publica
+# Cuanto se le da a la bajada del WMS. Son 365 dias -unas 65.000 lineas- y tarda
+# unos 8 minutos, pero puede pasarse 20 esperando al robot del stock y reintentar.
+ESPERA_BAJADA = 45 * 60
 
 
 def log(t, nivel='INFO'):
@@ -301,6 +316,97 @@ def leer_maestro():
 # ══════════════════════════════════════════════════════════════════════════════
 #  3. EL CRUCE
 # ══════════════════════════════════════════════════════════════════════════════
+
+# --------- LA FOTO DEL WMS TIENE QUE SER POSTERIOR AL CORREO ---------
+
+def _reloj(t):
+    return datetime.fromtimestamp(t).strftime('%d-%m %H:%M') if t else '(no hay)'
+
+
+def hora_foto():
+    """Cuando se bajo el 'Detalle Orden Pendientes.csv' que hay en disco."""
+    try:
+        return os.path.getmtime(PENDIENTES)
+    except OSError:
+        return 0.0
+
+
+def hora_correo():
+    """Cuando llego el ultimo correo de comercial. Es la vara contra la que se mide
+    la foto: el pendiente se arma cruzando los dos, y cruzar un correo de las 19:00
+    contra una foto de las 06:57 deja fuera todo lo que nacio durante el dia."""
+    ultimo = 0.0
+    try:
+        for n in os.listdir(CORREOS):
+            if n.startswith('~$') or not n.lower().endswith(('.xlsx', '.xls')):
+                continue
+            m = os.path.getmtime(os.path.join(CORREOS, n))
+            if m > ultimo:
+                ultimo = m
+    except Exception:
+        pass
+    return ultimo
+
+
+def refrescar_pendientes():
+    """BAJA DEL WMS UNA FOTO DE HOY ANTES DE CRUZAR. Devuelve True solo si la foto
+    que queda en disco es POSTERIOR al correo mas nuevo.
+
+    POR QUE EXISTE. Lo eligio Daniel el 20-ago-2026 -'cuando guarda el Excel, sigue:
+    baja el Detalle de Orden, cruza y publica'- y el 21 volvio a fallar por no
+    estar: el correo se guardo 18:32 y la foto seguia siendo la de las 06:57, con
+    CERO pendientes del dia. Publico 31.246 unidades contra 116.467 reales.
+
+    LA VARA ES EL CORREO MAS NUEVO, no el de hoy a secas. Si comercial manda una
+    correccion a las 21:40 y la foto es de las 19:10, la foto vuelve a quedar vieja
+    y se baja de nuevo. Solo se saltea la bajada cuando de verdad no cambio nada, y
+    ahi se ahorran los ocho minutos.
+
+    SI FALLA, NO SE PUBLICA. La bajada le cede el paso al robot del stock -codigo
+    3- y ademas puede fallar por mil motivos; en todos la respuesta es la misma que
+    puso Daniel para el cruce: no se pisa el pendiente bueno con uno peor. Queda el
+    del dia anterior y el correo reintenta en la vuelta siguiente.
+    """
+    vara = hora_correo()
+    log('   correo mas nuevo   %s' % _reloj(vara))
+    log('   foto del WMS       %s' % _reloj(hora_foto()))
+    if vara and hora_foto() > vara:
+        log('   la foto ya es posterior al correo: no hace falta bajarla de nuevo')
+        return True
+
+    bajador = os.path.join(AQUI, 'picking_y_orden.py')
+    if not os.path.isfile(bajador):
+        log('No esta picking_y_orden.py, no hay con que bajar la foto: %s'
+            % bajador, 'ERROR')
+        return False
+
+    log('Bajando del WMS la foto de hoy (365 dias, unos 8 minutos)...')
+    cod = -1
+    try:
+        cod = subprocess.run([sys.executable, bajador, '--solo-pendientes'],
+                             timeout=ESPERA_BAJADA).returncode
+    except Exception as e:
+        log('No se pudo correr picking_y_orden.py (%s: %s)'
+            % (type(e).__name__, str(e)[:140]), 'ERROR')
+    if cod == 0:
+        log('Foto nueva bajada - %s' % _reloj(hora_foto()))
+    elif cod == 3:
+        log('El WMS estaba ocupado con otro robot y esta bajada le cede el paso.',
+            'AVISO')
+    else:
+        log('La bajada FALLO (codigo %s). Mirar logs/picking_orden_*.log' % cod,
+            'ERROR')
+
+    if not vara:
+        # Sin correos no hay con que comparar, y alcanza con que el archivo exista:
+        # el cruce de mas abajo tampoco va a dar nada y se corta ahi.
+        return hora_foto() > 0
+    if hora_foto() > vara:
+        return True
+    log('La foto del WMS sigue siendo ANTERIOR al correo (%s contra %s).'
+        % (_reloj(hora_foto()), _reloj(vara)), 'ERROR')
+    return False
+
 
 def armar(hoy):
     guias, cabecera, IQ, IG = leer_correos()
@@ -588,11 +694,24 @@ def subir_excel(ruta, fecha, intentos=3):
 
 def main():
     probar = '--probar' in sys.argv
+    sin_bajar = '--sin-bajar' in sys.argv
     hoy = arg('--fecha', datetime.now().strftime('%Y-%m-%d'))
 
     log('=' * 62)
     log('PENDIENTE DE DESPACHO  ·  %s' % hoy)
     log('=' * 62)
+
+    # LA FOTO PRIMERO. Solo para el dia de hoy: con --fecha de un dia pasado la foto
+    # del WMS no sirve -es de ahora, no de aquel dia- y bajarla serian ocho minutos
+    # tirados. Con --probar no se toca el WMS.
+    if not probar and not sin_bajar and hoy == datetime.now().strftime('%Y-%m-%d'):
+        if not refrescar_pendientes():
+            log('')
+            log('NO SE PUBLICA NADA. Sin una foto del WMS posterior al correo el '
+                'pendiente sale corto y pisaria al bueno; queda el del dia anterior. '
+                'El correo lo vuelve a intentar en la proxima vuelta.', 'ERROR')
+            return 2
+        log('')
 
     datos, guias, cabecera, IQ, por_guia, por_sku = armar(hoy)
     t = datos['totales']
@@ -624,6 +743,19 @@ def main():
         os.remove(ruta)
     except Exception:
         pass
+    if ok1 and ok2:
+        # EL SELLO ES PARA QUE EL CORREO SEPA QUE YA NO HACE FALTA REINTENTAR.
+        # `correo_guias.py` se despierta cada media hora hasta las 23:00; sin esto
+        # solo volveria a armar el pendiente si entrara OTRO correo, y una noche en
+        # que el WMS estuviera ocupado el dia se quedaria sin pendiente y nadie se
+        # enteraria hasta la mañana.
+        try:
+            os.makedirs(os.path.dirname(SELLO), exist_ok=True)
+            io.open(SELLO, 'w', encoding='utf-8').write(hoy)
+        except Exception as e:
+            log('No se pudo dejar el sello (%s). El pendiente SI se publico; lo '
+                'unico que pasa es que el correo va a volver a armarlo.'
+                % type(e).__name__, 'AVISO')
     log('')
     log('LISTO · datos %s · excel %s' % ('OK' if ok1 else 'FALLO', 'OK' if ok2 else 'FALLO'))
     return 0 if (ok1 and ok2) else 1

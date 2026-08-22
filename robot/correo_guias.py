@@ -118,6 +118,14 @@ VISTOS = os.path.join(AQUI, 'correo_guias_vistos.json')
 LOG = os.path.join(AQUI, 'logs', 'correo_guias.log')
 
 CACHE = os.path.join(AQUI, 'correo_guias_cache.json')
+# El sello que deja `armar_pendiente.py` cuando publica: adentro va la fecha del
+# pendiente que quedo armado. Sin el, este robot no tendria como saber si el de hoy
+# ya salio y solo reintentaria cuando entrara OTRO correo.
+SELLO_PENDIENTE = os.path.join(AQUI, 'logs', 'pendiente_armado.txt')
+# Ahora el armador baja tambien una foto del WMS de 365 dias -unos 8 minutos, y
+# hasta 20 mas si tiene que esperar al robot del stock-. La media hora de antes
+# lo mataba a mitad de la bajada.
+ESPERA_ARMADO = 60 * 60
 NS = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
 MINIMO_FILAS = 20       # un correo de guías nunca trae cuatro filas
 
@@ -514,25 +522,49 @@ def main():
     foto del WMS tiene que ser POSTERIOR al correo. El 20-ago-2026 se midio que el
     robot baja el pendiente a las 06:57 y el correo llega a las 19:00; con la foto
     de la mañana faltaban 277 ordenes -las nacidas durante el dia, entre ellas las
-    del correo de esa misma tarde- y sobraban 492 ya cerradas.
+    del correo de esa misma tarde- y sobraban 492 ya cerradas. Desde el 21-ago el
+    armador baja su propia foto antes de cruzar, y si no lo consigue NO publica.
+
+    Y POR ESO ACA SE REINTENTA. Si la bajada no salio -porque el robot del stock
+    estaba adentro del WMS, porque Oracle andaba lento- el pendiente de hoy queda
+    sin armar, y sin reintento se quedaria asi hasta mañana: este robot solo
+    despierta al armador cuando entra un correo, y el correo del dia ya entro. El
+    sello dice que dia quedo publicado; mientras haya correo de hoy y el sello no
+    lo diga, cada media hora se vuelve a probar hasta las 23:00.
 
     Va en un proceso aparte para que una caida de aquel NO se lleve puesto a este:
     el correo ya quedo guardado, que es lo que no se puede perder. Su salida se
     lee en `logs/armar_pendiente.log`.
     """
-    if guardados and not probar:
+    ahora = datetime.now()
+    try:
+        ya_armado = io.open(SELLO_PENDIENTE, encoding='utf-8').read().strip() \
+            == ahora.strftime('%Y-%m-%d')
+    except Exception:
+        ya_armado = False
+    hay_correo_de_hoy = os.path.isfile(
+        os.path.join(DESTINO, 'Guías %02d.%02d.xlsx' % (ahora.day, ahora.month)))
+
+    if (guardados or (hay_correo_de_hoy and not ya_armado)) and not probar:
         armador = os.path.join(AQUI, 'armar_pendiente.py')
         if not os.path.isfile(armador):
             log('No esta armar_pendiente.py, no se arma el pendiente.', 'AVISO')
         else:
             log('')
-            log('Entro correo nuevo: se arma el pendiente de despacho...')
+            log('Entro correo nuevo: se arma el pendiente de despacho...' if guardados
+                else 'El pendiente de hoy todavia no se publico: se reintenta...')
             try:
-                r = subprocess.run([sys.executable, armador], timeout=1800)
-                log('Pendiente de despacho: %s'
-                    % ('armado' if r.returncode == 0 else
-                       'FALLO (codigo %s), ver logs/armar_pendiente.log' % r.returncode),
-                    'INFO' if r.returncode == 0 else 'ERROR')
+                cod = subprocess.run([sys.executable, armador],
+                                     timeout=ESPERA_ARMADO).returncode
+                if cod == 0:
+                    log('Pendiente de despacho: armado')
+                elif cod == 2:
+                    log('Pendiente de despacho: NO se publico. No se pudo bajar del '
+                        'WMS una foto posterior al correo, asi que queda el del dia '
+                        'anterior. Se reintenta en la proxima vuelta.', 'AVISO')
+                else:
+                    log('Pendiente de despacho: FALLO (codigo %s), ver '
+                        'logs/armar_pendiente.log' % cod, 'ERROR')
             except Exception as e:
                 log('No se pudo arrancar armar_pendiente.py (%s: %s)'
                     % (type(e).__name__, str(e)[:120]), 'ERROR')
