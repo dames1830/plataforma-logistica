@@ -1,29 +1,30 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0339';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0340';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0339';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0339';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0339';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0339';
-import * as metasService from '../services_v245/metasService.js?v=29.0339';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0339';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0339';
+import * as adminService from '../services_v245/adminService.js?v=29.0340';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0340';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0340';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0340';
+import * as metasService from '../services_v245/metasService.js?v=29.0340';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0340';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0340';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
-         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto } from '../reportes/reserva_consolidacion.js?v=29.0339';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0339';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0339';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0339';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0339';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0339';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0339';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0339';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0339';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0339';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0339';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0339';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0339';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0339';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0339';
-import { montarSlotting } from './slotting.js?v=29.0339';
+         consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
+         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0340';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0340';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0340';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0340';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0340';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0340';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0340';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0340';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0340';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0340';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0340';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0340';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0340';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0340';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0340';
+import { montarSlotting } from './slotting.js?v=29.0340';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -380,7 +381,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0339';
+const VERSION = '29.0340';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4682,7 +4683,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0339');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0340');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16914,7 +16915,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0339 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0340 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24168,7 +24169,7 @@ const renderRFSection = (container) => {
   };
 
   /** El HTML de los dos cuadros. Cadena vacía si no hay con qué armarlos. */
-  const htmlConsolidacionReserva = (datos, serie) => {
+  const htmlConsolidacionReserva = (datos, serie, base) => {
       if (!datos) return '';
       const mil = (n) => Math.round(n).toLocaleString('es-ES');
       const colorOcup = (p) => p >= 97 ? '#b91c1c' : p >= 88 ? '#f97316' : p >= 75 ? '#fbbf24' : '#a3e635';
@@ -24267,7 +24268,19 @@ const renderRFSection = (container) => {
        *
        * Se llama FRAGMENTADOS y no "desparramados" porque es la palabra que el sistema ya usa
        * por dentro para esto -`skusFragmentados` en el historial de reserva-. */
-      const F = (datos.fragmentados || []);
+      /* ══════════════════════════════════════════════════════════════════════════
+       * DE DONDE SALEN ESTOS 30: DE LA BASE, NO DEL DIA.
+       *
+       * Daniel se los dio a su jefe con un compromiso: *"de esas 571 ubicaciones tengo que
+       * reducir 183, a 388"*. Si la lista se rearmara con el stock de cada noche, la meta se
+       * moveria sola y el compromiso no significaria nada. Por eso el cuadro sale de la BASE
+       * -una foto elegida, fija- y no del dia que se este mirando.
+       *
+       * La base NO cambia con el calendario a proposito: se pueden mirar los cuadros de
+       * arriba de cualquier dia y este sigue mostrando el compromiso. Cambiarla es un acto
+       * deliberado, con el boton FIJAR BASE. */
+      const B = (base && Array.isArray(base.fragmentados) && base.fragmentados.length) ? base : null;
+      const F = (B ? B.fragmentados : datos.fragmentados) || [];
       if (!F.length) return cuadro1 + panel('PADRE POR SELECTIVO', 'rgba(96,165,250,.35)', cabP + '<tbody>' + filasP + totP + '</tbody>');
 
       /* ── LA CABECERA CONSOLIDADA ──────────────────────────────────────────────
@@ -24285,7 +24298,7 @@ const renderRFSection = (container) => {
        * midio. En ese caso el hueco muestra la hora de la foto y nada mas. */
       const sumF2 = (k) => F.reduce((s, p) => s + p[k], 0);
       const ubicF = sumF2('n'), redF = sumF2('reduce'), quedanF = ubicF - redF;
-      const cie = datos.cierre;
+      const cie = B ? B.cierre : datos.cierre;
       const hechas = cie ? Math.max(0, Math.min(redF, redF - (Number(cie.reduce) || 0))) : null;
       const pctF = (hechas !== null && redF) ? Math.round(100 * hechas / redF) : 0;
       const dato = (v, k, d, col) => '<div style="flex:1;min-width:132px;padding:8px 16px;'
@@ -24295,11 +24308,11 @@ const renderRFSection = (container) => {
           + '<div style="font-size:.64rem;color:var(--text-muted);margin-top:2px">' + d + '</div></div>';
       const barraF = hechas === null
           ? '<div style="flex:2.4;min-width:300px;padding:8px 16px;display:flex;flex-direction:column;justify-content:center">'
-            + '<div style="font-size:.66rem;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase">avance del turno</div>'
-            + '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">se mide al cierre, con el ancla de la mañana</div></div>'
+            + '<div style="font-size:.66rem;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase">avance</div>'
+            + '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">se mide con el stock de reserva del día</div></div>'
           : '<div style="flex:2.4;min-width:300px;padding:8px 16px;display:flex;flex-direction:column;justify-content:center">'
             + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
-            + '<span style="font-size:.66rem;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase">avance del turno</span>'
+            + '<span style="font-size:.66rem;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase">avance</span>'
             + '<span style="font-size:1.35rem;font-weight:800;color:#10b981">' + pctF + '%</span></div>'
             + '<div style="height:12px;border-radius:7px;background:rgba(255,255,255,.08);overflow:hidden;position:relative;margin-top:7px">'
             + '<i style="position:absolute;left:0;top:0;bottom:0;border-radius:7px;width:' + pctF + '%;'
@@ -24315,6 +24328,16 @@ const renderRFSection = (container) => {
           + dato(mil(redF), 'se pueden reducir', 'el ' + (ubicF ? Math.round(100 * redF / ubicF) : 0) + '% de las ' + mil(ubicF), '#10b981')
           + dato(mil(quedanF), 'quedarían ocupadas', 'si se consolida todo', '')
           + barraF + '</div>';
+
+      /* El boton para mover la base. Va discreto -texto chico, sin recuadro- porque se usa
+         una vez cada varias semanas: cuando la base se termino y hay que comprometer otra.
+         Fija la foto del DIA QUE SE ESTA MIRANDO, asi se puede elegir cual con el calendario. */
+      const acciones = '<span style="margin-left:auto;display:flex;align-items:center;gap:14px">'
+          + '<span id="btn_base_frag" title="Fija los artículos de este día como la nueva base"'
+          + ' style="cursor:pointer;font-size:.62rem;font-weight:800;letter-spacing:.5px;'
+          + 'color:#00E5FF;text-transform:uppercase;opacity:.75"'
+          + ' onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.75">fijar base</span>'
+          + iconoExcel.replace('margin-left:auto;', '') + '</span>';
 
       const cabF = '<thead><tr>' + th('#', 'width:34px') + th('PADRE') + th('GENDER RIMS')
           + th('UBIC.') + th('PARES') + th('SU PALETA<br>LLENA', 'color:#c4b5fd') + th('SELECTIVOS')
@@ -24341,8 +24364,13 @@ const renderRFSection = (container) => {
          que se llevan al comite. No volver a proponerlo. */
       return cuadro1
            + panel('PADRE POR SELECTIVO', 'rgba(96,165,250,.35)', cabP + '<tbody>' + filasP + totP + '</tbody>')
-           + panel('LOS ' + F.length + ' MÁS FRAGMENTADOS', 'rgba(96,165,250,.35)',
-                   cabF + '<tbody>' + filasF + totF + '</tbody>', iconoExcel, cabecera);
+           + panel('LOS ' + F.length + ' MÁS FRAGMENTADOS'
+                     + (B && B.fecha
+                        ? '<span style="font-size:.6rem;color:var(--text-muted);font-weight:700;'
+                          + 'letter-spacing:.5px">BASE DEL ' + B.fecha.split('-').reverse().join('/')
+                          + '</span>' : ''),
+                   'rgba(96,165,250,.35)',
+                   cabF + '<tbody>' + filasF + totF + '</tbody>', acciones, cabecera);
   };
 
   /** El clic en una celda: las ubicaciones de ese padre en ese selectivo, una por una. */
@@ -24428,10 +24456,42 @@ const renderRFSection = (container) => {
       XLSX.writeFile(wb, `Articulo_Ubicacion_${fecha || getLogicalDate()}.xlsx`);
   };
 
-  const engancharClicConsolidacion = (raiz, datos) => {
+  const engancharClicConsolidacion = (raiz, datos, base) => {
       if (!raiz || !datos) return;
+      // El Excel exporta LO QUE SE VE: si hay base, son los 30 de la base con el detalle de
+      // ubicaciones de hoy, que es adonde hay que ir a mover las paletas.
+      const paraExcel = (base && (base.fragmentados || []).length) ? base : datos;
       const btn = raiz.querySelector('#btn_xls_frag');
-      if (btn) btn.addEventListener('click', () => exportarFragmentados(datos, datos.fecha));
+      if (btn) btn.addEventListener('click', () => exportarFragmentados(paraExcel, paraExcel.fecha));
+
+      /* FIJAR BASE. Se pregunta antes, con los numeros a la vista, porque lo que se pierde no
+         es la lista -la foto de ese dia queda- sino el avance acumulado contra la anterior. */
+      const btnB = raiz.querySelector('#btn_base_frag');
+      if (btnB) btnB.addEventListener('click', async () => {
+          /* SOLO SE PUEDE FIJAR UN DIA QUE TENGA FOTO. La base guarda una fecha y va a buscar
+             los datos a la foto de ese dia; apuntar a un dia sin foto dejaria el cuadro vacio. */
+          const dia = datos.fecha;
+          if (!dia) {
+              showPremiumAlert('TODAVÍA NO', 'Este día no tiene foto guardada. La foto se guarda '
+                  + 'sola en el ancla de la noche; después de eso se puede fijar como base.', 'info');
+              return;
+          }
+          const N = (datos.fragmentados || []).length;
+          const red = (datos.fragmentados || []).reduce((s, p) => s + (p.reduce || 0), 0);
+          const ok = await showPremiumConfirm('FIJAR BASE NUEVA',
+              `Los ${N} artículos del ${dia.split('-').reverse().join('/')} pasan a ser la base: `
+              + `${red} ubicaciones para reducir.\n\nEl avance vuelve a empezar de cero contra `
+              + 'esa meta. La base anterior deja de mostrarse.', 'warning');
+          if (!ok) return;
+          const r = await guardarBaseReserva(dia, usuarioActual());
+          if (!r) { showPremiumAlert('NO SE PUDO', 'No se pudo guardar la base. Intente de nuevo.', 'error'); return; }
+          showPremiumAlert('BASE FIJADA', `La base es ahora la del ${dia.split('-').reverse().join('/')}.`, 'success');
+          // Se redibuja por la misma puerta que el calendario: esa funcion tiene agarrado el
+          // contenedor bueno. `raiz` es #reserva_view_content, que es de adentro y no sirve.
+          if (typeof window.setReservaFotoFecha === 'function') {
+              window.setReservaFotoFecha(window.__reservaFotoFecha || null);
+          }
+      });
       raiz.querySelectorAll('.celda-consolida').forEach(celda => {
           celda.addEventListener('click', () => {
               const p = datos.padres.find(x => x.padre === celda.dataset.padre);
@@ -26686,33 +26746,99 @@ window.showCellModal = function(htmlContent) {
             // Se calcula ANTES y se mete DENTRO de la plantilla con ${_htmlConsol}: agregarlo
             // despues con insertAdjacentHTML no se dibujaba nunca, y costo cuatro intentos.
             // ─────────────────────────────────────────────────────────────────────
-            let _htmlConsol = '', _consol = null;
+            let _htmlConsol = '', _consol = null, _baseInfo = null;
             try {
                 let _fotos = [];
                 try { _fotos = await fetchFotosReserva(); } catch (e) { _fotos = []; }
                 if (!Array.isArray(_fotos)) _fotos = [];
+                let _base = null;
+                try { _base = await fetchBaseReserva(); } catch (e) { _base = null; }
 
                 const _sello = diaDeLaFotoDeReserva(new Date());
                 const _hoy = _sello ? _sello.fecha : null;
                 const _elegida = window.__reservaFotoFecha || _hoy;
                 const _viendoHoy = !_hoy || _elegida === _hoy;
 
+                /* ══════════════════════════════════════════════════════════════════════
+                 * LA FOTO DEL DIA MANDA. EL REPORTE NO SE RECALCULA.
+                 *
+                 * Hasta la v29.0339 esta pantalla, mirando HOY, volvia a calcular todo con el
+                 * stock que hubiera en ese momento. Consecuencia: cuando entraba el ancla de la
+                 * mañana, los 30 articulos cambiaban, las 571 ubicaciones cambiaban y los 183 a
+                 * reducir cambiaban. Daniel, 22-ago-2026: *"ese reporte no se debe mover por mas
+                 * que se actualice el stock... yo tengo que dar un estatus todos los dias de
+                 * estos treinta articulos que ya le estoy dando a mi jefe"*.
+                 *
+                 * Y tiene razon de fondo: **un compromiso con una meta que se mueve sola no es
+                 * un compromiso.** Si el reporte se rearma con el stock de las 07:00, el numero
+                 * contra el que se mide el avance ya no es el que se prometio anoche.
+                 *
+                 * ASI QUEDA: si el dia ya tiene su foto, se muestra LA FOTO —los 30, la matriz,
+                 * los totales, todo—. Lo unico que se mueve es el AVANCE DEL TURNO, que lo mide
+                 * el robot a las 07:00 sobre esos mismos padres y viene guardado en `cierre`.
+                 * Se recalcula solo cuando el dia todavia no tiene foto.
+                 *
+                 * QUE TODO VENGA DE LA FOTO ADEMAS EVITA UNA CONTRADICCION: la firma de arriba
+                 * dice "21/08/2026 · 19:00" y el grafico termina en el punto de esa noche. Si la
+                 * tabla mostrara el stock de ahora, el mismo cuadro tendria dos fechas.
+                 * ══════════════════════════════════════════════════════════════════════ */
+                const _fresco = consolidacionDeReserva(rawReserva, indexarMaestro());
                 if (_viendoHoy) {
-                    _consol = consolidacionDeReserva(rawReserva, indexarMaestro());
-                    /* EL CIERRE DEL TURNO VIENE DE LA FOTO, no del calculo de ahora. Lo mide
-                       el robot en el ancla de la mañana comparando los mismos padres que se
-                       guardaron a las 19:20; aca solo se lo pega al calculo del dia para que
-                       la cabecera lo muestre. Si todavia no se midio, no hay barra. */
                     const _guardada = _fotos.find(f => f && _sello && f.fecha === _sello.fecha);
-                    if (_consol && _guardada && _guardada.cierre) _consol.cierre = _guardada.cierre;
-                    // La de hoy se guarda sola, una sola vez: si ya hay foto de este dia,
-                    // no se vuelve a escribir. Asi el calendario se llena sin que nadie haga nada.
-                    if (_consol && _sello && !_fotos.some(f => f && f.fecha === _sello.fecha)) {
-                        const _f = fotoChicaDeReserva(_consol, _sello);
-                        if (_f) { guardarFotoReserva(_f).catch(() => {}); _fotos = [_f, ..._fotos]; }
+                    if (_guardada) {
+                        /* Lo unico que se toma del stock de ahora es el DETALLE DE UBICACIONES
+                           para el Excel: la foto no lo guarda -son ~570 filas- y de nada sirve
+                           mandar al montacarguista a una ubicacion de anoche. Los numeros que se
+                           ven sigue poniendolos la foto; esto solo dice donde estan hoy. Si un
+                           padre ya no aparece entre los fragmentados de ahora es porque se
+                           consolido: no tiene paletas que bajar, y por eso va vacio. */
+                        const _porPadre = new Map(((_fresco || {}).fragmentados || [])
+                            .map(p => [p.padre, p.ubic]));
+                        _consol = Object.assign({}, _guardada, {
+                            fragmentados: (_guardada.fragmentados || []).map(
+                                p => Object.assign({}, p, { ubic: _porPadre.get(p.padre) || [] }))
+                        });
+                    } else {
+                        // El dia todavia no tiene foto: se calcula y se guarda, una sola vez.
+                        // Asi el calendario se llena sin que nadie tenga que abrir nada.
+                        _consol = _fresco;
+                        if (_consol && _sello) {
+                            const _f = fotoChicaDeReserva(_consol, _sello);
+                            if (_f) { guardarFotoReserva(_f).catch(() => {}); _fotos = [_f, ..._fotos]; }
+                        }
                     }
                 } else {
                     _consol = _fotos.find(f => f && f.fecha === _elegida) || null;
+                }
+
+                /* ══════════════════════════════════════════════════════════════════════
+                 * LA BASE: LOS 30 QUE NO SE MUEVEN, Y CUANTO SE LLEVA HECHO
+                 *
+                 * `reserva_base` guarda UNA fecha, no los datos: los datos ya estan en la foto
+                 * de ese dia. El avance se mide con el stock DE AHORA contra esos mismos
+                 * padres —no contra los 30 mas fragmentados de hoy, que son otros: si un
+                 * articulo se consolido bien, hoy ya no esta en la lista justamente porque se
+                 * arreglo, y buscarlo ahi lo daria por no hecho.
+                 *
+                 * EN VIVO, no esperando al robot. El robot igual mide y sella el cierre de
+                 * cada turno en la foto del dia; esto es el acumulado contra la base, que es
+                 * el numero que Daniel reporta.
+                 *
+                 * Sin base fijada, el cuadro sigue mostrando el dia, como antes. */
+                if (_base && _base.fecha) {
+                    const _bf = _fotos.find(f => f && f.fecha === _base.fecha);
+                    if (_bf && Array.isArray(_bf.fragmentados) && _bf.fragmentados.length) {
+                        const _hoyPorPadre = new Map(((_fresco || {}).fragmentados || [])
+                            .map(p => [p.padre, p.ubic]));
+                        _baseInfo = {
+                            fecha: _bf.fecha,
+                            fragmentados: _bf.fragmentados.map(
+                                p => Object.assign({}, p, { ubic: _hoyPorPadre.get(p.padre) || [] })),
+                            cierre: (_fresco && _fresco.padresTodos)
+                                ? cierreDeFragmentados(_bf.fragmentados, _fresco.padresTodos)
+                                : null
+                        };
+                    }
                 }
 
                 window.setReservaFotoFecha = (f) => {
@@ -26765,7 +26891,7 @@ window.showCellModal = function(htmlContent) {
                         .map(f => [f.fecha, f.matriz.reduce((s, c) => s + (c.ocupadas || 0), 0)])
                         .sort((a, b) => a[0] < b[0] ? -1 : 1)
                         .slice(-10);
-                    _htmlConsol = _cal + htmlConsolidacionReserva(_consol, _serie);
+                    _htmlConsol = _cal + htmlConsolidacionReserva(_consol, _serie, _baseInfo);
                 } else if (!_viendoHoy) {
                     _htmlConsol = _cal + '<div class="glass-panel" style="padding:16px 18px;border:1px solid rgba(251,191,36,.35)">'
                         + `<b style="color:#fbbf24">No hay foto guardada del ${_elegida}.</b>`
@@ -26800,7 +26926,7 @@ window.showCellModal = function(htmlContent) {
                 </div>
             `;
 
-            engancharClicConsolidacion(viewContainer, _consol);
+            engancharClicConsolidacion(viewContainer, _consol, _baseInfo);
 
 
             // Draw History Line Chart

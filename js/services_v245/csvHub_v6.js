@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0339';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0340';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0339';
+const VERSION = '29.0340';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -393,6 +393,49 @@ export const fetchFotosReserva = async (force = false) => {
         const local = JSON.parse(localStorage.getItem(RESERVA_FOTOS_LOCAL_KEY) || '[]');
         return Array.isArray(local) ? local : [];
     } catch(e) { return []; }
+};
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * LA BASE DE LOS FRAGMENTADOS — el compromiso que no se mueve
+ *
+ * Daniel, 22-ago-2026: *"yo tengo que dar un estatus todos los dias de estos treinta
+ * articulos que ya le estoy dando a mi jefe: de esas 571 ubicaciones tengo que reducir
+ * 183, a 388. Eso no se tiene que mover para nada, lo unico que si se tiene que mover
+ * es el avance"*. **Una meta que se recalcula sola no es una meta**: si la lista se
+ * rearma cada noche con el stock nuevo, el numero contra el que se mide el avance ya no
+ * es el que se prometio.
+ *
+ * NO GUARDA LOS DATOS, GUARDA LA FECHA. La base es *"la foto del 21-08"*, y esa foto ya
+ * esta en `reserva_fotos` con sus 30 articulos y sus totales. Guardar una copia seria
+ * tener dos versiones del mismo dia y el dia que una se corrija, la otra queda mintiendo.
+ *
+ * Va con `date: 'MASTER'` a proposito: asi hay UNA sola fila en el servidor y no una por
+ * cada vez que se fija una base. Ademas el GET sin fecha ordena por texto, y 'MASTER' le
+ * gana a cualquier '2026-...', asi que leer y escribir en MASTER es lo unico coherente.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+export const fetchBaseReserva = async (force = false) => {
+    try {
+        await syncEngine.pullGlobal(['reserva_base'], force);
+    } catch(e) {
+        console.warn('[RB] No se pudo descargar la base de reserva:', e);
+    }
+    const b = syncEngine.syncStore.reserva_base;
+    return (b && b.fecha) ? b : null;
+};
+
+/** Fija la base. `fecha` es la de una foto que ya existe en reserva_fotos. */
+export const guardarBaseReserva = async (fecha, quien) => {
+    if (!fecha) return null;
+    const base = { fecha: fecha, fijadaEl: new Date().toISOString(), fijadaPor: quien || '' };
+    try {
+        syncEngine.syncStore.reserva_base = base;
+        const ok = await syncEngine.pushChange('reserva_base', base, 'MASTER');
+        return ok ? base : null;
+    } catch(e) {
+        console.warn('[RB] No se pudo fijar la base de reserva:', e);
+        return null;
+    }
 };
 
 /** Guarda la foto de un dia. Si ya habia una de ese dia, la reemplaza. */
