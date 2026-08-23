@@ -1,30 +1,30 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0350';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0351';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0350';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0350';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0350';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0350';
-import * as metasService from '../services_v245/metasService.js?v=29.0350';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0350';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0350';
+import * as adminService from '../services_v245/adminService.js?v=29.0351';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0351';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0351';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0351';
+import * as metasService from '../services_v245/metasService.js?v=29.0351';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0351';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0351';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0350';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0350';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0350';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0350';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0350';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0350';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0350';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0350';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0350';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0350';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0350';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0350';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0350';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0350';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0350';
-import { montarSlotting } from './slotting.js?v=29.0350';
+         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0351';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0351';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0351';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0351';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0351';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0351';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0351';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0351';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0351';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0351';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0351';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0351';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0351';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0351';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0351';
+import { montarSlotting } from './slotting.js?v=29.0351';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -381,7 +381,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0350';
+const VERSION = '29.0351';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4683,7 +4683,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0350');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0351');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16967,7 +16967,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0350 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0351 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -19820,7 +19820,10 @@ const renderRFSection = (container) => {
         if (!porTallaEnUbicacion.has(k)) porTallaEnUbicacion.set(k, new Map());
         const mu = porTallaEnUbicacion.get(k);
         const ya = mu.get(ubi);
-        mu.set(ubi, { qty: (ya ? ya.qty : 0) + qty, cuerpo: nom });
+        // El SKU completo viaja con la fila: la nota al pie lo imprime y no se puede
+        // rearmar desde `sku7|talla` —la talla del papel es la deducida, no el sufijo—.
+        mu.set(ubi, { qty: (ya ? ya.qty : 0) + qty, cuerpo: nom,
+                      sku: String(raw[1] || '').trim() });
       }
       // YA NO ESTÁ: Slotting lo sacó de ahí en esta jornada. La foto todavía lo muestra porque
       // el robot publica a las 19:00, pero el cuerpo está limpio desde que la tarea se finalizó.
@@ -21400,23 +21403,47 @@ const renderRFSection = (container) => {
            * Sin destino -todo a reserva, o trabada- no hay cuerpo con que comparar, asi que no
            * se marca nada: el asterisco contestaria algo que nadie pregunto. */
           const dest = String(l.destino || '').trim();
-          /* EL ASTERISCO SE DECIDE POR CUERPO Y LA NOTA SE ESCRIBE POR UBICACIÓN. Son dos
-             preguntas distintas: si esa talla vive fuera del cuerpo de destino —que es lo que
-             el asterisco avisa— y dónde exactamente hay que ir a buscarla. Ver
-             `porTallaEnUbicacion`. */
+          /* EL ASTERISCO SE DECIDE POR CUERPO. Es otra pregunta que la de la nota al pie: acá
+             solo interesa si esa talla vive FUERA del cuerpo al que va, que es lo que hay que
+             avisarle al operario antes de que la deje. */
           const m = ctx.porTallaEnUbicacion && ctx.porTallaEnUbicacion.get(x.sku7 + '|' + l.talla);
           const otros = (!dest || !m) ? []
-            : [...m].filter(([, d]) => d.cuerpo !== dest && d.qty > 0)
-                    .map(([u, d]) => ({ ubi: u, skuFull: l.skuFull, talla: l.talla, qty: Math.round(d.qty) }))
-                    .sort((a, b) => b.qty - a.qty);
-          otros.forEach(o => {
-            const k = o.ubi + '|' + o.skuFull + '|' + o.talla;
-            if (vistasPie.has(k)) return;
-            vistasPie.add(k);
-            pieDeTarea.push(o);
-          });
+            : [...m].filter(([, d]) => d.cuerpo !== dest && d.qty > 0);
           return { tipo: 'det', trabada, l, otros };
         });
+
+        /* ── LA NOTA AL PIE LISTA TODO EL PISO DEL ARTÍCULO ──────────────────────────
+         *
+         * Regla de Daniel, 23-ago-2026, cruzando la Tarea19 del 22 contra el WMS: *"solamente
+         * me muestra la talla 42, pero no me muestras todo lo demás stock, porque he visto en
+         * el WMS que hay stock en el mezzanine dos de ese artículo"*.
+         *
+         * Y tenía razón: el 8011987 tenía 237 pares en el MZN02 y la hoja mostraba 30. Los
+         * otros 207 estaban en MZN02-20-04, que es el cuerpo de destino, y la nota los dejaba
+         * fuera a propósito porque solo listaba los OTROS cuerpos. Correcto para lo que la
+         * nota preguntaba, inútil para lo que él necesita: cuadrar la hoja contra el WMS.
+         *
+         * Ahora se listan TODAS las ubicaciones de piso del artículo —el cuerpo de destino
+         * incluido— y TODAS sus tallas, también las que esta tarea no trae. Esto último es a
+         * propósito: si el artículo tiene una talla arriba que hoy no baja, en el WMS aparece
+         * igual, y una nota que la esconda vuelve a no cuadrar.
+         *
+         * El asterisco del detalle no cambia: sigue avisando de las que viven fuera del
+         * destino, que es la advertencia que el operario necesita mientras almacena. */
+        if (ctx.porTallaEnUbicacion) {
+          ctx.porTallaEnUbicacion.forEach((mu, clave) => {
+            const corte = clave.indexOf('|');
+            if (corte < 0 || clave.slice(0, corte) !== x.sku7) return;
+            const talla = clave.slice(corte + 1);
+            mu.forEach((d, u) => {
+              if (!d || !(d.qty > 0)) return;
+              const k = u + '|' + (d.sku || '') + '|' + talla;
+              if (vistasPie.has(k)) return;
+              vistasPie.add(k);
+              pieDeTarea.push({ ubi: u, skuFull: d.sku || '', talla, qty: Math.round(d.qty) });
+            });
+          });
+        }
         // LA BANDA DEL ARTICULO. Pedido de Daniel el 21-ago-2026: el gender tiene que
         // salir en la hoja, y con varios articulos no cabe en el titulo. Va una franja
         // antes de sus filas, con el codigo y su Gender RIMS. El caso -reposicion o
@@ -21583,7 +21610,16 @@ const renderRFSection = (container) => {
         const ultima = paginasTarea[paginasTarea.length - 1];
         const pie = doc.createElement('div');
         pie.className = 'pie';
-        pie.innerHTML = '<div class="rot">* Este artículo tiene esa talla en OTROS cuerpos:</div>'
+        /* POR TALLA Y DE MAYOR A MENOR. Ordenado por cantidad a secas, las tallas quedaban
+           salteadas y para sumar una había que ir y volver por toda la lista. La hoja se lee
+           para cuadrar contra el WMS, y ahí se busca por talla. */
+        pieDeTarea.sort((a, b) => (parseFloat(a.talla) || 0) - (parseFloat(b.talla) || 0)
+                               || String(a.talla).localeCompare(String(b.talla))
+                               || b.qty - a.qty
+                               || String(a.ubi).localeCompare(String(b.ubi)));
+        const totalPie = pieDeTarea.reduce((a, o) => a + (Number(o.qty) || 0), 0);
+        pie.innerHTML = '<div class="rot">Este artículo ya tiene en el piso '
+          + '(el * del detalle marca la talla que además vive fuera del cuerpo de destino):</div>'
           /* CUATRO COLUMNAS, NO CINCO. Había una quinta sin título y sin dato, que se comía
              el 14% del ancho y salía en blanco en cada renglón. Daniel, 23-ago-2026: *"si va
              a aparecer en blanco, ¿para qué la vas a poner? Deberías borrarla"*. Los anchos
@@ -21592,6 +21628,9 @@ const renderRFSection = (container) => {
           + '<th style="width:16%">Talla</th><th style="width:20%">Cantidad</th></tr>'
           + pieDeTarea.map(o => `<tr><td>${esc(o.ubi)}</td><td>${esc(o.skuFull)}</td>`
               + `<td>${esc(o.talla)}</td><td>${esc(o.qty)}</td></tr>`).join('')
+          /* EL TOTAL, PORQUE ESTA TABLA SE SUMA. Daniel cuadra la hoja contra el WMS a mano;
+             sin el total hay que sumar los renglones con calculadora cada vez. */
+          + `<tr><th colspan="3">Total en el piso</th><th>${esc(totalPie)}</th></tr>`
           + '</table>';
         ultima.cuerpo.appendChild(pie);
         if (ultima.cuerpo.scrollHeight > ALTO_UTIL) {
