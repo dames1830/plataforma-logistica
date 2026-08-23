@@ -1,30 +1,30 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0347';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0348';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0347';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0347';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0347';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0347';
-import * as metasService from '../services_v245/metasService.js?v=29.0347';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0347';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0347';
+import * as adminService from '../services_v245/adminService.js?v=29.0348';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0348';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0348';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0348';
+import * as metasService from '../services_v245/metasService.js?v=29.0348';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0348';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0348';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0347';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0347';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0347';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0347';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0347';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0347';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0347';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0347';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0347';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0347';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0347';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0347';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0347';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0347';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0347';
-import { montarSlotting } from './slotting.js?v=29.0347';
+         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0348';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0348';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0348';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0348';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0348';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0348';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros } from '../reportes/picking.js?v=29.0348';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0348';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0348';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0348';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0348';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0348';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0348';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0348';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0348';
+import { montarSlotting } from './slotting.js?v=29.0348';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -381,7 +381,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0347';
+const VERSION = '29.0348';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4683,7 +4683,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0347');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0348');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16967,7 +16967,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0347 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0348 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -19691,6 +19691,11 @@ const renderRFSection = (container) => {
         // la de al lado: ahi dice "Bata Comfit" donde 'Marcas' dice solo "Bata", y por eso el
         // sistema nunca habia podido distinguirlo. Ver densidadMarcaStd en zonasService.
         marcaStd: String(raw[8] || '').trim(),
+        /* LA COLECCIÓN, APARTE DE LA TEMPORADA. Es la columna 10 del Maestro —'Coleccion
+           PO'— y dice el trimestre en que se fabricó: `2026-Q4`. Se guarda sola porque
+           `temporada` de acá abajo la usa de RESPALDO y ahí las dos se mezclan; la banda de
+           la hoja impresa necesita el trimestre y nada más. Ver la banda en filasDelPapel. */
+        coleccion: String(raw[9] || '').trim(),
         // MANDA LA COLUMNA 'Temporada' DEL MAESTRO, Y SI FALTA, LA COLECCIÓN.
         //
         // La 15 —'Temporada', con "T. Actual" o "T. Anterior"— la mantiene el sistema de
@@ -21381,8 +21386,14 @@ const renderRFSection = (container) => {
                         'reposicion-fabrica': 'REPOSICION', 'escolar': 'ESCOLAR',
                         'catalogo': 'CATALOGO', 'marca-sin-reserva': 'SIN RESERVA' };
         const nCaso = (x.caso && x.caso.nombre) || '';
+        /* LA COLECCIÓN VA AL COSTADO DEL GENDER. Daniel la eligió el 22-ago-2026 sobre cinco
+           opciones, sabiendo lo que cuesta: **los artículos de temporada anterior la tienen en
+           blanco** y salen con un guion —3 de los 45 artículos de las tareas de ese día—. Se
+           le mostró en la maqueta con un caso real, el 5811640, y aun así prefirió el
+           trimestre: `2026-Q4` dice cuándo se fabricó, y "T. Actual" no. */
         items.unshift({ tipo: 'art', sku7: x.sku7,
                         rims: (x.ficha && x.ficha.genderRims) || x.genderRims || '',
+                        col: (x.ficha && x.ficha.coleccion) || x.coleccion || '',
                         caso: CASOS[nCaso] || (nCaso ? nCaso.toUpperCase().replace(/-/g, ' ') : ''),
                         nuevo: nCaso === 'codigo-nuevo' });
         const tPiso = trabada ? 0 : fp.reduce((a, l) => a + (l.alPiso || 0), 0);
@@ -21409,6 +21420,7 @@ const renderRFSection = (container) => {
         if (it.tipo === 'art') {
           return `<tr class="art${it.nuevo ? ' nuevo' : ''}"><td colspan="7">ARTICULO ${esc(it.sku7)}${
             it.rims ? ' &nbsp;·&nbsp; ' + esc(it.rims) : ''}${
+            ' &nbsp;·&nbsp; ' + (it.col ? esc(it.col) : '—')}${
             it.caso ? ' &nbsp;·&nbsp; ' + esc(it.caso) : ''}</td></tr>`;
         }
         if (it.tipo === 'det') {
