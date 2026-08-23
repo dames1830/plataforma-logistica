@@ -302,6 +302,41 @@ este orden:
 | `CDBUFFER-C` | Prepack. **No entra al circuito.** Se pica por caja, no por par |
 | `CDBUFFER-D` | Catálogo. Columna 8 del MZN03, sin mirar marca ni temporada |
 
+### EL PREPACK SE RECONOCE POR EL CÓDIGO, NO POR LA UBICACIÓN
+
+Daniel, 23-ago-2026: *"el prepack y el suelto son distintos. Nosotros no almacenamos prepack,
+almacenamos suelto nada más. Bórralas de almacenaje, no lo analices, no lo consideres."* Vale
+**para todas las marcas**, sin excepción.
+
+**Un código de prepack tiene la forma `7 dígitos - 1 dígito - 5 dígitos`** — `5614468-1-06006`—
+contra el suelto, que lleva la talla en dos dígitos: `5614468-1-03`. La función es `esPrepack()`
+de `js/reportes/picking.js`, y es la única que hay: si algún día se escribe una segunda, vuelve
+el problema que esto vino a resolver.
+
+**Sacarlo por la ubicación (`CDBUFFER-C`) NO alcanza, y así estuvo hasta la v29.0349.** El
+prepack aparece en todo el almacén: el 22-ago-2026 había 10.985 unidades en el selectivo de
+reserva, 5.260 pares en el mezzanine 4 contando como piso, y 156 pares en `CDBUFFER-A` que
+entraban a las tareas como si fueran sueltos.
+
+**Lo que rompía.** El corte de los 20 suma piso + reserva, y el prepack inflaba las dos mitades:
+la Tarea 6 del 22-ago salió impresa como **REPOSICIÓN** con el artículo teniendo CERO pares en
+el piso y CERO de talla suelta en reserva — lo único que tenía eran 180 cajas de prepack en el
+selectivo alto. Un código que nunca tuvo un cuerpo en el almacén recibía trato de segundo lote:
+un cuerpo de reposición en vez del 60% del código nuevo. **De los 45 artículos de esa ola, 10
+salieron mal por lo mismo**, y en todo el almacén eran 52 artículos, 32 de ellos sin un solo par
+que no fuera prepack.
+
+**Dónde se filtra hoy** (los tres sitios del circuito, todos en `dashboard_v28.js`):
+
+| Sitio | Qué evita |
+|---|---|
+| El generador de tareas | Que se arme una línea de prepack, venga de la sub-zona que venga |
+| El stock que lee la sugerencia | Que el prepack cuente como piso |
+| La reserva (`reservaDe`) | Que el prepack cuente para el corte de los 20 |
+
+**Los reportes de picking siguen contando el prepack** y ahí no se toca nada: es trabajo real que
+alguien hizo. La regla es de almacenaje, no del sistema entero.
+
 ### El buffer B NO se cree por la letra — y hoy se le está creyendo
 
 El 05-ago-2026 el buffer A se llenó y recepción metió mercadería **nueva** en el B. No fue
