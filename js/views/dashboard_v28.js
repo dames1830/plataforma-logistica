@@ -1,30 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0352';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0354';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0352';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0352';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0352';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0352';
-import * as metasService from '../services_v245/metasService.js?v=29.0352';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0352';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0352';
+import * as adminService from '../services_v245/adminService.js?v=29.0354';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0354';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0354';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0354';
+import * as metasService from '../services_v245/metasService.js?v=29.0354';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0354';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0354';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0352';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0352';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0352';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0352';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0352';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0352';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0352';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0352';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0352';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0352';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0352';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0352';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0352';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0352';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0352';
-import { montarSlotting } from './slotting.js?v=29.0352';
+         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0354';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0354';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0354';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0354';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0354';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0354';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0354';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0354';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0354';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0354';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0354';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0354';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0354';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0354';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0354';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0354';
+import { montarSlotting } from './slotting.js?v=29.0354';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -381,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0352';
+const VERSION = '29.0354';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4683,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0352');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0354');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16967,7 +16968,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0352 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0354 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25147,11 +25148,8 @@ const renderRFSection = (container) => {
    * Cómo empieza una ubicación de esta zona. El WMS escribe el mezzanine de dos formas
    * —MZN01-05-12 y también MZ01-05-12—, así que se aceptan las dos.
    */
-  const prefijosDeZona = (zona) => {
-    const z = String(zona || '').toUpperCase();
-    const m = /^MZN(\d+)$/.exec(z);
-    return m ? [z, 'MZ' + m[1]] : [z];
-  };
+  // `prefijosDeZona` y `getColSafe` viven ahora en reportes/layout_calculo.js, junto al
+  // cálculo que los usa. Acá solo se sigue necesitando `getColSafe`.
   // Visor de versiones: false = mapa ACTUAL, true = mapa ANTERIOR (penúltimo publicado).
   if (typeof window.__verLayoutAnterior === 'undefined') window.__verLayoutAnterior = false;
 
@@ -25343,202 +25341,33 @@ const renderRFSection = (container) => {
           }
       }
 
-      const getColSafe = (row, possibleNames) => {
-          if (!row) return '';
-          for (const key of Object.keys(row)) {
-              const upperKey = key.toUpperCase().trim();
-              if (possibleNames.some(name => upperKey.includes(name.toUpperCase()))) return String(row[key]);
-          }
-          const raw = Array.isArray(row) ? row : Object.values(row);
-          for (const name of possibleNames) {
-              if (name === 'IDX0') return String(raw[0] || '');
-              if (name === 'IDX1') return String(raw[1] || '');
-              if (name === 'IDX2') return String(raw[2] || '');
-              if (name === 'IDX3') return String(raw[3] || '');
-              if (name === 'IDX4') return String(raw[4] || '');
-              if (name === 'IDX5') return String(raw[5] || '');
-              if (name === 'IDX7') return String(raw[7] || '');
-              if (name === 'IDX10') return String(raw[10] || '');
-              if (name === 'IDX13') return String(raw[13] || '');
-              if (name === 'IDX14') return String(raw[14] || '');
-          }
-          return '';
-      };
 
+      window.globalLayoutData = window.globalLayoutData || {};
+      window.globalArticulosRaw = articulosRaw;
+
+      /* ── EL CÁLCULO DEL MAPA YA NO VIVE ACÁ ──────────────────────────────────────
+       *
+       * Se mudó a `js/reportes/layout_calculo.js`. Es el MISMO código, movido tal cual:
+       * lo único que cambió es que ahora se le pasan el stock, el Maestro y la zona en
+       * vez de que los tome del alcance de esta función.
+       *
+       * Se sacó porque el mapa se calculaba como EFECTO de dibujarlo, y eso obliga a que
+       * alguien tenga la pantalla abierta. El botón "PUBLICAR TODAS" no tenía más remedio
+       * que recorrer las cuatro zonas dibujando cada una y subiendo lo que quedaba en
+       * memoria. Un robot no puede hacer eso.
+       *
+       * Daniel, 23-ago-2026: *"quiero que el mapa de calor se actualice cada hora, en
+       * automático, con ese stock que se va actualizando"*. Con el cálculo afuera, el robot
+       * de la hora puede importar este archivo de producción y llamar a la misma función
+       * que llama la pantalla — la receta del robot del picking, una sola copia del
+       * cálculo. */
       let localLayoutData = {};
-      let padreStock = {};
-        window.globalLayoutData = window.globalLayoutData || {};
-        window.globalArticulosRaw = articulosRaw;
-      let localStats = { 'ACTUAL': { units: 0, bad_placed: 0, padres: new Set() }, 'ANTERIOR': { units: 0, bad_placed: 0, padres: new Set() } };
-      let localTotalUnits = 0;
-      let localUniquePadres = new Set();
       let localPayload = null;
-
-      if (!esReserva && activoRaw.length && articulosRaw.length) {
-            const skuTemporada = {};
-            const skuGender = {};
-            
-            const idxSku = 1; // Columna B
-            const idxGender = 3; // Columna D
-            const idxTemp = 14; // Columna O
-
-            articulosRaw.forEach((row, i) => {
-                if (i === 0 && Array.isArray(row) && String(row[0]).toUpperCase().includes('COD')) return;
-                let sku = '', temp = '', gender = '';
-                if (Array.isArray(row)) {
-                    sku = String(row[idxSku] || '').trim();
-                    temp = String(row[idxTemp] || row[13] || '').trim();
-                    gender = String(row[idxGender] || '').trim();
-                } else {
-                    const rawValues = Object.values(row);
-                    sku = getColSafe(row, ['ARTICULO', 'ARTCULO', 'PRODUCTO', 'SKU', 'CODIGO']).trim();
-                    temp = getColSafe(row, ['TEMPORADA', 'SEASON']).trim() || String(rawValues[14] || rawValues[13] || '').trim();
-                    gender = getColSafe(row, ['GENDER RIMS', 'RIMS']).trim();
-                }
-
-                if (String(sku).trim().includes('6646806')) {
-                    console.log("[TRACKER 6646806] Fila completa:", row);
-                    console.log("[TRACKER 6646806] SKU extraído:", sku);
-                    console.log("[TRACKER 6646806] Temp extraído:", temp);
-                    console.log("[TRACKER 6646806] Es Array:", Array.isArray(row));
-                    console.log("[TRACKER 6646806] idxTemp:", idxTemp, "Valor idxTemp:", Array.isArray(row) ? row[idxTemp] : null);
-                }
-
-                if (sku) {
-                    const sku7 = sku.substring(0, 7);
-                    const tUpper = temp ? temp.toUpperCase() : 'DESCONOCIDA';
-                    if (!skuTemporada[sku7] || !skuTemporada[sku7].includes('ACTUAL')) skuTemporada[sku7] = tUpper;
-                    if (!skuTemporada[sku] || !skuTemporada[sku].includes('ACTUAL')) skuTemporada[sku] = tUpper;
-                    
-                    if (!skuGender[sku7]) skuGender[sku7] = gender ? gender.toUpperCase() : '';
-                    if (!skuGender[sku]) skuGender[sku] = gender ? gender.toUpperCase() : '';
-                }
-            });
-          window.DEBUG_SKU_GENDER = skuGender;
-
-          // La grilla, el paso del elevador, el corte de saldos y la temporada de cada columna
-          // salen de Análisis SKU > Zonas de Almacenaje. Antes estaban escritos acá adentro.
-          const zonasCfg = zonasService.zonasActual().zonas[currentLayoutZona]
-              || { columnas: 24, cuerpos: 22, saldoMenorA: 80, franjas: {}, pasillos: [] };
-
-          padreStock = {};
-          activoRaw.forEach(row => {
-              const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
-              const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
-              const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
-              if (!ubi || cant <= 0 || !skuFull) return;
-              const sku7 = skuFull.substring(0, 7);
-              padreStock[sku7] = (padreStock[sku7] || 0) + cant;
-          });
-
-          activoRaw.forEach(row => {
-              const ubi = getColSafe(row, ['UBICACI', 'LOCATION', 'UBI', 'IDX3']).trim().toUpperCase();
-              const skuFull = getColSafe(row, ['ARTICULO', 'ARTÍCULO', 'PRODUCTO', 'SKU', 'ITEM', 'IDX1']).trim();
-              const cant = parseFloat(getColSafe(row, ['CANTIDAD', 'QTY', 'STOCK', 'IDX5'])) || 0;
-              
-              // SIRVE PARA CUALQUIER ZONA. Antes cada una estaba escrita a mano —SEL, MZN01
-              // y MZN02— y por eso el mezzanine 3 quedaba "en construcción": no era que le
-              // faltara lógica propia, es que ninguna rama lo nombraba. Ahora el prefijo sale
-              // de la zona que se está mirando, así que MZN03 y MZN04 entran solos.
-              if (!ubi || cant <= 0 || !skuFull) return;
-              const prefijos = prefijosDeZona(currentLayoutZona);
-              if (!prefijos.some(p => ubi.startsWith(p))) return;
-
-              const sku7 = skuFull.substring(0, 7);
-              const totalStockForPadre = padreStock[sku7] || 0;
-              const isSaldo = totalStockForPadre < zonasCfg.saldoMenorA;
-
-              let col = 0;
-              let rackRow = 0;
-
-              {
-                  let ubiClean = ubi;
-                  prefijos.forEach(p => { ubiClean = ubiClean.split(p).join(''); });
-
-                  const numMatches = ubiClean.match(/\d+/g);
-                  if (numMatches) {
-                      const allNums = numMatches.join('');
-                      if (allNums.length >= 4) {
-                          col = parseInt(allNums.substring(0, 2), 10);
-                          rackRow = parseInt(allNums.substring(2, 4), 10);
-                      } else if (numMatches.length >= 2) {
-                          col = parseInt(numMatches[0], 10);
-                          rackRow = parseInt(numMatches[1], 10);
-                      }
-                  }
-              }
-              
-              if (col !== 0 && rackRow !== 0) {
-                  
-                  let maxCols = zonasCfg.columnas;
-                  if (col >= 1 && col <= maxCols && rackRow >= 1 && rackRow <= zonasCfg.cuerpos) {
-                      // Paso del elevador: ahí no hay ubicaciones de almacenaje
-                      if (zonasService.esPasillo(currentLayoutZona, col, rackRow)) return;
-
-                      if (!localLayoutData[col]) localLayoutData[col] = {};
-                      if (!localLayoutData[col][rackRow]) localLayoutData[col][rackRow] = { totalQty: 0, skus: [], seasons: {} };
-                      
-                      const cell = localLayoutData[col][rackRow];
-                      cell.totalQty += cant;
-                      
-                      let temporadaRaw = skuTemporada[sku7] || skuTemporada[skuFull] || 'DESCONOCIDA';
-                      let temporadaClean = 'ANTERIOR'; 
-                      const actuales = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
-                      if (actuales.some(act => temporadaRaw.includes(act))) {
-                          temporadaClean = 'ACTUAL';
-                      }
-                      
-                      if (!cell.seasons[temporadaClean]) cell.seasons[temporadaClean] = 0;
-                      cell.seasons[temporadaClean] += cant;
-                      
-                      const existingSku = cell.skus.find(s => s.sku === skuFull);
-                      if (existingSku) existingSku.cant += cant;
-                      else cell.skus.push({ sku: skuFull, cant, temporada: temporadaClean === 'ACTUAL' ? 'T. Actual' : 'T. Anterior' });
-
-                      localUniquePadres.add(sku7);
-                      localTotalUnits += cant;
-                      localStats[temporadaClean].units += cant;
-                      localStats[temporadaClean].padres.add(sku7);
-
-                      // Si está bien ubicado sale de Zonas de Almacenaje, no de acá: antes esto
-                      // estaba escrito a mano y mover una columna de temporada era editar código.
-                      // Las columnas de saldos aceptan las dos temporadas, pero solo si el
-                      // artículo es saldo; la de escolar solo mira que sea escolar.
-                      const genderRaw = skuGender[skuFull] || skuGender[sku7] || '';
-                      const isSchool = genderRaw.includes('SCHOOL');
-                      const franjaCol = zonasService.franjaDeColumna(currentLayoutZona, col);
-
-                      let isValid;
-                      if (!zonasCfg.franjas || !Object.keys(zonasCfg.franjas).length) {
-                          isValid = true;                       // zona sin reglas: no se acusa a nadie
-                      } else if (franjaCol === 'escolar')  isValid = isSchool;
-                      else if (franjaCol === 'saldos')     isValid = isSaldo;
-                      // LA COLUMNA DE CATÁLOGO ACEPTA TODO. Es la 8 del mezzanine 3: ahí va
-                      // entero lo que llega por el buffer D, de la marca que venga y de la
-                      // temporada que sea. Sin esta rama, sus 22 cuerpos salían acusados de
-                      // mal ubicados en cuanto se encendiera el mapa de MZN03.
-                      else if (franjaCol === 'catalogo')   isValid = true;
-                      else if (franjaCol === 'actual')     isValid = (temporadaClean === 'ACTUAL');
-                      else if (franjaCol === 'anterior')   isValid = (temporadaClean === 'ANTERIOR');
-                      else                                 isValid = false;   // columna sin uso
-
-                      if (!isValid) {
-                          localStats[temporadaClean].bad_placed += cant;
-                      }
-                  }
-              }
-          });
-          
-          localStats['ACTUAL'].padres = Array.from(localStats['ACTUAL'].padres);
-          localStats['ANTERIOR'].padres = Array.from(localStats['ANTERIOR'].padres);
-
-          localPayload = {
-              type: 'processed',
-              layoutData: localLayoutData,
-              stats: localStats,
-              totalUnits: localTotalUnits,
-              uniquePadresSize: localUniquePadres.size
-          };
+      if (!esReserva) {
+          const _mapa = procesarLayout({ stock: activoRaw, maestro: articulosRaw, zona: currentLayoutZona });
+          localLayoutData = _mapa.layoutData;
+          localPayload = _mapa.payload;
+          window.DEBUG_SKU_GENDER = _mapa.skuGender;
       }
 
       // ══════════════════════════════════════════════════════════════════════════════════
