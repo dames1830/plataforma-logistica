@@ -61,6 +61,10 @@ DE_FABRICA = {
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'stock_hora':   {'activa': True, 'minuto': 30, 'cadaMin': 60, 'dias': {d: True for d in DIAS}},
     'picking_hora': {'activa': True, 'minuto': 50, 'cadaMin': 60, 'dias': {d: True for d in DIAS}},
+    # El mapa de calor se dibuja con el stock que publica `stock_hora` al minuto 30, y
+    # esa corrida tarda unos 8 minutos. Por eso va al 45: ya esta el stock nuevo y no se
+    # cruza con el picking, que entra al 50.
+    'mapa_hora':    {'activa': True, 'minuto': 45, 'cadaMin': 60, 'dias': {d: True for d in DIAS}},
     # A las 06:45: el turno noche cierra 06:30 y el de la manana entra 08:00, asi que
     # el almacen esta quieto y el dia de ayer ya cerro. Estaba a las 08:00 y eso
     # empujaba a SKUs sin salida fuera de la manana.

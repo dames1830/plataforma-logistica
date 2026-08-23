@@ -56,6 +56,8 @@ export const TAREAS = [
       detalle: 'el avance del turno: activo y reserva', area: 'layout_stock_hora' },
     { id: 'picking_hora', tipo: 'cada', etiqueta: 'Picking por hora',
       detalle: 'el avance del picking', area: 'picking_dias' },
+    { id: 'mapa_hora', tipo: 'cada', etiqueta: 'Mapa de calor',
+      detalle: 'publica las cuatro zonas con el stock de la hora', area: 'layout_activo_SEL' },
     { id: 'reportes', tipo: 'diaria', etiqueta: 'Reportes diarios',
       detalle: 'los dos archivos del día que cerró', area: null },
     { id: 'respaldo', tipo: 'diaria', etiqueta: 'Respaldo de datos',

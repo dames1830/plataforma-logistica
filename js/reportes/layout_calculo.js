@@ -27,7 +27,21 @@
    Quien lo use desde afuera tiene que llamar antes a `zonasService.cargarZonas()`.
    ============================================================================ */
 
-import * as zonasService from '../services_v245/zonasService.js?v=29.0354';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0355';
+
+/**
+ * TRAER LAS ZONAS, DESDE ESTE MISMO ARCHIVO.
+ *
+ * Parece de más —`zonasService.cargarZonas()` es público— pero no lo es, y la trampa es
+ * fea: los módulos se identifican por su URL COMPLETA, `?v=` incluido. Quien importe
+ * `zonasService.js` sin la versión se lleva OTRA copia del módulo, con su propio estado, y
+ * `cargarZonas()` llenaría esa copia mientras el cálculo sigue mirando la de fábrica.
+ * El mapa saldría entero, sin un error a la vista, con la grilla y las franjas equivocadas.
+ *
+ * Reexportándola desde acá, quien use el cálculo carga las zonas en la instancia correcta
+ * sin tener que saber nada de esto.
+ */
+export const cargarZonas = () => zonasService.cargarZonas();
 
 /** Las temporadas que cuentan como ACTUAL. Todo lo demás es ANTERIOR. */
 export const TEMPORADAS_ACTUALES = ['2026-Q3', '2026-Q4', '2027-Q1', '2027-Q2', 'ACTUAL'];
