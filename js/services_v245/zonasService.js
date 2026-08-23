@@ -1547,7 +1547,25 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}, o
         // Si en sus columnas no hay lugar, se busca en el resto de la franja que le toca.
         if (!extra.completo) {
             const franjaRep = franjaDeArticulo(art, zonaRep);
-            const otras = columnasDeFranja(zonaRep, franjaRep).filter(c => !susColumnas.includes(c));
+            /* Y DENTRO DE LA FRANJA, SOLO LAS COLUMNAS DE SU MARCA — el mismo filtro que el
+               camino de código nuevo tiene unas líneas más abajo, y que a este le faltaba.
+               Lo trajo Daniel el 22-ago-2026 leyendo la Tarea1: *"están mandando esa marca
+               Bubblegummers a la columna 04, cuando esa columna pertenece a la marca Power"*.
+               Y era exactamente eso: `columnasDeFranja` devuelve TODAS las columnas de esa
+               franja en la zona, y el MZN01 lo comparten Power (1-9), Bubblegummers (10-23)
+               y B.G Licenses (24). Al abrir cuerpos de más agarraba la 4, que es la primera
+               de "actual" en la zona y no es suya.
+
+               Si la marca no tiene columnas propias en esa franja se deja la franja entera,
+               igual que en el otro camino: hay marcas que no parten sus columnas por
+               temporada y ahí el filtro las dejaría sin ningún lugar. */
+            let deLaFranja = columnasDeFranja(zonaRep, franjaRep);
+            const suyasRep = columnasDeMarcaEnFranja(art && art.marca, franjaRep);
+            if (suyasRep.length) {
+                const propias = deLaFranja.filter(c => suyasRep.includes(c));
+                if (propias.length) deLaFranja = propias;
+            }
+            const otras = deLaFranja.filter(c => !susColumnas.includes(c));
             if (otras.length) {
                 const alt = elegirCuerpos(zonaRep, [...susColumnas, ...otras], faltan, ocupRep);
                 if (alt.completo) extra = alt;
