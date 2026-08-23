@@ -26,9 +26,7 @@ export const renderLayoutActivo = async (container) => {
 
       if (typeof window.__verLayoutAnterior === 'undefined') window.__verLayoutAnterior = false;
       // Handlers del visor de versiones (definidos temprano para que funcionen aun en el estado vacío)
-      window.__toggleVerLayout = () => { window.__verLayoutAnterior = !window.__verLayoutAnterior; const av = document.getElementById('__avisoNuevoMapa'); if (av) av.remove(); renderLayoutActivo(container); };
-      window.__aplicarNuevoMapa = () => { const av = document.getElementById('__avisoNuevoMapa'); if (av) av.remove(); renderLayoutActivo(container); };
-      window.__cerrarAvisoNuevoMapa = () => { const av = document.getElementById('__avisoNuevoMapa'); if (av) av.remove(); };
+      window.__toggleVerLayout = () => { window.__verLayoutAnterior = !window.__verLayoutAnterior; renderLayoutActivo(container); };
 
       let globalPayload = null;
       try {
@@ -904,8 +902,26 @@ window.showCellModal = function(htmlContent) {
           }
       }, 100);
 
-      // Aviso "nuevo mapa disponible": chequea cada 60s si el servidor tiene una versión más nueva
-      // que la que se está viendo. NO cambia el mapa solo; el operario decide cuándo actualizar.
+      /* ── EL MAPA SE ACTUALIZA SOLO ───────────────────────────────────────────────
+       *
+       * Acá había un cartel —"Hay un mapa nuevo disponible"— con un botón Actualizar y una
+       * X para cerrarlo. Existía porque el mapa se publicaba a mano y cambiaba de golpe:
+       * la idea era no moverle la pantalla a nadie sin avisar.
+       *
+       * Daniel lo sacó el 23-ago-2026, al decidir que el robot publique el mapa cada hora:
+       * *"el robot tiene que bajar el stock, cargar el mapa y el mapa se actualiza, ya está.
+       * No sé para qué tantos botones. Si no es necesario, sácalo"*. Y tiene razón: con el
+       * mapa actualizándose cada hora, el cartel saldría cada hora para pedir permiso de
+       * hacer justo lo que se espera que pase.
+       *
+       * Ahora se redibuja solo. Dos excepciones, que no son botones sino sentido común:
+       * si el reporte ya no está en pantalla, el reloj se apaga; y si alguien está mirando
+       * el mapa ANTERIOR a propósito, no se le cambia debajo de la mano.
+       *
+       * SE PREGUNTA POR `/api/sync/versiones`, QUE PESA 3 KB. El chequeo viejo se bajaba el
+       * mapa entero —entre 150 y 255 KB según la zona— una vez por minuto solo para mirarle
+       * la fecha: 15 MB por hora en cada pantalla abierta, para enterarse de un cambio que
+       * ocurre una vez por hora. */
       if (window.__layoutAvisoInterval) clearInterval(window.__layoutAvisoInterval);
       window.__layoutAvisoInterval = setInterval(async () => {
           try {
@@ -913,20 +929,13 @@ window.showCellModal = function(htmlContent) {
               if (window.__verLayoutAnterior) return; // viendo el anterior a propósito: no molestar
               const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
               const zona = currentLayoutZona || 'SEL';
-              const res = await fetch(`${base}/api/logistics/layout_activo_${zona}?date=MASTER&t=${Date.now()}`);
+              const res = await fetch(`${base}/api/sync/versiones?t=${Date.now()}`);
               if (!res.ok) return;
               const p = await res.json();
-              const serverUpd = (p && p.data && p.data.type === 'processed') ? (p.updated_at || null) : null;
+              const serverUpd = p && p.versiones && p.versiones[`layout_activo_${zona}`];
               if (serverUpd && window.__layoutDisplayedUpdatedAt && serverUpd !== window.__layoutDisplayedUpdatedAt) {
-                  if (!document.getElementById('__avisoNuevoMapa')) {
-                      const b = document.createElement('div');
-                      b.id = '__avisoNuevoMapa';
-                      b.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:99999; background:linear-gradient(135deg,#8b5cf6,#6366f1); color:#fff; padding:14px 18px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.4); font-family:Inter,sans-serif; display:flex; align-items:center; gap:12px; font-size:0.9rem; font-weight:700; max-width:90vw;';
-                      b.innerHTML = '<span>🔄 Hay un mapa nuevo disponible</span>'
-                          + '<button onclick="window.__aplicarNuevoMapa()" style="background:#fff; color:#4f46e5; border:none; padding:6px 12px; border-radius:8px; font-weight:800; cursor:pointer;">Actualizar</button>'
-                          + '<button onclick="window.__cerrarAvisoNuevoMapa()" title="Cerrar" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:1rem;">✕</button>';
-                      document.body.appendChild(b);
-                  }
+                  window.__layoutDisplayedUpdatedAt = serverUpd;   // o el redibujado vuelve a entrar acá
+                  renderLayoutActivo(container);
               }
           } catch(e) {}
       }, 60000);
