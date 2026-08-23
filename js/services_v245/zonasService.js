@@ -1446,14 +1446,31 @@ export const planificarAlmacenaje = (art, ocupadosPorZona, libresPorZona = {}, o
         });
     }
 
-    // REPOSICIÓN antes que el resto: si el artículo ya vive en el almacén, va a sus
-    // mismos cuerpos y no hace falta preguntarle nada a la configuración. Vale incluso en
-    // las zonas que todavía no tienen reglas cargadas —ahí está la mayor parte del volumen—,
-    // porque devolver algo a su lugar no depende de saber qué temporada lleva cada columna.
-    // EL BUFFER D SE SALTEA ESTE ATAJO. Lo que llega ahí va a la columna de catálogo aunque
-    // el artículo ya viva en el almacén: un Puma que tiene su cuerpo en la 16 y llega por el
-    // D no vuelve a la 16, va al catálogo. Es la regla de Daniel y no admite excepción.
-    if (art.origen !== 'D' && art.yaTiene && art.yaTiene.length) {
+    /* REPOSICIÓN antes que el resto: si el artículo ya vive en el almacén, va a sus
+     * mismos cuerpos y no hace falta preguntarle nada a la configuración. Vale incluso en
+     * las zonas que todavía no tienen reglas cargadas —ahí está la mayor parte del volumen—,
+     * porque devolver algo a su lugar no depende de saber qué temporada lleva cada columna.
+     *
+     * EL BUFFER D SE SALTEA ESTE ATAJO. Lo que llega ahí va a la columna de catálogo aunque
+     * el artículo ya viva en el almacén: un Puma que tiene su cuerpo en la 16 y llega por el
+     * D no vuelve a la 16, va al catálogo. Es la regla de Daniel y no admite excepción.
+     *
+     * Y UN CÓDIGO NUEVO TAMPOCO LO TOMA — 22-ago-2026. Este atajo miraba SOLO `yaTiene`, sin
+     * enterarse de lo que había decidido el corte de los 20 pares: el cálculo decía "código
+     * nuevo" y el destino igual lo mandaba al cuerpo viejo. Daniel: *"menos de veinte hay que
+     * tratarlo como código nuevo. Así lo estamos tratando en Bata, entonces hay que seguir esa
+     * misma lógica: Bubblegummers, Power, North Star, Weinbrenner"*.
+     *
+     * EL CASO REAL: el `1615398` de Bubblegummers llegó con 692 pares y tenía **un par** en el
+     * MZN01-21-03, la columna de escolar, siendo `Non School`. Ese par solo lo convirtió en su
+     * casa, y de ahí salieron 434 pares a la columna de escolar y 258 a la columna 4, que es de
+     * Power. Un par mal matriculado arrastró los 692.
+     *
+     * Y NO HACE FALTA NINGUNA REGLA NUEVA SOBRE LAS CASAS: si el artículo es código nuevo es
+     * porque tiene MENOS DE 20 pares en todo el almacén, así que cualquier casa suya es por
+     * definición un resto suelto. La casa se vuelve a ganar cuando el artículo de verdad vive
+     * ahí, y para eso ya está el corte de los 20. */
+    if (art.origen !== 'D' && !art.esCodigoNuevo && art.yaTiene && art.yaTiene.length) {
         // Un calzado mal ubicado puede tener su cuerpo EN el mezzanine 4. Ahí tampoco se
         // nombra la ubicación: se devuelve la zona y nada más.
         if (esZonaSinUbicacion(art.yaTiene[0].zona)) {
