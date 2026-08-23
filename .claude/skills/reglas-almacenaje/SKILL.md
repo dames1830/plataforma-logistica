@@ -1026,9 +1026,9 @@ Medido el 14-ago-2026 contra las tareas y el stock de producción. **Están abie
 2. ~~**La reserva no entra en la cuenta.**~~ **RESUELTO EN LA v29.0227**, en el mismo cambio: la
    reserva se lee de `ctx.reservaDe` y suma igual que el piso.
 
-3. **El destino no respeta el camino elegido.** `planificarAlmacenaje` toma el atajo de
-   reposición mirando **solo `art.yaTiene`**, sin consultar qué decidió `casoDelItem`. El cálculo
-   puede decir "código nuevo, baja el 60%" y mandar igual esos pares al cuerpo viejo del saldo.
+3. ~~**El destino no respeta el camino elegido.**~~ **RESUELTO EN LA v29.0347.**
+   `planificarAlmacenaje` recibe ahora `esCodigoNuevo` y no toma el atajo de reposición cuando
+   el corte de los 20 dijo que es nuevo. Ver "Un código nuevo no hereda casa" más abajo.
 
 4. **Los cuerpos ya prometidos no se marcan ocupados.** El bloque de `cargarContextoSugerencia`
    busca `art.sugerencia`, un dato que **nadie escribe** en todo el proyecto. Lo que sí se graba
@@ -1235,6 +1235,121 @@ Se midio sobre `almacenaje_activo` (30.710 filas, se baja sin sesion de la API):
 O sea que el problema **no es el reparto en si**, es **a cual de sus cuerpos se le echa lo
 nuevo**. Es mucho mas chico de lo que parece y mucho mas facil de arreglar.
 
+## UN CÓDIGO NUEVO NO HEREDA CASA — v29.0347, 22-ago-2026
+
+Daniel: *"menos de veinte hay que tratarlo como código nuevo. Así lo estamos tratando en Bata,
+entonces hay que seguir esa misma lógica: Bubblegummers, Power, North Star, Weinbrenner"*.
+
+**El corte de los 20 ya era universal y ya clasificaba bien. Lo que fallaba es que EL DESTINO NO
+SE ENTERABA:** `planificarAlmacenaje` tomaba el atajo de reposición mirando solo `yaTiene`, sin
+preguntar qué había decidido `casoDelItem`. El cálculo decía "código nuevo, baja el 60%" y el
+destino lo mandaba igual al cuerpo viejo.
+
+**EL CASO, medido sobre la `2026-08-22_Tarea1`:** el `1615398` de Bubblegummers llegó con **692
+pares** y tenía **UN PAR** en `MZN01-21-03`, la columna de escolar, siendo `Non School`. Ese par
+solo se convirtió en su casa —por el agujero de `casaDe`, que si ningún cuerpo llega a 20 se
+queda con el más cargado aunque tenga uno— y de ahí salieron **434 pares a la columna de escolar
+y 258 a la columna 4, que es de Power**. Un par mal matriculado arrastró los 692.
+
+**Y NO HIZO FALTA NINGUNA REGLA NUEVA SOBRE LAS CASAS.** Si el artículo es código nuevo es porque
+tiene menos de 20 pares en todo el almacén, así que **cualquier casa suya es por definición un
+resto suelto**. La casa se vuelve a ganar cuando el artículo de verdad vive ahí, y para eso ya
+está el corte de los 20. El agujero de `casaDe` sigue ahí y ya no hace daño por este camino.
+
+## LA REPOSICIÓN TAMPOCO PUEDE INVADIR LA COLUMNA DE OTRA MARCA — v29.0346
+
+Daniel, leyendo la misma tarea: *"están mandando esa marca Bubblegummers al mezzanine uno columna
+cero cuatro, cuando esa columna pertenece a la marca Power"*.
+
+Cuando el camino de reposición necesita **abrir cuerpos de más**, buscaba en
+`columnasDeFranja(zona, franja)`, que devuelve **TODAS** las columnas de esa franja en la zona. El
+MZN01 lo comparten tres marcas, así que agarraba la 4 —la primera de "actual" de la zona—.
+
+**Lo más feo del defecto: el camino de CÓDIGO NUEVO ya tenía el filtro**, unas líneas más abajo, y
+su comentario describe este mismo síntoma con estas mismas palabras. Se arregló ahí y a este se le
+pasó. **Al arreglar algo así, buscar el patrón entero.**
+
+**LO QUE EL ARREGLO DESTAPÓ, y es más grave que el defecto:** Bubblegummers **no tiene un solo
+cuerpo libre** en sus once columnas de temporada actual —220 cuerpos, los 220 con stock—. El
+sistema iba a la columna de Power porque no tenía adónde ir. Con el filtro puesto esa mercadería
+sale "Revisar Slotting". **Power tiene 27 cuerpos libres usables** (col 02 con 3, 03 con 12, 04
+con 2 y 08 con 10; la 05, 06 y 09 están bloqueadas). **Pendiente de decisión de Daniel.**
+
+## LA CAPACIDAD DEL CUERPO SE MIDE, NO SE DEDUCE — v29.0341 a v29.0343
+
+Daniel, parado en el `SEL-07-09` con una tarea de Slotting en la mano: *"la tarea me dice mover
+130 pares al SEL-07-08, pero ahí entran unos 40. ¿Estás analizando el cubicaje de la ubicación
+destino?"*.
+
+**Sí lo analizaba —esa comprobación la trajo él el 18-ago— pero con un número que no era real.**
+El sistema creía 450 porque la tabla decía "serie 8 → 450" para **todo el selectivo, de la serie 2
+a la 9**. La capacidad real de ese cuerpo para ese zapato es **365**.
+
+### La escalera, de lo más preciso a lo más general
+
+| | De dónde sale | Cubre |
+|---|---|---|
+| 1 | **La columna** — la medida del mueble, la tomó Daniel | 2% |
+| 2 | **EL ARTÍCULO**, medido en esa zona | **75%** |
+| 3 | La sub-marca (Bata Comfit 700) | 0,4% |
+| 4 | **MARCA + TIPO + TALLA** | **19%** |
+| 5 | **TIPO + TALLA** | 4% |
+| 6 | Marca + tipo | 0,3% |
+| 7 | El tipo de calzado solo — bota 270, deportivo 430, sandalia 430, zapato 500 | 0% |
+| 8 | La serie — lo único que había antes | **0%** |
+
+Medido sobre los 1.255 cuerpos con stock de SEL, MZN01, MZN02 y MZN03. **La serie ya no se usa.**
+
+### Cómo se midió, sin ir a medir con un metro
+
+De los **105 días de stock** que OneDrive guarda desde mayo, para cada CUERPO, los días que tuvo
+**UN SOLO artículo**, y el máximo que ese artículo llegó a tener. **1.087 medidas confirmadas.**
+
+**LA PRUEBA QUE SEPARA UNA CAPACIDAD DE UN "NUNCA TUVO MÁS":** una medida cuenta **solo si ese día
+al artículo le SOBRABA mercadería fuera de ese cuerpo** —20 pares o más—. Ahí el cuerpo fue el
+límite y el número significa algo. **La primera versión no tenía esa prueba y publicó el artículo
+`7016610` de Marie Claire con capacidad 1 par**: no es que entre uno, es que en 105 días nunca
+tuvo más. Ese cuerpo habría quedado bloqueado. De 1.360 medidas quedaron 1.087.
+
+**ES UN PISO, NO UN TECHO.** Que se le hayan visto 365 significa que 365 entran seguro. Para lo que
+sirve —no mandar mercadería que no cabe— equivocarse por abajo es lo correcto.
+
+### El agrupador es la TALLA, no el gender
+
+Dentro de DEPORTIVO, medido: **18-25 → 831 · 26-30 → 580 · 31-35 → 543 · 36-39 → 447 · 40-44 → 311**.
+
+**EL GENDER MIENTE Y LA TALLA NO.** El Power `2816964` es **talla 28 y entra 700**, y su
+`Gender RIMS` dice `04 SPORT`, igual que una zapatilla de hombre. Agrupar por gender fallaba por
+eso. La talla sale del stock que se está barriendo —no del Maestro, que no la trae— y va
+**ponderada por pares**: la talla que más hay es la que llena el cuerpo.
+
+Lo que Daniel dijo y la medición confirmó: **Weinbrenner kids 510 contra 339 del adulto**. Y lo que
+NO era como parecía: **el Power school entra 300 contra 423 del adulto**, y el **Bubblegummers
+school 120 contra 589 del kids**. Por eso el número se mide y no se deduce.
+
+### `OUTDOOR HEIGHT CUT` es BOTA
+
+Son **250 artículos** —casi todos Weinbrenner— que estaban contados como deportivos porque su
+*categoría* dice SPORT. Los trajo Daniel: *"hay botas también en Weinbrenner"*. **Ojo:
+`HEIGHT 3/5/7` a secas es altura de TACO** —wedge, sandalia— y esa no es bota. Por eso la regla
+pide `HEIGHT CUT`.
+
+### Dónde vive
+
+`tipoDeCalzado()` y `rangoDeTalla()` en `zonasService.js`; `densidadArticulo` (clave `ZONA|sku7`)
+y `densidadMarcaTipo` (claves `Marca|TIPO|RANGO`, `TIPO|RANGO` y `Marca|TIPO`) en la configuración
+de zonas. Se ve y se edita en Análisis SKU → Zonas de Almacenaje.
+
+**PENDIENTE: la medición se hizo desde la PC de Daniel, con los archivos de OneDrive.** Para que se
+mantenga sola hay que ponerla en el robot de la noche, que puede ir actualizando los máximos con el
+stock de cada día. **El servidor no tiene OneDrive**, así que tiene que acumular desde el stock
+publicado, no desde los archivos.
+
+**PENDIENTE: la pantalla de configuración quedó sucia** —la tabla por serie de 50 casillas sigue
+ahí sin usarse—. Hay una maqueta aprobada por Daniel el 22-ago en
+`scratch/maqueta_cubicaje.html`: una sola tabla marca · tipo · talla, los artículos con medida
+propia como número + buscador, y las excepciones aparte. **Sin implementar.**
+
 ## LA HOJA IMPRESA — lo acordado con Daniel el 21-ago-2026
 
 Revisado hoja por hoja contra maquetas. **Lo aprobado y por que:**
@@ -1274,6 +1389,25 @@ cuerpo ya tiene lo que todavia hay que llevarle.
 
 **SIN DESTINO NO SE MARCA NADA.** Cuando la linea va entera a reserva —o esta trabada— no hay
 cuerpo con que comparar, asi que no lleva asterisco: marcaria algo que nadie pregunto.
+
+### LA COLECCIÓN EN LA BANDA — v29.0348, 22-ago-2026
+
+Daniel: *"ya le has puesto el gender a cada artículo, ¿le puedes poner la temporada?"*. Se le
+mostraron **cinco opciones sobre la hoja real** con tres artículos de las tareas de ese día, y
+eligió la **colección** —el trimestre— en vez de la temporada:
+
+    ARTICULO 1615398 · 03 KIDS · 2026-Q4 · CODIGO NUEVO
+
+Sale de la columna 10 del Maestro, `Coleccion PO`, guardada **aparte** en la ficha del contexto:
+`temporada` la usaba de respaldo y ahí las dos se mezclan.
+
+**LO QUE CUESTA, y se le mostró antes de que eligiera:** los artículos de **temporada anterior
+tienen la colección en blanco** y salen con un guion —3 de los 45 de ese día—. Se le enseñó con un
+caso real, el `5811640`, y aun así prefirió el trimestre: *2026-Q4* dice cuándo se fabricó y
+"T. Actual" no.
+
+**Si algún día molesta el guion:** poner `T. ANTERIOR` en su lugar cuando la colección esté vacía.
+Es una línea y no cambia lo que eligió.
 
 **Si algo tiene que resaltar en la hoja, NUNCA por color.** El operario trabaja con la hoja en
 **blanco y negro**: un rojo sale gris claro, mas debil que el texto normal. Va negrita, fondo o

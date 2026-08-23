@@ -131,6 +131,43 @@ trabajo no hecho.
 **El síntoma siempre fue el mismo** y Daniel lo dijo con las mismas palabras las cuatro veces:
 *"al comenzar el turno ya tenía mercadería separada y no se había bajado ni una paleta"*.
 
+## LA FOTO DEL ARRANQUE TIENE QUE ESTAR CONGELADA — 22-ago-2026, v29.0344
+
+**El 22-ago a las 07:27 Daniel abrió la jornada del 21 y la separación decía 0 de 311. Se había
+separado el 100%.** Rehecho con los archivos del WMS de esa noche: los **catorce** códigos del plan
+bajaron, todos con más de lo que el plan pedía.
+
+**El cuadro no se equivocó de número: no tenía con qué contar.** La cuenta leía
+`analisis_sku_reserva` como foto del arranque, que es el **área VIVA**. De noche está bien —adentro
+sigue la corrida de las 19:00— pero **a las 07:07 el robot de la mañana la pisa**:
+
+    analisis_sku_reserva (arranque) -> 22/08 07:07:23
+    reserva_cierre 21-08 (cierre)   -> 22/08 07:07:51
+
+**Las dos puntas de la resta eran la misma foto, con 28 segundos de diferencia.** Cero por
+construcción.
+
+**Ahora se lee `reserva_arranque` de esa fecha**, que el robot congela a las 19:00 y no vuelve a
+tocar. Es la misma foto que ya usaba Bajada de paletas —**por eso ESA fila sí funcionaba, 12 de
+12**— pero le faltaba estar **abierta por código**: el 36% de las paletas trae más de un artículo y
+la separación se mide por artículo. `generar_slotting.py` la guarda con `porCodigo` desde el
+22-ago; **instalado en el servidor ese día**.
+
+**Sin foto congelada y con la jornada cerrada, la fila queda SIN NÚMERO y editable.**
+
+## LA META NO SE COLA A LA JORNADA SIGUIENTE — mismo día
+
+El 22-ago 08:09, con el turno del 22 sin arrancar, cuatro filas decían "sin meta" y **Limpieza de
+Buffer C mostraba 703 pares y 0%, NO ATENDIDO**. Salía de un respaldo que armaba la meta con el
+**stock activo del servidor** cuando no había foto del día — y a esa hora ese stock era el de las
+07:07 de esa misma mañana.
+
+**El respaldo estaba mal en TODOS los casos**, y por eso se eliminó entero: el robot guarda la foto
+en la MISMA corrida que publica el stock, así que antes no hay foto y el stock es de ayer, y
+después la foto está y el respaldo sobra. **No existe un momento en que diga la verdad.**
+
+Sin foto, sin meta.
+
 ## Dos trampas que valen para CUALQUIER cuadro medido con dos fotos
 
 **1. Las dos puntas tienen que estar DENTRO de la jornada que se mide.** A las 07:00 la corrida
