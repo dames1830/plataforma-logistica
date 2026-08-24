@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0356';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0357';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0356';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0356';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0356';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0356';
-import * as metasService from '../services_v245/metasService.js?v=29.0356';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0356';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0356';
+import * as adminService from '../services_v245/adminService.js?v=29.0357';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0357';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0357';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0357';
+import * as metasService from '../services_v245/metasService.js?v=29.0357';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0357';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0357';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados } from '../reportes/reserva_consolidacion.js?v=29.0356';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0356';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0356';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0356';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0356';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0356';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0356';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0356';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0356';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0356';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0356';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0356';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0356';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0356';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0356';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0356';
-import { montarSlotting } from './slotting.js?v=29.0356';
+         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0357';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0357';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0357';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0357';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0357';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0357';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0357';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0357';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0357';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0357';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0357';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0357';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0357';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0357';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0357';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0357';
+import { montarSlotting } from './slotting.js?v=29.0357';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0356';
+const VERSION = '29.0357';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4684,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0356');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0357');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16968,7 +16968,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0356 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0357 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24318,6 +24318,10 @@ const renderRFSection = (container) => {
   let ubicacionState = { page: 1, query: '', ubisArray: [] };
   let currentLayoutZona = 'SEL';
   /* La foto de la reserva, guardada mientras se cambia de nivel. Ver el mapa de reserva. */
+  /* EL STOCK CON EL QUE SE ARMA EL PLAN DEL EXCEL. Es el que la pantalla acaba de leer
+     —el de la hora si el robot lo publicó, y si no el del ancla—, no la foto del día:
+     mandar a alguien a una ubicación de anoche es hacerlo caminar al vacío. */
+  let _reservaCrudaParaPlan = null;
   let _reservaCache = { filas: null, sello: null, t: 0 };
 
   /**
@@ -24633,7 +24637,12 @@ const renderRFSection = (container) => {
             + 'background:linear-gradient(90deg,#10b981,#4ade80);box-shadow:0 0 16px rgba(16,185,129,.5)"></i></div>'
             + '<div style="display:flex;justify-content:space-between;font-size:.64rem;color:var(--text-muted);margin-top:5px">'
             + '<span><b style="color:#10b981">' + mil(hechas) + '</b> ubicaciones liberadas</span>'
-            + '<span>faltan ' + mil(redF - hechas) + ' de ' + mil(redF) + '</span></div></div>';
+            + '<span>faltan ' + mil(redF - hechas) + ' de ' + mil(redF) + '</span></div>'
+            /* DE CUÁNDO ES EL AVANCE. Sin esto la barra se mueve sola durante la noche y no
+               hay forma de saber si lo que se ve es de hace cinco minutos o de esta mañana.
+               El robot publica la reserva al minuto :30, así que el atraso máximo es una hora. */
+            + '<div style="font-size:.6rem;color:var(--text-muted);margin-top:3px">medido con la reserva de '
+            + (window.__reservaHoraSello ? ('las ' + window.__reservaHoraSello) : 'la foto del día') + '</div></div>';
       const cabecera = '<div style="display:flex;align-items:stretch;flex-wrap:wrap;margin:2px 0 12px;'
           + 'border-radius:12px;overflow:hidden;border:1px solid rgba(16,185,129,.22);'
           + 'background:linear-gradient(90deg,rgba(16,185,129,.10),rgba(96,165,250,.05))">'
@@ -24729,45 +24738,100 @@ const renderRFSection = (container) => {
    * unas 570 filas que triplicarian el historico. En ese caso sale solo la primera hoja y el
    * nombre del archivo lleva la fecha de esa foto, para que no se confunda con la de hoy.
    * ══════════════════════════════════════════════════════════════════════════════ */
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * EL EXCEL DE LA CONSOLIDACIÓN — tres hojas, y es la orden de trabajo
+   * ══════════════════════════════════════════════════════════════════════════════
+   *
+   * Antes bajaba dos hojas que decían cuáles paletas bajar y cuáles recibían, pero NO cuál
+   * va a cuál. Daniel, 23-ago-2026: *"quiero que tú me detalles todo el movimiento que
+   * tiene que hacer el operario para yo solamente descargar el Excel y decirle: haz este
+   * artículo de acá"*.
+   *
+   * TRES HOJAS PORQUE SON TRES LECTORES DISTINTOS:
+   *
+   *   REPARTO         para Daniel. Una fila por artículo, con su grupo.
+   *   OPERARIOS       para los chicos. Qué sale de dónde y va a dónde, con la talla —o el
+   *                   SKU, si es prepack— en las dos puntas.
+   *   MONTACARGUISTA  ubicación, LPN, cantidad y qué hacer. Sin artículo y sin talla:
+   *                   *"al montacarguista no le interesa la talla, no le interesa el SKU"*.
+   *
+   * LA HOJA DEL MONTACARGUISTA VA POR PALETA, NO POR MOVIMIENTO. Un destino que recibe seis
+   * paletas BAJA UNA VEZ y sube una vez; repetirlo seis veces lo mandaría seis veces al
+   * mismo sitio.
+   *
+   * Se arma con el stock que la pantalla está mirando —el de la hora si el robot lo
+   * publicó—, no con la foto del día: de nada sirve mandar a alguien a una ubicación de
+   * anoche. Ver `planDeConsolidacion`. */
   const exportarFragmentados = (datos, fecha) => {
-      const F = (datos && datos.fragmentados) || [];
-      if (!F.length) { showPremiumAlert('SIN DATOS', 'No hay artículos que reducir para exportar.', 'info'); return; }
+      const crudas = _reservaCrudaParaPlan;
+      if (!crudas || !crudas.length) {
+          showPremiumAlert('SIN STOCK DE RESERVA',
+              'No se pudo leer el stock de reserva para armar el plan. Vuelve a entrar al módulo.', 'warning');
+          return;
+      }
+      const plan = planDeConsolidacion(crudas, indexarMaestro(), {
+          serieDe: (padre) => { try { return zonasService.serieDe(padre); } catch (e) { return null; } }
+      });
+      if (!plan || !plan.paletas) {
+          showPremiumAlert('NADA QUE CONSOLIDAR',
+              'Con el stock de ahora no hay ninguna paleta que se pueda juntar con otra.', 'info');
+          return;
+      }
 
-      const resumen = F.map((p, i) => ({
-          '#': i + 1,
-          'PADRE': p.padre,
-          'GENDER RIMS': p.g || '',
-          'UBICACIONES': p.n,
-          'PARES': p.tot,
-          'SU PALETA LLENA': p.cap,
-          'SELECTIVOS': p.sel,
-          'REDUCE': p.reduce,
-          'QUEDARÍAN OCUPADAS': p.quedan
-      }));
-
-      const detalle = [];
-      F.forEach((p, i) => {
-          (p.ubic || []).forEach((u, j) => {
-              detalle.push({
-                  '#': i + 1,
-                  'PADRE': p.padre,
-                  'QUÉ HACER': j < p.reduce ? 'BAJAR' : 'RECIBE',
-                  'UBICACIÓN': u.u,
-                  'SELECTIVO': u.col,
-                  'LPN': u.lpn || '',
-                  'PARES': u.p,
-                  'TALLAS': (u.t || []).join(' · '),
-                  'COMPARTE CON': (u.ot || []).join(' · ')
+      const reparto = [];
+      const operarios = [];
+      const monta = [];
+      plan.grupos.forEach(g => {
+          g.lineas.forEach(l => {
+              reparto.push({
+                  'GRUPO': 'G' + g.n, 'ARTÍCULO': l.padre, 'TIPO': l.tipo,
+                  'GENDER RIMS': l.g || '', 'UBICACIONES HOY': l.n,
+                  'PALETA LLENA': l.cap, 'PALETAS A BAJAR': l.mv.length
               });
+              l.mv.forEach((m, i) => operarios.push({
+                  'GRUPO': 'G' + g.n, 'ARTÍCULO': m.padre, 'TIPO': m.tipo,
+                  'PALETA': (i + 1) + ' de ' + l.mv.length,
+                  'SACAR DE': m.deU, 'LPN': m.deLpn,
+                  'TALLA / SKU': m.deQue, 'CANTIDAD': m.pares,
+                  'PONER EN': m.aU, 'LPN DESTINO': m.aLpn, 'TALLA / SKU DESTINO': m.aQue,
+                  'TENÍA': m.tenia, 'QUEDA': m.queda, 'TOPE': m.cap, 'OK': ''
+              }));
+          });
+          /* Un destino que recibe varias paletas baja UNA sola vez: se junta antes de
+             escribir, y se anota con cuánto se va para arriba. */
+          const dest = new Map();
+          let n = 0;
+          g.lineas.forEach(l => l.mv.forEach(m => {
+              monta.push({ 'GRUPO': 'G' + g.n, 'ORDEN': ++n, 'UBICACIÓN': m.deU, 'LPN': m.deLpn,
+                           'CANTIDAD': m.pares,
+                           'QUÉ HACER': 'BAJAR · no vuelve, la ubicación queda libre', 'OK': '' });
+              const e = dest.get(m.aU) || { lpn: m.aLpn, tenia: m.tenia, queda: m.queda };
+              e.tenia = Math.min(e.tenia, m.tenia);
+              e.queda = Math.max(e.queda, m.queda);
+              dest.set(m.aU, e);
+          }));
+          [...dest.keys()].sort().forEach(u => {
+              const e = dest.get(u);
+              monta.push({ 'GRUPO': 'G' + g.n, 'ORDEN': ++n, 'UBICACIÓN': u, 'LPN': e.lpn,
+                           'CANTIDAD': e.tenia,
+                           'QUÉ HACER': 'BAJAR y VOLVER A SUBIR a la misma ubicación · se va con ' + e.queda,
+                           'OK': '' });
           });
       });
 
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumen), 'Fragmentados');
-      if (detalle.length) {
-          XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detalle), 'Ubicaciones');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reparto), 'Reparto');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(operarios), 'Operarios');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(monta), 'Montacarguista');
+      /* LAS MEZCLADAS SOLO SI LAS HAY. Una paleta con solid y prepack juntos es un error de
+         quien matriculó —Daniel, 24-ago-2026— y hoy no existe ninguna. Si aparece, va en su
+         hoja para que se revise, no escondida en una nota. */
+      if (plan.mezcladas.length) {
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+              plan.mezcladas.map(u => ({ 'UBICACIÓN': u, 'PROBLEMA': 'tiene SOLID y PREPACK en la misma paleta' }))),
+              'Revisar');
       }
-      XLSX.writeFile(wb, `Articulo_Ubicacion_${fecha || getLogicalDate()}.xlsx`);
+      XLSX.writeFile(wb, `Consolidacion_reserva_${fecha || getLogicalDate()}.xlsx`);
   };
 
   const engancharClicConsolidacion = (raiz, datos, base) => {
@@ -26924,7 +26988,38 @@ window.showCellModal = function(htmlContent) {
                  * dice "21/08/2026 · 19:00" y el grafico termina en el punto de esa noche. Si la
                  * tabla mostrara el stock de ahora, el mismo cuadro tendria dos fechas.
                  * ══════════════════════════════════════════════════════════════════════ */
-                const _fresco = consolidacionDeReserva(rawReserva, indexarMaestro());
+                /* ── EL AVANCE MIRA EL STOCK DE LA HORA; LA FOTO DEL DÍA, NO ────────────
+                 *
+                 * Regla de Daniel, 24-ago-2026: *"si lo hacemos por hora, tendría visibilidad
+                 * durante el turno"*. Hasta acá el cuadro entero salía de `analisis_sku_reserva`
+                 * —la foto del ancla—, así que lo que su gente consolidaba a las 21:00 no se veía
+                 * hasta que corría el ancla de la mañana. Su corte era uno al día y llegaba tarde.
+                 *
+                 * SON DOS COSAS DISTINTAS Y AHORA SE MIDEN CON DOS FOTOS DISTINTAS:
+                 *
+                 *   LA FOTO DEL DÍA —los 30 artículos, la matriz, los totales— sigue saliendo del
+                 *   ANCLA y no se mueve. Es el compromiso, y un compromiso con una meta que se
+                 *   mueve sola no es un compromiso.
+                 *
+                 *   EL AVANCE contra la base, y el detalle de ubicaciones que va al papel, salen
+                 *   del STOCK DE LA HORA, que el robot publica al minuto :30. Así a las 21:00 se
+                 *   ve lo que se lleva hecho, y a las 06:35 el turno cierra con su número.
+                 *
+                 * Es la misma solución del mapa de calor: si hay stock de la hora se usa, y si no
+                 * —el robot no corrió, no hay internet— se cae al del ancla y no se rompe nada. */
+                const _frescoAncla = consolidacionDeReserva(rawReserva, indexarMaestro());
+                let _rawHora = null, _horaSello = null;
+                try {
+                    const _rh = await fetch(`${TURNO_API}/${AREA_RESERVA_DE_LA_HORA}?date=MASTER&t=${Date.now()}`);
+                    if (_rh.ok) {
+                        const _c = await _rh.json();
+                        const _d = (_c && _c.data !== undefined) ? _c.data : _c;
+                        if (Array.isArray(_d) && _d.length) { _rawHora = _d; _horaSello = _c.updated_at || null; }
+                    }
+                } catch (e) { console.warn('[RESERVA] sin stock de la hora, se usa el del ancla:', e && e.message); }
+                const _fresco = _rawHora ? consolidacionDeReserva(_rawHora, indexarMaestro()) : _frescoAncla;
+                window.__reservaHoraSello = _rawHora ? (textoFechaServidor(_horaSello) || null) : null;
+                _reservaCrudaParaPlan = _rawHora || rawReserva;
                 if (_viendoHoy) {
                     const _guardada = _fotos.find(f => f && _sello && f.fecha === _sello.fecha);
                     if (_guardada) {
@@ -26941,9 +27036,12 @@ window.showCellModal = function(htmlContent) {
                                 p => Object.assign({}, p, { ubic: _porPadre.get(p.padre) || [] }))
                         });
                     } else {
-                        // El dia todavia no tiene foto: se calcula y se guarda, una sola vez.
-                        // Asi el calendario se llena sin que nadie tenga que abrir nada.
-                        _consol = _fresco;
+                        /* El dia todavia no tiene foto: se calcula y se guarda, una sola vez.
+                           Asi el calendario se llena sin que nadie tenga que abrir nada.
+                           VA CON EL ANCLA, NO CON LA DE LA HORA: la foto del dia es el
+                           compromiso, y tiene que ser la misma sin importar a que hora la
+                           haya abierto el primero que entro. */
+                        _consol = _frescoAncla;
                         if (_consol && _sello) {
                             const _f = fotoChicaDeReserva(_consol, _sello);
                             if (_f) { guardarFotoReserva(_f).catch(() => {}); _fotos = [_f, ..._fotos]; }

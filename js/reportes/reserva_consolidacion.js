@@ -23,7 +23,7 @@
  * 43. El ultimo tramo del SKU es un indice, y la talla de verdad viene al final de la
  * descripcion -`...BATA INDUSTRIALS-1-43`-. Se usa `extractTalla`, que es la que ya
  * resuelve esto en toda la plataforma; escribir otra aca seria tener dos verdades. */
-import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0356';
+import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0357';
 
 export const NIVELES_RESERVA = ['H', 'G', 'F', 'E', 'D'];
 export const COLS_RESERVA = 12;
@@ -296,3 +296,175 @@ export const fotoChicaDeReserva = (datos, sello) => (!datos || !sello) ? null : 
     fragTotal: datos.fragTotal, fragUbic: datos.fragUbic
 });
 
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * EL PLAN DE CONSOLIDACIÓN — qué paleta va a qué paleta
+ * ══════════════════════════════════════════════════════════════════════════════
+ *
+ * `consolidacionDeReserva` dice CUÁNTAS ubicaciones se pueden reducir. Esto dice CÓMO:
+ * de qué paleta bajar, en cuál echarla y con cuánto queda.
+ *
+ * Daniel, 23-ago-2026: *"dime de qué paleta tengo que bajar, a qué paleta le tengo que
+ * poner para completar la paleta llena. Quiero que tú me detalles todo el movimiento que
+ * tiene que hacer el operario para yo solamente descargar el Excel"*.
+ *
+ * LAS CUATRO REGLAS, todas medidas contra la reserva real antes de escribirlas:
+ *
+ * 1. SOLID Y PREPACK SON DOS LÍNEAS DISTINTAS DEL MISMO ARTÍCULO y se consolidan por
+ *    separado. El 5898406 tiene 8 paletas de solid con tallas 35 a 40 y 10 de prepack: son
+ *    la misma referencia y no se tocan entre sí. El prepack se reconoce por la forma del
+ *    código —7 dígitos, guion, 1 dígito, guion, CINCO dígitos—; ese sufijo no es una talla,
+ *    es el código del pack. Medido: de 2.391 paletas, NINGUNA mezcla las dos cosas. Si
+ *    alguna vez aparece una, es un error de quien matriculó y sale marcada.
+ *
+ * 2. UNA PALETA BAJA ENTERA Y VA A UN SOLO SITIO. Repartirla entre varios destinos libera
+ *    más ubicaciones —192 contra 127— pero son 306 movimientos con 202 paletas partidas.
+ *    Daniel eligió el viaje único: el operario vuelca y no cuenta.
+ *
+ * 3. LA TALLA NO SE MEZCLA. Un destino solo recibe tallas que YA tiene, así que ninguna
+ *    paleta termina peor de lo que estaba. Y una sin talla legible solo se junta con otra
+ *    igual: meterla en una de talla 37 sería inventar.
+ *
+ * 4. EL PREPACK TIENE PISO, NO TOPE. Regla de Daniel, 24-ago-2026: *"si la paleta tiene más
+ *    de veinte, cumple con que esté llena. Si tiene menos de veinte, hay que consolidar"*.
+ *    Cuánto aguanta la que recibe sale de la SERIE, porque *"en la serie uno, como son
+ *    Bubblegummers, entran más"* — y está medido: la serie 1 tiene mediana 50 y las series
+ *    5 y 8 tienen 17 y 16.
+ */
+
+/** El prepack se reconoce por la forma del código. La misma regla que usa el picking. */
+const FORMA_PREPACK = /^\d{7}-\d-\d{5}$/;
+export const esPrepackDeReserva = (sku) => FORMA_PREPACK.test(String(sku || '').trim());
+
+/** Piso del prepack: por debajo de esto hay que consolidar. */
+export const PISO_PREPACK = 20;
+
+/** Cuánto aguanta una paleta de prepack, por serie. Es la MEDIANA de lo que cada serie ya
+ *  logra hoy, medida el 24-ago-2026 sobre las 418 paletas de prepack de la reserva. No es un
+ *  número inventado, y entra por `opciones.topes` para poder cambiarlo sin tocar esto. */
+export const TOPES_PREPACK = { '1': 50, '2': 37, '3': 30, '4': 24, '5': 20,
+                               '6': 30, '7': 36, '8': 20, '9': 20, '0': 48 };
+
+export const planDeConsolidacion = (filas, idx, opciones) => {
+    const o = opciones || {};
+    const piso = o.piso || PISO_PREPACK;
+    const topes = o.topes || TOPES_PREPACK;
+    const serieDe = typeof o.serieDe === 'function' ? o.serieDe : () => null;
+    const porGrupo = o.porGrupo || 25;
+    if (!idx || !idx.porSku) return null;
+
+    /* Cada ubicación se parte en sus dos líneas de trabajo. La llave lleva el tipo, así una
+       paleta de prepack nunca puede terminar de destino de una de solid. */
+    const ub = new Map();
+    (filas || []).forEach(row => {
+        if (!row) return;
+        if (!row.ES_ALTO && !String(row.NIVEL).toUpperCase().includes('AL')) return;
+        const u = String(row.UBICACION || '').trim();
+        if (!u.startsWith('SEL-')) return;
+        const q = parseFloat(row.CANTIDAD) || 0;
+        if (q <= 0) return;
+        const sku = String(row.PRODUCTO || '').trim();
+        const padre = _padreDeProducto(sku);
+        if (!padre) return;
+        const tipo = esPrepackDeReserva(sku) ? 'PREPACK' : 'SOLID';
+        /* En SOLID la marca es la TALLA; en PREPACK, el SKU completo. Es lo que el operario
+           lee para saber si esa caja va ahí. Daniel: *"si tiene solid pones la talla, y si
+           tiene prepack le pones todo el SKU para que el operario distinga"*. */
+        const marca = tipo === 'PREPACK' ? sku : (extractTalla(row.DESCRIPCION) || 'S/T');
+        const k = u + '|' + padre + '|' + tipo;
+        let e = ub.get(k);
+        if (!e) { e = { u, padre, tipo, lpn: String(row.LPN || '').trim(), q: 0, d: {} }; ub.set(k, e); }
+        e.q += q;
+        e.d[marca] = (e.d[marca] || 0) + q;
+        if (!e.lpn) e.lpn = String(row.LPN || '').trim();
+    });
+
+    /* Una ubicación es de la línea que más pares tiene. Si tiene las dos, es un error de
+       matriculación y se anota: hoy no pasa en ninguna de las 2.391. */
+    const porUbi = new Map();
+    ub.forEach(e => { const l = porUbi.get(e.u) || []; l.push(e); porUbi.set(e.u, l); });
+    const mezcladas = [];
+    const G = new Map();
+    porUbi.forEach((l, u) => {
+        if (new Set(l.map(x => x.tipo)).size > 1) mezcladas.push(u);
+        const d = l.reduce((a, b) => (b.q > a.q ? b : a));
+        const k = d.padre + '|' + d.tipo;
+        const g = G.get(k) || []; g.push(d); G.set(k, g);
+    });
+
+    const llaves = (x) => Object.keys(x);
+    const dentro = (a, b) => llaves(a).every(t => t in b);
+    const acepta = (a, b) => (!llaves(a).length || !llaves(b).length)
+        ? (!llaves(a).length && !llaves(b).length) : dentro(a, b);
+    /* CON VARIAS TALLAS, CUÁNTO DE CADA UNA. Daniel lo preguntó mirando una paleta de 12 con
+       tallas 41 y 42: *"¿cuánto es la talla 41 y cuánto la 42?"*. No se parte el renglón —una
+       paleta es un viaje y la hoja del montacarguista dejaría de cuadrar—: el desglose va
+       dentro de la celda. Con una sola talla va la talla sola, sin ruido. */
+    const rotulo = (x) => {
+        const k = llaves(x).sort();
+        if (!k.length) return '—';
+        return k.length > 1 ? k.map(t => t + '×' + Math.round(x[t])).join(' · ') : k[0];
+    };
+
+    const lineas = [];
+    G.forEach((ps0, k) => {
+        if (ps0.length < 2) return;
+        const corte = k.lastIndexOf('|');
+        const padre = k.slice(0, corte), tipo = k.slice(corte + 1);
+        const ps = ps0.map(x => ({ ...x, dd: { ...x.d } }));
+        let cap, org, rec;
+        if (tipo === 'SOLID') {
+            cap = Math.max(...ps.map(x => x.q));
+            const tot = ps.reduce((s, x) => s + x.q, 0);
+            const red = ps.length - Math.max(1, Math.ceil(tot / cap));
+            if (red <= 0) return;
+            const orden = ps.slice().sort((a, b) => a.q - b.q);
+            org = orden.slice(0, red); rec = orden.slice(red);
+        } else {
+            const s = String(serieDe(padre));
+            cap = Math.max(piso, topes[s] || piso, ...ps.map(x => x.q));
+            org = ps.filter(x => x.q < piso).sort((a, b) => b.q - a.q);
+            rec = ps.filter(x => x.q >= piso).sort((a, b) => b.q - a.q);
+            if (!org.length) return;
+            if (!rec.length) rec = [org.shift()];   // sin ninguna que cumpla, la más gorda hace de base
+        }
+        rec = rec.map(x => ({ ...x, hueco: cap - x.q }));
+        const mv = [];
+        org.forEach(x => {
+            const caben = rec.filter(r => r.hueco >= x.q && (tipo === 'SOLID' ? acepta(x.dd, r.dd) : true));
+            if (!caben.length) return;
+            /* EL HUECO MÁS JUSTO QUE LA AGUANTE ENTERA. Yendo al más grande primero, una
+               paleta se parte en siete destinos y el operario camina de más. */
+            const r = caben.reduce((m, y) => (y.hueco < m.hueco ? y : m));
+            mv.push({ padre: padre, tipo: tipo, deU: x.u, deLpn: x.lpn, pares: Math.round(x.q),
+                      deQue: rotulo(x.dd), aU: r.u, aLpn: r.lpn,
+                      aQue: llaves(r.dd).sort().join('/') || '—',
+                      tenia: Math.round(r.q), queda: Math.round(r.q + x.q), cap: Math.round(cap) });
+            r.q += x.q; r.hueco -= x.q;
+            llaves(x.dd).forEach(t => { r.dd[t] = (r.dd[t] || 0) + x.dd[t]; });
+        });
+        if (mv.length) lineas.push({ padre: padre, tipo: tipo, n: ps.length, cap: Math.round(cap),
+                                     g: (idx.porSku.get(padre) || {}).detalle || '', mv: mv });
+    });
+
+    /* Primero el SOLID, que es donde está el volumen; dentro, el que más libera. Los GRUPOS
+       son BLOQUES DE TRABAJO EN ORDEN, no equipos: *"el mismo grupo de personas va a ser el
+       grupo uno, termina y va a ser el grupo dos"*. Por eso el 1 es el que más rinde: si una
+       noche solo alcanza para uno, que sea el mejor. */
+    lineas.sort((a, b) => (a.tipo === b.tipo ? 0 : (a.tipo === 'SOLID' ? -1 : 1))
+                       || (b.mv.length - a.mv.length) || (b.n - a.n));
+    let g = null;
+    const grupos = [];
+    lineas.forEach(l => {
+        if (!g || g.paletas + l.mv.length > porGrupo) {
+            g = { n: grupos.length + 1, lineas: [], paletas: 0 };
+            grupos.push(g);
+        }
+        l.grupo = g.n; g.lineas.push(l); g.paletas += l.mv.length;
+    });
+
+    return { lineas: lineas, grupos: grupos, mezcladas: mezcladas,
+             paletas: lineas.reduce((s, l) => s + l.mv.length, 0),
+             solid: lineas.filter(l => l.tipo === 'SOLID').reduce((s, l) => s + l.mv.length, 0),
+             prepack: lineas.filter(l => l.tipo === 'PREPACK').reduce((s, l) => s + l.mv.length, 0) };
+};
