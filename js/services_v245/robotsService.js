@@ -92,6 +92,7 @@ export const robotsPorDefecto = () => ({
     ancla_manana: { activa: true, hora: '07:00', dias: { ...LUN_A_SAB } },
     stock_hora:   { activa: true, minuto: 30, cadaMin: 60, dias: { ...TODOS } },
     picking_hora: { activa: true, minuto: 50, cadaMin: 60, dias: { ...TODOS } },
+    mapa_hora:    { activa: true, minuto: 45, cadaMin: 60, dias: { ...TODOS } },
     reportes:     { activa: true, hora: '06:45', dias: { ...LUN_A_SAB } },
     respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } },
     archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } },
@@ -125,7 +126,21 @@ export const normalizar = (cfg) => {
     const c = (cfg && typeof cfg === 'object') ? cfg : {};
     const out = {};
     TAREAS.forEach(t => {
-        const d = def[t.id];
+        /* SIN VALORES DE FÁBRICA NO SE CAE LA PANTALLA ENTERA.
+         *
+         * Pasó el 23-ago-2026 con `mapa_hora`: se agregó a TAREAS y se olvidó en
+         * `robotsPorDefecto()`, así que `d` venía `undefined` y `d.dias` tiraba
+         * "Cannot read properties of undefined". No fallaba esa fila: fallaba
+         * Configuración → Parámetros completa, que es justo la pantalla desde la que se
+         * manejan los robots. Un olvido de una línea dejó a Daniel sin poder tocar
+         * ningún horario.
+         *
+         * Ahora una tarea sin fábrica cae a un valor sensato —apagada, todos los días—
+         * y las demás se dibujan igual. Se avisa por consola, que es donde lo ve quien
+         * la agregó, y no en la cara del que solo quiere cambiar una hora. */
+        const d = def[t.id] || { activa: false, hora: '00:00', minuto: 0, cadaMin: 60,
+                                 dias: { ...TODOS } };
+        if (!def[t.id]) console.warn(`[ROBOTS] la tarea '${t.id}' no tiene valores de fábrica en robotsPorDefecto()`);
         const v = (c[t.id] && typeof c[t.id] === 'object') ? c[t.id] : {};
         const base = { activa: ('activa' in v) ? !!v.activa : d.activa, dias: _dias(v.dias, d.dias) };
         if (t.tipo === 'diaria') {
