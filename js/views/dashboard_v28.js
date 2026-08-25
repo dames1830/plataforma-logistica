@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0361';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0362';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0361';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0361';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0361';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0361';
-import * as metasService from '../services_v245/metasService.js?v=29.0361';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0361';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0361';
+import * as adminService from '../services_v245/adminService.js?v=29.0362';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0362';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0362';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0362';
+import * as metasService from '../services_v245/metasService.js?v=29.0362';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0362';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0362';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0361';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0361';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0361';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0361';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0361';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0361';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0361';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0361';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0361';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0361';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0361';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0361';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0361';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0361';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0361';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0361';
-import { montarSlotting } from './slotting.js?v=29.0361';
+         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0362';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0362';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0362';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0362';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0362';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0362';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0362';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0362';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0362';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0362';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0362';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0362';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0362';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0362';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0362';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0362';
+import { montarSlotting } from './slotting.js?v=29.0362';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0361';
+const VERSION = '29.0362';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4684,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0361');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0362');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16968,7 +16968,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0361 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0362 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24824,6 +24824,10 @@ const renderRFSection = (container) => {
         .acc { font-size: 8.5pt; }
         .sube td { background: #eefaee; }
         .tll { white-space: normal; font-weight: 800; max-width: 46mm; line-height: 1.15; }
+        table.apretada { font-size: 7.2pt; table-layout: fixed; }
+        table.apretada th, table.apretada td { padding: 2px 3px; }
+        table.apretada .lpn { font-size: 6pt; letter-spacing: -0.2px; }
+        table.apretada .tll { max-width: none; }
         .tag { display: inline-block; background: #b45309; color: #fff; font-weight: 800;
                font-size: 6.5pt; padding: 0 4px; border-radius: 3px; margin-right: 3px; }
         tr.par td { background: #fffbeb; }
@@ -24879,7 +24883,7 @@ const renderRFSection = (container) => {
 
       /* Una hoja: se reparten sus filas en páginas, cada una con su encabezado y su número.
          `cabecera` es la fila de títulos de la tabla, que se repite entera en cada página. */
-      const armarHoja = (nombre, nota, cabecera, filas, resumen) => {
+      const armarHoja = (nombre, nota, cabecera, filas, resumen, clase) => {
           const paginas = [];
           let pagina = null, tbody = null;
           const abrir = () => {
@@ -24889,7 +24893,7 @@ const renderRFSection = (container) => {
                   + `<span class="pag"></span></div>`
                   + (paginas.length === 0 && resumen ? resumen : '')
                   + (paginas.length === 0 && nota ? `<div class=q>${nota}</div>` : '')
-                  + `<table><thead>${cabecera}</thead><tbody></tbody></table>`;
+                  + `<table class="${clase || ''}"><thead>${cabecera}</thead><tbody></tbody></table>`;
               tbody = cuerpo.querySelector('tbody');
               paginas.push({ pg, cuerpo });
           };
@@ -24936,8 +24940,9 @@ const renderRFSection = (container) => {
                       ? ` class="par${antes ? '' : ' p1'}${luego ? '' : ' pN'}"` : '';
                   f2.push(`<tr${cls}><td class="c gr">G${g.n}</td><td class=b>${esc(m.padre)}</td>`
                       + `<td class="c ${m.tipo === 'PREPACK' ? 'pk' : ''}">${m.tipo}</td>`
-                      + `<td class=c>${orden.get(m.deU)}/${l.libera}</td>`
-                      + `<td class=c>${m.partir ? '<span class=tag>PARTIR</span>' + esc(m.parte) : '—'}</td>`
+                      + `<td class=c>${m.partir ? '<span class=tag>PARTIR</span>' : ''}`
+                      + `${orden.get(m.deU)}/${l.libera}`
+                      + `${m.partir ? '<br><b>' + esc(m.parte) + '</b>' : ''}</td>`
                       + `<td class=o>${esc(m.deU)}</td><td class=lpn>${esc(m.deLpn)}</td>`
                       + `<td class=tll>${esc(m.deQue)}</td>`
                       + `<td class="c ${m.partir ? 'tot' : 'b'}">${m.tiene}</td>`
@@ -24995,11 +25000,11 @@ const renderRFSection = (container) => {
 
       armarHoja('Hoja 2 · OPERARIOS',
           'Las tallas van con la cantidad en las dos puntas. <b>TIENE / LLEVAS / QUEDA AHÍ</b> es la paleta de origen: cuando QUEDA AHÍ llega a <b>0 verde</b>, esa ubicación está vacía. Los renglones amarillos son una sola paleta repartida entre varios destinos.',
-          `<tr><th>GRUPO</th><th>ARTÍCULO</th><th>TIPO</th><th>PALETA</th><th>PARTIR</th>`
+          `<tr><th>GRUPO</th><th>ARTÍCULO</th><th>TIPO</th><th>PALETA</th>`
           + `<th>SACAR DE</th><th>LPN</th><th>TALLAS QUE LLEVA</th>`
           + `<th>TIENE</th><th>LLEVAS</th><th>QUEDA AHÍ</th>`
           + `<th>PONER EN</th><th>LPN</th><th>TALLAS QUE YA TIENE EL DESTINO</th>`
-          + `<th>TENÍA</th><th>QUEDA</th><th>TOPE</th><th>OK</th></tr>`, f2, '');
+          + `<th>TENÍA</th><th>QUEDA</th><th>TOPE</th><th>OK</th></tr>`, f2, '', 'apretada');
 
       armarHoja('Hoja 3 · MONTACARGUISTA',
           'Sin artículo y sin talla: ubicación, LPN, cantidad y qué hacer. Una paleta que se parte baja UNA sola vez, con todo lo que tiene.',
