@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0362';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0363';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0362';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0362';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0362';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0362';
-import * as metasService from '../services_v245/metasService.js?v=29.0362';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0362';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0362';
+import * as adminService from '../services_v245/adminService.js?v=29.0363';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0363';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0363';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0363';
+import * as metasService from '../services_v245/metasService.js?v=29.0363';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0363';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0363';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0362';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0362';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0362';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0362';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0362';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0362';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0362';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0362';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0362';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0362';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0362';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0362';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0362';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0362';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0362';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0362';
-import { montarSlotting } from './slotting.js?v=29.0362';
+         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0363';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0363';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0363';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0363';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0363';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0363';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0363';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0363';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0363';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0363';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0363';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0363';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0363';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0363';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0363';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0363';
+import { montarSlotting } from './slotting.js?v=29.0363';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0362';
+const VERSION = '29.0363';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4684,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0362');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0363');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16968,7 +16968,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0362 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0363 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24825,12 +24825,23 @@ const renderRFSection = (container) => {
         .sube td { background: #eefaee; }
         .tll { white-space: normal; font-weight: 800; max-width: 46mm; line-height: 1.15; }
         table.apretada { font-size: 7.2pt; table-layout: fixed; }
-        table.apretada th, table.apretada td { padding: 2px 3px; }
-        table.apretada .lpn { font-size: 6pt; letter-spacing: -0.2px; }
+        table.apretada th, table.apretada td { padding: 2px 3px; overflow: hidden; }
+        /* Los títulos parten de línea: en nowrap, "TALLAS QUE LLEVA" se desbordaba encima
+           de "TIENE" y las dos quedaban ilegibles. */
+        table.apretada th { white-space: normal; line-height: 1.1; }
+        table.apretada .lpn { font-size: 6pt; letter-spacing: -0.3px; color: #111;
+                              white-space: normal; word-break: break-all; }
         table.apretada .tll { max-width: none; }
+        /* LOS COLORES DE ESTADO LE GANAN A LA FILA AMARILLA. Sin esto, la regla de la fila
+           partida le borraba el fondo a la celda de la cantidad: letra blanca sobre amarillo,
+           en las filas partidas —las únicas donde hay que contar— no se veía el número. */
+        tr.par td.cnt, td.cnt { background: #b45309; color: #fff; }
+        tr.par td.tot, td.tot { background: #e5e7eb; color: #111; }
+        tr.par td.res, td.res { background: #fee2e2; color: #b91c1c; }
+        tr.par td.vac, td.vac { background: #166534; color: #fff; }
         .tag { display: inline-block; background: #b45309; color: #fff; font-weight: 800;
                font-size: 6.5pt; padding: 0 4px; border-radius: 3px; margin-right: 3px; }
-        tr.par td { background: #fffbeb; }
+        tr.par td { background: #fffbeb; }   /* los estados lo pisan, ver abajo */
         tr.p1 td { border-top: 2px solid #b45309; }
         tr.pN td { border-bottom: 2px solid #b45309; }
         .cnt { background: #b45309; color: #fff; font-weight: 800; text-align: center; }
@@ -24883,7 +24894,7 @@ const renderRFSection = (container) => {
 
       /* Una hoja: se reparten sus filas en páginas, cada una con su encabezado y su número.
          `cabecera` es la fila de títulos de la tabla, que se repite entera en cada página. */
-      const armarHoja = (nombre, nota, cabecera, filas, resumen, clase) => {
+      const armarHoja = (nombre, nota, cabecera, filas, resumen, clase, anchos) => {
           const paginas = [];
           let pagina = null, tbody = null;
           const abrir = () => {
@@ -24893,7 +24904,8 @@ const renderRFSection = (container) => {
                   + `<span class="pag"></span></div>`
                   + (paginas.length === 0 && resumen ? resumen : '')
                   + (paginas.length === 0 && nota ? `<div class=q>${nota}</div>` : '')
-                  + `<table class="${clase || ''}"><thead>${cabecera}</thead><tbody></tbody></table>`;
+                  + `<table class="${clase || ''}">${anchos || ''}`
+                  + `<thead>${cabecera}</thead><tbody></tbody></table>`;
               tbody = cuerpo.querySelector('tbody');
               paginas.push({ pg, cuerpo });
           };
@@ -25004,7 +25016,12 @@ const renderRFSection = (container) => {
           + `<th>SACAR DE</th><th>LPN</th><th>TALLAS QUE LLEVA</th>`
           + `<th>TIENE</th><th>LLEVAS</th><th>QUEDA AHÍ</th>`
           + `<th>PONER EN</th><th>LPN</th><th>TALLAS QUE YA TIENE EL DESTINO</th>`
-          + `<th>TENÍA</th><th>QUEDA</th><th>TOPE</th><th>OK</th></tr>`, f2, '', 'apretada');
+          + `<th>TENÍA</th><th>QUEDA</th><th>TOPE</th><th>OK</th></tr>`, f2, '', 'apretada',
+          /* CADA COLUMNA CON SU ANCHO. El LPN necesita 18 caracteres y el desglose de
+             tallas del destino puede traer cuatro; repartir por igual cortaba el uno y
+             dejaba de sobra al otro. Suman 100. */
+          '<colgroup>' + [4, 5.5, 4.5, 7, 8, 7.5, 9, 4, 4.5, 5, 8, 7.5, 10.5, 4, 4, 4, 3]
+              .map(w => '<col style="width:' + w + '%">').join('') + '</colgroup>');
 
       armarHoja('Hoja 3 · MONTACARGUISTA',
           'Sin artículo y sin talla: ubicación, LPN, cantidad y qué hacer. Una paleta que se parte baja UNA sola vez, con todo lo que tiene.',
