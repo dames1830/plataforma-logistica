@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0373';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0374';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0373';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0373';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0373';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0373';
-import * as metasService from '../services_v245/metasService.js?v=29.0373';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0373';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0373';
+import * as adminService from '../services_v245/adminService.js?v=29.0374';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0374';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0374';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0374';
+import * as metasService from '../services_v245/metasService.js?v=29.0374';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0374';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0374';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0373';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0373';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0373';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0373';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0373';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0373';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0373';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0373';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0373';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0373';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0373';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0373';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0373';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0373';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0373';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0373';
-import { montarSlotting } from './slotting.js?v=29.0373';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0374';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0374';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0374';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0374';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0374';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0374';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0374';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0374';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0374';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0374';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0374';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0374';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0374';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0374';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0374';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0374';
+import { montarSlotting } from './slotting.js?v=29.0374';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0373';
+const VERSION = '29.0374';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4762,7 +4762,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0373');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0374');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17074,7 +17074,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0373 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0374 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23013,13 +23013,19 @@ const renderRFSection = (container) => {
       // La MISMA columna que usa Replenishment para su columna MARCA. Si acá se leyera otra,
       // la pantalla mostraría una marca y la reposición buscaría por otra.
       const m = String(getCol(fila, ['Marcas','MARCAS','Marca','MARCA']) || raw[13] || '').trim();
-      if (g && g !== '-' && g !== 'GENDER RIMS') fichaDe.set(art7, { genero: g, marca: m || 'SIN MARCA' });
+      /* La SUBCATEGORIA dice si es bota, y de ahi sale cuanto entra en el cuerpo. Sin
+         esto no se puede saber el tope del factor: un BOTA 36-39 entra 320 y un ZAPATO de
+         la misma marca y rango, 140. */
+      const sub = String(getCol(fila, ['Subcategory RIMS','SUBCATEGORY RIMS','Subcategoria']) || raw[5] || '').trim().toUpperCase();
+      const cat = String(getCol(fila, ['Category RIMS','CATEGORY RIMS','Categoria']) || raw[4] || '').trim().toUpperCase();
+      if (g && g !== '-' && g !== 'GENDER RIMS') fichaDe.set(art7, {
+        genero: g, marca: m || 'SIN MARCA', sub: sub, cat: cat });
     });
 
     const grupos = new Map();
     const tocar = (m, g, t) => {
       const clave = `${m}||${g}||${t}`;
-      if (!grupos.has(clave)) grupos.set(clave, { marca: m, genero: g, talla: t, sku: new Map() });
+      if (!grupos.has(clave)) grupos.set(clave, { marca: m, genero: g, talla: t, sku: new Map(), tipos: {} });
       return grupos.get(clave);
     };
     const tocarSku = (grupo, sku) => {
@@ -23039,7 +23045,12 @@ const renderRFSection = (container) => {
       const talla = extractTalla(getCol(fila, ['Descripcion de articulo','Descripción de artículo','Descripcion','Descripción','DESCRIPCION','Description']) || raw[2]);
       const f = fichaDe.get(sku.substring(0, 7));
       if (!f || !talla) return;
-      tocarSku(tocar(f.marca, f.genero, talla), sku).piso += qty;
+      const _gp = tocar(f.marca, f.genero, talla);
+      tocarSku(_gp, sku).piso += qty;
+      /* El tipo del grupo es el que mas pares tiene: un grupo puede mezclar zapato y bota
+         y el tope lo tiene que poner el que manda, no el primero que aparezca. */
+      const _tp = zonasService.tipoDeCalzado(f.sub, f.cat);
+      if (_tp) _gp.tipos[_tp] = (_gp.tipos[_tp] || 0) + qty;
     });
 
     reserva.forEach(fila => {
@@ -23051,7 +23062,10 @@ const renderRFSection = (container) => {
       const talla = extractTalla(getCol(fila, ['DESCRIPCION','Descripcion','Descripción','Description']));
       const f = fichaDe.get(sku.substring(0, 7));
       if (!f || !talla) return;
-      tocarSku(tocar(f.marca, f.genero, talla), sku).altura += qty;
+      const _ga = tocar(f.marca, f.genero, talla);
+      tocarSku(_ga, sku).altura += qty;
+      const _ta = zonasService.tipoDeCalzado(f.sub, f.cat);
+      if (_ta) _ga.tipos[_ta] = (_ga.tipos[_ta] || 0) + qty;
     });
 
     // Se ordena la talla como número cuando se puede: así la 5 va antes que la 40, que como
@@ -23059,7 +23073,9 @@ const renderRFSection = (container) => {
     return [...grupos.values()].map(gr => {
       let piso = 0, altura = 0;
       gr.sku.forEach(s => { piso += s.piso; altura += s.altura; });
-      return { marca: gr.marca, genero: gr.genero, talla: gr.talla, sku: gr.sku, skus: gr.sku.size, piso, altura };
+      /* `tipos` viaja tambien: sin el, el tope del factor no se puede calcular y el
+         bloqueo no bloquea nada. */
+      return { marca: gr.marca, genero: gr.genero, talla: gr.talla, sku: gr.sku, skus: gr.sku.size, piso, altura, tipos: gr.tipos || {} };
     }).sort((a, b) => {
       if (a.marca  !== b.marca)  return a.marca.localeCompare(b.marca);
       if (a.genero !== b.genero) return a.genero.localeCompare(b.genero);
@@ -23276,6 +23292,36 @@ const renderRFSection = (container) => {
         </div>`;
       }).join('');
 
+      /* ══════════════════════════════════════════════════════════════════════════
+       * EL TOPE: lo que entra en el cuerpo, repartido entre las tallas del rango
+       * ══════════════════════════════════════════════════════════════════════════
+       *
+       * El factor es POR TALLA, pero el cuerpo guarda el articulo ENTERO. Con 8 tallas y
+       * factor 40 se estan pidiendo 320 pares para un cuerpo que aguanta 233.
+       *
+       * La capacidad sale del cubicaje MEDIDO, con la misma precedencia que usa el
+       * almacenaje. La tabla vieja por serie no se mira: estaba inventada. */
+      const TALLAS_POR_RANGO = { '18-25': 8, '26-30': 5, '31-35': 5, '36-39': 4, '40-44': 5, '45+': 3 };
+      const topeDeFactor = (f) => {
+        try {
+          const rango = zonasService.rangoDeTalla(f.talla);
+          if (!rango) return null;
+          const tipos = Object.entries(f.tipos || {});
+          if (!tipos.length) return null;
+          const tipo = tipos.sort((a, b) => b[1] - a[1])[0][0];   // el que mas pares tiene
+          const cfg = (zonasService.zonasActual && zonasService.zonasActual()) || {};
+          const d = cfg.densidadMarcaTipo || {};
+          const cap = d[`${f.marca}|${tipo}|${rango}`]
+                   ?? d[`${tipo}|${rango}`]
+                   ?? d[`${f.marca}|${tipo}`];
+          if (!cap || cap <= 0) return null;      // sin medida no se pone tope: no se inventa
+          const n = TALLAS_POR_RANGO[rango] || 4;
+          return { cap: cap, tipo: tipo, rango: rango, tallas: n, tope: Math.floor(cap / n) };
+        } catch (e) { return null; }
+      };
+      /* Sin medida NO hay tope, y eso es a proposito: bloquear con un numero inventado seria
+         peor que no bloquear. Se avisa en la pantalla que ese grupo no tiene cubicaje. */
+
       const fijar = (m, g, t, crudo) => {
         const clave = _claveMGT(m, g, t);
         if (crudo === '') delete _configMarcaGenero[clave];
@@ -23287,10 +23333,38 @@ const renderRFSection = (container) => {
         return true;
       };
 
+      /* Cada fila sabe su tope, para poder comprobarlo al escribir. */
+      const topePorClave = new Map();
+      filas.forEach(f => {
+        const t = topeDeFactor(f);
+        if (t) topePorClave.set(_claveMGT(f.marca, f.genero, f.talla), t);
+      });
+
       // Escribir un objetivo suelto
       elCuerpo.querySelectorAll('input[data-t]').forEach(inp => {
+        /* SE GUARDA LO QUE HABIA, para poder volver si el nuevo se pasa. Daniel, 25-ago-2026:
+           *"que se regrese al numero donde estaba antes"*. Un aviso no alcanza: *"si solamente
+           le avisas y no lo ve, va a procesar el analisis y va a bajar cien"*. */
+        inp.dataset.previo = inp.value;
         inp.addEventListener('change', e => {
-          if (!fijar(e.target.dataset.m, e.target.dataset.g, e.target.dataset.t, e.target.value.trim())) return;
+          const el = e.target;
+          const lim = topePorClave.get(_claveMGT(el.dataset.m, el.dataset.g, el.dataset.t));
+          const val = parseInt(String(el.value).trim(), 10);
+          if (lim && Number.isFinite(val) && val > lim.tope) {
+            el.value = el.dataset.previo || '';
+            el.style.borderColor = '#f87171';
+            el.style.background = 'rgba(248,113,113,.15)';
+            setTimeout(() => { el.style.borderColor = ''; el.style.background = '#1e293b'; }, 1600);
+            showPremiumAlert('NO ENTRA EN EL CUERPO',
+                `En ${el.dataset.m} · ${lim.tipo} · talla ${el.dataset.t} el cuerpo aguanta `
+                + `${lim.cap} pares y el rango ${lim.rango} tiene ${lim.tallas} tallas: `
+                + `el máximo por talla es ${lim.tope}.
+
+Se dejó el valor anterior.`, 'warning');
+            return;
+          }
+          el.dataset.previo = el.value;
+          if (!fijar(el.dataset.m, el.dataset.g, el.dataset.t, el.value.trim())) return;
           _guardarFactoresLocal();
           marcarSinPublicar();
           pintarTabla();
