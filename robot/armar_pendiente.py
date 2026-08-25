@@ -155,6 +155,25 @@ def arg(nombre, por_defecto=None):
     return por_defecto
 
 
+def correos_excluidos():
+    """Las fechas que se pidieron dejar fuera, como {(mes, dia)}.
+
+    Se acepta `--sin-correo 24.08`, `24-08` y repetido varias veces. Se lee con el mismo
+    `fecha_del_nombre` que nombra los archivos, para que no haya dos formas de entender
+    una fecha: si el nombre del archivo se lee de una manera, el filtro tambien.
+    """
+    fuera = set()
+    for i, a in enumerate(sys.argv):
+        if a == '--sin-correo' and i + 1 < len(sys.argv):
+            f = fecha_del_nombre(sys.argv[i + 1])
+            if f:
+                fuera.add(f)
+            else:
+                raise SystemExit('No entiendo la fecha "%s". Va como 24.08 o 24-08.'
+                                 % sys.argv[i + 1])
+    return fuera
+
+
 def limpio(v):
     """El WMS exporta envuelto como formula: ="7997215". El correo lo escribe pelado.
 
@@ -215,6 +234,16 @@ def leer_correos():
         if f:
             archivos.append((f, n))
     archivos.sort()
+
+    # LOS QUE SE PIDIERON DEJAR FUERA. Se descuentan del total ANTES de contar, para que
+    # el aviso de "se reconocieron X de Y" siga cazando un formato de nombre nuevo.
+    fuera = correos_excluidos()
+    if fuera:
+        antes = len(archivos)
+        archivos = [(f, n) for (f, n) in archivos if f not in fuera]
+        log('SE DEJAN FUERA %d correo(s): %s'
+            % (antes - len(archivos),
+               ', '.join('%02d.%02d' % (d, m) for (m, d) in sorted(fuera))), 'AVISO')
 
     guias, cabecera, iq_out, ig_out = {}, None, None, None
     leidos = 0
@@ -805,6 +834,14 @@ def main():
         % (format(o['noLiberado']['ordenes'], ',d'), format(o['noLiberado']['unidades'], ',d')))
 
     if probar:
+        if '--excel' in sys.argv:
+            # El Excel se escribe pero NO se sube: sirve para mirar una corrida sin
+            # tocar el pendiente bueno que ya esta publicado.
+            ruta = os.path.join(AQUI, 'Pendiente PRUEBA %s.xlsx'
+                                % datetime.strptime(hoy, '%Y-%m-%d').strftime('%d-%m-%y'))
+            excel(ruta, cabecera, IQ, guias, por_guia, por_sku)
+            log('')
+            log('Excel de prueba: %s' % ruta)
         log('')
         log('MODO PROBAR: no se publica nada ni se sube ningun archivo.')
         return 0

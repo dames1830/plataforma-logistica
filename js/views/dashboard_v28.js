@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0363';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0364';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0363';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0363';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0363';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0363';
-import * as metasService from '../services_v245/metasService.js?v=29.0363';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0363';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0363';
+import * as adminService from '../services_v245/adminService.js?v=29.0364';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0364';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0364';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0364';
+import * as metasService from '../services_v245/metasService.js?v=29.0364';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0364';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0364';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0363';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0363';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0363';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0363';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0363';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0363';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0363';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0363';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0363';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0363';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0363';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0363';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0363';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0363';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0363';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0363';
-import { montarSlotting } from './slotting.js?v=29.0363';
+         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0364';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0364';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0364';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0364';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0364';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0364';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0364';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0364';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0364';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0364';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0364';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0364';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0364';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0364';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0364';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0364';
+import { montarSlotting } from './slotting.js?v=29.0364';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0363';
+const VERSION = '29.0364';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4684,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0363');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0364');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16968,7 +16968,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0363 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0364 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24521,6 +24521,15 @@ const renderRFSection = (container) => {
           + '<path d="M14 2v6h6" fill="#8E241A"/>'
           + '<text x="12" y="17.5" font-family="Arial" font-size="7.5" font-weight="bold" fill="#fff" text-anchor="middle">PDF</text>'
           + '</svg></span>';
+      /* LA TARJETA PARA EL GRUPO. Al costado del PDF porque es el mismo avance, en otro
+         formato: el PDF es para el piso y esto para el celular. */
+      const iconoTarjeta = '<span id="btn_wsp_frag" title="Tarjeta de avance para compartir" style="cursor:pointer;'
+          + 'display:flex;align-items:center;opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
+          + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
+          + '<rect x="3" y="4" width="18" height="16" rx="2.5" fill="#0e7490"/>'
+          + '<circle cx="9" cy="12" r="3.6" fill="none" stroke="#67e8f9" stroke-width="2"/>'
+          + '<path d="M14.2 9.4h4.2M14.2 12h4.2M14.2 14.6h2.6" stroke="#a5f3fc" stroke-width="1.6" stroke-linecap="round"/>'
+          + '</svg></span>';
       const panel = (titulo, borde, tabla, extra, antes, debajo) => '<div class="glass-panel" style="padding:12px 18px;margin-bottom:13px;border:1px solid ' + borde + '">'
           + '<h3 style="margin:0 0 7px;font-size:.95rem;display:flex;align-items:center;gap:10px;color:#fff">'
           + '<span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;box-shadow:0 0 10px #60a5fa"></span>' + titulo
@@ -24638,9 +24647,19 @@ const renderRFSection = (container) => {
        * fechas no dan, se dice y no se muestra la barra. */
       const desfasada = !!(B && B.fecha && window.__reservaMedidoEn
                            && window.__reservaMedidoEn < B.fecha);
+      /* SE MIDEN UBICACIONES, NO EL REDUCE TEORICO. Daniel, 25-ago-2026: el cuadro decia
+         21 liberadas y las que de verdad habian desaparecido eran 27 —de 571 quedaban 544—.
+         El REDUCE es un techo calculado; baja cuando las paletas quedan mas llenas, no cuando
+         una ubicacion se vacia. El 8816479 libero DOS ubicaciones y su reduce siguio en 3:
+         para el cuadro habia avanzado cero. Restando ubicaciones sale el numero que se puede
+         ir a contar al WMS, que es el que el comite le va a pedir. */
       const hechas = (cie && !desfasada)
-          ? Math.max(0, Math.min(redF, redF - (Number(cie.reduce) || 0))) : null;
+          ? Math.max(0, Math.min(redF, ubicF - (Number(cie.ubic) || 0))) : null;
       const pctF = (hechas !== null && redF) ? Math.round(100 * hechas / redF) : 0;
+      /* Los mismos numeros para la tarjeta que se manda al grupo: un solo calculo. */
+      window.__avanceConsolidacion = { base: (B && B.fecha) || datos.fecha,
+          ubicBase: ubicF, ubicHoy: cie ? cie.ubic : null, meta: redF,
+          hechas: hechas, pct: pctF, sello: window.__reservaHoraSello || null };
       const dato = (v, k, d, col) => '<div style="flex:1;min-width:132px;padding:8px 16px;'
           + 'border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;justify-content:center">'
           + '<div style="font-size:1.3rem;font-weight:800;line-height:1.05' + (col ? ';color:' + col : '') + '">' + v + '</div>'
@@ -24687,7 +24706,7 @@ const renderRFSection = (container) => {
           + ' style="cursor:pointer;font-size:.62rem;font-weight:800;letter-spacing:.5px;'
           + 'color:#00E5FF;text-transform:uppercase;opacity:.75"'
           + ' onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.75">fijar base</span>'
-          + iconoPDF + iconoExcel.replace('margin-left:auto;', '') + '</span>';
+          + iconoTarjeta + iconoPDF + iconoExcel.replace('margin-left:auto;', '') + '</span>';
 
       const cabF = '<thead><tr>' + th('#', 'width:34px') + th('PADRE') + th('GENDER RIMS')
           + th('UBIC.') + th('PARES') + th('SU PALETA<br>LLENA', 'color:#c4b5fd') + th('SELECTIVOS')
@@ -25159,6 +25178,145 @@ const renderRFSection = (container) => {
       XLSX.writeFile(wb, `Consolidacion_reserva_${fecha || getLogicalDate()}.xlsx`);
   };
 
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * LA TARJETA DE AVANCE — para sacarle una foto y mandarla al grupo
+   * ══════════════════════════════════════════════════════════════════════════════
+   *
+   * Daniel, 25-ago-2026: *"un boton al costado del PDF y el Excel, un modal para yo tomar un
+   * screenshot y mandarlo al grupo de WhatsApp"*.
+   *
+   * EL PORCENTAJE VA CONTRA LAS 183 DEL COMITE, nunca contra los articulos que se estan
+   * trabajando. Lo dijo el mismo: *"si pongo el 85% en la tarjeta, el comite va a decir: ah,
+   * ya te falta quince nada mas por terminar"*. El avance de dos articulos no es el avance
+   * del compromiso.
+   *
+   * DOS HORAS Y NO UNA. Arriba, cuando se saca la foto; abajo, de cuando son los datos. Si el
+   * robot no publico la reserva en la ultima hora se nota al toque, en vez de que un reporte
+   * viejo pase por fresco.
+   *
+   * SIN LISTA DE ARTICULOS. La primera version los traia y Daniel la corto: *"solamente la
+   * tarjeta principal, ya no me pongas muchos"*. Lo que va al grupo es el avance, no el
+   * detalle — para el detalle estan el Excel y el PDF. */
+  const tarjetaAvance = (info) => {
+      const { base, ubicBase, ubicHoy, meta, hechas, pct, sello } = info;
+      /* Su propio formateador: el de renderAnalisisReserva vive dentro de esa funcion y aca
+         no llega. Sin esto la tarjeta reventaba con "mil is not defined" al abrirla, y eso
+         el chequeo de sintaxis no lo ve. */
+      const mil = (n) => Math.round(n).toLocaleString('es-ES');
+      const ahora = new Date();
+      const dia = ahora.toLocaleDateString('es-PE',
+          { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const hora = ahora.toLocaleTimeString('es-PE',
+          { hour: 'numeric', minute: '2-digit', hour12: true });
+      const R = 55, LARGO = 2 * Math.PI * R;
+      const hueco = LARGO * (1 - Math.min(100, Math.max(0, pct)) / 100);
+      const fechaLinda = (f) => String(f || '').split('-').reverse().join('/');
+
+      const html = '<div id="tarj_avance" style="background:#0b1220;border:1px solid #1e2d47;'
+        + 'border-radius:15px;padding:19px 22px 15px;width:470px;max-width:100%;'
+        + 'font-family:\'Segoe UI\',system-ui,Arial,sans-serif;color:#e6edf7">'
+        + '<div style="display:flex;align-items:center;gap:10px">'
+        +   '<span style="width:9px;height:9px;border-radius:50%;background:#38bdf8;'
+        +     'box-shadow:0 0 10px #38bdf8"></span>'
+        +   '<h3 style="font-size:14.5px;margin:0;letter-spacing:.4px;font-weight:800">'
+        +     'AVANCE DE CONSOLIDACIÓN</h3>'
+        +   '<span style="margin-left:auto;font-size:10px;color:#8ba0bd;letter-spacing:.6px">'
+        +     'BASE DEL ' + fechaLinda(base) + '</span></div>'
+        + '<div style="margin:11px 0 0;padding:9px 13px;border-radius:9px;background:#0e1728;'
+        +   'border:1px solid #1e2d47;display:flex;align-items:baseline;gap:9px">'
+        +   '<span style="font-size:14.5px;font-weight:800;letter-spacing:.3px">' + dia + '</span>'
+        +   '<span style="font-size:13px;color:#38bdf8;font-weight:700">' + hora + '</span>'
+        +   '<span style="margin-left:auto;font-size:9.5px;color:#8ba0bd;letter-spacing:.5px">'
+        +     'REPORTE</span></div>'
+        + '<div style="display:flex;align-items:center;gap:24px;padding:18px 4px 8px">'
+        +   '<div style="position:relative;width:132px;height:132px;flex:none">'
+        +     '<svg width="132" height="132" viewBox="0 0 132 132" style="transform:rotate(-90deg)">'
+        +       '<circle cx="66" cy="66" r="' + R + '" fill="none" stroke="#16233a" stroke-width="14"/>'
+        +       '<circle cx="66" cy="66" r="' + R + '" fill="none" stroke="#34d399" stroke-width="14"'
+        +         ' stroke-linecap="round" stroke-dasharray="' + LARGO.toFixed(1) + '"'
+        +         ' stroke-dashoffset="' + hueco.toFixed(1) + '"/></svg>'
+        +     '<div style="position:absolute;inset:0;display:flex;flex-direction:column;'
+        +       'align-items:center;justify-content:center">'
+        +       '<div style="font-size:36px;font-weight:900;color:#34d399;line-height:1">'
+        +         pct + '%</div>'
+        +       '<div style="font-size:8px;color:#8ba0bd;letter-spacing:1px;margin-top:4px;'
+        +         'text-align:center;line-height:1.35">DE LO<br>COMPROMETIDO</div></div></div>'
+        +   '<div style="flex:1">'
+        +     '<div style="font-size:46px;font-weight:900;line-height:1;color:#34d399">'
+        +       mil(hechas) + ' <small style="font-size:19px;color:#8ba0bd;font-weight:700">de '
+        +       mil(meta) + '</small></div>'
+        +     '<div style="font-size:10.5px;color:#8ba0bd;letter-spacing:.9px;margin-top:6px">'
+        +       'UBICACIONES LIBERADAS</div>'
+        +     '<div style="font-size:15px;margin-top:12px;font-weight:700;color:#fbbf24">Faltan '
+        +       mil(meta - hechas) + '</div>'
+        +     '<div style="font-size:11px;color:#8ba0bd;margin-top:3px">de ' + mil(ubicBase)
+        +       ' ubicaciones, hoy quedan ' + mil(ubicHoy) + '</div></div></div>'
+        + '<div style="height:8px;border-radius:5px;background:#16233a;overflow:hidden;margin:6px 0 0">'
+        +   '<i style="display:block;height:100%;border-radius:5px;width:' + pct + '%;'
+        +     'background:linear-gradient(90deg,#059669,#34d399)"></i></div>'
+        + '<div style="display:flex;justify-content:space-between;margin-top:7px;font-size:10px;'
+        +   'color:#8ba0bd"><span>base del ' + fechaLinda(base) + '</span>'
+        +   '<span>meta: ' + mil(meta) + ' ubicaciones</span></div>'
+        + '<div style="margin-top:11px;padding-top:9px;border-top:1px solid #1e2d47;'
+        +   'font-size:9.5px;color:#63799a;text-align:right">Medido con la reserva de '
+        +   (sello ? ('las ' + sello) : 'la foto del día') + '</div></div>';
+
+      /* El fondo NO lleva desenfoque: `glass-panel` recorta lo que se le sale y en una captura
+         de pantalla eso se ve. Ver la trampa del blur en CLAUDE.md. */
+      const capa = document.createElement('div');
+      capa.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(2,6,16,.86);'
+        + 'display:flex;align-items:center;justify-content:center;padding:22px;overflow:auto';
+      capa.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px">'
+        + html
+        + '<div style="display:flex;gap:10px">'
+        +   '<button id="tarj_copiar" style="background:#0e7490;color:#fff;border:0;border-radius:9px;'
+        +     'padding:9px 20px;font:700 13px system-ui;cursor:pointer">Copiar imagen</button>'
+        +   '<button id="tarj_cerrar" style="background:#1e2d47;color:#e6edf7;border:0;border-radius:9px;'
+        +     'padding:9px 20px;font:700 13px system-ui;cursor:pointer">Cerrar</button></div>'
+        + '<div style="font-size:11px;color:#63799a">También puedes sacarle una captura de pantalla</div>'
+        + '</div>';
+      document.body.appendChild(capa);
+      const cerrar = () => capa.remove();
+      capa.addEventListener('click', (e) => { if (e.target === capa) cerrar(); });
+      capa.querySelector('#tarj_cerrar').addEventListener('click', cerrar);
+
+      /* COPIAR LA IMAGEN sin traer ninguna libreria: la tarjeta se mete en un SVG con
+         foreignObject, se dibuja en un canvas y de ahi sale un PNG al portapapeles. Si el
+         navegador no deja escribir imagenes en el portapapeles, se avisa y queda la captura
+         de pantalla, que es como Daniel lo iba a hacer igual. */
+      capa.querySelector('#tarj_copiar').addEventListener('click', async (ev) => {
+          const btn = ev.currentTarget;
+          const antes = btn.textContent;
+          btn.textContent = 'Copiando...';
+          try {
+              const nodo = capa.querySelector('#tarj_avance');
+              const w = nodo.offsetWidth, h = nodo.offsetHeight, esc = 2;
+              const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '">'
+                  + '<foreignObject width="100%" height="100%">'
+                  + '<div xmlns="http://www.w3.org/1999/xhtml">' + nodo.outerHTML + '</div>'
+                  + '</foreignObject></svg>';
+              const img = new Image();
+              await new Promise((ok, mal) => {
+                  img.onload = ok; img.onerror = mal;
+                  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+              });
+              const cv = document.createElement('canvas');
+              cv.width = w * esc; cv.height = h * esc;
+              const cx = cv.getContext('2d');
+              cx.fillStyle = '#070d18'; cx.fillRect(0, 0, cv.width, cv.height);
+              cx.setTransform(esc, 0, 0, esc, 0, 0);
+              cx.drawImage(img, 0, 0);
+              const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+              await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+              btn.textContent = 'Copiada';
+          } catch (e) {
+              console.warn('[TARJETA] no se pudo copiar:', e);
+              btn.textContent = 'Usa una captura';
+          }
+          setTimeout(() => { btn.textContent = antes; }, 2600);
+      });
+  };
+
   const engancharClicConsolidacion = (raiz, datos, base) => {
       if (!raiz || !datos) return;
       // El Excel exporta LO QUE SE VE: si hay base, son los 30 de la base con el detalle de
@@ -25168,6 +25326,20 @@ const renderRFSection = (container) => {
       if (btn) btn.addEventListener('click', () => exportarFragmentados(paraExcel, paraExcel.fecha));
       const btnPdf = raiz.querySelector('#btn_pdf_frag');
       if (btnPdf) btnPdf.addEventListener('click', () => abrirPdfConsolidacion(paraExcel.fecha));
+      /* LA TARJETA SALE DE LOS MISMOS NUMEROS QUE EL CUADRO DE ARRIBA, guardados al dibujarlo.
+         Recalcularlos aca seria un segundo camino para el mismo dato: el dia que uno cambie,
+         el otro quedaria mintiendo — y este es el que se manda al comite. */
+      const btnWsp = raiz.querySelector('#btn_wsp_frag');
+      if (btnWsp) btnWsp.addEventListener('click', () => {
+          const a = window.__avanceConsolidacion;
+          if (!a || a.hechas === null) {
+              showPremiumAlert('TODAVÍA NO SE PUEDE MEDIR',
+                  'El avance necesita una base fijada y la reserva del día. Cuando el cuadro de '
+                  + 'arriba muestre la barra, la tarjeta sale.', 'info');
+              return;
+          }
+          tarjetaAvance(a);
+      });
 
       /* FIJAR BASE. Se pregunta antes, con los numeros a la vista, porque lo que se pierde no
          es la lista -la foto de ese dia queda- sino el avance acumulado contra la anterior. */
