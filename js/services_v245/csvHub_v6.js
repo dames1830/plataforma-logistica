@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0369';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0370';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0369';
+const VERSION = '29.0370';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -553,6 +553,53 @@ export const loadBufferReport = async () => { const h = await fetchBufferHistory
 
 export const saveLastBufferKPI = async (data) => {
     await saveToDB('lastBufferKPI_report', data);
+};
+
+/* EL ANALISIS, EN EL SERVIDOR, PARA QUE LO VEA CUALQUIER PC.
+ *
+ * Daniel, 25-ago-2026. Hasta ahora el reporte vivia solo en el IndexedDB de la maquina que
+ * proceso: otro usuario abria la pantalla vacia y, si procesaba para ver algo, pisaba el
+ * plan del servidor con su corrida.
+ *
+ * Se manda el objeto COMPLETO, el mismo que va a IndexedDB. Recortarlo seria adivinar que
+ * campos usa el dibujo, y el dia que se agregue un cuadro dejaria de pintar.
+ *
+ * EL TOPE NO ES UN ADORNO: por encima de 12 MB el servidor rechaza y sin este aviso la
+ * pantalla diria que publico. Mejor que quede en local y se sepa. */
+const AREA_ANALISIS_BUFFER = 'analisis_buffer';
+const TOPE_ANALISIS_MB = 12;
+
+export const publicarAnalisisBuffer = async (data, fecha) => {
+    if (!data || !fecha) return false;
+    let cuerpo;
+    try { cuerpo = JSON.stringify(data); }
+    catch (e) { console.warn('[AB] El análisis no se pudo serializar:', e); return false; }
+    const mb = cuerpo.length / 1048576;
+    if (mb > TOPE_ANALISIS_MB) {
+        console.warn(`[AB] El análisis pesa ${mb.toFixed(1)} MB y no se sube `
+            + `(tope ${TOPE_ANALISIS_MB} MB). Queda solo en esta PC.`);
+        return false;
+    }
+    try {
+        const r = await fetch(`${API_BASE}/logistics/${AREA_ANALISIS_BUFFER}?date=${fecha}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: cuerpo
+        });
+        console.log(r.ok
+            ? `[AB] ✅ Análisis publicado (${fecha}): ${mb.toFixed(2)} MB, visible desde cualquier PC.`
+            : `[AB] ⚠️ El análisis no se pudo publicar (${r.status}).`);
+        return r.ok;
+    } catch (e) { console.warn('[AB] No se pudo publicar el análisis:', e); return false; }
+};
+
+export const traerAnalisisBuffer = async (fecha) => {
+    if (!fecha) return null;
+    try {
+        const r = await fetch(`${API_BASE}/logistics/${AREA_ANALISIS_BUFFER}?date=${fecha}&z=${Date.now()}`);
+        if (!r.ok) return null;
+        const j = await r.json();
+        const d = (j && j.data !== undefined) ? j.data : j;
+        return (d && (d.resumenSKUDetalle || d.detalle || d.waterfall)) ? d : null;
+    } catch (e) { console.warn('[AB] No se pudo traer el análisis del servidor:', e); return null; }
 };
 export const loadLastBufferKPI = async () => {
     return await loadFromDB('lastBufferKPI_report');

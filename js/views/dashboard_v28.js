@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0369';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0370';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0369';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0369';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0369';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0369';
-import * as metasService from '../services_v245/metasService.js?v=29.0369';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0369';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0369';
+import * as adminService from '../services_v245/adminService.js?v=29.0370';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0370';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0370';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0370';
+import * as metasService from '../services_v245/metasService.js?v=29.0370';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0370';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0370';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0369';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0369';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0369';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0369';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0369';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0369';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0369';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0369';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0369';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0369';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0369';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0369';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0369';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0369';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0369';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0369';
-import { montarSlotting } from './slotting.js?v=29.0369';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0370';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0370';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0370';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0370';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0370';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0370';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0370';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0370';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0370';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0370';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0370';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0370';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0370';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0370';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0370';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0370';
+import { montarSlotting } from './slotting.js?v=29.0370';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0369';
+const VERSION = '29.0370';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3941,7 +3941,21 @@ export const renderDashboard = async (container, user, onLogout) => {
             console.warn("[PULSE] Error leyendo caché IndexedDB:", e);
         }
 
-        // 2. Fallback tradicional si no se cargó de IndexedDB
+        /* 2. DEL SERVIDOR, si esta PC no lo tiene. Es lo que hace que el análisis sea
+              global: quien lo corrió lo subió, y cualquier otra máquina lo ve sin volver
+              a procesar —y sin pisar el plan del servidor con una corrida nueva—. */
+        if (!lastBufferKPI) {
+            try {
+                const delServidor = await traerAnalisisBuffer(getLogicalDate());
+                if (delServidor) {
+                    lastBufferKPI = delServidor;
+                    lastBufferResult = delServidor;
+                    console.log('[AB] Análisis traído del servidor: lo procesó otra PC.');
+                }
+            } catch (e) { console.warn('[AB] No se pudo traer el análisis:', e); }
+        }
+
+        // 3. Fallback tradicional si no se cargó de IndexedDB ni del servidor
         if (!lastBufferKPI) {
             const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI')
                          || localStorage.getItem('lastBufferKPI')
@@ -4037,15 +4051,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                        queda libre. Medido sobre el pedido del 24: de 35 ubicaciones a 129,
                        bajando 1.524 pares que nadie pidio. VA APAGADO: esos pares hay que
                        acomodarlos en el activo, y la noche que no hay sitio no se corre. -->
-                  <label id="lbl_barrido" title="La paleta que volveria con 40 pares o menos se baja entera y libera la ubicación"
+                  <label id="lbl_barrido" title="Al procesar, la paleta que volvería con 40 pares o menos baja entera y su ubicación queda libre"
                          style="display:flex; align-items:center; gap:0.45rem; cursor:pointer;
                                 font-size:0.68rem; font-weight:800; letter-spacing:.4px;
                                 color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);
                                 padding:0.4rem 0.8rem; border-radius:6px; user-select:none;">
                       <input type="checkbox" id="chk_barrido" style="accent-color:#10b981; cursor:pointer; margin:0;">
-                      🧹 BARRER SALDOS
+                      ⏳ CHECK BUFFER
                   </label>
-                  <button id="btn_reset_cache" title="Reiniciar Memoria" style="background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:0.65rem; padding:0.4rem 0.8rem; cursor:pointer; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'; this.style.color='#fff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='var(--text-muted)';">🧹 REINICIAR MEMORIA</button>
+                  
               </div>
               <div id="export_actions" style="display:flex; gap:0.5rem;"></div>
             </div>
@@ -4377,7 +4391,6 @@ export const renderDashboard = async (container, user, onLogout) => {
                 } catch (e) { console.warn('[BARRIDO] no se pudo guardar el check:', e); }
             });
         }
-        const btnReset = document.getElementById('btn_reset_cache');
 
         if (btnCalc) {
             btnCalc.onclick = async () => {
@@ -4465,6 +4478,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                                puede saber que el buffer bajó ese artículo, y termina
                                mandándole a reserva el 40% de algo que acaba de bajar. */
                             publicarBajadaDelBuffer(res);
+                            /* Y EL REPORTE ENTERO, para que se vea desde cualquier PC.
+                               Daniel, 25-ago-2026: *"súbelo al servidor, que sea global
+                               para que otros lo vean"*. Sin await, igual que los dos de
+                               arriba: el análisis ya está en pantalla. */
+                            publicarAnalisisBuffer(res, getLogicalDate());
 
                         } else {
                             showPremiumAlert("Error de Maestros", "No se pudo realizar el análisis porque faltan los archivos maestros.", "error");
@@ -4479,19 +4497,6 @@ export const renderDashboard = async (container, user, onLogout) => {
             };
         }
 
-        if (btnReset) {
-            btnReset.onclick = async () => {
-                if(await showPremiumConfirm('REINICIAR MEMORIA', '¿REINICIAR TODA LA MEMORIA?\n\nEsto borrará todos los archivos cargados localmente para solucionar bloqueos.', 'danger')) {
-                    Object.keys(localStorage).forEach(k => { if(k.startsWith('logistics_')) localStorage.removeItem(k); });
-                    localStorage.removeItem('lastBufferKPI');
-                    localStorage.removeItem('logistics_v24_prod_lastBufferKPI');
-                    sessionStorage.removeItem('lastBufferKPI_session');
-                    // Limpiar IndexedDB de reporte
-                    saveLastBufferKPI(null).catch(() => {});
-                    window.location.reload();
-                }
-            };
-        }
 
         // CARGAR RESULTADOS CACHEADOS AL FINAL
         if (lastBufferKPI) {
@@ -4724,7 +4729,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0369');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0370');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17036,7 +17041,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0369 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0370 | MOBILE PORTAL
                             </div>
                     </div>
 
