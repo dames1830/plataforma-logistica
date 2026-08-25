@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0364';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0365';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0364';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0364';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0364';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0364';
-import * as metasService from '../services_v245/metasService.js?v=29.0364';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0364';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0364';
+import * as adminService from '../services_v245/adminService.js?v=29.0365';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0365';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0365';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0365';
+import * as metasService from '../services_v245/metasService.js?v=29.0365';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0365';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0365';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0364';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0364';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0364';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0364';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0364';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0364';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0364';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0364';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0364';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0364';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0364';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0364';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0364';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0364';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0364';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0364';
-import { montarSlotting } from './slotting.js?v=29.0364';
+         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0365';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0365';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0365';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0365';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0365';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0365';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0365';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0365';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0365';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0365';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0365';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0365';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0365';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0365';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0365';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0365';
+import { montarSlotting } from './slotting.js?v=29.0365';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0364';
+const VERSION = '29.0365';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4684,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0364');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0365');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16968,7 +16968,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0364 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0365 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25213,21 +25213,17 @@ const renderRFSection = (container) => {
       const fechaLinda = (f) => String(f || '').split('-').reverse().join('/');
 
       const html = '<div id="tarj_avance" style="background:#0b1220;border:1px solid #1e2d47;'
-        + 'border-radius:15px;padding:19px 22px 15px;width:470px;max-width:100%;'
+        + 'border-radius:15px;padding:19px 22px 17px;width:470px;max-width:100%;'
         + 'font-family:\'Segoe UI\',system-ui,Arial,sans-serif;color:#e6edf7">'
         + '<div style="display:flex;align-items:center;gap:10px">'
         +   '<span style="width:9px;height:9px;border-radius:50%;background:#38bdf8;'
         +     'box-shadow:0 0 10px #38bdf8"></span>'
         +   '<h3 style="font-size:14.5px;margin:0;letter-spacing:.4px;font-weight:800">'
-        +     'AVANCE DE CONSOLIDACIÓN</h3>'
-        +   '<span style="margin-left:auto;font-size:10px;color:#8ba0bd;letter-spacing:.6px">'
-        +     'BASE DEL ' + fechaLinda(base) + '</span></div>'
+        +     'AVANCE DE CONSOLIDACIÓN</h3></div>'
         + '<div style="margin:11px 0 0;padding:9px 13px;border-radius:9px;background:#0e1728;'
         +   'border:1px solid #1e2d47;display:flex;align-items:baseline;gap:9px">'
         +   '<span style="font-size:14.5px;font-weight:800;letter-spacing:.3px">' + dia + '</span>'
-        +   '<span style="font-size:13px;color:#38bdf8;font-weight:700">' + hora + '</span>'
-        +   '<span style="margin-left:auto;font-size:9.5px;color:#8ba0bd;letter-spacing:.5px">'
-        +     'REPORTE</span></div>'
+        +   '<span style="font-size:13px;color:#38bdf8;font-weight:700">' + hora + '</span></div>'
         + '<div style="display:flex;align-items:center;gap:24px;padding:18px 4px 8px">'
         +   '<div style="position:relative;width:132px;height:132px;flex:none">'
         +     '<svg width="132" height="132" viewBox="0 0 132 132" style="transform:rotate(-90deg)">'
@@ -25235,12 +25231,10 @@ const renderRFSection = (container) => {
         +       '<circle cx="66" cy="66" r="' + R + '" fill="none" stroke="#34d399" stroke-width="14"'
         +         ' stroke-linecap="round" stroke-dasharray="' + LARGO.toFixed(1) + '"'
         +         ' stroke-dashoffset="' + hueco.toFixed(1) + '"/></svg>'
-        +     '<div style="position:absolute;inset:0;display:flex;flex-direction:column;'
-        +       'align-items:center;justify-content:center">'
+        +     '<div style="position:absolute;inset:0;display:flex;align-items:center;'
+        +       'justify-content:center">'
         +       '<div style="font-size:36px;font-weight:900;color:#34d399;line-height:1">'
-        +         pct + '%</div>'
-        +       '<div style="font-size:8px;color:#8ba0bd;letter-spacing:1px;margin-top:4px;'
-        +         'text-align:center;line-height:1.35">DE LO<br>COMPROMETIDO</div></div></div>'
+        +         pct + '%</div></div></div>'
         +   '<div style="flex:1">'
         +     '<div style="font-size:46px;font-weight:900;line-height:1;color:#34d399">'
         +       mil(hechas) + ' <small style="font-size:19px;color:#8ba0bd;font-weight:700">de '
@@ -25248,18 +25242,10 @@ const renderRFSection = (container) => {
         +     '<div style="font-size:10.5px;color:#8ba0bd;letter-spacing:.9px;margin-top:6px">'
         +       'UBICACIONES LIBERADAS</div>'
         +     '<div style="font-size:15px;margin-top:12px;font-weight:700;color:#fbbf24">Faltan '
-        +       mil(meta - hechas) + '</div>'
-        +     '<div style="font-size:11px;color:#8ba0bd;margin-top:3px">de ' + mil(ubicBase)
-        +       ' ubicaciones, hoy quedan ' + mil(ubicHoy) + '</div></div></div>'
+        +       mil(meta - hechas) + '</div></div></div>'
         + '<div style="height:8px;border-radius:5px;background:#16233a;overflow:hidden;margin:6px 0 0">'
         +   '<i style="display:block;height:100%;border-radius:5px;width:' + pct + '%;'
-        +     'background:linear-gradient(90deg,#059669,#34d399)"></i></div>'
-        + '<div style="display:flex;justify-content:space-between;margin-top:7px;font-size:10px;'
-        +   'color:#8ba0bd"><span>base del ' + fechaLinda(base) + '</span>'
-        +   '<span>meta: ' + mil(meta) + ' ubicaciones</span></div>'
-        + '<div style="margin-top:11px;padding-top:9px;border-top:1px solid #1e2d47;'
-        +   'font-size:9.5px;color:#63799a;text-align:right">Medido con la reserva de '
-        +   (sello ? ('las ' + sello) : 'la foto del día') + '</div></div>';
+        +     'background:linear-gradient(90deg,#059669,#34d399)"></i></div></div>';
 
       /* El fondo NO lleva desenfoque: `glass-panel` recorta lo que se le sale y en una captura
          de pantalla eso se ve. Ver la trampa del blur en CLAUDE.md. */
@@ -25268,53 +25254,13 @@ const renderRFSection = (container) => {
         + 'display:flex;align-items:center;justify-content:center;padding:22px;overflow:auto';
       capa.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px">'
         + html
-        + '<div style="display:flex;gap:10px">'
-        +   '<button id="tarj_copiar" style="background:#0e7490;color:#fff;border:0;border-radius:9px;'
-        +     'padding:9px 20px;font:700 13px system-ui;cursor:pointer">Copiar imagen</button>'
-        +   '<button id="tarj_cerrar" style="background:#1e2d47;color:#e6edf7;border:0;border-radius:9px;'
-        +     'padding:9px 20px;font:700 13px system-ui;cursor:pointer">Cerrar</button></div>'
-        + '<div style="font-size:11px;color:#63799a">También puedes sacarle una captura de pantalla</div>'
-        + '</div>';
+        + '<button id="tarj_cerrar" style="background:#1e2d47;color:#e6edf7;border:0;border-radius:9px;'
+        +   'padding:9px 22px;font:700 13px system-ui;cursor:pointer">Cerrar</button></div>';
       document.body.appendChild(capa);
       const cerrar = () => capa.remove();
       capa.addEventListener('click', (e) => { if (e.target === capa) cerrar(); });
       capa.querySelector('#tarj_cerrar').addEventListener('click', cerrar);
 
-      /* COPIAR LA IMAGEN sin traer ninguna libreria: la tarjeta se mete en un SVG con
-         foreignObject, se dibuja en un canvas y de ahi sale un PNG al portapapeles. Si el
-         navegador no deja escribir imagenes en el portapapeles, se avisa y queda la captura
-         de pantalla, que es como Daniel lo iba a hacer igual. */
-      capa.querySelector('#tarj_copiar').addEventListener('click', async (ev) => {
-          const btn = ev.currentTarget;
-          const antes = btn.textContent;
-          btn.textContent = 'Copiando...';
-          try {
-              const nodo = capa.querySelector('#tarj_avance');
-              const w = nodo.offsetWidth, h = nodo.offsetHeight, esc = 2;
-              const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '">'
-                  + '<foreignObject width="100%" height="100%">'
-                  + '<div xmlns="http://www.w3.org/1999/xhtml">' + nodo.outerHTML + '</div>'
-                  + '</foreignObject></svg>';
-              const img = new Image();
-              await new Promise((ok, mal) => {
-                  img.onload = ok; img.onerror = mal;
-                  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-              });
-              const cv = document.createElement('canvas');
-              cv.width = w * esc; cv.height = h * esc;
-              const cx = cv.getContext('2d');
-              cx.fillStyle = '#070d18'; cx.fillRect(0, 0, cv.width, cv.height);
-              cx.setTransform(esc, 0, 0, esc, 0, 0);
-              cx.drawImage(img, 0, 0);
-              const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
-              await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-              btn.textContent = 'Copiada';
-          } catch (e) {
-              console.warn('[TARJETA] no se pudo copiar:', e);
-              btn.textContent = 'Usa una captura';
-          }
-          setTimeout(() => { btn.textContent = antes; }, 2600);
-      });
   };
 
   const engancharClicConsolidacion = (raiz, datos, base) => {
