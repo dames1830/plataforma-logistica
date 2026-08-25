@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0358';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0359';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0358';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0358';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0358';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0358';
-import * as metasService from '../services_v245/metasService.js?v=29.0358';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0358';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0358';
+import * as adminService from '../services_v245/adminService.js?v=29.0359';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0359';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0359';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0359';
+import * as metasService from '../services_v245/metasService.js?v=29.0359';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0359';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0359';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0358';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0358';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0358';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0358';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0358';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0358';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0358';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0358';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0358';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0358';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0358';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0358';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0358';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0358';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0358';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0358';
-import { montarSlotting } from './slotting.js?v=29.0358';
+         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0359';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0359';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0359';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0359';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0359';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0359';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0359';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0359';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0359';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0359';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0359';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0359';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0359';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0359';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0359';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0359';
+import { montarSlotting } from './slotting.js?v=29.0359';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0358';
+const VERSION = '29.0359';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4684,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0358');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0359');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16968,7 +16968,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0358 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0359 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24626,7 +24626,20 @@ const renderRFSection = (container) => {
       const sumF2 = (k) => F.reduce((s, p) => s + p[k], 0);
       const ubicF = sumF2('n'), redF = sumF2('reduce'), quedanF = ubicF - redF;
       const cie = B ? B.cierre : datos.cierre;
-      const hechas = cie ? Math.max(0, Math.min(redF, redF - (Number(cie.reduce) || 0))) : null;
+      /* NO SE MIDE UN AVANCE CONTRA UNA FOTO ANTERIOR A LA BASE.
+       *
+       * Lo destapó Daniel el 24-ago-2026 mirando el entorno de pruebas: la base era del 21 y
+       * el stock de esa base de datos, del 17. El cuadro mostraba **19%, 34 ubicaciones
+       * liberadas** — un avance de cuatro días ANTES de haberse comprometido. Se lee como
+       * trabajo hecho y es puro ruido.
+       *
+       * En producción no puede pasar, porque el stock siempre es posterior. Pero es
+       * exactamente la clase de número que no se puede llevar a un comité, así que cuando las
+       * fechas no dan, se dice y no se muestra la barra. */
+      const desfasada = !!(B && B.fecha && window.__reservaMedidoEn
+                           && window.__reservaMedidoEn < B.fecha);
+      const hechas = (cie && !desfasada)
+          ? Math.max(0, Math.min(redF, redF - (Number(cie.reduce) || 0))) : null;
       const pctF = (hechas !== null && redF) ? Math.round(100 * hechas / redF) : 0;
       const dato = (v, k, d, col) => '<div style="flex:1;min-width:132px;padding:8px 16px;'
           + 'border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;justify-content:center">'
@@ -24636,7 +24649,12 @@ const renderRFSection = (container) => {
       const barraF = hechas === null
           ? '<div style="flex:2.4;min-width:300px;padding:8px 16px;display:flex;flex-direction:column;justify-content:center">'
             + '<div style="font-size:.66rem;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase">avance</div>'
-            + '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">se mide con el stock de reserva del día</div></div>'
+            + '<div style="font-size:.78rem;color:' + (desfasada ? '#fbbf24' : 'var(--text-muted)') + ';margin-top:6px">'
+            + (desfasada
+                ? 'no se puede medir: la reserva cargada es del '
+                  + String(window.__reservaMedidoEn || '').split('-').reverse().join('/')
+                  + ' y la base es del ' + String(B.fecha).split('-').reverse().join('/')
+                : 'se mide con el stock de reserva del día') + '</div></div>'
           : '<div style="flex:2.4;min-width:300px;padding:8px 16px;display:flex;flex-direction:column;justify-content:center">'
             + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
             + '<span style="font-size:.66rem;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase">avance</span>'
@@ -27187,6 +27205,11 @@ window.showCellModal = function(htmlContent) {
                 } catch (e) { console.warn('[RESERVA] sin stock de la hora, se usa el del ancla:', e && e.message); }
                 const _fresco = _rawHora ? consolidacionDeReserva(_rawHora, indexarMaestro()) : _frescoAncla;
                 window.__reservaHoraSello = _rawHora ? (textoFechaServidor(_horaSello) || null) : null;
+                /* LA FECHA CON LA QUE SE MIDIO, para poder compararla contra la de la base.
+                   El rotulo de arriba es texto y no sirve para comparar. */
+                window.__reservaMedidoEn = _rawHora
+                    ? String(_horaSello || '').slice(0, 10)
+                    : (_sello ? _sello.fecha : null);
                 _reservaCrudaParaPlan = _rawHora || rawReserva;
                 if (_viendoHoy) {
                     const _guardada = _fotos.find(f => f && _sello && f.fecha === _sello.fecha);
