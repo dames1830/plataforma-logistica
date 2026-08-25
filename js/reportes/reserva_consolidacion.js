@@ -23,7 +23,7 @@
  * 43. El ultimo tramo del SKU es un indice, y la talla de verdad viene al final de la
  * descripcion -`...BATA INDUSTRIALS-1-43`-. Se usa `extractTalla`, que es la que ya
  * resuelve esto en toda la plataforma; escribir otra aca seria tener dos verdades. */
-import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0367';
+import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0368';
 
 export const NIVELES_RESERVA = ['H', 'G', 'F', 'E', 'D'];
 export const COLS_RESERVA = 12;
@@ -514,4 +514,68 @@ export const planDeConsolidacion = (filas, idx, opciones) => {
              partidas: suma(l => l.partidas),
              solid: lineas.filter(l => l.tipo === 'SOLID').reduce((s, l) => s + l.libera, 0),
              prepack: lineas.filter(l => l.tipo === 'PREPACK').reduce((s, l) => s + l.libera, 0) };
+};
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * PREPACK CHICO EN RESERVA — cuantas ubicaciones se liberan bajandolo
+ * ══════════════════════════════════════════════════════════════════════════════
+ *
+ * Daniel, 25-ago-2026: *"quiero bajarme los prepack que son de diez a menos para mandarlo a
+ * otras zonas, para desocupar espacios en reserva"*.
+ *
+ * LA UBICACION SOLO SE LIBERA SI QUEDA VACIA. Un prepack de 6 cajas en una paleta que ademas
+ * tiene 200 pares de solid no desocupa nada: la ubicacion sigue ocupada. Medido el 25-ago
+ * sobre la reserva de las 07:36, de 55 ubicaciones con 10 cajas o menos **solo 43 quedan
+ * vacias**. Mandar al montacarguista a las 55 seria hacerle perder doce viajes.
+ *
+ * El tope entra por parametro y no esta clavado: Daniel puede querer verlo a 15 o a 20. */
+export const prepackChicoDeReserva = (filas, tope) => {
+    const TOPE = Number(tope) || 10;
+    const ubis = new Map();
+    (filas || []).forEach(row => {
+        if (!row) return;
+        if (!row.ES_ALTO && !String(row.NIVEL).toUpperCase().includes('AL')) return;
+        const u = String(row.UBICACION || '').trim();
+        if (!u.startsWith('SEL-')) return;
+        const q = parseFloat(row.CANTIDAD) || 0;
+        if (q <= 0) return;
+        const sku = String(row.PRODUCTO || '').trim();
+        let e = ubis.get(u);
+        if (!e) { e = { u: u, lpn: String(row.LPN || '').trim(), lineas: [], total: 0 }; ubis.set(u, e); }
+        e.lineas.push({ sku: sku, q: q, pre: esPrepackDeReserva(sku) });
+        e.total += q;
+        if (!e.lpn) e.lpn = String(row.LPN || '').trim();
+    });
+
+    const bajar = [], conRestos = [];
+    let ubiPre = 0, cajasPre = 0, artsPre = new Set(), artsChico = new Set(), cajasChico = 0;
+    ubis.forEach(e => {
+        const pre = e.lineas.filter(l => l.pre);
+        if (pre.length) {
+            ubiPre++;
+            pre.forEach(l => { cajasPre += l.q; artsPre.add(l.sku.split('-')[0]); });
+        }
+        const chicos = pre.filter(l => l.q <= TOPE);
+        if (!chicos.length) return;
+        const sacando = chicos.reduce((s, l) => s + l.q, 0);
+        cajasChico += sacando;
+        chicos.forEach(l => artsChico.add(l.sku.split('-')[0]));
+        const fila = { u: e.u, lpn: e.lpn, q: Math.round(sacando),
+                       queda: Math.round(e.total - sacando),
+                       skus: chicos.map(l => l.sku + ' x' + Math.round(l.q)).join(' + ') };
+        (fila.queda <= 0 ? bajar : conRestos).push(fila);
+    });
+    const porUbi = (a, b) => a.u.localeCompare(b.u);
+    bajar.sort(porUbi); conRestos.sort(porUbi);
+
+    return {
+        tope: TOPE,
+        ubicaciones: ubis.size,
+        conPrepack: ubiPre, cajasPrepack: Math.round(cajasPre), artsPrepack: artsPre.size,
+        chicas: bajar.length + conRestos.length,
+        cajasChicas: Math.round(cajasChico), artsChicas: artsChico.size,
+        bajar: bajar,            // las que quedan VACIAS: a estas va el montacarguista
+        conRestos: conRestos,    // tienen algo mas encima: sacarlas no libera nada
+        cajasBajar: bajar.reduce((s, x) => s + x.q, 0)
+    };
 };

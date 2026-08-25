@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0367';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0368';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0367';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0367';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0367';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0367';
-import * as metasService from '../services_v245/metasService.js?v=29.0367';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0367';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0367';
+import * as adminService from '../services_v245/adminService.js?v=29.0368';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0368';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0368';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0368';
+import * as metasService from '../services_v245/metasService.js?v=29.0368';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0368';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0368';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0367';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0367';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0367';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0367';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0367';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0367';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0367';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0367';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0367';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0367';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0367';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0367';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0367';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0367';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0367';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0367';
-import { montarSlotting } from './slotting.js?v=29.0367';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0368';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0368';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0368';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0368';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0368';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0368';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0368';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0368';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0368';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0368';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0368';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0368';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0368';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0368';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0368';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0368';
+import { montarSlotting } from './slotting.js?v=29.0368';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0367';
+const VERSION = '29.0368';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4684,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0367');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0368');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16996,7 +16996,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0367 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0368 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24759,7 +24759,68 @@ const renderRFSection = (container) => {
          acumulado- y Daniel lo saco el 22-ago-2026: *"ese grafico que dice Pareto por
          ubicaciones no me lee nada, no me dice nada"*. La tabla si: ahi estan los numeros
          que se llevan al comite. No volver a proponerlo. */
+      /* ══════════════════════════════════════════════════════════════════════════
+       * PREPACK RESERVA — bajarlo libera ubicaciones sin consolidar nada
+       * ══════════════════════════════════════════════════════════════════════════
+       *
+       * Daniel, 25-ago-2026: *"quiero bajarme los prepack que son de diez a menos para
+       * mandarlo a otras zonas, para desocupar espacios en reserva"*. Es la via rapida: no
+       * hay que juntar paletas ni mover tallas, se baja y la ubicacion queda libre.
+       *
+       * SIN TABLA A PROPOSITO. *"En la maqueta no me muestres el detalle, ese detalle
+       * deberia estar en el Excel"*. Acá van los cuatro numeros y el icono; el detalle
+       * —adonde va el montacarguista— sale en el archivo. */
+      let panelPre = '';
+      try {
+          const pre = prepackChicoDeReserva(_reservaCrudaParaPlan || [], 10);
+          if (pre && pre.chicas) {
+              window.__prepackReserva = pre;
+              const mil2 = (v) => (Number(v) || 0).toLocaleString('es-PE');
+              const pct = pre.ubicaciones
+                  ? (100 * pre.bajar.length / pre.ubicaciones).toFixed(1).replace('.', ',') : '0';
+              const tj = (v, col, tit, det) =>
+                  '<div style="padding:15px 17px;border-right:1px solid rgba(255,255,255,.07);'
+                  + 'border-bottom:1px solid rgba(255,255,255,.07)">'
+                  + '<div style="font-size:1.7rem;font-weight:800;line-height:1.05'
+                  + (col ? ';color:' + col : '') + '">' + v + '</div>'
+                  + '<div style="font-size:.6rem;color:var(--text-muted);font-weight:800;'
+                  + 'letter-spacing:.6px;text-transform:uppercase;margin-top:4px;line-height:1.35">'
+                  + tit + '</div>'
+                  + '<div style="font-size:.64rem;color:var(--text-muted);margin-top:4px">'
+                  + det + '</div></div>';
+              const iconoPre = '<span id="btn_xls_prepack" title="Exportar a Excel" '
+                  + 'style="margin-left:auto;cursor:pointer;display:flex;align-items:center;'
+                  + 'opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
+                  + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
+                  + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#1D6F42"/>'
+                  + '<path d="M14 2v6h6" fill="#0F5132"/>'
+                  + '<path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="#fff"/>'
+                  + '</svg></span>';
+              panelPre = '<div class="glass-panel" style="padding:12px 18px;margin-bottom:13px;'
+                  + 'border:1px solid rgba(96,165,250,.35)">'
+                  + '<h3 style="margin:0 0 7px;font-size:.95rem;display:flex;align-items:center;gap:10px;color:#fff">'
+                  + '<span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;'
+                  + 'box-shadow:0 0 10px #60a5fa"></span>PREPACK RESERVA' + iconoPre + '</h3>'
+                  + '<div style="display:grid;grid-template-columns:1fr 1fr;background:rgba(0,0,0,.18);'
+                  + 'border:1px solid rgba(255,255,255,.07);border-radius:11px;overflow:hidden">'
+                  + tj(mil2(pre.conPrepack), '#38bdf8', 'ubicaciones con prepack',
+                       mil2(pre.cajasPrepack) + ' cajas &middot; ' + pre.artsPrepack + ' artículos')
+                  + tj(mil2(pre.chicas), '#fbbf24', 'tienen ' + pre.tope + ' cajas o menos',
+                       mil2(pre.cajasChicas) + ' cajas &middot; ' + pre.artsChicas + ' artículos')
+                  + tj(mil2(pre.bajar.length), '#34d399', 'ubicaciones que se desocupan',
+                       mil2(pre.cajasBajar) + ' cajas para bajar')
+                  + tj(mil2(pre.ubicaciones), '', 'ubicaciones de reserva',
+                       'se libera el ' + pct + '%')
+                  + '</div>'
+                  + '<div style="font-size:.68rem;color:var(--text-muted);margin-top:10px;line-height:1.5">'
+                  + 'De las ' + mil2(pre.chicas) + ', solo <b style="color:#fff">' + pre.bajar.length
+                  + '</b> quedan vacías al bajar el prepack. En las otras ' + pre.conRestos.length
+                  + ' hay mercadería encima y sacarlo no desocupa nada.</div></div>';
+          }
+      } catch (e) { console.warn('[PREPACK] no se pudo armar el panel:', e); }
+
       return cuadro1
+           + panelPre
            + panel('PADRE POR SELECTIVO', 'rgba(96,165,250,.35)', cabP + '<tbody>' + filasP + totP + '</tbody>')
            + panel('LOS ' + F.length + ' MÁS FRAGMENTADOS'
                      + (B && B.fecha
@@ -25298,6 +25359,29 @@ const renderRFSection = (container) => {
       const paraExcel = (base && (base.fragmentados || []).length) ? base : datos;
       const btn = raiz.querySelector('#btn_xls_frag');
       if (btn) btn.addEventListener('click', () => exportarFragmentados(paraExcel, paraExcel.fecha));
+      /* EL EXCEL DEL PREPACK. Solo las ubicaciones que quedan VACIAS: mandar al
+         montacarguista a las que tienen mercaderia encima serian viajes perdidos. Sin
+         articulo ni talla, igual que su hoja de la consolidacion. */
+      const btnPre = raiz.querySelector('#btn_xls_prepack');
+      if (btnPre) btnPre.addEventListener('click', () => {
+          const pre = window.__prepackReserva;
+          if (!pre || !pre.bajar.length) {
+              showPremiumAlert('NADA QUE BAJAR',
+                  'Con el stock de ahora no hay prepack de ' + ((pre && pre.tope) || 10)
+                  + ' cajas o menos que deje la ubicación vacía.', 'info');
+              return;
+          }
+          const filas = pre.bajar.map((f, i) => ({
+              '#': i + 1, 'UBICACIÓN': f.u, 'LPN': f.lpn, 'CANTIDAD': f.q
+          }));
+          filas.push({ '#': '', 'UBICACIÓN': 'TOTAL', 'LPN': '', 'CANTIDAD': pre.cajasBajar });
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), 'Bajada de paletas');
+          /* La fecha del ARCHIVO es la del dia, no la de la base: esto sale de la
+             reserva de ahora, no de los 30 congelados del 21. */
+          XLSX.writeFile(wb, `Bajada_paletas_prepack_${getLogicalDate()}.xlsx`);
+      });
+
       const btnPdf = raiz.querySelector('#btn_pdf_frag');
       if (btnPdf) btnPdf.addEventListener('click', () => abrirPdfConsolidacion(paraExcel.fecha));
       /* LA TARJETA SALE DE LOS MISMOS NUMEROS QUE EL CUADRO DE ARRIBA, guardados al dibujarlo.
