@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0368';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0369';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0368';
+const VERSION = '29.0369';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -2143,6 +2143,62 @@ export const calculateBufferPallets = (configOverride = null) => {
             });
         }
     });
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * EL BARRIDO DE SALDOS  —  solo si Daniel prendio el check
+     * ══════════════════════════════════════════════════════════════════════════════
+     *
+     * La paleta que ya baja por el pedido y volveria arriba con MUY POCO se baja entera:
+     * ese resto se queda meses ocupando una ubicacion completa. Se corre DESPUES de servir
+     * todo el pedido, asi que no le quita ni un par a nadie ni cambia el sin stock.
+     *
+     * SOLO PALETAS QUE YA IBAN A BAJAR. Nunca abre una ubicacion nueva: si el pedido no la
+     * toco, el barrido tampoco. El montacarguista hace el mismo viaje.
+     *
+     * Va apagado por defecto —ver el comentario del check en la pantalla—. */
+    /* Se pregunta a mano y no con `isConfigEnabled`: esa vive DENTRO del bucle por SKU y
+       acá no alcanza. Y ojo con el default: `isConfigEnabled` da true cuando el valor no
+       existe, y el barrido tiene que nacer APAGADO. */
+    const barridoOn = config.barrido === true || config.barrido === 1
+        || String(config.barrido) === 'true' || String(config.barrido) === '1';
+    if (barridoOn) {
+        const CORTE = Number(config.barridoCorte) > 0 ? Number(config.barridoCorte) : 40;
+        /* Cuanto queda EN CADA UBICACION despues de servir el pedido, sku por sku. */
+        const restoPorUbi = new Map();      // ubi -> [{sku, resto, row}]
+        Object.keys(stAltos).forEach(sku => {
+            stAltos[sku].forEach(item => {
+                const ubi = String(getCol(item.row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '').trim();
+                if (!ubi.toUpperCase().startsWith('SEL-')) return;
+                if (!cuotasPicking[ubi]) return;          // esta paleta no bajaba: no se toca
+                const id = item.row._id || `${getCol(item.row, ['LPN']) || ''}_${sku}_${ubi}`;
+                const resto = item.qty - (stockUsadoMap.get(id) || 0);
+                if (resto <= 0) return;
+                if (!restoPorUbi.has(ubi)) restoPorUbi.set(ubi, []);
+                restoPorUbi.get(ubi).push({ sku, resto, id });
+            });
+        });
+        let ubisBarridas = 0, paresBarridos = 0;
+        restoPorUbi.forEach((lineas, ubi) => {
+            const queda = lineas.reduce((a, b) => a + b.resto, 0);
+            if (queda <= 0 || queda > CORTE) return;      // vuelve con mucho: se deja subir
+            ubisBarridas++;
+            lineas.forEach(l => {
+                paresBarridos += l.resto;
+                detalleZonas.push({
+                    'NIVEL/AREA': nivelesMap['Alto'],
+                    'UBICACION': ubi,
+                    'ARTÍCULO': getArticulo(l.sku),
+                    'SKU': l.sku,
+                    'ATD RQ': l.resto,
+                    'BARRIDO': 'SI'
+                });
+                cuotasPicking[ubi][l.sku] = (cuotasPicking[ubi][l.sku] || 0) + l.resto;
+                stockUsadoMap.set(l.id, (stockUsadoMap.get(l.id) || 0) + l.resto);
+            });
+        });
+        console.log(`[BARRIDO] corte ${CORTE}: ${ubisBarridas} ubicaciones se vacian, `
+            + `${Math.round(paresBarridos)} pares de mas al piso.`);
+    }
 
 
     const calcPct = (a, r) => r > 0 ? ((a / r) * 100).toFixed(1) + '%' : '0%';
