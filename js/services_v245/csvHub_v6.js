@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0372';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0373';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0372';
+const VERSION = '29.0373';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -589,6 +589,71 @@ export const publicarAnalisisBuffer = async (data, fecha) => {
             : `[AB] ⚠️ El análisis no se pudo publicar (${r.status}).`);
         return r.ok;
     } catch (e) { console.warn('[AB] No se pudo publicar el análisis:', e); return false; }
+};
+
+/* LOS FACTORES DEL COLCHON, GLOBALES.
+ *
+ * Las tres tablas viven en el localStorage porque `calculateBufferPallets` es SINCRONA y las
+ * lee sin poder esperar a la red. Asi que el servidor no las reemplaza: las BAJA y las
+ * escribe en el localStorage antes de procesar. */
+const AREA_CFG_ANALISIS = 'config_analisis';
+const CLAVES_FACTORES = {
+    tallasGenero: 'logistics_v24_prod_configTallasGenero',
+    skuExcepciones: 'logistics_v24_prod_configSKUExcepciones',
+    marcaGenero: 'logistics_v24_prod_configMarcaGenero'
+};
+
+export const publicarFactores = async () => {
+    const cuerpo = {};
+    Object.keys(CLAVES_FACTORES).forEach(k => {
+        try { cuerpo[k] = JSON.parse(localStorage.getItem(CLAVES_FACTORES[k]) || '{}') || {}; }
+        catch (e) { cuerpo[k] = {}; }
+    });
+    /* NUNCA PUBLICAR LAS TRES TABLAS VACIAS. Una PC que abre la pantalla sin factores y
+       guarda estaria BORRANDOSELOS A TODOS: el area es una sola y la ultima escritura manda.
+       Vaciar los factores tiene que ser una decision explicita, no el efecto de abrir una
+       pantalla en la maquina equivocada. */
+    const cuantos = Object.keys(CLAVES_FACTORES)
+        .reduce((n, k) => n + Object.keys(cuerpo[k] || {}).length, 0);
+    if (cuantos === 0) {
+        console.warn('[FACTORES] No se publica: las tres tablas están vacías en esta PC. '
+            + 'Publicarlas borraría los factores del servidor.');
+        return false;
+    }
+    cuerpo.guardadoEl = new Date().toISOString();
+    try {
+        const r = await fetch(`${API_BASE}/logistics/${AREA_CFG_ANALISIS}?date=MASTER`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cuerpo)
+        });
+        console.log(r.ok
+            ? `[FACTORES] ✅ Publicados: ${Object.keys(cuerpo.tallasGenero).length} por género/talla, `
+              + `${Object.keys(cuerpo.marcaGenero).length} por marca, `
+              + `${Object.keys(cuerpo.skuExcepciones).length} excepciones.`
+            : `[FACTORES] ⚠️ No se pudieron publicar (${r.status}).`);
+        return r.ok;
+    } catch (e) { console.warn('[FACTORES] No se pudieron publicar:', e); return false; }
+};
+
+/* Los baja y los deja en el localStorage. Si el servidor no contesta, se sigue con lo que
+   haya en esta PC: correr con los factores de ayer es mejor que no correr. */
+export const bajarFactores = async () => {
+    try {
+        const r = await fetch(`${API_BASE}/logistics/${AREA_CFG_ANALISIS}?date=MASTER&z=${Date.now()}`);
+        if (!r.ok) return false;
+        const j = await r.json();
+        const d = (j && j.data !== undefined) ? j.data : j;
+        if (!d || typeof d !== 'object') return false;
+        let n = 0;
+        Object.keys(CLAVES_FACTORES).forEach(k => {
+            if (d[k] && typeof d[k] === 'object') {
+                localStorage.setItem(CLAVES_FACTORES[k], JSON.stringify(d[k]));
+                n += Object.keys(d[k]).length;
+            }
+        });
+        if (n) console.log(`[FACTORES] Traídos del servidor: ${n} valores.`);
+        return n > 0;
+    } catch (e) { console.warn('[FACTORES] No se pudieron traer:', e); return false; }
 };
 
 export const traerAnalisisBuffer = async (fecha) => {

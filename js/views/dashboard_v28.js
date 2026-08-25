@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0372';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0373';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0372';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0372';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0372';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0372';
-import * as metasService from '../services_v245/metasService.js?v=29.0372';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0372';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0372';
+import * as adminService from '../services_v245/adminService.js?v=29.0373';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0373';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0373';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0373';
+import * as metasService from '../services_v245/metasService.js?v=29.0373';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0373';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0373';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0372';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0372';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0372';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0372';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0372';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0372';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0372';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0372';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0372';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0372';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0372';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0372';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0372';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0372';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0372';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0372';
-import { montarSlotting } from './slotting.js?v=29.0372';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0373';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0373';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0373';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0373';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0373';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0373';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0373';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0373';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0373';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0373';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0373';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0373';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0373';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0373';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0373';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0373';
+import { montarSlotting } from './slotting.js?v=29.0373';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0372';
+const VERSION = '29.0373';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4439,6 +4439,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                 btnCalc.style.opacity = '0.7';
                 btnCalc.innerHTML = '⏳ PREPARANDO...';
 
+                /* LOS FACTORES, DEL SERVIDOR Y ANTES DE CALCULAR. `calculateBufferPallets`
+                   los lee del localStorage y es sincrona, asi que hay que dejarlos puestos
+                   antes. Si el servidor no contesta se sigue con los de esta PC. */
+                try { await bajarFactores(); } catch (e) { /* se sigue con los locales */ }
+
                 // El Maestro se baja del publicado en la nube: acá solo hay que
                 // cargar los dos stocks.
                 await rescatarMaestro();
@@ -4757,7 +4762,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0372');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0373');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17069,7 +17074,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0372 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0373 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22893,6 +22898,10 @@ const renderRFSection = (container) => {
     } catch (e) {
       console.error('[Factores] no se pudo guardar en esta PC:', e);
     }
+    /* Y AL SERVIDOR, para que el analisis salga igual desde cualquier PC. Daniel,
+       25-ago-2026: hasta hoy vivian solo aca y el mismo pedido bajaba distinta cantidad
+       segun quien apretara el boton. Sin await: guardar no debe esperar a la red. */
+    publicarFactores();
   };
 
   /**
@@ -23069,7 +23078,11 @@ const renderRFSection = (container) => {
   };
 
   const renderConfiguracionAnalisisSKU = async (container) => {
-    _loadConfiguracionAnalisis();
+    /* PRIMERO LOS DEL SERVIDOR. Si se leyeran solo los de esta PC, cada maquina mostraria
+       -y guardaria- factores distintos, que es exactamente lo que se vino a arreglar. Se
+       bajan ANTES de leer el localStorage, porque `bajarFactores` escribe ahi. */
+    try { await bajarFactores(); } catch (e) { /* se sigue con los de esta PC */ }
+    _loadConfiguracionAnalisis(true);
     _cargarMarcaGenero();
 
     container.innerHTML = `
