@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0371';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0372';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0371';
+const VERSION = '29.0372';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1994,9 +1994,31 @@ export const calculateBufferPallets = (configOverride = null) => {
                      .localeCompare(String(getCol(b.row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '')));
         });
     };
+    /* MODELO 3 — el pasadizo que ya tiene trabajo, y dentro la paleta mas grande. */
+    const modelo3 = config.modelo3 === true || config.modelo3 === 1
+        || String(config.modelo3) === 'true' || String(config.modelo3) === '1';
+    /* Los selectivos comparten pasadizo de a dos: 01+02 es el 1, 03+04 el 2, y asi. */
+    const pasilloDe = (ubi) => {
+        const m = /^SEL-(\d+)/i.exec(String(ubi || '').trim());
+        return m ? Math.ceil(parseInt(m[1], 10) / 2) : 0;
+    };
+    const cargaPasillo = new Map();     // pasadizo -> paletas ya asignadas ahi
+    const ubisTocadas = new Set();
+
     const satisfyDemand = (sku, pending, stockMap, nivelLabel) => {
         if (!stockMap[sku] || pending <= 0) return pending;
-        for (let item of stockMap[sku]) {
+        /* Con el modelo 3 el orden se calcula EN EL MOMENTO: depende de cuanto trabajo
+           lleva cada pasadizo, y eso cambia con cada SKU. Sin el, se respeta el orden que
+           ya trae el mapa -el del WMS, o el del modelo 1 si esta prendido-. */
+        const lista = modelo3
+            ? stockMap[sku].slice().sort((a, b) => {
+                  const ua = String(getCol(a.row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '');
+                  const ub = String(getCol(b.row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '');
+                  return (cargaPasillo.get(pasilloDe(ub)) || 0) - (cargaPasillo.get(pasilloDe(ua)) || 0)
+                      || (b.qty - a.qty) || ua.localeCompare(ub);
+              })
+            : stockMap[sku];
+        for (let item of lista) {
             if (pending <= 0) break;
             let id = item.row._id || `${getCol(item.row, ['LPN']) || ''}_${sku}_${getCol(item.row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || ''}`;
             let uses = stockUsadoMap.get(id) || 0;
@@ -2015,6 +2037,13 @@ export const calculateBufferPallets = (configOverride = null) => {
 
                 // RELLENAR DATOS PARA REPORTE SKU (Zonas que impactan paletas/buffer)
                 if (ubi.toUpperCase().startsWith('SEL-')) {
+                    /* La primera vez que se toca una ubicacion, su pasadizo suma uno: es lo
+                       que hace que el modelo 3 vuelva a ese pasadizo con el siguiente SKU. */
+                    if (!ubisTocadas.has(ubi)) {
+                        ubisTocadas.add(ubi);
+                        const P = pasilloDe(ubi);
+                        if (P) cargaPasillo.set(P, (cargaPasillo.get(P) || 0) + 1);
+                    }
                     ubicacionesEnElPiso.add(ubi);
                     if (!cuotasPicking[ubi]) cuotasPicking[ubi] = {};
                     cuotasPicking[ubi][sku] = (cuotasPicking[ubi][sku] || 0) + pick;
