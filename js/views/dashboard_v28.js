@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0374';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0375';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0374';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0374';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0374';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0374';
-import * as metasService from '../services_v245/metasService.js?v=29.0374';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0374';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0374';
+import * as adminService from '../services_v245/adminService.js?v=29.0375';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0375';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0375';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0375';
+import * as metasService from '../services_v245/metasService.js?v=29.0375';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0375';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0375';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0374';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0374';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0374';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0374';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0374';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0374';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0374';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0374';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0374';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0374';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0374';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0374';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0374';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0374';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0374';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0374';
-import { montarSlotting } from './slotting.js?v=29.0374';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0375';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0375';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0375';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0375';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0375';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0375';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0375';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0375';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0375';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0375';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0375';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0375';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0375';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0375';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0375';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0375';
+import { montarSlotting } from './slotting.js?v=29.0375';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0374';
+const VERSION = '29.0375';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4045,7 +4045,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <div style="background:rgba(30, 41, 59, 0.3); padding:1rem 1.5rem; border-radius:12px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
               <div style="display:flex; align-items:center; gap:1rem;">
-                  <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.5rem 1.5rem; border-radius:8px; font-size:0.8rem; font-weight:800; box-shadow:0 0 15px rgba(79,70,229,0.3);">⚡ PROCESAR ANÁLISIS</button>
+                  <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.38rem 1rem; border-radius:7px; font-size:0.7rem; font-weight:800; box-shadow:0 0 12px rgba(79,70,229,0.28);">⚡ PROCESAR</button>
                   <!-- EL BARRIDO DE SALDOS. Daniel, 25-ago-2026: la paleta que ya baja
                        por el pedido y volveria con muy poco, se baja entera y la ubicacion
                        queda libre. Medido sobre el pedido del 24: de 35 ubicaciones a 129,
@@ -4075,6 +4075,23 @@ export const renderDashboard = async (container, user, onLogout) => {
                       <input type="checkbox" id="chk_m3" style="accent-color:#10b981; cursor:pointer; margin:0;">
                       ⏳ MODELO 3
                   </label>
+                  <!-- EL FACTOR es UNO DE TRES, no se combina: por eso va en combo y no en
+                       check. Los numeros salen de 29 dias de picking, con la mediana diaria
+                       y cortados al cubicaje del cuerpo. -->
+                  <span style="width:1px; height:26px; background:var(--border);"></span>
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="font-size:0.6rem; font-weight:800; letter-spacing:.5px;
+                                 color:var(--text-muted); text-transform:uppercase;">FACTOR</span>
+                    <select id="sel_factor" title="Cuánto se baja de más para dejar piso"
+                            style="background:#0e1728; border:1px solid rgba(255,255,255,0.14);
+                                   color:#fff; padding:0.38rem 0.7rem; border-radius:6px;
+                                   font-size:0.7rem; font-weight:700; cursor:pointer; outline:none;">
+                      <option value="config">Como está configurado</option>
+                      <option value="sin">Sin factores</option>
+                      <option value="d1">Factor 1 día</option>
+                      <option value="d2">Factor 2 días</option>
+                    </select>
+                  </div>
                   
               </div>
               <div id="export_actions" style="display:flex; gap:0.5rem;"></div>
@@ -4404,6 +4421,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                guardado antes de que existiera el modelo 1. */
             if (chkM2) chkM2.checked = !!(cfgChk.modelo2 !== undefined ? cfgChk.modelo2 : cfgChk.barrido);
             if (chkM3) chkM3.checked = !!cfgChk.modelo3;
+            const selF = document.getElementById('sel_factor');
+            if (selF && cfgChk.factorModo) selF.value = cfgChk.factorModo;
+            if (selF) selF.addEventListener('change', async () => {
+                try {
+                    const c = (await fetchBufferConfig()) || {};
+                    c.factorModo = selF.value;
+                    await saveBufferConfig(c);
+                } catch (e) { console.warn('[FACTOR] no se pudo guardar el combo:', e); }
+            });
             pintarChk(chkM1, lblM1); pintarChk(chkM2, lblM2); pintarChk(chkM3, lblM3);
             const guardar = async () => {
                 try {
@@ -4474,7 +4500,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <div style="position: absolute; top:0; left:0; width:100%; height:100%; border-radius:14px; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px); opacity:0.5;"></div>
                         </div>
                     </div>
-                    <p style="margin-top:2.5rem; font-size:0.9rem; color:#94a3b8; font-weight:600; letter-spacing:1px; text-transform:uppercase; animation: pulse-text 1.5s infinite;">Sincronizando maestros y cruzando datos...</p>
+                    <div id="pasos_analisis" style="margin-top:2rem; text-align:left; display:inline-block; min-width:340px; font-size:0.78rem; color:#94a3b8;"></div>
                     <style>
                         @keyframes thick-progress { 0% { width: 0%; left: 4px; } 100% { width: calc(100% - 8px); left: 4px; } }
                         @keyframes pulse-text { 0% { opacity:0.5; } 50% { opacity:1; } 100% { opacity:0.5; } }
@@ -4482,13 +4508,54 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </div>`;
 
                 setTimeout(async () => {
+                    /* LOS PASOS. Cada uno se marca al terminar, con lo que tardó: con el
+                       factor prendido esto pasa de 369 a 800 paletas y una barra muda se lee
+                       como colgada. */
+                    const _cajaPasos = document.getElementById('pasos_analisis');
+                    const _pasos = [];
+                    let _t0 = Date.now();
+                    const paso = (txt) => {
+                        if (_pasos.length) {
+                            _pasos[_pasos.length - 1].seg = ((Date.now() - _t0) / 1000).toFixed(1);
+                            _pasos[_pasos.length - 1].fin = true;
+                        }
+                        _t0 = Date.now();
+                        if (txt) _pasos.push({ txt: txt, fin: false, seg: null });
+                        if (!_cajaPasos) return;
+                        _cajaPasos.innerHTML = _pasos.map(x =>
+                            '<div style="display:flex;align-items:center;gap:9px;padding:4px 0;'
+                            + (x.fin ? 'color:#6b7f9e' : 'color:#fff;font-weight:700') + '">'
+                            + '<span style="width:15px;text-align:center;color:'
+                            + (x.fin ? '#34d399' : '#38bdf8') + '">' + (x.fin ? '\u2713' : '\u25CF') + '</span>'
+                            + x.txt
+                            + (x.seg ? '<span style="margin-left:auto;font-size:.68rem;color:#63799a">'
+                                       + x.seg + ' s</span>' : '')
+                            + '</div>').join('');
+                    };
                     try {
+                        paso('Leyendo la configuración del buffer');
                         const config = await fetchBufferConfig().catch(() => ({ include_reserva: '1', include_alto: '1', include_piso: '1', include_aereo: '1', include_logico: '1' }));
+                        /* EL COMBO MANDA sobre lo guardado: es lo que el usuario acaba de
+                           elegir en la pantalla, y puede no haberse guardado todavía. */
+                        const _selF = document.getElementById('sel_factor');
+                        if (_selF) config.factorModo = _selF.value;
+                        if (config.factorModo === 'd1' || config.factorModo === 'd2') {
+                            paso('Trayendo la tabla de factores del servidor');
+                            try { await traerFactoresCalculados(); }
+                            catch (e) { console.warn('[FACTOR] no se pudo traer la tabla:', e); }
+                        }
                         // Los objetivos de piso se traen del servidor ANTES de calcular. El motor
                         // los lee del localStorage, y una PC que nunca abrió la pantalla de
                         // factores los tenía vacíos: el colchón quedaba en cero sin avisar.
+                        paso('Leyendo los objetivos de piso publicados');
                         await _traerFactoresPublicados();
+                        const _nomModelo = [config.modelo1 ? 'Modelo 1' : '',
+                                            config.modelo2 ? 'Modelo 2' : '',
+                                            config.modelo3 ? 'Modelo 3' : ''].filter(Boolean).join(' + ')
+                                           || 'Por defecto';
+                        paso('Calculando y eligiendo las paletas · ' + _nomModelo);
                         const res = calculateBufferPallets(config);
+                        paso('Armando el reporte');
                         if (res) {
                             lastBufferKPI = res;
                             lastBufferResult = res;
@@ -4762,7 +4829,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0374');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0375');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17074,7 +17141,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0374 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0375 | MOBILE PORTAL
                             </div>
                     </div>
 

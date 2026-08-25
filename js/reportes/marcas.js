@@ -12,8 +12,8 @@
  *
  * Para agregar una columna se toca acá y aparece en los dos.
  */
-import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0374';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0374';
+import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0375';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0375';
 
 /** Las columnas del reporte. Agregar una acá la agrega en las dos pantallas. */
 export const COLUMNAS = [

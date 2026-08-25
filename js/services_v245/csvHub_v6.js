@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0374';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0375';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0374';
+const VERSION = '29.0375';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -655,6 +655,22 @@ export const bajarFactores = async () => {
         return n > 0;
     } catch (e) { console.warn('[FACTORES] No se pudieron traer:', e); return false; }
 };
+
+/* LAS TABLAS DE FACTORES CALCULADOS, para el combo del Analisis Buffer. Se cachean en
+ * memoria: `calculateBufferPallets` es sincrona y no puede esperar a la red. */
+let _factoresCalc = null;
+export const traerFactoresCalculados = async (force = false) => {
+    if (_factoresCalc && !force) return _factoresCalc;
+    try {
+        const r = await fetch(`${API_BASE}/logistics/factores_calculados?date=MASTER&z=${Date.now()}`);
+        if (!r.ok) return null;
+        const j = await r.json();
+        const d = (j && j.data !== undefined) ? j.data : j;
+        if (d && (d.dia1 || d.dia2)) { _factoresCalc = d; return d; }
+        return null;
+    } catch (e) { console.warn('[FACTORES] No se pudieron traer los calculados:', e); return null; }
+};
+export const factoresCalculadosEnMemoria = () => _factoresCalc;
 
 export const traerAnalisisBuffer = async (fecha) => {
     if (!fecha) return null;
@@ -1950,6 +1966,14 @@ export const calculateBufferPallets = (configOverride = null) => {
     // llama miles de veces por corrida. Ahora se lee una sola vez, arriba.
     // ══════════════════════════════════════════════════════════════════════════════
     let _cfgTallasGenero = {}, _cfgSKUExcepciones = {}, _cfgMarcaGenero = {};
+    /* EL COMBO DEL FACTOR manda sobre la tabla de marca+genero+talla:
+     *   'sin'  el factor es CERO para todos: solo se baja lo que el pedido pide
+     *   'd1'   la tabla medida para un dia de picking
+     *   'd2'   la de dos dias
+     * Sin combo -o con 'config'- se usa lo que Daniel tenga configurado a mano, que es como
+     * funcionaba antes de que esto existiera. */
+    const _modoFactor = String(config.factorModo || 'config');
+    const _tablasCalc = factoresCalculadosEnMemoria();
     try {
         const g = localStorage.getItem('logistics_v24_prod_configTallasGenero');
         if (g) _cfgTallasGenero = JSON.parse(g) || {};
@@ -1959,6 +1983,16 @@ export const calculateBufferPallets = (configOverride = null) => {
         if (m) _cfgMarcaGenero = JSON.parse(m) || {};
     } catch(e) {
         console.warn("[PULSE] Error al leer configuraciones de Analisis SKU:", e);
+    }
+    if (_modoFactor === 'sin') {
+        /* Cero de verdad: se vacian las tres tablas para que `getExtraBuffer` devuelva 0 sea
+           cual sea el camino -excepcion por SKU, marca+genero+talla o genero+talla-. */
+        _cfgTallasGenero = {}; _cfgSKUExcepciones = {}; _cfgMarcaGenero = {};
+    } else if (_modoFactor === 'd1' || _modoFactor === 'd2') {
+        const t = _tablasCalc && _tablasCalc[_modoFactor === 'd1' ? 'dia1' : 'dia2'];
+        if (t) { _cfgMarcaGenero = t; _cfgTallasGenero = {}; _cfgSKUExcepciones = {}; }
+        else console.warn('[FACTORES] No hay tabla calculada para', _modoFactor,
+            '- se usa la configuracion de esta PC.');
     }
 
     /** SKU -> talla real, sacada de la descripción del activo y de la reserva. */
