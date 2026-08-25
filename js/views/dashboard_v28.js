@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0370';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0371';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0370';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0370';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0370';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0370';
-import * as metasService from '../services_v245/metasService.js?v=29.0370';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0370';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0370';
+import * as adminService from '../services_v245/adminService.js?v=29.0371';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0371';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0371';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0371';
+import * as metasService from '../services_v245/metasService.js?v=29.0371';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0371';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0371';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0370';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0370';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0370';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0370';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0370';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0370';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0370';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0370';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0370';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0370';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0370';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0370';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0370';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0370';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0370';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0370';
-import { montarSlotting } from './slotting.js?v=29.0370';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0371';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0371';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0371';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0371';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0371';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0371';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0371';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0371';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0371';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0371';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0371';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0371';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0371';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0371';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0371';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0371';
+import { montarSlotting } from './slotting.js?v=29.0371';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0370';
+const VERSION = '29.0371';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4051,13 +4051,21 @@ export const renderDashboard = async (container, user, onLogout) => {
                        queda libre. Medido sobre el pedido del 24: de 35 ubicaciones a 129,
                        bajando 1.524 pares que nadie pidio. VA APAGADO: esos pares hay que
                        acomodarlos en el activo, y la noche que no hay sitio no se corre. -->
-                  <label id="lbl_barrido" title="Al procesar, la paleta que volvería con 40 pares o menos baja entera y su ubicación queda libre"
+                  <label id="lbl_m1" title="Buffer de menor a mayor"
                          style="display:flex; align-items:center; gap:0.45rem; cursor:pointer;
                                 font-size:0.68rem; font-weight:800; letter-spacing:.4px;
                                 color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);
                                 padding:0.4rem 0.8rem; border-radius:6px; user-select:none;">
-                      <input type="checkbox" id="chk_barrido" style="accent-color:#10b981; cursor:pointer; margin:0;">
-                      ⏳ CHECK BUFFER
+                      <input type="checkbox" id="chk_m1" style="accent-color:#10b981; cursor:pointer; margin:0;">
+                      ⏳ MODELO 1
+                  </label>
+                  <label id="lbl_m2" title="Buffer paleta completa"
+                         style="display:flex; align-items:center; gap:0.45rem; cursor:pointer;
+                                font-size:0.68rem; font-weight:800; letter-spacing:.4px;
+                                color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);
+                                padding:0.4rem 0.8rem; border-radius:6px; user-select:none;">
+                      <input type="checkbox" id="chk_m2" style="accent-color:#10b981; cursor:pointer; margin:0;">
+                      ⏳ MODELO 2
                   </label>
                   
               </div>
@@ -4364,32 +4372,39 @@ export const renderDashboard = async (container, user, onLogout) => {
         
         // ACTIVAR BOTONES PRIMERO (Prioridad Máxima)
         const btnCalc = document.getElementById('btn_calc');
-        /* EL CHECK DEL BARRIDO. Se recuerda entre corridas —es la config del buffer— pero
-           nace APAGADO la primera vez: es una decision de cada noche, no una regla. */
-        const chkBarr = document.getElementById('chk_barrido');
-        const lblBarr = document.getElementById('lbl_barrido');
-        const pintarBarr = () => {
-            if (!lblBarr || !chkBarr) return;
-            const on = chkBarr.checked;
-            lblBarr.style.borderColor = on ? 'rgba(16,185,129,.55)' : 'rgba(255,255,255,0.1)';
-            lblBarr.style.color = on ? '#10b981' : 'var(--text-muted)';
-            lblBarr.style.background = on ? 'rgba(16,185,129,.10)' : 'transparent';
+        /* LOS DOS CHECKS. Se recuerdan entre corridas —viven en la config del buffer— pero
+           nacen APAGADOS: son una decisión de cada noche, no una regla. Cuando uno está
+           prendido su recuadro se pone verde, para que no se pase por alto. */
+        const chkM1 = document.getElementById('chk_m1');
+        const chkM2 = document.getElementById('chk_m2');
+        const lblM1 = document.getElementById('lbl_m1');
+        const lblM2 = document.getElementById('lbl_m2');
+        const pintarChk = (chk, lbl) => {
+            if (!chk || !lbl) return;
+            const on = chk.checked;
+            lbl.style.borderColor = on ? 'rgba(16,185,129,.55)' : 'rgba(255,255,255,0.1)';
+            lbl.style.color = on ? '#10b981' : 'var(--text-muted)';
+            lbl.style.background = on ? 'rgba(16,185,129,.10)' : 'transparent';
         };
-        if (chkBarr) {
-            try {
-                const cfg = await fetchBufferConfig();
-                chkBarr.checked = !!(cfg && cfg.barrido);
-            } catch (e) { chkBarr.checked = false; }
-            pintarBarr();
-            chkBarr.addEventListener('change', async () => {
-                pintarBarr();
+        if (chkM1 || chkM2) {
+            let cfgChk = {};
+            try { cfgChk = (await fetchBufferConfig()) || {}; } catch (e) { cfgChk = {}; }
+            if (chkM1) chkM1.checked = !!cfgChk.modelo1;
+            /* `barrido` es el nombre viejo del modelo 2: se sigue leyendo por si quedó
+               guardado antes de que existiera el modelo 1. */
+            if (chkM2) chkM2.checked = !!(cfgChk.modelo2 !== undefined ? cfgChk.modelo2 : cfgChk.barrido);
+            pintarChk(chkM1, lblM1); pintarChk(chkM2, lblM2);
+            const guardar = async () => {
                 try {
                     const cfg = (await fetchBufferConfig()) || {};
-                    cfg.barrido = chkBarr.checked;
-                    if (!cfg.barridoCorte) cfg.barridoCorte = 40;
+                    if (chkM1) cfg.modelo1 = chkM1.checked;
+                    if (chkM2) cfg.modelo2 = chkM2.checked;
+                    if (!cfg.modelo2Corte) cfg.modelo2Corte = 40;
                     await saveBufferConfig(cfg);
-                } catch (e) { console.warn('[BARRIDO] no se pudo guardar el check:', e); }
-            });
+                } catch (e) { console.warn('[MODELOS] no se pudo guardar el check:', e); }
+            };
+            if (chkM1) chkM1.addEventListener('change', () => { pintarChk(chkM1, lblM1); guardar(); });
+            if (chkM2) chkM2.addEventListener('change', () => { pintarChk(chkM2, lblM2); guardar(); });
         }
 
         if (btnCalc) {
@@ -4729,7 +4744,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0370');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0371');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17041,7 +17056,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0370 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0371 | MOBILE PORTAL
                             </div>
                     </div>
 

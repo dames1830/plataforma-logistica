@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0370';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0371';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0370';
+const VERSION = '29.0371';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1971,6 +1971,29 @@ export const calculateBufferPallets = (configOverride = null) => {
     let globalRQ = 0, totalsByNivel = {};
     let sinStockPorRevisar = [];
 
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * MODELO 1 — EL ORDEN: DE LA PALETA MAS VACIA A LA MAS LLENA
+     * ══════════════════════════════════════════════════════════════════════════════
+     *
+     * Hasta el 25-ago-2026 se recorrian en el orden en que venian del WMS —ordenado por
+     * UBICACION, del SEL-01 al SEL-12—, asi que una paleta con 20 pares en el SEL-11 se
+     * quedaba intacta mientras se abria una llena en el SEL-01. Esos restos envejecen arriba
+     * ocupando una ubicacion entera.
+     *
+     * Daniel, 25-ago-2026: *"que vaya buscando la paleta que tenga menos cantidad, y asi va
+     * buscando, y al ultimo recien rompa una paleta nueva"*.
+     *
+     * EL DESEMPATE POR UBICACION NO ES UN ADORNO. Con dos paletas de la misma cantidad, sin
+     * el desempate manda el orden del archivo del WMS — y ese orden cambia solo entre una
+     * exportacion y otra. Es la misma trampa que movio el avance de la consolidacion de 40 a
+     * 39 sin que nadie tocara una paleta. */
+    const ordenarPorMenor = (mapa) => {
+        Object.keys(mapa).forEach(sku => {
+            mapa[sku].sort((a, b) => (a.qty - b.qty)
+                || String(getCol(a.row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '')
+                     .localeCompare(String(getCol(b.row, ['UBICACION', 'Ubicación', 'Ubicación actual']) || '')));
+        });
+    };
     const satisfyDemand = (sku, pending, stockMap, nivelLabel) => {
         if (!stockMap[sku] || pending <= 0) return pending;
         for (let item of stockMap[sku]) {
@@ -2058,6 +2081,15 @@ export const calculateBufferPallets = (configOverride = null) => {
     };
 
     // PROCESAMIENTO DE ANÁLISIS (JERARQUÍA 1 A 7)
+    /* SE ORDENA ACA Y NO ANTES: mas arriba todavia se registra stock en `stLogicos`
+       -lo que no es MATE ni picking-, y ordenar antes dejaba ese nivel a medio ordenar.
+       Ordenar es barato y pasa una sola vez por corrida. */
+    /* MODELO 1 — Daniel, 25-ago-2026. Sin el check se recorren en el orden del WMS
+       -ascendente por ubicacion, del SEL-01 al SEL-12-, que es como fue siempre. */
+    const modelo1 = config.modelo1 === true || config.modelo1 === 1
+        || String(config.modelo1) === 'true' || String(config.modelo1) === '1';
+    if (modelo1) [stAltos, stPisos, stAereos, stLogicos, stMerma].forEach(ordenarPorMenor);
+
     Object.keys(demanda).sort().forEach(sku => {
         let totalSolicitado = demanda[sku].total;
 
@@ -2206,10 +2238,17 @@ export const calculateBufferPallets = (configOverride = null) => {
     /* Se pregunta a mano y no con `isConfigEnabled`: esa vive DENTRO del bucle por SKU y
        acá no alcanza. Y ojo con el default: `isConfigEnabled` da true cuando el valor no
        existe, y el barrido tiene que nacer APAGADO. */
-    const barridoOn = config.barrido === true || config.barrido === 1
-        || String(config.barrido) === 'true' || String(config.barrido) === '1';
+    /* Lo que se lleva el barrido NO es demanda atendida: se cuenta aparte para poder
+       descontarlo del cuadro de niveles, que si no deja de cuadrar. */
+    let paresBarridoTotal = 0;
+    const barridoPorUbiSku = new Map();   // ubi|sku -> pares que puso el barrido
+    /* MODELO 2. Se sigue leyendo `barrido` por si quedo guardado con el nombre viejo. */
+    const _m2 = (config.modelo2 !== undefined) ? config.modelo2 : config.barrido;
+    const barridoOn = _m2 === true || _m2 === 1
+        || String(_m2) === 'true' || String(_m2) === '1';
     if (barridoOn) {
-        const CORTE = Number(config.barridoCorte) > 0 ? Number(config.barridoCorte) : 40;
+        const CORTE = Number(config.modelo2Corte || config.barridoCorte) > 0
+            ? Number(config.modelo2Corte || config.barridoCorte) : 40;
         /* Cuanto queda EN CADA UBICACION despues de servir el pedido, sku por sku. */
         const restoPorUbi = new Map();      // ubi -> [{sku, resto, row}]
         Object.keys(stAltos).forEach(sku => {
@@ -2240,9 +2279,12 @@ export const calculateBufferPallets = (configOverride = null) => {
                     'BARRIDO': 'SI'
                 });
                 cuotasPicking[ubi][l.sku] = (cuotasPicking[ubi][l.sku] || 0) + l.resto;
+                barridoPorUbiSku.set(ubi + '|' + l.sku,
+                    (barridoPorUbiSku.get(ubi + '|' + l.sku) || 0) + l.resto);
                 stockUsadoMap.set(l.id, (stockUsadoMap.get(l.id) || 0) + l.resto);
             });
         });
+        paresBarridoTotal = paresBarridos;
         console.log(`[BARRIDO] corte ${CORTE}: ${ubisBarridas} ubicaciones se vacian, `
             + `${Math.round(paresBarridos)} pares de mas al piso.`);
     }
@@ -2384,11 +2426,23 @@ export const calculateBufferPallets = (configOverride = null) => {
 
     // 1. Re-calcular totalsByNivel SOLAMENTE para '2. ALTO' con las cantidades con buffer extra
     totalsByNivel['2. ALTO'] = 0;
+    /* EL BARRIDO NO ES DEMANDA ATENDIDA. `QTY BUFFER` trae lo que el barrido se lleva de
+       mas -y esta bien: el montacarguista lo baja-, pero contarlo como demanda servida hace
+       que el cuadro pase del total pedido y el SIN STOCK se desarme. Se descuenta ubicacion
+       por ubicacion y SKU por SKU, no con un total: restar el total de golpe sacaba de mas y
+       el SIN STOCK subia de 909 a 973 sin que faltara un solo par. */
+    const yaDescontado = new Map();
     detallePallets.forEach(dp => {
         const lvl = getNivelLabel(dp.NIVEL);
-        if (lvl === '2. ALTO') {
-            totalsByNivel['2. ALTO'] += dp['QTY BUFFER'] || 0;
+        if (lvl !== '2. ALTO') return;
+        let q = dp['QTY BUFFER'] || 0;
+        const k = String(dp.UBICACIONES || '').trim() + '|' + String(dp.SKU || '').trim();
+        const barrido = barridoPorUbiSku.get(k) || 0;
+        if (barrido > 0) {
+            const resta = Math.min(q, barrido - (yaDescontado.get(k) || 0));
+            if (resta > 0) { q -= resta; yaDescontado.set(k, (yaDescontado.get(k) || 0) + resta); }
         }
+        totalsByNivel['2. ALTO'] += q;
     });
 
     // 2. Re-generar waterfall con las nuevas cantidades
