@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0366';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0367';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0366';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0366';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0366';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0366';
-import * as metasService from '../services_v245/metasService.js?v=29.0366';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0366';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0366';
+import * as adminService from '../services_v245/adminService.js?v=29.0367';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0367';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0367';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0367';
+import * as metasService from '../services_v245/metasService.js?v=29.0367';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0367';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0367';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0366';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0366';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0366';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0366';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0366';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0366';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0366';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0366';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0366';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0366';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0366';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0366';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0366';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0366';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0366';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0366';
-import { montarSlotting } from './slotting.js?v=29.0366';
+         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0367';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0367';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0367';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0367';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0367';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0367';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0367';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0367';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0367';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0367';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0367';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0367';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0367';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0367';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0367';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0367';
+import { montarSlotting } from './slotting.js?v=29.0367';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0366';
+const VERSION = '29.0367';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4684,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0366');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0367');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -4758,9 +4758,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
                     <h3 style="color:var(--primary); margin:0;">Base de Datos de Trabajadores</h3>
-                    <label class="btn" style="width:auto; background:var(--success); font-size:0.75rem; padding:0.4rem 0.8rem;">
-                        📥 IMPORTAR EXCEL <input type="file" id="import_workers" accept=".xlsx,.xls" style="display:none;">
-                    </label>
+                    <span id="export_workers" title="Exportar trabajadores" style="cursor:pointer; display:flex; align-items:center; opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#1D6F42"/><path d="M14 2v6h6" fill="#0F5132"/><path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="#fff"/></svg><span style="font-size:.62rem;font-weight:800;color:#8ba0bd;margin-left:3px">↓</span></span>
                 </div>
                 <div class="glass-panel" style="padding:0; overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
@@ -4787,7 +4785,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                                     <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="dni" contenteditable="true" style="padding:0.7rem; font-weight:800; color:#fff; outline:none;">${w.dni || w.Dni || ''}</td>
                                     <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="nombre" contenteditable="true" style="padding:0.7rem; outline:none; text-transform:uppercase;">${w.nombre || w.Nombre || ''}</td>
                                     <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="apellidos" contenteditable="true" style="padding:0.7rem; outline:none; text-transform:uppercase;">${w.apellidos || w.Apellidos || ''}</td>
-                                    <td class="edit-worker" data-dni="${w.dni || w.Dni}" data-f="puesto" contenteditable="true" style="padding:0.7rem; outline:none; text-transform:uppercase;">${w.puesto || w.Puesto || ''}</td>
+                                    <td style="padding:0.7rem;">
+                                        <select class="edit-worker-select" data-dni="${w.dni || w.Dni}" data-f="puesto" style="background:rgba(255,255,255,0.05); border:none; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.65rem; outline:none; cursor:pointer;">
+                                            ${opcionesCargo(w.puesto || w.Puesto)}
+                                        </select>
+                                    </td>
                                     <td style="padding:0.7rem;">
                                         <select class="edit-worker-select" data-dni="${w.dni || w.Dni}" data-f="turno" style="background:rgba(255,255,255,0.05); border:none; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.65rem; outline:none; cursor:pointer;">
                                             <option value="DIA" ${ (w.turno||w.Turno)==='DIA'?'selected':'' }>DIA</option>
@@ -4817,7 +4819,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     </div>
                     <div style="display:flex; flex-direction:column; gap:0.3rem;">
                         <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">PUESTO</label>
-                        <input type="text" id="nw_puesto" required style="background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.5rem; outline:none; font-size:0.8rem;">
+                        <select id="nw_puesto" style="background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:6px; color:#fff; padding:0.5rem; outline:none; font-size:0.8rem;">${opcionesCargo('')}</select>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:0.3rem;">
                         <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">TURNO</label>
@@ -4883,30 +4885,28 @@ export const renderDashboard = async (container, user, onLogout) => {
         };
     });
 
-    document.getElementById('import_workers').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const data = new Uint8Array(evt.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const json = XLSX.utils.sheet_to_json(sheet);
-            
-            // Normalizar las llaves a minúsculas para consistencia (DNI/Dni/dni -> dni)
-            const normalized = json.map(row => {
-                const newRow = {};
-                for (let key in row) {
-                    newRow[key.toLowerCase().trim()] = row[key];
-                }
-                return newRow;
-            });
-
-            adminService.saveWorkers(normalized);
-            renderAdminTab();
-        };
-        reader.readAsArrayBuffer(file);
+    /* EXPORTAR. La misma tabla que se ve, para revisarla en Excel o corregir muchos
+       cargos de una y volver a subirla con el boton de al lado. Las columnas salen con los
+       nombres que espera el importador, asi el viaje de ida y vuelta cierra. */
+    const btnExp = document.getElementById('export_workers');
+    if (btnExp) btnExp.addEventListener('click', () => {
+        const filas = adminService.getWorkers().map(w => ({
+            'DNI': String(w.dni || w.Dni || ''),
+            'NOMBRE': w.nombre || w.Nombre || '',
+            'APELLIDOS': w.apellidos || w.Apellidos || '',
+            'PUESTO': w.puesto || w.Puesto || '',
+            'TURNO': w.turno || w.Turno || '',
+            'ACTIVO': (w.active === false) ? 'NO' : 'SI'
+        }));
+        if (!filas.length) {
+            showPremiumAlert('SIN TRABAJADORES', 'No hay nadie cargado para exportar.', 'info');
+            return;
+        }
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), 'Trabajadores');
+        XLSX.writeFile(wb, `Trabajadores_${getLogicalDate()}.xlsx`);
     });
+
   };
 
   const renderUsuariosSection = (container) => {
@@ -5250,7 +5250,35 @@ export const renderDashboard = async (container, user, onLogout) => {
   // Los cargos del turno noche que entran a la toma de asistencia. Estaba fijo en
   // AYUDANTE DE ALMACEN, asi que los OPERADOR no aparecian aunque estuvieran
   // cargados en la matriz de trabajadores. Para sumar otro cargo, agregarlo aca.
-  const CARGOS_ASISTENCIA = ['AYUDANTE DE ALMACEN', 'OPERADOR'];
+  /* TODOS los cargos que existen, para los combos. Los de dia van al final: no entran
+     a la toma de noche pero hay que poder registrar a esa gente igual. */
+  const CARGOS = ['ALMACENAJE', 'BUFFER', 'SLOTTING', 'MONTACARGUISTA',
+                  'RECEPCION', 'CATALOGO', 'DESPACHO'];
+  /* Los que entran a la toma de asistencia del turno NOCHE. Daniel, 25-ago-2026: el
+     AYUDANTE DE ALMACEN se partio en tres y el OPERADOR paso a MONTACARGUISTA. */
+  const CARGOS_ASISTENCIA = ['ALMACENAJE', 'BUFFER', 'SLOTTING', 'MONTACARGUISTA'];
+  /* UN CARGO QUE YA NO ESTA EN LA LISTA NO SE PISA NI SE ESCONDE.
+     Sin esto el <select> se cae en la PRIMERA opcion y las 69 personas que todavia figuran
+     como AYUDANTE DE ALMACEN se verian como ALMACENAJE sin serlo — y al tocar cualquier otra
+     celda se guardaria ese valor que nadie eligio. Se muestra tal cual, marcado en ambar,
+     para que se vea de un vistazo a quien falta reasignar. */
+  /* SE COMPARA SIN TILDES. En el maestro hay 14 personas con "RECEPCION" acentuada y una
+     sin acentuar: es el mismo cargo escrito de dos formas, y marcarlas todas como "reasignar"
+     seria ruido sobre gente que esta bien. Es tambien la razon del combo: a mano, cada quien
+     escribe distinto. */
+  const sinTilde = (v) => String(v || '').trim().toUpperCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const opcionesCargo = (actual) => {
+      const a = sinTilde(actual);
+      const viejo = (a && CARGOS.map(sinTilde).indexOf(a) === -1)
+          ? '<option value="' + String(actual).trim().toUpperCase()
+            + '" selected style="background:#0f172a;color:#fbbf24">'
+            + String(actual).trim().toUpperCase() + ' ← reasignar</option>'
+          : '';
+      return viejo + CARGOS.map(c =>
+          '<option value="' + c + '"' + (a === sinTilde(c) ? ' selected' : '')
+          + ' style="background:#0f172a">' + c + '</option>').join('');
+  };
 
   const renderAsistenciaSection = (container) => {
     const workers = adminService.getWorkers().filter(w => w.active !== false && (w.turno === 'NOCHE' || w.Turno === 'NOCHE') && CARGOS_ASISTENCIA.includes(String(w.puesto || w.Puesto || '').trim().toUpperCase()));
@@ -5720,7 +5748,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         // largos no entran en la columna: "AYUDANTE DE ALMACEN" son 19 caracteres y
         // lo tiene el 70% de la gente.
         const ABREVIA = {
-            'AYUDANTE DE ALMACEN': 'A. ALMACEN',
+            'AYUDANTE DE ALMACEN': 'A. ALMACEN',   // historico: los dias anteriores al 25-ago
             'MONTACARGUISTA': 'MONTACARG.',
             'RECEPCION': 'RECEPCIÓN'
         };
@@ -16968,7 +16996,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0366 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0367 | MOBILE PORTAL
                             </div>
                     </div>
 
