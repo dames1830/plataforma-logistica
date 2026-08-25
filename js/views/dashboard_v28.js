@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0360';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0361';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0360';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0360';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0360';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0360';
-import * as metasService from '../services_v245/metasService.js?v=29.0360';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0360';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0360';
+import * as adminService from '../services_v245/adminService.js?v=29.0361';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0361';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0361';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0361';
+import * as metasService from '../services_v245/metasService.js?v=29.0361';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0361';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0361';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0360';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0360';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0360';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0360';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0360';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0360';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0360';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0360';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0360';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0360';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0360';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0360';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0360';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0360';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0360';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0360';
-import { montarSlotting } from './slotting.js?v=29.0360';
+         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0361';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0361';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0361';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0361';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0361';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0361';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0361';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0361';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0361';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0361';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0361';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0361';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0361';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0361';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0361';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0361';
+import { montarSlotting } from './slotting.js?v=29.0361';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0360';
+const VERSION = '29.0361';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4684,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0360');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0361');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16968,7 +16968,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0360 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0361 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24810,7 +24810,7 @@ const renderRFSection = (container) => {
         .tit .det { font-size: 8.5pt; color: #555; }
         .tit .pag { margin-left: auto; font-size: 9pt; font-weight: 700; }
         .q { color: #555; font-size: 8.5pt; margin-bottom: 5px; }
-        table { border-collapse: collapse; width: 100%; font-size: 9pt; }
+        table { border-collapse: collapse; width: 100%; font-size: 8pt; }
         th { background: #222; color: #fff; font-weight: 700; padding: 4px 6px; text-align: left;
              white-space: nowrap; font-size: 8pt; }
         td { border: 1px solid #bbb; padding: 3px 6px; white-space: nowrap; }
@@ -24820,9 +24820,21 @@ const renderRFSection = (container) => {
         .d { background: #d9f2d9; font-weight: 700; }
         .t { font-weight: 800; }
         .pk { background: #222; color: #fff; font-weight: 800; font-size: 7.5pt; }
-        .lpn { font-family: Consolas, monospace; font-size: 7.5pt; }
+        .lpn { font-family: Consolas, monospace; font-size: 6.8pt; }
         .acc { font-size: 8.5pt; }
         .sube td { background: #eefaee; }
+        .tll { white-space: normal; font-weight: 800; max-width: 46mm; line-height: 1.15; }
+        .tag { display: inline-block; background: #b45309; color: #fff; font-weight: 800;
+               font-size: 6.5pt; padding: 0 4px; border-radius: 3px; margin-right: 3px; }
+        tr.par td { background: #fffbeb; }
+        tr.p1 td { border-top: 2px solid #b45309; }
+        tr.pN td { border-bottom: 2px solid #b45309; }
+        .cnt { background: #b45309; color: #fff; font-weight: 800; text-align: center; }
+        .tot { background: #e5e7eb; font-weight: 800; }
+        .res { background: #fee2e2; color: #b91c1c; font-weight: 800; }
+        .vac { background: #166534; color: #fff; font-weight: 800; }
+        .k.hi { border: 2px solid #b45309; background: #fffbeb; }
+        .k.hi b { color: #b45309; }
         .chk { width: 26px; }
         .caja { display: flex; gap: 9px; flex-wrap: wrap; margin: 6px 0 9px; }
         .k { border: 1px solid #bbb; border-radius: 4px; padding: 5px 12px; }
@@ -24909,26 +24921,48 @@ const renderRFSection = (container) => {
               f1.push(`<tr><td class="c gr">G${g.n}</td><td class=b>${esc(l.padre)}</td>`
                   + `<td class="c ${l.tipo === 'PREPACK' ? 'pk' : ''}">${l.tipo}</td>`
                   + `<td>${esc(l.g)}</td><td class=c>${l.n}</td><td class=c>${l.cap}</td>`
-                  + `<td class="c b">${l.mv.length}</td></tr>`);
-              l.mv.forEach((m, i) => f2.push(
-                  `<tr><td class="c gr">G${g.n}</td><td class=b>${esc(m.padre)}</td>`
-                  + `<td class="c ${m.tipo === 'PREPACK' ? 'pk' : ''}">${m.tipo}</td>`
-                  + `<td class=c>${i + 1}/${l.mv.length}</td>`
-                  + `<td class=o>${esc(m.deU)}</td><td class=lpn>${esc(m.deLpn)}</td>`
-                  + `<td class="c t">${esc(m.deQue)}</td><td class="c b">${m.pares}</td>`
-                  + `<td class=d>${esc(m.aU)}</td><td class=lpn>${esc(m.aLpn)}</td>`
-                  + `<td class="c t">${esc(m.aQue)}</td>`
-                  + `<td class=c>${m.tenia}</td><td class="c b">${m.queda}</td><td class=c>${m.cap}</td>`
-                  + `<td class=chk></td></tr>`));
+                  + `<td class="c b">${l.libera}</td>`
+                  + `<td class="c ${l.partidas ? 'cnt' : ''}">${l.partidas || '—'}</td>`
+                  + `<td class=c>${l.mv.length}</td></tr>`);
+              /* LA PALETA SE NUMERA POR UBICACIÓN, NO POR RENGLÓN: una que se parte en tres
+                 sigue siendo UNA paleta. Numerando renglones, el operario creería que son
+                 diecinueve paletas cuando son trece. */
+              const orden = new Map();
+              l.mv.forEach(m => { if (!orden.has(m.deU)) orden.set(m.deU, orden.size + 1); });
+              l.mv.forEach((m, i) => {
+                  const antes = i > 0 && l.mv[i - 1].partir && l.mv[i - 1].deU === m.deU;
+                  const luego = i + 1 < l.mv.length && l.mv[i + 1].partir && l.mv[i + 1].deU === m.deU;
+                  const cls = m.partir
+                      ? ` class="par${antes ? '' : ' p1'}${luego ? '' : ' pN'}"` : '';
+                  f2.push(`<tr${cls}><td class="c gr">G${g.n}</td><td class=b>${esc(m.padre)}</td>`
+                      + `<td class="c ${m.tipo === 'PREPACK' ? 'pk' : ''}">${m.tipo}</td>`
+                      + `<td class=c>${orden.get(m.deU)}/${l.libera}</td>`
+                      + `<td class=c>${m.partir ? '<span class=tag>PARTIR</span>' + esc(m.parte) : '—'}</td>`
+                      + `<td class=o>${esc(m.deU)}</td><td class=lpn>${esc(m.deLpn)}</td>`
+                      + `<td class=tll>${esc(m.deQue)}</td>`
+                      + `<td class="c ${m.partir ? 'tot' : 'b'}">${m.tiene}</td>`
+                      + `<td class="c ${m.partir ? 'cnt' : 'b'}">${m.pares}</td>`
+                      + `<td class="c ${m.quedaAhi ? 'res' : 'vac'}">${m.quedaAhi}</td>`
+                      + `<td class=d>${esc(m.aU)}</td><td class=lpn>${esc(m.aLpn)}</td>`
+                      + `<td class=tll>${esc(m.aQue)}</td>`
+                      + `<td class=c>${m.tenia}</td><td class="c b">${m.queda}</td><td class=c>${m.cap}</td>`
+                      + `<td class=chk></td></tr>`);
+              });
           });
+          /* LA PALETA QUE SE PARTE BAJA UNA SOLA VEZ, con todo lo que tiene: la reparten abajo
+             los operarios. Para el montacarguista es un viaje, no dos ni tres. */
           const dest = new Map();
+          const vistas = new Set();
           let n = 0;
           g.lineas.forEach(l => l.mv.forEach(m => {
-              f3.push(`<tr><td class="c gr">G${g.n}</td><td class=c>${++n}</td>`
-                  + `<td class=o>${esc(m.deU)}</td><td class=lpn>${esc(m.deLpn)}</td>`
-                  + `<td class="c b">${m.pares}</td>`
-                  + `<td class=acc><b>BAJAR</b> · no vuelve, la ubicación queda libre</td>`
-                  + `<td class=chk></td></tr>`);
+              if (!vistas.has(m.deU)) {
+                  vistas.add(m.deU);
+                  f3.push(`<tr><td class="c gr">G${g.n}</td><td class=c>${++n}</td>`
+                      + `<td class=o>${esc(m.deU)}</td><td class=lpn>${esc(m.deLpn)}</td>`
+                      + `<td class="c b">${m.tiene}</td>`
+                      + `<td class=acc><b>BAJAR</b> · no vuelve, la ubicación queda libre</td>`
+                      + `<td class=chk></td></tr>`);
+              }
               const e = dest.get(m.aU) || { lpn: m.aLpn, tenia: m.tenia, queda: m.queda };
               e.tenia = Math.min(e.tenia, m.tenia);
               e.queda = Math.max(e.queda, m.queda);
@@ -24948,6 +24982,7 @@ const renderRFSection = (container) => {
       const resumen = `<div class=caja>
         <div class=k><b>${plan.paletas}</b><span>PALETAS QUE BAJAN</span></div>
         <div class=k><b>${plan.paletas}</b><span>UBICACIONES LIBRES</span></div>
+        <div class="k hi"><b>${plan.partidas}</b><span>SE PARTEN</span></div>
         <div class=k><b>${plan.solid}</b><span>DE SOLID</span></div>
         <div class=k><b>${plan.prepack}</b><span>DE PREPACK</span></div>
         <div class=k><b>${vuelven}</b><span>PALETAS QUE VUELVEN</span></div></div>`;
@@ -24955,16 +24990,19 @@ const renderRFSection = (container) => {
       armarHoja('Hoja 1 · REPARTO',
           'Una fila por artículo. Los grupos van en orden: si esta noche solo alcanza el grupo 1, es el trabajo que más libera.',
           `<tr><th>GRUPO</th><th>ARTÍCULO</th><th>TIPO</th><th>GENDER RIMS</th>`
-          + `<th>UBIC. HOY</th><th>PALETA LLENA</th><th>PALETAS A BAJAR</th></tr>`, f1, resumen);
+          + `<th>UBIC. HOY</th><th>PALETA LLENA</th><th>PALETAS A BAJAR</th>`
+          + `<th>SE PARTEN</th><th>RENGLONES</th></tr>`, f1, resumen);
 
       armarHoja('Hoja 2 · OPERARIOS',
-          'En SOLID la columna dice la <b>talla</b>; en PREPACK, el <b>SKU completo</b>. Si lo de la izquierda no está en lo de la derecha, esa caja no va ahí.',
-          `<tr><th>GRUPO</th><th>ARTÍCULO</th><th>TIPO</th><th>PALETA</th>`
-          + `<th>SACAR DE</th><th>LPN</th><th>TALLA / SKU</th><th>CANT.</th>`
-          + `<th>PONER EN</th><th>LPN</th><th>TALLA / SKU</th><th>TENÍA</th><th>QUEDA</th><th>TOPE</th><th>OK</th></tr>`, f2, '');
+          'Las tallas van con la cantidad en las dos puntas. <b>TIENE / LLEVAS / QUEDA AHÍ</b> es la paleta de origen: cuando QUEDA AHÍ llega a <b>0 verde</b>, esa ubicación está vacía. Los renglones amarillos son una sola paleta repartida entre varios destinos.',
+          `<tr><th>GRUPO</th><th>ARTÍCULO</th><th>TIPO</th><th>PALETA</th><th>PARTIR</th>`
+          + `<th>SACAR DE</th><th>LPN</th><th>TALLAS QUE LLEVA</th>`
+          + `<th>TIENE</th><th>LLEVAS</th><th>QUEDA AHÍ</th>`
+          + `<th>PONER EN</th><th>LPN</th><th>TALLAS QUE YA TIENE EL DESTINO</th>`
+          + `<th>TENÍA</th><th>QUEDA</th><th>TOPE</th><th>OK</th></tr>`, f2, '');
 
       armarHoja('Hoja 3 · MONTACARGUISTA',
-          'Sin artículo y sin talla: ubicación, LPN, cantidad y qué hacer.',
+          'Sin artículo y sin talla: ubicación, LPN, cantidad y qué hacer. Una paleta que se parte baja UNA sola vez, con todo lo que tiene.',
           `<tr><th>GRUPO</th><th>ORDEN</th><th>UBICACIÓN</th><th>LPN</th><th>CANTIDAD</th>`
           + `<th>QUÉ HACER</th><th>OK</th></tr>`, f3, '');
 
@@ -25036,25 +25074,40 @@ const renderRFSection = (container) => {
               reparto.push({
                   'GRUPO': 'G' + g.n, 'ARTÍCULO': l.padre, 'TIPO': l.tipo,
                   'GENDER RIMS': l.g || '', 'UBICACIONES HOY': l.n,
-                  'PALETA LLENA': l.cap, 'PALETAS A BAJAR': l.mv.length
+                  'PALETA LLENA': l.cap, 'PALETAS A BAJAR': l.libera,
+                  'SE PARTEN': l.partidas || '', 'RENGLONES': l.mv.length,
+                  'UBICACIONES QUE LIBERA': l.libera
               });
-              l.mv.forEach((m, i) => operarios.push({
+              /* LA PALETA SE NUMERA POR UBICACIÓN, NO POR RENGLÓN. Una que se parte en tres
+                 sigue siendo UNA paleta: si se numerara por renglón, el operario creería que
+                 son diecinueve paletas cuando son trece. */
+              const orden = new Map();
+              l.mv.forEach(m => { if (!orden.has(m.deU)) orden.set(m.deU, orden.size + 1); });
+              l.mv.forEach(m => operarios.push({
                   'GRUPO': 'G' + g.n, 'ARTÍCULO': m.padre, 'TIPO': m.tipo,
-                  'PALETA': (i + 1) + ' de ' + l.mv.length,
+                  'PALETA': orden.get(m.deU) + ' de ' + l.libera,
+                  'PARTIR': m.partir ? m.parte : '',
                   'SACAR DE': m.deU, 'LPN': m.deLpn,
-                  'TALLA / SKU': m.deQue, 'CANTIDAD': m.pares,
-                  'PONER EN': m.aU, 'LPN DESTINO': m.aLpn, 'TALLA / SKU DESTINO': m.aQue,
+                  'TALLAS QUE LLEVA': m.deQue,
+                  'TIENE': m.tiene, 'LLEVAS': m.pares, 'QUEDA AHÍ': m.quedaAhi,
+                  'PONER EN': m.aU, 'LPN DESTINO': m.aLpn,
+                  'TALLAS QUE YA TIENE EL DESTINO': m.aQue,
                   'TENÍA': m.tenia, 'QUEDA': m.queda, 'TOPE': m.cap, 'OK': ''
               }));
           });
-          /* Un destino que recibe varias paletas baja UNA sola vez: se junta antes de
-             escribir, y se anota con cuánto se va para arriba. */
+          /* LA PALETA QUE SE PARTE BAJA UNA SOLA VEZ. La reparten abajo los operarios; para el
+             montacarguista es un viaje con la paleta completa, no dos ni tres. Y un destino
+             que recibe de varias baja y sube una vez, igual que antes. */
           const dest = new Map();
+          const vistas = new Set();
           let n = 0;
           g.lineas.forEach(l => l.mv.forEach(m => {
-              monta.push({ 'GRUPO': 'G' + g.n, 'ORDEN': ++n, 'UBICACIÓN': m.deU, 'LPN': m.deLpn,
-                           'CANTIDAD': m.pares,
-                           'QUÉ HACER': 'BAJAR · no vuelve, la ubicación queda libre', 'OK': '' });
+              if (!vistas.has(m.deU)) {
+                  vistas.add(m.deU);
+                  monta.push({ 'GRUPO': 'G' + g.n, 'ORDEN': ++n, 'UBICACIÓN': m.deU, 'LPN': m.deLpn,
+                               'CANTIDAD': m.tiene,
+                               'QUÉ HACER': 'BAJAR · no vuelve, la ubicación queda libre', 'OK': '' });
+              }
               const e = dest.get(m.aU) || { lpn: m.aLpn, tenia: m.tenia, queda: m.queda };
               e.tenia = Math.min(e.tenia, m.tenia);
               e.queda = Math.max(e.queda, m.queda);

@@ -23,7 +23,7 @@
  * 43. El ultimo tramo del SKU es un indice, y la talla de verdad viene al final de la
  * descripcion -`...BATA INDUSTRIALS-1-43`-. Se usa `extractTalla`, que es la que ya
  * resuelve esto en toda la plataforma; escribir otra aca seria tener dos verdades. */
-import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0360';
+import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0361';
 
 export const NIVELES_RESERVA = ['H', 'G', 'F', 'E', 'D'];
 export const COLS_RESERVA = 12;
@@ -317,13 +317,16 @@ export const fotoChicaDeReserva = (datos, sello) => (!datos || !sello) ? null : 
  *    es el código del pack. Medido: de 2.391 paletas, NINGUNA mezcla las dos cosas. Si
  *    alguna vez aparece una, es un error de quien matriculó y sale marcada.
  *
- * 2. UNA PALETA BAJA ENTERA Y VA A UN SOLO SITIO. Repartirla entre varios destinos libera
- *    más ubicaciones —192 contra 127— pero son 306 movimientos con 202 paletas partidas.
- *    Daniel eligió el viaje único: el operario vuelca y no cuenta.
+ * 2. LA PALETA BAJA ENTERA SI CABE ENTERA; SI NO, SE PARTE. El viaje único era la regla
+ *    original, pero el 24-ago-2026 Daniel comprometió 183 ubicaciones ante el comité y la
+ *    medición mostró que con viaje único solo se alcanzaban 110: una paleta que no entra
+ *    en ningún hueco no se libera jamás, aunque el comité la cuente. Partiendo llega a 154.
+ *    De 198 paletas, 154 siguen siendo de un solo viaje y 44 se reparten; la hoja dice
+ *    cuántos pares van a cada destino y el operario cuenta, no decide.
  *
- * 3. LA TALLA NO SE MEZCLA. Un destino solo recibe tallas que YA tiene, así que ninguna
- *    paleta termina peor de lo que estaba. Y una sin talla legible solo se junta con otra
- *    igual: meterla en una de talla 37 sería inventar.
+ * 3. LAS TALLAS SE MEZCLAN, mientras sea el mismo artículo. *"Pueden mezclar las tallas
+ *    siempre y cuando sea del mismo artículo, normal, no hay problema"* —Daniel, 24-ago-2026.
+ *    La regla contraria la había puesto yo, no él, y costaba 45 ubicaciones de las 183.
  *
  * 4. EL PREPACK TIENE PISO, NO TOPE. Regla de Daniel, 24-ago-2026: *"si la paleta tiene más
  *    de veinte, cumple con que esté llena. Si tiene menos de veinte, hay que consolidar"*.
@@ -392,18 +395,16 @@ export const planDeConsolidacion = (filas, idx, opciones) => {
         const g = G.get(k) || []; g.push(d); G.set(k, g);
     });
 
-    const llaves = (x) => Object.keys(x);
-    const dentro = (a, b) => llaves(a).every(t => t in b);
-    const acepta = (a, b) => (!llaves(a).length || !llaves(b).length)
-        ? (!llaves(a).length && !llaves(b).length) : dentro(a, b);
-    /* CON VARIAS TALLAS, CUÁNTO DE CADA UNA. Daniel lo preguntó mirando una paleta de 12 con
-       tallas 41 y 42: *"¿cuánto es la talla 41 y cuánto la 42?"*. No se parte el renglón —una
-       paleta es un viaje y la hoja del montacarguista dejaría de cuadrar—: el desglose va
-       dentro de la celda. Con una sola talla va la talla sola, sin ruido. */
+    const llaves = (x) => Object.keys(x).filter(t => x[t] > 0);
+    /* CADA TALLA CON SU CANTIDAD, SIEMPRE, EN LAS DOS PUNTAS. Lo pidieron los operarios y lo
+       trajo Daniel el 24-ago-2026: *"que eso mismo lo pongas en tallas destino, para que ellos
+       sepan qué tallas y cuánto tiene"*. Antes el destino mostraba solo "42/44" y el operario
+       no sabía si la 44 que llevaba se juntaba con 5 o con 300. Va con cantidad hasta cuando
+       hay una sola talla, para que todos los renglones se lean igual. */
     const rotulo = (x) => {
         const k = llaves(x).sort();
         if (!k.length) return '—';
-        return k.length > 1 ? k.map(t => t + '×' + Math.round(x[t])).join(' · ') : k[0];
+        return k.map(t => t + '×' + Math.round(x[t])).join(' · ');
     };
 
     const lineas = [];
@@ -430,21 +431,61 @@ export const planDeConsolidacion = (filas, idx, opciones) => {
         }
         rec = rec.map(x => ({ ...x, hueco: cap - x.q }));
         const mv = [];
+        const anota = (x, r, cuanto, det, partir, parte, resta) => {
+            mv.push({ padre: padre, tipo: tipo, partir: partir, parte: parte,
+                      deU: x.u, deLpn: x.lpn, deQue: rotulo(det),
+                      tiene: Math.round(x.q), pares: Math.round(cuanto),
+                      quedaAhi: Math.round(resta),
+                      aU: r.u, aLpn: r.lpn, aQue: rotulo(r.dd),
+                      tenia: Math.round(r.q), queda: Math.round(r.q + cuanto),
+                      cap: Math.round(cap) });
+            r.q += cuanto; r.hueco -= cuanto;
+            llaves(det).forEach(t => { r.dd[t] = (r.dd[t] || 0) + det[t]; });
+        };
         org.forEach(x => {
-            const caben = rec.filter(r => r.hueco >= x.q && (tipo === 'SOLID' ? acepta(x.dd, r.dd) : true));
-            if (!caben.length) return;
-            /* EL HUECO MÁS JUSTO QUE LA AGUANTE ENTERA. Yendo al más grande primero, una
-               paleta se parte en siete destinos y el operario camina de más. */
-            const r = caben.reduce((m, y) => (y.hueco < m.hueco ? y : m));
-            mv.push({ padre: padre, tipo: tipo, deU: x.u, deLpn: x.lpn, pares: Math.round(x.q),
-                      deQue: rotulo(x.dd), aU: r.u, aLpn: r.lpn,
-                      aQue: llaves(r.dd).sort().join('/') || '—',
-                      tenia: Math.round(r.q), queda: Math.round(r.q + x.q), cap: Math.round(cap) });
-            r.q += x.q; r.hueco -= x.q;
-            llaves(x.dd).forEach(t => { r.dd[t] = (r.dd[t] || 0) + x.dd[t]; });
+            /* PRIMERO, ENTERA EN EL HUECO MÁS JUSTO. Yendo al más grande primero, una paleta
+               se parte en siete destinos y el operario camina de más. */
+            const caben = rec.filter(r => r.hueco >= x.q);
+            if (caben.length) {
+                anota(x, caben.reduce((m, y) => (y.hueco < m.hueco ? y : m)),
+                      x.q, { ...x.dd }, false, '', 0);
+                return;
+            }
+            /* SI NO CABE ENTERA, SE PARTE. Regla de Daniel, 24-ago-2026, después de ver que el
+               compromiso con el comité —183 ubicaciones— era inalcanzable con el viaje único:
+               medido sobre la reserva, bajaba a 110. Una paleta que no cabe en ningún hueco no
+               se libera nunca, aunque el cálculo del comité la cuente.
+               SE REPARTE TALLA POR TALLA, no a granel: así cada renglón dice qué tallas lleva
+               y ninguno queda diciendo "llévate 32" sin decir de qué. */
+            const orden = rec.filter(r => r.hueco > 0).sort((a, b) => b.hueco - a.hueco);
+            if (orden.reduce((s, r) => s + r.hueco, 0) < x.q) return;   // no alcanza: se queda
+            const pend = { ...x.dd };
+            const trozos = [];
+            let resta = x.q;
+            for (const r of orden) {
+                if (resta <= 0) break;
+                let cabe = r.hueco, dio = {}, suma = 0;
+                for (const t of llaves(pend).sort()) {
+                    if (cabe <= 0) break;
+                    const pon = Math.min(pend[t], cabe);
+                    dio[t] = (dio[t] || 0) + pon; pend[t] -= pon;
+                    cabe -= pon; suma += pon; resta -= pon;
+                }
+                if (suma > 0) trozos.push({ r: r, dio: dio, suma: suma });
+            }
+            let falta = x.q;
+            trozos.forEach((t, i) => {
+                falta -= t.suma;
+                anota(x, t.r, t.suma, t.dio, true, (i + 1) + ' de ' + trozos.length, falta);
+            });
         });
-        if (mv.length) lineas.push({ padre: padre, tipo: tipo, n: ps.length, cap: Math.round(cap),
-                                     g: (idx.porSku.get(padre) || {}).detalle || '', mv: mv });
+        if (mv.length) {
+            const libera = new Set(mv.map(m => m.deU)).size;
+            const partidas = new Set(mv.filter(m => m.partir).map(m => m.deU)).size;
+            lineas.push({ padre: padre, tipo: tipo, n: ps.length, cap: Math.round(cap),
+                          libera: libera, partidas: partidas,
+                          g: (idx.porSku.get(padre) || {}).detalle || '', mv: mv });
+        }
     });
 
     /* Primero el SOLID, que es donde está el volumen; dentro, el que más libera. Los GRUPOS
@@ -452,19 +493,25 @@ export const planDeConsolidacion = (filas, idx, opciones) => {
        grupo uno, termina y va a ser el grupo dos"*. Por eso el 1 es el que más rinde: si una
        noche solo alcanza para uno, que sea el mejor. */
     lineas.sort((a, b) => (a.tipo === b.tipo ? 0 : (a.tipo === 'SOLID' ? -1 : 1))
-                       || (b.mv.length - a.mv.length) || (b.n - a.n));
+                       || (b.libera - a.libera) || (b.n - a.n));
     let g = null;
     const grupos = [];
     lineas.forEach(l => {
-        if (!g || g.paletas + l.mv.length > porGrupo) {
+        if (!g || g.paletas + l.libera > porGrupo) {
             g = { n: grupos.length + 1, lineas: [], paletas: 0 };
             grupos.push(g);
         }
-        l.grupo = g.n; g.lineas.push(l); g.paletas += l.mv.length;
+        l.grupo = g.n; g.lineas.push(l); g.paletas += l.libera;
     });
 
+    /* `paletas` CUENTA UBICACIONES QUE QUEDAN LIBRES, NO RENGLONES. Desde que una paleta se
+       puede partir en dos o tres, los renglones son más que las paletas: contar renglones
+       inflaría el avance y el cuadro dejaría de cuadrar con el mapa. */
+    const suma = (f) => lineas.reduce((s, l) => s + f(l), 0);
     return { lineas: lineas, grupos: grupos, mezcladas: mezcladas,
-             paletas: lineas.reduce((s, l) => s + l.mv.length, 0),
-             solid: lineas.filter(l => l.tipo === 'SOLID').reduce((s, l) => s + l.mv.length, 0),
-             prepack: lineas.filter(l => l.tipo === 'PREPACK').reduce((s, l) => s + l.mv.length, 0) };
+             paletas: suma(l => l.libera),
+             renglones: suma(l => l.mv.length),
+             partidas: suma(l => l.partidas),
+             solid: lineas.filter(l => l.tipo === 'SOLID').reduce((s, l) => s + l.libera, 0),
+             prepack: lineas.filter(l => l.tipo === 'PREPACK').reduce((s, l) => s + l.libera, 0) };
 };
