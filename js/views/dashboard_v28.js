@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0357';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0358';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0357';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0357';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0357';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0357';
-import * as metasService from '../services_v245/metasService.js?v=29.0357';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0357';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0357';
+import * as adminService from '../services_v245/adminService.js?v=29.0358';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0358';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0358';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0358';
+import * as metasService from '../services_v245/metasService.js?v=29.0358';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0358';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0358';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0357';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0357';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0357';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0357';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0357';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0357';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0357';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0357';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0357';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0357';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0357';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0357';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0357';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0357';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0357';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0357';
-import { montarSlotting } from './slotting.js?v=29.0357';
+         cierreDeFragmentados, planDeConsolidacion } from '../reportes/reserva_consolidacion.js?v=29.0358';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0358';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0358';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0358';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0358';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0358';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0358';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0358';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0358';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0358';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0358';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0358';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0358';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0358';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0358';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0358';
+import { montarSlotting } from './slotting.js?v=29.0358';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0357';
+const VERSION = '29.0358';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4684,7 +4684,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0357');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0358');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -16968,7 +16968,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0357 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0358 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24512,6 +24512,15 @@ const renderRFSection = (container) => {
           + '<path d="M14 2v6h6" fill="#0F5132"/>'
           + '<path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="#fff"/>'
           + '</svg></span>';
+      /* El PDF va al costado del Excel. Mismo plan, distinto papel: el Excel para filtrar
+         y contar, este para imprimir y repartir. */
+      const iconoPDF = '<span id="btn_pdf_frag" title="Imprimir o guardar en PDF" style="cursor:pointer;'
+          + 'display:flex;align-items:center;opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
+          + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
+          + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#C0392B"/>'
+          + '<path d="M14 2v6h6" fill="#8E241A"/>'
+          + '<text x="12" y="17.5" font-family="Arial" font-size="7.5" font-weight="bold" fill="#fff" text-anchor="middle">PDF</text>'
+          + '</svg></span>';
       const panel = (titulo, borde, tabla, extra, antes, debajo) => '<div class="glass-panel" style="padding:12px 18px;margin-bottom:13px;border:1px solid ' + borde + '">'
           + '<h3 style="margin:0 0 7px;font-size:.95rem;display:flex;align-items:center;gap:10px;color:#fff">'
           + '<span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;box-shadow:0 0 10px #60a5fa"></span>' + titulo
@@ -24660,7 +24669,7 @@ const renderRFSection = (container) => {
           + ' style="cursor:pointer;font-size:.62rem;font-weight:800;letter-spacing:.5px;'
           + 'color:#00E5FF;text-transform:uppercase;opacity:.75"'
           + ' onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.75">fijar base</span>'
-          + iconoExcel.replace('margin-left:auto;', '') + '</span>';
+          + iconoPDF + iconoExcel.replace('margin-left:auto;', '') + '</span>';
 
       const cabF = '<thead><tr>' + th('#', 'width:34px') + th('PADRE') + th('GENDER RIMS')
           + th('UBIC.') + th('PARES') + th('SU PALETA<br>LLENA', 'color:#c4b5fd') + th('SELECTIVOS')
@@ -24739,6 +24748,149 @@ const renderRFSection = (container) => {
    * nombre del archivo lleva la fecha de esa foto, para que no se confunda con la de hoy.
    * ══════════════════════════════════════════════════════════════════════════════ */
   /* ══════════════════════════════════════════════════════════════════════════════
+   * EL PDF DE LA CONSOLIDACIÓN — el mismo plan, pero con formato
+   * ══════════════════════════════════════════════════════════════════════════════
+   *
+   * Daniel, 24-ago-2026, viendo el Excel: *"ya vi que bajó todo lo que dice la maqueta,
+   * pero está en texto plano, todo feo. Al costado del Excel ponle PDF, para imprimir
+   * desde ahí, pero dale un formato decente"*.
+   *
+   * EL EXCEL SE QUEDA COMO ESTÁ, a propósito: sirve para filtrar, ordenar y contar. Este
+   * otro es para IMPRIMIR y repartir en el piso, y por eso el papel manda: A4 acostado,
+   * cada hoja en su propia página y las filas sin partirse entre dos hojas.
+   *
+   * SALE DEL MISMO `planDeConsolidacion` QUE EL EXCEL. Si fueran dos cálculos, el día que
+   * se corrija una regla uno de los dos papeles quedaría mintiendo — y son los dos el
+   * mismo trabajo, repartido a la misma gente.
+   *
+   * No genera el PDF: abre la ventana de impresión del navegador, que es la que ya sabe
+   * guardar como PDF. Es la misma receta de la hoja de tareas de almacenaje. */
+  const imprimirConsolidacion = (plan, fecha, sello) => {
+      const esc = (v) => String(v === null || v === undefined ? '' : v)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+      const CSS = `
+        @page { size: A4 landscape; margin: 8mm; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #111;
+               background: #fff; margin: 0; padding: 14px; }
+        h1 { font-size: 17pt; margin: 0 0 2px; }
+        h2 { font-size: 12pt; margin: 18px 0 3px; page-break-before: always; }
+        h2:first-of-type { page-break-before: auto; }
+        .q { color: #555; font-size: 9pt; margin-bottom: 7px; }
+        .sub { color: #555; font-size: 9.5pt; margin-bottom: 10px; }
+        table { border-collapse: collapse; width: 100%; font-size: 9pt; }
+        th { background: #222; color: #fff; font-weight: 700; padding: 5px 6px; text-align: left;
+             white-space: nowrap; font-size: 8pt; }
+        td { border: 1px solid #bbb; padding: 3px 6px; white-space: nowrap; }
+        tr { page-break-inside: avoid; }
+        .c { text-align: center; } .b { font-weight: 700; }
+        .gr { background: #e8e8e8; font-weight: 800; }
+        .o { background: #fdf0c8; font-weight: 700; }
+        .d { background: #d9f2d9; font-weight: 700; }
+        .t { font-weight: 800; }
+        .pk { background: #222; color: #fff; font-weight: 800; font-size: 7.5pt; }
+        .lpn { font-family: Consolas, monospace; font-size: 7.5pt; }
+        .acc { font-size: 8.5pt; }
+        .sube td { background: #eefaee; }
+        .chk { width: 26px; }
+        .caja { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0 14px; }
+        .k { border: 1px solid #bbb; border-radius: 4px; padding: 7px 13px; min-width: 108px; }
+        .k b { display: block; font-size: 16pt; line-height: 1.1; }
+        .k span { font-size: 7.5pt; color: #555; }
+        @media print { .noimp { display: none !important; } }
+        .noimp { position: sticky; top: 0; z-index: 9; background: #1e293b; color: #e2e8f0;
+                 padding: 10px 14px; font: 600 13px/1.5 system-ui, sans-serif; text-align: center;
+                 margin: -14px -14px 14px; }
+        .noimp button { background: #4f46e5; color: #fff; border: 0; border-radius: 8px;
+                 padding: 7px 18px; font: 700 13px system-ui, sans-serif; cursor: pointer; margin-left: 10px; }`;
+
+      const f1 = [], f2 = [], f3 = [];
+      let vuelven = 0;
+      plan.grupos.forEach(g => {
+          g.lineas.forEach(l => {
+              f1.push(`<tr><td class="c gr">G${g.n}</td><td class=b>${esc(l.padre)}</td>`
+                  + `<td class="c ${l.tipo === 'PREPACK' ? 'pk' : ''}">${l.tipo}</td>`
+                  + `<td>${esc(l.g)}</td><td class=c>${l.n}</td><td class=c>${l.cap}</td>`
+                  + `<td class="c b">${l.mv.length}</td></tr>`);
+              l.mv.forEach((m, i) => f2.push(
+                  `<tr><td class="c gr">G${g.n}</td><td class=b>${esc(m.padre)}</td>`
+                  + `<td class="c ${m.tipo === 'PREPACK' ? 'pk' : ''}">${m.tipo}</td>`
+                  + `<td class=c>${i + 1}/${l.mv.length}</td>`
+                  + `<td class=o>${esc(m.deU)}</td><td class=lpn>${esc(m.deLpn)}</td>`
+                  + `<td class="c t">${esc(m.deQue)}</td><td class="c b">${m.pares}</td>`
+                  + `<td class=d>${esc(m.aU)}</td><td class=lpn>${esc(m.aLpn)}</td>`
+                  + `<td class="c t">${esc(m.aQue)}</td>`
+                  + `<td class=c>${m.tenia}</td><td class="c b">${m.queda}</td><td class=c>${m.cap}</td>`
+                  + `<td class=chk></td></tr>`));
+          });
+          /* La hoja del montacarguista va por PALETA: un destino que recibe seis baja una
+             sola vez. Por eso los destinos se juntan antes de escribirlos. */
+          const dest = new Map();
+          let n = 0;
+          g.lineas.forEach(l => l.mv.forEach(m => {
+              f3.push(`<tr><td class="c gr">G${g.n}</td><td class=c>${++n}</td>`
+                  + `<td class=o>${esc(m.deU)}</td><td class=lpn>${esc(m.deLpn)}</td>`
+                  + `<td class="c b">${m.pares}</td>`
+                  + `<td class=acc><b>BAJAR</b> · no vuelve, la ubicación queda libre</td>`
+                  + `<td class=chk></td></tr>`);
+              const e = dest.get(m.aU) || { lpn: m.aLpn, tenia: m.tenia, queda: m.queda };
+              e.tenia = Math.min(e.tenia, m.tenia);
+              e.queda = Math.max(e.queda, m.queda);
+              dest.set(m.aU, e);
+          }));
+          [...dest.keys()].sort().forEach(u => {
+              const e = dest.get(u);
+              vuelven++;
+              f3.push(`<tr class=sube><td class="c gr">G${g.n}</td><td class=c>${++n}</td>`
+                  + `<td class=d>${esc(u)}</td><td class=lpn>${esc(e.lpn)}</td>`
+                  + `<td class="c b">${e.tenia}</td>`
+                  + `<td class=acc><b>BAJAR y VOLVER A SUBIR</b> a la misma ubicación · se va con ${e.queda}</td>`
+                  + `<td class=chk></td></tr>`);
+          });
+      });
+
+      const win = window.open('', '_blank');
+      if (!win) {
+          showPremiumAlert('EL NAVEGADOR BLOQUEÓ LA VENTANA',
+              'Permite las ventanas emergentes de este sitio para poder imprimir.', 'warning');
+          return;
+      }
+      win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8">
+        <title>Consolidación de reserva · ${esc(fecha || '')}</title><style>${CSS}</style></head><body>
+        <div class="noimp">${plan.paletas} paletas · ${plan.grupos.length} grupos
+          <button onclick="window.print()">🖨️ Imprimir o guardar en PDF</button></div>
+        <h1>Consolidación de reserva — plan del turno</h1>
+        <div class=sub>Reserva de: ${esc(sello || fecha || '')} &nbsp;·&nbsp; ${plan.lineas.length} artículos
+          &nbsp;·&nbsp; <b>los grupos van en orden: el 1 es el que más rinde</b></div>
+        <div class=caja>
+          <div class=k><b>${plan.paletas}</b><span>PALETAS QUE BAJAN</span></div>
+          <div class=k><b>${plan.paletas}</b><span>UBICACIONES LIBRES</span></div>
+          <div class=k><b>${plan.solid}</b><span>DE SOLID</span></div>
+          <div class=k><b>${plan.prepack}</b><span>DE PREPACK</span></div>
+          <div class=k><b>${vuelven}</b><span>PALETAS QUE VUELVEN</span></div>
+        </div>
+        <h2>Hoja 1 · REPARTO</h2>
+        <div class=q>Una fila por artículo. Si esta noche solo alcanza el grupo 1, es el trabajo que más libera.</div>
+        <table><tr><th>GRUPO</th><th>ARTÍCULO</th><th>TIPO</th><th>GENDER RIMS</th>
+          <th>UBIC. HOY</th><th>PALETA LLENA</th><th>PALETAS A BAJAR</th></tr>${f1.join('')}</table>
+        <h2>Hoja 2 · OPERARIOS</h2>
+        <div class=q>En SOLID la columna dice la <b>talla</b>; en PREPACK, el <b>SKU completo</b>.
+          Si lo de la izquierda no está en lo de la derecha, esa caja no va ahí.</div>
+        <table><tr><th>GRUPO</th><th>ARTÍCULO</th><th>TIPO</th><th>PALETA</th>
+          <th>SACAR DE</th><th>LPN</th><th>TALLA / SKU</th><th>CANT.</th>
+          <th>PONER EN</th><th>LPN</th><th>TALLA / SKU</th><th>TENÍA</th><th>QUEDA</th><th>TOPE</th><th>OK</th></tr>
+          ${f2.join('')}</table>
+        <h2>Hoja 3 · MONTACARGUISTA</h2>
+        <div class=q>Sin artículo y sin talla: ubicación, LPN, cantidad y qué hacer.</div>
+        <table><tr><th>GRUPO</th><th>ORDEN</th><th>UBICACIÓN</th><th>LPN</th><th>CANTIDAD</th>
+          <th>QUÉ HACER</th><th>OK</th></tr>${f3.join('')}</table>
+        </body></html>`);
+      win.document.close();
+      win.focus();
+  };
+
+  /* ══════════════════════════════════════════════════════════════════════════════
    * EL EXCEL DE LA CONSOLIDACIÓN — tres hojas, y es la orden de trabajo
    * ══════════════════════════════════════════════════════════════════════════════
    *
@@ -24762,12 +24914,15 @@ const renderRFSection = (container) => {
    * Se arma con el stock que la pantalla está mirando —el de la hora si el robot lo
    * publicó—, no con la foto del día: de nada sirve mandar a alguien a una ubicación de
    * anoche. Ver `planDeConsolidacion`. */
-  const exportarFragmentados = (datos, fecha) => {
+  /* EL PLAN LO ARMAN LOS DOS PAPELES CON ESTA MISMA FUNCION. Si el Excel y el PDF lo
+     calcularan cada uno por su lado, el dia que se corrija una regla uno de los dos
+     quedaria mintiendo — y son el mismo trabajo, repartido a la misma gente. */
+  const planParaElPapel = () => {
       const crudas = _reservaCrudaParaPlan;
       if (!crudas || !crudas.length) {
           showPremiumAlert('SIN STOCK DE RESERVA',
               'No se pudo leer el stock de reserva para armar el plan. Vuelve a entrar al módulo.', 'warning');
-          return;
+          return null;
       }
       const plan = planDeConsolidacion(crudas, indexarMaestro(), {
           serieDe: (padre) => { try { return zonasService.serieDe(padre); } catch (e) { return null; } }
@@ -24775,8 +24930,19 @@ const renderRFSection = (container) => {
       if (!plan || !plan.paletas) {
           showPremiumAlert('NADA QUE CONSOLIDAR',
               'Con el stock de ahora no hay ninguna paleta que se pueda juntar con otra.', 'info');
-          return;
+          return null;
       }
+      return plan;
+  };
+
+  const abrirPdfConsolidacion = (fecha) => {
+      const plan = planParaElPapel();
+      if (plan) imprimirConsolidacion(plan, fecha || getLogicalDate(), window.__reservaHoraSello);
+  };
+
+  const exportarFragmentados = (datos, fecha) => {
+      const plan = planParaElPapel();
+      if (!plan) return;
 
       const reparto = [];
       const operarios = [];
@@ -24841,6 +25007,8 @@ const renderRFSection = (container) => {
       const paraExcel = (base && (base.fragmentados || []).length) ? base : datos;
       const btn = raiz.querySelector('#btn_xls_frag');
       if (btn) btn.addEventListener('click', () => exportarFragmentados(paraExcel, paraExcel.fecha));
+      const btnPdf = raiz.querySelector('#btn_pdf_frag');
+      if (btnPdf) btnPdf.addEventListener('click', () => abrirPdfConsolidacion(paraExcel.fecha));
 
       /* FIJAR BASE. Se pregunta antes, con los numeros a la vista, porque lo que se pierde no
          es la lista -la foto de ese dia queda- sino el avance acumulado contra la anterior. */
