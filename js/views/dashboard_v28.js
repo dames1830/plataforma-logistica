@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0416';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0417';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0416';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0416';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0416';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0416';
-import * as metasService from '../services_v245/metasService.js?v=29.0416';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0416';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0416';
+import * as adminService from '../services_v245/adminService.js?v=29.0417';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0417';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0417';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0417';
+import * as metasService from '../services_v245/metasService.js?v=29.0417';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0417';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0417';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0416';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0416';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0416';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0416';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0416';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0416';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0416';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0416';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0416';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0416';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0416';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0416';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0416';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0416';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0416';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0416';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0416';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0416';
-import { montarSlotting } from './slotting.js?v=29.0416';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0417';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0417';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0417';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0417';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0417';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0417';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0417';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0417';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0417';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0417';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0417';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0417';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0417';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0417';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0417';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0417';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0417';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0417';
+import { montarSlotting } from './slotting.js?v=29.0417';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0416';
+const VERSION = '29.0417';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1367,14 +1367,35 @@ almacenajeTasksCache = almacenajeTasksCache.map(t => {
  * importa es la jornada de hoy.
  */
 const DIAS_EN_DISCO = 3;
-let _cuotaAvisada = false;
+/* En que estado quedo el disco la ultima vez: 'ok' (entro todo), 'recorte' (se
+   guardaron solo los ultimos dias) o 'lleno' (no entro ni un dia). Se avisa solo
+   cuando el estado CAMBIA, no en cada guardado -antes el aviso de recorte salia en
+   todos y llenaba la consola-. */
+let _estadoDisco = 'ok';
+
+/* Que esta ocupando el localStorage de esta PC. Va DENTRO del aviso, para que la
+   primera vez que el disco se llene se vea al toque quien lo llena, sin tener que
+   correr nada a mano. */
+const _diagnosticoDisco = () => {
+    try {
+        let total = 0; const claves = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            const n = ((localStorage.getItem(k) || '').length + k.length);
+            total += n; claves.push([k, n]);
+        }
+        claves.sort((x, y) => y[1] - x[1]);
+        const top = claves.slice(0, 3).map(([k, n]) => k + '=' + Math.round(n / 1024) + 'KB').join(', ');
+        return 'Disco usado ~' + (total / 1048576).toFixed(1) + ' MB. Lo mas pesado: ' + top + '.';
+    } catch (e) { return ''; }
+};
 
 const safeSaveAlmacenajeTasksCache = () => {
     const CLAVE = 'logistics_sync_v24_almacenaje_tasks';
     const escribir = (lista) => localStorage.setItem(CLAVE, JSON.stringify(lista));
     const esCuota = (e) => e && (e.name === 'QuotaExceededError' || e.code === 22
                               || e.name === 'NS_ERROR_DOM_QUOTA_REACHED');
-    try { escribir(almacenajeTasksCache); _cuotaAvisada = false; return; }
+    try { escribir(almacenajeTasksCache); _estadoDisco = 'ok'; return; }
     catch (e) {
         if (!esCuota(e)) { console.warn('[PULSE] No se pudo guardar en esta PC:', e && e.message); return; }
     }
@@ -1390,10 +1411,12 @@ const safeSaveAlmacenajeTasksCache = () => {
         if (recorte.length === almacenajeTasksCache.length) continue;   // no recorta nada, no insistir
         try {
             escribir(recorte);
-            console.warn(`🧹 [PULSE] El disco de esta PC estaba lleno: se guardaron las `
-                + `${recorte.length} tareas desde el ${corte} (de ${almacenajeTasksCache.length}). `
-                + `Las demas siguen en el servidor y en pantalla.`);
-            _cuotaAvisada = false;
+            if (_estadoDisco !== 'recorte') {
+                console.warn('🧹 [PULSE] El disco de esta PC esta lleno: se guardaron las '
+                    + recorte.length + ' tareas desde el ' + corte + ' (de ' + almacenajeTasksCache.length
+                    + '). Las demas siguen en el servidor y en pantalla. ' + _diagnosticoDisco());
+            }
+            _estadoDisco = 'recorte';
             return;
         } catch (e2) { /* siguiente escalon */ }
     }
@@ -1402,12 +1425,12 @@ const safeSaveAlmacenajeTasksCache = () => {
        al recargar reviva tareas viejas, y se avisa UNA sola vez -no en cada
        guardado, que es justo lo que llenaba la consola-. */
     try { localStorage.removeItem(CLAVE); } catch (e3) { /* ni eso */ }
-    if (!_cuotaAvisada) {
-        _cuotaAvisada = true;
+    if (_estadoDisco !== 'lleno') {
         console.error('❌ [PULSE] El almacenamiento de esta PC esta lleno y no entra ni la '
             + 'jornada de hoy. El trabajo NO se pierde: se guarda en el servidor. '
-            + 'Conviene vaciar los datos del sitio en el navegador.');
+            + 'Conviene vaciar los datos del sitio en el navegador. ' + _diagnosticoDisco());
     }
+    _estadoDisco = 'lleno';
 };
 
 if (migratedInit) {
@@ -5302,7 +5325,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0416');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0417');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17838,7 +17861,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0416 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0417 | MOBILE PORTAL
                             </div>
                     </div>
 
