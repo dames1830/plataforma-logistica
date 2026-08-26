@@ -25,6 +25,16 @@
 /** La clave donde se guarda. Va con el usuario adentro. */
 const claveDe = (usuario) => `deam_tema_${usuario || 'anon'}`;
 
+/**
+ * El ultimo tema que se eligio en ESTA computadora, sea quien sea.
+ *
+ * Hace falta para el login y la pantalla de carga: ahi todavia no se sabe quien
+ * va a entrar -no hay sesion- y sin esto arrancaban siempre en el tema de
+ * fabrica. Daniel lo vio enseguida: elegia Power BI, cerraba sesion, y el login
+ * volvia a salir azul noche.
+ */
+const CLAVE_ULTIMO = 'deam_tema_ultimo';
+
 /** El tema que se usa cuando la persona todavia no eligio ninguno. */
 export const TEMA_POR_DEFECTO = 'indigo';
 
@@ -75,6 +85,10 @@ export const getTema = (usuario) => {
   try {
     const g = localStorage.getItem(claveDe(usuario));
     if (g && existeTema(g)) return g;
+    // Sin nada guardado para esta persona, se hereda el ultimo de la maquina:
+    // es mucho mejor que saltar de golpe al tema de fabrica.
+    const u = localStorage.getItem(CLAVE_ULTIMO);
+    if (u && existeTema(u)) return u;
   } catch (e) { /* navegador con el almacenamiento bloqueado: sigue con el defecto */ }
   return TEMA_POR_DEFECTO;
 };
@@ -94,6 +108,9 @@ export const setTema = (id, usuario) => {
   const tema = aplicarTema(id);
   try {
     localStorage.setItem(claveDe(usuario), tema);
+    // Y aparte, suelto: es el que van a usar el login y la pantalla de carga,
+    // que corren antes de saber quien entra.
+    localStorage.setItem(CLAVE_ULTIMO, tema);
   } catch (e) {
     console.warn('[TEMA] No se pudo guardar la eleccion:', e);
   }

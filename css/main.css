@@ -250,7 +250,10 @@ select option:hover {
 /* Botón Píldora Premium */
 .btn-pill {
   background: linear-gradient(135deg, var(--sky-deep) 0%, var(--blue) 100%) !important;
-  color: var(--text-strong) !important;
+  /* --on-primary y no --text-strong: el boton es un degradado de color, asi que
+     el texto tiene que ser el que va ENCIMA de un acento. Con --text-strong
+     quedaba casi negro sobre azul en los temas claros. */
+  color: var(--on-primary) !important;
   border: none !important;
   padding: 0.95rem !important;
   border-radius: 50px !important;
@@ -332,7 +335,7 @@ select option:hover {
 }
 
 .forgot-password-link {
-  color: var(--sky) !important;
+  color: var(--sky-deep) !important;
   text-decoration: none;
   transition: color 0.2s;
 }
@@ -375,14 +378,28 @@ select option:hover {
   background: linear-gradient(90deg, var(--sky-deep), var(--primary-2));
   box-shadow: 0 0 10px rgba(var(--sky-rgb), 0.8);
   border-radius: 10px;
-  animation: progressInfinite 2s infinite ease-in-out;
+  /* Sin animacion en bucle: el ancho lo pone el arranque segun lo que de verdad
+     lleva cargado, y esta transicion solo suaviza el salto entre un paso y otro.
+     Antes daba una vuelta infinita que crecia hasta la mitad y se devolvia, y
+     desde afuera parecia que la carga se trababa siempre en el mismo sitio. */
+  transition: width 0.35s ease-out;
 }
 
-@keyframes progressInfinite {
-  0% { width: 0%; left: 0%; }
-  50% { width: 50%; }
-  100% { width: 0%; left: 100%; }
+/* El iconito de la pestaña, en grande, mientras carga. */
+.boot-icono {
+  width: 68px;
+  height: 68px;
+  border-radius: 16px;
+  margin-bottom: 1.6rem;
+  box-shadow: 0 10px 30px -8px rgba(var(--shadow-rgb), 0.45);
 }
+
+/* Al terminar, la capa de carga se desvanece y deja ver la plataforma. */
+#bootScreen {
+  opacity: 1;
+  transition: opacity 0.35s ease-out;
+}
+#bootScreen.cerrando { opacity: 0; pointer-events: none; }
 
 .error-message {
   color: var(--danger);

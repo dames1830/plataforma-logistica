@@ -720,3 +720,12 @@ html[data-tema="negro"] #sync-indicator .sync-tooltip {
   line-height: 1.5;
   margin: 0;
 }
+
+/* El boton LOGIN es un degradado de dos azules. En el tema negro esos dos
+   colores se vuelven grises claros y el texto blanco encima no se leia
+   (2,1:1). Ahi va relleno solido, el mismo de todos los botones. */
+html[data-tema="negro"] .btn-pill {
+  background: var(--btn-fill) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}

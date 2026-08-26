@@ -1,10 +1,93 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0384';
-import * as adminService from './services_v245/adminService.js?v=29.0384';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0384';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0384';
+import { getSession, logout } from './services_v245/auth.js?v=29.0385';
+import * as adminService from './services_v245/adminService.js?v=29.0385';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0385';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0385';
+
+
+/**
+ * LA PANTALLA DE CARGA
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * Va en una capa aparte -no dentro de #app- a proposito. Antes ocupaba el mismo
+ * sitio donde despues se dibuja la plataforma, asi que desaparecia en el instante
+ * en que el dashboard escribia: la barra nunca llegaba al final porque la pantalla
+ * ya no estaba. Siendo una capa encima, el dashboard se dibuja DEBAJO y la barra
+ * puede terminar su recorrido antes de destaparlo.
+ *
+ * LA BARRA MARCA AVANCE DE VERDAD. Antes daba una vuelta infinita que crecia hasta
+ * la mitad y se devolvia, y parecia trabada siempre en el mismo punto. Ahora cada
+ * paso real del arranque -sincronizar con la nube, bajar el modulo, dibujar- sube
+ * un techo, y entre paso y paso la barra se acerca a ese techo sin alcanzarlo. Asi
+ * nunca retrocede, nunca se planta del todo, y el 100% coincide con que la
+ * plataforma esta lista.
+ */
+const pantallaCarga = {
+  valor: 0,
+  techo: 0,
+  timer: null,
+  capa: null,
+
+  mostrar(version) {
+    if (this.capa) return;
+    const capa = document.createElement('div');
+    capa.id = 'bootScreen';
+    capa.className = 'app-loading-layout';
+    capa.innerHTML = `
+      <div style="text-align:center; max-width:420px; width:90%; display:flex; flex-direction:column; align-items:center;">
+        <img src="favicon.svg" alt="" class="boot-icono">
+        <h2 style="margin:0; font-weight:300; letter-spacing:4px; font-size:1.8rem; color:var(--text-strong);">
+          LOGÍSTICA <span style="font-weight:900; background:linear-gradient(to right, var(--sky-deep), var(--primary-2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">DEAM1830</span>
+        </h2>
+        <div class="premium-progress-bar"><div class="premium-progress-fill"></div></div>
+        <p style="margin-top:1.5rem; font-size:0.85rem; opacity:0.6; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:var(--text-muted);">
+          INICIANDO ENTORNO ${version}...
+        </p>
+      </div>`;
+    document.body.appendChild(capa);
+    this.capa = capa;
+    this.hasta(12);
+    clearInterval(this.timer);
+    this.timer = setInterval(() => {
+      // Se acerca al techo sin llegar: siempre se mueve, pero no promete de mas.
+      if (this.valor < this.techo) {
+        this.valor += Math.max(0.25, (this.techo - this.valor) * 0.07);
+        this.pintar();
+      }
+    }, 110);
+  },
+
+  pintar() {
+    const f = this.capa && this.capa.querySelector('.premium-progress-fill');
+    if (f) f.style.width = Math.min(100, this.valor).toFixed(1) + '%';
+  },
+
+  /** Un paso del arranque termino: sube el techo hasta donde puede llegar ahora. */
+  hasta(pct) {
+    if (pct > this.techo) this.techo = pct;
+    this.pintar();
+  },
+
+  /**
+   * Todo listo. La barra completa el recorrido y RECIEN AHI se destapa la
+   * plataforma: la pausa es corta pero suficiente para ver que llego al final,
+   * que es lo que le faltaba.
+   */
+  async cerrar() {
+    if (!this.capa) return;
+    clearInterval(this.timer);
+    this.valor = 100;
+    this.techo = 100;
+    this.pintar();
+    await new Promise(r => setTimeout(r, 340));
+    this.capa.classList.add('cerrando');
+    await new Promise(r => setTimeout(r, 360));
+    if (this.capa && this.capa.parentNode) this.capa.parentNode.removeChild(this.capa);
+    this.capa = null;
+  }
+};
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -347,7 +430,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0384';
+      this.APP_VERSION = 'v29.0385';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -576,32 +659,15 @@ class App {
     // porque las tablas se insertan con innerHTML desde 312 sitios distintos.
     observarTablas();
     try {
-        if (this.root) {
-            // [CRÍTICO] Limpiar clases heredadas para evitar bugs de desbordamiento de scroll y franjas horizontales
-            this.root.className = 'app-loading-layout';
-            this.root.innerHTML = `
-            <div style="text-align: center; max-width: 420px; width: 90%; display: flex; flex-direction: column; align-items: center;">
-                <h2 style="margin:0; font-weight: 300; letter-spacing: 4px; font-size: 1.8rem; color: var(--text-strong); text-shadow: 0 0 20px rgba(var(--ink-rgb), 0.1);">
-                    LOGÍSTICA <span style="font-weight: 900; background: linear-gradient(to right, var(--sky-deep), var(--primary-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">DEAM1830</span>
-                </h2>
-                <div class="premium-progress-bar">
-                    <div class="premium-progress-fill"></div>
-                </div>
-                <p style="margin-top: 1.5rem; font-size: 0.85rem; opacity: 0.6; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); animation: pulseLoadingText 1.5s infinite alternate;">
-                    INICIANDO ENTORNO ${this.APP_VERSION}...
-                </p>
-            </div>
-            <style>
-              @keyframes pulseLoadingText {
-                0% { opacity: 0.4; }
-                100% { opacity: 0.8; }
-              }
-            </style>`;
-        }
-        
+        // La pantalla de carga va en su propia capa (ver pantallaCarga): asi el
+        // dashboard se dibuja debajo y la barra alcanza a llegar al final.
+        if (this.root) this.root.className = '';
+        pantallaCarga.mostrar(this.APP_VERSION);
+
         // 1. Sincronización proactiva con la nube
         await adminService.initializeAdminData().catch(e => console.warn("Sync error:", e));
-        
+        pantallaCarga.hasta(45);          // la nube ya contesto
+
         const user = getSession();
 
         // El tema de ESTA persona. El <script> de arranque de index.html ya puso
@@ -609,10 +675,14 @@ class App {
         // esta PC entra otro usuario, el suyo es otro. Aca ya se sabe quien es.
         aplicarTemaDeUsuario(user && user.username);
 
-        this.render(user);
+        await this.render(user);
+        await pantallaCarga.cerrar();     // la barra llega al 100 y recien ahi se destapa
 
     } catch (err) {
         console.error("[BOOT] Error Crítico:", err);
+        // Pase lo que pase la capa se va: si se quedara puesta taparia la
+        // plataforma entera y no habria forma de usar nada.
+        await pantallaCarga.cerrar();
     }
   }
 
@@ -672,6 +742,7 @@ class App {
         if (user) {
             // La MISMA dirección que precargó adelantarDashboard(), o se baja dos veces.
             const { renderDashboard } = await import(this.urlDashboard());
+            pantallaCarga.hasta(78);      // el modulo del panel ya esta compilado
 
             // NO se borra la pantalla de carga antes de llamar al dashboard.
             //
@@ -690,6 +761,7 @@ class App {
             });
         } else {
             const { renderLogin } = await import(`./views/login.js?v=${this.APP_VERSION}`);
+            pantallaCarga.hasta(85);      // el login ya esta listo para dibujarse
             this.root.innerHTML = '';
             renderLogin(this.root, () => {
                 this.isRendered = false;
