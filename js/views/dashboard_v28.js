@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0410';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0411';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0410';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0410';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0410';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0410';
-import * as metasService from '../services_v245/metasService.js?v=29.0410';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0410';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0410';
+import * as adminService from '../services_v245/adminService.js?v=29.0411';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0411';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0411';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0411';
+import * as metasService from '../services_v245/metasService.js?v=29.0411';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0411';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0411';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0410';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0410';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0410';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0410';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0410';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0410';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0410';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0410';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0410';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0410';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0410';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0410';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0410';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0410';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0410';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0410';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0410';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0410';
-import { montarSlotting } from './slotting.js?v=29.0410';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0411';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0411';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0411';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0411';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0411';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0411';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0411';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0411';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0411';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0411';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0411';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0411';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0411';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0411';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0411';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0411';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0411';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0411';
+import { montarSlotting } from './slotting.js?v=29.0411';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0410';
+const VERSION = '29.0411';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1371,19 +1371,65 @@ if (migratedInit) {
 }
 
 // --- PERSISTENCIA AVANZADA (IndexedDB vía csvHub) ---
-const updateSyncIndicator = (status, text) => {
+/* EL INDICADOR NO PUEDE PARPADEAR.
+ *
+ * Daniel, 26-ago-2026: *"el circular que esta al inferior derecho pasa rapido del
+ * check verde al amarillo, verde, amarillo, como que se bloquea, y hay un parpadeo
+ * en la pantalla"*.
+ *
+ * La causa es que varios guardados seguidos pintan cada uno su `working` y su
+ * `online`: el reenvio de tareas pendientes recorre las sucias DE A UNA y cada
+ * vuelta enciende y apaga la luz. Con cinco pendientes son diez cambios en pocos
+ * segundos, y eso es exactamente lo que se ve.
+ *
+ * DOS FRENOS, los dos aca adentro para que valgan sin importar quien llame:
+ *   1. Si el estado no cambia, solo se cambia el texto. Reescribir la clase con el
+ *      mismo valor igual reinicia la animacion del CSS.
+ *   2. Un estado tiene que verse al menos MINIMO_VISIBLE. Lo que llegue antes se
+ *      guarda y se aplica al cumplirse el tiempo; si llegan varios, gana el ULTIMO,
+ *      que es el estado de verdad. Asi diez cambios en un segundo se ven como uno.
+ */
+const MINIMO_VISIBLE = 700;
+let _syncUltimo = { status: null, text: null, cuando: 0 };
+let _syncPendiente = null, _syncReloj = null;
+
+const _pintarSync = (status, text) => {
   const el = document.getElementById('sync-indicator');
   const icon = document.getElementById('sync-icon');
   const txt = document.getElementById('sync-text');
   if (!el) return;
-  el.className = `sync-${status}`;
-  if (icon) icon.innerText = status === 'online' ? '✅' : (status === 'working' ? '⏳' : '❌');
-  if (txt) txt.innerText = text;
+  if (_syncUltimo.status !== status) {
+      el.className = `sync-${status}`;
+      if (icon) icon.innerText = status === 'online' ? '✅' : (status === 'working' ? '⏳' : '❌');
+  }
+  if (txt && _syncUltimo.text !== text) txt.innerText = text;
+  _syncUltimo = { status, text, cuando: Date.now() };
 };
 
-const saveAlmacenajeTasks = async (partialTask = null) => {
+const updateSyncIndicator = (status, text) => {
+  const falta = MINIMO_VISIBLE - (Date.now() - _syncUltimo.cuando);
+  /* Mismo estado: el texto puede cambiar cuando quiera, no hay parpadeo posible. */
+  if (status === _syncUltimo.status || falta <= 0) {
+      if (_syncReloj) { clearTimeout(_syncReloj); _syncReloj = null; _syncPendiente = null; }
+      _pintarSync(status, text);
+      return;
+  }
+  _syncPendiente = { status, text };
+  if (!_syncReloj) {
+      _syncReloj = setTimeout(() => {
+          _syncReloj = null;
+          const p = _syncPendiente; _syncPendiente = null;
+          if (p) _pintarSync(p.status, p.text);
+      }, falta);
+  }
+};
+
+/* `enTanda` = esta llamada va DENTRO de un lote y no toca el indicador: lo enciende
+   y lo apaga quien manda el lote, una sola vez. Sin esto, reenviar cinco tareas
+   pendientes daba diez cambios de luz en pocos segundos. */
+const saveAlmacenajeTasks = async (partialTask = null, enTanda = false) => {
   try {
-      updateSyncIndicator('working', 'GUARDANDO EN LA NUBE...');
+      if (!enTanda) updateSyncIndicator('working', 'GUARDANDO EN LA NUBE...');
       
       // 1. Persistencia LOCAL inmediata
       safeSaveAlmacenajeTasksCache();
@@ -1413,11 +1459,13 @@ const saveAlmacenajeTasks = async (partialTask = null) => {
                 almacenajeTasksCache.forEach(t => delete t._dirty);
             }
             safeSaveAlmacenajeTasksCache();
-            updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
-            setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
+            if (!enTanda) {
+                updateSyncIndicator('online', 'NUBE ACTUALIZADA ✅');
+                setTimeout(() => updateSyncIndicator('online', `SISTEMA v${VERSION} ONLINE`), 3000);
+            }
         } else {
             console.warn("⚠️ [SYNC] Error de sincronización. Los datos permanecen seguros en tu PC.");
-            updateSyncIndicator('offline', 'PENDIENTE DE SINCRONIZACIÓN');
+            if (!enTanda) updateSyncIndicator('offline', 'PENDIENTE DE SINCRONIZACIÓN');
         }
         // DEVUELVE SI LLEGÓ. Antes no devolvía nada, así que quien la llamaba no podía saber
         // si el guardado había funcionado — y todos la llamaban sin esperarla. El 07-ago-2026
@@ -1426,7 +1474,7 @@ const saveAlmacenajeTasks = async (partialTask = null) => {
         return !!success;
     } catch (e) {
         console.error("[SYNC] Error crítico:", e);
-        updateSyncIndicator('offline', 'FALLO CRÍTICO DE CONEXIÓN');
+        if (!enTanda) updateSyncIndicator('offline', 'FALLO CRÍTICO DE CONEXIÓN');
         return false;
     }
 };
@@ -5210,7 +5258,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0410');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0411');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -12940,12 +12988,40 @@ const renderRFSection = (container) => {
                    * Mandando cada tarea por separado, el servidor la reemplaza POR ID y no toca
                    * ninguna otra: lo que esta PC no sepa, no lo puede romper.
                    */
-                  const sucias = almacenajeTasksCache.filter(t => t && t._dirty);
+                  /* UNA SOLA LUZ PARA TODA LA TANDA. Antes cada tarea encendia y apagaba
+                     el indicador, asi que reenviar cinco daba diez cambios en pocos
+                     segundos: el parpadeo que reporto Daniel. Ahora se enciende una vez
+                     al empezar y se apaga una vez al terminar, con el resultado real.
+
+                     Y UNA TAREA QUE NO ENTRA NO SE REINTENTA PARA SIEMPRE. Si el servidor
+                     la rechaza, `_dirty` no se limpia y volvia a mandarse cada 20 segundos
+                     sin fin. Despues de 3 intentos fallidos se deja descansar 5 minutos:
+                     el dato sigue guardado en la PC y se vuelve a intentar, pero deja de
+                     martillar. Es la misma leccion del 500 que quedo clavado. */
+                  const sucias = almacenajeTasksCache.filter(t => t && t._dirty
+                      && !(window.__reintentoEspera && window.__reintentoEspera[t.id] > Date.now()));
                   if (sucias.length) {
                       console.log(`📡 [OFFLINE RECOVERY] ${sucias.length} tarea(s) sin sincronizar. Se reenvían de a una.`);
+                      updateSyncIndicator('working', `SUBIENDO ${sucias.length} PENDIENTE${sucias.length > 1 ? 'S' : ''}...`);
+                      window.__reintentoFallos = window.__reintentoFallos || {};
+                      window.__reintentoEspera = window.__reintentoEspera || {};
+                      let bien = 0;
                       for (const sucia of sucias) {
-                          await saveAlmacenajeTasks(sucia);
+                          const ok = await saveAlmacenajeTasks(sucia, true);
+                          if (ok) { bien++; delete window.__reintentoFallos[sucia.id]; }
+                          else {
+                              const n = (window.__reintentoFallos[sucia.id] || 0) + 1;
+                              window.__reintentoFallos[sucia.id] = n;
+                              if (n >= 3) {
+                                  window.__reintentoEspera[sucia.id] = Date.now() + 300000;
+                                  console.warn(`⏸️ [OFFLINE RECOVERY] La tarea ${sucia.id} fallo ${n} veces; `
+                                      + `se reintenta en 5 minutos. El dato sigue guardado en esta PC.`);
+                              }
+                          }
                       }
+                      updateSyncIndicator(bien === sucias.length ? 'online' : 'offline',
+                          bien === sucias.length ? `SISTEMA v${VERSION} ONLINE`
+                                                 : `${sucias.length - bien} PENDIENTE(S) SIN SUBIR`);
                   }
               }
 
@@ -17710,7 +17786,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0410 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0411 | MOBILE PORTAL
                             </div>
                     </div>
 
