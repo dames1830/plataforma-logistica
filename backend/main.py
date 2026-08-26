@@ -839,6 +839,28 @@ def versiones_de_areas():
         return {"status": "error", "message": str(e)}
 
 
+@app.delete("/api/logistics/{area}/{snapshot_date}")
+def borrar_snapshot(area: str, snapshot_date: str, request: Request):
+    """Borra UN dia de UN area. Para quitar una jornada mal metida -una fecha
+    tecleada mal, o un dato de prueba-. Exige admin: es destructivo y no lo llama
+    ningun robot. Nunca toca 'MASTER' -los datos singleton- ni el area 'users'."""
+    if not es_admin(request):
+        return JSONResponse(status_code=403, content={
+            "status": "error", "message": "Solo un administrador con la sesion iniciada puede borrar un dia."})
+    if snapshot_date == "MASTER" or area == "users":
+        return JSONResponse(status_code=400, content={
+            "status": "error", "message": "No se puede borrar por aca un dato maestro ni los usuarios."})
+    try:
+        conn = sqlite3.connect(db_path()); cur = conn.cursor()
+        cur.execute("DELETE FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?",
+                    (area, snapshot_date))
+        n = cur.rowcount
+        conn.commit(); conn.close()
+        return {"status": "success", "area": area, "date": snapshot_date, "borrados": n}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 @app.get("/api/logistics/{area}/dates")
 def list_area_dates(area: str):
     try:
