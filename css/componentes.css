@@ -69,6 +69,11 @@
 }
 .btn-icono:disabled { opacity: .45; cursor: not-allowed; }
 
+/* Borrar se queda en rojo. Sin fondo el dibujo es lo unico que avisa, asi que
+   el color tiene que seguir diciendo que esta accion no se deshace. */
+.btn-peligro { color: var(--danger); }
+.btn-peligro:hover { color: var(--danger); background: rgba(var(--danger-rgb), 0.12); border-color: rgba(var(--danger-rgb), 0.35); }
+
 /* El de Excel va en verde: es como se reconoce, y ahi el color SI significa
    algo. El tono sale del tema, asi que se lee en los cuatro. */
 .btn-excel { color: var(--success); }

@@ -40,20 +40,63 @@ const TRAZOS = {
   buffer:      '<path d="M6 3h12"/><path d="M6 21h12"/><path d="M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9"/><path d="M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/>',
   analisis_sku:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
   admin_pers:  '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17.5" cy="9" r="2.4"/><path d="M16 19c0-2.4 1.6-4 3.5-4"/>',
-  /* Exportar a Excel. La hoja con la cuadricula y la X: es como se reconoce el
-     Excel de un vistazo, sin necesidad de poner la palabra al lado. */
-  excel:       '<path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3v5h5"/><path d="m9 12.5 5 5"/><path d="m14 12.5-5 5"/>',
+  /* Exportar a Excel: cuadro verde y la X blanca, SIEMPRE IGUAL. Este es el
+     unico dibujo que no toma el color del tema, y a proposito: el Excel se
+     reconoce por su verde, y si cambiara de tono en cada tema dejaria de
+     leerse de un vistazo. Es lo que pidio Daniel: un solo diseno para todo.
+
+     El verde es #21A366, de la propia marca. Se eligio ese y no el mas oscuro
+     porque tiene que despegarse de los CUATRO fondos: sobre blanco da 3,2:1 y
+     sobre el negro 6,1:1. El #217346 se quedaba en 2,8:1 sobre el panel del
+     tema indigo, por debajo del minimo de un dibujo. */
+  excel:       '<rect x="3.4" y="3" width="17.2" height="18" rx="2.6" fill="#21A366" stroke="none"/>'
+             + '<path d="m9.1 9.1 5.8 5.8M14.9 9.1l-5.8 5.8" stroke="#FFFFFF" stroke-width="2.1"/>',
   imprimir:    '<path d="M7 8V3.5h10V8"/><rect x="4" y="8" width="16" height="7.5" rx="1.5"/><path d="M7 14h10v6.5H7z"/>',
-  wms:         '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3 2"/>',
+  wms:         '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>',
+  /* Los de las filas: refrescar, editar, borrar, guardar y cerrar. */
+  refrescar:   '<path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M20.5 3.5V10H14"/>',
+  editar:      '<path d="M4 20h4.2L19.6 8.6a2.2 2.2 0 0 0-3.1-3.1L5 17v3z"/><path d="m14.8 6.7 3.1 3.1"/>',
+  borrar:      '<path d="M4 7h16"/><path d="M10 4h4"/><path d="M6.6 7 7.6 20.2h8.8L17.4 7"/><path d="M10.4 10.6v6M13.6 10.6v6"/>',
+  guardar:     '<path d="M5 3h11l3.5 3.5V21H5z"/><path d="M8.5 3v5.5h6.5V3"/><path d="M8.5 21v-6.5h7V21"/>',
+  cerrar:      '<path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/>',
   config:      '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>'
+};
+
+/* EL COLOR DE LOS DIBUJOS DE ACCION.
+   Los del menu siguen al tema -toman `currentColor`- porque acompanan a un
+   texto y tienen que pesar lo mismo que el. Los de accion NO: van a un boton
+   sin nombre, y ahi el color es la mitad de lo que dice que hace el boton.
+   Por eso llevan un color fijo, el mismo en los cuatro temas, igual que el
+   de Excel.
+
+   CADA UNO SE ELIGIO MIDIENDO, no a ojo: el mismo color tiene que despegarse
+   del blanco de los temas claros Y del negro del tema oscuro. Eso deja una
+   franja estrecha de tonos medios. Los de aca dan, en el peor de sus fondos:
+
+     imprimir 3,63:1 | wms 3,63:1 | refrescar 3,45:1 | editar 3,25:1
+     borrar   4,00:1 | guardar 3,61:1 | cerrar 3,75:1 | excel 3,23:1
+
+   El minimo de un dibujo es 3:1. Un tono mas claro se pierde sobre blanco y
+   uno mas oscuro se pierde sobre negro: no hay margen para subirlos. */
+const COLORES = {
+  imprimir:  '#3B82F6',
+  wms:       '#D2691E',
+  refrescar: '#2563EB',
+  editar:    '#B8860B',
+  borrar:    '#E04A4A',
+  guardar:   '#0E7C86',
+  cerrar:    '#64748B'
 };
 
 /** Devuelve el <svg> listo para meter en el HTML. '' si el nombre no existe. */
 export const icono = (nombre, tam = 17) => {
   const t = TRAZOS[nombre];
   if (!t) return '';
+  // El de Excel trae sus colores dentro del propio dibujo -cuadro verde y X
+  // blanca-, asi que no toca el trazo de afuera.
+  const trazo = COLORES[nombre] || 'currentColor';
   return '<svg class="ic-svg" width="' + tam + '" height="' + tam + '" viewBox="0 0 24 24" '
-       + 'fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" '
+       + 'fill="none" stroke="' + trazo + '" stroke-width="1.7" stroke-linecap="round" '
        + 'stroke-linejoin="round" aria-hidden="true" focusable="false">' + t + '</svg>';
 };
 

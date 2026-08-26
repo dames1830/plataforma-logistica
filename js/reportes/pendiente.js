@@ -24,6 +24,8 @@
  * }
  */
 
+import { icono } from '../services_v245/iconos.js?v=29.0404';
+
 const nf = (n) => Number(n || 0).toLocaleString('es-PE');
 
 /** El % que le toca a la barra, siempre contra el mayor de su propio cuadro. */
@@ -161,7 +163,7 @@ function cuerpo(d, fecha, dias) {
                     ? 'día guardado' : 'días guardados'}</span>`
                 : ''}
           </div>
-          <button id="pend_bajar" class="pend-btn"${d ? '' : ' disabled'}>📥 DESCARGAR EXCEL</button>
+          <button id="pend_bajar" class="btn-icono btn-excel pend-btn"${d ? '' : ' disabled'} title="Descargar el pendiente en Excel">${icono('excel', 18)}</button>
         </div>
       </div>`;
 
@@ -276,13 +278,14 @@ function estilos() {
       filter:invert(64%) sepia(38%) saturate(1400%) hue-rotate(207deg) brightness(102%)}
     #pend input[type=date]:hover::-webkit-calendar-picker-indicator{
       filter:invert(88%) sepia(20%) saturate(900%) hue-rotate(200deg) brightness(115%)}
-    #pend .pend-btn{background:var(--btn-fill);color:var(--panel-deep);border:0;border-radius:9px;
-      padding:9px 16px;font-weight:800;font-size:var(--t-sm);letter-spacing:.4px;cursor:pointer}
+    /* Sin relleno: el dibujo de Excel es lo que se reconoce. Lo que queda aca
+       es solo lo que .btn-icono no cubre. */
+    #pend .pend-btn{font-weight:800;font-size:var(--t-sm);letter-spacing:.4px}
     #pend .pend-btn:disabled{opacity:.75;cursor:progress}
     /* La ruedita del botón mientras trabaja. Va acá y no en el CSS del tablero
        porque #pend se lleva su estilo puesto y se puede probar suelto. */
     #pend .pend-giro{display:inline-block;width:11px;height:11px;vertical-align:-1px;
-      border:2px solid rgba(var(--bg-rgb), .25);border-left-color:var(--panel-deep);border-radius:50%;
+      border:2px solid rgba(var(--ink-rgb), .25);border-left-color:currentColor;border-radius:50%;
       animation:pend-giro .7s linear infinite;margin-right:5px}
     @keyframes pend-giro{to{transform:rotate(360deg)}}
 
