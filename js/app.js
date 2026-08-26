@@ -1,10 +1,10 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0388';
-import * as adminService from './services_v245/adminService.js?v=29.0388';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0388';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0388';
+import { getSession, logout } from './services_v245/auth.js?v=29.0389';
+import * as adminService from './services_v245/adminService.js?v=29.0389';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0389';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0389';
 
 
 /**
@@ -432,7 +432,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0388';
+      this.APP_VERSION = 'v29.0389';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -675,7 +675,15 @@ class App {
         // El tema de ESTA persona. El <script> de arranque de index.html ya puso
         // uno, pero adivinando con la sesion que hubiera guardada antes: si en
         // esta PC entra otro usuario, el suyo es otro. Aca ya se sabe quien es.
-        aplicarTemaDeUsuario(user && user.username);
+        // El tema que el administrador le dejo puesto en Administracion > Usuarios.
+        // Viaja con la persona: entra desde cualquier PC y lo trae. Si ella ya
+        // eligio otro en esta maquina, manda el suyo.
+        let temaAsignado = null;
+        try {
+            const ficha = (adminService.getUsers() || []).find(u => u && user && u.username === user.username);
+            temaAsignado = ficha && ficha.tema;
+        } catch (e) { /* sin lista de usuarios: se sigue sin tema asignado */ }
+        aplicarTemaDeUsuario(user && user.username, temaAsignado);
 
         await this.render(user);
         await pantallaCarga.cerrar();     // la barra llega al 100 y recien ahi se destapa

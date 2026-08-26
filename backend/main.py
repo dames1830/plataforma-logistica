@@ -300,6 +300,16 @@ def init_db(ruta: Optional[str] = None):
     cursor.execute('CREATE TABLE IF NOT EXISTS archivos_nube (id INTEGER PRIMARY KEY AUTOINCREMENT, modulo TEXT NOT NULL, nombre TEXT NOT NULL, fecha TEXT NOT NULL, tamano INTEGER NOT NULL, contenido BLOB NOT NULL, subido_por TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_archivos_nube ON archivos_nube (modulo, fecha DESC)')
 
+    # 'tema' llego despues: el administrador le deja puesto un tema a cada usuario y ese
+    # es con el que abre la primera vez, en la PC que sea. Antes el tema vivia solo en el
+    # navegador, asi que cada maquina era un mundo y una persona nueva siempre arrancaba
+    # en el de fabrica. Queda NULL en los que ya estaban: eso significa 'sin asignar', y
+    # entonces manda el ultimo tema que se haya usado en esa computadora.
+    try:
+        cursor.execute('ALTER TABLE users ADD COLUMN tema TEXT')
+    except sqlite3.OperationalError:
+        pass          # ya existia: no es un error, es que la base ya estaba al dia
+
     # 'tipo' llegó después: en un mismo módulo conviven Slotting, Stock Activo y Stock
     # Reserva, y cada uno tiene que guardar SUS días. Sin esto los tres se repartían el
     # mismo cupo y agregar dos archivos dejaba el historial del Slotting en dos días.
@@ -735,28 +745,31 @@ def get_area_data(area: str, date: Optional[str] = None):
                         if username in db_usernames:
                             # Ya existía: se actualizan sus datos, su contraseña queda como está.
                             cursor.execute(
-                                "UPDATE users SET name=?, role=?, active=? WHERE username=?",
-                                (name, role, active, username))
+                                "UPDATE users SET name=?, role=?, active=?, tema=? WHERE username=?",
+                                (name, role, active, u.get('tema') or None, username))
                         else:
                             # Usuario nuevo que solo aparece en el snapshot: se crea con una
                             # contraseña imposible de adivinar. Hay que asignarle una desde
                             # el panel para que pueda entrar.
                             cursor.execute("""
-                                INSERT INTO users (username, password, name, role, active)
-                                VALUES (?, ?, ?, ?, ?)
+                                INSERT INTO users (username, password, name, role, active, tema)
+                                VALUES (?, ?, ?, ?, ?, ?)
                                 ON CONFLICT(username) DO UPDATE SET
                                     name=excluded.name,
                                     role=excluded.role,
-                                    active=excluded.active
-                            """, (username, hashear_password(secrets.token_urlsafe(24)), name, role, active))
+                                    active=excluded.active,
+                                    tema=excluded.tema
+                            """, (username, hashear_password(secrets.token_urlsafe(24)), name, role, active,
+                                  u.get('tema') or None))
                     conn.commit()
 
             # IMPORTANTE: la contraseña NO se devuelve nunca. Solo se informa si el
             # usuario tiene una asignada, para que el panel pueda mostrarlo.
-            cursor.execute("SELECT username, name, role, active, password FROM users")
+            cursor.execute("SELECT username, name, role, active, password, tema FROM users")
             rows = cursor.fetchall()
             data = [{"username": r[0], "name": r[1], "role": r[2],
-                     "active": bool(r[3]), "tiene_password": bool(r[4])} for r in rows]
+                     "active": bool(r[3]), "tiene_password": bool(r[4]),
+                     "tema": r[5]} for r in rows]
             conn.close()
             return {"area": "users", "data": data}
             

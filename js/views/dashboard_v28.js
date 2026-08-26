@@ -1,32 +1,32 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0388';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0389';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0388';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0388';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0388';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0388';
-import * as metasService from '../services_v245/metasService.js?v=29.0388';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0388';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0388';
+import * as adminService from '../services_v245/adminService.js?v=29.0389';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0389';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0389';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0389';
+import * as metasService from '../services_v245/metasService.js?v=29.0389';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0389';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0389';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0388';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0388';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0388';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0388';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0388';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0388';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0388';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0388';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0388';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0388';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0388';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0388';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0388';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0388';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0388';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0388';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0388';
-import { montarSlotting } from './slotting.js?v=29.0388';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0389';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0389';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0389';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0389';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0389';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0389';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0389';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0389';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0389';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0389';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0389';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0389';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0389';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0389';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0389';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0389';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0389';
+import { montarSlotting } from './slotting.js?v=29.0389';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -389,7 +389,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0388';
+const VERSION = '29.0389';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5202,7 +5202,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0388');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0389');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5442,12 +5442,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <th style="padding:0.8rem; text-align:left;">Usuario</th>
                                 <th style="padding:0.8rem; text-align:left;">Contraseña</th>
                                 <th style="padding:0.8rem; text-align:left;">Rol</th>
+                                <th style="padding:0.8rem; text-align:left;" title="Con que colores abre la plataforma esta persona la primera vez. Si despues ella elige otro en Configuracion, manda el suyo.">Tema</th>
                                 <th style="padding:0.8rem; text-align:center;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${!syncEngine.isFirstPullDone ? 
-                                '<tr><td colspan="6" style="padding:3rem; text-align:center;"><div class="spinner-small" style="display:inline-block; margin-bottom:10px;"></div><br><span style="color:var(--primary); font-weight:700;">Sincronizando con la nube...</span></td></tr>' :
+                                '<tr><td colspan="7" style="padding:3rem; text-align:center;"><div class="spinner-small" style="display:inline-block; margin-bottom:10px;"></div><br><span style="color:var(--primary); font-weight:700;">Sincronizando con la nube...</span></td></tr>' :
                                 (users.length ? users.map(u => `
                                 <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.02); opacity: ${u.active === false ? '0.5' : '1'}">
                                     <td style="padding:0.8rem; text-align:center;">
@@ -5463,6 +5464,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         </span>
                                     </td>
                                     <td style="padding:0.8rem;"><span style="background:rgba(var(--primary-rgb), 0.2); color:var(--brand-pale); padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700;">${u.role.toUpperCase()}</span></td>
+                                    <td style="padding:0.8rem;">
+                                        <select class="sel-tema" data-user="${u.username}" data-previo="${u.tema || ''}" title="Tema con el que abre la plataforma"
+                                                style="background:var(--input-bg); color:var(--text-main); border:1px solid var(--border); border-radius:6px; padding:0.3rem 0.5rem; font-size:0.78rem; cursor:pointer;">
+                                            <option value="" ${!u.tema ? 'selected' : ''}>— sin asignar —</option>
+                                            ${TEMAS.map(t => `<option value="${t.id}" ${u.tema === t.id ? 'selected' : ''}>${t.nombre}</option>`).join('')}
+                                        </select>
+                                    </td>
                                     <td style="padding:0.8rem; text-align:center;">
                                         <div style="display:flex; gap:0.8rem; justify-content:center;">
                                             <button class="btn-edit" data-user='${JSON.stringify(u)}' title="Editar" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:1rem;">✏️</button>
@@ -5470,7 +5478,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                         </div>
                                     </td>
                                 </tr>
-                            `).join('') : '<tr><td colspan="6" style="padding:1rem; text-align:center; color:var(--text-muted);">No hay usuarios adicionales creados.</td></tr>')}
+                            `).join('') : '<tr><td colspan="7" style="padding:1rem; text-align:center; color:var(--text-muted);">No hay usuarios adicionales creados.</td></tr>')}
                         </tbody>
                     </table>
                 </div>
@@ -5627,6 +5635,43 @@ export const renderDashboard = async (container, user, onLogout) => {
         btnCancel.style.display = 'none';
         isEditing = false;
     };
+
+    /* ─────────────────────────────────────────────────────────────────────
+       ADMINISTRACION > USUARIOS > TEMA
+       El tema con el que cada persona ABRE la plataforma, elegido por el
+       administrador. Viaja con ella: entra desde la PC que sea y lo trae.
+
+       Es un POR DEFECTO, no una imposicion: si despues ella elige otro en
+       Configuracion > Tema, manda el suyo. Por eso "— sin asignar —" es una
+       opcion valida y no un hueco: significa que arranque con el ultimo tema
+       que se haya usado en esa computadora.
+       ───────────────────────────────────────────────────────────────────── */
+    document.querySelectorAll('.sel-tema').forEach(sel => sel.onchange = async function() {
+        const username = sel.dataset.user;
+        const tema = sel.value || null;
+        const antes = sel.dataset.previo || '';
+        sel.disabled = true;
+        try {
+            // OJO: saveUser NO lanza error cuando el servidor no contesta, devuelve
+            // false. Sin mirar el resultado el desplegable se quedaba mostrando el
+            // tema nuevo aunque no se hubiera guardado nada: una mentira en pantalla.
+            const guardado = await adminService.saveUser({ username, tema });
+            if (guardado === false) throw new Error('el servidor no confirmo el guardado');
+            sel.dataset.previo = sel.value;
+            // Si el administrador se cambia el suyo, se ve en el momento; para el
+            // resto vale la proxima vez que entren.
+            const yo = (getSession() || {}).username;
+            if (username === yo && tema) { setTema(tema, yo); }
+            logSystemAction('TEMA', `Tema de ${username}: ${tema || 'sin asignar'}`);
+        } catch (e) {
+            sel.value = antes;   // no se pudo guardar: se deja como estaba
+            window.showPremiumAlert('No se pudo guardar el tema',
+                'No se pudo llegar al servidor, asi que <b>el tema quedo como estaba</b>.<br><br>' +
+                'Revisa la conexion y vuelve a intentarlo.', 'error');
+        } finally {
+            sel.disabled = false;
+        }
+    });
 
     document.querySelectorAll('.btn-status').forEach(btn => btn.onclick = async function() {
         await withLoading(this, '⏳...', async () => {
@@ -17583,7 +17628,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0388 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0389 | MOBILE PORTAL
                             </div>
                     </div>
 

@@ -81,10 +81,22 @@ export const existeTema = (id) => TEMAS.some(t => t.id === id);
  * Si nunca eligio, o si quedo guardado un nombre que ya no existe, devuelve el
  * por defecto en vez de dejar la plataforma sin pintar.
  */
-export const getTema = (usuario) => {
+/**
+ * Que tema le toca a esta persona, por orden de prioridad:
+ *
+ *   1. Lo que ELLA eligio en esta computadora. Manda siempre: el tema que pone
+ *      el administrador es el de arranque, no una imposicion.
+ *   2. El que el ADMINISTRADOR le dejo asignado en Administracion > Usuarios.
+ *      Este viaja con la persona: entra desde cualquier PC y lo trae puesto.
+ *   3. El ultimo que se uso en esta computadora (para el login, que corre antes
+ *      de saber quien entra).
+ *   4. El de fabrica.
+ */
+export const getTema = (usuario, asignado) => {
   try {
     const g = localStorage.getItem(claveDe(usuario));
     if (g && existeTema(g)) return g;
+    if (asignado && existeTema(asignado)) return asignado;
     // Sin nada guardado para esta persona, se hereda el ultimo de la maquina:
     // es mucho mejor que saltar de golpe al tema de fabrica.
     const u = localStorage.getItem(CLAVE_ULTIMO);
@@ -137,8 +149,8 @@ export const temaActual = () =>
  * login: no sabe quien va a entrar. Al terminar de entrar hay que releer la
  * preferencia de esa persona, que puede no ser la del ultimo que uso la PC.
  */
-export const aplicarTemaDeUsuario = (usuario) => {
-  const tema = getTema(usuario);
+export const aplicarTemaDeUsuario = (usuario, asignado) => {
+  const tema = getTema(usuario, asignado);
   // Queda anotado como el ultimo de ESTA maquina, que es lo que van a leer el
   // login y la pantalla de carga la proxima vez -ellos corren antes de que
   // haya sesion-. Tambien arregla solo a quien ya tenia un tema elegido de
