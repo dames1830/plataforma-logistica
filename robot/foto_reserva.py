@@ -47,6 +47,13 @@ from datetime import datetime
 SITIO = 'https://deam1830.com/'
 MODULO = 'https://deam1830.com/js/reportes/reserva_consolidacion.js'
 API = 'https://logistics-backend-wv0x.onrender.com/api/logistics'
+# EL TOKEN DEL ROBOT. Desde v29.0415 el servidor puede EXIGIR credencial para
+# escribir datos (ver EXIGIR_TOKEN_ESCRITURA en backend/main.py). El robot no tiene
+# sesion, asi que lleva su propio token, leido del entorno del Contabo -NUNCA escrito
+# aca, o estaria publico en el repo-. Si la variable no esta, se manda vacio y el
+# servidor, mientras el candado siga apagado, lo deja pasar igual.
+ROBOT_TOKEN = os.environ.get('ROBOT_TOKEN', '')
+
 
 AREA_RESERVA = 'analisis_sku_reserva'
 AREA_MAESTRO = 'articulos'
@@ -95,6 +102,7 @@ def publicar(area, datos, intentos=3):
         try:
             p = urllib.request.Request('%s/%s' % (API, area), data=cuerpo, method='POST')
             p.add_header('Content-Type', 'application/json')
+            p.add_header('X-Robot-Token', ROBOT_TOKEN)
             with urllib.request.urlopen(p, timeout=300) as r:
                 json.loads(r.read().decode('utf-8'))
             return True

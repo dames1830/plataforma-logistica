@@ -239,6 +239,65 @@ def usuario_del_token(request: Request):
     finally:
         conn.close()
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ESCRIBIR DATOS: QUIEN PUEDE (fase 3 del cierre de la API abierta, 26-ago-2026)
+#
+# `POST/PATCH /logistics/{area}` deja escribir CUALQUIER area sin credenciales. Lo
+# usan dos escritores legitimos, con credenciales distintas:
+#   - Las PC de operarios, que YA tienen token de sesion desde v29.0413 (el login lo
+#     entrega). Solo faltaba que la web lo mandara en TODAS las escrituras, no solo
+#     en las de usuarios.
+#   - Los robots del Contabo, que corren sin sesion. Llevan un ROBOT_TOKEN propio,
+#     una variable de entorno que vive en el Contabo y en Render -NUNCA en el repo-.
+#
+# EL INTERRUPTOR. Encender esto de golpe romperia la operacion: toda PC con sesion
+# vieja y todo robot que aun no mande token dejaria de escribir. Por eso hay un
+# interruptor, apagado por defecto:
+#   EXIGIR_TOKEN_ESCRITURA=false (o sin poner)  -> se acepta todo, pero se CUENTAN
+#       las escrituras anonimas. Se despliega asi, se mira el contador bajar a cero
+#       -robots y PC ya mandan token- y recien ahi se enciende.
+#   EXIGIR_TOKEN_ESCRITURA=true                 -> escribir datos exige token.
+#
+# Seguro de fabrica: si se enciende SIN haber puesto ROBOT_TOKEN, se ignora y se
+# sigue en modo aviso. Nunca se deja el servidor exigiendo un token que no existe.
+ROBOT_TOKEN = (os.environ.get("ROBOT_TOKEN") or "").strip()
+
+def _exigir_token_escritura() -> bool:
+    if (os.environ.get("EXIGIR_TOKEN_ESCRITURA") or "").strip().lower() not in ("1", "true", "si", "yes"):
+        return False
+    if not ROBOT_TOKEN:
+        print("[SEGURIDAD] EXIGIR_TOKEN_ESCRITURA esta encendido pero falta ROBOT_TOKEN: "
+              "se sigue en modo aviso para no romper los robots.")
+        return False
+    return True
+
+# Cuantas escrituras llegan sin credencial mientras el interruptor esta apagado.
+# Se mira en /health para saber si ya se puede encender sin dejar a nadie fuera.
+_escrituras_anonimas = {"total": 0, "ultima_area": None, "ultima_hora": None}
+
+def token_de_robot_valido(request: Request) -> bool:
+    t = request.headers.get('X-Robot-Token') or ''
+    return bool(ROBOT_TOKEN) and secrets.compare_digest(t, ROBOT_TOKEN)
+
+def puede_escribir_datos(request: Request) -> bool:
+    """Un robot con su token, o cualquier usuario activo con sesion iniciada."""
+    return token_de_robot_valido(request) or (usuario_del_token(request) is not None)
+
+def _control_escritura(request: Request, area: str):
+    """Devuelve una respuesta 403 si hay que frenar, o None si se puede seguir.
+    En modo aviso nunca frena: solo cuenta las anonimas para el /health."""
+    if puede_escribir_datos(request):
+        return None
+    if _exigir_token_escritura():
+        return JSONResponse(status_code=403, content={
+            "status": "error",
+            "message": "Escribir datos necesita una sesion iniciada o el token del robot."})
+    _escrituras_anonimas["total"] += 1
+    _escrituras_anonimas["ultima_area"] = area
+    _escrituras_anonimas["ultima_hora"] = ahora().isoformat()
+    return None
+
+
 def es_admin(request: Request) -> bool:
     u = usuario_del_token(request)
     return bool(u and u.get('role') == 'admin')
@@ -527,7 +586,15 @@ def health():
             "entorno": entorno_actual(),
             "db_size_mb": db_size / (1024*1024),
             "disk_free_mb": free / (1024*1024),
-            "timestamp": ahora().isoformat()
+            "timestamp": ahora().isoformat(),
+            # Estado del candado de escritura -fase 3-. Sirve para saber si ya se puede
+            # encender sin dejar a nadie fuera: cuando `escrituras_anonimas` deje de subir,
+            # es que todos los robots y PC ya mandan token.
+            "candado_escritura": {
+                "exigiendo": _exigir_token_escritura(),
+                "robot_token_puesto": bool(ROBOT_TOKEN),
+                "escrituras_anonimas": dict(_escrituras_anonimas)
+            }
         }
     except Exception as e: return {"status": "error", "message": str(e)}
 
@@ -901,6 +968,13 @@ def get_area_data(area: str, date: Optional[str] = None):
 @app.post("/api/logistics/{area}")
 async def save_area_data(area: str, request: Request, date: Optional[str] = None):
     try:
+        # 'users' tiene su propio candado de admin mas abajo. Las demas areas pasan por
+        # el control de escritura: en modo aviso no frena, con el interruptor encendido
+        # exige token de robot o de sesion.
+        if area != 'users':
+            _bloqueo = _control_escritura(request, area)
+            if _bloqueo is not None:
+                return _bloqueo
         payload_data = await request.json()
 
         # Las contraseñas que lleguen se procesan aparte y JAMÁS se escriben en el
@@ -1118,6 +1192,10 @@ async def restore_performance(request: Request):
 @app.patch("/api/logistics/{area}")
 async def patch_area_data(area: str, request: Request, date: Optional[str] = None):
     try:
+        if area != 'users':
+            _bloqueo = _control_escritura(request, area)
+            if _bloqueo is not None:
+                return _bloqueo
         partial_data = await request.json()
         
         target_date = "MASTER" if area in SINGLETON_AREAS else (date if date else ahora().strftime("%Y-%m-%d"))

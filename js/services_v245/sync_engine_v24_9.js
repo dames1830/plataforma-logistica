@@ -355,18 +355,20 @@ export async function pushChange(area, data, date = null) {
         // Objetos maestros completos como 'attendance' o 'config' deben enviarse por POST.
         const method = (!Array.isArray(payload) && typeof payload === 'object' && payload.hasOwnProperty('id')) ? 'PATCH' : 'POST';
         
-        /* EL TOKEN VA SOLO EN LAS ESCRITURAS DE USUARIOS. Es la unica area con candado
-           en el servidor -ver `es_admin` en backend/main.py-, y se manda solo ahi para
-           no meter una cabecera nueva en las otras 60 areas, que dispararia el preflight
-           de CORS en cada subida del robot y de todas las PC. Se lee del localStorage y
-           no de un import para no atar el motor a auth.js. */
+        /* EL TOKEN DE SESION VA EN TODAS LAS ESCRITURAS (fase 3, 26-ago-2026).
+           Antes iba solo en 'users'. Ahora el servidor puede exigir credencial para
+           escribir cualquier area -ver el interruptor EXIGIR_TOKEN_ESCRITURA en
+           backend/main.py-, asi que esta PC manda SIEMPRE su token de sesion. El
+           servidor lo lee en X-Auth-Token; los robots mandan su propio X-Robot-Token.
+           Se lee del localStorage y no de un import para no atar el motor a auth.js.
+
+           `allow_headers=["*"]` en el CORS del servidor deja pasar la cabecera, asi que
+           no hay preflight nuevo que agregar. */
         const cabeceras = { 'Content-Type': 'application/json' };
-        if (area === 'users') {
-            try {
-                const t = (JSON.parse(localStorage.getItem('logistics_session') || '{}') || {}).token;
-                if (t) cabeceras['X-Auth-Token'] = t;
-            } catch (e) { /* sin token: el servidor respondera 403 y se avisa arriba */ }
-        }
+        try {
+            const t = (JSON.parse(localStorage.getItem('logistics_session') || '{}') || {}).token;
+            if (t) cabeceras['X-Auth-Token'] = t;
+        } catch (e) { /* sin token: el servidor respondera 403 si esta exigiendo, y se avisa */ }
 
         const res = await fetch(url, {
             method: method,

@@ -140,6 +140,13 @@ WEB_ENTORNO = os.environ.get("PULSE_ENTORNO", "produccion")
 # servidor guardaría un snapshot por día y llenaría su disco de 1 GB en un mes.
 WEB_SUBIR_STOCKS = True
 WEB_DATOS_API = "https://logistics-backend-wv0x.onrender.com/api/logistics"
+# EL TOKEN DEL ROBOT. Desde v29.0415 el servidor puede EXIGIR credencial para
+# escribir datos (ver EXIGIR_TOKEN_ESCRITURA en backend/main.py). El robot no tiene
+# sesion, asi que lleva su propio token, leido del entorno del Contabo -NUNCA escrito
+# aca, o estaria publico en el repo-. Si la variable no esta, se manda vacio y el
+# servidor, mientras el candado siga apagado, lo deja pasar igual.
+ROBOT_TOKEN = os.environ.get('ROBOT_TOKEN', '')
+
 AREA_ACTIVO = "almacenaje_activo"
 AREA_RESERVA = "analisis_sku_reserva"
 
@@ -1208,6 +1215,7 @@ def subir_datos(area, filas, intentos=3, fecha=None):
         try:
             pedido = urllib.request.Request(url, data=cuerpo, method="POST")
             pedido.add_header("Content-Type", "application/json")
+            pedido.add_header('X-Robot-Token', ROBOT_TOKEN)
             if WEB_ENTORNO == "beta":
                 pedido.add_header("X-Environment", "beta")
 

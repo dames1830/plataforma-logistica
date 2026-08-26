@@ -87,6 +87,13 @@ except ImportError:
     openpyxl = None
 
 WEB_DATOS_API = "https://logistics-backend-wv0x.onrender.com/api/logistics"
+# EL TOKEN DEL ROBOT. Desde v29.0415 el servidor puede EXIGIR credencial para
+# escribir datos (ver EXIGIR_TOKEN_ESCRITURA en backend/main.py). El robot no tiene
+# sesion, asi que lleva su propio token, leido del entorno del Contabo -NUNCA escrito
+# aca, o estaria publico en el repo-. Si la variable no esta, se manda vacio y el
+# servidor, mientras el candado siga apagado, lo deja pasar igual.
+ROBOT_TOKEN = os.environ.get('ROBOT_TOKEN', '')
+
 WEB_ARCHIVOS_API = "https://logistics-backend-wv0x.onrender.com/api/archivos"
 AREA = "pendiente_despacho"
 # La tarjeta PEDIDOS de Zona Buffer -> Archivo. Es un area COMPARTIDA que ya
@@ -668,6 +675,7 @@ def publicar_datos(datos, intentos=3):
         try:
             p = urllib.request.Request(url, data=cuerpo, method='POST')
             p.add_header('Content-Type', 'application/json')
+            p.add_header('X-Robot-Token', ROBOT_TOKEN)
             with urllib.request.urlopen(p, timeout=300) as resp:
                 json.loads(resp.read().decode('utf-8'))
             log('Publicado en la plataforma: %.1f KB' % (len(cuerpo) / 1024.0))
@@ -731,6 +739,7 @@ def publicar_pedidos(por_sku, intentos=3):
         try:
             p = urllib.request.Request(url, data=cuerpo, method='POST')
             p.add_header('Content-Type', 'application/json')
+            p.add_header('X-Robot-Token', ROBOT_TOKEN)
             with urllib.request.urlopen(p, timeout=300) as resp:
                 json.loads(resp.read().decode('utf-8'))
             log('Zona Buffer > Archivo > PEDIDOS: %s articulos, %s unidades (%.1f KB)'

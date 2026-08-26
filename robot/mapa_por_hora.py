@@ -112,7 +112,10 @@ def anotar_rotacion(dia):
 # lee el resumen que devuelve.
 # ─────────────────────────────────────────────────────────────────────────────
 JS = r"""
-async ({ zonas, rotarAnterior, publicar, base }) => {
+async ({ zonas, rotarAnterior, publicar, base, robotToken }) => {
+  // La cabecera con el token del robot para los POST. En los GET no hace falta.
+  const cabPost = { 'Content-Type': 'application/json' };
+  if (robotToken) cabPost['X-Robot-Token'] = robotToken;
   const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
   const t = () => '?t=' + Date.now();
   const pasos = [];
@@ -155,7 +158,7 @@ async ({ zonas, rotarAnterior, publicar, base }) => {
             const c = await r.json();
             if (c && c.data && c.data.type === 'processed' && c.data.totalUnits > 0) {
               const g = await fetch(API + '/layout_activo_' + zona + '_ANT?date=MASTER', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: cabPost,
                 body: JSON.stringify(c.data) });
               paso.anterior = g.ok;
             }
@@ -168,7 +171,7 @@ async ({ zonas, rotarAnterior, publicar, base }) => {
       payload.zona = zona;
       payload.publishedAt = Date.now();
       const res = await fetch(API + '/layout_activo_' + zona + '?date=MASTER', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: cabPost,
         body: JSON.stringify(payload) });
       paso.publicado = res.ok;
       if (!res.ok) paso.motivo = 'el servidor respondio ' + res.status;
@@ -204,8 +207,11 @@ def correr(zonas, publicar=True, forzar_anterior=False, headless=True, sitio=SIT
             # Se abre el sitio para tener el ORIGEN correcto: desde ahi el import y los
             # fetch a la API salen como si los hiciera la propia plataforma.
             pag.goto(sitio, wait_until='domcontentloaded', timeout=90000)
+            # El token del robot -del entorno del Contabo, nunca escrito aca- viaja
+            # al JS inyectado, que lo pone en la cabecera de sus POST. Ver v29.0415.
             r = pag.evaluate(JS, {'zonas': zonas, 'rotarAnterior': rotar,
-                                 'publicar': publicar, 'base': base})
+                                 'publicar': publicar, 'base': base,
+                                 'robotToken': os.environ.get('ROBOT_TOKEN', '')})
         except Exception as e:
             print(f'[MAPA] ERROR: {e}')
             nav.close()
