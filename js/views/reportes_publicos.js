@@ -11,13 +11,13 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0398';
+} from '../services_v245/csvHub_v6.js?v=29.0399';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0398';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0398';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0398';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0398';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0398';
+import * as adminService from '../services_v245/adminService.js?v=29.0399';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0399';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0399';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0399';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0399';
 
 /**
  * El día operativo, no el del calendario.
@@ -288,7 +288,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0398</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0399</span>
     </div>`;
 
   buildTabNav();
@@ -1265,7 +1265,7 @@ const renderWeeklyStorageReport = (tasksList) => {
                                 const genderRowTotal = sortedBrands.reduce((sum, b) => sum + (genderData[b] || 0), 0);
                                 return `
                                     <tr style="background:#F4F1EC; border-bottom:1px solid #EEE9E3; font-size:0.74rem;">
-                                        <td style="padding:5px 8px 5px 24px; color:#9C9590; font-weight:600; font-style:italic; white-space:nowrap;">↳ ${gender}</td>
+                                        <td style="padding:5px 8px 5px 24px; color:#9C9590; font-weight:600; font-style:italic; white-space:nowrap;">${gender}</td>
                                         ${sortedBrands.map(b => {
                                             const qty = genderData[b] || 0;
                                             return `<td style="padding:5px 8px; text-align:center; color:#4A4540;">${qty > 0 ? qty.toLocaleString('es-PE') : '-'}</td>`;
