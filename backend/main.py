@@ -663,7 +663,7 @@ def _clonar_ligera(limite_mb: float) -> dict:
 
 
 @app.post("/api/admin/clonar-a-beta")
-def clonar_produccion_a_beta(confirmar: str = "", modo: str = "ligera",
+def clonar_produccion_a_beta(request: Request, confirmar: str = "", modo: str = "ligera",
                              limite_mb: float = LIMITE_SNAPSHOT_MB):
     """
     Copia datos de PRODUCCIÓN al entorno de PRUEBAS.
@@ -677,6 +677,13 @@ def clonar_produccion_a_beta(confirmar: str = "", modo: str = "ligera",
     Hay que confirmar a propósito:
       POST /api/admin/clonar-a-beta?confirmar=COPIAR-A-BETA
     """
+    # CANDADO DE ADMIN. No toca produccion -solo copia hacia beta-, pero igual queda
+    # detras del token: no hay razon para que un anonimo lo dispare. El ?confirmar=
+    # sigue siendo un segundo freno contra el descuido, no contra un atacante.
+    if not es_admin(request):
+        return JSONResponse(status_code=403, content={
+            "status": "error", "message": "Solo un administrador con la sesion iniciada puede hacer esto."})
+
     if confirmar != "COPIAR-A-BETA":
         return {"status": "error",
                 "message": "Falta la confirmación. Agrega ?confirmar=COPIAR-A-BETA a la URL."}
@@ -1038,6 +1045,12 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
 @app.post("/api/admin/restore/workers")
 async def restore_workers(request: Request):
     try:
+        # CANDADO DE ADMIN. Este endpoint puede rehacer o borrar datos y NADIE lo llama
+        # desde el codigo -ni la web ni los robots-: es una operacion manual. Sin token de
+        # admin, una peticion anonima podia dispararlo. Ver `es_admin` en este mismo archivo.
+        if not es_admin(request):
+            return JSONResponse(status_code=403, content={
+                "status": "error", "message": "Solo un administrador con la sesion iniciada puede hacer esto."})
         data = await request.json()
         conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         # Los trabajadores se guardan como un snapshot especial 'workers' con fecha 'MASTER'
@@ -1069,6 +1082,12 @@ async def restore_users(request: Request):
 @app.post("/api/admin/restore/permissions")
 async def restore_permissions(request: Request):
     try:
+        # CANDADO DE ADMIN. Este endpoint puede rehacer o borrar datos y NADIE lo llama
+        # desde el codigo -ni la web ni los robots-: es una operacion manual. Sin token de
+        # admin, una peticion anonima podia dispararlo. Ver `es_admin` en este mismo archivo.
+        if not es_admin(request):
+            return JSONResponse(status_code=403, content={
+                "status": "error", "message": "Solo un administrador con la sesion iniciada puede hacer esto."})
         data = await request.json()
         conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         for p in data:
@@ -1080,6 +1099,12 @@ async def restore_permissions(request: Request):
 @app.post("/api/admin/restore/performance_history")
 async def restore_performance(request: Request):
     try:
+        # CANDADO DE ADMIN. Este endpoint puede rehacer o borrar datos y NADIE lo llama
+        # desde el codigo -ni la web ni los robots-: es una operacion manual. Sin token de
+        # admin, una peticion anonima podia dispararlo. Ver `es_admin` en este mismo archivo.
+        if not es_admin(request):
+            return JSONResponse(status_code=403, content={
+                "status": "error", "message": "Solo un administrador con la sesion iniciada puede hacer esto."})
         data = await request.json() # Esperamos un objeto { "YYYY-MM-DD": [records], ... }
         conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         count = 0
@@ -1231,7 +1256,11 @@ async def api_login(request: Request):
         return {"success": False, "message": "No se pudo validar el acceso", "detalle": str(e)}
 
 @app.post("/api/admin/db_cleanup")
-def force_db_cleanup():
+def force_db_cleanup(request: Request):
+    # CANDADO DE ADMIN: reconstruye la base entera; jamas debe correr anonimo.
+    if not es_admin(request):
+        return JSONResponse(status_code=403, content={
+            "status": "error", "message": "Solo un administrador con la sesion iniciada puede hacer esto."})
     temp_db_path = "/tmp/temp_database.db"
     try:
         import shutil
