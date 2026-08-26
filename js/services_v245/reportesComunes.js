@@ -181,7 +181,7 @@ export const diaOperativoDeTarea = (t, fechaLogicaDe) => {
 
 /** Rótulo del rango: una sola fecha si es de un día, o 'desde - hasta'. */
 export const rotuloRango = (desde, hasta, color = '#94a3b8') => {
-    const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const hora = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
     const d = String(desde || '').split('-').reverse().join('/');
     const h = String(hasta || '').split('-').reverse().join('/');
     return `<span style="color:${color};">${d === h ? d : `${d} - ${h}`} ${hora}</span>`;

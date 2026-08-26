@@ -605,12 +605,21 @@ select option:hover {
   color: var(--on-primary);
 }
 
-/* Los emoji de las pestañas. En el tema negro van en gris; en los demas, a
-   color. El <span class="ic"> lo pone renderNav(). */
+/* Los emoji que quedan (sub-pestañas y botones sueltos). En el tema negro van
+   en gris; en los demas, a color. El <span class="ic"> lo pone renderNav(). */
 .nav-item .ic,
 .sub-nav-item .ic {
   filter: var(--icon-filter);
+  display: inline-flex;
+  align-items: center;
 }
+
+/* Los dibujos propios NO llevan filtro: toman el color del texto que los rodea
+   (stroke: currentColor), asi que siguen el tema solos. Con el filtro encima se
+   apagarian dos veces en el tema negro. */
+.nav-item .ic:has(.ic-svg),
+.sub-nav-item .ic:has(.ic-svg) { filter: none; }
+.ic-svg { display: block; }
 
 /* Barra de desplazamiento. */
 ::-webkit-scrollbar-track { background: rgba(var(--shadow-rgb), 0.2); }

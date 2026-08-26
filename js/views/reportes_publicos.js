@@ -11,13 +11,13 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0392';
+} from '../services_v245/csvHub_v6.js?v=29.0393';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0392';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0392';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0392';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0392';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0392';
+import * as adminService from '../services_v245/adminService.js?v=29.0393';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0393';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0393';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0393';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0393';
 
 /**
  * El día operativo, no el del calendario.
@@ -288,7 +288,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0392</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0393</span>
     </div>`;
 
   buildTabNav();
@@ -695,28 +695,28 @@ Período: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd, '#9C9590
                                             genderTableRows += `<tr style="border-bottom:1px solid #EEE9E3; background:#fff;">
                                                 <td style="padding:5px 6px; color:#9C9590; font-size:0.78rem; font-weight:600;">${area}</td>
                                                 <td style="padding:5px 6px;"><b style="color:#1C2B3A; font-weight:800; font-size:0.8rem; font-family:'Outfit',sans-serif;">${gender}</b></td>
-                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.buffer.toLocaleString()}</td>
-                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.avance.toLocaleString()}</td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.buffer.toLocaleString('es-PE')}</td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.avance.toLocaleString('es-PE')}</td>
                                                 <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem;">${getPctHtml(data.avance, data.buffer)}</td>
-                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#B45309; font-size:0.8rem;">${pendiente.toLocaleString()}</td>
+                                                <td style="padding:5px 6px; text-align:center; font-weight:700; color:#B45309; font-size:0.8rem;">${pendiente.toLocaleString('es-PE')}</td>
                                             </tr>`;
                                         });
                                         const areaPendiente = areaBufferSum - areaAvanceSum;
                                         genderTableRows += `<tr style="background:#F4F1EC; border-top:1px solid #DDD8CF; border-bottom:1px solid #DDD8CF; font-weight:700;">
                                             <td colspan="2" style="padding:7px 8px; color:#1C2B3A; font-weight:700; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit',sans-serif; border-left:3px solid #B45309;">Total ${area}</td>
-                                            <td style="padding:7px 8px; text-align:center; color:#1C2B3A; font-size:0.78rem; font-weight:700;">${areaBufferSum.toLocaleString()}</td>
-                                            <td style="padding:7px 8px; text-align:center; color:#1C2B3A; font-size:0.78rem; font-weight:700;">${areaAvanceSum.toLocaleString()}</td>
+                                            <td style="padding:7px 8px; text-align:center; color:#1C2B3A; font-size:0.78rem; font-weight:700;">${areaBufferSum.toLocaleString('es-PE')}</td>
+                                            <td style="padding:7px 8px; text-align:center; color:#1C2B3A; font-size:0.78rem; font-weight:700;">${areaAvanceSum.toLocaleString('es-PE')}</td>
                                             <td style="padding:7px 8px; text-align:center; font-size:0.78rem; font-weight:700;">${getPctHtml(areaAvanceSum, areaBufferSum)}</td>
-                                            <td style="padding:7px 8px; text-align:center; color:#B45309; font-size:0.78rem; font-weight:700;">${areaPendiente.toLocaleString()}</td>
+                                            <td style="padding:7px 8px; text-align:center; color:#B45309; font-size:0.78rem; font-weight:700;">${areaPendiente.toLocaleString('es-PE')}</td>
                                         </tr>`;
                                     });
                                     const grandPendiente = grandBuffer - grandAvance;
                                     genderTableRows += `<tr style="background:#1C2B3A; font-weight:700;">
                                         <td colspan="2" style="padding:9px 8px; color:#fff; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; font-family:'Outfit',sans-serif; font-weight:700; border-left:4px solid #B45309;">TOTAL GENERAL CDBUFFER</td>
-                                        <td style="padding:9px 8px; text-align:center; color:#fff; font-size:0.8rem; font-weight:700;">${grandBuffer.toLocaleString()}</td>
-                                        <td style="padding:9px 8px; text-align:center; color:#fff; font-size:0.8rem; font-weight:700;">${grandAvance.toLocaleString()}</td>
+                                        <td style="padding:9px 8px; text-align:center; color:#fff; font-size:0.8rem; font-weight:700;">${grandBuffer.toLocaleString('es-PE')}</td>
+                                        <td style="padding:9px 8px; text-align:center; color:#fff; font-size:0.8rem; font-weight:700;">${grandAvance.toLocaleString('es-PE')}</td>
                                         <td style="padding:9px 8px; text-align:center; font-size:0.8rem; font-weight:700;">${getPctHtml(grandAvance, grandBuffer)}</td>
-                                        <td style="padding:9px 8px; text-align:center; color:#F5C97A; font-size:0.8rem; font-weight:700;">${grandPendiente.toLocaleString()}</td>
+                                        <td style="padding:9px 8px; text-align:center; color:#F5C97A; font-size:0.8rem; font-weight:700;">${grandPendiente.toLocaleString('es-PE')}</td>
                                     </tr>`;
                                     return genderTableRows;
                                 })()}
@@ -925,8 +925,8 @@ function renderRendimientoOperarios() {
                                 const pagedPerfRows = sortedGroupRows.slice(activePerfPage * 25, (activePerfPage + 1) * 25);
 
                                 return pagedPerfRows.map(row => {
-                                    const startStr = row.firstStart ? row.firstStart.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
-                                    const endStr = row.lastEnd ? row.lastEnd.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
+                                    const startStr = row.firstStart ? row.firstStart.toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
+                                    const endStr = row.lastEnd ? row.lastEnd.toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
                                     
                                     // 1. Duración Transcurrida (TRANSCURRIDO)
                                     let durationStr = '---';
@@ -950,7 +950,7 @@ function renderRendimientoOperarios() {
                                     let qtyPerHourStr = '---';
                                     if (activeHours > 0.08) { // Mínimo 5 minutos para evitar anomalías
                                         const qtyPerHour = Math.round(row.totalQty / activeHours);
-                                        qtyPerHourStr = qtyPerHour.toLocaleString();
+                                        qtyPerHourStr = qtyPerHour.toLocaleString('es-PE');
                                     }
 
                                     const avgQty = row.taskCount > 0 ? Math.round(row.totalQty / row.taskCount) : 0;
@@ -970,13 +970,13 @@ function renderRendimientoOperarios() {
                                             <td style="padding:6px 4px; color:#1C2B3A; font-weight:700; width:70px; white-space:nowrap;">${displayDate}</td>
                                             <td style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;"><span style="background:${row.turno === 'NOCHE' ? 'rgba(28,43,58,0.1)' : 'rgba(180,83,9,0.1)'}; color:${row.turno === 'NOCHE' ? '#1C2B3A' : '#B45309'}; padding:2px 6px; border-radius:3px; font-size:0.68rem; font-weight:700;">${row.turno}</span></td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:#1C2B3A;">${row.operators.size}</td>
-                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:#1C2B3A;">${row.totalQty.toLocaleString()}</td>
+                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:#1C2B3A;">${row.totalQty.toLocaleString('es-PE')}</td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:#B45309;">${row.taskCount}</td>
                                             <td style="padding:6px 8px; text-align:center; color:#9C9590; font-size:0.75rem;">${startStr}</td>
                                             <td style="padding:6px 8px; text-align:center; color:#9C9590; font-size:0.75rem;">${endStr}</td>
                                             <td style="padding:6px 8px; text-align:center; color:#4A4540; font-weight:700;">${durationStr}</td>
                                             <td style="padding:6px 8px; text-align:center; color:#1A6336; font-weight:700;">${qtyPerHourStr}</td>
-                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:#B45309;">${avgQty.toLocaleString()}</td>
+                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:#B45309;">${avgQty.toLocaleString('es-PE')}</td>
                                         </tr>
                                     `;
                                 }).join('');
@@ -1080,9 +1080,9 @@ const renderHourlyProductionReport = (tasksList) => {
                                     <td style="padding:6px 8px; color:#1C2B3A; font-weight:700;">${formatLogicalDate(dateKey)}</td>
                                     ${targetHours.map(hr => {
                                         const qty = rowData[hr];
-                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? '#1C2B3A' : '#DDD8CF'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
+                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? '#1C2B3A' : '#DDD8CF'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString('es-PE') : '0'}</td>`;
                                     }).join('')}
-                                    <td style="padding:6px 8px; text-align:center; color:#B45309; font-weight:700; background:#FFF8F0;">${rowTotal.toLocaleString()}</td>
+                                    <td style="padding:6px 8px; text-align:center; color:#B45309; font-weight:700; background:#FFF8F0;">${rowTotal.toLocaleString('es-PE')}</td>
                                 </tr>
                             `;
                         }).join('')}
@@ -1268,9 +1268,9 @@ const renderWeeklyStorageReport = (tasksList) => {
                                         <td style="padding:5px 8px 5px 24px; color:#9C9590; font-weight:600; font-style:italic; white-space:nowrap;">↳ ${gender}</td>
                                         ${sortedBrands.map(b => {
                                             const qty = genderData[b] || 0;
-                                            return `<td style="padding:5px 8px; text-align:center; color:#4A4540;">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
+                                            return `<td style="padding:5px 8px; text-align:center; color:#4A4540;">${qty > 0 ? qty.toLocaleString('es-PE') : '-'}</td>`;
                                         }).join('')}
-                                        <td style="padding:5px 8px; text-align:center; color:#B45309; font-weight:700; background:#FFF8F0;">${genderRowTotal.toLocaleString()}</td>
+                                        <td style="padding:5px 8px; text-align:center; color:#B45309; font-weight:700; background:#FFF8F0;">${genderRowTotal.toLocaleString('es-PE')}</td>
                                     </tr>
                                 `;
                             }).join('') : '';
@@ -1283,9 +1283,9 @@ const renderWeeklyStorageReport = (tasksList) => {
                                     </td>
                                     ${sortedBrands.map(b => {
                                         const qty = rowData[b] || 0;
-                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#1C2B3A' : '#DDD8CF'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
+                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? '#1C2B3A' : '#DDD8CF'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString('es-PE') : '0'}</td>`;
                                     }).join('')}
-                                    <td style="padding:6px 8px; text-align:center; color:#B45309; font-weight:700; background:#FFF8F0;">${rowTotal.toLocaleString()}</td>
+                                    <td style="padding:6px 8px; text-align:center; color:#B45309; font-weight:700; background:#FFF8F0;">${rowTotal.toLocaleString('es-PE')}</td>
                                 </tr>
                                 ${genderRowsHtml}
                             `;
@@ -1295,9 +1295,9 @@ const renderWeeklyStorageReport = (tasksList) => {
                                 <td style="padding:8px 8px; color:#fff; font-weight:700; border-left:4px solid #B45309;">TOTAL GENERAL</td>
                                 ${sortedBrands.map(b => {
                                     const qty = colTotals[b];
-                                    return `<td style="padding:8px 8px; text-align:center; color:#fff; font-weight:700;">${qty.toLocaleString()}</td>`;
+                                    return `<td style="padding:8px 8px; text-align:center; color:#fff; font-weight:700;">${qty.toLocaleString('es-PE')}</td>`;
                                 }).join('')}
-                                <td style="padding:8px 8px; text-align:center; color:#F5C97A; font-weight:700;">${grandTotal.toLocaleString()}</td>
+                                <td style="padding:8px 8px; text-align:center; color:#F5C97A; font-weight:700;">${grandTotal.toLocaleString('es-PE')}</td>
                             </tr>
                         ` : ''}
                     </tbody>
@@ -1578,7 +1578,7 @@ const renderWeeklyDailyChartSection = (tasksList) => {
                             ctx.shadowOffsetX = 0;
                             ctx.shadowOffsetY = 1;
                             
-                            ctx.fillText(val.toLocaleString(), point.x, point.y + yOffset);
+                            ctx.fillText(val.toLocaleString('es-PE'), point.x, point.y + yOffset);
                             ctx.restore();
                         });
                     });
@@ -1625,7 +1625,7 @@ const renderWeeklyDailyChartSection = (tasksList) => {
                                     let label = context.dataset.label || '';
                                     const val = context.parsed.y;
                                     if (val !== null && val !== undefined) {
-                                        return ` ${label}: ${val.toLocaleString()}`;
+                                        return ` ${label}: ${val.toLocaleString('es-PE')}`;
                                     }
                                     return ` ${label}`;
                                 }
@@ -2224,9 +2224,9 @@ async function renderHistorialBuffer() {
                                 <td style="padding:0.4rem 0.8rem; font-weight:700; color:${r.marca==='TOTAL'?'#1C2B3A':'#4A4540'};">${brandAlias(r.marca)}</td>
                                 ${matrix.columns.map(c => {
                                     const val = r.breakdown[c] || 0;
-                                    return `<td style="padding:0.4rem 0.3rem; text-align:center; color:${val > 0 ? '#1C2B3A' : '#DDD8CF'}; font-weight:${val > 0 ? '700' : 'normal'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
+                                    return `<td style="padding:0.4rem 0.3rem; text-align:center; color:${val > 0 ? '#1C2B3A' : '#DDD8CF'}; font-weight:${val > 0 ? '700' : 'normal'}">${val > 0 ? val.toLocaleString('es-PE') : '0'}</td>`;
                                 }).join('')}
-                                <td style="padding:0.4rem 0.8rem; text-align:center; background:#FFF8F0; color:#B45309; font-weight:700; border-left:1px solid #EEE9E3;">${r.total.toLocaleString()}</td>
+                                <td style="padding:0.4rem 0.8rem; text-align:center; background:#FFF8F0; color:#B45309; font-weight:700; border-left:1px solid #EEE9E3;">${r.total.toLocaleString('es-PE')}</td>
                             </tr>
                         `).join('') : `
                             <tr>
@@ -2258,7 +2258,7 @@ async function renderAnalisisBuffer() {
   }
 
     lastBufferResult = data; // [MOD v12.4.1] Sincronizar estado global para permitir exportación inmediata
-    const ts = data.timestamp || new Date().toLocaleString();
+    const ts = data.timestamp || new Date().toLocaleString('es-PE');
     const tsHtml = `<span style="font-size:0.7rem; opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${ts})</span>`;
     const widthLeft = 'minmax(400px, 1fr)';
     const widthRight = 'minmax(600px, 2fr)';
@@ -2273,8 +2273,8 @@ async function renderAnalisisBuffer() {
                     <thead><tr style="background:#1C2B3A; color:#fff;"><th style="padding:0.5rem 1rem; text-align:left;">NIVEL/AREA</th><th style="padding:0.5rem 1rem; text-align:center;">RQ</th><th style="padding:0.5rem 1rem; text-align:center;">ATD</th><th style="padding:0.5rem 1rem; text-align:center;">ATD %</th></tr></thead>
                     <tbody>${data.waterfall.map(r => `<tr style="border-bottom:1px solid #EEE9E3; ${r.nivel==='Total'?'background:#F4F1EC; font-weight:700;':'background:#fff;'}">
                         <td style="padding:0.5rem 1rem; color:${r.nivel==='Total'?'#1C2B3A':'#4A4540'}; font-weight:${r.nivel==='Total'?'700':'500'};">${r.nivel}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center; color:#4A4540;">${r.rq.toLocaleString()}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center; color:${r.atd > 0 ? '#1C2B3A' : '#DDD8CF'};">${r.atd.toLocaleString()}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:#4A4540;">${r.rq.toLocaleString('es-PE')}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:${r.atd > 0 ? '#1C2B3A' : '#DDD8CF'};">${r.atd.toLocaleString('es-PE')}</td>
                         <td style="padding:0.5rem 1rem; text-align:center; color:#1A6336; font-weight:700;">${r.pct}</td>
                     </tr>`).join('')}</tbody>
                 </table>
@@ -2289,7 +2289,7 @@ async function renderAnalisisBuffer() {
                         <td style="padding:0.5rem 1rem; color:#9C9590;">${r.tipo}</td>
                         <td style="padding:0.5rem 1rem; text-align:center; color:#4A4540;">${r.paletas}</td>
                         <td style="padding:0.5rem 1rem; text-align:center; color:#4A4540;">${r.skus}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center; color:#1A6336; font-weight:700;">${Number(r.parcaja).toLocaleString()}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:#1A6336; font-weight:700;">${Number(r.parcaja).toLocaleString('es-PE')}</td>
                     </tr>`).join('')}</tbody>
                 </table>
             </div>
@@ -2299,15 +2299,15 @@ async function renderAnalisisBuffer() {
                 <div style="display:flex; justify-content:space-around; padding:1.2rem; color:#4A4540;">
                     <div style="text-align:center;">
                         <div style="font-size:0.68rem; color:#9C9590; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artículos</div>
-                        <div style="font-size:1.6rem; font-weight:700; color:#1C2B3A; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.articulos || 0).toLocaleString()}</div>
+                        <div style="font-size:1.6rem; font-weight:700; color:#1C2B3A; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.articulos || 0).toLocaleString('es-PE')}</div>
                     </div>
                     <div style="text-align:center; border-left:1px solid #DDD8CF; padding-left:0.5rem;">
                         <div style="font-size:0.68rem; color:#9C9590; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad SKUs</div>
-                        <div style="font-size:1.6rem; font-weight:700; color:#1C2B3A; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.skus || 0).toLocaleString()}</div>
+                        <div style="font-size:1.6rem; font-weight:700; color:#1C2B3A; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.skus || 0).toLocaleString('es-PE')}</div>
                     </div>
                     <div style="text-align:center; border-left:1px solid #DDD8CF; padding-left:0.5rem;">
                         <div style="font-size:0.68rem; color:#9C9590; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Unidades (RQ)</div>
-                        <div style="font-size:1.6rem; font-weight:700; color:#991B1B; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.qty || 0).toLocaleString()}</div>
+                        <div style="font-size:1.6rem; font-weight:700; color:#991B1B; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.qty || 0).toLocaleString('es-PE')}</div>
                     </div>
                 </div>
             </div>

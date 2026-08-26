@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0392';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0393';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0392';
+const VERSION = '29.0393';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1231,7 +1231,7 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
                 body: JSON.stringify(reducido)
             }).then(r => {
                 if (r.ok) {
-                    console.log(`[DEMANDA] ✅ ${area} publicado: ${reducido.length.toLocaleString('es')} filas de ${(payload || []).length.toLocaleString('es')}.`);
+                    console.log(`[DEMANDA] ✅ ${area} publicado: ${reducido.length.toLocaleString('es-PE')} filas de ${(payload || []).length.toLocaleString('es-PE')}.`);
                     logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${reducido.length} (demanda compartida)`);
                 } else {
                     console.warn(`[DEMANDA] ⚠️ ${area} no se pudo publicar (${r.status}). Las otras PC van a seguir con el anterior.`);
@@ -1519,7 +1519,7 @@ export const getAreaData = async (area, forceRefresh = false) => {
           if (esAreaDeDemanda(area) && Array.isArray(serverResponse.data) && serverResponse.data.length > 0
               && !DEMANDA_EN_LA_NUBE[area].valida(serverResponse.data[0])) {
               console.warn(`[DEMANDA] Lo que hay en el servidor para '${area}' no está reducido ` +
-                           `(${serverResponse.data.length.toLocaleString('es')} filas del formato viejo). ` +
+                           `(${serverResponse.data.length.toLocaleString('es-PE')} filas del formato viejo). ` +
                            `Se ignora y se usa la copia de esta PC.`);
               serverResponse.data = [];
           }
@@ -3061,7 +3061,7 @@ export const calculateBufferPallets = (configOverride = null) => {
         detalleTemporadas: detalleTemporadas,
         detalleRQRevisar: detalleRQRevisar,
         sinStockPorRevisar: sinStockPorRevisar,
-        timestamp: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
+        timestamp: new Date().toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
     };
 };
 

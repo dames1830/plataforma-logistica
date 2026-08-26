@@ -186,7 +186,7 @@ export const montarRotacion = (container, OPC = {}) => {
         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding-bottom:.9rem;
                     margin-bottom:1.2rem; border-bottom:1px solid rgba(var(--ink-rgb), .05);">
           <h3 style="font-size:var(--t-lg); font-weight:800; letter-spacing:.4px; margin:0; color:var(--text-strong);">Rotación y Permanencia</h3>
-          <span style="font-size:var(--t-xs); color:var(--text-muted);">
+          <span class="txt-chico">
             ventana de ${meta.mesesVentana || 3} meses · ${esc(meta.desde || '')} al ${esc(meta.hasta || '')}
             · ${mil(meta.fotos || 0)} fotos${meta.generado ? ' · generado ' + esc(meta.generado) : ''}</span>
           <div style="display:flex; gap:6px; margin-left:auto; flex-wrap:wrap;">${GRUPOS.map(filtro).join('')}</div>

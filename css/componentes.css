@@ -1,0 +1,93 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENTES
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Las piezas que se repiten en toda la plataforma, escritas UNA vez.
+
+   POR QUE
+     Habia 4.497 estilos escritos a mano contra 62 clases, y de esos, 210
+     patrones repetidos 4 veces o mas: 1.684 copias del mismo estilo. Por eso
+     cada cambio visual era un barrido de miles de lineas, y por eso dos
+     pantallas que deberian verse igual no se veian igual: nadie se acuerda de
+     cual era el padding correcto.
+
+     Con una clase, mover el alto de las filas es UNA edicion en vez de 1.684.
+
+   COMO SE ADOPTA
+     Sin apagar nada. Estas clases conviven con los estilos en linea que ya
+     hay -el estilo en linea siempre gana- asi que se van reemplazando pantalla
+     por pantalla, sin un dia de corte y sin riesgo de dejar algo a medias.
+
+   Los valores salen de los tokens de temas.css, asi que siguen el tema y la
+   escala de letra solos.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Celdas de tabla ─────────────────────────────────────────────────────── */
+.celda        { padding: var(--e-3); text-align: center; }
+.celda-izq    { padding: var(--e-3); text-align: left; }
+.celda-der    { padding: var(--e-3); text-align: right; }
+.celda-fina   { padding: var(--e-2); text-align: center; }
+
+/* La linea que separa filas. Un velo, no un color fijo: se despega igual sobre
+   fondo claro y sobre fondo oscuro. */
+.fila-sep     { border-bottom: 1px solid rgba(var(--ink-rgb), 0.06); }
+
+/* ── Texto ───────────────────────────────────────────────────────────────── */
+.txt-fuerte   { color: var(--text-strong); }
+.txt-suave    { color: var(--text-muted); }
+.txt-apagado  { color: var(--text-dim); }
+.txt-chico    { font-size: var(--t-xs); color: var(--text-muted); }
+.txt-dato     { font-size: var(--t-sm); color: var(--text-muted); }
+
+/* La etiqueta que va encima de un campo o de una cifra. */
+.rotulo {
+  display: block;
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--e-1);
+}
+
+/* ── Disposicion ─────────────────────────────────────────────────────────── */
+.fila-entre   { display: flex; justify-content: space-between; align-items: center; }
+.fila-centro  { display: flex; align-items: center; gap: var(--e-2); }
+.centrado     { text-align: center; }
+
+/* ── Tarjeta e insignia ──────────────────────────────────────────────────── */
+.tarjeta {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--e-4);
+}
+
+/* La insignia de estado. El fondo es un velo DEL PROPIO TONO -no un color
+   fijo- para que se adapte: tinte oscuro sobre fondo oscuro, tinte claro sobre
+   fondo claro. Con un color fijo quedaba dorado sobre dorado en los temas
+   claros y no se leia. */
+.insignia {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: var(--t-xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.insignia-ok   { background: rgba(var(--success-rgb), 0.18); color: var(--success); }
+.insignia-alerta { background: rgba(var(--warning-rgb), 0.18); color: var(--warning); }
+.insignia-mal  { background: rgba(var(--danger-rgb), 0.18);  color: var(--danger); }
+.insignia-info { background: rgba(var(--primary-rgb), 0.18); color: var(--brand-light); }
+
+/* ── Numeros ─────────────────────────────────────────────────────────────── */
+/* Cifras alineadas por columna: comparar de un vistazo y sumar sin errores. */
+.cifra { font-variant-numeric: tabular-nums; font-weight: 700; }
+.cifra-grande {
+  font-size: var(--t-2xl);
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}

@@ -618,7 +618,7 @@ export const renderLayoutActivo = async (container) => {
                               <div style="margin-bottom:15px; background:#F4F1EC; padding:12px; border-radius:6px; border:1px solid #DDD8CF;">
                                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                                       <span style="color:var(--text-muted); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Artículos (Padres)</span>
-                                      <span style="font-weight:800; color:#1C2B3A; font-size:1.1rem;">${uniquePadresSize.toLocaleString()}</span>
+                                      <span style="font-weight:800; color:#1C2B3A; font-size:1.1rem;">${uniquePadresSize.toLocaleString('es-PE')}</span>
                                   </div>
 
                                   <div style="width:100%; height:6px; background:#EEE9E3; border-radius:3px; display:flex; overflow:hidden; margin-bottom:6px;">
@@ -635,7 +635,7 @@ export const renderLayoutActivo = async (container) => {
                               <div style="margin-bottom:15px; background:#F4F1EC; padding:12px; border-radius:6px; border:1px solid #DDD8CF;">
                                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                                       <span style="color:var(--text-muted); font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Unidades Totales</span>
-                                      <span style="font-weight:800; color:#1C2B3A; font-size:1.1rem;">${totalUnits.toLocaleString()}</span>
+                                      <span style="font-weight:800; color:#1C2B3A; font-size:1.1rem;">${totalUnits.toLocaleString('es-PE')}</span>
                                   </div>
 
                                   <div style="width:100%; height:6px; background:#EEE9E3; border-radius:3px; display:flex; overflow:hidden; margin-bottom:6px;">
@@ -652,7 +652,7 @@ export const renderLayoutActivo = async (container) => {
                               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
                                   <div style="background:#F4F1EC; padding:12px; border-radius:6px; border:1px solid #DDD8CF; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                                       <span style="color:var(--text-muted); font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px; text-align:center;">Ubicaciones Vacías</span>
-                                      <span style="font-weight:800; color:#1C2B3A; font-size:1.2rem;">${emptyCellsCount.toLocaleString()}</span>
+                                      <span style="font-weight:800; color:#1C2B3A; font-size:1.2rem;">${emptyCellsCount.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="background:#F4F1EC; padding:12px; border-radius:6px; border:1px solid #DDD8CF; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                                       <span style="color:var(--text-muted); font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px; text-align:center;">Densidad (Unid/Ubi)</span>
@@ -677,15 +677,15 @@ export const renderLayoutActivo = async (container) => {
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
-                                      <span style="color:#1C2B3A;">${statsActualPadresSize.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${statsActualPadresSize.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Unidades</span>
-                                      <span style="color:#1C2B3A;">${stats['ACTUAL'].units.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${stats['ACTUAL'].units.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 6-13')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                      <span style="color:#ef4444;">${stats['ACTUAL'].bad_placed.toLocaleString()} mal ubicadas</span>
+                                      <span style="color:#ef4444;">${stats['ACTUAL'].bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
                                   </div>
                               </div>
 
@@ -696,15 +696,15 @@ export const renderLayoutActivo = async (container) => {
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
-                                      <span style="color:#1C2B3A;">${statsAnteriorPadresSize.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${statsAnteriorPadresSize.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Unidades</span>
-                                      <span style="color:#1C2B3A;">${stats['ANTERIOR'].units.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${stats['ANTERIOR'].units.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 3-5')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                      <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString()} mal ubicadas</span>
+                                      <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
                                   </div>
                               </div>
 
@@ -715,15 +715,15 @@ export const renderLayoutActivo = async (container) => {
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
-                                      <span style="color:#1C2B3A;">${uniquePadresSize.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${uniquePadresSize.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); margin-bottom:2px;">
                                       <span>Unidades</span>
-                                      <span style="color:#1C2B3A;">${statsGeneral.units.toLocaleString()}</span>
+                                      <span style="color:#1C2B3A;">${statsGeneral.units.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Desviación general total')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                      <span style="color:#ef4444;">${statsGeneral.bad_placed.toLocaleString()} mal ubicadas</span>
+                                      <span style="color:#ef4444;">${statsGeneral.bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
                                   </div>
                               </div>
                           </div>

@@ -18,7 +18,7 @@
 import {
     EQUIVALENCIA_PREPACK, juntarCronometros, tiempoDe, tiempoSituacion,
     escaleraDe, embudoDe, TOPE_HUECO_SEG
-} from './picking.js?v=29.0392';
+} from './picking.js?v=29.0393';
 
 const F = (n) => Number(n || 0).toLocaleString('es-PE');
 const DMY = (d) => String(d || '').split('-').reverse().join('/');
@@ -117,7 +117,7 @@ const sec2 = (C, dias) => {
 const sec3 = (C) => {
     const s = tiempoDe(C, 'suelto');
     const c10 = tiempoDe(C, '10');
-    if (!s.mediana) return '<div style="color:var(--text-muted); font-size:var(--t-sm);">Sin mediciones en las fechas elegidas.</div>';
+    if (!s.mediana) return '<div class="txt-dato">Sin mediciones en las fechas elegidas.</div>';
     const unoAUno = s.mediana * 10;
     const factor = c10.mediana ? (c10.mediana / s.mediana).toFixed(2) : '—';
     const barra = (rot, seg, ancho, color) => `
@@ -147,7 +147,7 @@ const sec4 = (C) => {
     const pm = tiempoSituacion(C, 'prepack', 'mismo'), pc = tiempoSituacion(C, 'prepack', 'camino');
     const s = tiempoDe(C, 'suelto');
     const totalS = sm.n + sc.n, totalP = pm.n + pc.n;
-    if (!totalS || !totalP) return '<div style="color:var(--text-muted); font-size:var(--t-sm);">Sin mediciones suficientes.</div>';
+    if (!totalS || !totalP) return '<div class="txt-dato">Sin mediciones suficientes.</div>';
 
     const mezcla = tiempoDe(C, 'suelto').mediana;
     const todoPrepack = (() => {

@@ -1,32 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0392';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0393';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0392';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0392';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0392';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0392';
-import * as metasService from '../services_v245/metasService.js?v=29.0392';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0392';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0392';
+import * as adminService from '../services_v245/adminService.js?v=29.0393';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0393';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0393';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0393';
+import * as metasService from '../services_v245/metasService.js?v=29.0393';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0393';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0393';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0392';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0392';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0392';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0392';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0392';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0392';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0392';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0392';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0392';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0392';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0392';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0392';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0392';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0392';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0392';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0392';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0392';
-import { montarSlotting } from './slotting.js?v=29.0392';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0393';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0393';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0393';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0393';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0393';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0393';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0393';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0393';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0393';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0393';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0393';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0393';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0393';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0393';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0393';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0393';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0393';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0393';
+import { montarSlotting } from './slotting.js?v=29.0393';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -389,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0392';
+const VERSION = '29.0393';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2388,7 +2389,7 @@ window.downloadExcelDetail = async () => {
 
     wsMonta.mergeCells('A2:D2');
     const row2 = wsMonta.getRow(2);
-    row2.getCell(1).value = data.timestamp || new Date().toLocaleString();
+    row2.getCell(1).value = data.timestamp || new Date().toLocaleString('es-PE');
     row2.getCell(1).font = { size: 10, name: 'Calibri' };
     row2.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
@@ -2480,7 +2481,7 @@ window.downloadExcelDetail = async () => {
     wsAnalisis.mergeCells('A2:I2');
     const row2A = wsAnalisis.getRow(2);
     row2A.height = 30;
-    row2A.getCell(1).value = data.timestamp || new Date().toLocaleString();
+    row2A.getCell(1).value = data.timestamp || new Date().toLocaleString('es-PE');
     row2A.getCell(1).font = { size: 10, name: 'Calibri' };
     row2A.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
@@ -2638,7 +2639,7 @@ window.downloadExcelDetail = async () => {
     // corridas del mismo día se confunden entre sí.
     wsAnalisis.mergeCells('K3:P3');
     const fechaPal = wsAnalisis.getCell('K3');
-    fechaPal.value = data.timestamp || new Date().toLocaleString();
+    fechaPal.value = data.timestamp || new Date().toLocaleString('es-PE');
     fechaPal.font = { size: 10, name: 'Calibri' };
     fechaPal.alignment = { vertical: 'middle', horizontal: 'center' };
 
@@ -2896,7 +2897,9 @@ export const renderDashboard = async (container, user, onLogout) => {
   if (currentDateFilter) setDateFilter(null); // Limpiar filtro al quitar el picker
 
   const renderNav = () => {
-    navContainer.innerHTML = allowedTabs.map(t => `<a class="nav-item ${t.id === currentTab ? 'active' : ''}" data-id="${t.id}"><span class="ic">${t.icon}</span> ${t.label}</a>`).join('');
+    // Dibujo propio si existe para esa pestaña; si no, el emoji de siempre. Asi una
+    // pestaña nueva no se queda sin nada mientras no se le dibuje su icono.
+    navContainer.innerHTML = allowedTabs.map(t => `<a class="nav-item ${t.id === currentTab ? 'active' : ''}" data-id="${t.id}"><span class="ic">${hayIcono(t.id) ? icono(t.id) : t.icon}</span> ${t.label}</a>`).join('');
     document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', (e) => { 
         currentTab = e.currentTarget.dataset.id; 
         activeAdminSub = null; // Resetear sub-pestaña al cambiar de sección
@@ -3001,7 +3004,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         <div class="animate-fade-in" style="display:flex; justify-content:space-between; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:0.7rem;">
             <h1 style="margin:0; font-size:var(--t-xl); font-weight:900; letter-spacing:-0.4px; color:var(--text-strong);">¡Hola, <span style="background: linear-gradient(to right, var(--brand-light), var(--violet-soft)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
             <div id="homeClock" style="color:var(--text-muted); font-weight:700; font-size:var(--t-sm);">
-                ${now.toLocaleDateString('es-ES', options)} | ${now.toLocaleTimeString()}
+                ${now.toLocaleDateString('es-PE', options)} | ${now.toLocaleTimeString('es-PE')}
             </div>
         </div>`;
 
@@ -3011,7 +3014,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             const el = document.getElementById('homeClock');
             if (!el) { clearInterval(window.homeClockInterval); return; }
             const d = new Date();
-            el.textContent = `${d.toLocaleDateString('es-ES', options)} | ${d.toLocaleTimeString()}`;
+            el.textContent = `${d.toLocaleDateString('es-PE', options)} | ${d.toLocaleTimeString('es-PE')}`;
         }, 1000);
     };
 
@@ -3040,7 +3043,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div class="glass-panel" style="padding:3rem; text-align:center;">
                 <div style="font-size:var(--t-2xl); margin-bottom:0.8rem;">🗓️</div>
                 <h3 style="color:var(--text-strong); margin:0 0 0.6rem 0;">Sin tareas finalizadas en las últimas dos semanas</h3>
-                <p style="color:var(--text-muted);">La comparativa aparecerá en cuanto se cierren tareas.</p>
+                <p class="txt-suave">La comparativa aparecerá en cuanto se cierren tareas.</p>
             </div>`;
         arrancarReloj();
         return;
@@ -3233,7 +3236,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const celdaValor = (texto, flecha = '') => `
         <span style="display:grid; grid-template-columns:0.95em 1fr; gap:0.28em; align-items:center; width:100%;">
             <span style="line-height:1;">${flecha}</span>
-            <span style="text-align:center;">${texto}</span>
+            <span class="centrado">${texto}</span>
         </span>`;
 
     /**
@@ -3577,7 +3580,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                   <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
                       <span style="color:${color}; font-weight:700; font-size:var(--t-md);">${estado}</span>
                       ${detalle ? `<span style="width:4px; height:4px; background:rgba(var(--ink-rgb), 0.2); border-radius:50%;"></span>
-                                   <span style="color:var(--text-muted); font-size:var(--t-sm);">${detalle}</span>` : ''}
+                                   <span class="txt-dato">${detalle}</span>` : ''}
                   </div>
               </div>
           </div>
@@ -3616,7 +3619,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderUploadArea = (container, area, hasData = null, ext = '.csv', customLabel = null) => {
     const meta = getUploadMeta(area);
-    const dateStr = meta ? new Date(meta.ts).toLocaleString() : 'NUNCA';
+    const dateStr = meta ? new Date(meta.ts).toLocaleString('es-PE') : 'NUNCA';
     const div = document.createElement('div');
     div.id = `wrap_${area}`;
     div.style.width = '100%';
@@ -3677,7 +3680,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         ? (isLoaded
             ? `${hasData.length.toLocaleString('es-PE')} regs · ${Math.round(unidades).toLocaleString('es-PE')} unidades`
             : (horaVacio ? `lo quitaron a las ${horaVacio}` : ''))
-        : (isLoaded ? `${hasData.length.toLocaleString()} regs` : '');
+        : (isLoaded ? `${hasData.length.toLocaleString('es-PE')} regs` : '');
 
     // EL STOCK YA NO SE CARGA A MANO: lo publica el robot a las 19:00 y todas las PC lo
     // leen de la nube. Se deja la tarjeta a la vista —con cuántas filas hay y de cuándo
@@ -3688,7 +3691,7 @@ export const renderDashboard = async (container, user, onLogout) => {
       // La fecha sale del área REAL: si se mira desde un nombre viejo, su meta quedó
       // congelada el día que alguien cargó ese archivo a mano por última vez.
       const metaNube = getUploadMeta(AREA_CANONICA[area] || area);
-      const dateStr = metaNube ? new Date(metaNube.ts).toLocaleString() : 'NUNCA';
+      const dateStr = metaNube ? new Date(metaNube.ts).toLocaleString('es-PE') : 'NUNCA';
       // El mismo verde y el mismo armado que el Maestro (renderMaestroNube): las tres
       // tarjetas dicen lo mismo —esto viene de la nube, no se toca acá— y tienen que
       // leerse como una sola cosa, no como tres avisos distintos.
@@ -3702,7 +3705,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
                         <span style="color:${color}; font-weight:700; font-size:var(--t-md);">${isLoaded ? 'EN LA NUBE' : 'SIN PUBLICAR'}</span>
                         ${isLoaded ? `<span style="width:4px; height:4px; background:rgba(var(--ink-rgb), 0.2); border-radius:50%;"></span>
-                                      <span style="color:var(--text-muted); font-size:var(--t-sm);">${hasData.length.toLocaleString('es-PE')} regs · ${dateStr}</span>` : ''}
+                                      <span class="txt-dato">${hasData.length.toLocaleString('es-PE')} regs · ${dateStr}</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -3725,7 +3728,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                   <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
                       <span style="color:${colorEstado}; font-weight:700; font-size:var(--t-md);">${textoEstado}</span>
                       ${detalle ? `<span style="width:4px; height:4px; background:rgba(var(--ink-rgb), 0.2); border-radius:50%;"></span>
-                                    <span style="color:var(--text-muted); font-size:var(--t-sm);">${detalle}</span>` : ''}
+                                    <span class="txt-dato">${detalle}</span>` : ''}
                   </div>
               </div>
           </div>
@@ -3831,7 +3834,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                   <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
                       <span style="color:${color}; font-weight:700; font-size:var(--t-md);">${estado}</span>
                       ${detalle ? `<span style="width:4px; height:4px; background:rgba(var(--ink-rgb), 0.2); border-radius:50%;"></span>
-                                   <span style="color:var(--text-muted); font-size:var(--t-sm);">${detalle}</span>` : ''}
+                                   <span class="txt-dato">${detalle}</span>` : ''}
                   </div>
               </div>
           </div>
@@ -4097,7 +4100,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         await renderBufferConfig(buf);
     } else {
         const now = new Date();
-        const timeStr = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+        const timeStr = `${now.toLocaleDateString('es-PE')} ${now.toLocaleTimeString('es-PE')}`;
         buf.innerHTML = `
           <div style="background:rgba(var(--card-rgb), 0.3); padding:1rem 1.5rem; border-radius:12px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; background:rgba(var(--ink-rgb), 0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(var(--ink-rgb), 0.05);">
@@ -4811,9 +4814,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <td style="padding:0.4rem 0.8rem; font-weight:700; ${r.marca==='TOTAL'?'color:var(--success)':''}">${brandAlias(r.marca)}</td>
                                 ${matrix.columns.map(c => {
                                     const val = r.breakdown[c] || 0;
-                                    return `<td style="padding:0.4rem 0.3rem; text-align:center; color:${val > 0 ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.1)'}; font-weight:${val > 0 ? '700' : 'normal'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
+                                    return `<td style="padding:0.4rem 0.3rem; text-align:center; color:${val > 0 ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.1)'}; font-weight:${val > 0 ? '700' : 'normal'}">${val > 0 ? val.toLocaleString('es-PE') : '0'}</td>`;
                                 }).join('')}
-                                <td style="padding:0.4rem 0.8rem; text-align:center; background:rgba(var(--pink-rgb), 0.05); color:var(--success); font-weight:900; border-left:1px solid rgba(var(--ink-rgb), 0.05);">${r.total.toLocaleString()}</td>
+                                <td style="padding:0.4rem 0.8rem; text-align:center; background:rgba(var(--pink-rgb), 0.05); color:var(--success); font-weight:900; border-left:1px solid rgba(var(--ink-rgb), 0.05);">${r.total.toLocaleString('es-PE')}</td>
                             </tr>
                         `).join('') : `
                             <tr>
@@ -4892,9 +4895,9 @@ export const renderDashboard = async (container, user, onLogout) => {
       };
   };
 
-  /* El MISMO formato que el reporte de arriba (`.toLocaleString()` a secas). Forzar
+  /* El MISMO formato que el reporte de arriba (`.toLocaleString('es-PE')` a secas). Forzar
      'es-PE' acá dejaba 61.792 arriba y 61,792 abajo, en la misma pantalla. */
-  const nUm = (x) => Number(x || 0).toLocaleString();
+  const nUm = (x) => Number(x || 0).toLocaleString('es-PE');
 
   const pintarCuadrosAbajo = async (config, resElegido, correrOtros = true) => {
       const caja = document.getElementById('cuadrosAbajo');
@@ -5060,7 +5063,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   const renderBufferResults = (container, data) => {
     lastBufferResult = data; // [MOD v12.4.1] Sincronizar estado global para permitir exportación inmediata
-    const ts = data.timestamp || new Date().toLocaleString();
+    const ts = data.timestamp || new Date().toLocaleString('es-PE');
     const tsHtml = `<span style="font-size:var(--t-xs); opacity:0.4; margin-left:8px; font-weight:400; vertical-align:middle;">(${ts})</span>`;
     const widthLeft = '580px';
     const widthRight = '1200px';
@@ -5074,8 +5077,8 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <thead style="background:rgba(var(--shadow-rgb), 0.5);"><tr style="color:var(--text-muted); border-bottom:1px solid rgba(var(--primary-rgb), 0.2);"><th style="padding:0.6rem 1rem; text-align:left;">NIVEL/AREA</th><th style="padding:0.6rem 1rem; text-align:center;">RQ</th><th style="padding:0.6rem 1rem; text-align:center;">ATD</th><th style="padding:0.6rem 1rem; text-align:center;">ATD %</th></tr></thead>
                     <tbody style="color:var(--text-pale);">${data.waterfall.map(r => `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03); ${r.nivel==='Total'?'background:rgba(var(--primary-rgb), 0.08); font-weight:900;':''}">
                         <td style="padding:0.5rem 1rem; color:${r.nivel==='Total'?'var(--success)':'inherit'};">${r.nivel}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center;">${r.rq.toLocaleString()}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center; color:${r.atd > 0 ? 'var(--text-strong)' : 'var(--text-dim)'};">${r.atd.toLocaleString()}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center;">${r.rq.toLocaleString('es-PE')}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:${r.atd > 0 ? 'var(--text-strong)' : 'var(--text-dim)'};">${r.atd.toLocaleString('es-PE')}</td>
                         <td style="padding:0.5rem 1rem; text-align:center; color:var(--success);">${r.pct}</td>
                     </tr>`).join('')}</tbody>
                 </table>
@@ -5090,7 +5093,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <td style="padding:0.5rem 1rem; color:var(--text-muted);">${r.tipo}</td>
                         <td style="padding:0.5rem 1rem; text-align:center;">${r.paletas}</td>
                         <td style="padding:0.5rem 1rem; text-align:center;">${r.skus}</td>
-                        <td style="padding:0.5rem 1rem; text-align:center; color:var(--success);">${Number(r.parcaja).toLocaleString()}</td>
+                        <td style="padding:0.5rem 1rem; text-align:center; color:var(--success);">${Number(r.parcaja).toLocaleString('es-PE')}</td>
                     </tr>`).join('')}</tbody>
                 </table>
             </div>
@@ -5098,17 +5101,17 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div style="background:rgba(var(--bg-rgb), 0.9); border:2px solid var(--danger); border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(var(--danger-rgb), 0.3);">
                 <div style="padding:0.7rem; background:rgba(var(--danger-rgb), 0.1); border-bottom:1px solid rgba(var(--danger-rgb), 0.3); text-align:center;"><h3 style="color:var(--danger); font-weight:800; margin:0; font-size:var(--t-md); letter-spacing:1px; white-space:nowrap;">RESUMEN 7. SIN STOCK ${tsHtml}</h3></div>
                 <div style="display:flex; justify-content:space-around; padding:1.2rem; color:var(--text-pale);">
-                    <div style="text-align:center;">
+                    <div class="centrado">
                         <div style="font-size:var(--t-xs); color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artículos</div>
-                        <div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${((data.sinStockSummary ? data.sinStockSummary.articulos : undefined) || 0).toLocaleString()}</div>
+                        <div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${((data.sinStockSummary ? data.sinStockSummary.articulos : undefined) || 0).toLocaleString('es-PE')}</div>
                     </div>
                     <div style="text-align:center; border-left:1px solid rgba(var(--ink-rgb), 0.1); padding-left:0.5rem;">
                         <div style="font-size:var(--t-xs); color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem;">Cantidad SKUs</div>
-                        <div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${((data.sinStockSummary ? data.sinStockSummary.skus : undefined) || 0).toLocaleString()}</div>
+                        <div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${((data.sinStockSummary ? data.sinStockSummary.skus : undefined) || 0).toLocaleString('es-PE')}</div>
                     </div>
                     <div style="text-align:center; border-left:1px solid rgba(var(--ink-rgb), 0.1); padding-left:0.5rem;">
                         <div style="font-size:var(--t-xs); color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Unidades (RQ)</div>
-                        <div style="font-size:var(--t-xl); font-weight:900; color:var(--danger);">${((data.sinStockSummary ? data.sinStockSummary.qty : undefined) || 0).toLocaleString()}</div>
+                        <div style="font-size:var(--t-xl); font-weight:900; color:var(--danger);">${((data.sinStockSummary ? data.sinStockSummary.qty : undefined) || 0).toLocaleString('es-PE')}</div>
                     </div>
                 </div>
             </div>
@@ -5209,7 +5212,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0392');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0393');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5444,13 +5447,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <table style="width:100%; border-collapse:collapse; font-size:var(--t-md);">
                         <thead style="background:rgba(var(--ink-rgb), 0.05);">
                             <tr>
-                                <th style="padding:0.8rem; text-align:left;">Estado</th>
-                                <th style="padding:0.8rem; text-align:left;">Nombre</th>
-                                <th style="padding:0.8rem; text-align:left;">Usuario</th>
-                                <th style="padding:0.8rem; text-align:left;">Contraseña</th>
-                                <th style="padding:0.8rem; text-align:left;">Rol</th>
-                                <th style="padding:0.8rem; text-align:left;" title="Con que colores abre la plataforma esta persona la primera vez. Si despues ella elige otro en Configuracion, manda el suyo.">Tema</th>
-                                <th style="padding:0.8rem; text-align:center;">Acciones</th>
+                                <th class="celda-izq">Estado</th>
+                                <th class="celda-izq">Nombre</th>
+                                <th class="celda-izq">Usuario</th>
+                                <th class="celda-izq">Contraseña</th>
+                                <th class="celda-izq">Rol</th>
+                                <th class="celda-izq" title="Con que colores abre la plataforma esta persona la primera vez. Si despues ella elige otro en Configuracion, manda el suyo.">Tema</th>
+                                <th class="celda">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -5458,7 +5461,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 '<tr><td colspan="7" style="padding:3rem; text-align:center;"><div class="spinner-small" style="display:inline-block; margin-bottom:10px;"></div><br><span style="color:var(--primary); font-weight:700;">Sincronizando con la nube...</span></td></tr>' :
                                 (users.length ? users.map(u => `
                                 <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.02); opacity: ${u.active === false ? '0.5' : '1'}">
-                                    <td style="padding:0.8rem; text-align:center;">
+                                    <td class="celda">
                                         <button class="btn-status" data-user="${u.username}" title="${u.active === false ? 'Activar' : 'Desactivar'}" style="background:none; border:none; cursor:pointer; font-size:var(--t-lg);">
                                             ${u.active === false ? '❌' : '✅'}
                                         </button>
@@ -5478,7 +5481,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             ${TEMAS.map(t => `<option value="${t.id}" ${u.tema === t.id ? 'selected' : ''}>${t.nombre}</option>`).join('')}
                                         </select>
                                     </td>
-                                    <td style="padding:0.8rem; text-align:center;">
+                                    <td class="celda">
                                         <div style="display:flex; gap:0.8rem; justify-content:center;">
                                             <button class="btn-edit" data-user='${JSON.stringify(u)}' title="Editar" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:var(--t-lg);">✏️</button>
                                             <button class="btn-del" data-user="${u.username}" title="Eliminar" style="background:none; border:none; color:var(--danger-soft); cursor:pointer; font-size:var(--t-lg);">🗑️</button>
@@ -5731,7 +5734,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 let hasAccess = r === 'admin' ? true : (dbVal !== undefined ? (dbVal === 1 || dbVal === true) : t.roles.includes(r));
                                 if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id)) hasAccess = true;
                                 const isFixed = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id));
-                                return `<td style="padding:0.8rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer;"'}></td>`;
+                                return `<td class="celda"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer;"'}></td>`;
                             }).join('')}
                         </tr>`);
 
@@ -5888,10 +5891,10 @@ export const renderDashboard = async (container, user, onLogout) => {
     };
 
     const existing = loadAttendanceState(forcedDate);
-    const dateFormatted = new Date(forcedDate + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+    const dateFormatted = new Date(forcedDate + 'T12:00:00').toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
 
     if (!workers.length) {
-        container.innerHTML = `<div style="padding:3rem; text-align:center;"><p style="color:var(--text-muted);">Debes importar o registrar <b>Trabajadores Activos</b> antes de tomar asistencia.</p></div>`;
+        container.innerHTML = `<div style="padding:3rem; text-align:center;"><p class="txt-suave">Debes importar o registrar <b>Trabajadores Activos</b> antes de tomar asistencia.</p></div>`;
         return;
     }
 
@@ -5911,11 +5914,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <thead style="background:rgba(var(--ink-rgb), 0.05); border-bottom:1px solid var(--border);">
                     <tr>
                         <th style="padding:0.8rem; text-align:center; width:50px; border-right:1px solid rgba(var(--ink-rgb), 0.05);">#</th>
-                        <th style="padding:0.8rem; text-align:left;">DNI</th>
-                        <th style="padding:0.8rem; text-align:left;">Apellidos y Nombres</th>
-                        <th style="padding:0.8rem; text-align:center;">Estado</th>
-                        <th style="padding:0.8rem; text-align:center;">Puntualidad</th>
-                        <th style="padding:0.8rem; text-align:center;">Justificación</th>
+                        <th class="celda-izq">DNI</th>
+                        <th class="celda-izq">Apellidos y Nombres</th>
+                        <th class="celda">Estado</th>
+                        <th class="celda">Puntualidad</th>
+                        <th class="celda">Justificación</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -5932,19 +5935,19 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(var(--ink-rgb), 0.05);">${idx + 1}</td>
                             <td style="padding:0.8rem; color:var(--text-strong); font-weight:800; font-size:var(--t-md); letter-spacing:0.5px;">${dni}</td>
                             <td style="padding:0.8rem; font-weight:600;">${displayName}</td>
-                            <td style="padding:0.8rem; text-align:center;">
+                            <td class="celda">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
                                     <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'var(--on-accent)':'var(--text-strong)'}; font-size:var(--t-xs); cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">P</button>
                                     <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'var(--danger)':'none'}; color:${!isPresent?'var(--on-accent)':'var(--text-strong)'}; font-size:var(--t-xs); cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">F</button>
                                 </div>
                             </td>
-                            <td style="padding:0.8rem; text-align:center;">
+                            <td class="celda">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
                                     <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'var(--cyan-deep)':'none'}; color:${isOnTime?'var(--on-accent)':'var(--text-strong)'}; font-size:var(--t-xs); cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">SÍ</button>
                                     <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'var(--orange)':'none'}; color:var(--text-strong); font-size:var(--t-xs); cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">NO</button>
                                 </div>
                             </td>
-                            <td style="padding:0.8rem; text-align:center;">
+                            <td class="celda">
                                 <select ${isFinalized ? 'disabled' : ''} onchange="window.updateJust('${dni}', this.value)" style="background:rgba(var(--ink-rgb), 0.1); border:1px solid var(--border); color:var(--text-strong); padding:0.3rem 0.5rem; border-radius:6px; font-size:var(--t-xs); outline:none; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">
                                     <option value="" style="background:var(--panel-solid);">- SELECCIONE -</option>
                                     <option value="Descanso Médico" ${(rec && rec.justification==='Descanso Médico')?'selected':'' } style="background:var(--panel-solid);">DESCANSO MÉDICO</option>
@@ -6116,7 +6119,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     if (!syncEngine.isFirstPullDone) {
         container.innerHTML = `<div class="glass-panel" style="padding:5rem; text-align:center;">
             <div class="spinner" style="margin:0 auto 1.5rem auto;"></div>
-            <p style="color:var(--text-muted);">Cargando asistencia...</p>
+            <p class="txt-suave">Cargando asistencia...</p>
         </div>`;
         return;
     }
@@ -6751,9 +6754,9 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <h4 style="margin:0; color:var(--primary); font-size:var(--t-lg); font-weight:800;">📊 CONSOLIDADO KPI</h4>
                 <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
                     <div style="display:flex; align-items:center; gap:8px; background:rgba(var(--ink-rgb), 0.03); border:1px solid var(--border); padding:4px 10px; border-radius:8px;">
-                         <span style="font-size:var(--t-xs); color:var(--text-muted);">DESDE:</span>
+                         <span class="txt-chico">DESDE:</span>
                          <input type="date" id="kpi_start" value="${kpiStart}" style="background:none; border:none; color:var(--text-strong); font-size:var(--t-sm); outline:none;">
-                         <span style="font-size:var(--t-xs); color:var(--text-muted);">HASTA:</span>
+                         <span class="txt-chico">HASTA:</span>
                          <input type="date" id="kpi_end" value="${kpiEnd}" style="background:none; border:none; color:var(--text-strong); font-size:var(--t-sm); outline:none;">
                     </div>
                     <input type="text" id="kpi_search" placeholder="🔍 Buscar operario..." value="${kpiSearch}" style="background:rgba(var(--ink-rgb), 0.03); border:1px solid var(--border); color:var(--text-strong); padding:6px 12px; border-radius:8px; font-size:var(--t-sm); outline:none; width:200px;">
@@ -6762,9 +6765,9 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; font-size:var(--t-md);">
-                    <thead><tr style="border-bottom:2px solid rgba(var(--ink-rgb), 0.05); color:var(--text-muted);"><th style="padding:0.8rem; text-align:left;">OPERARIO</th><th style="padding:0.8rem; text-align:center;">DÍAS TRAB.</th><th style="padding:0.8rem; text-align:center;">JUSTIFICACIÓN</th><th style="padding:0.8rem; text-align:center;">FALTAS</th><th style="padding:0.8rem; text-align:center;">TARDANZAS</th><th style="padding:0.8rem; text-align:center;">PROM. RENDIMIENTO</th></tr></thead>
+                    <thead><tr style="border-bottom:2px solid rgba(var(--ink-rgb), 0.05); color:var(--text-muted);"><th class="celda-izq">OPERARIO</th><th class="celda">DÍAS TRAB.</th><th class="celda">JUSTIFICACIÓN</th><th class="celda">FALTAS</th><th class="celda">TARDANZAS</th><th class="celda">PROM. RENDIMIENTO</th></tr></thead>
                     <tbody>${consolidado.map(w => `
-                        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.02);"><td style="padding:0.8rem; color:var(--text-strong); font-weight:600;">${w.name}</td><td style="padding:0.8rem; text-align:center; font-weight:700; color:var(--blue-mid);">${w.diasTrabajados}</td><td style="padding:0.8rem; text-align:center; color:var(--warning-soft);">${w.justificaciones}</td><td style="padding:0.8rem; text-align:center; color:${w.faltas > 0 ? 'var(--danger)' : 'var(--text-muted)'};">${w.faltas}</td><td style="padding:0.8rem; text-align:center; color:${w.tardanzas > 0 ? 'var(--orange)' : 'var(--text-muted)'};">${w.tardanzas}</td><td style="padding:0.8rem; text-align:center;"><div style="display:inline-block; padding:4px 12px; border-radius:12px; background:${getStatusColor(w.avg)}22; color:${getStatusColor(w.avg)}; font-weight:900;">${w.avg}%</div></td></tr>`).join('')}</tbody>
+                        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.02);"><td style="padding:0.8rem; color:var(--text-strong); font-weight:600;">${w.name}</td><td style="padding:0.8rem; text-align:center; font-weight:700; color:var(--blue-mid);">${w.diasTrabajados}</td><td style="padding:0.8rem; text-align:center; color:var(--warning-soft);">${w.justificaciones}</td><td style="padding:0.8rem; text-align:center; color:${w.faltas > 0 ? 'var(--danger)' : 'var(--text-muted)'};">${w.faltas}</td><td style="padding:0.8rem; text-align:center; color:${w.tardanzas > 0 ? 'var(--orange)' : 'var(--text-muted)'};">${w.tardanzas}</td><td class="celda"><div style="display:inline-block; padding:4px 12px; border-radius:12px; background:${getStatusColor(w.avg)}22; color:${getStatusColor(w.avg)}; font-weight:900;">${w.avg}%</div></td></tr>`).join('')}</tbody>
                 </table>
             </div>
         </div>
@@ -6887,13 +6890,13 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <thead style="background:rgba(var(--ink-rgb), 0.05); border-bottom:1px solid var(--border);">
                     <tr>
                         <th style="padding:0.8rem; text-align:center; width:45px;">#</th>
-                        <th style="padding:0.8rem; text-align:left;">TRABAJADOR / DNI</th>
-                        <th style="padding:0.8rem; text-align:center;">ASIST.</th>
-                        <th style="padding:0.8rem; text-align:center;">PUNT.</th>
-                        <th style="padding:0.8rem; text-align:center;">PROD.</th>
-                        <th style="padding:0.8rem; text-align:center;">BPA</th>
-                        <th style="padding:0.8rem; text-align:center;">SUP.</th>
-                        <th style="padding:0.8rem; text-align:center;">JUST.</th>
+                        <th class="celda-izq">TRABAJADOR / DNI</th>
+                        <th class="celda">ASIST.</th>
+                        <th class="celda">PUNT.</th>
+                        <th class="celda">PROD.</th>
+                        <th class="celda">BPA</th>
+                        <th class="celda">SUP.</th>
+                        <th class="celda">JUST.</th>
                         <th style="padding:0.8rem; text-align:center; background:rgba(var(--primary-rgb), 0.1);">RENDIMIENTO %</th>
                     </tr>
                 </thead>
@@ -6923,22 +6926,22 @@ export const renderDashboard = async (container, user, onLogout) => {
                         <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(var(--ink-rgb), 0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted);">${idx + 1}</td>
                             <td style="padding:0.8rem; display:flex; align-items:center;"><b>${displayName}</b> <span style="background:rgba(var(--warning-soft-rgb), 0.18); color:var(--on-accent); padding:2px 6px; border-radius:4px; font-size:var(--t-xs); font-weight:800; margin-left:8px;">${p.dni}</span></td>
-                            <td style="padding:0.8rem; text-align:center;">
+                            <td class="celda">
                                 <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="asistencia" style="background:none; border:none; color:${p.asistencia==='P'?'var(--success)':'var(--danger)'}; font-weight:900;">
                                     <option value="P" ${p.asistencia==='P'?'selected':''}>P</option>
                                     <option value="F" ${p.asistencia==='F'?'selected':''}>F</option>
                                 </select>
                             </td>
-                            <td style="padding:0.8rem; text-align:center;">
+                            <td class="celda">
                                 <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="puntualidad" style="background:none; border:none; color:${p.puntualidad==='SÍ'?'var(--success)':'var(--danger)'}; font-weight:700;">
                                     <option value="SÍ" ${p.puntualidad==='SÍ'?'selected':''}>SÍ</option>
                                     <option value="NO" ${p.puntualidad==='NO'?'selected':''}>NO</option>
                                 </select>
                             </td>
-                            <td style="padding:0.8rem; text-align:center;"><input type="number" step="0.1" value="${p.produccion}" data-date="${p.date}" data-dni="${p.dni}" data-f="produccion" class="edit-perf-log" style="width:35px; background:none; border:none; color:var(--text-strong); text-align:center;"></td>
-                            <td style="padding:0.8rem; text-align:center;"><input type="number" step="0.1" value="${p.bpa}" data-date="${p.date}" data-dni="${p.dni}" data-f="bpa" class="edit-perf-log" style="width:35px; background:none; border:none; color:var(--text-strong); text-align:center;"></td>
-                            <td style="padding:0.8rem; text-align:center;"><input type="number" step="0.1" value="${p.supervisor}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:35px; background:none; border:none; color:var(--text-strong); text-align:center;"></td>
-                            <td style="padding:0.8rem; text-align:center;"><input type="text" value="${p.justification || ''}" data-date="${p.date}" data-dni="${p.dni}" data-f="justification" class="edit-perf-log" placeholder="---" style="width:100%; background:none; border:none; color:${p.justification?'var(--cyan-deep)':'rgba(var(--ink-rgb), 0.1)'}; text-align:center; font-size:var(--t-xs); outline:none;"></td>
+                            <td class="celda"><input type="number" step="0.1" value="${p.produccion}" data-date="${p.date}" data-dni="${p.dni}" data-f="produccion" class="edit-perf-log" style="width:35px; background:none; border:none; color:var(--text-strong); text-align:center;"></td>
+                            <td class="celda"><input type="number" step="0.1" value="${p.bpa}" data-date="${p.date}" data-dni="${p.dni}" data-f="bpa" class="edit-perf-log" style="width:35px; background:none; border:none; color:var(--text-strong); text-align:center;"></td>
+                            <td class="celda"><input type="number" step="0.1" value="${p.supervisor}" data-date="${p.date}" data-dni="${p.dni}" data-f="supervisor" class="edit-perf-log" style="width:35px; background:none; border:none; color:var(--text-strong); text-align:center;"></td>
+                            <td class="celda"><input type="text" value="${p.justification || ''}" data-date="${p.date}" data-dni="${p.dni}" data-f="justification" class="edit-perf-log" placeholder="---" style="width:100%; background:none; border:none; color:${p.justification?'var(--cyan-deep)':'rgba(var(--ink-rgb), 0.1)'}; text-align:center; font-size:var(--t-xs); outline:none;"></td>
                             <td style="padding:0.8rem; text-align:center; background:rgba(var(--primary-rgb), 0.1); font-weight:900; color:var(--text-strong);" id="rend-${p.dni}-${p.date}">${p.rendimiento}</td>
                         </tr>`;
                         }).join('')}`;
@@ -8389,12 +8392,12 @@ const renderRFSection = (container) => {
               <thead style="background:rgba(var(--ink-rgb), 0.05); border-bottom:1px solid var(--border);">
                 <tr>
                   <th style="padding:0.8rem; text-align:center; width:40px; border-right:1px solid rgba(var(--ink-rgb), 0.05);">#</th>
-                  <th style="padding:0.8rem; text-align:left;">Serie</th>
-                  <th style="padding:0.8rem; text-align:left;">Marca / Modelo</th>
-                  <th style="padding:0.8rem; text-align:left;">Número</th>
-                  <th style="padding:0.8rem; text-align:left;">Batería</th>
-                  <th style="padding:0.8rem; text-align:center;">Estado Físico</th>
-                  <th style="padding:0.8rem; text-align:left;">Observación</th>
+                  <th class="celda-izq">Serie</th>
+                  <th class="celda-izq">Marca / Modelo</th>
+                  <th class="celda-izq">Número</th>
+                  <th class="celda-izq">Batería</th>
+                  <th class="celda">Estado Físico</th>
+                  <th class="celda-izq">Observación</th>
                   <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
                 </tr>
               </thead>
@@ -8436,7 +8439,7 @@ const renderRFSection = (container) => {
                           <span style="font-weight:800; color:var(--text-strong); font-size:var(--t-sm);">${bat}%</span>
                         </div>
                       </td>
-                      <td style="padding:0.8rem; text-align:center;">
+                      <td class="celda">
                         <span style="background:${stateGlow}; color:${stateColor}; border:1px solid ${stateColor}44; padding:3px 10px; border-radius:20px; font-size:var(--t-xs); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
                           ${r.estado || 'Operativo'}
                         </span>
@@ -8444,7 +8447,7 @@ const renderRFSection = (container) => {
                       <td style="padding:0.8rem; font-size:var(--t-sm); color:var(--text-muted); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.comentarios || ''}">
                         ${r.comentarios || '—'}
                       </td>
-                      <td style="padding:0.8rem; text-align:center;">
+                      <td class="celda">
                         <div style="display:flex; gap:0.8rem; justify-content:center; align-items:center;">
                           <button class="btn-edit-rf" data-rf='${JSON.stringify(r).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:var(--t-md); filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">✏️</button>
                           <button class="btn-delete-rf" data-serie="${r.serie}" style="background:none; border:none; cursor:pointer; font-size:var(--t-md); filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">🗑️</button>
@@ -8462,11 +8465,11 @@ const renderRFSection = (container) => {
               <thead style="background:rgba(var(--ink-rgb), 0.05); border-bottom:1px solid var(--border);">
                 <tr>
                   <th style="padding:0.8rem; text-align:center; width:40px; border-right:1px solid rgba(var(--ink-rgb), 0.05);">#</th>
-                  <th style="padding:0.8rem; text-align:left;">Código de Batería</th>
-                  <th style="padding:0.8rem; text-align:left;">Compatibilidad (Modelo)</th>
-                  <th style="padding:0.8rem; text-align:left;">Salud / Vida Útil</th>
-                  <th style="padding:0.8rem; text-align:left;">Ubicación / Ranura</th>
-                  <th style="padding:0.8rem; text-align:center;">Estado Físico</th>
+                  <th class="celda-izq">Código de Batería</th>
+                  <th class="celda-izq">Compatibilidad (Modelo)</th>
+                  <th class="celda-izq">Salud / Vida Útil</th>
+                  <th class="celda-izq">Ubicación / Ranura</th>
+                  <th class="celda">Estado Físico</th>
                   <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
                 </tr>
               </thead>
@@ -8495,18 +8498,18 @@ const renderRFSection = (container) => {
                       <td style="padding:0.8rem;">
                         <div style="display:flex; align-items:center; gap:8px;">
                           <div style="font-weight:900; color:${saludColor};">${salud}%</div>
-                          <div style="font-size:var(--t-xs); color:var(--text-muted);">
+                          <div class="txt-chico">
                             (${salud >= 80 ? 'Excelente' : (salud >= 60 ? 'Bueno' : 'Desgastada')})
                           </div>
                         </div>
                       </td>
                       <td style="padding:0.8rem; font-weight:600; color:var(--text-soft);">📍 ${b.ubicacion || 'Estante Principal'}</td>
-                      <td style="padding:0.8rem; text-align:center;">
+                      <td class="celda">
                         <span style="background:${stateGlow}; color:${stateColor}; border:1px solid ${stateColor}44; padding:3px 10px; border-radius:20px; font-size:var(--t-xs); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
                           ${b.estado || 'Operativo'}
                         </span>
                       </td>
-                      <td style="padding:0.8rem; text-align:center;">
+                      <td class="celda">
                         <div style="display:flex; gap:0.8rem; justify-content:center; align-items:center;">
                           <button class="btn-edit-battery" data-battery='${JSON.stringify(b).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:var(--t-md); filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">✏️</button>
                           <button class="btn-delete-battery" data-codigo="${b.codigo}" style="background:none; border:none; cursor:pointer; font-size:var(--t-md); filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">🗑️</button>
@@ -8524,12 +8527,12 @@ const renderRFSection = (container) => {
               <thead style="background:rgba(var(--ink-rgb), 0.05); border-bottom:1px solid var(--border);">
                 <tr>
                   <th style="padding:0.8rem; text-align:center; width:40px; border-right:1px solid rgba(var(--ink-rgb), 0.05);">#</th>
-                  <th style="padding:0.8rem; text-align:left;">Código de Cargador</th>
-                  <th style="padding:0.8rem; text-align:left;">Marca / Modelo</th>
-                  <th style="padding:0.8rem; text-align:center;">Capacidad (Ranuras)</th>
-                  <th style="padding:0.8rem; text-align:center;">Ranuras Operativas</th>
-                  <th style="padding:0.8rem; text-align:left;">Ubicación de Carga</th>
-                  <th style="padding:0.8rem; text-align:center;">Estado Físico</th>
+                  <th class="celda-izq">Código de Cargador</th>
+                  <th class="celda-izq">Marca / Modelo</th>
+                  <th class="celda">Capacidad (Ranuras)</th>
+                  <th class="celda">Ranuras Operativas</th>
+                  <th class="celda-izq">Ubicación de Carga</th>
+                  <th class="celda">Estado Físico</th>
                   <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
                 </tr>
               </thead>
@@ -8559,18 +8562,18 @@ const renderRFSection = (container) => {
                         <span style="color:var(--text-muted); font-size:var(--t-xs);">${c.modelo || ''}</span>
                       </td>
                       <td style="padding:0.8rem; text-align:center; font-weight:700; color:var(--text-strong);">${slotsTotal} slots</td>
-                      <td style="padding:0.8rem; text-align:center;">
+                      <td class="celda">
                         <span style="color:${slotsOk === slotsTotal ? 'var(--success-alt)' : 'var(--warning)'}; font-weight:800;">
                           ${slotsOk} / ${slotsTotal} OK
                         </span>
                       </td>
                       <td style="padding:0.8rem; font-weight:600; color:var(--text-soft);">⚡ ${c.ubicacion || 'Zona de Carga Principal'}</td>
-                      <td style="padding:0.8rem; text-align:center;">
+                      <td class="celda">
                         <span style="background:${stateGlow}; color:${stateColor}; border:1px solid ${stateColor}44; padding:3px 10px; border-radius:20px; font-size:var(--t-xs); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
                           ${c.estado || 'Operativo'}
                         </span>
                       </td>
-                      <td style="padding:0.8rem; text-align:center;">
+                      <td class="celda">
                         <div style="display:flex; gap:0.8rem; justify-content:center; align-items:center;">
                           <button class="btn-edit-charger" data-charger='${JSON.stringify(c).replace(/'/g, "&apos;")}' style="background:none; border:none; cursor:pointer; font-size:var(--t-md); filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">✏️</button>
                           <button class="btn-delete-charger" data-codigo="${c.codigo}" style="background:none; border:none; cursor:pointer; font-size:var(--t-md); filter:grayscale(0.3) brightness(1.2); padding:2px; outline:none;">🗑️</button>
@@ -8654,7 +8657,7 @@ const renderRFSection = (container) => {
                 </thead>
                 <tbody>
                   ${activeAssignments.length ? activeAssignments.map(a => {
-                    const activeTime = new Date(a.assigned_at).toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+                    const activeTime = new Date(a.assigned_at).toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
                     const screenStyle = a.pantalla_ok !== false ? 'color:var(--success-alt); font-weight:800;' : 'color:var(--danger); font-weight:800; text-decoration:line-through;';
                     const numStyle = a.numeracion_ok !== false ? 'color:var(--success-alt); font-weight:800;' : 'color:var(--danger); font-weight:800; text-decoration:line-through;';
                     const rfInfo = rfs.find(r => r.serie === a.rf_serial);
@@ -8665,7 +8668,7 @@ const renderRFSection = (container) => {
                         <td style="padding:0.7rem; font-weight:900; color:var(--text-strong);"><span style="background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.08); padding:2px 6px; border-radius:4px; font-family:monospace;">${rfNumero}${a.rf_serial}</span></td>
                         <td style="padding:0.7rem;">
                           <div style="font-weight:700; color:var(--text-strong);">${a.worker_name}</div>
-                          <div style="font-size:var(--t-xs); color:var(--text-muted);">DNI: ${a.worker_dni}</div>
+                          <div class="txt-chico">DNI: ${a.worker_dni}</div>
                         </td>
                         <td style="padding:0.7rem; text-align:center;">
                           <span style="background:rgba(var(--ink-rgb), 0.05); padding:2px 6px; border-radius:4px; font-weight:800;">${a.turn}</span>
@@ -8694,19 +8697,19 @@ const renderRFSection = (container) => {
             <thead style="background:rgba(var(--ink-rgb), 0.05); border-bottom:1px solid var(--border);">
               <tr>
                 <th style="padding:0.8rem; text-align:center; width:40px; border-right:1px solid rgba(var(--ink-rgb), 0.05);">#</th>
-                <th style="padding:0.8rem; text-align:left;">Equipo RF</th>
-                <th style="padding:0.8rem; text-align:left;">Trabajador</th>
-                <th style="padding:0.8rem; text-align:center;">Turno</th>
-                <th style="padding:0.8rem; text-align:left;">Asignación (Entrega)</th>
-                <th style="padding:0.8rem; text-align:left;">Devolución (Retorno)</th>
-                <th style="padding:0.8rem; text-align:left;">Bitácora de Control y Observaciones</th>
+                <th class="celda-izq">Equipo RF</th>
+                <th class="celda-izq">Trabajador</th>
+                <th class="celda">Turno</th>
+                <th class="celda-izq">Asignación (Entrega)</th>
+                <th class="celda-izq">Devolución (Retorno)</th>
+                <th class="celda-izq">Bitácora de Control y Observaciones</th>
                 <th style="padding:0.8rem; text-align:center; width:120px;">Acciones</th>
               </tr>
             </thead>
             <tbody>
               ${filteredAssignments.length ? filteredAssignments.map((a, idx) => {
-                const assignedTime = new Date(a.assigned_at).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-                const returnedTime = a.returned_at ? new Date(a.returned_at).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : null;
+                const assignedTime = new Date(a.assigned_at).toLocaleString('es-PE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+                const returnedTime = a.returned_at ? new Date(a.returned_at).toLocaleString('es-PE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : null;
                 
                 const isDamaged = a.returned_at && (a.retorno_pantalla_ok === false || a.retorno_numeracion_ok === false);
                 const isPending = !a.returned_at;
@@ -8765,7 +8768,7 @@ const renderRFSection = (container) => {
                       <div style="font-weight:700; color:var(--text-strong); font-size:var(--t-sm);">${a.worker_name}</div>
                       <div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:2px;">DNI: ${a.worker_dni}</div>
                     </td>
-                    <td style="padding:0.8rem; text-align:center;">
+                    <td class="celda">
                       <span style="background:rgba(var(--ink-rgb), 0.05); padding:2px 8px; border-radius:4px; font-size:var(--t-xs); font-weight:800; color:var(--text-soft);">${a.turn}</span>
                     </td>
                     <td style="padding:0.8rem; color:var(--text-soft); font-weight:500;">
@@ -8851,7 +8854,7 @@ const renderRFSection = (container) => {
                 return `
                   <div style="background:${bg}; border:${border}; border-radius:10px; padding:0.8rem; margin-top:0.3rem;">
                     <span style="font-size:var(--t-xs); color:var(--text-muted); font-weight:800; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:5px;">Última RF Escaneada:</span>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="fila-entre">
                       <span style="font-size:var(--t-lg); font-weight:900; color:var(--text-strong); font-family:monospace;">${last.serial}</span>
                       <span style="background:${isExpected?'rgba(var(--success-alt-rgb), 0.2)':'rgba(var(--danger-rgb), 0.2)'}; color:${color}; font-size:var(--t-xs); font-weight:800; padding:2px 8px; border-radius:12px; border:1px solid ${color}44;">
                         ${isExpected ? '✔️ CONFORME' : '❌ NO ESPERADO'}
@@ -8893,7 +8896,7 @@ const renderRFSection = (container) => {
                             <td style="padding:0.7rem;">
                               ${isExpected && detail ? `
                                 <div style="font-weight:700; color:var(--text-soft);">${detail.worker_name}</div>
-                                <div style="font-size:var(--t-xs); color:var(--text-muted);">Turno anterior: ${detail.turn}</div>
+                                <div class="txt-chico">Turno anterior: ${detail.turn}</div>
                               ` : `
                                 <div style="color:var(--text-muted); font-style:italic;">No estuvo en uso en el turno</div>
                               `}
@@ -9002,7 +9005,7 @@ const renderRFSection = (container) => {
               playBeep(isExpected ? 'success' : 'error');
               scannedRfs.unshift({
                 serial: val,
-                timestamp: new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit', second:'2-digit' })
+                timestamp: new Date().toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', second:'2-digit' })
               });
               renderRFSection(container);
             }
@@ -9118,7 +9121,7 @@ const renderRFSection = (container) => {
           reportContent += `========================================\n`;
           reportContent += `Fecha Referencia: ${revisionDate}\n`;
           reportContent += `Turno Referencia: ${revisionTurn}\n`;
-          reportContent += `Fecha de Generación: ${new Date().toLocaleString('es-ES')}\n`;
+          reportContent += `Fecha de Generación: ${new Date().toLocaleString('es-PE')}\n`;
           reportContent += `----------------------------------------\n\n`;
           reportContent += `RESUMEN DE EQUIPOS:\n`;
           reportContent += `Esperados: ${totalExpected}\n`;
@@ -10357,8 +10360,8 @@ const renderRFSection = (container) => {
         <div style="border:1px solid rgba(var(--ink-rgb), 0.08); border-radius:10px; padding:11px 13px; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; ${e.txt === 'Vencida' ? 'opacity:0.55;' : ''}">
           <span style="background:${e.fondo}; color:${e.color}; padding:2px 9px; border-radius:6px; font-size:var(--t-xs); font-weight:800; letter-spacing:0.5px; text-transform:uppercase;">${e.txt}</span>
           <span style="color:var(--text-strong); font-size:var(--t-sm); font-weight:700;">${r.nombre}</span>
-          <span style="color:var(--text-muted); font-size:var(--t-sm);">${rango}</span>
-          <span style="color:var(--text-muted); font-size:var(--t-sm);">${rotuloTurno(r.turno)} · ${rotuloDias(r.dias)}</span>
+          <span class="txt-dato">${rango}</span>
+          <span class="txt-dato">${rotuloTurno(r.turno)} · ${rotuloDias(r.dias)}</span>
           <span style="color:var(--brand-light); font-size:var(--t-sm); font-weight:700; margin-left:auto;">${horas}</span>
           <span style="display:flex; gap:6px;">
             <button onclick="window.jrEditar('${r.id}')" title="Editar" style="background:none; border:none; cursor:pointer; font-size:var(--t-md);">✏️</button>
@@ -10402,7 +10405,7 @@ const renderRFSection = (container) => {
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:2px;">
           <div>
             <div style="font-size:var(--t-xs); font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--cyan-neon);">Reglas temporales</div>
-            <div style="color:var(--text-muted); font-size:var(--t-sm);">Mandan mientras están vigentes; al vencer vuelve el horario base.</div>
+            <div class="txt-dato">Mandan mientras están vigentes; al vencer vuelve el horario base.</div>
           </div>
           <button id="jr_agregar" style="background:rgba(var(--cyan-neon-rgb), 0.08); border:1px solid rgba(var(--cyan-neon-rgb), 0.3); color:var(--cyan-neon); padding:7px 15px; border-radius:8px; cursor:pointer; font-size:var(--t-sm); font-weight:800;">+ AGREGAR REGLA</button>
         </div>
@@ -10415,7 +10418,7 @@ const renderRFSection = (container) => {
         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding-top:14px; border-top:1px solid rgba(var(--ink-rgb), 0.06); margin-bottom:1.5rem;">
           <span style="color:var(--text-strong); font-size:var(--t-sm); font-weight:700;">Horas para corregir una tarea después del cierre</span>
           <input type="number" id="j_horasBloqueo" value="${j.horasBloqueo}" min="0" max="168" step="1" style="width:90px; background:rgba(var(--ink-rgb), 0.04); border:1px solid rgba(var(--ink-rgb), 0.08); color:var(--text-strong); padding:7px 9px; border-radius:7px; font-size:var(--t-md); font-weight:700; outline:none;">
-          <span style="color:var(--text-muted); font-size:var(--t-sm);">En 0 se traba apenas cierra la jornada.</span>
+          <span class="txt-dato">En 0 se traba apenas cierra la jornada.</span>
         </div>
 
         <div id="j_preview" style="background:rgba(var(--cyan-neon-rgb), 0.04); border:1px solid rgba(var(--cyan-neon-rgb), 0.18); border-radius:10px; padding:14px 16px; margin-bottom:1.5rem; font-size:var(--t-sm); line-height:1.7; color:var(--text-soft);"></div>
@@ -10526,7 +10529,7 @@ const renderRFSection = (container) => {
       const btn = document.getElementById('j_guardar');
       const estado = document.getElementById('j_estado');
       btn.disabled = true;
-      estado.innerHTML = '<span style="color:var(--text-muted);">Publicando…</span>';
+      estado.innerHTML = '<span class="txt-suave">Publicando…</span>';
       try {
         await jornadaService.guardarJornada(j);
         _jornadaBorrador = null;
@@ -10734,7 +10737,7 @@ const renderRFSection = (container) => {
                   style="background:rgba(var(--shadow-rgb), 0.3); border:1px solid var(--border); border-radius:6px;
                          color:var(--text-strong); padding:0.35rem 0.5rem; font-family:monospace; font-size:var(--t-md);">`
         : `<div style="display:flex; align-items:center; gap:0.4rem;">
-             <span style="color:var(--text-muted); font-size:var(--t-sm);">minuto</span>
+             <span class="txt-dato">minuto</span>
              <input type="number" min="0" max="59" data-t="${t.id}" data-campo="minuto" value="${c.minuto}"
                     style="width:60px; background:rgba(var(--shadow-rgb), 0.3); border:1px solid var(--border);
                            border-radius:6px; color:var(--text-strong); padding:0.35rem; font-family:monospace; font-size:var(--t-md);">
@@ -10745,7 +10748,7 @@ const renderRFSection = (container) => {
                           color:var(--text-strong); padding:0.35rem; font-size:var(--t-sm);">
              ${robotsService.CADA.map(x => `<option value="${x.min}" ${x.min === c.cadaMin ? 'selected' : ''}>${x.texto}</option>`).join('')}
            </select>`
-        : `<span style="color:var(--text-muted); font-size:var(--t-sm);">una vez</span>`;
+        : `<span class="txt-dato">una vez</span>`;
 
       return `<tr style="border-top:1px solid var(--border);">
         <td style="padding:0.7rem 1rem;">
@@ -10754,7 +10757,7 @@ const renderRFSection = (container) => {
                    title="Prendida o apagada" style="width:16px; height:16px; cursor:pointer;">
             <span>
               <span style="color:var(--text-strong); font-weight:600; font-size:var(--t-md);">${esc(t.etiqueta)}</span><br>
-              <span style="color:var(--text-muted); font-size:var(--t-sm);">${esc(t.detalle)}</span>
+              <span class="txt-dato">${esc(t.detalle)}</span>
             </span>
           </label>
         </td>
@@ -10830,7 +10833,7 @@ const renderRFSection = (container) => {
               <tr style="border-top:1px solid var(--border);">
                 <td style="padding:0.7rem 1rem; width:38%;">
                   <span style="color:var(--text-strong); font-weight:600;">Asunto</span><br>
-                  <span style="color:var(--text-muted); font-size:var(--t-sm);">basta con que el asunto lo contenga; no distingue tildes ni mayúsculas</span>
+                  <span class="txt-dato">basta con que el asunto lo contenga; no distingue tildes ni mayúsculas</span>
                 </td>
                 <td style="padding:0.7rem 1rem;">
                   <input type="text" data-c="asunto" value="${esc(cor.asunto)}" maxlength="120"
@@ -10841,7 +10844,7 @@ const renderRFSection = (container) => {
               <tr style="border-top:1px solid var(--border);">
                 <td style="padding:0.7rem 1rem;">
                   <span style="color:var(--text-strong); font-weight:600;">Remitente</span><br>
-                  <span style="color:var(--text-muted); font-size:var(--t-sm);">vacío acepta de cualquiera. Hoy llega de dos personas —el original y un reenvío— y con el asunto alcanza</span>
+                  <span class="txt-dato">vacío acepta de cualquiera. Hoy llega de dos personas —el original y un reenvío— y con el asunto alcanza</span>
                 </td>
                 <td style="padding:0.7rem 1rem;">
                   <input type="text" data-c="remitente" value="${esc(cor.remitente)}" maxlength="120" placeholder="(cualquiera)"
@@ -10852,7 +10855,7 @@ const renderRFSection = (container) => {
               <tr style="border-top:1px solid var(--border);">
                 <td style="padding:0.7rem 1rem;">
                   <span style="color:var(--text-strong); font-weight:600;">Días hacia atrás</span><br>
-                  <span style="color:var(--text-muted); font-size:var(--t-sm);">cuántos días de correos revisa cada vez. Con 3 recupera un fin de semana</span>
+                  <span class="txt-dato">cuántos días de correos revisa cada vez. Con 3 recupera un fin de semana</span>
                 </td>
                 <td style="padding:0.7rem 1rem;">
                   <input type="number" data-c="diasAtras" min="1" max="30" value="${cor.diasAtras}"
@@ -10867,7 +10870,7 @@ const renderRFSection = (container) => {
               <tr style="border-top:1px solid var(--border);">
                 <td style="padding:0.7rem 1rem;">
                   <span style="color:var(--text-strong); font-weight:600;">Prendido</span><br>
-                  <span style="color:var(--text-muted); font-size:var(--t-sm);">apagado, el robot no mira el correo</span>
+                  <span class="txt-dato">apagado, el robot no mira el correo</span>
                 </td>
                 <td style="padding:0.7rem 1rem;">
                   <input type="checkbox" data-c="activa" ${cor.activa ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer;">
@@ -10876,15 +10879,15 @@ const renderRFSection = (container) => {
               <tr style="border-top:1px solid var(--border);">
                 <td style="padding:0.7rem 1rem;">
                   <span style="color:var(--text-strong); font-weight:600;">Ventana</span><br>
-                  <span style="color:var(--text-muted); font-size:var(--t-sm);">entre esas dos horas revisa cada vez que el servidor lo despierta. Puede cruzar la medianoche: de 22:00 a 02:00 vale</span>
+                  <span class="txt-dato">entre esas dos horas revisa cada vez que el servidor lo despierta. Puede cruzar la medianoche: de 22:00 a 02:00 vale</span>
                 </td>
                 <td style="padding:0.7rem 1rem;">
                   <div style="display:flex; align-items:center; gap:0.5rem;">
-                    <span style="color:var(--text-muted); font-size:var(--t-sm);">de</span>
+                    <span class="txt-dato">de</span>
                     <input type="time" data-c="desde" value="${esc(cor.desde)}"
                            style="background:rgba(var(--shadow-rgb), 0.3); border:1px solid var(--border); border-radius:6px;
                                   color:var(--text-strong); padding:0.35rem 0.5rem; font-family:monospace; font-size:var(--t-md);">
-                    <span style="color:var(--text-muted); font-size:var(--t-sm);">a</span>
+                    <span class="txt-dato">a</span>
                     <input type="time" data-c="hasta" value="${esc(cor.hasta)}"
                            style="background:rgba(var(--shadow-rgb), 0.3); border:1px solid var(--border); border-radius:6px;
                                   color:var(--text-strong); padding:0.35rem 0.5rem; font-family:monospace; font-size:var(--t-md);">
@@ -10897,21 +10900,21 @@ const renderRFSection = (container) => {
               <tr style="border-top:1px solid var(--border);">
                 <td style="padding:0.7rem 1rem;">
                   <span style="color:var(--text-strong); font-weight:600;">No se arma antes de</span><br>
-                  <span style="color:var(--text-muted); font-size:var(--t-sm);">el correo se guarda a la hora que llegue; esto es lo que espera el <b>cruce</b>. La foto del WMS tiene que traer los pedidos del día: a las 06:57 no hay ninguno, y a las 18:30 faltan los de la tarde. Si comercial manda a las 20:15, se arma a las 20:15</span>
+                  <span class="txt-dato">el correo se guarda a la hora que llegue; esto es lo que espera el <b>cruce</b>. La foto del WMS tiene que traer los pedidos del día: a las 06:57 no hay ninguno, y a las 18:30 faltan los de la tarde. Si comercial manda a las 20:15, se arma a las 20:15</span>
                 </td>
                 <td style="padding:0.7rem 1rem;">
                   <div style="display:flex; align-items:center; gap:0.5rem;">
                     <input type="time" data-c="pendienteDesde" value="${esc(cor.pendienteDesde)}"
                            style="background:rgba(var(--shadow-rgb), 0.3); border:1px solid var(--border); border-radius:6px;
                                   color:var(--text-strong); padding:0.35rem 0.5rem; font-family:monospace; font-size:var(--t-md);">
-                    <span style="color:var(--text-muted); font-size:var(--t-sm);">de fábrica 19:00</span>
+                    <span class="txt-dato">de fábrica 19:00</span>
                   </div>
                 </td>
               </tr>
               <tr style="border-top:1px solid var(--border);">
                 <td style="padding:0.7rem 1rem;">
                   <span style="color:var(--text-strong); font-weight:600;">Días de la semana</span><br>
-                  <span style="color:var(--text-muted); font-size:var(--t-sm);">el domingo viene apagado: comercial no manda</span>
+                  <span class="txt-dato">el domingo viene apagado: comercial no manda</span>
                 </td>
                 <td style="padding:0.7rem 1rem;">
                   <div style="display:flex; gap:1rem; flex-wrap:wrap;">
@@ -12163,19 +12166,19 @@ const renderRFSection = (container) => {
             
             <div style="text-align:left; max-width:400px; margin:0 auto 2rem; background:rgba(var(--ink-rgb), 0.02); padding:1rem 1.5rem; border-radius:10px; border:1px solid rgba(var(--ink-rgb), 0.05); display:flex; flex-direction:column; gap:0.8rem; font-size:var(--t-sm);">
                 <strong style="color:rgba(var(--ink-rgb), 0.7); display:block; margin-bottom:0.2rem;">ESTADO DE ARCHIVOS:</strong>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="fila-entre">
                     <span>STOCK RESERVA (Original):</span>
                     <span style="font-weight:700; color:${hasStockReserva ? 'var(--success)' : 'var(--danger)'}">${hasStockReserva ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="fila-entre">
                     <span>VALIDAR RESERVA (Final):</span>
                     <span style="font-weight:700; color:${hasValReserva ? 'var(--success)' : 'var(--danger)'}">${hasValReserva ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="fila-entre">
                     <span>VALIDAR ACTIVO (Final):</span>
                     <span style="font-weight:700; color:${hasValActivo ? 'var(--success)' : 'var(--danger)'}">${hasValActivo ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="fila-entre">
                     <span>VALIDAR LPN (Tránsito):</span>
                     <span style="font-weight:700; color:${hasValLPN ? 'var(--success)' : 'var(--danger)'}">${hasValLPN ? '🟢 CARGADO' : '❌ FALTANTE'}</span>
                 </div>
@@ -12520,7 +12523,7 @@ const renderRFSection = (container) => {
             statusTag,
             generalState,
             colorDot,
-            fecha: (() => { const d = fechaProceso ? new Date(fechaProceso + 'T12:00:00') : new Date(); return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }); })()
+            fecha: (() => { const d = fechaProceso ? new Date(fechaProceso + 'T12:00:00') : new Date(); return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' }); })()
         });
     });
     }
@@ -13015,7 +13018,7 @@ const renderRFSection = (container) => {
     if (!m) return fecha || '—';
     const d = new Date(+m[1], +m[2] - 1, +m[3]);
     if (isNaN(d)) return fecha;
-    const txt = d.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    const txt = d.toLocaleDateString('es-PE', { weekday: 'short', day: '2-digit', month: '2-digit' });
     return txt.charAt(0).toUpperCase() + txt.slice(1);
   };
 
@@ -13040,7 +13043,7 @@ const renderRFSection = (container) => {
       container.innerHTML = `<div class="glass-panel" style="padding:2.5rem; text-align:center;">
           <div style="font-size:var(--t-2xl); margin-bottom:0.75rem;">📡</div>
           <div style="color:var(--danger-soft); font-weight:800; margin-bottom:0.4rem;">No se pudo conectar con el servidor</div>
-          <div style="color:var(--text-muted); font-size:var(--t-sm);">${e.message}</div>
+          <div class="txt-dato">${e.message}</div>
           <button id="reintentarDescargas" style="margin-top:1.2rem; background:rgba(var(--brand-rgb), 0.15); color:var(--brand-light); border:1px solid rgba(var(--brand-rgb), 0.3); padding:0.5rem 1.2rem; border-radius:8px; cursor:pointer; font-weight:700; font-size:var(--t-sm);">Reintentar</button>
         </div>`;
       document.getElementById('reintentarDescargas')?.addEventListener('click', () => renderDescargasInventario(container));
@@ -13458,7 +13461,7 @@ const renderRFSection = (container) => {
                                         } else if (diff < 0) {
                                             diffBadge = `<span style="color:var(--danger); font-weight:bold;">${diff}</span>`;
                                         } else {
-                                            diffBadge = `<span style="color:var(--text-muted);">0</span>`;
+                                            diffBadge = `<span class="txt-suave">0</span>`;
                                         }
                                         
                                         // 4. % Exactitud
@@ -14169,13 +14172,13 @@ const renderRFSection = (container) => {
                         <tr>
                             <td style="padding:10px 15px; font-weight:600; padding-left:25px;">${dayCapitalized} <span style="font-size:var(--t-xs); color:var(--text-muted); margin-left:8px;">(${d.dateStr})</span></td>
                             <td style="text-align:center; font-weight:700;">${d.locsCount}</td>
-                            <td style="text-align:center;">${d.skusCount}</td>
+                            <td class="centrado">${d.skusCount}</td>
                             <td style="text-align:center; font-weight:700; color:var(--text-strong);">${d.qtyFis} u.</td>
                             <td style="text-align:center; opacity:0.8;">${d.qtySis} u.</td>
                             <td style="text-align:center; color:${d.diff===0?'var(--success-alt)':(d.diff>0?'var(--sky)':'var(--danger)')}; font-weight:900;">
                                 ${d.diff > 0 ? '+' : ''}${d.diff}
                             </td>
-                            <td style="text-align:center;">
+                            <td class="centrado">
                                 <span style="background:${accColor}15; color:${accColor}; padding:2px 8px; border-radius:6px; font-weight:800;">
                                     ${parseFloat(d.accuracy).toFixed(1)}%
                                 </span>
@@ -14207,12 +14210,12 @@ const renderRFSection = (container) => {
                         <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid var(--violet); background:rgba(var(--ink-rgb), 0.01);">
                             <h4 style="margin:0; font-size:var(--t-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">SKUs Únicos</h4>
                             <h2 style="margin:0.5rem 0; font-size:var(--t-2xl); color:var(--text-strong); font-weight:800;">${uniqueSkusCount}</h2>
-                            <span style="font-size:var(--t-xs); color:var(--text-muted);">Sobrantes o asignados</span>
+                            <span class="txt-chico">Sobrantes o asignados</span>
                         </div>
                         <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid var(--success-alt); background:rgba(var(--ink-rgb), 0.01);">
                             <h4 style="margin:0; font-size:var(--t-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Qty Total Conteo</h4>
                             <h2 style="margin:0.5rem 0; font-size:var(--t-2xl); color:var(--success-alt); font-weight:800;">${totalFisQty} u.</h2>
-                            <span style="font-size:var(--t-xs); color:var(--text-muted);">Unidades físicas</span>
+                            <span class="txt-chico">Unidades físicas</span>
                         </div>
                         <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid var(--warning); background:rgba(var(--ink-rgb), 0.01);">
                             <h4 style="margin:0; font-size:var(--t-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Qty Total Sistema</h4>
@@ -14291,12 +14294,12 @@ const renderRFSection = (container) => {
                         <thead>
                             <tr>
                                 <th style="padding:12px 15px;">DÍA / SEMANA</th>
-                                <th style="text-align:center;">UBICACIONES CONTADAS</th>
-                                <th style="text-align:center;">SKUs ÚNICOS</th>
-                                <th style="text-align:center;">FISICO (QTY)</th>
-                                <th style="text-align:center;">SISTEMA (QTY)</th>
-                                <th style="text-align:center;">DIFERENCIA</th>
-                                <th style="text-align:center;">EXACTITUD ERU</th>
+                                <th class="centrado">UBICACIONES CONTADAS</th>
+                                <th class="centrado">SKUs ÚNICOS</th>
+                                <th class="centrado">FISICO (QTY)</th>
+                                <th class="centrado">SISTEMA (QTY)</th>
+                                <th class="centrado">DIFERENCIA</th>
+                                <th class="centrado">EXACTITUD ERU</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -14320,12 +14323,12 @@ const renderRFSection = (container) => {
                         <tr>
                             <td style="font-weight:700; color:var(--success-alt); padding:10px 15px;">📍 ${r.ubi}</td>
                             <td>${r.sku}</td>
-                            <td style="text-align:center;">${r.sis}</td>
+                            <td class="centrado">${r.sis}</td>
                             <td style="text-align:center; font-weight:700; color:var(--text-strong);">${r.fis}</td>
                             <td style="text-align:center; color:${r.diff===0?'var(--success-alt)':(r.diff>0?'var(--sky)':'var(--danger)')}; font-weight:900;">
                                 ${r.diff > 0 ? '+' : ''}${r.diff}
                             </td>
-                            <td style="text-align:center;">
+                            <td class="centrado">
                                 <span style="background:${accColor}15; color:${accColor}; padding:2px 8px; border-radius:6px; font-weight:800;">
                                     ${parseFloat(r.eri).toFixed(1)}%
                                 </span>
@@ -14345,10 +14348,10 @@ const renderRFSection = (container) => {
                             <tr>
                                 <th style="padding:12px 15px;">UBICACIÓN</th>
                                 <th>SKU</th>
-                                <th style="text-align:center;">SISTEMA</th>
-                                <th style="text-align:center;">FÍSICO</th>
-                                <th style="text-align:center;">DIF</th>
-                                <th style="text-align:center;">EXACTITUD ERU</th>
+                                <th class="centrado">SISTEMA</th>
+                                <th class="centrado">FÍSICO</th>
+                                <th class="centrado">DIF</th>
+                                <th class="centrado">EXACTITUD ERU</th>
                                 <th>OPERARIO</th>
                             </tr>
                         </thead>
@@ -14380,13 +14383,13 @@ const renderRFSection = (container) => {
                     return `
                         <tr>
                             <td style="font-weight:700; color:var(--brand-light); padding:10px 15px;">🏷️ ${r.sku}</td>
-                            <td style="font-size:var(--t-xs); color:var(--text-muted);">${r.ubi}</td>
-                            <td style="text-align:center;">${r.sis}</td>
+                            <td class="txt-chico">${r.ubi}</td>
+                            <td class="centrado">${r.sis}</td>
                             <td style="text-align:center; font-weight:700; color:var(--text-strong);">${r.fis}</td>
                             <td style="text-align:center; color:${r.diff===0?'var(--success-alt)':(r.diff>0?'var(--sky)':'var(--danger)')}; font-weight:900;">
                                 ${r.diff > 0 ? '+' : ''}${r.diff}
                             </td>
-                            <td style="text-align:center;">
+                            <td class="centrado">
                                 <span style="background:${accColor}15; color:${accColor}; padding:2px 8px; border-radius:6px; font-weight:800;">
                                     ${parseFloat(r.eri).toFixed(1)}%
                                 </span>
@@ -14405,10 +14408,10 @@ const renderRFSection = (container) => {
                             <tr>
                                 <th style="padding:12px 15px;">SKU</th>
                                 <th>UBICACIÓN</th>
-                                <th style="text-align:center;">SISTEMA</th>
-                                <th style="text-align:center;">FÍSICO</th>
-                                <th style="text-align:center;">DIF</th>
-                                <th style="text-align:center;">EXACTITUD ERI</th>
+                                <th class="centrado">SISTEMA</th>
+                                <th class="centrado">FÍSICO</th>
+                                <th class="centrado">DIF</th>
+                                <th class="centrado">EXACTITUD ERI</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -14563,7 +14566,7 @@ const renderRFSection = (container) => {
     
     if (eriVal) eriVal.innerText = `${data.finalERI}%`;
     if (eriCircle) eriCircle.setAttribute('stroke-dasharray', `${data.finalERI}, 100`);
-    if (eriHead) eriHead.innerHTML = `<tr><th style="padding:10px;">SKU</th><th>UBICACIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">CUMPLIMIENTO (%)</th></tr>`;
+    if (eriHead) eriHead.innerHTML = `<tr><th style="padding:10px;">SKU</th><th>UBICACIÓN</th><th class="centrado">SISTEMA</th><th class="centrado">FÍSICO</th><th class="centrado">DIF</th><th class="centrado">CUMPLIMIENTO (%)</th></tr>`;
     
     if (eriBody && Array.isArray(data.eriResults)) {
         // Filtrar encabezados residuales
@@ -14575,7 +14578,7 @@ const renderRFSection = (container) => {
                 <td style="text-align:center; opacity:0.8;">${r.sis}</td>
                 <td style="text-align:center; font-weight:700; color:var(--text-strong);">${r.fis}</td>
                 <td style="text-align:center; color:${r.diff===0?'var(--success-alt)':'var(--danger)'}; font-weight:900;">${r.diff > 0 ? '+' : ''}${r.diff}</td>
-                <td style="text-align:center;">
+                <td class="centrado">
                     <span style="background:rgba(var(--brand-rgb), 0.1); color:var(--brand-light); padding:2px 8px; border-radius:6px; font-weight:800; font-size:var(--t-xs);">${r.eri}%</span>
                 </td>
             </tr>
@@ -14596,7 +14599,7 @@ const renderRFSection = (container) => {
 
     if (eruVal) eruVal.innerText = `${data.finalERU}%`;
     if (eruCircle) eruCircle.setAttribute('stroke-dasharray', `${data.finalERU}, 100`);
-    if (eruHead) eruHead.innerHTML = `<tr><th style="padding:10px;">UBICACIÓN</th><th>SKU</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF</th><th style="text-align:center;">CUMPLIMIENTO (%)</th></tr>`;
+    if (eruHead) eruHead.innerHTML = `<tr><th style="padding:10px;">UBICACIÓN</th><th>SKU</th><th class="centrado">SISTEMA</th><th class="centrado">FÍSICO</th><th class="centrado">DIF</th><th class="centrado">CUMPLIMIENTO (%)</th></tr>`;
     
     if (eruBody && Array.isArray(data.eruResults)) {
         // Filtrar encabezados residuales
@@ -14608,7 +14611,7 @@ const renderRFSection = (container) => {
                 <td style="text-align:center; opacity:0.8;">${r.sis}</td>
                 <td style="text-align:center; font-weight:700; color:var(--text-strong);">${r.fis}</td>
                 <td style="text-align:center; color:${r.diff===0?'var(--success-alt)':'var(--danger)'}; font-weight:900;">${r.diff > 0 ? '+' : ''}${r.diff}</td>
-                <td style="text-align:center;">
+                <td class="centrado">
                     <span style="background:rgba(var(--success-alt-rgb), 0.1); color:var(--success-alt); padding:2px 8px; border-radius:6px; font-weight:800; font-size:var(--t-xs);">${r.eri}%</span>
                 </td>
             </tr>
@@ -14867,7 +14870,7 @@ const renderRFSection = (container) => {
       });
 
       const meta = getUploadMeta('recepcion_activo') || {};
-      const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+      const timeStr = meta.timestamp || new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
 
       reporte1HTML = `
           <div class="glass-panel" style="border: 2px solid var(--cyan); border-radius: 12px; padding: 0.8rem 1.2rem; background: rgba(var(--bg-rgb), 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(var(--cyan-rgb), 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
@@ -14907,12 +14910,12 @@ const renderRFSection = (container) => {
                                           rowTotal += val;
                                           return `
                                               <td style="color: var(--text-strong); font-weight: 500; padding: 5px 10px; text-align: center; font-size:var(--t-sm);">
-                                                  ${val.toLocaleString('en-US')}
+                                                  ${val.toLocaleString('es-PE')}
                                               </td>
                                           `;
                                       }).join('')}
                                       <td style="color: var(--cyan); font-weight: 700; padding: 5px 10px; text-align: center; background: rgba(var(--cyan-rgb), 0.01); font-size:var(--t-sm);">
-                                          ${rowTotal.toLocaleString('en-US')}
+                                          ${rowTotal.toLocaleString('es-PE')}
                                       </td>
                                   </tr>
                               `;
@@ -14928,12 +14931,12 @@ const renderRFSection = (container) => {
                                   });
                                   return `
                                       <td style="color: var(--cyan); font-weight: 800; padding: 6px 10px; text-align: center; font-size:var(--t-sm);">
-                                          ${deptTotal.toLocaleString('en-US')}
+                                          ${deptTotal.toLocaleString('es-PE')}
                                       </td>
                                   `;
                               }).join('')}
                               <td style="color: var(--cyan); font-weight: 900; padding: 6px 10px; text-align: center; background: rgba(var(--cyan-rgb), 0.08); font-size:var(--t-md); text-shadow: 0 0 5px rgba(var(--cyan-rgb), 0.5);">
-                                  ${totalSum.toLocaleString('en-US')}
+                                  ${totalSum.toLocaleString('es-PE')}
                               </td>
                           </tr>
                       </tfoot>
@@ -15018,7 +15021,7 @@ const renderRFSection = (container) => {
                       <tr style="border-bottom: 1px solid rgba(var(--ink-rgb), 0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(var(--cyan-rgb), 0.02)'" onmouseout="this.style.background='none'">
                           <td style="color: var(--text-dim); font-weight: 600; padding: 5px 10px; font-size:var(--t-sm);">${area}</td>
                           <td style="color: var(--text-strong); font-weight: 700; padding: 5px 10px; font-size:var(--t-sm);">${gender || '<span style="color: var(--text-faint);">-</span>'}</td>
-                          <td style="color: var(--text-strong); font-weight: 500; padding: 5px 10px; text-align: center; font-size:var(--t-sm);">${buffer.toLocaleString('en-US')}</td>
+                          <td style="color: var(--text-strong); font-weight: 500; padding: 5px 10px; text-align: center; font-size:var(--t-sm);">${buffer.toLocaleString('es-PE')}</td>
                       </tr>
                   `;
               }).join('');
@@ -15028,7 +15031,7 @@ const renderRFSection = (container) => {
               const subtotalRow = `
                   <tr style="border-bottom: 2px solid rgba(var(--cyan-rgb), 0.3); background: rgba(var(--cyan-rgb), 0.02); font-weight: 700;">
                       <td colspan="2" style="color: var(--cyan); font-weight: 700; padding: 5px 10px; font-size:var(--t-sm);">Total ${area}</td>
-                      <td style="color: var(--cyan); font-weight: 700; padding: 5px 10px; text-align: center; font-size:var(--t-sm);">${areaBuffer.toLocaleString('en-US')}</td>
+                      <td style="color: var(--cyan); font-weight: 700; padding: 5px 10px; text-align: center; font-size:var(--t-sm);">${areaBuffer.toLocaleString('es-PE')}</td>
                   </tr>
               `;
 
@@ -15036,7 +15039,7 @@ const renderRFSection = (container) => {
           }).join('');
 
           const meta = getUploadMeta('recepcion_activo') || {};
-          const timeStr = meta.timestamp || new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+          const timeStr = meta.timestamp || new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
 
           reporte2HTML = `
               <div class="glass-panel" style="border: 2px solid var(--cyan); border-radius: 12px; padding: 0.8rem 1.2rem; background: rgba(var(--bg-rgb), 0.7); backdrop-filter: blur(12px); box-shadow: 0 0 25px rgba(var(--cyan-rgb), 0.15); text-align: left; position: relative; overflow: hidden; height: fit-content;">
@@ -15067,7 +15070,7 @@ const renderRFSection = (container) => {
                               ${tableRowsHTML}
                               <tr style="background: rgba(var(--cyan-rgb), 0.08); border-top: 2px solid var(--cyan); font-weight: 800;">
                                   <td colspan="2" style="color: var(--text-strong); font-weight: 800; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.5px; font-size:var(--t-sm);">TOTAL GENERAL CDBUFFER</td>
-                                  <td style="color: var(--cyan); font-weight: 800; padding: 6px 10px; text-align: center; font-size:var(--t-md);">${grandBuffer.toLocaleString('en-US')}</td>
+                                  <td style="color: var(--cyan); font-weight: 800; padding: 6px 10px; text-align: center; font-size:var(--t-md);">${grandBuffer.toLocaleString('es-PE')}</td>
                               </tr>
                           </tbody>
                       </table>
@@ -15104,7 +15107,7 @@ const renderRFSection = (container) => {
                       <tr style="border-bottom: 1px solid rgba(var(--ink-rgb), 0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(var(--cyan-rgb), 0.02)'" onmouseout="this.style.background='none'">
                           <td style="color: var(--text-dim); font-weight: 600; padding: 5px 10px; font-size:var(--t-sm);">${area}</td>
                           <td style="color: var(--text-strong); font-weight: 700; padding: 5px 10px; font-size:var(--t-sm);">${brand || '<span style="color: var(--text-faint);">-</span>'}</td>
-                          <td style="color: var(--text-strong); font-weight: 500; padding: 5px 10px; text-align: center; font-size:var(--t-sm);">${buffer.toLocaleString('en-US')}</td>
+                          <td style="color: var(--text-strong); font-weight: 500; padding: 5px 10px; text-align: center; font-size:var(--t-sm);">${buffer.toLocaleString('es-PE')}</td>
                       </tr>
                   `;
               }).join('');
@@ -15114,7 +15117,7 @@ const renderRFSection = (container) => {
               const subtotalRow = `
                   <tr style="border-bottom: 2px solid rgba(var(--cyan-rgb), 0.3); background: rgba(var(--cyan-rgb), 0.02); font-weight: 700;">
                       <td colspan="2" style="color: var(--cyan); font-weight: 700; padding: 5px 10px; font-size:var(--t-sm);">Total ${area}</td>
-                      <td style="color: var(--cyan); font-weight: 700; padding: 5px 10px; text-align: center; font-size:var(--t-sm);">${areaBuffer.toLocaleString('en-US')}</td>
+                      <td style="color: var(--cyan); font-weight: 700; padding: 5px 10px; text-align: center; font-size:var(--t-sm);">${areaBuffer.toLocaleString('es-PE')}</td>
                   </tr>
               `;
 
@@ -15150,7 +15153,7 @@ const renderRFSection = (container) => {
                               ${tableBrandRowsHTML}
                               <tr style="background: rgba(var(--cyan-rgb), 0.08); border-top: 2px solid var(--cyan); font-weight: 800;">
                                   <td colspan="2" style="color: var(--text-strong); font-weight: 800; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.5px; font-size:var(--t-sm);">TOTAL GENERAL CDBUFFER</td>
-                                  <td style="color: var(--cyan); font-weight: 800; padding: 6px 10px; text-align: center; font-size:var(--t-md);">${grandBrandBuffer.toLocaleString('en-US')}</td>
+                                  <td style="color: var(--cyan); font-weight: 800; padding: 6px 10px; text-align: center; font-size:var(--t-md);">${grandBrandBuffer.toLocaleString('es-PE')}</td>
                               </tr>
                           </tbody>
                       </table>
@@ -15482,27 +15485,27 @@ const renderRFSection = (container) => {
     if (!tableBody || !tableHead) return;
 
     if (mode === 'ERI') {
-        tableHead.innerHTML = `<tr><th>SKU</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA TOTAL</th><th style="text-align:center;">FÍSICO TOTAL</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">% ERI</th></tr>`;
+        tableHead.innerHTML = `<tr><th>SKU</th><th>DESCRIPCIÓN</th><th class="centrado">SISTEMA TOTAL</th><th class="centrado">FÍSICO TOTAL</th><th class="centrado">DIF.</th><th class="centrado">% ERI</th></tr>`;
         tableBody.innerHTML = data.eriResults.map(r => `
             <tr>
                 <td style="font-weight:700; color:var(--brand-light);">${r.sku}</td>
                 <td style="font-size:var(--t-xs); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.desc}</td>
-                <td style="text-align:center;">${r.sis}</td>
+                <td class="centrado">${r.sis}</td>
                 <td style="text-align:center; font-weight:700; color:var(--text-strong);">${r.fis}</td>
                 <td style="text-align:center; font-weight:800; color:${r.diff === 0 ? 'var(--success-soft)' : 'var(--danger-soft)'};">${r.diff > 0 ? '+' : ''}${r.diff}</td>
-                <td style="text-align:center;"><span style="background:rgba(var(--brand-rgb), 0.1); color:var(--brand-light); padding:2px 6px; border-radius:4px; font-weight:700;">${r.eri}%</span></td>
+                <td class="centrado"><span style="background:rgba(var(--brand-rgb), 0.1); color:var(--brand-light); padding:2px 6px; border-radius:4px; font-weight:700;">${r.eri}%</span></td>
             </tr>
         `).join('');
     } else {
-        tableHead.innerHTML = `<tr><th>SKU / UBICACIÓN</th><th>DESCRIPCIÓN</th><th style="text-align:center;">SISTEMA</th><th style="text-align:center;">FÍSICO</th><th style="text-align:center;">DIF.</th><th style="text-align:center;">% ERU</th></tr>`;
+        tableHead.innerHTML = `<tr><th>SKU / UBICACIÓN</th><th>DESCRIPCIÓN</th><th class="centrado">SISTEMA</th><th class="centrado">FÍSICO</th><th class="centrado">DIF.</th><th class="centrado">% ERU</th></tr>`;
         tableBody.innerHTML = data.eruResults.map(r => `
             <tr>
                 <td style="font-weight:700;">${r.sku}<br><span style="font-size:var(--t-xs); color:var(--success-alt);">${r.ubi}</span></td>
                 <td style="font-size:var(--t-xs); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.desc}</td>
-                <td style="text-align:center;">${r.sis}</td>
+                <td class="centrado">${r.sis}</td>
                 <td style="text-align:center; font-weight:700; color:var(--text-strong);">${r.fis}</td>
                 <td style="text-align:center; font-weight:800; color:${r.diff === 0 ? 'var(--success-soft)' : 'var(--danger-soft)'};">${r.diff > 0 ? '+' : ''}${r.diff}</td>
-                <td style="text-align:center;"><span style="background:rgba(var(--success-alt-rgb), 0.1); color:var(--success-alt); padding:2px 6px; border-radius:4px; font-weight:700;">${r.eri}%</span></td>
+                <td class="centrado"><span style="background:rgba(var(--success-alt-rgb), 0.1); color:var(--success-alt); padding:2px 6px; border-radius:4px; font-weight:700;">${r.eri}%</span></td>
             </tr>
         `).join('');
     }
@@ -15518,7 +15521,7 @@ const renderRFSection = (container) => {
     const accuracy = total > 0 ? ((vacias / total) * 100).toFixed(2) : 0;
     const discrepancias = results.filter(r => r.lpns > 1);
     const now = new Date();
-    const ts = `${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+    const ts = `${now.toLocaleDateString('es-PE')} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
     const tsSpan = `<span style="font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 400; margin-left: 10px; letter-spacing: 0.5px; vertical-align: middle;">[ ${ts} ]</span>`;
 
     container.innerHTML = `
@@ -16107,7 +16110,7 @@ const renderRFSection = (container) => {
                                         ${index + 1}
                                     </div>
                                     <div style="flex-grow:1;">
-                                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div class="fila-entre">
                                             <span style="font-weight:700; font-size:var(--t-sm); color:var(--text-strong);">${s.storeName}</span>
                                             <span class="badge ${isDelivered ? 'status-success' : 'status-warning'}" style="font-size:var(--t-xs);">${s.status.toUpperCase()}</span>
                                         </div>
@@ -16318,7 +16321,7 @@ const renderRFSection = (container) => {
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(var(--ink-rgb), 0.05); padding-bottom:0.8rem; margin-bottom:1rem;">
                     <div>
                         <div style="font-size:var(--t-sm); font-weight:800; color:var(--text-strong);">PULSE CONDUCTOR</div>
-                        <div style="font-size:var(--t-xs); color:var(--text-muted);">Camión: ${activeRoute.plate} | ${activeRoute.id}</div>
+                        <div class="txt-chico">Camión: ${activeRoute.plate} | ${activeRoute.id}</div>
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
                         <span class="badge ${activeRoute.status === 'Creada' ? 'status-muted' : 'status-warning'}" style="font-size:var(--t-xs); margin: 0;">
@@ -16950,7 +16953,7 @@ const renderRFSection = (container) => {
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
                   <!-- Tarjeta 1: Total Pedidos -->
                   <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(var(--ink-rgb), 0.06); background:linear-gradient(135deg, rgba(var(--card-rgb), 0.7) 0%, rgba(var(--bg-rgb), 0.85) 100%);">
-                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <div class="fila-entre">
                           <span style="font-size:var(--t-xs); font-weight:800; color:var(--text-muted); letter-spacing:0.5px;">TOTAL DESPACHOS</span>
                           <span style="font-size:var(--t-lg); background:rgba(var(--primary-rgb), 0.15); color:var(--brand-light); padding:4px 8px; border-radius:8px; font-weight:900;">📦</span>
                       </div>
@@ -16960,7 +16963,7 @@ const renderRFSection = (container) => {
 
                   <!-- Tarjeta 2: Efectividad -->
                   <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(var(--success-alt-rgb), 0.2); background:linear-gradient(135deg, rgba(var(--success-alt-rgb), 0.08) 0%, rgba(var(--bg-rgb), 0.85) 100%); box-shadow: 0 4px 20px rgba(var(--success-alt-rgb), 0.05);">
-                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <div class="fila-entre">
                           <span style="font-size:var(--t-xs); font-weight:800; color:var(--success-pale); letter-spacing:0.5px;">TASA EFECTIVIDAD</span>
                           <span style="font-size:var(--t-lg); background:rgba(var(--success-alt-rgb), 0.15); color:var(--success-mid); padding:4px 8px; border-radius:8px; font-weight:900;">🎯</span>
                       </div>
@@ -16970,7 +16973,7 @@ const renderRFSection = (container) => {
 
                   <!-- Tarjeta 3: Gasto Distribución -->
                   <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(var(--warning-rgb), 0.2); background:linear-gradient(135deg, rgba(var(--warning-rgb), 0.08) 0%, rgba(var(--bg-rgb), 0.85) 100%); box-shadow: 0 4px 20px rgba(var(--warning-rgb), 0.05);">
-                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <div class="fila-entre">
                           <span style="font-size:var(--t-xs); font-weight:800; color:var(--warning-soft); letter-spacing:0.5px;">GASTO LOGÍSTICA</span>
                           <span style="font-size:var(--t-lg); background:rgba(var(--warning-rgb), 0.15); color:var(--warning-soft); padding:4px 8px; border-radius:8px; font-weight:900;">💰</span>
                       </div>
@@ -16980,7 +16983,7 @@ const renderRFSection = (container) => {
 
                   <!-- Tarjeta 4: Cobro de Flete -->
                   <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(var(--cyan-deep-rgb), 0.2); background:linear-gradient(135deg, rgba(var(--cyan-deep-rgb), 0.08) 0%, rgba(var(--bg-rgb), 0.85) 100%); box-shadow: 0 4px 20px rgba(var(--cyan-deep-rgb), 0.05);">
-                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <div class="fila-entre">
                           <span style="font-size:var(--t-xs); font-weight:800; color:var(--cyan); letter-spacing:0.5px;">COBRO EN DESTINO</span>
                           <span style="font-size:var(--t-lg); background:rgba(var(--cyan-deep-rgb), 0.15); color:var(--cyan); padding:4px 8px; border-radius:8px; font-weight:900;">💵</span>
                       </div>
@@ -17069,7 +17072,7 @@ const renderRFSection = (container) => {
                           <div>
                               <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); font-weight:700; margin-bottom:3px;">
                                   <span style="color:var(--success-alt); display:flex; align-items:center; gap:4px;"><span style="width:7px; height:7px; background:var(--success-alt); border-radius:50%;"></span> ATENDIDO</span>
-                                  <span style="color:var(--text-strong);">${atendidos} (${rateAtendidos}%)</span>
+                                  <span class="txt-fuerte">${atendidos} (${rateAtendidos}%)</span>
                               </div>
                               <div style="width:100%; height:6px; background:rgba(var(--ink-rgb), 0.04); border-radius:4px; overflow:hidden;">
                                   <div style="width:${rateAtendidos}%; height:100%; background:var(--success-alt); border-radius:4px;"></div>
@@ -17080,7 +17083,7 @@ const renderRFSection = (container) => {
                           <div>
                               <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); font-weight:700; margin-bottom:3px;">
                                   <span style="color:var(--text-dim); display:flex; align-items:center; gap:4px;"><span style="width:7px; height:7px; background:var(--text-dim); border-radius:50%;"></span> PENDIENTE</span>
-                                  <span style="color:var(--text-strong);">${pendientes} (${totalOrders > 0 ? ((pendientes / totalOrders) * 100).toFixed(1) : 0}%)</span>
+                                  <span class="txt-fuerte">${pendientes} (${totalOrders > 0 ? ((pendientes / totalOrders) * 100).toFixed(1) : 0}%)</span>
                               </div>
                               <div style="width:100%; height:6px; background:rgba(var(--ink-rgb), 0.04); border-radius:4px; overflow:hidden;">
                                   <div style="width:${totalOrders > 0 ? ((pendientes / totalOrders) * 100).toFixed(1) : 0}%; height:100%; background:var(--text-dim); border-radius:4px;"></div>
@@ -17091,7 +17094,7 @@ const renderRFSection = (container) => {
                           <div>
                               <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); font-weight:700; margin-bottom:3px;">
                                   <span style="color:var(--danger); display:flex; align-items:center; gap:4px;"><span style="width:7px; height:7px; background:var(--danger); border-radius:50%;"></span> INCIDENCIAS</span>
-                                  <span style="color:var(--text-strong);">${noAtendidos + reprogramar} (${totalOrders > 0 ? (((noAtendidos + reprogramar) / totalOrders) * 100).toFixed(1) : 0}%)</span>
+                                  <span class="txt-fuerte">${noAtendidos + reprogramar} (${totalOrders > 0 ? (((noAtendidos + reprogramar) / totalOrders) * 100).toFixed(1) : 0}%)</span>
                               </div>
                               <div style="width:100%; height:6px; background:rgba(var(--ink-rgb), 0.04); border-radius:4px; overflow:hidden;">
                                   <div style="width:${totalOrders > 0 ? (((noAtendidos + reprogramar) / totalOrders) * 100).toFixed(1) : 0}%; height:100%; background:var(--danger); border-radius:4px;"></div>
@@ -17185,7 +17188,7 @@ const renderRFSection = (container) => {
 
       // Metadata de subida del archivo NO RETAIL (Pedidos Catálogo)
       const meta = getUploadMeta('no_retail') || {};
-      const uploadDateRaw = meta.timestamp || (meta.ts && !isNaN(new Date(meta.ts).getTime()) ? new Date(meta.ts).toLocaleString() : 'Desconocida');
+      const uploadDateRaw = meta.timestamp || (meta.ts && !isNaN(new Date(meta.ts).getTime()) ? new Date(meta.ts).toLocaleString('es-PE') : 'Desconocida');
       const uploadDate = uploadDateRaw.includes(',') ? uploadDateRaw.split(',')[0].trim() : uploadDateRaw;
       // Si meta.ts es null, undefined o inválido, el fallback es la fecha actual (new Date())
       let uDate = new Date();
@@ -17245,7 +17248,7 @@ const renderRFSection = (container) => {
           let csvContent = "\ufeffFecha Carga,Fecha Entrega,Agencia,Cliente,Pedido,Estado,Cobro Flete,Factura,Gasto,Observaciones\n";
           
           clients.forEach(c => {
-              const fechaEnt = c.statusDate ? new Date(c.statusDate).toLocaleDateString('es-ES') : '';
+              const fechaEnt = c.statusDate ? new Date(c.statusDate).toLocaleDateString('es-PE') : '';
               const obsClean = (c.incidenciaObs || '').replace(/"/g, '""').replace(/\r?\n|\r/g, ' ');
               const gastoStr = c.gasto ? `S/ ${parseFloat(c.gasto).toFixed(2)}` : 'S/ 0.00';
               const row = `\"${c.fechaCargaStr || uploadDate}\",\"${fechaEnt}\",\"${c.agencia}\",\"${c.clientName}\",\"${c.pedido}\",\"${c.status}\",\"${c.cobroFlete}\",\"${c.factura || ''}\",\"${gastoStr}\",\"${obsClean}\"`;
@@ -17328,7 +17331,7 @@ const renderRFSection = (container) => {
                                   <div style="font-weight:900; color:var(--text-strong); font-size:var(--t-sm);">${c.fechaCargaStr || uploadDate}</div>
                               </td>
                               <td style="padding:1rem;">
-                                  <div style="font-weight:700; color:var(--sky);">${c.statusDate ? new Date(c.statusDate).toLocaleDateString('es-ES') : '-'}</div>
+                                  <div style="font-weight:700; color:var(--sky);">${c.statusDate ? new Date(c.statusDate).toLocaleDateString('es-PE') : '-'}</div>
                               </td>
                               <td style="padding:1rem;">
                                   <div style="font-size:var(--t-sm); font-weight:800; color:var(--text-muted);">${c.agencia || '-'}</div>
@@ -17373,7 +17376,7 @@ const renderRFSection = (container) => {
               <!-- Paginación -->
               ${totalPages > 1 ? `
               <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:rgba(var(--shadow-rgb), 0.2); border-top:1px solid rgba(var(--ink-rgb), 0.05);">
-                  <div style="color:var(--text-muted); font-size:var(--t-sm);">
+                  <div class="txt-dato">
                       Mostrando ${currentPage * limit + 1} - ${Math.min((currentPage + 1) * limit, clients.length)} de ${clients.length} registros
                   </div>
                   <div style="display:flex; gap:0.5rem;">
@@ -17663,7 +17666,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0392 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0393 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18126,7 +18129,7 @@ const renderRFSection = (container) => {
                                     <div style="margin-left:0.5rem; margin-bottom:0.6rem; border-left:2px solid rgba(var(--ink-rgb), 0.05); padding-left:0.6rem;">
                                         <div style="font-size:var(--t-xs); font-weight:700; color:var(--text-strong); display:flex; justify-content:space-between;">
                                             <span>🏢 ${agency}</span>
-                                            <span style="color:var(--text-muted);">${cList.length} Clientes</span>
+                                            <span class="txt-suave">${cList.length} Clientes</span>
                                         </div>
                                         
                                         <div style="display:flex; flex-direction:column; gap:0.25rem; margin-top:0.2rem;">
@@ -18177,7 +18180,7 @@ const renderRFSection = (container) => {
                 const dd = String(today.getDate()).padStart(2, '0');
                 const mm = String(today.getMonth() + 1).padStart(2, '0');
                 const yyyy = today.getFullYear();
-                uploadDate = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString() : `${dd}/${mm}/${yyyy}`);
+                uploadDate = meta.timestamp || (meta.ts ? new Date(meta.ts).toLocaleString('es-PE') : `${dd}/${mm}/${yyyy}`);
             }
             
             return `
@@ -18246,7 +18249,7 @@ const renderRFSection = (container) => {
                                                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                                                         <div>
                                                             <span style="font-size:var(--t-sm); font-weight:800; color:var(--text-strong); display:block;">${c.clientName}</span>
-                                                            <span style="font-size:var(--t-xs); color:var(--text-muted);">Pedido: ${c.pedido} | 📍 ${c.address}</span>
+                                                            <span class="txt-chico">Pedido: ${c.pedido} | 📍 ${c.address}</span>
                                                         </div>
                                                         <span class="badge ${c.liquidated ? 'status-success' : 'status-warning'}" style="font-size:var(--t-xs); padding:1px 6px;">
                                                             ${c.liquidated ? c.status : 'PENDIENTE'}
@@ -18257,7 +18260,7 @@ const renderRFSection = (container) => {
                                                         <!-- Liquidation Form -->
                                                         <div style="display:flex; flex-direction:column; gap:0.8rem; margin-top:0.8rem; border-top:1px dashed rgba(var(--ink-rgb), 0.05); padding-top:0.8rem;">
                                                             <!-- Cobro Flete (SI/NO) selector -->
-                                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                            <div class="fila-entre">
                                                                 <span style="font-size:var(--t-xs); color:var(--text-strong); font-weight:700;">💰 COBRO FLETE:</span>
                                                                 <div style="display:flex; background:rgba(var(--ink-rgb), 0.03); border-radius:8px; padding:2px; border:1px solid rgba(var(--ink-rgb), 0.05);">
                                                                     <button class="nr-flete-btn" data-client="${c.id}" data-val="SI" style="background:${c.cobroFlete === 'SI' ? 'var(--blue-deep)' : 'transparent'}; color:var(--text-strong); border:none; padding:3px 10px; border-radius:6px; font-size:var(--t-xs); font-weight:800; cursor:pointer;">SI</button>
@@ -18266,13 +18269,13 @@ const renderRFSection = (container) => {
                                                             </div>
 
                                                             <!-- Campo Gasto -->
-                                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                            <div class="fila-entre">
                                                                 <span style="font-size:var(--t-xs); color:var(--text-strong); font-weight:700;">💸 GASTO:</span>
                                                                 <input type="number" step="0.01" min="0" placeholder="S/ 0.00" class="nr-gasto-input" data-client="${c.id}" value="${c._tempGasto !== undefined ? c._tempGasto : (c.gasto || '')}" style="background:rgba(var(--shadow-rgb), 0.3); border:1px solid rgba(var(--ink-rgb), 0.1); color:var(--text-strong); padding:4px 8px; border-radius:6px; outline:none; font-size:var(--t-xs); font-family:inherit; width:80px; text-align:right;">
                                                             </div>
 
                                                             <!-- Campo Factura -->
-                                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                            <div class="fila-entre">
                                                                 <span style="font-size:var(--t-xs); color:var(--text-strong); font-weight:700;">📄 FACTURA:</span>
                                                                 <input type="text" placeholder="Factura" class="nr-factura-input" data-client="${c.id}" value="${c._tempFactura !== undefined ? c._tempFactura : (c.factura || '')}" style="background:rgba(var(--shadow-rgb), 0.3); border:1px solid rgba(var(--ink-rgb), 0.1); color:var(--text-strong); padding:4px 8px; border-radius:6px; outline:none; font-size:var(--t-xs); font-family:inherit; width:100px; text-align:right;">
                                                             </div>
@@ -18288,7 +18291,7 @@ const renderRFSection = (container) => {
                                                             </div>
 
                                                             <!-- Campo Incidencia -->
-                                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                            <div class="fila-entre">
                                                                 <span style="font-size:var(--t-xs); color:var(--text-strong); font-weight:700;">⚠️ ¿TIENE INCIDENCIA?</span>
                                                                 <div style="display:flex; background:rgba(var(--ink-rgb), 0.03); border-radius:8px; padding:2px; border:1px solid rgba(var(--ink-rgb), 0.05);">
                                                                     <button class="nr-incidencia-btn" data-client="${c.id}" data-val="SI" style="background:${(c._tempIncidencia || c.incidencia || 'NO') === 'SI' ? 'var(--danger)' : 'transparent'}; color:${(c._tempIncidencia || c.incidencia || 'NO') === 'SI' ? 'var(--on-accent)' : 'var(--text-strong)'}; border:none; padding:3px 10px; border-radius:6px; font-size:var(--t-xs); font-weight:800; cursor:pointer;">SI</button>
@@ -18421,7 +18424,7 @@ const renderRFSection = (container) => {
                     </div>
 
                     <!-- Cobro Flete -->
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="fila-entre">
                         <span style="font-size:var(--t-xs); color:var(--text-strong); font-weight:700;">💰 COBRO FLETE:</span>
                         <div style="display:flex; background:rgba(var(--ink-rgb), 0.03); border-radius:8px; padding:2px; border:1px solid rgba(var(--ink-rgb), 0.05);">
                             <button id="modal-flete-si" style="background:${tempCobroFlete === 'SI' ? 'var(--blue-deep)' : 'transparent'}; color:var(--text-strong); border:none; padding:3px 12px; border-radius:6px; font-size:var(--t-xs); font-weight:800; cursor:pointer;">SI</button>
@@ -18430,7 +18433,7 @@ const renderRFSection = (container) => {
                     </div>
 
                     <!-- Gasto -->
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="fila-entre">
                         <span style="font-size:var(--t-xs); color:var(--text-strong); font-weight:700;">💸 GASTO:</span>
                         <input type="number" step="0.01" min="0" id="modal-gasto-input" placeholder="S/ 0.00" value="${tempGasto}" style="background:rgba(var(--shadow-rgb), 0.3); border:1px solid rgba(var(--ink-rgb), 0.1); color:var(--text-strong); padding:6px 10px; border-radius:6px; outline:none; font-size:var(--t-xs); font-family:inherit; width:100px; text-align:right;">
                     </div>
@@ -18446,7 +18449,7 @@ const renderRFSection = (container) => {
                     </div>
 
                     <!-- Incidencia -->
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="fila-entre">
                         <span style="font-size:var(--t-xs); color:var(--text-strong); font-weight:700;">⚠️ ¿TIENE INCIDENCIA?</span>
                         <div style="display:flex; background:rgba(var(--ink-rgb), 0.03); border-radius:8px; padding:2px; border:1px solid rgba(var(--ink-rgb), 0.05);">
                             <button id="modal-incidencia-si" style="background:${tempIncidencia === 'SI' ? 'var(--danger)' : 'transparent'}; color:${tempIncidencia === 'SI' ? 'var(--on-accent)' : 'var(--text-strong)'}; border:none; padding:3px 12px; border-radius:6px; font-size:var(--t-xs); font-weight:800; cursor:pointer;">SI</button>
@@ -22508,7 +22511,7 @@ const renderRFSection = (container) => {
                     sug = `<span style="color:var(--danger); font-weight:900;">⚠️ REVISAR SLOTTING</span>
                            <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35);">${p.motivo}</div>`;
                   } else {
-                    sug = `<span style="color:var(--text-muted);">— sin regla</span>
+                    sug = `<span class="txt-suave">— sin regla</span>
                            <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.3);">${p.motivo || ''}</div>`;
                   }
                   const hoy = x.casa.length
@@ -22603,7 +22606,7 @@ const renderRFSection = (container) => {
             <select data-col="${c}" style="width:100%; background:rgba(var(--ink-rgb), 0.05); border:1px solid rgba(var(--ink-rgb), 0.12); border-radius:6px; color:var(--text-strong); font-size:var(--t-xs); padding:3px; cursor:pointer;">
               ${Object.keys(FR).map(k => `<option value="${k}" ${f === k ? 'selected' : ''}>${FR[k].etiqueta}</option>`).join('')}
             </select>
-            ${pasillo ? `<div title="Esta columna tiene cuerpos que son paso del elevador" style="font-size:var(--t-xs); color:var(--text-muted);">🚧 pasillo</div>` : '<div style="height:9px;"></div>'}
+            ${pasillo ? `<div title="Esta columna tiene cuerpos que son paso del elevador" class="txt-chico">🚧 pasillo</div>` : '<div style="height:9px;"></div>'}
           </div>`;
       }
 
@@ -23800,10 +23803,10 @@ const renderRFSection = (container) => {
       const dato = (n, t) => `<span><b style="color:var(--text-main); font-size:var(--t-md); font-weight:700;">${n}</b> ${t}</span>`;
       elResumen.innerHTML = [
         dato(marcaElegida ? 1 : marcas.length, marcaElegida ? 'marca' : 'marcas'),
-        dato(v.length.toLocaleString('es'), 'combinaciones a la vista'),
-        dato(conObjetivo.toLocaleString('es'), 'con objetivo cargado'),
-        dato(skusPorReponer.toLocaleString('es'), 'SKUs quedarían por reponer'),
-        dato(Math.round(aBajar).toLocaleString('es'), 'pares habría que bajar')
+        dato(v.length.toLocaleString('es-PE'), 'combinaciones a la vista'),
+        dato(conObjetivo.toLocaleString('es-PE'), 'con objetivo cargado'),
+        dato(skusPorReponer.toLocaleString('es-PE'), 'SKUs quedarían por reponer'),
+        dato(Math.round(aBajar).toLocaleString('es-PE'), 'pares habría que bajar')
       ].join('');
     };
 
@@ -23863,16 +23866,16 @@ const renderRFSection = (container) => {
                     const prom = f.skus ? Math.round(f.piso / f.skus) : 0;
                     return `<tr data-fila="${_escF(f.marca)}||${_escF(f.genero)}||${_escF(f.talla)}" style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
                       ${td(_escF(f.talla), 'left', 'color:var(--text-main); font-weight:700; padding-left:1.6rem;')}
-                      ${td(f.skus.toLocaleString('es'), 'right', 'color:var(--text-muted);')}
-                      ${td(Math.round(f.piso).toLocaleString('es'), 'right', 'color:var(--text-main);')}
-                      ${td(prom.toLocaleString('es'), 'right', 'color:var(--text-muted);')}
-                      ${td(Math.round(f.altura).toLocaleString('es'), 'right', 'color:var(--text-muted);')}
+                      ${td(f.skus.toLocaleString('es-PE'), 'right', 'color:var(--text-muted);')}
+                      ${td(Math.round(f.piso).toLocaleString('es-PE'), 'right', 'color:var(--text-main);')}
+                      ${td(prom.toLocaleString('es-PE'), 'right', 'color:var(--text-muted);')}
+                      ${td(Math.round(f.altura).toLocaleString('es-PE'), 'right', 'color:var(--text-muted);')}
                       <td style="padding:0.28rem 0.9rem; text-align:center;">
                         <input type="number" min="0" max="99999" data-m="${_escF(f.marca)}" data-g="${_escF(f.genero)}" data-t="${_escF(f.talla)}"
                           value="${objetivoDe(f)}" placeholder="—"
                           style="width:72px; background:var(--panel-solid); border:1px solid ${valido ? 'rgba(var(--primary-rgb), 0.5)' : 'var(--border)'}; border-radius:6px; color:var(--text-main); text-align:center; font-size:var(--t-sm); padding:0.28rem 0; outline:none;">
                       </td>
-                      ${td(valido ? Math.round(aBajar).toLocaleString('es') : '—', 'right', `color:${valido && aBajar > 0 ? 'var(--text-main)' : 'var(--text-muted)'}; font-weight:${valido && aBajar > 0 ? '700' : '400'};`)}
+                      ${td(valido ? Math.round(aBajar).toLocaleString('es-PE') : '—', 'right', `color:${valido && aBajar > 0 ? 'var(--text-main)' : 'var(--text-muted)'}; font-weight:${valido && aBajar > 0 ? '700' : '400'};`)}
                     </tr>`;
                   }).join('')}
                 </tbody>
@@ -24459,7 +24462,7 @@ Se dejó el valor anterior.`, 'warning');
       ].map(k => `
         <div class="glass-panel" style="padding:1.2rem 1.5rem; border-left:3px solid ${k.color};">
           <div style="font-size:var(--t-xl); margin-bottom:0.3rem;">${k.icon}</div>
-          <div style="font-size:var(--t-2xl); font-weight:800; color:${k.color};">${k.val.toLocaleString('es')}</div>
+          <div style="font-size:var(--t-2xl); font-weight:800; color:${k.color};">${k.val.toLocaleString('es-PE')}</div>
           <div style="font-size:var(--t-xs); font-weight:700; color:var(--text-muted); letter-spacing:1px;">${k.label}</div>
           <div style="font-size:var(--t-xs); color:var(--text-muted); opacity:0.6;">${k.sub}</div>
         </div>`).join('');
@@ -24487,11 +24490,11 @@ Se dejó el valor anterior.`, 'warning');
           <td style="padding:0.6rem 1rem; font-size:var(--t-sm); color:var(--success-mid);">${i.genderRims}</td>
           <td style="padding:0.6rem 1rem; font-size:var(--t-sm); color:var(--pink-soft);">${i.temporada}</td>
           <td style="padding:0.6rem 1rem; text-align:center; font-size:var(--t-sm); font-weight:700; color:var(--brand-light); background:rgba(var(--primary2-rgb), 0.05);">${i.factor !== undefined ? i.factor : umbral}</td>
-          <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.qAct===0?'var(--danger)':i.qAct<=(i.factor !== undefined ? i.factor : umbral)?'var(--warning)':'var(--text-pale)'};">${i.qAct.toLocaleString('es')}</td>
-          <td style="padding:0.6rem 1rem; text-align:right; color:${i.qRes>0?'var(--success)':'#ef444488'}; font-weight:600;">${i.qRes.toLocaleString('es')}</td>
+          <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.qAct===0?'var(--danger)':i.qAct<=(i.factor !== undefined ? i.factor : umbral)?'var(--warning)':'var(--text-pale)'};">${i.qAct.toLocaleString('es-PE')}</td>
+          <td style="padding:0.6rem 1rem; text-align:right; color:${i.qRes>0?'var(--success)':'#ef444488'}; font-weight:600;">${i.qRes.toLocaleString('es-PE')}</td>
           <td style="padding:0.6rem 1rem; text-align:right; font-weight:800; font-size:var(--t-md); color:${aBajarDe(i) > 0 ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.2)'};"
-              ${i.relleno > 0 ? `title="Incluye ${i.relleno} pares por encima del tope, para no dejar el cuerpo a medio llenar"` : ''}>${aBajarDe(i) > 0 ? aBajarDe(i).toLocaleString('es') : '—'}${i.relleno > 0 ? '<span style="color:var(--brand-pale); font-weight:700; font-size:var(--t-xs);"> +' + i.relleno.toLocaleString('es') + '</span>' : ''}</td>
-          <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; font-size:var(--t-sm); color:${solicitudDe(i) > 0 ? 'var(--brand-pale)' : 'rgba(var(--ink-rgb), 0.2)'};">${solicitudDe(i) > 0 ? solicitudDe(i).toLocaleString('es') : '—'}</td>
+              ${i.relleno > 0 ? `title="Incluye ${i.relleno} pares por encima del tope, para no dejar el cuerpo a medio llenar"` : ''}>${aBajarDe(i) > 0 ? aBajarDe(i).toLocaleString('es-PE') : '—'}${i.relleno > 0 ? '<span style="color:var(--brand-pale); font-weight:700; font-size:var(--t-xs);"> +' + i.relleno.toLocaleString('es-PE') + '</span>' : ''}</td>
+          <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; font-size:var(--t-sm); color:${solicitudDe(i) > 0 ? 'var(--brand-pale)' : 'rgba(var(--ink-rgb), 0.2)'};">${solicitudDe(i) > 0 ? solicitudDe(i).toLocaleString('es-PE') : '—'}</td>
           <td style="padding:0.6rem 1rem; text-align:center;">${estadoBadge(i.estado)}</td>
         </tr>`).join('');
     };
@@ -24504,7 +24507,7 @@ Se dejó el valor anterior.`, 'warning');
       <div style="margin-bottom:1.2rem; font-size:var(--t-sm); color:var(--text-muted); display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
         <span style="border:1px solid var(--border); border-radius:20px; padding:2px 10px; font-weight:700; color:var(--success);">SOLO SOLIDPACK</span>
         <span>Los prepack no se reponen por quiebre de talla: bajan por pedido de comercial, desde la Zona Buffer.${
-          (_replCache && _replCache.omitidos) ? ` Quedaron afuera <b>${Number(_replCache.omitidos).toLocaleString('es')}</b> SKU entre prepack y materiales.` : ''
+          (_replCache && _replCache.omitidos) ? ` Quedaron afuera <b>${Number(_replCache.omitidos).toLocaleString('es-PE')}</b> SKU entre prepack y materiales.` : ''
         }</span>
       </div>
 
@@ -24672,7 +24675,7 @@ Se dejó el valor anterior.`, 'warning');
         <div class="glass-panel animate-fade-in" style="padding:4rem 2rem; text-align:center; border:1px dashed rgba(var(--ink-rgb), 0.1);">
           <div style="font-size:var(--t-2xl); opacity:0.3; margin-bottom:1.5rem;">🔄</div>
           <h3 style="color:var(--text-strong); font-weight:700; margin-bottom:0.8rem;">Sin Datos Cargados</h3>
-          <p style="color:var(--text-muted);">Ve a <b>📁 ARCHIVO ANÁLISIS SKU</b> y carga los archivos de Stock Activo y Stock Reserva.</p>
+          <p class="txt-suave">Ve a <b>📁 ARCHIVO ANÁLISIS SKU</b> y carga los archivos de Stock Activo y Stock Reserva.</p>
         </div>`;
       return;
     }
@@ -24692,7 +24695,7 @@ Se dejó el valor anterior.`, 'warning');
         <div class="glass-panel animate-fade-in" style="padding:5rem 2rem; text-align:center; border:1px dashed rgba(var(--primary2-rgb), 0.25);">
           <div style="font-size:var(--t-2xl); margin-bottom:1.5rem;">🔄</div>
           <h3 style="color:var(--text-strong); font-weight:700; margin-bottom:0.6rem;">Análisis de Replenishment</h3>
-          <p style="color:var(--text-muted); margin-bottom:0.4rem;">Activo: <b style="color:var(--primary-2);">${activo.length.toLocaleString('es')}</b> registros &nbsp;|&nbsp; Reserva: <b style="color:var(--primary-2);">${reserva.length.toLocaleString('es')}</b> registros</p>
+          <p style="color:var(--text-muted); margin-bottom:0.4rem;">Activo: <b style="color:var(--primary-2);">${activo.length.toLocaleString('es-PE')}</b> registros &nbsp;|&nbsp; Reserva: <b style="color:var(--primary-2);">${reserva.length.toLocaleString('es-PE')}</b> registros</p>
           <p style="color:var(--text-muted); font-size:var(--t-sm); margin-bottom:2rem;">Haz clic en PROCESAR para calcular el estado de reposición de todos los SKUs.</p>
           <button id="repl_run_btn" style="
             background: linear-gradient(135deg,var(--primary-2),var(--violet));
@@ -25200,7 +25203,7 @@ Se dejó el valor anterior.`, 'warning');
 
       const ye = (v) => y1 - (y1 - y0) * (v - piso) / (tope - piso);
       const px = (i) => x0 + i * dx;
-      const num = (v) => Math.round(v).toLocaleString('es-ES');
+      const num = (v) => Math.round(v).toLocaleString('es-PE');
 
       /* La curva: cada tramo con dos manijas a media distancia. Da la ondulacion SIN inventar
          valores — la linea pasa exactamente por cada dia medido. */
@@ -25266,7 +25269,7 @@ Se dejó el valor anterior.`, 'warning');
   /** El HTML de los dos cuadros. Cadena vacía si no hay con qué armarlos. */
   const htmlConsolidacionReserva = (datos, serie, base) => {
       if (!datos) return '';
-      const mil = (n) => Math.round(n).toLocaleString('es-ES');
+      const mil = (n) => Math.round(n).toLocaleString('es-PE');
       const colorOcup = (p) => p >= 97 ? 'var(--danger-deep)' : p >= 88 ? 'var(--orange)' : p >= 75 ? 'var(--warning-soft)' : 'var(--success-soft)';
       const colorLlen = (p) => p < 33 ? 'var(--danger-deep)' : p < 66 ? 'var(--orange)' : p < 100 ? 'var(--warning-soft)' : 'var(--success-alt)';
       const BASE_TH = 'text-align:center;color:var(--text-muted);font-weight:700;font-size:var(--t-xs);letter-spacing:.4px;padding:3px 9px;line-height:1.2;border-bottom:1px solid rgba(var(--ink-rgb), .08);white-space:nowrap;';
@@ -26040,7 +26043,7 @@ Se dejó el valor anterior.`, 'warning');
       /* Su propio formateador: el de renderAnalisisReserva vive dentro de esa funcion y aca
          no llega. Sin esto la tarjeta reventaba con "mil is not defined" al abrirla, y eso
          el chequeo de sintaxis no lo ve. */
-      const mil = (n) => Math.round(n).toLocaleString('es-ES');
+      const mil = (n) => Math.round(n).toLocaleString('es-PE');
       const ahora = new Date();
       const dia = ahora.toLocaleDateString('es-PE',
           { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -26212,7 +26215,7 @@ Se dejó el valor anterior.`, 'warning');
                   + '<div style="display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:14px"><div>'
                   + '<div style="font-size:var(--t-lg);font-weight:800;color:var(--text-strong)">' + p.padre + ' · SEL-' + String(celda.dataset.col).padStart(2, '0') + '</div>'
                   + '<div style="font-size:var(--t-sm);margin-top:8px;color:var(--text-muted)">' + L.length + ' ubicaciones · <b style="color:var(--text-strong)">'
-                  + suma.toLocaleString('es-ES') + ' pares</b> · paleta llena de este artículo: <b style="color:var(--text-strong)">' + p.cap + '</b> pares<br>'
+                  + suma.toLocaleString('es-PE') + ' pares</b> · paleta llena de este artículo: <b style="color:var(--text-strong)">' + p.cap + '</b> pares<br>'
                   + 'Aquí caben en <b style="color:var(--success-alt)">' + nec + '</b> ubicación' + (nec > 1 ? 'es' : '')
                   + ' → se liberarían <b style="color:var(--success-alt)">' + (L.length - nec) + '</b></div></div>'
                   + '<div style="cursor:pointer;color:var(--text-muted);font-size:var(--t-xl);line-height:1"'
@@ -26340,7 +26343,7 @@ Se dejó el valor anterior.`, 'warning');
   /** El panel de la derecha de la reserva. Devuelve HTML; no toca la pantalla. */
   const panelReservaHTML = (r, nivelVisto, sello) => {
       if (!r) return '';
-      const n = (x) => Number(x || 0).toLocaleString();
+      const n = (x) => Number(x || 0).toLocaleString('es-PE');
       const esc = (t) => String(t == null ? '' : t)
           .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
       const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
@@ -26480,7 +26483,7 @@ Se dejó el valor anterior.`, 'warning');
                    border-radius:9px; padding:9px 12px; margin-top:11px; gap:10px;">
                   <span style="font-size:var(--t-xs); font-weight:800; color:var(--text-muted);">Densidad media · ${n(r.fw.pal)} paletas de calzado</span>
                   <span style="font-size:var(--t-lg); font-weight:900; color:var(--text-strong); white-space:nowrap;">${n(r.fw.media)}
-                      <span style="font-size:var(--t-xs); color:var(--text-muted);">de ${r.capacidad} · ${pct(r.fw.media, r.capacidad)}%</span></span>
+                      <span class="txt-chico">de ${r.capacidad} · ${pct(r.fw.media, r.capacidad)}%</span></span>
               </div>
               <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;
                    background:rgba(var(--success-alt-rgb), 0.12); border:1px solid rgba(var(--success-alt-rgb), 0.35);
@@ -26620,7 +26623,7 @@ Se dejó el valor anterior.`, 'warning');
 
       if (!filas.length) throw new Error('No se encontró ninguna fila con artículo.');
 
-      decir(`Publicando ${filas.length.toLocaleString('es')} filas...`);
+      decir(`Publicando ${filas.length.toLocaleString('es-PE')} filas...`);
       const res = await fetch(_urlStockHora(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -26633,7 +26636,7 @@ Se dejó el valor anterior.`, 'warning');
       try { await logSystemAction((getSession() || {}).username || 'sistema', 'STOCK_MAPA', `Stock del mapa actualizado: ${filas.length} filas`); } catch (e) {}
 
       showPremiumAlert('Stock del mapa actualizado',
-        `Entraron <b>${filas.length.toLocaleString('es')}</b> filas y ya están publicadas para todas las computadoras.<br>` +
+        `Entraron <b>${filas.length.toLocaleString('es-PE')}</b> filas y ya están publicadas para todas las computadoras.<br>` +
         `El stock del día —el de las 19:00— <b>no se tocó</b>: el Replenishment y la Zona Buffer siguen con el de siempre.`,
         'success');
       renderLayoutActivo(window.__layoutContainer);
@@ -27135,11 +27138,11 @@ Se dejó el valor anterior.`, 'warning');
                                       : (temps[0] === 'ACTUAL' ? 'T. Actual' : 'T. Anterior');
                                   tip = `<b>${nombre}</b><br/>Columna ${String(c).padStart(2,'0')} · Cuerpo ${logicalR} · Nivel ${nv} · Posición ${pos}`
                                       + `<hr style='border-color:rgba(var(--ink-rgb), 0.1); margin:4px 0;'/>`
-                                      + `<b>${queEs}</b> · ${pal.qty.toLocaleString()} unid.<br/>`;
+                                      + `<b>${queEs}</b> · ${pal.qty.toLocaleString('es-PE')} unid.<br/>`;
                                   pal.skus.slice(0, 6).forEach(s => {
                                       const g = window.DEBUG_SKU_GENDER
                                           ? (window.DEBUG_SKU_GENDER[s.sku] || window.DEBUG_SKU_GENDER[s.sku.substring(0,7)] || '') : '';
-                                      tip += `<span style='font-size:var(--t-sm); color:var(--text-soft);'>${esc(s.sku)} (${s.cant.toLocaleString()}) - ${s.temporada}${g ? ' [' + esc(g) + ']' : ''}</span><br/>`;
+                                      tip += `<span style='font-size:var(--t-sm); color:var(--text-soft);'>${esc(s.sku)} (${s.cant.toLocaleString('es-PE')}) - ${s.temporada}${g ? ' [' + esc(g) + ']' : ''}</span><br/>`;
                                   });
                                   if (pal.skus.length > 6) tip += `<span style='font-size:var(--t-sm); color:var(--text-soft);'>...y ${pal.skus.length - 6} más</span>`;
                               }
@@ -27320,7 +27323,7 @@ Se dejó el valor anterior.`, 'warning');
                               <div style="margin-bottom:15px; background:rgba(var(--ink-rgb), 0.02); padding:12px; border-radius:8px; border:1px solid rgba(var(--ink-rgb), 0.05);">
                                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                                       <span style="color:var(--text-muted); font-size:var(--t-md); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Artículos (Padres)</span>
-                                      <span style="font-weight:900; color:var(--text-strong); font-size:var(--t-lg);">${uniquePadresSize.toLocaleString()}</span>
+                                      <span style="font-weight:900; color:var(--text-strong); font-size:var(--t-lg);">${uniquePadresSize.toLocaleString('es-PE')}</span>
                                   </div>
                                   
                                   <div style="width:100%; height:6px; background:rgba(var(--ink-rgb), 0.1); border-radius:3px; display:flex; overflow:hidden; margin-bottom:6px;">
@@ -27337,7 +27340,7 @@ Se dejó el valor anterior.`, 'warning');
                               <div style="margin-bottom:15px; background:rgba(var(--ink-rgb), 0.02); padding:12px; border-radius:8px; border:1px solid rgba(var(--ink-rgb), 0.05);">
                                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                                       <span style="color:var(--text-muted); font-size:var(--t-md); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Unidades Totales</span>
-                                      <span style="font-weight:900; color:var(--text-strong); font-size:var(--t-lg);">${totalUnits.toLocaleString()}</span>
+                                      <span style="font-weight:900; color:var(--text-strong); font-size:var(--t-lg);">${totalUnits.toLocaleString('es-PE')}</span>
                                   </div>
                                   
                                   <div style="width:100%; height:6px; background:rgba(var(--ink-rgb), 0.1); border-radius:3px; display:flex; overflow:hidden; margin-bottom:6px;">
@@ -27353,8 +27356,8 @@ Se dejó el valor anterior.`, 'warning');
                               
                               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
                                   <div style="background:rgba(var(--ink-rgb), 0.02); padding:12px; border-radius:8px; border:1px solid rgba(var(--ink-rgb), 0.05); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                      <span style="color:var(--text-muted); font-size:var(--t-sm); font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">${isReserva ? `Paletas libres <span style="text-transform:none; font-weight:700;">(de ${ACTUAL_TOTAL_CELLS.toLocaleString()})</span>` : 'Ubicaciones Vacías'}</span>
-                                      <span style="font-weight:900; color:var(--text-strong); font-size:var(--t-lg);">${emptyCellsCount.toLocaleString()}</span>
+                                      <span style="color:var(--text-muted); font-size:var(--t-sm); font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">${isReserva ? `Paletas libres <span style="text-transform:none; font-weight:700;">(de ${ACTUAL_TOTAL_CELLS.toLocaleString('es-PE')})</span>` : 'Ubicaciones Vacías'}</span>
+                                      <span style="font-weight:900; color:var(--text-strong); font-size:var(--t-lg);">${emptyCellsCount.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="background:rgba(var(--ink-rgb), 0.02); padding:12px; border-radius:8px; border:1px solid rgba(var(--ink-rgb), 0.05); display:flex; flex-direction:column; align-items:center; justify-content:center;">
                                       <span style="color:var(--text-muted); font-size:var(--t-sm); font-weight:800; text-transform:uppercase; margin-bottom:4px; text-align:center;">${isReserva ? 'Unid. por paleta' : 'Densidad (Unid/Ubi)'}</span>
@@ -27386,16 +27389,16 @@ Se dejó el valor anterior.`, 'warning');
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
-                                      <span style="color:var(--text-strong);">${statsActualPadresSize.toLocaleString()}</span>
+                                      <span class="txt-fuerte">${statsActualPadresSize.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); color:var(--text-muted); margin-bottom:2px;">
                                       <span>Unidades</span>
-                                      <span style="color:var(--text-strong);">${stats['ACTUAL'].units.toLocaleString()}</span>
+                                      <span class="txt-fuerte">${stats['ACTUAL'].units.toLocaleString('es-PE')}</span>
                                   </div>
                                   ${isReserva ? '' : `
                                   <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 6-13')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                      <span style="color:var(--danger);">${stats['ACTUAL'].bad_placed.toLocaleString()} mal ubicadas</span>
+                                      <span style="color:var(--danger);">${stats['ACTUAL'].bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
                                   </div>
                                   `}
                               </div>
@@ -27407,16 +27410,16 @@ Se dejó el valor anterior.`, 'warning');
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
-                                      <span style="color:var(--text-strong);">${statsAnteriorPadresSize.toLocaleString()}</span>
+                                      <span class="txt-fuerte">${statsAnteriorPadresSize.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); color:var(--text-muted); margin-bottom:2px;">
                                       <span>Unidades</span>
-                                      <span style="color:var(--text-strong);">${stats['ANTERIOR'].units.toLocaleString()}</span>
+                                      <span class="txt-fuerte">${stats['ANTERIOR'].units.toLocaleString('es-PE')}</span>
                                   </div>
                                   ${isReserva ? '' : `
                                   <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 3-5')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                      <span style="color:var(--danger);">${stats['ANTERIOR'].bad_placed.toLocaleString()} mal ubicadas</span>
+                                      <span style="color:var(--danger);">${stats['ANTERIOR'].bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
                                   </div>
                                   `}
                               </div>
@@ -27428,16 +27431,16 @@ Se dejó el valor anterior.`, 'warning');
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); color:var(--text-muted); margin-bottom:2px;">
                                       <span>Artículos (Padre)</span>
-                                      <span style="color:var(--text-strong);">${uniquePadresSize.toLocaleString()}</span>
+                                      <span class="txt-fuerte">${uniquePadresSize.toLocaleString('es-PE')}</span>
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); color:var(--text-muted); margin-bottom:2px;">
                                       <span>Unidades</span>
-                                      <span style="color:var(--text-strong);">${statsGeneral.units.toLocaleString()}</span>
+                                      <span class="txt-fuerte">${statsGeneral.units.toLocaleString('es-PE')}</span>
                                   </div>
                                   ${isReserva ? '' : `
                                   <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Desviación general total')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                      <span style="color:var(--danger);">${statsGeneral.bad_placed.toLocaleString()} mal ubicadas</span>
+                                      <span style="color:var(--danger);">${statsGeneral.bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
                                   </div>
                                   `}
                               </div>
@@ -28006,11 +28009,11 @@ window.showCellModal = function(htmlContent) {
                     rowsHtml += `
                         <tr style="border-top:1px solid rgba(var(--ink-rgb), 0.05); background:rgba(var(--shadow-rgb), 0.2);">
                             <td style="padding:10px; font-weight:700; color:var(--text-strong);">${item.sku}</td>
-                            <td style="padding:10px; text-align:center; color:var(--success-alt); font-weight:800;">${item.totalQty.toLocaleString()}</td>
+                            <td style="padding:10px; text-align:center; color:var(--success-alt); font-weight:800;">${item.totalQty.toLocaleString('es-PE')}</td>
                             <td style="padding:10px; text-align:center; color:${item.numPaletas > 2 ? 'var(--danger)' : item.numPaletas > 1 ? 'var(--warning-soft)' : 'var(--text-strong)'}; font-weight:800;">${item.numPaletas}</td>
                             <td style="padding:10px; color:var(--text-muted); font-size:var(--t-sm); border-left:1px solid rgba(var(--ink-rgb), 0.02);">${p0.lpn}</td>
                             <td style="padding:10px; color:var(--text-muted); font-size:var(--t-sm);">${p0.ubicacion}</td>
-                            <td style="padding:10px; color:var(--text-muted); font-size:var(--t-sm); text-align:right;">${p0.cantidad.toLocaleString()}</td>
+                            <td style="padding:10px; color:var(--text-muted); font-size:var(--t-sm); text-align:right;">${p0.cantidad.toLocaleString('es-PE')}</td>
                         </tr>
                     `;
                     for(let i=1; i<item.paletas.length; i++) {
@@ -28020,7 +28023,7 @@ window.showCellModal = function(htmlContent) {
                                 <td colspan="3"></td>
                                 <td style="padding:4px 10px; color:var(--text-muted); font-size:var(--t-sm); border-left:1px solid rgba(var(--ink-rgb), 0.02);">${pi.lpn}</td>
                                 <td style="padding:4px 10px; color:var(--text-muted); font-size:var(--t-sm);">${pi.ubicacion}</td>
-                                <td style="padding:4px 10px; color:var(--text-muted); font-size:var(--t-sm); text-align:right;">${pi.cantidad.toLocaleString()}</td>
+                                <td style="padding:4px 10px; color:var(--text-muted); font-size:var(--t-sm); text-align:right;">${pi.cantidad.toLocaleString('es-PE')}</td>
                             </tr>
                         `;
                     }
@@ -28113,11 +28116,11 @@ window.showCellModal = function(htmlContent) {
                     rowsHtml += `
                         <tr style="border-top:1px solid rgba(var(--ink-rgb), 0.05); background:rgba(var(--shadow-rgb), 0.2);">
                             <td style="padding:10px; font-weight:700; color:var(--text-strong);">${item.ubicacion}</td>
-                            <td style="padding:10px; text-align:center; color:var(--success-alt); font-weight:800;">${item.totalQty.toLocaleString()}</td>
+                            <td style="padding:10px; text-align:center; color:var(--success-alt); font-weight:800;">${item.totalQty.toLocaleString('es-PE')}</td>
                             <td style="padding:10px; text-align:center; color:${item.numSkus > 2 ? 'var(--danger)' : item.numSkus > 1 ? 'var(--warning-soft)' : 'var(--text-strong)'}; font-weight:800;">${item.numSkus}</td>
                             <td style="padding:10px; color:var(--text-muted); font-size:var(--t-sm); border-left:1px solid rgba(var(--ink-rgb), 0.02);">${s0.lpn}</td>
                             <td style="padding:10px; color:var(--text-muted); font-size:var(--t-sm);">${s0.sku}</td>
-                            <td style="padding:10px; color:var(--text-muted); font-size:var(--t-sm); text-align:right;">${s0.cantidad.toLocaleString()}</td>
+                            <td style="padding:10px; color:var(--text-muted); font-size:var(--t-sm); text-align:right;">${s0.cantidad.toLocaleString('es-PE')}</td>
                         </tr>
                     `;
                     for(let i=1; i<item.skus.length; i++) {
@@ -28127,7 +28130,7 @@ window.showCellModal = function(htmlContent) {
                                 <td colspan="3"></td>
                                 <td style="padding:4px 10px; color:var(--text-muted); font-size:var(--t-sm); border-left:1px solid rgba(var(--ink-rgb), 0.02);">${si.lpn}</td>
                                 <td style="padding:4px 10px; color:var(--text-muted); font-size:var(--t-sm);">${si.sku}</td>
-                                <td style="padding:4px 10px; color:var(--text-muted); font-size:var(--t-sm); text-align:right;">${si.cantidad.toLocaleString()}</td>
+                                <td style="padding:4px 10px; color:var(--text-muted); font-size:var(--t-sm); text-align:right;">${si.cantidad.toLocaleString('es-PE')}</td>
                             </tr>
                         `;
                     }
@@ -28489,7 +28492,7 @@ window.showCellModal = function(htmlContent) {
                     
                     const labels = historyData.map(d => {
                         const date = new Date(d.created_at);
-                        return date.toLocaleDateString('es-ES', {month:'short', day:'numeric'});
+                        return date.toLocaleDateString('es-PE', {month:'short', day:'numeric'});
                     });
                     
                     const skusFragData = historyData.map(d => d.skus_fragmentados || 0);
@@ -28870,7 +28873,7 @@ window.showCellModal = function(htmlContent) {
                       detalleObsGen: res.detalleObsGen || [],
                       detalleTemporadas: res.detalleTemporadas || [],
                       tablaTallas: res.tablaTallas || [],
-                      timestamp: res.timestamp || new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
+                      timestamp: res.timestamp || new Date().toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
                   };
 
               try {
@@ -28988,22 +28991,22 @@ window.showCellModal = function(htmlContent) {
                                 ${tQ.map(row => `
                                     <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
                                         <td style="padding:0.7rem 0.5rem; font-weight:800; color:var(--text-strong);">${row.Año}</td>
-                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q1 === 0 ? '0.15' : '1'}">${(row.Q1 || 0).toLocaleString()}</td>
-                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q2 === 0 ? '0.15' : '1'}">${(row.Q2 || 0).toLocaleString()}</td>
-                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q3 === 0 ? '0.15' : '1'}">${(row.Q3 || 0).toLocaleString()}</td>
-                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q4 === 0 ? '0.15' : '1'}">${(row.Q4 || 0).toLocaleString()}</td>
-                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:900; color:var(--primary); background:rgba(var(--primary-rgb), 0.02); opacity: ${row.TOTAL === 0 ? '0.15' : '1'}">${(row.TOTAL || 0).toLocaleString()}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q1 === 0 ? '0.15' : '1'}">${(row.Q1 || 0).toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q2 === 0 ? '0.15' : '1'}">${(row.Q2 || 0).toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q3 === 0 ? '0.15' : '1'}">${(row.Q3 || 0).toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:600; opacity: ${row.Q4 === 0 ? '0.15' : '1'}">${(row.Q4 || 0).toLocaleString('es-PE')}</td>
+                                        <td style="padding:0.7rem 0.5rem; text-align:center; font-weight:900; color:var(--primary); background:rgba(var(--primary-rgb), 0.02); opacity: ${row.TOTAL === 0 ? '0.15' : '1'}">${(row.TOTAL || 0).toLocaleString('es-PE')}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                             <tfoot style="border-top:2px solid var(--border); background:rgba(var(--primary-rgb), 0.05);">
                                 <tr style="font-weight:900; color:var(--text-strong); font-size:var(--t-md);">
                                     <td style="padding:1rem 0.5rem;">TOTAL GENERAL</td>
-                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q1||0),0).toLocaleString()}</td>
-                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q2||0),0).toLocaleString()}</td>
-                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q3||0),0).toLocaleString()}</td>
-                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q4||0),0).toLocaleString()}</td>
-                                    <td style="padding:1rem 0.5rem; text-align:center; color:var(--warning-soft); background:rgba(var(--shadow-rgb), 0.2);">${tQ.reduce((s,r)=>s+(r.TOTAL||0),0).toLocaleString()}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q1||0),0).toLocaleString('es-PE')}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q2||0),0).toLocaleString('es-PE')}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q3||0),0).toLocaleString('es-PE')}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center;">${tQ.reduce((s,r)=>s+(r.Q4||0),0).toLocaleString('es-PE')}</td>
+                                    <td style="padding:1rem 0.5rem; text-align:center; color:var(--warning-soft); background:rgba(var(--shadow-rgb), 0.2);">${tQ.reduce((s,r)=>s+(r.TOTAL||0),0).toLocaleString('es-PE')}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -29020,9 +29023,9 @@ window.showCellModal = function(htmlContent) {
                     <table style="width:100%; font-size:var(--t-sm); border-collapse:collapse;">
                         <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid var(--panel-alt);"><th style="text-align:left; padding:0.5rem;">TIPO OBSOLENCIA</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
                         <tbody>
-                            ${tO.length ? tO.map(row => `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.02);"><td style="padding:0.6rem 0.5rem; color:var(--text-strong);">${row.label}</td><td style="text-align:center; padding:0.6rem 0.5rem; font-weight:800; color:var(--success-alt); opacity:${row.qty===0?'0.15':'1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; padding:1rem; opacity:0.3;">Sin datos</td></tr>'}
+                            ${tO.length ? tO.map(row => `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.02);"><td style="padding:0.6rem 0.5rem; color:var(--text-strong);">${row.label}</td><td style="text-align:center; padding:0.6rem 0.5rem; font-weight:800; color:var(--success-alt); opacity:${row.qty===0?'0.15':'1'}">${(row.qty || 0).toLocaleString('es-PE')}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; padding:1rem; opacity:0.3;">Sin datos</td></tr>'}
                         </tbody>
-                        ${tO.length ? `<tfoot><tr style="background:rgba(var(--success-alt-rgb), 0.1); color:var(--success-alt); font-weight:900;"><td style="padding:0.6rem 0.5rem;">TOTAL GENERAL</td><td style="text-align:center;">${tO.reduce((a,b)=>a+b.qty,0).toLocaleString()}</td></tr></tfoot>` : ''}
+                        ${tO.length ? `<tfoot><tr style="background:rgba(var(--success-alt-rgb), 0.1); color:var(--success-alt); font-weight:900;"><td style="padding:0.6rem 0.5rem;">TOTAL GENERAL</td><td class="centrado">${tO.reduce((a,b)=>a+b.qty,0).toLocaleString('es-PE')}</td></tr></tfoot>` : ''}
                     </table>
                 </div>
 
@@ -29032,9 +29035,9 @@ window.showCellModal = function(htmlContent) {
                     <table style="width:100%; font-size:var(--t-sm); border-collapse:collapse;">
                         <thead><tr style="color:var(--text-muted); font-weight:800; border-bottom:1px solid var(--panel-alt);"><th style="text-align:left; padding:0.5rem;">G. GENDER</th><th style="text-align:center; padding:0.5rem;">CANTIDAD</th></tr></thead>
                         <tbody>
-                            ${tG.length ? tG.map(row => `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.02);"><td style="padding:0.6rem 0.5rem; color:var(--text-strong);">${row.label}</td><td style="text-align:center; padding:0.6rem 0.5rem; font-weight:800; color:var(--warning-soft); opacity:${row.qty===0?'0.15':'1'}">${(row.qty || 0).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; padding:1rem; opacity:0.3;">Sin datos</td></tr>'}
+                            ${tG.length ? tG.map(row => `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.02);"><td style="padding:0.6rem 0.5rem; color:var(--text-strong);">${row.label}</td><td style="text-align:center; padding:0.6rem 0.5rem; font-weight:800; color:var(--warning-soft); opacity:${row.qty===0?'0.15':'1'}">${(row.qty || 0).toLocaleString('es-PE')}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; padding:1rem; opacity:0.3;">Sin datos</td></tr>'}
                         </tbody>
-                        ${tG.length ? `<tfoot><tr style="background:rgba(var(--warning-soft-rgb), 0.1); color:var(--warning-soft); font-weight:900;"><td style="padding:0.6rem 0.5rem;">TOTAL GENERAL</td><td style="text-align:center;">${tG.reduce((a,b)=>a+b.qty,0).toLocaleString()}</td></tr></tfoot>` : ''}
+                        ${tG.length ? `<tfoot><tr style="background:rgba(var(--warning-soft-rgb), 0.1); color:var(--warning-soft); font-weight:900;"><td style="padding:0.6rem 0.5rem;">TOTAL GENERAL</td><td class="centrado">${tG.reduce((a,b)=>a+b.qty,0).toLocaleString('es-PE')}</td></tr></tfoot>` : ''}
                     </table>
                 </div>
 
@@ -30763,7 +30766,7 @@ window.showCellModal = function(htmlContent) {
       <div style="background:rgba(var(--ink-rgb), 0.03); border:1px solid var(--border); border-radius:13px; padding:0.75rem 1rem;">
         <div style="font-size:var(--t-xs); font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted);">${r}</div>
         <div style="font-size:var(--t-xl); font-weight:900; letter-spacing:-1px; margin-top:3px;">${v}</div>
-        <div style="font-size:var(--t-xs); color:var(--text-muted);">${sub}</div>
+        <div class="txt-chico">${sub}</div>
       </div>`;
 
     const diez = P.filter(p=>p.s>=1 && p.s<=4).map(p=>({ s:p.s, pares:p.picadoPct/10, ingreso:p.ingreso }));
@@ -30777,7 +30780,7 @@ window.showCellModal = function(htmlContent) {
                 <div style="font-size:var(--t-xs); font-weight:700; letter-spacing:0.7px; text-transform:uppercase; color:var(--text-muted);">Semana ${d.s}</div>
                 <div style="display:flex; align-items:baseline; justify-content:center; gap:4px;">
                   <div style="font-size:var(--t-xl); font-weight:900; color:${d.ingreso?AMBAR:AZUL}; letter-spacing:-0.5px;">${d.ingreso?'—':d1(d.pares)}</div>
-                  <div style="font-size:var(--t-xs); color:var(--text-muted);">${d.ingreso?'entró otra tanda':'pares'}</div>
+                  <div class="txt-chico">${d.ingreso?'entró otra tanda':'pares'}</div>
                 </div>
               </div>`).join('')}
           </div>
@@ -30785,7 +30788,7 @@ window.showCellModal = function(htmlContent) {
                       display:flex; align-items:baseline; justify-content:space-between;">
             <span style="font-size:var(--t-xs); font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-muted);">En el primer mes</span>
             <span><b style="font-size:var(--t-lg); font-weight:900; color:var(--text-strong);">${d1(P.filter(p=>p.s>=1&&p.s<=4).reduce((x,p)=>x+p.picadoPct,0)/10)}</b>
-            <span style="font-size:var(--t-xs); color:var(--text-muted);"> de 10</span></span>
+            <span class="txt-chico"> de 10</span></span>
           </div>
         </div>
         <div class="kpi-caja">
@@ -30976,7 +30979,7 @@ window.showCellModal = function(htmlContent) {
       <div style="background:rgba(var(--ink-rgb), 0.03); border:1px solid var(--border); border-radius:13px; padding:0.75rem 1rem;">
         <div style="font-size:var(--t-xs); font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted);">${r}</div>
         <div style="font-size:var(--t-xl); font-weight:900; letter-spacing:-1px; margin-top:3px;">${v}</div>
-        <div style="font-size:var(--t-xs); color:var(--text-muted);">${sub}</div>
+        <div class="txt-chico">${sub}</div>
       </div>`;
 
     // CADA CLASE TIENE DOS PORCENTAJES Y SE CONFUNDEN: cuántos ARTÍCULOS son sobre el total,
@@ -30987,15 +30990,15 @@ window.showCellModal = function(htmlContent) {
         <div style="font-size:var(--t-xs); font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:${c.col}; margin-bottom:0.7rem;">Clase ${c.k} · ${c.sub}</div>
         <div style="display:flex; align-items:baseline; gap:0.4rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.07);">
           <b style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong); letter-spacing:-0.5px;">${c.art}</b>
-          <span style="font-size:var(--t-xs); color:var(--text-muted);">artículos</span>
+          <span class="txt-chico">artículos</span>
           <b style="font-size:var(--t-md); font-weight:900; color:var(--text-strong); margin-left:auto;">${d1(c.pctArt)}%</b>
-          <span style="font-size:var(--t-xs); color:var(--text-muted);">de los ${A.length}</span>
+          <span class="txt-chico">de los ${A.length}</span>
         </div>
         <div style="display:flex; align-items:baseline; gap:0.4rem; padding-top:0.5rem;">
           <b style="font-size:var(--t-xl); font-weight:900; color:${c.col}; letter-spacing:-0.5px;">${n(c.pares)}</b>
-          <span style="font-size:var(--t-xs); color:var(--text-muted);">pares</span>
+          <span class="txt-chico">pares</span>
           <b style="font-size:var(--t-md); font-weight:900; color:${c.col}; margin-left:auto;">${d1(c.pct)}%</b>
-          <span style="font-size:var(--t-xs); color:var(--text-muted);">de los ${n(TQ)}</span>
+          <span class="txt-chico">de los ${n(TQ)}</span>
         </div>
 
       </div>`;
@@ -31084,7 +31087,7 @@ window.showCellModal = function(htmlContent) {
                style="background:var(--panel-deeper); color:var(--text-main); border:1px solid var(--border);
                       border-radius:8px; padding:0.34rem 0.65rem; font-size:var(--t-sm);
                       font-weight:700; font-family:inherit; min-width:17rem; flex:0 1 22rem;">
-        <div style="font-size:var(--t-xs); color:var(--text-muted);">
+        <div class="txt-chico">
           <span style="color:${NARANJA};">▲</span> los <b style="color:var(--text-strong);">${altos.length}</b> que siguen con más del 20% de su llegada ·
           <b style="color:var(--text-strong);">${n(TQA)}</b> pares
         </div>
@@ -31292,7 +31295,7 @@ window.showCellModal = function(htmlContent) {
         <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(var(--ink-rgb), 0.06);">
           <div style="padding:1rem 1.4rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <h3 style="margin:0; color:var(--text-strong); font-size:var(--t-md); font-weight:900; letter-spacing:0.5px;">📅 DÍAS CARGADOS</h3>
-            <span style="font-size:var(--t-xs); color:var(--text-muted);">${dias.length} ${dias.length === 1 ? 'jornada' : 'jornadas'}</span>
+            <span class="txt-chico">${dias.length} ${dias.length === 1 ? 'jornada' : 'jornadas'}</span>
           </div>
           ${dias.length ? `
             <div style="overflow:auto; max-height:420px;">
@@ -31908,7 +31911,7 @@ window.showCellModal = function(htmlContent) {
         <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(var(--success-rgb), 0.22);">
           <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <h3 style="margin:0; color:var(--text-strong); font-size:var(--t-md); font-weight:900; letter-spacing:0.5px;">👷 PRODUCTIVIDAD POR PERSONA</h3>
-            <span style="font-size:var(--t-xs); color:var(--text-muted);">${rotSeg[pickFiltro.seg]} · ${elegidos.length === 1 ? nDia(elegidos[0]) : `${elegidos.length} jornadas`}</span>
+            <span class="txt-chico">${rotSeg[pickFiltro.seg]} · ${elegidos.length === 1 ? nDia(elegidos[0]) : `${elegidos.length} jornadas`}</span>
           </div>
           <div style="overflow:auto; max-height:460px;">
             <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-grey);">
@@ -32092,7 +32095,7 @@ window.showCellModal = function(htmlContent) {
   const pintarSinSalida = async (container) => {
     const caja = container.querySelector('#kpi_sin_salida');
     if (!caja) return;
-    caja.innerHTML = `<div style="color:var(--text-muted); font-size:var(--t-sm);">
+    caja.innerHTML = `<div class="txt-dato">
         Trayendo los SKUs sin salida...</div>`;
 
     let paq = null;
@@ -33463,9 +33466,9 @@ window.showCellModal = function(htmlContent) {
                                     <td style="padding:6px 8px; color:var(--text-strong); font-weight:700;">${formatLogicalDate(dateKey)}</td>
                                     ${targetHours.map(hr => {
                                         const qty = rowData[hr];
-                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
+                                        return `<td style="padding:6px 4px; text-align:center; color:${qty > 0 ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString('es-PE') : '0'}</td>`;
                                     }).join('')}
-                                    <td style="padding:6px 8px; text-align:center; color:var(--cyan-neon); font-weight:900; background:rgba(var(--cyan-neon-rgb), 0.05);">${rowTotal.toLocaleString()}</td>
+                                    <td style="padding:6px 8px; text-align:center; color:var(--cyan-neon); font-weight:900; background:rgba(var(--cyan-neon-rgb), 0.05);">${rowTotal.toLocaleString('es-PE')}</td>
                                 </tr>
                             `;
                         }).join('')}
@@ -33645,9 +33648,9 @@ window.showCellModal = function(htmlContent) {
                                         <td style="padding:5px 8px 5px 24px; color:rgba(var(--ink-rgb), 0.7); font-weight:600; font-style:italic; white-space:nowrap;">↳ ${gender}</td>
                                         ${sortedBrands.map(b => {
                                             const qty = genderData[b] || 0;
-                                            return `<td style="padding:5px 8px; text-align:center; color:rgba(var(--ink-rgb), 0.65);">${qty > 0 ? qty.toLocaleString() : '-'}</td>`;
+                                            return `<td style="padding:5px 8px; text-align:center; color:rgba(var(--ink-rgb), 0.65);">${qty > 0 ? qty.toLocaleString('es-PE') : '-'}</td>`;
                                         }).join('')}
-                                        <td style="padding:5px 8px; text-align:center; color:var(--violet-soft); font-weight:700; background:rgba(var(--violet-rgb), 0.04);">${genderRowTotal.toLocaleString()}</td>
+                                        <td style="padding:5px 8px; text-align:center; color:var(--violet-soft); font-weight:700; background:rgba(var(--violet-rgb), 0.04);">${genderRowTotal.toLocaleString('es-PE')}</td>
                                     </tr>
                                 `;
                             }).join('') : '';
@@ -33660,9 +33663,9 @@ window.showCellModal = function(htmlContent) {
                                     </td>
                                     ${sortedBrands.map(b => {
                                         const qty = rowData[b] || 0;
-                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString() : '0'}</td>`;
+                                        return `<td style="padding:6px 8px; text-align:center; color:${qty > 0 ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.45)'}; font-weight:${qty > 0 ? '700' : '400'};">${qty > 0 ? qty.toLocaleString('es-PE') : '0'}</td>`;
                                     }).join('')}
-                                    <td style="padding:6px 8px; text-align:center; color:var(--violet-soft); font-weight:900; background:rgba(var(--violet-rgb), 0.05);">${rowTotal.toLocaleString()}</td>
+                                    <td style="padding:6px 8px; text-align:center; color:var(--violet-soft); font-weight:900; background:rgba(var(--violet-rgb), 0.05);">${rowTotal.toLocaleString('es-PE')}</td>
                                 </tr>
                                 ${genderRowsHtml}
                             `;
@@ -33672,9 +33675,9 @@ window.showCellModal = function(htmlContent) {
                                 <td style="padding:8px 8px; color:var(--text-strong); font-weight:900;">TOTAL GENERAL</td>
                                 ${sortedBrands.map(b => {
                                     const qty = colTotals[b];
-                                    return `<td style="padding:8px 8px; text-align:center; color:var(--violet-soft); font-weight:900;">${qty.toLocaleString()}</td>`;
+                                    return `<td style="padding:8px 8px; text-align:center; color:var(--violet-soft); font-weight:900;">${qty.toLocaleString('es-PE')}</td>`;
                                 }).join('')}
-                                <td style="padding:8px 8px; text-align:center; color:var(--violet-soft); font-weight:900; background:rgba(var(--violet-rgb), 0.1); text-shadow:0 0 8px rgba(var(--violet-rgb), 0.5);">${grandTotal.toLocaleString()}</td>
+                                <td style="padding:8px 8px; text-align:center; color:var(--violet-soft); font-weight:900; background:rgba(var(--violet-rgb), 0.1); text-shadow:0 0 8px rgba(var(--violet-rgb), 0.5);">${grandTotal.toLocaleString('es-PE')}</td>
                             </tr>
                         ` : ''}
                     </tbody>
@@ -33955,7 +33958,7 @@ window.showCellModal = function(htmlContent) {
                             ctx.shadowOffsetX = 0;
                             ctx.shadowOffsetY = 1;
                             
-                            ctx.fillText(val.toLocaleString(), point.x, point.y + yOffset);
+                            ctx.fillText(val.toLocaleString('es-PE'), point.x, point.y + yOffset);
                             ctx.restore();
                         });
                     });
@@ -34002,7 +34005,7 @@ window.showCellModal = function(htmlContent) {
                                     let label = context.dataset.label || '';
                                     const val = context.parsed.y;
                                     if (val !== null && val !== undefined) {
-                                        return ` ${label}: ${val.toLocaleString()}`;
+                                        return ` ${label}: ${val.toLocaleString('es-PE')}`;
                                     }
                                     return ` ${label}`;
                                 }
@@ -34805,7 +34808,7 @@ window.showCellModal = function(htmlContent) {
                 
                 <!-- REPORTE ALMACENAJE - MARCAS (IZQUIERDA) -->
                 <div style="background:var(--bg-dark); border:2px solid var(--cyan-neon); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--cyan-neon-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="fila-entre">
                         <div style="border-left: 4px solid var(--cyan-neon); padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                             <h3 style="color:var(--cyan-neon); font-weight:900; margin:0; font-size:var(--t-lg); letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                                 REPORTE ALMACENAJE - MARCAS
@@ -34836,7 +34839,7 @@ window.showCellModal = function(htmlContent) {
 
                 <!-- REPORTE ALMACENAJE - GENDER RIMS (DERECHA) -->
                 <div style="background:var(--bg-dark); border:2px solid var(--cyan-neon); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--cyan-neon-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="fila-entre">
                         <div style="border-left: 4px solid var(--cyan-neon); padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                             <h3 style="color:var(--cyan-neon); font-weight:900; margin:0; font-size:var(--t-lg); letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                                 REPORTE ALMACENAJE - GENDER RIMS
@@ -34987,12 +34990,12 @@ window.showCellModal = function(htmlContent) {
                                                 <tr style="border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--bg-dark);">
                                                     <td style="padding:5px 6px; color:var(--text-muted); font-size:var(--t-sm); font-weight:600;">${area}</td>
                                                     <td style="padding:5px 6px;"><b style="color:var(--text-strong); font-weight:800; font-size:var(--t-sm); font-family:'Outfit', sans-serif;">${gender}</b></td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:var(--text-strong); font-size:var(--t-sm);">${data.buffer.toLocaleString()}</td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:var(--text-strong); font-size:var(--t-sm);">${data.avance.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:var(--text-strong); font-size:var(--t-sm);">${data.buffer.toLocaleString('es-PE')}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:700; color:var(--text-strong); font-size:var(--t-sm);">${data.avance.toLocaleString('es-PE')}</td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:800; font-size:var(--t-sm);">
                                                         ${getPctHtml(data.avance, data.buffer, true)}
                                                     </td>
-                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; color:var(--cyan-neon);  font-size:var(--t-sm);">${pendiente.toLocaleString()}</td>
+                                                    <td style="padding:5px 6px; text-align:center; font-weight:800; color:var(--cyan-neon);  font-size:var(--t-sm);">${pendiente.toLocaleString('es-PE')}</td>
                                                 </tr>
                                             `;
                                         });
@@ -35002,12 +35005,12 @@ window.showCellModal = function(htmlContent) {
                                         genderTableRows += `
                                             <tr style="background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.12) 0%, rgba(var(--bg-rgb), 0.5) 100%); border-top: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6); border-bottom: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6); font-weight: 900;">
                                                 <td colspan="2" style="padding:7px 8px; color:var(--cyan-neon); font-weight:900; font-size:var(--t-sm); text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid var(--cyan-neon);">Total ${area}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:var(--text-strong); font-size:var(--t-sm); font-weight:800;">${areaBufferSum.toLocaleString()}</td>
-                                                <td style="padding:7px 8px; text-align:center; color:var(--text-strong); font-size:var(--t-sm); font-weight:800;">${areaAvanceSum.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:var(--text-strong); font-size:var(--t-sm); font-weight:800;">${areaBufferSum.toLocaleString('es-PE')}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:var(--text-strong); font-size:var(--t-sm); font-weight:800;">${areaAvanceSum.toLocaleString('es-PE')}</td>
                                                 <td style="padding:7px 8px; text-align:center; font-size:var(--t-sm); font-weight:800;">
                                                     ${getPctHtml(areaAvanceSum, areaBufferSum, false)}
                                                 </td>
-                                                <td style="padding:7px 8px; text-align:center; color:var(--cyan-neon); font-size:var(--t-sm); font-weight:900;">${areaPendiente.toLocaleString()}</td>
+                                                <td style="padding:7px 8px; text-align:center; color:var(--cyan-neon); font-size:var(--t-sm); font-weight:900;">${areaPendiente.toLocaleString('es-PE')}</td>
                                             </tr>
                                         `;
                                     });
@@ -35017,12 +35020,12 @@ window.showCellModal = function(htmlContent) {
                                     genderTableRows += `
                                         <tr style="background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.25) 0%, rgba(var(--bg-rgb), 0.8) 100%); border-top: 2px solid var(--cyan-neon); border-bottom: 2px solid var(--cyan-neon); font-weight: 900;">
                                             <td colspan="2" style="padding:9px 8px; color:var(--text-strong); font-size:var(--t-md); text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid var(--cyan-neon);">TOTAL GENERAL CDBUFFER</td>
-                                            <td style="padding:9px 8px; text-align:center; color:var(--cyan-neon); font-size:var(--t-md); font-weight:900;">${grandBuffer.toLocaleString()}</td>
-                                            <td style="padding:9px 8px; text-align:center; color:var(--cyan-neon); font-size:var(--t-md); font-weight:900;">${grandAvance.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:var(--cyan-neon); font-size:var(--t-md); font-weight:900;">${grandBuffer.toLocaleString('es-PE')}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:var(--cyan-neon); font-size:var(--t-md); font-weight:900;">${grandAvance.toLocaleString('es-PE')}</td>
                                             <td style="padding:9px 8px; text-align:center; font-size:var(--t-md); font-weight:900;">
                                                 ${getPctHtml(grandAvance, grandBuffer, false)}
                                             </td>
-                                            <td style="padding:9px 8px; text-align:center; color:var(--cyan-neon); font-size:var(--t-md); font-weight:900; text-shadow: 0 0 10px rgba(var(--cyan-neon-rgb), 0.5);">${grandPendiente.toLocaleString()}</td>
+                                            <td style="padding:9px 8px; text-align:center; color:var(--cyan-neon); font-size:var(--t-md); font-weight:900; text-shadow: 0 0 10px rgba(var(--cyan-neon-rgb), 0.5);">${grandPendiente.toLocaleString('es-PE')}</td>
                                         </tr>
                                     `;
 
@@ -35037,7 +35040,7 @@ window.showCellModal = function(htmlContent) {
 
             <!-- REPORTE RENDIMIENTO DE OPERARIOS (ANCHO COMPLETO) -->
                 <div style="background:var(--bg-dark); border:2px solid var(--cyan-neon); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--cyan-neon-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem; min-width:0;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="fila-entre">
                     <div style="border-left: 4px solid var(--cyan-neon); padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                         <h3 style="color:var(--cyan-neon); font-weight:900; margin:0; font-size:var(--t-lg); letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                             RENDIMIENTO DE OPERARIOS
@@ -35227,8 +35230,8 @@ window.showCellModal = function(htmlContent) {
                                 const pagedPerfRows = sortedGroupRows.slice(activePerfPage * 25, (activePerfPage + 1) * 25);
 
                                 return pagedPerfRows.map(row => {
-                                    const startStr = row.firstStart ? row.firstStart.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
-                                    const endStr = row.lastEnd ? row.lastEnd.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
+                                    const startStr = row.firstStart ? row.firstStart.toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
+                                    const endStr = row.lastEnd ? row.lastEnd.toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit', hour12:true}) : '---';
                                     
                                     // 1. Duración Transcurrida (TRANSCURRIDO)
                                     let durationStr = '---';
@@ -35252,7 +35255,7 @@ window.showCellModal = function(htmlContent) {
                                     let qtyPerHourStr = '---';
                                     if (activeHours > 0.08) { // Mínimo 5 minutos para evitar anomalías
                                         const qtyPerHour = Math.round(row.totalQty / activeHours);
-                                        qtyPerHourStr = qtyPerHour.toLocaleString();
+                                        qtyPerHourStr = qtyPerHour.toLocaleString('es-PE');
                                     }
 
                                     const avgQty = row.taskCount > 0 ? Math.round(row.totalQty / row.taskCount) : 0;
@@ -35272,13 +35275,13 @@ window.showCellModal = function(htmlContent) {
                                             <td style="padding:6px 4px; color:var(--text-strong); font-weight:700; width:70px; white-space:nowrap;">${displayDate}</td>
                                             <td style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;"><span style="background:${row.turno === 'NOCHE' ? 'rgba(var(--cyan-neon-rgb), 0.2)' : 'rgba(var(--yellow-rgb), 0.2)'}; color:${row.turno === 'NOCHE' ? 'var(--cyan-neon)' : 'var(--warning-pale)'}; padding:2px 6px; border-radius:4px; font-size:var(--t-xs); font-weight:800;">${row.turno}</span></td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:800; color:var(--text-strong);">${row.operators.size}</td>
-                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:var(--text-strong);">${row.totalQty.toLocaleString()}</td>
+                                            <td style="padding:6px 8px; text-align:center; font-weight:700; color:var(--text-strong);">${row.totalQty.toLocaleString('es-PE')}</td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:var(--cyan-neon);">${row.taskCount}</td>
                                             <td style="padding:6px 8px; text-align:center; color:var(--text-muted); font-size:var(--t-sm);">${startStr}</td>
                                             <td style="padding:6px 8px; text-align:center; color:var(--text-muted); font-size:var(--t-sm);">${endStr}</td>
                                             <td style="padding:6px 8px; text-align:center; color:var(--sky); font-weight:700;">${durationStr}</td>
                                             <td style="padding:6px 8px; text-align:center; color:var(--success); font-weight:800;">${qtyPerHourStr}</td>
-                                            <td style="padding:6px 8px; text-align:center; font-weight:800; color:var(--yellow-deep);">${avgQty.toLocaleString()}</td>
+                                            <td style="padding:6px 8px; text-align:center; font-weight:800; color:var(--yellow-deep);">${avgQty.toLocaleString('es-PE')}</td>
                                         </tr>
                                     `;
                                 }).join('');
@@ -35429,7 +35432,7 @@ window.showCellModal = function(htmlContent) {
                                              title="Slotting ya liberó el cuerpo: se puede rehacer la tarea">REIMPRIMIR</span>`
                                         : `<span style="color:var(--danger); font-weight:900; font-size:var(--t-xs); letter-spacing:0.07em; margin-left:9px;"
                                              title="No se pudo guardar: esperando a Slotting">BLOQUEADA</span>`)}</td>
-                                    <td style="padding:10.8px 1rem; text-align:center;">${(t.status === 'Finalizado' ? getTaskTotalAvance(t) : t.qty).toLocaleString()}</td>
+                                    <td style="padding:10.8px 1rem; text-align:center;">${(t.status === 'Finalizado' ? getTaskTotalAvance(t) : t.qty).toLocaleString('es-PE')}</td>
                                     <td style="padding:10.8px 1rem; white-space:nowrap;" title="${marcaNormalizada(t.marca)}">${marcaCorta(t.marca)}</td>
                                     <td style="padding:10.8px 1rem; color:var(--text-strong); font-weight:800; background:rgba(var(--primary-rgb), 0.05);">${t.u1 || '---'}</td>
                                     <td style="padding:10.8px 1rem; color:var(--text-strong); font-weight:800; opacity:0.8;">${t.u2 || '---'}</td>
@@ -35542,10 +35545,10 @@ window.showCellModal = function(htmlContent) {
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; background:rgba(var(--bg-rgb), 0.4); border-radius:8px; border:1px solid rgba(var(--ink-rgb), 0.05);">
                     <div style="display:flex; gap:1.5rem; font-size:var(--t-sm); align-items:center;">
-                        <span style="color:var(--text-muted);">${isDetail ? 'Registros Detalle:' : 'Tareas en Rango:'} <b style="color:var(--text-strong);">${targetItems.length}</b></span>
-                        ${isDetail ? `<span style="color:var(--text-muted);">Tareas en Rango: <b style="color:var(--text-strong);">${tareasEnRango.length}</b></span>` : ''}
-                        <span style="color:var(--text-muted);">Pares Totales: <b style="color:var(--text-strong);">${paresEnRango.toLocaleString()}</b></span>
-                        <span style="color:var(--text-muted); opacity:0.5;">de ${tasks.length.toLocaleString()} tareas en total</span>
+                        <span class="txt-suave">${isDetail ? 'Registros Detalle:' : 'Tareas en Rango:'} <b style="color:var(--text-strong);">${targetItems.length}</b></span>
+                        ${isDetail ? `<span class="txt-suave">Tareas en Rango: <b style="color:var(--text-strong);">${tareasEnRango.length}</b></span>` : ''}
+                        <span class="txt-suave">Pares Totales: <b style="color:var(--text-strong);">${paresEnRango.toLocaleString('es-PE')}</b></span>
+                        <span style="color:var(--text-muted); opacity:0.5;">de ${tasks.length.toLocaleString('es-PE')} tareas en total</span>
                     </div>
                     
                     <!-- Paginación Glassmorphic -->
@@ -35960,7 +35963,7 @@ window.showCellModal = function(htmlContent) {
     };
 
     // El faltante nunca es negativo: o quedó algo en el buffer o no quedó nada
-    const audFaltanteHtml = (v) => `<span style="color:${v < AUD_TOL ? 'var(--success)' : 'var(--danger)'}; font-weight:900;">${Math.round(v).toLocaleString()}</span>`;
+    const audFaltanteHtml = (v) => `<span style="color:${v < AUD_TOL ? 'var(--success)' : 'var(--danger)'}; font-weight:900;">${Math.round(v).toLocaleString('es-PE')}</span>`;
 
     // Dónde entró la mercadería. Las ubicaciones que no estaban en el plan van marcadas.
     const AUD_MAX_DESTINOS = 4;
@@ -35972,7 +35975,7 @@ window.showCellModal = function(htmlContent) {
         const filas = r.destinos.slice(0, AUD_MAX_DESTINOS).map(d => {
             const [color, marca] = estilo[d.estado] || estilo.plan;
             return `<div style="color:${color};">${marca}${d.ubi}
-                <span style="color:var(--text-grey2);">· ${d.pares.toLocaleString()}</span></div>`;
+                <span style="color:var(--text-grey2);">· ${d.pares.toLocaleString('es-PE')}</span></div>`;
         }).join('');
         const resto = r.destinos.length - AUD_MAX_DESTINOS;
         return filas + (resto > 0
@@ -36002,11 +36005,11 @@ window.showCellModal = function(htmlContent) {
                             <td style="padding:0.5rem; font-weight:800; white-space:nowrap;">${r.corto}</td>
                             <td style="padding:0.5rem; white-space:nowrap;">${r.fecha}</td>
                             <td style="padding:0.5rem; white-space:nowrap;">${r.u1}</td>
-                            <td style="padding:0.5rem; text-align:right;">${Math.round(r.iniBuffer).toLocaleString()}</td>
-                            <td style="padding:0.5rem; text-align:right;">${Math.round(r.movidoReal).toLocaleString()}</td>
+                            <td style="padding:0.5rem; text-align:right;">${Math.round(r.iniBuffer).toLocaleString('es-PE')}</td>
+                            <td style="padding:0.5rem; text-align:right;">${Math.round(r.movidoReal).toLocaleString('es-PE')}</td>
                             <td style="padding:0.5rem; text-align:right;">${audFaltanteHtml(r.faltantePorMover)}</td>
-                            <td style="padding:0.5rem; text-align:right; opacity:0.7;">${Math.round(r.iniZona).toLocaleString()}</td>
-                            <td style="padding:0.5rem; text-align:right; opacity:0.7;">${Math.round(r.zonaHoy).toLocaleString()}</td>
+                            <td style="padding:0.5rem; text-align:right; opacity:0.7;">${Math.round(r.iniZona).toLocaleString('es-PE')}</td>
+                            <td style="padding:0.5rem; text-align:right; opacity:0.7;">${Math.round(r.zonaHoy).toLocaleString('es-PE')}</td>
                             <td style="padding:0.5rem; text-align:right;">${audNumHtml(r.difZona, true)}</td>
                             <td style="padding:0.5rem; font-size:var(--t-xs); white-space:nowrap; line-height:1.5;">
                                 ${audDestinosHtml(r)}
@@ -36141,11 +36144,11 @@ window.showCellModal = function(htmlContent) {
                 ${tarjeta(okCount, 'Cuadran', 'var(--success)')}
                 ${tarjeta(conDif, 'Con faltante por mover', conDif ? 'var(--danger)' : 'var(--success)')}
                 ${tarjeta(noLlego, 'No llegó a zona', noLlego ? 'var(--danger)' : 'var(--success)')}
-                ${tarjeta(paresFuera.toLocaleString(), 'Pares fuera del plan', paresFuera ? 'var(--warning-soft)' : 'var(--success)')}
+                ${tarjeta(paresFuera.toLocaleString('es-PE'), 'Pares fuera del plan', paresFuera ? 'var(--warning-soft)' : 'var(--success)')}
             </div>
             ${paresFuera ? `
             <div style="background:rgba(var(--warning-soft-rgb), 0.08); border:1px solid rgba(var(--warning-soft-rgb), 0.25); border-radius:10px; padding:0.7rem 1rem; font-size:var(--t-sm); color:var(--warning-pale);">
-                ${paresFuera.toLocaleString()} pares entraron en ubicaciones que no estaban en el plan de la tarea,
+                ${paresFuera.toLocaleString('es-PE')} pares entraron en ubicaciones que no estaban en el plan de la tarea,
                 repartidos en ${tareasFuera} tarea${tareasFuera > 1 ? 's' : ''}. Van marcados con ⚠ en la columna
                 "Se almacenó en". No se cuentan como error: puede que la ubicación del plan estuviera llena.
             </div>` : ''}
@@ -36835,14 +36838,14 @@ window.showCellModal = function(htmlContent) {
                     caja.style.borderColor = 'rgba(var(--success-rgb), 0.3)';
                     caja.style.background = 'rgba(var(--success-rgb), 0.05)';
                     caja.innerHTML = `<b style="color:var(--success);">Catálogo publicado</b><br>
-                        <span style="color:var(--text-strong);">${m.filas.toLocaleString('es-PE')} artículos</span>
+                        <span class="txt-fuerte">${m.filas.toLocaleString('es-PE')} artículos</span>
                         ${cuando ? ` · ${cuando}` : ''}${m.usuario && m.usuario !== '—' ? ` · lo publicó ${m.usuario}` : ''}`;
                 } else if (m.origen === 'local') {
                     caja.style.borderColor = 'rgba(var(--danger-rgb), 0.45)';
                     caja.style.background = 'rgba(var(--danger-rgb), 0.07)';
                     caja.innerHTML = `<b style="color:var(--danger);">⚠ No se pudo consultar el catálogo publicado</b><br>
                         Se va a usar el que quedó guardado en <b>esta computadora</b>
-                        (<span style="color:var(--text-strong);">${m.filas.toLocaleString('es-PE')} artículos</span>).
+                        (<span class="txt-fuerte">${m.filas.toLocaleString('es-PE')} artículos</span>).
                         Las marcas pueden salir distintas a las de otra PC.`;
                 } else {
                     caja.style.borderColor = 'rgba(var(--danger-rgb), 0.45)';
@@ -36889,7 +36892,7 @@ window.showCellModal = function(htmlContent) {
         modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--shadow-rgb), 0.85); z-index:100000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
 
         // Helper para formatear ISO a input time (HH:mm)
-        const toTimeInput = (iso) => iso ? new Date(iso).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}) : '';
+        const toTimeInput = (iso) => iso ? new Date(iso).toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit'}) : '';
         
         const cleanTaskId = taskId.includes('_') ? taskId.split('_')[1] : taskId;
 

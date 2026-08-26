@@ -106,11 +106,11 @@ export const cuadroRecorrido = (R) => {
         `<b style="color:var(--warning-soft);">${r.pct}%</b> de los contenedores obliga a visitar más de una zona.`,
         `<div style="padding:1rem 1.3rem; display:flex; gap:1rem; flex-wrap:wrap;">
            <div style="flex:1; min-width:150px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${F(r.contenedores)}</div>
-             <div style="font-size:var(--t-xs); color:var(--text-muted);">contenedores armados</div></div>
+             <div class="txt-chico">contenedores armados</div></div>
            <div style="flex:1; min-width:150px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--warning-soft);">${F(r.con_varias_zonas)}</div>
-             <div style="font-size:var(--t-xs); color:var(--text-muted);">obligaron a cambiar de zona</div></div>
+             <div class="txt-chico">obligaron a cambiar de zona</div></div>
            <div style="flex:1; min-width:150px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${F(r.lineas_en_multi)}</div>
-             <div style="font-size:var(--t-xs); color:var(--text-muted);">líneas dentro de esos</div></div>
+             <div class="txt-chico">líneas dentro de esos</div></div>
          </div>`
         + tabla(th('El contenedor se armó en') + th('') + th('Contenedores', 1) + th('%', 1), filas),
         'Un contenedor que se arma en una sola zona no obliga a caminar entre pasillos. Cuantos más crucen zonas, más tiempo se va en el traslado y no en sacar.');
@@ -132,11 +132,11 @@ export const cuadroRepetida = (R) => {
         `<b style="color:var(--sky);">${r.pct}%</b> de las visitas son volver a un sitio donde ya se estuvo.`,
         `<div style="padding:1rem 1.3rem; display:flex; gap:1rem; flex-wrap:wrap;">
            <div style="flex:1; min-width:140px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${F(r.visitas)}</div>
-             <div style="font-size:var(--t-xs); color:var(--text-muted);">visitas en total</div></div>
+             <div class="txt-chico">visitas en total</div></div>
            <div style="flex:1; min-width:140px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${F(r.ubicaciones)}</div>
-             <div style="font-size:var(--t-xs); color:var(--text-muted);">ubicaciones distintas</div></div>
+             <div class="txt-chico">ubicaciones distintas</div></div>
            <div style="flex:1; min-width:140px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--sky);">${F(r.repetidas)}</div>
-             <div style="font-size:var(--t-xs); color:var(--text-muted);">visitas repetidas</div></div>
+             <div class="txt-chico">visitas repetidas</div></div>
          </div>`
         + tabla(th('A dónde más se volvió') + th('') + th('Visitas', 1), filas),
         'Las ubicaciones distintas del período son la <b style="color:rgba(var(--ink-rgb), 0.6);">unión</b>, no la suma: una a la que se fue los nueve días es una sola ubicación, no nueve.');

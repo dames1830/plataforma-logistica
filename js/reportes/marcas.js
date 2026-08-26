@@ -12,8 +12,8 @@
  *
  * Para agregar una columna se toca acá y aparece en los dos.
  */
-import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0392';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0392';
+import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0393';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0393';
 
 /** Las columnas del reporte. Agregar una acá la agrega en las dos pantallas. */
 export const COLUMNAS = [
@@ -220,7 +220,7 @@ export const TEMA_CLARO = {
 
 /* ── LA PINTURA ───────────────────────────────────────────────────────────*/
 
-const num = (v) => Math.round(v).toLocaleString();
+const num = (v) => Math.round(v).toLocaleString('es-PE');
 
 /**
  * Cabecera de la tabla.

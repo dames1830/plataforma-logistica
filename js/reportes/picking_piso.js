@@ -283,17 +283,17 @@ export const cuadroBalance = (B) => {
           <div style="flex:1; min-width:190px; background:rgba(var(--danger-rgb), 0.07); border-radius:10px; padding:0.8rem 1rem;">
             <div style="font-size:var(--t-xl); font-weight:900; color:var(--danger-soft);">${F(B.vencido)}</div>
             <div style="font-size:var(--t-xs); font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted);">Vencido sin trabajar</div>
-            <div style="font-size:var(--t-xs); color:var(--text-muted);">se mandó a almacenar y nadie lo hizo</div>
+            <div class="txt-chico">se mandó a almacenar y nadie lo hizo</div>
           </div>
           <div style="flex:1; min-width:190px; background:rgba(var(--ink-rgb), 0.03); border-radius:10px; padding:0.8rem 1rem;">
             <div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${F(B.no_calzado)}</div>
             <div style="font-size:var(--t-xs); font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted);">Almacenado que no es calzado</div>
-            <div style="font-size:var(--t-xs); color:var(--text-muted);">bolsas y complementos, fuera del cuadro</div>
+            <div class="txt-chico">bolsas y complementos, fuera del cuadro</div>
           </div>
           <div style="flex:1; min-width:190px; background:rgba(var(--ink-rgb), 0.03); border-radius:10px; padding:0.8rem 1rem;">
             <div style="font-size:var(--t-xl); font-weight:900; color:${difTot >= 0 ? 'var(--warning-soft)' : 'var(--sky)'};">${difTot >= 0 ? '+' : ''}${F(difTot)}</div>
             <div style="font-size:var(--t-xs); font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted);">Acumulado de las ${B.jornadas} jornadas</div>
-            <div style="font-size:var(--t-xs); color:var(--text-muted);">${F(B.almacenado)} almacenados − ${F(B.picado)} picados</div>
+            <div class="txt-chico">${F(B.almacenado)} almacenados − ${F(B.picado)} picados</div>
           </div>
         </div>
         <div style="padding:0.8rem 1.3rem; background:rgba(var(--shadow-rgb), 0.25); font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">

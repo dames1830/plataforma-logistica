@@ -631,7 +631,7 @@ export const montarSlotting = (container, OPC = {}) => {
           ${k.porPersona.length
             ? k.porPersona.map(p => barra(p.usuario, Math.round(p.cuerpos / maxCuerpos * 100),
                 `${p.cuerpos} cuerpo${p.cuerpos === 1 ? '' : 's'}`)).join('')
-            : `<div style="color:var(--text-muted); font-size:var(--t-sm);">Todavía no hay tareas finalizadas en el rango.</div>`}
+            : `<div class="txt-dato">Todavía no hay tareas finalizadas en el rango.</div>`}
           <div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:0.5rem; line-height:1.6;">
             Se cuenta por CUERPO liberado y no por pares: un cuerpo con nueve pares cuesta el mismo
             viaje que uno con trescientos. Cuando la tarea la hacen dos, el cuerpo se le cuenta a los dos.
@@ -652,7 +652,7 @@ export const montarSlotting = (container, OPC = {}) => {
           <input type="number" id="${id}" value="${valor}" min="0" style="width:95px; background:rgba(var(--ink-rgb), 0.04);
                  border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.55rem 0.7rem;
                  font-weight:800; font-size:var(--t-md);">
-          <span style="font-size:var(--t-xs); color:var(--text-muted);">${sufijo}</span>
+          <span class="txt-chico">${sufijo}</span>
         </div>
       </div>`;
 
