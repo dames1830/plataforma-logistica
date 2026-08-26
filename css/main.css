@@ -430,8 +430,16 @@ select option:hover {
 .btn-logout:hover { background: rgba(var(--danger-rgb), 0.1); color: var(--danger); border-color: var(--danger); }
 
 /* Top Navigation Tabs */
+/* EL RIBBON LLEVA UN VELO ENCIMA DE --bg-card, no un gris escrito a mano.
+   En los temas claros --bg-card es blanco puro y la banda no se distinguia del
+   area de trabajo; un gris fijo la arreglaria ahi y la rompería en el tema negro.
+   El velo se define por tema en temas.css -ver --ribbon-veil-. Se pinta como
+   imagen sobre el color de fondo: asi se componen los dos sin tocar el token. */
 .top-nav-links {
-  display: flex; overflow-x: auto; background: var(--bg-card); border-bottom: 1px solid var(--border);
+  display: flex; overflow-x: auto;
+  background-color: var(--bg-card);
+  background-image: linear-gradient(var(--ribbon-veil, transparent), var(--ribbon-veil, transparent));
+  border-bottom: 1px solid var(--border);
   padding: 0 1.5rem; gap: 0.5rem;
   flex-shrink: 0;
   /* hide scrollbar for elegance */

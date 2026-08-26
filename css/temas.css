@@ -147,6 +147,18 @@ html[data-tema="indigo"] {
 
   /* Trios RGB para las transparencias ------------------------------------- */
   --ink-rgb:            255, 255, 255;   /* la tinta que contrasta con el fondo */
+
+  /* EL VELO DEL RIBBON DE NAVEGACION. Daniel, 26-ago-2026: "le pueden poner un
+     fondo oscuro, ojo oscuro leve, solo leve para que no se vea muy blanco".
+     El ribbon usaba --bg-card, que en los temas claros es BLANCO PURO -mas claro
+     todavia que el area de trabajo de abajo-, asi que la banda no se distinguia
+     de nada.
+
+     Va GRADUADO POR TEMA y no con un solo numero: en los claros la tinta es negra
+     y el velo oscurece, pero en el negro la tinta es BLANCA y el mismo 10% subiria
+     la barra a un gris medio. Ese tema Daniel lo quiere negro, asi que ahi el velo
+     es minimo: lo justo para que la banda se despegue del fondo. */
+  --ribbon-veil:        rgba(255, 255, 255, 0.045);
   --shadow-rgb:           0,   0,   0;
   --bg-rgb:              15,  23,  42;
   --card-rgb:            30,  41,  59;
@@ -275,6 +287,8 @@ html[data-tema="pbi"] {
   --pink-soft:      #A83079;
 
   --ink-rgb:               0,   0,   0;   /* tinta oscura: el reves del blanco */
+
+  --ribbon-veil:        rgba(  0,   0,   0, 0.10);
   --shadow-rgb:          232, 231, 229;
   --bg-rgb:             243, 242, 241;
   --card-rgb:           255, 255, 255;
@@ -396,6 +410,8 @@ html[data-tema="pbi-classic"] {
   --pink-soft:      #94587F;
 
   --ink-rgb:               0,   0,   0;
+
+  --ribbon-veil:        rgba(  0,   0,   0, 0.10);
   --shadow-rgb:          230, 232, 232;
   --bg-rgb:             245, 245, 245;
   --card-rgb:           255, 255, 255;
@@ -520,6 +536,8 @@ html[data-tema="negro"] {
   --pink-soft:      #CACACA;
 
   --ink-rgb:            255, 255, 255;
+
+  --ribbon-veil:        rgba(255, 255, 255, 0.035);
   --shadow-rgb:           0,   0,   0;
   --bg-rgb:               0,   0,   0;
   --card-rgb:            12,  12,  12;
