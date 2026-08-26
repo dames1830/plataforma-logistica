@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0376';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0377';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0376';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0376';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0376';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0376';
-import * as metasService from '../services_v245/metasService.js?v=29.0376';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0376';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0376';
+import * as adminService from '../services_v245/adminService.js?v=29.0377';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0377';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0377';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0377';
+import * as metasService from '../services_v245/metasService.js?v=29.0377';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0377';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0377';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0376';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0376';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0376';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0376';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0376';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0376';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0376';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0376';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0376';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0376';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0376';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0376';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0376';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0376';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0376';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0376';
-import { montarSlotting } from './slotting.js?v=29.0376';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0377';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0377';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0377';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0377';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0377';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0377';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0377';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0377';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0377';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0377';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0377';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0377';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0377';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0377';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0377';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0377';
+import { montarSlotting } from './slotting.js?v=29.0377';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0376';
+const VERSION = '29.0377';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4097,6 +4097,7 @@ export const renderDashboard = async (container, user, onLogout) => {
               <div id="export_actions" style="display:flex; gap:0.5rem;"></div>
             </div>
             <div id="resultsArea" style="display:flex; gap:0.6rem; align-items:start;"></div>
+            <div id="cuadrosAbajo" style="margin-top:0.6rem;"></div>
           </div>`;
         const results = document.getElementById('resultsArea');
 
@@ -4500,7 +4501,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <div style="position: absolute; top:0; left:0; width:100%; height:100%; border-radius:14px; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px); opacity:0.5;"></div>
                         </div>
                     </div>
-                    <div id="pasos_analisis" style="margin-top:2rem; text-align:left; display:inline-block; min-width:340px; font-size:0.78rem; color:#94a3b8;"></div>
+                    <div id="pasos_analisis" style="margin-top:2rem; text-align:left; display:inline-block; min-width:340px; font-size:0.78rem; color:#94a3b8;"><div style="display:flex;align-items:center;gap:9px;padding:4px 0;color:#fff;font-weight:700"><span style="width:15px;text-align:center;color:#38bdf8">●</span>Leyendo la configuración del buffer</div></div>
                     <style>
                         @keyframes thick-progress { 0% { width: 0%; left: 4px; } 100% { width: calc(100% - 8px); left: 4px; } }
                         @keyframes pulse-text { 0% { opacity:0.5; } 50% { opacity:1; } 100% { opacity:0.5; } }
@@ -4571,6 +4572,10 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 sessionStorage.setItem('lastBufferKPI_session', serialized); // backup extra
                             } catch(e) { console.warn("[PULSE] Quota Full en Zona Buffer (localStorage), guardado en IndexedDB únicamente.", e); }
                             renderBufferResults(results, res);
+                            /* LOS DOS CUADROS DE ABAJO. Van despues de pintar el reporte
+                               para no retrasarlo, y sin await por la misma razon. */
+                            pintarCuadrosAbajo(config, res).catch(e =>
+                                console.warn('[CUADROS] No se pudieron armar:', e));
 
                             /* Y LA META AL SERVIDOR, para que el reporte del turno la tenga
                                desde que arranca la noche y no recién al validar. Va sin
@@ -4679,6 +4684,229 @@ export const renderDashboard = async (container, user, onLogout) => {
             </div>
         </div>
     `;
+  };
+
+  /* ==========================================================================
+     LOS DOS CUADROS DE ABAJO DEL REPORTE
+     --------------------------------------------------------------------------
+     1) COMPARACION DE MODELOS. Las seis combinaciones sobre el MISMO pedido y el
+        MISMO factor. Solo la elegida se publica y se exporta; las otras cinco
+        corren en silencio y mueren aca.
+     2) RECORRIDO DEL MONTACARGUISTA. Donde esta la carga del modelo elegido,
+        pasillo por pasillo. Un pasillo son DOS selectivos: el 01 y el 02 se
+        recorren desde el mismo pasadizo, y contarlos por separado hace parecer
+        que el montacarguista camina el doble.
+     ========================================================================== */
+  const COMBOS_BUFFER = [
+      { k: 'def', n: 'Por defecto',  reg: 'Ascendente del selectivo 1 al 12',    m1: false, m2: false, m3: false },
+      { k: 'm1',  n: 'Modelo 1',     reg: 'Buffer de menor a mayor',             m1: true,  m2: false, m3: false },
+      { k: 'm2',  n: 'Modelo 2',     reg: 'Buffer paleta completa',              m1: false, m2: true,  m3: false },
+      { k: 'm3',  n: 'Modelo 3',     reg: 'Mayor paleta por pasillo',            m1: false, m2: false, m3: true  },
+      { k: 'm12', n: 'Modelo 1 + 2', reg: 'Menor a mayor, y completa la paleta', m1: true,  m2: true,  m3: false },
+      { k: 'm32', n: 'Modelo 3 + 2', reg: 'Por pasillo, y completa la paleta',   m1: false, m2: true,  m3: true  }
+  ];
+
+  /* Las paletas del resultado, agrupadas por ubicacion+LPN.
+     OJO: una paleta trae varios SKU. Lo que TIENE es la suma de sus SKU, no el
+     mayor: tomar el mayor daba paletas "vacias" que en realidad quedaban con
+     mercaderia adentro. */
+  const paletasDelResultado = (r) => {
+      const m = new Map();
+      (r && r.detalle ? r.detalle : []).forEach(f => {
+          const ubi = String(f['UBICACIONES'] || '').trim();
+          const clave = ubi + '|' + String(f['LPN'] || '');
+          const e = m.get(clave) || { ubi: ubi, baja: 0, porSku: new Map() };
+          e.baja += Number(f['QTY BUFFER']) || 0;
+          const sku = String(f['SKU'] || '');
+          e.porSku.set(sku, Math.max(e.porSku.get(sku) || 0, Number(f['QTY RESERVA']) || 0));
+          m.set(clave, e);
+      });
+      const out = [];
+      m.forEach(e => {
+          let tiene = 0;
+          e.porSku.forEach(v => { tiene += v; });
+          const mm = /^SEL-(\d\d)-(\d\d)/.exec(e.ubi);
+          out.push({
+              ubi: e.ubi, baja: e.baja, tiene: tiene,
+              vacia: tiene > 0 && e.baja >= tiene,
+              rack: mm ? Number(mm[1]) : 0,
+              col: mm ? Number(mm[2]) : 0,
+              pasillo: mm ? Math.ceil(Number(mm[1]) / 2) : 0
+          });
+      });
+      return out;
+  };
+
+  /* Las tres cifras de una corrida. Paletas y pares NO se recuentan: se leen del
+     mismo `resumenSKU` que ya muestra la pantalla, para que el cuadro de abajo
+     no pueda contradecir al de arriba. */
+  const cifrasDeCorrida = (r) => {
+      const tg = (r && r.resumenSKU ? r.resumenSKU : [])
+          .find(x => String(x.fuente || '').includes('TOTAL GENERAL'));
+      const pal = paletasDelResultado(r);
+      return {
+          paletas: tg ? (Number(tg.paletas) || 0) : pal.length,
+          pares:   tg ? (Number(tg.parcaja) || 0) : pal.reduce((a, b) => a + b.baja, 0),
+          vacian:  pal.filter(x => x.vacia).length
+      };
+  };
+
+  /* El MISMO formato que el reporte de arriba (`.toLocaleString()` a secas). Forzar
+     'es-PE' acá dejaba 61.792 arriba y 61,792 abajo, en la misma pantalla. */
+  const nUm = (x) => Number(x || 0).toLocaleString();
+
+  const pintarCuadrosAbajo = async (config, resElegido) => {
+      const caja = document.getElementById('cuadrosAbajo');
+      if (!caja) return;
+      const m1 = !!config.modelo1, m2 = !!config.modelo2, m3 = !!config.modelo3;
+      const elegido = COMBOS_BUFFER.find(c => c.m1 === m1 && c.m2 === m2 && c.m3 === m3);
+      const claveElegida = elegido ? elegido.k : null;
+
+      caja.innerHTML = '<div style="padding:0.9rem 1.1rem; background:rgba(15,23,42,0.9);'
+          + ' border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#94a3b8;'
+          + ' font-size:0.78rem;">Corriendo los otros modelos por dentro...</div>';
+
+      const filas = [];
+      for (let i = 0; i < COMBOS_BUFFER.length; i++) {
+          const c = COMBOS_BUFFER[i];
+          let r;
+          if (c.k === claveElegida) {
+              r = resElegido;                       // el elegido NO se recalcula
+          } else {
+              /* Un respiro para que el navegador pinte el avance: el motor es
+                 sincrono y sin esto la pantalla queda congelada las 5 pasadas. */
+              await new Promise(res => setTimeout(res, 0));
+              caja.innerHTML = '<div style="padding:0.9rem 1.1rem; background:rgba(15,23,42,0.9);'
+                  + ' border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#94a3b8;'
+                  + ' font-size:0.78rem;">Corriendo los otros modelos por dentro &middot; '
+                  + (i + 1) + ' de ' + COMBOS_BUFFER.length + '</div>';
+              await new Promise(res => setTimeout(res, 0));
+              try {
+                  r = calculateBufferPallets(Object.assign({}, config,
+                      { modelo1: c.m1, modelo2: c.m2, modelo3: c.m3, barrido: c.m2 }));
+              } catch (e) {
+                  console.warn('[CUADROS] Fallo el modelo', c.n, e);
+                  r = null;
+              }
+          }
+          filas.push(Object.assign({}, c, {
+              sel: c.k === claveElegida,
+              cif: r ? cifrasDeCorrida(r) : null
+          }));
+      }
+
+      /* EL RECORRIDO, del modelo elegido nada mas. */
+      const pal = paletasDelResultado(resElegido).filter(x => x.pasillo > 0);
+      const totPares = pal.reduce((a, b) => a + b.baja, 0) || 1;
+      const PAS = {};
+      pal.forEach(x => {
+          PAS[x.pasillo] = PAS[x.pasillo] || { pal: 0, pares: 0, vac: 0, cols: new Set() };
+          PAS[x.pasillo].pal++; PAS[x.pasillo].pares += x.baja;
+          if (x.vacia) PAS[x.pasillo].vac++;
+          PAS[x.pasillo].cols.add(x.col);
+      });
+      const kPas = Object.keys(PAS).sort((a, b) => a - b);
+      const tot = { pal: 0, pares: 0, vac: 0 };
+
+      const th = 'padding:0.5rem 0.9rem; font-size:0.6rem; letter-spacing:0.5px; font-weight:800;'
+          + ' text-transform:uppercase; color:var(--text-muted); background:rgba(0,0,0,0.4);'
+          + ' border-bottom:1px solid rgba(255,255,255,0.08); text-align:center;';
+      const td = 'padding:0.45rem 0.9rem; border-bottom:1px solid rgba(255,255,255,0.04);'
+          + ' text-align:center; font-size:0.78rem;';
+
+      caja.innerHTML = `
+        <div style="display:flex; gap:0.6rem; align-items:start; flex-wrap:wrap;">
+
+          <div style="flex:1 1 560px; background:rgba(15,23,42,0.9); border:2px solid #818cf8;
+                      border-radius:12px; overflow:hidden; box-shadow:0 0 15px rgba(129,140,248,0.12);">
+            <div style="padding:0.7rem; background:rgba(129,140,248,0.1);
+                        border-bottom:1px solid rgba(129,140,248,0.3); text-align:center;">
+              <h3 style="margin:0; font-size:0.78rem; letter-spacing:1px; color:#c7d2fe;
+                         font-weight:800;">COMPARACI&Oacute;N DE MODELOS</h3>
+            </div>
+            <table style="border-collapse:collapse; width:100%;">
+              <thead><tr>
+                <th style="${th} text-align:left;">Modelo</th>
+                <th style="${th} text-align:left;">C&oacute;mo elige la paleta</th>
+                <th style="${th}">Paletas</th>
+                <th style="${th}" title="La paleta baja completa y no queda saldo adentro">Se vac&iacute;an</th>
+                <th style="${th}">Pares que baja</th>
+              </tr></thead>
+              <tbody style="color:#eee;">
+                ${filas.map(f => `<tr style="${f.sel ? 'background:rgba(129,140,248,0.10);' : ''}">
+                  <td style="${td} text-align:left; font-weight:800; color:${f.sel ? '#c7d2fe' : '#eee'};">
+                    ${f.n}${f.sel ? ' <span style="font-size:0.55rem; font-weight:800; padding:2px 7px;'
+                      + ' border-radius:20px; background:rgba(129,140,248,0.22); color:#c7d2fe;'
+                      + ' border:1px solid rgba(129,140,248,0.45); margin-left:6px;'
+                      + ' vertical-align:middle;">PROCESADO</span>' : ''}
+                  </td>
+                  <td style="${td} text-align:left; color:#94a3b8; font-size:0.72rem;">${f.reg}</td>
+                  <td style="${td} font-weight:800;">${f.cif ? f.cif.paletas : '&mdash;'}</td>
+                  <td style="${td} color:#22c55e; font-weight:800;">${f.cif ? f.cif.vacian : '&mdash;'}</td>
+                  <td style="${td}">${f.cif ? nUm(f.cif.pares) : '&mdash;'}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+            <div style="padding:0.6rem 0.9rem; font-size:0.68rem; color:#8ba0bd; line-height:1.5;
+                        border-top:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.16);">
+              Las seis corren sobre el <b style="color:#e6edf7;">mismo pedido y el mismo factor</b>.
+              Solo el marcado se public&oacute; y es el que sale en el Excel; los otros cinco se
+              calcularon aparte, nada m&aacute;s para este cuadro.
+            </div>
+          </div>
+
+          <div style="flex:1 1 520px; background:rgba(15,23,42,0.9); border:2px solid #f59e0b;
+                      border-radius:12px; overflow:hidden; box-shadow:0 0 15px rgba(245,158,11,0.12);">
+            <div style="padding:0.7rem; background:rgba(245,158,11,0.1);
+                        border-bottom:1px solid rgba(245,158,11,0.3); text-align:center;">
+              <h3 style="margin:0; font-size:0.78rem; letter-spacing:1px; color:#fbbf24;
+                         font-weight:800;">RECORRIDO DEL MONTACARGUISTA</h3>
+            </div>
+            <table style="border-collapse:collapse; width:100%;">
+              <thead><tr>
+                <th style="${th} text-align:left;">Pasillo</th>
+                <th style="${th} text-align:left;">Racks</th>
+                <th style="${th}">Columnas<br>que pisa</th>
+                <th style="${th}">Paletas</th>
+                <th style="${th}">Se vac&iacute;an</th>
+                <th style="${th}">Pares</th>
+                <th style="${th}">% de los<br>pares</th>
+              </tr></thead>
+              <tbody style="color:#eee;">
+                ${kPas.map(k => {
+                    const e = PAS[k];
+                    tot.pal += e.pal; tot.pares += e.pares; tot.vac += e.vac;
+                    const pct = e.pares / totPares * 100;
+                    const hot = pct > 50;
+                    return `<tr style="${hot ? 'background:rgba(251,191,36,0.07);' : ''}">
+                      <td style="${td} text-align:left; font-weight:800;">Pasillo ${k}</td>
+                      <td style="${td} text-align:left; color:#94a3b8;">SEL-${String(k * 2 - 1).padStart(2, '0')} + ${String(k * 2).padStart(2, '0')}</td>
+                      <td style="${td} color:#94a3b8;">${e.cols.size}</td>
+                      <td style="${td} font-weight:800;">${e.pal}</td>
+                      <td style="${td} color:#22c55e; font-weight:800;">${e.vac}</td>
+                      <td style="${td}">${nUm(e.pares)}</td>
+                      <td style="${td} color:${hot ? '#fbbf24' : '#94a3b8'}; font-weight:${hot ? '800' : '400'};">${pct.toFixed(1)}%</td>
+                    </tr>`;
+                }).join('')}
+                <tr style="border-top:2px solid rgba(255,255,255,0.12);">
+                  <td style="${td} text-align:left; font-weight:800;">TOTAL</td>
+                  <td style="${td}"></td><td style="${td}"></td>
+                  <td style="${td} font-weight:800;">${tot.pal}</td>
+                  <td style="${td} color:#22c55e; font-weight:800;">${tot.vac}</td>
+                  <td style="${td} font-weight:800;">${nUm(tot.pares)}</td>
+                  <td style="${td}">100%</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="padding:0.6rem 0.9rem; font-size:0.68rem; color:#8ba0bd; line-height:1.5;
+                        border-top:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.16);">
+              Un pasillo son <b style="color:#e6edf7;">dos selectivos</b>: el 01 y el 02 se
+              recorren desde el mismo pasadizo. El detalle ubicaci&oacute;n por ubicaci&oacute;n
+              sale en el Excel.
+            </div>
+          </div>
+
+        </div>`;
   };
 
   const renderBufferResults = (container, data) => {
@@ -4832,7 +5060,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0376');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0377');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17144,7 +17372,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0376 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0377 | MOBILE PORTAL
                             </div>
                     </div>
 
