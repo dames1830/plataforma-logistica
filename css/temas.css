@@ -729,3 +729,114 @@ html[data-tema="negro"] .btn-pill {
   border: 1px solid var(--border) !important;
   box-shadow: none !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LA ESCALA DE LETRA
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Habia 74 tamaños distintos y el 37% del texto estaba por debajo de 11,6 px.
+   Con tantos y tan parecidos nada destacaba: habia que BUSCAR el dato en vez
+   de que saltara, y a las ocho horas cansa.
+
+   Seis escalones, bien separados. El de las celdas de tabla (--t-sm) sube de
+   ~11 a 14 px, que es lo que usan Excel y Power BI para cuadriculas densas:
+   un 30% mas grande y sigue entrando todo, porque lo que crece es la letra y
+   no el numero de columnas.
+
+   No van por tema: un tema cambia el COLOR, no cuanto se ve. Por eso viven en
+   :root y valen para los cuatro.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --t-xs:   0.75rem;    /* 12px · etiquetas de columna, notas al pie   */
+  --t-sm:   0.875rem;   /* 14px · celdas de tabla                      */
+  --t-md:   0.9375rem;  /* 15px · texto de la interfaz                 */
+  --t-lg:   1.125rem;   /* 18px · subtitulos y cifras destacadas       */
+  --t-xl:   1.5rem;     /* 24px · titulos de seccion                   */
+  --t-2xl:  2.125rem;   /* 34px · cifras grandes de KPI                */
+
+  /* Espaciado: 333 combinaciones de padding distintas se reducen a estas. */
+  --e-1:    0.25rem;
+  --e-2:    0.45rem;
+  --e-3:    0.7rem;
+  --e-4:    1rem;
+  --e-5:    1.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EL TECLADO
+   Habia 4 reglas de foco en toda la plataforma: quien carga la asistencia o
+   las actividades del turno no veia donde estaba parado, soltaba el teclado y
+   buscaba con el mouse en cada casilla. Ahora todo lo que se puede enfocar
+   se ve, y solo cuando se llega POR TECLADO (:focus-visible), asi que el que
+   usa el mouse no ve aros por todos lados.
+   ═══════════════════════════════════════════════════════════════════════════ */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+[contenteditable]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* En los campos de texto el aro va pegado al borde, que se lee mejor que un
+   recuadro flotando alrededor. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.28);
+}
+
+/* Las celdas que se editan escribiendo encima. */
+[contenteditable="true"]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  background: rgba(var(--primary-rgb), 0.07);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAS TABLAS
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Son 112 y es donde se pasa el dia. Solo 27 tenian la cabecera fija: en las
+   otras 85, al bajar se perdian los nombres de las columnas y ya no se sabia
+   que numero era cual.
+
+   Se resuelve de una vez para todas, sin tocar las 112: cualquier <thead th>
+   que este dentro de algo que se pueda desplazar se queda pegado arriba.
+   `position: sticky` no hace nada si no hay un contenedor con scroll, asi que
+   en las tablas que no lo tienen simplemente no cambia nada: no rompe ninguna.
+   ═══════════════════════════════════════════════════════════════════════════ */
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* El fondo es obligatorio: sin el, las filas se ven POR DEBAJO de la cabecera
+   al desplazarse y queda un amasijo ilegible. */
+thead th {
+  background-color: var(--panel-solid);
+  background-clip: padding-box;
+}
+
+/* Cabecera de dos pisos (grupo de columnas arriba, columnas abajo): la segunda
+   fila se pega debajo de la primera y no encima. */
+thead tr:nth-child(2) th { top: 2.1rem; z-index: 4; }
+
+/* Las que ya traian su propio sticky con un tope distinto lo conservan. */
+.data-table th { top: -1px; }
+
+/* Filas mas altas: seguir una fila de 13 columnas con el renglon apretado hace
+   saltar de linea. Se toca el padding vertical y NO el horizontal, para no
+   ensanchar la tabla. */
+table td { padding-top: var(--e-2); padding-bottom: var(--e-2); }
+
+/* Las cifras, siempre alineadas por columna: comparar de un vistazo y sumar
+   sin equivocarse. */
+table { font-variant-numeric: tabular-nums; }

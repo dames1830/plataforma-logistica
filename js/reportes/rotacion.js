@@ -97,10 +97,10 @@ export const montarRotacion = (container, OPC = {}) => {
       <div style="flex:1; min-width:158px; background:rgba(var(--ink-rgb), .03);
                   border:1px solid rgba(var(--ink-rgb), .07); border-left:3px solid ${color};
                   border-radius:12px; padding:.9rem 1.1rem;">
-        <div style="font-size:.6rem; letter-spacing:.8px; text-transform:uppercase;
+        <div style="font-size:var(--t-xs); letter-spacing:.8px; text-transform:uppercase;
                     color:var(--text-muted); margin-bottom:.35rem; font-weight:800;">${rotulo}</div>
-        <div style="font-size:1.6rem; font-weight:800; line-height:1.1; color:${colorValor || 'var(--text-strong)'};">${valorTxt}</div>
-        <div style="font-size:.68rem; color:var(--text-dim); margin-top:.3rem;">${pie}</div>
+        <div style="font-size:var(--t-xl); font-weight:800; line-height:1.1; color:${colorValor || 'var(--text-strong)'};">${valorTxt}</div>
+        <div style="font-size:var(--t-xs); color:var(--text-dim); margin-top:.3rem;">${pie}</div>
       </div>`;
 
     const filtro = (g) => {
@@ -110,8 +110,8 @@ export const montarRotacion = (container, OPC = {}) => {
         background:${on ? 'var(--primary)' : 'rgba(var(--ink-rgb), 0.03)'};
         color:${on ? 'var(--text-strong)' : 'var(--text-muted)'};
         border:1px solid ${on ? 'var(--primary)' : 'rgba(var(--ink-rgb), .1)'};
-        border-radius:8px; padding:.4rem .8rem; font-size:.72rem; font-weight:700; cursor:pointer;">
-        ${g[1]}<small style="display:block; font-size:.6rem; font-weight:400; opacity:.8;">
+        border-radius:8px; padding:.4rem .8rem; font-size:var(--t-xs); font-weight:700; cursor:pointer;">
+        ${g[1]}<small style="display:block; font-size:var(--t-xs); font-weight:400; opacity:.8;">
         ${mil(n.length)} art. · ${mil(suma(n))}</small></button>`;
     };
 
@@ -126,7 +126,7 @@ export const montarRotacion = (container, OPC = {}) => {
         matriz += `<td style="padding:.5rem .7rem; text-align:right; border-bottom:1px solid rgba(var(--ink-rgb), .04);
                    ${alerta ? 'background:rgba(var(--danger-rgb), 0.10);' : ''}">
           ${suma(x) ? mil(suma(x)) : '<span style="color:var(--text-faint);">0</span>'}
-          <span style="display:block; font-size:.62rem; color:var(--text-dim);">${mil(x.length)} art.</span></td>`;
+          <span style="display:block; font-size:var(--t-xs); color:var(--text-dim);">${mil(x.length)} art.</span></td>`;
       });
       matriz += `<td style="padding:.5rem .7rem; text-align:right; color:var(--text-strong); font-weight:800;
                  border-bottom:1px solid rgba(var(--ink-rgb), .04);">${mil(suma(cl(c)))}</td></tr>`;
@@ -136,7 +136,7 @@ export const montarRotacion = (container, OPC = {}) => {
     TRAMOS.forEach(t => {
       const x = F.filter(f => f.sem >= t[0] && f.sem <= t[1]);
       matriz += `<td style="padding:.5rem .7rem; text-align:right;">${mil(suma(x))}
-        <span style="display:block; font-size:.62rem; color:var(--text-dim); font-weight:400;">${mil(x.length)} art.</span></td>`;
+        <span style="display:block; font-size:var(--t-xs); color:var(--text-dim); font-weight:400;">${mil(x.length)} art.</span></td>`;
     });
     matriz += `<td style="padding:.5rem .7rem; text-align:right;">${mil(suma(F))}</td></tr>`;
 
@@ -152,7 +152,7 @@ export const montarRotacion = (container, OPC = {}) => {
 
     const cabecera = COLS.map(c => `
       <th class="rot-ord" data-k="${c.k}" style="padding:.55rem .6rem; font-weight:700;
-          color:var(--text-muted); font-size:.64rem; letter-spacing:.4px; text-transform:uppercase;
+          color:var(--text-muted); font-size:var(--t-xs); letter-spacing:.4px; text-transform:uppercase;
           white-space:nowrap; cursor:pointer; text-align:${c.a || 'left'};">
         ${c.r}${orden.k === c.k ? (orden.asc ? ' ↑' : ' ↓') : ''}</th>`).join('');
 
@@ -160,7 +160,7 @@ export const montarRotacion = (container, OPC = {}) => {
       const c = CH[f.clase];
       return `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), .04);">
         <td style="padding:.5rem .6rem; color:var(--text-strong); white-space:nowrap;">${esc(f.cod)}${
-          f.nuevo ? '<span style="font-size:.6rem; color:var(--brand-light); margin-left:4px;">nuevo</span>' : ''}</td>
+          f.nuevo ? '<span style="font-size:var(--t-xs); color:var(--brand-light); margin-left:4px;">nuevo</span>' : ''}</td>
         <td style="padding:.5rem .6rem; white-space:nowrap;">${esc(f.marca)}</td>
         <td style="padding:.5rem .6rem; text-align:center; color:var(--text-muted); white-space:nowrap;">${esc(f.col)}</td>
         <td style="padding:.5rem .6rem; color:var(--text-muted); min-width:7.5rem;">${esc(f.mod || '')}</td>
@@ -176,7 +176,7 @@ export const montarRotacion = (container, OPC = {}) => {
             : (f.cob >= 999 ? '+999 sem' : coma(f.cob) + ' sem')}</td>
         <td style="padding:.5rem .6rem; text-align:right; white-space:nowrap;
             color:${f.par >= 60 ? 'var(--danger-soft)' : f.par >= 28 ? 'var(--warning-soft)' : 'var(--text-muted)'};">${mil(f.par)}</td>
-        <td style="padding:.5rem .6rem; text-align:center;"><span style="font-size:.62rem; font-weight:800;
+        <td style="padding:.5rem .6rem; text-align:center;"><span style="font-size:var(--t-xs); font-weight:800;
             padding:2px 7px; border-radius:5px; color:${c.color}; background:${c.fondo};">${c.nombre}</span></td>
       </tr>`;
     }).join('');
@@ -185,8 +185,8 @@ export const montarRotacion = (container, OPC = {}) => {
       <div id="rot">
         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding-bottom:.9rem;
                     margin-bottom:1.2rem; border-bottom:1px solid rgba(var(--ink-rgb), .05);">
-          <h3 style="font-size:1rem; font-weight:800; letter-spacing:.4px; margin:0; color:var(--text-strong);">Rotación y Permanencia</h3>
-          <span style="font-size:.68rem; color:var(--text-muted);">
+          <h3 style="font-size:var(--t-lg); font-weight:800; letter-spacing:.4px; margin:0; color:var(--text-strong);">Rotación y Permanencia</h3>
+          <span style="font-size:var(--t-xs); color:var(--text-muted);">
             ventana de ${meta.mesesVentana || 3} meses · ${esc(meta.desde || '')} al ${esc(meta.hasta || '')}
             · ${mil(meta.fotos || 0)} fotos${meta.generado ? ' · generado ' + esc(meta.generado) : ''}</span>
           <div style="display:flex; gap:6px; margin-left:auto; flex-wrap:wrap;">${GRUPOS.map(filtro).join('')}</div>
@@ -194,7 +194,7 @@ export const montarRotacion = (container, OPC = {}) => {
 
         ${sel === 'SINM' ? `
           <div style="background:rgba(var(--warning-soft-rgb), .08); border:1px solid rgba(var(--warning-soft-rgb), .25); border-radius:10px;
-                      padding:.7rem 1rem; font-size:.74rem; color:var(--warning-soft); margin-bottom:1.2rem; line-height:1.6;">
+                      padding:.7rem 1rem; font-size:var(--t-sm); color:var(--warning-soft); margin-bottom:1.2rem; line-height:1.6;">
             <b>Esto no es mercadería: son insumos y materiales.</b> Etiquetas, hang tags y cartones.
             Un rollo de 10.000 etiquetas cuenta como 10.000 unidades, así que inflan el stock y no dicen
             nada de la rotación de la mercadería. Están acá para que se vean, no para medirlos con la misma vara.
@@ -208,41 +208,41 @@ export const montarRotacion = (container, OPC = {}) => {
           ${tarjeta('var(--danger-soft)', 'Viejos Y lentos', mil(suma(duro)), mil(duro.length) + ' artículos · +' + TOPE + ' sem y no rotan', 'var(--danger-soft)')}
         </div>
 
-        <h4 style="font-size:.72rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;
+        <h4 style="font-size:var(--t-xs); font-weight:800; letter-spacing:1px; text-transform:uppercase;
                    margin:1.4rem 0 .6rem; color:var(--text-strong);">La foto de un golpe
-          <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-dim); font-size:.72rem; margin-left:.5rem;">
+          <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-dim); font-size:var(--t-xs); margin-left:.5rem;">
             — ${U} por rotación y semanas en el CD · en rojo, lo que está quieto <b>y</b> viejo: ahí es donde hay que entrar</span></h4>
         <div style="overflow-x:auto;">
-          <table style="width:100%; border-collapse:collapse; font-size:.78rem; color:var(--text-grey); min-width:640px;">
+          <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-grey); min-width:640px;">
             <thead><tr style="background:var(--panel-solid);">
-              <th style="padding:.55rem .7rem; text-align:left; color:var(--text-muted); font-size:.64rem; text-transform:uppercase;">Rotación</th>
-              ${TRAMOS.map(t => `<th style="padding:.55rem .7rem; text-align:right; color:var(--text-muted); font-size:.64rem; text-transform:uppercase;">${t[2]} sem</th>`).join('')}
-              <th style="padding:.55rem .7rem; text-align:right; color:var(--text-muted); font-size:.64rem; text-transform:uppercase;">Total</th>
+              <th style="padding:.55rem .7rem; text-align:left; color:var(--text-muted); font-size:var(--t-xs); text-transform:uppercase;">Rotación</th>
+              ${TRAMOS.map(t => `<th style="padding:.55rem .7rem; text-align:right; color:var(--text-muted); font-size:var(--t-xs); text-transform:uppercase;">${t[2]} sem</th>`).join('')}
+              <th style="padding:.55rem .7rem; text-align:right; color:var(--text-muted); font-size:var(--t-xs); text-transform:uppercase;">Total</th>
             </tr></thead>
             <tbody>${matriz}</tbody>
           </table>
         </div>
 
-        <h4 style="font-size:.72rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;
+        <h4 style="font-size:var(--t-xs); font-weight:800; letter-spacing:1px; text-transform:uppercase;
                    margin:1.6rem 0 .6rem; color:var(--danger-soft); display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
           El detalle
-          <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-dim); font-size:.72rem;">
+          <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-dim); font-size:var(--t-xs);">
             ${mil(filas.length)} artículo${filas.length === 1 ? '' : 's'}${filas.length > 600 ? ' · se muestran los primeros 600' : ''}</span>
           <input id="rot_busca" type="search" autocomplete="off" value="${esc(busca)}"
                  placeholder="Filtrar por código, marca, modelo o colección..."
                  style="margin-left:auto; background:rgba(var(--ink-rgb), 0.04); color:var(--text-strong);
                  border:1px solid rgba(var(--ink-rgb), .12); border-radius:8px; padding:.4rem .7rem;
-                 font-size:.75rem; min-width:17rem; font-weight:400;">
+                 font-size:var(--t-sm); min-width:17rem; font-weight:400;">
         </h4>
         <div style="overflow-x:auto;">
-          <table style="width:100%; border-collapse:collapse; font-size:.78rem; color:var(--text-grey);">
+          <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-grey);">
             <thead><tr style="background:var(--panel-solid);">${cabecera}</tr></thead>
             <tbody>${cuerpo || `<tr><td colspan="12" style="padding:2rem; text-align:center; color:var(--text-muted);">
               No hay artículos con ese filtro.</td></tr>`}</tbody>
           </table>
         </div>
 
-        <div style="margin-top:1rem; font-size:.72rem; color:var(--text-dim); line-height:1.8;">
+        <div style="margin-top:1rem; font-size:var(--t-xs); color:var(--text-dim); line-height:1.8;">
           <b style="color:var(--text-muted);">Análisis FSN</b> (Fast / Slow / Non-moving) más
           <b style="color:var(--text-muted);">aging de inventario</b>: son dos análisis estándar y distintos,
           y el nombre del reporte traduce los dos.

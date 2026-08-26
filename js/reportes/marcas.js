@@ -12,8 +12,8 @@
  *
  * Para agregar una columna se toca acá y aparece en los dos.
  */
-import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0391';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0391';
+import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0392';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0392';
 
 /** Las columnas del reporte. Agregar una acá la agrega en las dos pantallas. */
 export const COLUMNAS = [
@@ -170,7 +170,7 @@ const semaforo = (cero, parcial, ok) => (pct, alcanzado, meta) =>
 
 export const TEMA_OSCURO = {
     cabeceraColorea: true,
-    cabecera: 'color:var(--cyan-neon); text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid var(--cyan-neon);',
+    cabecera: 'color:var(--cyan-neon); text-transform:uppercase; font-size:var(--t-xs); font-weight:800; letter-spacing:0.05em; border-bottom:2px solid var(--cyan-neon);',
     fila: 'border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--surface-max);',
     area: 'var(--text-muted)', marca: 'var(--text-strong)', marcaPeso: '800',
     valor: 'var(--text-strong)', dia: 'var(--yellow)', noche: 'var(--brand-light)', pend: 'var(--cyan-neon)', pendPeso: '800',
@@ -178,14 +178,14 @@ export const TEMA_OSCURO = {
     pct: semaforo('var(--danger)', 'var(--warning-soft)', 'var(--success)'),
     totalArea: {
         fila: 'background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.12) 0%, rgba(var(--bg-rgb), 0.5) 100%); border-top: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6); border-bottom: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6); font-weight: 900;',
-        etiquetaEstilo: "padding:7px 8px; color:var(--cyan-neon); font-weight:900; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid var(--cyan-neon);",
+        etiquetaEstilo: "padding:7px 8px; color:var(--cyan-neon); font-weight:900; font-size:var(--t-sm); text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid var(--cyan-neon);",
         tam: '0.82rem', peso: '800',
         valor: 'var(--text-strong)', dia: 'var(--yellow)', noche: 'var(--brand-light)', pend: 'var(--cyan-neon)', pendPeso: '900',
         pct: semaforo('var(--danger)', 'var(--warning-soft)', 'var(--success)')
     },
     granTotal: {
         fila: 'background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.25) 0%, rgba(var(--bg-rgb), 0.8) 100%); border-top: 2px solid var(--cyan-neon); border-bottom: 2px solid var(--cyan-neon); font-weight: 900;',
-        etiquetaEstilo: "padding:9px 8px; color:var(--text-strong); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid var(--cyan-neon);",
+        etiquetaEstilo: "padding:9px 8px; color:var(--text-strong); font-size:var(--t-md); text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid var(--cyan-neon);",
         tam: '0.85rem', peso: '900',
         valor: 'var(--cyan-neon)', dia: 'var(--yellow)', noche: 'var(--brand-light)', pend: 'var(--cyan-neon)', pendPeso: '900',
         pendExtra: 'text-shadow: 0 0 10px rgba(var(--cyan-neon-rgb), 0.5);',
@@ -195,7 +195,7 @@ export const TEMA_OSCURO = {
 
 export const TEMA_CLARO = {
     cabeceraColorea: false,
-    cabecera: 'background:#1C2B3A; color:#fff; text-transform:uppercase; font-size:0.67rem; font-weight:700; letter-spacing:0.04em;',
+    cabecera: 'background:#1C2B3A; color:#fff; text-transform:uppercase; font-size:var(--t-xs); font-weight:700; letter-spacing:0.04em;',
     fila: 'border-bottom:1px solid #EEE9E3; background:#fff;',
     area: '#9C9590', marca: '#1C2B3A', marcaPeso: '700',
     valor: '#1C2B3A', dia: '#B45309', noche: '#4A4540', pend: '#B45309', pendPeso: '700',
@@ -203,14 +203,14 @@ export const TEMA_CLARO = {
     pct: semaforo('#ef4444', '#fbbf24', '#22c55e'),
     totalArea: {
         fila: 'background:#F4F1EC; border-top:1px solid #DDD8CF; border-bottom:1px solid #DDD8CF; font-weight:700;',
-        etiquetaEstilo: "padding:7px 8px; color:#1C2B3A; font-weight:700; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 3px solid #B45309;",
+        etiquetaEstilo: "padding:7px 8px; color:#1C2B3A; font-weight:700; font-size:var(--t-sm); text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 3px solid #B45309;",
         tam: '0.78rem', peso: '700',
         valor: '#1C2B3A', dia: '#B45309', noche: '#4A4540', pend: '#B45309', pendPeso: '700',
         pct: semaforo('#991B1B', '#B45309', '#1A6336')
     },
     granTotal: {
         fila: 'background:#1C2B3A; font-weight:700;',
-        etiquetaEstilo: "padding:9px 8px; color:#fff; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.8px; font-family:'Outfit', sans-serif; font-weight:700; border-left: 4px solid #B45309;",
+        etiquetaEstilo: "padding:9px 8px; color:#fff; font-size:var(--t-sm); text-transform:uppercase; letter-spacing:0.8px; font-family:'Outfit', sans-serif; font-weight:700; border-left: 4px solid #B45309;",
         tam: '0.8rem', peso: '700',
         valor: '#fff', dia: '#F5C97A', noche: '#A8B8C8', pend: '#F5C97A', pendPeso: '700',
         pendExtra: '',
@@ -253,7 +253,7 @@ export const filasMarcas = (datos, tema) => {
 
     const pctMarca = (d, color) => {
         const col = color(d.pct, d.total, d.buffer);
-        return `<td style="padding:5px 6px; text-align:center; font-weight:800; font-size:0.75rem; white-space:nowrap;"><span style="color:${col}; font-size:0.75rem; font-weight:800; display:inline-flex; align-items:center; gap:3px;"><span>${d.pct === 0 ? '●' : '▲'}</span><span>${d.pct}%</span></span></td>`;
+        return `<td style="padding:5px 6px; text-align:center; font-weight:800; font-size:var(--t-sm); white-space:nowrap;"><span style="color:${col}; font-size:var(--t-sm); font-weight:800; display:inline-flex; align-items:center; gap:3px;"><span>${d.pct === 0 ? '●' : '▲'}</span><span>${d.pct}%</span></span></td>`;
     };
 
     const pctTotal = (d, t, pad) => {
@@ -277,8 +277,8 @@ export const filasMarcas = (datos, tema) => {
         marcas.forEach(m => {
             html += `
             <tr style="${tema.fila}">
-                <td style="padding:5px 6px; color:${tema.area}; font-size:0.78rem; font-weight:600;">${area}</td>
-                <td style="padding:5px 6px;"><b title="${m.marca}" style="color:${tema.marca}; font-weight:${tema.marcaPeso}; font-size:0.8rem; font-family:'Outfit', sans-serif; white-space:nowrap;">${marcaCorta(m.marca)}</b></td>
+                <td style="padding:5px 6px; color:${tema.area}; font-size:var(--t-sm); font-weight:600;">${area}</td>
+                <td style="padding:5px 6px;"><b title="${m.marca}" style="color:${tema.marca}; font-weight:${tema.marcaPeso}; font-size:var(--t-sm); font-family:'Outfit', sans-serif; white-space:nowrap;">${marcaCorta(m.marca)}</b></td>
                 ${celda(m.buffer, tema.valor, '700', '0.8rem')}
                 ${celda(m.dia, tema.dia, '700', '0.8rem')}
                 ${celda(m.noche, tema.noche, '700', '0.8rem')}

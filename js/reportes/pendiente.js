@@ -255,11 +255,11 @@ function estilos() {
     #pend{--pend-amber:var(--warning)}
     #pend .pend-head{display:flex;justify-content:space-between;align-items:center;
       flex-wrap:wrap;gap:12px;margin-bottom:16px}
-    #pend h2{font-size:1.2rem;font-weight:800;margin:0;color:var(--text-strong)}
-    #pend .pend-sub{color:var(--text-muted);font-size:.8rem}
+    #pend h2{font-size:var(--t-lg);font-weight:800;margin:0;color:var(--text-strong)}
+    #pend .pend-sub{color:var(--text-muted);font-size:var(--t-sm)}
     #pend .pend-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     #pend .pend-cal{display:flex;flex-direction:column;gap:2px}
-    #pend .pend-guardados{font-size:.68rem;color:var(--text-muted);padding-left:2px}
+    #pend .pend-guardados{font-size:var(--t-xs);color:var(--text-muted);padding-left:2px}
     /* EL CALENDARIO TIENE QUE VERSE Y TIENE QUE INVITAR A APRETARLO.
        La propiedad color-scheme: var(--scheme) es lo que pinta de blanco el iconito que trae
        el navegador: sin eso queda gris oscuro sobre fondo oscuro y no se ve. Daniel,
@@ -268,7 +268,7 @@ function estilos() {
        OJO: nada de comillas invertidas aca adentro, que esto vive dentro de una
        plantilla de texto y la cortan. */
     #pend input[type=date]{background:rgba(var(--shadow-rgb), .3);border:1px solid var(--border);
-      border-radius:8px;color:var(--text-strong);padding:8px 10px;font-size:.82rem;font-weight:700;
+      border-radius:8px;color:var(--text-strong);padding:8px 10px;font-size:var(--t-sm);font-weight:700;
       color-scheme: var(--scheme);cursor:pointer;letter-spacing:.3px}
     #pend input[type=date]:hover{border-color:var(--primary);background:rgba(var(--brand-rgb), .12)}
     #pend input[type=date]::-webkit-calendar-picker-indicator{
@@ -277,7 +277,7 @@ function estilos() {
     #pend input[type=date]:hover::-webkit-calendar-picker-indicator{
       filter:invert(88%) sepia(20%) saturate(900%) hue-rotate(200deg) brightness(115%)}
     #pend .pend-btn{background:var(--btn-fill);color:var(--panel-deep);border:0;border-radius:9px;
-      padding:9px 16px;font-weight:800;font-size:.78rem;letter-spacing:.4px;cursor:pointer}
+      padding:9px 16px;font-weight:800;font-size:var(--t-sm);letter-spacing:.4px;cursor:pointer}
     #pend .pend-btn:disabled{opacity:.75;cursor:progress}
     /* La ruedita del botón mientras trabaja. Va acá y no en el CSS del tablero
        porque #pend se lleva su estilo puesto y se puede probar suelto. */
@@ -290,21 +290,21 @@ function estilos() {
       gap:12px;margin-bottom:16px}
     #pend .pend-card{background:rgba(var(--ink-rgb), .04);border:1px solid var(--border);
       border-radius:14px;padding:15px;text-align:center}
-    #pend .pend-card .v{font-size:1.55rem;font-weight:800;color:var(--text-strong);line-height:1.1}
+    #pend .pend-card .v{font-size:var(--t-xl);font-weight:800;color:var(--text-strong);line-height:1.1}
     #pend .pend-card .v.hot{color:var(--pend-amber)}
-    #pend .pend-card .l{font-size:.7rem;color:var(--text-muted);margin-top:3px;letter-spacing:.4px}
+    #pend .pend-card .l{font-size:var(--t-xs);color:var(--text-muted);margin-top:3px;letter-spacing:.4px}
 
     #pend .pend-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     @media(max-width:980px){#pend .pend-grid{grid-template-columns:1fr}}
     #pend .pend-panel{background:rgba(var(--ink-rgb), .04);border:1px solid var(--border);
       border-radius:14px;padding:16px 18px}
-    #pend .pend-panel h3{margin:0 0 2px;font-size:.8rem;font-weight:800;
+    #pend .pend-panel h3{margin:0 0 2px;font-size:var(--t-sm);font-weight:800;
       letter-spacing:.9px;color:var(--text-strong)}
-    #pend .pend-cap{font-size:.73rem;color:var(--text-muted);margin-bottom:11px}
-    #pend .pend-vacio{color:var(--text-muted);font-size:.8rem;padding:12px 0}
+    #pend .pend-cap{font-size:var(--t-sm);color:var(--text-muted);margin-bottom:11px}
+    #pend .pend-vacio{color:var(--text-muted);font-size:var(--t-sm);padding:12px 0}
 
-    #pend table{width:100%;border-collapse:collapse;font-size:.82rem}
-    #pend th{text-align:left;color:var(--text-muted);font-size:.65rem;letter-spacing:.6px;
+    #pend table{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
+    #pend th{text-align:left;color:var(--text-muted);font-size:var(--t-xs);letter-spacing:.6px;
       font-weight:700;padding:6px 8px;border-bottom:1px solid var(--border)}
     #pend th.n,#pend td.n{text-align:right;font-variant-numeric:tabular-nums}
     #pend td{padding:6px 8px;border-bottom:1px solid rgba(var(--ink-rgb), .05)}
@@ -314,12 +314,12 @@ function estilos() {
     #pend .pend-bar.ambar{background:rgba(var(--warning-rgb), .8)}
     #pend .pend-ojo td{color:var(--warning-pale)}
     #pend .pend-gris td{color:var(--text-muted)}
-    #pend .pend-mas{font-size:.73rem;color:var(--primary);font-weight:700;
+    #pend .pend-mas{font-size:var(--t-sm);color:var(--primary);font-weight:700;
       padding-top:8px;display:block}
     #pend .pend-nota{border-left:3px solid var(--pend-amber);padding:9px 13px;
       background:rgba(var(--warning-rgb), .07);border-radius:0 8px 8px 0;margin-top:11px;
-      font-size:.79rem;color:var(--blue-pale)}
+      font-size:var(--t-sm);color:var(--blue-pale)}
     #pend .pend-nada{text-align:center;padding:40px 20px}
-    #pend .pend-nada-t{font-size:1rem;font-weight:700;color:var(--text-strong);margin-bottom:6px}
+    #pend .pend-nada-t{font-size:var(--t-lg);font-weight:700;color:var(--text-strong);margin-bottom:6px}
     </style>`;
 }

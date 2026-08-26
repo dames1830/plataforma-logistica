@@ -1,10 +1,10 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0391';
-import * as adminService from './services_v245/adminService.js?v=29.0391';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0391';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0391';
+import { getSession, logout } from './services_v245/auth.js?v=29.0392';
+import * as adminService from './services_v245/adminService.js?v=29.0392';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0392';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0392';
 
 
 /**
@@ -38,11 +38,11 @@ const pantallaCarga = {
     capa.innerHTML = `
       <div style="text-align:center; max-width:420px; width:90%; display:flex; flex-direction:column; align-items:center;">
         <img src="favicon.svg" alt="" class="boot-icono">
-        <h2 style="margin:0; font-weight:300; letter-spacing:4px; font-size:1.8rem; color:var(--text-strong);">
+        <h2 style="margin:0; font-weight:300; letter-spacing:4px; font-size:var(--t-2xl); color:var(--text-strong);">
           LOGÍSTICA <span style="font-weight:900; background:linear-gradient(to right, var(--sky-deep), var(--primary-2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">DEAM1830</span>
         </h2>
         <div class="premium-progress-bar"><div class="premium-progress-fill"></div></div>
-        <p style="margin-top:1.5rem; font-size:0.85rem; opacity:0.6; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:var(--text-muted);">
+        <p style="margin-top:1.5rem; font-size:var(--t-md); opacity:0.6; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:var(--text-muted);">
           INICIANDO ENTORNO ${version}...
         </p>
       </div>`;
@@ -152,7 +152,7 @@ window.showPremiumAlert = (title, message, type = 'error') => {
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    font-size: 2.2rem;
+                    font-size:var(--t-2xl);
                     margin-bottom: 1.5rem;
                     box-shadow: 0 0 20px ${glowColor};
                     animation: pulse-icon 2s infinite;
@@ -163,7 +163,7 @@ window.showPremiumAlert = (title, message, type = 'error') => {
                 <h3 style="
                     margin: 0 0 0.8rem 0;
                     color: var(--text-strong);
-                    font-size: 1.3rem;
+                    font-size:var(--t-xl);
                     font-weight: 800;
                     letter-spacing: 1px;
                     text-transform: uppercase;
@@ -175,7 +175,7 @@ window.showPremiumAlert = (title, message, type = 'error') => {
                 <p style="
                     margin: 0 0 2rem 0;
                     color: var(--text-muted);
-                    font-size: 0.9rem;
+                    font-size:var(--t-md);
                     line-height: 1.6;
                     font-weight: 500;
                     font-family: var(--font-ui);
@@ -190,7 +190,7 @@ window.showPremiumAlert = (title, message, type = 'error') => {
                     border-radius: 12px;
                     background: linear-gradient(135deg, ${accentColor} 0%, var(--on-accent) 150%);
                     color: var(--text-strong);
-                    font-size: 0.9rem;
+                    font-size:var(--t-md);
                     font-weight: 700;
                     letter-spacing: 1px;
                     cursor: pointer;
@@ -295,7 +295,7 @@ window.showPremiumConfirm = (title, message, type = 'warning') => {
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    font-size: 2.2rem;
+                    font-size:var(--t-2xl);
                     margin-bottom: 1.5rem;
                     box-shadow: 0 0 20px ${glowColor};
                     animation: pulse-icon-confirm 2s infinite;
@@ -306,7 +306,7 @@ window.showPremiumConfirm = (title, message, type = 'warning') => {
                 <h3 style="
                     margin: 0 0 0.8rem 0;
                     color: var(--text-strong);
-                    font-size: 1.3rem;
+                    font-size:var(--t-xl);
                     font-weight: 800;
                     letter-spacing: 1px;
                     text-transform: uppercase;
@@ -318,7 +318,7 @@ window.showPremiumConfirm = (title, message, type = 'warning') => {
                 <p style="
                     margin: 0 0 2rem 0;
                     color: var(--text-muted);
-                    font-size: 0.9rem;
+                    font-size:var(--t-md);
                     line-height: 1.6;
                     font-weight: 500;
                     font-family: var(--font-ui);
@@ -338,7 +338,7 @@ window.showPremiumConfirm = (title, message, type = 'warning') => {
                         border-radius: 12px;
                         background: rgba(var(--ink-rgb), 0.05);
                         color: var(--text-soft);
-                        font-size: 0.9rem;
+                        font-size:var(--t-md);
                         font-weight: 700;
                         letter-spacing: 1px;
                         cursor: pointer;
@@ -356,7 +356,7 @@ window.showPremiumConfirm = (title, message, type = 'warning') => {
                         border-radius: 12px;
                         background: linear-gradient(135deg, ${accentColor} 0%, var(--on-accent) 150%);
                         color: var(--text-strong);
-                        font-size: 0.9rem;
+                        font-size:var(--t-md);
                         font-weight: 700;
                         letter-spacing: 1px;
                         cursor: pointer;
@@ -432,7 +432,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0391';
+      this.APP_VERSION = 'v29.0392';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -603,17 +603,17 @@ class App {
       capa.style.cssText = 'position:fixed; inset:0; z-index:2147483000; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(var(--bg-rgb), .72); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);';
       capa.innerHTML = `
         <div style="width:100%; max-width:400px; text-align:center; background:rgba(var(--bg-rgb), .98); border:1px solid ${e.borde}; border-radius:16px; padding:28px 26px 22px; box-shadow:0 20px 60px rgba(var(--shadow-rgb), .6); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-          <span style="display:inline-block; font-size:10px; font-weight:800; letter-spacing:.09em; padding:3px 10px; border-radius:12px; margin-bottom:12px; background:${e.chipBg}; color:${e.chipCol}; border:1px solid ${e.chipBor};">${e.chip}</span>
-          <div style="width:44px; height:44px; margin:0 auto 14px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; background:${e.icoBg}; border:1px solid ${e.icoBor}; color:${e.chipCol};">${e.ico}</div>
-          <h3 style="color:var(--text-main); font-size:16.5px; font-weight:700; margin:0 0 8px;">${e.titulo}</h3>
-          ${obligatorio ? `<div style="font-size:30px; font-weight:800; color:var(--danger-pale); margin:2px 0 12px; font-variant-numeric:tabular-nums;"><span id="pulse-cuenta">20</span> <span style="font-size:14px; color:var(--text-muted); font-weight:600;">segundos</span></div>` : ''}
-          <p style="color:var(--text-muted); font-size:13px; line-height:1.6; margin:0 0 14px;">${e.texto}</p>
-          <div style="display:inline-flex; align-items:center; gap:9px; margin-bottom:20px; background:rgba(var(--ink-rgb), .04); border:1px solid rgba(var(--ink-rgb), .1); border-radius:20px; padding:5px 14px; font-size:12px; color:var(--text-dim);">
+          <span style="display:inline-block; font-size:var(--t-xs); font-weight:800; letter-spacing:.09em; padding:3px 10px; border-radius:12px; margin-bottom:12px; background:${e.chipBg}; color:${e.chipCol}; border:1px solid ${e.chipBor};">${e.chip}</span>
+          <div style="width:44px; height:44px; margin:0 auto 14px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:var(--t-xl); background:${e.icoBg}; border:1px solid ${e.icoBor}; color:${e.chipCol};">${e.ico}</div>
+          <h3 style="color:var(--text-main); font-size:var(--t-lg); font-weight:700; margin:0 0 8px;">${e.titulo}</h3>
+          ${obligatorio ? `<div style="font-size:var(--t-2xl); font-weight:800; color:var(--danger-pale); margin:2px 0 12px; font-variant-numeric:tabular-nums;"><span id="pulse-cuenta">20</span> <span style="font-size:var(--t-md); color:var(--text-muted); font-weight:600;">segundos</span></div>` : ''}
+          <p style="color:var(--text-muted); font-size:var(--t-sm); line-height:1.6; margin:0 0 14px;">${e.texto}</p>
+          <div style="display:inline-flex; align-items:center; gap:9px; margin-bottom:20px; background:rgba(var(--ink-rgb), .04); border:1px solid rgba(var(--ink-rgb), .1); border-radius:20px; padding:5px 14px; font-size:var(--t-sm); color:var(--text-dim);">
             ${this.APP_VERSION} &nbsp;→&nbsp; <b style="color:var(--brand-pale);">${publicada}</b>
           </div>
           <div style="display:flex; gap:10px;">
-            ${obligatorio ? '' : '<button id="pulse-despues" style="flex:1; background:transparent; border:1px solid rgba(var(--ink-rgb), .18); color:var(--text-muted); padding:11px; border-radius:9px; font-size:13.5px; font-weight:600; cursor:pointer;">Después</button>'}
-            <button id="pulse-ahora" style="flex:1; background:${obligatorio ? 'var(--danger)' : 'var(--btn-fill)'}; border:1px solid ${obligatorio ? 'var(--danger)' : 'var(--btn-fill)'}; color:${obligatorio ? 'var(--on-accent)' : 'var(--on-primary)'}; padding:11px; border-radius:9px; font-size:13.5px; font-weight:700; cursor:pointer;">Actualizar ahora</button>
+            ${obligatorio ? '' : '<button id="pulse-despues" style="flex:1; background:transparent; border:1px solid rgba(var(--ink-rgb), .18); color:var(--text-muted); padding:11px; border-radius:9px; font-size:var(--t-md); font-weight:600; cursor:pointer;">Después</button>'}
+            <button id="pulse-ahora" style="flex:1; background:${obligatorio ? 'var(--danger)' : 'var(--btn-fill)'}; border:1px solid ${obligatorio ? 'var(--danger)' : 'var(--btn-fill)'}; color:${obligatorio ? 'var(--on-accent)' : 'var(--on-primary)'}; padding:11px; border-radius:9px; font-size:var(--t-md); font-weight:700; cursor:pointer;">Actualizar ahora</button>
           </div>
           <div style="margin-top:13px; font-size:11.5px; color:var(--text-dim);">${e.pie}</div>
         </div>`;

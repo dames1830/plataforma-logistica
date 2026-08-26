@@ -19,18 +19,18 @@ const pct = (a, b) => b ? (100 * a / b).toFixed(1) : '0.0';
 const panel = (titulo, bajada, cuerpo, pie, color = 'rgba(var(--ink-rgb), 0.06)') => `
   <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid ${color};">
     <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.06);">
-      <h3 style="margin:0; color:var(--text-strong); font-size:0.9rem; font-weight:900; letter-spacing:0.5px;">${titulo}</h3>
-      ${bajada ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px; line-height:1.6;">${bajada}</div>` : ''}
+      <h3 style="margin:0; color:var(--text-strong); font-size:var(--t-md); font-weight:900; letter-spacing:0.5px;">${titulo}</h3>
+      ${bajada ? `<div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:3px; line-height:1.6;">${bajada}</div>` : ''}
     </div>
     ${cuerpo}
-    ${pie ? `<div style="padding:0.75rem 1.3rem; background:rgba(var(--shadow-rgb), 0.25); font-size:0.68rem; color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">${pie}</div>` : ''}
+    ${pie ? `<div style="padding:0.75rem 1.3rem; background:rgba(var(--shadow-rgb), 0.25); font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">${pie}</div>` : ''}
   </div>`;
 
-const th = (t, der) => `<th style="padding:0.55rem 0.9rem; text-align:${der ? 'right' : 'left'}; font-weight:700; color:var(--text-muted); font-size:0.7rem;">${t}</th>`;
+const th = (t, der) => `<th style="padding:0.55rem 0.9rem; text-align:${der ? 'right' : 'left'}; font-weight:700; color:var(--text-muted); font-size:var(--t-xs);">${t}</th>`;
 const td = (t, der, extra = '') => `<td style="padding:0.5rem 0.9rem; text-align:${der ? 'right' : 'left'}; ${extra}">${t}</td>`;
 const tabla = (cab, filas, alto) => `
   <div style="overflow:auto; ${alto ? `max-height:${alto};` : ''}">
-    <table style="width:100%; border-collapse:collapse; font-size:0.77rem; color:var(--text-grey);">
+    <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-grey);">
       <thead style="position:sticky; top:0; background:var(--panel-solid);"><tr>${cab}</tr></thead>
       <tbody>${filas}</tbody>
     </table>
@@ -105,12 +105,12 @@ export const cuadroRecorrido = (R) => {
     return panel('🚶 EL RECORRIDO',
         `<b style="color:var(--warning-soft);">${r.pct}%</b> de los contenedores obliga a visitar más de una zona.`,
         `<div style="padding:1rem 1.3rem; display:flex; gap:1rem; flex-wrap:wrap;">
-           <div style="flex:1; min-width:150px;"><div style="font-size:1.4rem; font-weight:900; color:var(--text-strong);">${F(r.contenedores)}</div>
-             <div style="font-size:0.68rem; color:var(--text-muted);">contenedores armados</div></div>
-           <div style="flex:1; min-width:150px;"><div style="font-size:1.4rem; font-weight:900; color:var(--warning-soft);">${F(r.con_varias_zonas)}</div>
-             <div style="font-size:0.68rem; color:var(--text-muted);">obligaron a cambiar de zona</div></div>
-           <div style="flex:1; min-width:150px;"><div style="font-size:1.4rem; font-weight:900; color:var(--text-strong);">${F(r.lineas_en_multi)}</div>
-             <div style="font-size:0.68rem; color:var(--text-muted);">líneas dentro de esos</div></div>
+           <div style="flex:1; min-width:150px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${F(r.contenedores)}</div>
+             <div style="font-size:var(--t-xs); color:var(--text-muted);">contenedores armados</div></div>
+           <div style="flex:1; min-width:150px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--warning-soft);">${F(r.con_varias_zonas)}</div>
+             <div style="font-size:var(--t-xs); color:var(--text-muted);">obligaron a cambiar de zona</div></div>
+           <div style="flex:1; min-width:150px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${F(r.lineas_en_multi)}</div>
+             <div style="font-size:var(--t-xs); color:var(--text-muted);">líneas dentro de esos</div></div>
          </div>`
         + tabla(th('El contenedor se armó en') + th('') + th('Contenedores', 1) + th('%', 1), filas),
         'Un contenedor que se arma en una sola zona no obliga a caminar entre pasillos. Cuantos más crucen zonas, más tiempo se va en el traslado y no en sacar.');
@@ -131,12 +131,12 @@ export const cuadroRepetida = (R) => {
     return panel('📍 UBICACIÓN REPETIDA',
         `<b style="color:var(--sky);">${r.pct}%</b> de las visitas son volver a un sitio donde ya se estuvo.`,
         `<div style="padding:1rem 1.3rem; display:flex; gap:1rem; flex-wrap:wrap;">
-           <div style="flex:1; min-width:140px;"><div style="font-size:1.4rem; font-weight:900; color:var(--text-strong);">${F(r.visitas)}</div>
-             <div style="font-size:0.68rem; color:var(--text-muted);">visitas en total</div></div>
-           <div style="flex:1; min-width:140px;"><div style="font-size:1.4rem; font-weight:900; color:var(--text-strong);">${F(r.ubicaciones)}</div>
-             <div style="font-size:0.68rem; color:var(--text-muted);">ubicaciones distintas</div></div>
-           <div style="flex:1; min-width:140px;"><div style="font-size:1.4rem; font-weight:900; color:var(--sky);">${F(r.repetidas)}</div>
-             <div style="font-size:0.68rem; color:var(--text-muted);">visitas repetidas</div></div>
+           <div style="flex:1; min-width:140px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${F(r.visitas)}</div>
+             <div style="font-size:var(--t-xs); color:var(--text-muted);">visitas en total</div></div>
+           <div style="flex:1; min-width:140px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${F(r.ubicaciones)}</div>
+             <div style="font-size:var(--t-xs); color:var(--text-muted);">ubicaciones distintas</div></div>
+           <div style="flex:1; min-width:140px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--sky);">${F(r.repetidas)}</div>
+             <div style="font-size:var(--t-xs); color:var(--text-muted);">visitas repetidas</div></div>
          </div>`
         + tabla(th('A dónde más se volvió') + th('') + th('Visitas', 1), filas),
         'Las ubicaciones distintas del período son la <b style="color:rgba(var(--ink-rgb), 0.6);">unión</b>, no la suma: una a la que se fue los nueve días es una sola ubicación, no nueve.');
@@ -153,7 +153,7 @@ export const cuadroCorridas = (R) => {
           ${td(F(x.lineas), true)}
           ${td(`<b style="color:var(--text-strong);">${F(x.pares)}</b>`, true)}
           ${td(x.personas, true, 'color:var(--text-muted);')}
-          ${td(`${x.desde}–${x.hasta}`, true, 'color:var(--text-muted); font-size:0.72rem;')}
+          ${td(`${x.desde}–${x.hasta}`, true, 'color:var(--text-muted); font-size:var(--t-xs);')}
           ${td(x.minutos + ' min', true, 'color:var(--text-muted);')}
         </tr>`).join('');
     return panel('🌊 LAS CORRIDAS MÁS GRANDES',
@@ -172,9 +172,9 @@ export const cuadroArticulos = (R) => {
         <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
           ${td(`<span style="color:${i < 3 ? 'var(--yellow)' : 'var(--text-muted)'}; font-weight:800;">${i + 1}</span>`)}
           ${td(`<b style="color:var(--text-strong);">${esc(x.codigo)}</b>`)}
-          ${td(esc(x.desc || '').slice(0, 46), false, 'color:var(--text-muted); font-size:0.72rem;')}
+          ${td(esc(x.desc || '').slice(0, 46), false, 'color:var(--text-muted); font-size:var(--t-xs);')}
           ${td(esc(x.marca), false, 'color:var(--text-muted);')}
-          ${td(esc(x.coleccion), false, 'color:var(--text-muted); font-size:0.72rem;')}
+          ${td(esc(x.coleccion), false, 'color:var(--text-muted); font-size:var(--t-xs);')}
           ${td(barra(x.pares, max, 'var(--violet-soft)'), false, 'width:14%;')}
           ${td(`<b style="color:var(--text-strong);">${F(x.pares)}</b>`, true)}
           ${td(F(x.lineas), true, 'color:var(--text-muted);')}
@@ -279,8 +279,8 @@ export const cuadroQuePaso = (R, segmento, ayer) => {
     if (!m.length) return '';
     const filas = m.map(x => `
         <div style="padding:0.8rem 1.3rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.04); border-left:3px solid ${COLOR_MSG[x.tipo]};">
-          <div style="font-size:0.82rem; font-weight:800; color:var(--text-strong); margin-bottom:3px;">${x.t}</div>
-          <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.75;">${x.d}</div>
+          <div style="font-size:var(--t-sm); font-weight:800; color:var(--text-strong); margin-bottom:3px;">${x.t}</div>
+          <div style="font-size:var(--t-sm); color:var(--text-muted); line-height:1.75;">${x.d}</div>
         </div>`).join('');
     return panel('💬 QUÉ PASÓ EN ESTE PERÍODO',
         'Sale de los propios números: si algo no aplica, no aparece.', filas, '');

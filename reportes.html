@@ -20,7 +20,7 @@ window.addEventListener('unhandledrejection', function(event) {
 </script>
 
   <!-- ENTORNO: decide produccion vs pruebas. DEBE ir antes que cualquier otro script. -->
-  <script src="js/env.js?v=29.0391"></script>
+  <script src="js/env.js?v=29.0392"></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -31,6 +31,12 @@ window.addEventListener('unhandledrejection', function(event) {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet" />
   <style>
     :root {
+      /* La escala de letra, la misma que la plataforma. Va tambien aca porque
+         marcas.js lo comparten las dos pantallas y esta no carga temas.css:
+         sin estos seis valores el reporte publico se quedaria sin tamaños. */
+      --t-xs:  0.75rem;   --t-sm:  0.875rem;  --t-md:  0.9375rem;
+      --t-lg:  1.125rem;  --t-xl:  1.5rem;    --t-2xl: 2.125rem;
+
       --bg: #FAFAF8;
       --surface: #FFFFFF;
       --surface2: #F4F1EC;
@@ -261,6 +267,6 @@ window.addEventListener('unhandledrejection', function(event) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-  <script type="module" src="js/views/reportes_publicos.js?v=29.0391"></script>
+  <script type="module" src="js/views/reportes_publicos.js?v=29.0392"></script>
 </body>
 </html>

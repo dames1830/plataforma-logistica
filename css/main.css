@@ -57,10 +57,10 @@ body {
 
 /* Form Elements */
 .input-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
-.input-group label { font-size: 0.875rem; color: var(--text-muted); font-weight: 500; }
+.input-group label { font-size:var(--t-md); color: var(--text-muted); font-weight: 500; }
 .input-group input, .input-group select {
   width: 100%; background: var(--panel-solid); border: 1px solid var(--border);
-  border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-main); font-size: 1rem;
+  border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-main); font-size:var(--t-lg);
   transition: all 0.3s ease; outline: none;
   color-scheme: var(--scheme); 
 }
@@ -72,13 +72,13 @@ body {
 .custom-select-container { position: relative; width: 100%; }
 .custom-select-trigger {
   width: 100%; background: var(--panel-solid); border: 1px solid var(--border);
-  border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-main); font-size: 1rem;
+  border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-main); font-size:var(--t-lg);
   cursor: pointer; display: flex; justify-content: space-between; align-items: center;
   transition: all 0.2s ease;
 }
 .custom-select-trigger:hover { border-color: var(--primary); }
 .custom-select-trigger::after {
-  content: '▼'; font-size: 0.7rem; color: var(--text-muted); transition: transform 0.2s;
+  content: '▼'; font-size:var(--t-xs); color: var(--text-muted); transition: transform 0.2s;
 }
 .custom-select-container.open .custom-select-trigger::after { transform: rotate(180deg); }
 
@@ -93,7 +93,7 @@ body {
 @keyframes selectFade { from { opacity:0; transform: translateY(-5px); } to { opacity:1; transform: translateY(0); } }
 
 .custom-option {
-  padding: 0.8rem 1.2rem; cursor: pointer; color: var(--text-main); font-size: 0.95rem;
+  padding: 0.8rem 1.2rem; cursor: pointer; color: var(--text-main); font-size:var(--t-md);
   transition: background 0.2s; border-bottom: 1px solid rgba(var(--ink-rgb), 0.03);
 }
 .custom-option:last-child { border-bottom: none; }
@@ -179,7 +179,7 @@ select option:hover {
 }
 
 .pill-input-group label {
-  font-size: 0.8rem;
+  font-size:var(--t-sm);
   font-weight: 700;
   color: var(--text-muted);
   margin-bottom: 0.5rem;
@@ -199,7 +199,7 @@ select option:hover {
   left: 1.25rem;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1.05rem;
+  font-size:var(--t-lg);
   color: var(--text-muted);
   display: flex;
   align-items: center;
@@ -225,7 +225,7 @@ select option:hover {
   border-radius: 50px !important;
   padding: 0.9rem 1.25rem 0.9rem 3.4rem !important;
   color: var(--text-main) !important;
-  font-size: 1rem !important;
+  font-size:var(--t-lg) !important;
   font-weight: 600 !important;
   outline: none !important;
   box-shadow: inset 0 2px 4px rgba(var(--shadow-rgb), 0.2), 0 4px 10px rgba(var(--shadow-rgb), 0.1) !important;
@@ -236,7 +236,7 @@ select option:hover {
 .pill-input-wrapper input::placeholder {
   color: var(--text-dim) !important;
   font-weight: 500 !important;
-  font-size: 0.95rem !important;
+  font-size:var(--t-md) !important;
 }
 
 .pill-input-wrapper input:focus {
@@ -258,7 +258,7 @@ select option:hover {
   padding: 0.95rem !important;
   border-radius: 50px !important;
   font-weight: 800 !important;
-  font-size: 1.05rem !important;
+  font-size:var(--t-lg) !important;
   letter-spacing: 1.5px !important;
   text-transform: uppercase !important;
   cursor: pointer !important;
@@ -291,7 +291,7 @@ select option:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.85rem;
+  font-size:var(--t-md);
   font-weight: 600;
   margin-bottom: 1.5rem;
   padding: 0 0.5rem;
@@ -330,7 +330,7 @@ select option:hover {
 .remember-me-checkbox:checked::after {
   content: '✓';
   color: var(--text-strong);
-  font-size: 0.7rem;
+  font-size:var(--t-xs);
   font-weight: 800;
 }
 
@@ -400,7 +400,7 @@ select option:hover {
 
 .error-message {
   color: var(--danger);
-  font-size: 0.875rem;
+  font-size:var(--t-md);
   margin-top: 0.5rem;
   text-align: center;
   min-height: 1.2rem;
@@ -416,11 +416,11 @@ select option:hover {
   padding: 1rem 2rem; background: var(--bg-card); border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.topbar-brand h2 { font-size: 1.25rem; color: var(--text-strong); margin: 0; }
+.topbar-brand h2 { font-size:var(--t-xl); color: var(--text-strong); margin: 0; }
 .user-profile { display: flex; align-items: center; gap: 1rem; }
 .user-details { display: flex; flex-direction: column; text-align: right; }
-.user-name { font-weight: 600; color: var(--text-main); font-size: 0.95rem; }
-.user-role { color: var(--text-muted); font-size: 0.75rem; text-transform: capitalize; margin-top: 2px;}
+.user-name { font-weight: 600; color: var(--text-main); font-size:var(--t-md); }
+.user-role { color: var(--text-muted); font-size:var(--t-sm); text-transform: capitalize; margin-top: 2px;}
 
 /* Custom Logout btn matching top menu */
 .btn-logout {
@@ -441,7 +441,7 @@ select option:hover {
 .nav-item {
   display: flex; align-items: center; padding: 1rem 1.2rem; color: var(--text-muted);
   text-decoration: none; cursor: pointer; transition: all 0.2s ease;
-  border-bottom: 3px solid transparent; font-weight: 500; font-size: 0.9rem; white-space: nowrap;
+  border-bottom: 3px solid transparent; font-weight: 500; font-size:var(--t-md); white-space: nowrap;
 }
 .nav-item:hover, .nav-item.active {
   color: var(--text-main); border-bottom: 3px solid var(--primary);
@@ -452,7 +452,7 @@ select option:hover {
 .main-wrapper { flex-grow: 1; padding: 1.5rem 2rem; overflow-y: auto; }
 
 .tab-header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end;}
-.tab-header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.2rem;}
+.tab-header h1 { font-size:var(--t-2xl); font-weight: 700; margin-bottom: 0.2rem;}
 
 /* CSV Upload Area */
 .upload-area {
@@ -469,9 +469,9 @@ select option:hover {
 /* KPI Cards */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
 .kpi-card { padding: 1.5rem; border-radius: 12px; background: rgba(var(--card-rgb), 0.5); border: 1px solid var(--border); display: flex; flex-direction: column; }
-.kpi-title { font-size: 0.875rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; margin-bottom: 0.5rem; }
-.kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-main); }
-.kpi-subtitle { font-size: 0.75rem; color: var(--success); margin-top: 0.5rem; }
+.kpi-title { font-size:var(--t-md); color: var(--text-muted); font-weight: 500; text-transform: uppercase; margin-bottom: 0.5rem; }
+.kpi-value { font-size:var(--t-2xl); font-weight: 700; color: var(--text-main); }
+.kpi-subtitle { font-size:var(--t-sm); color: var(--success); margin-top: 0.5rem; }
 
 /* Charts & Dashboard Body */
 .dashboard-body { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 2rem; }
@@ -485,7 +485,7 @@ select option:hover {
 .data-table-container { width: 100%; overflow-x: auto; background: rgba(var(--card-rgb), 0.5); border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 0; border-bottom-right-radius: 0;}
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
-.data-table th { font-weight: 700; color: var(--text-main); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; background: var(--panel-solid); position: sticky; top: -1px; z-index: 10; backdrop-filter: blur(10px); }
+.data-table th { font-weight: 700; color: var(--text-main); font-size:var(--t-sm); text-transform: uppercase; letter-spacing: 0.05em; background: var(--panel-solid); position: sticky; top: -1px; z-index: 10; backdrop-filter: blur(10px); }
 
 /* Highlight para CUALQUIER fila de tabla en el sistema */
 table tr { transition: background 0.2s ease, transform 0.1s ease; }
@@ -498,7 +498,7 @@ table tr:hover {
   box-shadow: inset 4px 0 0 var(--primary);
 }
 
-.status-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+.status-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size:var(--t-sm); font-weight: 600; }
 .status-pending { background: rgba(var(--yellow-rgb), 0.2); color: var(--warning-soft); }
 .status-completed { background: rgba(var(--success-rgb), 0.2); color: var(--success-soft); }
 .status-issue { background: rgba(var(--danger-rgb), 0.2); color: var(--danger-pale); }
@@ -506,7 +506,7 @@ table tr:hover {
 /* Sub-Navigation Tabs */
 .sub-nav-item {
   display: inline-flex; align-items: center; padding: 0.6rem 1.2rem;
-  cursor: pointer; font-size: 0.875rem; font-weight: 500;
+  cursor: pointer; font-size:var(--t-md); font-weight: 500;
   color: var(--text-muted); text-decoration: none;
   border-bottom: 2px solid transparent;
   transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
@@ -535,7 +535,7 @@ table tr:hover {
 /* Performance sub-tabs & RF sub-tabs (Level 3 & 4) */
 .perf-sub-item {
   padding: 0.5rem 0.2rem;
-  font-size: 0.8rem;
+  font-size:var(--t-sm);
   font-weight: 500;
   color: var(--text-muted) !important;
   text-decoration: none;
@@ -585,7 +585,7 @@ table tr:hover {
   }
   .nav-item {
     padding: 0.75rem 0.6rem;
-    font-size: 0.8rem;
+    font-size:var(--t-sm);
   }
   
   .main-wrapper {
@@ -599,7 +599,7 @@ table tr:hover {
     margin-bottom: 1.25rem;
   }
   .tab-header h1 {
-    font-size: 1.4rem;
+    font-size:var(--t-xl);
   }
   
   /* Upload Area Mobile */
@@ -618,7 +618,7 @@ table tr:hover {
     padding: 1rem;
   }
   .kpi-value {
-    font-size: 1.5rem;
+    font-size:var(--t-xl);
   }
   
   .dashboard-body {
@@ -632,7 +632,7 @@ table tr:hover {
   }
   .data-table th, .data-table td {
     padding: 0.75rem 0.5rem;
-    font-size: 0.75rem;
+    font-size:var(--t-sm);
   }
   
   /* Mobile Chofer Portal / Liquidacion Card Elements */
@@ -654,7 +654,7 @@ table tr:hover {
   
   .chofer-btn {
     padding: 0.85rem !important;
-    font-size: 0.9rem !important;
+    font-size:var(--t-md) !important;
     border-radius: 12px !important;
     display: flex;
     align-items: center;
@@ -676,7 +676,7 @@ table tr:hover {
   /* Hide text labels on sub-tabs on ultra-small screens */
   .sub-nav-item {
     padding: 0.5rem;
-    font-size: 0.75rem;
+    font-size:var(--t-sm);
   }
 }
 

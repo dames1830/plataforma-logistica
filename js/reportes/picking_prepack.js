@@ -18,7 +18,7 @@
 import {
     EQUIVALENCIA_PREPACK, juntarCronometros, tiempoDe, tiempoSituacion,
     escaleraDe, embudoDe, TOPE_HUECO_SEG
-} from './picking.js?v=29.0391';
+} from './picking.js?v=29.0392';
 
 const F = (n) => Number(n || 0).toLocaleString('es-PE');
 const DMY = (d) => String(d || '').split('-').reverse().join('/');
@@ -31,17 +31,17 @@ const pct = (a, b) => b ? (100 * a / b).toFixed(1) : '0.0';
 const seccion = (n, titulo, bajada, cuerpo) => `
   <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(var(--ink-rgb), 0.07); margin-bottom:1.1rem;">
     <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.06); display:flex; align-items:center; gap:11px;">
-      <span style="background:rgba(var(--primary2-rgb), 0.18); color:var(--brand-pale); width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:900; flex:none;">${n}</span>
+      <span style="background:rgba(var(--primary2-rgb), 0.18); color:var(--brand-pale); width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:var(--t-sm); font-weight:900; flex:none;">${n}</span>
       <div>
-        <h3 style="margin:0; color:var(--text-strong); font-size:0.92rem; font-weight:900; letter-spacing:0.4px;">${titulo}</h3>
-        ${bajada ? `<div style="font-size:0.71rem; color:var(--text-muted); margin-top:2px; line-height:1.6;">${bajada}</div>` : ''}
+        <h3 style="margin:0; color:var(--text-strong); font-size:var(--t-md); font-weight:900; letter-spacing:0.4px;">${titulo}</h3>
+        ${bajada ? `<div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:2px; line-height:1.6;">${bajada}</div>` : ''}
       </div>
     </div>
     <div style="padding:1.1rem 1.3rem;">${cuerpo}</div>
   </div>`;
 
 const remate = (texto, color = 'var(--success-soft)') => `
-  <div style="margin-top:0.9rem; padding:0.7rem 1rem; background:rgba(var(--ink-rgb), 0.03); border-left:3px solid ${color}; border-radius:8px; font-size:0.8rem; color:var(--text-strong); font-weight:700; line-height:1.6;">
+  <div style="margin-top:0.9rem; padding:0.7rem 1rem; background:rgba(var(--ink-rgb), 0.03); border-left:3px solid ${color}; border-radius:8px; font-size:var(--t-sm); color:var(--text-strong); font-weight:700; line-height:1.6;">
     ${texto}
   </div>`;
 
@@ -56,10 +56,10 @@ const sec1 = (C) => {
     const total = C.mov.suelto + C.mov.prepack;
     const caja = (titulo, texto, mov, pie, color) => `
       <div style="flex:1; min-width:260px; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.07); border-top:3px solid ${color}; border-radius:12px; padding:1rem 1.1rem;">
-        <div style="font-size:0.85rem; font-weight:900; color:var(--text-strong); margin-bottom:0.5rem;">${titulo}</div>
-        <div style="font-size:0.76rem; color:var(--text-muted); line-height:1.8;">${texto}</div>
-        <div style="margin-top:0.7rem; font-size:0.75rem; color:${color}; font-weight:800;">${mov}</div>
-        ${pie ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">${pie}</div>` : ''}
+        <div style="font-size:var(--t-md); font-weight:900; color:var(--text-strong); margin-bottom:0.5rem;">${titulo}</div>
+        <div style="font-size:var(--t-sm); color:var(--text-muted); line-height:1.8;">${texto}</div>
+        <div style="margin-top:0.7rem; font-size:var(--t-sm); color:${color}; font-weight:800;">${mov}</div>
+        ${pie ? `<div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:2px;">${pie}</div>` : ''}
       </div>`;
     return `<div style="display:flex; gap:1rem; flex-wrap:wrap;">
       ${caja('Suelto',
@@ -87,13 +87,13 @@ const sec2 = (C, dias) => {
     }).join('');
     return `
       <div style="text-align:center; margin-bottom:1.1rem;">
-        <div style="font-size:2.4rem; font-weight:900; color:var(--success-soft); line-height:1.1;">${F(dif)}</div>
-        <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.7;">
+        <div style="font-size:var(--t-2xl); font-weight:900; color:var(--success-soft); line-height:1.1;">${F(dif)}</div>
+        <div style="font-size:var(--t-sm); color:var(--text-muted); line-height:1.7;">
           pares que salieron y el reporte no contaba — un <b style="color:var(--success-soft);">${pct(dif, C.pares_wms)}% más</b> de lo que se creía.
         </div>
       </div>
       <div style="overflow:auto;">
-        <table style="width:100%; border-collapse:collapse; font-size:0.76rem; color:var(--text-grey);">
+        <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-grey);">
           <thead><tr style="color:var(--text-muted); text-align:left;">
             <th style="padding:0.45rem 0.9rem; font-weight:700;">Jornada</th>
             <th style="padding:0.45rem 0.9rem; text-align:right; font-weight:700;">Dice el WMS</th>
@@ -117,12 +117,12 @@ const sec2 = (C, dias) => {
 const sec3 = (C) => {
     const s = tiempoDe(C, 'suelto');
     const c10 = tiempoDe(C, '10');
-    if (!s.mediana) return '<div style="color:var(--text-muted); font-size:0.8rem;">Sin mediciones en las fechas elegidas.</div>';
+    if (!s.mediana) return '<div style="color:var(--text-muted); font-size:var(--t-sm);">Sin mediciones en las fechas elegidas.</div>';
     const unoAUno = s.mediana * 10;
     const factor = c10.mediana ? (c10.mediana / s.mediana).toFixed(2) : '—';
     const barra = (rot, seg, ancho, color) => `
       <div style="margin-bottom:0.7rem;">
-        <div style="display:flex; justify-content:space-between; font-size:0.76rem; margin-bottom:4px;">
+        <div style="display:flex; justify-content:space-between; font-size:var(--t-sm); margin-bottom:4px;">
           <span style="color:rgba(var(--ink-rgb), 0.75);">${rot}</span>
           <b style="color:${color};">${seg} s</b>
         </div>
@@ -135,7 +135,7 @@ const sec3 = (C) => {
       ${barra('1 caja de 10 pares', c10.mediana || 0, 100 * (c10.mediana || 0) / unoAUno, 'var(--warning)')}
       ${barra('Esos 10 pares, uno por uno', unoAUno, 100, 'var(--danger)')}
       ${remate(`Una caja de 10 pares no cuesta 10 veces más. Cuesta <b style="color:var(--success-soft);">${factor} veces más</b>.`)}
-      <div style="margin-top:0.8rem; font-size:0.71rem; color:rgba(var(--ink-rgb), 0.35); line-height:1.7;">
+      <div style="margin-top:0.8rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35); line-height:1.7;">
         Cronometrado con el reloj del propio archivo: el hueco entre un movimiento y el siguiente es lo que costó ese movimiento.
         Se descartan los huecos de más de ${TOPE_HUECO_SEG / 60} minutos, que son paradas y no trabajo. Se usa la mediana y no el
         promedio, para que un caso raro no arrastre el número. Base: ${abrible(F(s.n) + ' movimientos', 'suelto', 'n')}.
@@ -147,7 +147,7 @@ const sec4 = (C) => {
     const pm = tiempoSituacion(C, 'prepack', 'mismo'), pc = tiempoSituacion(C, 'prepack', 'camino');
     const s = tiempoDe(C, 'suelto');
     const totalS = sm.n + sc.n, totalP = pm.n + pc.n;
-    if (!totalS || !totalP) return '<div style="color:var(--text-muted); font-size:0.8rem;">Sin mediciones suficientes.</div>';
+    if (!totalS || !totalP) return '<div style="color:var(--text-muted); font-size:var(--t-sm);">Sin mediciones suficientes.</div>';
 
     const mezcla = tiempoDe(C, 'suelto').mediana;
     const todoPrepack = (() => {
@@ -165,7 +165,7 @@ const sec4 = (C) => {
 
     const fila = (rot, sub, a, b, cuenta) => `
       <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
-        <td style="padding:0.5rem 0.9rem;">${rot}${sub ? `<div style="font-size:0.66rem; color:rgba(var(--ink-rgb), 0.3);">${sub}</div>` : ''}</td>
+        <td style="padding:0.5rem 0.9rem;">${rot}${sub ? `<div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.3);">${sub}</div>` : ''}</td>
         <td style="padding:0.5rem 0.9rem; text-align:right; color:var(--sky); font-weight:700;">${a} s</td>
         <td style="padding:0.5rem 0.9rem; text-align:right; color:var(--warning); font-weight:700;">${b} s</td>
         <td style="padding:0.5rem 0.9rem; text-align:right; color:var(--text-strong); font-weight:800;">${cuenta}</td>
@@ -174,23 +174,23 @@ const sec4 = (C) => {
     return `
       <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
         <div style="flex:1; min-width:240px; background:rgba(var(--ink-rgb), 0.03); border-radius:10px; padding:0.9rem 1rem;">
-          <div style="font-size:0.78rem; font-weight:800; color:var(--text-strong);">Ya estaba parado ahí</div>
-          <div style="font-size:1.15rem; font-weight:900; margin:4px 0; color:var(--text-strong);">${sm.mediana} s <span style="color:rgba(var(--ink-rgb), 0.3);">/</span> ${pm.mediana} s</div>
-          <div style="font-size:0.72rem; color:var(--text-muted); line-height:1.6;">Acá sí la caja cuesta más del doble: es el esfuerzo real de manipularla.</div>
+          <div style="font-size:var(--t-sm); font-weight:800; color:var(--text-strong);">Ya estaba parado ahí</div>
+          <div style="font-size:var(--t-lg); font-weight:900; margin:4px 0; color:var(--text-strong);">${sm.mediana} s <span style="color:rgba(var(--ink-rgb), 0.3);">/</span> ${pm.mediana} s</div>
+          <div style="font-size:var(--t-xs); color:var(--text-muted); line-height:1.6;">Acá sí la caja cuesta más del doble: es el esfuerzo real de manipularla.</div>
         </div>
         <div style="flex:1; min-width:240px; background:rgba(var(--ink-rgb), 0.03); border-radius:10px; padding:0.9rem 1rem;">
-          <div style="font-size:0.78rem; font-weight:800; color:var(--text-strong);">Tuvo que caminar</div>
-          <div style="font-size:1.15rem; font-weight:900; margin:4px 0; color:var(--text-strong);">${sc.mediana} s <span style="color:rgba(var(--ink-rgb), 0.3);">/</span> ${pc.mediana} s</div>
-          <div style="font-size:0.72rem; color:var(--text-muted); line-height:1.6;">La diferencia casi desaparece: la caminata pesa igual para los dos.</div>
+          <div style="font-size:var(--t-sm); font-weight:800; color:var(--text-strong);">Tuvo que caminar</div>
+          <div style="font-size:var(--t-lg); font-weight:900; margin:4px 0; color:var(--text-strong);">${sc.mediana} s <span style="color:rgba(var(--ink-rgb), 0.3);">/</span> ${pc.mediana} s</div>
+          <div style="font-size:var(--t-xs); color:var(--text-muted); line-height:1.6;">La diferencia casi desaparece: la caminata pesa igual para los dos.</div>
         </div>
       </div>
       ${remate('El trabajo está en <b style="color:var(--success-soft);">llegar al sitio</b>, no en levantar la caja.')}
 
-      <div style="margin-top:1.2rem; font-size:0.78rem; font-weight:900; color:var(--text-strong); letter-spacing:0.4px;">PERO NO CAMINAN LO MISMO</div>
-      <div style="font-size:0.73rem; color:var(--text-muted); margin:4px 0 0.7rem; line-height:1.7;">
+      <div style="margin-top:1.2rem; font-size:var(--t-sm); font-weight:900; color:var(--text-strong); letter-spacing:0.4px;">PERO NO CAMINAN LO MISMO</div>
+      <div style="font-size:var(--t-sm); color:var(--text-muted); margin:4px 0 0.7rem; line-height:1.7;">
         Un par suelto se saca muchas veces seguidas de la misma ubicación. Una caja, casi nunca: obliga a moverse casi siempre.
       </div>
-      <table style="width:100%; border-collapse:collapse; font-size:0.76rem; color:var(--text-grey); margin-bottom:1rem;">
+      <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-grey); margin-bottom:1rem;">
         <thead><tr style="color:var(--text-muted); text-align:left;">
           <th style="padding:0.45rem 0.9rem; font-weight:700;"></th>
           <th style="padding:0.45rem 0.9rem; text-align:right; font-weight:700;">Ya estaba ahí</th>
@@ -210,11 +210,11 @@ const sec4 = (C) => {
         </tbody>
       </table>
 
-      <div style="font-size:0.73rem; color:var(--text-muted); margin-bottom:0.6rem; line-height:1.7;">
+      <div style="font-size:var(--t-sm); color:var(--text-muted); margin-bottom:0.6rem; line-height:1.7;">
         Por eso el factor cambia tanto según la situación — y por eso el número real no es ninguno de los dos extremos,
         sino la mezcla que de verdad ocurre:
       </div>
-      <table style="width:100%; border-collapse:collapse; font-size:0.76rem; color:var(--text-grey);">
+      <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-grey);">
         <thead><tr style="color:var(--text-muted); text-align:left;">
           <th style="padding:0.45rem 0.9rem; font-weight:700;">Situación</th>
           <th style="padding:0.45rem 0.9rem; text-align:right; font-weight:700;">Un suelto tarda</th>
@@ -227,7 +227,7 @@ const sec4 = (C) => {
           ${fila('Todo mezclado', 'como pasa de verdad', mezcla, todoPrepack, `${todoPrepack} ÷ ${mezcla} = ${(todoPrepack / mezcla).toFixed(2)}`)}
         </tbody>
       </table>
-      <div style="margin-top:0.8rem; font-size:0.72rem; color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">
+      <div style="margin-top:0.8rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">
         Ya parado en el sitio, la caja cuesta el doble que un par. Pero en cuanto hay que caminar, la caminata pesa igual
         para los dos y la distancia entre ellos se achica.
         <br><b style="color:rgba(var(--ink-rgb), 0.6);">Y ahí aparece una palanca de layout:</b> una caja que obliga a moverse tarda
@@ -251,11 +251,11 @@ const sec5 = (C) => {
           <td style="padding:0.5rem 0.9rem; text-align:right;">${abrible(F(t.n), String(c), 'n')}</td>
           <td style="padding:0.5rem 0.9rem; text-align:right;">${abrible(t.mediana + ' s', String(c), 'seg')}</td>
           <td style="padding:0.5rem 0.9rem; text-align:right; font-weight:900; color:${flojo ? 'rgba(var(--ink-rgb), 0.35)' : 'var(--success-soft)'};">${usa ? usa.toFixed(2) : '—'}</td>
-          <td style="padding:0.5rem 0.9rem; font-size:0.68rem; color:rgba(var(--ink-rgb), 0.35);">${flojo ? 'muestra chica: se usa el general' : ''}</td>
+          <td style="padding:0.5rem 0.9rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35);">${flojo ? 'muestra chica: se usa el general' : ''}</td>
         </tr>`;
     }).join('');
     return `
-      <table style="width:100%; border-collapse:collapse; font-size:0.77rem; color:var(--text-grey);">
+      <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-grey);">
         <thead><tr style="color:var(--text-muted); text-align:left;">
           <th style="padding:0.45rem 0.9rem; font-weight:700;">Caja de</th>
           <th style="padding:0.45rem 0.9rem; text-align:right; font-weight:700;">Cuántas se midieron</th>
@@ -269,12 +269,12 @@ const sec5 = (C) => {
             <td style="padding:0.5rem 0.9rem; text-align:right;">${abrible(F(s.n), 'suelto', 'n')}</td>
             <td style="padding:0.5rem 0.9rem; text-align:right;">${abrible(s.mediana + ' s', 'suelto', 'seg')}</td>
             <td style="padding:0.5rem 0.9rem; text-align:right; font-weight:900; color:var(--sky);">1.00</td>
-            <td style="padding:0.5rem 0.9rem; font-size:0.68rem; color:rgba(var(--ink-rgb), 0.35);">la referencia</td>
+            <td style="padding:0.5rem 0.9rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35);">la referencia</td>
           </tr>
           ${filas}
         </tbody>
       </table>
-      <div style="margin-top:0.8rem; font-size:0.71rem; color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">
+      <div style="margin-top:0.8rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">
         Un par suelto es la referencia y vale 1,00. Cada tamaño de caja vale lo que tarda, comparado con él.
         <b style="color:var(--brand-pale);">Toque cualquier número subrayado</b> para ver de dónde sale.
         Por debajo de ${EQUIVALENCIA_PREPACK.minimo_muestra} mediciones no se usa el factor propio, sino el general
@@ -303,9 +303,9 @@ const sec6 = (C, dias) => {
         }).join('');
         const s = tiempoDe(C, 'suelto'), t = tiempoDe(C, String(c));
         return `
-          <div style="font-size:0.75rem; font-weight:900; color:var(--warning); letter-spacing:0.5px; margin:1rem 0 0.4rem;">CAJA DE ${c} PARES</div>
+          <div style="font-size:var(--t-sm); font-weight:900; color:var(--warning); letter-spacing:0.5px; margin:1rem 0 0.4rem;">CAJA DE ${c} PARES</div>
           <div style="overflow:auto;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.73rem; color:var(--text-grey);">
+          <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-grey);">
             <thead><tr style="color:var(--text-muted); text-align:left;">
               <th style="padding:0.4rem 0.9rem; font-weight:700;">Jornada</th>
               <th style="padding:0.4rem 0.9rem; text-align:right; font-weight:700;">Sueltos medidos</th>
@@ -327,7 +327,7 @@ const sec6 = (C, dias) => {
           </table></div>`;
     };
     return `
-      <div style="font-size:0.73rem; color:var(--text-muted); line-height:1.8; margin-bottom:0.3rem;">
+      <div style="font-size:var(--t-sm); color:var(--text-muted); line-height:1.8; margin-bottom:0.3rem;">
         El factor es una división: lo que tarda la caja ÷ lo que tarda un par suelto. Acá está la cuenta hecha
         <b style="color:rgba(var(--ink-rgb), 0.6);">jornada por jornada</b>, para que se vea que el número de arriba no sale de un solo día.
         Un día con menos de 30 mediciones no se calcula: no alcanza.
@@ -345,19 +345,19 @@ const sec8 = (C) => {
     return `
       <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:0.9rem;">
         <div style="flex:1; min-width:200px; text-align:center; background:rgba(var(--ink-rgb), 0.03); border-radius:10px; padding:0.9rem;">
-          <div style="font-size:1.5rem; font-weight:900; color:var(--success-soft);">${F(viajes)}</div>
-          <div style="font-size:0.7rem; color:var(--text-muted); line-height:1.6;">viajes ahorrados en ${C.jornadas || 1} jornadas</div>
+          <div style="font-size:var(--t-xl); font-weight:900; color:var(--success-soft);">${F(viajes)}</div>
+          <div style="font-size:var(--t-xs); color:var(--text-muted); line-height:1.6;">viajes ahorrados en ${C.jornadas || 1} jornadas</div>
         </div>
         <div style="flex:1; min-width:200px; text-align:center; background:rgba(var(--ink-rgb), 0.03); border-radius:10px; padding:0.9rem;">
-          <div style="font-size:1.5rem; font-weight:900; color:var(--text-strong);">${pct(paresCaja, C.pares_reales)}%</div>
-          <div style="font-size:0.7rem; color:var(--text-muted); line-height:1.6;">de los pares sale en caja…</div>
+          <div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${pct(paresCaja, C.pares_reales)}%</div>
+          <div style="font-size:var(--t-xs); color:var(--text-muted); line-height:1.6;">de los pares sale en caja…</div>
         </div>
         <div style="flex:1; min-width:200px; text-align:center; background:rgba(var(--ink-rgb), 0.03); border-radius:10px; padding:0.9rem;">
-          <div style="font-size:1.5rem; font-weight:900; color:var(--text-strong);">${pct(C.mov.prepack, total)}%</div>
-          <div style="font-size:0.7rem; color:var(--text-muted); line-height:1.6;">…usando solo esta parte de los movimientos</div>
+          <div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${pct(C.mov.prepack, total)}%</div>
+          <div style="font-size:var(--t-xs); color:var(--text-muted); line-height:1.6;">…usando solo esta parte de los movimientos</div>
         </div>
       </div>
-      <div style="font-size:0.75rem; color:rgba(var(--ink-rgb), 0.55); line-height:1.9;">
+      <div style="font-size:var(--t-sm); color:rgba(var(--ink-rgb), 0.55); line-height:1.9;">
         Esos <b style="color:var(--text-strong);">${F(paresCaja)} pares</b> salieron en <b style="color:var(--text-strong);">${F(C.mov.cajas)} cajas</b>.
         Si hubieran salido par por par, habrían costado un movimiento cada uno.
       </div>`;
@@ -371,11 +371,11 @@ const panelDetalle = (C, tipo, campo) => {
         const pasos = embudoDe(C, tipo);
         if (!pasos.length) return '';
         return `
-          <h4 style="margin:0 0 0.2rem; color:var(--text-strong); font-size:0.82rem; font-weight:900;">De dónde salen esas ${F(pasos[pasos.length - 1].n)} mediciones</h4>
-          <p style="margin:0 0 0.7rem; font-size:0.71rem; color:var(--text-muted); line-height:1.6;">
+          <h4 style="margin:0 0 0.2rem; color:var(--text-strong); font-size:var(--t-sm); font-weight:900;">De dónde salen esas ${F(pasos[pasos.length - 1].n)} mediciones</h4>
+          <p style="margin:0 0 0.7rem; font-size:var(--t-xs); color:var(--text-muted); line-height:1.6;">
             ${nombre}. Es una <b>cantidad</b>, no un tiempo: cuántas veces se pudo cronometrar.
           </p>
-          <table style="width:100%; border-collapse:collapse; font-size:0.72rem; color:var(--text-grey);">
+          <table style="width:100%; border-collapse:collapse; font-size:var(--t-xs); color:var(--text-grey);">
             <thead><tr style="color:var(--text-muted); text-align:left;">
               <th style="padding:0.35rem 0.7rem; font-weight:700;"></th>
               <th style="padding:0.35rem 0.7rem; text-align:right; font-weight:700;">Quedan</th>
@@ -386,7 +386,7 @@ const panelDetalle = (C, tipo, campo) => {
                 <tr style="${i === pasos.length - 1 ? 'border-top:1px solid rgba(var(--ink-rgb), 0.1); font-weight:800; color:var(--text-strong);' : 'border-bottom:1px solid rgba(var(--ink-rgb), 0.03);'}">
                   <td style="padding:0.35rem 0.7rem;">${esc(e.q)}</td>
                   <td style="padding:0.35rem 0.7rem; text-align:right;"><b>${F(e.n)}</b></td>
-                  <td style="padding:0.35rem 0.7rem; font-size:0.67rem; color:rgba(var(--ink-rgb), 0.35);">${esc(e.p)}</td>
+                  <td style="padding:0.35rem 0.7rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35);">${esc(e.p)}</td>
                 </tr>`).join('')}
             </tbody>
           </table>`;
@@ -396,12 +396,12 @@ const panelDetalle = (C, tipo, campo) => {
     if (!esc2) return '';
     const muestras = (C.muestras && C.muestras[tipo]) || [];
     return `
-      <h4 style="margin:0 0 0.2rem; color:var(--text-strong); font-size:0.82rem; font-weight:900;">De dónde salen esos ${esc2.mediana} segundos</h4>
-      <p style="margin:0 0 0.6rem; font-size:0.71rem; color:var(--text-muted); line-height:1.6;">
+      <h4 style="margin:0 0 0.2rem; color:var(--text-strong); font-size:var(--t-sm); font-weight:900;">De dónde salen esos ${esc2.mediana} segundos</h4>
+      <p style="margin:0 0 0.6rem; font-size:var(--t-xs); color:var(--text-muted); line-height:1.6;">
         ${nombre}. Se midieron <b>${F(esc2.n)}</b> veces. Así salieron algunas:
       </p>
       ${muestras.length ? `
-        <table style="width:100%; border-collapse:collapse; font-size:0.72rem; color:var(--text-grey); margin-bottom:0.8rem;">
+        <table style="width:100%; border-collapse:collapse; font-size:var(--t-xs); color:var(--text-grey); margin-bottom:0.8rem;">
           <thead><tr style="color:var(--text-muted); text-align:left;">
             <th style="padding:0.35rem 0.7rem; font-weight:700;">Operario</th>
             <th style="padding:0.35rem 0.7rem; text-align:right; font-weight:700;">Movimiento anterior</th>
@@ -415,26 +415,26 @@ const panelDetalle = (C, tipo, campo) => {
               <td style="padding:0.35rem 0.7rem; text-align:right; color:var(--text-muted);">${esc(m.ant)}</td>
               <td style="padding:0.35rem 0.7rem; text-align:right; color:var(--text-muted);">${esc(m.hora)}</td>
               <td style="padding:0.35rem 0.7rem; text-align:right;"><b>${m.seg} s</b></td>
-              <td style="padding:0.35rem 0.7rem; font-size:0.67rem; color:rgba(var(--ink-rgb), 0.35);">${esc(m.ubi)}</td>
+              <td style="padding:0.35rem 0.7rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35);">${esc(m.ubi)}</td>
             </tr>`).join('')}
           </tbody>
         </table>` : ''}
-      <p style="margin:0 0 0.5rem; font-size:0.71rem; color:var(--text-muted); line-height:1.6;">
+      <p style="margin:0 0 0.5rem; font-size:var(--t-xs); color:var(--text-muted); line-height:1.6;">
         …y así ${F(esc2.n)} veces. Ordenadas de menor a mayor, se toma <b>la del medio</b>:
       </p>
-      <table style="width:100%; border-collapse:collapse; font-size:0.72rem; color:var(--text-grey);">
+      <table style="width:100%; border-collapse:collapse; font-size:var(--t-xs); color:var(--text-grey);">
         <tbody>${esc2.puestos.map(p => `
           <tr style="${p.medio ? 'background:rgba(var(--warning-rgb), 0.1);' : 'border-bottom:1px solid rgba(var(--ink-rgb), 0.03);'}">
             <td style="padding:0.35rem 0.7rem; text-align:right; color:var(--text-muted);">la nº ${F(p.pos)}</td>
-            <td style="padding:0.35rem 0.7rem; text-align:right;"><b style="${p.medio ? 'color:var(--warning); font-size:1rem;' : ''}">${p.seg} s</b></td>
-            <td style="padding:0.35rem 0.7rem; font-size:0.67rem; color:rgba(var(--ink-rgb), 0.4);">${p.et}${p.medio ? ' ← el número del cuadro' : ''}</td>
+            <td style="padding:0.35rem 0.7rem; text-align:right;"><b style="${p.medio ? 'color:var(--warning); font-size:var(--t-lg);' : ''}">${p.seg} s</b></td>
+            <td style="padding:0.35rem 0.7rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4);">${p.et}${p.medio ? ' ← el número del cuadro' : ''}</td>
           </tr>`).join('')}
         </tbody>
       </table>
       ${esc2.centro.length ? `
-        <p style="margin:0.7rem 0 0.35rem; font-size:0.71rem; color:var(--text-muted);">Justo en el corte:</p>
+        <p style="margin:0.7rem 0 0.35rem; font-size:var(--t-xs); color:var(--text-muted);">Justo en el corte:</p>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          ${esc2.centro.map((v, i) => `<span style="padding:3px 9px; border-radius:6px; font-size:0.7rem; ${i === Math.floor(esc2.centro.length / 2) ? 'background:rgba(var(--warning-rgb), 0.2); color:var(--warning); font-weight:900;' : 'background:rgba(var(--ink-rgb), 0.05); color:rgba(var(--ink-rgb), 0.5);'}">${v} s</span>`).join('')}
+          ${esc2.centro.map((v, i) => `<span style="padding:3px 9px; border-radius:6px; font-size:var(--t-xs); ${i === Math.floor(esc2.centro.length / 2) ? 'background:rgba(var(--warning-rgb), 0.2); color:var(--warning); font-weight:900;' : 'background:rgba(var(--ink-rgb), 0.05); color:rgba(var(--ink-rgb), 0.5);'}">${v} s</span>`).join('')}
         </div>` : ''}`;
 };
 
@@ -449,9 +449,9 @@ export const pintarPrepack = (contenedor, dias) => {
     if (!dias || !dias.length) {
         contenedor.innerHTML = `
           <div class="glass-panel" style="padding:3rem 2rem; text-align:center; color:var(--text-muted);">
-            <div style="font-size:2.2rem; margin-bottom:0.6rem;">📦</div>
+            <div style="font-size:var(--t-2xl); margin-bottom:0.6rem;">📦</div>
             <h4 style="margin:0 0 0.5rem; color:var(--text-main); font-weight:800;">No hay jornadas en el rango elegido</h4>
-            <p style="margin:0 auto; max-width:52ch; font-size:0.82rem; line-height:1.7;">
+            <p style="margin:0 auto; max-width:52ch; font-size:var(--t-sm); line-height:1.7;">
               Este análisis se arma con los archivos de picking. Cargalos en <b style="color:var(--brand-pale);">Picking → Archivo Picking</b>.
             </p>
           </div>`;
@@ -463,9 +463,9 @@ export const pintarPrepack = (contenedor, dias) => {
 
     contenedor.innerHTML = `
       <div style="margin-bottom:1.1rem;">
-        <div style="font-size:0.68rem; color:var(--brand-pale); font-weight:900; letter-spacing:1.5px;">ANÁLISIS DE PICKING</div>
-        <h2 style="margin:2px 0 4px; color:var(--text-strong); font-size:1.35rem; font-weight:900;">Prepack contra suelto</h2>
-        <div style="font-size:0.76rem; color:var(--text-muted); line-height:1.7;">
+        <div style="font-size:var(--t-xs); color:var(--brand-pale); font-weight:900; letter-spacing:1.5px;">ANÁLISIS DE PICKING</div>
+        <h2 style="margin:2px 0 4px; color:var(--text-strong); font-size:var(--t-xl); font-weight:900;">Prepack contra suelto</h2>
+        <div style="font-size:var(--t-sm); color:var(--text-muted); line-height:1.7;">
           Cuánto trabajo cuesta de verdad cada uno, y por qué el reporte del WMS se queda corto.
           Datos reales de ${dias.length} ${dias.length === 1 ? 'jornada' : 'jornadas'}, del ${DMY(dias[0].dia)} al ${DMY(dias[dias.length - 1].dia)}.
           <b style="color:rgba(var(--ink-rgb), 0.6);">Nada estimado: todo sale del archivo del WMS.</b>
@@ -498,7 +498,7 @@ export const pintarPrepack = (contenedor, dias) => {
         a.classList.add('pp-on');
         const tr = a.closest('tr');
         const caja = `<div style="background:rgba(var(--bg-rgb), 0.75); border:1px solid rgba(var(--primary2-rgb), 0.3); border-radius:10px; padding:0.9rem 1.1rem; margin:0.5rem 0;">
-            <span class="pp-num" style="float:right; cursor:pointer; color:var(--text-muted); font-size:0.7rem;" data-tipo="${a.dataset.tipo}" data-campo="${a.dataset.campo}">cerrar ✕</span>
+            <span class="pp-num" style="float:right; cursor:pointer; color:var(--text-muted); font-size:var(--t-xs);" data-tipo="${a.dataset.tipo}" data-campo="${a.dataset.campo}">cerrar ✕</span>
             ${html}
           </div>`;
         if (tr) {
