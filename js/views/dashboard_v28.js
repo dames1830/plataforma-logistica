@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0379';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0380';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0379';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0379';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0379';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0379';
-import * as metasService from '../services_v245/metasService.js?v=29.0379';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0379';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0379';
+import * as adminService from '../services_v245/adminService.js?v=29.0380';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0380';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0380';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0380';
+import * as metasService from '../services_v245/metasService.js?v=29.0380';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0380';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0380';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0379';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0379';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0379';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0379';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0379';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0379';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0379';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0379';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0379';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0379';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0379';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0379';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0379';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0379';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0379';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0379';
-import { montarSlotting } from './slotting.js?v=29.0379';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0380';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0380';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0380';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0380';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0380';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0380';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0380';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0380';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0380';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0380';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0380';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0380';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0380';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0380';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0380';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0380';
+import { montarSlotting } from './slotting.js?v=29.0380';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0379';
+const VERSION = '29.0380';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4535,7 +4535,78 @@ export const renderDashboard = async (container, user, onLogout) => {
                     return;
                 }
 
-                btnCalc.disabled = true; btnCalc.innerHTML = '⚙️ CALCULANDO...';
+                /* ANTES QUE NADA: QUE EL STOCK NO SEA VIEJO.
+                   -----------------------------------------------------------
+                   El motor corre con la foto que tiene CARGADA esta PC. Si el
+                   robot publico una mas nueva, el analisis sale con ubicaciones
+                   que ya no existen y el montacarguista camina al vacio: paso el
+                   25-ago, con 237 pares mandados a una recepcion vacia.
+                   Se bloquea y no se procesa. Avisar no alcanza: el que no lo
+                   ve, igual manda a bajar. */
+                btnCalc.disabled = true; btnCalc.innerHTML = '⚙️ COMPROBANDO...';
+                /* Cada stock se guarda bajo su nombre canonico, pero hay pantallas viejas
+                   que lo dejaron con otros nombres. Se miran todos y vale el primero que
+                   traiga sello: si ninguno lo trae, esta PC no puede probar que su foto
+                   sea la ultima, y entonces tampoco procesa. */
+                const STOCKS_DEL_ROBOT = [
+                    { area: 'analisis_sku_reserva', nombre: 'STOCK RESERVA',
+                      alias: ['analisis_sku_reserva','buffer_reserva','almacenaje_reserva',
+                              'inventario_reserva','recepcion_reserva','stockReserva'] },
+                    { area: 'almacenaje_activo',    nombre: 'STOCK ACTIVO',
+                      alias: ['almacenaje_activo','buffer_activo','analisis_sku_activo',
+                              'inventario_activo','recepcion_activo','stockActivo','inventario'] }
+                ];
+                try {
+                    const rV = await fetch(`${API_BASE}/sync/versiones?t=${Date.now()}`);
+                    if (rV.ok) {
+                        const jV = await rV.json();
+                        const pub = (jV && jV.versiones) ? jV.versiones : {};
+                        const viejos = [];
+                        STOCKS_DEL_ROBOT.forEach(st => {
+                            const enServidor = pub[st.area];
+                            if (!enServidor) return;                 // el robot no publico: no hay con que comparar
+                            let enPC = null;
+                            for (const nom of st.alias) {
+                                const m = getUploadMeta(nom);
+                                if (m && m.timestamp) { enPC = m.timestamp; break; }
+                            }
+                            /* Se comparan los dos sellos de publicacion, no la hora
+                               en que se bajo: `meta_` guarda el `updated_at` de la
+                               foto, asi que si son iguales es LA MISMA foto. */
+                            if (!enPC || String(enPC).trim() !== String(enServidor).trim()) {
+                                viejos.push({ nombre: st.nombre, enPC: enPC, enServidor: enServidor });
+                            }
+                        });
+                        if (viejos.length) {
+                            const filas = viejos.map(v =>
+                                `<tr>
+                                   <td style="padding:.35rem .8rem; font-weight:800;">${v.nombre}</td>
+                                   <td style="padding:.35rem .8rem; color:#f87171;">${v.enPC || 'no hay foto cargada'}</td>
+                                   <td style="padding:.35rem .8rem; color:#22c55e;">${v.enServidor}</td>
+                                 </tr>`).join('');
+                            showPremiumAlert('Stock desactualizado',
+                                'Esta PC tiene una foto de stock <b>m&aacute;s vieja</b> que la que public&oacute; el robot. '
+                                + 'No se puede procesar: el an&aacute;lisis saldr&iacute;a con ubicaciones que ya no existen '
+                                + 'y el montacarguista ir&iacute;a a buscar mercader&iacute;a que no est&aacute;.'
+                                + '<br><br><table style="width:100%; border-collapse:collapse; font-size:.8rem;">'
+                                + '<tr style="color:#94a3b8; font-size:.65rem; text-transform:uppercase;">'
+                                + '<th style="padding:.35rem .8rem; text-align:left;">Archivo</th>'
+                                + '<th style="padding:.35rem .8rem; text-align:left;">En esta PC</th>'
+                                + '<th style="padding:.35rem .8rem; text-align:left;">El del robot</th></tr>'
+                                + filas + '</table>'
+                                + '<br><b>Recarga la p&aacute;gina con Ctrl+F5</b> y vuelve a procesar.',
+                                'error');
+                            soltarBoton();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    /* Sin red no se bloquea: dejar sin analisis a todo el turno por un
+                       servidor caido seria peor que el problema que esto evita. */
+                    console.warn('[STOCK] No se pudo comprobar si la foto es la ultima:', e);
+                }
+
+                btnCalc.innerHTML = '⚙️ CALCULANDO...';
                 results.innerHTML = `
                 <div style="width: 100%; padding:5rem 2rem; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); border-radius:16px; border:1px solid rgba(255,255,255,0.05); min-height:300px; box-shadow: inset 0 0 50px rgba(0,0,0,0.5);">
                     <h3 style="font-size:1.4rem; margin:0 0 2.5rem 0; color:#fff; font-weight:800; letter-spacing:2px; text-shadow: 0 0 10px rgba(56,189,248,0.5);">PROCESANDO ANÁLISIS BUFFER</h3>
@@ -5124,7 +5195,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0379');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0380');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17436,7 +17507,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0379 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0380 | MOBILE PORTAL
                             </div>
                     </div>
 
