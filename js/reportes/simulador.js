@@ -912,22 +912,26 @@ export const montarSimulador = function (RAIZ, OPC) {
                 fontFace: 'Arial', fontSize: 11, bold: true, color: c.ac, charSpacing: 0.8, valign: 'middle'
             });
             s.addText(c.num, {
-                x: c.x + 0.22, y: CY + 0.44, w: 1.25, h: 0.78, isTextBox: true, margin: 0,
-                fontFace: 'Arial', fontSize: 48, bold: true, color: BLANCO, align: 'left', valign: 'middle'
+                x: c.x + 0.22, y: CY + 0.42, w: 1.25, h: 0.76, isTextBox: true, margin: 0,
+                fontFace: 'Arial', fontSize: 46, bold: true, color: BLANCO, align: 'left', valign: 'middle'
             });
             s.addText(c.sub, {
-                x: c.x + 1.45, y: CY + 0.44, w: CW - 1.71, h: 0.78, isTextBox: true, margin: 0,
+                x: c.x + 1.42, y: CY + 0.42, w: CW - 1.68, h: 0.76, isTextBox: true, margin: 0,
                 fontFace: 'Arial', fontSize: 11, color: GRIS, align: 'left', valign: 'middle'
             });
+            /* LA CUARTA FILA TIENE QUE TERMINAR DENTRO DE LA TARJETA. Con el arranque en
+               1,30" y cajas de 0,21", la ultima linea cerraba en 2,78" de una tarjeta de
+               2,86": ocho centesimas de margen, y el texto asomaba por el borde de abajo.
+               Arrancando en 1,22" con cajas de 0,19" cierra en 2,67" y quedan 0,19". */
             c.filas.forEach((f, i) => {
-                const y = CY + 1.30 + i * 0.37;
+                const y = CY + 1.22 + i * 0.37;
                 s.addText(f[0], {
-                    x: c.x + 0.26, y: y, w: CW - 0.52, h: 0.17, isTextBox: true, margin: 0,
-                    fontFace: 'Arial', fontSize: 9, color: GRIS2, valign: 'middle'
+                    x: c.x + 0.26, y: y, w: CW - 0.52, h: 0.15, isTextBox: true, margin: 0,
+                    fontFace: 'Arial', fontSize: 8.5, color: GRIS2, valign: 'middle'
                 });
                 s.addText(f[1], {
-                    x: c.x + 0.26, y: y + 0.16, w: CW - 0.52, h: 0.21, isTextBox: true, margin: 0,
-                    fontFace: 'Arial', fontSize: 11.5, bold: true, color: BLANCO, valign: 'middle'
+                    x: c.x + 0.26, y: y + 0.15, w: CW - 0.52, h: 0.19, isTextBox: true, margin: 0,
+                    fontFace: 'Arial', fontSize: 11, bold: true, color: BLANCO, valign: 'middle'
                 });
             });
         });
@@ -955,7 +959,10 @@ export const montarSimulador = function (RAIZ, OPC) {
             { x: 8.82, ac: VERDE, nom: 'BUFFER', meta: S.metaBuf, real: R.bTotal, uni: 'paletas' }
         ].forEach(g => {
             const tope = Math.max(g.meta, g.real, 1);
-            const ANCHO = 2.30, X0 = g.x + 0.92;
+            /* 2,05" de barra y no 2,30": con 2,30 el numero de la derecha terminaba en
+               g.x + 4,13" dentro de una columna de 4,01", y en la tercera columna eso
+               son 0,12" FUERA del recuadro. Es lo que Daniel vio salirse. */
+            const ANCHO = 2.05, X0 = g.x + 0.92;
             const alcanza = g.real >= g.meta;
             s.addText(g.nom, {
                 x: g.x + 0.20, y: GY + 0.09, w: 2.0, h: 0.18, isTextBox: true, margin: 0,
@@ -977,12 +984,12 @@ export const montarSimulador = function (RAIZ, OPC) {
                     rectRadius: 0.02, fill: { color: b.color }, line: { color: b.color }
                 });
                 s.addText(nMil(b.val), {
-                    x: X0 + ANCHO + 0.06, y: y, w: 0.85, h: 0.20, isTextBox: true, margin: 0,
+                    x: X0 + ANCHO + 0.06, y: y, w: 0.78, h: 0.20, isTextBox: true, margin: 0,
                     fontFace: 'Arial', fontSize: 9.5, bold: true, color: BLANCO, align: 'right', valign: 'middle'
                 });
             });
             s.addText(g.uni, {
-                x: g.x + 0.20, y: GY + 0.09, w: CW - 0.40, h: 0.18, isTextBox: true, margin: 0,
+                x: g.x + 0.20, y: GY + 0.09, w: CW - 0.60, h: 0.18, isTextBox: true, margin: 0,
                 fontFace: 'Arial', fontSize: 8.5, color: GRIS2, align: 'right', valign: 'middle'
             });
         });
