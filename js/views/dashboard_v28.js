@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0404';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0405';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0404';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0404';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0404';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0404';
-import * as metasService from '../services_v245/metasService.js?v=29.0404';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0404';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0404';
+import * as adminService from '../services_v245/adminService.js?v=29.0405';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0405';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0405';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0405';
+import * as metasService from '../services_v245/metasService.js?v=29.0405';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0405';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0405';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0404';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0404';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0404';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0404';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0404';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0404';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0404';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0404';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0404';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0404';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0404';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0404';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0404';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0404';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0404';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0404';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0404';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0404';
-import { montarSlotting } from './slotting.js?v=29.0404';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0405';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0405';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0405';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0405';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0405';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0405';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0405';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0405';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0405';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0405';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0405';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0405';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0405';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0405';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0405';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0405';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0405';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0405';
+import { montarSlotting } from './slotting.js?v=29.0405';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0404';
+const VERSION = '29.0405';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5210,7 +5210,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0404');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0405');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5284,7 +5284,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
                     <h3 style="color:var(--primary); margin:0;">Base de Datos de Trabajadores</h3>
-                    <span id="export_workers" title="Exportar trabajadores" style="cursor:pointer; display:flex; align-items:center; opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="var(--success-deep)"/><path d="M14 2v6h6" fill="var(--success-dark)"/><path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="var(--text-strong)"/></svg><span style="font-size:var(--t-xs);font-weight:800;color:var(--text-muted);margin-left:3px">↓</span></span>
+                    <span id="export_workers" title="Exportar trabajadores" style="cursor:pointer; display:flex; align-items:center; opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">${icono('excel', 20)}<span style="font-size:var(--t-xs);font-weight:800;color:var(--text-muted);margin-left:3px">↓</span></span>
                 </div>
                 <div class="glass-panel" style="padding:0; overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
@@ -17656,7 +17656,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0404 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0405 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25277,29 +25277,17 @@ Se dejó el valor anterior.`, 'warning');
          plataforma no carga nada de otro servidor. */
       const iconoExcel = '<span id="btn_xls_frag" title="Exportar" style="margin-left:auto;cursor:pointer;'
           + 'display:flex;align-items:center;opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
-          + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
-          + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="var(--success-deep)"/>'
-          + '<path d="M14 2v6h6" fill="var(--success-dark)"/>'
-          + '<path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="var(--text-strong)"/>'
-          + '</svg></span>';
+          + icono('excel', 19) + '</span>';
       /* El PDF va al costado del Excel. Mismo plan, distinto papel: el Excel para filtrar
          y contar, este para imprimir y repartir. */
       const iconoPDF = '<span id="btn_pdf_frag" title="Imprimir o guardar en PDF" style="cursor:pointer;'
           + 'display:flex;align-items:center;opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
-          + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
-          + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="var(--danger-deep)"/>'
-          + '<path d="M14 2v6h6" fill="var(--danger-deep)"/>'
-          + '<text x="12" y="17.5" font-family="Arial" font-size="7.5" font-weight="bold" fill="var(--text-strong)" text-anchor="middle">PDF</text>'
-          + '</svg></span>';
+          + icono('pdf', 19) + '</span>';
       /* LA TARJETA PARA EL GRUPO. Al costado del PDF porque es el mismo avance, en otro
          formato: el PDF es para el piso y esto para el celular. */
       const iconoTarjeta = '<span id="btn_wsp_frag" title="Tarjeta de avance para compartir" style="cursor:pointer;'
           + 'display:flex;align-items:center;opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
-          + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
-          + '<rect x="3" y="4" width="18" height="16" rx="2.5" fill="var(--cyan-deep)"/>'
-          + '<circle cx="9" cy="12" r="3.6" fill="none" stroke="var(--cyan)" stroke-width="2"/>'
-          + '<path d="M14.2 9.4h4.2M14.2 12h4.2M14.2 14.6h2.6" stroke="var(--cyan)" stroke-width="1.6" stroke-linecap="round"/>'
-          + '</svg></span>';
+          + icono('tarjeta', 19) + '</span>';
       const panel = (titulo, borde, tabla, extra, antes, debajo) => '<div class="glass-panel" style="padding:12px 18px;margin-bottom:13px;border:1px solid ' + borde + '">'
           + '<h3 style="margin:0 0 7px;font-size:var(--t-md);display:flex;align-items:center;gap:10px;color:var(--text-strong)">'
           + '<span style="width:10px;height:10px;border-radius:50%;background:var(--blue-mid);box-shadow:0 0 10px var(--blue-mid)"></span>' + titulo
@@ -25533,11 +25521,7 @@ Se dejó el valor anterior.`, 'warning');
               const iconoPre = '<span id="btn_xls_prepack" title="Exportar a Excel" '
                   + 'style="margin-left:auto;cursor:pointer;display:flex;align-items:center;'
                   + 'opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
-                  + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
-                  + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="var(--success-deep)"/>'
-                  + '<path d="M14 2v6h6" fill="var(--success-dark)"/>'
-                  + '<path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="var(--text-strong)"/>'
-                  + '</svg></span>';
+                  + icono('excel', 19) + '</span>';
               panelPre = '<div class="glass-panel" style="padding:12px 18px;margin-bottom:13px;'
                   + 'border:1px solid rgba(var(--blue-rgb), .35)">'
                   + '<h3 style="margin:0 0 7px;font-size:var(--t-md);display:flex;align-items:center;gap:10px;color:var(--text-strong)">'
@@ -26043,7 +26027,13 @@ Se dejó el valor anterior.`, 'warning');
       const hueco = LARGO * (1 - Math.min(100, Math.max(0, pct)) / 100);
       const fechaLinda = (f) => String(f || '').split('-').reverse().join('/');
 
-      const html = '<div id="tarj_avance" style="background:var(--panel-deep);border:1px solid var(--panel-alt);'
+      /* VELO Y NO COLOR FIJO. Con var(--panel-deep) la tarjeta estaba puesta pero NO SE
+         VEIA: se dibuja DENTRO de un panel que en los temas claros tambien es blanco,
+         asi que quedaba blanco sobre blanco. Un velo se calcula contra la tinta del
+         tema, asi que se despega este encima de lo que este. Es el mismo arreglo que
+         necesitaron el marco de los reportes y las tarjetas del selector de temas. */
+      const html = '<div id="tarj_avance" style="background:rgba(var(--ink-rgb), 0.05);'
+        + 'border:1px solid rgba(var(--ink-rgb), 0.22);'
         + 'border-radius:15px;padding:19px 22px 17px;width:470px;max-width:100%;'
         + 'font-family:\'Segoe UI\',system-ui,Arial,sans-serif;color:var(--blue-pale)">'
         + '<div style="display:flex;align-items:center;gap:10px">'

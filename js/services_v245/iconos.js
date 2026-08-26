@@ -40,17 +40,37 @@ const TRAZOS = {
   buffer:      '<path d="M6 3h12"/><path d="M6 21h12"/><path d="M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9"/><path d="M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/>',
   analisis_sku:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
   admin_pers:  '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17.5" cy="9" r="2.4"/><path d="M16 19c0-2.4 1.6-4 3.5-4"/>',
-  /* Exportar a Excel: cuadro verde y la X blanca, SIEMPRE IGUAL. Este es el
-     unico dibujo que no toma el color del tema, y a proposito: el Excel se
-     reconoce por su verde, y si cambiara de tono en cada tema dejaria de
-     leerse de un vistazo. Es lo que pidio Daniel: un solo diseno para todo.
+  /* LA HOJA CON LA ESQUINA DOBLADA. Es el modelo que eligio Daniel -26-ago-2026,
+     "este modelo me gusta, solo debes poner en blanco la X y PDF letra"- y va
+     igual en TODA la plataforma: "todos deben ser asi".
 
-     El verde es #21A366, de la propia marca. Se eligio ese y no el mas oscuro
-     porque tiene que despegarse de los CUATRO fondos: sobre blanco da 3,2:1 y
-     sobre el negro 6,1:1. El #217346 se quedaba en 2,8:1 sobre el panel del
-     tema indigo, por debajo del minimo de un dibujo. */
-  excel:       '<rect x="3.4" y="3" width="17.2" height="18" rx="2.6" fill="#21A366" stroke="none"/>'
-             + '<path d="m9.1 9.1 5.8 5.8M14.9 9.1l-5.8 5.8" stroke="#FFFFFF" stroke-width="2.1"/>',
+     LA MARCA VA EN BLANCO FIJO. Antes salia de var(--text-strong), que en los
+     temas claros es casi negro: quedaba una X negra sobre verde y un PDF negro
+     sobre rojo, y no se leian. Ahora es #FFFFFF y no depende del tema.
+
+     LOS TONOS TAMPOCO SIGUEN AL TEMA, a proposito: el Excel se reconoce por su
+     verde y el PDF por su rojo. Si cambiaran de tono en cada tema dejarian de
+     leerse de un vistazo. Medidos contra los cuatro fondos y contra la marca
+     blanca de encima -el minimo de un dibujo es 3:1-:
+
+       hoja Excel #21A366  3,23 blanco | 6,12 negro | 5,52 indigo | 3,23 la X
+       hoja PDF   #E0473F  4,08 blanco | 4,85 negro | 4,37 indigo | 4,08 letra
+
+     El doblez es un tono mas oscuro de la misma hoja: da el relieve y tambien
+     se despega de los cuatro fondos -lo peor, 3,03:1-. */
+  excel:       '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#21A366" stroke="none"/>'
+             + '<path d="M14 2v6h6" fill="#17794A" stroke="none"/>'
+             + '<path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="#FFFFFF" stroke="none"/>',
+  pdf:         '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#E0473F" stroke="none"/>'
+             + '<path d="M14 2v6h6" fill="#B33A33" stroke="none"/>'
+             + '<text x="12.5" y="17.6" font-family="Arial,Helvetica,sans-serif" font-size="7" '
+             + 'font-weight="bold" fill="#FFFFFF" stroke="none" text-anchor="middle">PDF</text>',
+  /* La tarjeta para compartir: no es un documento, asi que no lleva hoja. Mismo
+     criterio igual -color fijo y la marca en blanco-. #0E8FA8 da 3,81 sobre
+     blanco, 5,20 sobre negro y 4,69 sobre el indigo. */
+  tarjeta:     '<rect x="3.4" y="3.4" width="17.2" height="17.2" rx="2.6" fill="#0E8FA8" stroke="none"/>'
+             + '<circle cx="9" cy="12" r="2.7" fill="none" stroke="#FFFFFF" stroke-width="1.6"/>'
+             + '<path d="M14 9.6h4M14 12h4M14 14.4h2.6" stroke="#FFFFFF" stroke-width="1.5"/>',
   imprimir:    '<path d="M7 8V3.5h10V8"/><rect x="4" y="8" width="16" height="7.5" rx="1.5"/><path d="M7 14h10v6.5H7z"/>',
   wms:         '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>',
   /* Los de las filas: refrescar, editar, borrar, guardar y cerrar. */
