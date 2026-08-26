@@ -869,7 +869,10 @@ export const montarSimulador = function (RAIZ, OPC) {
             fontFace: 'Arial', align: 'left', valign: 'middle', lineSpacingMultiple: 1.1
         });
 
-        const CY = 1.62, CH = 3.28, CW = 4.01;
+        /* Las tarjetas se compactan de 3,28" a 2,86" para hacerle sitio al cuadro de
+           meta contra simulado, que va debajo. Pedido de Daniel, 26-ago-2026: *"una cosa
+           es la meta y otra el rendimiento real; lo teórico y lo operativo"*. */
+        const CY = 1.46, CH = 2.86, CW = 4.01;
         [
             {
                 x: 0.5, ac: AMBAR, tit: 'ALMACENAMIENTO', num: String(R.aPers),
@@ -909,23 +912,78 @@ export const montarSimulador = function (RAIZ, OPC) {
                 fontFace: 'Arial', fontSize: 11, bold: true, color: c.ac, charSpacing: 0.8, valign: 'middle'
             });
             s.addText(c.num, {
-                x: c.x + 0.22, y: CY + 0.5, w: 1.25, h: 0.86, isTextBox: true, margin: 0,
-                fontFace: 'Arial', fontSize: 52, bold: true, color: BLANCO, align: 'left', valign: 'middle'
+                x: c.x + 0.22, y: CY + 0.44, w: 1.25, h: 0.78, isTextBox: true, margin: 0,
+                fontFace: 'Arial', fontSize: 48, bold: true, color: BLANCO, align: 'left', valign: 'middle'
             });
             s.addText(c.sub, {
-                x: c.x + 1.5, y: CY + 0.5, w: CW - 1.76, h: 0.86, isTextBox: true, margin: 0,
-                fontFace: 'Arial', fontSize: 11.5, color: GRIS, align: 'left', valign: 'middle'
+                x: c.x + 1.45, y: CY + 0.44, w: CW - 1.71, h: 0.78, isTextBox: true, margin: 0,
+                fontFace: 'Arial', fontSize: 11, color: GRIS, align: 'left', valign: 'middle'
             });
             c.filas.forEach((f, i) => {
-                const y = CY + 1.5 + i * 0.44;
+                const y = CY + 1.30 + i * 0.37;
                 s.addText(f[0], {
-                    x: c.x + 0.26, y: y, w: CW - 0.52, h: 0.2, isTextBox: true, margin: 0,
-                    fontFace: 'Arial', fontSize: 9.5, color: GRIS2, valign: 'middle'
+                    x: c.x + 0.26, y: y, w: CW - 0.52, h: 0.17, isTextBox: true, margin: 0,
+                    fontFace: 'Arial', fontSize: 9, color: GRIS2, valign: 'middle'
                 });
                 s.addText(f[1], {
-                    x: c.x + 0.26, y: y + 0.19, w: CW - 0.52, h: 0.23, isTextBox: true, margin: 0,
-                    fontFace: 'Arial', fontSize: 12, bold: true, color: BLANCO, valign: 'middle'
+                    x: c.x + 0.26, y: y + 0.16, w: CW - 0.52, h: 0.21, isTextBox: true, margin: 0,
+                    fontFace: 'Arial', fontSize: 11.5, bold: true, color: BLANCO, valign: 'middle'
                 });
+            });
+        });
+
+        /* ── EL CUADRO DE META CONTRA SIMULADO ────────────────────────────────────
+         *
+         * Daniel, 26-ago-2026: *"pon lo que quiere la meta y lo que podemos dar; una
+         * cosa es la meta y otra el rendimiento real"*.
+         *
+         * CADA ÁREA TIENE SU PROPIA ESCALA, y no es un descuido: el almacenaje se mide
+         * en pares y el buffer en paletas, así que 46.592 y 200 en la misma regla dejarían
+         * al buffer en una raya invisible. Dentro de cada área las dos barras SÍ comparten
+         * escala, que es lo único que hay que comparar: meta contra simulado.
+         *
+         * El color de la barra lo decide el resultado, no el área: verde si alcanza,
+         * rojo si no. */
+        const GY = 4.50;
+        s.addShape(pres.ShapeType.roundRect, {
+            x: 0.5, y: GY, w: 12.33, h: 0.92, rectRadius: 0.05,
+            fill: { color: '18294A' }, line: { color: '2B3F63', width: 1 }
+        });
+        [
+            { x: 0.5, ac: AMBAR, nom: 'ALMACENAJE', meta: S.meta, real: R.aTotal, uni: 'pares' },
+            { x: 4.66, ac: AZUL, nom: 'SLOTTING', meta: S.metaSlot, real: R.sTotal, uni: 'pares' },
+            { x: 8.82, ac: VERDE, nom: 'BUFFER', meta: S.metaBuf, real: R.bTotal, uni: 'paletas' }
+        ].forEach(g => {
+            const tope = Math.max(g.meta, g.real, 1);
+            const ANCHO = 2.30, X0 = g.x + 0.92;
+            const alcanza = g.real >= g.meta;
+            s.addText(g.nom, {
+                x: g.x + 0.20, y: GY + 0.09, w: 2.0, h: 0.18, isTextBox: true, margin: 0,
+                fontFace: 'Arial', fontSize: 8.5, bold: true, color: g.ac, charSpacing: 0.7, valign: 'middle'
+            });
+            [
+                { et: 'Meta', val: g.meta, color: '5A6B87' },
+                { et: 'Simulado', val: g.real, color: alcanza ? '5FB98F' : 'E0685F' }
+            ].forEach((b, j) => {
+                const y = GY + 0.32 + j * 0.26;
+                s.addText(b.et, {
+                    x: g.x + 0.20, y: y, w: 0.70, h: 0.20, isTextBox: true, margin: 0,
+                    fontFace: 'Arial', fontSize: 9, color: GRIS2, valign: 'middle'
+                });
+                // Piso de 0,04": una barra de ancho cero no se dibuja y el renglón
+                // quedaría mudo, como si el dato faltara.
+                s.addShape(pres.ShapeType.roundRect, {
+                    x: X0, y: y + 0.04, w: Math.max(0.04, (b.val / tope) * ANCHO), h: 0.13,
+                    rectRadius: 0.02, fill: { color: b.color }, line: { color: b.color }
+                });
+                s.addText(nMil(b.val), {
+                    x: X0 + ANCHO + 0.06, y: y, w: 0.85, h: 0.20, isTextBox: true, margin: 0,
+                    fontFace: 'Arial', fontSize: 9.5, bold: true, color: BLANCO, align: 'right', valign: 'middle'
+                });
+            });
+            s.addText(g.uni, {
+                x: g.x + 0.20, y: GY + 0.09, w: CW - 0.40, h: 0.18, isTextBox: true, margin: 0,
+                fontFace: 'Arial', fontSize: 8.5, color: GRIS2, align: 'right', valign: 'middle'
             });
         });
 
@@ -934,7 +992,7 @@ export const montarSimulador = function (RAIZ, OPC) {
            9 pt —que sería lo único que entraba— no se lee proyectada. Va en dos líneas de
            11 pt, que sí entran (531 y 442 pt de los 551 que mide la caja). Arriba quedan
            0,16" libres bajo las tarjetas y abajo 0,10" antes del pie. */
-        const BY = 5.06, BH = 1.56;
+        const BY = 5.56, BH = 1.10;
         s.addShape(pres.ShapeType.roundRect, {
             x: 0.5, y: BY, w: 8.17, h: BH, rectRadius: 0.05,
             fill: { color: '18294A' }, line: { color: '2B3F63', width: 1 }
@@ -942,8 +1000,8 @@ export const montarSimulador = function (RAIZ, OPC) {
         // Sin el número en el título: en mayúsculas, "7 H 8 MIN" se lee peor que en el
         // cuerpo, y abajo la cuenta ya termina diciéndolo con todas las letras.
         s.addText('DE DÓNDE SALEN LAS HORAS EFECTIVAS', {
-            x: 0.76, y: BY + 0.16, w: 7.65, h: 0.24, isTextBox: true, margin: 0,
-            fontFace: 'Arial', fontSize: 10, bold: true, color: AMBAR, charSpacing: 0.8, valign: 'middle'
+            x: 0.76, y: BY + 0.09, w: 7.65, h: 0.20, isTextBox: true, margin: 0,
+            fontFace: 'Arial', fontSize: 9.5, bold: true, color: AMBAR, charSpacing: 0.8, valign: 'middle'
         });
         s.addText([
             { text: S.entrada, options: { bold: true, color: BLANCO } },
@@ -955,8 +1013,8 @@ export const montarSimulador = function (RAIZ, OPC) {
             { text: S.salida, options: { bold: true, color: BLANCO } },
             { text: ' salida', options: { color: GRIS } }
         ], {
-            x: 0.76, y: BY + 0.46, w: 7.65, h: 0.28, isTextBox: true, margin: 0,
-            fontFace: 'Arial', fontSize: 11.5, valign: 'middle'
+            x: 0.76, y: BY + 0.31, w: 7.65, h: 0.22, isTextBox: true, margin: 0,
+            fontFace: 'Arial', fontSize: 10.5, valign: 'middle'
         });
         s.addText([
             { text: `${hhmm(R.ventana)} de ventana`, options: { bold: true, color: BLANCO } },
@@ -965,8 +1023,8 @@ export const montarSimulador = function (RAIZ, OPC) {
             { text: '  =  ', options: { color: GRIS } },
             { text: `${hhmm(R.disponible)} disponibles`, options: { bold: true, color: BLANCO } }
         ], {
-            x: 0.76, y: BY + 0.70, w: 7.65, h: 0.26, isTextBox: true, margin: 0,
-            fontFace: 'Arial', fontSize: 11, valign: 'middle'
+            x: 0.76, y: BY + 0.55, w: 7.65, h: 0.22, isTextBox: true, margin: 0,
+            fontFace: 'Arial', fontSize: 10.5, valign: 'middle'
         });
         s.addText([
             { text: hhmm(R.disponible), options: { bold: true, color: BLANCO } },
@@ -975,22 +1033,19 @@ export const montarSimulador = function (RAIZ, OPC) {
             { text: '  =  ', options: { color: GRIS } },
             { text: `${efec} efectivas`, options: { bold: true, color: AMBAR } }
         ], {
-            x: 0.76, y: BY + 0.98, w: 7.65, h: 0.26, isTextBox: true, margin: 0,
-            fontFace: 'Arial', fontSize: 11, valign: 'middle'
+            x: 0.76, y: BY + 0.79, w: 7.65, h: 0.22, isTextBox: true, margin: 0,
+            fontFace: 'Arial', fontSize: 10.5, valign: 'middle'
         });
-        s.addText('El porcentaje de ocupación es lo que la plataforma mide en el piso: baños, traslados y coordinación ya están descontados ahí.',
-            {
-                x: 0.76, y: BY + 1.26, w: 7.65, h: 0.22, isTextBox: true, margin: 0,
-                fontFace: 'Arial', fontSize: 9, italic: true, color: GRIS2, valign: 'middle'
-            });
+        // La nota de la ocupación se fue: el cuadro de meta contra simulado ocupa ese
+        // espacio y explicar el 84 % es menos importante que mostrar si se llega o no.
 
         s.addShape(pres.ShapeType.roundRect, {
             x: 8.82, y: BY, w: 4.01, h: BH, rectRadius: 0.05,
             fill: { color: '18294A' }, line: { color: '2B3F63', width: 1 }
         });
         s.addText('DÓNDE ESTAMOS HOY', {
-            x: 9.08, y: BY + 0.14, w: 3.49, h: 0.22, isTextBox: true, margin: 0,
-            fontFace: 'Arial', fontSize: 10, bold: true, color: VERDE, charSpacing: 0.8, valign: 'middle'
+            x: 9.08, y: BY + 0.09, w: 3.49, h: 0.20, isTextBox: true, margin: 0,
+            fontFace: 'Arial', fontSize: 9.5, bold: true, color: VERDE, charSpacing: 0.8, valign: 'middle'
         });
 
         /* LAS TRES ÁREAS, no solo el almacenaje. Daniel, 26-ago-2026: *"me muestras 22.879
@@ -1002,35 +1057,38 @@ export const montarSimulador = function (RAIZ, OPC) {
             ['Slotting', 'sin medición todavía', GRIS2],
             ['Buffer', M.bufHoy > 0 ? `${nMil(M.bufHoy)} paletas por noche` : 'sin dato', VERDE]
         ].forEach(([area, valor, color], i) => {
-            const y = BY + 0.40 + i * 0.26;
+            // Paso 0,21" y no 0,22": con 0,22 la tercera fila termina en 0,95" y la
+            // nota de abajo, que arranca en 0,90", le quedaba encima.
+            const y = BY + 0.28 + i * 0.21;
             s.addText(area, {
-                x: 9.08, y: y, w: 0.95, h: 0.24, isTextBox: true, margin: 0,
-                fontFace: 'Arial', fontSize: 9.5, color: GRIS2, valign: 'middle'
+                x: 9.08, y: y, w: 0.95, h: 0.21, isTextBox: true, margin: 0,
+                fontFace: 'Arial', fontSize: 9, color: GRIS2, valign: 'middle'
             });
             s.addText(valor, {
-                x: 10.03, y: y, w: 2.54, h: 0.24, isTextBox: true, margin: 0,
-                fontFace: 'Arial', fontSize: 11, bold: color !== GRIS2, color: color, valign: 'middle'
+                x: 10.03, y: y, w: 2.54, h: 0.21, isTextBox: true, margin: 0,
+                fontFace: 'Arial', fontSize: 10, bold: color !== GRIS2, color: color, valign: 'middle'
             });
         });
 
         s.addText(
-            `Almacenaje: ${(M.hoyPersonas || 0).toFixed(1).replace('.', ',')} personas por noche, `
-            + `con un techo de ${nMil(M.techo || 0)} pares.`
-            + (M.bufNoches ? ` Buffer: promedio de ${M.bufNoches} noches con paletas bajadas.` : ''), {
-            x: 9.08, y: BY + 1.20, w: 3.49, h: 0.30, isTextBox: true, margin: 0,
-            fontFace: 'Arial', fontSize: 8, color: GRIS2, valign: 'top', lineSpacingMultiple: 1.15
+            `Con ${(M.hoyPersonas || 0).toFixed(1).replace('.', ',')} personas por noche `
+            + `y un techo de ${nMil(M.techo || 0)} pares.`, {
+            x: 9.08, y: BY + 0.93, w: 3.49, h: 0.15, isTextBox: true, margin: 0,
+            fontFace: 'Arial', fontSize: 7.5, color: GRIS2, valign: 'middle'
         });
 
-        // Si se abrió un candado, la lámina TIENE que decirlo.
+        /* Si se abrió un candado, la lámina TIENE que decirlo — pero SOLO eso.
+           Daniel, 26-ago-2026: *"quítale todo, ponle nada más escenario simulado, para
+           que vean que es una simulación"*. El detalle de qué dato se cambió está en la
+           pantalla del simulador; en la lámina solo hace ruido. */
         const sim = haySimulado();
         s.addText(
             sim
-                ? `⚠  ESCENARIO SIMULADO: hay un dato medido cambiado a mano — ${nMil(S.aUph)} pares/hora `
-                + `por grupo de ${S.aTam}, ocupación ${S.ocup} %.   ·   Generado desde el Simulador.`
+                ? '⚠  ESCENARIO SIMULADO'
                 : `Medido sobre ${nMil(M.tareas || 0)} tareas finalizadas del ${rango} `
                 + `(${nMil(M.pares || 0)} pares almacenados).   ·   Generado desde el Simulador.`,
             {
-                x: 0.5, y: 6.72, w: 12.33, h: 0.26, isTextBox: true, margin: 0,
+                x: 0.5, y: 6.76, w: 12.33, h: 0.24, isTextBox: true, margin: 0,
                 fontFace: 'Arial', fontSize: 8.5, bold: sim, color: sim ? AMBAR : '6C7C99', valign: 'middle'
             });
 
