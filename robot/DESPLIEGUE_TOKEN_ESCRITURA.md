@@ -13,14 +13,26 @@ Seguro de fábrica: si enciendes `EXIGIR_TOKEN_ESCRITURA` sin haber puesto
 `ROBOT_TOKEN`, el servidor lo ignora y sigue en modo aviso. Nunca queda
 exigiendo un token que no existe.
 
-## El token de este despliegue
+## El token: se genera y NUNCA se escribe aquí
+
+El token es un secreto. **No va en este archivo ni en ningún otro del repo** —el
+repo se sirve público en `deam1830.com/robot/`, así que un token escrito aquí lo
+puede leer cualquiera y el candado deja de servir. (Eso pasó una vez: el token
+que estuvo escrito acá quedó quemado y se cambió por otro.)
+
+Se genera con:
 ```
-ROBOT_TOKEN = rbt_wbxGk4sW3qWmv8pUNBccS_7jjw4YY6MhG6ffbMqq
+python -c "import secrets; print('rbt_'+secrets.token_urlsafe(30))"
 ```
-Guárdalo. Va en DOS lugares y en ninguno más:
+
+Y el valor va SOLO en DOS lugares, nunca en un archivo del repo:
 1. En **Render** (el servidor), como variable de entorno `ROBOT_TOKEN`.
 2. En el **Contabo** (donde corren los robots), como variable de entorno
    `ROBOT_TOKEN` del sistema, para que los scripts la lean con `os.environ`.
+
+Los dos tienen que tener EL MISMO valor. Si alguna vez se sospecha que se filtró,
+se genera otro y se cambia en los dos lugares —los robots no hay que tocarlos,
+leen la variable.
 
 ## Los pasos, en este orden
 
