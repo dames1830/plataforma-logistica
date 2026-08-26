@@ -644,9 +644,13 @@ html[data-tema="negro"] #sync-indicator .sync-tooltip {
 }
 
 .tema-opt {
-  border: 1px solid var(--border);
+  /* Un velo y no var(--bg-card): en los temas claros la tarjeta seria blanca
+     sobre un panel blanco y las cuatro opciones no se distinguirian del fondo
+     (medido: 1,0:1). El velo se despega SIEMPRE de lo que tenga detras porque
+     se calcula contra la tinta del tema, no contra un color fijo. */
+  border: 1px solid rgba(var(--ink-rgb), 0.22);
   border-radius: var(--r-md);
-  background: var(--bg-card);
+  background: rgba(var(--ink-rgb), 0.05);
   padding: 1rem;
   cursor: pointer;
   display: flex;
