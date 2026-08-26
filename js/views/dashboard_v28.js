@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0411';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0412';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0411';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0411';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0411';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0411';
-import * as metasService from '../services_v245/metasService.js?v=29.0411';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0411';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0411';
+import * as adminService from '../services_v245/adminService.js?v=29.0412';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0412';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0412';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0412';
+import * as metasService from '../services_v245/metasService.js?v=29.0412';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0412';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0412';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0411';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0411';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0411';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0411';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0411';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0411';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0411';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0411';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0411';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0411';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0411';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0411';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0411';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0411';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0411';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0411';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0411';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0411';
-import { montarSlotting } from './slotting.js?v=29.0411';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0412';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0412';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0412';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0412';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0412';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0412';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0412';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0412';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0412';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0412';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0412';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0412';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0412';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0412';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0412';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0412';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0412';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0412';
+import { montarSlotting } from './slotting.js?v=29.0412';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0411';
+const VERSION = '29.0412';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1342,27 +1342,71 @@ almacenajeTasksCache = almacenajeTasksCache.map(t => {
     }
     return t;
 });
+/* EL DISCO DEL NAVEGADOR SE LLENO Y LA PURGA NO PURGABA NADA.
+ *
+ * Daniel, 26-ago-2026, con la consola abierta: "LocalStorage lleno. Auto-purgando
+ * tareas antiguas..." seguido de "Fallo critico de cuota incluso tras purga", una
+ * y otra vez. Esa era la causa del parpadeo, no el indicador.
+ *
+ * DOS DEFECTOS, y el primero es UNA LETRA:
+ *
+ *   1. La purga filtraba por `status === 'Finalizada'` y el estado que graba la
+ *      plataforma es 'Finalizado'. Cero coincidencias: de las 949 tareas de
+ *      produccion, 689 son 'Finalizado' y NINGUNA es 'Finalizada'. La purga
+ *      recorria la lista, no sacaba nada, y el segundo intento fallaba igual.
+ *
+ *   2. Purgaba `almacenajeTasksCache`, que es lo que SE ESTA VIENDO. Aunque
+ *      hubiera funcionado, para hacer sitio en el disco le habria borrado tareas
+ *      de la pantalla. Lo que se guarda y lo que se muestra son cosas distintas:
+ *      ahora se recorta SOLO lo que se escribe, y la memoria no se toca.
+ *
+ * SE RECORTA POR DIA Y EN ESCALONES. Las 949 tareas pesan 1,52 MB y las
+ * anteriores al 23-ago son el 88% de ese peso: guardando los ultimos dias entra
+ * de sobra. El resto no se pierde — vive en el servidor y baja al abrir. Este
+ * cajon es solo el respaldo para trabajar sin internet, y para eso lo que
+ * importa es la jornada de hoy.
+ */
+const DIAS_EN_DISCO = 3;
+let _cuotaAvisada = false;
+
 const safeSaveAlmacenajeTasksCache = () => {
-    try {
-        localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
-    } catch (e) {
-        if (e.name === 'QuotaExceededError' || e.code === 22 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-            console.warn("🧹 [PULSE] LocalStorage lleno. Auto-purgando tareas antiguas...");
-            const doceHoras = 12 * 60 * 60 * 1000;
-            const now = Date.now();
-            almacenajeTasksCache = almacenajeTasksCache.filter(t => {
-                if (t.status === 'Finalizada' && t.termino) {
-                    const ts = new Date(t.termino).getTime();
-                    if (!isNaN(ts) && (now - ts > doceHoras)) return false;
-                }
-                return true;
-            });
-            try {
-                localStorage.setItem('logistics_sync_v24_almacenaje_tasks', JSON.stringify(almacenajeTasksCache));
-            } catch (err2) {
-                console.error("❌ [PULSE] Fallo crítico de cuota incluso tras purga.");
-            }
-        }
+    const CLAVE = 'logistics_sync_v24_almacenaje_tasks';
+    const escribir = (lista) => localStorage.setItem(CLAVE, JSON.stringify(lista));
+    const esCuota = (e) => e && (e.name === 'QuotaExceededError' || e.code === 22
+                              || e.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+    try { escribir(almacenajeTasksCache); _cuotaAvisada = false; return; }
+    catch (e) {
+        if (!esCuota(e)) { console.warn('[PULSE] No se pudo guardar en esta PC:', e && e.message); return; }
+    }
+
+    /* Escalones: primero los ultimos dias, y si aun no entra, solo el ultimo.
+       `fecha` es 'AAAA-MM-DD', asi que ordena bien como texto. */
+    const dias = [...new Set(almacenajeTasksCache.map(t => String((t && t.fecha) || '')))]
+                 .filter(Boolean).sort().reverse();
+    for (const cuantos of [DIAS_EN_DISCO, 1]) {
+        const corte = dias[cuantos - 1] || dias[dias.length - 1];
+        if (!corte) break;
+        const recorte = almacenajeTasksCache.filter(t => String((t && t.fecha) || '') >= corte);
+        if (recorte.length === almacenajeTasksCache.length) continue;   // no recorta nada, no insistir
+        try {
+            escribir(recorte);
+            console.warn(`🧹 [PULSE] El disco de esta PC estaba lleno: se guardaron las `
+                + `${recorte.length} tareas desde el ${corte} (de ${almacenajeTasksCache.length}). `
+                + `Las demas siguen en el servidor y en pantalla.`);
+            _cuotaAvisada = false;
+            return;
+        } catch (e2) { /* siguiente escalon */ }
+    }
+
+    /* Ni con un dia entra: se suelta el cajon para no dejar una copia a medias que
+       al recargar reviva tareas viejas, y se avisa UNA sola vez -no en cada
+       guardado, que es justo lo que llenaba la consola-. */
+    try { localStorage.removeItem(CLAVE); } catch (e3) { /* ni eso */ }
+    if (!_cuotaAvisada) {
+        _cuotaAvisada = true;
+        console.error('❌ [PULSE] El almacenamiento de esta PC esta lleno y no entra ni la '
+            + 'jornada de hoy. El trabajo NO se pierde: se guarda en el servidor. '
+            + 'Conviene vaciar los datos del sitio en el navegador.');
     }
 };
 
@@ -5258,7 +5302,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0411');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0412');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17786,7 +17830,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0411 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0412 | MOBILE PORTAL
                             </div>
                     </div>
 
