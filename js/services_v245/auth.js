@@ -14,7 +14,7 @@ const getApiBase = (defaultUrl) => {
   return defaultUrl;
 };
 const AUTH_API = getApiBase("https://logistics-backend-wv0x.onrender.com/api");
-const VERSION = '29.0418';
+const VERSION = '29.0419';
 
 /**
  * [SEGURIDAD v26.5.572] La validación la hace EL SERVIDOR.
@@ -103,6 +103,18 @@ export const getSession = () => {
   const session = localStorage.getItem('logistics_session');
   if (!session) return null;
   const user = JSON.parse(session);
+
+  /* RELOGIN DE LAS SESIONES VIEJAS. Desde el candado de escritura, una sesion sin
+     token no puede guardar datos en el servidor. Una sesion abierta ANTES del
+     candado no lo tiene. En vez de dejar que las tareas fallen en silencio cuando
+     se encienda, se pide entrar de nuevo -una sola vez- para obtener el token.
+     Solo afecta a esas sesiones viejas; las nuevas ya lo traen y no se tocan. */
+  if (!user.token) {
+    console.warn('[AUTH] Sesion anterior al candado (sin token): se pide volver a entrar.');
+    try { sessionStorage.setItem('deam_relogin_por_token', '1'); } catch (e) { /* da igual */ }
+    logout();
+    return null;
+  }
   
   // [SEGURIDAD GOLD] Si el usuario no es 'dames', verificar que siga activo en la lista oficial
   if (user.username !== 'dames') {

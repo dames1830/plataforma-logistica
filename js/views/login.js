@@ -1,6 +1,11 @@
-import { login as authLogin } from '../services_v245/auth.js?v=29.0418';
+import { login as authLogin } from '../services_v245/auth.js?v=29.0419';
 
 export const renderLogin = (container, onLoginSuccess) => {
+  /* Si venimos de una sesion vieja invalidada por falta de token, se avisa por que
+     hay que entrar de nuevo -si no, parece que el sistema echo al usuario sin razon-. */
+  let _porToken = false;
+  try { _porToken = sessionStorage.getItem('deam_relogin_por_token') === '1';
+        sessionStorage.removeItem('deam_relogin_por_token'); } catch (e) {}
   // Establecer clase para el diseño degradado premium claro (inspirado en la referencia)
   container.className = 'login-view-wrapper';
   
@@ -23,6 +28,12 @@ export const renderLogin = (container, onLoginSuccess) => {
           <circle cx="60" cy="36" r="18" stroke="var(--avatar-stroke, var(--text-strong))" stroke-width="4" stroke-linejoin="round" />
           <path d="M28,80 C28,62 42,56 60,56 C78,56 92,62 92,80 Z" stroke="var(--avatar-stroke, var(--text-strong))" stroke-width="4" stroke-linejoin="round" />
         </svg>
+      </div>
+
+      <div id="aviso_relogin" style="display:none; margin:0 0 14px; padding:9px 13px; border-radius:9px;
+                  background:rgba(var(--warning-soft-rgb), 0.14); border:1px solid rgba(var(--warning-soft-rgb), 0.4);
+                  color:var(--warning-soft); font-size:var(--t-sm); font-weight:700; text-align:center;">
+        Por seguridad, vuelve a ingresar. Es solo esta vez.
       </div>
 
       <form id="loginForm" style="display: flex; flex-direction: column;">
@@ -61,12 +72,16 @@ export const renderLogin = (container, onLoginSuccess) => {
       
       </form>
       <div style="text-align: center; margin-top: 1.5rem; font-size:var(--t-xs); color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em;">
-        SYSTEM BUILD: v29.0418 | SECURE SYNC
+        SYSTEM BUILD: v29.0419 | SECURE SYNC
       </div>
     </div>
   `;
 
   const form = document.getElementById('loginForm');
+  if (_porToken) {
+    const av = document.getElementById('aviso_relogin');
+    if (av) av.style.display = 'block';
+  }
   const errorDiv = document.getElementById('loginError');
   const btn = document.getElementById('loginBtn');
   const forgotLink = document.getElementById('forgotPass');
