@@ -1,3 +1,4 @@
+import { icono } from '../services_v245/iconos.js?v=29.0394';
 /**
  * SKUs SIN SALIDA — los que llegaron y no se están moviendo
  *
@@ -196,9 +197,7 @@ export const montarSinSalida = function (RAIZ, OPC) {
     <span style="margin-left:auto; font-size:var(--t-xs); color:var(--text-muted);">
       al ${ddmm(P.fecha)} &middot; ${esc(P.hora || '')}
     </span>
-    ${OPC.alExportar ? `<button id="sss_xls" class="btn" style="width:auto; background:var(--success-alt);
-        padding:0.45rem 0.9rem; font-size:var(--t-xs); font-weight:800; border-radius:8px;">
-        📥 EXPORTAR</button>` : ''}
+    ${OPC.alExportar ? `<button id="sss_xls" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>` : ''}
   </div>
 
   <div class="tarjetas">

@@ -91,3 +91,58 @@
   color: var(--text-strong);
   font-variant-numeric: tabular-nums;
 }
+
+/* ── Botones que son solo un icono ───────────────────────────────────────── */
+/*
+   Sin fondo. Un boton de exportar no compite con el boton principal de la
+   pantalla: se reconoce por el dibujo, no por el bloque de color. Antes eran
+   tres rectangulos de colores distintos al lado de PROCESAR TAREAS y los
+   cuatro pesaban igual, asi que ninguno destacaba.
+
+   El aro al pasar el mouse y el fondo tenue al pulsar dan la respuesta que
+   antes daba el color. Y como no hay texto, el `title` es obligatorio: con
+   solo un dibujo, sin el nadie sabe que hace.
+*/
+.btn-icono {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px;
+  min-width: 32px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.btn-icono:hover {
+  color: var(--text-strong);
+  border-color: var(--border);
+  background: rgba(var(--ink-rgb), 0.06);
+}
+.btn-icono:disabled { opacity: .45; cursor: not-allowed; }
+
+/* El de Excel va en verde: es como se reconoce, y ahi el color SI significa
+   algo. El tono sale del tema, asi que se lee en los cuatro. */
+.btn-excel { color: var(--success); }
+.btn-excel:hover { color: var(--success); background: rgba(var(--success-rgb), 0.12); border-color: rgba(var(--success-rgb), 0.35); }
+
+/* ── El aire alrededor de un reporte ─────────────────────────────────────── */
+/*
+   Los reportes que se dibujan enteros dentro de un contenedor -Rotacion,
+   Pendiente, Prepack, SKU sin salida- no traian margen propio: la tabla
+   arrancaba pegada al borde izquierdo de la pantalla y el titulo tambien.
+   Se lee peor y parece que el reporte estuviera cortado.
+
+   Se les da el aire aca y no en cada uno, para que todos respiren igual.
+*/
+#rot, #pend, #pp_detalle, #sss {
+  padding: var(--e-4) var(--e-5) var(--e-5);
+}
+
+@media (max-width: 900px) {
+  #rot, #pend, #pp_detalle, #sss { padding: var(--e-3); }
+}

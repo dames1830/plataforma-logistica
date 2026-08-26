@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0393';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0394';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0393';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0393';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0393';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0393';
-import * as metasService from '../services_v245/metasService.js?v=29.0393';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0393';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0393';
+import * as adminService from '../services_v245/adminService.js?v=29.0394';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0394';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0394';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0394';
+import * as metasService from '../services_v245/metasService.js?v=29.0394';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0394';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0394';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0393';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0393';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0393';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0393';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0393';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0393';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0393';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0393';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0393';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0393';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0393';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0393';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0393';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0393';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0393';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0393';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0393';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0393';
-import { montarSlotting } from './slotting.js?v=29.0393';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0394';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0394';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0394';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0394';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0394';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0394';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0394';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0394';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0394';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0394';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0394';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0394';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0394';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0394';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0394';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0394';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0394';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0394';
+import { montarSlotting } from './slotting.js?v=29.0394';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0393';
+const VERSION = '29.0394';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5126,7 +5126,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     const exportArea = document.getElementById('export_actions');
     if (exportArea) {
         exportArea.innerHTML = `
-            <button id="btn_exp_buffer" class="btn" style="width:auto; background:var(--success); padding:0.5rem 1.5rem; border-radius:8px; font-size:var(--t-sm); font-weight:800; box-shadow:0 0 15px rgba(var(--success-rgb), 0.3);">📥 EXCEL DETALLE</button>
+            <button id="btn_exp_buffer" class="btn-icono btn-excel" title="Excel detalle">${icono('excel', 18)}</button>
         `;
         document.getElementById('btn_exp_buffer').onclick = () => {
             if(!data.detalle || !data.detalle.length) alert('⚠️ ERROR: Datos no disponibles.');
@@ -5212,7 +5212,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0393');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0394');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -6760,7 +6760,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                          <input type="date" id="kpi_end" value="${kpiEnd}" style="background:none; border:none; color:var(--text-strong); font-size:var(--t-sm); outline:none;">
                     </div>
                     <input type="text" id="kpi_search" placeholder="🔍 Buscar operario..." value="${kpiSearch}" style="background:rgba(var(--ink-rgb), 0.03); border:1px solid var(--border); color:var(--text-strong); padding:6px 12px; border-radius:8px; font-size:var(--t-sm); outline:none; width:200px;">
-                    <button onclick='exportKPIConsolidado(${JSON.stringify(consolidado).replace(/'/g, "&apos;")})' class="btn" style="width:auto; font-size:var(--t-sm); padding:0.5rem 1rem; background:var(--success-alt); border-radius:8px;">📥 EXPORTAR</button>
+                    <button onclick='exportKPIConsolidado(${JSON.stringify(consolidado).replace(/'/g, "&apos;")})' class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
                 </div>
             </div>
             <div style="overflow-x:auto;">
@@ -6883,7 +6883,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <h3 style="color:var(--primary); margin:0;">Historial de Performance Diaria</h3>
-            <button onclick="exportPerformanceToExcel()" class="btn" style="width:auto; background:var(--success-alt); padding:0.6rem 1.2rem; font-size:var(--t-sm); font-weight:800;">📊 EXPORTAR A EXCEL</button>
+            <button onclick="exportPerformanceToExcel()" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
@@ -8839,7 +8839,7 @@ const renderRFSection = (container) => {
                 <button id="btn_generate_summary" class="btn" style="width:100%; background:linear-gradient(135deg, var(--primary) 0%, var(--panel-deep) 150%); color:var(--text-strong); font-size:var(--t-sm); padding:0.7rem; font-weight:800; border-radius:8px; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.35); border:none; cursor:pointer;">📊 Generar Resumen</button>
                 <div style="display:flex; gap:10px;">
                   <button id="btn_clear_revision" class="btn" style="flex:1; background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-pale); font-size:var(--t-sm); padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--danger-rgb), 0.2)';" onmouseout="this.style.background='rgba(var(--danger-rgb), 0.1)';">🗑️ Limpiar Lecturas</button>
-                  <button id="btn_export_revision" class="btn" style="flex:1; background:rgba(var(--success-alt-rgb), 0.1); border:1px solid rgba(var(--success-alt-rgb), 0.3); color:var(--success-pale); font-size:var(--t-sm); padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--success-alt-rgb), 0.2)';" onmouseout="this.style.background='rgba(var(--success-alt-rgb), 0.1)';">📥 Exportar Reporte</button>
+                  <button id="btn_export_revision" class="btn-icono btn-excel" onmouseover="this.style.background='rgba(var(--success-alt-rgb), 0.2)';" onmouseout="this.style.background='rgba(var(--success-alt-rgb), 0.1)';" title="Exportar reporte a Excel">${icono('excel', 18)}</button>
                 </div>
               </div>
 
@@ -11731,9 +11731,7 @@ const renderRFSection = (container) => {
                     <button id="btn_hist_sync" title="Sincronizar Historial" style="background:var(--btn-fill); color:var(--on-primary); border:none; width:30px; height:30px; border-radius:6px; font-size:var(--t-md); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                         🔄
                     </button>
-                    <button id="btn_hist_export" style="background:var(--success); color:var(--on-accent); border:none; padding:0.4rem 1rem; border-radius:6px; font-size:var(--t-sm); font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                        📥 EXPORTAR
-                    </button>
+                    <button id="btn_hist_export" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
                 </div>
             </div>
 
@@ -11765,9 +11763,7 @@ const renderRFSection = (container) => {
                 <div style="flex:1; min-width:0; background:rgba(var(--bg-rgb), 0.9); border:2px solid var(--primary); border-radius:12px; overflow:hidden; box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3);">
                     <div style="padding:0.4rem 0.6rem; background:rgba(var(--primary-rgb), 0.1); border-bottom:1px solid rgba(var(--primary-rgb), 0.3); display:flex; justify-content:space-between; align-items:center;">
                         <h3 style="color:var(--text-strong); font-weight:800; margin:0; font-size:var(--t-md); letter-spacing:1px; white-space:nowrap;">Buffer Temporada</h3>
-                        <button id="btn_temp_export" style="background:var(--success); color:var(--on-accent); border:none; padding:0.35rem 0.8rem; border-radius:6px; font-size:var(--t-xs); font-weight:800; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                            📥 EXPORTAR TEMPORADA
-                        </button>
+                        <button id="btn_temp_export" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'" class="btn-icono btn-excel" title="Exportar temporada a Excel">${icono('excel', 18)}</button>
                     </div>
                     <div style="overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-pale); text-align:center;">
@@ -12675,7 +12671,7 @@ const renderRFSection = (container) => {
                 </div>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
                     <button id="btn_reprocess_kpi" class="btn" style="background:var(--btn-fill); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:var(--t-sm); font-weight:700;">🔄 REPROCESAR</button>
-                    <button id="btn_excel_val" class="btn" style="background:var(--success); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:var(--t-sm); font-weight:700;">📥 EXPORTAR CONCILIACIÓN</button>
+                    <button id="btn_excel_val" class="btn-icono btn-excel" title="Exportar conciliación a Excel">${icono('excel', 18)}</button>
                 </div>
             </div>
 
@@ -15551,7 +15547,7 @@ const renderRFSection = (container) => {
             <h3 style="font-size:var(--t-md); font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-strong); display:flex; align-items:center;">
               REPORTE UCA GENERAL ${tsSpan}
             </h3>
-            <button id="btnExportUCA" class="btn" style="width:auto; padding:5px 12px; font-size:var(--t-xs); background:var(--success-deep);">📊 EXPORTAR UCA</button>
+            <button id="btnExportUCA" class="btn-icono btn-excel" title="Exportar uca a Excel">${icono('excel', 18)}</button>
           </div>
           
           <div class="data-table-container" style="max-height:400px; border-radius:8px;">
@@ -17276,9 +17272,7 @@ const renderRFSection = (container) => {
         <div style="padding: 1.5rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
               <div style="display:flex; gap:1rem;">
-                  <button onclick="exportTrackingToExcel()" style="background:var(--success-alt); color:var(--on-accent); border:none; padding:0.5rem 1rem; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;">
-                      <i class="fas fa-file-excel"></i> Exportar a Excel
-                  </button>
+                  <button onclick="exportTrackingToExcel()" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
               </div>
               
               <!-- Filtro de Búsqueda de Texto en el Medio -->
@@ -17666,7 +17660,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0393 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0394 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -24522,7 +24516,7 @@ Se dejó el valor anterior.`, 'warning');
           <button id="repl_reprocesar" style="background:rgba(var(--ink-rgb), 0.04); border:1px solid rgba(var(--ink-rgb), 0.12); border-radius:8px; color:rgba(var(--ink-rgb), 0.5); padding:0.4rem 0.9rem; font-size:var(--t-sm); cursor:pointer; font-weight:600; transition:all 0.15s; white-space:nowrap; line-height:1;"
             onmouseover="this.style.background='rgba(var(--ink-rgb), 0.09)'; this.style.color='var(--text-strong)';"
             onmouseout="this.style.background='rgba(var(--ink-rgb), 0.04)'; this.style.color='rgba(var(--ink-rgb), 0.5)';">🔄 REPROCESAR</button>
-          <button id="repl_export" class="btn" style="padding:0.4rem 1rem; font-size:var(--t-sm); font-weight:700; white-space:nowrap;">📥 EXPORTAR</button>
+          <button id="repl_export" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
         </div>
       </div>
 
@@ -28033,9 +28027,7 @@ window.showCellModal = function(htmlContent) {
                     <div style="width: 100%;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                             <h3 style="color:var(--brand-light); font-weight:800; margin:0; font-size:var(--t-lg);">ANÁLISIS DE FRAGMENTACIÓN DE RESERVA</h3>
-                            <button id="btn_export_reserva_sku" class="btn-primary" style="display:flex; align-items:center; gap:0.5rem; background:var(--success-alt); padding:5px 10px; font-size:var(--t-sm);">
-                                <span>📊</span> Exportar
-                            </button>
+                            <button id="btn_export_reserva_sku" class="btn-icono btn-excel btn-primary" title="Exportar a Excel">${icono('excel', 18)}</button>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                             <input type="text" id="reserva_sku_search" placeholder="🔍 Buscar SKU o LPN..." value="${reservaState.query}" style="padding:8px 12px; border-radius:5px; border:1px solid rgba(var(--ink-rgb), 0.1); background:rgba(var(--shadow-rgb), 0.2); color:var(--text-strong); width:60%; outline:none;">
@@ -28140,9 +28132,7 @@ window.showCellModal = function(htmlContent) {
                     <div style="width: 100%;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                             <h3 style="color:var(--danger); font-weight:800; margin:0; font-size:var(--t-lg);">REPORTE UBICACIÓN RESERVA</h3>
-                            <button id="btn_export_reserva_ubi" class="btn-primary" style="display:flex; align-items:center; gap:0.5rem; background:var(--success-alt); padding:5px 10px; font-size:var(--t-sm);">
-                                <span>📊</span> Exportar
-                            </button>
+                            <button id="btn_export_reserva_ubi" class="btn-icono btn-excel btn-primary" title="Exportar a Excel">${icono('excel', 18)}</button>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                             <input type="text" id="reserva_ubi_search" placeholder="🔍 Buscar Ubicación, LPN o SKU..." value="${ubicacionState.query}" style="padding:8px 12px; border-radius:5px; border:1px solid rgba(var(--ink-rgb), 0.1); background:rgba(var(--shadow-rgb), 0.2); color:var(--text-strong); width:60%; outline:none;">
@@ -28955,12 +28945,8 @@ window.showCellModal = function(htmlContent) {
             <button id="btn_refresh_global" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:var(--t-sm); background:rgba(var(--primary-rgb), 0.05); border:1px solid var(--primary); font-weight:800; border-radius:8px; color:var(--text-strong); cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='var(--primary)'" onmouseout="this.style.background='rgba(var(--primary-rgb), 0.05)'">
                 🔄 RE-PROCESAR TODO
             </button>
-            <button id="btn_export_analisis" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:var(--t-sm); background:rgba(var(--success-alt-rgb), 0.05); border:1px solid var(--success-alt); font-weight:800; border-radius:8px; color:var(--text-strong); cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='var(--success-alt)'" onmouseout="this.style.background='rgba(var(--success-alt-rgb), 0.05)'">
-                📥 EXPORTAR TEMPORADA
-            </button>
-            <button id="btn_export_obsgen" class="btn" style="width:auto; padding:0.8rem 1.5rem; font-size:var(--t-sm); background:rgba(var(--warning-soft-rgb), 0.05); border:1px solid var(--warning-soft); font-weight:800; border-radius:8px; color:var(--text-strong); cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='var(--warning-soft)'" onmouseout="this.style.background='rgba(var(--warning-soft-rgb), 0.05)'">
-                📊 DETALLE OBS.GEN
-            </button>
+            <button id="btn_export_analisis" class="btn-icono btn-excel" onmouseover="this.style.background='var(--success-alt)'" onmouseout="this.style.background='rgba(var(--success-alt-rgb), 0.05)'" title="Exportar temporada a Excel">${icono('excel', 18)}</button>
+            <button id="btn_export_obsgen" class="btn-icono btn-excel" onmouseover="this.style.background='var(--warning-soft)'" onmouseout="this.style.background='rgba(var(--warning-soft-rgb), 0.05)'" title="Detalle obs.gen a Excel">${icono('excel', 18)}</button>
         </div>
 
         <div style="display:flex; gap:1.5rem; align-items: stretch;">
@@ -32454,7 +32440,7 @@ window.showCellModal = function(htmlContent) {
             <div class="glass-panel" style="background:rgba(var(--bg-rgb), 0.9); border:2px solid var(--primary); border-radius:14px; padding:1.3rem; box-shadow:0 0 25px rgba(var(--primary-rgb), 0.15);">
               <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:2px;">
                 <h3 style="color:var(--text-strong); font-weight:900; margin:0; font-size:var(--t-lg); letter-spacing:0.5px;">FOOTWEAR</h3>
-                <button onclick="window.exportarProductividad(this)" class="btn" style="width:auto; padding:6px 14px; font-size:var(--t-xs); background:rgba(var(--success-alt-rgb), 0.1); color:var(--success-alt); border:1px solid var(--success-alt); cursor:pointer;">📥 EXPORTAR</button>
+                <button onclick="window.exportarProductividad(this)" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
               </div>
               <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); margin-bottom:1rem;">
                 ${fw.vacio ? 'sin datos' : `${fw.tareas.toLocaleString('es-PE')} tareas en ${fw.cerradas.length} semanas cerradas`}
@@ -34796,7 +34782,7 @@ window.showCellModal = function(htmlContent) {
                     <div style="display:flex; background:rgba(var(--shadow-rgb), 0.35); border-bottom:1px solid rgba(var(--primary2-rgb), 0.2); flex-wrap:wrap;">
                         ${nav}
                         <div style="display:flex; align-items:center; padding:0 1rem; gap:8px; margin-left:auto;">
-                            <button onclick="window.exportarKpiTareas(this)" class="btn" style="width:auto; padding:6px 12px; font-size:var(--t-xs); background:rgba(var(--success-alt-rgb), 0.1); color:var(--success-alt); border:1px solid var(--success-alt); cursor:pointer; white-space:nowrap;">📥 EXPORTAR</button>
+                            <button onclick="window.exportarKpiTareas(this)" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
                         </div>
                     </div>
                     <div style="overflow-x:auto;">${cuerpo}</div>

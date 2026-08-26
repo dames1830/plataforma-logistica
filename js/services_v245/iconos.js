@@ -40,6 +40,11 @@ const TRAZOS = {
   buffer:      '<path d="M6 3h12"/><path d="M6 21h12"/><path d="M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9"/><path d="M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/>',
   analisis_sku:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
   admin_pers:  '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17.5" cy="9" r="2.4"/><path d="M16 19c0-2.4 1.6-4 3.5-4"/>',
+  /* Exportar a Excel. La hoja con la cuadricula y la X: es como se reconoce el
+     Excel de un vistazo, sin necesidad de poner la palabra al lado. */
+  excel:       '<path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3v5h5"/><path d="m9 12.5 5 5"/><path d="m14 12.5-5 5"/>',
+  imprimir:    '<path d="M7 8V3.5h10V8"/><rect x="4" y="8" width="16" height="7.5" rx="1.5"/><path d="M7 14h10v6.5H7z"/>',
+  wms:         '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3 2"/>',
   config:      '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>'
 };
 
