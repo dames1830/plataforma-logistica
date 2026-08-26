@@ -35,6 +35,17 @@ const claveDe = (usuario) => `deam_tema_${usuario || 'anon'}`;
  */
 const CLAVE_ULTIMO = 'deam_tema_ultimo';
 
+/**
+ * El ultimo tema ASIGNADO que se le vio a esta persona en esta computadora.
+ *
+ * Sirve para distinguir dos cosas que parecen la misma: que el administrador le
+ * haya dejado un tema puesto desde siempre, y que se lo ACABE DE CAMBIAR. Lo
+ * segundo es una instruccion nueva y tiene que ganar, aunque la persona haya
+ * elegido otro antes; lo primero no, porque entonces el administrador le estaria
+ * pisando la eleccion en cada arranque.
+ */
+const claveAsignado = (usuario) => `deam_tema_asignado_${usuario || 'anon'}`;
+
 /** El tema que se usa cuando la persona todavia no eligio ninguno. */
 export const TEMA_POR_DEFECTO = 'indigo';
 
@@ -150,6 +161,20 @@ export const temaActual = () =>
  * preferencia de esa persona, que puede no ser la del ultimo que uso la PC.
  */
 export const aplicarTemaDeUsuario = (usuario, asignado) => {
+  // Si el administrador le CAMBIO el tema desde la ultima vez, esa es una orden
+  // nueva: se aplica y se borra la eleccion anterior de esta PC. Despues la
+  // persona puede volver a elegir el suyo y ese vuelve a mandar.
+  try {
+    if (asignado && existeTema(asignado)) {
+      if (localStorage.getItem(claveAsignado(usuario)) !== asignado) {
+        localStorage.setItem(claveAsignado(usuario), asignado);
+        localStorage.removeItem(claveDe(usuario));
+      }
+    } else if (!asignado) {
+      localStorage.removeItem(claveAsignado(usuario));
+    }
+  } catch (e) { /* almacenamiento bloqueado: sigue con el orden normal */ }
+
   const tema = getTema(usuario, asignado);
   // Queda anotado como el ultimo de ESTA maquina, que es lo que van a leer el
   // login y la pantalla de carga la proxima vez -ellos corren antes de que
