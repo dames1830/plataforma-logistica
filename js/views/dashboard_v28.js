@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0405';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0407';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0405';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0405';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0405';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0405';
-import * as metasService from '../services_v245/metasService.js?v=29.0405';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0405';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0405';
+import * as adminService from '../services_v245/adminService.js?v=29.0407';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0407';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0407';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0407';
+import * as metasService from '../services_v245/metasService.js?v=29.0407';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0407';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0407';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0405';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0405';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0405';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0405';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0405';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0405';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0405';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0405';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0405';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0405';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0405';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0405';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0405';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0405';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0405';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0405';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0405';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0405';
-import { montarSlotting } from './slotting.js?v=29.0405';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0407';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0407';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0407';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0407';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0407';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0407';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0407';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0407';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0407';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0407';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0407';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0407';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0407';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0407';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0407';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0407';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0407';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0407';
+import { montarSlotting } from './slotting.js?v=29.0407';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0405';
+const VERSION = '29.0407';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5210,7 +5210,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0405');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0407');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17656,7 +17656,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0405 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0407 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -26027,13 +26027,20 @@ Se dejó el valor anterior.`, 'warning');
       const hueco = LARGO * (1 - Math.min(100, Math.max(0, pct)) / 100);
       const fechaLinda = (f) => String(f || '').split('-').reverse().join('/');
 
-      /* VELO Y NO COLOR FIJO. Con var(--panel-deep) la tarjeta estaba puesta pero NO SE
-         VEIA: se dibuja DENTRO de un panel que en los temas claros tambien es blanco,
-         asi que quedaba blanco sobre blanco. Un velo se calcula contra la tinta del
-         tema, asi que se despega este encima de lo que este. Es el mismo arreglo que
-         necesitaron el marco de los reportes y las tarjetas del selector de temas. */
-      const html = '<div id="tarj_avance" style="background:rgba(var(--ink-rgb), 0.05);'
-        + 'border:1px solid rgba(var(--ink-rgb), 0.22);'
+      /* OPACA, Y EL BORDE ES EL QUE LA DEFINE.
+         Esta tarjeta se captura y se manda al grupo, asi que NO puede dejar ver la
+         tabla de atras: un velo aqui no sirve, por mas que se despegue del fondo.
+         Va `--panel-solid`, que es opaco en los cuatro temas.
+
+         Pero opaco solo no alcanza: en Power BI ese blanco cae sobre un velo que es
+         casi el mismo blanco -1,04:1-, y en el negro pasa igual. Antes usaba
+         `--panel-deep`, que EN POWER BI ES EXACTAMENTE EL MISMO #F3F2F1 del velo del
+         modal: por eso no se veia nada, 1,0:1. Lo que marca el canto es el BORDE, que
+         se calcula contra la tinta del tema y se despega siempre. Como el fondo de la
+         tarjeta es opaco, ese borde translucido se apoya en ella y no transparenta. */
+      const html = '<div id="tarj_avance" style="background:var(--panel-solid);'
+        + 'border:1px solid rgba(var(--ink-rgb), 0.28);'
+        + 'box-shadow:0 10px 34px rgba(var(--shadow-rgb), 0.28);'
         + 'border-radius:15px;padding:19px 22px 17px;width:470px;max-width:100%;'
         + 'font-family:\'Segoe UI\',system-ui,Arial,sans-serif;color:var(--blue-pale)">'
         + '<div style="display:flex;align-items:center;gap:10px">'
@@ -26041,14 +26048,15 @@ Se dejó el valor anterior.`, 'warning');
         +     'box-shadow:0 0 10px var(--sky)"></span>'
         +   '<h3 style="font-size:var(--t-md);margin:0;letter-spacing:.4px;font-weight:800">'
         +     'AVANCE DE CONSOLIDACIÓN DE RESERVA</h3></div>'
-        + '<div style="margin:11px 0 0;padding:9px 13px;border-radius:9px;background:var(--panel-deep);'
-        +   'border:1px solid var(--panel-alt);display:flex;align-items:baseline;gap:9px">'
+        + '<div style="margin:11px 0 0;padding:9px 13px;border-radius:9px;'
+        +   'background:rgba(var(--ink-rgb), 0.06);border:1px solid rgba(var(--ink-rgb), 0.16);'
+        +   'display:flex;align-items:baseline;gap:9px">'
         +   '<span style="font-size:var(--t-md);font-weight:800;letter-spacing:.3px">' + dia + '</span>'
         +   '<span style="font-size:var(--t-sm);color:var(--sky);font-weight:700">' + hora + '</span></div>'
         + '<div style="display:flex;align-items:center;gap:24px;padding:18px 4px 8px">'
         +   '<div style="position:relative;width:132px;height:132px;flex:none">'
         +     '<svg width="132" height="132" viewBox="0 0 132 132" style="transform:rotate(-90deg)">'
-        +       '<circle cx="66" cy="66" r="' + R + '" fill="none" stroke="var(--panel-alt)" stroke-width="14"/>'
+        +       '<circle cx="66" cy="66" r="' + R + '" fill="none" stroke="rgba(var(--ink-rgb), 0.12)" stroke-width="14"/>'
         +       '<circle cx="66" cy="66" r="' + R + '" fill="none" stroke="var(--success-mid)" stroke-width="14"'
         +         ' stroke-linecap="round" stroke-dasharray="' + LARGO.toFixed(1) + '"'
         +         ' stroke-dashoffset="' + hueco.toFixed(1) + '"/></svg>'
@@ -26064,14 +26072,15 @@ Se dejó el valor anterior.`, 'warning');
         +       'UBICACIONES LIBERADAS</div>'
         +     '<div style="font-size:var(--t-md);margin-top:12px;font-weight:700;color:var(--warning-soft)">Faltan '
         +       mil(meta - hechas) + '</div></div></div>'
-        + '<div style="height:8px;border-radius:5px;background:var(--panel-alt);overflow:hidden;margin:6px 0 0">'
+        + '<div style="height:8px;border-radius:5px;background:rgba(var(--ink-rgb), 0.12);'
+        +   'overflow:hidden;margin:6px 0 0">'
         +   '<i style="display:block;height:100%;border-radius:5px;width:' + pct + '%;'
         +     'background:linear-gradient(90deg,var(--success-deep),var(--success-mid))"></i></div></div>';
 
       /* El fondo NO lleva desenfoque: `glass-panel` recorta lo que se le sale y en una captura
          de pantalla eso se ve. Ver la trampa del blur en CLAUDE.md. */
       const capa = document.createElement('div');
-      capa.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(var(--bg-rgb), .86);'
+      capa.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(var(--bg-rgb), .97);'
         + 'display:flex;align-items:center;justify-content:center;padding:22px;overflow:auto';
       capa.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px">'
         + html
