@@ -126,7 +126,7 @@ export const montarSlotting = (container, OPC = {}) => {
               ${lista.length ? `<button id="slt_imprimir" class="btn" style="background:rgba(var(--ink-rgb), 0.06);
                        border:1px solid var(--border); color:var(--text-pale); width:auto; padding:0.5rem 1.1rem;
                        border-radius:8px; font-size:0.74rem; font-weight:800;">🖨️ IMPRIMIR</button>` : ''}
-              <button id="slt_procesar" class="btn" style="background:var(--primary); width:auto;
+              <button id="slt_procesar" class="btn" style="background:var(--btn-fill); width:auto;
                       padding:0.5rem 1.1rem; border-radius:8px; font-size:0.74rem; font-weight:800;">
                 ⚙️ PROCESAR SLOTTING</button>
             </div>
@@ -813,7 +813,7 @@ export const montarSlotting = (container, OPC = {}) => {
                    .pg:last-child { page-break-after: auto; } .noimp { display: none !important; } }
     .noimp { position: sticky; top: 0; z-index: 9; background: var(--panel-solid); color: var(--text-pale);
              padding: 10px 14px; font: 600 13px/1.5 system-ui, sans-serif; text-align: center; }
-    .noimp button { background: var(--primary); color: var(--text-strong); border: 0; border-radius: 8px;
+    .noimp button { background: var(--btn-fill); color: var(--text-strong); border: 0; border-radius: 8px;
              padding: 7px 18px; font: 700 13px system-ui, sans-serif; cursor: pointer; margin-left: 10px; }`;
 
   const CABECERA = `<tr>

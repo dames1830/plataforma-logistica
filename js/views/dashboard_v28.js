@@ -1,45 +1,51 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0383';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0384';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0383';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0383';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0383';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0383';
-import * as metasService from '../services_v245/metasService.js?v=29.0383';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0383';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0383';
+import * as adminService from '../services_v245/adminService.js?v=29.0384';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0384';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0384';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0384';
+import * as metasService from '../services_v245/metasService.js?v=29.0384';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0384';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0384';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0383';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0383';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0383';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0383';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0383';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0383';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0383';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0383';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0383';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0383';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0383';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0383';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0383';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0383';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0383';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0383';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0383';
-import { montarSlotting } from './slotting.js?v=29.0383';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0384';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0384';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0384';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0384';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0384';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0384';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0384';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0384';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0384';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0384';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0384';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0384';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0384';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0384';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0384';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0384';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0384';
+import { montarSlotting } from './slotting.js?v=29.0384';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
     if (!btn) return fn();
     const orig = btn.innerHTML;
     const origDisabled = btn.disabled;
+    const origColor = btn.style.color;
     btn.disabled = true;
     btn.style.opacity = '0.7';
+    // Color propio: el aviso de "guardando" heredaba el de la fila, y la fila de
+    // un usuario desactivado va al 50% de opacidad. Entre eso y el 0.7 de aca
+    // quedaba practicamente invisible: parecia que el boton se hubiera borrado.
+    btn.style.color = 'var(--text-strong)';
     btn.innerHTML = loadingLabel;
     try { return await fn(); }
     finally {
         btn.disabled = origDisabled;
         btn.style.opacity = '';
+        btn.style.color = origColor;
         btn.innerHTML = orig;
     }
 }
@@ -383,7 +389,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0383';
+const VERSION = '29.0384';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4089,7 +4095,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           <div style="background:rgba(var(--card-rgb), 0.3); padding:1rem 1.5rem; border-radius:12px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; background:rgba(var(--ink-rgb), 0.03); padding:0.8rem; border-radius:8px; border:1px solid rgba(var(--ink-rgb), 0.05);">
               <div style="display:flex; align-items:center; gap:1rem;">
-                  <button id="btn_calc" class="btn" style="background:var(--primary); width:auto; padding:0.38rem 1rem; border-radius:7px; font-size:0.7rem; font-weight:800; box-shadow:0 0 12px rgba(var(--primary-rgb), 0.28);">⚡ PROCESAR</button>
+                  <button id="btn_calc" class="btn" style="background:var(--btn-fill); width:auto; padding:0.38rem 1rem; border-radius:7px; font-size:0.7rem; font-weight:800; box-shadow:0 0 12px rgba(var(--primary-rgb), 0.28);">⚡ PROCESAR</button>
                   <!-- EL BARRIDO DE SALDOS. Daniel, 25-ago-2026: la paleta que ya baja
                        por el pedido y volveria con muy poco, se baja entera y la ubicacion
                        queda libre. Medido sobre el pedido del 24: de 35 ubicaciones a 129,
@@ -5196,7 +5202,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0383');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0384');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5340,7 +5346,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <option value="NOCHE" style="background:var(--bg-dark);">NOCHE</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn" style="background:var(--primary); margin-top:0.5rem; padding:0.6rem; font-size:0.8rem; font-weight:800;">GUARDAR TRABAJADOR</button>
+                    <button type="submit" class="btn" style="background:var(--btn-fill); margin-top:0.5rem; padding:0.6rem; font-size:0.8rem; font-weight:800;">GUARDAR TRABAJADOR</button>
                 </form>
             </div>
         </div>
@@ -5877,12 +5883,12 @@ export const renderDashboard = async (container, user, onLogout) => {
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
                                     <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'var(--on-accent)':'var(--text-strong)'}; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">P</button>
-                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'var(--danger)':'none'}; color:var(--text-strong); font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">F</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'var(--danger)':'none'}; color:${!isPresent?'var(--on-accent)':'var(--text-strong)'}; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">F</button>
                                 </div>
                             </td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'var(--cyan-deep)':'none'}; color:var(--text-strong); font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">SÍ</button>
+                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'var(--cyan-deep)':'none'}; color:${isOnTime?'var(--on-accent)':'var(--text-strong)'}; font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">SÍ</button>
                                     <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'var(--orange)':'none'}; color:var(--text-strong); font-size:0.7rem; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">NO</button>
                                 </div>
                             </td>
@@ -5948,12 +5954,12 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const btnClose = document.createElement('button');
         btnClose.className = 'btn-primary';
-        btnClose.style = 'background:var(--primary); padding:0.6rem 1.5rem; border-radius:8px; font-weight:800; cursor:pointer; font-size:0.85rem;';
+        btnClose.style = 'background:var(--btn-fill); color:var(--on-primary); padding:0.6rem 1.5rem; border-radius:8px; font-weight:800; cursor:pointer; font-size:0.85rem;';
         btnClose.innerHTML = '💾 CERRAR ASISTENCIA';
 
         if ((existing ? existing.finalized : undefined)) {
             btnClose.innerHTML = '✅ ASISTENCIA CERRADA';
-            btnClose.style.background = 'var(--success)';
+            btnClose.style.background = 'var(--success)'; btnClose.style.color = 'var(--on-accent)';
             btnClose.style.color = 'var(--on-accent)';
             btnClose.disabled = true;
             btnClose.style.cursor = 'default';
@@ -6282,9 +6288,15 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         const DIAS_TRES = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
         const FUENTE = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+        /* Un canvas NO entiende var(): lo que llega como 'var(--text-main)' hay
+           que traducirlo a color de verdad antes de pintar, o el navegador lo
+           descarta y el texto sale del color anterior. Es el mismo problema que
+           tenian los graficos, resuelto en el unico sitio por donde pasa todo. */
+        const colorReal = (v) => !v ? colorTema('--text-soft')
+            : String(v).replace(/var\(\s*(--[a-z0-9-]+)\s*\)/gi, (_, n) => colorTema(n) || '#888');
         const texto = (t, x, y, opciones) => {
             const o = opciones || {};
-            g.fillStyle = o.color || '#c9d1d9';
+            g.fillStyle = colorReal(o.color);
             g.font = `${o.peso || 400} ${o.tam || 11}px ${FUENTE}`;
             g.textAlign = o.alinear || 'left';
             g.fillText(String(t), x, y);
@@ -6311,13 +6323,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             });
         }
 
-        g.fillStyle = '#0d1117';
+        g.fillStyle = colorTema('--bg-dark');
         g.fillRect(0, 0, ancho, alto);
 
         // --- Título: barra propia para que no se confunda con la tabla ------------
-        g.fillStyle = '#161d27';
+        g.fillStyle = colorTema('--bg-card');
         g.fillRect(0, 0, ancho, ALTO_CAB - 14);
-        g.fillStyle = '#1f6feb';
+        g.fillStyle = colorTema('--primary');
         g.fillRect(0, 0, 4, ALTO_CAB - 14);
 
         const a = desdeClave(desde), b = desdeClave(hasta);
@@ -6350,7 +6362,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const anchoTar = (ancho - MARGEN * 2 - huecoTar * 3) / 4;
         tarjetas.forEach(([n, rot, col], i) => {
             const x = MARGEN + i * (anchoTar + huecoTar);
-            g.fillStyle = '#161d27';
+            g.fillStyle = colorTema('--bg-card');
             g.beginPath();
             g.roundRect(x, yTar, anchoTar, ALTO_TARJETAS - 10, 6);
             g.fill();
@@ -6367,7 +6379,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         const xPrimerDia = xCargo + ANCHO_CARGO;
         const xDia = (i) => xPrimerDia + i * ANCHO_DIA + ANCHO_DIA / 2;
 
-        g.fillStyle = '#1c2531';
+        g.fillStyle = colorTema('--panel-alt');
         g.fillRect(MARGEN, yCab - 9 - ALTO_2DA_LINEA, ancho - MARGEN * 2, 18 + ALTO_2DA_LINEA);
 
         const COLOR_CAB = 'var(--text-soft)';
@@ -6388,7 +6400,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         filas.forEach((f, i) => {
             const y = yCab + 19 + i * ALTO_FILA;
             if (i % 2) {
-                g.fillStyle = '#131920';
+                g.fillStyle = colorTema('--panel-deep');
                 g.fillRect(MARGEN, y - ALTO_FILA / 2, ancho - MARGEN * 2, ALTO_FILA);
             }
             texto(i + 1, xNum, y, { color: 'var(--text-muted)', tam: 9.5, alinear: 'center' });
@@ -6405,7 +6417,7 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         // --- Pie: la leyenda, en una sola fila ------------------------------------
         const yPie = yCab + 19 + filas.length * ALTO_FILA + 6;
-        g.fillStyle = '#21262d';
+        g.fillStyle = colorTema('--border');
         g.fillRect(MARGEN, yPie, ancho - MARGEN * 2, 1);
 
         // El guion no se explica: un dia en blanco ya se entiende solo.
@@ -6741,7 +6753,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </a>
               `).join('')}
             </nav>
-            <button id="btn_sync_performance_cloud" class="btn-primary" style="font-size:0.75rem; padding:0.5rem 1rem; border-radius:8px; background:var(--primary); color:var(--on-primary); font-weight:800; cursor:pointer; box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.4); border:none; display:flex; align-items:center; gap:8px;">
+            <button id="btn_sync_performance_cloud" class="btn-primary" style="font-size:0.75rem; padding:0.5rem 1rem; border-radius:8px; background:var(--btn-fill); color:var(--on-primary); font-weight:800; cursor:pointer; box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.4); border:none; display:flex; align-items:center; gap:8px;">
                 <span style="font-size:1.1rem;">🔄</span> SINCRONIZAR CLOUD
             </button>
         </div>
@@ -6858,7 +6870,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                             return `
                         <tr class="perf-row-${date}" style="display:none; border-bottom:1px solid rgba(var(--ink-rgb), 0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted);">${idx + 1}</td>
-                            <td style="padding:0.8rem; display:flex; align-items:center;"><b>${displayName}</b> <span style="background:var(--warning-soft); color:var(--on-accent); padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:800; margin-left:8px;">${p.dni}</span></td>
+                            <td style="padding:0.8rem; display:flex; align-items:center;"><b>${displayName}</b> <span style="background:rgba(var(--warning-soft-rgb), 0.18); color:var(--on-accent); padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:800; margin-left:8px;">${p.dni}</span></td>
                             <td style="padding:0.8rem; text-align:center;">
                                 <select class="edit-perf-log" data-date="${p.date}" data-dni="${p.dni}" data-f="asistencia" style="background:none; border:none; color:${p.asistencia==='P'?'var(--success)':'var(--danger)'}; font-weight:900;">
                                     <option value="P" ${p.asistencia==='P'?'selected':''}>P</option>
@@ -8294,7 +8306,7 @@ const renderRFSection = (container) => {
               <option value="De Baja" ${rfStatusFilter==='De Baja'?'selected':''}>DE BAJA</option>
             </select>
             ${activeInventorySubTab === 'rfs' ? `
-              <button id="btn_new_rf" class="btn" style="width:auto; background:var(--primary); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px;">📡 REGISTRAR EQUIPO</button>
+              <button id="btn_new_rf" class="btn" style="width:auto; background:var(--btn-fill); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px;">📡 REGISTRAR EQUIPO</button>
             ` : activeInventorySubTab === 'baterias' ? `
               <button id="btn_new_battery" class="btn" style="width:auto; background:linear-gradient(135deg, var(--success-alt) 0%, var(--success-dark) 150%); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px; border:none; color:var(--text-strong); cursor:pointer; box-shadow:0 4px 10px rgba(var(--success-alt-rgb), 0.3);">🔋 REGISTRAR BATERÍA</button>
             ` : `
@@ -10722,7 +10734,7 @@ const renderRFSection = (container) => {
         </div>
 
         <div style="display:flex; gap:0.7rem; margin-top:1.2rem; flex-wrap:wrap;">
-          <button id="rob_guardar" class="btn" style="background:var(--primary); color:var(--on-accent); padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">GUARDAR HORARIOS</button>
+          <button id="rob_guardar" class="btn" style="background:var(--btn-fill); color:var(--on-primary); padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">GUARDAR HORARIOS</button>
           <button id="rob_fabrica" class="btn" style="background:rgba(var(--ink-rgb), 0.06); border:1px solid var(--border); color:var(--text-pale); padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">↩️ VOLVER A LO DE FÁBRICA</button>
         </div>
       </div>
@@ -10857,7 +10869,7 @@ const renderRFSection = (container) => {
         </div>
 
         <div style="display:flex; gap:0.7rem; margin-top:1.2rem; flex-wrap:wrap;">
-          <button id="cor_guardar" class="btn" style="background:var(--primary); color:var(--on-accent); padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">GUARDAR CORREO</button>
+          <button id="cor_guardar" class="btn" style="background:var(--btn-fill); color:var(--on-primary); padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">GUARDAR CORREO</button>
           <button id="cor_fabrica" class="btn" style="background:rgba(var(--ink-rgb), 0.06); border:1px solid var(--border); color:var(--text-pale); padding:0.75rem 1.6rem; font-size:0.78rem; font-weight:800;">↩️ VOLVER A LO DE FÁBRICA</button>
         </div>
       </div>`;
@@ -11633,7 +11645,7 @@ const renderRFSection = (container) => {
                     <input type="date" id="hist_date_to" value="${savedTo}" style="background:var(--panel-deep); color:var(--text-strong); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme: var(--scheme);" />
                 </div>
                 <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
-                    <button id="btn_hist_sync" title="Sincronizar Historial" style="background:var(--primary); color:var(--on-primary); border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                    <button id="btn_hist_sync" title="Sincronizar Historial" style="background:var(--btn-fill); color:var(--on-primary); border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                         🔄
                     </button>
                     <button id="btn_hist_export" style="background:var(--success); color:var(--on-accent); border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
@@ -12089,7 +12101,7 @@ const renderRFSection = (container) => {
                 </div>
             </div>
 
-            <button id="btn_run_kpi_analysis" class="btn" style="background:var(--primary); width:auto; padding:0.7rem 2.2rem; font-weight:800; font-size:0.85rem; border-radius:8px; box-shadow:0 0 20px rgba(var(--primary2-rgb), 0.3); transition:all 0.2s;">
+            <button id="btn_run_kpi_analysis" class="btn" style="background:var(--btn-fill); width:auto; padding:0.7rem 2.2rem; font-weight:800; font-size:0.85rem; border-radius:8px; box-shadow:0 0 20px rgba(var(--primary2-rgb), 0.3); transition:all 0.2s;">
                 ⚡ EJECUTAR ANÁLISIS DE CONCILIACIÓN
             </button>
         </div>
@@ -12579,7 +12591,7 @@ const renderRFSection = (container) => {
                     </div>
                 </div>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <button id="btn_reprocess_kpi" class="btn" style="background:var(--primary); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">🔄 REPROCESAR</button>
+                    <button id="btn_reprocess_kpi" class="btn" style="background:var(--btn-fill); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">🔄 REPROCESAR</button>
                     <button id="btn_excel_val" class="btn" style="background:var(--success); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;">📥 EXPORTAR CONCILIACIÓN</button>
                 </div>
             </div>
@@ -15975,7 +15987,7 @@ const renderRFSection = (container) => {
                                 </div>
                                 <div style="display:flex; align-items:center; gap:0.8rem;">
                                     <div style="flex-grow:1; height:6px; background:rgba(var(--ink-rgb), 0.05); border-radius:3px; overflow:hidden;">
-                                        <div style="width:${r.progress}%; height:100%; background:var(--primary); transition:width 0.3s;"></div>
+                                        <div style="width:${r.progress}%; height:100%; background:var(--btn-fill); transition:width 0.3s;"></div>
                                     </div>
                                     <span style="font-size:0.75rem; font-weight:800; color:var(--text-strong);">${r.progress}%</span>
                                 </div>
@@ -16167,7 +16179,7 @@ const renderRFSection = (container) => {
         <!-- Simulation back to office bar for admin testing -->
         <div style="background: rgba(var(--bg-rgb), 0.95); padding: 0.6rem 1rem; width:100%; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(var(--ink-rgb), 0.08); position: sticky; top: 0; z-index:999999; box-shadow:0 4px 10px rgba(var(--shadow-rgb), 0.3);">
             <span style="font-size:0.65rem; color:var(--warning); font-weight:800; letter-spacing:0.5px;">📲 VISTA CHOFER (SIMULADO)</span>
-            <button id="btn_back_to_office" style="background:var(--primary); color:var(--on-primary); border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
+            <button id="btn_back_to_office" style="background:var(--btn-fill); color:var(--on-primary); border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
                 🏢 VOLVER A OFICINA
             </button>
         </div>
@@ -16620,7 +16632,7 @@ const renderRFSection = (container) => {
                   </div>
               </div>
 
-              <button id="save_edit_btn" style="width:100%; background:var(--primary); color:var(--on-primary); border:none; padding:0.8rem; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s;">
+              <button id="save_edit_btn" style="width:100%; background:var(--btn-fill); color:var(--on-primary); border:none; padding:0.8rem; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s;">
                   GUARDAR CAMBIOS
               </button>
           </div>
@@ -17181,7 +17193,7 @@ const renderRFSection = (container) => {
         <div style="padding: 1.5rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
               <div style="display:flex; gap:1rem;">
-                  <button onclick="exportTrackingToExcel()" style="background:var(--success-alt); color:var(--on-primary); border:none; padding:0.5rem 1rem; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;">
+                  <button onclick="exportTrackingToExcel()" style="background:var(--success-alt); color:var(--on-accent); border:none; padding:0.5rem 1rem; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:0.5rem; transition:0.2s;">
                       <i class="fas fa-file-excel"></i> Exportar a Excel
                   </button>
               </div>
@@ -17269,7 +17281,7 @@ const renderRFSection = (container) => {
                                   </div>
                               </td>
                               <td style="padding:1rem; text-align:center;">
-                                  <button class="btn-edit-tracking" data-client="${c.id}" style="background:var(--primary); color:var(--on-primary); border:none; padding:0.35rem 0.7rem; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
+                                  <button class="btn-edit-tracking" data-client="${c.id}" style="background:var(--btn-fill); color:var(--on-primary); border:none; padding:0.35rem 0.7rem; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
                                       ⚙️ Editar
                                   </button>
                               </td>
@@ -17503,7 +17515,7 @@ const renderRFSection = (container) => {
             <!-- Simulation back to office bar for admin testing -->
             <div style="background: rgba(var(--bg-rgb), 0.95); padding: 0.6rem 1rem; width:100%; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(var(--ink-rgb), 0.08); position: sticky; top: 0; z-index:999999; box-shadow:0 4px 10px rgba(var(--shadow-rgb), 0.3);">
                 <span style="font-size:0.65rem; color:var(--warning); font-weight:800; letter-spacing:0.5px;">📲 VISTA PORTAL MÓVIL NO RETAIL</span>
-                <button id="btn_back_to_office" style="background:var(--primary); color:var(--on-primary); border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
+                <button id="btn_back_to_office" style="background:var(--btn-fill); color:var(--on-primary); border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
                     🏢 VOLVER A OFICINA
                 </button>
             </div>
@@ -17571,7 +17583,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0383 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0384 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -18199,7 +18211,7 @@ const renderRFSection = (container) => {
                                                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                                                 <span style="font-size:0.65rem; color:var(--text-strong); font-weight:700;">⚠️ ¿TIENE INCIDENCIA?</span>
                                                                 <div style="display:flex; background:rgba(var(--ink-rgb), 0.03); border-radius:8px; padding:2px; border:1px solid rgba(var(--ink-rgb), 0.05);">
-                                                                    <button class="nr-incidencia-btn" data-client="${c.id}" data-val="SI" style="background:${(c._tempIncidencia || c.incidencia || 'NO') === 'SI' ? 'var(--danger)' : 'transparent'}; color:var(--text-strong); border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
+                                                                    <button class="nr-incidencia-btn" data-client="${c.id}" data-val="SI" style="background:${(c._tempIncidencia || c.incidencia || 'NO') === 'SI' ? 'var(--danger)' : 'transparent'}; color:${(c._tempIncidencia || c.incidencia || 'NO') === 'SI' ? 'var(--on-accent)' : 'var(--text-strong)'}; border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
                                                                     <button class="nr-incidencia-btn" data-client="${c.id}" data-val="NO" style="background:${(c._tempIncidencia || c.incidencia || 'NO') === 'NO' ? 'var(--text-faint)' : 'transparent'}; color:var(--text-strong); border:none; padding:3px 10px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
                                                                 </div>
                                                             </div>
@@ -18229,7 +18241,7 @@ const renderRFSection = (container) => {
                                                             </div>
 
                                                             <!-- Save Button -->
-                                                            <button class="btn btn-nr-liquidar-client" data-client="${c.id}" style="width:100%; background:var(--success-alt); border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; color:var(--on-primary); cursor:pointer; transition:background 0.2s;">
+                                                            <button class="btn btn-nr-liquidar-client" data-client="${c.id}" style="width:100%; background:var(--success-alt); border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; color:var(--on-accent); cursor:pointer; transition:background 0.2s;">
                                                                 ✅ LIQUIDAR CLIENTE
                                                             </button>
                                                         </div>
@@ -18357,7 +18369,7 @@ const renderRFSection = (container) => {
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="font-size:0.65rem; color:var(--text-strong); font-weight:700;">⚠️ ¿TIENE INCIDENCIA?</span>
                         <div style="display:flex; background:rgba(var(--ink-rgb), 0.03); border-radius:8px; padding:2px; border:1px solid rgba(var(--ink-rgb), 0.05);">
-                            <button id="modal-incidencia-si" style="background:${tempIncidencia === 'SI' ? 'var(--danger)' : 'transparent'}; color:var(--text-strong); border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
+                            <button id="modal-incidencia-si" style="background:${tempIncidencia === 'SI' ? 'var(--danger)' : 'transparent'}; color:${tempIncidencia === 'SI' ? 'var(--on-accent)' : 'var(--text-strong)'}; border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">SI</button>
                             <button id="modal-incidencia-no" style="background:${tempIncidencia === 'NO' ? 'var(--text-faint)' : 'transparent'}; color:var(--text-strong); border:none; padding:3px 12px; border-radius:6px; font-size:0.6rem; font-weight:800; cursor:pointer;">NO</button>
                         </div>
                     </div>
@@ -18393,7 +18405,7 @@ const renderRFSection = (container) => {
                     <!-- Acciones del Modal -->
                     <div style="display:flex; gap:0.6rem; border-top:1px solid rgba(var(--ink-rgb), 0.08); padding-top:0.8rem; margin-top:0.4rem;">
                         <button id="btn_modal_cancel" style="flex:1; background:rgba(var(--ink-rgb), 0.05); color:var(--text-soft); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">CANCELAR</button>
-                        <button id="btn_modal_save" style="flex:1; background:var(--success-alt); color:var(--on-primary); border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">GUARDAR CAMBIOS</button>
+                        <button id="btn_modal_save" style="flex:1; background:var(--success-alt); color:var(--on-accent); border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">GUARDAR CAMBIOS</button>
                     </div>
                 </div>
             `;
@@ -21926,7 +21938,7 @@ const renderRFSection = (container) => {
                      .pg:last-child { page-break-after: auto; } .noimp { display: none !important; } }
       .noimp { position: sticky; top: 0; z-index: 9; background: var(--panel-solid); color: var(--text-pale);
                padding: 10px 14px; font: 600 13px/1.5 system-ui, sans-serif; text-align: center; }
-      .noimp button { background: var(--primary); color: var(--text-strong); border: 0; border-radius: 8px;
+      .noimp button { background: var(--btn-fill); color: var(--text-strong); border: 0; border-radius: 8px;
                padding: 7px 18px; font: 700 13px system-ui, sans-serif; cursor: pointer; margin-left: 10px; }`;
 
     /* SIETE COLUMNAS, Y NO OCHO. La columna «En el cuerpo» -lo que ya hay de esa talla en el
@@ -22337,7 +22349,7 @@ const renderRFSection = (container) => {
               <div style="font-size:0.68rem; color:rgba(var(--brand-pale-rgb), 0.7); font-weight:600;">Dónde diría el sistema que hay que almacenar · no toca la tarea ni guarda nada</div>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <button id="sug_excel" class="btn" title="Descargar el papel que se imprime: una tarea por página, vertical, en blanco y negro" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:var(--on-primary); font-weight:800; border:none; margin-right:6px;">📥 EXCEL DEL PAPEL</button>
+              <button id="sug_excel" class="btn" title="Descargar el papel que se imprime: una tarea por página, vertical, en blanco y negro" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--btn-fill); color:var(--on-primary); font-weight:800; border:none; margin-right:6px;">📥 EXCEL DEL PAPEL</button>
               <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
                 <span style="font-size:0.7rem; color:rgba(var(--ink-rgb), 0.4); font-weight:700;">DE:</span>
                 <input type="date" id="sug_desde" value="${desde}" style="background:transparent; border:none; color:var(--text-strong); font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; color-scheme: var(--scheme);">
@@ -23658,7 +23670,7 @@ const renderRFSection = (container) => {
               <button id="fx_subir_btn" style="background:transparent; border:1px solid var(--border); border-radius:7px; color:var(--text-muted); padding:0.42rem 0.8rem; font-size:0.73rem; cursor:pointer; font-weight:600;">Subir Excel</button>
               <input type="file" id="fx_subir" accept=".xlsx" style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;">
             </div>
-            <button id="fx_guardar" style="background:var(--primary); border:1px solid var(--primary); border-radius:7px; color:var(--on-primary); padding:0.42rem 1rem; font-size:0.73rem; cursor:pointer; font-weight:700;">Guardar</button>
+            <button id="fx_guardar" style="background:var(--btn-fill); border:1px solid var(--primary); border-radius:7px; color:var(--on-primary); padding:0.42rem 1rem; font-size:0.73rem; cursor:pointer; font-weight:700;">Guardar</button>
           </div>
         </div>
         <div id="fx_resumen" style="margin-top:1.1rem; padding-top:0.9rem; border-top:1px solid var(--border); display:flex; gap:2rem; flex-wrap:wrap; font-size:0.75rem; color:var(--text-muted);"></div>
@@ -25581,13 +25593,13 @@ Se dejó el valor anterior.`, 'warning');
         td { border: 1px solid var(--text-soft); padding: 3px 6px; white-space: nowrap; }
         .c { text-align: center; } .b { font-weight: 700; }
         .gr { background: var(--text-pale); font-weight: 800; }
-        .o { background: var(--warning-pale); font-weight: 700; }
-        .d { background: var(--success-pale); font-weight: 700; }
+        .o { background: rgba(var(--warning-rgb), 0.18); font-weight: 700; }
+        .d { background: rgba(var(--success-rgb), 0.18); font-weight: 700; }
         .t { font-weight: 800; }
         .pk { background: var(--panel-deep); color: var(--text-strong); font-weight: 800; font-size: 7.5pt; }
         .lpn { font-family: Consolas, monospace; font-size: 6.8pt; }
         .acc { font-size: 8.5pt; }
-        .sube td { background: var(--success-pale); }
+        .sube td { background: rgba(var(--success-rgb), 0.18); }
         .tll { white-space: normal; font-weight: 800; max-width: 46mm; line-height: 1.15; }
         table.apretada { font-size: 7.2pt; table-layout: fixed; }
         table.apretada th, table.apretada td { padding: 2px 3px; overflow: hidden; }
@@ -25602,18 +25614,18 @@ Se dejó el valor anterior.`, 'warning');
            en las filas partidas —las únicas donde hay que contar— no se veía el número. */
         tr.par td.cnt, td.cnt { background: var(--bronze); color: var(--text-strong); }
         tr.par td.tot, td.tot { background: var(--text-pale); color: var(--panel-deeper); }
-        tr.par td.res, td.res { background: var(--danger-pale); color: var(--danger-deep); }
-        tr.par td.vac, td.vac { background: var(--success-dark); color: var(--text-strong); }
+        tr.par td.res, td.res { background: rgba(var(--danger-rgb), 0.18); color: var(--danger-deep); }
+        tr.par td.vac, td.vac { background: rgba(var(--success-rgb), 0.18); color: var(--text-strong); }
         .tag { display: inline-block; background: var(--bronze); color: var(--text-strong); font-weight: 800;
                font-size: 6.5pt; padding: 0 4px; border-radius: 3px; margin-right: 3px; }
-        tr.par td { background: var(--warning-pale); }   /* los estados lo pisan, ver abajo */
+        tr.par td { background: rgba(var(--warning-rgb), 0.18); }   /* los estados lo pisan, ver abajo */
         tr.p1 td { border-top: 2px solid var(--bronze); }
         tr.pN td { border-bottom: 2px solid var(--bronze); }
         .cnt { background: var(--bronze); color: var(--text-strong); font-weight: 800; text-align: center; }
         .tot { background: var(--text-pale); font-weight: 800; }
-        .res { background: var(--danger-pale); color: var(--danger-deep); font-weight: 800; }
-        .vac { background: var(--success-dark); color: var(--text-strong); font-weight: 800; }
-        .k.hi { border: 2px solid var(--bronze); background: var(--warning-pale); }
+        .res { background: rgba(var(--danger-rgb), 0.18); color: var(--danger-deep); font-weight: 800; }
+        .vac { background: rgba(var(--success-rgb), 0.18); color: var(--text-strong); font-weight: 800; }
+        .k.hi { border: 2px solid var(--bronze); background: rgba(var(--warning-rgb), 0.18); }
         .k.hi b { color: var(--bronze); }
         .chk { width: 26px; }
         .caja { display: flex; gap: 9px; flex-wrap: wrap; margin: 6px 0 9px; }
@@ -25626,7 +25638,7 @@ Se dejó el valor anterior.`, 'warning');
                        .pg:last-child { page-break-after: auto; } .noimp { display: none !important; } }
         .noimp { position: sticky; top: 0; z-index: 9; background: var(--panel-solid); color: var(--text-pale);
                  padding: 10px 14px; font: 600 13px/1.5 system-ui, sans-serif; text-align: center; }
-        .noimp button { background: var(--primary); color: var(--text-strong); border: 0; border-radius: 8px;
+        .noimp button { background: var(--btn-fill); color: var(--text-strong); border: 0; border-radius: 8px;
                  padding: 7px 18px; font: 700 13px system-ui, sans-serif; cursor: pointer; margin-left: 10px; }`;
 
       const win = window.open('', '_blank');
@@ -31187,7 +31199,7 @@ window.showCellModal = function(htmlContent) {
             </div>` : ''}
 
           <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-            <label style="display:inline-flex; align-items:center; gap:9px; background:var(--primary); color:var(--on-primary); padding:0.6rem 1.3rem; border-radius:10px; font-size:0.78rem; font-weight:800; cursor:${hayMaestro ? 'pointer' : 'not-allowed'}; opacity:${hayMaestro ? '1' : '0.45'}; box-shadow:0 4px 14px rgba(var(--primary-rgb), 0.3);">
+            <label style="display:inline-flex; align-items:center; gap:9px; background:var(--btn-fill); color:var(--on-primary); padding:0.6rem 1.3rem; border-radius:10px; font-size:0.78rem; font-weight:800; cursor:${hayMaestro ? 'pointer' : 'not-allowed'}; opacity:${hayMaestro ? '1' : '0.45'}; box-shadow:0 4px 14px rgba(var(--primary-rgb), 0.3);">
               📥 ELEGIR ARCHIVOS Y CALCULAR
               <input type="file" id="pick_files" accept=".csv" multiple ${hayMaestro ? '' : 'disabled'} style="display:none;">
             </label>
@@ -34201,7 +34213,7 @@ window.showCellModal = function(htmlContent) {
                 <!-- BOTONES DE ACCIÓN PRINCIPALES -->
                 <div style="display:flex; gap:10px; align-items:center;">
                     ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(var(--success-rgb), 0.1); color:var(--success); border:1px solid rgba(var(--success-rgb), 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
-                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel(this)" class="btn" title="Descargar en Excel las tareas del rango" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:var(--primary); color:var(--on-primary); border:none; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.3);">📥</button>
+                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel(this)" class="btn" title="Descargar en Excel las tareas del rango" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:var(--btn-fill); color:var(--on-primary); border:none; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.3);">📥</button>
                     <button onclick="window.imprimirTareasAlmacenaje(this)" class="btn" title="Imprimir las tareas del rango · una tarea por hoja, lista para doble cara" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:var(--cyan-deep); color:var(--text-strong); border:none; box-shadow:0 4px 12px rgba(var(--cyan-rgb), 0.3);">🖨️</button>` : ''}
                     ${!isDetail ? `<button onclick="window.openAuditModal()" class="btn" title="Auditar WMS: cruza lo que dice la tarea contra lo que dice el WMS" style="width:auto; padding:6px 12px; font-size:0.7rem; background:var(--cyan-deep); color:var(--text-strong); font-weight:800; border:none; box-shadow:0 4px 12px rgba(var(--cyan-deep-rgb), 0.3); margin-left:5px;">🎯 WMS</button>` : ''}
                 </div>
@@ -36068,7 +36080,7 @@ window.showCellModal = function(htmlContent) {
                 <button id="audBtnFiltro" onclick="window.__audToggleFiltro()" style="background:rgba(var(--ink-rgb), 0.06); border:1px solid rgba(var(--ink-rgb), 0.15); color:var(--text-strong); padding:6px 14px; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">Ver solo diferencias</button>
                 <div style="display:flex; gap:10px;">
                     <button id="audBtnVolver" style="background:rgba(var(--ink-rgb), 0.06); border:1px solid rgba(var(--ink-rgb), 0.15); color:var(--text-strong); padding:6px 14px; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">Auditar con otro archivo</button>
-                    <button id="btnDownloadAudit" style="background:var(--primary); color:var(--on-primary); font-weight:800; border:none; padding:6px 18px; font-size:0.7rem; border-radius:8px; cursor:pointer;">Descargar Excel</button>
+                    <button id="btnDownloadAudit" style="background:var(--btn-fill); color:var(--on-primary); font-weight:800; border:none; padding:6px 18px; font-size:0.7rem; border-radius:8px; cursor:pointer;">Descargar Excel</button>
                 </div>
             </div>
 
@@ -36427,7 +36439,7 @@ window.showCellModal = function(htmlContent) {
 
                 <div style="display:flex; gap:10px; justify-content:flex-end;">
                     <button id="p_back" class="btn" style="background:rgba(var(--ink-rgb), 0.1); color:var(--text-strong); border:none; padding:0.6rem 1.2rem; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Volver</button>
-                    <button id="p_confirm" class="btn" style="background:var(--success); color:var(--on-primary); border:none; padding:0.6rem 1.2rem; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Confirmar y Finalizar</button>
+                    <button id="p_confirm" class="btn" style="background:var(--success); color:var(--on-accent); border:none; padding:0.6rem 1.2rem; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Confirmar y Finalizar</button>
                 </div>
             </div>
         `;
@@ -36841,7 +36853,7 @@ window.showCellModal = function(htmlContent) {
                         <input type="time" id="edit_end" value="${toTimeInput(task.termino)}" style="width:100%; padding:10px; background:rgba(var(--ink-rgb), 0.05); border:1px solid rgba(var(--ink-rgb), 0.1); color:var(--text-strong); border-radius:8px; font-size:1.2rem; font-weight:800; outline:none; color-scheme: var(--scheme);">
                     </div>
                     <div style="margin-top:10px; display:flex; gap:10px;">
-                        <button id="save_times" class="btn" style="flex:1; background:var(--primary); font-weight:800;">GUARDAR CAMBIOS</button>
+                        <button id="save_times" class="btn" style="flex:1; background:var(--btn-fill); font-weight:800;">GUARDAR CAMBIOS</button>
                         <button id="close_edit" class="btn" style="flex:1; background:rgba(var(--ink-rgb), 0.05); color:var(--text-muted);">CANCELAR</button>
                     </div>
                 </div>

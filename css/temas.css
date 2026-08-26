@@ -101,6 +101,7 @@ html[data-tema="indigo"] {
   --brand-pale:     #a5b4fc;
   --brand-paler:    #c4b5fd;
   --on-primary:     #ffffff;
+  --btn-fill:      var(--primary);
 
   /* Semaforo — el color aca SI significa algo ----------------------------- */
   --danger:         #ef4444;
@@ -232,6 +233,7 @@ html[data-tema="pbi"] {
   --brand-pale:     #0E76D6;
   --brand-paler:    #744EC2;
   --on-primary:     #FFFFFF;
+  --btn-fill:      var(--primary);
 
   --danger:         #D1434E;
   --danger-soft:    #C0454F;
@@ -352,6 +354,7 @@ html[data-tema="pbi-classic"] {
   --brand-pale:     #00847A;
   --brand-paler:    #8A5580;
   --on-primary:     #FFFFFF;
+  --btn-fill:      var(--primary);
 
   --danger:         #C54C49;
   --danger-soft:    #B8433F;
@@ -473,7 +476,8 @@ html[data-tema="negro"] {
   --brand-light:    #C8C8C8;
   --brand-pale:     #A8A8A8;
   --brand-paler:    #909090;
-  --on-primary:     #000000;
+  --on-primary:     #FFFFFF;
+  --btn-fill:      #2A2A2A;
 
   --danger:         #C7554D;
   --danger-soft:    #D4675F;
@@ -693,8 +697,10 @@ html[data-tema="negro"] #sync-indicator .sync-tooltip {
                                          para que la tarjeta no salte al elegir */
 }
 .tema-opt.elegido .tema-tick {
-  background: var(--primary);
-  border-color: var(--primary);
+  /* --btn-fill y no --primary: en el tema negro --primary es blanco y el tilde
+     blanco encima quedaba invisible. Este par funciona en los cuatro temas. */
+  background: var(--btn-fill);
+  border-color: var(--btn-fill);
   color: var(--on-primary);
 }
 

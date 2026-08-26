@@ -276,7 +276,7 @@ function estilos() {
       filter:invert(64%) sepia(38%) saturate(1400%) hue-rotate(207deg) brightness(102%)}
     #pend input[type=date]:hover::-webkit-calendar-picker-indicator{
       filter:invert(88%) sepia(20%) saturate(900%) hue-rotate(200deg) brightness(115%)}
-    #pend .pend-btn{background:var(--primary);color:var(--panel-deep);border:0;border-radius:9px;
+    #pend .pend-btn{background:var(--btn-fill);color:var(--panel-deep);border:0;border-radius:9px;
       padding:9px 16px;font-weight:800;font-size:.78rem;letter-spacing:.4px;cursor:pointer}
     #pend .pend-btn:disabled{opacity:.75;cursor:progress}
     /* La ruedita del botón mientras trabaja. Va acá y no en el CSS del tablero

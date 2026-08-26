@@ -97,7 +97,7 @@ body {
   transition: background 0.2s; border-bottom: 1px solid rgba(var(--ink-rgb), 0.03);
 }
 .custom-option:last-child { border-bottom: none; }
-.custom-option:hover { background: var(--primary); }
+.custom-option:hover { background: var(--btn-fill); }
 .custom-option.selected { background: rgba(var(--primary-rgb), 0.2); color: var(--primary); font-weight: 600; }
 
 /* Lista desplegable de los <select> nativos. Sin esto el sistema operativo la pinta
@@ -114,12 +114,12 @@ select optgroup {
 }
 select option:checked,
 select option:hover {
-  background-color: var(--primary);
+  background-color: var(--btn-fill);
   color: var(--text-strong);
 }
 
 .btn {
-  background: var(--primary); color: var(--on-primary); border: none; padding: 0.75rem 1.5rem;
+  background: var(--btn-fill); color: var(--on-primary); border: none; padding: 0.75rem 1.5rem;
   border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; width: 100%;
 }
 .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
@@ -450,7 +450,7 @@ select option:hover {
 }
 .upload-area p { color: var(--text-muted); margin-bottom: 1rem; }
 .upload-btn { background: var(--bg-card); color: var(--text-main); display: inline-block; padding: 0.5rem 1.5rem; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
-.upload-btn:hover { background: var(--primary); border-color: var(--primary); }
+.upload-btn:hover { background: var(--btn-fill); border-color: var(--primary); }
 
 /* KPI Cards */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
