@@ -1,32 +1,32 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0389';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0390';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0389';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0389';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0389';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0389';
-import * as metasService from '../services_v245/metasService.js?v=29.0389';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0389';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0389';
+import * as adminService from '../services_v245/adminService.js?v=29.0390';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0390';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0390';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0390';
+import * as metasService from '../services_v245/metasService.js?v=29.0390';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0390';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0390';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0389';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0389';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0389';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0389';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0389';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0389';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0389';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0389';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0389';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0389';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0389';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0389';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0389';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0389';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0389';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0389';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0389';
-import { montarSlotting } from './slotting.js?v=29.0389';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0390';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0390';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0390';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0390';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0390';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0390';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0390';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0390';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0390';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0390';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0390';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0390';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0390';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0390';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0390';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0390';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0390';
+import { montarSlotting } from './slotting.js?v=29.0390';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -389,7 +389,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0389';
+const VERSION = '29.0390';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2263,7 +2263,14 @@ const TABS = [
   // Estas sub-pestañas están acá para que la matriz de Permisos genere su clave
   // ('config_archivos_nube') y se pueda dar o quitar el acceso por rol.
   { id: 'config', label: 'Configuración', icon: '⚙️', roles: ['admin'], subTabs: [
-    { id: 'archivos_nube', label: 'Archivos Nube', icon: '☁️' }
+    { id: 'reportes', label: 'Reportes', icon: '📊' },
+    { id: 'parametros', label: 'Parámetros', icon: '⚙️' },
+    { id: 'conexion', label: 'Conexión', icon: '🌐' },
+    { id: 'mantenimiento', label: 'Mantenimiento', icon: '🛠️' },
+    { id: 'informacion', label: 'Información', icon: 'ℹ️' },
+    { id: 'archivos_nube', label: 'Archivos Nube', icon: '☁️' },
+    { id: 'jornada', label: 'Jornada de Trabajo', icon: '🕐' },
+    { id: 'tema', label: 'Tema', icon: '🎨' }
   ] }
 ];
 
@@ -5202,7 +5209,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0389');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0390');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -10113,9 +10120,23 @@ const renderRFSection = (container) => {
    * Manda la matriz de permisos. Mientras nadie la haya tocado, solo el admin, para
    * que dar de alta a un jefe no le regale de arranque la potestad de publicar.
    */
-  const puedeArchivosNube = () => {
+  const puedeArchivosNube = () => puedeConfigSub('archivos_nube');
+
+  /**
+   * ¿Este usuario puede entrar a esta sub-pestaña de Configuración?
+   *
+   * Manda la matriz de Permisos. Mientras nadie la haya tocado, solo el admin:
+   * dar de alta a un jefe no le regala de arranque el acceso a Parámetros ni a
+   * Mantenimiento.
+   *
+   * Antes solo 'archivos_nube' estaba registrado, así que en la matriz de
+   * Permisos, debajo de Configuración, aparecía esa sola fila y las otras siete
+   * no se podían dar ni quitar: quedaban abiertas para cualquiera que llegara a
+   * Configuración.
+   */
+  const puedeConfigSub = (sub) => {
       const perms = adminService.getPermissions(user.role) || {};
-      const valor = perms['config_archivos_nube'];
+      const valor = perms['config_' + sub];
       return valor === undefined ? user.role === 'admin' : valor === 1;
   };
 
@@ -11231,17 +11252,31 @@ const renderRFSection = (container) => {
 
   const renderConfigTab = async () => {
     contentSubtitle.textContent = "Panel de Control Técnico";
-    if (!activeConfigSub) activeConfigSub = 'reportes';
+    /* La primera sub-pestaña que este usuario PUEDA ver. Antes se entraba
+       siempre a 'reportes' aunque el rol no la tuviera permitida: la barra la
+       escondia y la pantalla salia vacia, sin decir por que. */
+    const subsPermitidas = ['reportes','parametros','conexion','mantenimiento','informacion','archivos_nube','jornada','tema']
+        .filter(puedeConfigSub);
+    if (!activeConfigSub || !subsPermitidas.includes(activeConfigSub)) activeConfigSub = subsPermitidas[0] || null;
+    if (!activeConfigSub) {
+        contentArea.innerHTML = `<div class="glass-panel" style="padding:3rem; text-align:center;">
+            <div style="font-size:2.2rem; margin-bottom:0.7rem;">🔒</div>
+            <h3 style="color:var(--text-strong); margin:0 0 0.5rem;">Sin acceso a Configuración</h3>
+            <p style="color:var(--text-muted); max-width:460px; margin:0 auto; line-height:1.6;">
+                Tu rol no tiene habilitada ninguna sección de Configuración.
+                Se habilitan en <b>Administración → Permisos</b>.</p></div>`;
+        return;
+    }
     contentArea.innerHTML = `
-        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
-          <a class="sub-nav-item ${activeConfigSub==='reportes'?'active':''}" data-s="reportes" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">📊</span> REPORTES</a>
-          <a class="sub-nav-item ${activeConfigSub==='parametros'?'active':''}" data-s="parametros" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">⚙️</span> PARÁMETROS</a>
-          <a class="sub-nav-item ${activeConfigSub==='conexion'?'active':''}" data-s="conexion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">🌐</span> CONEXIÓN</a>
-          <a class="sub-nav-item ${activeConfigSub==='mantenimiento'?'active':''}" data-s="mantenimiento" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">🛠️</span> MANTENIMIENTO</a>
-          <a class="sub-nav-item ${activeConfigSub==='informacion'?'active':''}" data-s="informacion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">ℹ️</span> INFORMACIÓN</a>
-          ${puedeArchivosNube() ? `<a class="sub-nav-item ${activeConfigSub==='archivos_nube'?'active':''}" data-s="archivos_nube" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">☁️</span> ARCHIVOS NUBE</a>` : ''}
-          <a class="sub-nav-item ${activeConfigSub==='jornada'?'active':''}" data-s="jornada" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">🕐</span> JORNADA DE TRABAJO</a>
-          <a class="sub-nav-item ${activeConfigSub==='tema'?'active':''}" data-s="tema" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">🎨</span> TEMA</a>
+        <nav style="display:flex; gap:1.2rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); flex-wrap:wrap;">
+          ${puedeConfigSub('reportes') ? `<a class="sub-nav-item ${activeConfigSub==='reportes'?'active':''}" data-s="reportes" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">📊</span> REPORTES</a>` : ''}
+          ${puedeConfigSub('parametros') ? `<a class="sub-nav-item ${activeConfigSub==='parametros'?'active':''}" data-s="parametros" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">⚙️</span> PARÁMETROS</a>` : ''}
+          ${puedeConfigSub('conexion') ? `<a class="sub-nav-item ${activeConfigSub==='conexion'?'active':''}" data-s="conexion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">🌐</span> CONEXIÓN</a>` : ''}
+          ${puedeConfigSub('mantenimiento') ? `<a class="sub-nav-item ${activeConfigSub==='mantenimiento'?'active':''}" data-s="mantenimiento" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">🛠️</span> MANTENIMIENTO</a>` : ''}
+          ${puedeConfigSub('informacion') ? `<a class="sub-nav-item ${activeConfigSub==='informacion'?'active':''}" data-s="informacion" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">ℹ️</span> INFORMACIÓN</a>` : ''}
+          ${puedeConfigSub('archivos_nube') ? `<a class="sub-nav-item ${activeConfigSub==='archivos_nube'?'active':''}" data-s="archivos_nube" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">☁️</span> ARCHIVOS NUBE</a>` : ''}
+          ${puedeConfigSub('jornada') ? `<a class="sub-nav-item ${activeConfigSub==='jornada'?'active':''}" data-s="jornada" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">🕐</span> JORNADA DE TRABAJO</a>` : ''}
+          ${puedeConfigSub('tema') ? `<a class="sub-nav-item ${activeConfigSub==='tema'?'active':''}" data-s="tema" style="padding: 0.5rem 0.2rem; font-size: 0.85rem;"><span class="ic">🎨</span> TEMA</a>` : ''}
         </nav><div id="configContent"></div>`;
     // e.currentTarget y no e.target: el emoji de la pestaña va dentro de un
     // <span class="ic"> (para poder apagarlo en el tema negro), y al hacer clic
@@ -17628,7 +17663,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0389 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0390 | MOBILE PORTAL
                             </div>
                     </div>
 

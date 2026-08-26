@@ -728,40 +728,48 @@ def get_area_data(area: str, date: Optional[str] = None):
                 db_usernames = {r[0] for r in cursor.fetchall()}
                 snap_usernames = {u.get('username') for u in snap_users if u.get('username')}
 
+                # LAS BAJAS solo si de verdad cambio el conjunto de usuarios: borrar
+                # es irreversible y no se hace por un cambio de rol.
                 if db_usernames != snap_usernames:
                     if snap_usernames:
                         cursor.execute("DELETE FROM users WHERE username NOT IN ({})".format(','.join(['?']*len(snap_usernames))), list(snap_usernames))
                     else:
-                        cursor.execute("DELETE FROM users")
+                        cursor.execute("DELETE FROM users")
+
+                # LOS DATOS se copian SIEMPRE, no solo cuando hay altas o bajas.
+                # El comentario de arriba decia "y datos", pero el bucle estaba dentro
+                # del if: cambiarle el rol o el tema a alguien que ya existia no altera
+                # el conjunto de usuarios, asi que no se escribia nunca y el cambio se
+                # perdia en silencio. Aparecio al guardar el tema de un usuario: el
+                # panel lo mostraba puesto y el servidor seguia sin saberlo.
+                for u in snap_users:
+                    username = u.get('username')
+                    name = u.get('name')
+                    role = u.get('role')
+                    active = 1 if u.get('active', True) else 0
+                    if not (username and name and role):
+                        continue
 
-                    for u in snap_users:
-                        username = u.get('username')
-                        name = u.get('name')
-                        role = u.get('role')
-                        active = 1 if u.get('active', True) else 0
-                        if not (username and name and role):
-                            continue
-
-                        if username in db_usernames:
-                            # Ya existía: se actualizan sus datos, su contraseña queda como está.
-                            cursor.execute(
-                                "UPDATE users SET name=?, role=?, active=?, tema=? WHERE username=?",
-                                (name, role, active, u.get('tema') or None, username))
-                        else:
-                            # Usuario nuevo que solo aparece en el snapshot: se crea con una
-                            # contraseña imposible de adivinar. Hay que asignarle una desde
-                            # el panel para que pueda entrar.
-                            cursor.execute("""
-                                INSERT INTO users (username, password, name, role, active, tema)
-                                VALUES (?, ?, ?, ?, ?, ?)
-                                ON CONFLICT(username) DO UPDATE SET
-                                    name=excluded.name,
-                                    role=excluded.role,
-                                    active=excluded.active,
-                                    tema=excluded.tema
-                            """, (username, hashear_password(secrets.token_urlsafe(24)), name, role, active,
-                                  u.get('tema') or None))
-                    conn.commit()
+                    if username in db_usernames:
+                        # Ya existía: se actualizan sus datos, su contraseña queda como está.
+                        cursor.execute(
+                            "UPDATE users SET name=?, role=?, active=?, tema=? WHERE username=?",
+                            (name, role, active, u.get('tema') or None, username))
+                    else:
+                        # Usuario nuevo que solo aparece en el snapshot: se crea con una
+                        # contraseña imposible de adivinar. Hay que asignarle una desde
+                        # el panel para que pueda entrar.
+                        cursor.execute("""
+                            INSERT INTO users (username, password, name, role, active, tema)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(username) DO UPDATE SET
+                                name=excluded.name,
+                                role=excluded.role,
+                                active=excluded.active,
+                                tema=excluded.tema
+                        """, (username, hashear_password(secrets.token_urlsafe(24)), name, role, active,
+                              u.get('tema') or None))
+                conn.commit()
 
             # IMPORTANTE: la contraseña NO se devuelve nunca. Solo se informa si el
             # usuario tiene una asignada, para que el panel pueda mostrarlo.
