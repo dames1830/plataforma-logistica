@@ -90,6 +90,15 @@ export const getTema = (usuario) => {
     const u = localStorage.getItem(CLAVE_ULTIMO);
     if (u && existeTema(u)) return u;
   } catch (e) { /* navegador con el almacenamiento bloqueado: sigue con el defecto */ }
+
+  // Ultimo recurso: el que YA esta puesto en la pantalla. Sin esto, cerrar
+  // sesion devolvia la web al tema de fabrica de golpe -Daniel lo vio: estaba
+  // en Power BI, cerraba sesion y el login salia azul noche-.
+  try {
+    const puesto = document.documentElement.getAttribute('data-tema');
+    if (existeTema(puesto)) return puesto;
+  } catch (e) { /* sin DOM: sigue con el defecto */ }
+
   return TEMA_POR_DEFECTO;
 };
 
@@ -128,7 +137,15 @@ export const temaActual = () =>
  * login: no sabe quien va a entrar. Al terminar de entrar hay que releer la
  * preferencia de esa persona, que puede no ser la del ultimo que uso la PC.
  */
-export const aplicarTemaDeUsuario = (usuario) => aplicarTema(getTema(usuario));
+export const aplicarTemaDeUsuario = (usuario) => {
+  const tema = getTema(usuario);
+  // Queda anotado como el ultimo de ESTA maquina, que es lo que van a leer el
+  // login y la pantalla de carga la proxima vez -ellos corren antes de que
+  // haya sesion-. Tambien arregla solo a quien ya tenia un tema elegido de
+  // antes de que existiera esta clave.
+  try { localStorage.setItem(CLAVE_ULTIMO, tema); } catch (e) { /* almacenamiento bloqueado */ }
+  return aplicarTema(tema);
+};
 
 /**
  * El valor REAL de un token, ya resuelto.

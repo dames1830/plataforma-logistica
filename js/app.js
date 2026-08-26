@@ -1,10 +1,10 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0385';
-import * as adminService from './services_v245/adminService.js?v=29.0385';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0385';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0385';
+import { getSession, logout } from './services_v245/auth.js?v=29.0386';
+import * as adminService from './services_v245/adminService.js?v=29.0386';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0386';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0386';
 
 
 /**
@@ -81,9 +81,11 @@ const pantallaCarga = {
     this.valor = 100;
     this.techo = 100;
     this.pintar();
-    await new Promise(r => setTimeout(r, 340));
-    this.capa.classList.add('cerrando');
-    await new Promise(r => setTimeout(r, 360));
+    await new Promise(r => setTimeout(r, 380));
+    // Se quita de golpe, sin desvanecer. El desvanecido dejaba ver el login POR
+    // DEBAJO mientras la capa todavia estaba encima, y como los dos tienen el
+    // logo centrado en el mismo sitio se veia el titulo duplicado y en fantasma:
+    // parecia que la pantalla se hubiera roto.
     if (this.capa && this.capa.parentNode) this.capa.parentNode.removeChild(this.capa);
     this.capa = null;
   }
@@ -430,7 +432,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0385';
+      this.APP_VERSION = 'v29.0386';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está

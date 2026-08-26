@@ -394,12 +394,9 @@ select option:hover {
   box-shadow: 0 10px 30px -8px rgba(var(--shadow-rgb), 0.45);
 }
 
-/* Al terminar, la capa de carga se desvanece y deja ver la plataforma. */
-#bootScreen {
-  opacity: 1;
-  transition: opacity 0.35s ease-out;
-}
-#bootScreen.cerrando { opacity: 0; pointer-events: none; }
+/* La capa de carga NO se desvanece: se quita entera. Al desvanecerse se veia
+   por debajo el login que ya estaba dibujado, y con los dos logos centrados en
+   el mismo punto el titulo salia duplicado y en fantasma. */
 
 .error-message {
   color: var(--danger);
