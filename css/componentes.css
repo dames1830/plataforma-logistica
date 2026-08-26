@@ -25,72 +25,16 @@
 /* ── Celdas de tabla ─────────────────────────────────────────────────────── */
 .celda        { padding: var(--e-3); text-align: center; }
 .celda-izq    { padding: var(--e-3); text-align: left; }
-.celda-der    { padding: var(--e-3); text-align: right; }
-.celda-fina   { padding: var(--e-2); text-align: center; }
-
-/* La linea que separa filas. Un velo, no un color fijo: se despega igual sobre
-   fondo claro y sobre fondo oscuro. */
-.fila-sep     { border-bottom: 1px solid rgba(var(--ink-rgb), 0.06); }
 
 /* ── Texto ───────────────────────────────────────────────────────────────── */
 .txt-fuerte   { color: var(--text-strong); }
 .txt-suave    { color: var(--text-muted); }
-.txt-apagado  { color: var(--text-dim); }
 .txt-chico    { font-size: var(--t-xs); color: var(--text-muted); }
 .txt-dato     { font-size: var(--t-sm); color: var(--text-muted); }
 
-/* La etiqueta que va encima de un campo o de una cifra. */
-.rotulo {
-  display: block;
-  font-size: var(--t-xs);
-  color: var(--text-muted);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: var(--e-1);
-}
-
 /* ── Disposicion ─────────────────────────────────────────────────────────── */
 .fila-entre   { display: flex; justify-content: space-between; align-items: center; }
-.fila-centro  { display: flex; align-items: center; gap: var(--e-2); }
 .centrado     { text-align: center; }
-
-/* ── Tarjeta e insignia ──────────────────────────────────────────────────── */
-.tarjeta {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: var(--e-4);
-}
-
-/* La insignia de estado. El fondo es un velo DEL PROPIO TONO -no un color
-   fijo- para que se adapte: tinte oscuro sobre fondo oscuro, tinte claro sobre
-   fondo claro. Con un color fijo quedaba dorado sobre dorado en los temas
-   claros y no se leia. */
-.insignia {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: var(--t-xs);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.insignia-ok   { background: rgba(var(--success-rgb), 0.18); color: var(--success); }
-.insignia-alerta { background: rgba(var(--warning-rgb), 0.18); color: var(--warning); }
-.insignia-mal  { background: rgba(var(--danger-rgb), 0.18);  color: var(--danger); }
-.insignia-info { background: rgba(var(--primary-rgb), 0.18); color: var(--brand-light); }
-
-/* ── Numeros ─────────────────────────────────────────────────────────────── */
-/* Cifras alineadas por columna: comparar de un vistazo y sumar sin errores. */
-.cifra { font-variant-numeric: tabular-nums; font-weight: 700; }
-.cifra-grande {
-  font-size: var(--t-2xl);
-  font-weight: 900;
-  line-height: 1.1;
-  color: var(--text-strong);
-  font-variant-numeric: tabular-nums;
-}
 
 /* ── Botones que son solo un icono ───────────────────────────────────────── */
 /*
@@ -140,14 +84,19 @@
    Se les da el aire aca y no en cada uno, para que todos respiren igual.
 */
 #rot, #pend, #pp_detalle, #sss {
-  /* Marco propio, no solo aire. Estos reportes se dibujan sueltos dentro del
-     contenedor y quedaban sin nada que los delimitara: la tabla arrancaba
-     pegada al borde y no se veia donde empieza y donde termina el reporte.
-     Ahora son una tarjeta, como el resto de la plataforma. */
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  /* Marco propio, no solo aire: sin el, la tabla arranca pegada al borde y no
+     se ve donde empieza ni donde termina el reporte.
+
+     VELO Y NO COLOR FIJO. Con var(--bg-card) el marco estaba puesto pero NO SE
+     VEIA: estos reportes se dibujan DENTRO de un panel, y en los temas claros
+     el panel tambien es blanco, asi que quedaba una tarjeta blanca sobre fondo
+     blanco -medido: 1,0:1- y en el negro una casi negra sobre casi negro
+     -1,01:1-. Un velo se calcula contra la tinta del tema, asi que se despega
+     siempre, este encima de lo que este. Es el mismo arreglo que necesitaron
+     las tarjetas del selector de temas. */
+  background: rgba(var(--ink-rgb), 0.05);
+  border: 1px solid rgba(var(--ink-rgb), 0.22);
   border-radius: var(--r-md);
-  box-shadow: var(--glass-shadow);
   padding: var(--e-4) var(--e-5) var(--e-5);
 }
 
