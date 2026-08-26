@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0420';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0421';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0420';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0420';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0420';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0420';
-import * as metasService from '../services_v245/metasService.js?v=29.0420';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0420';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0420';
+import * as adminService from '../services_v245/adminService.js?v=29.0421';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0421';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0421';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0421';
+import * as metasService from '../services_v245/metasService.js?v=29.0421';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0421';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0421';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0420';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0420';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0420';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0420';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0420';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0420';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0420';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0420';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0420';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0420';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0420';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0420';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0420';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0420';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0420';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0420';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0420';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0420';
-import { montarSlotting } from './slotting.js?v=29.0420';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0421';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0421';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0421';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0421';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0421';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0421';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0421';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0421';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0421';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0421';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0421';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0421';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0421';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0421';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0421';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0421';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0421';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0421';
+import { montarSlotting } from './slotting.js?v=29.0421';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0420';
+const VERSION = '29.0421';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2385,7 +2385,8 @@ const TABS = [
         { id: 'reporte', label: 'KPI Reporte', icon: '📋' }
     ]},
     { id: 'rfs', label: 'RF´s', icon: '🔋' },
-    { id: 'actividades', label: 'Actividades', icon: '🗓️' }
+    { id: 'actividades', label: 'Actividades', icon: '🗓️' },
+    { id: 'simulador', label: 'Simulador', icon: '🧮' }
   ] },
   // Configuración pinta su propia barra interna (renderConfigTab), no la genérica.
   // Estas sub-pestañas están acá para que la matriz de Permisos genere su clave
@@ -5337,7 +5338,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0420');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0421');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5402,6 +5403,203 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (activeAdminSub === 'performance') renderPerformanceSection(adminContainer);
     else if (activeAdminSub === 'rfs') renderRFSection(adminContainer);
     else if (activeAdminSub === 'actividades') renderActividadesSection(adminContainer);
+    else if (activeAdminSub === 'simulador') renderSimuladorSection(adminContainer);
+  };
+
+  /* ══════════════════════════════════════════════════════════════════════════
+   * SIMULADOR — DOTACIÓN Y CAPACIDAD DEL TURNO
+   *
+   * El dibujo vive en js/reportes/simulador.js. Acá se junta lo que ese archivo
+   * no sabe buscar: LO QUE LA PLATAFORMA MIDE SOBRE LAS TAREAS REALES.
+   *
+   * Daniel, 26-ago-2026: *"ocupación real, ¿yo tengo que poner el número ahí? Si
+   * no tengo que editar nada, bloquéalo"*. Tiene razón: la ocupación, el ritmo y
+   * el tamaño del grupo salen de las tareas finalizadas, no de una opinión.
+   * ══════════════════════════════════════════════════════════════════════════ */
+
+  const SIM_CACHE = 'simulador_params_v1';
+  const SIM_DIAS = 14;          // últimas jornadas CON trabajo que entran a la medición
+  const SIM_MIN_TAREA = 15;     // minutos: por debajo, el u/h de una tarea es puro ruido
+
+  /**
+   * Saca de las tareas los tres números que el simulador NO deja escribir a mano,
+   * más el retrato de lo que se está haciendo hoy.
+   *
+   * OJO CON DOS COSAS, que ya mordieron antes:
+   *
+   *   EL RITMO VA PONDERADO, no por mediana. La mediana contesta "¿cómo le fue a
+   *   una tarea?"; para proyectar un turno entero hace falta "¿cuántos pares por
+   *   hora de grupo se mueven de verdad", que es total ÷ total. Se devuelven las
+   *   dos: la diferencia entre ambas ES el prepack, que se matricula por paleta
+   *   entera y da tareas de 3.000 u/h que no son trabajo par por par.
+   *
+   *   LA OCUPACIÓN SE MIDE DENTRO DE LA VENTANA DEL GRUPO —de su primera tarea a
+   *   su última— y no contra el turno entero. Un grupo que esa noche solo hizo
+   *   almacenaje dos horas no estuvo "16 % ocupado": estuvo ocupado el 84 % de
+   *   las dos horas que le tocó almacenar.
+   */
+  const medirDeLasTareas = (tareas) => {
+      const aFecha = (s) => {
+          const d = new Date(String(s || '').replace('Z', '').slice(0, 19));
+          return isNaN(d.getTime()) ? null : d;
+      };
+      const filas = [];
+      (tareas || []).forEach(t => {
+          if (!t || t.status !== 'Finalizado' || !t.inicio || !t.termino) return;
+          const a = aFecha(t.inicio), b = aFecha(t.termino);
+          if (!a || !b) return;
+          const mins = (b - a) / 60000;
+          // Más de un día es una tarea que quedó abierta y se cerró al otro día:
+          // su duración no mide trabajo, mide olvido.
+          if (mins <= 0 || mins > 1440) return;
+          const us = [t.u1, t.u2, t.u3].filter(Boolean);
+          filas.push({
+              dia: diaOperativoDeTarea(t) || String(t.inicio).slice(0, 10),
+              qty: Number(t.qty) || 0, mins, ini: a, fin: b,
+              grupo: us.slice().sort().join('|'), n: us.length || 2
+          });
+      });
+      if (!filas.length) return null;
+
+      const dias = [...new Set(filas.map(f => f.dia))].sort();
+      const ultimos = new Set(dias.slice(-SIM_DIAS));
+      const R = filas.filter(f => ultimos.has(f.dia));
+      if (!R.length) return null;
+
+      const pares = R.reduce((a, f) => a + f.qty, 0);
+      const minsGrupo = R.reduce((a, f) => a + f.mins, 0);
+      const horasGrupo = minsGrupo / 60;
+
+      const sueltos = R.filter(f => f.mins >= SIM_MIN_TAREA).map(f => f.qty / (f.mins / 60)).sort((x, y) => x - y);
+      const mediana = sueltos.length ? sueltos[Math.floor(sueltos.length / 2)] : 0;
+
+      // El tamaño de grupo más repetido, no el promedio: 2 y 3 personas no dan 2,5.
+      const cuentaN = {};
+      R.forEach(f => { cuentaN[f.n] = (cuentaN[f.n] || 0) + 1; });
+      const tamGrupo = Number(Object.keys(cuentaN).sort((a, b) => cuentaN[b] - cuentaN[a])[0]) || 2;
+
+      // Ocupación y horas netas: por grupo y por noche
+      const porGrupo = new Map();
+      R.forEach(f => {
+          const k = f.dia + '§' + f.grupo;
+          const g = porGrupo.get(k) || { ini: f.ini, fin: f.fin, mins: 0 };
+          if (f.ini < g.ini) g.ini = f.ini;
+          if (f.fin > g.fin) g.fin = f.fin;
+          g.mins += f.mins;
+          porGrupo.set(k, g);
+      });
+      let ventana = 0, trabajo = 0, cuenta = 0;
+      porGrupo.forEach(g => {
+          const v = (g.fin - g.ini) / 60000;
+          if (v < 30) return;   // un grupo con una sola tarea corta no dice nada de ocupación
+          ventana += v; trabajo += g.mins; cuenta++;
+      });
+      const ocupPct = ventana > 0 ? (trabajo / ventana) * 100 : 84;
+      const horasNetasHoy = cuenta > 0 ? (trabajo / cuenta) / 60 : 4.75;
+
+      // El retrato de hoy: por noche
+      const porDia = new Map();
+      R.forEach(f => {
+          const d = porDia.get(f.dia) || { qty: 0, gente: new Set() };
+          d.qty += f.qty;
+          f.grupo.split('|').filter(Boolean).forEach(u => d.gente.add(u));
+          porDia.set(f.dia, d);
+      });
+      const noches = [...porDia.values()];
+      const hoyPares = noches.reduce((a, d) => a + d.qty, 0) / noches.length;
+      const hoyPersonas = noches.reduce((a, d) => a + d.gente.size, 0) / noches.length;
+
+      return {
+          tareas: R.length, pares, horasGrupo,
+          desde: [...ultimos].sort()[0], hasta: [...ultimos].sort().slice(-1)[0],
+          uphPonderada: horasGrupo > 0 ? pares / horasGrupo : 450,
+          uphMediana: mediana, tamGrupo, ocupPct, horasNetasHoy,
+          hoyPares, hoyPersonas, techo: Math.max(...noches.map(d => d.qty))
+      };
+  };
+
+  /** Guarda los parámetros del simulador dentro del `config` compartido, sin pisar
+   *  lo que hay al lado (la jornada, las zonas, las tallas viven en el mismo cajón). */
+  const guardarParamsSimulador = async (params) => {
+      const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/config';
+      let cajon = {};
+      try {
+          const res = await fetch(`${API}?t=${Date.now()}`);
+          if (res.ok) {
+              const cuerpo = await res.json();
+              const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+              if (datos && typeof datos === 'object' && !Array.isArray(datos)) cajon = datos;
+          }
+      } catch (e) { /* si no se puede releer, se manda solo lo del simulador */ }
+
+      const cabeceras = { 'Content-Type': 'application/json' };
+      try {
+          const t = (JSON.parse(localStorage.getItem('logistics_session') || '{}') || {}).token;
+          if (t) cabeceras['X-Auth-Token'] = t;
+      } catch (e) { /* sin token el servidor responderá 403 si está exigiendo */ }
+
+      const res = await fetch(API, {
+          method: 'POST', headers: cabeceras,
+          body: JSON.stringify({ ...cajon, simulador: params })
+      });
+      if (!res.ok) throw new Error('El servidor respondió ' + res.status);
+  };
+
+  const renderSimuladorSection = async (container) => {
+      if (!container) return;
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:3rem; color:var(--text-muted);">
+          <div style="width:26px; height:26px; border:3px solid rgba(var(--primary2-rgb), 0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <span style="font-size:var(--t-md);">Midiendo sobre las tareas...</span>
+        </div>`;
+
+      /* Se fuerza la bajada igual que en el turno: esta pantalla se puede abrir sin
+         haber pasado nunca por Almacenaje, y entonces `adminStore` está vacío. */
+      try { await syncEngine.pullGlobal(['almacenaje_tasks'], true); } catch (e) { /* se sigue con lo que haya */ }
+      const vivas = Array.isArray(adminService.adminStore.almacenaje_tasks)
+          ? adminService.adminStore.almacenaje_tasks
+          : (almacenajeTasksCache || []);
+      const tareas = [
+          ...vivas,
+          ...(typeof adminService.getAlmacenajeTasksHistory === 'function'
+              ? (adminService.getAlmacenajeTasksHistory() || []) : [])
+      ];
+
+      const medidos = medirDeLasTareas(tareas);
+
+      /* Los parámetros: primero los del servidor —para que todas las PC vean lo
+         mismo— y si no llegan, los de esta PC. Nunca se cae a vacío: el módulo
+         tiene sus propios valores de fábrica. */
+      let estado = null;
+      try {
+          const res = await fetch(`https://logistics-backend-wv0x.onrender.com/api/logistics/config?t=${Date.now()}`);
+          if (res.ok) {
+              const cuerpo = await res.json();
+              const datos = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+              if (datos && datos.simulador && typeof datos.simulador === 'object') estado = datos.simulador;
+          }
+      } catch (e) { /* se prueba con lo local */ }
+      if (!estado) {
+          try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
+      }
+
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0421');
+
+      /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
+         cada tecla— y sin esto sería un POST por letra escrita. */
+      let reloj = null;
+      const alGuardar = (params) => {
+          try { localStorage.setItem(SIM_CACHE, JSON.stringify(params)); } catch (e) { /* disco lleno: no es motivo para romper la pantalla */ }
+          clearTimeout(reloj);
+          reloj = setTimeout(() => {
+              guardarParamsSimulador(params).catch(err => console.warn('[SIMULADOR] No se pudo guardar:', err));
+          }, 2500);
+      };
+
+      container.innerHTML = '';
+      const raiz = document.createElement('div');
+      container.appendChild(raiz);
+      montarSimulador(raiz, { medidos: medidos || {}, estado, alGuardar });
   };
 
   const renderTrabajadoresSection = (container) => {
@@ -17876,7 +18074,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0420 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0421 | MOBILE PORTAL
                             </div>
                     </div>
 

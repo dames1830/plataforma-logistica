@@ -1,0 +1,1100 @@
+<!-- Va primero y no se saca: servido por http.server el archivo llega SIN charset
+     y el navegador lo lee como latin-1 — "proyección" salía "proyecciÃ³n". -->
+<meta charset="utf-8">
+<title>Simulador de dotación y capacidad del turno</title>
+
+<style>
+  :root {
+    color-scheme: light;
+    --ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
+
+    --bg: #f2f5fa;
+    --panel: #ffffff;
+    --panel-2: #eef1f8;
+    --line: #dce1ec;
+    --line-2: #bcc5d8;
+    --text: #10151f;
+    --text-2: #4c566d;
+    --text-3: #79839a;
+    --accent: #4f46e5;
+    --accent-soft: #e9e8fd;
+    --ok: #0f7f57;
+    --ok-soft: #ddf2e9;
+    --warn: #a76a06;
+    --warn-soft: #fcefd6;
+    --bad: #bd332d;
+    --bad-soft: #fbe8e7;
+    --shadow: 0 1px 2px rgba(16, 21, 31, .05);
+
+    /* Un color por frente. Se repiten en la barra del turno, en las tarjetas
+       y en el comparador, para que el ojo siga el mismo hilo en toda la pantalla. */
+    --alm: #c2410c;   --alm-soft: #fdece2;
+    --slo: #1d4ed8;   --slo-soft: #e2eafc;
+    --buf: #047857;   --buf-soft: #d9f2e8;
+    --cena: #a16207;  --cena-soft: #fbf0d5;
+    --gris-tramo: #97a2b8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #0b0e15;
+      --panel: #151a24;
+      --panel-2: #1b2130;
+      --line: #242b3a;
+      --line-2: #38425a;
+      --text: #e8ecf4;
+      --text-2: #99a3ba;
+      --text-3: #6a7590;
+      --accent: #8b93f8;
+      --accent-soft: #23244a;
+      --ok: #34d399;
+      --ok-soft: #10322a;
+      --warn: #fbbf24;
+      --warn-soft: #3a2c0c;
+      --bad: #f87171;
+      --bad-soft: #3a1d1d;
+      --shadow: none;
+      --alm: #fb923c;   --alm-soft: #3a2110;
+      --slo: #7aa5fb;   --slo-soft: #17244a;
+      --buf: #4ade80;   --buf-soft: #10321f;
+      --cena: #fcd34d;  --cena-soft: #33280a;
+      --gris-tramo: #4a5568;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0b0e15;  --panel: #151a24; --panel-2: #1b2130;
+    --line: #242b3a; --line-2: #38425a;
+    --text: #e8ecf4; --text-2: #99a3ba; --text-3: #6a7590;
+    --accent: #8b93f8; --accent-soft: #23244a;
+    --ok: #34d399; --ok-soft: #10322a;
+    --warn: #fbbf24; --warn-soft: #3a2c0c;
+    --bad: #f87171; --bad-soft: #3a1d1d;
+    --shadow: none;
+    --alm: #fb923c; --alm-soft: #3a2110;
+    --slo: #7aa5fb; --slo-soft: #17244a;
+    --buf: #4ade80; --buf-soft: #10321f;
+    --cena: #fcd34d; --cena-soft: #33280a;
+    --gris-tramo: #4a5568;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 22px 20px 60px;
+    background: var(--bg); color: var(--text);
+    font-family: var(--ui); font-size: 14px; line-height: 1.55;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .panel-h {
+    padding: 13px 18px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .panel-h h2 {
+    margin: 0; font-size: 12px; font-weight: 800; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--text-2);
+  }
+  .panel-b { padding: 18px; }
+  .nota { font-size: 12px; color: var(--text-3); line-height: 1.7; }
+
+  /* ── Cabecera ─────────────────────────────────────────────────────────── */
+  header { margin-bottom: 18px; }
+  h1 { margin: 0 0 4px; font-size: 23px; font-weight: 800; letter-spacing: -.01em; }
+  .sub { color: var(--text-3); font-size: 13px; }
+  .cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .acciones { text-align: right; }
+  .btn.grande { padding: 12px 20px; font-size: 13.5px; border-radius: 10px; }
+  .btn.grande:disabled { opacity: .6; cursor: progress; }
+  .estado-proc { font-size: 11.5px; color: var(--text-3); margin-top: 7px; max-width: 330px; line-height: 1.6; }
+  .estado-proc.listo { color: var(--ok); font-weight: 700; }
+  .estado-proc.error { color: var(--bad); font-weight: 700; }
+
+  .leyenda {
+    display: flex; gap: 26px; flex-wrap: wrap; margin-bottom: 16px; padding: 10px 16px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    font-size: 12.5px; color: var(--text-2); box-shadow: var(--shadow);
+  }
+  .leyenda b.v { color: var(--ok); }
+  .leyenda b.e { color: var(--accent); }
+  .leyenda.simulando { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .kpi {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; box-shadow: var(--shadow);
+  }
+  .kpi .lab {
+    font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--text-3); margin-bottom: 6px;
+  }
+  .kpi .val { font-size: 30px; font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .kpi .pie { font-size: 11.5px; color: var(--text-3); margin-top: 3px; }
+  .kpi.alm .val { color: var(--alm); }
+  .kpi.slo .val { color: var(--slo); }
+  .kpi.buf .val { color: var(--buf); }
+  .kpi.tot { background: var(--accent-soft); border-color: transparent; }
+  .kpi.tot .val { color: var(--accent); }
+  .kpi.tot .lab { color: var(--accent); opacity: .85; }
+
+  /* ── Campos ───────────────────────────────────────────────────────────── */
+  .campos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 18px; }
+  .campo label {
+    display: block; font-size: 11px; font-weight: 700; color: var(--text-2);
+    margin-bottom: 5px; letter-spacing: .02em;
+  }
+  input[type="time"], input[type="number"] {
+    width: 100%; padding: 7px 9px; font-family: var(--ui); font-size: 14px;
+    font-weight: 700; color: var(--text); background: var(--panel-2);
+    border: 1px solid var(--line-2); border-radius: 7px; font-variant-numeric: tabular-nums;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* ── Campos que la plataforma mide sola ───────────────────────────────────
+     Van cerrados. No es un capricho de diseño: si alguien puede escribir a mano
+     la productividad o la ocupación, el resultado deja de ser una medición y
+     pasa a ser lo que uno quiso que diera, y en comité eso no se puede defender. */
+  .medido { position: relative; }
+  .medido input {
+    background: transparent; border-color: transparent; padding-left: 0;
+    color: var(--ok); cursor: default;
+  }
+  .medido input:read-only:focus { outline: none; }
+  .medido.abierto input {
+    background: var(--warn-soft); border-color: var(--warn); color: var(--warn);
+    padding-left: 9px; cursor: auto;
+  }
+  .candado {
+    position: absolute; right: 0; top: -1px; background: none; border: none;
+    cursor: pointer; font-size: 13px; padding: 2px 4px; line-height: 1; opacity: .55;
+  }
+  .candado:hover { opacity: 1; }
+  .fuente { font-size: 10.5px; color: var(--text-3); line-height: 1.5; margin-top: 2px; }
+  .fuente b { color: var(--ok); }
+  .medido.abierto .fuente b { color: var(--warn); }
+  .fila-p.medido { position: relative; }
+  .fila-p.medido input { text-align: right; padding-right: 20px; }
+  .fila-p .candado { top: 6px; right: -2px; }
+
+  /* ── Barra del turno ──────────────────────────────────────────────────── */
+  .turno-barra {
+    position: relative; height: 46px; border-radius: 8px; overflow: hidden;
+    background: var(--panel-2); border: 1px solid var(--line); margin-top: 6px;
+  }
+  .tramo {
+    position: absolute; top: 0; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; font-weight: 800; letter-spacing: .04em; overflow: hidden;
+    white-space: nowrap; color: #fff;
+  }
+  /* Dos niveles: cuando dos horas caen muy juntas —20:00 y 20:30 en un turno de
+     10 h están a menos de 5 % de distancia— la segunda baja una línea en vez de
+     escribirse encima de la primera. */
+  .reglas { position: relative; height: 32px; margin-top: 4px; }
+  .marca {
+    position: absolute; top: 0; font-size: 10.5px; font-weight: 700; color: var(--text-3);
+    transform: translateX(-50%); font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .marca.baja { top: 15px; }
+  .marca.baja::before {
+    content: ''; position: absolute; left: 50%; top: -13px; height: 11px;
+    border-left: 1px dotted var(--line-2);
+  }
+
+  .formula {
+    margin-top: 16px; padding: 13px 15px; background: var(--panel-2);
+    border-radius: 9px; font-size: 13.5px; line-height: 2; border: 1px solid var(--line);
+  }
+  .formula b { font-variant-numeric: tabular-nums; }
+  .formula .res { color: var(--accent); font-weight: 800; }
+
+  /* ── Tarjetas de frente ───────────────────────────────────────────────── */
+  .frentes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .frente { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: var(--shadow); }
+  .frente-h { padding: 12px 16px 10px; }
+  .frente-h .tit { font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+  .frente.a .tit { color: var(--alm); }
+  .frente.s .tit { color: var(--slo); }
+  .frente.b .tit { color: var(--buf); }
+  .frente-h .des { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+  .frente-b { padding: 0 16px 16px; }
+
+  .stepper { display: flex; align-items: center; gap: 8px; margin: 4px 0 2px; }
+  .stepper button {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line-2);
+    background: var(--panel-2); color: var(--text); font-size: 17px; font-weight: 800;
+    cursor: pointer; line-height: 1; display: flex; align-items: center; justify-content: center;
+  }
+  .stepper button:hover { border-color: var(--accent); color: var(--accent); }
+  .stepper .n {
+    min-width: 44px; text-align: center; font-size: 22px; font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .stepper .u { font-size: 12px; color: var(--text-2); }
+
+  .fila-p {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 7px 0; border-top: 1px solid var(--line); font-size: 12.5px;
+  }
+  .fila-p span { color: var(--text-2); }
+  .fila-p input { width: 78px; padding: 4px 7px; font-size: 13px; text-align: right; }
+
+  .salida {
+    margin-top: 12px; padding: 11px 13px; border-radius: 9px;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  }
+  .frente.a .salida { background: var(--alm-soft); }
+  .frente.s .salida { background: var(--slo-soft); }
+  .frente.b .salida { background: var(--buf-soft); }
+  .salida .big { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .frente.a .salida .big { color: var(--alm); }
+  .frente.s .salida .big { color: var(--slo); }
+  .frente.b .salida .big { color: var(--buf); }
+  .salida .lab { font-size: 11.5px; font-weight: 700; opacity: .85; }
+  .frente.a .salida .lab { color: var(--alm); }
+  .frente.s .salida .lab { color: var(--slo); }
+  .frente.b .salida .lab { color: var(--buf); }
+
+  /* ── Meta ─────────────────────────────────────────────────────────────── */
+  .meta-fila { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .meta-campo { width: 150px; }
+  .barra-meta {
+    flex: 1; min-width: 260px; height: 30px; border-radius: 8px; background: var(--panel-2);
+    border: 1px solid var(--line); position: relative; overflow: hidden;
+  }
+  .barra-meta .rell { position: absolute; left: 0; top: 0; height: 100%; background: var(--alm); opacity: .85; }
+  .barra-meta .txt {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 12.5px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums;
+  }
+  .veredicto { padding: 11px 14px; border-radius: 9px; font-size: 13.5px; font-weight: 700; margin-top: 14px; }
+  .veredicto.ok { background: var(--ok-soft); color: var(--ok); }
+  .veredicto.no { background: var(--bad-soft); color: var(--bad); }
+
+  .btn {
+    padding: 8px 15px; border-radius: 8px; border: 1px solid var(--accent);
+    background: var(--accent); color: #fff; font-family: var(--ui);
+    font-size: 12.5px; font-weight: 800; cursor: pointer; white-space: nowrap;
+  }
+  .btn.sec { background: transparent; color: var(--accent); }
+  .btn:hover { filter: brightness(1.08); }
+
+  /* ── Comparador ───────────────────────────────────────────────────────── */
+  .comp { display: flex; align-items: flex-end; gap: 10px; height: 190px; padding-top: 8px; }
+  .comp-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .comp-bar {
+    width: 100%; border-radius: 7px 7px 0 0; background: var(--gris-tramo);
+    position: relative; transition: height .18s ease;
+  }
+  .comp-col.cumple .comp-bar { background: var(--ok); }
+  .comp-col.actual .comp-bar { background: var(--alm); }
+  .comp-val { font-size: 11.5px; font-weight: 800; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+  .comp-pie { margin-top: 7px; text-align: center; font-size: 11.5px; line-height: 1.35; }
+  .comp-pie b { display: block; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .comp-col.actual .comp-pie b { color: var(--alm); }
+  .comp-wrap { position: relative; }
+  .linea-meta {
+    position: absolute; left: 0; right: 0; border-top: 2px dashed var(--bad);
+    font-size: 10.5px; font-weight: 800; color: var(--bad); text-align: right; pointer-events: none;
+  }
+
+  /* ── Resumen ──────────────────────────────────────────────────────────── */
+  .resumen { font-size: 14.5px; line-height: 2; }
+  .resumen b { font-variant-numeric: tabular-nums; }
+  .chip {
+    display: inline-block; padding: 1px 8px; border-radius: 20px; font-size: 12.5px;
+    font-weight: 800; font-variant-numeric: tabular-nums;
+  }
+  .chip.a { background: var(--alm-soft); color: var(--alm); }
+  .chip.s { background: var(--slo-soft); color: var(--slo); }
+  .chip.b { background: var(--buf-soft); color: var(--buf); }
+
+  .aviso {
+    margin-top: 14px; padding: 12px 15px; border-radius: 9px; background: var(--warn-soft);
+    color: var(--warn); font-size: 12.5px; line-height: 1.75; font-weight: 600;
+  }
+
+  @media (max-width: 980px) {
+    .kpis, .campos { grid-template-columns: repeat(2, 1fr); }
+    .frentes { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="cabecera">
+      <div>
+        <h1>🧮 Simulador de dotación</h1>
+        <div class="sub">Administración → Simulador · Mueva la gente y el horario, y vea cuánto se produce.</div>
+      </div>
+      <div class="acciones">
+        <button class="btn grande" id="btn_procesar">📊 PROCESAR Y GENERAR PRESENTACIÓN</button>
+        <div class="estado-proc" id="estado_proc">La presentación sale siempre con el mismo nombre y pisa a la anterior.</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Resultado siempre a la vista ─────────────────────────────────── -->
+  <div class="kpis">
+    <div class="kpi alm">
+      <div class="lab">Almacenamiento</div>
+      <div class="val" id="k_alm">—</div>
+      <div class="pie" id="k_alm_pie">pares en el turno</div>
+    </div>
+    <div class="kpi slo">
+      <div class="lab">Slotting</div>
+      <div class="val" id="k_slo">—</div>
+      <div class="pie" id="k_slo_pie">pares en el turno</div>
+    </div>
+    <div class="kpi buf">
+      <div class="lab">Buffer</div>
+      <div class="val" id="k_buf">—</div>
+      <div class="pie" id="k_buf_pie">paletas en el turno</div>
+    </div>
+    <div class="kpi tot">
+      <div class="lab">Personal del turno</div>
+      <div class="val" id="k_tot">—</div>
+      <div class="pie" id="k_tot_pie">personas</div>
+    </div>
+  </div>
+
+  <div class="leyenda" id="leyenda">
+    <span><b class="v">🔒 Con candado</b> — lo mide la plataforma sola, usted no lo escribe.</span>
+    <span><b class="e">Lo demás</b> — lo define usted: los horarios, la gente y la meta.</span>
+  </div>
+
+  <!-- ── La jornada ───────────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-h">
+      <h2>1 · La jornada</h2>
+      <button class="btn sec" id="btn_reset">Volver al horario de hoy</button>
+    </div>
+    <div class="panel-b">
+      <div class="campos">
+        <div class="campo"><label>Entrada del turno</label><input type="time" id="f_entrada" value="20:00"></div>
+        <div class="campo"><label>Arranque de tareas</label><input type="time" id="f_arranque" value="20:30"></div>
+        <div class="campo"><label>Corte para BPA</label><input type="time" id="f_bpa" value="06:00"></div>
+        <div class="campo"><label>Salida</label><input type="time" id="f_salida" value="06:30"></div>
+        <div class="campo"><label>Refrigerio empieza</label><input type="time" id="f_cena" value="01:00"></div>
+        <div class="campo"><label>Refrigerio dura (min)</label><input type="number" id="f_cena_min" value="60" min="0" max="180" step="5"></div>
+        <div class="campo medido" id="c_ocup">
+          <label>Ocupación real (%) 🔒</label>
+          <button class="candado" data-abre="c_ocup" title="Lo mide la plataforma. Ábralo solo para simular.">🔓</button>
+          <input type="number" id="f_ocup" value="84" min="30" max="100" step="1" readonly>
+          <div class="fuente">Lo mide la plataforma sobre <b>683 tareas</b> del 27-jul al 25-ago. Usted no lo escribe.</div>
+        </div>
+        <div class="campo">
+          <label>Horas efectivas</label>
+          <div style="padding:7px 0; font-size:20px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums;" id="f_efec">—</div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;">
+        <div class="turno-barra" id="barra"></div>
+        <div class="reglas" id="reglas"></div>
+      </div>
+
+      <div class="formula" id="formula"></div>
+
+      <div class="nota" style="margin-top:12px;">
+        La <b>ocupación real</b> es la única cifra que no se negocia: es lo que la plataforma mide hoy en el
+        piso, comparando el tiempo que un grupo pasa dentro de tareas contra el que pasa en el turno.
+        Baño, traslados y coordinación ya están descontados ahí — no hay que volver a restarlos.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Los tres frentes ─────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-h"><h2>2 · Los tres frentes</h2></div>
+    <div class="panel-b">
+      <div class="frentes">
+
+        <div class="frente a">
+          <div class="frente-h">
+            <div class="tit">Almacenamiento</div>
+            <div class="des">Del buffer a su ubicación definitiva</div>
+          </div>
+          <div class="frente-b">
+            <div class="stepper">
+              <button data-mas="a_grupos" data-paso="-1">−</button>
+              <div class="n" id="n_a_grupos">16</div>
+              <button data-mas="a_grupos" data-paso="1">+</button>
+              <div class="u">grupos de <b id="n_a_tam">2</b> = <b id="n_a_pers">32</b> personas</div>
+            </div>
+            <div class="fila-p medido" id="c_a_tam">
+              <span>Personas por grupo 🔒</span>
+              <input type="number" id="p_a_tam" value="2" min="1" max="6" readonly>
+              <button class="candado" data-abre="c_a_tam" title="Lo mide la plataforma. Ábralo solo para simular.">🔓</button>
+            </div>
+            <div class="fila-p medido" id="c_a_uph">
+              <span>Pares por hora, por grupo 🔒</span>
+              <input type="number" id="p_a_uph" value="450" min="50" max="2000" step="10" readonly>
+              <button class="candado" data-abre="c_a_uph" title="Lo mide la plataforma. Ábralo solo para simular.">🔓</button>
+            </div>
+            <div class="fuente" style="padding-bottom:6px;">De <b>683 tareas finalizadas</b>: todas fueron de 2 personas y la mediana dio 424 pares/hora.</div>
+            <div class="fila-p"><span>Pares por grupo en el turno</span><b id="v_a_grupo">—</b></div>
+            <div class="salida">
+              <div><div class="big" id="v_a_total">—</div><div class="lab">PARES EN EL TURNO</div></div>
+              <div style="text-align:right;"><div style="font-size:11.5px; color:var(--text-3);">por persona</div><b id="v_a_pp" style="font-size:14px;">—</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="frente s">
+          <div class="frente-h">
+            <div class="tit">Slotting</div>
+            <div class="des">Reacomodo del piso · el encargado guía, no mueve</div>
+          </div>
+          <div class="frente-b">
+            <div class="stepper">
+              <button data-mas="s_pers" data-paso="-1">−</button>
+              <div class="n" id="n_s_pers">5</div>
+              <button data-mas="s_pers" data-paso="1">+</button>
+              <div class="u">personas · <b id="n_s_prod">4</b> mueven carga</div>
+            </div>
+            <div class="fila-p"><span>Encargados que solo guían</span><input type="number" id="p_s_enc" value="1" min="0" max="4"></div>
+            <div class="fila-p"><span>Pares por hora, por persona</span><input type="number" id="p_s_uph" value="200" min="20" max="1000" step="10"></div>
+            <div class="fila-p"><span>Pares por persona en el turno</span><b id="v_s_persona">—</b></div>
+            <div class="salida">
+              <div><div class="big" id="v_s_total">—</div><div class="lab">PARES EN EL TURNO</div></div>
+              <div style="text-align:right;"><div style="font-size:11.5px; color:var(--text-3);">sin medición</div><b id="v_s_nota" style="font-size:12px;">a comprobar</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="frente b">
+          <div class="frente-h">
+            <div class="tit">Buffer</div>
+            <div class="des">Bajar de reserva y dejarlo en el activo</div>
+          </div>
+          <div class="frente-b">
+            <div class="stepper">
+              <button data-mas="b_grupos" data-paso="-1">−</button>
+              <div class="n" id="n_b_grupos">2</div>
+              <button data-mas="b_grupos" data-paso="1">+</button>
+              <div class="u">grupos de <b id="n_b_tam">5</b> = <b id="n_b_pers">10</b> personas</div>
+            </div>
+            <div class="fila-p"><span>Personas por grupo</span><input type="number" id="p_b_tam" value="5" min="1" max="12"></div>
+            <div class="fila-p"><span>Paletas por grupo en el turno</span><input type="number" id="p_b_pal" value="70" min="5" max="400" step="5"></div>
+            <div class="fila-p"><span>Montacarguistas</span><input type="number" id="p_b_monta" value="2" min="0" max="10"></div>
+            <div class="salida">
+              <div><div class="big" id="v_b_total">—</div><div class="lab">PALETAS EN EL TURNO</div></div>
+              <div style="text-align:right;"><div style="font-size:11.5px; color:var(--text-3);">una paleta cada</div><b id="v_b_ritmo" style="font-size:14px;">—</b></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="nota" id="nota_buffer" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ── Contra la meta ───────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-h">
+      <h2>3 · Contra la meta</h2>
+      <button class="btn" id="btn_ajustar">Ajustar la gente a la meta</button>
+    </div>
+    <div class="panel-b">
+      <div class="meta-fila">
+        <div class="campo meta-campo">
+          <label>Meta de pares por día</label>
+          <input type="number" id="f_meta" value="50000" min="1000" max="300000" step="1000">
+        </div>
+        <div class="barra-meta"><div class="rell" id="meta_rell"></div><div class="txt" id="meta_txt"></div></div>
+      </div>
+      <div class="veredicto" id="veredicto"></div>
+    </div>
+  </div>
+
+  <!-- ── Comparador ───────────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-h">
+      <h2>4 · Si en el comité le piden otro número</h2>
+      <span class="nota">Almacenamiento, con el horario y el rendimiento de arriba</span>
+    </div>
+    <div class="panel-b">
+      <div class="comp-wrap">
+        <div class="comp" id="comp"></div>
+        <div class="linea-meta" id="linea_meta"></div>
+      </div>
+      <div class="nota" style="margin-top:14px;">
+        Cada columna es una dotación de almacenamiento distinta. Las <b style="color:var(--ok)">verdes</b> llegan a la meta,
+        la <b style="color:var(--alm)">naranja</b> es la que está cargada arriba. Como los grupos son de a
+        <b id="cmp_tam">2</b>, solo existen dotaciones pares.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Resumen ──────────────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-h"><h2>5 · Lo que se lleva al comité</h2></div>
+    <div class="panel-b">
+      <div class="resumen" id="resumen"></div>
+      <div class="aviso" id="aviso"></div>
+    </div>
+  </div>
+
+  <div class="nota" style="text-align:center; margin-top:22px;">
+    Maqueta · los rendimientos vienen de 683 tareas finalizadas entre el 27-jul y el 25-ago-2026.
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// EL ESTADO. Todo lo que se puede tocar en pantalla vive acá; nada se calcula
+// dos veces ni se guarda en el DOM.
+// ─────────────────────────────────────────────────────────────────────────────
+const BASE = {
+  entrada: '20:00', arranque: '20:30', bpa: '06:00', salida: '06:30',
+  cena: '01:00', cenaMin: 60, ocup: 84,
+  aGrupos: 16, aTam: 2, aUph: 450,
+  sPers: 5, sEnc: 1, sUph: 200,
+  bGrupos: 2, bTam: 5, bPal: 70, bMonta: 2,
+  meta: 50000
+};
+const S = { ...BASE };
+
+/** Las 70 paletas por grupo se midieron en un turno de este largo. Si el horario
+ *  se mueve, el total de paletas se mueve con él — que es justo lo que se pide. */
+let HORAS_REF = null;
+
+const $ = (id) => document.getElementById(id);
+const nMil = (n) => Math.round(n).toLocaleString('es-PE');
+const hhmm = (min) => {
+  const h = Math.floor(min / 60), m = Math.round(min % 60);
+  return h + ' h' + (m ? ' ' + String(m).padStart(2, '0') : '');
+};
+
+/** Minutos desde la entrada del turno. Suma 24 h cuando la hora ya cruzó la
+ *  medianoche: sin esto, las 06:00 quedan ANTES de las 20:00 y todo sale negativo. */
+const desdeEntrada = (hora, entrada) => {
+  const [h, m] = hora.split(':').map(Number);
+  const [he, me] = entrada.split(':').map(Number);
+  let d = (h * 60 + m) - (he * 60 + me);
+  if (d < 0) d += 24 * 60;
+  return d;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EL CÁLCULO
+// ─────────────────────────────────────────────────────────────────────────────
+function calcular() {
+  const tArranque = desdeEntrada(S.arranque, S.entrada);
+  const tBpa      = desdeEntrada(S.bpa, S.entrada);
+  const tSalida   = desdeEntrada(S.salida, S.entrada);
+  let   tCena     = desdeEntrada(S.cena, S.entrada);
+
+  const ventana = Math.max(0, tBpa - tArranque);
+  // El refrigerio solo descuenta si cae DENTRO de la ventana de trabajo.
+  const cenaDentro = (tCena >= tArranque && tCena < tBpa) ? Math.min(S.cenaMin, tBpa - tCena) : 0;
+  const disponible = Math.max(0, ventana - cenaDentro);
+  const efectivas = disponible * (S.ocup / 100) / 60;
+
+  if (HORAS_REF === null) HORAS_REF = efectivas;   // se fija con el horario de hoy
+
+  const aPers = S.aGrupos * S.aTam;
+  const aGrupo = S.aUph * efectivas;
+  const aTotal = aGrupo * S.aGrupos;
+
+  const sProd = Math.max(0, S.sPers - S.sEnc);
+  const sPersona = S.sUph * efectivas;
+  const sTotal = sPersona * sProd;
+
+  const bPers = S.bGrupos * S.bTam;
+  const bTotal = S.bPal * S.bGrupos * (HORAS_REF > 0 ? efectivas / HORAS_REF : 1);
+  const bRitmo = bTotal > 0 ? (efectivas * 60) / (bTotal / S.bGrupos) : 0;   // min por paleta, por grupo
+
+  return {
+    tArranque, tBpa, tSalida, tCena, ventana, cenaDentro, disponible, efectivas,
+    aPers, aGrupo, aTotal, sProd, sPersona, sTotal, bPers, bTotal, bRitmo,
+    total: aPers + S.sPers + bPers + S.bMonta
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EL DIBUJO
+// ─────────────────────────────────────────────────────────────────────────────
+function pintarBarra(R) {
+  const largo = Math.max(R.tSalida, 1);
+  const pct = (min) => (min / largo) * 100;
+
+  const tramos = [
+    { ini: 0, fin: R.tArranque, txt: 'CHARLA', color: 'var(--gris-tramo)' },
+    { ini: R.tArranque, fin: R.tBpa, txt: 'TAREAS', color: 'var(--alm)' },
+    { ini: R.tBpa, fin: R.tSalida, txt: 'BPA', color: 'var(--slo)' }
+  ];
+  if (R.cenaDentro > 0) {
+    tramos.push({ ini: R.tCena, fin: R.tCena + R.cenaDentro, txt: 'REFRIGERIO', color: 'var(--cena)' });
+  }
+
+  $('barra').innerHTML = tramos.filter(t => t.fin > t.ini).map(t => {
+    const ancho = pct(t.fin - t.ini);
+    return `<div class="tramo" style="left:${pct(t.ini)}%; width:${ancho}%; background:${t.color};">
+              ${ancho > 7 ? t.txt : ''}
+            </div>`;
+  }).join('');
+
+  const marcas = [
+    { t: 0, h: S.entrada }, { t: R.tArranque, h: S.arranque },
+    { t: R.tBpa, h: S.bpa }, { t: R.tSalida, h: S.salida }
+  ];
+  if (R.cenaDentro > 0) marcas.push({ t: R.tCena, h: S.cena });
+  marcas.sort((a, b) => a.t - b.t);
+  let ultimaArriba = -99;
+  $('reglas').innerHTML = marcas.map(m => {
+    const p = pct(m.t);
+    // Menos de 7 % de separación son unos 25 px: las dos horas se pisarían.
+    const choca = (p - ultimaArriba) < 7;
+    if (!choca) ultimaArriba = p;
+    return `<div class="marca${choca ? ' baja' : ''}" style="left:${Math.min(97, Math.max(3, p))}%;">${m.h}</div>`;
+  }).join('');
+}
+
+function pintarComparador(R) {
+  // Siete escenarios alrededor del cargado, siempre en dotaciones que cierren grupos.
+  const centro = S.aGrupos;
+  const grupos = [];
+  for (let i = -3; i <= 3; i++) {
+    const g = centro + i;
+    if (g >= 1) grupos.push(g);
+  }
+  const datos = grupos.map(g => ({ g, pers: g * S.aTam, pares: R.aGrupo * g }));
+  const tope = Math.max(S.meta, ...datos.map(d => d.pares)) * 1.08;
+
+  $('comp').innerHTML = datos.map(d => {
+    const alto = (d.pares / tope) * 100;
+    const clases = ['comp-col'];
+    if (d.pares >= S.meta) clases.push('cumple');
+    if (d.g === centro) clases.push('actual');
+    return `<div class="${clases.join(' ')}">
+              <div class="comp-val">${nMil(d.pares)}</div>
+              <div class="comp-bar" style="height:${alto}%;"></div>
+              <div class="comp-pie"><b>${d.pers}</b>personas</div>
+            </div>`;
+  }).join('');
+
+  // La línea de la meta va sobre el área de barras: 190 px de alto menos el pie.
+  const ALTO = 190;
+  const y = ALTO - (S.meta / tope) * ALTO;
+  $('linea_meta').style.top = y + 'px';
+  $('linea_meta').textContent = 'meta ' + nMil(S.meta) + ' ';
+  $('cmp_tam').textContent = S.aTam;
+}
+
+function pintar() {
+  const R = calcular();
+
+  // KPIs
+  $('k_alm').textContent = nMil(R.aTotal);
+  $('k_alm_pie').textContent = `${S.aGrupos} grupos · ${R.aPers} personas`;
+  $('k_slo').textContent = nMil(R.sTotal);
+  $('k_slo_pie').textContent = `${R.sProd} de ${S.sPers} mueven carga`;
+  $('k_buf').textContent = nMil(R.bTotal);
+  $('k_buf_pie').textContent = `${S.bGrupos} grupos · ${R.bPers} personas`;
+  $('k_tot').textContent = R.total;
+  $('k_tot_pie').textContent = `${R.aPers} + ${S.sPers} + ${R.bPers} + ${S.bMonta} montacarguistas`;
+
+  // Jornada
+  $('f_efec').textContent = hhmm(R.efectivas * 60);
+  pintarBarra(R);
+  $('formula').innerHTML =
+    `<b>${hhmm(R.ventana)}</b> de ventana <span style="color:var(--text-3)">(${S.arranque} a ${S.bpa})</span>` +
+    `&nbsp; menos <b>${R.cenaDentro} min</b> de refrigerio &nbsp;=&nbsp; <b>${hhmm(R.disponible)}</b> disponibles` +
+    `<br>` +
+    `<b>${hhmm(R.disponible)}</b> × <b>${S.ocup} %</b> de ocupación real &nbsp;=&nbsp; ` +
+    `<span class="res">${hhmm(R.efectivas * 60)} efectivas por persona</span>`;
+
+  // Frentes
+  $('n_a_grupos').textContent = S.aGrupos;
+  $('n_a_tam').textContent = S.aTam;
+  $('n_a_pers').textContent = R.aPers;
+  $('v_a_grupo').textContent = nMil(R.aGrupo) + ' pares';
+  $('v_a_total').textContent = nMil(R.aTotal);
+  $('v_a_pp').textContent = nMil(R.aTotal / Math.max(1, R.aPers)) + ' pares';
+
+  $('n_s_pers').textContent = S.sPers;
+  $('n_s_prod').textContent = R.sProd;
+  $('v_s_persona').textContent = nMil(R.sPersona) + ' pares';
+  $('v_s_total').textContent = nMil(R.sTotal);
+
+  $('n_b_grupos').textContent = S.bGrupos;
+  $('n_b_tam').textContent = S.bTam;
+  $('n_b_pers').textContent = R.bPers;
+  $('v_b_total').textContent = nMil(R.bTotal);
+  $('v_b_ritmo').textContent = R.bRitmo > 0 ? Math.round(R.bRitmo) + ' min' : '—';
+
+  $('nota_buffer').innerHTML =
+    `Las <b>${S.bPal} paletas por grupo</b> están medidas sobre un turno de <b>${hhmm(HORAS_REF * 60)}</b>. ` +
+    `Con las <b>${hhmm(R.efectivas * 60)}</b> de ahora el total queda en <b>${nMil(R.bTotal)} paletas</b>, ` +
+    `que es <b>${Math.round(R.bTotal / Math.max(1, R.bPers) * 10) / 10} por persona</b>. ` +
+    `El slotting todavía no tiene medición propia: los ${S.sUph} pares por hora son un supuesto a comprobar.`;
+
+  // Meta
+  const pct = S.meta > 0 ? (R.aTotal / S.meta) * 100 : 0;
+  $('meta_rell').style.width = Math.min(100, pct) + '%';
+  $('meta_rell').style.background = pct >= 100 ? 'var(--ok)' : 'var(--alm)';
+  $('meta_txt').textContent = `${nMil(R.aTotal)} de ${nMil(S.meta)} pares · ${Math.round(pct)} %`;
+  const dif = R.aTotal - S.meta;
+  const v = $('veredicto');
+  v.className = 'veredicto ' + (dif >= 0 ? 'ok' : 'no');
+  v.innerHTML = dif >= 0
+    ? `✔ Con <b>${R.aPers} personas</b> en almacenamiento se llega: sobran <b>${nMil(dif)} pares</b> de margen.`
+    : `✘ Con <b>${R.aPers} personas</b> no se llega: faltan <b>${nMil(-dif)} pares</b>. ` +
+      `Hacen falta <b>${Math.ceil(S.meta / Math.max(1, R.aGrupo)) * S.aTam} personas</b> ` +
+      `(${Math.ceil(S.meta / Math.max(1, R.aGrupo))} grupos).`;
+
+  pintarComparador(R);
+
+  // Resumen
+  $('resumen').innerHTML =
+    `Para mover <b>${nMil(S.meta)} pares por día</b> en un turno de <b>${hhmm(R.efectivas * 60)} efectivas</b> ` +
+    `hacen falta <span class="chip a">${R.aPers}</span> personas en almacenamiento ` +
+    `(${S.aGrupos} grupos de ${S.aTam}, a ${nMil(S.aUph)} pares/hora cada grupo), ` +
+    `<span class="chip s">${S.sPers}</span> en slotting ` +
+    `(${R.sProd} moviendo carga y ${S.sEnc} guiando) y ` +
+    `<span class="chip b">${R.bPers + S.bMonta}</span> en buffer ` +
+    `(${S.bGrupos} grupos de ${S.bTam} más ${S.bMonta} montacarguistas) para <b>${nMil(R.bTotal)} paletas</b>.` +
+    `<br>Total: <b style="font-size:19px; color:var(--accent);">${R.total} personas</b> por turno.`;
+
+  $('aviso').innerHTML =
+    `⚠️ Esto supone que cada frente se dedica a lo suyo. Hoy un grupo de almacenamiento trabaja ` +
+    `<b>4 h 45 netas</b> de las ${hhmm(R.efectivas * 60)}, porque el mismo personal también baja paletas y separa. ` +
+    `Con ese reparto, las ${R.aPers} personas rendirían cerca de <b>${nMil(R.aPers / S.aTam * S.aUph * 4.75)} pares</b>, no ${nMil(R.aTotal)}.`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOS CONTROLES
+// ─────────────────────────────────────────────────────────────────────────────
+const enlaces = [
+  ['f_entrada', 'entrada', String], ['f_arranque', 'arranque', String],
+  ['f_bpa', 'bpa', String], ['f_salida', 'salida', String], ['f_cena', 'cena', String],
+  ['f_cena_min', 'cenaMin', Number], ['f_ocup', 'ocup', Number],
+  ['p_a_tam', 'aTam', Number], ['p_a_uph', 'aUph', Number],
+  ['p_s_enc', 'sEnc', Number], ['p_s_uph', 'sUph', Number],
+  ['p_b_tam', 'bTam', Number], ['p_b_pal', 'bPal', Number], ['p_b_monta', 'bMonta', Number],
+  ['f_meta', 'meta', Number]
+];
+enlaces.forEach(([id, clave, tipo]) => {
+  $(id).addEventListener('input', (e) => {
+    const v = tipo(e.target.value);
+    // Un campo vacío no debe convertir el estado en NaN y borrar toda la pantalla.
+    if (tipo === Number && !Number.isFinite(v)) return;
+    S[clave] = v;
+    if (MEDIDOS[id]) refrescarLeyenda();
+    pintar();
+  });
+});
+
+document.querySelectorAll('[data-mas]').forEach(b => {
+  b.addEventListener('click', () => {
+    const clave = b.dataset.mas === 'a_grupos' ? 'aGrupos' : b.dataset.mas === 's_pers' ? 'sPers' : 'bGrupos';
+    S[clave] = Math.max(clave === 'sPers' ? 1 : 1, S[clave] + Number(b.dataset.paso));
+    pintar();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOS CANDADOS
+//
+// Lo que la plataforma mide va cerrado. Se puede abrir para simular —"¿y si
+// llegamos al 90 % de ocupación?" es una pregunta legítima de comité—, pero
+// entonces la pantalla lo GRITA y la presentación lo dice, para que nadie
+// confunda un supuesto con una medición.
+// ─────────────────────────────────────────────────────────────────────────────
+const MEDIDOS = { f_ocup: 'ocup', p_a_tam: 'aTam', p_a_uph: 'aUph' };
+
+function haySimulado() {
+  return Object.keys(MEDIDOS).some(id => Number($(id).value) !== BASE[MEDIDOS[id]]);
+}
+
+function refrescarLeyenda() {
+  const sim = haySimulado();
+  const l = $('leyenda');
+  l.className = 'leyenda' + (sim ? ' simulando' : '');
+  l.innerHTML = sim
+    ? `<span>⚠️ <b>Está simulando</b> — hay un dato medido que fue cambiado a mano. La presentación lo va a decir.</span>`
+    : `<span><b class="v">🔒 Con candado</b> — lo mide la plataforma sola, usted no lo escribe.</span>
+       <span><b class="e">Lo demás</b> — lo define usted: los horarios, la gente y la meta.</span>`;
+}
+
+document.querySelectorAll('.candado').forEach(b => {
+  b.addEventListener('click', () => {
+    const caja = $(b.dataset.abre);
+    const campo = caja.querySelector('input');
+    const abriendo = !caja.classList.contains('abierto');
+    caja.classList.toggle('abierto', abriendo);
+    campo.readOnly = !abriendo;
+    b.textContent = abriendo ? '🔒' : '🔓';
+    b.title = abriendo ? 'Volver al dato medido' : 'Lo mide la plataforma. Ábralo solo para simular.';
+    if (abriendo) { campo.focus(); campo.select(); }
+    else {
+      // Al cerrar vuelve al valor medido: si no, quedaría un número inventado
+      // con cara de medición y nadie se acordaría de haberlo tocado.
+      campo.value = BASE[MEDIDOS[campo.id]];
+      S[MEDIDOS[campo.id]] = BASE[MEDIDOS[campo.id]];
+    }
+    refrescarLeyenda();
+    pintar();
+  });
+});
+
+$('btn_ajustar').addEventListener('click', () => {
+  const R = calcular();
+  if (R.aGrupo > 0) { S.aGrupos = Math.ceil(S.meta / R.aGrupo); pintar(); }
+});
+
+$('btn_reset').addEventListener('click', () => {
+  Object.assign(S, BASE);
+  enlaces.forEach(([id, clave]) => { $(id).value = S[clave]; });
+  // Los candados también vuelven a cerrarse: "volver al horario de hoy" tiene que
+  // dejar la pantalla como recién abierta, sin simulaciones colgadas de antes.
+  document.querySelectorAll('.medido.abierto').forEach(caja => {
+    caja.classList.remove('abierto');
+    caja.querySelector('input').readOnly = true;
+    const b = caja.querySelector('.candado');
+    b.textContent = '🔓';
+    b.title = 'Lo mide la plataforma. Ábralo solo para simular.';
+  });
+  refrescarLeyenda();
+  pintar();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LA PRESENTACIÓN
+//
+// El generador pesa 477 KB. Se baja RECIÉN cuando se pide la presentación: si
+// se cargara al arrancar, esos 477 KB se los comería toda la plataforma cada vez
+// que alguien entra, aunque nunca abra el simulador.
+// ─────────────────────────────────────────────────────────────────────────────
+const CDN_PPTX = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+const NOMBRE_PPT = 'Simulador_Dotacion.pptx';
+
+/** Lo que se está haciendo hoy. En el módulo real sale de las tareas finalizadas;
+ *  acá va fijo para que la maqueta muestre el cuadro completo. */
+const HOY = { pares: 25010, personas: '17,5', techo: 45853, techoDia: '22 de agosto' };
+
+function cargarPptx() {
+  if (window.PptxGenJS) return Promise.resolve();
+  return new Promise((ok, fallo) => {
+    const et = document.createElement('script');
+    et.src = CDN_PPTX;
+    et.onload = () => ok();
+    et.onerror = () => fallo(new Error('No se pudo bajar el generador. Revise la conexión.'));
+    document.head.appendChild(et);
+  });
+}
+
+/** Fecha de hoy en texto. NUNCA por toISOString(): eso devuelve UTC y a partir de
+ *  las 19:00 de Lima ya escribe el día siguiente, justo cuando entra el turno. */
+function fechaLarga() {
+  const d = new Date();
+  const MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','setiembre','octubre','noviembre','diciembre'];
+  return `${d.getDate()} de ${MES[d.getMonth()]} de ${d.getFullYear()}`;
+}
+
+async function generarPPT() {
+  await cargarPptx();
+  const R = calcular();
+
+  const FONDO = '132038', TARJETA = '1D2E4D', BLANCO = 'FFFFFF';
+  const GRIS = 'A9B6CC', GRIS2 = '8393AD';
+  const AMBAR = 'F2A03D', AZUL = '5AB0E2', VERDE = '5FB98F';
+
+  const pres = new PptxGenJS();
+  pres.layout = 'LAYOUT_WIDE';
+  pres.author = 'Logistica DEAM1830';
+  const s = pres.addSlide();
+  s.background = { color: FONDO };
+
+  const efec = hhmm(R.efectivas * 60);
+
+  s.addText(`DOTACIÓN PARA ${nMil(S.meta)} PARES POR DÍA`, {
+    x: 0.5, y: 0.32, w: 9.15, h: 0.6, isTextBox: true, margin: 0,
+    fontFace: 'Arial', fontSize: 26, bold: true, color: BLANCO, valign: 'middle'
+  });
+  s.addText(`Comité del ${fechaLarga()}   ·   Centro de Distribución   ·   Turno noche`, {
+    x: 0.5, y: 1.0, w: 8.9, h: 0.3, isTextBox: true, margin: 0,
+    fontFace: 'Arial', fontSize: 12, color: GRIS, valign: 'middle'
+  });
+
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 9.72, y: 0.34, w: 3.11, h: 1.0, rectRadius: 0.08,
+    fill: { color: AMBAR }, line: { color: AMBAR }
+  });
+  s.addText(String(R.total), {
+    x: 9.86, y: 0.4, w: 1.1, h: 0.88, isTextBox: true, margin: 0,
+    fontFace: 'Arial', fontSize: 44, bold: true, color: '15243D', align: 'center', valign: 'middle'
+  });
+  s.addText([
+    { text: 'PERSONAS', options: { fontSize: 15, bold: true, color: '15243D', breakLine: true } },
+    { text: 'en los tres frentes', options: { fontSize: 11, color: '4A3611' } }
+  ], {
+    x: 10.94, y: 0.4, w: 1.8, h: 0.88, isTextBox: true, margin: 0,
+    fontFace: 'Arial', align: 'left', valign: 'middle', lineSpacingMultiple: 1.1
+  });
+
+  const CY = 1.62, CH = 3.28, CW = 4.01;
+  const tarjetas = [
+    { x: 0.5, ac: AMBAR, tit: 'ALMACENAMIENTO', num: String(R.aPers),
+      sub: `personas  ·  ${S.aGrupos} grupos de ${S.aTam}`,
+      filas: [['Meta del comité', `${nMil(S.meta)} pares por día`],
+              ['Rendimiento por grupo', `${nMil(S.aUph)} pares por hora`],
+              [`${efec} efectivas por noche`, `${nMil(R.aGrupo)} pares por grupo`],
+              [`${S.aGrupos} grupos x ${nMil(R.aGrupo)}`, `${nMil(R.aTotal)} pares por día`]] },
+    { x: 4.66, ac: AZUL, tit: 'SLOTTING', num: String(S.sPers),
+      sub: `personas  ·  ${R.sProd} mueven carga`,
+      filas: [['El módulo está en construcción', 'todavía no hay historial'],
+              [`${S.sEnc} encargado guía, no mueve`, `quedan ${R.sProd} productivas`],
+              ['Supuesto por persona', `${nMil(S.sUph)} pares por hora`],
+              [`${R.sProd} personas x ${nMil(R.sPersona)}`, `${nMil(R.sTotal)} pares por día`]] },
+    { x: 8.82, ac: VERDE, tit: 'BUFFER  ·  DE RESERVA AL ACTIVO', num: String(R.bPers + S.bMonta),
+      sub: `${R.bPers} operarios + ${S.bMonta} montacarguistas`,
+      filas: [['Cómo se arma', `${S.bGrupos} grupos de ${S.bTam} personas`],
+              ['Por grupo en el turno', `${nMil(S.bPal)} paletas`],
+              ['Ritmo que exige', `una paleta cada ${Math.round(R.bRitmo)} minutos`],
+              ['Carga total del turno', `${nMil(R.bTotal)} paletas`]] }
+  ];
+
+  tarjetas.forEach(c => {
+    s.addShape(pres.ShapeType.roundRect, {
+      x: c.x, y: CY, w: CW, h: CH, rectRadius: 0.05,
+      fill: { color: TARJETA }, line: { color: '2B3F63', width: 1 }
+    });
+    s.addText(c.tit, {
+      x: c.x + 0.26, y: CY + 0.2, w: CW - 0.52, h: 0.26, isTextBox: true, margin: 0,
+      fontFace: 'Arial', fontSize: 11, bold: true, color: c.ac, charSpacing: 0.8, valign: 'middle'
+    });
+    s.addText(c.num, {
+      x: c.x + 0.22, y: CY + 0.5, w: 1.25, h: 0.86, isTextBox: true, margin: 0,
+      fontFace: 'Arial', fontSize: 52, bold: true, color: BLANCO, align: 'left', valign: 'middle'
+    });
+    s.addText(c.sub, {
+      x: c.x + 1.5, y: CY + 0.5, w: CW - 1.76, h: 0.86, isTextBox: true, margin: 0,
+      fontFace: 'Arial', fontSize: 11.5, color: GRIS, align: 'left', valign: 'middle'
+    });
+    c.filas.forEach((f, i) => {
+      const y = CY + 1.5 + i * 0.44;
+      s.addText(f[0], {
+        x: c.x + 0.26, y: y, w: CW - 0.52, h: 0.2, isTextBox: true, margin: 0,
+        fontFace: 'Arial', fontSize: 9.5, color: GRIS2, valign: 'middle'
+      });
+      s.addText(f[1], {
+        x: c.x + 0.26, y: y + 0.19, w: CW - 0.52, h: 0.23, isTextBox: true, margin: 0,
+        fontFace: 'Arial', fontSize: 12, bold: true, color: BLANCO, valign: 'middle'
+      });
+    });
+  });
+
+  const BY = 5.14, BH = 1.42;
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.5, y: BY, w: 8.17, h: BH, rectRadius: 0.05,
+    fill: { color: '18294A' }, line: { color: '2B3F63', width: 1 }
+  });
+  s.addText(`DE DÓNDE SALEN LAS ${efec.toUpperCase()} EFECTIVAS`, {
+    x: 0.76, y: BY + 0.16, w: 7.65, h: 0.24, isTextBox: true, margin: 0,
+    fontFace: 'Arial', fontSize: 10, bold: true, color: AMBAR, charSpacing: 0.8, valign: 'middle'
+  });
+  s.addText([
+    { text: S.entrada, options: { bold: true, color: BLANCO } },
+    { text: ' entrada y charla      ', options: { color: GRIS } },
+    { text: S.arranque, options: { bold: true, color: BLANCO } },
+    { text: ' arrancan las tareas      ', options: { color: GRIS } },
+    { text: S.bpa, options: { bold: true, color: BLANCO } },
+    { text: ' BPA      ', options: { color: GRIS } },
+    { text: S.salida, options: { bold: true, color: BLANCO } },
+    { text: ' salida', options: { color: GRIS } }
+  ], {
+    x: 0.76, y: BY + 0.46, w: 7.65, h: 0.28, isTextBox: true, margin: 0,
+    fontFace: 'Arial', fontSize: 11.5, valign: 'middle'
+  });
+  s.addText([
+    { text: `${hhmm(R.ventana)} de ventana`, options: { bold: true, color: BLANCO } },
+    { text: '  menos  ', options: { color: GRIS2 } },
+    { text: `${R.cenaDentro} min de refrigerio`, options: { bold: true, color: BLANCO } },
+    { text: `  =  ${hhmm(R.disponible)} disponibles  `, options: { color: GRIS } },
+    { text: `x ${S.ocup} % de ocupación real`, options: { bold: true, color: AMBAR } },
+    { text: '  =  ', options: { color: GRIS } },
+    { text: `${efec} efectivas`, options: { bold: true, color: AMBAR } }
+  ], {
+    x: 0.76, y: BY + 0.82, w: 7.65, h: 0.28, isTextBox: true, margin: 0,
+    fontFace: 'Arial', fontSize: 11.5, valign: 'middle'
+  });
+  s.addText('El porcentaje de ocupación es lo que la plataforma mide hoy en el piso: baños, traslados y coordinación ya están descontados ahí.', {
+    x: 0.76, y: BY + 1.09, w: 7.65, h: 0.22, isTextBox: true, margin: 0,
+    fontFace: 'Arial', fontSize: 9, italic: true, color: GRIS2, valign: 'middle'
+  });
+
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 8.82, y: BY, w: 4.01, h: BH, rectRadius: 0.05,
+    fill: { color: '18294A' }, line: { color: '2B3F63', width: 1 }
+  });
+  s.addText('DÓNDE ESTAMOS HOY', {
+    x: 9.08, y: BY + 0.16, w: 3.49, h: 0.24, isTextBox: true, margin: 0,
+    fontFace: 'Arial', fontSize: 10, bold: true, color: VERDE, charSpacing: 0.8, valign: 'middle'
+  });
+  s.addText([
+    { text: nMil(HOY.pares), options: { fontSize: 26, bold: true, color: BLANCO } },
+    { text: '  pares por noche', options: { fontSize: 12, color: GRIS } }
+  ], {
+    x: 9.08, y: BY + 0.44, w: 3.49, h: 0.42, isTextBox: true, margin: 0,
+    fontFace: 'Arial', valign: 'middle'
+  });
+  s.addText(`Con ${HOY.personas} personas en promedio. El techo alcanzado fue de ${nMil(HOY.techo)} pares el ${HOY.techoDia}.`, {
+    x: 9.08, y: BY + 0.9, w: 3.49, h: 0.4, isTextBox: true, margin: 0,
+    fontFace: 'Arial', fontSize: 9.5, color: GRIS, valign: 'top', lineSpacingMultiple: 1.15
+  });
+
+  // Si se abrió un candado, la lámina TIENE que decirlo. Un supuesto puesto a mano
+  // que viaja con cara de medición es la peor manera de perder un comité.
+  const sim = haySimulado();
+  s.addText(
+    sim
+      ? '⚠  ESCENARIO SIMULADO: hay un dato medido cambiado a mano — ' +
+        `${S.aUph} pares/hora por grupo de ${S.aTam}, ocupación ${S.ocup} %.   ·   Generado desde el Simulador de la plataforma.`
+      : 'Medido sobre 683 tareas finalizadas entre el 27-jul y el 25-ago-2026 (556.089 pares almacenados).   ·   Generado desde el Simulador de la plataforma.',
+    {
+      x: 0.5, y: 6.72, w: 12.33, h: 0.26, isTextBox: true, margin: 0,
+      fontFace: 'Arial', fontSize: 8.5, bold: sim, color: sim ? 'F2A03D' : '6C7C99', valign: 'middle'
+    });
+
+  await pres.writeFile({ fileName: NOMBRE_PPT });
+}
+
+$('btn_procesar').addEventListener('click', async () => {
+  const btn = $('btn_procesar'), est = $('estado_proc');
+  btn.disabled = true;
+  const textoOriginal = btn.textContent;
+  btn.textContent = '⏳ GENERANDO...';
+  est.className = 'estado-proc';
+  est.textContent = 'Armando la presentación con los datos de pantalla...';
+  try {
+    pintar();                       // los números de la lámina son los de la pantalla
+    await generarPPT();
+    const h = new Date();
+    est.className = 'estado-proc listo';
+    est.textContent = `✔ ${NOMBRE_PPT} generado a las ` +
+      `${String(h.getHours()).padStart(2,'0')}:${String(h.getMinutes()).padStart(2,'0')}. ` +
+      `Cada vez que procese, sale el mismo archivo con los datos nuevos.`;
+  } catch (e) {
+    // Si algo falla se DICE. Un botón que no hace nada deja al usuario esperando
+    // un archivo que nunca va a llegar.
+    est.className = 'estado-proc error';
+    est.textContent = '✘ ' + (e && e.message ? e.message : 'No se pudo generar la presentación.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
+});
+
+refrescarLeyenda();
+pintar();
+</script>

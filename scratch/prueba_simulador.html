@@ -1,0 +1,55 @@
+<!-- Banco de pruebas del módulo real (js/reportes/simulador.js), con los CSS de la
+     plataforma y los medidos que salieron de las 418 tareas reales del servidor.
+     Sirve para ver el módulo tal cual va a quedar sin tener que entrar al tablero. -->
+<meta charset="utf-8">
+<title>Prueba del Simulador</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body { margin: 0; padding: 20px; background: var(--panel-deeper); }
+  #barra { max-width: 1180px; margin: 0 auto 14px; display: flex; gap: 8px; align-items: center; }
+  #barra button { padding: 6px 12px; border-radius: 7px; cursor: pointer;
+    border: 1px solid var(--brand-light); background: transparent; color: var(--brand-light);
+    font-size: 12px; font-weight: 700; }
+  #barra span { color: var(--text-muted); font-size: 12px; }
+  /* El eco del guardado es larguísimo y, suelto, estira la página entera y saca
+     barra horizontal — un defecto del banco, no del módulo. */
+  #eco { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+
+<div id="barra">
+  <span>Banco de pruebas · tema:</span>
+  <button data-t="indigo">Indigo</button>
+  <button data-t="pbi">PBI claro</button>
+  <button data-t="pbi-classic">PBI clásico</button>
+  <button data-t="negro">Negro</button>
+  <span id="eco"></span>
+</div>
+<div id="raiz"></div>
+
+<script type="module">
+// Con marca de tiempo: sin esto el navegador se queda con la copia vieja del
+// módulo y uno cree que un arreglo no funcionó cuando ni siquiera se cargó.
+const { montarSimulador } = await import('../js/reportes/simulador.js?z=' + Date.now());
+
+// Lo que midió medirDeLasTareas sobre las 949 tareas bajadas del servidor.
+const medidos = {
+  tareas: 418, pares: 335634, horasGrupo: 654.4,
+  desde: '2026-08-11', hasta: '2026-08-25',
+  uphPonderada: 513, uphMediana: 422, tamGrupo: 2,
+  ocupPct: 83.6, horasNetasHoy: 4.67,
+  hoyPares: 23974, hoyPersonas: 17.3, techo: 45853
+};
+
+montarSimulador(document.getElementById('raiz'), {
+  medidos, estado: null,
+  alGuardar: (p) => { document.getElementById('eco').textContent = 'guardaría: ' + JSON.stringify(p); }
+});
+
+// Los cuatro temas reales de la plataforma. El atributo es `data-tema` en <html>.
+document.documentElement.setAttribute('data-tema', 'indigo');
+document.querySelectorAll('#barra button').forEach(b => b.addEventListener('click', () => {
+  document.documentElement.setAttribute('data-tema', b.dataset.t);
+}));
+</script>
