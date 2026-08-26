@@ -838,6 +838,36 @@ thead th {
    fila se pega debajo de la primera y no encima. */
 thead tr:nth-child(2) th { top: 2.1rem; z-index: 4; }
 
+/* ── LA TRAMPA DEL overflow-x ─────────────────────────────────────────────
+   Casi todas las tablas anchas van dentro de un <div style="overflow-x:auto">
+   para que no rompan el ancho de la pagina. Pero en CSS, poner overflow-x:auto
+   convierte el overflow-y en auto TAMBIEN: ese div pasa a ser el contenedor
+   que manda para el scroll.
+
+   Y ahi esta el problema: como no tiene alto, crece con la tabla -medido: 2.320
+   px- asi que NUNCA se desplaza por dentro. El que se desplaza es la pagina. Y
+   una cabecera `sticky` se pega a SU contenedor, no a la pagina: como ese
+   contenedor no se mueve, la cabecera se va con las filas y desaparece.
+
+   Poniendole un alto maximo, el que se desplaza vuelve a ser el div y la
+   cabecera se queda quieta arriba, que es lo que se espera al bajar por una
+   lista de 600 articulos.
+
+   Las tablas cortas no se enteran: el maximo solo actua cuando sobra contenido.
+   ───────────────────────────────────────────────────────────────────────── */
+.tabla-scroll,
+[style*="overflow-x:auto"]:has(> table),
+[style*="overflow-x: auto"]:has(> table) {
+  max-height: 68vh;
+}
+
+/* Con poca altura de pantalla, un maximo en vh deja la tabla muy corta. */
+@media (max-height: 700px) {
+  .tabla-scroll,
+  [style*="overflow-x:auto"]:has(> table),
+  [style*="overflow-x: auto"]:has(> table) { max-height: 60vh; }
+}
+
 /* Las que ya traian su propio sticky con un tope distinto lo conservan. */
 .data-table th { top: -1px; }
 

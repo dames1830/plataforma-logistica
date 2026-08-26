@@ -140,6 +140,14 @@
    Se les da el aire aca y no en cada uno, para que todos respiren igual.
 */
 #rot, #pend, #pp_detalle, #sss {
+  /* Marco propio, no solo aire. Estos reportes se dibujan sueltos dentro del
+     contenedor y quedaban sin nada que los delimitara: la tabla arrancaba
+     pegada al borde y no se veia donde empieza y donde termina el reporte.
+     Ahora son una tarjeta, como el resto de la plataforma. */
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--glass-shadow);
   padding: var(--e-4) var(--e-5) var(--e-5);
 }
 
