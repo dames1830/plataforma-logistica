@@ -83,8 +83,6 @@ const CSS = `
   --alm: var(--warning);       --alm-soft: rgba(var(--warning-rgb), 0.16);
   --slo: var(--primary-2);     --slo-soft: rgba(var(--ink-rgb), 0.10);
   --buf: var(--success);       --buf-soft: rgba(var(--success-rgb), 0.14);
-  --cena-c: var(--yellow);
-  --gris-tramo: var(--text-faint);
 }
 
 #sim *, #sim *::before, #sim *::after { box-sizing: border-box; }
@@ -118,7 +116,9 @@ const CSS = `
 #sim .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
 #sim .kpi .lab { font-size: var(--t-xs); font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
   color: var(--text-3); margin-bottom: 6px; }
-#sim .kpi .val { font-size: var(--t-2xl); font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; }
+/* line-height 1.2 y no 1.05: con la letra de este tamano, 1.05 deja la caja 5 px
+   mas baja que los glifos y les come el borde de abajo. */
+#sim .kpi .val { font-size: var(--t-2xl); font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
 #sim .kpi .pie { font-size: var(--t-xs); color: var(--text-3); margin-top: 3px; }
 #sim .kpi.alm .val { color: var(--alm); }
 #sim .kpi.slo .val { color: var(--slo); }
@@ -126,13 +126,6 @@ const CSS = `
 #sim .kpi.tot { background: var(--accent-soft); border-color: transparent; }
 #sim .kpi.tot .val { color: var(--accent); }
 #sim .kpi.tot .lab { color: var(--accent); opacity: .85; }
-
-#sim .leyenda { display: flex; gap: 26px; flex-wrap: wrap; margin-bottom: 16px; padding: 10px 16px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
-  font-size: var(--t-xs); color: var(--text-2); }
-#sim .leyenda b.v { color: var(--ok); }
-#sim .leyenda b.e { color: var(--accent); }
-#sim .leyenda.simulando { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
 
 #sim .campos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 18px; }
 #sim .campo label { display: block; font-size: var(--t-xs); font-weight: 700; color: var(--text-2); margin-bottom: 5px; }
@@ -164,25 +157,6 @@ const CSS = `
 #sim .medido.abierto .fuente b { color: var(--warn); }
 #sim .fila-p.medido input { text-align: right; padding-right: 20px; }
 #sim .fila-p .candado { top: 6px; right: -2px; }
-
-#sim .turno-barra { position: relative; height: 46px; border-radius: 8px; overflow: hidden;
-  background: var(--panel-2); border: 1px solid var(--line); margin-top: 6px; }
-/* EL RÓTULO VA A LA IZQUIERDA, no centrado: el refrigerio se dibuja ENCIMA del tramo
-   de tareas y, con los dos textos centrados, tapaba la palabra TAREAS justo en el
-   medio. Al ras de su borde, cada tramo muestra el suyo.
-   El color sale de --on-accent, que se invierte con el tema: en claro el ámbar es
-   oscuro y el texto va blanco; en oscuro el ámbar es brillante y el texto va negro. */
-#sim .tramo { position: absolute; top: 0; height: 100%; display: flex; align-items: center;
-  justify-content: flex-start; padding-left: 9px; font-size: var(--t-xs); font-weight: 800;
-  letter-spacing: .04em; overflow: hidden; white-space: nowrap; color: var(--on-accent, #10151f); }
-/* Dos niveles: 20:00 y 20:30 en un turno de 10 h caen a menos de 5 % de distancia
-   y una hora se escribiría encima de la otra. */
-#sim .reglas { position: relative; height: 32px; margin-top: 4px; }
-#sim .marca { position: absolute; top: 0; font-size: var(--t-xs); font-weight: 700; color: var(--text-3);
-  transform: translateX(-50%); font-variant-numeric: tabular-nums; white-space: nowrap; }
-#sim .marca.baja { top: 15px; }
-#sim .marca.baja::before { content: ''; position: absolute; left: 50%; top: -13px; height: 11px;
-  border-left: 1px dotted var(--line-2); }
 
 #sim .formula { margin-top: 16px; padding: 13px 15px; background: var(--panel-2); border-radius: 9px;
   font-size: var(--t-sm); line-height: 2; border: 1px solid var(--line); }
@@ -251,7 +225,10 @@ const CSS = `
 #sim .comp { display: flex; align-items: flex-end; gap: 10px; height: 190px; padding-top: 8px; }
 #sim .comp-col { flex: 1; display: flex; flex-direction: column; align-items: center;
   justify-content: flex-end; height: 100%; }
-#sim .comp-bar { width: 100%; border-radius: 7px 7px 0 0; background: var(--gris-tramo); }
+#sim .comp-bar { width: 100%; border-radius: 7px 7px 0 0; background: var(--text-faint); }
+#sim .comp-ok { font-size: var(--t-xs); font-weight: 800; margin-top: 2px; color: var(--bad); }
+#sim .comp-col.cumple .comp-ok { color: var(--ok); }
+#sim .comp-hoy { font-size: var(--t-xs); color: var(--alm); font-weight: 700; }
 #sim .comp-col.cumple .comp-bar { background: var(--ok); }
 #sim .comp-col.actual .comp-bar { background: var(--alm); }
 #sim .comp-val { font-size: var(--t-xs); font-weight: 800; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
@@ -283,11 +260,11 @@ const HTML = `
   <div class="cabecera">
     <div>
       <h1>🧮 Simulador de dotación</h1>
-      <div class="sub">Mueva la gente y el horario, y vea cuánto se produce.</div>
     </div>
     <div class="acciones">
       <button class="btn grande" id="sim_procesar">📊 PROCESAR Y GENERAR PRESENTACIÓN</button>
-      <div class="estado-proc" id="sim_estado">La presentación sale siempre con el mismo nombre.</div>
+      <!-- Arranca VACÍO: solo habla cuando hay algo que decir del procesado. -->
+      <div class="estado-proc" id="sim_estado"></div>
     </div>
   </div>
 
@@ -301,8 +278,6 @@ const HTML = `
     <div class="kpi tot"><div class="lab">Personal del turno</div><div class="val" id="sim_k_tot">—</div>
       <div class="pie" id="sim_k_tot_pie">personas</div></div>
   </div>
-
-  <div class="leyenda" id="sim_leyenda"></div>
 
   <div class="panel">
     <div class="panel-h"><h2>1 · La jornada</h2>
@@ -324,21 +299,12 @@ const HTML = `
         <div class="campo"><label>Horas efectivas</label>
           <div style="padding:7px 0; font-size:var(--t-xl); font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums;" id="sim_efec">—</div></div>
       </div>
-      <div style="margin-top:18px;">
-        <div class="turno-barra" id="sim_barra"></div>
-        <div class="reglas" id="sim_reglas"></div>
-      </div>
       <div class="formula" id="sim_formula"></div>
-      <div class="nota" style="margin-top:12px;">
-        La <b>ocupación real</b> es la única cifra que no se negocia: la mide la plataforma comparando el
-        tiempo que un grupo pasa dentro de tareas contra el que pasa en el piso. Baños, traslados y
-        coordinación ya están descontados ahí — no hay que volver a restarlos.
-      </div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="panel-h"><h2>2 · Los tres frentes</h2></div>
+    <div class="panel-h"><h2>2 · Las tres áreas</h2></div>
     <div class="panel-b">
       <div class="frentes">
         <div class="frente a">
@@ -435,14 +401,10 @@ const HTML = `
 
   <div class="panel">
     <div class="panel-h"><h2>4 · Si en el comité le piden otro número</h2>
-      <span class="nota">Almacenamiento, con el horario y el rendimiento de arriba</span></div>
+      <span class="nota" id="sim_comp_tit"></span></div>
     <div class="panel-b">
       <div class="comp-wrap"><div class="comp" id="sim_comp"></div>
         <div class="linea-meta" id="sim_linea_meta"></div></div>
-      <div class="nota" style="margin-top:14px;">
-        Cada columna es una dotación distinta. Las <b style="color:var(--ok)">verdes</b> llegan a la meta,
-        la <b style="color:var(--alm)">naranja</b> es la que está cargada arriba.
-      </div>
     </div>
   </div>
 
@@ -550,48 +512,7 @@ export const montarSimulador = function (RAIZ, OPC) {
         || Number(S.aTam) !== Number(MED.aTam)
         || (Number(S.aUph) !== UPH_REAL && Number(S.aUph) !== UPH_TIPICA);
 
-    function refrescarLeyenda() {
-        const l = $('sim_leyenda');
-        const sim = haySimulado();
-        l.className = 'leyenda' + (sim ? ' simulando' : '');
-        l.innerHTML = sim
-            ? '<span>⚠️ <b>Está simulando</b> — hay un dato medido cambiado a mano. La presentación lo va a decir.</span>'
-            : '<span><b class="v">🔒 Con candado</b> — lo mide la plataforma sola, usted no lo escribe.</span>'
-            + '<span><b class="e">Lo demás</b> — lo define usted: los horarios, la gente y la meta.</span>';
-    }
-
     // ── EL DIBUJO ────────────────────────────────────────────────────────────
-    function pintarBarra(R) {
-        const largo = Math.max(R.tSalida, 1);
-        const pct = (min) => (min / largo) * 100;
-        const tramos = [
-            { ini: 0, fin: R.tArranque, txt: 'CHARLA', color: 'var(--gris-tramo)' },
-            { ini: R.tArranque, fin: R.tBpa, txt: 'TAREAS', color: 'var(--alm)' },
-            { ini: R.tBpa, fin: R.tSalida, txt: 'BPA', color: 'var(--slo)' }
-        ];
-        if (R.cenaDentro > 0) tramos.push({ ini: R.tCena, fin: R.tCena + R.cenaDentro, txt: 'REFRIGERIO', color: 'var(--cena-c)' });
-
-        $('sim_barra').innerHTML = tramos.filter(t => t.fin > t.ini).map(t => {
-            const ancho = pct(t.fin - t.ini);
-            return `<div class="tramo" style="left:${pct(t.ini)}%; width:${ancho}%; background:${t.color};">`
-                + (ancho > 7 ? t.txt : '') + '</div>';
-        }).join('');
-
-        const marcas = [
-            { t: 0, h: S.entrada }, { t: R.tArranque, h: S.arranque },
-            { t: R.tBpa, h: S.bpa }, { t: R.tSalida, h: S.salida }
-        ];
-        if (R.cenaDentro > 0) marcas.push({ t: R.tCena, h: S.cena });
-        marcas.sort((a, b) => a.t - b.t);
-        let ultima = -99;
-        $('sim_reglas').innerHTML = marcas.map(m => {
-            const p = pct(m.t);
-            const choca = (p - ultima) < 7;   // menos de 7 % son unos 25 px: se pisarían
-            if (!choca) ultima = p;
-            return `<div class="marca${choca ? ' baja' : ''}" style="left:${Math.min(97, Math.max(3, p))}%;">${m.h}</div>`;
-        }).join('');
-    }
-
     function pintarComparador(R) {
         const centro = S.aGrupos;
         const grupos = [];
@@ -599,18 +520,31 @@ export const montarSimulador = function (RAIZ, OPC) {
         const datos = grupos.map(g => ({ g, pers: g * S.aTam, pares: R.aGrupo * g }));
         const tope = Math.max(S.meta, ...datos.map(d => d.pares)) * 1.08 || 1;
 
+        /* CADA COLUMNA SE LEE SOLA: cuánta gente, cuántos pares, y si llega o no.
+           Con las barras a secas Daniel dijo que no se entendía, y tenía razón: las
+           siete salen casi de la misma altura porque el rango entre la más chica y la
+           más grande es estrecho, así que el dibujo no distingue nada. El ✔ y el ✘
+           sí. */
         $('sim_comp').innerHTML = datos.map(d => {
+            const llega = d.pares >= S.meta;
             const clases = ['comp-col'];
-            if (d.pares >= S.meta) clases.push('cumple');
+            if (llega) clases.push('cumple');
             if (d.g === centro) clases.push('actual');
-            return `<div class="${clases.join(' ')}"><div class="comp-val">${nMil(d.pares)}</div>`
+            return `<div class="${clases.join(' ')}">`
+                + `<div class="comp-val">${nMil(d.pares)}</div>`
                 + `<div class="comp-bar" style="height:${(d.pares / tope) * 100}%;"></div>`
-                + `<div class="comp-pie"><b>${d.pers}</b>personas</div></div>`;
+                + `<div class="comp-pie"><b>${d.pers}</b>personas`
+                + `<div class="comp-ok">${llega ? '✔ llega' : '✘ no llega'}</div>`
+                + `${d.g === centro ? '<div class="comp-hoy">es la cargada</div>' : ''}</div>`
+                + `</div>`;
         }).join('');
 
         const ALTO = 190;
         $('sim_linea_meta').style.top = (ALTO - (S.meta / tope) * ALTO) + 'px';
         $('sim_linea_meta').textContent = 'meta ' + nMil(S.meta) + ' ';
+        $('sim_comp_tit').innerHTML =
+            `Cuántos pares saldrían de almacenamiento con cada cantidad de gente, `
+            + `con el horario y el ritmo de arriba`;
     }
 
     function pintar() {
@@ -626,7 +560,6 @@ export const montarSimulador = function (RAIZ, OPC) {
         $('sim_k_tot_pie').textContent = `${R.aPers} + ${S.sPers} + ${R.bPers} + ${S.bMonta} montacarguistas`;
 
         $('sim_efec').textContent = hhmm(R.efectivas * 60);
-        pintarBarra(R);
         $('sim_formula').innerHTML =
             `<b>${hhmm(R.ventana)}</b> de ventana <span style="color:var(--text-3)">(${S.arranque} a ${S.bpa})</span>`
             + `&nbsp; menos <b>${R.cenaDentro} min</b> de refrigerio &nbsp;=&nbsp; <b>${hhmm(R.disponible)}</b> disponibles<br>`
@@ -681,12 +614,19 @@ export const montarSimulador = function (RAIZ, OPC) {
             + `(${S.bGrupos} grupos de ${S.bTam} más ${S.bMonta} montacarguistas) para <b>${nMil(R.bTotal)} paletas</b>.`
             + `<br>Total: <b style="font-size:var(--t-lg); color:var(--accent);">${R.total} personas</b> por turno.`;
 
+        /* EL AVISO EN CRISTIANO. Daniel, 26-ago-2026: *"¿qué significa 4 h 37 netas de las
+           7 h 08? No entiendo"*. Antes decía "netas" a secas, que no dice nada: lo que hay
+           que explicar es que el turno le DA 7 h 08 al grupo, pero hoy solo 4 h 37 se van
+           en almacenar porque las otras se van en bajar paletas y separar. */
         const netas = Number.isFinite(M.horasNetasHoy) ? M.horasNetasHoy : 4.75;
+        const otras = Math.max(0, R.efectivas - netas);
         $('sim_aviso').innerHTML =
-            `⚠️ Esto supone que cada frente se dedica a lo suyo. Hoy un grupo de almacenamiento trabaja `
-            + `<b>${hhmm(netas * 60)} netas</b> de las ${hhmm(R.efectivas * 60)}, porque el mismo personal también baja `
-            + `paletas y separa. Con ese reparto, las ${R.aPers} personas rendirían cerca de `
-            + `<b>${nMil(S.aGrupos * S.aUph * netas)} pares</b>, no ${nMil(R.aTotal)}.`;
+            `⚠️ <b>La cuenta de arriba supone que estas ${R.aPers} personas SOLO almacenan.</b> Hoy no es así.<br>`
+            + `El turno le da a cada grupo <b>${hhmm(R.efectivas * 60)}</b>, pero midiendo las tareas de verdad `
+            + `solo <b>${hhmm(netas * 60)}</b> se van en almacenar: las otras <b>${hhmm(otras * 60)}</b> el mismo `
+            + `personal las gasta bajando paletas y separando mercadería.<br>`
+            + `Si el reparto sigue igual, estas ${R.aPers} personas harían <b>${nMil(S.aGrupos * S.aUph * netas)} pares</b> `
+            + `y no ${nMil(R.aTotal)}. Para llegar a los ${nMil(R.aTotal)} hay que dedicarlas a almacenar el turno entero.`;
 
         pintarFuenteUph();
 
@@ -745,7 +685,6 @@ export const montarSimulador = function (RAIZ, OPC) {
             // Un campo vacío no debe volver el estado NaN y borrar toda la pantalla.
             if (!esTexto[c] && !Number.isFinite(v)) return;
             S[c] = v;
-            if (MEDIDOS['sim_' + c]) refrescarLeyenda();
             pintar();
         });
     });
@@ -757,7 +696,6 @@ export const montarSimulador = function (RAIZ, OPC) {
         if (!b || !RAIZ.contains(b)) return;
         S.aUph = Number(b.dataset.uph);
         $('sim_aUph').value = S.aUph;
-        refrescarLeyenda();
         pintar();
     });
 
@@ -786,7 +724,6 @@ export const montarSimulador = function (RAIZ, OPC) {
                 campo.value = MED[clave];
                 S[clave] = MED[clave];
             }
-            refrescarLeyenda();
             pintar();
         });
     });
@@ -811,7 +748,6 @@ export const montarSimulador = function (RAIZ, OPC) {
             b.textContent = '🔓';
             b.title = 'Lo mide la plataforma. Ábralo solo para simular.';
         });
-        refrescarLeyenda();
         pintar();
     });
 
@@ -1038,6 +974,5 @@ export const montarSimulador = function (RAIZ, OPC) {
         }
     });
 
-    refrescarLeyenda();
     pintar();
 };
