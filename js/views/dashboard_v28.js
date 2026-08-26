@@ -1,31 +1,31 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0377';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0378';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0377';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0377';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0377';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0377';
-import * as metasService from '../services_v245/metasService.js?v=29.0377';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0377';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0377';
+import * as adminService from '../services_v245/adminService.js?v=29.0378';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0378';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0378';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0378';
+import * as metasService from '../services_v245/metasService.js?v=29.0378';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0378';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0378';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0377';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0377';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0377';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0377';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0377';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0377';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0377';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0377';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0377';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0377';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0377';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0377';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0377';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0377';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0377';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0377';
-import { montarSlotting } from './slotting.js?v=29.0377';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0378';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0378';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0378';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0378';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0378';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0378';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0378';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0378';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0378';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0378';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0378';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0378';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0378';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0378';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0378';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0378';
+import { montarSlotting } from './slotting.js?v=29.0378';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -382,7 +382,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0377';
+const VERSION = '29.0378';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4612,6 +4612,19 @@ export const renderDashboard = async (container, user, onLogout) => {
             setTimeout(() => {
                 try {
                     renderBufferResults(results, lastBufferKPI);
+                    /* LOS DOS CUADROS TAMBIEN ACA. Al abrir la pantalla se restaura el
+                       ultimo analisis: sin esto, quien entraba a mirarlo no veia nada
+                       abajo y parecia que los cuadros no existieran.
+                       Los otros cinco modelos solo se corren si los archivos estan en
+                       esta PC; si no, salen en raya en vez de con numeros a medias. */
+                    fetchBufferConfig()
+                        .catch(() => ({}))
+                        .then(cfg => {
+                            const hayDatos = !!(dataStore && dataStore.buffer_reserva
+                                                && dataStore.articulos);
+                            return pintarCuadrosAbajo(cfg || {}, lastBufferKPI, hayDatos);
+                        })
+                        .catch(e => console.warn('[CUADROS] No se pudieron armar al abrir:', e));
                     /* Y SI ESE ANÁLISIS ES DE ESTA JORNADA, se publica al abrir la
                        pantalla. Si no, el análisis que se corrió antes de que esto
                        existiera —o desde una PC con la versión vieja— se quedaba
@@ -4755,16 +4768,18 @@ export const renderDashboard = async (container, user, onLogout) => {
      'es-PE' acá dejaba 61.792 arriba y 61,792 abajo, en la misma pantalla. */
   const nUm = (x) => Number(x || 0).toLocaleString();
 
-  const pintarCuadrosAbajo = async (config, resElegido) => {
+  const pintarCuadrosAbajo = async (config, resElegido, correrOtros = true) => {
       const caja = document.getElementById('cuadrosAbajo');
       if (!caja) return;
       const m1 = !!config.modelo1, m2 = !!config.modelo2, m3 = !!config.modelo3;
       const elegido = COMBOS_BUFFER.find(c => c.m1 === m1 && c.m2 === m2 && c.m3 === m3);
       const claveElegida = elegido ? elegido.k : null;
 
-      caja.innerHTML = '<div style="padding:0.9rem 1.1rem; background:rgba(15,23,42,0.9);'
-          + ' border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#94a3b8;'
-          + ' font-size:0.78rem;">Corriendo los otros modelos por dentro...</div>';
+      if (correrOtros) {
+          caja.innerHTML = '<div style="padding:0.9rem 1.1rem; background:rgba(15,23,42,0.9);'
+              + ' border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#94a3b8;'
+              + ' font-size:0.78rem;">Corriendo los otros modelos por dentro...</div>';
+      }
 
       const filas = [];
       for (let i = 0; i < COMBOS_BUFFER.length; i++) {
@@ -4772,6 +4787,8 @@ export const renderDashboard = async (container, user, onLogout) => {
           let r;
           if (c.k === claveElegida) {
               r = resElegido;                       // el elegido NO se recalcula
+          } else if (!correrOtros) {
+              r = null;                             // sin archivos cargados: raya, no invento
           } else {
               /* Un respiro para que el navegador pinte el avance: el motor es
                  sincrono y sin esto la pantalla queda congelada las 5 pasadas. */
@@ -4849,9 +4866,13 @@ export const renderDashboard = async (container, user, onLogout) => {
             </table>
             <div style="padding:0.6rem 0.9rem; font-size:0.68rem; color:#8ba0bd; line-height:1.5;
                         border-top:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.16);">
-              Las seis corren sobre el <b style="color:#e6edf7;">mismo pedido y el mismo factor</b>.
-              Solo el marcado se public&oacute; y es el que sale en el Excel; los otros cinco se
-              calcularon aparte, nada m&aacute;s para este cuadro.
+              ${correrOtros
+                ? 'Las seis corren sobre el <b style="color:#e6edf7;">mismo pedido y el mismo factor</b>. '
+                  + 'Solo el marcado se public&oacute; y es el que sale en el Excel; los otros cinco se '
+                  + 'calcularon aparte, nada m&aacute;s para este cuadro.'
+                : 'Este es el <b style="color:#e6edf7;">&uacute;ltimo an&aacute;lisis guardado</b>. '
+                  + 'Para comparar los otros cinco modelos hay que apretar '
+                  + '<b style="color:#e6edf7;">PROCESAR</b> con los archivos cargados.'}
             </div>
           </div>
 
@@ -5060,7 +5081,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0377');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0378');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17372,7 +17393,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0377 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0378 | MOBILE PORTAL
                             </div>
                     </div>
 
