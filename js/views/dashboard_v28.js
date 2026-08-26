@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0408';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0409';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0408';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0408';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0408';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0408';
-import * as metasService from '../services_v245/metasService.js?v=29.0408';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0408';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0408';
+import * as adminService from '../services_v245/adminService.js?v=29.0409';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0409';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0409';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0409';
+import * as metasService from '../services_v245/metasService.js?v=29.0409';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0409';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0409';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0408';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0408';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0408';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0408';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0408';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0408';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0408';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0408';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0408';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0408';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0408';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0408';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0408';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0408';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0408';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0408';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0408';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0408';
-import { montarSlotting } from './slotting.js?v=29.0408';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0409';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0409';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0409';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0409';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0409';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0409';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0409';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0409';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0409';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0409';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0409';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0409';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0409';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0409';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0409';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0409';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0409';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0409';
+import { montarSlotting } from './slotting.js?v=29.0409';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0408';
+const VERSION = '29.0409';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5210,7 +5210,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0408');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0409');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17710,7 +17710,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0408 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0409 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -27289,6 +27289,39 @@ Se dejó el valor anterior.`, 'warning');
 
           const now = new Date();
           const timestampStr = window.__layoutHeaderTs || `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+
+          /* LA PASTILLA DEL ROBOT. El mapa se publica solo cada hora -tarea
+             `mapa_hora`, en el minuto 45-, asi que lo unico que hay que ver de un
+             vistazo es si el robot esta al dia. Verde cuando publico hace poco;
+             AMBAR cuando lleva mas de dos horas sin publicar, que es cuando de
+             verdad hay que enterarse. Dos horas y no una: el robot corre cada 60
+             minutos y Windows lo despierta cada 10, asi que un atraso de una hora
+             es normal y avisar ahi seria una alarma que nadie mira. */
+          const selloRobot = window.__layoutSelloRobot || null;
+          const minsRobot  = selloRobot ? Math.round((Date.now() - selloRobot) / 60000) : null;
+          const robotViejo = minsRobot === null || minsRobot > 120;
+          const hhmmRobot  = selloRobot
+              ? new Date(selloRobot).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false })
+              : null;
+          const haceCuanto = minsRobot === null ? ''
+              : (minsRobot < 60 ? ' · hace ' + minsRobot + ' min'
+                                : ' · hace ' + Math.floor(minsRobot / 60) + ' h');
+          const pastillaRobot = isReserva ? `
+              <div style="font-size:var(--t-sm); color:var(--text-muted); font-weight:700; white-space:nowrap;">${timestampStr || ''}</div>
+          ` : `
+              <div title="${selloRobot
+                        ? 'El robot publica el mapa cada hora, en el minuto 45. Ultima vez: '
+                          + new Date(selloRobot).toLocaleString('es-PE')
+                        : 'El robot todavia no publico este mapa. Se puede publicar a mano desde el menu de la derecha.'}"
+                   style="display:flex; align-items:center; gap:6px; font-size:var(--t-sm); font-weight:800; white-space:nowrap;
+                          padding:4px 12px; border-radius:999px;
+                          color:${robotViejo ? 'var(--warning)' : 'var(--success)'};
+                          background:rgba(var(--${robotViejo ? 'warning' : 'success'}-rgb), 0.12);
+                          border:1px solid rgba(var(--${robotViejo ? 'warning' : 'success'}-rgb), 0.45);">
+                  <span style="width:7px; height:7px; border-radius:50%; background:currentColor; flex:none;"></span>
+                  ${selloRobot ? 'Publicado por el robot &middot; ' + hhmmRobot + haceCuanto : 'El robot todavia no publico'}
+              </div>
+          `;
           
           const statsActualPadresSize = Array.isArray(stats['ACTUAL'].padres) ? stats['ACTUAL'].padres.length : (stats['ACTUAL'].padres ? stats['ACTUAL'].padres.size : 0);
           const statsAnteriorPadresSize = Array.isArray(stats['ANTERIOR'].padres) ? stats['ANTERIOR'].padres.length : (stats['ANTERIOR'].padres ? stats['ANTERIOR'].padres.size : 0);
@@ -27298,46 +27331,37 @@ Se dejó el valor anterior.`, 'warning');
           const percUnidActual = totalUnits > 0 ? Math.round((stats['ACTUAL'].units / totalUnits) * 100) : 0;
           const percUnidAnterior = totalUnits > 0 ? Math.round((stats['ANTERIOR'].units / totalUnits) * 100) : 0;
 
-          const btnPublicarTodas = (hasLocalPayload && !isReserva) ? `
-              <button title="Procesa y publica TODAS las zonas (${zonasConMapa().join(', ')}) de una sola vez" onclick="window.publicarTodasLasZonas(this)" style="background:linear-gradient(135deg,var(--violet),var(--primary-2)); border:none; color:var(--text-strong); padding:8px 16px; border-radius:8px; cursor:pointer; font-size:var(--t-sm); font-weight:900; letter-spacing:0.3px; display:flex; align-items:center; gap:6px; white-space:nowrap; box-shadow:0 4px 14px rgba(var(--violet-rgb), 0.4); transition:all 0.2s;" onmouseover="this.style.filter='brightness(1.12)'" onmouseout="this.style.filter='brightness(1)'">
-                  🌐 PROCESAR Y PUBLICAR TODAS
-              </button>
-          ` : '';
-
-          const btnCompartir = (hasLocalPayload) ? `
-              <button title="Publica SOLO esta zona (${currentLayoutZona}) en el servidor" onclick="window.subirLayoutGlobal(this)" style="background:rgba(var(--blue-rgb), 0.15); border:1px solid var(--blue); color:var(--blue-soft); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:var(--t-sm); font-weight:700; display:flex; align-items:center; gap:5px; white-space:nowrap; transition:all 0.2s;">
-                  ⚡ Solo esta zona
-              </button>
-          ` : '';
-
           const btnVerVersion = (!isReserva) ? `
               <button title="Alterna entre el mapa ACTUAL y el ANTERIOR (penúltimo publicado)" onclick="window.__toggleVerLayout()" style="background:${window.__verLayoutAnterior ? 'rgba(var(--warning-soft-rgb), 0.15)' : 'rgba(var(--ink-rgb), 0.05)'}; border:1px solid ${window.__verLayoutAnterior ? 'var(--warning-soft)' : 'rgba(var(--ink-rgb), 0.18)'}; color:var(--text-strong); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:var(--t-sm); font-weight:800; white-space:nowrap; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
                   ${window.__verLayoutAnterior ? '🔵 Ver Actual' : '🕘 Ver Anterior'}
               </button>
           ` : '';
 
-          const btnSincronizar = `
-              <button title="Sincronizar Datos" onclick="window.syncLayoutActivo(this)" style="background:rgba(var(--success-alt-rgb), 0.2); border:1px solid var(--success-alt); color:var(--text-strong); padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
-                  <svg id="sync-icon-svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5"></path><path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 014.51 15"></path></svg>
-              </button>
+          /* EL MENU DE LOS TRES PUNTOS.
+             Los cuatro botones de abajo eran de cuando el mapa se publicaba a mano.
+             Desde que la tarea `mapa_hora` lo hace sola cada hora, tenerlos a la
+             vista solo llenaba la cabecera —cinco botones—. Se van adentro del
+             menu, PERO NO SE BORRAN: si un dia el robot no arranca, tiene que
+             quedar una manera de publicar a mano.
+
+             EL MENU SE DIBUJA SOBRE EL <body> Y CON `position:fixed`, no dentro de
+             la cabecera. Este panel es un `glass-panel` con `overflow-x:auto`, y eso
+             tambien recorta a lo alto: un menu normal saldria cortado y pareceria
+             que llega vacio. Ya paso una vez. */
+          const btnMenu = isReserva ? '' : `
+              <button id="btn_menu_mapa" title="Acciones manuales del mapa"
+                      onclick="window.__menuMapa(this)"
+                      style="background:none; border:1px solid rgba(var(--ink-rgb), 0.18); color:var(--text-muted);
+                             padding:6px 10px; border-radius:8px; cursor:pointer; font-size:var(--t-lg);
+                             line-height:1; font-weight:900; letter-spacing:1px;">&#8943;</button>
           `;
 
-          // El stock que alimenta ESTE mapa. Va acá y no en Archivo Análisis SKU a
-          // propósito: aquella es la pantalla del stock oficial del día, y de ahí se
-          // sacaron los botones de subir justamente para que nadie lo pise.
-          const btnStockHora = (!isReserva) ? `
-              <span style="font-size:var(--t-xs); color:${window.__usandoStockHora ? 'var(--success-mid)' : 'rgba(var(--ink-rgb), 0.35)'}; font-weight:700; white-space:nowrap;"
-                    title="${window.__usandoStockHora ? 'El mapa está usando el stock subido durante el día. El stock de las 19:00 no se toca.' : 'Todavía nadie subió stock hoy: el mapa usa la foto de las 19:00.'}">
-                  ${window.__usandoStockHora ? '● stock de las ' + (window.__stockHoraTexto || '—') : '○ stock del día (19:00)'}
+          const etiquetaStock = (!isReserva) ? `
+              <span style="font-size:var(--t-xs); color:var(--text-muted); font-weight:700; white-space:nowrap;"
+                    title="${window.__usandoStockHora ? 'El mapa esta usando el stock que sube el robot cada hora. El stock de las 19:00 no se toca.' : 'Todavia nadie subio stock hoy: el mapa usa la foto de las 19:00.'}">
+                  ${window.__usandoStockHora ? 'stock de las ' + (window.__stockHoraTexto || '—') : 'stock del día (19:00)'}
               </span>
               <span id="lbl_stock_hora" style="font-size:var(--t-xs); color:var(--warning-soft); font-weight:700; white-space:nowrap;"></span>
-              <div style="position:relative; display:inline-flex;">
-                  <button title="Sube el CSV de Stock Activo de Oracle tal como sale. Actualiza SOLO este mapa: el stock del día no se mueve." style="background:rgba(var(--warning-soft-rgb), 0.12); border:1px solid rgba(var(--warning-soft-rgb), 0.5); color:var(--warning-soft); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:var(--t-sm); font-weight:800; display:flex; align-items:center; gap:5px; white-space:nowrap;">
-                      📤 Actualizar stock
-                  </button>
-                  <input type="file" accept=".csv" onchange="window.subirStockDelMapa(this)"
-                         style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;">
-              </div>
           ` : '';
 
           const brandTitle = currentLayoutZona === 'MZN01' ? 'BG Y POWER' : (currentLayoutZona === 'MZN02' ? 'NORTH STAR' : 'BATA');
@@ -27564,13 +27588,11 @@ Se dejó el valor anterior.`, 'warning');
                               ${isGlobal ? '<span style="font-size:var(--t-xs); background:rgba(var(--blue-rgb), 0.2); color:var(--blue-mid); border:1px solid rgba(var(--blue-rgb), 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
                               ${(!isReserva && window.__verLayoutAnterior) ? '<span style="font-size:var(--t-xs); background:rgba(var(--warning-soft-rgb), 0.2); color:var(--warning-soft); border:1px solid rgba(var(--warning-soft-rgb), 0.5); padding:2px 8px; border-radius:12px; font-weight:800; letter-spacing:1px;">VERSIÓN ANTERIOR</span>' : ''}
                           </h3>
-                          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
-                              <div style="text-align:right; font-size:var(--t-md); color:var(--blue-mid); font-weight:800; border:1px solid rgba(var(--blue-rgb), 0.4); padding:4px 10px; border-radius:12px; background:rgba(var(--blue-rgb), 0.1);">
-                                  🕒 ${timestampStr}
-                              </div>
-                              ${btnStockHora}
-                              ${btnPublicarTodas}
+                          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+                              ${pastillaRobot}
+                              ${etiquetaStock}
                               ${btnVerVersion}
+                              ${btnMenu}
                           </div>
                       </div>
                       
@@ -27725,17 +27747,26 @@ window.showCellModal = function(htmlContent) {
       let isGlobal = esReserva ? false
           : (window.__verLayoutAnterior ? true : (!localPayload && globalPayload));
 
-      // Fecha del encabezado = momento real de publicación del mapa que se muestra
+      /* EL CARTEL DECIA QUE EL MAPA ESTABA SIN PUBLICAR CUANDO SI LO ESTABA.
+         La pantalla RECALCULA el mapa en el navegador cada vez que se abre, asi que
+         `localPayload` existe SIEMPRE; como ganaba en este if, el cartel decia
+         "Sin publicar · procesado ahora" siempre, aunque el robot acabara de
+         publicar. Daniel lo leyo como que el robot no corria — y si corria: el
+         26-ago publico las cuatro zonas a las 03:50.
+
+         Ahora el cartel dice lo unico que hace falta saber de un vistazo: CUANDO
+         PUBLICO EL ROBOT POR ULTIMA VEZ. Lo que se dibuja no cambia -sigue siendo
+         el calculo local, que es el mas fresco de esta PC-; lo que cambia es que
+         el rotulo ya no miente. */
       if (esReserva) {
           // La reserva no se publica: el encabezado dice de cuándo es la foto del robot.
           window.__layoutHeaderTs = window.__reservaSello || null;
-      } else if (localPayload && !window.__verLayoutAnterior) {
-          window.__layoutHeaderTs = 'Sin publicar · procesado ahora';
-      } else if (globalPayload && globalPayload.publishedAt) {
-          window.__layoutHeaderTs = 'Publicado: ' + new Date(globalPayload.publishedAt).toLocaleString('es-PE');
-      } else if (globalPayload && window.__layoutDisplayedUpdatedAt) {
-          window.__layoutHeaderTs = 'Publicado: ' + window.__layoutDisplayedUpdatedAt;
+          window.__layoutSelloRobot = null;
       } else {
+          const publicado = (globalPayload && globalPayload.publishedAt)
+              ? new Date(globalPayload.publishedAt)
+              : (window.__layoutDisplayedUpdatedAt ? new Date(window.__layoutDisplayedUpdatedAt) : null);
+          window.__layoutSelloRobot = (publicado && !isNaN(publicado)) ? publicado.getTime() : null;
           window.__layoutHeaderTs = null;
       }
 
@@ -27778,6 +27809,74 @@ window.showCellModal = function(htmlContent) {
     };
 
     // Alternar entre el mapa ACTUAL y el ANTERIOR
+/* EL MENU DE ACCIONES DEL MAPA.
+ *
+ * VA SOBRE EL <body> Y CON `position:fixed`. El mapa vive en un `glass-panel` con
+ * `overflow-x:auto`, y poner overflow en un eje lo pone en los dos: un menu dibujado
+ * adentro se recorta y parece que llegara vacio. Ya paso una vez con otro menu.
+ *
+ * Lo que hay aca dentro NO es de uso diario: la tarea `mapa_hora` publica sola cada
+ * hora. Son la salida de emergencia para el dia que el robot no arranque.
+ */
+window.__menuMapa = (btn) => {
+    const viejo = document.getElementById('menu_mapa_flotante');
+    if (viejo) { viejo.remove(); return; }           // segundo clic: se cierra
+
+    const r = btn.getBoundingClientRect();
+    const m = document.createElement('div');
+    m.id = 'menu_mapa_flotante';
+    m.style.cssText = 'position:fixed; z-index:99999; width:270px; border-radius:12px; padding:6px;'
+        + 'background:var(--panel-solid); border:1px solid rgba(var(--ink-rgb), 0.18);'
+        + 'box-shadow:0 12px 34px rgba(var(--shadow-rgb), 0.3);';
+    /* Si no entra por debajo, sube. Sin esto el menu se sale de la pantalla en un
+       monitor bajo y la ultima opcion queda fuera. */
+    const alto = 210;
+    m.style.left = Math.max(8, Math.min(r.right - 270, window.innerWidth - 278)) + 'px';
+    m.style.top  = (r.bottom + alto > window.innerHeight ? r.top - alto - 6 : r.bottom + 6) + 'px';
+
+    const fila = (dibujo, texto, sub) =>
+        '<span class="mm-fila" style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; cursor:pointer;">'
+      + icono(dibujo, 18)
+      + '<span><span style="display:block; font-size:var(--t-sm); font-weight:700; color:var(--text-strong)">' + texto + '</span>'
+      + (sub ? '<span style="display:block; font-size:var(--t-xs); color:var(--text-muted)">' + sub + '</span>' : '')
+      + '</span></span>';
+
+    m.innerHTML =
+        '<div style="font-size:var(--t-xs); color:var(--text-muted); padding:6px 10px 4px; font-weight:700;">Si el robot falla</div>'
+      + '<span data-acc="todas">'  + fila('wms',       'Procesar y publicar todas', 'las zonas de una vez') + '</span>'
+      + '<span data-acc="zona">'   + fila('refrescar', 'Publicar solo esta zona',   ((document.getElementById('zonaFilterSelect') || {}).value || '')) + '</span>'
+      + '<label style="display:block; position:relative;">'
+      +   fila('excel', 'Actualizar stock a mano', 'sube el CSV de Oracle')
+      +   '<input type="file" accept=".csv" style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;">'
+      + '</label>'
+      + '<span data-acc="sync">'   + fila('refrescar', 'Sincronizar datos', '') + '</span>';
+
+    document.body.appendChild(m);
+
+    /* El resaltado al pasar el mouse se engancha aca y no con `onmouseover=` en el
+       HTML: la comilla suelta dentro de una cadena de JavaScript es justo donde se
+       rompe el archivo, y este menu se arma con cadenas. */
+    m.querySelectorAll('.mm-fila').forEach(f => {
+        f.addEventListener('mouseenter', () => { f.style.background = 'rgba(var(--ink-rgb), 0.06)'; });
+        f.addEventListener('mouseleave', () => { f.style.background = 'none'; });
+    });
+
+    const cerrar = () => { const x = document.getElementById('menu_mapa_flotante'); if (x) x.remove(); };
+    m.querySelector('[data-acc="todas"]').onclick = () => { cerrar(); window.publicarTodasLasZonas(btn); };
+    m.querySelector('[data-acc="zona"]').onclick  = () => { cerrar(); window.subirLayoutGlobal(btn); };
+    m.querySelector('[data-acc="sync"]').onclick  = () => { cerrar(); window.syncLayoutActivo(btn); };
+    m.querySelector('input[type=file]').onchange  = function () { cerrar(); window.subirStockDelMapa(this); };
+
+    /* Se cierra al hacer clic afuera o con Esc. El `setTimeout` es para que este
+       mismo clic —el que abrio el menu— no lo cierre al instante. */
+    setTimeout(() => {
+        const fuera = (e) => { if (!m.contains(e.target) && e.target !== btn) { cerrar(); document.removeEventListener('mousedown', fuera); } };
+        document.addEventListener('mousedown', fuera);
+        const esc = (e) => { if (e.key === 'Escape') { cerrar(); document.removeEventListener('keydown', esc); } };
+        document.addEventListener('keydown', esc);
+    }, 0);
+};
+
     window.__toggleVerLayout = () => {
         window.__verLayoutAnterior = !window.__verLayoutAnterior;
         const c = window.__layoutContainer;
