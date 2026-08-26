@@ -133,3 +133,40 @@ export const colorTema = (nombre) =>
 
 /** Un velo con transparencia, ya resuelto. Para las grillas de los graficos. */
 export const veloTema = (alfa) => `rgba(${colorTema('--ink-rgb')}, ${alfa})`;
+
+/**
+ * Deja un config de Chart.js con colores DE VERDAD.
+ *
+ * Un grafico se dibuja en un <canvas>: ahi `var(--loquesea)` no es CSS, es una
+ * cadena que Chart.js intenta leer como color, no puede, y pinta negro. Eso paso
+ * con el grafico de rendimiento: el relleno salio negro sobre fondo blanco.
+ *
+ * No alcanza con revisar lo que hay dentro del `new Chart(...)`: los datasets se
+ * arman antes, en variables sueltas, y el color entra por ahi. Por eso esto
+ * recorre el config ENTERO -datasets, escalas, leyenda, tooltip- y cambia
+ * cualquier var() que encuentre, venga de donde venga.
+ *
+ * Se modifica el mismo objeto, no una copia: asi no se rompe ninguna referencia
+ * que Chart.js pueda estar guardando.
+ */
+export const resolverColoresChart = (config) => {
+  const raiz = getComputedStyle(document.documentElement);
+  const cambiar = (txt) => txt.replace(/var\(\s*(--[a-z0-9-]+)\s*\)/gi,
+    (_, nombre) => raiz.getPropertyValue(nombre).trim() || 'transparent');
+
+  const vistos = new WeakSet();
+  const paseo = (nodo) => {
+    if (!nodo || typeof nodo !== 'object' || vistos.has(nodo)) return;
+    vistos.add(nodo);
+    for (const k in nodo) {
+      const v = nodo[k];
+      if (typeof v === 'string') {
+        if (v.indexOf('var(--') !== -1) nodo[k] = cambiar(v);
+      } else if (v && typeof v === 'object') {
+        paseo(v);   // las funciones y los elementos del DOM se dejan como estan
+      }
+    }
+  };
+  paseo(config);
+  return config;
+};

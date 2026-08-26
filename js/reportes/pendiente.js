@@ -276,13 +276,13 @@ function estilos() {
       filter:invert(64%) sepia(38%) saturate(1400%) hue-rotate(207deg) brightness(102%)}
     #pend input[type=date]:hover::-webkit-calendar-picker-indicator{
       filter:invert(88%) sepia(20%) saturate(900%) hue-rotate(200deg) brightness(115%)}
-    #pend .pend-btn{background:var(--primary);color:#0b1020;border:0;border-radius:9px;
+    #pend .pend-btn{background:var(--primary);color:var(--panel-deep);border:0;border-radius:9px;
       padding:9px 16px;font-weight:800;font-size:.78rem;letter-spacing:.4px;cursor:pointer}
     #pend .pend-btn:disabled{opacity:.75;cursor:progress}
     /* La ruedita del botón mientras trabaja. Va acá y no en el CSS del tablero
        porque #pend se lleva su estilo puesto y se puede probar suelto. */
     #pend .pend-giro{display:inline-block;width:11px;height:11px;vertical-align:-1px;
-      border:2px solid rgba(11,16,32,.25);border-left-color:#0b1020;border-radius:50%;
+      border:2px solid rgba(var(--bg-rgb), .25);border-left-color:var(--panel-deep);border-radius:50%;
       animation:pend-giro .7s linear infinite;margin-right:5px}
     @keyframes pend-giro{to{transform:rotate(360deg)}}
 
@@ -318,7 +318,7 @@ function estilos() {
       padding-top:8px;display:block}
     #pend .pend-nota{border-left:3px solid var(--pend-amber);padding:9px 13px;
       background:rgba(var(--warning-rgb), .07);border-radius:0 8px 8px 0;margin-top:11px;
-      font-size:.79rem;color:#e8edf7}
+      font-size:.79rem;color:var(--blue-pale)}
     #pend .pend-nada{text-align:center;padding:40px 20px}
     #pend .pend-nada-t{font-size:1rem;font-weight:700;color:var(--text-strong);margin-bottom:6px}
     </style>`;

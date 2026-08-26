@@ -12,8 +12,8 @@
  *
  * Para agregar una columna se toca acá y aparece en los dos.
  */
-import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0382';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0382';
+import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0383';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0383';
 
 /** Las columnas del reporte. Agregar una acá la agrega en las dos pantallas. */
 export const COLUMNAS = [
@@ -170,26 +170,26 @@ const semaforo = (cero, parcial, ok) => (pct, alcanzado, meta) =>
 
 export const TEMA_OSCURO = {
     cabeceraColorea: true,
-    cabecera: 'color:#00E5FF; text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid #00E5FF;',
-    fila: 'border-bottom: 1px solid rgba(0, 229, 255, 0.08); background:#000000;',
-    area: '#a1a1aa', marca: '#ffffff', marcaPeso: '800',
-    valor: '#ffffff', dia: '#facc15', noche: '#818cf8', pend: '#00E5FF', pendPeso: '800',
-    vacio: 'padding:4rem; text-align:center; color:rgba(0, 229, 255, 0.3); font-weight:700;',
-    pct: semaforo('#ef4444', '#fbbf24', '#22c55e'),
+    cabecera: 'color:var(--cyan-neon); text-transform:uppercase; font-size:0.72rem; font-weight:800; letter-spacing:0.05em; border-bottom:2px solid var(--cyan-neon);',
+    fila: 'border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--surface-max);',
+    area: 'var(--text-muted)', marca: 'var(--text-strong)', marcaPeso: '800',
+    valor: 'var(--text-strong)', dia: 'var(--yellow)', noche: 'var(--brand-light)', pend: 'var(--cyan-neon)', pendPeso: '800',
+    vacio: 'padding:4rem; text-align:center; color:rgba(var(--cyan-neon-rgb), 0.3); font-weight:700;',
+    pct: semaforo('var(--danger)', 'var(--warning-soft)', 'var(--success)'),
     totalArea: {
-        fila: 'background: linear-gradient(90deg, rgba(0, 229, 255, 0.12) 0%, rgba(15, 23, 42, 0.5) 100%); border-top: 1.5px solid rgba(0, 229, 255, 0.6); border-bottom: 1.5px solid rgba(0, 229, 255, 0.6); font-weight: 900;',
-        etiquetaEstilo: "padding:7px 8px; color:#00E5FF; font-weight:900; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid #00E5FF;",
+        fila: 'background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.12) 0%, rgba(var(--bg-rgb), 0.5) 100%); border-top: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6); border-bottom: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6); font-weight: 900;',
+        etiquetaEstilo: "padding:7px 8px; color:var(--cyan-neon); font-weight:900; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid var(--cyan-neon);",
         tam: '0.82rem', peso: '800',
-        valor: '#ffffff', dia: '#facc15', noche: '#818cf8', pend: '#00E5FF', pendPeso: '900',
-        pct: semaforo('#ef4444', '#fbbf24', '#22c55e')
+        valor: 'var(--text-strong)', dia: 'var(--yellow)', noche: 'var(--brand-light)', pend: 'var(--cyan-neon)', pendPeso: '900',
+        pct: semaforo('var(--danger)', 'var(--warning-soft)', 'var(--success)')
     },
     granTotal: {
-        fila: 'background: linear-gradient(90deg, rgba(0, 229, 255, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%); border-top: 2px solid #00E5FF; border-bottom: 2px solid #00E5FF; font-weight: 900;',
-        etiquetaEstilo: "padding:9px 8px; color:#ffffff; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid #00E5FF;",
+        fila: 'background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.25) 0%, rgba(var(--bg-rgb), 0.8) 100%); border-top: 2px solid var(--cyan-neon); border-bottom: 2px solid var(--cyan-neon); font-weight: 900;',
+        etiquetaEstilo: "padding:9px 8px; color:var(--text-strong); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid var(--cyan-neon);",
         tam: '0.85rem', peso: '900',
-        valor: '#00E5FF', dia: '#facc15', noche: '#818cf8', pend: '#00E5FF', pendPeso: '900',
-        pendExtra: 'text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);',
-        pct: semaforo('#ef4444', '#fbbf24', '#22c55e')
+        valor: 'var(--cyan-neon)', dia: 'var(--yellow)', noche: 'var(--brand-light)', pend: 'var(--cyan-neon)', pendPeso: '900',
+        pendExtra: 'text-shadow: 0 0 10px rgba(var(--cyan-neon-rgb), 0.5);',
+        pct: semaforo('var(--danger)', 'var(--warning-soft)', 'var(--success)')
     }
 };
 

@@ -1,10 +1,10 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0382';
-import * as adminService from './services_v245/adminService.js?v=29.0382';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0382';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0382';
+import { getSession, logout } from './services_v245/auth.js?v=29.0383';
+import * as adminService from './services_v245/adminService.js?v=29.0383';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0383';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0383';
 
 // --- SISTEMA GLOBAL DE ALERTAS PREMIUM GLASSMÓRFICAS ---
 window.showPremiumAlert = (title, message, type = 'error') => {
@@ -347,7 +347,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0382';
+      this.APP_VERSION = 'v29.0383';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -528,7 +528,7 @@ class App {
           </div>
           <div style="display:flex; gap:10px;">
             ${obligatorio ? '' : '<button id="pulse-despues" style="flex:1; background:transparent; border:1px solid rgba(var(--ink-rgb), .18); color:var(--text-muted); padding:11px; border-radius:9px; font-size:13.5px; font-weight:600; cursor:pointer;">Después</button>'}
-            <button id="pulse-ahora" style="flex:1; background:${obligatorio ? '#dc2626' : 'var(--primary)'}; border:1px solid ${obligatorio ? '#dc2626' : 'var(--primary)'}; color:var(--text-strong); padding:11px; border-radius:9px; font-size:13.5px; font-weight:700; cursor:pointer;">Actualizar ahora</button>
+            <button id="pulse-ahora" style="flex:1; background:${obligatorio ? 'var(--danger)' : 'var(--primary)'}; border:1px solid ${obligatorio ? 'var(--danger)' : 'var(--primary)'}; color:var(--text-strong); padding:11px; border-radius:9px; font-size:13.5px; font-weight:700; cursor:pointer;">Actualizar ahora</button>
           </div>
           <div style="margin-top:13px; font-size:11.5px; color:var(--text-dim);">${e.pie}</div>
         </div>`;

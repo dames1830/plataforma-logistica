@@ -35,6 +35,14 @@
    La transparencia lleva el enfasis y el trio lleva el tema. Un solo token
    resuelve los 1.392 usos del blanco.
 
+   El trio --shadow-rgb en los temas CLAROS no es negro sino un gris muy
+   claro. Suena raro para algo que se llama "sombra", pero rgba(0,0,0,a)
+   en este codigo se usa para dos cosas: sombras Y fondos oscuros. Si el
+   trio fuera oscuro, una cabecera de tabla con fondo rgba(0,0,0,0.55)
+   quedaria gris oscuro y el texto claro de encima no se leeria -paso en
+   KPI TAREAS-. Se elige que ganen los FONDOS: las sombras quedan muy
+   suaves, que es justo como se ve Power BI.
+
    ── LO QUE NO SE TOCA ─────────────────────────────────────────────────────
    Los colores de Chart.js, los de ExcelJS (argb) y los de canvas siguen fijos
    a proposito: ahi `var(--x)` no vale nada porque no es CSS. Y un Excel
@@ -65,6 +73,7 @@ html[data-tema="indigo"] {
   --panel-alt:      #1c2b3a;
   --panel-deep:     #0b1120;
   --panel-deeper:   #101a2c;
+  --surface-max:    #000000;
   --glass-bg:       rgba(15, 23, 42, 0.6);
   --glass-border:   rgba(255, 255, 255, 0.08);
   --glass-shadow:   0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -197,6 +206,7 @@ html[data-tema="pbi"] {
   --panel-alt:      #FAF9F8;
   --panel-deep:     #F3F2F1;
   --panel-deeper:   #EDEBE9;
+  --surface-max:    #FFFFFF;
   --glass-bg:       #FFFFFF;
   --glass-border:   #E1DFDD;
   --glass-shadow:   0 1px 3px rgba(0, 0, 0, 0.08);
@@ -235,10 +245,10 @@ html[data-tema="pbi"] {
   --success-mid:    #197278;
   --success-deep:   #0F6B26;
   --success-dark:   #0C5620;
-  --warning:        #8A7200;
-  --warning-soft:   #8A7200;
+  --warning:        #7D6700;
+  --warning-soft:   #7D6700;
   --warning-pale:   #6E5B00;
-  --yellow:         #8A7200;
+  --yellow:         #7D6700;
   --yellow-deep:    #6E5B00;
   --bronze:         #8A5A12;
   --orange:         #B8541F;
@@ -256,36 +266,36 @@ html[data-tema="pbi"] {
   --blue-soft:      #12239E;
   --blue-mid:       #0E76D6;
   --blue-deep:      #12239E;
-  --blue-pale:      #EFF6FC;
+  --blue-pale:      #12239E;
   --violet:         #744EC2;
   --violet-soft:    #6B007B;
   --pink:           #C13A8E;
   --pink-soft:      #A83079;
 
-  --ink-rgb:             32,  31,  30;   /* tinta oscura: el reves del blanco */
-  --shadow-rgb:          71,  70,  68;
+  --ink-rgb:               0,   0,   0;   /* tinta oscura: el reves del blanco */
+  --shadow-rgb:          232, 231, 229;
   --bg-rgb:             243, 242, 241;
   --card-rgb:           255, 255, 255;
-  --primary-rgb:         17, 141, 255;
+  --primary-rgb:          14, 118, 214;
   --primary2-rgb:        18,  35, 158;
   --brand-rgb:           18,  35, 158;
-  --brand-pale-rgb:      17, 141, 255;
-  --success-rgb:         26, 171,  64;
+  --brand-pale-rgb:        18,  35, 158;
+  --success-rgb:          20, 136,  51;
   --success-alt-rgb:     25, 114, 120;
   --danger-rgb:         214,  69,  80;
-  --warning-rgb:        217, 179,   0;
-  --warning-soft-rgb:   217, 179,   0;
-  --yellow-rgb:         217, 179,   0;
-  --cyan-neon-rgb:       17, 141, 255;
+  --warning-rgb:        138, 114,   0;
+  --warning-soft-rgb:   138, 114,   0;
+  --yellow-rgb:         138, 114,   0;
+  --cyan-neon-rgb:        14, 118, 214;
   --cyan-rgb:            25, 114, 120;
   --cyan-deep-rgb:       15,  92,  96;
-  --sky-rgb:             17, 141, 255;
-  --blue-rgb:            17, 141, 255;
+  --sky-rgb:              14, 118, 214;
+  --blue-rgb:             14, 118, 214;
   --violet-rgb:         116,  78, 194;
   --on-accent:           #FFFFFF;
   --text-muted-rgb:       96,  94,  92;
-  --pink-rgb:            224,  68, 167;
-  --orange-rgb:          230, 108,  55;
+  --pink-rgb:            193,  58, 142;
+  --orange-rgb:          184,  84,  31;
 
   --r-lg:           4px;
   --r-md:           2px;
@@ -316,6 +326,7 @@ html[data-tema="pbi-classic"] {
   --panel-alt:      #FAFAFA;
   --panel-deep:     #F5F5F5;
   --panel-deeper:   #EEEEEE;
+  --surface-max:    #FFFFFF;
   --glass-bg:       #FFFFFF;
   --glass-border:   #E0E0E0;
   --glass-shadow:   0 1px 3px rgba(0, 0, 0, 0.08);
@@ -354,10 +365,10 @@ html[data-tema="pbi-classic"] {
   --success-mid:    #00847A;
   --success-deep:   #006158;
   --success-dark:   #00534C;
-  --warning:        #8C7308;
-  --warning-soft:   #8C7308;
+  --warning:        #7F6907;
+  --warning-soft:   #7F6907;
   --warning-pale:   #705C06;
-  --yellow:         #8C7308;
+  --yellow:         #7F6907;
   --yellow-deep:    #705C06;
   --bronze:         #8A5A12;
   --orange:         #B85A2E;
@@ -375,36 +386,36 @@ html[data-tema="pbi-classic"] {
   --blue-soft:      #23657D;
   --blue-mid:       #2C7A96;
   --blue-deep:      #1D5468;
-  --blue-pale:      #EDF7F9;
+  --blue-pale:      #23657D;
   --violet:         #8A5580;
   --violet-soft:    #7A4A71;
   --pink:           #A66999;
   --pink-soft:      #94587F;
 
-  --ink-rgb:             38,  49,  51;
-  --shadow-rgb:          70,  80,  82;
+  --ink-rgb:               0,   0,   0;
+  --shadow-rgb:          230, 232, 232;
   --bg-rgb:             245, 245, 245;
   --card-rgb:           255, 255, 255;
-  --primary-rgb:          1, 184, 170;
-  --primary2-rgb:         1, 184, 170;
+  --primary-rgb:            0, 132, 122;
+  --primary2-rgb:           0, 132, 122;
   --brand-rgb:           55,  70,  73;
-  --brand-pale-rgb:       1, 184, 170;
-  --success-rgb:          1, 184, 170;
-  --success-alt-rgb:      1, 184, 170;
-  --danger-rgb:         253,  98,  94;
-  --warning-rgb:        242, 200,  15;
-  --warning-soft-rgb:   242, 200,  15;
-  --yellow-rgb:         242, 200,  15;
-  --cyan-neon-rgb:      138, 212, 235;
-  --cyan-rgb:           138, 212, 235;
-  --cyan-deep-rgb:        1, 184, 170;
-  --sky-rgb:            138, 212, 235;
+  --brand-pale-rgb:          55,  70,  73;
+  --success-rgb:            0, 132, 122;
+  --success-alt-rgb:        0, 132, 122;
+  --danger-rgb:         197,  76,  73;
+  --warning-rgb:        140, 115,   8;
+  --warning-soft-rgb:   140, 115,   8;
+  --yellow-rgb:         140, 115,   8;
+  --cyan-neon-rgb:       44, 122, 150;
+  --cyan-rgb:             0, 132, 122;
+  --cyan-deep-rgb:          0, 132, 122;
+  --sky-rgb:             44, 122, 150;
   --blue-rgb:            44, 122, 150;
-  --violet-rgb:         166, 105, 153;
+  --violet-rgb:         138,  85, 128;
   --on-accent:           #FFFFFF;
   --text-muted-rgb:       95, 107, 109;
-  --pink-rgb:            166, 105, 153;
-  --orange-rgb:          254, 150, 102;
+  --pink-rgb:            148,  88, 127;
+  --orange-rgb:          184,  90,  46;
 
   --r-lg:           4px;
   --r-md:           2px;
@@ -437,6 +448,7 @@ html[data-tema="negro"] {
   --panel-alt:      #0F0F0F;
   --panel-deep:     #060606;
   --panel-deeper:   #030303;
+  --surface-max:    #000000;
   --glass-bg:       #0A0A0A;
   --glass-border:   #1C1C1C;
   --glass-shadow:   none;
@@ -497,7 +509,7 @@ html[data-tema="negro"] {
   --blue-soft:      #DADADA;
   --blue-mid:       #C4C4C4;
   --blue-deep:      #8A8A8A;
-  --blue-pale:      #161616;
+  --blue-pale:      #C8C8C8;
   --violet:         #9E9E9E;
   --violet-soft:    #BABABA;
   --pink:           #AEAEAE;

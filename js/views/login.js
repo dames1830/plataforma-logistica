@@ -1,4 +1,4 @@
-import { login as authLogin } from '../services_v245/auth.js?v=29.0382';
+import { login as authLogin } from '../services_v245/auth.js?v=29.0383';
 
 export const renderLogin = (container, onLoginSuccess) => {
   // Establecer clase para el diseño degradado premium claro (inspirado en la referencia)
@@ -61,7 +61,7 @@ export const renderLogin = (container, onLoginSuccess) => {
       
       </form>
       <div style="text-align: center; margin-top: 1.5rem; font-size: 0.65rem; color: rgba(var(--ink-rgb), 0.3); font-weight: 600; letter-spacing: 0.05em;">
-        SYSTEM BUILD: v29.0382 | SECURE SYNC
+        SYSTEM BUILD: v29.0383 | SECURE SYNC
       </div>
     </div>
   `;
@@ -92,7 +92,7 @@ export const renderLogin = (container, onLoginSuccess) => {
 
     if (result.success) {
       btn.innerHTML = '¡ACCESO CONCEDIDO! 🚀';
-      btn.style.background = 'linear-gradient(135deg, var(--success), #16a34a)';
+      btn.style.background = 'linear-gradient(135deg, var(--success), var(--success-deep))';
       btn.style.boxShadow = '0 4px 15px rgba(var(--success-rgb), 0.4)';
       
       // Animación premium y desvanecimiento de salida conjunta

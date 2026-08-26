@@ -27,7 +27,7 @@
 const CH = {
   NON:  { color: 'var(--danger-soft)', fondo: 'rgba(var(--danger-rgb), .15)', nombre: 'Non mover' },
   SLOW: { color: 'var(--warning-soft)', fondo: 'rgba(var(--warning-soft-rgb), .15)',  nombre: 'Slow' },
-  FAST: { color: 'var(--success-mid)', fondo: 'rgba(52,211,153,.15)',  nombre: 'Fast' }
+  FAST: { color: 'var(--success-mid)', fondo: 'rgba(var(--success-alt-rgb), .15)',  nombre: 'Fast' }
 };
 const CLASES = ['NON', 'SLOW', 'FAST'];
 const GRUPOS = [

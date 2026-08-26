@@ -1,32 +1,32 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0382';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0383';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0382';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0382';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0382';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0382';
-import * as metasService from '../services_v245/metasService.js?v=29.0382';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0382';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0382';
+import * as adminService from '../services_v245/adminService.js?v=29.0383';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0383';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0383';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0383';
+import * as metasService from '../services_v245/metasService.js?v=29.0383';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0383';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0383';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0382';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0382';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0382';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0382';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0382';
-import { TEMAS, setTema, temaActual, colorTema, veloTema } from '../services_v245/temaService.js?v=29.0382';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0382';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0382';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0382';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0382';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0382';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0382';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0382';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0382';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0382';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0382';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0382';
-import { montarSlotting } from './slotting.js?v=29.0382';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0383';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0383';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0383';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0383';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0383';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0383';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0383';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0383';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0383';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0383';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0383';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0383';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0383';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0383';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0383';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0383';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0383';
+import { montarSlotting } from './slotting.js?v=29.0383';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -383,7 +383,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0382';
+const VERSION = '29.0383';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2986,7 +2986,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     // pantalla, y el saludo no puede comerse el espacio de los datos.
     const cabecera = `
         <div class="animate-fade-in" style="display:flex; justify-content:space-between; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:0.7rem;">
-            <h1 style="margin:0; font-size:1.55rem; font-weight:900; letter-spacing:-0.4px; color:var(--text-strong);">¡Hola, <span style="background: linear-gradient(to right, var(--brand-light), #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
+            <h1 style="margin:0; font-size:1.55rem; font-weight:900; letter-spacing:-0.4px; color:var(--text-strong);">¡Hola, <span style="background: linear-gradient(to right, var(--brand-light), var(--violet-soft)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${user.name}</span>!</h1>
             <div id="homeClock" style="color:var(--text-muted); font-weight:700; font-size:0.8rem;">
                 ${now.toLocaleDateString('es-ES', options)} | ${now.toLocaleTimeString()}
             </div>
@@ -4127,7 +4127,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                     <span style="font-size:0.6rem; font-weight:800; letter-spacing:.5px;
                                  color:var(--text-muted); text-transform:uppercase;">FACTOR</span>
                     <select id="sel_factor" title="Cuánto se baja de más para dejar piso"
-                            style="background:#0e1728; border:1px solid rgba(var(--ink-rgb), 0.14);
+                            style="background:var(--panel-deep); border:1px solid rgba(var(--ink-rgb), 0.14);
                                    color:var(--text-strong); padding:0.38rem 0.7rem; border-radius:6px;
                                    font-size:0.7rem; font-weight:700; cursor:pointer; outline:none;">
                       <option value="config">Como está configurado</option>
@@ -4612,7 +4612,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 <div style="width: 100%; padding:5rem 2rem; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(circle at center, var(--panel-solid) 0%, var(--bg-dark) 100%); border-radius:16px; border:1px solid rgba(var(--ink-rgb), 0.05); min-height:300px; box-shadow: inset 0 0 50px rgba(var(--shadow-rgb), 0.5);">
                     <h3 style="font-size:1.4rem; margin:0 0 2.5rem 0; color:var(--text-strong); font-weight:800; letter-spacing:2px; text-shadow: 0 0 10px rgba(var(--sky-rgb), 0.5);">PROCESANDO ANÁLISIS BUFFER</h3>
                     <div style="width: 80%; max-width: 900px; height: 34px; background: var(--panel-deep); border-radius: 20px; box-shadow: inset 0 5px 15px rgba(var(--shadow-rgb), 0.8), 0 1px 0 rgba(var(--ink-rgb), 0.1), 0 -1px 0 rgba(var(--shadow-rgb), 0.5); padding: 4px; position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: 4px; left: 4px; height: 26px; border-radius: 14px; background: linear-gradient(180deg, var(--sky) 0%, #0284c7 50%, #0369a1 100%); box-shadow: inset 0 2px 4px rgba(var(--ink-rgb), 0.5), inset 0 -3px 6px rgba(var(--shadow-rgb), 0.3), 0 0 25px rgba(var(--sky-rgb), 0.7); animation: thick-progress 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;">
+                        <div style="position: absolute; top: 4px; left: 4px; height: 26px; border-radius: 14px; background: linear-gradient(180deg, var(--sky) 0%, var(--sky-deep) 50%, var(--blue-deep) 100%); box-shadow: inset 0 2px 4px rgba(var(--ink-rgb), 0.5), inset 0 -3px 6px rgba(var(--shadow-rgb), 0.3), 0 0 25px rgba(var(--sky-rgb), 0.7); animation: thick-progress 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;">
                             <div style="position: absolute; top:0; left:0; width:100%; height:100%; border-radius:14px; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(var(--ink-rgb), 0.1) 10px, rgba(var(--ink-rgb), 0.1) 20px); opacity:0.5;"></div>
                         </div>
                     </div>
@@ -4639,11 +4639,11 @@ export const renderDashboard = async (container, user, onLogout) => {
                     if (!_cajaPasos) return;
                     _cajaPasos.innerHTML = _pasos.map(x =>
                         '<div style="display:flex;align-items:center;gap:9px;padding:4px 0;'
-                        + (x.fin ? 'color:#6b7f9e' : 'color:var(--text-strong);font-weight:700') + '">'
+                        + (x.fin ? 'color:var(--text-dim)' : 'color:var(--text-strong);font-weight:700') + '">'
                         + '<span style="width:15px;text-align:center;color:'
                         + (x.fin ? 'var(--success-mid)' : 'var(--sky)') + '">' + (x.fin ? '\u2713' : '\u25CF') + '</span>'
                         + x.txt
-                        + (x.seg ? '<span style="margin-left:auto;font-size:.68rem;color:#63799a">'
+                        + (x.seg ? '<span style="margin-left:auto;font-size:.68rem;color:var(--text-dim)">'
                                    + x.seg + ' s</span>' : '')
                         + '</div>').join('');
                 };
@@ -5196,7 +5196,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0382');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0383');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5270,7 +5270,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             <div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
                     <h3 style="color:var(--primary); margin:0;">Base de Datos de Trabajadores</h3>
-                    <span id="export_workers" title="Exportar trabajadores" style="cursor:pointer; display:flex; align-items:center; opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#1D6F42"/><path d="M14 2v6h6" fill="#0F5132"/><path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="var(--text-strong)"/></svg><span style="font-size:.62rem;font-weight:800;color:var(--text-muted);margin-left:3px">↓</span></span>
+                    <span id="export_workers" title="Exportar trabajadores" style="cursor:pointer; display:flex; align-items:center; opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="var(--success-deep)"/><path d="M14 2v6h6" fill="var(--success-dark)"/><path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="var(--text-strong)"/></svg><span style="font-size:.62rem;font-weight:800;color:var(--text-muted);margin-left:3px">↓</span></span>
                 </div>
                 <div class="glass-panel" style="padding:0; overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
@@ -6326,14 +6326,14 @@ export const renderDashboard = async (container, user, onLogout) => {
             ? `Semanas ${semanas[0].semana} a ${semanas[semanas.length - 1].semana}`
             : `Semana ${numeroDeSemana(a)}`;
         texto(`${cuales}  ·  ${a.getDate()} de ${MESES[a.getMonth()]} al ${b.getDate()} de ${MESES[b.getMonth()]} de ${b.getFullYear()}`,
-              MARGEN, 38, { color: '#c3d2e0', tam: 10.5 });
+              MARGEN, 38, { color: 'var(--text-soft)', tam: 10.5 });
         // Sin esto, quien recibe la imagen no sabe a que dia corresponden los cuatro numeros.
         if (ultimo) {
             texto(`RESUMEN DEL ${DIAS_TRES[ultimo.getDay()]} ${ultimo.getDate()}`,
-                  ancho - MARGEN, 44, { color: '#a9bbcc', tam: 8.5, peso: 700, alinear: 'right' });
+                  ancho - MARGEN, 44, { color: 'var(--text-muted)', tam: 8.5, peso: 700, alinear: 'right' });
         }
-        texto('LOGÍSTICA', ancho - MARGEN, 16, { color: '#b6c4d2', tam: 9, alinear: 'right' });
-        texto('DEAM1830', ancho - MARGEN, 29, { color: '#4a9eff', tam: 11, peso: 700, alinear: 'right' });
+        texto('LOGÍSTICA', ancho - MARGEN, 16, { color: 'var(--text-muted)', tam: 9, alinear: 'right' });
+        texto('DEAM1830', ancho - MARGEN, 29, { color: 'var(--blue-mid)', tam: 11, peso: 700, alinear: 'right' });
 
 
         // --- Las cuatro tarjetas del resumen --------------------------------------
@@ -6341,8 +6341,8 @@ export const renderDashboard = async (container, user, onLogout) => {
         // celular, y asi los cuatro datos se leen sin buscar.
         const tarjetas = [
             [gente, gente === 1 ? 'OPERARIO' : 'OPERARIOS', 'var(--text-main)'],
-            [vino, vino === 1 ? 'ASISTENCIA' : 'ASISTENCIAS', '#3fb950'],
-            [falto, falto === 1 ? 'FALTA' : 'FALTAS', '#f85149'],
+            [vino, vino === 1 ? 'ASISTENCIA' : 'ASISTENCIAS', 'var(--success)'],
+            [falto, falto === 1 ? 'FALTA' : 'FALTAS', 'var(--danger)'],
             [conObs, conObs === 1 ? 'OBSERVACIÓN' : 'OBSERVACIONES', 'var(--bronze)']
         ];
         const yTar = ALTO_CAB - 4;
@@ -6355,7 +6355,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             g.roundRect(x, yTar, anchoTar, ALTO_TARJETAS - 10, 6);
             g.fill();
             texto(n, x + anchoTar / 2, yTar + 15, { color: col, tam: 19, peso: 700, alinear: 'center' });
-            texto(rot, x + anchoTar / 2, yTar + 30, { color: '#cbd8e4', tam: 8.5, peso: 700, alinear: 'center' });
+            texto(rot, x + anchoTar / 2, yTar + 30, { color: 'var(--text-soft)', tam: 8.5, peso: 700, alinear: 'center' });
         });
 
         // --- Encabezado de columnas: fondo propio, si no parece una fila más ------
@@ -6370,7 +6370,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         g.fillStyle = '#1c2531';
         g.fillRect(MARGEN, yCab - 9 - ALTO_2DA_LINEA, ancho - MARGEN * 2, 18 + ALTO_2DA_LINEA);
 
-        const COLOR_CAB = '#cbd8e4';
+        const COLOR_CAB = 'var(--text-soft)';
         texto('#', xNum, yCab - ALTO_2DA_LINEA / 2, { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' });
         texto('NOMBRES Y APELLIDOS', xNombre, yCab - ALTO_2DA_LINEA / 2, { color: COLOR_CAB, tam: 8.5, peso: 700 });
         texto('DNI', xDni, yCab - ALTO_2DA_LINEA / 2, { color: COLOR_CAB, tam: 8.5, peso: 700 });
@@ -6378,7 +6378,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         dias.forEach((d, i) => {
             if (variasSemanas) {
                 texto(DIAS_TRES[d.getDay()], xDia(i), yCab - 7, { color: COLOR_CAB, tam: 7.5, peso: 700, alinear: 'center' });
-                texto(ddmm(d), xDia(i), yCab + 3, { color: '#c3d2e0', tam: 8, peso: 700, alinear: 'center' });
+                texto(ddmm(d), xDia(i), yCab + 3, { color: 'var(--text-soft)', tam: 8, peso: 700, alinear: 'center' });
             } else {
                 texto(DIAS_TRES[d.getDay()], xDia(i), yCab, { color: COLOR_CAB, tam: 8.5, peso: 700, alinear: 'center' });
             }
@@ -6391,7 +6391,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 g.fillStyle = '#131920';
                 g.fillRect(MARGEN, y - ALTO_FILA / 2, ancho - MARGEN * 2, ALTO_FILA);
             }
-            texto(i + 1, xNum, y, { color: '#aab8c6', tam: 9.5, alinear: 'center' });
+            texto(i + 1, xNum, y, { color: 'var(--text-muted)', tam: 9.5, alinear: 'center' });
             texto(recortar(f.nombre, ANCHO_NOMBRE - 8, 10.5), xNombre, y, { color: 'var(--text-main)', tam: 10.5 });
             texto(f.dni, xDni, y, { color: 'var(--text-main)', tam: 10.5 });
             texto(recortar(cargoDe(f.dni), ANCHO_CARGO - 8, 10.5), xCargo, y, { color: 'var(--text-main)', tam: 10.5 });
@@ -6410,12 +6410,12 @@ export const renderDashboard = async (container, user, onLogout) => {
 
         // El guion no se explica: un dia en blanco ya se entiende solo.
         const leyenda = [
-            ['✓', 'asistió', '#3fb950'],
+            ['✓', 'asistió', 'var(--success)'],
             ['V', 'vacaciones', 'var(--bronze)'],
             ['M', 'descanso médico', 'var(--bronze)'],
             ['C', 'cumpleaños', 'var(--bronze)'],
             ['O', 'otros (justificada)', 'var(--bronze)'],
-            ['✗', 'falta injustificada', '#f85149']
+            ['✗', 'falta injustificada', 'var(--danger)']
         ];
         let xLey = MARGEN;
         const yLey = yPie + 16;
@@ -6423,7 +6423,7 @@ export const renderDashboard = async (container, user, onLogout) => {
             texto(simbolo, xLey, yLey, { color, tam: 10.5, peso: 700 });
             g.font = `700 10.5px ${FUENTE}`;
             const w = g.measureText(simbolo).width;
-            texto(rotulo, xLey + w + 3, yLey, { color: '#d5dde5', tam: 9.5 });
+            texto(rotulo, xLey + w + 3, yLey, { color: 'var(--text-soft)', tam: 9.5 });
             g.font = `400 9.5px ${FUENTE}`;
             xLey += w + 3 + g.measureText(rotulo).width + 11;
         });
@@ -6567,7 +6567,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 ${th('Operario')}
                                 ${th('DNI')}
                                 ${dias.map(d => th(variasSemanas
-                                    ? `${DIAS_CORTOS[d.getDay()]}<br><span style="font-size:0.92em; color:#9fb3c8;">${ddmm(d)}</span>`
+                                    ? `${DIAS_CORTOS[d.getDay()]}<br><span style="font-size:0.92em; color:var(--text-muted);">${ddmm(d)}</span>`
                                     : `${DIAS_CORTOS[d.getDay()]} ${d.getDate()}`, 'center')).join('')}
                                 ${th('Asist.', 'center')}
                             </tr>
@@ -6741,7 +6741,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                 </a>
               `).join('')}
             </nav>
-            <button id="btn_sync_performance_cloud" class="btn-primary" style="font-size:0.75rem; padding:0.5rem 1rem; border-radius:8px; background:var(--primary); color:var(--text-strong); font-weight:800; cursor:pointer; box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.4); border:none; display:flex; align-items:center; gap:8px;">
+            <button id="btn_sync_performance_cloud" class="btn-primary" style="font-size:0.75rem; padding:0.5rem 1rem; border-radius:8px; background:var(--primary); color:var(--on-primary); font-weight:800; cursor:pointer; box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.4); border:none; display:flex; align-items:center; gap:8px;">
                 <span style="font-size:1.1rem;">🔄</span> SINCRONIZAR CLOUD
             </button>
         </div>
@@ -8296,9 +8296,9 @@ const renderRFSection = (container) => {
             ${activeInventorySubTab === 'rfs' ? `
               <button id="btn_new_rf" class="btn" style="width:auto; background:var(--primary); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px;">📡 REGISTRAR EQUIPO</button>
             ` : activeInventorySubTab === 'baterias' ? `
-              <button id="btn_new_battery" class="btn" style="width:auto; background:linear-gradient(135deg, var(--success-alt) 0%, #064e3b 150%); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px; border:none; color:var(--text-strong); cursor:pointer; box-shadow:0 4px 10px rgba(var(--success-alt-rgb), 0.3);">🔋 REGISTRAR BATERÍA</button>
+              <button id="btn_new_battery" class="btn" style="width:auto; background:linear-gradient(135deg, var(--success-alt) 0%, var(--success-dark) 150%); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px; border:none; color:var(--text-strong); cursor:pointer; box-shadow:0 4px 10px rgba(var(--success-alt-rgb), 0.3);">🔋 REGISTRAR BATERÍA</button>
             ` : `
-              <button id="btn_new_charger" class="btn" style="width:auto; background:linear-gradient(135deg, var(--cyan-deep) 0%, #083344 150%); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px; border:none; color:var(--text-strong); cursor:pointer; box-shadow:0 4px 10px rgba(var(--cyan-deep-rgb), 0.3);">🔌 REGISTRAR CARGADOR</button>
+              <button id="btn_new_charger" class="btn" style="width:auto; background:linear-gradient(135deg, var(--cyan-deep) 0%, var(--cyan-deep) 150%); font-size:0.78rem; padding:0.5rem 1.2rem; font-weight:800; border-radius:8px; border:none; color:var(--text-strong); cursor:pointer; box-shadow:0 4px 10px rgba(var(--cyan-deep-rgb), 0.3);">🔌 REGISTRAR CARGADOR</button>
             `}
           ` : ''}
         </div>
@@ -8569,7 +8569,7 @@ const renderRFSection = (container) => {
                 <textarea id="rf_fast_notes" rows="2" placeholder="Ej: Sin arañazos, incluye lápiz..." style="background:rgba(var(--shadow-rgb), 0.2); border:1px solid rgba(var(--ink-rgb), 0.15); color:var(--text-strong); width:100%; outline:none; padding:0.5rem; border-radius:8px; font-size:0.75rem; resize:none;"></textarea>
               </div>
 
-              <button type="submit" class="btn" style="background:linear-gradient(135deg, var(--primary) 0%, #1e1b4b 150%); padding:0.7rem; font-weight:800; font-size:0.75rem; width:100%; border-radius:10px; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.3); margin-top:0.3rem;">⚡ ENTREGAR Y ASIGNAR RF</button>
+              <button type="submit" class="btn" style="background:linear-gradient(135deg, var(--primary) 0%, var(--panel-deep) 150%); padding:0.7rem; font-weight:800; font-size:0.75rem; width:100%; border-radius:10px; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.3); margin-top:0.3rem;">⚡ ENTREGAR Y ASIGNAR RF</button>
             </form>
           </div>
 
@@ -8686,7 +8686,7 @@ const renderRFSection = (container) => {
                   returnStatusHtml = `
                     <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
                       <span class="pulse-pendiente-dot" style="background:rgba(var(--warning-rgb), 0.15); color:var(--warning); border:1px solid rgba(var(--warning-rgb), 0.4); padding:3px 8px; border-radius:12px; font-weight:800; font-size:0.65rem; letter-spacing:0.5px; box-shadow:0 0 8px rgba(var(--warning-rgb), 0.2); display:inline-block;">⏳ EN USO</span>
-                      <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, var(--orange) 0%, #c2410c 100%); border:none; color:var(--text-strong); font-size:0.62rem; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:800; outline:none; box-shadow:0 2px 6px rgba(var(--orange-rgb), 0.35); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">📥 RECIBIR RF</button>
+                      <button class="btn-recibir-rf" data-serie="${a.rf_serial}" style="background:linear-gradient(135deg, var(--orange) 0%, var(--orange) 100%); border:none; color:var(--text-strong); font-size:0.62rem; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:800; outline:none; box-shadow:0 2px 6px rgba(var(--orange-rgb), 0.35); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">📥 RECIBIR RF</button>
                     </div>
                   `;
                 }
@@ -8769,7 +8769,7 @@ const renderRFSection = (container) => {
 
               <!-- BOTONES AUXILIARES -->
               <div style="display:flex; flex-direction:column; gap:8px; margin-top:0.5rem;">
-                <button id="btn_generate_summary" class="btn" style="width:100%; background:linear-gradient(135deg, var(--primary) 0%, #1e1b4b 150%); color:var(--text-strong); font-size:0.8rem; padding:0.7rem; font-weight:800; border-radius:8px; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.35); border:none; cursor:pointer;">📊 Generar Resumen</button>
+                <button id="btn_generate_summary" class="btn" style="width:100%; background:linear-gradient(135deg, var(--primary) 0%, var(--panel-deep) 150%); color:var(--text-strong); font-size:0.8rem; padding:0.7rem; font-weight:800; border-radius:8px; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.35); border:none; cursor:pointer;">📊 Generar Resumen</button>
                 <div style="display:flex; gap:10px;">
                   <button id="btn_clear_revision" class="btn" style="flex:1; background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-pale); font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--danger-rgb), 0.2)';" onmouseout="this.style.background='rgba(var(--danger-rgb), 0.1)';">🗑️ Limpiar Lecturas</button>
                   <button id="btn_export_revision" class="btn" style="flex:1; background:rgba(var(--success-alt-rgb), 0.1); border:1px solid rgba(var(--success-alt-rgb), 0.3); color:var(--success-pale); font-size:0.75rem; padding:0.6rem; font-weight:700; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--success-alt-rgb), 0.2)';" onmouseout="this.style.background='rgba(var(--success-alt-rgb), 0.1)';">📥 Exportar Reporte</button>
@@ -10241,7 +10241,7 @@ const renderRFSection = (container) => {
     const hoy = jornadaService.fechaLogicaDe();
     const estadoRegla = (r) => {
       const h = hoy;   // la misma fecha logica que usa el resto de la pantalla
-      if (r.hasta && h > r.hasta) return { txt: 'Vencida', color: 'var(--text-dim)', fondo: 'rgba(107,114,128,0.12)' };
+      if (r.hasta && h > r.hasta) return { txt: 'Vencida', color: 'var(--text-dim)', fondo: 'rgba(var(--text-muted-rgb), 0.12)' };
       if (r.desde && h < r.desde) return { txt: 'Programada', color: 'var(--yellow)', fondo: 'rgba(var(--yellow-rgb), 0.12)' };
       return { txt: 'Vigente', color: 'var(--success)', fondo: 'rgba(var(--success-rgb), 0.12)' };
     };
@@ -10850,7 +10850,7 @@ const renderRFSection = (container) => {
         </div>
 
         <div style="margin-top:1.2rem; padding:0.9rem 1rem; background:rgba(var(--blue-rgb), 0.08);
-                    border:1px solid rgba(var(--blue-rgb), 0.3); border-radius:10px; color:#bfdbfe; font-size:0.8rem; line-height:1.6;">
+                    border:1px solid rgba(var(--blue-rgb), 0.3); border-radius:10px; color:var(--blue-soft); font-size:0.8rem; line-height:1.6;">
           Lo que cambies acá lo toma el robot en su próxima vuelta, <b>sin entrar al servidor</b>.
           Si un día comercial avisa que lo manda a las 21:00, mueves la ventana y listo.
           Si el servidor se queda sin internet, trabaja con lo último que leyó de acá.
@@ -11313,7 +11313,7 @@ const renderRFSection = (container) => {
                         <td style="padding:0.8rem; font-weight:800; color:var(--text-strong);">${g.nombre}</td>
                         <td style="padding:0.8rem;">
                             <div style="display:flex; align-items:center; gap:6px;">
-                                <input type="text" readonly value="${fullLink}" style="background:#0a0f1e; border:1px solid var(--border); color:var(--brand-light); padding:4px 8px; border-radius:6px; font-size:0.75rem; width:260px;" id="link_input_${idx}">
+                                <input type="text" readonly value="${fullLink}" style="background:var(--panel-deep); border:1px solid var(--border); color:var(--brand-light); padding:4px 8px; border-radius:6px; font-size:0.75rem; width:260px;" id="link_input_${idx}">
                                 <button class="btn btn-copy-link" data-link="${fullLink}" style="font-size:0.7rem; padding:4px 8px; background:rgba(var(--brand-rgb), 0.2); color:var(--brand-light);">📋 Copiar</button>
                             </div>
                         </td>
@@ -11633,7 +11633,7 @@ const renderRFSection = (container) => {
                     <input type="date" id="hist_date_to" value="${savedTo}" style="background:var(--panel-deep); color:var(--text-strong); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:0.72rem; outline:none; cursor:pointer; color-scheme: var(--scheme);" />
                 </div>
                 <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
-                    <button id="btn_hist_sync" title="Sincronizar Historial" style="background:var(--primary); color:var(--text-strong); border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                    <button id="btn_hist_sync" title="Sincronizar Historial" style="background:var(--primary); color:var(--on-primary); border:none; width:30px; height:30px; border-radius:6px; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                         🔄
                     </button>
                     <button id="btn_hist_export" style="background:var(--success); color:var(--on-accent); border:none; padding:0.4rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
@@ -11916,7 +11916,7 @@ const renderRFSection = (container) => {
                     " onmouseover="this.style.background='rgba(var(--ink-rgb), 0.12)'" onmouseout="this.style.background='rgba(var(--ink-rgb), 0.06)'">Cancelar</button>
                     <button id="modal_hist_confirm" style="
                         flex:1; padding:0.65rem 1rem; border-radius:9px;
-                        background:linear-gradient(135deg,var(--danger),#dc2626); border:none;
+                        background:linear-gradient(135deg,var(--danger),var(--danger)); border:none;
                         color:var(--text-strong); font-size:0.82rem; font-weight:800; cursor:pointer;
                         box-shadow:0 4px 15px rgba(var(--danger-rgb), 0.35);
                         transition:all 0.2s;
@@ -12144,7 +12144,7 @@ const renderRFSection = (container) => {
     const overlay = document.createElement('div');
     overlay.style.cssText = `position:fixed;inset:0;background:rgba(var(--shadow-rgb), 0.75);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);animation:fadeIn 0.2s ease;`;
     overlay.innerHTML = `
-      <div style="background:linear-gradient(135deg,var(--bg-dark),#1e1b4b);border:1px solid rgba(var(--primary2-rgb), 0.4);border-radius:20px;padding:2rem 2.5rem;min-width:340px;max-width:400px;box-shadow:0 25px 80px rgba(var(--shadow-rgb), 0.6);animation:slideUp 0.3s ease;">
+      <div style="background:linear-gradient(135deg,var(--bg-dark),var(--panel-deep));border:1px solid rgba(var(--primary2-rgb), 0.4);border-radius:20px;padding:2rem 2.5rem;min-width:340px;max-width:400px;box-shadow:0 25px 80px rgba(var(--shadow-rgb), 0.6);animation:slideUp 0.3s ease;">
         <div style="text-align:center;margin-bottom:1.5rem;">
           <div style="font-size:2.5rem;margin-bottom:0.6rem;">📅</div>
           <h3 style="color:var(--text-strong);font-size:1.1rem;font-weight:800;margin:0 0 0.4rem;letter-spacing:0.5px;">FECHA DEL PROCESO</h3>
@@ -14112,7 +14112,7 @@ const renderRFSection = (container) => {
                                 ${totalAssigned > 0 ? ((totalClosed/totalAssigned)*100).toFixed(0) : 0}% COMPLETADO
                             </span>
                         </div>
-                        <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid #a855f7; background:rgba(var(--ink-rgb), 0.01);">
+                        <div class="glass-panel" style="padding:1.2rem; text-align:center; border-left:4px solid var(--violet); background:rgba(var(--ink-rgb), 0.01);">
                             <h4 style="margin:0; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">SKUs Únicos</h4>
                             <h2 style="margin:0.5rem 0; font-size:1.8rem; color:var(--text-strong); font-weight:800;">${uniqueSkusCount}</h2>
                             <span style="font-size:0.65rem; color:var(--text-muted);">Sobrantes o asignados</span>
@@ -14159,7 +14159,7 @@ const renderRFSection = (container) => {
                 <div class="glass-panel" style="padding:1.5rem; border-radius:15px; border:1px solid rgba(var(--primary2-rgb), 0.2); background:rgba(var(--bg-rgb), 0.2);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                         <h3 style="color:var(--text-strong); margin:0; font-size:1rem; font-weight:900; letter-spacing:1px;">📊 REPORTE UCA (DISPONIBILIDAD)</h3>
-                        <button id="btn_run_uca" class="btn-premium-pulse" style="width:auto; padding:8px 20px; font-size:0.75rem; background:linear-gradient(135deg, var(--primary), #7c3aed); color:var(--text-strong); border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.3);">⚡ GENERAR UCA</button>
+                        <button id="btn_run_uca" class="btn-premium-pulse" style="width:auto; padding:8px 20px; font-size:0.75rem; background:linear-gradient(135deg, var(--primary), var(--violet)); color:var(--text-strong); border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.3);">⚡ GENERAR UCA</button>
                     </div>
                     <div id="uca_results_area"></div>
                 </div>
@@ -14607,7 +14607,7 @@ const renderRFSection = (container) => {
         container.innerHTML = `
           <div class="glass-panel" style="padding: 3rem; text-align: center; border-radius: 16px; background: rgba(var(--ink-rgb), 0.01); border: 1px solid rgba(var(--ink-rgb), 0.05); max-width: 800px; margin: 2rem auto; animation: fadeIn 0.3s ease;">
               <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">⚠️</div>
-              <h3 style="margin-bottom: 1rem; color: #ff6b6b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+              <h3 style="margin-bottom: 1rem; color: var(--danger-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
                   FALTAN ARCHIVOS DE RECEPCIÓN
               </h3>
               <p style="color: var(--text-muted); margin-bottom: 1rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; font-size: 0.95rem;">
@@ -14890,9 +14890,9 @@ const renderRFSection = (container) => {
 
       if (sortedAreas.length === 0) {
           reporte2HTML = `
-              <div class="glass-panel" style="padding: 2.5rem; text-align: center; border: 1px solid rgba(255,100,100,0.2); background: rgba(10,5,5,0.4); border-radius: 12px; height: 100%;">
+              <div class="glass-panel" style="padding: 2.5rem; text-align: center; border: 1px solid rgba(var(--danger-rgb), 0.2); background: rgba(var(--bg-rgb), 0.4); border-radius: 12px; height: 100%;">
                   <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
-                  <h4 style="color: #ff6b6b; font-weight: 700; margin-bottom: 0.5rem;">Sin Ubicaciones CDBUFFER-A/B/D</h4>
+                  <h4 style="color: var(--danger-soft); font-weight: 700; margin-bottom: 0.5rem;">Sin Ubicaciones CDBUFFER-A/B/D</h4>
                   <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 500px; margin: 0 auto;">
                       No se encontraron ubicaciones de tipo CDBUFFER en Stock Activo ni Stock Reserva para generar el reporte de Almacenaje.
                   </p>
@@ -14925,7 +14925,7 @@ const renderRFSection = (container) => {
                   return `
                       <tr style="border-bottom: 1px solid rgba(var(--ink-rgb), 0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(var(--cyan-rgb), 0.02)'" onmouseout="this.style.background='none'">
                           <td style="color: var(--text-dim); font-weight: 600; padding: 5px 10px; font-size: 0.8rem;">${area}</td>
-                          <td style="color: var(--text-strong); font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">${gender || '<span style="color: #334155;">-</span>'}</td>
+                          <td style="color: var(--text-strong); font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">${gender || '<span style="color: var(--text-faint);">-</span>'}</td>
                           <td style="color: var(--text-strong); font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${buffer.toLocaleString('en-US')}</td>
                       </tr>
                   `;
@@ -15011,7 +15011,7 @@ const renderRFSection = (container) => {
                   return `
                       <tr style="border-bottom: 1px solid rgba(var(--ink-rgb), 0.03); transition: background 0.2s;" onmouseover="this.style.background='rgba(var(--cyan-rgb), 0.02)'" onmouseout="this.style.background='none'">
                           <td style="color: var(--text-dim); font-weight: 600; padding: 5px 10px; font-size: 0.8rem;">${area}</td>
-                          <td style="color: var(--text-strong); font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">${brand || '<span style="color: #334155;">-</span>'}</td>
+                          <td style="color: var(--text-strong); font-weight: 700; padding: 5px 10px; font-size: 0.8rem;">${brand || '<span style="color: var(--text-faint);">-</span>'}</td>
                           <td style="color: var(--text-strong); font-weight: 500; padding: 5px 10px; text-align: center; font-size: 0.8rem;">${buffer.toLocaleString('en-US')}</td>
                       </tr>
                   `;
@@ -15918,7 +15918,7 @@ const renderRFSection = (container) => {
             vehicleMarker = `
                 <g class="truck-marker">
                     <circle cx="${truckPos.x}" cy="${truckPos.y}" r="16" fill="var(--blue)" opacity="0.3" class="pulse-marker" />
-                    <circle cx="${truckPos.x}" cy="${truckPos.y}" r="9" fill="#2563eb" stroke="var(--text-strong)" stroke-width="2" />
+                    <circle cx="${truckPos.x}" cy="${truckPos.y}" r="9" fill="var(--blue)" stroke="var(--text-strong)" stroke-width="2" />
                     <text x="${truckPos.x}" y="${truckPos.y + 4}" font-size="8" text-anchor="middle">🚚</text>
                 </g>
             `;
@@ -16167,7 +16167,7 @@ const renderRFSection = (container) => {
         <!-- Simulation back to office bar for admin testing -->
         <div style="background: rgba(var(--bg-rgb), 0.95); padding: 0.6rem 1rem; width:100%; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(var(--ink-rgb), 0.08); position: sticky; top: 0; z-index:999999; box-shadow:0 4px 10px rgba(var(--shadow-rgb), 0.3);">
             <span style="font-size:0.65rem; color:var(--warning); font-weight:800; letter-spacing:0.5px;">📲 VISTA CHOFER (SIMULADO)</span>
-            <button id="btn_back_to_office" style="background:var(--primary); color:var(--text-strong); border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
+            <button id="btn_back_to_office" style="background:var(--primary); color:var(--on-primary); border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
                 🏢 VOLVER A OFICINA
             </button>
         </div>
@@ -16620,7 +16620,7 @@ const renderRFSection = (container) => {
                   </div>
               </div>
 
-              <button id="save_edit_btn" style="width:100%; background:var(--primary); color:var(--text-strong); border:none; padding:0.8rem; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s;">
+              <button id="save_edit_btn" style="width:100%; background:var(--primary); color:var(--on-primary); border:none; padding:0.8rem; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s;">
                   GUARDAR CAMBIOS
               </button>
           </div>
@@ -16889,11 +16889,11 @@ const renderRFSection = (container) => {
                   <!-- Tarjeta 4: Cobro de Flete -->
                   <div class="glass-panel" style="padding:1.2rem; border-radius:16px; position:relative; overflow:hidden; border:1px solid rgba(var(--cyan-deep-rgb), 0.2); background:linear-gradient(135deg, rgba(var(--cyan-deep-rgb), 0.08) 0%, rgba(var(--bg-rgb), 0.85) 100%); box-shadow: 0 4px 20px rgba(var(--cyan-deep-rgb), 0.05);">
                       <div style="display:flex; justify-content:space-between; align-items:center;">
-                          <span style="font-size:0.7rem; font-weight:800; color:#cffafe; letter-spacing:0.5px;">COBRO EN DESTINO</span>
+                          <span style="font-size:0.7rem; font-weight:800; color:var(--cyan); letter-spacing:0.5px;">COBRO EN DESTINO</span>
                           <span style="font-size:1.1rem; background:rgba(var(--cyan-deep-rgb), 0.15); color:var(--cyan); padding:4px 8px; border-radius:8px; font-weight:900;">💵</span>
                       </div>
                       <h2 style="font-size:2.2rem; font-weight:900; margin:0.8rem 0 0.2rem 0; font-family:'Outfit',sans-serif; color:var(--cyan-deep); text-shadow:0 0 15px rgba(var(--cyan-deep-rgb), 0.2);">${fleteSiRate}%</h2>
-                      <p style="margin:0; font-size:0.7rem; color:#cffafe; font-weight:600;">${fleteSi} pedidos marcados con Cobro Flete (SI)</p>
+                      <p style="margin:0; font-size:0.7rem; color:var(--cyan); font-weight:600;">${fleteSi} pedidos marcados con Cobro Flete (SI)</p>
                   </div>
               </div>
 
@@ -17242,7 +17242,7 @@ const renderRFSection = (container) => {
                                   <div style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">${c.agencia || '-'}</div>
                               </td>
                               <td style="padding:1rem;">
-                                  <div style="font-weight:700; color:#bfdbfe;">${c.clientName}</div>
+                                  <div style="font-weight:700; color:var(--blue-soft);">${c.clientName}</div>
                                   <div style="font-size:0.75rem; color:var(--text-muted);">Pedido: ${c.pedido}</div>
                               </td>
                               <td style="padding:1rem;">
@@ -17503,7 +17503,7 @@ const renderRFSection = (container) => {
             <!-- Simulation back to office bar for admin testing -->
             <div style="background: rgba(var(--bg-rgb), 0.95); padding: 0.6rem 1rem; width:100%; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(var(--ink-rgb), 0.08); position: sticky; top: 0; z-index:999999; box-shadow:0 4px 10px rgba(var(--shadow-rgb), 0.3);">
                 <span style="font-size:0.65rem; color:var(--warning); font-weight:800; letter-spacing:0.5px;">📲 VISTA PORTAL MÓVIL NO RETAIL</span>
-                <button id="btn_back_to_office" style="background:var(--primary); color:var(--text-strong); border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
+                <button id="btn_back_to_office" style="background:var(--primary); color:var(--on-primary); border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:800; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--primary-hover)'" onmouseout="this.style.background='var(--primary)'">
                     🏢 VOLVER A OFICINA
                 </button>
             </div>
@@ -17571,7 +17571,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size: 0.65rem; color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0382 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0383 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -17948,18 +17948,18 @@ const renderRFSection = (container) => {
                 <!-- Stats Grid (Hoy vs Liquidados vs Total) -->
                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.6rem; margin-bottom:1.5rem;">
                     <!-- Hoy Card -->
-                    <div style="background:linear-gradient(135deg, var(--blue-deep) 0%, #00368a 100%); border-radius:12px; padding:0.8rem; display:flex; flex-direction:column; position:relative; box-shadow: 0 4px 15px rgba(2, 77, 189, 0.2);">
+                    <div style="background:linear-gradient(135deg, var(--blue-deep) 0%, var(--blue-deep) 100%); border-radius:12px; padding:0.8rem; display:flex; flex-direction:column; position:relative; box-shadow: 0 4px 15px rgba(var(--blue-rgb), 0.2);">
                         <span style="font-size:0.55rem; color:var(--blue-soft); font-weight:800; letter-spacing:0.5px;">HOY (PEND.)</span>
                         <span style="font-size:1.8rem; font-weight:900; color:var(--text-strong); line-height:1; margin: 0.2rem 0;">${pendingAgenciesCount}</span>
-                        <span style="font-size:0.55rem; color:#bfdbfe; font-weight:600; line-height:1.2;">Agencias</span>
+                        <span style="font-size:0.55rem; color:var(--blue-soft); font-weight:600; line-height:1.2;">Agencias</span>
                         <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.15; user-select:none;">🚚</span>
                     </div>
 
                     <!-- Liquidados Card -->
-                    <div style="background:linear-gradient(135deg, var(--success-alt) 0%, #047857 100%); border-radius:12px; padding:0.8rem; display:flex; flex-direction:column; position:relative; box-shadow: 0 4px 15px rgba(var(--success-alt-rgb), 0.2);">
+                    <div style="background:linear-gradient(135deg, var(--success-alt) 0%, var(--success-deep) 100%); border-radius:12px; padding:0.8rem; display:flex; flex-direction:column; position:relative; box-shadow: 0 4px 15px rgba(var(--success-alt-rgb), 0.2);">
                         <span style="font-size:0.55rem; color:var(--success-pale); font-weight:800; letter-spacing:0.5px;">LIQUIDADOS</span>
                         <span style="font-size:1.8rem; font-weight:900; color:var(--text-strong); line-height:1; margin: 0.2rem 0;">${liquidatedCount}</span>
-                        <span style="font-size:0.55rem; color:#d1fae5; font-weight:600; line-height:1.2;">Firmados</span>
+                        <span style="font-size:0.55rem; color:var(--success-pale); font-weight:600; line-height:1.2;">Firmados</span>
                         <span style="position:absolute; right:8px; top:8px; font-size:1.2rem; opacity:0.15; user-select:none;">✍️</span>
                     </div>
 
@@ -18120,7 +18120,7 @@ const renderRFSection = (container) => {
                             return `
                                 <div style="
                                     background: rgba(var(--ink-rgb), 0.02);
-                                    border: 1px solid ${isExpanded ? 'rgba(2, 77, 189, 0.4)' : 'rgba(var(--ink-rgb), 0.04)'};
+                                    border: 1px solid ${isExpanded ? 'rgba(var(--blue-rgb), 0.4)' : 'rgba(var(--ink-rgb), 0.04)'};
                                     border-radius: 18px;
                                     padding: 1.2rem;
                                     display: flex;
@@ -18229,7 +18229,7 @@ const renderRFSection = (container) => {
                                                             </div>
 
                                                             <!-- Save Button -->
-                                                            <button class="btn btn-nr-liquidar-client" data-client="${c.id}" style="width:100%; background:var(--success-alt); border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; color:var(--text-strong); cursor:pointer; transition:background 0.2s;">
+                                                            <button class="btn btn-nr-liquidar-client" data-client="${c.id}" style="width:100%; background:var(--success-alt); border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; color:var(--on-primary); cursor:pointer; transition:background 0.2s;">
                                                                 ✅ LIQUIDAR CLIENTE
                                                             </button>
                                                         </div>
@@ -18393,7 +18393,7 @@ const renderRFSection = (container) => {
                     <!-- Acciones del Modal -->
                     <div style="display:flex; gap:0.6rem; border-top:1px solid rgba(var(--ink-rgb), 0.08); padding-top:0.8rem; margin-top:0.4rem;">
                         <button id="btn_modal_cancel" style="flex:1; background:rgba(var(--ink-rgb), 0.05); color:var(--text-soft); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">CANCELAR</button>
-                        <button id="btn_modal_save" style="flex:1; background:var(--success-alt); color:var(--text-strong); border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">GUARDAR CAMBIOS</button>
+                        <button id="btn_modal_save" style="flex:1; background:var(--success-alt); color:var(--on-primary); border:none; padding:0.6rem; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">GUARDAR CAMBIOS</button>
                     </div>
                 </div>
             `;
@@ -18702,7 +18702,7 @@ const renderRFSection = (container) => {
         <div style="overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:var(--text-pale);">
             <thead style="background:rgba(var(--shadow-rgb), 0.5);">
-              <tr style="color:rgba(147,197,253,0.8); text-transform:uppercase; font-size:0.63rem; letter-spacing:0.05em;">
+              <tr style="color:rgba(var(--blue-rgb), 0.8); text-transform:uppercase; font-size:0.63rem; letter-spacing:0.05em;">
                 <th style="padding:0.6rem 1.1rem; text-align:left;">Marca</th>
                 <th style="padding:0.6rem; text-align:left;">Regla</th>
                 <th style="padding:0.6rem; text-align:center;">Cuánto</th>
@@ -21880,7 +21880,7 @@ const renderRFSection = (container) => {
     const CSS = `
       @page { size: A4 portrait; margin: 0; }
       * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      html, body { margin: 0; padding: 0; background: #58585b; }
+      html, body { margin: 0; padding: 0; background: var(--text-dim); }
       body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: var(--on-accent); }
       .pg { width: 210mm; height: 297mm; padding: 9mm 7mm; background: var(--text-strong);
             margin: 0 auto 6mm; position: relative; overflow: hidden; }
@@ -21902,13 +21902,13 @@ const renderRFSection = (container) => {
       table { width: 100%; border-collapse: collapse; }
       .firmas { margin-top: 3mm; font-size: 10.5pt; }
       .firmas td { border: 1px solid #888780; height: 8mm; padding: 0 2mm; }
-      .firmas .rot { background: #F1EFE8; font-weight: 400; white-space: nowrap; }
+      .firmas .rot { background: var(--text-pale); font-weight: 400; white-space: nowrap; }
       .det { margin-top: 3mm; font-size: 10.5pt; }
       .det th { background: var(--panel-alt); color: var(--text-strong); font-weight: 700; font-size: 10.5pt;
                 border: 1px solid #888780; height: 7mm; text-align: center; }
       .det td { border: 1px solid #888780; height: 6.4mm; text-align: center; padding: 0 1mm; }
-      .det td.g { background: #F1EFE8; font-weight: 700; }
-      .det tr.art td { background: #F1EFE8; font-weight: 700; text-align: left;
+      .det td.g { background: var(--text-pale); font-weight: 700; }
+      .det tr.art td { background: var(--text-pale); font-weight: 700; text-align: left;
                        font-size: 11pt; height: 7mm; padding: 0 2mm; }
       .det tr.art.nuevo td { background: var(--panel-alt); color: var(--text-strong); }
       .det td.b { font-weight: 700; }
@@ -22337,7 +22337,7 @@ const renderRFSection = (container) => {
               <div style="font-size:0.68rem; color:rgba(var(--brand-pale-rgb), 0.7); font-weight:600;">Dónde diría el sistema que hay que almacenar · no toca la tarea ni guarda nada</div>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <button id="sug_excel" class="btn" title="Descargar el papel que se imprime: una tarea por página, vertical, en blanco y negro" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:var(--text-strong); font-weight:800; border:none; margin-right:6px;">📥 EXCEL DEL PAPEL</button>
+              <button id="sug_excel" class="btn" title="Descargar el papel que se imprime: una tarea por página, vertical, en blanco y negro" style="width:auto; padding:6px 14px; font-size:0.7rem; background:var(--primary); color:var(--on-primary); font-weight:800; border:none; margin-right:6px;">📥 EXCEL DEL PAPEL</button>
               <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
                 <span style="font-size:0.7rem; color:rgba(var(--ink-rgb), 0.4); font-weight:700;">DE:</span>
                 <input type="date" id="sug_desde" value="${desde}" style="background:transparent; border:none; color:var(--text-strong); font-size:0.75rem; font-weight:700; outline:none; cursor:pointer; color-scheme: var(--scheme);">
@@ -23151,7 +23151,7 @@ const renderRFSection = (container) => {
 
     const tramos = [
       { et: '0 a 25%', c: 'var(--danger-soft)', n: 0 }, { et: '25 a 50%', c: 'var(--warning-soft)', n: 0 },
-      { et: '50 a 75%', c: '#a3e635', n: 0 }, { et: '75 a 100%', c: 'var(--success)', n: 0 },
+      { et: '50 a 75%', c: 'var(--success-soft)', n: 0 }, { et: '75 a 100%', c: 'var(--success)', n: 0 },
       { et: 'lleno', c: 'var(--sky-deep)', n: 0 }
     ];
     filas.forEach(f => tramos[f.pct < 25 ? 0 : f.pct < 50 ? 1 : f.pct < 75 ? 2 : f.pct < 100 ? 3 : 4].n++);
@@ -23658,7 +23658,7 @@ const renderRFSection = (container) => {
               <button id="fx_subir_btn" style="background:transparent; border:1px solid var(--border); border-radius:7px; color:var(--text-muted); padding:0.42rem 0.8rem; font-size:0.73rem; cursor:pointer; font-weight:600;">Subir Excel</button>
               <input type="file" id="fx_subir" accept=".xlsx" style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;">
             </div>
-            <button id="fx_guardar" style="background:var(--primary); border:1px solid var(--primary); border-radius:7px; color:var(--text-strong); padding:0.42rem 1rem; font-size:0.73rem; cursor:pointer; font-weight:700;">Guardar</button>
+            <button id="fx_guardar" style="background:var(--primary); border:1px solid var(--primary); border-radius:7px; color:var(--on-primary); padding:0.42rem 1rem; font-size:0.73rem; cursor:pointer; font-weight:700;">Guardar</button>
           </div>
         </div>
         <div id="fx_resumen" style="margin-top:1.1rem; padding-top:0.9rem; border-top:1px solid var(--border); display:flex; gap:2rem; flex-wrap:wrap; font-size:0.75rem; color:var(--text-muted);"></div>
@@ -25175,7 +25175,7 @@ Se dejó el valor anterior.`, 'warning');
   const htmlConsolidacionReserva = (datos, serie, base) => {
       if (!datos) return '';
       const mil = (n) => Math.round(n).toLocaleString('es-ES');
-      const colorOcup = (p) => p >= 97 ? 'var(--danger-deep)' : p >= 88 ? 'var(--orange)' : p >= 75 ? 'var(--warning-soft)' : '#a3e635';
+      const colorOcup = (p) => p >= 97 ? 'var(--danger-deep)' : p >= 88 ? 'var(--orange)' : p >= 75 ? 'var(--warning-soft)' : 'var(--success-soft)';
       const colorLlen = (p) => p < 33 ? 'var(--danger-deep)' : p < 66 ? 'var(--orange)' : p < 100 ? 'var(--warning-soft)' : 'var(--success-alt)';
       const BASE_TH = 'text-align:center;color:var(--text-muted);font-weight:700;font-size:.66rem;letter-spacing:.4px;padding:3px 9px;line-height:1.2;border-bottom:1px solid rgba(var(--ink-rgb), .08);white-space:nowrap;';
       const BASE_TD = 'padding:1px 9px;line-height:1.2;text-align:center;font-weight:700;border-bottom:1px solid rgba(var(--ink-rgb), .04);';
@@ -25193,8 +25193,8 @@ Se dejó el valor anterior.`, 'warning');
       const iconoExcel = '<span id="btn_xls_frag" title="Exportar" style="margin-left:auto;cursor:pointer;'
           + 'display:flex;align-items:center;opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
           + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
-          + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#1D6F42"/>'
-          + '<path d="M14 2v6h6" fill="#0F5132"/>'
+          + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="var(--success-deep)"/>'
+          + '<path d="M14 2v6h6" fill="var(--success-dark)"/>'
           + '<path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="var(--text-strong)"/>'
           + '</svg></span>';
       /* El PDF va al costado del Excel. Mismo plan, distinto papel: el Excel para filtrar
@@ -25202,8 +25202,8 @@ Se dejó el valor anterior.`, 'warning');
       const iconoPDF = '<span id="btn_pdf_frag" title="Imprimir o guardar en PDF" style="cursor:pointer;'
           + 'display:flex;align-items:center;opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
           + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
-          + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#C0392B"/>'
-          + '<path d="M14 2v6h6" fill="#8E241A"/>'
+          + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="var(--danger-deep)"/>'
+          + '<path d="M14 2v6h6" fill="var(--danger-deep)"/>'
           + '<text x="12" y="17.5" font-family="Arial" font-size="7.5" font-weight="bold" fill="var(--text-strong)" text-anchor="middle">PDF</text>'
           + '</svg></span>';
       /* LA TARJETA PARA EL GRUPO. Al costado del PDF porque es el mismo avance, en otro
@@ -25211,9 +25211,9 @@ Se dejó el valor anterior.`, 'warning');
       const iconoTarjeta = '<span id="btn_wsp_frag" title="Tarjeta de avance para compartir" style="cursor:pointer;'
           + 'display:flex;align-items:center;opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
           + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
-          + '<rect x="3" y="4" width="18" height="16" rx="2.5" fill="#0e7490"/>'
+          + '<rect x="3" y="4" width="18" height="16" rx="2.5" fill="var(--cyan-deep)"/>'
           + '<circle cx="9" cy="12" r="3.6" fill="none" stroke="var(--cyan)" stroke-width="2"/>'
-          + '<path d="M14.2 9.4h4.2M14.2 12h4.2M14.2 14.6h2.6" stroke="#a5f3fc" stroke-width="1.6" stroke-linecap="round"/>'
+          + '<path d="M14.2 9.4h4.2M14.2 12h4.2M14.2 14.6h2.6" stroke="var(--cyan)" stroke-width="1.6" stroke-linecap="round"/>'
           + '</svg></span>';
       const panel = (titulo, borde, tabla, extra, antes, debajo) => '<div class="glass-panel" style="padding:12px 18px;margin-bottom:13px;border:1px solid ' + borde + '">'
           + '<h3 style="margin:0 0 7px;font-size:.95rem;display:flex;align-items:center;gap:10px;color:var(--text-strong)">'
@@ -25226,7 +25226,7 @@ Se dejó el valor anterior.`, 'warning');
       const filasM = datos.matriz.map(m => {
           Object.keys(T).forEach(k => { T[k] += m[k]; });
           const cl = colorOcup(m.pct);
-          const cLib = m.libres <= 2 ? 'var(--danger-deep)' : m.libres <= 6 ? 'var(--danger)' : m.libres <= 29 ? 'var(--orange)' : m.libres <= 50 ? 'var(--warning-soft)' : '#a3e635';
+          const cLib = m.libres <= 2 ? 'var(--danger-deep)' : m.libres <= 6 ? 'var(--danger)' : m.libres <= 29 ? 'var(--orange)' : m.libres <= 50 ? 'var(--warning-soft)' : 'var(--success-soft)';
           return '<tr' + (m.libres <= 6 ? ' style="background:rgba(var(--danger-rgb), .07)"' : '') + '>'
               + tdIzq('SEL-' + String(m.col).padStart(2, '0')) + td(mil(m.existen)) + td(mil(m.ocupadas))
               + td(mil(m.fw), 'color:var(--blue-soft)') + td(mil(m.nofw), 'color:var(--brand-paler)') + td(m.libres, 'color:' + cLib)
@@ -25239,7 +25239,7 @@ Se dejó el valor anterior.`, 'warning');
           + th('FOOTWEAR', 'color:var(--blue-soft)') + th('NO FW', 'color:var(--brand-paler)') + th('LIBRES', 'color:var(--danger-pale)')
           + th('OCUPACIÓN') + th('%') + th('PARES FW', 'color:var(--blue-soft)')
           + th('HASTA 50<br><span style="font-weight:400">5 cajas</span>', 'color:var(--danger-pale)')
-          + th('51 A 100<br><span style="font-weight:400">6 a 10 cajas</span>', 'color:#fdba74') + '</tr></thead>';
+          + th('51 A 100<br><span style="font-weight:400">6 a 10 cajas</span>', 'color:var(--orange)') + '</tr></thead>';
       const totM = '<tr style="background:rgba(var(--ink-rgb), .05)">' + tdIzq('<b>TOTAL</b>') + td(mil(T.existen)) + td(mil(T.ocupadas))
           + td(mil(T.fw), 'color:var(--blue-soft)') + td(mil(T.nofw), 'color:var(--brand-paler)') + td(mil(T.libres), 'color:var(--danger)')
           + '<td style="padding:3px 9px">' + barra(pctT, 'var(--danger)') + '</td>' + td(pctT + '%', 'color:var(--danger)')
@@ -25449,8 +25449,8 @@ Se dejó el valor anterior.`, 'warning');
                   + 'style="margin-left:auto;cursor:pointer;display:flex;align-items:center;'
                   + 'opacity:.85" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85">'
                   + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">'
-                  + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="#1D6F42"/>'
-                  + '<path d="M14 2v6h6" fill="#0F5132"/>'
+                  + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="var(--success-deep)"/>'
+                  + '<path d="M14 2v6h6" fill="var(--success-dark)"/>'
                   + '<path d="M8.6 11.6h1.7l1.2 2 1.2-2h1.7l-2 3.1 2.1 3.2h-1.7l-1.3-2.1-1.3 2.1H8.5l2.1-3.2-2-3.1z" fill="var(--text-strong)"/>'
                   + '</svg></span>';
               panelPre = '<div class="glass-panel" style="padding:12px 18px;margin-bottom:13px;'
@@ -25564,7 +25564,7 @@ Se dejó el valor anterior.`, 'warning');
       const CSS = `
         @page { size: A4 landscape; margin: 0; }
         * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        html, body { margin: 0; padding: 0; background: #58585b; }
+        html, body { margin: 0; padding: 0; background: var(--text-dim); }
         body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: var(--panel-deeper); }
         .pg { width: 297mm; height: 210mm; padding: 8mm 9mm; background: var(--text-strong);
               margin: 0 auto 6mm; position: relative; overflow: hidden; }
@@ -25580,14 +25580,14 @@ Se dejó el valor anterior.`, 'warning');
              white-space: nowrap; font-size: 8pt; }
         td { border: 1px solid var(--text-soft); padding: 3px 6px; white-space: nowrap; }
         .c { text-align: center; } .b { font-weight: 700; }
-        .gr { background: #e8e8e8; font-weight: 800; }
-        .o { background: #fdf0c8; font-weight: 700; }
-        .d { background: #d9f2d9; font-weight: 700; }
+        .gr { background: var(--text-pale); font-weight: 800; }
+        .o { background: var(--warning-pale); font-weight: 700; }
+        .d { background: var(--success-pale); font-weight: 700; }
         .t { font-weight: 800; }
         .pk { background: var(--panel-deep); color: var(--text-strong); font-weight: 800; font-size: 7.5pt; }
         .lpn { font-family: Consolas, monospace; font-size: 6.8pt; }
         .acc { font-size: 8.5pt; }
-        .sube td { background: #eefaee; }
+        .sube td { background: var(--success-pale); }
         .tll { white-space: normal; font-weight: 800; max-width: 46mm; line-height: 1.15; }
         table.apretada { font-size: 7.2pt; table-layout: fixed; }
         table.apretada th, table.apretada td { padding: 2px 3px; overflow: hidden; }
@@ -25602,18 +25602,18 @@ Se dejó el valor anterior.`, 'warning');
            en las filas partidas —las únicas donde hay que contar— no se veía el número. */
         tr.par td.cnt, td.cnt { background: var(--bronze); color: var(--text-strong); }
         tr.par td.tot, td.tot { background: var(--text-pale); color: var(--panel-deeper); }
-        tr.par td.res, td.res { background: #fee2e2; color: var(--danger-deep); }
-        tr.par td.vac, td.vac { background: #166534; color: var(--text-strong); }
+        tr.par td.res, td.res { background: var(--danger-pale); color: var(--danger-deep); }
+        tr.par td.vac, td.vac { background: var(--success-dark); color: var(--text-strong); }
         .tag { display: inline-block; background: var(--bronze); color: var(--text-strong); font-weight: 800;
                font-size: 6.5pt; padding: 0 4px; border-radius: 3px; margin-right: 3px; }
-        tr.par td { background: #fffbeb; }   /* los estados lo pisan, ver abajo */
+        tr.par td { background: var(--warning-pale); }   /* los estados lo pisan, ver abajo */
         tr.p1 td { border-top: 2px solid var(--bronze); }
         tr.pN td { border-bottom: 2px solid var(--bronze); }
         .cnt { background: var(--bronze); color: var(--text-strong); font-weight: 800; text-align: center; }
         .tot { background: var(--text-pale); font-weight: 800; }
-        .res { background: #fee2e2; color: var(--danger-deep); font-weight: 800; }
-        .vac { background: #166534; color: var(--text-strong); font-weight: 800; }
-        .k.hi { border: 2px solid var(--bronze); background: #fffbeb; }
+        .res { background: var(--danger-pale); color: var(--danger-deep); font-weight: 800; }
+        .vac { background: var(--success-dark); color: var(--text-strong); font-weight: 800; }
+        .k.hi { border: 2px solid var(--bronze); background: var(--warning-pale); }
         .k.hi b { color: var(--bronze); }
         .chk { width: 26px; }
         .caja { display: flex; gap: 9px; flex-wrap: wrap; margin: 6px 0 9px; }
@@ -25958,7 +25958,7 @@ Se dejó el valor anterior.`, 'warning');
       const hueco = LARGO * (1 - Math.min(100, Math.max(0, pct)) / 100);
       const fechaLinda = (f) => String(f || '').split('-').reverse().join('/');
 
-      const html = '<div id="tarj_avance" style="background:var(--panel-deep);border:1px solid #1e2d47;'
+      const html = '<div id="tarj_avance" style="background:var(--panel-deep);border:1px solid var(--panel-alt);'
         + 'border-radius:15px;padding:19px 22px 17px;width:470px;max-width:100%;'
         + 'font-family:\'Segoe UI\',system-ui,Arial,sans-serif;color:var(--blue-pale)">'
         + '<div style="display:flex;align-items:center;gap:10px">'
@@ -25966,14 +25966,14 @@ Se dejó el valor anterior.`, 'warning');
         +     'box-shadow:0 0 10px var(--sky)"></span>'
         +   '<h3 style="font-size:14.5px;margin:0;letter-spacing:.4px;font-weight:800">'
         +     'AVANCE DE CONSOLIDACIÓN DE RESERVA</h3></div>'
-        + '<div style="margin:11px 0 0;padding:9px 13px;border-radius:9px;background:#0e1728;'
-        +   'border:1px solid #1e2d47;display:flex;align-items:baseline;gap:9px">'
+        + '<div style="margin:11px 0 0;padding:9px 13px;border-radius:9px;background:var(--panel-deep);'
+        +   'border:1px solid var(--panel-alt);display:flex;align-items:baseline;gap:9px">'
         +   '<span style="font-size:14.5px;font-weight:800;letter-spacing:.3px">' + dia + '</span>'
         +   '<span style="font-size:13px;color:var(--sky);font-weight:700">' + hora + '</span></div>'
         + '<div style="display:flex;align-items:center;gap:24px;padding:18px 4px 8px">'
         +   '<div style="position:relative;width:132px;height:132px;flex:none">'
         +     '<svg width="132" height="132" viewBox="0 0 132 132" style="transform:rotate(-90deg)">'
-        +       '<circle cx="66" cy="66" r="' + R + '" fill="none" stroke="#16233a" stroke-width="14"/>'
+        +       '<circle cx="66" cy="66" r="' + R + '" fill="none" stroke="var(--panel-alt)" stroke-width="14"/>'
         +       '<circle cx="66" cy="66" r="' + R + '" fill="none" stroke="var(--success-mid)" stroke-width="14"'
         +         ' stroke-linecap="round" stroke-dasharray="' + LARGO.toFixed(1) + '"'
         +         ' stroke-dashoffset="' + hueco.toFixed(1) + '"/></svg>'
@@ -25989,18 +25989,18 @@ Se dejó el valor anterior.`, 'warning');
         +       'UBICACIONES LIBERADAS</div>'
         +     '<div style="font-size:15px;margin-top:12px;font-weight:700;color:var(--warning-soft)">Faltan '
         +       mil(meta - hechas) + '</div></div></div>'
-        + '<div style="height:8px;border-radius:5px;background:#16233a;overflow:hidden;margin:6px 0 0">'
+        + '<div style="height:8px;border-radius:5px;background:var(--panel-alt);overflow:hidden;margin:6px 0 0">'
         +   '<i style="display:block;height:100%;border-radius:5px;width:' + pct + '%;'
         +     'background:linear-gradient(90deg,var(--success-deep),var(--success-mid))"></i></div></div>';
 
       /* El fondo NO lleva desenfoque: `glass-panel` recorta lo que se le sale y en una captura
          de pantalla eso se ve. Ver la trampa del blur en CLAUDE.md. */
       const capa = document.createElement('div');
-      capa.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(2,6,16,.86);'
+      capa.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(var(--bg-rgb), .86);'
         + 'display:flex;align-items:center;justify-content:center;padding:22px;overflow:auto';
       capa.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px">'
         + html
-        + '<button id="tarj_cerrar" style="background:#1e2d47;color:var(--blue-pale);border:0;border-radius:9px;'
+        + '<button id="tarj_cerrar" style="background:var(--panel-alt);color:var(--blue-pale);border:0;border-radius:9px;'
         +   'padding:9px 22px;font:700 13px system-ui;cursor:pointer">Cerrar</button></div>';
       document.body.appendChild(capa);
       const cerrar = () => capa.remove();
@@ -26294,7 +26294,7 @@ Se dejó el valor anterior.`, 'warning');
 
       const LLEN = [
           { k: 'llena', e: `Llena (${r.capacidad} o más)`, c: 'var(--success-alt)' },
-          { k: 'p75',   e: '75 a 99%',                     c: '#84cc16' },
+          { k: 'p75',   e: '75 a 99%',                     c: 'var(--success-mid)' },
           { k: 'p50',   e: '50 a 74%',                     c: 'var(--yellow-deep)' },
           { k: 'p25',   e: '25 a 49%',                     c: 'var(--warning)' },
           { k: 'p00',   e: 'menos del 25%',                c: 'var(--text-dim)' }
@@ -28403,7 +28403,7 @@ window.showCellModal = function(htmlContent) {
                     const skusFragData = historyData.map(d => d.skus_fragmentados || 0);
                     const ubisMixtasData = historyData.map(d => d.ubicaciones_mixtas || 0);
 
-                    new Chart(ctxHist, {
+                    new Chart(ctxHist, resolverColoresChart({
                         type: 'line',
                         data: {
                             labels: labels,
@@ -28447,7 +28447,7 @@ window.showCellModal = function(htmlContent) {
                                 x: { grid: { display: false }, ticks: { color: colorTema('--text-muted') } }
                             }
                         }
-                    });
+                    }));
                 }
             }
 
@@ -28455,7 +28455,7 @@ window.showCellModal = function(htmlContent) {
             const topSkus = reservaState.skusArray.slice(0, 10);
             const ctxSkus = document.getElementById('topSkusChart');
             if (ctxSkus && topSkus.length > 0) {
-                new Chart(ctxSkus, {
+                new Chart(ctxSkus, resolverColoresChart({
                     type: 'bar',
                     data: {
                         labels: topSkus.map(s => s.sku),
@@ -28477,14 +28477,14 @@ window.showCellModal = function(htmlContent) {
                             x: { grid: { display: false }, ticks: { color: colorTema('--text-muted'), maxRotation: 45, minRotation: 45 } }
                         }
                     }
-                });
+                }));
             }
 
             // Draw Top 10 Ubicaciones Bar Chart
             const topUbis = ubicacionState.ubisArray.slice(0, 10);
             const ctxUbis = document.getElementById('topUbisChart');
             if (ctxUbis && topUbis.length > 0) {
-                new Chart(ctxUbis, {
+                new Chart(ctxUbis, resolverColoresChart({
                     type: 'bar',
                     data: {
                         labels: topUbis.map(u => u.ubicacion),
@@ -28506,7 +28506,7 @@ window.showCellModal = function(htmlContent) {
                             x: { grid: { display: false }, ticks: { color: colorTema('--text-muted'), maxRotation: 45, minRotation: 45 } }
                         }
                     }
-                });
+                }));
             }
         }
     };
@@ -29877,7 +29877,7 @@ window.showCellModal = function(htmlContent) {
     const radio = todas.map(d => Math.min(7, 2.5 + Math.sqrt(d.tareas) / 2.2));
 
     window.__prodCharts = window.__prodCharts || {};
-    window.__prodCharts[canvasId] = new Chart(cv, {
+    window.__prodCharts[canvasId] = new Chart(cv, resolverColoresChart({
       type: 'line',
       data: { labels: etiquetas, datasets: [
         { label: 'Tendencia', data: tend, borderColor: 'rgba(255,255,255,0.35)', borderWidth: 2,
@@ -29910,7 +29910,7 @@ window.showCellModal = function(htmlContent) {
           x: { grid: { display: false }, ticks: { color: colorTema('--text-muted'), autoSkip: true, maxTicksLimit: 14 } }
         }
       }
-    });
+    }));
   };
 
   /**
@@ -29929,7 +29929,7 @@ window.showCellModal = function(htmlContent) {
 
     window.__prodCharts = window.__prodCharts || {};
     if (window.__prodCharts[canvasId]) window.__prodCharts[canvasId].destroy();
-    window.__prodCharts[canvasId] = new Chart(cv, {
+    window.__prodCharts[canvasId] = new Chart(cv, resolverColoresChart({
       type: 'line',
       data: {
         labels: todas.map(d => 'S' + d.sem),
@@ -29954,7 +29954,7 @@ window.showCellModal = function(htmlContent) {
         },
         scales: { y: { display: false }, x: { display: false } }
       }
-    });
+    }));
   };
 
   /** Tarjeta chica de una categoría: el número de la última semana y hacia dónde va. */
@@ -30161,7 +30161,7 @@ window.showCellModal = function(htmlContent) {
   const KPI_ORDINAL = ['', 'primera', 'segunda', 'tercera', 'cuarta', 'quinta', 'sexta',
                        'séptima', 'octava', 'novena', 'décima'];
   const kpiOrdinal = k => KPI_ORDINAL[k] || `semana ${k}`;
-  const KPI_AZUL='#3987e5', KPI_NARANJA='#d95926', KPI_AMBAR='var(--warning-soft)', KPI_PARES='rgba(248,250,252,0.55)';
+  const KPI_AZUL='var(--blue)', KPI_NARANJA='var(--orange)', KPI_AMBAR='var(--warning-soft)', KPI_PARES='rgba(var(--ink-rgb), 0.55)';
   /* La opción "Solo marca propia" del filtro de marca. Empieza con dos guiones bajos
      para que no pueda chocar nunca con el nombre de una marca del Maestro. */
   const KPI_PROPIAS = '__propias';
@@ -30594,7 +30594,7 @@ window.showCellModal = function(htmlContent) {
     // La etiqueta: un solo renglón, el porcentaje y entre paréntesis los pares.
     const etiqueta = (xx, yy, k, pct, cant) => {
       const f = k ? 11 : 9.2;
-      const c = k ? 'var(--text-main)' : 'rgba(248,250,252,0.6)';
+      const c = k ? 'var(--text-main)' : 'rgba(var(--ink-rgb), 0.6)';
       return `<text x="${xx.toFixed(1)}" y="${(yy-13).toFixed(1)}" text-anchor="middle">`
        + `<tspan fill="${c}" font-size="${f}" font-weight="800">${pct}</tspan>`
        + `<tspan dx="4" fill="${PARES}" font-size="${(f-0.8).toFixed(1)}" font-weight="700">(${cant})</tspan></text>`;
@@ -30606,7 +30606,7 @@ window.showCellModal = function(htmlContent) {
     const PIC = P.map(p=>({ s:p.s, v:p.s?p.picadoPct:0, pares:p.picado, ingreso:p.ingreso }));
     const lineaPic = PIC.map((p,i)=>`${i?'L':'M'}${x(p.s).toFixed(1)},${yc(p.v).toFixed(1)}`).join(' ');
     const areaPic  = `${lineaPic} L${x(MAXS).toFixed(1)},${yc(0).toFixed(1)} L${x(0).toFixed(1)},${yc(0).toFixed(1)} Z`;
-    const puntosPic = PIC.map(p=>`<circle cx="${x(p.s).toFixed(1)}" cy="${yc(p.v).toFixed(1)}" r="${p.ingreso?6:(clave.has(p.s)||p.s===0?5:3.5)}" fill="${p.ingreso?AMBAR:NARANJA}" stroke="#111827" stroke-width="2"/>`).join('');
+    const puntosPic = PIC.map(p=>`<circle cx="${x(p.s).toFixed(1)}" cy="${yc(p.v).toFixed(1)}" r="${p.ingreso?6:(clave.has(p.s)||p.s===0?5:3.5)}" fill="${p.ingreso?AMBAR:NARANJA}" stroke="var(--panel-deep)" stroke-width="2"/>`).join('');
     // LA SEMANA 0 NO ES UN PICKING: ES LA LLEGADA, y ahora lo dice. El punto arrancaba
     // en cero y sin etiqueta, así que se leía como "esa semana no se picó nada" cuando
     // lo que significa es que ahí empieza a contarse. Los pares que llegaron estaban en
@@ -30716,7 +30716,7 @@ window.showCellModal = function(htmlContent) {
         <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:var(--text-strong);">${n(p.pares)}</td>
         <td style="padding:0.45rem 0.8rem; text-align:right;">${d1(p.queda)}%</td>
         <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:${AMBAR}; font-style:italic;">${p.rebase===null?'—':d1(p.rebase)+'%'}</td>
-        <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:${p.ingreso?AMBAR:'#fda98a'};">${!p.s?'—':(p.ingreso?'+'+n(p.ingreso):n(p.picado))}</td>
+        <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:${p.ingreso?AMBAR:'var(--danger-pale)'};">${!p.s?'—':(p.ingreso?'+'+n(p.ingreso):n(p.picado))}</td>
         <td style="padding:0.45rem 0.8rem; text-align:right;">${!p.s?'—':(p.ingreso?'entró':d1(p.picadoPct)+'%')}</td>
         <td style="padding:0.45rem 0.8rem; text-align:right; font-weight:800; color:${AMBAR}; font-style:italic;">${p.picoRebase===null?'—':d1(p.picoRebase)+'%'}</td>
       </tr>`).join('');
@@ -30836,7 +30836,7 @@ window.showCellModal = function(htmlContent) {
     const CLS = [
       { k:'A', col:NARANJA,                 sub:'hasta el 80% de lo que falta' },
       { k:'B', col:AMBAR,                   sub:'del 80% al 95%' },
-      { k:'C', col:'rgba(57,135,229,0.55)', sub:'el 5% final' }
+      { k:'C', col:'rgba(var(--blue-rgb), 0.55)', sub:'el 5% final' }
     ];
     CLS.forEach((c,i)=>{
       c.desde = clase.indexOf(i);
@@ -31187,7 +31187,7 @@ window.showCellModal = function(htmlContent) {
             </div>` : ''}
 
           <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-            <label style="display:inline-flex; align-items:center; gap:9px; background:var(--primary); color:var(--text-strong); padding:0.6rem 1.3rem; border-radius:10px; font-size:0.78rem; font-weight:800; cursor:${hayMaestro ? 'pointer' : 'not-allowed'}; opacity:${hayMaestro ? '1' : '0.45'}; box-shadow:0 4px 14px rgba(var(--primary-rgb), 0.3);">
+            <label style="display:inline-flex; align-items:center; gap:9px; background:var(--primary); color:var(--on-primary); padding:0.6rem 1.3rem; border-radius:10px; font-size:0.78rem; font-weight:800; cursor:${hayMaestro ? 'pointer' : 'not-allowed'}; opacity:${hayMaestro ? '1' : '0.45'}; box-shadow:0 4px 14px rgba(var(--primary-rgb), 0.3);">
               📥 ELEGIR ARCHIVOS Y CALCULAR
               <input type="file" id="pick_files" accept=".csv" multiple ${hayMaestro ? '' : 'disabled'} style="display:none;">
             </label>
@@ -32369,7 +32369,7 @@ window.showCellModal = function(htmlContent) {
               ${avisoCurso(fw)}
             </div>
 
-            <div class="glass-panel" style="background:rgba(var(--bg-rgb), 0.9); border:1px solid rgba(235,104,52,0.35); border-radius:14px; padding:1.3rem;">
+            <div class="glass-panel" style="background:rgba(var(--bg-rgb), 0.9); border:1px solid rgba(var(--orange-rgb), 0.35); border-radius:14px; padding:1.3rem;">
               <h3 style="color:var(--text-strong); font-weight:900; margin:0 0 2px 0; font-size:1.05rem; letter-spacing:0.5px;">06 OTHERS</h3>
               <div style="font-size:0.72rem; color:rgba(var(--ink-rgb), 0.4); margin-bottom:1rem;">
                 ${ot.vacio ? 'sin datos' : `${ot.tareas.toLocaleString('es-PE')} tareas en ${ot.cerradas.length} semanas cerradas`}
@@ -32405,7 +32405,7 @@ window.showCellModal = function(htmlContent) {
       </div>`;
 
     prodGrafico('prodFw', fw, 'var(--primary)');
-    prodGrafico('prodOt', ot, '#eb6834');
+    prodGrafico('prodOt', ot, 'var(--orange)');
     otras.forEach((x, i) => prodMiniGrafico(`prodMini${i}`, x.r, 'var(--sky)'));
   };
 
@@ -33870,7 +33870,7 @@ window.showCellModal = function(htmlContent) {
                 }
             };
             
-            window.weeklyDailyChartInstance = new Chart(ctx, {
+            window.weeklyDailyChartInstance = new Chart(ctx, resolverColoresChart({
                 type: 'line',
                 data: {
                     labels: chartLabels,
@@ -33896,7 +33896,7 @@ window.showCellModal = function(htmlContent) {
                             mode: 'index',
                             intersect: false,
                             backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                            titleColor: '#fef08a',
+                            titleColor: 'var(--warning-pale)',
                             bodyColor: colorTema('--text-strong'),
                             borderColor: '#eab308',
                             borderWidth: 1.5,
@@ -33950,7 +33950,7 @@ window.showCellModal = function(htmlContent) {
                     }
                 },
                 plugins: [datalabelsPlugin]
-            });
+            }));
         }, 100);
 
         return `
@@ -33958,7 +33958,7 @@ window.showCellModal = function(htmlContent) {
         <div style="background:var(--bg-dark); border:2px solid var(--yellow-deep); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--yellow-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid rgba(var(--yellow-rgb), 0.15); padding-bottom:8px;">
                 <div style="border-left: 4px solid var(--yellow-deep); padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                    <h3 style="color:#fef08a; font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                    <h3 style="color:var(--warning-pale); font-weight:900; margin:0; font-size:1rem; letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                         GRÁFICO DE RENDIMIENTO SEMANA Y DÍA
                     </h3>
                     <div style="font-size:0.68rem; color:rgba(var(--yellow-rgb), 0.6); font-weight:700; letter-spacing:0.5px;">
@@ -34201,8 +34201,8 @@ window.showCellModal = function(htmlContent) {
                 <!-- BOTONES DE ACCIÓN PRINCIPALES -->
                 <div style="display:flex; gap:10px; align-items:center;">
                     ${!isDetail ? `<button id="btn_open_shift_new" class="btn" style="width:auto; background:rgba(var(--success-rgb), 0.1); color:var(--success); border:1px solid rgba(var(--success-rgb), 0.3); padding:6px 12px; font-size:0.7rem; font-weight:700;">⚙️ PROCESAR TAREAS</button>` : ''}
-                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel(this)" class="btn" title="Descargar en Excel las tareas del rango" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:var(--primary); color:var(--text-strong); border:none; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.3);">📥</button>
-                    <button onclick="window.imprimirTareasAlmacenaje(this)" class="btn" title="Imprimir las tareas del rango · una tarea por hoja, lista para doble cara" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:var(--cyan-deep); color:var(--text-strong); border:none; box-shadow:0 4px 12px rgba(15,118,110,0.3);">🖨️</button>` : ''}
+                    ${!isDetail ? `<button onclick="window.exportAlmacenajeExcel(this)" class="btn" title="Descargar en Excel las tareas del rango" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:var(--primary); color:var(--on-primary); border:none; box-shadow:0 4px 12px rgba(var(--primary-rgb), 0.3);">📥</button>
+                    <button onclick="window.imprimirTareasAlmacenaje(this)" class="btn" title="Imprimir las tareas del rango · una tarea por hoja, lista para doble cara" style="width:auto; padding:6px 12px; font-size:0.95rem; line-height:1.15; background:var(--cyan-deep); color:var(--text-strong); border:none; box-shadow:0 4px 12px rgba(var(--cyan-rgb), 0.3);">🖨️</button>` : ''}
                     ${!isDetail ? `<button onclick="window.openAuditModal()" class="btn" title="Auditar WMS: cruza lo que dice la tarea contra lo que dice el WMS" style="width:auto; padding:6px 12px; font-size:0.7rem; background:var(--cyan-deep); color:var(--text-strong); font-weight:800; border:none; box-shadow:0 4px 12px rgba(var(--cyan-deep-rgb), 0.3); margin-left:5px;">🎯 WMS</button>` : ''}
                 </div>
 
@@ -34455,7 +34455,7 @@ window.showCellModal = function(htmlContent) {
                         background:${on ? 'rgba(var(--primary2-rgb), 0.14)' : 'transparent'}; border:none;
                         border-bottom:2px solid ${on ? 'var(--brand-light)' : 'transparent'};">
                         <div style="color:${on ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.55)'}; font-weight:900; font-size:0.8rem; letter-spacing:0.5px; text-transform:uppercase;">${v.icono} ${v.label}</div>
-                        <div style="color:${on ? 'rgba(199,210,254,0.75)' : 'rgba(var(--ink-rgb), 0.25)'}; font-size:0.63rem; margin-top:2px;">${v.sub}</div>
+                        <div style="color:${on ? 'rgba(var(--brand-pale-rgb), 0.75)' : 'rgba(var(--ink-rgb), 0.25)'}; font-size:0.63rem; margin-top:2px;">${v.sub}</div>
                     </button>`;
                 }).join('');
 
@@ -34655,7 +34655,7 @@ window.showCellModal = function(htmlContent) {
                     cuerpo = `
                     <table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:var(--text-pale);">
                         <thead style="background:rgba(var(--shadow-rgb), 0.55);">
-                            <tr style="color:rgba(103,232,249,0.85); text-transform:uppercase; font-size:0.64rem; letter-spacing:0.06em; border-bottom:2px solid rgba(var(--cyan-rgb), 0.2);">
+                            <tr style="color:rgba(var(--cyan-rgb), 0.85); text-transform:uppercase; font-size:0.64rem; letter-spacing:0.06em; border-bottom:2px solid rgba(var(--cyan-rgb), 0.2);">
                                 ${th('Categoría', 'left')}${th('Tareas')}${th('Grupos')}${th('Unidades')}${th('% del Volumen')}${th('Horas')}${th('U/H Real')}${th('Meta U/H')}${th('Desviación')}${th('Cumplimiento')}${th('Origen Meta')}
                             </tr>
                         </thead>
@@ -35178,7 +35178,7 @@ window.showCellModal = function(htmlContent) {
                                     return `
                                         <tr style="border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--bg-dark);">
                                             <td style="padding:6px 4px; color:var(--text-strong); font-weight:700; width:70px; white-space:nowrap;">${displayDate}</td>
-                                            <td style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;"><span style="background:${row.turno === 'NOCHE' ? 'rgba(var(--cyan-neon-rgb), 0.2)' : 'rgba(var(--yellow-rgb), 0.2)'}; color:${row.turno === 'NOCHE' ? 'var(--cyan-neon)' : '#fef08a'}; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:800;">${row.turno}</span></td>
+                                            <td style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;"><span style="background:${row.turno === 'NOCHE' ? 'rgba(var(--cyan-neon-rgb), 0.2)' : 'rgba(var(--yellow-rgb), 0.2)'}; color:${row.turno === 'NOCHE' ? 'var(--cyan-neon)' : 'var(--warning-pale)'}; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:800;">${row.turno}</span></td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:800; color:var(--text-strong);">${row.operators.size}</td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:var(--text-strong);">${row.totalQty.toLocaleString()}</td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:var(--cyan-neon);">${row.taskCount}</td>
@@ -36068,7 +36068,7 @@ window.showCellModal = function(htmlContent) {
                 <button id="audBtnFiltro" onclick="window.__audToggleFiltro()" style="background:rgba(var(--ink-rgb), 0.06); border:1px solid rgba(var(--ink-rgb), 0.15); color:var(--text-strong); padding:6px 14px; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">Ver solo diferencias</button>
                 <div style="display:flex; gap:10px;">
                     <button id="audBtnVolver" style="background:rgba(var(--ink-rgb), 0.06); border:1px solid rgba(var(--ink-rgb), 0.15); color:var(--text-strong); padding:6px 14px; border-radius:8px; font-size:0.7rem; font-weight:800; cursor:pointer;">Auditar con otro archivo</button>
-                    <button id="btnDownloadAudit" style="background:var(--primary); color:var(--text-strong); font-weight:800; border:none; padding:6px 18px; font-size:0.7rem; border-radius:8px; cursor:pointer;">Descargar Excel</button>
+                    <button id="btnDownloadAudit" style="background:var(--primary); color:var(--on-primary); font-weight:800; border:none; padding:6px 18px; font-size:0.7rem; border-radius:8px; cursor:pointer;">Descargar Excel</button>
                 </div>
             </div>
 
@@ -36427,7 +36427,7 @@ window.showCellModal = function(htmlContent) {
 
                 <div style="display:flex; gap:10px; justify-content:flex-end;">
                     <button id="p_back" class="btn" style="background:rgba(var(--ink-rgb), 0.1); color:var(--text-strong); border:none; padding:0.6rem 1.2rem; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Volver</button>
-                    <button id="p_confirm" class="btn" style="background:var(--success); color:var(--text-strong); border:none; padding:0.6rem 1.2rem; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Confirmar y Finalizar</button>
+                    <button id="p_confirm" class="btn" style="background:var(--success); color:var(--on-primary); border:none; padding:0.6rem 1.2rem; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Confirmar y Finalizar</button>
                 </div>
             </div>
         `;
@@ -37057,7 +37057,7 @@ window.showCellModal = function(htmlContent) {
                 }).join('');
             }
 
-            window.__kpiCharts.push(new Chart(cvTrend, {
+            window.__kpiCharts.push(new Chart(cvTrend, resolverColoresChart({
                 type: 'bar',
                 data: { labels: etiquetasX, datasets },
                 options: {
@@ -37074,7 +37074,7 @@ window.showCellModal = function(htmlContent) {
                         x: { stacked: apilado, grid: { display: false }, border: { display: false }, ticks: { color: ejeColor, font: { size: 10 } } }
                     }
                 }
-            }));
+            })));
         }
 
     }

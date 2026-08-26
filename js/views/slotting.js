@@ -777,7 +777,7 @@ export const montarSlotting = (container, OPC = {}) => {
   const CSS_PAPEL = `
     @page { size: A4 portrait; margin: 0; }
     * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    html, body { margin: 0; padding: 0; background: #58585b; }
+    html, body { margin: 0; padding: 0; background: var(--text-dim); }
     body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: var(--on-accent); }
     .pg { width: 210mm; height: 297mm; padding: 9mm 7mm; background: var(--text-strong);
           margin: 0 auto 6mm; position: relative; overflow: hidden; }
@@ -788,15 +788,15 @@ export const montarSlotting = (container, OPC = {}) => {
     table { width: 100%; border-collapse: collapse; }
     .firmas { margin-top: 3mm; font-size: 10.5pt; }
     .firmas td { border: 1px solid #888780; height: 10mm; padding: 0 2mm; }
-    .firmas .rot { background: #F1EFE8; font-weight: 400; white-space: nowrap; }
+    .firmas .rot { background: var(--text-pale); font-weight: 400; white-space: nowrap; }
     .det { margin-top: 3mm; }
     .det th { border: 1px solid #888780; height: 7mm; text-align: center;
-              font-size: 10.5pt; font-weight: 700; background: #F1EFE8; }
+              font-size: 10.5pt; font-weight: 700; background: var(--text-pale); }
     .det td { border: 1px solid #888780; height: 8.5mm; text-align: center;
               padding: 0 1mm; font-size: 12pt; }
     .det td.b { font-weight: 700; }
     .det td.t { font-weight: 700; font-size: 13pt; }
-    .det td.dest { background: #F1EFE8; font-weight: 700; font-size: 13pt; }
+    .det td.dest { background: var(--text-pale); font-weight: 700; font-size: 13pt; }
     .det tr.tot td { background: #E5E3DC; font-weight: 700; height: 7.5mm; font-size: 11pt; }
     .det tr.tt td { background: var(--panel-alt); color: var(--text-strong); font-weight: 700; height: 8mm; font-size: 12pt; }
     .banda th { background: var(--panel-alt); color: var(--text-strong); font-weight: 700; text-align: left;

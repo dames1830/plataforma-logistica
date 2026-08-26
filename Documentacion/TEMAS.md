@@ -82,7 +82,15 @@ Cuatro sitios siguen con el color escrito a mano, a propósito. En todos ellos
 | **Paletas categóricas** | `PALETA_MARCAS` y compañía distinguen marcas. Si se aplastaran a un token quedarían indistinguibles. |
 
 **Chart.js es el caso especial.** También necesita un color de verdad, pero ahí
-sí queríamos que siguiera el tema. Se resuelve al dibujar:
+sí queríamos que siguiera el tema. Cada `new Chart(...)` va envuelto en
+`resolverColoresChart(...)`, que recorre el config **entero** —datasets,
+escalas, leyenda, tooltip— y cambia cualquier `var(--x)` por su color real.
+
+No alcanza con revisar lo de adentro del `new Chart(...)`: los datasets se arman
+*antes*, en variables sueltas, y el color entra por ahí. Pasó exactamente eso y
+el gráfico de rendimiento salió con el relleno **negro** sobre fondo blanco.
+
+Para casos sueltos siguen `colorTema('--x')` y `veloTema(alfa)`:
 
 ```js
 ticks: { color: colorTema('--text-muted') }   // devuelve "#605E5C" en pbi
@@ -94,7 +102,7 @@ Los gráficos toman los colores nuevos en cuanto la pantalla se vuelve a dibujar
 ### Fuera de alcance
 
 Los **reportes públicos** (`reportes.html`, `reportes_publicos.js`,
-`public_layout_activo.js`, `marcas.js`) no tienen tema. Se abren sin sesión, ni
+`public_layout_activo.js`) no tienen tema. Se abren sin sesión, ni
 siquiera cargan `main.css` y ya son claros: son un producto aparte.
 
 ---
@@ -123,6 +131,22 @@ for r,_,fs in os.walk('.'):
 print('sin definir:', sorted(u-d) or 'ninguna')"
 ```
 
+### El caso de `marcas.js`
+
+Trae **dos** juegos de estilos: `TEMA_OSCURO` y `TEMA_CLARO`. La plataforma usa
+el oscuro y los reportes públicos el claro — cada uno lo usa **uno solo**, así
+que `TEMA_OSCURO` sí lleva tokens y sigue los cuatro temas. `TEMA_CLARO` se
+queda con colores fijos porque los reportes públicos ni cargan `temas.css`.
+
+Antes de eso el reporte de Marcas salía **negro dentro de una pantalla blanca**:
+sus filas tenían `background:#000000` escrito a mano.
+
+### La hoja impresa no lleva tema
+
+Los bloques `@media print`, todo lo que mida en `mm` o `pt`, y las clases
+`.pie` / `.firmas` / `.det` / `.nota` conservan su color fijo. El operario
+trabaja con papel blanco y negro: ahí el tema no pinta nada.
+
 ---
 
 ## Reglas de color al elegir valores
@@ -138,7 +162,22 @@ El amarillo `#D9B300` de Power BI da 2,0:1 sobre blanco y el mínimo legible es
 
 **`--on-accent` y `--on-primary`** son el texto que va *encima* de un relleno de
 color. En los temas oscuros el acento es brillante y va texto negro; en los
-claros el acento es oscuro y va texto blanco.
+claros el acento es oscuro y va texto blanco. **Nunca poner `--text-strong`
+sobre un fondo de acento:** en el tema negro `--primary` es blanco y el botón
+quedaba blanco sobre blanco, invisible.
+
+**Los tríos `-rgb` llevan el color LEGIBLE, no el vivo.** Un trío se usa igual
+para un velo de fondo que para texto, y muchas cabeceras pintan el texto con
+opacidad (`rgba(var(--brand-pale-rgb), 0.85)`), lo que *lava* el color: con el
+azul vivo salía celeste sobre gris (2,3:1). Con el azul profundo del catálogo
+aguanta cualquier opacidad (7,5:1). El color vivo vive solo en `--sem-ok` /
+`--sem-warn` / `--sem-bad`, que son rellenos chicos.
+
+**`--shadow-rgb` en los temas claros es un gris claro, no negro.** Suena raro,
+pero `rgba(0,0,0,a)` se usaba para dos cosas: sombras y fondos oscuros. Si el
+trío fuera oscuro, una cabecera de tabla con `rgba(0,0,0,0.55)` quedaría gris
+medio y el texto de encima no se leería. Ganan los fondos; las sombras quedan
+suaves, que es como se ve Power BI.
 
 Todos los valores de los cuatro temas están comprobados con la medida de
 contraste (WCAG) para texto chico sobre su propio panel.

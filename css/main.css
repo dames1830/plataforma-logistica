@@ -249,7 +249,7 @@ select option:hover {
 
 /* Botón Píldora Premium */
 .btn-pill {
-  background: linear-gradient(135deg, var(--sky-deep) 0%, #2563eb 100%) !important;
+  background: linear-gradient(135deg, var(--sky-deep) 0%, var(--blue) 100%) !important;
   color: var(--text-strong) !important;
   border: none !important;
   padding: 0.95rem !important;
