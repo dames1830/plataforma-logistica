@@ -41,9 +41,9 @@
  */
 
 const CSS = `
-#sss { --sss-rosa:#f472b6; --sss-ambar:#fbbf24; --sss-rojo:#f87171;
-       --sss-azul:#60a5fa; --sss-lila:#a78bfa; --sss-verde:#34d399;
-       --sss-gris:#94a3b8; --sss-apagado:#475569; }
+#sss { --sss-rosa:var(--pink-soft); --sss-ambar:var(--warning-soft); --sss-rojo:var(--danger-soft);
+       --sss-azul:var(--blue-mid); --sss-lila:var(--violet-soft); --sss-verde:var(--success-mid);
+       --sss-gris:var(--text-muted); --sss-apagado:var(--text-faint); }
 #sss * { box-sizing:border-box; }
 /* 1.500 y no los 1.180 de siempre: el cuadro de arriba necesita 1.219 px por sus
    catorce columnas, y a 1.180 la última —Pedido más antiguo, que es por la que se
@@ -51,31 +51,31 @@ const CSS = `
 #sss .wrap { max-width:1500px; margin:0 auto; }
 #sss .cab { display:flex; align-items:center; gap:14px; flex-wrap:wrap;
             padding-bottom:0.9rem; margin-bottom:1.2rem;
-            border-bottom:1px solid rgba(255,255,255,0.05); }
+            border-bottom:1px solid rgba(var(--ink-rgb), 0.05); }
 #sss h3.tit { font-size:1rem; font-weight:800; letter-spacing:0.4px; margin:0;
               color:var(--text-main); }
 #sss .sello { font-size:0.62rem; font-weight:800; letter-spacing:1px;
               text-transform:uppercase; color:var(--sss-gris);
-              border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:3px 8px; }
+              border:1px solid rgba(var(--ink-rgb), 0.12); border-radius:6px; padding:3px 8px; }
 #sss .tarjetas { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:1.2rem; }
-#sss .t { flex:1; min-width:158px; background:rgba(255,255,255,0.03);
-          border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:0.9rem 1.1rem; }
+#sss .t { flex:1; min-width:158px; background:rgba(var(--ink-rgb), 0.03);
+          border:1px solid rgba(var(--ink-rgb), 0.07); border-radius:12px; padding:0.9rem 1.1rem; }
 #sss .t .r { font-size:0.62rem; letter-spacing:0.8px; text-transform:uppercase;
              color:var(--text-muted); margin-bottom:0.35rem; }
 #sss .t .v { font-size:1.6rem; font-weight:800; line-height:1.1; color:var(--text-main); }
-#sss .t .p { font-size:0.7rem; color:#64748b; margin-top:0.3rem; }
+#sss .t .p { font-size:0.7rem; color:var(--text-dim); margin-top:0.3rem; }
 #sss h4.sec { font-size:0.72rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;
               margin:1.6rem 0 0.6rem; }
-#sss h4.sec span { font-weight:400; text-transform:none; letter-spacing:0; color:#64748b;
+#sss h4.sec span { font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-dim);
                    font-size:0.72rem; margin-left:0.5rem; }
-#sss table { width:100%; border-collapse:collapse; font-size:0.78rem; color:#d1d5db; }
-#sss thead tr { background:#1e293b; }
+#sss table { width:100%; border-collapse:collapse; font-size:0.78rem; color:var(--text-grey); }
+#sss thead tr { background:var(--panel-solid); }
 /* El relleno lateral se achica solo cuando la pantalla aprieta: catorce columnas
    por dos costados son 66 px que no valen una barra de scroll. */
 #sss th { padding:0.55rem clamp(0.3rem, 0.55vw, 0.7rem); font-weight:700; color:var(--text-muted);
           font-size:0.66rem; letter-spacing:0.4px; text-transform:uppercase; white-space:nowrap; }
 #sss td { padding:0.5rem clamp(0.3rem, 0.55vw, 0.7rem);
-          border-bottom:1px solid rgba(255,255,255,0.04); white-space:nowrap; }
+          border-bottom:1px solid rgba(var(--ink-rgb), 0.04); white-space:nowrap; }
 /* EL MODELO ES LA VÁLVULA. Es la única columna larga —252 px de los 1.219 que pide
    el cuadro—, así que es la que cede cuando la pantalla no da.
    CEDE CORTÁNDOSE, NO PARTIÉNDOSE: partido en tres renglones estiraba la fila entera
@@ -85,11 +85,11 @@ const CSS = `
 #sss td.mod { white-space:nowrap; }
 #sss td.mod > span { display:block; max-width:15rem; overflow:hidden;
                      text-overflow:ellipsis; white-space:nowrap; }
-#sss tbody tr:nth-child(even) { background:rgba(255,255,255,0.02); }
+#sss tbody tr:nth-child(even) { background:rgba(var(--ink-rgb), 0.02); }
 #sss .der { text-align:right; } #sss .cen { text-align:center; }
 #sss th.ord { cursor:pointer; user-select:none; }
-#sss th.ord:hover { color:#f8fafc; background:rgba(255,255,255,0.05); }
-#sss .pie { margin-top:1rem; font-size:0.72rem; color:#64748b; line-height:1.8; }
+#sss th.ord:hover { color:var(--text-main); background:rgba(var(--ink-rgb), 0.05); }
+#sss .pie { margin-top:1rem; font-size:0.72rem; color:var(--text-dim); line-height:1.8; }
 `;
 
 const esc = (s) => String(s == null ? '' : s)
@@ -196,7 +196,7 @@ export const montarSinSalida = function (RAIZ, OPC) {
     <span style="margin-left:auto; font-size:0.7rem; color:var(--text-muted);">
       al ${ddmm(P.fecha)} &middot; ${esc(P.hora || '')}
     </span>
-    ${OPC.alExportar ? `<button id="sss_xls" class="btn" style="width:auto; background:#10b981;
+    ${OPC.alExportar ? `<button id="sss_xls" class="btn" style="width:auto; background:var(--success-alt);
         padding:0.45rem 0.9rem; font-size:0.72rem; font-weight:800; border-radius:8px;">
         📥 EXPORTAR</button>` : ''}
   </div>
@@ -301,7 +301,7 @@ function montarTabla(RAIZ, id, datos, cols, celdas, iniCol) {
         cabe.innerHTML = cols.map((c, i) => {
             const act = i === orden.i;
             return '<th class="ord ' + (c.a || '') + '" data-i="' + i + '"'
-                + (act ? ' style="color:#f8fafc;"' : '') + '>' + esc(c.r)
+                + (act ? ' style="color:var(--text-main);"' : '') + '>' + esc(c.r)
                 + '<span style="margin-left:4px; opacity:' + (act ? '1' : '.25') + ';">'
                 + (act ? (orden.desc ? '▼' : '▲') : '▼') + '</span></th>';
         }).join('');

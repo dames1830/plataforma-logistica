@@ -1,4 +1,4 @@
-import { login as authLogin } from '../services_v245/auth.js?v=29.0380';
+import { login as authLogin } from '../services_v245/auth.js?v=29.0381';
 
 export const renderLogin = (container, onLoginSuccess) => {
   // Establecer clase para el diseño degradado premium claro (inspirado en la referencia)
@@ -10,7 +10,7 @@ export const renderLogin = (container, onLoginSuccess) => {
       
       <!-- SVG Vectorial de los 3 Avatares Superpuestos con Recorte 3D (Máxima Nitidez) -->
       <div style="display: flex; justify-content: center; margin-bottom: 2.25rem;">
-        <svg viewBox="0 0 120 100" class="login-avatar-svg" style="width: 120px; height: 100px; color: #0ea5e9; fill: currentColor;">
+        <svg viewBox="0 0 120 100" class="login-avatar-svg" style="width: 120px; height: 100px; color: var(--sky-deep); fill: currentColor;">
           <!-- Avatar Izquierda -->
           <circle cx="32" cy="48" r="14" />
           <path d="M8,80 C8,66 20,60 32,60 C44,60 56,66 56,80 Z" />
@@ -20,8 +20,8 @@ export const renderLogin = (container, onLoginSuccess) => {
           <path d="M64,80 C64,66 76,60 88,60 C100,60 112,66 112,80 Z" />
           
           <!-- Avatar Centro (Con contorno para lograr el efecto 3D exacto de la referencia) -->
-          <circle cx="60" cy="36" r="18" stroke="var(--avatar-stroke, #ffffff)" stroke-width="4" stroke-linejoin="round" />
-          <path d="M28,80 C28,62 42,56 60,56 C78,56 92,62 92,80 Z" stroke="var(--avatar-stroke, #ffffff)" stroke-width="4" stroke-linejoin="round" />
+          <circle cx="60" cy="36" r="18" stroke="var(--avatar-stroke, var(--text-strong))" stroke-width="4" stroke-linejoin="round" />
+          <path d="M28,80 C28,62 42,56 60,56 C78,56 92,62 92,80 Z" stroke="var(--avatar-stroke, var(--text-strong))" stroke-width="4" stroke-linejoin="round" />
         </svg>
       </div>
 
@@ -60,8 +60,8 @@ export const renderLogin = (container, onLoginSuccess) => {
         <button type="submit" class="btn-pill" id="loginBtn">LOGIN</button>
       
       </form>
-      <div style="text-align: center; margin-top: 1.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 600; letter-spacing: 0.05em;">
-        SYSTEM BUILD: v29.0380 | SECURE SYNC
+      <div style="text-align: center; margin-top: 1.5rem; font-size: 0.65rem; color: rgba(var(--ink-rgb), 0.3); font-weight: 600; letter-spacing: 0.05em;">
+        SYSTEM BUILD: v29.0381 | SECURE SYNC
       </div>
     </div>
   `;
@@ -92,8 +92,8 @@ export const renderLogin = (container, onLoginSuccess) => {
 
     if (result.success) {
       btn.innerHTML = '¡ACCESO CONCEDIDO! 🚀';
-      btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
-      btn.style.boxShadow = '0 4px 15px rgba(34, 197, 94, 0.4)';
+      btn.style.background = 'linear-gradient(135deg, var(--success), #16a34a)';
+      btn.style.boxShadow = '0 4px 15px rgba(var(--success-rgb), 0.4)';
       
       // Animación premium y desvanecimiento de salida conjunta
       setTimeout(() => {

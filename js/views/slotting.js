@@ -100,31 +100,31 @@ export const montarSlotting = (container, OPC = {}) => {
 
     container.innerHTML = `
       <div id="slt">
-        <div style="background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px;
+        <div style="background:rgba(var(--card-rgb), 0.35); border:1px solid var(--border); border-radius:12px;
                     padding:1.1rem 1.4rem; margin-bottom:1rem;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap;">
             <div>
               <div style="display:flex; align-items:baseline; gap:0.6rem; flex-wrap:wrap;">
-                <span style="font-size:2rem; font-weight:800; color:#fff; line-height:1;">${por.Finalizado}</span>
+                <span style="font-size:2rem; font-weight:800; color:var(--text-strong); line-height:1;">${por.Finalizado}</span>
                 <span style="font-size:1rem; color:var(--text-muted);">de ${lista.length} tareas hechas</span>
-                <span style="font-size:1.1rem; font-weight:800; color:#22c55e;">${avance}%</span>
+                <span style="font-size:1.1rem; font-weight:800; color:var(--success);">${avance}%</span>
               </div>
               <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">
-                ${cuerpos} cuerpos por limpiar · <b style="color:#94a3b8;">${num(pares)} pares</b> por sacar ·
-                <b style="color:#22c55e;">${liberados} cuerpos liberados</b>
+                ${cuerpos} cuerpos por limpiar · <b style="color:var(--text-muted);">${num(pares)} pares</b> por sacar ·
+                <b style="color:var(--success);">${liberados} cuerpos liberados</b>
               </div>
             </div>
             <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
               <div style="display:flex; align-items:center; gap:6px;">
                 <span style="font-size:0.66rem; color:var(--text-muted); font-weight:800; letter-spacing:0.06em;">DE:</span>
-                <input type="date" id="slt_desde" value="${esc(desde)}" style="background:rgba(255,255,255,0.04);
-                       border:1px solid var(--border); color:#fff; border-radius:7px; padding:0.42rem 0.6rem; font-size:0.75rem;">
+                <input type="date" id="slt_desde" value="${esc(desde)}" style="background:rgba(var(--ink-rgb), 0.04);
+                       border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.42rem 0.6rem; font-size:0.75rem;">
                 <span style="font-size:0.66rem; color:var(--text-muted); font-weight:800; letter-spacing:0.06em;">HASTA:</span>
-                <input type="date" id="slt_hasta" value="${esc(hasta)}" style="background:rgba(255,255,255,0.04);
-                       border:1px solid var(--border); color:#fff; border-radius:7px; padding:0.42rem 0.6rem; font-size:0.75rem;">
+                <input type="date" id="slt_hasta" value="${esc(hasta)}" style="background:rgba(var(--ink-rgb), 0.04);
+                       border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.42rem 0.6rem; font-size:0.75rem;">
               </div>
-              ${lista.length ? `<button id="slt_imprimir" class="btn" style="background:rgba(255,255,255,0.06);
-                       border:1px solid var(--border); color:#e2e8f0; width:auto; padding:0.5rem 1.1rem;
+              ${lista.length ? `<button id="slt_imprimir" class="btn" style="background:rgba(var(--ink-rgb), 0.06);
+                       border:1px solid var(--border); color:var(--text-pale); width:auto; padding:0.5rem 1.1rem;
                        border-radius:8px; font-size:0.74rem; font-weight:800;">🖨️ IMPRIMIR</button>` : ''}
               <button id="slt_procesar" class="btn" style="background:var(--primary); width:auto;
                       padding:0.5rem 1.1rem; border-radius:8px; font-size:0.74rem; font-weight:800;">
@@ -135,11 +135,11 @@ export const montarSlotting = (container, OPC = {}) => {
 
         ${cartelTrabados(lista)}
 
-        <div style="background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px;
+        <div style="background:rgba(var(--card-rgb), 0.35); border:1px solid var(--border); border-radius:12px;
                     padding:0.4rem 0.6rem; overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:0.78rem; min-width:1150px;">
             <thead><tr style="color:var(--text-muted); text-transform:uppercase; font-size:0.68rem;
-                       font-weight:800; letter-spacing:0.05em; border-bottom:2px solid rgba(79,70,229,0.35);">
+                       font-weight:800; letter-spacing:0.05em; border-bottom:2px solid rgba(var(--primary-rgb), 0.35);">
               <th style="padding:7px 9px; text-align:left;">Fecha</th>
               <th style="padding:7px 9px; text-align:left;">Tarea</th>
               <th style="padding:7px 9px; text-align:center;">Pares</th>
@@ -176,14 +176,14 @@ export const montarSlotting = (container, OPC = {}) => {
     }));
     const pares = [...vistos.values()].reduce((a, b) => a + b, 0);
     return `
-      <div style="display:flex; align-items:center; gap:10px; background:rgba(239,68,68,0.13);
-                  border:1px solid rgba(239,68,68,0.45); border-radius:9px; padding:0.6rem 0.85rem;
+      <div style="display:flex; align-items:center; gap:10px; background:rgba(var(--danger-rgb), 0.13);
+                  border:1px solid rgba(var(--danger-rgb), 0.45); border-radius:9px; padding:0.6rem 0.85rem;
                   margin-bottom:0.8rem;">
         <span style="font-size:1.1rem;">🔴</span>
         <div style="font-size:0.82rem; line-height:1.5;">
-          <b style="color:#ef4444; font-weight:900; letter-spacing:0.04em;">${pri.length} TAREA${
+          <b style="color:var(--danger); font-weight:900; letter-spacing:0.04em;">${pri.length} TAREA${
             pri.length > 1 ? 'S' : ''} CON PRIORIDAD</b>
-          <span style="color:#cbd5e1;"> · almacenaje dejó ${num(pares)} pares parados en el buffer
+          <span style="color:var(--text-soft);"> · almacenaje dejó ${num(pares)} pares parados en el buffer
           esperando estos cuerpos. ${pri.length > 1 ? 'Imprimilas' : 'Imprimila'} y ${
             pri.length > 1 ? 'hacelas' : 'hacela'} primero.</span>
         </div>
@@ -220,29 +220,29 @@ export const montarSlotting = (container, OPC = {}) => {
     if (real !== null) {
       const ok = real <= esperado;
       objetivo = ok ? 'CUMPLIÓ' : 'NO CUMPLIÓ';
-      color = ok ? '#22c55e' : '#ef4444';
+      color = ok ? 'var(--success)' : 'var(--danger)';
       ayuda = `Tardó ${real} min y se esperaban ${esperado}`;
     }
     return `
       <tr class="slt-fila" data-f="${esc(t.fecha)}" data-n="${esc(t.n)}"
-          style="border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer;${t.prioridad
-            ? ' background:rgba(239,68,68,0.10); box-shadow:inset 4px 0 0 #ef4444;' : ''}">
+          style="border-bottom:1px solid rgba(var(--ink-rgb), 0.04); cursor:pointer;${t.prioridad
+            ? ' background:rgba(var(--danger-rgb), 0.10); box-shadow:inset 4px 0 0 var(--danger);' : ''}">
         <td style="padding:10px 9px;">${esc(String(t.fecha).split('-').reverse().join('/'))}</td>
-        <td style="padding:10px 9px; color:#fff; font-weight:700; white-space:nowrap;">Slot ${esc(t.n)}${
+        <td style="padding:10px 9px; color:var(--text-strong); font-weight:700; white-space:nowrap;">Slot ${esc(t.n)}${
           /* AL COSTADO Y EN LA MISMA LÍNEA. Daniel, 15-ago-2026: la fila no puede crecer a dos
              renglones ni repetir el aviso en la columna Estado — con verlo junto al número de
              tarea alcanza. */
-          t.prioridad ? `<span style="color:#ef4444; font-weight:900; font-size:0.72rem;
+          t.prioridad ? `<span style="color:var(--danger); font-weight:900; font-size:0.72rem;
              letter-spacing:0.08em; margin-left:9px;"
              title="${esc(destrabaTexto(t))}">🔴 PRIORIDAD</span>` : ''}</td>
         <td style="padding:10px 9px; text-align:center;">${num(t.pares)}</td>
         <td style="padding:10px 9px; text-align:center;">${cuerposDe(t)}</td>
         <td style="padding:10px 9px;">${esc(t.marca || '---')}</td>
-        <td style="padding:10px 9px; color:#fff; font-weight:800; background:rgba(79,70,229,0.06);">${esc(t.u1 || '---')}</td>
-        <td style="padding:10px 9px; color:#fff; font-weight:800; opacity:0.8;">${esc(t.u2 || '---')}</td>
+        <td style="padding:10px 9px; color:var(--text-strong); font-weight:800; background:rgba(var(--primary-rgb), 0.06);">${esc(t.u1 || '---')}</td>
+        <td style="padding:10px 9px; color:var(--text-strong); font-weight:800; opacity:0.8;">${esc(t.u2 || '---')}</td>
         <td style="padding:10px 9px; font-size:0.75rem; opacity:0.6;">${hora(t.inicio)}</td>
         <td style="padding:10px 9px; font-size:0.75rem; opacity:0.6;">${hora(t.termino)}</td>
-        <td style="padding:10px 9px; text-align:center; color:#fff; font-weight:900; font-size:0.95rem;">${prod === null ? '---' : num(prod)}</td>
+        <td style="padding:10px 9px; text-align:center; color:var(--text-strong); font-weight:900; font-size:0.95rem;">${prod === null ? '---' : num(prod)}</td>
         <td style="padding:10px 9px; text-align:center; font-size:0.7rem;" title="${esc(ayuda)}">
           <span style="color:${color}; font-weight:900;">${objetivo}</span></td>
         <td style="padding:10px 9px; text-align:center;">
@@ -251,14 +251,14 @@ export const montarSlotting = (container, OPC = {}) => {
           ${cerrada
             ? `<span title="Jornada cerrada: la tarea ya no se puede editar." style="font-size:1.05rem; opacity:0.45; cursor:help;">🔒</span>`
             : `<button class="slt-horas" data-f="${esc(t.fecha)}" data-n="${esc(t.n)}" title="Editar horas"
-                       style="background:none; border:none; cursor:pointer; font-size:1.05rem; color:#facc15;">✏️</button>
+                       style="background:none; border:none; cursor:pointer; font-size:1.05rem; color:var(--yellow);">✏️</button>
                <button class="slt-reiniciar" data-f="${esc(t.fecha)}" data-n="${esc(t.n)}" title="Reiniciar tarea"
-                       style="background:none; border:none; cursor:pointer; font-size:1.05rem; color:#60a5fa;">🔄</button>
+                       style="background:none; border:none; cursor:pointer; font-size:1.05rem; color:var(--blue-mid);">🔄</button>
                ${(est !== 'Finalizado' || OPC.puedeBorrarFinalizadas)
                  ? `<button class="slt-borrar" data-f="${esc(t.fecha)}" data-n="${esc(t.n)}" title="Eliminar tarea"
-                            style="background:none; border:none; cursor:pointer; font-size:1.05rem; color:#ef4444;">🗑️</button>`
+                            style="background:none; border:none; cursor:pointer; font-size:1.05rem; color:var(--danger);">🗑️</button>`
                  : `<button disabled title="Una tarea finalizada solo la puede borrar un administrador"
-                            style="background:none; border:none; cursor:not-allowed; font-size:1.05rem; color:#ef4444; opacity:0.3;">🗑️</button>`}`}
+                            style="background:none; border:none; cursor:not-allowed; font-size:1.05rem; color:var(--danger); opacity:0.3;">🗑️</button>`}`}
         </td>
       </tr>`;
   }
@@ -286,28 +286,28 @@ export const montarSlotting = (container, OPC = {}) => {
 
     const modal = document.createElement('div');
     modal.id = 'slt_modal';
-    modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8);'
+    modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--shadow-rgb), 0.8);'
                 + 'z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);';
     modal.innerHTML = `
-      <div class="glass-panel" style="width:400px; padding:2rem; border:1px solid #facc15; border-radius:16px;">
-        <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; text-align:center;">
-          Editar horas: <span style="color:#facc15;">Slot ${esc(t.n)}</span></h3>
+      <div class="glass-panel" style="width:400px; padding:2rem; border:1px solid var(--yellow); border-radius:16px;">
+        <h3 style="margin:0 0 1.5rem 0; color:var(--text-strong); font-size:1.1rem; text-align:center;">
+          Editar horas: <span style="color:var(--yellow);">Slot ${esc(t.n)}</span></h3>
         <div style="display:flex; flex-direction:column; gap:1.1rem;">
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Inicio</label>
             <input type="datetime-local" id="slt_ini" value="${paraInput(t.inicio)}"
-                   style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2);
-                   padding:0.7rem; border-radius:8px; color:#fff; font-weight:700; font-size:0.9rem;">
+                   style="width:100%; background:var(--bg-dark); border:1px solid rgba(var(--ink-rgb), 0.2);
+                   padding:0.7rem; border-radius:8px; color:var(--text-strong); font-weight:700; font-size:0.9rem;">
           </div>
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Término</label>
             <input type="datetime-local" id="slt_fin" value="${paraInput(t.termino)}"
-                   style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2);
-                   padding:0.7rem; border-radius:8px; color:#fff; font-weight:700; font-size:0.9rem;">
+                   style="width:100%; background:var(--bg-dark); border:1px solid rgba(var(--ink-rgb), 0.2);
+                   padding:0.7rem; border-radius:8px; color:var(--text-strong); font-weight:700; font-size:0.9rem;">
           </div>
           <div style="font-size:0.68rem; color:var(--text-muted); line-height:1.5;">
-            Dejando el término en blanco la tarea vuelve a <b style="color:#e2e8f0;">ASIGNADO</b>.
-            Con los dos puestos queda <b style="color:#e2e8f0;">FINALIZADO</b> y se recalcula la productividad.
+            Dejando el término en blanco la tarea vuelve a <b style="color:var(--text-pale);">ASIGNADO</b>.
+            Con los dos puestos queda <b style="color:var(--text-pale);">FINALIZADO</b> y se recalcula la productividad.
           </div>
           <div style="display:flex; gap:10px;">
             <button id="slt_guardarHoras" class="btn" style="flex:1; padding:0.8rem; font-size:0.75rem; font-weight:800;">GUARDAR</button>
@@ -381,22 +381,22 @@ export const montarSlotting = (container, OPC = {}) => {
 
     const modal = document.createElement('div');
     modal.id = 'slt_modal';
-    modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8);'
+    modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--shadow-rgb), 0.8);'
                 + 'z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);';
     modal.innerHTML = `
-      <div class="glass-panel" style="width:420px; padding:2rem; border:1px solid #ef4444; border-radius:16px;">
-        <h3 style="margin:0 0 1rem 0; color:#fff; font-size:1.1rem; text-align:center;">
-          ¿Eliminar la tarea <span style="color:#ef4444;">Slot ${esc(t.n)}</span>?</h3>
+      <div class="glass-panel" style="width:420px; padding:2rem; border:1px solid var(--danger); border-radius:16px;">
+        <h3 style="margin:0 0 1rem 0; color:var(--text-strong); font-size:1.1rem; text-align:center;">
+          ¿Eliminar la tarea <span style="color:var(--danger);">Slot ${esc(t.n)}</span>?</h3>
         <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.6; margin-bottom:1.3rem;">
-          Son <b style="color:#e2e8f0;">${num(t.pares)} pares</b> en
-          <b style="color:#e2e8f0;">${cuerposDe(t)} cuerpo${cuerposDe(t) === 1 ? '' : 's'}</b>.
+          Son <b style="color:var(--text-pale);">${num(t.pares)} pares</b> en
+          <b style="color:var(--text-pale);">${cuerposDe(t)} cuerpo${cuerposDe(t) === 1 ? '' : 's'}</b>.
           <br><br>Los cuerpos no se pierden: al volver a procesar el Slotting vuelven a salir,
           porque el barrido los encuentra de nuevo en el almacén.
         </div>
         <div style="display:flex; gap:10px;">
-          <button id="slt_confirmarBorrar" class="btn" style="flex:1; background:#ef4444; padding:0.8rem; font-size:0.75rem; font-weight:800;">ELIMINAR</button>
-          <button id="slt_cancelarBorrar" class="btn" style="flex:1; background:rgba(255,255,255,0.06);
-                  border:1px solid var(--border); color:#e2e8f0; padding:0.8rem; font-size:0.75rem; font-weight:800;">CANCELAR</button>
+          <button id="slt_confirmarBorrar" class="btn" style="flex:1; background:var(--danger); padding:0.8rem; font-size:0.75rem; font-weight:800;">ELIMINAR</button>
+          <button id="slt_cancelarBorrar" class="btn" style="flex:1; background:rgba(var(--ink-rgb), 0.06);
+                  border:1px solid var(--border); color:var(--text-pale); padding:0.8rem; font-size:0.75rem; font-weight:800;">CANCELAR</button>
         </div>
       </div>`;
     document.body.appendChild(modal);
@@ -475,35 +475,35 @@ export const montarSlotting = (container, OPC = {}) => {
 
     const modal = document.createElement('div');
     modal.id = 'slt_modal';
-    modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8);'
+    modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--shadow-rgb), 0.8);'
                 + 'z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);';
     modal.innerHTML = `
       <div class="glass-panel" style="width:380px; padding:2rem; border:1px solid var(--primary); border-radius:16px;">
-        <h3 style="margin:0 0 1.5rem 0; color:#fff; font-size:1.1rem; text-align:center;">
+        <h3 style="margin:0 0 1.5rem 0; color:var(--text-strong); font-size:1.1rem; text-align:center;">
           Asignar Tarea: <span style="color:var(--primary);">Slot ${esc(t.n)}</span></h3>
         <div style="display:flex; flex-direction:column; gap:1.2rem;">
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 1 (Obligatorio)</label>
-            <select id="slt_u1" style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2);
-                    padding:0.8rem; border-radius:8px; color:#fff; outline:none; font-weight:700; font-size:0.9rem;">
+            <select id="slt_u1" style="width:100%; background:var(--bg-dark); border:1px solid rgba(var(--ink-rgb), 0.2);
+                    padding:0.8rem; border-radius:8px; color:var(--text-strong); outline:none; font-weight:700; font-size:0.9rem;">
               <option value="">Seleccionar operario...</option>${opciones}
             </select>
           </div>
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">Usuario 2 (Opcional)</label>
-            <select id="slt_u2" style="width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.2);
-                    padding:0.8rem; border-radius:8px; color:#fff; outline:none; font-weight:700; font-size:0.9rem;">
+            <select id="slt_u2" style="width:100%; background:var(--bg-dark); border:1px solid rgba(var(--ink-rgb), 0.2);
+                    padding:0.8rem; border-radius:8px; color:var(--text-strong); outline:none; font-weight:700; font-size:0.9rem;">
               <option value="">Ninguno</option>${opciones}
             </select>
           </div>
           <div style="font-size:0.68rem; color:var(--text-muted); line-height:1.5;">
-            Con un operario la meta es <b style="color:#e2e8f0;">${num(svc.configActual().uphSolo)} pares/h</b>;
-            con dos, <b style="color:#e2e8f0;">${num(svc.configActual().uphGrupo)} pares/h</b>.
+            Con un operario la meta es <b style="color:var(--text-pale);">${num(svc.configActual().uphSolo)} pares/h</b>;
+            con dos, <b style="color:var(--text-pale);">${num(svc.configActual().uphGrupo)} pares/h</b>.
             Más ${svc.configActual().tiempoBase} minutos de recorrido.
           </div>
           <div style="margin-top:0.4rem; display:flex; gap:10px;">
             <button id="slt_asignar" class="btn" style="flex:1; padding:0.8rem; font-size:0.75rem; font-weight:800;">ASIGNAR E INICIAR</button>
-            ${est === 'Asignado' ? `<button id="slt_finalizar" class="btn" style="flex:1; background:#22c55e; padding:0.8rem; font-size:0.75rem; font-weight:800;">FINALIZAR</button>` : ''}
+            ${est === 'Asignado' ? `<button id="slt_finalizar" class="btn" style="flex:1; background:var(--success); padding:0.8rem; font-size:0.75rem; font-weight:800;">FINALIZAR</button>` : ''}
           </div>
           <button id="slt_cerrar" style="background:none; border:none; color:var(--text-muted);
                   cursor:pointer; font-size:0.7rem; margin-top:0.5rem; width:100%;">Cerrar sin cambios</button>
@@ -580,10 +580,10 @@ export const montarSlotting = (container, OPC = {}) => {
     const k = svc.kpi(cajon, desde, hasta);
     const c = svc.configActual();
     const tarjeta = (titulo, valor, pie, color) => `
-      <div style="background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px; padding:0.85rem 1rem;">
+      <div style="background:rgba(var(--card-rgb), 0.35); border:1px solid var(--border); border-radius:12px; padding:0.85rem 1rem;">
         <h4 style="margin:0; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.08em;
                    color:var(--text-muted); font-weight:800;">${titulo}</h4>
-        <div style="font-size:1.9rem; font-weight:900; color:${color || '#fff'}; line-height:1.15; margin-top:2px;">${valor}</div>
+        <div style="font-size:1.9rem; font-weight:900; color:${color || 'var(--text-strong)'}; line-height:1.15; margin-top:2px;">${valor}</div>
         <div style="font-size:0.68rem; color:var(--text-muted); margin-top:2px;">${pie}</div>
       </div>`;
 
@@ -591,20 +591,20 @@ export const montarSlotting = (container, OPC = {}) => {
     const barra = (etiqueta, valor, texto, col) => `
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:0.74rem;">
         <span style="width:120px; color:var(--text-muted);">${esc(etiqueta)}</span>
-        <div style="flex:1; height:14px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden;">
-          <div style="height:100%; width:${valor}%; background:${col || '#4f46e5'};"></div></div>
-        <b style="width:80px; text-align:right; color:#fff;">${texto}</b>
+        <div style="flex:1; height:14px; background:rgba(var(--ink-rgb), 0.05); border-radius:4px; overflow:hidden;">
+          <div style="height:100%; width:${valor}%; background:${col || 'var(--primary)'};"></div></div>
+        <b style="width:80px; text-align:right; color:var(--text-strong);">${texto}</b>
       </div>`;
 
     container.innerHTML = `
       <div id="slt">
         <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
           <span style="font-size:0.66rem; color:var(--text-muted); font-weight:800; letter-spacing:0.06em;">DE:</span>
-          <input type="date" id="slt_desde" value="${esc(desde)}" style="background:rgba(255,255,255,0.04);
-                 border:1px solid var(--border); color:#fff; border-radius:7px; padding:0.42rem 0.6rem; font-size:0.75rem;">
+          <input type="date" id="slt_desde" value="${esc(desde)}" style="background:rgba(var(--ink-rgb), 0.04);
+                 border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.42rem 0.6rem; font-size:0.75rem;">
           <span style="font-size:0.66rem; color:var(--text-muted); font-weight:800; letter-spacing:0.06em;">HASTA:</span>
-          <input type="date" id="slt_hasta" value="${esc(hasta)}" style="background:rgba(255,255,255,0.04);
-                 border:1px solid var(--border); color:#fff; border-radius:7px; padding:0.42rem 0.6rem; font-size:0.75rem;">
+          <input type="date" id="slt_hasta" value="${esc(hasta)}" style="background:rgba(var(--ink-rgb), 0.04);
+                 border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.42rem 0.6rem; font-size:0.75rem;">
           <span style="font-size:0.68rem; color:var(--text-muted); margin-left:0.6rem;">
             ${k.fechas.length} jornada${k.fechas.length === 1 ? '' : 's'} · las metas salen de Config. Slotting</span>
         </div>
@@ -621,12 +621,12 @@ export const montarSlotting = (container, OPC = {}) => {
           ${tarjeta('Cumplieron el objetivo', k.conTiempo ? `${k.cumplieron}<span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);"> / ${k.conTiempo}</span>` : '---',
                     'contra el tiempo esperado')}
           ${tarjeta('Cuerpos reincidentes', k.reincidentes,
-                    'se limpiaron y volvieron', k.reincidentes ? '#f59e0b' : '#fff')}
+                    'se limpiaron y volvieron', k.reincidentes ? 'var(--warning)' : 'var(--text-strong)')}
         </div>
 
-        <div style="background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px;
+        <div style="background:rgba(var(--card-rgb), 0.35); border:1px solid var(--border); border-radius:12px;
                     padding:1rem 1.2rem; margin-bottom:1rem;">
-          <h3 style="margin:0 0 0.8rem; font-size:0.78rem; color:#fff; letter-spacing:0.06em;
+          <h3 style="margin:0 0 0.8rem; font-size:0.78rem; color:var(--text-strong); letter-spacing:0.06em;
                      text-transform:uppercase; font-weight:800;">Quién limpió cuánto</h3>
           ${k.porPersona.length
             ? k.porPersona.map(p => barra(p.usuario, Math.round(p.cuerpos / maxCuerpos * 100),
@@ -649,8 +649,8 @@ export const montarSlotting = (container, OPC = {}) => {
         <label style="display:block; font-size:0.64rem; color:var(--text-muted); text-transform:uppercase;
                       font-weight:800; margin-bottom:5px;" title="${esc(ayuda || '')}">${etiqueta}</label>
         <div style="display:flex; align-items:center; gap:7px;">
-          <input type="number" id="${id}" value="${valor}" min="0" style="width:95px; background:rgba(255,255,255,0.04);
-                 border:1px solid var(--border); color:#fff; border-radius:7px; padding:0.55rem 0.7rem;
+          <input type="number" id="${id}" value="${valor}" min="0" style="width:95px; background:rgba(var(--ink-rgb), 0.04);
+                 border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.55rem 0.7rem;
                  font-weight:800; font-size:0.9rem;">
           <span style="font-size:0.68rem; color:var(--text-muted);">${sufijo}</span>
         </div>
@@ -658,9 +658,9 @@ export const montarSlotting = (container, OPC = {}) => {
 
     container.innerHTML = `
       <div id="slt">
-        <div style="background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px;
+        <div style="background:rgba(var(--card-rgb), 0.35); border:1px solid var(--border); border-radius:12px;
                     padding:1rem 1.2rem; margin-bottom:1rem;">
-          <h3 style="margin:0 0 0.8rem; font-size:0.78rem; color:#fff; letter-spacing:0.06em;
+          <h3 style="margin:0 0 0.8rem; font-size:0.78rem; color:var(--text-strong); letter-spacing:0.06em;
                      text-transform:uppercase; font-weight:800;">Meta de productividad</h3>
           <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-end;">
             ${campo('cfg_base', 'Tiempo mínimo por tarea', c.tiempoBase, 'minutos',
@@ -671,18 +671,18 @@ export const montarSlotting = (container, OPC = {}) => {
             ${campo('cfg_grupo', 'Pares por hora · 2 personas', c.uphGrupo, 'pares/h')}
           </div>
           <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem; line-height:1.6;
-                      background:rgba(79,70,229,0.08); border:1px solid rgba(79,70,229,0.25);
+                      background:rgba(var(--primary-rgb), 0.08); border:1px solid rgba(var(--primary-rgb), 0.25);
                       border-radius:8px; padding:0.7rem 0.9rem;">
-            <b style="color:#fff;">tiempo esperado = base + (cuerpos − 1) × extra + ( pares ÷ meta por hora ) × 60</b><br>
+            <b style="color:var(--text-strong);">tiempo esperado = base + (cuerpos − 1) × extra + ( pares ÷ meta por hora ) × 60</b><br>
             Los minutos de base son los que hacen que la meta no sea absurda: con 150 por hora y sin
             base, mover un par pediría 24 segundos. Los "minutos extra por cuerpo" existen porque una
             tarea de Slotting visita varios cuerpos —hay de cinco—; en 0 se comporta igual que almacenaje.
           </div>
         </div>
 
-        <div style="background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:12px;
+        <div style="background:rgba(var(--card-rgb), 0.35); border:1px solid var(--border); border-radius:12px;
                     padding:1rem 1.2rem; margin-bottom:1rem;">
-          <h3 style="margin:0 0 0.8rem; font-size:0.78rem; color:#fff; letter-spacing:0.06em;
+          <h3 style="margin:0 0 0.8rem; font-size:0.78rem; color:var(--text-strong); letter-spacing:0.06em;
                      text-transform:uppercase; font-weight:800;">Cómo se arman las tareas</h3>
           <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-end;">
             ${campo('cfg_tope', 'Pares por tarea', c.paresPorTarea, 'pares · es una guía: un cuerpo nunca se parte')}
@@ -697,7 +697,7 @@ export const montarSlotting = (container, OPC = {}) => {
                   <input type="checkbox" disabled> MZN04</label>
               </div>
               <div style="font-size:0.68rem; color:var(--text-muted); margin-top:6px; max-width:520px; line-height:1.6;">
-                Hoy solo el <b style="color:#e2e8f0;">selectivo</b>: los mezzanines todavía no tienen
+                Hoy solo el <b style="color:var(--text-pale);">selectivo</b>: los mezzanines todavía no tienen
                 reglas propias de Slotting. Se tildan el día que las tengan.
               </div>
             </div>
@@ -706,12 +706,12 @@ export const montarSlotting = (container, OPC = {}) => {
             <label style="display:flex; align-items:flex-start; gap:9px; cursor:pointer;">
               <input type="checkbox" id="cfg_unaVez" ${c.unaVezPorTurno ? 'checked' : ''} style="margin-top:3px;">
               <span>
-                <b style="color:#fff; font-size:0.8rem;">Procesar solo una vez por turno</b>
+                <b style="color:var(--text-strong); font-size:0.8rem;">Procesar solo una vez por turno</b>
                 <div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px; line-height:1.6; max-width:760px;">
                   Con el tilde puesto, el Slotting se procesa una sola vez entre las 20:00 y las 06:30.
                   El botón queda igual —no se oculta ni se apaga— y al apretarlo de nuevo sale el aviso.
                   Sin el tilde se puede procesar las veces que haga falta.
-                  <br><b style="color:#e2e8f0;">Por qué conviene dejarlo puesto:</b> volver a procesar rehace
+                  <br><b style="color:var(--text-pale);">Por qué conviene dejarlo puesto:</b> volver a procesar rehace
                   el reparto entero, así que las tareas que el equipo tiene en la mano dejan de existir y
                   las que ya empezó cambian de número.
                 </div>
@@ -723,8 +723,8 @@ export const montarSlotting = (container, OPC = {}) => {
         <div style="display:flex; gap:0.6rem;">
           <button id="cfg_guardar" class="btn" style="width:auto; padding:0.6rem 1.2rem;
                   border-radius:8px; font-size:0.75rem; font-weight:800;">💾 GUARDAR Y PUBLICAR</button>
-          <button id="cfg_volver" class="btn" style="width:auto; background:rgba(255,255,255,0.06);
-                  border:1px solid var(--border); color:#e2e8f0; padding:0.6rem 1.2rem;
+          <button id="cfg_volver" class="btn" style="width:auto; background:rgba(var(--ink-rgb), 0.06);
+                  border:1px solid var(--border); color:var(--text-pale); padding:0.6rem 1.2rem;
                   border-radius:8px; font-size:0.75rem; font-weight:800;">↩️ VOLVER A LO PUBLICADO</button>
         </div>
       </div>`;
@@ -778,8 +778,8 @@ export const montarSlotting = (container, OPC = {}) => {
     @page { size: A4 portrait; margin: 0; }
     * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     html, body { margin: 0; padding: 0; background: #58585b; }
-    body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #000; }
-    .pg { width: 210mm; height: 297mm; padding: 9mm 7mm; background: #fff;
+    body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: var(--on-accent); }
+    .pg { width: 210mm; height: 297mm; padding: 9mm 7mm; background: var(--text-strong);
           margin: 0 auto 6mm; position: relative; overflow: hidden; }
     .t1 { text-align: center; font-size: 26pt; font-weight: 700; line-height: 1.05; }
     .t1.cont { font-size: 18pt; }
@@ -798,22 +798,22 @@ export const montarSlotting = (container, OPC = {}) => {
     .det td.t { font-weight: 700; font-size: 13pt; }
     .det td.dest { background: #F1EFE8; font-weight: 700; font-size: 13pt; }
     .det tr.tot td { background: #E5E3DC; font-weight: 700; height: 7.5mm; font-size: 11pt; }
-    .det tr.tt td { background: #2C2C2A; color: #fff; font-weight: 700; height: 8mm; font-size: 12pt; }
-    .banda th { background: #2C2C2A; color: #fff; font-weight: 700; text-align: left;
+    .det tr.tt td { background: var(--panel-alt); color: var(--text-strong); font-weight: 700; height: 8mm; font-size: 12pt; }
+    .banda th { background: var(--panel-alt); color: var(--text-strong); font-weight: 700; text-align: left;
                 height: 8mm; font-size: 13pt; letter-spacing: 1.5px; padding: 0 2mm; }
-    .tick div { width: 4.6mm; height: 4.6mm; border: 1.5px solid #000; margin: 0 auto; }
+    .tick div { width: 4.6mm; height: 4.6mm; border: 1.5px solid var(--on-accent); margin: 0 auto; }
     .nota { margin-top: 2.5mm; border: 1px solid #888780; height: 12mm; font-size: 9pt;
-            padding: 1mm 2mm; color: #555; }
+            padding: 1mm 2mm; color: var(--text-dim); }
     .cierre { display: flex; align-items: center; justify-content: center; height: 100%;
               color: #888780; font-size: 13pt; font-weight: 700; text-align: center; }
-    .cartel { border: 2.2px solid #000; margin-top: 2.5mm; padding: 1.2mm 2mm; text-align: center; }
+    .cartel { border: 2.2px solid var(--on-accent); margin-top: 2.5mm; padding: 1.2mm 2mm; text-align: center; }
     .cartel b { display: block; font-size: 13pt; }
     .cartel span { font-size: 8.5pt; }
-    @media print { body { background: #fff; } .pg { margin: 0; page-break-after: always; }
+    @media print { body { background: var(--text-strong); } .pg { margin: 0; page-break-after: always; }
                    .pg:last-child { page-break-after: auto; } .noimp { display: none !important; } }
-    .noimp { position: sticky; top: 0; z-index: 9; background: #1e293b; color: #e2e8f0;
+    .noimp { position: sticky; top: 0; z-index: 9; background: var(--panel-solid); color: var(--text-pale);
              padding: 10px 14px; font: 600 13px/1.5 system-ui, sans-serif; text-align: center; }
-    .noimp button { background: #4f46e5; color: #fff; border: 0; border-radius: 8px;
+    .noimp button { background: var(--primary); color: var(--text-strong); border: 0; border-radius: 8px;
              padding: 7px 18px; font: 700 13px system-ui, sans-serif; cursor: pointer; margin-left: 10px; }`;
 
   const CABECERA = `<tr>

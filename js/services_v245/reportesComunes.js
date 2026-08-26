@@ -204,7 +204,7 @@ export const selectorRango = (desde, hasta, setter, opciones = {}) => {
         ${[['DE', desde, `${setter}(this.value, null)`], ['A', hasta, `${setter}(null, this.value)`]].map(([eti, val, ev]) => `
             <div style="display:flex; align-items:center; background:${fondo}; border:1px solid ${color}59; border-radius:8px; padding:3px 8px; gap:6px;">
                 <span style="font-size:0.6rem; color:${color}; font-weight:800; letter-spacing:0.5px;">${eti}</span>
-                <input type="date" value="${val}" onchange="${ev}" style="background:transparent; border:none; color:${texto}; font-size:0.68rem; font-weight:700; outline:none; cursor:pointer; font-family:'Inter', sans-serif; color-scheme:${esquema};">
+                <input type="date" value="${val}" onchange="${ev}" style="background:transparent; border:none; color:${texto}; font-size:0.68rem; font-weight:700; outline:none; cursor:pointer; font-family:var(--font-ui, 'Inter', sans-serif); color-scheme:${esquema};">
             </div>`).join('')}
     </div>`;
 };

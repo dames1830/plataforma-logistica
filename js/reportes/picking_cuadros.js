@@ -16,29 +16,29 @@ const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 const pct = (a, b) => b ? (100 * a / b).toFixed(1) : '0.0';
 
-const panel = (titulo, bajada, cuerpo, pie, color = 'rgba(255,255,255,0.06)') => `
+const panel = (titulo, bajada, cuerpo, pie, color = 'rgba(var(--ink-rgb), 0.06)') => `
   <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid ${color};">
-    <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.06);">
-      <h3 style="margin:0; color:#fff; font-size:0.9rem; font-weight:900; letter-spacing:0.5px;">${titulo}</h3>
+    <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.06);">
+      <h3 style="margin:0; color:var(--text-strong); font-size:0.9rem; font-weight:900; letter-spacing:0.5px;">${titulo}</h3>
       ${bajada ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px; line-height:1.6;">${bajada}</div>` : ''}
     </div>
     ${cuerpo}
-    ${pie ? `<div style="padding:0.75rem 1.3rem; background:rgba(0,0,0,0.25); font-size:0.68rem; color:rgba(255,255,255,0.4); line-height:1.8;">${pie}</div>` : ''}
+    ${pie ? `<div style="padding:0.75rem 1.3rem; background:rgba(var(--shadow-rgb), 0.25); font-size:0.68rem; color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">${pie}</div>` : ''}
   </div>`;
 
 const th = (t, der) => `<th style="padding:0.55rem 0.9rem; text-align:${der ? 'right' : 'left'}; font-weight:700; color:var(--text-muted); font-size:0.7rem;">${t}</th>`;
 const td = (t, der, extra = '') => `<td style="padding:0.5rem 0.9rem; text-align:${der ? 'right' : 'left'}; ${extra}">${t}</td>`;
 const tabla = (cab, filas, alto) => `
   <div style="overflow:auto; ${alto ? `max-height:${alto};` : ''}">
-    <table style="width:100%; border-collapse:collapse; font-size:0.77rem; color:#d1d5db;">
-      <thead style="position:sticky; top:0; background:#1e293b;"><tr>${cab}</tr></thead>
+    <table style="width:100%; border-collapse:collapse; font-size:0.77rem; color:var(--text-grey);">
+      <thead style="position:sticky; top:0; background:var(--panel-solid);"><tr>${cab}</tr></thead>
       <tbody>${filas}</tbody>
     </table>
   </div>`;
 
 /** Barra proporcional, para que la fila se lea sin tener que comparar cifras. */
 const barra = (v, max, color) => `
-  <div style="background:rgba(255,255,255,0.05); border-radius:4px; height:7px; overflow:hidden; min-width:60px;">
+  <div style="background:rgba(var(--ink-rgb), 0.05); border-radius:4px; height:7px; overflow:hidden; min-width:60px;">
     <div style="width:${max ? (100 * v / max).toFixed(1) : 0}%; height:100%; background:${color};"></div>
   </div>`;
 
@@ -50,15 +50,15 @@ export const cuadroPorHora = (R) => {
     const max = Math.max(...d.map(x => x.pares));
     const pico = d.reduce((a, b) => b.pares > a.pares ? b : a);
     const filas = d.map(x => `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-          ${td(`<b style="color:#fff;">${String(x.hora).padStart(2, '0')}:00</b>`)}
-          ${td(barra(x.pares, max, x.hora === pico.hora ? '#22c55e' : '#6366f1'), false, 'width:45%;')}
-          ${td(`<b style="color:#fff;">${F(x.pares)}</b>`, true)}
+        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+          ${td(`<b style="color:var(--text-strong);">${String(x.hora).padStart(2, '0')}:00</b>`)}
+          ${td(barra(x.pares, max, x.hora === pico.hora ? 'var(--success)' : 'var(--primary-2)'), false, 'width:45%;')}
+          ${td(`<b style="color:var(--text-strong);">${F(x.pares)}</b>`, true)}
           ${td(F(x.lineas), true, 'color:var(--text-muted);')}
           ${td(x.personas, true, 'color:var(--text-muted);')}
         </tr>`).join('');
     return panel('🕐 A QUÉ HORA SE PICÓ',
-        `El pico es a las <b style="color:#4ade80;">${String(pico.hora).padStart(2, '0')}:00</b>, con ${F(pico.pares)} pares.`,
+        `El pico es a las <b style="color:var(--success-soft);">${String(pico.hora).padStart(2, '0')}:00</b>, con ${F(pico.pares)} pares.`,
         tabla(th('Hora') + th('') + th('Pares', 1) + th('Líneas', 1) + th('Personas', 1), filas, '340px'),
         'La hora es la del reloj, no la de la jornada. Con varias fechas elegidas se suma la misma hora de cada día; las personas no se suman —es la misma gente— y se muestra el día más cargado.');
 };
@@ -73,21 +73,21 @@ export const cuadroCurvas = (R) => {
                          { cajas: 0, lineas: 0, pares: 0 });
     const max = Math.max(...d.map(x => x.pares));
     const filas = d.map(x => `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-          ${td(`<b style="color:#fff;">${x.curva} pares</b>`)}
-          ${td(barra(x.pares, max, '#f59e0b'), false, 'width:35%;')}
-          ${td(`<b style="color:#fff;">${F(x.cajas)}</b>`, true)}
+        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+          ${td(`<b style="color:var(--text-strong);">${x.curva} pares</b>`)}
+          ${td(barra(x.pares, max, 'var(--warning)'), false, 'width:35%;')}
+          ${td(`<b style="color:var(--text-strong);">${F(x.cajas)}</b>`, true)}
           ${td(F(x.lineas), true, 'color:var(--text-muted);')}
-          ${td(`<b style="color:#fff;">${F(x.pares)}</b>`, true)}
+          ${td(`<b style="color:var(--text-strong);">${F(x.pares)}</b>`, true)}
           ${td(pct(x.pares, total) + '%', true, 'color:var(--text-muted);')}
         </tr>`).join('')
-      + `<tr style="border-top:2px solid rgba(255,255,255,0.1); font-weight:900; color:#fff;">
+      + `<tr style="border-top:2px solid rgba(var(--ink-rgb), 0.1); font-weight:900; color:var(--text-strong);">
           ${td('Total')}${td('')}${td(F(tot.cajas), 1)}${td(F(tot.lineas), 1)}${td(F(tot.pares), 1)}${td('100%', 1)}
         </tr>`;
     return panel('📦 QUÉ CURVAS SE PICARON',
         'De todo lo que salió en caja, qué tamaños de curva fueron.',
         tabla(th('Pares por caja') + th('') + th('Cajas', 1) + th('Líneas', 1) + th('Pares', 1) + th('% de los ' + F(total), 1), filas),
-        '<b style="color:rgba(255,255,255,0.6);">Las cajas no son las líneas.</b> Una misma línea puede llevar más de una caja del mismo código: por eso la curva de 10 tiene más cajas que líneas.');
+        '<b style="color:rgba(var(--ink-rgb), 0.6);">Las cajas no son las líneas.</b> Una misma línea puede llevar más de una caja del mismo código: por eso la curva de 10 tiene más cajas que líneas.');
 };
 
 /* --- El recorrido ----------------------------------------------------------- */
@@ -96,20 +96,20 @@ export const cuadroRecorrido = (R) => {
     const r = R.recorrido;
     if (!r || !r.contenedores) return '';
     const filas = (r.dist || []).map(([zonas, n]) => `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
           ${td(zonas === 1 ? 'Una sola zona' : `${zonas} zonas`)}
-          ${td(barra(n, r.contenedores, zonas === 1 ? '#22c55e' : '#f59e0b'), false, 'width:45%;')}
-          ${td(`<b style="color:#fff;">${F(n)}</b>`, true)}
+          ${td(barra(n, r.contenedores, zonas === 1 ? 'var(--success)' : 'var(--warning)'), false, 'width:45%;')}
+          ${td(`<b style="color:var(--text-strong);">${F(n)}</b>`, true)}
           ${td(pct(n, r.contenedores) + '%', true, 'color:var(--text-muted);')}
         </tr>`).join('');
     return panel('🚶 EL RECORRIDO',
-        `<b style="color:#fbbf24;">${r.pct}%</b> de los contenedores obliga a visitar más de una zona.`,
+        `<b style="color:var(--warning-soft);">${r.pct}%</b> de los contenedores obliga a visitar más de una zona.`,
         `<div style="padding:1rem 1.3rem; display:flex; gap:1rem; flex-wrap:wrap;">
-           <div style="flex:1; min-width:150px;"><div style="font-size:1.4rem; font-weight:900; color:#fff;">${F(r.contenedores)}</div>
+           <div style="flex:1; min-width:150px;"><div style="font-size:1.4rem; font-weight:900; color:var(--text-strong);">${F(r.contenedores)}</div>
              <div style="font-size:0.68rem; color:var(--text-muted);">contenedores armados</div></div>
-           <div style="flex:1; min-width:150px;"><div style="font-size:1.4rem; font-weight:900; color:#fbbf24;">${F(r.con_varias_zonas)}</div>
+           <div style="flex:1; min-width:150px;"><div style="font-size:1.4rem; font-weight:900; color:var(--warning-soft);">${F(r.con_varias_zonas)}</div>
              <div style="font-size:0.68rem; color:var(--text-muted);">obligaron a cambiar de zona</div></div>
-           <div style="flex:1; min-width:150px;"><div style="font-size:1.4rem; font-weight:900; color:#fff;">${F(r.lineas_en_multi)}</div>
+           <div style="flex:1; min-width:150px;"><div style="font-size:1.4rem; font-weight:900; color:var(--text-strong);">${F(r.lineas_en_multi)}</div>
              <div style="font-size:0.68rem; color:var(--text-muted);">líneas dentro de esos</div></div>
          </div>`
         + tabla(th('El contenedor se armó en') + th('') + th('Contenedores', 1) + th('%', 1), filas),
@@ -123,23 +123,23 @@ export const cuadroRepetida = (R) => {
     if (!r || !r.visitas) return '';
     const max = Math.max(...(r.top || []).map(x => x.visitas), 1);
     const filas = (r.top || []).map(x => `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-          ${td(`<b style="color:#93c5fd;">${esc(x.ubicacion)}</b>`)}
-          ${td(barra(x.visitas, max, '#38bdf8'), false, 'width:50%;')}
-          ${td(`<b style="color:#fff;">${F(x.visitas)}</b>`, true)}
+        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+          ${td(`<b style="color:var(--blue-soft);">${esc(x.ubicacion)}</b>`)}
+          ${td(barra(x.visitas, max, 'var(--sky)'), false, 'width:50%;')}
+          ${td(`<b style="color:var(--text-strong);">${F(x.visitas)}</b>`, true)}
         </tr>`).join('');
     return panel('📍 UBICACIÓN REPETIDA',
-        `<b style="color:#38bdf8;">${r.pct}%</b> de las visitas son volver a un sitio donde ya se estuvo.`,
+        `<b style="color:var(--sky);">${r.pct}%</b> de las visitas son volver a un sitio donde ya se estuvo.`,
         `<div style="padding:1rem 1.3rem; display:flex; gap:1rem; flex-wrap:wrap;">
-           <div style="flex:1; min-width:140px;"><div style="font-size:1.4rem; font-weight:900; color:#fff;">${F(r.visitas)}</div>
+           <div style="flex:1; min-width:140px;"><div style="font-size:1.4rem; font-weight:900; color:var(--text-strong);">${F(r.visitas)}</div>
              <div style="font-size:0.68rem; color:var(--text-muted);">visitas en total</div></div>
-           <div style="flex:1; min-width:140px;"><div style="font-size:1.4rem; font-weight:900; color:#fff;">${F(r.ubicaciones)}</div>
+           <div style="flex:1; min-width:140px;"><div style="font-size:1.4rem; font-weight:900; color:var(--text-strong);">${F(r.ubicaciones)}</div>
              <div style="font-size:0.68rem; color:var(--text-muted);">ubicaciones distintas</div></div>
-           <div style="flex:1; min-width:140px;"><div style="font-size:1.4rem; font-weight:900; color:#38bdf8;">${F(r.repetidas)}</div>
+           <div style="flex:1; min-width:140px;"><div style="font-size:1.4rem; font-weight:900; color:var(--sky);">${F(r.repetidas)}</div>
              <div style="font-size:0.68rem; color:var(--text-muted);">visitas repetidas</div></div>
          </div>`
         + tabla(th('A dónde más se volvió') + th('') + th('Visitas', 1), filas),
-        'Las ubicaciones distintas del período son la <b style="color:rgba(255,255,255,0.6);">unión</b>, no la suma: una a la que se fue los nueve días es una sola ubicación, no nueve.');
+        'Las ubicaciones distintas del período son la <b style="color:rgba(var(--ink-rgb), 0.6);">unión</b>, no la suma: una a la que se fue los nueve días es una sola ubicación, no nueve.');
 };
 
 /* --- Las corridas ----------------------------------------------------------- */
@@ -148,10 +148,10 @@ export const cuadroCorridas = (R) => {
     const d = R.corridas || [];
     if (!d.length) return '';
     const filas = d.map(x => `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-          ${td(`<b style="color:#fff;">${esc(x.ola)}</b>`)}
+        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+          ${td(`<b style="color:var(--text-strong);">${esc(x.ola)}</b>`)}
           ${td(F(x.lineas), true)}
-          ${td(`<b style="color:#fff;">${F(x.pares)}</b>`, true)}
+          ${td(`<b style="color:var(--text-strong);">${F(x.pares)}</b>`, true)}
           ${td(x.personas, true, 'color:var(--text-muted);')}
           ${td(`${x.desde}–${x.hasta}`, true, 'color:var(--text-muted); font-size:0.72rem;')}
           ${td(x.minutos + ' min', true, 'color:var(--text-muted);')}
@@ -169,14 +169,14 @@ export const cuadroArticulos = (R) => {
     if (!d.length) return '';
     const max = Math.max(...d.map(x => x.pares));
     const filas = d.slice(0, 25).map((x, i) => `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-          ${td(`<span style="color:${i < 3 ? '#facc15' : 'var(--text-muted)'}; font-weight:800;">${i + 1}</span>`)}
-          ${td(`<b style="color:#fff;">${esc(x.codigo)}</b>`)}
+        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+          ${td(`<span style="color:${i < 3 ? 'var(--yellow)' : 'var(--text-muted)'}; font-weight:800;">${i + 1}</span>`)}
+          ${td(`<b style="color:var(--text-strong);">${esc(x.codigo)}</b>`)}
           ${td(esc(x.desc || '').slice(0, 46), false, 'color:var(--text-muted); font-size:0.72rem;')}
           ${td(esc(x.marca), false, 'color:var(--text-muted);')}
           ${td(esc(x.coleccion), false, 'color:var(--text-muted); font-size:0.72rem;')}
-          ${td(barra(x.pares, max, '#a78bfa'), false, 'width:14%;')}
-          ${td(`<b style="color:#fff;">${F(x.pares)}</b>`, true)}
+          ${td(barra(x.pares, max, 'var(--violet-soft)'), false, 'width:14%;')}
+          ${td(`<b style="color:var(--text-strong);">${F(x.pares)}</b>`, true)}
           ${td(F(x.lineas), true, 'color:var(--text-muted);')}
           ${td(F(x.ubicaciones), true, 'color:var(--text-muted);')}
         </tr>`).join('');
@@ -199,7 +199,7 @@ export const cuadroGenero = (R, cuadroPick) => cuadroPick
    Un cuadro con frases fijas envejece mal; éste dice lo que hay.
    -------------------------------------------------------------------------- */
 
-const COLOR_MSG = { bueno: '#4ade80', aviso: '#fbbf24', dato: '#818cf8' };
+const COLOR_MSG = { bueno: 'var(--success-soft)', aviso: 'var(--warning-soft)', dato: 'var(--brand-light)' };
 
 export const cuadroQuePaso = (R, segmento, ayer) => {
     const u = segmento === 'no_calzado' ? 'unidades' : 'pares';
@@ -278,8 +278,8 @@ export const cuadroQuePaso = (R, segmento, ayer) => {
 
     if (!m.length) return '';
     const filas = m.map(x => `
-        <div style="padding:0.8rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.04); border-left:3px solid ${COLOR_MSG[x.tipo]};">
-          <div style="font-size:0.82rem; font-weight:800; color:#fff; margin-bottom:3px;">${x.t}</div>
+        <div style="padding:0.8rem 1.3rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.04); border-left:3px solid ${COLOR_MSG[x.tipo]};">
+          <div style="font-size:0.82rem; font-weight:800; color:var(--text-strong); margin-bottom:3px;">${x.t}</div>
           <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.75;">${x.d}</div>
         </div>`).join('');
     return panel('💬 QUÉ PASÓ EN ESTE PERÍODO',
@@ -297,10 +297,10 @@ export const cuadroProductividad = (C) => {
     const g = (C && C.gente || []).filter(p => p.picks_hora);
     if (!g.length) return '';
     const filas = g.map((p, i) => `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-          ${td(`<span style="color:${i < 3 ? '#facc15' : 'var(--text-muted)'}; font-weight:800;">${i + 1}</span>`)}
-          ${td(`<b style="color:#fff;">${esc(p.usuario)}</b>`)}
-          ${td(`<b style="color:#4ade80;">${F(p.picks_hora)}</b>`, true)}
+        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+          ${td(`<span style="color:${i < 3 ? 'var(--yellow)' : 'var(--text-muted)'}; font-weight:800;">${i + 1}</span>`)}
+          ${td(`<b style="color:var(--text-strong);">${esc(p.usuario)}</b>`)}
+          ${td(`<b style="color:var(--success-soft);">${F(p.picks_hora)}</b>`, true)}
           ${td(F(p.pares), true)}
           ${td(p.horas, true, 'color:var(--text-muted);')}
           ${td(F(p.sueltos), true, 'color:var(--text-muted);')}
@@ -309,7 +309,7 @@ export const cuadroProductividad = (C) => {
     return panel(`⚡ PRODUCTIVIDAD · ${F(C.picks_hora)} PICKS POR HORA`,
         'Una sola cifra para todos. Un pick es una ida a una ubicación a sacar algo. El par suelto y la caja de '
       + 'prepack se suman en la misma cuenta, cada uno pesando el tiempo que de verdad cuesta. '
-      + '<b style="color:rgba(255,255,255,0.6);">Cubre todo lo que sacó la persona, calzado y no calzado.</b>',
+      + '<b style="color:rgba(var(--ink-rgb), 0.6);">Cubre todo lo que sacó la persona, calzado y no calzado.</b>',
         tabla(th('#') + th('Usuario') + th('Picks por hora', 1) + th('Pares que sacó', 1)
             + th('Horas', 1) + th('De ahí, sueltos', 1) + th('De ahí, cajas', 1), filas, '420px'),
         'Las horas son las de cada persona, de su primer pick al último. Acá no hay corte de horas: están todos, '
@@ -324,23 +324,23 @@ export const cuadroTiempoEntrePicks = (C) => {
     const totN = r.reduce((s, x) => s + x.n, 0);
     const totS = r.reduce((s, x) => s + x.seg, 0);
     const filas = r.map(x => `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-          ${td(`<b style="color:#fff;">${x.et}</b>`)}
+        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+          ${td(`<b style="color:var(--text-strong);">${x.et}</b>`)}
           ${td(F(x.n), true)}
           ${td((x.seg / 3600).toFixed(1), true, 'color:var(--text-muted);')}
           ${td(pct(x.seg, totS) + '%', true)}
-          ${td(`<b style="color:${x.n && (x.zona / x.n) > 0.3 ? '#fbbf24' : 'var(--text-muted)'};">${pct(x.zona, x.n)}%</b>`, true)}
+          ${td(`<b style="color:${x.n && (x.zona / x.n) > 0.3 ? 'var(--warning-soft)' : 'var(--text-muted)'};">${pct(x.zona, x.n)}%</b>`, true)}
         </tr>`).join('')
-      + `<tr style="border-top:2px solid rgba(255,255,255,0.1); font-weight:900; color:#fff;">
+      + `<tr style="border-top:2px solid rgba(var(--ink-rgb), 0.1); font-weight:900; color:var(--text-strong);">
           ${td('Total')}${td(F(totN), 1)}${td((totS / 3600).toFixed(1), 1)}${td('100%', 1)}${td('', 1)}
         </tr>`;
     return panel('⏱️ EL TIEMPO ENTRE UN PICK Y EL SIGUIENTE',
         'Todos los huecos, sumados entre todas las personas, repartidos por tamaño. '
-      + '<b style="color:rgba(255,255,255,0.6);">La última columna es la clave:</b> dice qué parte de esos huecos es un cambio de zona.',
+      + '<b style="color:rgba(var(--ink-rgb), 0.6);">La última columna es la clave:</b> dice qué parte de esos huecos es un cambio de zona.',
         tabla(th('Hueco entre un pick y el siguiente') + th('Cuántos', 1) + th('Horas', 1)
             + th('% del tiempo', 1) + th('Cambia de zona', 1), filas),
         `${F(totN)} huecos y ${(totS / 3600).toFixed(1)} horas sumadas. `
-      + '<b style="color:rgba(255,255,255,0.6);">Los huecos cortos casi nunca cambian de zona y los largos sí:</b> '
+      + '<b style="color:rgba(var(--ink-rgb), 0.6);">Los huecos cortos casi nunca cambian de zona y los largos sí:</b> '
       + 'el tiempo no se pierde sacando, se pierde caminando. Acá entran todos los huecos, también los largos — '
       + 'para medir el factor del prepack esos se descartan, porque son paradas y no trabajo.');
 };
@@ -363,17 +363,17 @@ export const cuadroTotal = (dias, segmento) => {
     const filas = INDIC.map(([nom, f]) => {
         const vals = cols.map(c => f(c.resumen.seg[segmento]));
         const total = vals.reduce((a, b) => a + b, 0);
-        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-            ${td(`<b style="color:#fff;">${nom}</b>`)}
+        return `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+            ${td(`<b style="color:var(--text-strong);">${nom}</b>`)}
             ${vals.map(v => td(F(v), true, 'color:var(--text-muted);')).join('')}
             ${td(F(Math.round(total / vals.length)), true)}
-            ${td(`<b style="color:#fff;">${F(total)}</b>`, true)}
+            ${td(`<b style="color:var(--text-strong);">${F(total)}</b>`, true)}
           </tr>`;
     }).join('');
     return panel('🧮 TOTAL',
         'Único cuadro que mezcla fechas, y lo dice. Sigue el segmento elegido arriba.',
         tabla(th('Indicador') + cols.map(c => th(dmy(c.dia), 1)).join('') + th('Promedio', 1) + th('Total', 1), filas),
-        '<b style="color:rgba(255,255,255,0.6);">Ojo con las tres últimas filas.</b> Personas, ubicaciones y códigos '
+        '<b style="color:rgba(var(--ink-rgb), 0.6);">Ojo con las tres últimas filas.</b> Personas, ubicaciones y códigos '
       + 'son cosas DISTINTAS, no cantidades: el total de la derecha las suma, así que cuenta varias veces a quien '
       + 'trabajó varios días. Para saber cuántas personas distintas hubo, mire la tarjeta de arriba.');
 };

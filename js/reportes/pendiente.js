@@ -252,25 +252,25 @@ function cuerpo(d, fecha, dias) {
 
 function estilos() {
     return `<style>
-    #pend{--pend-amber:#f59e0b}
+    #pend{--pend-amber:var(--warning)}
     #pend .pend-head{display:flex;justify-content:space-between;align-items:center;
       flex-wrap:wrap;gap:12px;margin-bottom:16px}
-    #pend h2{font-size:1.2rem;font-weight:800;margin:0;color:#fff}
+    #pend h2{font-size:1.2rem;font-weight:800;margin:0;color:var(--text-strong)}
     #pend .pend-sub{color:var(--text-muted);font-size:.8rem}
     #pend .pend-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     #pend .pend-cal{display:flex;flex-direction:column;gap:2px}
     #pend .pend-guardados{font-size:.68rem;color:var(--text-muted);padding-left:2px}
     /* EL CALENDARIO TIENE QUE VERSE Y TIENE QUE INVITAR A APRETARLO.
-       La propiedad color-scheme:dark es lo que pinta de blanco el iconito que trae
+       La propiedad color-scheme: var(--scheme) es lo que pinta de blanco el iconito que trae
        el navegador: sin eso queda gris oscuro sobre fondo oscuro y no se ve. Daniel,
        21-ago-2026: "por que no le has puesto el icono de calendario? Como voy a
        cambiar de fecha?". Y se agranda, porque el de fabrica es diminuto.
        OJO: nada de comillas invertidas aca adentro, que esto vive dentro de una
        plantilla de texto y la cortan. */
-    #pend input[type=date]{background:rgba(0,0,0,.3);border:1px solid var(--border);
-      border-radius:8px;color:#fff;padding:8px 10px;font-size:.82rem;font-weight:700;
-      color-scheme:dark;cursor:pointer;letter-spacing:.3px}
-    #pend input[type=date]:hover{border-color:var(--primary);background:rgba(129,140,248,.12)}
+    #pend input[type=date]{background:rgba(var(--shadow-rgb), .3);border:1px solid var(--border);
+      border-radius:8px;color:var(--text-strong);padding:8px 10px;font-size:.82rem;font-weight:700;
+      color-scheme: var(--scheme);cursor:pointer;letter-spacing:.3px}
+    #pend input[type=date]:hover{border-color:var(--primary);background:rgba(var(--brand-rgb), .12)}
     #pend input[type=date]::-webkit-calendar-picker-indicator{
       cursor:pointer;opacity:1;transform:scale(1.35);margin-left:6px;
       filter:invert(64%) sepia(38%) saturate(1400%) hue-rotate(207deg) brightness(102%)}
@@ -288,18 +288,18 @@ function estilos() {
 
     #pend .pend-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
       gap:12px;margin-bottom:16px}
-    #pend .pend-card{background:rgba(255,255,255,.04);border:1px solid var(--border);
+    #pend .pend-card{background:rgba(var(--ink-rgb), .04);border:1px solid var(--border);
       border-radius:14px;padding:15px;text-align:center}
-    #pend .pend-card .v{font-size:1.55rem;font-weight:800;color:#fff;line-height:1.1}
+    #pend .pend-card .v{font-size:1.55rem;font-weight:800;color:var(--text-strong);line-height:1.1}
     #pend .pend-card .v.hot{color:var(--pend-amber)}
     #pend .pend-card .l{font-size:.7rem;color:var(--text-muted);margin-top:3px;letter-spacing:.4px}
 
     #pend .pend-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     @media(max-width:980px){#pend .pend-grid{grid-template-columns:1fr}}
-    #pend .pend-panel{background:rgba(255,255,255,.04);border:1px solid var(--border);
+    #pend .pend-panel{background:rgba(var(--ink-rgb), .04);border:1px solid var(--border);
       border-radius:14px;padding:16px 18px}
     #pend .pend-panel h3{margin:0 0 2px;font-size:.8rem;font-weight:800;
-      letter-spacing:.9px;color:#fff}
+      letter-spacing:.9px;color:var(--text-strong)}
     #pend .pend-cap{font-size:.73rem;color:var(--text-muted);margin-bottom:11px}
     #pend .pend-vacio{color:var(--text-muted);font-size:.8rem;padding:12px 0}
 
@@ -307,19 +307,19 @@ function estilos() {
     #pend th{text-align:left;color:var(--text-muted);font-size:.65rem;letter-spacing:.6px;
       font-weight:700;padding:6px 8px;border-bottom:1px solid var(--border)}
     #pend th.n,#pend td.n{text-align:right;font-variant-numeric:tabular-nums}
-    #pend td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.05)}
+    #pend td{padding:6px 8px;border-bottom:1px solid rgba(var(--ink-rgb), .05)}
     #pend tbody tr:last-child td{border-bottom:0}
-    #pend .pend-bar{height:5px;border-radius:4px;background:rgba(129,140,248,.75);
+    #pend .pend-bar{height:5px;border-radius:4px;background:rgba(var(--brand-rgb), .75);
       display:block;margin-top:3px}
-    #pend .pend-bar.ambar{background:rgba(245,158,11,.8)}
-    #pend .pend-ojo td{color:#fde68a}
+    #pend .pend-bar.ambar{background:rgba(var(--warning-rgb), .8)}
+    #pend .pend-ojo td{color:var(--warning-pale)}
     #pend .pend-gris td{color:var(--text-muted)}
     #pend .pend-mas{font-size:.73rem;color:var(--primary);font-weight:700;
       padding-top:8px;display:block}
     #pend .pend-nota{border-left:3px solid var(--pend-amber);padding:9px 13px;
-      background:rgba(245,158,11,.07);border-radius:0 8px 8px 0;margin-top:11px;
+      background:rgba(var(--warning-rgb), .07);border-radius:0 8px 8px 0;margin-top:11px;
       font-size:.79rem;color:#e8edf7}
     #pend .pend-nada{text-align:center;padding:40px 20px}
-    #pend .pend-nada-t{font-size:1rem;font-weight:700;color:#fff;margin-bottom:6px}
+    #pend .pend-nada-t{font-size:1rem;font-weight:700;color:var(--text-strong);margin-bottom:6px}
     </style>`;
 }

@@ -14,8 +14,29 @@ window.addEventListener('unhandledrejection', function(e) {
     document.body.innerHTML += '<div style="position:fixed;top:50px;left:0;z-index:9999;background:orange;color:white;padding:20px;font-size:20px;">' + e.reason + '</div>';
 });
 </script>
+  <!-- TEMA: se aplica antes de que se dibuje el primer pixel.
+       Si esto corriera despues, la pantalla arrancaria en indigo y saltaria al
+       tema elegido a la vista del usuario. Por eso va aca, en linea y sin
+       esperar a ningun modulo: lee la preferencia y la escribe en el <html>.
+       El servicio de verdad es js/services_v245/temaService.js; esto es solo
+       el adelanto, y usa las mismas claves. -->
+  <script>
+  (function () {
+    try {
+      var TEMAS = ['indigo', 'pbi', 'pbi-classic', 'negro'];
+      var usuario = 'anon';
+      var ses = localStorage.getItem('logistics_session');
+      if (ses) { var u = JSON.parse(ses); if (u && u.username) usuario = u.username; }
+      var t = localStorage.getItem('deam_tema_' + usuario);
+      document.documentElement.setAttribute('data-tema', TEMAS.indexOf(t) >= 0 ? t : 'indigo');
+    } catch (e) {
+      document.documentElement.setAttribute('data-tema', 'indigo');
+    }
+  })();
+  </script>
+
   <!-- ENTORNO: decide produccion vs pruebas. DEBE ir antes que cualquier otro script. -->
-  <script src="js/env.js?v=29.0380"></script>
+  <script src="js/env.js?v=29.0381"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logística Deam1830</title>
@@ -29,7 +50,11 @@ window.addEventListener('unhandledrejection', function(e) {
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   
-  <link rel="stylesheet" href="css/main.css?v=29.0380" id="main_css">
+  <link rel="stylesheet" href="css/main.css?v=29.0381" id="main_css">
+  <!-- Los temas van DESPUES de main.css a proposito: redefinen las mismas
+       variables (--primary, --bg-dark, --text-muted...) y con la misma
+       especificidad gana la ultima hoja que se carga. -->
+  <link rel="stylesheet" href="css/temas.css?v=29.0381" id="temas_css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
   <style>
     #sync-indicator {
@@ -43,24 +68,24 @@ window.addEventListener('unhandledrejection', function(e) {
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 20px rgba(var(--shadow-rgb), 0.4);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
       pointer-events: auto !important;
     }
     #sync-indicator:hover {
       transform: scale(1.1);
-      box-shadow: 0 6px 25px rgba(0,0,0,0.5);
+      box-shadow: 0 6px 25px rgba(var(--shadow-rgb), 0.5);
     }
     #sync-indicator .sync-tooltip {
       position: absolute;
       bottom: 50px;
       right: 0;
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(135deg, rgba(var(--card-rgb), 0.98) 0%, rgba(var(--bg-rgb), 0.98) 100%);
+      border: 1px solid rgba(var(--ink-rgb), 0.08);
       padding: 10px 16px;
       border-radius: 12px;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 25px -5px rgba(var(--shadow-rgb), 0.5);
       opacity: 0;
       visibility: hidden;
       transform: translateY(10px);
@@ -74,19 +99,19 @@ window.addEventListener('unhandledrejection', function(e) {
       transform: translateY(0);
     }
     .sync-online { 
-      background: rgba(34, 197, 94, 0.9); 
-      border: 1.5px solid rgba(34, 197, 94, 0.5); 
-      box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); 
+      background: rgba(var(--success-rgb), 0.9); 
+      border: 1.5px solid rgba(var(--success-rgb), 0.5); 
+      box-shadow: 0 0 15px rgba(var(--success-rgb), 0.4); 
     }
     .sync-offline { 
-      background: rgba(239, 68, 68, 0.9); 
-      border: 1.5px solid rgba(239, 68, 68, 0.5); 
-      box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); 
+      background: rgba(var(--danger-rgb), 0.9); 
+      border: 1.5px solid rgba(var(--danger-rgb), 0.5); 
+      box-shadow: 0 0 15px rgba(var(--danger-rgb), 0.4); 
     }
     .sync-working { 
-      background: rgba(234, 179, 8, 0.9); 
-      border: 1.5px solid rgba(234, 179, 8, 0.5); 
-      box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); 
+      background: rgba(var(--yellow-rgb), 0.9); 
+      border: 1.5px solid rgba(var(--yellow-rgb), 0.5); 
+      box-shadow: 0 0 15px rgba(var(--yellow-rgb), 0.4); 
       animation: pulse-working 1.5s infinite alternate; 
     }
     @keyframes pulse-working {
@@ -109,11 +134,11 @@ window.addEventListener('unhandledrejection', function(e) {
   <div id="sync-indicator" class="sync-online">
     <span id="sync-icon" style="font-size: 1.1rem; user-select: none;">…</span>
     <div class="sync-tooltip">
-      <div id="sync-text" style="font-weight: 800; font-size: 0.75rem; color: #fff; white-space: nowrap;">SISTEMA v29.0380 ONLINE</div>
-      <div style="font-size: 0.65rem; color: rgba(255,255,255,0.4); margin-top: 4px; white-space: nowrap;">System is currently up to date and syncing.</div>
+      <div id="sync-text" style="font-weight: 800; font-size: 0.75rem; color: var(--text-strong); white-space: nowrap;">SISTEMA v29.0381 ONLINE</div>
+      <div style="font-size: 0.65rem; color: rgba(var(--ink-rgb), 0.4); margin-top: 4px; white-space: nowrap;">System is currently up to date and syncing.</div>
     </div>
   </div>
-  <script src="js/app.js?v=29.0380" type="module">
+  <script src="js/app.js?v=29.0381" type="module">
     document.addEventListener('DOMContentLoaded', () => {
       const syncIndicator = document.getElementById('sync-indicator');
       syncIndicator.addEventListener('click', (e) => {

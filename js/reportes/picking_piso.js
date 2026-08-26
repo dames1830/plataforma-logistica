@@ -204,13 +204,13 @@ export const calcularBalance = ({ tareas, dias, esCalzado, marcaDe, diaDeTarea, 
 const quePasa = (f) => {
     const may = Math.max(f.almacenado, f.picado);
     if (!may) return { texto: '—', color: 'var(--text-muted)' };
-    if (!f.picado) return { texto: 'entra y no sale', color: '#fbbf24' };
-    if (!f.almacenado) return { texto: 'sale y no entra', color: '#38bdf8' };
+    if (!f.picado) return { texto: 'entra y no sale', color: 'var(--warning-soft)' };
+    if (!f.almacenado) return { texto: 'sale y no entra', color: 'var(--sky)' };
     const d = Math.abs(f.dif), p = Math.round(100 * d / may);
     if (!p) return { texto: 'parejo', color: 'var(--text-muted)' };
     return f.dif > 0
-        ? { texto: `entraron <b>${F(d)} más</b> (${p}%)`, color: '#fbbf24' }
-        : { texto: `salieron <b>${F(d)} más</b> (${p}%)`, color: '#38bdf8' };
+        ? { texto: `entraron <b>${F(d)} más</b> (${p}%)`, color: 'var(--warning-soft)' }
+        : { texto: `salieron <b>${F(d)} más</b> (${p}%)`, color: 'var(--sky)' };
 };
 
 export const cuadroBalance = (B) => {
@@ -222,43 +222,43 @@ export const cuadroBalance = (B) => {
         const q = quePasa(f);
         const salida = f.almacenado ? Math.round(100 * f.picado / f.almacenado) : null;
         return `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-          <td style="padding:0.5rem 0.9rem; color:#fff; font-weight:700;">${esc(corta(f.marca))}</td>
+        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+          <td style="padding:0.5rem 0.9rem; color:var(--text-strong); font-weight:700;">${esc(corta(f.marca))}</td>
           <td style="padding:0.5rem 0.9rem; width:26%;">
-            ${barra(f.almacenado, '#f59e0b')}<div style="height:3px;"></div>${barra(f.picado, '#818cf8')}
+            ${barra(f.almacenado, 'var(--warning)')}<div style="height:3px;"></div>${barra(f.picado, 'var(--brand-light)')}
           </td>
           <td style="padding:0.5rem 0.9rem; text-align:right; font-weight:700;">${F(f.almacenado)}</td>
           <td style="padding:0.5rem 0.9rem; text-align:right; font-weight:700;">${F(f.picado)}</td>
-          <td style="padding:0.5rem 0.9rem; text-align:right; color:${salida !== null && salida > 100 ? '#4ade80' : 'var(--text-muted)'};">${salida === null ? '—' : salida + '%'}</td>
-          <td style="padding:0.5rem 0.9rem; text-align:right; font-weight:800; color:${f.dif >= 0 ? '#fbbf24' : '#38bdf8'};">${f.dif >= 0 ? '+' : ''}${F(f.dif)}</td>
+          <td style="padding:0.5rem 0.9rem; text-align:right; color:${salida !== null && salida > 100 ? 'var(--success-soft)' : 'var(--text-muted)'};">${salida === null ? '—' : salida + '%'}</td>
+          <td style="padding:0.5rem 0.9rem; text-align:right; font-weight:800; color:${f.dif >= 0 ? 'var(--warning-soft)' : 'var(--sky)'};">${f.dif >= 0 ? '+' : ''}${F(f.dif)}</td>
           <td style="padding:0.5rem 0.9rem; color:${q.color}; font-size:0.73rem;">${q.texto}</td>
         </tr>`;
     }).join('');
 
     const difTot = B.almacenado - B.picado;
     return `
-      <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(245,158,11,0.25);">
-        <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.06);">
-          <h3 style="margin:0; color:#fff; font-size:0.92rem; font-weight:900; letter-spacing:0.5px;">
+      <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(var(--warning-rgb), 0.25);">
+        <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.06);">
+          <h3 style="margin:0; color:var(--text-strong); font-size:0.92rem; font-weight:900; letter-spacing:0.5px;">
             ⚖️ BALANCE DEL PISO · ${B.jornadas} ${B.jornadas === 1 ? 'JORNADA' : 'JORNADAS'} ·
             ${F(B.almacenado)} ALMACENADOS CONTRA ${F(B.picado)} PICADOS
           </h3>
           <div style="font-size:0.71rem; color:var(--text-muted); margin-top:4px; line-height:1.7;">
             Calzado contra calzado, en los dos lados. El almacenaje sale de las tareas finalizadas con operario y
-            horario; el picking, del archivo del día. <b style="color:rgba(255,255,255,0.6);">El almacenaje se cuenta
+            horario; el picking, del archivo del día. <b style="color:rgba(var(--ink-rgb), 0.6);">El almacenaje se cuenta
             por jornada</b>, no por fecha de calendario: una noche que arranca a las 19:00 y termina de madrugada es
             una sola jornada. No depende del segmento elegido arriba.
-            <b style="color:rgba(255,255,255,0.6);">El prepack queda fuera de los dos lados</b>: no se almacena en
+            <b style="color:rgba(var(--ink-rgb), 0.6);">El prepack queda fuera de los dos lados</b>: no se almacena en
             mezzanine ni en selectivo, así que no puede contarse como salida de ahí.
           </div>
           <div style="margin-top:0.6rem; font-size:0.7rem; color:var(--text-muted);">
-            <span style="color:#f59e0b;">■</span> Almacena — pares que bajaron al piso
-            &nbsp;&nbsp;<span style="color:#818cf8;">■</span> Pica — pares que salieron
+            <span style="color:var(--warning);">■</span> Almacena — pares que bajaron al piso
+            &nbsp;&nbsp;<span style="color:var(--brand-light);">■</span> Pica — pares que salieron
           </div>
         </div>
         <div style="overflow:auto;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#d1d5db;">
-            <thead style="position:sticky; top:0; background:#1e293b;"><tr>
+          <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:var(--text-grey);">
+            <thead style="position:sticky; top:0; background:var(--panel-solid);"><tr>
               <th style="padding:0.55rem 0.9rem; text-align:left; font-weight:700; color:var(--text-muted); font-size:0.7rem;">Marca</th>
               <th></th>
               <th style="padding:0.55rem 0.9rem; text-align:right; font-weight:700; color:var(--text-muted); font-size:0.7rem;">Almacena</th>
@@ -268,43 +268,43 @@ export const cuadroBalance = (B) => {
               <th style="padding:0.55rem 0.9rem; text-align:left; font-weight:700; color:var(--text-muted); font-size:0.7rem;">Qué pasa</th>
             </tr></thead>
             <tbody>${filas}
-              <tr style="border-top:2px solid rgba(255,255,255,0.12); font-weight:900; color:#fff;">
+              <tr style="border-top:2px solid rgba(var(--ink-rgb), 0.12); font-weight:900; color:var(--text-strong);">
                 <td style="padding:0.6rem 0.9rem;">Total</td><td></td>
                 <td style="padding:0.6rem 0.9rem; text-align:right;">${F(B.almacenado)}</td>
                 <td style="padding:0.6rem 0.9rem; text-align:right;">${F(B.picado)}</td>
                 <td style="padding:0.6rem 0.9rem; text-align:right;">${B.almacenado ? Math.round(100 * B.picado / B.almacenado) + '%' : '—'}</td>
-                <td style="padding:0.6rem 0.9rem; text-align:right; color:${difTot >= 0 ? '#fbbf24' : '#38bdf8'};">${difTot >= 0 ? '+' : ''}${F(difTot)}</td>
+                <td style="padding:0.6rem 0.9rem; text-align:right; color:${difTot >= 0 ? 'var(--warning-soft)' : 'var(--sky)'};">${difTot >= 0 ? '+' : ''}${F(difTot)}</td>
                 <td style="padding:0.6rem 0.9rem; font-size:0.73rem; color:var(--text-muted);">${difTot >= 0 ? 'el piso se llenó' : 'el piso se vació'}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div style="padding:1rem 1.3rem; display:flex; gap:1rem; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,0.06);">
-          <div style="flex:1; min-width:190px; background:rgba(239,68,68,0.07); border-radius:10px; padding:0.8rem 1rem;">
-            <div style="font-size:1.4rem; font-weight:900; color:#f87171;">${F(B.vencido)}</div>
+        <div style="padding:1rem 1.3rem; display:flex; gap:1rem; flex-wrap:wrap; border-top:1px solid rgba(var(--ink-rgb), 0.06);">
+          <div style="flex:1; min-width:190px; background:rgba(var(--danger-rgb), 0.07); border-radius:10px; padding:0.8rem 1rem;">
+            <div style="font-size:1.4rem; font-weight:900; color:var(--danger-soft);">${F(B.vencido)}</div>
             <div style="font-size:0.65rem; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted);">Vencido sin trabajar</div>
             <div style="font-size:0.68rem; color:var(--text-muted);">se mandó a almacenar y nadie lo hizo</div>
           </div>
-          <div style="flex:1; min-width:190px; background:rgba(255,255,255,0.03); border-radius:10px; padding:0.8rem 1rem;">
-            <div style="font-size:1.4rem; font-weight:900; color:#fff;">${F(B.no_calzado)}</div>
+          <div style="flex:1; min-width:190px; background:rgba(var(--ink-rgb), 0.03); border-radius:10px; padding:0.8rem 1rem;">
+            <div style="font-size:1.4rem; font-weight:900; color:var(--text-strong);">${F(B.no_calzado)}</div>
             <div style="font-size:0.65rem; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted);">Almacenado que no es calzado</div>
             <div style="font-size:0.68rem; color:var(--text-muted);">bolsas y complementos, fuera del cuadro</div>
           </div>
-          <div style="flex:1; min-width:190px; background:rgba(255,255,255,0.03); border-radius:10px; padding:0.8rem 1rem;">
-            <div style="font-size:1.4rem; font-weight:900; color:${difTot >= 0 ? '#fbbf24' : '#38bdf8'};">${difTot >= 0 ? '+' : ''}${F(difTot)}</div>
+          <div style="flex:1; min-width:190px; background:rgba(var(--ink-rgb), 0.03); border-radius:10px; padding:0.8rem 1rem;">
+            <div style="font-size:1.4rem; font-weight:900; color:${difTot >= 0 ? 'var(--warning-soft)' : 'var(--sky)'};">${difTot >= 0 ? '+' : ''}${F(difTot)}</div>
             <div style="font-size:0.65rem; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted);">Acumulado de las ${B.jornadas} jornadas</div>
             <div style="font-size:0.68rem; color:var(--text-muted);">${F(B.almacenado)} almacenados − ${F(B.picado)} picados</div>
           </div>
         </div>
-        <div style="padding:0.8rem 1.3rem; background:rgba(0,0,0,0.25); font-size:0.68rem; color:rgba(255,255,255,0.4); line-height:1.8;">
-          <b style="color:rgba(255,255,255,0.6);">% salida</b> es cuánto de lo almacenado volvió a salir picado; por encima del 100% el piso se está vaciando.
-          En <b style="color:rgba(255,255,255,0.6);">Qué pasa</b> el porcentaje es otra cosa: la brecha entre los dos lados, medida sobre el mayor de ellos.
-          <br><b style="color:#fbbf24;">Sin prepack:</b> quedaron fuera <b style="color:rgba(255,255,255,0.6);">${F(B.prepack_fuera)} pares</b>
+        <div style="padding:0.8rem 1.3rem; background:rgba(var(--shadow-rgb), 0.25); font-size:0.68rem; color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">
+          <b style="color:rgba(var(--ink-rgb), 0.6);">% salida</b> es cuánto de lo almacenado volvió a salir picado; por encima del 100% el piso se está vaciando.
+          En <b style="color:rgba(var(--ink-rgb), 0.6);">Qué pasa</b> el porcentaje es otra cosa: la brecha entre los dos lados, medida sobre el mayor de ellos.
+          <br><b style="color:var(--warning-soft);">Sin prepack:</b> quedaron fuera <b style="color:rgba(var(--ink-rgb), 0.6);">${F(B.prepack_fuera)} pares</b>
           que salieron en caja de prepack. Se pican de CDBUFFER-C y del andamio, y ninguno de los dos se llena con
           tareas de almacenaje, así que contarlos de un solo lado hacía ver el piso más vacío de lo que está.
           Los demás cuadros del picking sí los cuentan: es trabajo que alguien hizo.
           ${B.dias_repartidos && B.dias_repartidos.length ? `
-          <br><span style="color:rgba(255,255,255,0.3);">En ${B.dias_repartidos.length}
+          <br><span style="color:rgba(var(--ink-rgb), 0.3);">En ${B.dias_repartidos.length}
           ${B.dias_repartidos.length === 1 ? 'jornada subida' : 'jornadas subidas'} antes de este cambio
           —${B.dias_repartidos.map(d => esc(String(d).split('-').reverse().join('/'))).join(', ')}— el prepack se
           reparte entre las marcas por su brecha de cajas: el total sale exacto y una marca puede correrse unos
@@ -360,32 +360,32 @@ export const cuadroCobertura = (C) => {
     if (!C || !C.filas.length) return '';
     const lectura = (f) => {
         if (f.dias === null) return { t: 'no salió nada en los días medidos', c: 'var(--text-muted)' };
-        if (f.dias < 7) return { t: 'se queda sin piso', c: '#f87171' };
-        if (f.dias > 90) return { t: 'ocupa piso sin rotar', c: '#fbbf24' };
+        if (f.dias < 7) return { t: 'se queda sin piso', c: 'var(--danger-soft)' };
+        if (f.dias > 90) return { t: 'ocupa piso sin rotar', c: 'var(--warning-soft)' };
         return { t: '', c: 'var(--text-muted)' };
     };
     const filas = C.filas.map(f => {
         const l = lectura(f);
         return `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-          <td style="padding:0.5rem 0.9rem; color:#fff; font-weight:700;">${esc(corta(f.marca))}</td>
+        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+          <td style="padding:0.5rem 0.9rem; color:var(--text-strong); font-weight:700;">${esc(corta(f.marca))}</td>
           <td style="padding:0.5rem 0.9rem; text-align:right;">${F(f.stock)}</td>
           <td style="padding:0.5rem 0.9rem; text-align:right; color:var(--text-muted);">${F(f.pica_dia)}</td>
-          <td style="padding:0.5rem 0.9rem; text-align:right; font-weight:800; color:${l.c === 'var(--text-muted)' ? '#fff' : l.c};">${f.dias === null ? '—' : f.dias}</td>
+          <td style="padding:0.5rem 0.9rem; text-align:right; font-weight:800; color:${l.c === 'var(--text-muted)' ? 'var(--text-strong)' : l.c};">${f.dias === null ? '—' : f.dias}</td>
           <td style="padding:0.5rem 0.9rem; font-size:0.73rem; color:${l.c};">${l.t}</td>
         </tr>`;
     }).join('');
     return `
-      <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(255,255,255,0.07);">
-        <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.06);">
-          <h3 style="margin:0; color:#fff; font-size:0.9rem; font-weight:900; letter-spacing:0.5px;">📅 COBERTURA DEL PISO</h3>
+      <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(var(--ink-rgb), 0.07);">
+        <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.06);">
+          <h3 style="margin:0; color:var(--text-strong); font-size:0.9rem; font-weight:900; letter-spacing:0.5px;">📅 COBERTURA DEL PISO</h3>
           <div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px; line-height:1.6;">
             Cuántos días dura en el piso lo que hay, al ritmo de picking medido.
           </div>
         </div>
         <div style="overflow:auto; max-height:420px;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#d1d5db;">
-            <thead style="position:sticky; top:0; background:#1e293b;"><tr>
+          <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:var(--text-grey);">
+            <thead style="position:sticky; top:0; background:var(--panel-solid);"><tr>
               <th style="padding:0.55rem 0.9rem; text-align:left; font-weight:700; color:var(--text-muted); font-size:0.7rem;">Marca</th>
               <th style="padding:0.55rem 0.9rem; text-align:right; font-weight:700; color:var(--text-muted); font-size:0.7rem;">En el piso</th>
               <th style="padding:0.55rem 0.9rem; text-align:right; font-weight:700; color:var(--text-muted); font-size:0.7rem;">Pica por día</th>
@@ -393,7 +393,7 @@ export const cuadroCobertura = (C) => {
               <th style="padding:0.55rem 0.9rem; text-align:left; font-weight:700; color:var(--text-muted); font-size:0.7rem;">Lectura</th>
             </tr></thead>
             <tbody>${filas}
-              <tr style="border-top:2px solid rgba(255,255,255,0.12); font-weight:900; color:#fff;">
+              <tr style="border-top:2px solid rgba(var(--ink-rgb), 0.12); font-weight:900; color:var(--text-strong);">
                 <td style="padding:0.6rem 0.9rem;">Total en el piso</td>
                 <td style="padding:0.6rem 0.9rem; text-align:right;">${F(C.total)}</td>
                 <td colspan="3" style="padding:0.6rem 0.9rem; font-size:0.72rem; color:var(--text-muted); font-weight:400;">
@@ -403,7 +403,7 @@ export const cuadroCobertura = (C) => {
             </tbody>
           </table>
         </div>
-        <div style="padding:0.75rem 1.3rem; background:rgba(0,0,0,0.25); font-size:0.68rem; color:rgba(255,255,255,0.4); line-height:1.8;">
+        <div style="padding:0.75rem 1.3rem; background:rgba(var(--shadow-rgb), 0.25); font-size:0.68rem; color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">
           El stock es el activo publicado por el robot, todo el calzado sin mirar zona. El ritmo es el promedio de los
           días elegidos arriba: si se elige un solo día, el ritmo es el de ese día y la cobertura se mueve mucho.
         </div>
