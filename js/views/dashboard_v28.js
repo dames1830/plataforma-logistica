@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0396';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0397';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0396';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0396';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0396';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0396';
-import * as metasService from '../services_v245/metasService.js?v=29.0396';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0396';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0396';
+import * as adminService from '../services_v245/adminService.js?v=29.0397';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0397';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0397';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0397';
+import * as metasService from '../services_v245/metasService.js?v=29.0397';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0397';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0397';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0396';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0396';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0396';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0396';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0396';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0396';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0396';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0396';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0396';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0396';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0396';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0396';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0396';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0396';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0396';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0396';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0396';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0396';
-import { montarSlotting } from './slotting.js?v=29.0396';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0397';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0397';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0397';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0397';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0397';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0397';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0397';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0397';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0397';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0397';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0397';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0397';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0397';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0397';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0397';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0397';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0397';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0397';
+import { montarSlotting } from './slotting.js?v=29.0397';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0396';
+const VERSION = '29.0397';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5212,7 +5212,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0396');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0397');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -17660,7 +17660,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0396 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0397 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -31400,6 +31400,12 @@ window.showCellModal = function(htmlContent) {
   // de nuevo para cada una.
   let pickMenuAbierto = false;
 
+  // Por donde iba la lista de fechas. Cada clic redibuja la vista entera, asi que
+  // el menu se vuelve a crear desde cero y aparece arriba del todo: al marcar una
+  // fecha del final, la lista se rebobinaba y habia que volver a bajar para marcar
+  // la siguiente. Guardando el desplazamiento se restituye despues de redibujar.
+  let pickMenuScroll = 0;
+
   /**
    * El filtro de fechas. `conPicking` es opcional: cuando viene, las fechas que
    * no tienen archivo de picking se marcan como tales.
@@ -31424,7 +31430,8 @@ window.showCellModal = function(htmlContent) {
         ${!pickMenuAbierto ? '' : `
         <div data-pickcerrar="1" title="cerrar"
              style="position:fixed; top:0; left:0; right:0; bottom:0; z-index:39;"></div>
-        <div style="position:absolute; z-index:40; top:calc(100% + 4px); right:0; min-width:100%;
+        <div data-pickscroll="1"
+             style="position:absolute; z-index:40; top:calc(100% + 4px); right:0; min-width:100%;
                     background:var(--panel-deeper); border:1px solid var(--border); border-radius:8px;
                     padding:0.25rem; max-height:16rem; overflow:auto; box-shadow:0 8px 22px rgba(var(--shadow-rgb), 0.5);">
           ${filas.map(([v, t]) => {
@@ -31443,6 +31450,42 @@ window.showCellModal = function(htmlContent) {
           }).join('')}
         </div>`}
       </div>`;
+  };
+
+  /**
+   * Engancha el menu de fechas. Lo usan las dos pantallas que lo muestran
+   * -Prepack y Reporte Picking- porque el codigo era el mismo copiado dos veces:
+   * arreglar el desplazamiento en una y no en la otra habria dejado el defecto
+   * a medias.
+   *
+   * `redibujar` es la funcion que vuelve a pintar esa pantalla.
+   */
+  const engancharComboFechas = (container, redibujar) => {
+    const lista = container.querySelector('[data-pickscroll]');
+    if (lista) {
+      // Se devuelve a donde estaba ANTES de que el clic redibujara todo.
+      lista.scrollTop = pickMenuScroll;
+      lista.addEventListener('scroll', () => { pickMenuScroll = lista.scrollTop; });
+    }
+    container.querySelectorAll('[data-fecha]').forEach(b => {
+      b.onclick = () => {
+        const l = container.querySelector('[data-pickscroll]');
+        if (l) pickMenuScroll = l.scrollTop;
+        const f = b.dataset.fecha;
+        if (!f) pickFiltro.fechas = [];
+        else if (pickFiltro.fechas.indexOf(f) >= 0) pickFiltro.fechas = pickFiltro.fechas.filter(x => x !== f);
+        else pickFiltro.fechas = pickFiltro.fechas.concat([f]);
+        redibujar(container);
+      };
+    });
+    container.querySelectorAll('[data-pickmenu],[data-pickcerrar]').forEach(b => {
+      b.onclick = () => {
+        // Al abrirlo de nuevo se arranca desde arriba: es una consulta nueva.
+        if (!pickMenuAbierto) pickMenuScroll = 0;
+        pickMenuAbierto = b.hasAttribute('data-pickmenu') ? !pickMenuAbierto : false;
+        redibujar(container);
+      };
+    });
   };
 
   const tarjetaPick = (rotulo, valor, pie, color) => `
@@ -31672,21 +31715,7 @@ window.showCellModal = function(htmlContent) {
     pintarPrepack(container.querySelector('#pp_cuerpo'),
                   conCrono.map(d => ({ dia: d, pp: pickingDiasCache[d].pp })));
 
-    container.querySelectorAll('[data-fecha]').forEach(b => {
-      b.onclick = () => {
-        const f = b.dataset.fecha;
-        if (!f) pickFiltro.fechas = [];
-        else if (pickFiltro.fechas.indexOf(f) >= 0) pickFiltro.fechas = pickFiltro.fechas.filter(x => x !== f);
-        else pickFiltro.fechas = pickFiltro.fechas.concat([f]);
-        renderPrepackPicking(container);
-      };
-    });
-    container.querySelectorAll('[data-pickmenu],[data-pickcerrar]').forEach(b => {
-      b.onclick = () => {
-        pickMenuAbierto = b.hasAttribute('data-pickmenu') ? !pickMenuAbierto : false;
-        renderPrepackPicking(container);
-      };
-    });
+    engancharComboFechas(container, renderPrepackPicking);
   };
 
   const renderReportePicking = async (container) => {
@@ -32004,21 +32033,7 @@ window.showCellModal = function(htmlContent) {
     container.querySelectorAll('[data-seg]').forEach(b => {
       b.onclick = () => { pickFiltro.seg = b.dataset.seg; renderReportePicking(container); };
     });
-    container.querySelectorAll('[data-fecha]').forEach(b => {
-      b.onclick = () => {
-        const f = b.dataset.fecha;
-        if (!f) pickFiltro.fechas = [];
-        else if (pickFiltro.fechas.indexOf(f) >= 0) pickFiltro.fechas = pickFiltro.fechas.filter(x => x !== f);
-        else pickFiltro.fechas = pickFiltro.fechas.concat([f]);
-        renderReportePicking(container);
-      };
-    });
-    container.querySelectorAll('[data-pickmenu],[data-pickcerrar]').forEach(b => {
-      b.onclick = () => {
-        pickMenuAbierto = b.hasAttribute('data-pickmenu') ? !pickMenuAbierto : false;
-        renderReportePicking(container);
-      };
-    });
+    engancharComboFechas(container, renderReportePicking);
   };
 
   /**
@@ -33193,11 +33208,15 @@ window.showCellModal = function(htmlContent) {
         } else {
             window.__expandedStorageReportWeeks.push(week);
         }
-        if (window.__almacenajeContainer) {
-            const _sy = window.scrollY;
-            window.renderAlmacenajeTareas(window.__almacenajeContainer);
-            requestAnimationFrame(() => window.scrollTo({ top: _sy, behavior: 'instant' }));
-        }
+        // Solo se muestran o se esconden las filas que ya estan puestas. Antes esto
+        // redibujaba renderAlmacenajeTareas() entera y la pantalla pegaba un salto
+        // muy visible; encima habia que volver a poner el scroll a mano porque el
+        // redibujado lo perdia.
+        const abierta = window.__expandedStorageReportWeeks.indexOf(week) > -1;
+        document.querySelectorAll('[data-semana-hija="' + week + '"]')
+                .forEach(tr => { tr.style.display = abierta ? '' : 'none'; });
+        const flecha = document.querySelector('[data-semana-flecha="' + week + '"]');
+        if (flecha) flecha.style.transform = abierta ? 'rotate(90deg)' : '';
     };
 
     window.setChartDateRange = (start, end) => {
@@ -33626,11 +33645,16 @@ window.showCellModal = function(htmlContent) {
                             const rowTotal = sortedBrands.reduce((sum, b) => sum + (rowData[b] || 0), 0);
                             const isExpanded = window.__expandedStorageReportWeeks && window.__expandedStorageReportWeeks.includes(w);
                             
-                            const genderRowsHtml = isExpanded ? Array.from(allGendersPerWeek[w] || []).sort().map(gender => {
+                            // Se dibujan SIEMPRE, escondidas si la semana esta cerrada.
+                            // Antes se armaban solo al expandir, y para eso habia que
+                            // redibujar la pantalla ENTERA -mas de 1.600 celdas- por abrir
+                            // una semana: eso era el parpadeo. Estando ya puestas, abrir es
+                            // solo mostrarlas, y no parpadea nada.
+                            const genderRowsHtml = Array.from(allGendersPerWeek[w] || []).sort().map(gender => {
                                 const genderData = weeklyBrandGenderData[w][gender] || {};
                                 const genderRowTotal = sortedBrands.reduce((sum, b) => sum + (genderData[b] || 0), 0);
                                 return `
-                                    <tr style="background: rgba(var(--violet-rgb), 0.04); border-bottom: 1px solid rgba(var(--violet-rgb), 0.06); font-size:var(--t-sm);">
+                                    <tr data-semana-hija="${w}" style="display:${isExpanded ? '' : 'none'}; background: rgba(var(--violet-rgb), 0.04); border-bottom: 1px solid rgba(var(--violet-rgb), 0.06); font-size:var(--t-sm);">
                                         <td style="padding:5px 8px 5px 24px; color:rgba(var(--ink-rgb), 0.7); font-weight:600; font-style:italic; white-space:nowrap;">↳ ${gender}</td>
                                         ${sortedBrands.map(b => {
                                             const qty = genderData[b] || 0;
@@ -33639,12 +33663,12 @@ window.showCellModal = function(htmlContent) {
                                         <td style="padding:5px 8px; text-align:center; color:var(--violet-soft); font-weight:700; background:rgba(var(--violet-rgb), 0.04);">${genderRowTotal.toLocaleString('es-PE')}</td>
                                     </tr>
                                 `;
-                            }).join('') : '';
+                            }).join('');
 
                             return `
                                 <tr onclick="window.toggleStorageReportWeek('${w}')" style="border-bottom: 1px solid rgba(var(--violet-rgb), 0.08); background:var(--bg-dark); cursor:pointer;" onmouseover="this.style.background='rgba(var(--ink-rgb), 0.03)'" onmouseout="this.style.background='var(--bg-dark)'">
                                     <td style="padding:6px 8px; color:var(--text-strong); font-weight:700; white-space:nowrap;">
-                                        <span style="color:var(--violet); margin-right:6px; display:inline-block; transition: transform 0.2s; ${isExpanded ? 'transform: rotate(90deg);' : ''}">▶</span>
+                                        <span data-semana-flecha="${w}" style="color:var(--violet); margin-right:6px; display:inline-block; transition: transform 0.2s; ${isExpanded ? 'transform: rotate(90deg);' : ''}">▶</span>
                                         ${w}
                                     </td>
                                     ${sortedBrands.map(b => {
