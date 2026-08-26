@@ -452,9 +452,15 @@ export const montarSimulador = function (RAIZ, OPC) {
     let HORAS_REF = null;
 
     const $ = (id) => RAIZ.querySelector('#' + id);
+    /* SE ESCRIBE "7 h 8 min", NO "7 h 08".
+     *
+     * Daniel, 26-ago-2026: *"quiero entender 7 h 08 qué, ¿7 horas y 8 minutos? No sé qué
+     * puedo interpretar con eso"*. Y tiene razón: "7 h 08" se puede leer como 7 horas con
+     * 8 minutos o como 7,08 horas, que son cosas distintas. Con el "min" escrito no hay
+     * forma de leerlo mal. El cero de relleno tampoco va: "7 h 8 min" se lee de corrido. */
     const hhmm = (min) => {
         const h = Math.floor(min / 60), m = Math.round(min % 60);
-        return h + ' h' + (m ? ' ' + String(m).padStart(2, '0') : '');
+        return h + ' h' + (m ? ' ' + m + ' min' : '');
     };
 
     /** Minutos desde la entrada del turno. Suma 24 h cuando la hora ya cruzó la medianoche:
@@ -584,10 +590,19 @@ export const montarSimulador = function (RAIZ, OPC) {
         $('sim_v_bTotal').textContent = nMil(R.bTotal);
         $('sim_v_bRitmo').textContent = R.bRitmo > 0 ? Math.round(R.bRitmo) + ' min' : '—';
 
-        $('sim_nota_buffer').innerHTML =
-            `Las <b>${nMil(S.bPal)} paletas por grupo</b> están medidas sobre un turno de <b>${hhmm(HORAS_REF * 60)}</b>. `
-            + `Con las <b>${hhmm(R.efectivas * 60)}</b> de ahora quedan en <b>${nMil(R.bTotal)} paletas</b>, `
-            + `que son <b>${(R.bTotal / Math.max(1, R.bPers)).toFixed(1)} por persona</b>.`;
+        /* Un decimal como mucho, y solo si hace falta: 140 paletas entre 10 personas son
+           "14 por persona", no "14.0". */
+        const nDec = (n) => Number(n || 0).toLocaleString('es-PE', { maximumFractionDigits: 1 });
+        const porPersona = nDec(R.bTotal / Math.max(1, R.bPers));
+        const cambioElHorario = Math.abs(R.efectivas - HORAS_REF) > 0.01;
+        $('sim_nota_buffer').innerHTML = cambioElHorario
+            // Solo se explica el reajuste cuando de verdad hubo uno: con el horario sin
+            // tocar, decir dos veces la misma hora suena a error.
+            ? `Las <b>${nMil(S.bPal)} paletas por grupo</b> están medidas sobre un turno de `
+            + `<b>${hhmm(HORAS_REF * 60)}</b>. Con las <b>${hhmm(R.efectivas * 60)}</b> de ahora quedan en `
+            + `<b>${nMil(R.bTotal)} paletas</b>, que son <b>${porPersona} por persona</b>.`
+            : `Las <b>${nMil(S.bPal)} paletas por grupo</b> hacen <b>${nMil(R.bTotal)} paletas</b> en el turno, `
+            + `que son <b>${porPersona} por persona</b>. Si mueve el horario, este total se mueve con él.`;
 
         const pct = S.meta > 0 ? (R.aTotal / S.meta) * 100 : 0;
         $('sim_meta_rell').style.width = Math.min(100, pct) + '%';
@@ -868,12 +883,19 @@ export const montarSimulador = function (RAIZ, OPC) {
             });
         });
 
-        const BY = 5.14, BH = 1.42;
+        /* La franja crece de 1,42" a 1,56" y sube 0,08": la cuenta de las horas ya no
+           entra en un renglón desde que se escriben "7 h 17 min" en vez de "7 h 17", y a
+           9 pt —que sería lo único que entraba— no se lee proyectada. Va en dos líneas de
+           11 pt, que sí entran (531 y 442 pt de los 551 que mide la caja). Arriba quedan
+           0,16" libres bajo las tarjetas y abajo 0,10" antes del pie. */
+        const BY = 5.06, BH = 1.56;
         s.addShape(pres.ShapeType.roundRect, {
             x: 0.5, y: BY, w: 8.17, h: BH, rectRadius: 0.05,
             fill: { color: '18294A' }, line: { color: '2B3F63', width: 1 }
         });
-        s.addText(`DE DÓNDE SALEN LAS ${efec.toUpperCase()} EFECTIVAS`, {
+        // Sin el número en el título: en mayúsculas, "7 H 8 MIN" se lee peor que en el
+        // cuerpo, y abajo la cuenta ya termina diciéndolo con todas las letras.
+        s.addText('DE DÓNDE SALEN LAS HORAS EFECTIVAS', {
             x: 0.76, y: BY + 0.16, w: 7.65, h: 0.24, isTextBox: true, margin: 0,
             fontFace: 'Arial', fontSize: 10, bold: true, color: AMBAR, charSpacing: 0.8, valign: 'middle'
         });
@@ -894,21 +916,27 @@ export const montarSimulador = function (RAIZ, OPC) {
             { text: `${hhmm(R.ventana)} de ventana`, options: { bold: true, color: BLANCO } },
             { text: '  menos  ', options: { color: GRIS2 } },
             { text: `${R.cenaDentro} min de refrigerio`, options: { bold: true, color: BLANCO } },
-            { text: `  =  ${hhmm(R.disponible)} disponibles  `, options: { color: GRIS } },
-            { text: `x ${S.ocup} % de ocupación real`, options: { bold: true, color: AMBAR } },
+            { text: '  =  ', options: { color: GRIS } },
+            { text: `${hhmm(R.disponible)} disponibles`, options: { bold: true, color: BLANCO } }
+        ], {
+            x: 0.76, y: BY + 0.70, w: 7.65, h: 0.26, isTextBox: true, margin: 0,
+            fontFace: 'Arial', fontSize: 11, valign: 'middle'
+        });
+        s.addText([
+            { text: hhmm(R.disponible), options: { bold: true, color: BLANCO } },
+            { text: '  por el  ', options: { color: GRIS2 } },
+            { text: `${S.ocup} % de ocupación real`, options: { bold: true, color: AMBAR } },
             { text: '  =  ', options: { color: GRIS } },
             { text: `${efec} efectivas`, options: { bold: true, color: AMBAR } }
         ], {
-            // 10 pt y no 11,5: la línea entera son unos 108 caracteres y a 11,5 se pasa
-            // de los 7,65" de la caja, se parte en dos y el segundo renglón pisa la
-            // nota en cursiva de abajo.
-            x: 0.76, y: BY + 0.82, w: 7.65, h: 0.28, isTextBox: true, margin: 0,
-            fontFace: 'Arial', fontSize: 10, valign: 'middle'
+            x: 0.76, y: BY + 0.98, w: 7.65, h: 0.26, isTextBox: true, margin: 0,
+            fontFace: 'Arial', fontSize: 11, valign: 'middle'
         });
-        s.addText('El porcentaje de ocupación es lo que la plataforma mide en el piso: baños, traslados y coordinación ya están descontados ahí.', {
-            x: 0.76, y: BY + 1.09, w: 7.65, h: 0.22, isTextBox: true, margin: 0,
-            fontFace: 'Arial', fontSize: 9, italic: true, color: GRIS2, valign: 'middle'
-        });
+        s.addText('El porcentaje de ocupación es lo que la plataforma mide en el piso: baños, traslados y coordinación ya están descontados ahí.',
+            {
+                x: 0.76, y: BY + 1.26, w: 7.65, h: 0.22, isTextBox: true, margin: 0,
+                fontFace: 'Arial', fontSize: 9, italic: true, color: GRIS2, valign: 'middle'
+            });
 
         s.addShape(pres.ShapeType.roundRect, {
             x: 8.82, y: BY, w: 4.01, h: BH, rectRadius: 0.05,
