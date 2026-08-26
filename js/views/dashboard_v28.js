@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0407';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0408';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0407';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0407';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0407';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0407';
-import * as metasService from '../services_v245/metasService.js?v=29.0407';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0407';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0407';
+import * as adminService from '../services_v245/adminService.js?v=29.0408';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0408';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0408';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0408';
+import * as metasService from '../services_v245/metasService.js?v=29.0408';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0408';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0408';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0407';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0407';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0407';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0407';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0407';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0407';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0407';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0407';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0407';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0407';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0407';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0407';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0407';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0407';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0407';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0407';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0407';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0407';
-import { montarSlotting } from './slotting.js?v=29.0407';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0408';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0408';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0408';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0408';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0408';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0408';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0408';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0408';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0408';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0408';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0408';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0408';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0408';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0408';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0408';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0408';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0408';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0408';
+import { montarSlotting } from './slotting.js?v=29.0408';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0407';
+const VERSION = '29.0408';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5210,7 +5210,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0407');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0408');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -7007,6 +7007,25 @@ export const renderDashboard = async (container, user, onLogout) => {
 const TURNO_AREA = 'turno_actividades';
 const TURNO_API  = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
 
+/* LA ULTIMA JORNADA GUARDADA ANTES DE `dia`.
+   Sirve para que una noche nueva no nazca vacia: hereda la lista de actividades
+   de la anterior. Se pide la lista de fechas del area y se toma la mayor que sea
+   MENOR que la que se esta abriendo -no la mas reciente a secas-, para que mirar
+   una jornada vieja no herede de uno de sus dias futuros. */
+const ultimaJornadaGuardada = async (dia) => {
+    try {
+        const r = await fetch(`${TURNO_API}/${TURNO_AREA}/dates`);
+        if (!r.ok) return null;
+        const j = await r.json();
+        const previas = (j.dates || []).filter(f => f && f < dia).sort();
+        const cual = previas[previas.length - 1];
+        if (!cual) return null;
+        const datos = await leerArea(TURNO_AREA, cual);
+        if (datos) datos._dia = cual;
+        return datos;
+    } catch (e) { console.warn('[TURNO] No se pudo buscar la jornada anterior:', e); return null; }
+};
+
 /* Con fecha trae ESA jornada; sin fecha, la única que hay. */
 const leerArea = async (area, dia) => {
     try {
@@ -7922,9 +7941,44 @@ const renderActividadesSection = async (container, dia) => {
         <span style="font-size:var(--t-md);">Trayendo el turno...</span>
       </div>`;
 
-    const [guardado, fuentes] = await Promise.all([
+    let [guardado, fuentes] = await Promise.all([
         leerArea(TURNO_AREA, jornada), fuentesDelTurno(jornada)
     ]);
+    /* UNA JORNADA NUEVA HEREDA LA LISTA DE LA ANTERIOR.
+
+       Antes, si el dia no tenia nada guardado, `montarTurno` caia en su plantilla
+       de fabrica —siete actividades fijas— y TODO lo que Daniel hubiera agregado
+       desaparecia al dia siguiente. Le paso el 25-ago con "Consolidar Reserva",
+       que habia creado el 24: la actividad existe, pero solo en el dia en que la
+       escribio.
+
+       SE HEREDA LA LISTA, NO LOS NUMEROS. La plantilla ya traia una vez `meta: 60,
+       av: 45` escritos a mano y cada jornada nacia con 45 de 60 hechos sin que
+       nadie hubiera trabajado; arrastrar los de ayer seria el mismo error.
+
+       Y LA META SOLO DE LAS QUE SE ESCRIBEN A MANO. `congelado()` congela la meta
+       apenas hay una, asi que heredar la de una actividad automatica dejaria a
+       Almacenamiento con los pares de anoche y su fuente ya no podria corregirlo.
+       Las de a mano si: son un objetivo que se repite y volver a escribir 50 cada
+       noche es trabajo de gusto. */
+    if (!guardado || !guardado.procs || !guardado.procs.length) {
+        const anterior = await ultimaJornadaGuardada(jornada);
+        if (anterior && anterior.procs && anterior.procs.length) {
+            guardado = {
+                ini: anterior.ini, fin: anterior.fin, dia: jornada,
+                procs: anterior.procs.map(p => {
+                    const q = Object.assign({}, p);
+                    q.av = 0;                       // el avance es de esa noche
+                    q.aMano = {};
+                    if (q.fuente) q.meta = 0;       // la pone la fuente
+                    else if (p.aMano && p.aMano.meta) q.aMano = { meta: true };
+                    return q;
+                })
+            };
+            console.log('[TURNO] ' + jornada + ' no tenia nada guardado: se hereda la '
+                + 'lista de ' + (anterior._dia || 'la jornada anterior') + ' con los avances en cero.');
+        }
+    }
     // La pestaña pudo cambiar mientras se buscaban los datos.
     if (!container.isConnected || activeAdminSub !== 'actividades') return;
 
@@ -17656,7 +17710,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0407 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0408 | MOBILE PORTAL
                             </div>
                     </div>
 
