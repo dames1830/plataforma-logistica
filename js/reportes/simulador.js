@@ -58,7 +58,12 @@ export const BASE = {
     cena: '01:00', cenaMin: 60,
     aGrupos: 16, sPers: 5, sEnc: 1, sUph: 200,
     bGrupos: 2, bTam: 5, bPal: 70, bMonta: 2,
-    meta: 50000
+    /* LAS TRES ÁREAS TIENEN META. Daniel, 26-ago-2026: *"los tres tienen que tener meta:
+       meta de almacenaje, meta de slotting y el buffer también"*.
+       Las de slotting y buffer arrancan en null a propósito: al abrir la pantalla se
+       rellenan con lo que da la dotación cargada, para que no queden vacías mientras
+       nadie fije un objetivo. Desde ahí ya son un número que se escribe a mano. */
+    meta: 50000, metaSlot: null, metaBuf: null
 };
 
 const CSS = `
@@ -202,8 +207,8 @@ const CSS = `
 #sim .frente.s .salida .lab { color: var(--slo); }
 #sim .frente.b .salida .lab { color: var(--buf); }
 
-#sim .meta-fila { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-#sim .meta-campo { width: 150px; }
+#sim .meta-fila { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 12px; }
+#sim .meta-campo { width: 190px; }
 #sim .barra-meta { flex: 1; min-width: 260px; height: 30px; border-radius: 8px; background: var(--panel-2);
   border: 1px solid var(--line); position: relative; overflow: hidden; }
 #sim .barra-meta .rell { position: absolute; left: 0; top: 0; height: 100%; opacity: .85; }
@@ -391,9 +396,19 @@ const HTML = `
       <button class="btn" id="sim_ajustar">Ajustar la gente a la meta</button></div>
     <div class="panel-b">
       <div class="meta-fila">
-        <div class="campo meta-campo"><label>Meta de pares por día</label>
-          <input type="number" id="sim_meta" min="1000" max="500000" step="1000"></div>
+        <div class="campo meta-campo"><label>Almacenaje · meta de pares</label>
+          <input type="number" id="sim_meta" min="0" max="500000" step="1000"></div>
         <div class="barra-meta"><div class="rell" id="sim_meta_rell"></div><div class="txt" id="sim_meta_txt"></div></div>
+      </div>
+      <div class="meta-fila">
+        <div class="campo meta-campo"><label>Slotting · meta de pares</label>
+          <input type="number" id="sim_metaSlot" min="0" max="500000" step="100"></div>
+        <div class="barra-meta"><div class="rell" id="sim_metaSlot_rell"></div><div class="txt" id="sim_metaSlot_txt"></div></div>
+      </div>
+      <div class="meta-fila">
+        <div class="campo meta-campo"><label>Buffer · meta de paletas</label>
+          <input type="number" id="sim_metaBuf" min="0" max="3000" step="5"></div>
+        <div class="barra-meta"><div class="rell" id="sim_metaBuf_rell"></div><div class="txt" id="sim_metaBuf_txt"></div></div>
       </div>
       <div class="veredicto" id="sim_veredicto"></div>
     </div>
@@ -604,19 +619,38 @@ export const montarSimulador = function (RAIZ, OPC) {
             : `Las <b>${nMil(S.bPal)} paletas por grupo</b> hacen <b>${nMil(R.bTotal)} paletas</b> en el turno, `
             + `que son <b>${porPersona} por persona</b>. Si mueve el horario, este total se mueve con él.`;
 
-        const pct = S.meta > 0 ? (R.aTotal / S.meta) * 100 : 0;
-        $('sim_meta_rell').style.width = Math.min(100, pct) + '%';
-        $('sim_meta_rell').style.background = pct >= 100 ? 'var(--ok)' : 'var(--alm)';
-        $('sim_meta_txt').textContent = `${nMil(R.aTotal)} de ${nMil(S.meta)} pares · ${Math.round(pct)} %`;
+        /* UNA BARRA POR ÁREA. El color no se elige por área sino por resultado: verde si
+           llega, ámbar si no. Un porcentaje nunca va solo — al lado siempre la cantidad
+           y de qué es. */
+        const barra = (id, hecho, meta, unidad) => {
+            const p = meta > 0 ? (hecho / meta) * 100 : 0;
+            $(id + '_rell').style.width = Math.min(100, p) + '%';
+            $(id + '_rell').style.background = p >= 100 ? 'var(--ok)' : 'var(--alm)';
+            $(id + '_txt').textContent = meta > 0
+                ? `${nMil(hecho)} de ${nMil(meta)} ${unidad} · ${Math.round(p)} %`
+                : `${nMil(hecho)} ${unidad} · sin meta puesta`;
+        };
+        barra('sim_meta', R.aTotal, S.meta, 'pares');
+        barra('sim_metaSlot', R.sTotal, S.metaSlot, 'pares');
+        barra('sim_metaBuf', R.bTotal, S.metaBuf, 'paletas');
 
         const dif = R.aTotal - S.meta;
         const v = $('sim_veredicto');
         v.className = 'veredicto ' + (dif >= 0 ? 'ok' : 'no');
         const hacenFalta = Math.ceil(S.meta / Math.max(1, R.aGrupo));
-        v.innerHTML = dif >= 0
+        // Las que no llegan se nombran: si solo hablara del almacenaje, un slotting corto
+        // pasaría de largo sin que nadie lo note.
+        const cortas = [];
+        if (R.sTotal < S.metaSlot) cortas.push(`slotting (faltan ${nMil(S.metaSlot - R.sTotal)} pares)`);
+        if (R.bTotal < S.metaBuf) cortas.push(`buffer (faltan ${nMil(S.metaBuf - R.bTotal)} paletas)`);
+        v.innerHTML = (dif >= 0
             ? `✔ Con <b>${R.aPers} personas</b> en almacenamiento se llega: sobran <b>${nMil(dif)} pares</b> de margen.`
-            : `✘ Con <b>${R.aPers} personas</b> no se llega: faltan <b>${nMil(-dif)} pares</b>. `
-            + `Hacen falta <b>${hacenFalta * S.aTam} personas</b> (${hacenFalta} grupos).`;
+            : `✘ Con <b>${R.aPers} personas</b> no se llega al almacenaje: faltan <b>${nMil(-dif)} pares</b>. `
+            + `Hacen falta <b>${hacenFalta * S.aTam} personas</b> (${hacenFalta} grupos).`)
+            // "Tampoco" solo cuando el almacenaje tampoco llegó; si llegó, es un "pero".
+            + (cortas.length
+                ? `<br>${dif >= 0 ? 'Pero no llega' : 'Tampoco llega'} ${cortas.join(', ni ')}.`
+                : '');
 
         pintarComparador(R);
 
@@ -688,8 +722,17 @@ export const montarSimulador = function (RAIZ, OPC) {
             + `<br>La diferencia entre las dos <b>es el prepack</b>, que se matricula por paleta entera y no se trabaja par por par.`;
     }
 
+    /* LAS METAS DE SLOTTING Y BUFFER, si nadie las fijó todavía, arrancan con lo que da
+       la dotación cargada. Así la pantalla y la lámina nunca muestran una meta vacía
+       —"para que no quede vacío", pidió Daniel— y desde ahí él las corrige a mano. */
+    if (!(S.metaSlot > 0) || !(S.metaBuf > 0)) {
+        const R0 = calcular();
+        if (!(S.metaSlot > 0)) S.metaSlot = Math.round(R0.sTotal);
+        if (!(S.metaBuf > 0)) S.metaBuf = Math.round(R0.bTotal);
+    }
+
     const campos = ['entrada', 'arranque', 'bpa', 'salida', 'cena', 'cenaMin', 'ocup',
-        'aTam', 'aUph', 'sEnc', 'sUph', 'bTam', 'bPal', 'bMonta', 'meta'];
+        'aTam', 'aUph', 'sEnc', 'sUph', 'bTam', 'bPal', 'bMonta', 'meta', 'metaSlot', 'metaBuf'];
     const esTexto = { entrada: 1, arranque: 1, bpa: 1, salida: 1, cena: 1 };
 
     campos.forEach(c => {
@@ -805,7 +848,8 @@ export const montarSimulador = function (RAIZ, OPC) {
             x: 0.5, y: 0.32, w: 9.15, h: 0.6, isTextBox: true, margin: 0,
             fontFace: 'Arial', fontSize: 26, bold: true, color: BLANCO, valign: 'middle'
         });
-        s.addText(`Comité del ${fechaLarga()}   ·   Centro de Distribución   ·   Turno noche`, {
+        // Sin "Comité del": la lámina puede ir a cualquier lado, no solo a un comité.
+        s.addText(`${fechaLarga()}   ·   Centro de Distribución   ·   Turno noche`, {
             x: 0.5, y: 1.0, w: 8.9, h: 0.3, isTextBox: true, margin: 0,
             fontFace: 'Arial', fontSize: 12, color: GRIS, valign: 'middle'
         });
@@ -830,7 +874,9 @@ export const montarSimulador = function (RAIZ, OPC) {
             {
                 x: 0.5, ac: AMBAR, tit: 'ALMACENAMIENTO', num: String(R.aPers),
                 sub: `personas  ·  ${S.aGrupos} grupos de ${S.aTam}`,
-                filas: [['Meta del comité', `${nMil(S.meta)} pares por día`],
+                // Las tres tarjetas arrancan por la META, y se llama "Meta" a secas:
+                // la lámina no siempre va a un comité.
+                filas: [['Meta', `${nMil(S.meta)} pares por día`],
                 ['Rendimiento por grupo', `${nMil(S.aUph)} pares por hora`],
                 [`${efec} efectivas por noche`, `${nMil(R.aGrupo)} pares por grupo`],
                 [`${S.aGrupos} grupos x ${nMil(R.aGrupo)}`, `${nMil(R.aTotal)} pares por día`]]
@@ -838,20 +884,20 @@ export const montarSimulador = function (RAIZ, OPC) {
             {
                 x: 4.66, ac: AZUL, tit: 'SLOTTING', num: String(S.sPers),
                 sub: `personas  ·  ${R.sProd} mueven carga`,
-                filas: [['El módulo está en construcción', 'todavía no hay historial'],
+                filas: [['Meta', `${nMil(S.metaSlot)} pares por día`],
                 [`${S.sEnc} encargado guía, no mueve`, `quedan ${R.sProd} productivas`],
-                ['Supuesto por persona', `${nMil(S.sUph)} pares por hora`],
+                ['Rendimiento por persona', `${nMil(S.sUph)} pares por hora`],
                 [`${R.sProd} personas x ${nMil(R.sPersona)}`, `${nMil(R.sTotal)} pares por día`]]
             },
             {
                 x: 8.82, ac: VERDE, tit: 'BUFFER  ·  DE RESERVA AL ACTIVO', num: String(R.bPers + S.bMonta),
                 sub: `${R.bPers} operarios + ${S.bMonta} montacarguistas`,
-                filas: [['Cómo se arma', `${S.bGrupos} grupos de ${S.bTam} personas`],
+                filas: [['Meta', `${nMil(S.metaBuf)} paletas`],
+                ['Cómo se arma', `${S.bGrupos} grupos de ${S.bTam} personas`],
                 ['Por grupo en el turno', `${nMil(S.bPal)} paletas`],
-                // "por grupo" va dicho: sin eso, 6 minutos se lee como el tiempo de UNA
+                // "un grupo" va dicho: sin eso, 6 minutos se lee como el tiempo de UNA
                 // persona y el número parece imposible.
-                ['Ritmo que exige', `un grupo saca una cada ${Math.round(R.bRitmo)} min`],
-                ['Carga total del turno', `${nMil(R.bTotal)} paletas`]]
+                ['Lo que se alcanza', `${nMil(R.bTotal)} paletas · una cada ${Math.round(R.bRitmo)} min`]]
             }
         ].forEach(c => {
             s.addShape(pres.ShapeType.roundRect, {
@@ -943,21 +989,36 @@ export const montarSimulador = function (RAIZ, OPC) {
             fill: { color: '18294A' }, line: { color: '2B3F63', width: 1 }
         });
         s.addText('DÓNDE ESTAMOS HOY', {
-            x: 9.08, y: BY + 0.16, w: 3.49, h: 0.24, isTextBox: true, margin: 0,
+            x: 9.08, y: BY + 0.14, w: 3.49, h: 0.22, isTextBox: true, margin: 0,
             fontFace: 'Arial', fontSize: 10, bold: true, color: VERDE, charSpacing: 0.8, valign: 'middle'
         });
-        s.addText([
-            { text: nMil(M.hoyPares || 0), options: { fontSize: 26, bold: true, color: BLANCO } },
-            { text: '  pares por noche', options: { fontSize: 12, color: GRIS } }
-        ], {
-            x: 9.08, y: BY + 0.44, w: 3.49, h: 0.42, isTextBox: true, margin: 0,
-            fontFace: 'Arial', valign: 'middle'
+
+        /* LAS TRES ÁREAS, no solo el almacenaje. Daniel, 26-ago-2026: *"me muestras 22.879
+           pares por noche, pero ¿qué? ¿almacenaje, buffer, qué es? Debes poner los tres"*.
+           Slotting va sin número y lo DICE: no hay de dónde sacarlo —el stock no trae
+           usuario— y poner un cero ahí se leería como que no se trabajó. */
+        [
+            ['Almacenaje', M.hoyPares > 0 ? `${nMil(M.hoyPares)} pares por noche` : 'sin dato', VERDE],
+            ['Slotting', 'sin medición todavía', GRIS2],
+            ['Buffer', M.bufHoy > 0 ? `${nMil(M.bufHoy)} paletas por noche` : 'sin dato', VERDE]
+        ].forEach(([area, valor, color], i) => {
+            const y = BY + 0.40 + i * 0.26;
+            s.addText(area, {
+                x: 9.08, y: y, w: 0.95, h: 0.24, isTextBox: true, margin: 0,
+                fontFace: 'Arial', fontSize: 9.5, color: GRIS2, valign: 'middle'
+            });
+            s.addText(valor, {
+                x: 10.03, y: y, w: 2.54, h: 0.24, isTextBox: true, margin: 0,
+                fontFace: 'Arial', fontSize: 11, bold: color !== GRIS2, color: color, valign: 'middle'
+            });
         });
+
         s.addText(
-            `Con ${(M.hoyPersonas || 0).toFixed(1).replace('.', ',')} personas en promedio. `
-            + `El techo alcanzado fue de ${nMil(M.techo || 0)} pares.`, {
-            x: 9.08, y: BY + 0.9, w: 3.49, h: 0.4, isTextBox: true, margin: 0,
-            fontFace: 'Arial', fontSize: 9.5, color: GRIS, valign: 'top', lineSpacingMultiple: 1.15
+            `Almacenaje: ${(M.hoyPersonas || 0).toFixed(1).replace('.', ',')} personas por noche, `
+            + `con un techo de ${nMil(M.techo || 0)} pares.`
+            + (M.bufNoches ? ` Buffer: promedio de ${M.bufNoches} noches con paletas bajadas.` : ''), {
+            x: 9.08, y: BY + 1.20, w: 3.49, h: 0.30, isTextBox: true, margin: 0,
+            fontFace: 'Arial', fontSize: 8, color: GRIS2, valign: 'top', lineSpacingMultiple: 1.15
         });
 
         // Si se abrió un candado, la lámina TIENE que decirlo.
