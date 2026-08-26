@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0412';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0413';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0412';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0412';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0412';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0412';
-import * as metasService from '../services_v245/metasService.js?v=29.0412';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0412';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0412';
+import * as adminService from '../services_v245/adminService.js?v=29.0413';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0413';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0413';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0413';
+import * as metasService from '../services_v245/metasService.js?v=29.0413';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0413';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0413';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0412';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0412';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0412';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0412';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0412';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0412';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0412';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0412';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0412';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0412';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0412';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0412';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0412';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0412';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0412';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0412';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0412';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0412';
-import { montarSlotting } from './slotting.js?v=29.0412';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0413';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0413';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0413';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0413';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0413';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0413';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0413';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0413';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0413';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0413';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0413';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0413';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0413';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0413';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0413';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0413';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0413';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0413';
+import { montarSlotting } from './slotting.js?v=29.0413';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0412';
+const VERSION = '29.0413';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5302,7 +5302,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0412');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0413');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5692,7 +5692,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                 }
                 renderAdminTab();
             } else {
-                alert('⚠️ El usuario se guardó localmente pero falló la sincronización con el servidor.');
+                /* Desde v29.0413 el servidor exige un token de administrador para tocar
+                   usuarios. Quien tuviera la sesion abierta de ANTES no lo tiene, y el
+                   aviso generico -"fallo la sincronizacion"- lo mandaria a buscar un
+                   problema de red que no existe. Se distingue el caso. */
+                let t = '';
+                try { t = (JSON.parse(localStorage.getItem('logistics_session') || '{}') || {}).token || ''; } catch (e) {}
+                alert(t
+                    ? '⚠️ El usuario se guardó localmente pero falló la sincronización con el servidor.'
+                    : '🔒 Para cambiar usuarios hay que volver a entrar. Tu sesion es anterior al candado nuevo y no trae la credencial que el servidor pide ahora. Cierra sesion, vuelve a entrar y repite el cambio.');
                 renderAdminTab();
             }
         } catch (err) {
@@ -17830,7 +17838,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0412 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0413 | MOBILE PORTAL
                             </div>
                     </div>
 

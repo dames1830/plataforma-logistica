@@ -355,9 +355,22 @@ export async function pushChange(area, data, date = null) {
         // Objetos maestros completos como 'attendance' o 'config' deben enviarse por POST.
         const method = (!Array.isArray(payload) && typeof payload === 'object' && payload.hasOwnProperty('id')) ? 'PATCH' : 'POST';
         
+        /* EL TOKEN VA SOLO EN LAS ESCRITURAS DE USUARIOS. Es la unica area con candado
+           en el servidor -ver `es_admin` en backend/main.py-, y se manda solo ahi para
+           no meter una cabecera nueva en las otras 60 areas, que dispararia el preflight
+           de CORS en cada subida del robot y de todas las PC. Se lee del localStorage y
+           no de un import para no atar el motor a auth.js. */
+        const cabeceras = { 'Content-Type': 'application/json' };
+        if (area === 'users') {
+            try {
+                const t = (JSON.parse(localStorage.getItem('logistics_session') || '{}') || {}).token;
+                if (t) cabeceras['X-Auth-Token'] = t;
+            } catch (e) { /* sin token: el servidor respondera 403 y se avisa arriba */ }
+        }
+
         const res = await fetch(url, {
             method: method,
-            headers: { 'Content-Type': 'application/json' },
+            headers: cabeceras,
             body: JSON.stringify(payload),
             signal: corte.signal
         });

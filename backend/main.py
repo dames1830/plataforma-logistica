@@ -185,6 +185,65 @@ def verificar_password(plano, guardado) -> bool:
         return False
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# QUIEN PUEDE TOCAR LOS USUARIOS
+#
+# Hasta el 26-ago-2026 NINGUN endpoint pedia credenciales, y `POST /logistics/users`
+# empieza borrando a todo el que no venga en la lista. Con UNA sola peticion anonima
+# se podia borrar a los siete usuarios reales y crearse uno con rol admin y la clave
+# que uno quisiera: la plataforma entera, sin adivinar nada. La direccion del
+# servidor esta en el JavaScript publico.
+#
+# El arreglo es a proposito ESTRECHO: solo se exige token para ESCRIBIR usuarios.
+# Leer sigue libre -si no, no arranca ni la pantalla de entrada- y el resto de areas
+# tambien, para no dejar sin trabajar a los robots ni a los reportes publicos. Esos
+# huecos siguen abiertos y hay que cerrarlos despues; este es el que te deja fuera de
+# tu propia plataforma.
+# ══════════════════════════════════════════════════════════════════════════════
+DIAS_DE_SESION = 30
+
+def crear_sesion(username: str, role: str) -> str:
+    """Devuelve un token nuevo y lo guarda. De paso limpia los vencidos."""
+    token = secrets.token_urlsafe(32)
+    vence = (ahora() + timedelta(days=DIAS_DE_SESION)).isoformat()
+    conn = sqlite3.connect(db_path()); cur = conn.cursor()
+    try:
+        cur.execute("DELETE FROM sessions WHERE expires_at < ?", (ahora().isoformat(),))
+        cur.execute("INSERT INTO sessions (token, username, role, expires_at) VALUES (?, ?, ?, ?)",
+                    (token, username, role, vence))
+        conn.commit()
+    finally:
+        conn.close()
+    return token
+
+def usuario_del_token(request: Request):
+    """El usuario dueno del token, o None. Se relee el ROL DE LA TABLA `users` y no
+    el que quedo grabado en la sesion: si a alguien le bajan el rol, deja de poder
+    en el acto y no cuando venza su token."""
+    token = request.headers.get('X-Auth-Token') or ''
+    if not token:
+        return None
+    conn = sqlite3.connect(db_path()); cur = conn.cursor()
+    try:
+        cur.execute("SELECT username, expires_at FROM sessions WHERE token = ?", (token,))
+        fila = cur.fetchone()
+        if not fila or str(fila[1]) < ahora().isoformat():
+            return None
+        cur.execute("SELECT username, role, active FROM users WHERE username = ?", (fila[0],))
+        u = cur.fetchone()
+        if not u or not u[2]:
+            return None
+        return {"username": u[0], "role": u[1]}
+    except Exception:
+        return None
+    finally:
+        conn.close()
+
+def es_admin(request: Request) -> bool:
+    u = usuario_del_token(request)
+    return bool(u and u.get('role') == 'admin')
+
+
 def migrar_passwords(ruta: str) -> int:
     """Convierte a huella las contraseñas que todavía estén en texto plano."""
     convertidas = 0
@@ -299,6 +358,13 @@ def init_db(ruta: Optional[str] = None):
     # ARCHIVOS NUBE más abajo para por qué se guarda el archivo y no sus filas.
     cursor.execute('CREATE TABLE IF NOT EXISTS archivos_nube (id INTEGER PRIMARY KEY AUTOINCREMENT, modulo TEXT NOT NULL, nombre TEXT NOT NULL, fecha TEXT NOT NULL, tamano INTEGER NOT NULL, contenido BLOB NOT NULL, subido_por TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_archivos_nube ON archivos_nube (modulo, fecha DESC)')
+
+    # SESIONES. Nacen al entrar y son lo unico que autoriza tocar los usuarios.
+    # Van en la base y no en memoria porque el servidor se duerme y al despertar
+    # todas las sesiones vivas se perderian: cada quien tendria que volver a entrar
+    # sin saber por que.
+    cursor.execute('CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, username TEXT NOT NULL, role TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, expires_at TEXT NOT NULL)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_exp ON sessions (expires_at)')
 
     # 'tema' llego despues: el administrador le deja puesto un tema a cada usuario y ese
     # es con el que abre la primera vez, en la PC que sea. Antes el tema vivia solo en el
@@ -832,6 +898,32 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
 
         # Las contraseñas que lleguen se procesan aparte y JAMÁS se escriben en el
         # snapshot: ahí solo van los datos públicos del usuario.
+        # ESCRIBIR USUARIOS EXIGE SER ADMIN. Es la unica area con candado: mas abajo
+        # esta operacion BORRA a todo el que no venga en la lista, asi que sin esto una
+        # peticion anonima deja a Daniel fuera y se crea un admin propio.
+        if area == 'users':
+            if not es_admin(request):
+                return JSONResponse(status_code=403, content={
+                    "status": "error",
+                    "message": "Solo un administrador con la sesion iniciada puede cambiar usuarios."})
+
+            # NUNCA DEJAR LA PLATAFORMA SIN ADMINISTRADOR ACTIVO. Esta operacion borra a
+            # todo el que no venga en la lista, asi que un envio incompleto -o un descuido
+            # en la pantalla- deja cero admins y a nadie con que volver a entrar.
+            #
+            # VA ACA ARRIBA, ANTES DE ESCRIBIR NADA. Puesto mas abajo -junto al DELETE de la
+            # tabla- ya era tarde: el snapshot se escribe primero, y al LEER /logistics/users
+            # la auto-sanitizacion copia ese snapshot a la tabla. El 400 llegaba, pero el
+            # dato malo ya estaba puesto. Comprobado: dejaba la base en un solo asistente.
+            if isinstance(payload_data, list):
+                hay_admin = any(isinstance(u, dict) and u.get('role') == 'admin'
+                                and u.get('active', True) for u in payload_data)
+                if not hay_admin:
+                    return JSONResponse(status_code=400, content={
+                        "status": "error",
+                        "message": "La operacion dejaria la plataforma sin ningun administrador "
+                                   "activo. Tiene que quedar al menos uno."})
+
         passwords_recibidas = {}
         if area == 'users' and isinstance(payload_data, list):
             limpio = []
@@ -957,6 +1049,12 @@ async def restore_workers(request: Request):
 @app.post("/api/admin/restore/users")
 async def restore_users(request: Request):
     try:
+        # Mismo candado que la escritura normal: esta ruta puede sobrescribir la
+        # contrasena de cualquiera, incluida la del administrador.
+        if not es_admin(request):
+            return JSONResponse(status_code=403, content={
+                "status": "error",
+                "message": "Solo un administrador con la sesion iniciada puede restaurar usuarios."})
         data = await request.json()
         conn = sqlite3.connect(db_path()); cursor = conn.cursor()
         for u in data:
@@ -1124,7 +1222,10 @@ async def api_login(request: Request):
             return {"success": False, "message": "Usuario inactivo o desactivado"}
 
         _intentos_fallidos.pop(usuario.lower(), None)
-        return {"success": True,
+        # El token es lo unico que autoriza tocar los usuarios. Se entrega SOLO aca,
+        # despues de comprobar la contrasena contra la huella guardada.
+        token = crear_sesion(row[1], row[3])
+        return {"success": True, "token": token,
                 "user": {"id": row[0], "username": row[1], "name": row[2], "role": row[3]}}
     except Exception as e:
         return {"success": False, "message": "No se pudo validar el acceso", "detalle": str(e)}

@@ -14,7 +14,7 @@ const getApiBase = (defaultUrl) => {
   return defaultUrl;
 };
 const AUTH_API = getApiBase("https://logistics-backend-wv0x.onrender.com/api");
-const VERSION = '29.0412';
+const VERSION = '29.0413';
 
 /**
  * [SEGURIDAD v26.5.572] La validación la hace EL SERVIDOR.
@@ -54,7 +54,13 @@ export const login = async (username, password) => {
   }
 
   const u = respuesta.user || {};
-  const sessionData = { id: u.id, username: u.username, role: u.role, name: u.name };
+  /* EL TOKEN. Lo entrega el servidor SOLO despues de comprobar la contrasena, y es lo
+     unico que autoriza cambiar usuarios. Antes del 26-ago-2026 no existia: cualquiera
+     podia mandar una peticion anonima que borrara a todos los usuarios y creara un
+     admin propio, sin adivinar ninguna clave. Se guarda junto a la sesion; al salir se
+     borra con ella. */
+  const sessionData = { id: u.id, username: u.username, role: u.role, name: u.name,
+                        token: respuesta.token || null };
   localStorage.setItem('logistics_session', JSON.stringify(sessionData));
   console.log(`[AUTH] Acceso concedido para ${sessionData.username}.`);
 
@@ -77,6 +83,14 @@ export const login = async (username, password) => {
   }
 
   return { success: true, user: sessionData };
+};
+
+/** El token de esta sesion, o '' si no hay. Lo usan las llamadas que cambian usuarios. */
+export const tokenDeSesion = () => {
+  try {
+    const s = JSON.parse(localStorage.getItem('logistics_session') || '{}');
+    return s.token || '';
+  } catch (e) { return ''; }
 };
 
 export const logout = () => {
