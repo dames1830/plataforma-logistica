@@ -855,9 +855,24 @@ thead tr:nth-child(2) th { top: 2.1rem; z-index: 4; }
 
    Las tablas cortas no se enteran: el maximo solo actua cuando sobra contenido.
    ───────────────────────────────────────────────────────────────────────── */
+/* Vale para las tres formas de escribirlo: overflow-x:auto, overflow:auto y la
+   clase .tabla-scroll. Son 52 + 10 envoltorios; otros 11 ya traen su propio
+   alto maximo y 4 no tienen envoltorio -ahi se desplaza la pagina y la cabecera
+   se pega igual-. */
 .tabla-scroll,
 [style*="overflow-x:auto"]:has(> table),
-[style*="overflow-x: auto"]:has(> table) {
+[style*="overflow-x: auto"]:has(> table),
+[style*="overflow:auto"]:has(> table),
+[style*="overflow: auto"]:has(> table) {
+  max-height: 68vh;
+}
+
+/* Un ancestro con overflow:hidden ROMPE el sticky: el navegador recorta en vez
+   de desplazar, asi que la cabecera no tiene contra que pegarse. Si el que
+   recorta es el envoltorio directo de una tabla, se le deja desplazar. */
+[style*="overflow:hidden"]:has(> table),
+[style*="overflow: hidden"]:has(> table) {
+  overflow: auto !important;
   max-height: 68vh;
 }
 
@@ -865,11 +880,18 @@ thead tr:nth-child(2) th { top: 2.1rem; z-index: 4; }
 @media (max-height: 700px) {
   .tabla-scroll,
   [style*="overflow-x:auto"]:has(> table),
-  [style*="overflow-x: auto"]:has(> table) { max-height: 60vh; }
+  [style*="overflow-x: auto"]:has(> table),
+  [style*="overflow:auto"]:has(> table),
+  [style*="overflow: auto"]:has(> table) { max-height: 60vh; }
 }
 
 /* Las que ya traian su propio sticky con un tope distinto lo conservan. */
 .data-table th { top: -1px; }
+
+/* Una cabecera que se declara `relative` en linea se pisa su propio sticky. El
+   estilo en linea le gana a la hoja, asi que hay que ganarle con !important. */
+thead th[style*="position:relative"],
+thead th[style*="position: relative"] { position: sticky !important; }
 
 /* Filas mas altas: seguir una fila de 13 columnas con el renglon apretado hace
    saltar de linea. Se toca el padding vertical y NO el horizontal, para no
