@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0436';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0437';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0436';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0436';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0436';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0436';
-import * as metasService from '../services_v245/metasService.js?v=29.0436';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0436';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0436';
+import * as adminService from '../services_v245/adminService.js?v=29.0437';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0437';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0437';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0437';
+import * as metasService from '../services_v245/metasService.js?v=29.0437';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0437';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0437';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0436';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0436';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0436';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0436';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0436';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0436';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0436';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0436';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0436';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0436';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0436';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0436';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0436';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0436';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0436';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0436';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0436';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0436';
-import { montarSlotting } from './slotting.js?v=29.0436';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0437';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0437';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0437';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0437';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0437';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0437';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0437';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0437';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0437';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0437';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0437';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0437';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0437';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0437';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0437';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0437';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0437';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0437';
+import { montarSlotting } from './slotting.js?v=29.0437';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0436';
+const VERSION = '29.0437';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5338,7 +5338,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0436');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0437');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5601,7 +5601,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0436');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0437');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18167,7 +18167,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0436 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0437 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -34402,9 +34402,12 @@ window.__menuMapa = (btn) => {
                            style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
                     <button onclick="window.__hourlyHoy()" title="Volver a la jornada de hoy"
                             style="padding:5px 10px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--cyan-neon); font-size:var(--t-xs); font-weight:800; cursor:pointer; font-family:inherit;">HOY</button>
-                    <!-- La cámara arma la misma tabla en chico para recortarla y mandarla por WhatsApp. -->
+                    <!-- La cámara arma la misma tabla en chico para recortarla y mandarla por WhatsApp.
+                         SIN MARCO NI FONDO, como los otros 22 botones de icono del tablero: yo lo
+                         habia puesto con recuadro y era el unico de todo el archivo. Daniel,
+                         27-ago-2026: "los iconos no tengan marco ni fondo, solo icono". -->
                     <button onclick="window.__hourlyFoto()" title="Verlo en chico para mandar por WhatsApp"
-                            style="padding:5px 11px; border-radius:7px; border:1px solid var(--cyan-neon); background:rgba(var(--cyan-neon-rgb), 0.14); color:var(--cyan-neon); font-size:var(--t-md); cursor:pointer; line-height:1; font-family:inherit;">📷</button>
+                            style="background:none; border:none; cursor:pointer; font-size:var(--t-lg); color:var(--cyan-neon); line-height:1; padding:2px 4px;">📷</button>
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:0.4rem;">
