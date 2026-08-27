@@ -26,6 +26,8 @@ const CR = String.fromCharCode(13);
 const src = (await (await fetch('../js/views/dashboard_v28.js?z='+Date.now())).text()).split(CR).join('');
 const T = await import('../js/services_v245/temaService.js?z=' + Date.now());
 
+const tz = (a,b) => { const i = src.indexOf(a); if (i<0) throw new Error('no esta: '+a); return src.slice(i, src.indexOf(b,i)); };
+
 // La celda, tal cual esta escrita en el dashboard
 const a = src.indexOf('${(() => {\n                                            const enUso = _temasEnUso');
 const b = src.indexOf('})()}', a) + 5;
@@ -37,9 +39,18 @@ eco('De la pantalla de usuarios salieron <b>' + CELDA.length + '</b> caracteres 
 // tal cual, sin volver a escapar nada. Escapar las comillas invertidas rompia el
 // template que la celda tiene adentro.
 const EXPRESION = CELDA.slice(2, -1);
+
+/* NO SE LE PASA NINGUN AYUDANTE COMO PARAMETRO.
+   La primera version de esta prueba recibia `esc` de afuera, y con eso tapaba justo el
+   error que habia: en la pantalla de usuarios `esc` no existia y la celda reventaba con
+   "esc is not defined". Ahora el ayudante se SACA DEL ARCHIVO igual que la celda: si
+   manana alguien lo borra o lo renombra, esta prueba se cae, que es lo que tiene que
+   pasar. Lo unico que se le da son las dos cosas que el ambiente de verdad tiene. */
+const NL = String.fromCharCode(10);
+const AYUDANTE = tz('  const escUsuario = (v) => String(', NL + NL);
+eco('El ayudante que escapa el texto tambien sale del archivo: <b>' + AYUDANTE.length + '</b> caracteres.' + NL);
 const mod = await import('data:text/javascript,' + encodeURIComponent(
-  'export const pintar = (u, _temasEnUso, TEMAS, esc) => ' + EXPRESION + ';'));
-const esc = (v) => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  AYUDANTE + NL + 'export const pintar = (u, _temasEnUso, TEMAS) => ' + EXPRESION + ';'));
 
 const casos = [
   ['coincide',      { username:'ana',  tema:'pbi' },    { ana:  { id:'ana',  tema:'pbi',    cuando:'2026-08-27T03:40:00' } }],
@@ -55,7 +66,7 @@ const casos = [
 ];
 document.getElementById('cuerpo').innerHTML = casos.map(([et,u,m]) =>
   `<tr><td>${et}<div style="font-size:11px;opacity:.5">asignado: ${u.tema||'—'}</div></td>
-       <td>${mod.pintar(u, m, T.TEMAS, esc)}</td></tr>`).join('');
+       <td>${mod.pintar(u, m, T.TEMAS)}</td></tr>`).join('');
 
 const celda = (i) => document.querySelectorAll('#cuerpo tr')[i].children[1].innerText.trim();
 const html  = (i) => document.querySelectorAll('#cuerpo tr')[i].children[1].innerHTML;
