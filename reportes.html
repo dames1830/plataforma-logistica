@@ -8,19 +8,55 @@
 
 
 <script>
-window.onerror = function(msg, url, lineNo, columnNo, error) {
-  alert('ERROR: ' + msg + '\nLine: ' + lineNo + '\nCol: ' + columnNo);
-  document.body.innerHTML += '<div style="position:fixed;top:0;left:0;background:red;color:white;z-index:9999;padding:20px;font-size:20px;width:100%;">ERROR: ' + msg + ' <br> Line: ' + lineNo + '</div>';
-  return false;
-};
-window.addEventListener('unhandledrejection', function(event) {
-  alert('PROMISE ERROR: ' + event.reason);
-  document.body.innerHTML += '<div style="position:fixed;top:100px;left:0;background:orange;color:white;z-index:9999;padding:20px;font-size:20px;width:100%;">PROMISE ERROR: ' + event.reason + '</div>';
-});
+/* AVISO DE ERROR — NO USAR innerHTML AQUI.
+ *
+ * Lo que habia antes hacia `document.body.innerHTML += ...` para mostrar el error.
+ * Esa linea vuelve a armar el cuerpo ENTERO de la pagina: los elementos que estaban
+ * se destruyen y se crean otros iguales pero nuevos. La plataforma se queda apuntando
+ * a los viejos, que ya no estan en la pantalla, y todo lo que dibuja despues va a la
+ * nada: pantalla negra. Peor todavia, al no existir mas `contentArea`, el siguiente
+ * dibujo daba "Cannot set properties of null" y volvia a entrar aca, en circulo.
+ *
+ * 27-ago-2026: eso tumbo produccion. Cualquier error chico apagaba la plataforma entera.
+ *
+ * Ahora el aviso se AGREGA con appendChild, que no toca nada de lo que ya hay, sale
+ * abajo, se puede cerrar, y el detalle completo queda en la consola (F12) para poder
+ * rastrear de donde salio. */
+(function () {
+  var puesto = 0;
+  function avisar(texto, detalle) {
+    try {
+      console.error('[ERROR EN LA PLATAFORMA]', detalle || texto);
+      if (puesto >= 3) return;               // no se tapa la pantalla de avisos
+      puesto++;
+      var b = document.createElement('div');
+      b.style.cssText = 'position:fixed; left:12px; bottom:' + (12 + (puesto - 1) * 52) + 'px;'
+        + ' z-index:2147483001; max-width:min(560px, calc(100vw - 24px)); background:#7A2E12;'
+        + ' color:#fff; padding:9px 34px 9px 12px; border-radius:8px; font:13px/1.45 system-ui, sans-serif;'
+        + ' box-shadow:0 6px 22px rgba(0,0,0,.45); white-space:pre-wrap; word-break:break-word;';
+      b.textContent = texto;
+      var x = document.createElement('button');
+      x.textContent = '✕';
+      x.setAttribute('aria-label', 'Cerrar el aviso');
+      x.style.cssText = 'position:absolute; top:5px; right:7px; background:none; border:none;'
+        + ' color:#fff; font-size:14px; line-height:1; cursor:pointer; opacity:.75;';
+      x.onclick = function () { b.remove(); };
+      b.appendChild(x);
+      (document.body || document.documentElement).appendChild(b);
+    } catch (_) { /* si ni esto se puede, que no se lleve la pagina por delante */ }
+  }
+  window.addEventListener('error', function (e) {
+    avisar('Fallo algo en la pantalla: ' + e.message, (e.error && e.error.stack) || (e.filename + ':' + e.lineno));
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    var r = e.reason;
+    avisar('Fallo algo en la pantalla: ' + ((r && r.message) || r), (r && r.stack) || r);
+  });
+})();
 </script>
 
   <!-- ENTORNO: decide produccion vs pruebas. DEBE ir antes que cualquier otro script. -->
-  <script src="js/env.js?v=29.0434"></script>
+  <script src="js/env.js?v=29.0440"></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -267,6 +303,6 @@ window.addEventListener('unhandledrejection', function(event) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-  <script type="module" src="js/views/reportes_publicos.js?v=29.0434"></script>
+  <script type="module" src="js/views/reportes_publicos.js?v=29.0440"></script>
 </body>
 </html>
