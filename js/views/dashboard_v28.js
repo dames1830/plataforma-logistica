@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0429';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0430';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0429';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0429';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0429';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0429';
-import * as metasService from '../services_v245/metasService.js?v=29.0429';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0429';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0429';
+import * as adminService from '../services_v245/adminService.js?v=29.0430';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0430';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0430';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0430';
+import * as metasService from '../services_v245/metasService.js?v=29.0430';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0430';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0430';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0429';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0429';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0429';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0429';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0429';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0429';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0429';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0429';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0429';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0429';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0429';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0429';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0429';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0429';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0429';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0429';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0429';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0429';
-import { montarSlotting } from './slotting.js?v=29.0429';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0430';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0430';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0430';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0430';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0430';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0430';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0430';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0430';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0430';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0430';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0430';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0430';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0430';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0430';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0430';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0430';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0430';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0430';
+import { montarSlotting } from './slotting.js?v=29.0430';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0429';
+const VERSION = '29.0430';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5338,7 +5338,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0429');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0430');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5601,7 +5601,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0429');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0430');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18167,7 +18167,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0429 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0430 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -20865,6 +20865,39 @@ const renderRFSection = (container) => {
       }
     } catch (e) { console.warn('[Sugerencia] no se pudo leer lo que bajó el Análisis de Buffer:', e && e.message); }
 
+    /* ══════════════════════════════════════════════════════════════════════════════
+     * LO QUE PICKING SE LLEVÓ HOY
+     *
+     * Daniel, 26-ago-2026: *"si bajamos ciento doce y durante la mañana picking se lo llevó,
+     * y en la tarde recepción va y matricula el mismo artículo pero más de dos mil pares,
+     * entonces es un tema de recepción. Tú tienes el picking del día, deberías hacer un cruce"*.
+     *
+     * El caso que lo destapó: el `5616493` figuraba en la lista del Análisis de Buffer por
+     * 112 pares, picking se los llevó durante el día, y a la tarde recepción matriculó 2.459.
+     * Como el artículo seguía en la lista, la tarea bajó los 2.459 enteros al piso.
+     *
+     * SOLO SE PREGUNTA SI PICKING TOCÓ EL ARTÍCULO, no cuánto ni de dónde: el resumen del día
+     * guarda la lista de códigos picados y las ubicaciones visitadas, pero no las cruza. Con
+     * saber que lo tocó alcanza para lo que se decide acá — que lo que bajó ya no está en el
+     * buffer, así que no hay nada que "no devolver al rack".
+     * ══════════════════════════════════════════════════════════════════════════════ */
+    let picadoHoy = null;
+    try {
+      const dia = getLogicalDate();
+      const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+      const res = await fetch(`${base}/api/logistics/picking_dias?t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const cajon = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        const hoy = cajon && cajon[dia];
+        const cods = hoy && hoy.seg && hoy.seg.todo && hoy.seg.todo._cod;
+        if (Array.isArray(cods) && cods.length) {
+          picadoHoy = new Set(cods.map(c => String(c || '').trim().substring(0, 7)).filter(Boolean));
+          console.log(`[Sugerencia] Picking del ${dia}: ${picadoHoy.size} artículos tocados.`);
+        }
+      }
+    } catch (e) { console.warn('[Sugerencia] no se pudo leer el picking del día:', e && e.message); }
+
     // La reserva se pide DIRECTO: getAreaData no consulta la nube para las áreas que
     // empiezan con 'analisis_sku', así que en una PC que no subió el archivo daría cero.
     let reservaRaw = [];
@@ -21145,7 +21178,8 @@ const renderRFSection = (container) => {
     });
 
     return { ficha, ocupados, casaDe, porTallaDe, porTallaEnCuerpo, porTallaEnUbicacion, reservaDe,
-             lineasBufferDe, origenDe, libres, ocupantes, mandadoABajar, bajadoPorBuffer };
+             lineasBufferDe, origenDe, libres, ocupantes, mandadoABajar, bajadoPorBuffer,
+             picadoHoy };
   };
 
   /**
@@ -21532,6 +21566,9 @@ const renderRFSection = (container) => {
    */
   const casoDelItem = (s7, datos, pares, zona, ctx) => {
     const origen = ctx.origenDe && ctx.origenDe.get(s7);
+    /* Lo que el Análisis de Buffer mandó bajar y TODAVÍA está en el buffer. Viaja hasta el
+       final: el caso lo decide la regla de siempre, pero el piso no puede volver al rack. */
+    let pisoDeBajada = 0, razonDeBajada = '';
 
     // EL ESCOLAR MANDA SOBRE TODO LO DEMÁS: 50 pares al piso y el resto a reserva.
     //
@@ -21570,10 +21607,50 @@ const renderRFSection = (container) => {
     if (bajada) {
       const de = bajada.fuentes && bajada.fuentes.size
         ? [...bajada.fuentes].join(' + ') : 'el análisis';
-      return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
-               motivo: `El Análisis de Buffer lo mandó bajar por ${de} `
-                     + `(${Math.round(bajada.pares).toLocaleString('es-PE')} pares): se almacena `
-                     + `todo, no vuelve nada al rack.` };
+      const mando = Math.round(Number(bajada.pares) || 0);
+
+      /* LA MISMA PRUEBA DE INTEGRIDAD QUE YA TENÍA LA LETRA B, QUE ACÁ FALTABA.
+       *
+       * Estar en la lista decía "bajó de reserva" y con eso se bajaba TODO el buffer, sin
+       * mirar cuánto había mandado bajar el análisis. Daniel lo cazó en la Tarea6 del
+       * 26-ago-2026: el `5616493` figuraba por 112 pares, recepción matriculó 2.459 —los
+       * 2.459 en CDBUFFER-A, ni uno en el B— y la tarea mandó almacenar los 2.459 con
+       * PALETIZAR en cero. Esa noche fueron 14 artículos: el análisis había mandado bajar
+       * 682 pares en total y se mandaron almacenar 9.712.
+       *
+       * El resultado en el piso: `SEL-01-11` recibía 1.459 pares donde entran 350 —el 417%—
+       * y en total 9 cuerpos quedaban por encima de su capacidad, 4.008 pares que no entran.
+       *
+       * La cuenta es la misma que ya usaba el camino de la letra B y está escrita en el
+       * skill `cadena-de-modulos`: LO QUE BAJA DE RESERVA NO PUEDE SER MÁS DE LO QUE SE
+       * MANDÓ BAJAR. Si llega más, el resto entró por la puerta. No es contradecir al módulo
+       * anterior —eso sigue prohibido— es detectar que ese dato no viene de él. */
+      if (pares <= mando) {
+        return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
+                 motivo: `El Análisis de Buffer lo mandó bajar por ${de} `
+                       + `(${mando.toLocaleString('es-PE')} pares): se almacena `
+                       + `todo, no vuelve nada al rack.` };
+      }
+
+      /* LLEGÓ MÁS DE LO QUE SE MANDÓ BAJAR: sigue de largo y lo decide la regla de siempre.
+       *
+       * Y NO SE LE PONE PISO SI PICKING YA SE LO LLEVÓ. Daniel, 26-ago-2026: *"si bajamos
+       * ciento doce y durante la mañana picking se lo llevó, y en la tarde recepción matricula
+       * más de dos mil pares, entonces es un tema de recepción"*. Lo que bajó ya salió del
+       * buffer, así que no queda nada que proteger de volver al rack: el lote entero es
+       * recepción y se trata como tal.
+       *
+       * Si picking NO lo tocó, lo que bajó sigue ahí abajo y esos pares no pueden volver
+       * arriba —esa es la posta del módulo anterior—, así que quedan como piso del piso. */
+      const seLoLlevoPicking = !!(ctx.picadoHoy && ctx.picadoHoy.has(s7));
+      pisoDeBajada = seLoLlevoPicking ? 0 : mando;
+      razonDeBajada = seLoLlevoPicking
+        ? `El Análisis de Buffer lo mandó bajar por ${de} (${mando.toLocaleString('es-PE')} pares), `
+          + `pero picking ya se los llevó y llegaron ${pares.toLocaleString('es-PE')} de recepción: `
+          + `se trata como mercadería nueva.`
+        : `De los ${pares.toLocaleString('es-PE')} pares del buffer, el Análisis de Buffer mandó bajar `
+          + `${mando.toLocaleString('es-PE')} por ${de}; el resto entró por recepción. `
+          + `Esos ${mando.toLocaleString('es-PE')} no vuelven al rack.`;
     }
 
     if (origen && origen.has('B')) {
@@ -21620,8 +21697,26 @@ const renderRFSection = (container) => {
        * prueba vieja. Ver el skill `cadena-de-modulos`. */
       if (ctx.mandadoABajar) {
         if (ctx.mandadoABajar.has(s7)) {
-          return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
-                   motivo: 'Replenishment lo mandó bajar: se almacena todo, no vuelve al rack.' };
+          /* LA MISMA CUENTA QUE EL ANÁLISIS DE BUFFER, y por la misma razón: `mandadoABajar`
+             ya guarda CUÁNTO mandó bajar Replenishment y acá solo se preguntaba si el artículo
+             estaba. Con el buffer A lleno, recepción deja mercadería nueva en el B —pasa y va
+             a seguir pasando—, y entonces un lote entero se bajaba al piso por una reposición
+             de doscientos pares. Es el mismo defecto que Daniel encontró el 26-ago-2026 en la
+             Tarea6 por el otro camino; se arregla en los dos a la vez para no repetir lo del
+             filtro de columnas, que se corrigió en un camino y se olvidó en el otro. */
+          const mandoRepl = Math.round(Number(ctx.mandadoABajar.get(s7)) || 0);
+          if (pares <= mandoRepl) {
+            return { nombre: 'reposicion-buffer', regla: { modo: 'todo', valor: 0 },
+                     motivo: `Replenishment lo mandó bajar (${mandoRepl.toLocaleString('es-PE')} pares): `
+                           + `se almacena todo, no vuelve al rack.` };
+          }
+          const seLoLlevo = !!(ctx.picadoHoy && ctx.picadoHoy.has(s7));
+          pisoDeBajada = Math.max(pisoDeBajada, seLoLlevo ? 0 : mandoRepl);
+          razonDeBajada = seLoLlevo
+            ? `Replenishment mandó bajar ${mandoRepl.toLocaleString('es-PE')} pares, pero picking ya se `
+              + `los llevó y llegaron ${pares.toLocaleString('es-PE')}: el resto es recepción.`
+            : `De los ${pares.toLocaleString('es-PE')} pares del buffer, Replenishment mandó bajar `
+              + `${mandoRepl.toLocaleString('es-PE')}; el resto entró por recepción.`;
         }
         // Está en el B pero nadie lo mandó bajar: lo dejó recepción. Sigue de largo.
       } else if (pares <= enReserva) {
@@ -21703,13 +21798,14 @@ const renderRFSection = (container) => {
     const enReservaHoy = Number(ctx.reservaDe && ctx.reservaDe.get(s7)) || 0;
     const enElAlmacen = Math.round(enElPiso + enReservaHoy);
 
+    const extra = razonDeBajada ? ' ' + razonDeBajada : '';
     return enElAlmacen >= MINIMO_PARA_REPOSICION
-      ? { nombre: 'reposicion-fabrica', regla: { modo: 'cuerpos', valor: CUERPOS_REPOSICION },
+      ? { nombre: 'reposicion-fabrica', regla: { modo: 'cuerpos', valor: CUERPOS_REPOSICION }, pisoDeBajada,
           motivo: `Ya tiene ${enElAlmacen} pares en el almacén (${Math.round(enElPiso)} en el piso `
-                + `y ${enReservaHoy} en reserva): es reposición, se completa hasta ${CUERPOS_REPOSICION} cuerpos.` }
-      : { nombre: 'codigo-nuevo', regla: { modo: 'porcentaje', valor: PCT_CODIGO_NUEVO, sinCandado: true },
+                + `y ${enReservaHoy} en reserva): es reposición, se completa hasta ${CUERPOS_REPOSICION} cuerpos.` + extra }
+      : { nombre: 'codigo-nuevo', regla: { modo: 'porcentaje', valor: PCT_CODIGO_NUEVO, sinCandado: true }, pisoDeBajada,
           motivo: `Tiene ${enElAlmacen} pares en el almacén, menos de ${MINIMO_PARA_REPOSICION}: es código nuevo, `
-                + `se le deja abajo el ${PCT_CODIGO_NUEVO}%, que es lo que se vende en las dos primeras semanas.` };
+                + `se le deja abajo el ${PCT_CODIGO_NUEVO}%, que es lo que se vende en las dos primeras semanas.` + extra };
   };
 
   /**
@@ -21769,6 +21865,26 @@ const renderRFSection = (container) => {
     let cant = planificar(caso.regla);
     let alPiso = cant ? cant.alPiso : pares;
     let aReserva = cant ? cant.aReserva : 0;
+
+    /* LO QUE BAJÓ DE RESERVA NO PUEDE VOLVER AL RACK, aunque la regla del caso pida menos.
+     *
+     * Es la posta del módulo anterior y no se discute: si el Análisis de Buffer mandó bajar
+     * 500 pares y el cuerpo entra 350, se bajan los 500. Lo que NO se hace es lo que se hacía
+     * hasta el 26-ago-2026 —bajar los 2.459 del buffer porque el artículo figuraba en la lista
+     * por 112—; el resto es recepción y lo decide la regla de siempre.
+     *
+     * NUNCA RECORTA: solo actúa si el plan quedó por debajo de lo que bajó. */
+    if (caso.pisoDeBajada > 0 && alPiso < caso.pisoDeBajada) {
+      /* `modo:'pares'` fija el OBJETIVO del artículo en el piso, no lo que baja del buffer.
+         Por eso se le suma lo que ya tiene abajo: con 200 en el piso y 112 bajados de
+         reserva, el objetivo son 312 y no 112 —que haría bajar cero—. */
+      const yaAbajo = Object.values(ctx.porTallaDe.get(s7) || {})
+        .reduce((a, t) => a + (Number(t && t.piso) || 0), 0);
+      const conPiso = planificar({ modo: 'pares', valor: yaAbajo + Math.min(caso.pisoDeBajada, pares) });
+      if (conPiso && conPiso.alPiso > alPiso) {
+        cant = conPiso; alPiso = conPiso.alPiso; aReserva = conPiso.aReserva;
+      }
+    }
     /* EL DESTINO TIENE QUE RESPETAR LO QUE DECIDIO EL CORTE DE LOS 20. Sin `esCodigoNuevo`
        el planificador miraba solo `yaTiene` y mandaba un codigo nuevo al cuerpo viejo de un
        par suelto. Se pasa aca y no dentro de `datos` porque `caso` se calcula despues. */
