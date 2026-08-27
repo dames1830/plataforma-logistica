@@ -1,0 +1,132 @@
+<!-- La comprobacion que impide guardar una tarea fechada en el futuro.
+     Saca del dashboard el guardado de horas de verdad y le teclea, uno por uno, los
+     casos que pasaron el 26-ago-2026 y los que tienen que seguir pasando sin problema. -->
+<meta charset="utf-8">
+<title>Prueba: una hora que no llegó</title>
+<style>
+  body{margin:0;padding:22px;background:#0d1117;color:#8b949e;font:13px/1.85 system-ui,sans-serif}
+  #eco{max-width:1000px;margin:0 auto;white-space:pre-wrap}
+  b{color:#3fb950} .mal{color:#f85149;font-weight:700} .t{color:#58a6ff;font-weight:700}
+</style>
+<div id="eco"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+window.addEventListener('unhandledrejection', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + ((e.reason && e.reason.message) || e.reason)); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 20000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z='+Date.now())).text()).split(CR).join('');
+const tz = (a,b) => { const i = src.indexOf(a); if (i<0) throw new Error('no esta: '+a); return src.slice(i, src.indexOf(b,i)); };
+
+/* El corazon del guardado: desde que se leen las horas del formulario hasta que se decide
+   si se guarda o se rechaza. Se corta justo antes de mandar al servidor. */
+const BLOQUE = tz("            const u1 = modal.querySelector('#edit_u1').value;",
+                  "            tarea._dirty = true;");
+eco('Del dashboard salieron <b>' + BLOQUE.length + '</b> caracteres del guardado de horas.\n');
+
+// Lo que ese bloque usa de afuera, fingido para poder teclear casos a mano
+const mod = await import('data:text/javascript,' + encodeURIComponent(`
+export const guardar = (caso, entorno) => {
+  const { jornada, ahora, tareaPrevia } = caso;
+  let avisos = [], guardo = false;
+  const modal = { querySelector: (q) => ({ value: caso.campos[q.replace('#','')] ?? '' }) };
+  const showPremiumAlert = (t, m) => { avisos.push({ titulo: t, texto: m }); };
+  const getLogicalDate = () => jornada;
+  const jornadaYaRegistrada = () => null;
+  const tareaDelCache = () => tarea;
+  const avisarTareaDesaparecida = () => {};
+  const diaDelSello = entorno.diaDelSello;
+  const noAntesDeLaOla = entorno.noAntesDeLaOla;
+  const sumarUnDia = entorno.sumarUnDia;
+  const tarea = { ...tareaPrevia };
+  const task = tarea;
+  const Date_ = Date;
+  const correr = () => {
+${BLOQUE}
+    guardo = true;   // si llego aca, paso todas las comprobaciones
+  };
+  correr();
+  return { guardo, avisos, tarea };
+};`));
+
+// Las funciones de fecha, tal cual estan en el dashboard. diaDelSello consulta el horario
+// del turno, asi que va el servicio de jornada de verdad, no uno fingido.
+const F = await import('data:text/javascript,' + encodeURIComponent(
+  `import * as jornadaService from '${new URL('../js/services_v245/jornadaService.js?z=' + Date.now(), location.href).href}';\n` +
+  tz('const soloElDia = ', '\nconst ') + '\n' +
+  tz('const sumarUnDia = ', '\nconst ') + '\n' +
+  tz('const restarUnDia = ', '\nconst ') + '\n' +
+  tz('const diaDelSello = ', '\nconst ') + '\n' +
+  tz('const noAntesDeLaOla = ', '\nconst ') +
+  '\nexport { sumarUnDia, diaDelSello, noAntesDeLaOla };'));
+const entorno = { sumarUnDia: F.sumarUnDia, diaDelSello: F.diaDelSello, noAntesDeLaOla: F.noAntesDeLaOla };
+
+const AHORA = new Date();
+const hh = (d) => String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+const enMin = (m) => new Date(AHORA.getTime() + m*60000);
+const jornada = (AHORA.getHours() < 12 ? new Date(AHORA.getTime() - 86400000) : AHORA).toISOString().slice(0,10);
+const vacia = { id: '2026-08-26_TareaX', fecha: jornada, u1:'', u2:'', inicio:null, termino:null, status:'Creada' };
+
+const probar = (nombre, ini, fin) => mod.guardar(
+  { jornada, campos: { edit_u1:'jyauyo', edit_u2:'pmurayari', edit_start: ini, edit_end: fin }, tareaPrevia: vacia },
+  entorno);
+
+eco('<span class="t">── EL CASO QUE PASO EL 26 DE AGOSTO ──</span>');
+eco('   son las ' + hh(AHORA) + ' y la jornada en curso es la del ' + jornada.split('-').reverse().join('/'));
+
+const dentroDe3h = hh(enMin(180));
+const a = probar('termino en 3 horas', hh(enMin(-60)), dentroDe3h);
+ok('poner un TERMINO que todavia no llego (' + dentroDe3h + ') se rechaza', !a.guardo);
+ok('y avisa con un titulo que se entiende: "' + (a.avisos[0]||{}).titulo + '"',
+   /TODAVÍA NO LLEGÓ/i.test((a.avisos[0]||{}).titulo || ''));
+ok('el aviso dice a que hora quedaria', /\d{2}:\d{2}/.test((a.avisos[0]||{}).texto || ''));
+ok('y explica que la fecha no se escribe, se deduce de la hora',
+   /la fecha no se escribe/i.test((a.avisos[0]||{}).texto || ''));
+ok('la tarea queda COMO ESTABA, sin horas ni gente',
+   a.tarea.inicio === null && a.tarea.termino === null && a.tarea.status === 'Creada');
+
+eco('\n<span class="t">── EL CAMINO POR EL QUE SE FUE AL FUTURO ──</span>');
+/* Un inicio en el futuro, a secas, NO se puede dar: diaDelSello ya lo tira al dia anterior.
+   Lo que empujo a la Tarea46 al 27 fue la regla de la ola: una tarea no puede haber
+   empezado antes de que su ola existiera, asi que si la fecha deducida cae antes, la
+   manda al dia siguiente. Con una ola de hace un rato y una hora de la manana, esa
+   correccion la deja adelantada. Ahi es donde entra la comprobacion nueva. */
+const olaReciente = { ...vacia, fechaProcesado: new Date(AHORA.getTime() - 90*60000).toISOString() };
+const horaManana = hh(enMin(360));   // seis horas mas: para el sistema es "la manana"
+const conOla = mod.guardar(
+  { jornada, campos: { edit_u1:'jyauyo', edit_u2:'pmurayari', edit_start: horaManana, edit_end: hh(enMin(420)) },
+    tareaPrevia: olaReciente }, entorno);
+eco('   ola creada hace 1 h 30 · se teclea ' + horaManana + ' como inicio');
+ok('la tarea NO se guarda con la fecha corrida al futuro', !conOla.guardo);
+ok('y la tarea queda como estaba', conOla.tarea.inicio === null && conOla.tarea.status === 'Creada');
+
+const soloIni = mod.guardar(
+  { jornada, campos: { edit_u1:'jyauyo', edit_u2:'pmurayari', edit_start: hh(enMin(120)), edit_end: '' },
+    tareaPrevia: vacia }, entorno);
+ok('sin ola de por medio, un inicio de dentro de 2 h lo corrige solo al dia anterior (no hace falta rechazarlo)',
+   soloIni.guardo && new Date(soloIni.tarea.inicio).getTime() <= Date.now());
+
+
+eco('\n<span class="t">── LO QUE SI TIENE QUE PODER GUARDARSE ──</span>');
+const c = probar('normal', hh(enMin(-180)), hh(enMin(-60)));
+ok('una tarea de hace 3 horas a hace 1 hora se guarda: ' + hh(enMin(-180)) + ' → ' + hh(enMin(-60)), c.guardo);
+ok('y queda Finalizado', c.tarea.status === 'Finalizado');
+const d = probar('solo inicio', hh(enMin(-90)), '');
+ok('una tarea empezada y sin terminar se guarda', d.guardo && d.tarea.status === 'Asignado');
+const e = probar('recien terminada', hh(enMin(-45)), hh(AHORA));
+ok('una que termina AHORA MISMO se guarda —el minuto de tolerancia—', e.guardo);
+
+eco('\n<span class="t">── LAS COMPROBACIONES QUE YA HABIA SIGUEN ──</span>');
+const f = mod.guardar({ jornada, campos:{edit_u1:'jyauyo', edit_u2:'', edit_start:'', edit_end:''}, tareaPrevia: vacia }, entorno);
+ok('sin el segundo del grupo no deja guardar', !f.guardo && /GRUPO INCOMPLETO/.test((f.avisos[0]||{}).titulo||''));
+const g = mod.guardar({ jornada, campos:{edit_u1:'jyauyo', edit_u2:'jyauyo', edit_start:'', edit_end:''}, tareaPrevia: vacia }, entorno);
+ok('la misma persona dos veces tampoco', !g.guardo && /REPETIDO/.test((g.avisos[0]||{}).titulo||''));
+const h = probar('fin sin inicio', '', hh(enMin(-30)));
+ok('poner el termino sin el inicio tampoco', !h.guardo);
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>' : '\n<b>La comprobacion agarra el dedazo y deja pasar lo bueno.</b>');
+</script>
