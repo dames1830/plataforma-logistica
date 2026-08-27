@@ -1,4 +1,4 @@
-<!-- La regla que le da cara de Power BI a los otros cuatro reportes.
+<!-- La regla que le da cara de Power BI a los reportes escritos a mano.
      Arma tablas con la misma forma que las de la plataforma y mide lo que el navegador
      termina aplicando, en Power BI y en los otros tres temas. -->
 <meta charset="utf-8">
@@ -30,10 +30,7 @@ ok('la regla vive en temas.css', /\[data-tema="pbi"\] \.rep-pbi thead th/.test(c
 ok('y solo dentro del tema Power BI',
    !/(^|\n)\s*\.rep-pbi thead th/.test(css.replace(/\[data-tema="pbi"\] /g, '@@')));
 const cuantas = (re) => (src.match(re) || []).length;
-ok('las cuatro tablas llevan la clase: ' + cuantas(/class="rep-pbi"/g), cuantas(/class="rep-pbi"/g) === 4);
-ok('las filas normales estan marcadas: ' + cuantas(/<tr class="f"/g), cuantas(/<tr class="f"/g) === 4);
-ok('los subtotales: ' + cuantas(/<tr class="sub-tot"/g), cuantas(/<tr class="sub-tot"/g) === 1);
-ok('los totales generales: ' + cuantas(/<tr class="gran-tot"/g), cuantas(/<tr class="gran-tot"/g) === 2);
+ok('hay un subtotal marcado: ' + cuantas(/<tr class="sub-tot"/g), cuantas(/<tr class="sub-tot"/g) === 1);
 ok('Marcas NO lleva la clase: ese se viste por su propio modulo',
    !/class="rep-pbi"[^]{0,400}cabeceraMarcas/.test(src));
 
@@ -62,6 +59,23 @@ const bg = (sel) => { const e = lienzo.querySelector(sel); return e ? getCompute
 const fg = (sel) => { const e = lienzo.querySelector(sel); return e ? getComputedStyle(e).color : 'no hay'; };
 const fuente = (sel) => { const e = lienzo.querySelector(sel); return e ? getComputedStyle(e).fontFamily.split(',')[0].replace(/"/g,'') : ''; };
 const lum = (c) => { const m = c.match(/\d+/g); return m ? 0.299*+m[0]+0.587*+m[1]+0.114*+m[2] : null; };
+
+eco('\n<span class="t">── LOS DOS DE INICIO TAMBIÉN ──</span>');
+/* "Detalle por día" y "Marcas · Footwear" son recuadros `glass-panel` de la pantalla de
+   Inicio, con otra pinta que los de Almacenaje, pero llevan las mismas clases. */
+const trozoDe = (titulo) => {
+  const i = src.indexOf('>' + titulo + '</h3>');
+  return i < 0 ? '' : src.slice(Math.max(0, i - 700), i + 60);
+};
+[['Detalle por día', 'Detalle por día'], ['Marcas · Footwear', 'Marcas · Footwear']].forEach(([t, et]) => {
+  const z = trozoDe(t);
+  ok(et + ': el recuadro lleva la clase', /class="glass-panel caja-pbi"/.test(z));
+  ok(et + ': y su franja de arriba también', /class="tapa-pbi"/.test(z));
+});
+ok('las seis tablas llevan la clase: ' + cuantas(/class="rep-pbi"/g), cuantas(/class="rep-pbi"/g) === 6);
+ok('las filas normales, marcadas: ' + cuantas(/<tr class="f"/g), cuantas(/<tr class="f"/g) === 6);
+ok('los totales, marcados: ' + cuantas(/<tr class="gran-tot"/g), cuantas(/<tr class="gran-tot"/g) === 4);
+ok('los cinco recuadros con franja azul: ' + cuantas(/caja-pbi/g), cuantas(/caja-pbi/g) === 5);
 
 eco('\n<span class="t">── EN POWER BI, LA REGLA LE GANA AL ESTILO PEGADO ──</span>');
 pintar('pbi');
@@ -106,5 +120,5 @@ ok('en Negro nada queda invisible', [...lienzo.querySelectorAll('th,td')].every(
 document.documentElement.setAttribute('data-tema','pbi'); pintar('pbi');
 llegoAlFinal = true;
 eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
-           : '\n<b>Los cuatro reportes quedan con la cara de la foto, y solo en Power BI.</b>');
+           : '\n<b>Los seis reportes quedan con la cara de la foto, y solo en Power BI.</b>');
 </script>
