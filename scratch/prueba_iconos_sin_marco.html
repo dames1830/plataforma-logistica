@@ -1,0 +1,74 @@
+<!-- Comprueba que los botones de solo icono queden SIN MARCO NI FONDO ya dibujados.
+     No mira el codigo: saca los botones de los archivos reales, los pinta con el CSS
+     que usa cada pagina y mide lo que el navegador termina aplicando. Asi se cazan
+     las reglas de la hoja de estilos que le ganan a lo escrito en el boton. -->
+<meta charset="utf-8">
+<title>Iconos sin marco</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body { margin:0; padding:22px; background:#F9F7F4; font-family:system-ui, sans-serif; }
+  #eco { font-size:12.5px; color:#555; line-height:1.9; white-space:pre-wrap; }
+  #eco b { color:#1A6336; } #eco .mal { color:#991B1B; font-weight:700; }
+  .muestra { display:flex; gap:14px; align-items:center; margin:10px 0 18px;
+    padding:10px 14px; background:#fff; border:1px solid #EEE9E3; border-radius:8px; width:max-content; }
+</style>
+<div id="eco"></div>
+<div id="muestras"></div>
+<script type="module">
+document.documentElement.setAttribute('data-tema','indigo');
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0;
+const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
+const CR = String.fromCharCode(13);
+
+const leer = async (f) => (await (await fetch(f+'?z='+Date.now())).text()).split(CR).join('');
+const RP = await leer('../js/views/reportes_publicos.js');
+const DB = await leer('../js/views/dashboard_v28.js');
+
+// Se sacan del archivo, tal cual estan, y se les quita solo el ${...} de la plantilla.
+const sacar = (src, marca, cuantos=1) => {
+  const out = []; let d = 0;
+  for (let i = 0; i < cuantos; i++) {
+    const a = src.indexOf(marca, d); if (a < 0) break;
+    const ini = src.lastIndexOf('<button', a), fin = src.indexOf('</button>', a) + 9;
+    out.push(src.slice(ini, fin)
+      .replace(/\$\{BOTON_ICONO\}/g, 'background:none; border:none; padding:0.15rem 0.3rem; cursor:pointer; font-size:1rem; line-height:1; transition:opacity 0.2s;')
+      .replace(/\$\{RESALTE\}/g, '')
+      .replace(/\$\{[^{}]*\}/g, '0'));
+    d = fin;
+  }
+  return out;
+};
+const casos = [
+  ['Guardar (historial)',   sacar(RP, 'window._histSave')[0]],
+  ['Cancelar (historial)',  sacar(RP, 'window._histCancelEdit()"')[0]],
+  ['Editar (historial)',    sacar(RP, 'window._histEdit')[0]],
+  ['Eliminar (historial)',  sacar(RP, 'window._histDelete')[0]],
+  // Ojo: se busca por el title, no por el nombre de la funcion. El nombre aparece
+  // antes en la DEFINICION, y buscar por ahi arrastraba un boton que no era.
+  ['Refrescar marcas 1',    sacar(RP, 'title="Actualizar Reporte"', 2)[0]],
+  ['Refrescar marcas 2',    sacar(RP, 'title="Actualizar Reporte"', 2)[1]],
+  ['Sincronizar historial', sacar(RP, 'btn_hist_sync')[0]],
+  ['Menu del mapa',         sacar(DB, 'btn_menu_mapa')[0]],
+];
+
+const caja = document.getElementById('muestras');
+caja.innerHTML = '<div class="muestra">' + casos.map(c => c[1]).join('') + '</div>';
+const pintados = [...caja.querySelectorAll('button')];
+
+eco('Botones sacados de los archivos reales: <b>' + pintados.length + '</b> de ' + casos.length + '\n');
+casos.forEach((c, i) => {
+  const b = pintados[i];
+  if (!b) { ok(c[0] + ' — NO SE ENCONTRO EN EL ARCHIVO', false); return; }
+  const e = getComputedStyle(b);
+  const marco = e.borderTopStyle !== 'none' && parseFloat(e.borderTopWidth) > 0;
+  const fondo = !/rgba\(0, 0, 0, 0\)|transparent/.test(e.backgroundColor);
+  const chico = parseFloat(e.fontSize) < 14;
+  ok(c[0] + ' → ' + (marco ? 'MARCO ' + e.borderTopWidth + ' ' : '') + (fondo ? 'FONDO ' + e.backgroundColor + ' ' : '')
+     + (!marco && !fondo ? 'solo el icono, ' + e.fontSize : ''), !marco && !fondo && !chico);
+});
+eco(fallas ? '\n<span class="mal">' + fallas + ' con marco o fondo</span>'
+           : '\n<b>Los ' + pintados.length + ' quedan solo con el icono.</b>');
+</script>

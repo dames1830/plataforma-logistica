@@ -11,13 +11,13 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0440';
+} from '../services_v245/csvHub_v6.js?v=29.0444';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0440';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0440';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0440';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0440';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0440';
+import * as adminService from '../services_v245/adminService.js?v=29.0444';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0444';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0444';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0444';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0444';
 
 /**
  * El día operativo, no el del calendario.
@@ -288,7 +288,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0440</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0444</span>
     </div>`;
 
   buildTabNav();
@@ -574,7 +574,7 @@ Período: ${rotuloRango(window.__repMarcasStart, window.__repMarcasEnd, '#9C9590
                             </div>
                         </div>
                         ${selectorRango(window.__repMarcasStart, window.__repMarcasEnd, 'window.setRepMarcasRange', { color:'#B45309', fondo:'#F4F1EC', texto:'#1C2B3A', esquema:'light' })}
-                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:transparent; border:1px solid #DDD8CF; color:#9C9590; width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='#F4F1EC'; this.style.borderColor='#B45309'; this.style.color='#B45309'" onmouseout="this.style.background='transparent'; this.style.borderColor='#DDD8CF'; this.style.color='#9C9590'">
+                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:none; border:none; color:#9C9590; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.color='#B45309'" onmouseout="this.style.color='#9C9590'">
                             🔄
                         </button>
                     </div>
@@ -603,7 +603,7 @@ Período: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd, '#9C9590
                             </div>
                         </div>
                         ${selectorRango(window.__repGenderStart, window.__repGenderEnd, 'window.setRepGenderRange', { color:'#B45309', fondo:'#F4F1EC', texto:'#1C2B3A', esquema:'light' })}
-                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:transparent; border:1px solid #DDD8CF; color:#9C9590; width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='#F4F1EC'; this.style.borderColor='#B45309'; this.style.color='#B45309'" onmouseout="this.style.background='transparent'; this.style.borderColor='#DDD8CF'; this.style.color='#9C9590'">
+                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:none; border:none; color:#9C9590; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.color='#B45309'" onmouseout="this.style.color='#9C9590'">
                             🔄
                         </button>
                     </div>
@@ -1824,7 +1824,7 @@ async function renderHistorialBuffer() {
                     <input type="date" id="hist_date_to" value="${savedTo}" style="background:#fff; color:#1C2B3A; border:1px solid #DDD8CF; padding:0.3rem 0.5rem; border-radius:4px; font-size:0.72rem; outline:none; cursor:pointer;" />
                 </div>
                 <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
-                    <button id="btn_hist_sync" title="Sincronizar Historial" style="background:#1C2B3A; color:#fff; border:none; width:28px; height:28px; border-radius:4px; font-size:0.9rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                    <button id="btn_hist_sync" title="Sincronizar Historial" style="background:none; border:none; width:28px; height:28px; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'">
                         🔄
                     </button>
                     <button id="btn_hist_export" style="background:#1A6336; color:#fff; border:none; padding:0.35rem 0.8rem; border-radius:4px; font-size:0.72rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
@@ -1928,6 +1928,13 @@ async function renderHistorialBuffer() {
             return;
         }
 
+        /* Los botones de la fila van SIN MARCO NI FONDO, solo el icono. Daniel, 26-ago-2026:
+           *"dije que los iconos no tengan marco ni fondo, solo icono"*. El aviso de que se puede
+           hacer clic queda en el cursor y en que el icono se aclara al pasar por encima. */
+        const BOTON_ICONO = 'background:none; border:none; padding:0.15rem 0.3rem; cursor:pointer;'
+            + ' font-size:1rem; line-height:1; transition:opacity 0.2s;';
+        const RESALTE = ` onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"`;
+
         tbody.innerHTML = filtered.map(({ row, idx }) => {
             if (editingIdx === idx) {
                 // Fila en modo edición
@@ -1946,8 +1953,8 @@ async function renderHistorialBuffer() {
                     <td style="padding:0.3rem 0.4rem; border:1px solid #EEE9E3; font-weight:700;">${row.fillRate}</td>
                     <td style="padding:0.3rem 0.4rem; border:1px solid #EEE9E3;">
                         <div style="display:flex; gap:0.4rem; justify-content:center;">
-                            <button title="Guardar" onclick="window._histSave(${idx})" style="background:#1A6336; border:none; border-radius:4px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; color:#fff; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">💾</button>
-                            <button title="Cancelar" onclick="window._histCancelEdit()" style="background:#F4F1EC; border:1px solid #DDD8CF; border-radius:4px; padding:0.2rem 0.4rem; cursor:pointer; font-size:0.8rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">✖</button>
+                            <button title="Guardar" onclick="window._histSave(${idx})" style="${BOTON_ICONO}"${RESALTE}>💾</button>
+                            <button title="Cancelar" onclick="window._histCancelEdit()" style="${BOTON_ICONO}"${RESALTE}>✖</button>
                         </div>
                     </td>
                 </tr>`;
@@ -1961,8 +1968,8 @@ async function renderHistorialBuffer() {
                 <td style="padding:0.35rem 0.5rem; border:1px solid #EEE9E3; font-weight:700; font-size:0.85rem; color:#1C2B3A;">${row.fillRate}</td>
                 <td style="padding:0.35rem 0.5rem; border:1px solid #EEE9E3;">
                     <div style="display:flex; gap:0.5rem; justify-content:center;">
-                        <button title="Editar" onclick="window._histEdit(${idx})" style="background:transparent; border:1px solid #DDD8CF; border-radius:4px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='#F4F1EC'" onmouseout="this.style.background='transparent'">✏️</button>
-                        <button title="Eliminar" onclick="window._histDelete(${idx})" style="background:transparent; border:1px solid rgba(153,27,27,0.25); border-radius:4px; padding:0.2rem 0.45rem; cursor:pointer; font-size:0.8rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(153,27,27,0.08)'" onmouseout="this.style.background='transparent'">🗑️</button>
+                        <button title="Editar" onclick="window._histEdit(${idx})" style="${BOTON_ICONO}"${RESALTE}>✏️</button>
+                        <button title="Eliminar" onclick="window._histDelete(${idx})" style="${BOTON_ICONO}"${RESALTE}>🗑️</button>
                     </div>
                 </td>
             </tr>`;

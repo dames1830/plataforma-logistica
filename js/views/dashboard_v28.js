@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0440';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0444';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0440';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0440';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0440';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0440';
-import * as metasService from '../services_v245/metasService.js?v=29.0440';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0440';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0440';
+import * as adminService from '../services_v245/adminService.js?v=29.0444';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0444';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0444';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0444';
+import * as metasService from '../services_v245/metasService.js?v=29.0444';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0444';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0444';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0440';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0440';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0440';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0440';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0440';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0440';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0440';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0440';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0440';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0440';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0440';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0440';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0440';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0440';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0440';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0440';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0440';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0440';
-import { montarSlotting } from './slotting.js?v=29.0440';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0444';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0444';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0444';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0444';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0444';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0444';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0444';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0444';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0444';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0444';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0444';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0444';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0444';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0444';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0444';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0444';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0444';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0444';
+import { montarSlotting } from './slotting.js?v=29.0444';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0440';
+const VERSION = '29.0444';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -413,6 +413,73 @@ const getTaskTotalAvance = (t) => {
         });
     });
     return sum;
+};
+
+/**
+ * LO QUE FUE AL PISO Y LO QUE FUE A PALETA.
+ *
+ * No cuestan lo mismo. Llenar el piso es repisa por repisa; mandar a reserva es armar la
+ * curva sobre la paleta, enfilarla, ponerle el LPN y dejarla en la zona. Daniel, 27-ago-2026:
+ * *"cinco, diez minutos para doscientos pares"*, contra 300 pares la hora en el piso.
+ *
+ * El desglose lo graba la tarea al generarse (`almacenar` y `paletizar` por talla). Las
+ * tareas anteriores a que eso existiera NO lo traen: en esas `hayDesglose` viene en false y
+ * quien la use tiene que medirlas como antes —todo al ritmo del piso—, porque no hay de
+ * dónde sacar el dato. Inventarlo cambiaría números ya presentados en comité.
+ *
+ * Se mira el MISMO conjunto de ubicaciones que getTaskTotalAvance —buffer sin el C—, así
+ * que piso + reserva no puede pasarse del total que ese otro devuelve.
+ */
+const getTaskDestinos = (t) => {
+    let piso = 0, reserva = 0, hayDesglose = false;
+    (t && t.items || []).forEach(art => {
+        (art.items || []).forEach(i => {
+            const ubi = String(i.ubi || '').toUpperCase().trim();
+            if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C')) return;
+            if (i.almacenar === undefined && i.paletizar === undefined) return;
+            hayDesglose = true;
+            // EL DESGLOSE ES LO PLANIFICADO; LO QUE VALE ES LO QUE SE AVANZO.
+            // Si la tarea se dejo a medias, `almacenar` y `paletizar` siguen diciendo lo que
+            // el papel mandaba. Contarlos tal cual daba tiempo permitido por pares que nunca
+            // se movieron: en 10 tareas reales la suma pasaba del avance. Se usan como
+            // PROPORCION y se reparte lo realmente hecho, con el mismo criterio de avance
+            // que getTaskTotalAvance, para que las dos cuentas cierren siempre.
+            const hecho = (i.avance !== undefined && i.avance !== null)
+                ? (parseFloat(i.avance) || 0)
+                : (t.status === 'Finalizado' ? (parseFloat(i.qty) || 0) : 0);
+            const pl = parseFloat(i.almacenar) || 0, pr = parseFloat(i.paletizar) || 0;
+            const plan = pl + pr;
+            // Sin proporcion que aplicar, va todo al piso: es el ritmo mas lento, asi que
+            // ante la duda no se le regala tiempo a nadie.
+            if (plan <= 0) { piso += hecho; return; }
+            reserva += hecho * (pr / plan);
+            piso += hecho * (pl / plan);
+        });
+    });
+    return { piso, reserva, hayDesglose };
+};
+
+/**
+ * MINUTOS QUE UNA TAREA TENÍA PERMITIDOS.
+ *
+ * Los 10 minutos de recorrido son un PISO, no una suma. Daniel, 27-ago-2026: *"la hora de
+ * producción tiene que ser trescientos pares; dentro de esos sesenta minutos tiene que estar
+ * metido esos diez minutos de tarea base"*. Una tarea de 300 pares es de 60 minutos, no de 70.
+ *
+ * Antes se sumaban, y eso le regalaba 10 minutos a cada tarea —incluso a una de 3.000 pares,
+ * que no los necesita—. El piso solo hace falta abajo: una tarea de 5 pares pediría 1 minuto
+ * y no la cumpliría nadie. En agosto-2026 protegía a 22 tareas de 711; a las otras 689 se les
+ * estaba regalando el tiempo sin motivo.
+ */
+const minutosPermitidos = (t, meta) => {
+    const base = meta.tiempoBase || 0;
+    const uph = meta.metaUph > 0 ? meta.metaUph : 0;
+    const uphR = meta.metaReserva > 0 ? meta.metaReserva : uph;
+    const d = getTaskDestinos(t);
+    const trabajo = d.hayDesglose
+        ? (uph ? d.piso / uph * 60 : 0) + (uphR ? d.reserva / uphR * 60 : 0)
+        : (uph ? getTaskTotalAvance(t) / uph * 60 : 0);   // tarea vieja: no hay desglose que usar
+    return Math.max(base, trabajo);
 };
 
 /** Deja una categoría en formato legible: '08 ACCESORIES' → 'Accesories'. */
@@ -722,10 +789,12 @@ const buildKpiDataset = (tasks, desde, hasta) => {
         // artículo, volver) más lo que toma mover la cantidad al ritmo de la meta. Sin ese
         // recorrido, una tarea de 20 pares tendría 4 minutos y saldría reprobada siempre.
         const tiempoBase = meta.tiempoBase || 0;
-        const minutosEsperados = tiempoBase + (meta.metaUph > 0 ? (qty / meta.metaUph) * 60 : 0);
-        // Y al revés: de los minutos gastados, los que quedaron para mover mercadería
-        const minutosUtiles = Math.max(0, mins - tiempoBase);
-        const esperado = meta.metaUph * (minutosUtiles / 60);
+        const minutosEsperados = minutosPermitidos(t, meta);
+        // Y al revés: cuántos pares cabían en el tiempo que de verdad gastó, al mismo ritmo
+        // mezclado que se le exigió. Sin esto, una tarea de pura reserva pediría el ritmo del
+        // piso para lo esperado y el de reserva para lo permitido, y las dos cifras no cerrarían.
+        const ritmoMezclado = minutosEsperados > 0 ? (qty / minutosEsperados) * 60 : meta.metaUph;
+        const esperado = ritmoMezclado * (mins / 60);
         const usuarios = [t.u1, t.u2].filter(u => u && u !== '---');
 
         filas.push({
@@ -1049,13 +1118,14 @@ const buildJornadas = (tasksAll, desde, hasta, familia) => {
             const m = getTaskMinutos(t);
             const a = getTaskTotalAvance(t);
             const metaTarea = getTaskMeta(t);
-            const metaUph = metaTarea.metaUph;
-            const tBase = metaTarea.tiempoBase || 0;
+            const permitidos = minutosPermitidos(t, metaTarea);
             qty += a; mins += m;
             if (m > 0) {
-                // Mismo criterio que el KPI: se descuenta el recorrido antes de exigir la meta
-                meta += metaUph * (Math.max(0, m - tBase) / 60);
-                if (m <= tBase + (metaUph > 0 ? (a / metaUph) * 60 : 0)) ok++;
+                // La MISMA cuenta del KPI, no una parecida: sale de minutosPermitidos, que ya
+                // sabe separar el piso de la reserva. Antes se repetía acá a mano y las dos
+                // pantallas podían decir cosas distintas del mismo día.
+                meta += (permitidos > 0 ? (a / permitidos) * 60 : 0) * (m / 60);
+                if (m <= permitidos) ok++;
             } else {
                 sinHora++; // finalizada sin inicio o término marcado: no se puede medir
             }
@@ -5338,7 +5408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0440');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0444');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5601,7 +5671,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0440');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0444');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18167,7 +18237,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0440 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0444 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -27924,8 +27994,8 @@ Se dejó el valor anterior.`, 'warning');
           const btnMenu = isReserva ? '' : `
               <button id="btn_menu_mapa" title="Acciones manuales del mapa"
                       onclick="window.__menuMapa(this)"
-                      style="background:none; border:1px solid rgba(var(--ink-rgb), 0.18); color:var(--text-muted);
-                             padding:6px 10px; border-radius:8px; cursor:pointer; font-size:var(--t-lg);
+                      style="background:none; border:none; color:var(--text-muted);
+                             padding:6px 10px; cursor:pointer; font-size:var(--t-lg);
                              line-height:1; font-weight:900; letter-spacing:1px;">&#8943;</button>
           `;
 
@@ -33504,7 +33574,8 @@ window.__menuMapa = (btn) => {
                         <thead style="background:rgba(var(--shadow-rgb), 0.6);">
                             <tr style="color:rgba(var(--brand-pale-rgb), 0.85); text-transform:uppercase; font-size:var(--t-xs); letter-spacing:0.06em; border-bottom:2px solid rgba(var(--primary2-rgb), 0.25);">
                                 <th style="padding:0.8rem 1rem; text-align:left;">Categoría</th>
-                                <th style="padding:0.8rem 0.6rem; text-align:right;">Meta U/H</th>
+                                <th style="padding:0.8rem 0.6rem; text-align:right;" title="Pares por hora del grupo cuando la mercadería va al piso">Meta U/H</th>
+                                <th style="padding:0.8rem 0.6rem; text-align:right;" title="Pares por hora cuando la mercadería sale en paleta a reserva: armar la curva, enfilar, LPN y dejarla en la zona">Reserva U/H</th>
                                 <th style="padding:0.8rem 0.6rem; text-align:right;">Tamaño Tarea</th>
                                 <th style="padding:0.8rem 0.6rem; text-align:right;" title="Minutos fijos por tarea: el recorrido al buffer y de vuelta">T. Base</th>
                                 <th style="padding:0.8rem 1rem; text-align:left;">Vigencia</th>
@@ -33513,7 +33584,7 @@ window.__menuMapa = (btn) => {
                             </tr>
                         </thead>
                         <tbody>
-                            ${ordenadas.length === 0 ? `<tr><td colspan="7" style="padding:3rem; text-align:center; color:rgba(var(--ink-rgb), 0.25);">No hay reglas configuradas.</td></tr>` : ordenadas.map(r => {
+                            ${ordenadas.length === 0 ? `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(var(--ink-rgb), 0.25);">No hay reglas configuradas.</td></tr>` : ordenadas.map(r => {
                                 // "Vigente" solo decía que hoy cae dentro de su rango, y eso confundía:
                                 // dos reglas de la misma categoría podían decir VIGENTE las dos, cuando
                                 // en realidad solo una se usa. Ahora se dice cuál manda.
@@ -33538,6 +33609,7 @@ window.__menuMapa = (btn) => {
                                 return `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03); ${fondo}">
                                     <td style="padding:0.75rem 1rem;"><b style="color:var(--text-strong);">${esc(r.categoria)}</b>${chipGender(r.categoria)}${nivelBadge}${r.base ? ' <span style="font-size:var(--t-xs); color:var(--brand-light); border:1px solid rgba(var(--brand-rgb), 0.4); padding:1px 5px; border-radius:5px; vertical-align:middle;">BASE</span>' : ''}${nota}${fueraMaestro}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:var(--brand-pale); font-weight:900; font-size:var(--t-md);">${Number(r.metaUph).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.75rem 0.6rem; text-align:right; color:var(--warning-soft); font-weight:900; font-size:var(--t-md);">${metasService.metaReservaDe(r).toLocaleString('es-PE')}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:rgba(var(--ink-rgb), 0.65); font-weight:700;">${Number(r.tamanoTarea).toLocaleString('es-PE')}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:rgba(var(--ink-rgb), 0.45); font-weight:700; font-size:var(--t-sm);">${metasService.tiempoBaseDe(r)} min</td>
                                     <td style="padding:0.75rem 1rem; color:rgba(var(--ink-rgb), 0.6); font-size:var(--t-sm);">${vig}</td>
@@ -33646,7 +33718,7 @@ window.__menuMapa = (btn) => {
 
     const abrirModal = (regla) => {
         const editando = !!regla;
-        const r = regla || { categoria: 'FOOTWEAR', metaUph: 300, tamanoTarea: 300, desde: hoyStr, hasta: '', nota: '' };
+        const r = regla || { categoria: 'FOOTWEAR', metaUph: 300, metaReserva: metasService.RESERVA_FALLBACK, tamanoTarea: 300, desde: hoyStr, hasta: '', nota: '' };
         const prev = document.getElementById('cfg_meta_modal');
         if (prev) prev.remove();
 
@@ -33689,7 +33761,7 @@ window.__menuMapa = (btn) => {
 
                 <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:0.5rem;">
                     <div style="flex:1;">
-                        <label style="display:block; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Meta U/H (grupo de 2)</label>
+                        <label style="display:block; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Meta U/H piso (grupo de 2)</label>
                         <input type="number" id="cfg_meta" min="1" value="${r.metaUph}" style="width:100%; padding:9px 11px; background:rgba(var(--ink-rgb), 0.04); border:1px solid rgba(var(--ink-rgb), 0.12); border-radius:8px; color:var(--text-strong); font-size:var(--t-md); font-weight:800;">
                     </div>
                     <div style="flex:1;">
@@ -33701,9 +33773,13 @@ window.__menuMapa = (btn) => {
                     <input type="checkbox" id="cfg_link" checked style="accent-color:var(--primary-2); width:15px; height:15px; cursor:pointer;"> 🔗 Mover el tamaño de tarea junto con la meta
                 </label>
 
+                <label style="display:block; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Producción de reserva <span style="text-transform:none; font-weight:600;">(pares por hora en paleta)</span></label>
+                <input type="number" id="cfg_reserva" min="1" value="${metasService.metaReservaDe(r)}" style="width:100%; padding:9px 11px; background:rgba(var(--ink-rgb), 0.04); border:1px solid rgba(var(--warning-soft-rgb), 0.35); border-radius:8px; color:var(--text-strong); font-size:var(--t-md); font-weight:800; margin-bottom:0.4rem;">
+                <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.3); margin-bottom:1rem;">Mandar a reserva no cuesta lo mismo que llenar el piso: se arma la curva sobre la paleta, se enfila, se le pone el LPN y se deja en la zona. Medido: 200 pares en 10 minutos, o sea 1.200 por hora. Los pares de cada tarea se miden a un ritmo o al otro según a dónde fueron.</div>
+
                 <label style="display:block; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Tiempo base <span style="text-transform:none; font-weight:600;">(minutos por tarea)</span></label>
                 <input type="number" id="cfg_tbase" min="0" max="120" value="${metasService.tiempoBaseDe(r)}" style="width:100%; padding:9px 11px; background:rgba(var(--ink-rgb), 0.04); border:1px solid rgba(var(--ink-rgb), 0.12); border-radius:8px; color:var(--text-strong); font-size:var(--t-md); font-weight:800; margin-bottom:0.4rem;">
-                <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.3); margin-bottom:1rem;">Minutos que toma la tarea sin importar la cantidad: ir a la zona buffer, ubicar el artículo y volver. Se suman al tiempo que exige la meta, para que una tarea de pocos pares no salga reprobada solo por el recorrido.</div>
+                <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.3); margin-bottom:1rem;">Es el MÍNIMO que se le da a cualquier tarea, no algo que se sume: son los minutos del recorrido —ir a la zona buffer, ubicar el artículo y volver—. Una tarea de 300 pares a 300 u/h sigue siendo de 60 minutos; el mínimo solo entra cuando la cantidad es tan chica que el tiempo que le tocaría no alcanza ni para el recorrido.</div>
 
                 <div style="display:flex; gap:12px; margin-bottom:1rem;">
                     <div style="flex:1;">
@@ -33751,12 +33827,14 @@ window.__menuMapa = (btn) => {
             const meta = parseInt(inMeta.value, 10);
             const tam = parseInt(inTam.value, 10);
             const tbase = parseInt(modal.querySelector('#cfg_tbase').value, 10);
+            const reserva = parseInt(modal.querySelector('#cfg_reserva').value, 10);
             const desde = modal.querySelector('#cfg_desde').value;
             const hasta = modal.querySelector('#cfg_hasta').value;
 
             if (!meta || meta <= 0) { showPremiumAlert('DATO INVÁLIDO', 'La meta U/H debe ser un número mayor a cero.', 'error'); return; }
             if (!tam || tam <= 0) { showPremiumAlert('DATO INVÁLIDO', 'El tamaño de tarea debe ser un número mayor a cero.', 'error'); return; }
             if (!Number.isFinite(tbase) || tbase < 0 || tbase > 120) { showPremiumAlert('DATO INVÁLIDO', 'El tiempo base debe ser un número entre 0 y 120 minutos.', 'error'); return; }
+            if (!reserva || reserva <= 0) { showPremiumAlert('DATO INVÁLIDO', 'La producción de reserva debe ser un número mayor a cero.', 'error'); return; }
             if (!desde) { showPremiumAlert('DATO INVÁLIDO', 'La fecha de inicio de vigencia es obligatoria.', 'error'); return; }
             if (hasta && hasta < desde) { showPremiumAlert('FECHAS INVERTIDAS', 'La fecha final no puede ser anterior a la de inicio.', 'error'); return; }
 
@@ -33778,6 +33856,7 @@ window.__menuMapa = (btn) => {
                     ? metasService.NIVEL.GLOBAL
                     : (metasService.pareceDetalle(categoria) ? metasService.NIVEL.DETALLE : metasService.NIVEL.FAMILIA),
                 metaUph: meta,
+                metaReserva: reserva,
                 tamanoTarea: tam,
                 tiempoBase: tbase,
                 desde,
@@ -33893,9 +33972,26 @@ window.__menuMapa = (btn) => {
             if (tb && __savedTablaTop > 0) tb.scrollTop = __savedTablaTop;
             if (__savedWindowY > 0) window.scrollTo({ top: __savedWindowY, behavior: 'instant' });
         };
+        /* EL SCROLL SE DEVUELVE ANTES DEL PRIMER PINTADO. ESTO ES EL PARPADEO.
+         *
+         * Daniel, 27-ago-2026, ya en producción: *"sigo viendo el parpadeo"*. Yo había
+         * arreglado el cuadro por hora para que no rehiciera la pestaña, pero **el filtro que
+         * él usa es otro** —el DE/HASTA del panel de arriba— y hay 33 sitios más que sí la
+         * rehacen: los cinco filtros de fecha, la búsqueda, las semanas del gráfico...
+         *
+         * Parchearlos de a uno es inviable. La causa es una sola y está acá: el redibujado
+         * escribe el HTML nuevo y devuelve el scroll a su sitio recién en el frame SIGUIENTE
+         * (`requestAnimationFrame`). O sea que el navegador alcanza a pintar un cuadro con la
+         * pantalla arriba de todo y después salta. Ese ida y vuelta es lo que se ve parpadear.
+         *
+         * `queueMicrotask` corre apenas se vacía la pila —cuando esta función termina— y
+         * SIEMPRE ANTES de que el navegador pinte. El DOM ya está escrito, así que el scroll
+         * se acomoda sin que nadie llegue a ver el salto.
+         *
+         * Los dos rAF y el setTimeout se quedan como red: si la tabla todavía no tenía su
+         * altura final, el scrollTop se recorta a 0 y el salto volvería igual. */
+        queueMicrotask(__restoreScroll);
         requestAnimationFrame(() => { __restoreScroll(); requestAnimationFrame(__restoreScroll); });
-        // Red de seguridad: si en esos dos frames la tabla todavía no tenía su altura final,
-        // el scrollTop se recorta a 0 y el salto vuelve igual.
         setTimeout(__restoreScroll, 80);
     }
 
@@ -34385,9 +34481,12 @@ window.__menuMapa = (btn) => {
                            style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
                     <button onclick="window.__hourlyHoy()" title="Volver a la jornada de hoy"
                             style="padding:5px 10px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--cyan-neon); font-size:var(--t-xs); font-weight:800; cursor:pointer; font-family:inherit;">HOY</button>
-                    <!-- La cámara arma la misma tabla en chico para recortarla y mandarla por WhatsApp. -->
+                    <!-- La cámara arma la misma tabla en chico para recortarla y mandarla por WhatsApp.
+                         SIN MARCO NI FONDO, como los otros 22 botones de icono del tablero: yo lo
+                         habia puesto con recuadro y era el unico de todo el archivo. Daniel,
+                         27-ago-2026: "los iconos no tengan marco ni fondo, solo icono". -->
                     <button onclick="window.__hourlyFoto()" title="Verlo en chico para mandar por WhatsApp"
-                            style="padding:5px 11px; border-radius:7px; border:1px solid var(--cyan-neon); background:rgba(var(--cyan-neon-rgb), 0.14); color:var(--cyan-neon); font-size:var(--t-md); cursor:pointer; line-height:1; font-family:inherit;">📷</button>
+                            style="background:none; border:none; cursor:pointer; font-size:var(--t-lg); color:var(--cyan-neon); line-height:1; padding:2px 4px;">📷</button>
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:0.4rem;">
@@ -35334,25 +35433,157 @@ window.__menuMapa = (btn) => {
                 if (window.__kpiCatFiltro !== 'TODAS' && !familiasDisponibles.includes(window.__kpiCatFiltro)) {
                     window.__kpiCatFiltro = 'TODAS';
                 }
+                /* CAMBIAR DE PESTAÑA REHACE SOLO ESTE PANEL, NO LA PANTALLA ENTERA.
+                 *
+                 * Daniel, 27-ago-2026: *"cada vez que cambio a una pestaña en ese reporte hay
+                 * un parpadeo fuerte"*. Pasar de Operación a Personas rehacía TODA la pestaña
+                 * de Almacenaje, y ahí adentro se vuelven a crear los SIETE gráficos. Ese
+                 * costo es lo que se ve como parpadeo, y no tiene nada que ver con las tres
+                 * vistas: las tres salen de `window.__kpiFilas`, que ya está calculado.
+                 *
+                 * El respaldo al redibujado entero se queda para el arranque, cuando el panel
+                 * todavía no existe en pantalla. */
+                /* DOS REPINTADOS, Y LA DIFERENCIA IMPORTA.
+                 *
+                 * `repintar` rehace la pantalla entera y es lo que necesitan los filtros de
+                 * CATEGORÍA y de DÍA: esos no son del panel, filtran TODO el módulo —el
+                 * gráfico de arriba los lee, y la barra de estado dice "todo el módulo está
+                 * filtrado por…"—. Dejarlos redibujando solo el panel habría hecho que el
+                 * gráfico se quedara mostrando otra cosa.
+                 *
+                 * `repintarPanel` rehace SOLO las tres vistas, y es lo que necesita cambiar de
+                 * pestaña. Daniel, 27-ago-2026: *"cada vez que cambio a una pestaña hay un
+                 * parpadeo fuerte"*. Pasar de Operación a Personas rehacía toda la pantalla y
+                 * volvía a crear los SIETE gráficos, cuando las tres vistas salen de
+                 * `window.__kpiFilas`, que ya está calculado y no cambia. */
                 const repintar = () => {
                     const _sy = window.scrollY;
                     window.__kpiPage = 0; window.__accPage = 0; window.__rkPage = 0;
                     if (window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(window.__almacenajeContainer);
                     requestAnimationFrame(() => window.scrollTo({ top: _sy, behavior: 'instant' }));
                 };
+                const repintarPanel = () => {
+                    window.__kpiPage = 0; window.__accPage = 0; window.__rkPage = 0;
+                    const caja = document.getElementById('panelKpiVistas');
+                    if (caja && window.__kpiRenderPanel) caja.innerHTML = window.__kpiRenderPanel();
+                    else repintar();   // al arrancar, el panel todavía no está en pantalla
+                };
                 if (!window.__kpiSetCat) window.__kpiSetCat = (c) => { window.__kpiCatFiltro = c; repintar(); };
-                if (!window.__kpiVista) window.__kpiVista = 'operacion';
-                if (!window.__kpiSetVista) window.__kpiSetVista = (v) => { window.__kpiVista = v; repintar(); };
-                // Despliegue de filas sin volver a dibujar todo: los gráficos no se recrean
-                if (!window.__kpiToggleFila) window.__kpiToggleFila = (id) => {
-                    let abierto = false;
-                    document.querySelectorAll(`[data-parent="${id}"]`).forEach(el => {
-                        const oculto = el.style.display === 'none';
-                        el.style.display = oculto ? '' : 'none';
-                        abierto = oculto;
+                if (!window.__kpiVista) window.__kpiVista = 'grupos';
+                window.__kpiSetVista = (v) => { window.__kpiVista = v; repintarPanel(); };
+
+                /* Los nombres de usuario vienen del servidor: se escapan antes de entrar al HTML.
+                   Va aquí arriba, no dentro del panel, porque la foto también lo usa y estaba
+                   quedando fuera de alcance. */
+                const escKpi = (v) => String(v == null ? '' : v)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+                /* El rango propio de este cuadro. Se acomoda solo si queda al reves, en vez de
+                   mostrar una tabla vacia que parece un error. */
+                window.__kpiSetRangoPH = (cual, valor) => {
+                    const hoy = getLogicalDate();
+                    if (cual === 'desde') window.__kpiPHDesde = valor || hoy;
+                    else window.__kpiPHHasta = valor || hoy;
+                    if (window.__kpiPHDesde > window.__kpiPHHasta) {
+                        if (cual === 'desde') window.__kpiPHHasta = window.__kpiPHDesde;
+                        else window.__kpiPHDesde = window.__kpiPHHasta;
+                    }
+                    repintarPanel();
+                };
+                /* LA FOTO PARA WHATSAPP, la misma idea que el cuadro de Producción por hora:
+                 * la tabla en chico, en blanco y negro, para recortarla con Win+Shift+S.
+                 *
+                 * TODO VA ESCRITO EN CADA CELDA —tamaño, color, peso, relleno— y nada se hereda:
+                 * la hoja de estilos de la pantalla tiene reglas para las cabeceras de tabla que
+                 * le ganan a lo que herede la foto, y por eso los nombres salían en blanco sobre
+                 * blanco y el encabezado en letra chica. Ya pasó dos veces.
+                 *
+                 * Y ARRANCA EN DOBLE TAMAÑO: WhatsApp recomprime la imagen, así que una foto
+                 * grande llega nítida y una chica se pixela. */
+                window.__kpiFotoPH = () => {
+                    const E = window.__kpiPHEscala || 2;
+                    const D = window.__kpiPHDatos || {};
+                    const { HRS, totH, nM, fD, vista, desdeH, hastaH, dias } = D;
+                    const { filas, gran } = (window.__kpiPHArmar || (() => ({ filas: [], gran: {} })))();
+                    const px = (n) => Math.round(n * E) + 'px';
+                    const BASE = `font-family:Arial, sans-serif; font-size:${px(11)}; letter-spacing:normal; text-transform:none;`;
+                    const TH = `${BASE} padding:${px(5)} ${px(5)}; text-align:center; background:#12365c; color:#fff; font-weight:700; border:none;`;
+                    const TD = `${BASE} padding:${px(4)} ${px(5)}; text-align:center; border-bottom:1px solid #e3e7ee; color:#111; font-weight:400;`;
+                    const rango = desdeH === hastaH ? fD(desdeH) : `${fD(desdeH)} al ${fD(hastaH)}`;
+                    let i = 0;
+                    const cuerpoFoto = filas.map(r => {
+                        const hh = r.dia ? r.suma : r.h;
+                        const fondo = r.dia ? '#dbe4f0' : (i++ % 2 ? '#f4f6f9' : '#fff');
+                        return `<tr>
+                            <td style="${TD} background:${fondo}; text-align:left; padding-left:${px(r.dia ? 8 : 20)}; font-weight:${r.dia ? 900 : 700}; white-space:nowrap;">${r.dia ? fD(r.f) : escKpi(r.nom)}</td>
+                            ${HRS.map(x => `<td style="${TD} background:${fondo}; color:${hh[x] ? '#111' : '#9aa4b4'};">${hh[x] ? nM(hh[x]) : '-'}</td>`).join('')}
+                            <td style="${TD} background:#e7edf6; padding-left:${px(8)}; padding-right:${px(8)}; font-weight:900;">${nM(totH(hh))}</td></tr>`;
+                    }).join('');
+
+                    const foto = `<div style="background:#fff; color:#111; padding:${px(14)} ${px(16)}; border-radius:${px(10)}; font-family:Arial, sans-serif;">
+                        <div style="${BASE} font-size:${px(15)}; font-weight:900; color:#111;">PRODUCCIÓN POR HORA · ${vista === 'grupos' ? 'GRUPOS' : 'PERSONAS'}</div>
+                        <div style="${BASE} color:#666; margin-bottom:${px(9)};">${rango} · unidades almacenadas</div>
+                        <table style="border-collapse:collapse;"><thead><tr>
+                            <th style="${TH} text-align:left; padding-left:${px(8)};">${vista === 'grupos' ? 'GRUPO' : 'PERSONA'}</th>
+                            ${HRS.map(x => `<th style="${TH}">${String(x).padStart(2, '0')}:00</th>`).join('')}
+                            <th style="${TH} padding-left:${px(8)}; padding-right:${px(8)};">TOTAL</th></tr></thead>
+                        <tbody>${cuerpoFoto}</tbody><tfoot><tr>
+                            <td style="${TD} background:#12365c; color:#fff; font-weight:900; text-align:left; padding-left:${px(8)};">TOTAL</td>
+                            ${HRS.map(x => `<td style="${TD} background:#12365c; color:#fff; font-weight:900;">${gran[x] ? nM(gran[x]) : '-'}</td>`).join('')}
+                            <td style="${TD} background:#12365c; color:#fff; font-weight:900; padding-left:${px(8)}; padding-right:${px(8)};">${nM(totH(gran))}</td>
+                        </tr></tfoot></table>
+                        <div style="${BASE} font-size:${px(10)}; color:#888; margin-top:${px(7)};">${dias.length} ${dias.length === 1 ? 'jornada' : 'jornadas'} · ${nM(totH(gran))} unidades</div>
+                    </div>`;
+
+                    document.getElementById('fotoKpiPH')?.remove();
+                    const capa = document.createElement('div');
+                    capa.id = 'fotoKpiPH';
+                    capa.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(8,12,20,0.88);'
+                        + 'display:flex; align-items:center; justify-content:center; padding:22px; overflow:auto;';
+                    const bt = (on) => `padding:5px 12px; border-radius:8px; border:1px solid #fff; background:${on ? '#fff' : 'transparent'};`
+                        + `color:${on ? '#12365c' : '#fff'}; font-weight:800; font-size:13px; cursor:pointer; font-family:Arial, sans-serif;`;
+                    capa.innerHTML = `<div style="display:flex; flex-direction:column; gap:9px; align-items:flex-end; max-width:100%;">
+                        <div style="display:flex; gap:7px; align-items:center;">
+                          <span style="color:#9fb3cc; font-size:12px; font-family:Arial, sans-serif; margin-right:3px;">Tamaño:</span>
+                          <button data-e="1" style="${bt(E === 1)}">Chico</button>
+                          <button data-e="1.5" style="${bt(E === 1.5)}">Mediano</button>
+                          <button data-e="2" style="${bt(E === 2)}">Grande</button>
+                          <button data-x="1" style="${bt(false)} margin-left:10px;">✕ Cerrar</button>
+                        </div>
+                        <div style="overflow:auto; max-width:100%;">${foto}</div>
+                        <div style="color:#9fb3cc; font-size:11px; font-family:Arial, sans-serif; text-align:right; max-width:520px; line-height:1.6;">
+                          Recorte con <b style="color:#fff;">Win + Shift + S</b> y mándelo por WhatsApp.<br>
+                          Mándelo en <b style="color:#fff;">Grande</b>: WhatsApp achica la imagen igual, y una foto grande llega nítida.<br>
+                          Si aun así se ve borrosa, adjúntela como <b style="color:#fff;">Documento</b> en vez de como Foto.
+                        </div></div>`;
+                    const cerrar = () => capa.remove();
+                    capa.querySelectorAll('button[data-e]').forEach(b => b.addEventListener('click', () => {
+                        window.__kpiPHEscala = Number(b.dataset.e); cerrar(); window.__kpiFotoPH();
+                    }));
+                    capa.querySelector('button[data-x]').addEventListener('click', cerrar);
+                    capa.addEventListener('click', (e) => { if (e.target === capa) cerrar(); });
+                    document.addEventListener('keydown', function esc(e) {
+                        if (e.key === 'Escape') { cerrar(); document.removeEventListener('keydown', esc); }
                     });
-                    const ic = document.getElementById('ic_' + id);
-                    if (ic) ic.textContent = abierto ? '▾' : '▸';
+                    document.body.appendChild(capa);
+                };
+
+                // Despliegue de filas sin volver a dibujar todo: los gráficos no se recrean
+                /* QUE JORNADAS ESTAN DESPLEGADAS SE RECUERDA, NO SE LEE DE LA PANTALLA.
+                 *
+                 * Daniel, 27-ago-2026: *"cuando lo tengo expandido, se parpadea y cierra la
+                 * semana"*. El estado vivia UNICAMENTE en el `style.display` de cada fila, asi
+                 * que cualquier redibujado -cambiar de pestana, tocar un filtro, la
+                 * sincronizacion automatica- lo borraba y la jornada se cerraba sola.
+                 * Con el Set, la fila vuelve a dibujarse abierta. */
+                /* Que jornadas quedan desplegadas. Vive fuera del dibujo para que al repintar
+                   —cambiar de pestaña, mover el rango, el refresco automático— la jornada que
+                   el usuario abrió siga abierta. Antes se cerraba sola. */
+                if (!window.__kpiAbiertas) window.__kpiAbiertas = new Set();
+                window.__kpiToggleFila = (id) => {
+                    if (window.__kpiAbiertas.has(id)) window.__kpiAbiertas.delete(id);
+                    else window.__kpiAbiertas.add(id);
+                    repintarPanel();   // las filas hijas se dibujan solo si la jornada está abierta
                 };
                 // Clic en un día lo aísla; volver a hacer clic en el mismo lo suelta
                 if (!window.__kpiSetDia) window.__kpiSetDia = (f) => {
@@ -35470,23 +35701,112 @@ window.__menuMapa = (btn) => {
                 </div>`;
             })()}
 
-            <!-- PANEL DE ANÁLISIS: tres vistas, una por pregunta -->
-            ${(() => {
-                const filas = window.__kpiFilas || [];
-                const vista = window.__kpiVista || 'operacion';
-                const promGrupo = buildPromedioPorGrupo(filas);
-                const statsOp = buildStatsOperarios(filas);
+            <!-- PANEL DE ANÁLISIS: tres vistas, una por pregunta.
+                 Sale de una funcion con nombre y NO de un bloque suelto, para que cambiar de
+                 pestana pueda rehacer solo este panel en vez de toda la pantalla. -->
+            <div id="panelKpiVistas">
+            ${(window.__kpiRenderPanel = () => {
+                /* ══════════════════════════════════════════════════════════════════════
+                 * PRODUCCIÓN POR HORA, POR GRUPO Y POR PERSONA
+                 *
+                 * Rehecho el 27-ago-2026 con Daniel sobre una maqueta que aprobó. Antes eran
+                 * tres vistas —Operación, Personas y Producto— con columnas de meta y
+                 * cumplimiento, y al desplegar una jornada salía UNA FILA POR TAREA: el mismo
+                 * grupo aparecía tres veces en la misma noche.
+                 *
+                 * Lo que pidió, textual: *"el grupo debería ser acumulativo"*, *"en vez de esas
+                 * columnas de meta, total, finalización, ponmelo por hora"*, *"lo mismo en
+                 * personas pero separados"* y *"producto quítalo, no lleva a ningún sitio"*.
+                 *
+                 * EL RANGO ES PROPIO DE ESTE CUADRO —*"cada reporte debe tener su rango"*— así
+                 * que lee de `tasks`, la lista completa, y NO de `window.__kpiFilas`, que ya
+                 * viene recortada por el filtro de arriba. Si leyera de ahí, pedir una fecha
+                 * fuera de ese filtro devolvería un cuadro vacío sin explicación.
+                 * ══════════════════════════════════════════════════════════════════════ */
+                const HRS = [20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6];
+                /* Los nombres de usuario vienen del servidor: se escapan antes de entrar al HTML.
+                   VA DECLARADO ACA AUNQUE YA EXISTA MAS ARRIBA. Este panel es un `${...}` distinto
+                   dentro de la misma plantilla, y cada `${...}` es un ambiente aparte: lo de arriba
+                   NO se ve desde aca. Declararlo solo arriba daba "escKpi is not defined" al
+                   desplegar una jornada —el unico momento en que se usa—, asi que el error no
+                   aparecia hasta que alguien hacia clic. */
+                const escKpi = (v) => String(v == null ? '' : v)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                const hoyLog = getLogicalDate();
+                if (!window.__kpiPHDesde) window.__kpiPHDesde = hoyLog;
+                if (!window.__kpiPHHasta) window.__kpiPHHasta = hoyLog;
+                if (!window.__kpiVista) window.__kpiVista = 'grupos';
+                if (!window.__kpiPHEscala) window.__kpiPHEscala = 2;
+                const vista = window.__kpiVista === 'personas' ? 'personas' : 'grupos';
+                const desdeH = window.__kpiPHDesde, hastaH = window.__kpiPHHasta;
 
+                /* Se acumula por jornada y por grupo/persona, repartido en las horas en que
+                 * cada tarea TERMINÓ. Es la misma señal que usa el cuadro de Producción por
+                 * hora de más arriba, así que los dos tienen que dar lo mismo.
+                 *
+                 * EL REPARTO ENTRE LAS PERSONAS DE UN GRUPO. Daniel, 27-ago-2026: *"si un
+                 * grupo hizo mil pares, se le da quinientos a cada uno; si es impar, mil uno,
+                 * se le da quinientos uno al primero"*. Va en el orden de la tarea —u1 primero—
+                 * y así la suma de las personas es exactamente la del grupo, sin duplicar. */
+                const porDia = {};
+                (tasks || []).forEach(t => {
+                    if (!t || t.status !== 'Finalizado' || !t.termino) return;
+                    const f = diaOperativoDeTarea(t);
+                    if (!f || f < desdeH || f > hastaH) return;
+                    const d = new Date(String(t.termino).replace('Z', '').slice(0, 19));
+                    if (isNaN(d.getTime())) return;
+                    const hr = d.getHours();
+                    if (!HRS.includes(hr)) return;
+                    const us = [t.u1, t.u2, t.u3].filter(u => u && u !== '---');
+                    if (!us.length) return;
+                    const q = getTaskTotalAvance(t);
+                    porDia[f] = porDia[f] || { grupos: {}, personas: {} };
+
+                    const g = us.slice().sort().join(' + ');
+                    const cg = porDia[f].grupos[g] || (porDia[f].grupos[g] = { h: {}, t: 0 });
+                    cg.h[hr] = (cg.h[hr] || 0) + q; cg.t++;
+
+                    const base = Math.floor(q / us.length), resto = q % us.length;
+                    us.forEach((u, i) => {
+                        const cp = porDia[f].personas[u] || (porDia[f].personas[u] = { h: {}, t: 0 });
+                        cp.h[hr] = (cp.h[hr] || 0) + base + (i < resto ? 1 : 0);
+                        cp.t++;
+                    });
+                });
+
+                const dias = Object.keys(porDia).sort().reverse();
+                const totH = (h) => HRS.reduce((a, x) => a + (Number(h[x]) || 0), 0);
+                const nM = (n) => Math.round(Number(n) || 0).toLocaleString('es-PE');
+                const fD = (f) => String(f).split('-').reverse().join('/');
+
+                // Las filas que se dibujan, y las mismas que se llevará la foto.
+                const armar = () => {
+                    const filas = [], gran = {};
+                    dias.forEach(f => {
+                        const hijos = porDia[f][vista];
+                        const suma = {};
+                        Object.values(hijos).forEach(c => HRS.forEach(x => { suma[x] = (suma[x] || 0) + (c.h[x] || 0); }));
+                        HRS.forEach(x => { gran[x] = (gran[x] || 0) + (suma[x] || 0); });
+                        filas.push({ dia: true, f, suma, n: Object.keys(hijos).length });
+                        if (window.__kpiAbiertas.has(f)) {
+                            Object.entries(hijos).sort((a, b) => totH(b[1].h) - totH(a[1].h))
+                                .forEach(([nom, c]) => filas.push({ dia: false, nom, h: c.h, t: c.t }));
+                        }
+                    });
+                    return { filas, gran };
+                };
+                window.__kpiPHArmar = armar;
+                window.__kpiPHDatos = { HRS, totH, nM, fD, vista, desdeH, hastaH, dias };
+
+                const { filas, gran } = armar();
                 const VISTAS = [
-                    { id: 'operacion', icono: '🏭', label: 'Operación', sub: '¿Cómo salió cada jornada?' },
-                    { id: 'personas',  icono: '👥', label: 'Personas',  sub: '¿Quién rinde y quién no?' },
-                    { id: 'producto',  icono: '🏷️', label: 'Producto',  sub: '¿Qué categoría rinde mejor?' }
+                    { id: 'grupos', icono: '👥', label: 'Grupos', sub: '¿Cómo avanza cada grupo por hora?' },
+                    { id: 'personas', icono: '🧑', label: 'Personas', sub: '¿Cómo avanza cada persona por hora?' }
                 ];
-
                 const nav = VISTAS.map(v => {
                     const on = v.id === vista;
                     return `<button onclick="window.__kpiSetVista('${v.id}')" style="
-                        flex:1; min-width:150px; text-align:left; padding:0.75rem 1rem; cursor:pointer; transition:all 0.15s;
+                        flex:1; min-width:170px; text-align:left; padding:0.75rem 1rem; cursor:pointer; transition:all 0.15s;
                         background:${on ? 'rgba(var(--primary2-rgb), 0.14)' : 'transparent'}; border:none;
                         border-bottom:2px solid ${on ? 'var(--brand-light)' : 'transparent'};">
                         <div style="color:${on ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.55)'}; font-weight:900; font-size:var(--t-sm); letter-spacing:0.5px; text-transform:uppercase;">${v.icono} ${v.label}</div>
@@ -35494,254 +35814,61 @@ window.__menuMapa = (btn) => {
                     </button>`;
                 }).join('');
 
-                const th = (t, al = 'center') => `<th style="padding:0.7rem 0.8rem; text-align:${al}; font-weight:700;">${t}</th>`;
-                const vacio = (n, msg) => `<tr><td colspan="${n}" style="padding:3.5rem; text-align:center; color:rgba(var(--ink-rgb), 0.2);">${msg}</td></tr>`;
+                const celda = (v, esDia) => `<td style="padding:0.55rem 0.5rem; text-align:center; font-variant-numeric:tabular-nums;
+                    color:${v ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.2)'}; font-weight:${esDia ? 800 : 400};">${v ? nM(v) : '–'}</td>`;
 
-                let cuerpo = '';
-
-                // ── VISTA OPERACIÓN: una fila por jornada, con el estado real de sus tareas ──
-                if (vista === 'operacion') {
-                    const jornadas = window.__kpiJornadas || [];
-                    const gris = 'color:rgba(var(--ink-rgb), 0.2);';
-                    cuerpo = `
-                    <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-pale);">
-                        <thead style="background:rgba(var(--shadow-rgb), 0.55);">
-                            <tr style="color:rgba(var(--ink-rgb), 0.3); font-size:var(--t-xs); letter-spacing:0.05em; text-transform:uppercase;">
-                                <th colspan="2"></th>
-                                <th colspan="3" style="padding:5px 8px; text-align:center; font-weight:700; color:var(--cyan); border-bottom:1px solid rgba(var(--ink-rgb), 0.06);">Producción</th>
-                                <th colspan="4" style="padding:5px 8px; text-align:center; font-weight:700; border-bottom:1px solid rgba(var(--ink-rgb), 0.06);">Tareas</th>
-                                <th colspan="2" style="padding:5px 8px; text-align:center; font-weight:700; color:var(--warning); border-bottom:1px solid rgba(var(--ink-rgb), 0.06);">Sin ejecutar</th>
-                                <th colspan="2" style="padding:5px 8px; text-align:center; font-weight:700; border-bottom:1px solid rgba(var(--ink-rgb), 0.06);">Equipo</th>
-                            </tr>
-                            <tr style="color:rgba(var(--brand-pale-rgb), 0.85); text-transform:uppercase; font-size:var(--t-xs); letter-spacing:0.05em; border-bottom:2px solid rgba(var(--primary2-rgb), 0.2);">
-                                ${th('', 'center')}${th('Fecha', 'left')}${th('Almacenadas')}${th('Meta')}${th('% Meta')}${th('Total')}${th('Finaliz.')}${th('Cumplió')}${th('No cumplió')}${th('Creadas')}${th('Unid.')}${th('Grupos')}${th('U/H')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                        ${jornadas.length === 0 ? vacio(13, 'No hay jornadas con los filtros actuales.') : jornadas.map((j, di) => {
-                            const f = j.fecha;
-                            const dd = filas.filter(r => r.fecha === f);
-                            const q = j.qty, mt = j.meta, mins = j.mins;
-                            const pct = j.pct;
-                            const col = colorPorPct(pct);
-                            const uph = j.uph;
-                            const grupos = j.grupos;
-                            const id = 'dia' + di;
-
-                            const detalle = dd.slice().sort((a, b) => b.pct - a.pct).map(r => {
-                                const c2 = colorPorPct(r.pct);
-                                const prom = promGrupo.get(r.grupo) || 0;
-                                const delta = r.pct - prom;
-                                const vsProm = Math.abs(delta) < 5
-                                    ? '<span style="color:rgba(var(--ink-rgb), 0.28);">en su promedio</span>'
-                                    : (delta > 0 ? `<span style="color:var(--success);">▲ ${Math.round(delta)}pp</span>` : `<span style="color:var(--warning);">▼ ${Math.round(Math.abs(delta))}pp</span>`);
-                                const catColor = String(r.familia).toUpperCase() === 'FOOTWEAR' ? 'var(--brand-light)' : 'var(--warning)';
-                                return `<tr data-parent="${id}" style="display:none; background:rgba(var(--shadow-rgb), 0.28); border-bottom:1px solid rgba(var(--ink-rgb), 0.02);">
-                                    <td></td>
-                                    <td style="padding:0.5rem 0.8rem 0.5rem 2rem; color:var(--text-strong); font-weight:700; font-size:var(--t-xs); white-space:nowrap;">${r.grupo}
-                                        <span style="background:${catColor}1f; color:${catColor}; border:1px solid ${catColor}44; padding:1px 6px; border-radius:6px; font-size:var(--t-xs); font-weight:800; margin-left:6px;">${r.categoria}</span>
-                                        ${r.mixta ? ' <span title="Mezcla familias distintas" style="color:var(--danger);">⚠️</span>' : ''}
-                                    </td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:var(--brand-pale); font-weight:800;">${r.qty.toLocaleString('es-PE')}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; ${gris}">${Math.round(r.esperado).toLocaleString('es-PE')}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center;"><span style="color:${c2}; font-weight:800;">${Math.floor(r.pct)}%</span><div style="font-size:var(--t-xs); margin-top:1px;">${vsProm}</div></td>
-                                    <td colspan="4" style="padding:0.5rem 0.8rem; text-align:center; ${gris} font-size:var(--t-xs);">${r.mins > 0 ? fmtHM(r.mins) + ' de trabajo' : 'sin horario marcado'}</td>
-                                    <td colspan="2" style="padding:0.5rem 0.8rem; text-align:center; color:${r.desviacion >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight:700; font-size:var(--t-xs);">${r.desviacion >= 0 ? '+' : ''}${Math.round(r.desviacion).toLocaleString('es-PE')} u</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; ${gris} font-size:var(--t-xs);">${r.usuarios.length}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:${c2}; font-weight:800;">${Math.round(r.uph).toLocaleString('es-PE')}</td>
-                                </tr>`;
-                            }).join('');
-
-                            const cel = (v, estilo = '') => `<td style="padding:0.7rem 0.8rem; text-align:center; ${estilo}">${v}</td>`;
-                            const nada = `<span style="${gris}">—</span>`;
-
-                            return `<tr onclick="window.__kpiToggleFila('${id}')" style="border-bottom:1px solid rgba(var(--ink-rgb), 0.04); cursor:pointer;" onmouseover="this.style.background='rgba(var(--primary2-rgb), 0.05)'" onmouseout="this.style.background=''">
-                                <td style="padding:0.7rem 0.5rem; text-align:center; color:var(--brand-light); font-weight:900; width:26px;"><span id="ic_${id}">▸</span></td>
-                                <td style="padding:0.7rem 0.8rem; white-space:nowrap;"><b style="color:var(--text-strong); font-size:var(--t-md);">${f.split('-').reverse().join('/')}</b>${j.sinHora > 0 ? ` <span title="${j.sinHora} tarea(s) finalizada(s) sin hora de inicio o término: no se pueden medir" style="color:var(--warning); font-size:var(--t-xs);">⚠️</span>` : ''}</td>
-                                ${cel(j.finalizadas > 0 ? `<b style="color:var(--cyan); font-size:var(--t-md);">${Math.round(q).toLocaleString('es-PE')}</b>` : nada)}
-                                ${cel(mt > 0 ? `<span style="color:rgba(var(--ink-rgb), 0.4); font-weight:700;">${Math.round(mt).toLocaleString('es-PE')}</span>` : nada)}
-                                ${cel(mt > 0 ? `<b style="color:${col};">${Math.floor(pct)}%</b>` : nada)}
-                                ${cel(`<span style="color:rgba(var(--ink-rgb), 0.5); font-weight:700;">${j.total}</span>`)}
-                                ${cel(`<span style="color:var(--text-strong); font-weight:700;">${j.finalizadas}</span>`)}
-                                ${cel(j.cumplio > 0 ? `<span style="color:var(--success); font-weight:800;">${j.cumplio}</span>` : `<span style="${gris}">0</span>`)}
-                                ${cel(j.noCumplio > 0 ? `<span style="color:var(--danger); font-weight:800;">${j.noCumplio}</span>` : `<span style="${gris}">0</span>`)}
-                                ${cel(j.creadas + j.asignadas > 0 ? `<span style="color:var(--warning); font-weight:800;">${j.creadas + j.asignadas}</span>` : `<span style="${gris}">0</span>`)}
-                                ${cel(j.unidPend > 0 ? `<span style="color:var(--warning); font-size:var(--t-xs);">${Math.round(j.unidPend).toLocaleString('es-PE')}</span>` : nada)}
-                                ${cel(`<span style="color:rgba(var(--ink-rgb), 0.5); font-weight:700;">${grupos}</span>`)}
-                                ${cel(uph > 0 ? `<b style="color:${col};">${Math.round(uph).toLocaleString('es-PE')}</b>` : nada)}
-                            </tr>${detalle}`;
-                        }).join('')}
-                        ${jornadas.length > 0 ? (() => {
-                            const T = jornadas.reduce((a, j) => ({
-                                qty: a.qty + j.qty, meta: a.meta + j.meta, mins: a.mins + j.mins, total: a.total + j.total,
-                                fin: a.fin + j.finalizadas, ok: a.ok + j.cumplio, no: a.no + j.noCumplio, pend: a.pend + j.creadas + j.asignadas
-                            }), { qty: 0, meta: 0, mins: 0, total: 0, fin: 0, ok: 0, no: 0, pend: 0 });
-                            const p = T.meta > 0 ? (T.qty / T.meta) * 100 : 0;
-                            const c = colorPorPct(p);
-                            const ct = (v, e = '') => `<td style="padding:0.75rem 0.8rem; text-align:center; ${e}">${v}</td>`;
-                            return `<tr style="background:rgba(var(--primary2-rgb), 0.09); border-top:2px solid rgba(var(--primary2-rgb), 0.35);">
-                                <td></td>
-                                <td style="padding:0.75rem 0.8rem; color:var(--brand-paler); font-weight:900; font-size:var(--t-xs); text-transform:uppercase; letter-spacing:0.5px;">Total</td>
-                                ${ct(`<b style="color:var(--cyan); font-size:var(--t-md);">${Math.round(T.qty).toLocaleString('es-PE')}</b>`)}
-                                ${ct(`<span style="color:rgba(var(--ink-rgb), 0.45); font-weight:800;">${Math.round(T.meta).toLocaleString('es-PE')}</span>`)}
-                                ${ct(`<b style="color:${c};">${Math.floor(p)}%</b>`)}
-                                ${ct(`<b style="color:rgba(var(--ink-rgb), 0.7);">${T.total}</b>`)}
-                                ${ct(`<b style="color:var(--text-strong);">${T.fin}</b>`)}
-                                ${ct(`<b style="color:var(--success);">${T.ok}</b>`)}
-                                ${ct(`<b style="color:var(--danger);">${T.no}</b>`)}
-                                ${ct(`<b style="color:var(--warning);">${T.pend}</b>`)}
-                                ${ct(`<span style="${gris}" title="No se suma: la mercadería no almacenada vuelve a generar tarea al día siguiente">—</span>`)}
-                                ${ct(`<span style="${gris}">—</span>`)}
-                                ${ct(`<b style="color:${c};">${T.mins > 0 ? Math.round((T.qty / T.mins) * 60).toLocaleString('es-PE') : '—'}</b>`)}
-                            </tr>`;
-                        })() : ''}
-                        </tbody>
-                    </table>
-                    <div style="padding:0.75rem 1.2rem; background:rgba(var(--shadow-rgb), 0.3); border-top:1px solid rgba(var(--primary2-rgb), 0.15); font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35); line-height:1.7;">
-                        Clic en una jornada para ver sus tareas. Cada tarea se compara además contra el promedio de ese mismo grupo en el período, para detectar a quien bajó su ritmo aunque siga cumpliendo meta.<br>
-                        <b style="color:var(--warning);">Unid. sin ejecutar</b> no se suma entre días: si una tarea no se hace, su mercadería sigue en el buffer y al día siguiente vuelve a generar tarea, así que el mismo SKU aparece repetido en varias jornadas.
-                        ${jornadas.some(j => j.sinHora > 0) ? `<br><span style="color:var(--warning);">⚠️</span> marca jornadas con tareas finalizadas sin hora de inicio o término: no se pueden medir y quedan fuera del cumplimiento.` : ''}
-                    </div>`;
-                }
-
-                // ── VISTA PERSONAS: ranking, y al desplegar los días de cada operario ──
-                else if (vista === 'personas') {
-                    const MIN_TAREAS = 3;
-                    const rank = statsOp.filter(o => o.tareas >= MIN_TAREAS).sort((a, b) => b.promPct - a.promPct);
-                    const excluidos = statsOp.length - rank.length;
-                    window.__kpiRanking = rank;
-                    const medallas = ['🥇', '🥈', '🥉'];
-
-                    cuerpo = `
-                    <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-pale);">
-                        <thead style="background:rgba(var(--shadow-rgb), 0.55);">
-                            <tr style="color:rgba(var(--violet-rgb), 0.85); text-transform:uppercase; font-size:var(--t-xs); letter-spacing:0.06em; border-bottom:2px solid rgba(var(--violet-rgb), 0.2);">
-                                ${th('', 'center')}${th('#')}${th('Operador', 'left')}${th('Tareas')}${th('U/H Prom')}${th('Percentil')}${th('Mín · Mediana · Máx')}${th('% en Meta')}${th('Consistencia')}${th('Cumplimiento')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                        ${rank.length === 0 ? vacio(10, `Ningún operario alcanza las ${MIN_TAREAS} tareas mínimas con los filtros actuales.`) : rank.map((o, i) => {
-                            const col = colorPorPct(o.promPct);
-                            const id = 'op' + i;
-                            const consColor = o.consistencia >= 80 ? 'var(--success)' : o.consistencia >= 60 ? 'var(--warning)' : 'var(--danger)';
-                            const pColor = o.percentil >= 75 ? 'var(--success)' : o.percentil >= 40 ? 'var(--violet-soft)' : 'var(--warning)';
-
-                            const detalle = o.dias.map(d => {
-                                const p = d.meta > 0 ? (d.qty / d.meta) * 100 : 0;
-                                const c2 = colorPorPct(p);
-                                return `<tr data-parent="${id}" style="display:none; background:rgba(var(--shadow-rgb), 0.28); border-bottom:1px solid rgba(var(--ink-rgb), 0.02);">
-                                    <td></td><td></td>
-                                    <td style="padding:0.5rem 0.8rem 0.5rem 2rem; color:rgba(var(--ink-rgb), 0.7); font-size:var(--t-sm);">${d.fecha.split('-').reverse().join('/')}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(var(--ink-rgb), 0.35);">${d.tareas}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:${c2}; font-weight:800;">${d.mins > 0 ? Math.round((d.qty / d.mins) * 60).toLocaleString('es-PE') : '---'}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(var(--ink-rgb), 0.3); font-size:var(--t-xs);">${fmtHM(d.mins)}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:var(--brand-pale); font-weight:700;">${Math.round(d.qty).toLocaleString('es-PE')} u</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(var(--ink-rgb), 0.3);">meta ${Math.round(d.meta).toLocaleString('es-PE')}</td>
-                                    <td style="padding:0.5rem 0.8rem; text-align:center; color:${d.qty - d.meta >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight:700;">${d.qty - d.meta >= 0 ? '+' : ''}${Math.round(d.qty - d.meta).toLocaleString('es-PE')}</td>
-                                    <td style="padding:0.5rem 1rem; text-align:right; color:${c2}; font-weight:800;">${Math.floor(p)}%</td>
-                                </tr>`;
-                            }).join('');
-
-                            return `<tr onclick="window.__kpiToggleFila('${id}')" style="border-bottom:1px solid rgba(var(--ink-rgb), 0.04); cursor:pointer;" onmouseover="this.style.background='rgba(var(--violet-rgb), 0.05)'" onmouseout="this.style.background=''">
-                                <td style="padding:0.75rem 0.5rem; text-align:center; color:var(--violet-soft); font-weight:900; width:30px;"><span id="ic_${id}">▸</span></td>
-                                <td style="padding:0.75rem 0.5rem; text-align:center; font-size:var(--t-lg);">${medallas[i] || `<span style="color:rgba(var(--ink-rgb), 0.35); font-weight:700;">${i + 1}</span>`}</td>
-                                <td style="padding:0.75rem 0.8rem;"><b style="color:var(--text-strong); text-transform:uppercase; font-size:var(--t-md);">${o.user}</b><div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.28); margin-top:2px;">${o.dias.length} jornada${o.dias.length !== 1 ? 's' : ''}</div></td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(var(--ink-rgb), 0.5); font-weight:700;">${o.tareas}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center;"><span style="color:${col}; font-weight:900; font-size:var(--t-lg);">${Math.round(o.avgUph).toLocaleString('es-PE')}</span><div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.25);">u/h</div></td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center;"><span style="color:${pColor}; font-weight:900;">P${o.percentil}</span><div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.28);">${o.percentil >= 75 ? 'top del equipo' : o.percentil >= 40 ? 'zona media' : 'cola'}</div></td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; font-size:var(--t-xs); white-space:nowrap;">
-                                    <span style="color:rgba(var(--ink-rgb), 0.35);">${Math.round(o.minUph).toLocaleString('es-PE')}</span>
-                                    <span style="color:rgba(var(--ink-rgb), 0.2);"> · </span><b style="color:var(--text-pale);">${Math.round(o.medUph).toLocaleString('es-PE')}</b>
-                                    <span style="color:rgba(var(--ink-rgb), 0.2);"> · </span><span style="color:rgba(var(--ink-rgb), 0.35);">${Math.round(o.maxUph).toLocaleString('es-PE')}</span>
-                                </td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center;"><span style="color:var(--text-pale); font-weight:800;">${Math.round(o.pctEnMeta)}%</span><div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.28);">${o.enMeta} de ${o.tareas}</div></td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center;"><span style="color:${consColor}; font-weight:900;">${Math.round(o.consistencia)}%</span><div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.28);">${o.consistencia >= 80 ? 'estable' : o.consistencia >= 60 ? 'variable' : 'irregular'}</div></td>
-                                <td style="padding:0.75rem 1rem; min-width:130px;">
-                                    <div style="height:6px; background:rgba(var(--ink-rgb), 0.05); border-radius:6px; overflow:hidden;"><div style="width:${Math.min(o.promPct, 100)}%; height:100%; background:${col};"></div></div>
-                                    <div style="font-size:var(--t-xs); color:${col}; margin-top:3px; text-align:right; font-weight:800;">${Math.floor(o.promPct)}% de meta</div>
-                                </td>
-                            </tr>${detalle}`;
-                        }).join('')}
-                        </tbody>
-                    </table>
-                    <div style="padding:0.75rem 1.2rem; background:rgba(var(--shadow-rgb), 0.3); border-top:1px solid rgba(var(--violet-rgb), 0.15); font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35); line-height:1.7;">
-                        Clic en un operario para ver sus jornadas. <b style="color:rgba(var(--ink-rgb), 0.55);">Percentil</b>: P80 significa que rinde por encima del 80% del equipo. <b style="color:rgba(var(--ink-rgb), 0.55);">Mín · Mediana · Máx</b>: un promedio de 300 no es lo mismo si oscila entre 100 y 500 que si se mantiene en 300. <b style="color:rgba(var(--ink-rgb), 0.55);">Consistencia</b>: 100% es rendir siempre igual.
-                        ${excluidos > 0 ? `<br><span style="color:rgba(var(--ink-rgb), 0.28);">${excluidos} operario${excluidos !== 1 ? 's' : ''} fuera del ranking por tener menos de ${MIN_TAREAS} tareas.</span>` : ''}
-                    </div>`;
-                }
-
-                // ── VISTA PRODUCTO: rendimiento por familia y por Gender RIMS ──
-                else {
-                    const mapa = new Map();
-                    filas.forEach(r => {
-                        const fam = r.etiquetaCorta || 'Sin categoría';
-                        const det = r.detalle ? etiquetaCategoria(r.detalle) : '';
-                        const clave = fam + '||' + det;
-                        const cur = mapa.get(clave) || { fam, det, qty: 0, mins: 0, meta: 0, metaUph: 0, tareas: 0, origen: r.origenMeta, grupos: new Set() };
-                        cur.qty += r.qty; cur.mins += r.mins; cur.meta += r.esperado; cur.tareas++;
-                        cur.metaUph = r.metaUph;
-                        cur.grupos.add(r.grupo);
-                        mapa.set(clave, cur);
-                    });
-                    const cats = [...mapa.values()].sort((a, b) => a.fam.localeCompare(b.fam) || b.qty - a.qty);
-                    window.__kpiPorCategoria = cats;
-                    const totalUnid = cats.reduce((a, c) => a + c.qty, 0) || 1;
-
-                    cuerpo = `
-                    <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-pale);">
-                        <thead style="background:rgba(var(--shadow-rgb), 0.55);">
-                            <tr style="color:rgba(var(--cyan-rgb), 0.85); text-transform:uppercase; font-size:var(--t-xs); letter-spacing:0.06em; border-bottom:2px solid rgba(var(--cyan-rgb), 0.2);">
-                                ${th('Categoría', 'left')}${th('Tareas')}${th('Grupos')}${th('Unidades')}${th('% del Volumen')}${th('Horas')}${th('U/H Real')}${th('Meta U/H')}${th('Desviación')}${th('Cumplimiento')}${th('Origen Meta')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                        ${cats.length === 0 ? vacio(11, 'Sin datos por categoría con los filtros actuales.') : cats.map(c => {
-                            const pct = c.meta > 0 ? (c.qty / c.meta) * 100 : 0;
-                            const col = colorPorPct(pct);
-                            const uph = c.mins > 0 ? (c.qty / c.mins) * 60 : 0;
-                            const share = (c.qty / totalUnid) * 100;
-                            const origenTxt = c.origen === 'detalle' ? '<span style="color:var(--cyan);">Regla propia</span>'
-                                : c.origen === 'familia' ? '<span style="color:var(--violet-soft);">Heredada de familia</span>'
-                                : '<span style="color:var(--warning);">Respaldo · sin calibrar</span>';
-                            return `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.04);" onmouseover="this.style.background='rgba(var(--cyan-rgb), 0.04)'" onmouseout="this.style.background=''">
-                                <td style="padding:0.75rem 0.8rem;"><b style="color:var(--text-strong);">${c.det || c.fam}</b><div style="font-size:0.62rem; color:rgba(var(--ink-rgb), 0.28); margin-top:2px;">${c.det ? c.fam : 'sin detalle de Gender RIMS'}</div></td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(var(--ink-rgb), 0.5); font-weight:700;">${c.tareas}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(var(--ink-rgb), 0.5); font-weight:700;">${c.grupos.size}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:var(--cyan); font-weight:900; font-size:var(--t-md);">${Math.round(c.qty).toLocaleString('es-PE')}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center;">
-                                    <div style="height:5px; background:rgba(var(--ink-rgb), 0.05); border-radius:5px; overflow:hidden;"><div style="width:${share}%; height:100%; background:var(--cyan);"></div></div>
-                                    <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35); margin-top:2px;">${share.toFixed(1)}%</div>
-                                </td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(var(--ink-rgb), 0.45); font-weight:700;">${fmtHM(c.mins)}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:${col}; font-weight:900;">${Math.round(uph).toLocaleString('es-PE')}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(var(--ink-rgb), 0.4); font-weight:700;">${Math.round(c.metaUph).toLocaleString('es-PE')}</td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; color:${c.qty - c.meta >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight:800;">${c.qty - c.meta >= 0 ? '+' : ''}${Math.round(c.qty - c.meta).toLocaleString('es-PE')}</td>
-                                <td style="padding:0.75rem 1rem; min-width:130px;">
-                                    <div style="height:6px; background:rgba(var(--ink-rgb), 0.05); border-radius:6px; overflow:hidden;"><div style="width:${Math.min(pct, 100)}%; height:100%; background:${col};"></div></div>
-                                    <div style="font-size:var(--t-xs); color:${col}; margin-top:3px; text-align:right; font-weight:800;">${Math.floor(pct)}% de meta</div>
-                                </td>
-                                <td style="padding:0.75rem 0.8rem; text-align:center; font-size:var(--t-xs); font-weight:700;">${origenTxt}</td>
-                            </tr>`;
-                        }).join('')}
-                        </tbody>
-                    </table>
-                    <div style="padding:0.75rem 1.2rem; background:rgba(var(--shadow-rgb), 0.3); border-top:1px solid rgba(var(--cyan-rgb), 0.15); font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35); line-height:1.6;">
-                        <b style="color:rgba(var(--ink-rgb), 0.55);">% del Volumen</b> muestra cuánto pesa cada categoría en el total: una con cumplimiento bajo pero 2% del volumen no es lo mismo que una con el 90%.
-                        <b style="color:rgba(var(--ink-rgb), 0.55);">Origen Meta</b> en ámbar significa que esa categoría todavía no tiene meta propia y se mide con el respaldo.
-                    </div>`;
-                }
+                const cuerpo = !filas.length
+                    ? `<tr><td colspan="${HRS.length + 2}" style="padding:3.5rem; text-align:center; color:rgba(var(--ink-rgb), 0.2);">Sin producción en el rango elegido.</td></tr>`
+                    : filas.map(r => r.dia
+                        ? `<tr onclick="window.__kpiToggleFila('${r.f}')" style="cursor:pointer; border-bottom:1px solid rgba(var(--ink-rgb), 0.05);">
+                             <td style="padding:0.55rem 0.9rem; font-weight:800; color:var(--text-strong); white-space:nowrap;">
+                               <span style="color:var(--brand-light); font-weight:900;">${window.__kpiAbiertas.has(r.f) ? '▾' : '▸'}</span>
+                               &nbsp;${fD(r.f)}<span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.34); margin-left:7px;">${r.n} ${vista}</span></td>
+                             ${HRS.map(x => celda(r.suma[x], true)).join('')}
+                             <td style="padding:0.55rem 0.9rem; text-align:center; color:var(--brand-light); font-weight:900; background:rgba(var(--primary2-rgb), 0.07);">${nM(totH(r.suma))}</td>
+                           </tr>`
+                        : `<tr style="background:rgba(var(--shadow-rgb), 0.30); border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
+                             <td style="padding:0.5rem 0.9rem 0.5rem 2.7rem; color:var(--text-muted); white-space:nowrap;">${escKpi(r.nom)}<span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.34); margin-left:7px;">${r.t} ${r.t === 1 ? 'tarea' : 'tareas'}</span></td>
+                             ${HRS.map(x => celda(r.h[x], false)).join('')}
+                             <td style="padding:0.5rem 0.9rem; text-align:center; color:var(--brand-light); font-weight:900; background:rgba(var(--primary2-rgb), 0.07);">${nM(totH(r.h))}</td>
+                           </tr>`).join('');
 
                 return `
-                <div style="background:rgba(var(--bg-rgb), 0.92); border:2px solid var(--primary); border-radius:14px; overflow:hidden; box-shadow:0 0 25px rgba(var(--primary-rgb), 0.14);">
-                    <div style="display:flex; background:rgba(var(--shadow-rgb), 0.35); border-bottom:1px solid rgba(var(--primary2-rgb), 0.2); flex-wrap:wrap;">
-                        ${nav}
-                        <div style="display:flex; align-items:center; padding:0 1rem; gap:8px; margin-left:auto;">
-                            <button onclick="window.exportarKpiTareas(this)" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
-                        </div>
+                <div class="glass-panel" style="padding:0; overflow:hidden; margin-top:1.5rem;">
+                    <div style="display:flex; align-items:center; gap:8px; padding:10px 14px; flex-wrap:wrap; border-bottom:1px solid rgba(var(--ink-rgb), 0.10);">
+                        <span style="font-size:var(--t-xs); color:rgba(var(--brand-pale-rgb), 0.85); font-weight:800; letter-spacing:0.5px;">📅 DE:</span>
+                        <input type="date" value="${desdeH}" onchange="window.__kpiSetRangoPH('desde', this.value)"
+                               style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--brand-pale-rgb), 0.4); background:rgba(var(--ink-rgb), 0.05); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
+                        <span style="font-size:var(--t-xs); color:rgba(var(--brand-pale-rgb), 0.85); font-weight:800; letter-spacing:0.5px;">HASTA:</span>
+                        <input type="date" value="${hastaH}" onchange="window.__kpiSetRangoPH('hasta', this.value)"
+                               style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--brand-pale-rgb), 0.4); background:rgba(var(--ink-rgb), 0.05); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
+                        <button onclick="window.__kpiFotoPH()" title="Verlo en chico para mandar por WhatsApp"
+                                style="background:none; border:none; cursor:pointer; font-size:var(--t-lg); color:var(--brand-light); line-height:1; padding:2px 4px;">📷</button>
+                        <span style="margin-left:auto;"><button onclick="window.exportarKpiTareas(this)" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button></span>
                     </div>
-                    <div style="overflow-x:auto;">${cuerpo}</div>
+                    <div style="display:flex; border-bottom:1px solid rgba(var(--ink-rgb), 0.12);">${nav}</div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
+                            <thead><tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.12);">
+                                <th style="padding:0.6rem 0.9rem; text-align:left; font-weight:700; font-size:var(--t-xs); color:var(--text-muted); text-transform:uppercase; width:250px;">Fecha · ${vista === 'grupos' ? 'Grupo' : 'Persona'}</th>
+                                ${HRS.map(x => `<th style="padding:0.6rem 0.5rem; text-align:center; font-weight:700; font-size:var(--t-xs); color:var(--text-muted);">${String(x).padStart(2, '0')}:00</th>`).join('')}
+                                <th style="padding:0.6rem 0.9rem; text-align:center; font-weight:700; font-size:var(--t-xs); color:var(--text-muted); width:95px;">Total</th>
+                            </tr></thead>
+                            <tbody>${cuerpo}
+                                <tr style="background:rgba(var(--primary2-rgb), 0.12); border-top:2px solid rgba(var(--ink-rgb), 0.12);">
+                                    <td style="padding:0.6rem 0.9rem; font-weight:900; color:var(--text-strong);">TOTAL</td>
+                                    ${HRS.map(x => celda(gran[x], true)).join('')}
+                                    <td style="padding:0.6rem 0.9rem; text-align:center; color:var(--brand-light); font-weight:900;">${nM(totH(gran))}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="padding:0.8rem 1rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.42); line-height:1.75;">
+                        Clic en una jornada para ver ${vista === 'grupos' ? 'sus grupos. Cada grupo va acumulado: si hizo tres tareas, es una sola fila.' : 'a cada persona. Lo que hace un grupo se parte entre sus integrantes; si la cantidad es impar, el par de más va al primero, así el total coincide con el de Grupos.'}
+                    </div>
                 </div>`;
             })()}
+            </div>
 
             <!-- FILA INFERIOR DE REPORTES (2 COLUMNAS) -->
             <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; align-items:start;">

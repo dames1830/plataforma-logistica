@@ -1,0 +1,79 @@
+<!-- Prueba del cambio de pestaña en el panel de KPI (Operación / Personas / Producto).
+     No se puede abrir esa pantalla sin sesión, así que se comprueban las dos cosas que
+     hacen falta para que cambiar de pestaña NO rehaga la pantalla entera:
+       1. que el panel salga de una función con nombre y quede envuelto en su div
+       2. que `repintar` use ese div y solo caiga al redibujado completo si no existe -->
+<meta charset="utf-8">
+<title>Prueba de las pestañas del KPI</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0e1622; color: #dbe6f5; padding: 22px; }
+  #eco { font-size: 13px; line-height: 1.9; white-space: pre-wrap; max-width: 900px; }
+  b { color: #7ee2a8; } .mal { color: #ff8a80; font-weight: 700; }
+</style>
+<div id="eco"></div>
+<script>
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+
+(async () => {
+  const CR = String.fromCharCode(13);
+  const src = (await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text()).split(CR).join('');
+
+  eco('── COMO QUEDO ARMADO EL PANEL ──');
+  ok('el panel sale de una función con nombre, no de un bloque suelto',
+     src.includes('${(window.__kpiRenderPanel = () => {'));
+  const iDiv = src.indexOf('<div id="panelKpiVistas">');
+  ok('y está envuelto en su propio div', iDiv > 0);
+  ok('el div abre justo antes de la función',
+     iDiv > 0 && src.indexOf('${(window.__kpiRenderPanel', iDiv) - iDiv < 120);
+
+  // El div tiene que cerrar DESPUES de la llamada y ANTES de la fila inferior.
+  const iLlamada = src.indexOf('})()}', iDiv);
+  const iCierre = src.indexOf('</div>', iLlamada);
+  const iSiguiente = src.indexOf('<!-- FILA INFERIOR DE REPORTES', iDiv);
+  ok('el div cierra después del panel y antes del reporte siguiente',
+     iCierre > iLlamada && iCierre < iSiguiente);
+
+  eco('\n── QUE HACE AL CAMBIAR DE PESTAÑA ──');
+  const iPanel = src.indexOf('const repintarPanel = () => {');
+  const repPanel = src.slice(iPanel, src.indexOf('};', iPanel) + 2);
+  ok('cambiar de pestaña usa repintarPanel', /__kpiSetVista = \(v\) => \{ window\.__kpiVista = v; repintarPanel\(\)/.test(src));
+  ok('repintarPanel busca el panel por su id', repPanel.includes("getElementById('panelKpiVistas')"));
+  ok('y reemplaza SOLO ese panel', /caja\.innerHTML = window\.__kpiRenderPanel\(\)/.test(repPanel));
+  ok('el redibujado completo queda de respaldo, para el arranque',
+     repPanel.indexOf('else repintar()') > repPanel.indexOf('__kpiRenderPanel'));
+
+  eco('\n── LO QUE NO SE PODIA TOCAR ──');
+  // Los filtros de categoría y de día NO son del panel: filtran todo el módulo, y el
+  // gráfico de arriba los lee. Dejarlos redibujando solo el panel habría hecho que el
+  // gráfico se quedara mostrando otra cosa. Casi lo rompo.
+  ok('el filtro de CATEGORÍA sigue rehaciendo todo',
+     /__kpiSetCat = \(c\) => \{ window\.__kpiCatFiltro = c; repintar\(\)/.test(src));
+  ok('el filtro de DÍA también', /window\.__kpiDiaFiltro = \(f[^]{0,90}repintar\(\)/.test(src));
+  ok('y el gráfico sigue leyendo el filtro de categoría',
+     /apilado = \(window\.__kpiCatFiltro/.test(src));
+
+  eco('\n── LA JORNADA DESPLEGADA NO SE CIERRA SOLA ──');
+  ok('qué jornadas están abiertas se recuerda en un Set', src.includes('window.__kpiAbiertas = new Set()'));
+  ok('al desplegar se guarda ahí', /window\.__kpiAbiertas\.(add|delete)\(id\)/.test(src));
+  const filasHijas = (src.match(/window\.__kpiAbiertas\.has\(id\) \? '' : 'none'/g) || []).length;
+  ok('las filas hijas nacen abiertas si su jornada lo estaba (' + filasHijas + ' de 2 tablas)', filasHijas === 2);
+  const iconos = (src.match(/window\.__kpiAbiertas\.has\(id\) \? '▾' : '▸'/g) || []).length;
+  ok('y el triangulito acompaña (' + iconos + ' de 2)', iconos === 2);
+
+  eco('\n── LO QUE SE DEJA DE REHACER ──');
+  const nGraficos = (src.match(/new Chart\(/g) || []).length;
+  eco('   la pantalla de Almacenaje crea <b>' + nGraficos + ' gráficos</b>; al cambiar de');
+  eco('   pestaña se volvían a crear todos, y ahora ninguno.');
+  ok('hay gráficos de por medio, que es lo que hacía pesado el redibujado', nGraficos >= 5);
+
+  eco('\n── QUE LAS TRES VISTAS SIGAN AHI ──');
+  ['operacion', 'personas', 'producto'].forEach(v =>
+    ok('la vista ' + v + ' sigue declarada', src.includes("id: '" + v + "'")));
+  ok('y las tres se piden con el mismo botón', src.includes("window.__kpiSetVista('"));
+
+  eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+             : '\n<b>Cambiar de pestaña ya no rehace la pantalla.</b>');
+})();
+</script>

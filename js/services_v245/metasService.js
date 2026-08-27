@@ -21,6 +21,19 @@ export const TAMANO_FALLBACK = 300;
  * a 300 u/h se le exigirían 12 segundos y solo el recorrido ya toma varios minutos.
  */
 export const TIEMPO_BASE_FALLBACK = 10;
+/**
+ * PRODUCCIÓN DE RESERVA: pares por hora cuando la mercadería sale en paleta.
+ *
+ * No es el mismo trabajo que llenar el piso. Daniel, 27-ago-2026: en reserva se arma una
+ * curva sobre la paleta —mínimo tres tallas—, se enfila, se le pone el LPN y se deja en la
+ * zona para que el montacarguista la suba. *"Cinco, diez minutos para doscientos pares"*.
+ *
+ * De ahí sale el 1.200: 200 pares en 10 minutos, el extremo conservador de ese rango.
+ * Medido contra las 456 tareas de agosto-2026 que traen el desglose, con el piso a 300 y la
+ * reserva a 1.200 el tiempo permitido da 683 h contra 679 h reales. Contándolo todo al ritmo
+ * del piso daba 1.021 h: se regalaban 342 horas al mes y todo el mundo aprobaba.
+ */
+export const RESERVA_FALLBACK = 1200;
 
 /** Nivel al que aplica una regla. */
 export const NIVEL = { DETALLE: 'detalle', FAMILIA: 'familia', GLOBAL: 'global' };
@@ -33,6 +46,16 @@ export const tiempoBaseDe = (r) => {
     if (bruto === undefined || bruto === null || bruto === '') return TIEMPO_BASE_FALLBACK;
     const v = Number(bruto);
     return Number.isFinite(v) && v >= 0 ? v : TIEMPO_BASE_FALLBACK;
+};
+
+/** Producción de reserva de una regla, con respaldo para las guardadas antes de que existiera. */
+export const metaReservaDe = (r) => {
+    const bruto = r && r.metaReserva;
+    // Igual que en tiempoBaseDe: Number(null) y Number('') dan 0, no NaN. Sin este corte una
+    // regla vieja se quedaría con 0 pares/hora de reserva y ninguna tarea cumpliría jamás.
+    if (bruto === undefined || bruto === null || bruto === '') return RESERVA_FALLBACK;
+    const v = Number(bruto);
+    return Number.isFinite(v) && v > 0 ? v : RESERVA_FALLBACK;
 };
 
 let reglas = null;
@@ -64,14 +87,14 @@ export const esCategoriaVacia = (valor) => {
 };
 
 const reglasPorDefecto = () => ([
-    { id: nuevoId(), categoria: 'FOOTWEAR', nivel: NIVEL.FAMILIA, metaUph: 300, tamanoTarea: 300, tiempoBase: TIEMPO_BASE_FALLBACK, desde: '2026-01-01', hasta: '', nota: 'Regla base calzado', base: true },
-    { id: nuevoId(), categoria: 'GLOBAL', nivel: NIVEL.GLOBAL, metaUph: 300, tamanoTarea: 300, tiempoBase: TIEMPO_BASE_FALLBACK, desde: '2026-01-01', hasta: '', nota: 'Regla de respaldo para cualquier categoría sin regla propia', base: true }
+    { id: nuevoId(), categoria: 'FOOTWEAR', nivel: NIVEL.FAMILIA, metaUph: 300, tamanoTarea: 300, tiempoBase: TIEMPO_BASE_FALLBACK, metaReserva: RESERVA_FALLBACK, desde: '2026-01-01', hasta: '', nota: 'Regla base calzado', base: true },
+    { id: nuevoId(), categoria: 'GLOBAL', nivel: NIVEL.GLOBAL, metaUph: 300, tamanoTarea: 300, tiempoBase: TIEMPO_BASE_FALLBACK, metaReserva: RESERVA_FALLBACK, desde: '2026-01-01', hasta: '', nota: 'Regla de respaldo para cualquier categoría sin regla propia', base: true }
 ]);
 
 /** Migra reglas de la versión anterior, que usaba el pseudo-nivel NO_FOOTWEAR. */
 const conTiempoBase = (r) => {
-    const v = tiempoBaseDe(r);
-    return r.tiempoBase === v ? r : { ...r, tiempoBase: v };
+    const v = tiempoBaseDe(r), w = metaReservaDe(r);
+    return (r.tiempoBase === v && r.metaReserva === w) ? r : { ...r, tiempoBase: v, metaReserva: w };
 };
 
 const migrar = (lista) => (lista || []).map(conTiempoBase).map(r => {
@@ -180,19 +203,19 @@ export const resolverMeta = (detalle, familia, fecha) => {
     const d = norm(detalle);
     if (d && !esCategoriaVacia(d)) {
         const porDetalle = masReciente(vigentes.filter(r => norm(r.categoria) === d));
-        if (porDetalle) return { metaUph: porDetalle.metaUph, tamanoTarea: porDetalle.tamanoTarea, tiempoBase: tiempoBaseDe(porDetalle), regla: porDetalle, origen: NIVEL.DETALLE };
+        if (porDetalle) return { metaUph: porDetalle.metaUph, tamanoTarea: porDetalle.tamanoTarea, tiempoBase: tiempoBaseDe(porDetalle), metaReserva: metaReservaDe(porDetalle), regla: porDetalle, origen: NIVEL.DETALLE };
     }
 
     const f = norm(familia);
     if (f && !esCategoriaVacia(f)) {
         const porFamilia = masReciente(vigentes.filter(r => norm(r.categoria) === f));
-        if (porFamilia) return { metaUph: porFamilia.metaUph, tamanoTarea: porFamilia.tamanoTarea, tiempoBase: tiempoBaseDe(porFamilia), regla: porFamilia, origen: NIVEL.FAMILIA };
+        if (porFamilia) return { metaUph: porFamilia.metaUph, tamanoTarea: porFamilia.tamanoTarea, tiempoBase: tiempoBaseDe(porFamilia), metaReserva: metaReservaDe(porFamilia), regla: porFamilia, origen: NIVEL.FAMILIA };
     }
 
     const global = masReciente(vigentes.filter(r => norm(r.categoria) === 'GLOBAL'));
-    if (global) return { metaUph: global.metaUph, tamanoTarea: global.tamanoTarea, tiempoBase: tiempoBaseDe(global), regla: global, origen: NIVEL.GLOBAL };
+    if (global) return { metaUph: global.metaUph, tamanoTarea: global.tamanoTarea, tiempoBase: tiempoBaseDe(global), metaReserva: metaReservaDe(global), regla: global, origen: NIVEL.GLOBAL };
 
-    return { metaUph: META_FALLBACK, tamanoTarea: TAMANO_FALLBACK, tiempoBase: TIEMPO_BASE_FALLBACK, regla: null, origen: 'respaldo' };
+    return { metaUph: META_FALLBACK, tamanoTarea: TAMANO_FALLBACK, tiempoBase: TIEMPO_BASE_FALLBACK, metaReserva: RESERVA_FALLBACK, regla: null, origen: 'respaldo' };
 };
 
 /** Meta de hoy, para el generador de tareas. */

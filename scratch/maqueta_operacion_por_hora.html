@@ -1,0 +1,141 @@
+<!-- MAQUETA: la vista OPERACIÓN pasa a ser producción por hora, con el grupo acumulado.
+     Lee las tareas REALES del servidor, así que lo que se ve son los datos de Daniel. -->
+<meta charset="utf-8">
+<title>Maqueta · Operación por hora</title>
+<style>
+  /* Los colores van escritos y no tomados de la plataforma: esta maqueta se abre con doble
+     clic desde el Escritorio, donde las hojas de la web no existen. */
+  :root {
+    color-scheme: dark;
+    --panel-deeper:#0b0e15; --panel-alt:#151a24; --ink-rgb:232,236,244;
+    --text-strong:#e8ecf4; --text-muted:#99a3ba; --brand-light:#8b93f8;
+    --brand-pale-rgb:139,147,248; --primary2-rgb:99,102,241; --shadow-rgb:8,11,18;
+    --danger-rgb:248,113,113; --danger-soft:#f87171;
+  }
+  body { margin: 0; padding: 22px; background: var(--panel-deeper); font-family: system-ui, sans-serif; }
+  .wrap { max-width: 1500px; margin: 0 auto; }
+  h1 { color: var(--text-strong); font-size: 19px; margin: 0 0 3px; }
+  .sub { color: var(--text-muted); font-size: 13px; margin-bottom: 18px; }
+
+  .panel { background: var(--panel-alt); border: 1px solid rgba(var(--ink-rgb), 0.16);
+    border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+  .nav { display: flex; border-bottom: 1px solid rgba(var(--ink-rgb), 0.12); }
+  .nav button { flex: 1; min-width: 150px; text-align: left; padding: 0.75rem 1rem; cursor: pointer;
+    background: transparent; border: none; border-bottom: 2px solid transparent; font-family: inherit; }
+  .nav button.on { background: rgba(var(--primary2-rgb), 0.14); border-bottom-color: var(--brand-light); }
+  .nav .t { color: rgba(var(--ink-rgb), 0.55); font-weight: 900; font-size: 12px; letter-spacing: .5px; text-transform: uppercase; }
+  .nav button.on .t { color: var(--text-strong); }
+  .nav .s { color: rgba(var(--ink-rgb), 0.25); font-size: 11px; margin-top: 2px; }
+  .nav button.on .s { color: rgba(var(--brand-pale-rgb), 0.75); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { padding: 0.65rem 0.5rem; text-align: center; font-weight: 700; font-size: 11px;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em;
+    border-bottom: 1px solid rgba(var(--ink-rgb), 0.12); }
+  thead th.izq { text-align: left; padding-left: 1rem; }
+  td { padding: 0.6rem 0.5rem; text-align: center; border-bottom: 1px solid rgba(var(--ink-rgb), 0.05);
+    color: var(--text-strong); font-variant-numeric: tabular-nums; }
+  td.izq { text-align: left; padding-left: 1rem; }
+  tr.dia { cursor: pointer; }
+  tr.dia:hover { background: rgba(var(--ink-rgb), 0.04); }
+  tr.dia td { font-weight: 800; }
+  tr.grupo td { background: rgba(var(--shadow-rgb), 0.28); font-size: 12.5px; }
+  tr.grupo td.izq { padding-left: 2.6rem; color: var(--text-muted); }
+  .cero { color: rgba(var(--ink-rgb), 0.22); }
+  .tot { color: var(--brand-light); font-weight: 900; background: rgba(var(--primary2-rgb), 0.06); }
+  tr.total td { background: rgba(var(--primary2-rgb), 0.10); font-weight: 900; border-top: 2px solid rgba(var(--ink-rgb), 0.12); }
+  .ic { color: var(--brand-light); font-weight: 900; }
+  .tareas { font-size: 10.5px; color: rgba(var(--ink-rgb), 0.35); margin-left: 7px; }
+  .pie { padding: 0.8rem 1rem; font-size: 11.5px; color: rgba(var(--ink-rgb), 0.4); line-height: 1.7; }
+  .antes { background: rgba(var(--danger-rgb), 0.07); border: 1px solid rgba(var(--danger-rgb), 0.25);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 18px; color: var(--text-muted); font-size: 13px; line-height: 1.8; }
+  .antes b { color: var(--danger-soft); }
+</style>
+
+<div class="wrap">
+  <h1>Vista OPERACIÓN — como quedaría</h1>
+  <div class="sub">Con las tareas reales del servidor. Haga clic en una jornada para desplegar sus grupos.</div>
+
+  <div class="antes" id="antes"></div>
+
+  <div class="panel">
+    <div class="nav">
+      <button class="on"><div class="t">🏭 Operación</div><div class="s">¿Cómo salió cada jornada?</div></button>
+      <button><div class="t">👥 Personas</div><div class="s">¿Quién rinde y quién no?</div></button>
+      <button><div class="t">🏷️ Producto</div><div class="s">¿Qué categoría rinde mejor?</div></button>
+    </div>
+    <div style="overflow-x:auto;"><table id="tabla"></table></div>
+    <div class="pie" id="pie"></div>
+  </div>
+</div>
+
+<script>
+document.documentElement.setAttribute('data-tema', 'indigo');
+const HORAS = [20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6];
+const nMil = (n) => Math.round(Number(n) || 0).toLocaleString('es-PE');
+const abiertas = new Set();
+
+(async () => {
+  // Los datos van adentro: desde el Escritorio no se puede pedir nada al servidor.
+  const JOR = {"2026-08-26": {"cmoreano + jcuevas": {"h": {"22": 206}, "tareas": 1}, "jmaicelo + mbravo": {"h": {"22": 1006}, "tareas": 1}, "jbarazorda + mzarzosa": {"h": {"22": 1758, "21": 1926}, "tareas": 3}, "achaqquere + galata": {"h": {"22": 390}, "tareas": 1}, "jyauyo + pmurayari": {"h": {"21": 738}, "tareas": 2}}, "2026-08-25": {"achaqquere + scasahuaman": {"h": {"5": 89}, "tareas": 1}, "kcasahuaman + saltamirano": {"h": {"6": 426, "3": 546, "4": 424, "1": 424, "0": 444, "22": 550}, "tareas": 6}, "rrivera + scasahuaman": {"h": {"4": 1606, "2": 745, "5": 216, "6": 32}, "tareas": 4}, "pmurayari + scasahuaman": {"h": {"1": 1022, "22": 1041}, "tareas": 2}, "cmoreano + eleon": {"h": {"22": 520, "5": 396, "4": 636, "1": 400, "6": 332}, "tareas": 6}, "jcuevas + jramos": {"h": {"21": 421, "0": 825, "22": 783}, "tareas": 4}, "jmaicelo + mbravo": {"h": {"2": 1120, "6": 2418, "22": 1014}, "tareas": 3}, "fpalacios + jcuevas": {"h": {"6": 1456, "3": 980, "1": 672, "4": 648}, "tareas": 4}, "jcasafrancaá + jramos": {"h": {"6": 1278}, "tareas": 1}, "bquispe + rlunazco": {"h": {"6": 2626}, "tareas": 1}, "achaqquere + rmuñoz": {"h": {"22": 1918, "0": 320, "2": 430, "5": 447, "4": 470}, "tareas": 5}, "galata + jyauyo": {"h": {"6": 2393, "21": 438, "0": 361, "1": 430, "3": 570, "22": 350}, "tareas": 6}, "jcasafrancaá + rrodriguez": {"h": {"22": 517}, "tareas": 1}, "drodriguez + pmurayari": {"h": {"6": 792}, "tareas": 1}}, "2026-08-24": {"kcasahuaman + scasahuaman": {"h": {"1": 474, "21": 708, "22": 135}, "tareas": 3}, "jmaicelo + mbravo": {"h": {"1": 376, "21": 496, "0": 366, "4": 747}, "tareas": 5}, "achaqquere + galata": {"h": {"0": 375, "21": 362, "22": 317}, "tareas": 4}, "jbarazorda + jyauyo": {"h": {"0": 648, "21": 194, "1": 322, "2": 220, "22": 207, "6": 924, "3": 344}, "tareas": 7}, "drodriguez + mzarzosa": {"h": {"22": 240}, "tareas": 1}, "cmoreano + eleon": {"h": {"3": 60, "0": 366, "22": 15}, "tareas": 3}, "jbarazorda + jramos": {"h": {"21": 935}, "tareas": 1}, "jcasafrancaá + rrodriguez": {"h": {"22": 645, "0": 276}, "tareas": 2}, "achaqquere + scasahuaman": {"h": {"2": 700, "4": 512}, "tareas": 2}}, "2026-08-23": {"jyauyo + pmurayari": {"h": {"20": 3330}, "tareas": 1}}};
+
+  const jor = JOR;
+
+  const dias = Object.keys(jor).sort().reverse().slice(0, 4);   // las últimas jornadas
+  const fmt = (f) => f.split('-').reverse().join('/');
+  const totalDe = (h) => HORAS.reduce((a, x) => a + (h[x] || 0), 0);
+
+  // Lo que hay hoy, para que se vea la diferencia
+  const d0 = dias[0];
+  const repes = Object.entries(jor[d0]).filter(([, v]) => v.tareas > 1);
+  document.getElementById('antes').innerHTML =
+    'Hoy, al desplegar el <b>' + fmt(d0) + '</b>, cada TAREA es una fila: '
+    + repes.map(([g, v]) => '<b>' + g + '</b> aparece ' + v.tareas + ' veces').join(', ')
+    + '. Acá va acumulado: una fila por grupo.';
+
+  const pintar = () => {
+    let h = `<thead><tr>
+      <th class="izq" style="width:230px;">Fecha · Grupo</th>
+      ${HORAS.map(x => `<th>${String(x).padStart(2, '0')}:00</th>`).join('')}
+      <th style="width:90px;">Total</th></tr></thead><tbody>`;
+
+    const granTot = {};
+    dias.forEach(f => {
+      const grupos = jor[f];
+      const suma = {};
+      Object.values(grupos).forEach(g => HORAS.forEach(x => { suma[x] = (suma[x] || 0) + (g.h[x] || 0); }));
+      HORAS.forEach(x => { granTot[x] = (granTot[x] || 0) + (suma[x] || 0); });
+      const ab = abiertas.has(f);
+      h += `<tr class="dia" onclick="window.toggle('${f}')">
+        <td class="izq"><span class="ic">${ab ? '▾' : '▸'}</span> &nbsp;${fmt(f)}
+          <span class="tareas">${Object.keys(grupos).length} grupos</span></td>
+        ${HORAS.map(x => `<td class="${suma[x] ? '' : 'cero'}">${suma[x] ? nMil(suma[x]) : '–'}</td>`).join('')}
+        <td class="tot">${nMil(totalDe(suma))}</td></tr>`;
+
+      if (ab) {
+        Object.entries(grupos).sort((a, b) => totalDe(b[1].h) - totalDe(a[1].h)).forEach(([g, v]) => {
+          h += `<tr class="grupo"><td class="izq">${g}<span class="tareas">${v.tareas} ${v.tareas === 1 ? 'tarea' : 'tareas'}</span></td>
+            ${HORAS.map(x => `<td class="${v.h[x] ? '' : 'cero'}">${v.h[x] ? nMil(v.h[x]) : '–'}</td>`).join('')}
+            <td class="tot">${nMil(totalDe(v.h))}</td></tr>`;
+        });
+      }
+    });
+
+    h += `<tr class="total"><td class="izq">TOTAL</td>
+      ${HORAS.map(x => `<td class="${granTot[x] ? '' : 'cero'}">${granTot[x] ? nMil(granTot[x]) : '–'}</td>`).join('')}
+      <td class="tot">${nMil(totalDe(granTot))}</td></tr></tbody>`;
+    document.getElementById('tabla').innerHTML = h;
+
+    // Que los cuadros cuadren: la suma de las filas contra la suma de las columnas.
+    const porFila = dias.reduce((a, f) => a + Object.values(jor[f]).reduce((s, g) => s + totalDe(g.h), 0), 0);
+    document.getElementById('pie').innerHTML =
+      'Clic en una jornada para ver sus grupos. Cada grupo va acumulado: si hizo tres tareas, es una sola fila.<br>'
+      + 'Suma de las filas: <b>' + nMil(porFila) + '</b> · suma de las columnas: <b>' + nMil(totalDe(granTot)) + '</b> · '
+      + (porFila === totalDe(granTot) ? 'cuadra' : 'NO CUADRA');
+  };
+
+  window.toggle = (f) => { abiertas.has(f) ? abiertas.delete(f) : abiertas.add(f); pintar(); };
+  abiertas.add(dias[0]);
+  pintar();
+})();
+</script>
