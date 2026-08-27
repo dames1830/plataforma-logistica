@@ -12,8 +12,8 @@
  *
  * Para agregar una columna se toca acá y aparece en los dos.
  */
-import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0453';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0453';
+import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0454';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0454';
 
 /** Las columnas del reporte. Agregar una acá la agrega en las dos pantallas. */
 export const COLUMNAS = [
@@ -218,6 +218,74 @@ export const TEMA_CLARO = {
     }
 };
 
+/* ── EL TEMA POWER BI ─────────────────────────────────────────────────────
+   Daniel, 27-ago-2026, comparando la pantalla con la foto que manda por WhatsApp:
+   *"quiero que estos reportes de la web sean igualitos a ese de ahi, siempre y cuando
+   este en el tema de Power BI. No me vayas a poner en todos los temas"*.
+
+   Son los mismos colores de la foto, para que el reporte de la pantalla y el que se
+   manda al grupo se lean igual. TRES niveles, no dos —eso lo corrigio el mirandolo—:
+
+     titulo y TOTAL GENERAL   azul fuerte, letras blancas
+     subtotal por area        un tono suave con letras oscuras, para que se lea como
+                              un escalon y no compita con el total de verdad
+     filas de marca           sin tocar
+
+   EL FONDO SE ESCRIBE EN CADA CELDA, no solo en la fila. `temas.css` tiene una regla
+   `thead th { background-color: ... }` que le gana a lo que herede la fila: puesto solo
+   en el <tr>, el encabezado salia BLANCO SOBRE BLANCO. Ya paso dos veces con la foto de
+   WhatsApp; de ahi salen `cabeceraCelda` y `celda`.
+
+   VA SOLO EN ESTE TEMA. En Indigo y en Negro el fondo ya es oscuro y este azul se veria
+   como un parche; ademas en Negro los titulos son blancos y quedarian invisibles.
+*/
+const PBI_FUERTE = '#12365c';
+const PBI_SUAVE  = '#dbe4f0';
+const PBI_LETRA  = 'font-family:Arial, Helvetica, sans-serif;';
+const SOBRE_FUERTE = `background:${PBI_FUERTE} !important; color:#fff; ${PBI_LETRA}`;
+const SOBRE_SUAVE  = `background:${PBI_SUAVE} !important; color:#111; ${PBI_LETRA}`;
+
+export const TEMA_PBI = {
+    ...TEMA_OSCURO,
+    cabeceraColorea: false,
+    cabecera: `${SOBRE_FUERTE} text-transform:uppercase; font-size:var(--t-xs); font-weight:700; letter-spacing:0.04em;`,
+    cabeceraCelda: SOBRE_FUERTE,
+    /* UNA FILA SI Y UNA NO, EN UN CELESTE MUY SUAVE. Daniel, 27-ago-2026: *"por cada
+       registro que cambie el color, suavemente, pero que cambie; de blanco a algo suave,
+       celeste, pero muy suave"*. Es el mismo par de la foto de WhatsApp. Sirve para no
+       perder la fila cuando se sigue un renglon largo con el dedo. */
+    cebra: ['#ffffff', '#f4f6f9'],
+    fila: 'border-bottom:1px solid #eef1f5;',
+    totalArea: {
+        ...TEMA_OSCURO.totalArea,
+        fila: `${SOBRE_SUAVE} font-weight:700;`,
+        celda: SOBRE_SUAVE,
+        etiquetaEstilo: `${SOBRE_SUAVE} padding:7px 8px; font-weight:700; font-size:var(--t-sm); text-transform:uppercase; letter-spacing:0.5px;`,
+        valor: '#111', dia: '#8a6100', noche: '#4A4540', pend: '#8a6100', pendPeso: '700',
+        pct: semaforo('#991B1B', '#8a6100', '#1A6336')
+    },
+    granTotal: {
+        ...TEMA_OSCURO.granTotal,
+        fila: `${SOBRE_FUERTE} font-weight:700;`,
+        celda: SOBRE_FUERTE,
+        etiquetaEstilo: `${SOBRE_FUERTE} padding:9px 8px; font-size:var(--t-sm); text-transform:uppercase; letter-spacing:0.8px; font-weight:700;`,
+        valor: '#fff', dia: '#F5C97A', noche: '#A8B8C8', pend: '#F5C97A', pendPeso: '700',
+        pendExtra: '',
+        pct: semaforo('#FCA5A5', '#FCD34D', '#6EE7B7')
+    }
+};
+
+/**
+ * El tema que le toca a la pantalla de la plataforma segun el que este puesto.
+ * Los reportes publicos no pasan por aca: ellos usan TEMA_CLARO siempre.
+ */
+export const temaDePlataforma = () => {
+    try {
+        return document.documentElement.getAttribute('data-tema') === 'pbi'
+            ? TEMA_PBI : TEMA_OSCURO;
+    } catch (e) { return TEMA_OSCURO; }
+};
+
 /* ── LA PINTURA ───────────────────────────────────────────────────────────*/
 
 const num = (v) => Math.round(v).toLocaleString('es-PE');
@@ -231,7 +299,9 @@ export const cabeceraMarcas = (tema) => `
     <tr style="${tema.cabecera}">
         ${COLUMNAS.map(c => {
             const col = (c.color && tema.cabeceraColorea) ? ` color:${tema[c.color]};` : '';
-            return `<th style="padding:6px 8px; text-align:${c.alinea}; ${c.estilo}${col}">${c.titulo}</th>`;
+            // `cabeceraCelda` va en CADA <th>, no en la fila: la hoja de estilos le pone
+            // fondo propio a los <th> del encabezado y ese le gana al de la fila.
+            return `<th style="${tema.cabeceraCelda || ''}padding:6px 8px; text-align:${c.alinea}; ${c.estilo}${col}">${c.titulo}</th>`;
         }).join('')}
     </tr>`;
 
@@ -248,8 +318,8 @@ export const filasMarcas = (datos, tema) => {
     // Celda de una fila de total. El orden de las propiedades es distinto al de arriba
     // porque así estaba escrito, y conviene que el HTML salga igual byte a byte: cualquier
     // diferencia que aparezca en una comparación futura es entonces una diferencia de verdad.
-    const celdaTotal = (v, color, peso, tam, pad, extra = '') =>
-        `<td style="padding:${pad}; text-align:center; color:${color}; font-size:${tam}; font-weight:${peso};${extra ? ' ' + extra : ''}">${num(v)}</td>`;
+    const celdaTotal = (v, color, peso, tam, pad, extra = '', fondo = '') =>
+        `<td style="${fondo}padding:${pad}; text-align:center; color:${color}; font-size:${tam}; font-weight:${peso};${extra ? ' ' + extra : ''}">${num(v)}</td>`;
 
     const pctMarca = (d, color) => {
         const col = color(d.pct, d.total, d.buffer);
@@ -258,25 +328,29 @@ export const filasMarcas = (datos, tema) => {
 
     const pctTotal = (d, t, pad) => {
         const col = t.pct(d.pct, d.total, d.buffer);
-        return `<td style="padding:${pad}; text-align:center; font-size:${t.tam}; font-weight:${t.peso}; white-space:nowrap;"><span style="color:${col}; font-weight:${t.peso}; font-size:${t.tam};">${d.pct}%</span></td>`;
+        return `<td style="${t.celda || ''}padding:${pad}; text-align:center; font-size:${t.tam}; font-weight:${t.peso}; white-space:nowrap;"><span style="color:${col}; font-weight:${t.peso}; font-size:${t.tam};">${d.pct}%</span></td>`;
     };
 
     const filaTotal = (etiqueta, d, t, pad) => `
         <tr style="${t.fila}">
             <td colspan="2" style="${t.etiquetaEstilo}">${etiqueta}</td>
-            ${celdaTotal(d.buffer, t.valor, t.peso, t.tam, pad)}
-            ${celdaTotal(d.dia, t.dia, t.peso, t.tam, pad)}
-            ${celdaTotal(d.noche, t.noche, t.peso, t.tam, pad)}
-            ${celdaTotal(d.total, t.valor, t.peso, t.tam, pad)}
+            ${celdaTotal(d.buffer, t.valor, t.peso, t.tam, pad, '', t.celda || '')}
+            ${celdaTotal(d.dia, t.dia, t.peso, t.tam, pad, '', t.celda || '')}
+            ${celdaTotal(d.noche, t.noche, t.peso, t.tam, pad, '', t.celda || '')}
+            ${celdaTotal(d.total, t.valor, t.peso, t.tam, pad, '', t.celda || '')}
             ${pctTotal(d, t, pad)}
-            ${celdaTotal(d.pendiente, t.pend, t.pendPeso, t.tam, pad, t.pendExtra || '')}
+            ${celdaTotal(d.pendiente, t.pend, t.pendPeso, t.tam, pad, t.pendExtra || '', t.celda || '')}
         </tr>`;
 
     let html = '';
+    /* La cuenta corre de arriba abajo y NO se reinicia en cada area: las filas de total
+       ya cortan el bloque, y reiniciando quedaban dos blancas pegadas. */
+    let cebraN = 0;
+    const fondoFila = () => (tema.cebra ? `background:${tema.cebra[cebraN++ % 2]};` : '');
     datos.areas.forEach(({ area, marcas, totales }) => {
         marcas.forEach(m => {
             html += `
-            <tr style="${tema.fila}">
+            <tr style="${fondoFila()}${tema.fila}">
                 <td style="padding:5px 6px; color:${tema.area}; font-size:var(--t-sm); font-weight:600;">${area}</td>
                 <td style="padding:5px 6px;"><b title="${m.marca}" style="color:${tema.marca}; font-weight:${tema.marcaPeso}; font-size:var(--t-sm); font-family:'Outfit', sans-serif; white-space:nowrap;">${marcaCorta(m.marca)}</b></td>
                 ${celda(m.buffer, tema.valor, '700', '0.8rem')}

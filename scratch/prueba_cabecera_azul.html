@@ -1,0 +1,123 @@
+<!-- El reporte de Marcas con la cabecera azul del tema Power BI.
+     Dibuja la tabla de verdad en los CUATRO temas y comprueba que en Power BI salga
+     igual a la foto, y que en los otros tres no cambie nada. -->
+<meta charset="utf-8">
+<title>Prueba: la cabecera azul</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1020px;margin:0 auto 18px;white-space:pre-wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+  #lienzo{max-width:1020px;margin:0 auto}
+</style>
+<div id="eco"></div>
+<div id="lienzo"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+window.addEventListener('unhandledrejection', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + ((e.reason && e.reason.message) || e.reason)); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 25000);
+
+const CR = String.fromCharCode(13);
+const M = await import('../js/reportes/marcas.js?z=' + Date.now());
+const SY = (await (await fetch('../js/services_v245/sync_engine_v24_9.js?z='+Date.now())).text()).split(CR).join('');
+const tz = (s,a,b) => { const i=s.indexOf(a); return s.slice(i, s.indexOf(b,i)); };
+const D = await import('data:text/javascript,' + encodeURIComponent(
+  tz(SY,'function descomprimirTareas(data) {','\n/**') + '\nexport { descomprimirTareas };'));
+const tareas = D.descomprimirTareas((await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data);
+const datos = M.datosMarcas(tareas, '2026-08-26', '2026-08-26', () => 'noche');
+eco('Del reporte real salieron <b>' + datos.areas.length + '</b> áreas.\n');
+
+const lienzo = document.getElementById('lienzo');
+const dibujar = (tema) => {
+  document.documentElement.setAttribute('data-tema', tema);
+  const t = M.temaDePlataforma();
+  lienzo.innerHTML = `<table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
+      <thead>${M.cabeceraMarcas(t)}</thead><tbody>${M.filasMarcas(datos, t)}</tbody></table>`;
+  return t;
+};
+const f = (sel) => { const e = lienzo.querySelector(sel); return e ? getComputedStyle(e).backgroundColor : 'no hay'; };
+const c = (sel) => { const e = lienzo.querySelector(sel); return e ? getComputedStyle(e).color : 'no hay'; };
+const fuente = (sel) => { const e = lienzo.querySelector(sel); return e ? getComputedStyle(e).fontFamily.split(',')[0].replace(/"/g,'') : ''; };
+const filaCon = (txt) => [...lienzo.querySelectorAll('tbody tr')].find(tr => tr.innerText.replace(/\s+/g,' ').trim().startsWith(txt));
+const lum = (col) => { const m = col.match(/\d+/g); return m ? 0.299*+m[0] + 0.587*+m[1] + 0.114*+m[2] : null; };
+
+eco('<span class="t">── EN POWER BI, IGUAL A LA FOTO ──</span>');
+dibujar('pbi');
+ok('el encabezado va en el azul de la foto: ' + f('thead th'), f('thead th') === 'rgb(18, 54, 92)');
+ok('con letras blancas', c('thead th') === 'rgb(255, 255, 255)');
+ok('y en la misma letra de la foto: ' + fuente('thead th'), fuente('thead th') === 'Arial');
+const sub = filaCon('TOTAL CDBUFFER');
+ok('el subtotal por área va en tono suave: ' + getComputedStyle(sub.querySelector('td')).backgroundColor,
+   getComputedStyle(sub.querySelector('td')).backgroundColor === 'rgb(219, 228, 240)');
+ok('y con letras oscuras, no blancas',
+   lum(getComputedStyle(sub.querySelector('td')).color) < 120);
+const gran = filaCon('TOTAL GENERAL');
+ok('el TOTAL GENERAL va en azul fuerte', getComputedStyle(gran.querySelector('td')).backgroundColor === 'rgb(18, 54, 92)');
+ok('con letras blancas', getComputedStyle(gran.querySelector('td')).color === 'rgb(255, 255, 255)');
+ok('el subtotal y el total NO son iguales: se distinguen de un vistazo',
+   getComputedStyle(sub.querySelector('td')).backgroundColor !== getComputedStyle(gran.querySelector('td')).backgroundColor);
+const marca = [...lienzo.querySelectorAll('tbody tr')].find(tr => /^CDBUFFER/.test(tr.innerText.trim()));
+ok('las filas de marca no se tocaron', getComputedStyle(marca.querySelector('td')).backgroundColor === 'rgba(0, 0, 0, 0)');
+ok('y la columna TOTAL va sin fondo, como pidió',
+   getComputedStyle(marca.querySelectorAll('td')[5]).backgroundColor === 'rgba(0, 0, 0, 0)');
+
+eco('\n<span class="t">── UNA FILA SÍ Y UNA NO ──</span>');
+const deMarca = [...lienzo.querySelectorAll('tbody tr')].filter(tr => /^CDBUFFER/.test(tr.innerText.trim()));
+const fondos = deMarca.map(tr => getComputedStyle(tr).backgroundColor);
+ok('las filas van alternando el fondo: ' + [...new Set(fondos)].join('  /  '), new Set(fondos).size === 2);
+ok('ninguna fila seguida repite el mismo tono, ni al pasar de un área a la otra',
+   fondos.every((f, i) => i === 0 || f !== fondos[i - 1]));
+const celeste = fondos.find(f => f !== 'rgb(255, 255, 255)');
+ok('el celeste es MUY suave, casi blanco: ' + celeste, celeste && lum(celeste) > 235);
+ok('y no tapa la letra', lum(celeste) - lum(getComputedStyle(deMarca[0].querySelector('td')).color) > 45);
+
+eco('\n<span class="t">── TODO SE LEE, QUE ES LO QUE FALLÓ ANTES ──</span>');
+const celdas = [...lienzo.querySelectorAll('th, td')].filter(e => e.innerText.trim());
+const flojas = celdas.filter(e => {
+  const a = lum(getComputedStyle(e).color);
+  let el = e, fondo = getComputedStyle(e).backgroundColor;
+  while (fondo === 'rgba(0, 0, 0, 0)' && el.parentElement) { el = el.parentElement; fondo = getComputedStyle(el).backgroundColor; }
+  const b = lum(fondo);
+  return a !== null && b !== null && Math.abs(a - b) < 45;
+});
+ok('ninguna celda queda casi invisible' + (flojas.length ? ': ' + flojas.length + ' ("' + flojas[0].innerText.trim() + '")' : ''), !flojas.length);
+
+eco('\n<span class="t">── LOS OTROS TRES TEMAS NO CAMBIAN ──</span>');
+const antes = (() => { const t = M.TEMA_OSCURO; return JSON.stringify([t.cabecera, t.totalArea.fila, t.granTotal.fila]); })();
+for (const tema of ['indigo', 'pbi-classic', 'negro']) {
+  const t = dibujar(tema);
+  ok(tema + ': usa el tema de siempre, sin azul de por medio',
+     t === M.TEMA_OSCURO && f('thead th') !== 'rgb(18, 54, 92)');
+}
+dibujar('negro');
+const cn = [...lienzo.querySelectorAll('th')].map(e => getComputedStyle(e).color);
+ok('en Negro los títulos siguen siendo legibles y no blanco sobre blanco',
+   cn.every((col, i) => { const e = lienzo.querySelectorAll('th')[i]; let el = e, fo = getComputedStyle(e).backgroundColor;
+     while (fo === 'rgba(0, 0, 0, 0)' && el.parentElement) { el = el.parentElement; fo = getComputedStyle(el).backgroundColor; }
+     return Math.abs(lum(col) - lum(fo)) > 45; }));
+
+eco('\n<span class="t">── LOS CUADROS SIGUEN CUADRANDO ──</span>');
+dibujar('pbi');
+const num = (tr, i) => Number(tr.querySelectorAll('td')[i].innerText.replace(/[^\d]/g,''));
+const marcasDeB = [...lienzo.querySelectorAll('tbody tr')].filter(tr => /^CDBUFFER-B/.test(tr.innerText.trim()));
+const totB = filaCon('TOTAL CDBUFFER-B');
+// En las filas de total la primera celda ocupa DOS columnas (área + marca), así que el
+// BUFFER es la celda 1, no la 2 como en las filas de marca.
+const sumaB = marcasDeB.reduce((a, tr) => a + num(tr, 2), 0);
+ok('la suma de las marcas de CDBUFFER-B da su subtotal: ' + sumaB.toLocaleString('es-PE') + ' = ' + num(totB, 1).toLocaleString('es-PE'),
+   sumaB === num(totB, 1));
+const totA = filaCon('TOTAL CDBUFFER-A');
+const gTot = filaCon('TOTAL GENERAL');
+ok('y los dos subtotales dan el total general: ' + (num(totB,1) + num(totA,1)).toLocaleString('es-PE') + ' = ' + num(gTot,1).toLocaleString('es-PE'),
+   num(totB, 1) + num(totA, 1) === num(gTot, 1));
+
+document.documentElement.setAttribute('data-tema', 'pbi');
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>En Power BI queda igual a la foto, y los otros tres temas no se movieron.</b>');
+</script>

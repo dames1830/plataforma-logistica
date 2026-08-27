@@ -63,8 +63,8 @@
   <b style="color:var(--text-strong)">Tres niveles, como en la foto:</b> el <b style="color:var(--text-strong)">encabezado</b>
   y el <b style="color:var(--text-strong)">TOTAL GENERAL</b> en azul fuerte con letras blancas; los
   <b style="color:var(--text-strong)">subtotales por área</b> en un tono suave con letras oscuras, para que se lean como
-  un escalón y no compitan con el total de verdad; y la <b style="color:var(--text-strong)">columna TOTAL</b> con un tinte apenas.
-  Las filas de las marcas no se tocan.<br>
+  un escalón y no compitan con el total de verdad;.
+  Las filas de las marcas no se tocan, y la columna TOTAL va con el fondo normal.<br>
   <b style="color:var(--text-strong)">La letra también:</b> el encabezado y los totales pasan a Arial, la misma de la foto.<br>
   <b style="color:var(--text-strong)">Solo en el tema Power BI.</b> Es el mismo azul que ya usan los reportes públicos,
   así los dos se ven iguales. En Índigo, Power BI clásico y Negro no cambia nada: ahí este azul se vería como un parche
@@ -92,14 +92,12 @@ const datos = M.datosMarcas(tareas, '2026-08-26', '2026-08-26', () => 'noche');
      titulos y TOTAL GENERAL   azul fuerte con letras blancas
      subtotales por area       un tono suave, para que se lean como un escalon
                                y no compitan con el total de verdad
-     columna TOTAL             un tinte apenas, como en la foto
 
    EL FONDO SE ESCRIBE EN CADA CELDA, no en la fila. `temas.css` tiene una regla
    `thead th { background-color: ... }` que le gana a lo que herede la fila: puesto
    solo en el <tr>, el encabezado quedaba BLANCO SOBRE BLANCO. Ya paso dos veces. */
 const FUERTE = '#12365c';    // el azul de la foto
 const SUAVE  = '#dbe4f0';    // el escalon de los subtotales
-const TINTE  = '#e7edf6';    // la columna TOTAL
 const LETRA  = 'font-family:Arial, Helvetica, sans-serif;';
 const SOBRE_FUERTE = `background:${FUERTE} !important; color:#fff; ${LETRA}`;
 const SOBRE_SUAVE  = `background:${SUAVE} !important; color:#111; ${LETRA}`;
@@ -136,25 +134,15 @@ const conCelda = (html, extra) => html
   .replace(/<th style="/g, `<th style="${extra} `)
   .replace(/<td style="/g, `<td style="${extra} `);
 
-/* La columna TOTAL con su tinte, solo en las filas de marca: en las de total ya
-   tienen su propio fondo y pintarlas otra vez las mancharia. */
-const LA_TOTAL = 5;   // AREA, MARCAS, BUFFER, DIA, NOCHE, TOTAL, %, PENDIENTE
-const tintarColumna = (html) => html.split('</tr>').map(tr => {
-  if (!tr.trim() || /Total |TOTAL GENERAL/.test(tr)) return tr;
-  let n = -1;
-  return tr.replace(/<td style="/g, () => { n++; return n === LA_TOTAL ? `<td style="background:${TINTE}; ` : '<td style="'; });
-}).join('</tr>');
-
-cabA.innerHTML = M.cabeceraMarcas(M.TEMA_OSCURO);
-cuerpoA.innerHTML = M.filasMarcas(datos, M.TEMA_OSCURO);
 cabB.innerHTML = conCelda(M.cabeceraMarcas(propuesto), propuesto.cabeceraCelda);
-cuerpoB.innerHTML = tintarColumna(
-  M.filasMarcas(datos, propuesto)
-    .split('<tr')
-    .map(t => /TOTAL GENERAL/.test(t) ? conCelda('<tr' + t, propuesto.granTotal.celda).slice(3)
-            : /Total /.test(t)        ? conCelda('<tr' + t, propuesto.totalArea.celda).slice(3)
-            : t)
-    .join('<tr'));
+/* La columna TOTAL va sin fondo: Daniel la vio tintada y prefiere el normal.
+   Solo llevan fondo las dos filas de total; las de marca no se tocan. */
+cuerpoB.innerHTML = M.filasMarcas(datos, propuesto)
+  .split('<tr')
+  .map(t => /TOTAL GENERAL/.test(t) ? conCelda('<tr' + t, propuesto.granTotal.celda).slice(3)
+          : /Total /.test(t)        ? conCelda('<tr' + t, propuesto.totalArea.celda).slice(3)
+          : t)
+  .join('<tr');
 
 document.documentElement.setAttribute('data-tema', 'pbi');
 </script></body></html>
