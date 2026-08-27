@@ -1,0 +1,160 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>Maqueta · Encabezado y total en azul</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{margin:0;padding:20px;background:var(--bg-dark);font-family:'Inter',system-ui,sans-serif;color:var(--text-strong)}
+  .marco{max-width:1250px;margin:0 auto}
+  h1{font-size:18px;font-weight:800;margin:0 0 3px}
+  .sub{color:var(--text-muted);font-size:12.5px;margin-bottom:16px}
+  .mando{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px;
+    padding:11px 13px;background:var(--panel-solid);border:1px solid rgba(var(--ink-rgb),.12);border-radius:10px}
+  .mando b{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-right:2px}
+  .mando button{padding:6px 13px;border-radius:8px;border:1px solid rgba(var(--ink-rgb),.14);
+    background:rgba(var(--ink-rgb),.04);color:var(--text-muted);font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+  .mando button.on{background:var(--btn-fill);color:#fff;border-color:var(--btn-fill)}
+  .caja{background:var(--bg-dark);border:2px solid var(--cyan-neon);border-radius:12px;padding:.8rem 1.2rem;
+    box-shadow:0 0 25px rgba(var(--cyan-neon-rgb),.2);margin-bottom:20px}
+  .caja h3{color:var(--cyan-neon);font-weight:900;margin:0 0 2px;font-size:var(--t-lg);letter-spacing:1.5px;
+    text-transform:uppercase;font-family:'Outfit',sans-serif;border-left:4px solid var(--cyan-neon);padding-left:10px}
+  .caja .sid{font-size:var(--t-xs);color:rgba(var(--cyan-neon-rgb),.6);font-weight:700;padding-left:14px;margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
+  .rot{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;margin:0 0 7px;color:var(--text-muted)}
+  /* LA CABECERA ENTERA EN AZUL. El titulo, el SYNC_ID y el encabezado de la tabla
+     quedan pegados en un solo bloque, sin corte entre uno y otro. */
+  .caja.azul{padding:0;overflow:hidden;background:#fff;border-color:#12365c;box-shadow:none}
+  .caja.azul .tapa{background:#12365c;padding:.75rem 1.1rem .8rem}
+  .caja.azul .tapa h3{color:#fff;border-left:4px solid #F5C97A;margin:0 0 3px;
+    font-family:Arial,Helvetica,sans-serif;font-size:15px;letter-spacing:1.2px}
+  .caja.azul .tapa .sid{color:#9fb3cc;padding-left:14px;margin:0;
+    font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:400}
+  .caja.azul table{margin:0}
+  .caja.azul .rot{padding:9px 1.1rem 0;margin:0 0 7px}
+</style></head><body><div class="marco">
+<h1>El encabezado y el TOTAL, en azul con letras blancas</h1>
+<div class="sub">La tabla de verdad, con los datos de verdad, en el tema Power BI.</div>
+
+<div class="mando">
+  <b>Tema:</b> <button class="on" disabled>Gerencial · Power BI</button>
+  <span style="font-size:11.5px;color:var(--text-muted)">— el cambio va SOLO en este tema. Índigo, Power BI clásico y Negro quedan como están.</span>
+</div>
+
+<div class="caja">
+  <div class="rot" style="color:var(--danger)">◀ COMO ESTÁ HOY</div>
+  <h3>REPORTE ALMACENAJE - MARCAS</h3>
+  <div class="sid">SYNC_ID: 26/08/2026</div>
+  <div style="overflow-x:auto"><table><thead id="cabA"></thead><tbody id="cuerpoA"></tbody></table></div>
+</div>
+
+<div class="caja azul">
+  <div class="rot" style="color:var(--success)">▶ COMO QUEDARÍA</div>
+  <div class="tapa">
+    <h3>REPORTE ALMACENAJE - MARCAS</h3>
+    <div class="sid">SYNC_ID: 26/08/2026</div>
+  </div>
+  <div style="overflow-x:auto"><table><thead id="cabB"></thead><tbody id="cuerpoB"></tbody></table></div>
+</div>
+
+<div style="background:rgba(var(--primary-rgb),.07);border-left:3px solid var(--brand-light);padding:11px 14px;
+     border-radius:0 8px 8px 0;font-size:12.5px;color:var(--text-muted);line-height:1.85">
+  <b style="color:var(--text-strong)">La cabecera entera va en azul:</b> el título, el SYNC_ID y los nombres de las
+  columnas quedan pegados en un solo bloque, sin corte entre uno y otro.<br>
+  <b style="color:var(--text-strong)">Tres niveles, como en la foto:</b> el <b style="color:var(--text-strong)">encabezado</b>
+  y el <b style="color:var(--text-strong)">TOTAL GENERAL</b> en azul fuerte con letras blancas; los
+  <b style="color:var(--text-strong)">subtotales por área</b> en un tono suave con letras oscuras, para que se lean como
+  un escalón y no compitan con el total de verdad; y la <b style="color:var(--text-strong)">columna TOTAL</b> con un tinte apenas.
+  Las filas de las marcas no se tocan.<br>
+  <b style="color:var(--text-strong)">La letra también:</b> el encabezado y los totales pasan a Arial, la misma de la foto.<br>
+  <b style="color:var(--text-strong)">Solo en el tema Power BI.</b> Es el mismo azul que ya usan los reportes públicos,
+  así los dos se ven iguales. En Índigo, Power BI clásico y Negro no cambia nada: ahí este azul se vería como un parche
+  sobre un fondo que ya es oscuro.
+</div>
+</div>
+<script type="module">
+const M = await import('../js/reportes/marcas.js?z=' + Date.now());
+const T = await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json();
+
+/* El descompresor, para que los items lleguen como objetos */
+const CR = String.fromCharCode(13);
+const SY = (await (await fetch('../js/services_v245/sync_engine_v24_9.js?z=' + Date.now())).text()).split(CR).join('');
+const tz = (s,a,b) => { const i = s.indexOf(a); return s.slice(i, s.indexOf(b, i)); };
+const D = await import('data:text/javascript,' + encodeURIComponent(
+  tz(SY, 'function descomprimirTareas(data) {', '\n/**') + '\nexport { descomprimirTareas };'));
+const tareas = D.descomprimirTareas(T.data);
+
+const datos = M.datosMarcas(tareas, '2026-08-26', '2026-08-26', () => 'noche');
+
+/* ── EL CAMBIO QUE SE PROPONE ────────────────────────────────────────────────
+   Los mismos colores de la foto de WhatsApp, para que el reporte de la pantalla y
+   el que se manda al grupo se vean igual. Va SOLO en el tema Power BI.
+
+     titulos y TOTAL GENERAL   azul fuerte con letras blancas
+     subtotales por area       un tono suave, para que se lean como un escalon
+                               y no compitan con el total de verdad
+     columna TOTAL             un tinte apenas, como en la foto
+
+   EL FONDO SE ESCRIBE EN CADA CELDA, no en la fila. `temas.css` tiene una regla
+   `thead th { background-color: ... }` que le gana a lo que herede la fila: puesto
+   solo en el <tr>, el encabezado quedaba BLANCO SOBRE BLANCO. Ya paso dos veces. */
+const FUERTE = '#12365c';    // el azul de la foto
+const SUAVE  = '#dbe4f0';    // el escalon de los subtotales
+const TINTE  = '#e7edf6';    // la columna TOTAL
+const LETRA  = 'font-family:Arial, Helvetica, sans-serif;';
+const SOBRE_FUERTE = `background:${FUERTE} !important; color:#fff; ${LETRA}`;
+const SOBRE_SUAVE  = `background:${SUAVE} !important; color:#111; ${LETRA}`;
+
+const propuesto = { ...M.TEMA_OSCURO,
+  totalArea: { ...M.TEMA_OSCURO.totalArea },
+  granTotal: { ...M.TEMA_OSCURO.granTotal } };
+
+// El encabezado
+propuesto.cabeceraColorea = false;
+propuesto.cabecera      = `${SOBRE_FUERTE} text-transform:uppercase; font-size:var(--t-xs); font-weight:700; letter-spacing:0.04em;`;
+propuesto.cabeceraCelda = SOBRE_FUERTE;
+
+// El subtotal de cada area: tono suave, letras oscuras
+propuesto.totalArea.fila           = `${SOBRE_SUAVE} font-weight:700;`;
+propuesto.totalArea.celda          = SOBRE_SUAVE;
+propuesto.totalArea.etiquetaEstilo = `${SOBRE_SUAVE} padding:7px 8px; font-weight:700; font-size:var(--t-sm); text-transform:uppercase; letter-spacing:0.5px;`;
+propuesto.totalArea.valor = '#111'; propuesto.totalArea.dia = '#8a6100';
+propuesto.totalArea.noche = '#4A4540'; propuesto.totalArea.pend = '#8a6100';
+propuesto.totalArea.pct = (pct, al, me) => pct === 0 ? '#991B1B' : (al < me ? '#8a6100' : '#1A6336');
+
+// El total general: azul fuerte, como el encabezado
+propuesto.granTotal.fila           = `${SOBRE_FUERTE} font-weight:700;`;
+propuesto.granTotal.celda          = SOBRE_FUERTE;
+propuesto.granTotal.etiquetaEstilo = `${SOBRE_FUERTE} padding:9px 8px; font-size:var(--t-sm); text-transform:uppercase; letter-spacing:0.8px; font-weight:700;`;
+propuesto.granTotal.valor = '#fff'; propuesto.granTotal.dia = '#F5C97A';
+propuesto.granTotal.noche = '#A8B8C8'; propuesto.granTotal.pend = '#F5C97A';
+propuesto.granTotal.pendExtra = '';
+propuesto.granTotal.pct = (pct, al, me) => pct === 0 ? '#FCA5A5' : (al < me ? '#FCD34D' : '#6EE7B7');
+
+/* Mientras marcas.js no sepa de `cabeceraCelda` ni de `celda`, la maqueta los aplica
+   sobre el HTML que devuelve. Al implementarlo esto se va. */
+const conCelda = (html, extra) => html
+  .replace(/<th style="/g, `<th style="${extra} `)
+  .replace(/<td style="/g, `<td style="${extra} `);
+
+/* La columna TOTAL con su tinte, solo en las filas de marca: en las de total ya
+   tienen su propio fondo y pintarlas otra vez las mancharia. */
+const LA_TOTAL = 5;   // AREA, MARCAS, BUFFER, DIA, NOCHE, TOTAL, %, PENDIENTE
+const tintarColumna = (html) => html.split('</tr>').map(tr => {
+  if (!tr.trim() || /Total |TOTAL GENERAL/.test(tr)) return tr;
+  let n = -1;
+  return tr.replace(/<td style="/g, () => { n++; return n === LA_TOTAL ? `<td style="background:${TINTE}; ` : '<td style="'; });
+}).join('</tr>');
+
+cabA.innerHTML = M.cabeceraMarcas(M.TEMA_OSCURO);
+cuerpoA.innerHTML = M.filasMarcas(datos, M.TEMA_OSCURO);
+cabB.innerHTML = conCelda(M.cabeceraMarcas(propuesto), propuesto.cabeceraCelda);
+cuerpoB.innerHTML = tintarColumna(
+  M.filasMarcas(datos, propuesto)
+    .split('<tr')
+    .map(t => /TOTAL GENERAL/.test(t) ? conCelda('<tr' + t, propuesto.granTotal.celda).slice(3)
+            : /Total /.test(t)        ? conCelda('<tr' + t, propuesto.totalArea.celda).slice(3)
+            : t)
+    .join('<tr'));
+
+document.documentElement.setAttribute('data-tema', 'pbi');
+</script></body></html>
