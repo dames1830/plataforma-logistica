@@ -90,7 +90,11 @@ pintar();
 const filas = () => [...document.querySelectorAll('#panelKpiVistas tbody tr')];
 const cel = (tr, i) => tr.children[i].innerText.trim().replace(/\s+/g,' ');
 const num = (tr, i) => Number(cel(tr, i).replace(/[^\d]/g,''));
-const tarjeta = (i) => document.querySelectorAll('#panelKpiVistas [style*="font-size:var(--t-xl)"]')[i].innerText.trim();
+// Las tarjetas se quitaron: los mismos numeros viven ahora en el renglon del filtro.
+const renglon = () => document.querySelector('#panelKpiVistas button[onclick*="__kpiSetEf"]').parentElement.innerText.replace(/\s+/g,' ');
+const general = () => Number((/general del rango es (\d+)%/.exec(renglon()) || [0,0])[1]);
+const paresTot = () => Number((/([\d.,]+) pares/.exec(renglon()) || [0,'0'])[1].replace(/[^\d]/g,''));
+const aTiempo = () => (/(\d+) de (\d+) tareas dentro del tiempo/.exec(renglon()) || [])[0] || '';
 
 eco('<span class="t">── LA PESTANA EXISTE Y ABRE ──</span>');
 const pest = [...document.querySelectorAll('#panelKpiVistas button[onclick*="__kpiSetVista"]')];
@@ -104,8 +108,8 @@ ok('el icono de la camara va sin marco ni fondo',
    /background:\s*none/.test(document.querySelector('#panelKpiVistas button[onclick*="FotoPH"]').getAttribute('style')));
 
 eco('\n<span class="t">── USA LAS METAS DE VERDAD ──</span>');
-const gen = Number(tarjeta(0).replace(/[^\d]/g,''));
-eco('   rendimiento general de agosto: <b>' + gen + '%</b>  ·  ' + tarjeta(1) + ' tareas a tiempo');
+const gen = general();
+eco('   rendimiento general de agosto: <b>' + gen + '%</b>  ·  ' + aTiempo());
 ok('el rendimiento cae cerca del 100%, no en el 175% de antes', gen > 85 && gen < 130);
 ok('y no dice 0% ni NaN', Number.isFinite(gen) && gen > 0);
 
@@ -133,10 +137,12 @@ ok('quien terminó antes sale en verde y quien se pasó en rojo',
 
 eco('\n<span class="t">── LOS CUADROS CUADRAN ──</span>');
 const sumaPares = F.reduce((a,tr) => a + num(tr,1), 0);
-const tarjPares = Number(tarjeta(3).replace(/[^\d]/g,''));
-ok('la suma de los pares de cada persona da el total de la tarjeta: ' + sumaPares.toLocaleString('es-PE') + ' = ' + tarjPares.toLocaleString('es-PE'), sumaPares === tarjPares);
+const tarjPares = paresTot();
+ok('la suma de los pares de cada persona da el total que dice el renglon: ' + sumaPares.toLocaleString('es-PE') + ' = ' + tarjPares.toLocaleString('es-PE'), sumaPares === tarjPares);
 ok('nadie sale repetido', new Set(F.map(tr => cel(tr,0).replace(/^\d+\s*/,'').split(' ')[0])).size === F.length);
-ok('la cuenta de personas coincide con la tarjeta: ' + F.length, Number(tarjeta(2)) === F.length);
+ok('el boton Todos dice la misma cantidad de personas: ' + F.length,
+   Number((/Todos\s*(\d+)/.exec(renglon()) || [0,0])[1]) === F.length);
+ok('ya no quedan tarjetas arriba', document.querySelectorAll('#panelKpiVistas [style*="font-size:var(--t-xl)"]').length === 0);
 
 eco('\n<span class="t">── EL FILTRO, QUE ES EL CORAZON ──</span>');
 const bot = () => [...document.querySelectorAll('#panelKpiVistas button[onclick*="__kpiSetEf"]')];
