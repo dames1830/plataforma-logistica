@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0452';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0453';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0452';
+const VERSION = '29.0453';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -794,18 +794,21 @@ export const fetchAvailableDates = async () => {
     return [];
 };
 
-export const logSystemAction = async (username, action, details) => {
-    try {
-        await fetch(`${API_BASE}/logs`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-Environment': 'production'
-            },
-            body: JSON.stringify({ username, action, details })
-        });
-    } catch (e) { console.error("Error al loguear acción:", e); }
-};
+/* AQUI VIVIA logSystemAction, Y NUNCA GUARDO NADA.
+ *
+ * Mandaba cada accion a `POST /api/logs`, un endpoint que el servidor NO TIENE: devuelve
+ * 404 desde siempre. El error lo tragaba su propio try/catch, asi que nueve sitios de la
+ * plataforma creian estar dejando constancia de lo que hacian y no dejaban ninguna. Dos
+ * de esos nueve encima lo llamaban mal: le pasaban 'TEMA' donde va el usuario.
+ *
+ * Daniel, 27-ago-2026: *"o lo solucionas o lo borras; si no apunta a nada, borralo"*.
+ * Tiene razon: un registro que dice que registra y no registra es peor que no tenerlo,
+ * porque el dia que haga falta buscar quien hizo algo, no va a estar.
+ *
+ * La tabla `audit_logs` sigue en el servidor, creada y vacia. No se toco: quitarla exige
+ * desplegar el backend y no estorba. Si algun dia se quiere el historial de verdad, hay
+ * que hacer el endpoint que falta -POST y GET- y una pantalla para mirarlo.
+ */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    EL MAESTRO DE ARTÍCULOS EN LA NUBE
@@ -941,8 +944,6 @@ export const publicarMaestro = async (filas, username = 'sistema') => {
     await saveToDB(MAESTRO_AREA, filas);
     localStorage.setItem(MAESTRO_CACHE_KEY, JSON.stringify(ficha));
 
-    logSystemAction(username, 'PUBLICAR_MAESTRO',
-        `Maestro de Artículos publicado: ${revision.articulos} artículos.`);
     return ficha;
 };
 
@@ -1196,6 +1197,8 @@ const DEMANDA_EN_LA_NUBE = {
 export const esAreaDeDemanda = (area) => Object.prototype.hasOwnProperty.call(DEMANDA_EN_LA_NUBE, area);
 
 const persistToDatabase = async (area, payload, username = 'sistema') => {
+    // `username` ya no se usa: lo pedia logSystemAction, que se borro por no guardar nada.
+    // Se deja en la firma porque media docena de sitios lo pasan; sacarlo obliga a tocarlos todos.
     // 1. Guardar de forma inmediata en local IndexedDB y memoria
     dataStore[area] = payload;
     await saveToDB(area, payload);
@@ -1232,7 +1235,6 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
             }).then(r => {
                 if (r.ok) {
                     console.log(`[DEMANDA] ✅ ${area} publicado: ${reducido.length.toLocaleString('es-PE')} filas de ${(payload || []).length.toLocaleString('es-PE')}.`);
-                    logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${reducido.length} (demanda compartida)`);
                 } else {
                     console.warn(`[DEMANDA] ⚠️ ${area} no se pudo publicar (${r.status}). Las otras PC van a seguir con el anterior.`);
                 }
@@ -1305,7 +1307,6 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
         body: JSON.stringify(payload)
     }).then(response => {
         if (response.ok) {
-            logSystemAction(username, 'SUBIDA_DATOS', `Área: ${area}. Registros: ${payload.length} (Segundo plano)`);
         }
     }).catch(err => {
         console.warn(`[PULSE] Error de sincronización de fondo para ${area}:`, err);
@@ -1337,6 +1338,8 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
  * cargarlo, que también pisa el de todas.
  */
 export const clearAreaData = async (area, username = 'sistema') => {
+    // `username` ya no se usa: lo pedia logSystemAction, que se borro por no guardar nada.
+    // Se deja en la firma porque media docena de sitios lo pasan; sacarlo obliga a tocarlos todos.
     dataStore[area] = null;
     localStorage.removeItem('meta_' + area);
 
@@ -1351,7 +1354,6 @@ export const clearAreaData = async (area, username = 'sistema') => {
             });
             if (r.ok) {
                 marcarVacio(area);
-                logSystemAction(username, 'LIMPIEZA_DATOS', `Área: ${area} vaciada por el usuario (demanda compartida).`);
             } else {
                 ok = false;
                 console.warn(`[DEMANDA] ⚠️ No se pudo vaciar '${area}' en el servidor (${r.status}): va a volver a aparecer.`);
@@ -1380,7 +1382,6 @@ export const clearAreaData = async (area, username = 'sistema') => {
             },
             body: JSON.stringify([])
         });
-        await logSystemAction(username, 'LIMPIEZA_DATOS', `Área: ${area} vaciada por el usuario.`);
     } catch (e) {
         ok = false;
         console.warn(`[PULSE] No se pudo limpiar el servidor para '${area}', se limpió solo local.`, e);
