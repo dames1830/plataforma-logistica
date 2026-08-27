@@ -23,6 +23,15 @@ let fallas = 0;
 const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
 
 // El repo guarda con fin de linea de Windows; sin quitar el CR los indexOf fallan.
+/* SI ESTO SE MUERE A MITAD, TIENE QUE DECIRLO.
+   Antes, un error en medio del guion cortaba la corrida y quedaban a la vista solo los OK
+   de arriba: se leia como aprobado. Ahora cualquier error se cuenta como una falla mas y
+   al final se comprueba que la corrida llego hasta el ultimo tramo. */
+let llegoAlFinal = false;
+window.addEventListener('error', (e) => { fallas++; eco('<span class="mal">SE CORTO</span> ' + (e.message || e.error)); });
+window.addEventListener('unhandledrejection', (e) => { fallas++; eco('<span class="mal">SE CORTO</span> ' + ((e.reason && e.reason.message) || e.reason)); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL: lo de arriba no alcanza para dar nada por bueno.</span>'); }, 4000);
+
 const CR = String.fromCharCode(13);
 const src = (await (await fetch('../js/views/dashboard_v28.js?z='+Date.now())).text()).split(CR).join('');
 
@@ -41,22 +50,31 @@ eco('Del dashboard salieron <b>' + BLOQUE.length + '</b> caracteres de ayudantes
 const tareas = (await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data;
 eco('Tareas del servidor: <b>' + tareas.length + '</b>');
 
-// Lo unico que se finge es lo que el panel toma prestado del resto del modulo.
+/* SE ARMAN EN DOS AMBIENTES SEPARADOS, COMO EN EL ARCHIVO REAL.
+   En dashboard_v28.js los ayudantes y el panel son dos `${...}` distintos de la misma
+   plantilla: comparten lo de afuera, pero NINGUNO ve las variables del otro. La primera
+   version de esta prueba los metia en un solo ambiente, y por eso daba verde con un
+   `escKpi is not defined` adentro que solo aparecia al desplegar una jornada en la web.
+   Lo unico que se finge es lo que los dos toman prestado del resto del modulo. */
 const mod = await import('data:text/javascript,' + encodeURIComponent(`
 export const montar = (tasks, ayuda) => {
   const { getLogicalDate, diaOperativoDeTarea, getTaskTotalAvance, icono } = ayuda;
   const repintar = () => {};
+  (() => {
 ${BLOQUE}
-  window.__kpiRenderPanel = ${PANEL};
-  return repintarPanel;
+  })();
+  (() => {
+    window.__kpiRenderPanel = ${PANEL};
+  })();
 };`));
 
-const pintar = mod.montar(tareas, {
+mod.montar(tareas, {
   getLogicalDate: () => '2026-08-26',
   diaOperativoDeTarea: (t) => t.fecha || String(t.inicio || '').slice(0,10),
   getTaskTotalAvance: (t) => Number(t.qty) || 0,
   icono: () => ''
 });
+const pintar = () => { document.getElementById('panelKpiVistas').innerHTML = window.__kpiRenderPanel(); };
 pintar();
 
 const filas = () => [...document.querySelectorAll('#panelKpiVistas tbody tr')];
@@ -155,5 +173,6 @@ if (capa) {
   ok('arranca en Grande, que es lo que sobrevive a WhatsApp', capa.querySelector('table').getBoundingClientRect().width > 900);
   capa.remove();
 }
+llegoAlFinal = true;
 eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>' : '\n<b>El panel quedo como la maqueta.</b>');
 </script>
