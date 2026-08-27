@@ -88,6 +88,29 @@ const capa = document.getElementById('fotoHora');
 ok('abre la vista para WhatsApp', !!capa);
 ok('va en blanco, no en el oscuro del tablero', /background:#fff/.test(window.__hourlyFotoHTML));
 ok('y trae la misma jornada', /26-Ago/.test(window.__hourlyFotoHTML));
+eco('\n── QUE LA FOTO SE VEA DE VERDAD ──');
+// No alcanza con que el encabezado EXISTA: `temas.css` le pone fondo propio a todo
+// `thead th` y el texto blanco quedaba invisible. Se mide el color pintado.
+document.getElementById('fotoHora')?.remove();
+window.__hourlySetRango('desde', '2026-08-23');
+window.__hourlyFoto();
+const cap = document.getElementById('fotoHora');
+const ths = [...cap.querySelectorAll('thead th')];
+const lum = (c) => { const [r, g, b] = c.match(/\d+/g).map(Number); return 0.299 * r + 0.587 * g + 0.114 * b; };
+const contraste = (el) => Math.abs(lum(getComputedStyle(el).color) - lum(getComputedStyle(el).backgroundColor));
+const textos = ths.map(t => t.textContent.trim());
+ok('el encabezado trae la fecha, las 11 horas y el total: ' + textos.length + ' columnas', ths.length === 13);
+ok('y dice las horas: ' + textos.slice(1, 4).join(' '), textos.includes('20:00') && textos.includes('06:00'));
+ok('el fondo del encabezado es el azul, no el del tema: ' + getComputedStyle(ths[0]).backgroundColor,
+   /18,\s*54,\s*92/.test(getComputedStyle(ths[0]).backgroundColor));
+ok('se lee: contraste de ' + Math.round(contraste(ths[0])) + ' (hace falta 60 como mínimo)',
+   ths.every(t => contraste(t) > 60));
+const tds = [...cap.querySelectorAll('tfoot td')];
+ok('el TOTAL de abajo también se lee: ' + Math.round(contraste(tds[0])), tds.every(t => contraste(t) > 60));
+const cuerpo1 = cap.querySelector('tbody td');
+ok('y las filas del cuerpo: ' + Math.round(contraste(cuerpo1)), contraste(cuerpo1) > 60);
+cap.remove(); window.__hourlyHoy();
+
 eco('\n── EL PARPADEO ──');
 window.__redibujosCompletos = 0;
 const antesCaja = document.getElementById('cuadroPorHora');
