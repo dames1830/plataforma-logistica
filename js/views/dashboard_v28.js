@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0446';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0447';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0446';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0446';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0446';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0446';
-import * as metasService from '../services_v245/metasService.js?v=29.0446';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0446';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0446';
+import * as adminService from '../services_v245/adminService.js?v=29.0447';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0447';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0447';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0447';
+import * as metasService from '../services_v245/metasService.js?v=29.0447';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0447';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0447';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0446';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0446';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0446';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0446';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0446';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0446';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0446';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0446';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0446';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0446';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0446';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0446';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0446';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0446';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0446';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0446';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0446';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0446';
-import { montarSlotting } from './slotting.js?v=29.0446';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0447';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0447';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0447';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0447';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0447';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0447';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0447';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0447';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0447';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0447';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0447';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0447';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0447';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0447';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0447';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0447';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0447';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0447';
+import { montarSlotting } from './slotting.js?v=29.0447';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0446';
+const VERSION = '29.0447';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5408,7 +5408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0446');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0447');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5671,7 +5671,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0446');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0447');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18237,7 +18237,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0446 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0447 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -35517,7 +35517,7 @@ window.__menuMapa = (btn) => {
                        del turno, son los dos tiempos. Todo va escrito en cada celda —tamano,
                        color, peso, relleno— porque la hoja de estilos de la pantalla le gana a
                        lo que se herede, y por eso los nombres salian en blanco sobre blanco. */
-                    if (vista === 'eficiencia' && window.__kpiEfDatos) {
+                    if (vista === 'efectividad' && window.__kpiEfDatos) {
                         const { E: EF, filasEf, puesto } = window.__kpiEfDatos;
                         const hmF = (m) => {
                             m = Math.round(m);
@@ -35544,11 +35544,11 @@ window.__menuMapa = (btn) => {
                             return `<tr>${celdas.join('')}</tr>`;
                         }).join('');
 
-                        const cual = window.__kpiEfVista === 'mejores' ? 'LOS MÁS EFICIENTES'
-                                   : window.__kpiEfVista === 'flojos' ? 'LOS QUE NO CUMPLEN LA HORA' : 'TODOS';
+                        const cual = window.__kpiEfVista === 'si' ? 'LOS EFECTIVOS'
+                                   : window.__kpiEfVista === 'no' ? 'LOS NO EFECTIVOS' : 'TODOS';
                         const fotoEf = `<div style="background:#fff; color:#111; padding:${px(14)} ${px(16)}; border-radius:${px(10)}; font-family:Arial, sans-serif;">
-                            <div style="${BASE} font-size:${px(15)}; font-weight:900; color:#111;">EFICIENCIA POR PERSONA · ${cual}</div>
-                            <div style="${BASE} color:#666; margin-bottom:${px(9)};">${rango} · 100% = terminó justo en el tiempo permitido · general ${nM(EF.gen)}%</div>
+                            <div style="${BASE} font-size:${px(15)}; font-weight:900; color:#111;">EFECTIVIDAD POR PERSONA · ${cual}</div>
+                            <div style="${BASE} color:#666; margin-bottom:${px(9)};">${rango} · efectivo = hizo el trabajo en el tiempo permitido o menos · general ${nM(EF.gen)}%</div>
                             <table style="border-collapse:collapse;"><thead><tr>
                                 ${CAB.map((t, i) => `<th style="${TH} ${i === 1 ? 'text-align:left; padding-left:' + px(8) + ';' : ''}">${t}</th>`).join('')}
                             </tr></thead><tbody>${filasFoto}</tbody></table>
@@ -35815,7 +35815,7 @@ window.__menuMapa = (btn) => {
                 if (!window.__kpiPHHasta) window.__kpiPHHasta = hoyLog;
                 if (!window.__kpiVista) window.__kpiVista = 'grupos';
                 if (!window.__kpiPHEscala) window.__kpiPHEscala = 2;
-                const vista = ['personas', 'eficiencia'].includes(window.__kpiVista) ? window.__kpiVista : 'grupos';
+                const vista = ['personas', 'efectividad'].includes(window.__kpiVista) ? window.__kpiVista : 'grupos';
                 const desdeH = window.__kpiPHDesde, hastaH = window.__kpiPHHasta;
 
                 /* Se acumula por jornada y por grupo/persona, repartido en las horas en que
@@ -35880,7 +35880,7 @@ window.__menuMapa = (btn) => {
                 const VISTAS = [
                     { id: 'grupos', icono: '👥', label: 'Grupos', sub: '¿Cómo avanza cada grupo por hora?' },
                     { id: 'personas', icono: '🧑', label: 'Personas', sub: '¿Cómo avanza cada persona por hora?' },
-                    { id: 'eficiencia', icono: '🎯', label: 'Eficiencia', sub: '¿Cumple con su hora de producción?' }
+                    { id: 'efectividad', icono: '🎯', label: 'Efectividad', sub: '¿Hace el trabajo en el tiempo que corresponde?' }
                 ];
                 const nav = VISTAS.map(v => {
                     const on = v.id === vista;
@@ -35924,13 +35924,41 @@ window.__menuMapa = (btn) => {
                 };
                 const colEf = (p) => p >= 100 ? 'var(--success)' : p >= 85 ? 'var(--warning)' : 'var(--danger)';
 
+                /* UNA TAREA NO PUEDE TERMINAR MAÑANA.
+                 *
+                 * El 26-ago-2026 dos tareas quedaron grabadas con la hora de término un día
+                 * adelantado —una decía haber terminado a las 00:00 del día siguiente, otra
+                 * decía haber EMPEZADO a las 10 de la mañana que todavía no llegaba—. Salían
+                 * con 21 h y 17 h de duración, y hundían a las cuatro personas que las hicieron:
+                 * jyauyo pasaba de 157% a 29%, pmurayari de 148% a 33%. El día entero caía de
+                 * 125% a 48% por dos dedazos.
+                 *
+                 * El filtro de arriba no las agarraba: ese saca las que salen IMPOSIBLEMENTE
+                 * RÁPIDAS, y éstas salen imposiblemente lentas. Se apartan por la fecha, que es
+                 * el defecto de verdad, y se dice cuántas fueron: si se escondieran, nadie las
+                 * iría a corregir.
+                 */
+                const AHORA = Date.now();
+                const TURNO_MAX = 14 * 60;   // minutos: nadie trabaja una tarea de un tirón más que eso
+                const fechaImposible = (t) => {
+                    if (!t) return false;
+                    const f = new Date(String(t.termino || '').replace('Z', ''));
+                    const i = new Date(String(t.inicio || '').replace('Z', ''));
+                    if (!isNaN(f.getTime()) && f.getTime() > AHORA + 60000) return true;   // termina en el futuro
+                    if (!isNaN(i.getTime()) && i.getTime() > AHORA + 60000) return true;   // empieza en el futuro
+                    return false;
+                };
+
                 const armarEficiencia = () => {
                     const per = {};
-                    let fuera = 0, qFuera = 0, espT = 0, minT = 0, okT = 0, nT = 0, qT = 0;
+                    const porId = new Map((tasks || []).map(t => [t && t.id, t]));
+                    let fuera = 0, qFuera = 0, malFechadas = 0, espT = 0, minT = 0, okT = 0, nT = 0, qT = 0;
                     (buildKpiDataset(tasks, desdeH, hastaH) || []).forEach(r => {
                         if (!r.mins || !r.usuarios || !r.usuarios.length) return;
                         const q = Math.round(r.qty);
                         if (q <= 0) return;
+                        // La hora mal grabada: termina o empieza en el futuro, o dura más que un turno
+                        if (fechaImposible(porId.get(r.id)) || r.mins > TURNO_MAX) { malFechadas++; return; }
                         // Una tarea cerrada toda junta al final no se hizo en ese tiempo: se aparta
                         // y se dice cuántas fueron, en vez de promediarla e inflarle el número a alguien.
                         if (r.pct > TOPE_EF) { fuera++; qFuera += q; return; }
@@ -35949,7 +35977,7 @@ window.__menuMapa = (btn) => {
                     const todas = Object.entries(per)
                         .filter(([, d]) => d.min > 0)
                         .sort((a, b) => b[1].esp / b[1].min - a[1].esp / a[1].min);
-                    return { per, todas, gen, fuera, qFuera, espT, minT, okT, nT, qT };
+                    return { per, todas, gen, fuera, qFuera, malFechadas, espT, minT, okT, nT, qT };
                 };
                 window.__kpiEfArmar = armarEficiencia;
 
@@ -35988,15 +36016,24 @@ window.__menuMapa = (btn) => {
                     </div>
                     <div style="display:flex; border-bottom:1px solid rgba(var(--ink-rgb), 0.12);">${nav}</div>`;
 
-                if (vista === 'eficiencia') {
+                if (vista === 'efectividad') {
                     const E = armarEficiencia();
                     if (!window.__kpiEfVista) window.__kpiEfVista = 'todos';
+                    /* DOS ESTADOS, NO CUATRO. Daniel, 27-ago-2026: *"solamente quiero saber si
+                       son efectivos o no, nada más"*. El corte es 100%: terminó dentro del
+                       tiempo permitido o no lo terminó. Antes la vara era el promedio del rango
+                       y las dos listas se pisaban —quien estaba entre el promedio y el 100%
+                       salía en las dos a la vez—, que es exactamente lo que no puede pasar en
+                       un cuadro que se lleva a comité. */
                     const pctDe = (d) => d.esp / d.min * 100;
-                    const sobre = E.todas.filter(([, d]) => pctDe(d) > E.gen).length;
-                    const bajo = E.todas.filter(([, d]) => pctDe(d) < 100).length;
+                    /* El corte se decide sobre el numero REDONDEADO, el mismo que se ve.
+                       Con el crudo, alguien al 99,6% mostraba "100%" y la etiqueta decia
+                       "no efectivo": el cuadro se contradecia a si mismo. */
+                    const esEfectivo = (d) => Math.round(pctDe(d)) >= 100;
+                    const nSi = E.todas.filter(([, d]) => esEfectivo(d)).length;
                     const VF = window.__kpiEfVista;
-                    const filasEf = VF === 'mejores' ? E.todas.filter(([, d]) => pctDe(d) > E.gen)
-                                  : VF === 'flojos' ? E.todas.filter(([, d]) => pctDe(d) < 100)
+                    const filasEf = VF === 'si' ? E.todas.filter(([, d]) => esEfectivo(d))
+                                  : VF === 'no' ? E.todas.filter(([, d]) => !esEfectivo(d))
                                   : E.todas;
                     /* El puesto sale del orden COMPLETO, no del filtrado: mirando "los que no
                        cumplen" se sigue viendo en que lugar de todos esta parado cada uno. */
@@ -36005,8 +36042,8 @@ window.__menuMapa = (btn) => {
 
                     const botones = [
                         ['todos', 'Todos', E.todas.length],
-                        ['mejores', 'Los más eficientes', sobre],
-                        ['flojos', 'Los que no cumplen la hora', bajo]
+                        ['si', 'Efectivos', nSi],
+                        ['no', 'No efectivos', E.todas.length - nSi]
                     ].map(([id, et, n]) => `<button onclick="window.__kpiSetEf('${id}')" style="
                         padding:6px 13px; border-radius:8px; font:inherit; font-size:var(--t-xs); font-weight:800; cursor:pointer;
                         border:1px solid ${VF === id ? 'var(--brand-light)' : 'rgba(var(--ink-rgb), 0.12)'};
@@ -36014,6 +36051,10 @@ window.__menuMapa = (btn) => {
                         color:${VF === id ? 'var(--text-strong)' : 'var(--text-muted)'};">${et}<span style="font-weight:900; opacity:0.65; margin-left:5px;">${n}</span></button>`).join('');
 
                     const ORO = { 1: '#e3b341', 2: '#adbac7', 3: '#c08552' };
+                    // La etiqueta que pidió Daniel: al costado del nombre, y solo dice si sí o si no.
+                    const etiqueta = (si) => si
+                        ? `<span style="font-size:var(--t-xs); font-weight:900; letter-spacing:0.4px; text-transform:uppercase; color:var(--bg-dark); background:var(--success); padding:2px 8px; border-radius:9px; margin-left:8px; white-space:nowrap;">efectivo</span>`
+                        : `<span style="font-size:var(--t-xs); font-weight:900; letter-spacing:0.4px; text-transform:uppercase; color:var(--danger); background:rgba(var(--danger-rgb), 0.14); border:1px solid rgba(var(--danger-rgb), 0.45); padding:1px 8px; border-radius:9px; margin-left:8px; white-space:nowrap;">no efectivo</span>`;
                     const cuerpoEf = !filasEf.length
                         ? `<tr><td colspan="8" style="padding:3.5rem; text-align:center; color:rgba(var(--ink-rgb), 0.2);">Nadie en el rango elegido.</td></tr>`
                         : filasEf.map(([u, d]) => {
@@ -36024,7 +36065,7 @@ window.__menuMapa = (btn) => {
                                     <span style="display:inline-flex; align-items:center; justify-content:center; width:21px; height:21px; border-radius:50%; font-size:var(--t-xs); font-weight:900; margin-right:7px;
                                         background:${ORO[n] || 'rgba(var(--ink-rgb), 0.07)'}; color:${ORO[n] ? 'var(--bg-dark)' : 'rgba(var(--ink-rgb), 0.4)'};">${n}</span>
                                     <b style="color:var(--text-strong);">${escKpi(u)}</b>
-                                    ${n === 1 && pct > 100 ? `<span style="font-size:var(--t-xs); font-weight:900; letter-spacing:0.4px; text-transform:uppercase; color:var(--bg-dark); background:var(--success); padding:1px 7px; border-radius:9px; margin-left:7px;">el más eficiente</span>` : ''}
+                                    ${etiqueta(Math.round(pct) >= 100)}
                                 </td>
                                 <td style="padding:0.5rem 0.9rem; text-align:center; font-weight:800; color:var(--text-strong); font-variant-numeric:tabular-nums;">${nM(d.q)}</td>
                                 <td style="padding:0.5rem 0.9rem; text-align:center; color:var(--text-muted); font-variant-numeric:tabular-nums;">${hm(d.esp)}</td>
@@ -36049,7 +36090,7 @@ window.__menuMapa = (btn) => {
                         </div>
                         <div style="display:flex; gap:7px; padding:0 14px 13px; flex-wrap:wrap; align-items:center;">
                             ${botones}
-                            <span style="margin-left:6px; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.34);">${VF === 'flojos' ? 'tardaron más de lo permitido' : 'ordenados de más a menos eficiente'} · el general del rango es <b style="color:${colEf(E.gen)};">${nM(E.gen)}%</b>${VF === 'mejores' ? ', y esa es la vara' : ''} · ${E.okT} de ${E.nT} tareas dentro del tiempo · ${nM(E.qT)} pares</span>
+                            <span style="margin-left:6px; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.34);">ordenados de más a menos efectivo · el general del rango es <b style="color:${colEf(E.gen)};">${nM(E.gen)}%</b> · ${E.okT} de ${E.nT} tareas dentro del tiempo · ${nM(E.qT)} pares</span>
                         </div>
                         <div style="overflow-x:auto;">
                             <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
@@ -36062,6 +36103,7 @@ window.__menuMapa = (btn) => {
                         </div>
                         <div style="padding:0.8rem 1rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.42); line-height:1.85;">
                             ${E.fuera ? `<b>Se apartaron ${E.fuera} tareas (${nM(E.qFuera)} pares)</b> porque dan un número imposible: se cerraron todas juntas al final. No se promedian, para que no le inflen el número a nadie.<br>` : ''}
+                            ${E.malFechadas ? `<b style="color:var(--warning-soft);">⚠ ${E.malFechadas} ${E.malFechadas === 1 ? 'tarea quedó' : 'tareas quedaron'} fuera por tener mal la hora</b> —terminan o empiezan en un momento que todavía no llegó, o duran más de 14 horas—. Conviene corregirlas: mientras estén así, hunden a quien las hizo.<br>` : ''}
                             <b>La eficiencia de una persona es la de los grupos en que trabajó:</b> a dos que hicieron la misma tarea juntos no hay forma de separarlos, y por eso salen con el mismo número. Los pares sí se parten a la mitad; las horas no, porque los dos estuvieron ahí todo el tiempo.
                         </div>
                     </div>`;

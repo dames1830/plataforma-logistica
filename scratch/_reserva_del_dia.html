@@ -1,0 +1,97 @@
+<!-- ¿A que ritmo se esta almacenando de verdad en reserva? Todas las tareas de una
+     jornada, separando lo que fue al piso de lo que fue a paleta. -->
+<meta charset="utf-8"><title>Ritmo de reserva</title>
+<style>body{background:#0d1117;color:#8b949e;font:12.5px/1.7 ui-monospace,monospace;padding:20px;white-space:pre}
+b{color:#3fb950}.t{color:#58a6ff;font-weight:700}.r{color:#f85149}.a{color:#d29922}</style>
+<div id="o">Leyendo…</div>
+<script type="module">
+const O = document.getElementById('o'); O.innerHTML = '';
+const o = t => O.innerHTML += t + '\n';
+const CR = String.fromCharCode(13);
+const leer = async f => (await (await fetch(f+'?z='+Date.now())).text()).split(CR).join('');
+const tz = (s,a,b) => { const i=s.indexOf(a); return s.slice(i, s.indexOf(b,i)); };
+const DB = await leer('../js/views/dashboard_v28.js');
+const SY = await leer('../js/services_v245/sync_engine_v24_9.js');
+const MET_URL = '../js/services_v245/metasService.js?z=' + Date.now();
+const metas = await import(MET_URL); await metas.cargarReglas(true);
+const M = await import('data:text/javascript,' + encodeURIComponent(`
+import * as metasService from '${new URL(MET_URL, location.href).href}';
+const indexarMaestro = () => ({ porSku: new Map(), familias: [], detalles: [], padres: {} });
+const marcaNormalizada = m => m || 'S/M';
+const diaOperativoDeTarea = t => t.fecha || String(t.inicio||'').slice(0,10);
+` + tz(DB,'const getTaskTotalAvance = (t) => {','/* ── EL MAESTRO DE ARTÍCULOS')
+  + tz(DB,'const getTaskMinutos = (t) => {','\n/**')
+  + tz(SY,'function descomprimirTareas(data) {','\n/**')
+  + '\nexport { descomprimirTareas, getTaskDestinos, getTaskMinutos, getTaskTotalAvance, getTaskMeta, minutosPermitidos };'));
+
+const T = M.descomprimirTareas((await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data);
+const nm = n => Math.round(n).toLocaleString('es-PE');
+const hm = m => { m = Math.round(m); return m < 60 ? m+' min' : Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'); };
+const DIA = new URLSearchParams(location.search).get('dia') || '2026-08-26';
+const TODO = location.search.includes('todo');
+const ABANDONADA = 360;   // mas de 6 h abierta: nadie trabaja eso de un tiron, se dejo abierta
+
+const F0 = T.filter(t => t.status === 'Finalizado' && (TODO ? (t.fecha||'') >= '2026-08-01' : t.fecha === DIA) && t.inicio && t.termino)
+  .map(t => { const d = M.getTaskDestinos(t); const m = M.getTaskMinutos(t);
+    return { id: t.id, marca: t.marca, min: m, piso: d.piso, res: d.reserva, hay: d.hayDesglose,
+             q: M.getTaskTotalAvance(t), meta: M.getTaskMeta(t),
+             us: [t.u1,t.u2,t.u3].filter(x=>x&&x!=='---') }; })
+  .filter(r => r.min > 0 && r.q > 0);
+const abandonadas = F0.filter(r => r.min > ABANDONADA);
+const F = F0.filter(r => r.min <= ABANDONADA);
+
+o('<span class="t">' + (TODO ? 'AGOSTO COMPLETO' : 'JORNADA DEL ' + DIA.split('-').reverse().join('/')) + ' · ' + F.length + ' tareas</span>');
+if (abandonadas.length) {
+  o('<span class="r">   ' + abandonadas.length + ' tareas apartadas por quedar ABIERTAS mas de 6 h:</span>');
+  abandonadas.sort((a,b)=>b.min-a.min).slice(0,8).forEach(r =>
+    o('      ' + r.id.padEnd(24) + hm(r.min).padStart(9) + '   ' + r.us.join(' + ')));
+}
+o('');
+if (!TODO) {
+o('   ' + 'TAREA'.padEnd(22) + 'MIN'.padStart(6) + 'PISO'.padStart(8) + 'PALETA'.padStart(9) + '  %PAL' + 'RITMO REAL'.padStart(13) + '   quienes');
+F.sort((a,b)=>b.res-a.res).forEach(r => {
+  const pr = r.q ? r.res/(r.piso+r.res)*100 : 0;
+  const ritmo = r.q/(r.min/60);
+  o('   ' + r.id.replace(DIA+'_','').padEnd(22) + String(Math.round(r.min)).padStart(6)
+    + nm(r.piso).padStart(8) + nm(r.res).padStart(9) + (Math.round(pr)+'%').padStart(6)
+    + (nm(ritmo)+'/h').padStart(13) + '   ' + r.us.join(' + '));
+});
+}
+
+// SOLO LAS DE PURA RESERVA: ahi el ritmo que se ve ES el de reserva, sin mezcla
+const pura = F.filter(r => r.hay && r.res > 0 && r.res/(r.piso+r.res) >= 0.95);
+o('\n<span class="t">LAS DE PURA RESERVA (95% o mas a paleta): ' + pura.length + ' de ' + F.length + '</span>');
+if (pura.length) {
+  o('   ' + 'TAREA'.padEnd(22) + 'PALETA'.padStart(9) + 'MIN'.padStart(6) + 'PARES POR HORA'.padStart(16));
+  pura.sort((a,b)=>b.res/(b.min/60) - a.res/(a.min/60)).forEach(r =>
+    o('   ' + r.id.padEnd(24) + nm(r.res).padStart(9)
+      + String(Math.round(r.min)).padStart(6) + ('<b>'+nm(r.res/(r.min/60))+'</b>').padStart(25)));
+  const rit = pura.map(r => r.res/(r.min/60)).sort((a,b)=>a-b);
+  const med = rit[Math.floor(rit.length/2)];
+  o('\n   el mas lento ' + nm(rit[0]) + '/h · la mediana <b>' + nm(med) + '/h</b> · el mas rapido ' + nm(rit[rit.length-1]) + '/h');
+  o('   sumando todo: ' + nm(pura.reduce((a,r)=>a+r.res,0)) + ' pares en ' + hm(pura.reduce((a,r)=>a+r.min,0))
+    + '  →  <b>' + nm(pura.reduce((a,r)=>a+r.res,0) / (pura.reduce((a,r)=>a+r.min,0)/60)) + ' pares por hora</b>');
+}
+
+const puroP = F.filter(r => r.hay && r.piso > 0 && r.piso/(r.piso+r.res) >= 0.95);
+o('\n<span class="t">Y LAS DE PURO PISO (95% o mas al piso): ' + puroP.length + '</span>');
+if (puroP.length) {
+  const rit = puroP.map(r => r.piso/(r.min/60)).sort((a,b)=>a-b);
+  o('   mediana <b>' + nm(rit[Math.floor(rit.length/2)]) + ' pares por hora</b> (la meta dice 400)');
+  o('   sumando todo: ' + nm(puroP.reduce((a,r)=>a+r.piso,0)) + ' pares en ' + hm(puroP.reduce((a,r)=>a+r.min,0))
+    + '  →  <b>' + nm(puroP.reduce((a,r)=>a+r.piso,0) / (puroP.reduce((a,r)=>a+r.min,0)/60)) + ' pares por hora</b>');
+}
+
+o('\n<span class="t">EL DIA COMPLETO</span>');
+const tp = F.reduce((a,r)=>a+r.piso,0), tr = F.reduce((a,r)=>a+r.res,0), tm = F.reduce((a,r)=>a+r.min,0);
+o('   al piso ' + nm(tp) + ' pares · a paleta ' + nm(tr) + ' pares · en ' + hm(tm) + ' de trabajo');
+o('   la reserva fue el <b>' + Math.round(tr/(tp+tr)*100) + '%</b> de todo lo que se almaceno');
+o('\n<span class="a">   ¿QUE PASARIA SI LA META DE RESERVA FUERA OTRA?</span>');
+[1200, 1800, 2400, 3000].forEach(R => {
+  let perm = 0, ok = 0;
+  F.forEach(r => { const p = Math.max(10, (r.meta.metaUph? r.piso/r.meta.metaUph*60:0) + r.res/R*60);
+    perm += p; if (r.min <= p) ok++; });
+  o('   reserva a ' + String(nm(R)).padStart(5) + '/h  →  permitido ' + hm(perm).padStart(7)
+    + ' contra ' + hm(tm) + ' reales  =  <b>' + Math.round(perm/tm*100) + '%</b>   ·  ' + ok + ' de ' + F.length + ' tareas a tiempo');
+});
+</script>

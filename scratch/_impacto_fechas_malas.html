@@ -1,0 +1,69 @@
+<!-- ¿Cuanto le cuesta a cada persona una tarea con la fecha mal grabada? -->
+<meta charset="utf-8"><title>Impacto de las fechas malas</title>
+<style>body{background:#0d1117;color:#8b949e;font:12.5px/1.75 ui-monospace,monospace;padding:20px;white-space:pre}
+b{color:#3fb950}.t{color:#58a6ff;font-weight:700}.r{color:#f85149}.a{color:#d29922}</style>
+<div id="o">Leyendo…</div>
+<script type="module">
+const O = document.getElementById('o'); O.innerHTML = '';
+const o = t => O.innerHTML += t + '\n';
+const CR = String.fromCharCode(13);
+const leer = async f => (await (await fetch(f+'?z='+Date.now())).text()).split(CR).join('');
+const tz = (s,a,b) => { const i=s.indexOf(a); return s.slice(i, s.indexOf(b,i)); };
+const DB = await leer('../js/views/dashboard_v28.js');
+const SY = await leer('../js/services_v245/sync_engine_v24_9.js');
+const MET_URL = '../js/services_v245/metasService.js?z=' + Date.now();
+const metas = await import(MET_URL); await metas.cargarReglas(true);
+const M = await import('data:text/javascript,' + encodeURIComponent(`
+import * as metasService from '${new URL(MET_URL, location.href).href}';
+const indexarMaestro = () => ({ porSku: new Map(), familias: [], detalles: [], padres: {} });
+const marcaNormalizada = m => m || 'S/M';
+const diaOperativoDeTarea = t => t.fecha || String(t.inicio||'').slice(0,10);
+` + tz(DB,'const getTaskTotalAvance = (t) => {','/* ── EL MAESTRO DE ARTÍCULOS')
+  + tz(DB,'const getTaskMinutos = (t) => {','\n/**')
+  + tz(DB,'const buildKpiDataset = (tasks, desde, hasta) => {','\n/** hh:mm a partir de minutos')
+  + tz(SY,'function descomprimirTareas(data) {','\n/**')
+  + '\nexport { buildKpiDataset, descomprimirTareas };'));
+
+const T = M.descomprimirTareas((await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data);
+const nm = n => Math.round(n).toLocaleString('es-PE');
+const hm = m => { m = Math.round(m); return m < 60 ? m+' min' : Math.floor(m/60)+' h '+String(m%60).padStart(2,'0'); };
+const MALAS = ['2026-08-26_Tarea44', '2026-08-26_Tarea46'];
+
+const armar = (quitar) => {
+  const R = M.buildKpiDataset(T, '2026-08-26', '2026-08-26');
+  const per = {};
+  R.forEach(r => {
+    if (quitar && MALAS.includes(r.id)) return;
+    if (!r.mins || !r.usuarios.length || r.pct > 400) return;
+    const q = Math.round(r.qty); if (q <= 0) return;
+    const base = Math.floor(q/r.usuarios.length), resto = q % r.usuarios.length;
+    r.usuarios.forEach((u,i) => {
+      const d = per[u] || (per[u] = {esp:0,min:0,q:0,n:0});
+      d.esp += r.minutosEsperados; d.min += r.mins; d.q += base + (i<resto?1:0); d.n++;
+    });
+  });
+  return per;
+};
+const con = armar(false), sin = armar(true);
+
+o('<span class="t">¿ESTAN APARTADAS HOY? NO. Asi entra cada una en el calculo:</span>');
+M.buildKpiDataset(T, '2026-08-26', '2026-08-26').filter(r => MALAS.includes(r.id)).forEach(r =>
+  o('   ' + r.id + '   ' + hm(r.mins) + ' reales contra ' + hm(r.minutosEsperados)
+    + ' permitidos  =  <span class="r">' + Math.round(r.pct) + '%</span>   (el filtro solo saca las de mas de 400%)'));
+
+o('\n<span class="t">LO QUE LE CUESTA A CADA UNO</span>');
+o('   ' + 'PERSONA'.padEnd(14) + 'CON LA TAREA MALA'.padStart(20) + 'SIN ELLA'.padStart(14) + '   diferencia');
+const orden = Object.keys(con).sort((a,b) => (sin[b]?sin[b].esp/sin[b].min:0) - (sin[a]?sin[a].esp/sin[a].min:0));
+orden.forEach(u => {
+  const c = con[u], s = sin[u];
+  const pc = c ? c.esp/c.min*100 : 0, ps = s ? s.esp/s.min*100 : 0;
+  const cambia = Math.abs(pc - ps) > 0.5;
+  o('   ' + u.padEnd(14) + (Math.round(pc)+'%').padStart(20) + (s ? (Math.round(ps)+'%') : '—').padStart(14)
+    + (cambia ? '   <b>sube ' + Math.round(ps - pc) + ' puntos</b>' : ''));
+});
+
+o('\n<span class="t">Y EL DIA ENTERO</span>');
+const tot = (p) => { let e=0,m=0; Object.values(p).forEach(d=>{e+=d.esp;m+=d.min;}); return e/m*100; };
+o('   con las dos tareas mal fechadas : <span class="r">' + Math.round(tot(con)) + '%</span>');
+o('   sin ellas                       : <b>' + Math.round(tot(sin)) + '%</b>');
+</script>

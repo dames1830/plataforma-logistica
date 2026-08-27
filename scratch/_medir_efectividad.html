@@ -1,0 +1,84 @@
+<!-- Medicion previa: ¿la eficacia separa a la gente igual que la eficiencia?
+     Corre buildKpiDataset del dashboard contra las tareas y metas reales. -->
+<meta charset="utf-8"><title>Medir efectividad</title>
+<style>body{background:#0d1117;color:#8b949e;font:12.5px/1.7 ui-monospace,monospace;padding:20px;white-space:pre}
+b{color:#3fb950}.t{color:#58a6ff;font-weight:700}</style>
+<div id="o"></div>
+<script type="module">
+const o = t => document.getElementById('o').innerHTML += t + '\n';
+const CR = String.fromCharCode(13);
+const leer = async f => (await (await fetch(f+'?z='+Date.now())).text()).split(CR).join('');
+const tz = (s,a,b) => { const i=s.indexOf(a); return s.slice(i, s.indexOf(b,i)); };
+const DB = await leer('../js/views/dashboard_v28.js');
+const SY = await leer('../js/services_v245/sync_engine_v24_9.js');
+const MET_URL = '../js/services_v245/metasService.js?z=' + Date.now();
+const metas = await import(MET_URL);
+await metas.cargarReglas(true);
+
+const M = await import('data:text/javascript,' + encodeURIComponent(`
+import * as metasService from '${new URL(MET_URL, location.href).href}';
+const indexarMaestro = () => ({ porSku: new Map(), familias: [], detalles: [], padres: {} });
+const marcaNormalizada = m => m || 'S/M';
+const diaOperativoDeTarea = t => t.fecha || String(t.inicio||'').slice(0,10);
+` + tz(DB,'const getTaskTotalAvance = (t) => {','/* ── EL MAESTRO DE ARTÍCULOS')
+  + tz(DB,'const getTaskMinutos = (t) => {','\n/**')
+  + tz(DB,'const buildKpiDataset = (tasks, desde, hasta) => {','\n/** hh:mm a partir de minutos')
+  + tz(SY,'function descomprimirTareas(data) {','\n/**')
+  + '\nexport { buildKpiDataset, descomprimirTareas, getTaskMeta };'));
+
+const T = M.descomprimirTareas((await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data);
+const filas = M.buildKpiDataset(T, '2026-08-01', '2026-08-26');
+o('Tareas de agosto medidas: <b>' + filas.length + '</b>');
+
+const TOPE = 400, HORAS_JORNADA = 7;
+const per = {};
+filas.forEach(r => {
+  if (!r.mins || !r.usuarios.length || r.pct > TOPE) return;
+  const q = Math.round(r.qty); if (q <= 0) return;
+  const base = Math.floor(q / r.usuarios.length), resto = q % r.usuarios.length;
+  // La meta POR PERSONA de esa tarea: la del grupo dividida entre los que la hicieron
+  const metaPersona = (r.metaUph || 300) / r.usuarios.length;
+  r.usuarios.forEach((u,i) => {
+    const d = per[u] || (per[u] = {esp:0,min:0,q:0,n:0,ok:0,dias:new Set(),metaSum:0,metaN:0});
+    d.esp += r.minutosEsperados; d.min += r.mins; d.q += base + (i<resto?1:0);
+    d.n++; if (r.ok) d.ok++; d.dias.add(r.fecha);
+    d.metaSum += metaPersona * q; d.metaN += q;   // meta ponderada por lo que movio
+  });
+});
+
+const L = Object.entries(per).filter(([,d]) => d.min > 0 && d.dias.size >= 2).map(([u,d]) => {
+  const metaHora = d.metaN ? d.metaSum / d.metaN : 200;      // pares/hora que le tocan a esa persona
+  const debia = metaHora * HORAS_JORNADA * d.dias.size;       // lo que su jornada pedia
+  return { u, eficiencia: d.esp/d.min*100, eficacia: d.q/debia*100, q: d.q, debia,
+           dias: d.dias.size, horas: d.min/60, metaHora,
+           esperadas: d.esp/60, reales: d.min/60 };
+});
+L.forEach(x => x.efectividad = Math.sqrt(Math.min(x.eficacia,300)/100 * Math.min(x.eficiencia,300)/100) * 100);
+L.sort((a,b) => b.efectividad - a.efectividad);
+
+o('\n<span class="t">Jornada de referencia: ' + HORAS_JORNADA + ' h. Cada persona con su propia meta por hora.</span>');
+o('\n%-14s %5s %8s %9s %10s %11s %12s'.replace(/%(-?)(\d+)s/g, (_,l,n) => ''.padEnd(+n))
+  .replace(/^/, 'PERSONA'.padEnd(15) + 'DIAS'.padStart(5) + 'PARES'.padStart(9) + 'DEBIA'.padStart(9)
+   + 'EFICACIA'.padStart(11) + 'EFICIENCIA'.padStart(12) + 'EFECTIVIDAD'.padStart(13)));
+L.forEach(x => o(x.u.padEnd(15) + String(x.dias).padStart(5)
+  + Math.round(x.q).toLocaleString('es-PE').padStart(9)
+  + Math.round(x.debia).toLocaleString('es-PE').padStart(9)
+  + (Math.round(x.eficacia)+'%').padStart(11)
+  + (Math.round(x.eficiencia)+'%').padStart(12)
+  + (Math.round(x.efectividad)+'%').padStart(13)));
+
+const cuad = (f) => L.filter(f).length;
+o('\n<span class="t">EL CUADRANTE</span>');
+o('  efectivos    (llegan Y rapido) : <b>' + cuad(x=>x.eficacia>=100 && x.eficiencia>=100) + '</b>');
+o('  corren pero no llegan          : ' + cuad(x=>x.eficacia<100 && x.eficiencia>=100));
+o('  llegan pero les cuesta         : ' + cuad(x=>x.eficacia>=100 && x.eficiencia<100));
+o('  ni lo uno ni lo otro           : ' + cuad(x=>x.eficacia<100 && x.eficiencia<100));
+o('\n  eficacia   min ' + Math.round(Math.min(...L.map(x=>x.eficacia))) + '%  max ' + Math.round(Math.max(...L.map(x=>x.eficacia))) + '%');
+o('  eficiencia min ' + Math.round(Math.min(...L.map(x=>x.eficiencia))) + '%  max ' + Math.round(Math.max(...L.map(x=>x.eficiencia))) + '%');
+const cor = (a,b) => { const n=a.length, ma=a.reduce((s,v)=>s+v,0)/n, mb=b.reduce((s,v)=>s+v,0)/n;
+  const c=a.reduce((s,v,i)=>s+(v-ma)*(b[i]-mb),0); const va=Math.sqrt(a.reduce((s,v)=>s+(v-ma)**2,0)), vb=Math.sqrt(b.reduce((s,v)=>s+(v-mb)**2,0));
+  return c/(va*vb); };
+window.__JSON = JSON.stringify(L.map(x => [x.u, x.dias, Math.round(x.q), Math.round(x.metaHora*10)/10, Math.round(x.esperadas*10)/10, Math.round(x.reales*10)/10]));
+o('  ¿dicen lo mismo? correlacion entre las dos: ' + cor(L.map(x=>x.eficacia), L.map(x=>x.eficiencia)).toFixed(2)
+  + '  (si fuera cerca de 1, la eficacia no aportaria nada nuevo)');
+</script>

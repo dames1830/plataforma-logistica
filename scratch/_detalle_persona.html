@@ -1,0 +1,96 @@
+<!-- El detalle de una persona, tarea por tarea: cuanto fue al piso, cuanto a paleta,
+     que tiempo se le permitio por cada parte y como se juntan. Sale de las funciones
+     reales del dashboard, no de una copia. -->
+<meta charset="utf-8"><title>Detalle de una persona</title>
+<style>body{background:#0d1117;color:#8b949e;font:12.5px/1.75 ui-monospace,monospace;padding:20px;white-space:pre}
+b{color:#3fb950}.t{color:#58a6ff;font-weight:700}.r{color:#f85149}.a{color:#d29922}</style>
+<div id="o">Leyendo…</div>
+<script type="module">
+const O = document.getElementById('o'); O.innerHTML = '';
+const o = t => O.innerHTML += t + '\n';
+const CR = String.fromCharCode(13);
+const leer = async f => (await (await fetch(f+'?z='+Date.now())).text()).split(CR).join('');
+const tz = (s,a,b) => { const i=s.indexOf(a); return s.slice(i, s.indexOf(b,i)); };
+const DB = await leer('../js/views/dashboard_v28.js');
+const SY = await leer('../js/services_v245/sync_engine_v24_9.js');
+const MET_URL = '../js/services_v245/metasService.js?z=' + Date.now();
+const metas = await import(MET_URL);
+await metas.cargarReglas(true);
+
+const M = await import('data:text/javascript,' + encodeURIComponent(`
+import * as metasService from '${new URL(MET_URL, location.href).href}';
+const indexarMaestro = () => ({ porSku: new Map(), familias: [], detalles: [], padres: {} });
+const marcaNormalizada = m => m || 'S/M';
+const diaOperativoDeTarea = t => t.fecha || String(t.inicio||'').slice(0,10);
+` + tz(DB,'const getTaskTotalAvance = (t) => {','/* ── EL MAESTRO DE ARTÍCULOS')
+  + tz(DB,'const getTaskMinutos = (t) => {','\n/**')
+  + tz(DB,'const buildKpiDataset = (tasks, desde, hasta) => {','\n/** hh:mm a partir de minutos')
+  + tz(SY,'function descomprimirTareas(data) {','\n/**')
+  + '\nexport { buildKpiDataset, descomprimirTareas, getTaskDestinos, minutosPermitidos, getTaskMeta, getTaskMinutos, getTaskTotalAvance };'));
+
+const T = M.descomprimirTareas((await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data);
+const nm = n => Math.round(n).toLocaleString('es-PE');
+const hm = m => { m = Math.round(m); return m < 60 ? m+' min' : Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min'; };
+
+// Se busca a la persona con 1.474 pares en las ultimas jornadas
+const dias = [...new Set(T.filter(t=>t.status==='Finalizado').map(t=>t.fecha).filter(Boolean))].sort().slice(-4);
+o('<span class="t">BUSCANDO A QUIEN ALMACENO 1.474 PARES</span>');
+let hallado = null;
+for (const f of dias.slice().reverse()) {
+  const R = M.buildKpiDataset(T, f, f);
+  const per = {};
+  R.forEach(r => {
+    if (!r.mins || !r.usuarios.length || r.pct > 400) return;
+    const q = Math.round(r.qty); if (q <= 0) return;
+    const base = Math.floor(q/r.usuarios.length), resto = q % r.usuarios.length;
+    r.usuarios.forEach((u,i) => {
+      const d = per[u] || (per[u] = {q:0, esp:0, min:0, tareas:[]});
+      d.q += base + (i<resto?1:0); d.esp += r.minutosEsperados; d.min += r.mins; d.tareas.push(r);
+    });
+  });
+  const orden = Object.entries(per).sort((a,b)=>b[1].esp/b[1].min - a[1].esp/a[1].min);
+  const conEse = orden.find(([,d]) => Math.abs(d.q - 1474) <= 2);
+  o('   jornada ' + f + ': ' + orden.length + ' personas · el n.º 1 es ' + (orden[0]?orden[0][0]+' con '+nm(orden[0][1].q)+' pares':'-')
+    + (conEse ? '  <b>← aquí está: ' + conEse[0] + ' con ' + nm(conEse[1].q) + '</b>' : ''));
+  if (conEse && !hallado) hallado = { f, u: conEse[0], d: conEse[1], puesto: orden.findIndex(x=>x[0]===conEse[0])+1, total: orden.length };
+}
+if (!hallado) { o('\n<span class="r">No encontré a nadie con 1.474 pares en las últimas jornadas.</span>'); throw new Error('x'); }
+
+const { f, u, d, puesto, total } = hallado;
+o('\n<span class="t">═══ ' + u.toUpperCase() + ' · JORNADA ' + f.split('-').reverse().join('/') + ' · PUESTO ' + puesto + ' DE ' + total + ' ═══</span>\n');
+
+let sPiso = 0, sRes = 0, sPermPiso = 0, sPermRes = 0, sPerm = 0, sReal = 0, sMios = 0;
+d.tareas.forEach((r, k) => {
+  const t = T.find(x => x.id === r.id);
+  const de = M.getTaskDestinos(t);
+  const meta = M.getTaskMeta(t);
+  const permPiso = meta.metaUph > 0 ? de.piso / meta.metaUph * 60 : 0;
+  const permRes  = meta.metaReserva > 0 ? de.reserva / meta.metaReserva * 60 : 0;
+  const bruto = permPiso + permRes;
+  const perm = M.minutosPermitidos(t, meta);
+  const mios = Math.round(r.qty / r.usuarios.length);
+  sPiso += de.piso; sRes += de.reserva; sPermPiso += permPiso; sPermRes += permRes;
+  sPerm += perm; sReal += r.mins; sMios += mios;
+
+  o('<span class="a">TAREA ' + (k+1) + ' · ' + r.id + '</span>   ' + r.marca + '   con ' + r.usuarios.filter(x=>x!==u).join(', '));
+  o('   movió en total          ' + String(nm(r.qty)).padStart(7) + ' pares   (le tocan ' + nm(mios) + ' a ' + u + ', el resto al compañero)');
+  o('   ├─ al PISO (activo)     ' + String(nm(de.piso)).padStart(7) + ' pares  ÷ ' + nm(meta.metaUph) + ' por hora  →  ' + hm(permPiso).padStart(12) + ' permitidos');
+  o('   └─ a PALETA (reserva)   ' + String(nm(de.reserva)).padStart(7) + ' pares  ÷ ' + nm(meta.metaReserva) + ' por hora  →  ' + hm(permRes).padStart(12) + ' permitidos');
+  o('                                                        SUMA →  <b>' + hm(bruto) + '</b> permitidos'
+    + (perm > bruto + 0.5 ? '   <span class="a">(sube al mínimo de ' + hm(perm) + ')</span>' : ''));
+  o('   le tomó de verdad       ' + hm(r.mins).padStart(14) + '            →  <b>' + Math.round(perm/r.mins*100) + '%</b>'
+    + (r.mins <= perm ? '  <b>a tiempo</b>' : '  <span class="r">se pasó</span>') + '\n');
+});
+
+o('<span class="t">═══ CÓMO SE JUNTAN LAS ' + d.tareas.length + ' TAREAS ═══</span>');
+o('   pares al PISO en la jornada     ' + String(nm(sPiso)).padStart(8) + '  →  ' + hm(sPermPiso).padStart(14) + ' permitidos');
+o('   pares a PALETA en la jornada    ' + String(nm(sRes)).padStart(8) + '  →  ' + hm(sPermRes).padStart(14) + ' permitidos');
+o('   ─────────────────────────────────────────────────────────────────');
+o('   TIEMPO PERMITIDO DE LA JORNADA                 <b>' + hm(sPerm) + '</b>');
+o('   TIEMPO QUE LE TOMÓ DE VERDAD                   <b>' + hm(sReal) + '</b>');
+o('   ─────────────────────────────────────────────────────────────────');
+o('   EFECTIVIDAD = ' + Math.round(sPerm) + ' ÷ ' + Math.round(sReal) + ' = <b>' + Math.round(sPerm/sReal*100) + '%</b>'
+  + (sPerm >= sReal ? '   <b>EFECTIVO</b>' : '   <span class="r">NO EFECTIVO</span>'));
+o('\n   pares que le tocan a ' + u + ': <b>' + nm(sMios) + '</b>  (la mitad de cada tarea que hizo en pareja)');
+o('   <span class="a">Ojo: los pares NO entran en la división. Solo sirven para saber cuánto tiempo se le permitía.</span>');
+</script>

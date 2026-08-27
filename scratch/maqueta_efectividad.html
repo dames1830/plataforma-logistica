@@ -1,0 +1,177 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>Maqueta · Efectividad</title>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--linea:rgba(255,255,255,.09);
+ --txt:#e6edf3;--txt2:#8b949e;--txt3:#57606a;--acento:#58a6ff;--verde:#3fb950;--rojo:#f85149;--ambar:#d29922;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font:14px/1.5 'Segoe UI',system-ui,sans-serif;padding:22px}
+.marco{max-width:1240px;margin:0 auto}
+h1{font-size:19px;font-weight:800;margin-bottom:3px}
+.sub{color:var(--txt2);font-size:12.5px;margin-bottom:18px}
+.panel{background:var(--panel);border:1px solid var(--linea);border-radius:12px;overflow:hidden}
+.barra{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--linea);flex-wrap:wrap}
+.barra label{font-size:11px;font-weight:800;color:var(--acento);letter-spacing:.5px}
+input[type=date]{padding:5px 8px;border-radius:7px;border:1px solid rgba(88,166,255,.35);background:rgba(255,255,255,.04);color:var(--txt);font:inherit;font-size:12px;font-weight:700}
+.cam{background:none;border:none;cursor:pointer;font-size:17px;padding:2px 4px}
+.pes{display:flex;border-bottom:1px solid var(--linea)}
+.pes button{flex:1;text-align:left;padding:.72rem 1rem;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font:inherit}
+.pes button .t{font-size:12px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--txt3)}
+.pes button .s{font-size:11px;color:var(--txt3);margin-top:2px}
+.pes button.on{background:rgba(88,166,255,.10);border-bottom-color:var(--acento)}
+.pes button.on .t{color:var(--txt)} .pes button.on .s{color:rgba(88,166,255,.8)}
+.nota{background:rgba(88,166,255,.06);border-left:3px solid var(--acento);padding:9px 13px;border-radius:0 7px 7px 0;font-size:12px;color:#b9d4f2;margin:14px;line-height:1.75}
+.filtro{display:flex;gap:7px;padding:0 14px 13px;flex-wrap:wrap;align-items:center}
+.filtro button{padding:6px 13px;border-radius:8px;border:1px solid var(--linea);background:rgba(255,255,255,.03);color:var(--txt2);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer}
+.filtro button.on{background:rgba(88,166,255,.16);border-color:var(--acento);color:var(--txt)}
+.filtro button .c{font-weight:900;opacity:.6;margin-left:5px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:.55rem .8rem;text-align:center;font-size:10.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;border-bottom:1px solid var(--linea);white-space:nowrap}
+th.izq{text-align:left}
+td{padding:.5rem .8rem;text-align:center;font-variant-numeric:tabular-nums;border-bottom:1px solid rgba(255,255,255,.04)}
+td.izq{text-align:left;white-space:nowrap}
+tr:hover{background:rgba(255,255,255,.03)}
+.pos{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:900;margin-right:7px;background:rgba(255,255,255,.06);color:var(--txt3)}
+.pos.o1{background:#e3b341;color:#0d1117}.pos.o2{background:#adbac7;color:#0d1117}.pos.o3{background:#c08552;color:#0d1117}
+.tag{font-size:9.5px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:9px;margin-left:8px;white-space:nowrap}
+.si{background:var(--verde);color:#0d1117} .no{background:rgba(248,81,73,.16);color:var(--rojo);border:1px solid rgba(248,81,73,.45)}
+.gr{font-weight:900;font-size:16px}
+.chip{font-size:10px;color:var(--txt3)}
+.bar{height:4px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;width:76px;margin:3px auto 0}
+.bar i{display:block;height:100%;border-radius:3px}
+.pie{padding:.9rem 1rem;font-size:11.5px;color:var(--txt3);line-height:1.9;border-top:1px solid var(--linea)}
+.pie b{color:var(--txt2)}
+.cargando{padding:3rem;text-align:center;color:var(--txt3)}
+</style></head><body><div class="marco">
+<h1>Tercera pestaña · Efectividad</h1>
+<div class="sub">Datos reales del servidor, con las metas de verdad. Mueva las fechas y se recalcula.</div>
+
+<div class="panel">
+  <div class="barra">
+    <label>📅 DE:</label><input type="date" id="d1" value="2026-08-24">
+    <label>HASTA:</label><input type="date" id="d2" value="2026-08-26">
+    <button class="cam" title="Verlo en chico para mandar por WhatsApp">📷</button>
+    <span style="margin-left:auto;font-size:11px;color:var(--txt3)" id="cuenta"></span>
+  </div>
+  <div class="pes">
+    <button><div class="t">👥 Grupos</div><div class="s">¿Cómo avanza cada grupo por hora?</div></button>
+    <button><div class="t">🧑 Personas</div><div class="s">¿Cómo avanza cada persona por hora?</div></button>
+    <button class="on"><div class="t">🎯 Efectividad</div><div class="s">¿Hace el trabajo en el tiempo que corresponde?</div></button>
+  </div>
+  <div class="nota">
+    <b>Efectivo = hizo el trabajo que le dieron en el tiempo permitido o menos.</b>
+    No es quién movió más pares: es quién gastó menos tiempo por par. Diez tareas de 100 hechas en una hora cada una
+    dan menos efectividad que una sola tarea de 100 hecha en cuarenta minutos, aunque sean mil pares contra cien.
+  </div>
+  <div class="filtro" id="filtro"></div>
+  <div style="overflow-x:auto"><table>
+    <thead><tr>
+      <th class="izq" style="width:230px">Persona</th>
+      <th>Efectividad</th>
+      <th>Pares<br>almacenados</th><th>Debía<br>tomarle</th><th>Le tomó</th><th>Diferencia</th>
+      <th>Tareas<br>a tiempo</th><th class="izq">Con quién trabajó</th>
+    </tr></thead><tbody id="cuerpo"><tr><td colspan="8" class="cargando">Leyendo el servidor…</td></tr></tbody>
+  </table></div>
+  <div class="pie" id="pie"></div>
+</div>
+</div>
+<script type="module">
+/* No hay datos escritos aquí adentro: se saca la medicion del propio dashboard y se corre
+   contra las tareas y las metas reales, para que la maqueta no pueda mentir. */
+const CR = String.fromCharCode(13);
+const leer = async f => (await (await fetch(f+'?z='+Date.now())).text()).split(CR).join('');
+const tz = (s,a,b) => { const i=s.indexOf(a); return s.slice(i, s.indexOf(b,i)); };
+const DB = await leer('../js/views/dashboard_v28.js');
+const SY = await leer('../js/services_v245/sync_engine_v24_9.js');
+const MET_URL = '../js/services_v245/metasService.js?z=' + Date.now();
+const metas = await import(MET_URL);
+await metas.cargarReglas(true);
+
+const M = await import('data:text/javascript,' + encodeURIComponent(`
+import * as metasService from '${new URL(MET_URL, location.href).href}';
+const indexarMaestro = () => ({ porSku: new Map(), familias: [], detalles: [], padres: {} });
+const marcaNormalizada = m => m || 'S/M';
+const diaOperativoDeTarea = t => t.fecha || String(t.inicio||'').slice(0,10);
+` + tz(DB,'const getTaskTotalAvance = (t) => {','/* ── EL MAESTRO DE ARTÍCULOS')
+  + tz(DB,'const getTaskMinutos = (t) => {','\n/**')
+  + tz(DB,'const buildKpiDataset = (tasks, desde, hasta) => {','\n/** hh:mm a partir de minutos')
+  + tz(SY,'function descomprimirTareas(data) {','\n/**')
+  + '\nexport { buildKpiDataset, descomprimirTareas };'));
+
+const T = M.descomprimirTareas((await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data);
+
+const nm = n => Math.round(n).toLocaleString('es-PE');
+const hm = m => { m = Math.round(m); if (m < 60) return m + ' min';
+  const h = Math.floor(m/60), r = m % 60; return h + ' h' + (r ? ' ' + String(r).padStart(2,'0') + ' min' : ''); };
+const TOPE = 400;
+let VISTA = 'todos';
+
+function armar(){
+  const R = M.buildKpiDataset(T, d1.value, d2.value);
+  const per = {}; let fuera = 0, qFuera = 0, aMedias = 0;
+  R.forEach(r => {
+    if (!r.mins || !r.usuarios.length) return;
+    const q = Math.round(r.qty); if (q <= 0) return;
+    if (r.pct > TOPE) { fuera++; qFuera += q; return; }
+    const base = Math.floor(q/r.usuarios.length), resto = q % r.usuarios.length;
+    r.usuarios.forEach((u,i) => {
+      const d = per[u] || (per[u] = {esp:0,min:0,q:0,n:0,ok:0,soc:{}});
+      d.esp += r.minutosEsperados; d.min += r.mins; d.q += base + (i<resto?1:0);
+      d.n++; if (r.ok) d.ok++;
+      r.usuarios.forEach(o => { if (o !== u) d.soc[o] = (d.soc[o]||0)+1; });
+    });
+  });
+  const todas = Object.entries(per).filter(([,d]) => d.min > 0)
+    .sort((a,b) => b[1].esp/b[1].min - a[1].esp/a[1].min);
+  return { todas, fuera, qFuera, tareas: R.length };
+}
+
+function pintar(){
+  const A = armar();
+  const pct = d => d.esp/d.min*100;
+  const efectivos = A.todas.filter(([,d]) => pct(d) >= 100).length;
+  const puesto = new Map(A.todas.map(([u],i) => [u,i+1]));
+
+  filtro.innerHTML = [['todos','Todos',A.todas.length],
+                      ['si','Efectivos',efectivos],
+                      ['no','No efectivos',A.todas.length-efectivos]]
+    .map(([id,et,n]) => `<button class="${VISTA===id?'on':''}" data-v="${id}">${et}<span class="c">${n}</span></button>`).join('')
+    + `<span style="margin-left:6px;font-size:11px;color:var(--txt3)">ordenados de más a menos efectivo</span>`;
+  filtro.querySelectorAll('button').forEach(b => b.onclick = () => { VISTA = b.dataset.v; pintar(); });
+
+  const F = VISTA === 'todos' ? A.todas
+          : VISTA === 'si' ? A.todas.filter(([,d]) => pct(d) >= 100)
+          : A.todas.filter(([,d]) => pct(d) < 100);
+
+  const col = p => p >= 100 ? 'var(--verde)' : p >= 85 ? 'var(--ambar)' : 'var(--rojo)';
+  cuerpo.innerHTML = !F.length
+    ? '<tr><td colspan="8" class="cargando">Nadie en el rango elegido.</td></tr>'
+    : F.map(([u,d]) => {
+        const p = pct(d), dif = d.esp - d.min, n = puesto.get(u), es = p >= 100;
+        const soc = Object.entries(d.soc).sort((a,b)=>b[1]-a[1]).slice(0,2);
+        return `<tr>
+          <td class="izq"><span class="pos${n<=3?' o'+n:''}">${n}</span><b>${u}</b>
+            <span class="tag ${es?'si':'no'}">${es?'efectivo':'no efectivo'}</span></td>
+          <td><span class="gr" style="color:${col(p)}">${nm(p)}%</span>
+            <div class="bar"><i style="width:${Math.min(100,p/2.5)}%;background:${col(p)}"></i></div></td>
+          <td><b>${nm(d.q)}</b></td>
+          <td style="color:var(--txt2)">${hm(d.esp)}</td>
+          <td style="font-weight:900;font-size:15px;color:${col(p)}">${hm(d.min)}</td>
+          <td style="font-weight:800;color:${dif>=0?'var(--verde)':'var(--rojo)'}">${dif>=0?'&minus; ':'+ '}${hm(Math.abs(dif))}
+            <div class="chip">${dif>=0?'terminó antes':'se pasó'}</div></td>
+          <td>${d.ok} <span class="chip">de ${d.n}</span></td>
+          <td class="izq" style="color:var(--txt2)">${soc.map(([o,c])=>o+' <span class="chip">x'+c+'</span>').join(' · ')||'–'}</td>
+        </tr>`;
+      }).join('');
+
+  cuenta.textContent = A.tareas + ' tareas en el rango';
+  pie.innerHTML = `<b>Efectivo</b> es quien hizo el trabajo en el tiempo permitido o menos. Ese tiempo sale de la meta de cada tarea `
+    + `—lo que va al piso a un ritmo y lo que va a paleta al suyo— y se cambia en Config. Tareas.<br>`
+    + (A.fuera ? `<b>Se apartaron ${A.fuera} tareas (${nm(A.qFuera)} pares)</b> porque dan un número imposible: se cerraron todas juntas al final. No se promedian, para que no le inflen el número a nadie.<br>` : '')
+    + `<b>Dos personas de un mismo grupo salen con el mismo número:</b> hicieron la misma tarea juntos y no hay forma de separarlos. Los pares sí se parten a la mitad; las horas no, porque los dos estuvieron ahí todo el tiempo.`;
+}
+const d1 = document.getElementById('d1'), d2 = document.getElementById('d2');
+const filtro = document.getElementById('filtro'), cuerpo = document.getElementById('cuerpo'),
+      pie = document.getElementById('pie'), cuenta = document.getElementById('cuenta');
+d1.onchange = d2.onchange = pintar;
+pintar();
+</script></body></html>
