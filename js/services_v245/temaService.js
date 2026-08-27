@@ -46,6 +46,51 @@ const CLAVE_ULTIMO = 'deam_tema_ultimo';
  */
 const claveAsignado = (usuario) => `deam_tema_asignado_${usuario || 'anon'}`;
 
+/**
+ * AVISARLE AL SERVIDOR QUE ESTA PERSONA USA ESTE TEMA.
+ *
+ * Daniel, 27-ago-2026: vio en Administracion > Usuarios que el asistente tenia Power BI
+ * asignado, pero en su pantalla estaba en indigo. La columna mostraba lo que el
+ * ADMINISTRADOR habia dejado puesto, no lo que la persona esta usando de verdad.
+ *
+ * ESTO NO CAMBIA COMO SE APLICA EL TEMA. Se sigue guardando en esta computadora y se
+ * sigue pintando antes del primer pixel; el aviso sale despues y a nadie le importa si
+ * llega o no. Si el servidor esta caido, la persona ve su tema igual.
+ *
+ * VA POR PATCH Y CON EL USUARIO COMO id, asi el servidor cambia SOLO esa fila. Con un
+ * POST del bloque entero, dos personas cambiando el tema a la vez se borrarian entre
+ * ellas. Y va aparte de `users` a proposito: escribir ahi exige ser administrador
+ * —esa operacion borra a quien no venga en la lista— y un operario no puede ni debe.
+ *
+ * SE AVISA SOLO CUANDO CAMBIA: se recuerda aca lo ultimo que se aviso, y si es lo mismo
+ * no se manda nada. Entrar a la plataforma no tiene por que costar una llamada mas.
+ */
+const API_TEMAS = 'https://logistics-backend-wv0x.onrender.com/api/logistics/temas_en_uso';
+const claveReportado = (usuario) => `deam_tema_reportado_${usuario || 'anon'}`;
+
+export const avisarTemaAlServidor = (usuario, tema) => {
+  if (!usuario || usuario === 'anon' || !existeTema(tema)) return;
+  try {
+    if (localStorage.getItem(claveReportado(usuario)) === tema) return;
+  } catch (e) { /* almacenamiento bloqueado: se avisa igual, no molesta */ }
+
+  const entorno = (typeof window !== 'undefined' && window.PULSE_ES_BETA) ? 'beta' : 'production';
+  fetch(`${API_TEMAS}?date=MASTER`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-Environment': entorno },
+    body: JSON.stringify({ id: usuario, tema, cuando: selloLocal() })
+  }).then(r => {
+    if (!r.ok) return;
+    try { localStorage.setItem(claveReportado(usuario), tema); } catch (e) {}
+  }).catch(() => { /* sin internet: se vuelve a intentar la proxima vez que entre */ });
+};
+
+/** La hora de esta computadora en texto, sin pasar por UTC. */
+const selloLocal = () => {
+  const d = new Date(), z = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`;
+};
+
 /** El tema que se usa cuando la persona todavia no eligio ninguno. */
 export const TEMA_POR_DEFECTO = 'indigo';
 
@@ -146,6 +191,7 @@ export const setTema = (id, usuario) => {
   } catch (e) {
     console.warn('[TEMA] No se pudo guardar la eleccion:', e);
   }
+  avisarTemaAlServidor(usuario, tema);
   return tema;
 };
 
@@ -181,6 +227,9 @@ export const aplicarTemaDeUsuario = (usuario, asignado) => {
   // haya sesion-. Tambien arregla solo a quien ya tenia un tema elegido de
   // antes de que existiera esta clave.
   try { localStorage.setItem(CLAVE_ULTIMO, tema); } catch (e) { /* almacenamiento bloqueado */ }
+  // Tambien al entrar, no solo al elegir: asi la columna de Administracion se llena con
+  // quien nunca toco el tema, y con quien lo eligio en otra PC. Solo manda algo si cambio.
+  avisarTemaAlServidor(usuario, tema);
   return aplicarTema(tema);
 };
 

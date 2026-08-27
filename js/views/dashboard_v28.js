@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0448';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0449';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0448';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0448';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0448';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0448';
-import * as metasService from '../services_v245/metasService.js?v=29.0448';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0448';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0448';
+import * as adminService from '../services_v245/adminService.js?v=29.0449';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0449';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0449';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0449';
+import * as metasService from '../services_v245/metasService.js?v=29.0449';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0449';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0449';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0448';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0448';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0448';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0448';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0448';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0448';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0448';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0448';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0448';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0448';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0448';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0448';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0448';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0448';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0448';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0448';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0448';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0448';
-import { montarSlotting } from './slotting.js?v=29.0448';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0449';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0449';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0449';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0449';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0449';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0449';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0449';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0449';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0449';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0449';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0449';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0449';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0449';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0449';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0449';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0449';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0449';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0449';
+import { montarSlotting } from './slotting.js?v=29.0449';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0448';
+const VERSION = '29.0449';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5408,7 +5408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0448');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0449');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5671,7 +5671,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0448');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0449');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -5848,8 +5848,46 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   };
 
+  /* EL TEMA QUE CADA PERSONA ESTA USANDO DE VERDAD.
+   *
+   * Daniel, 27-ago-2026: vio que el asistente figuraba con Power BI y en su pantalla
+   * estaba en indigo. La columna mostraba lo ASIGNADO por el administrador, que es otra
+   * cosa: la persona puede elegir el suyo en Configuracion y ese manda.
+   *
+   * Vive en su propia area y no en `users`: escribir ahi exige ser administrador —esa
+   * operacion borra a quien no venga en la lista— y quien cambia el tema es el operario.
+   * Cada persona es una fila con su usuario como id, y viaja por PATCH, asi dos que
+   * cambian el tema a la vez no se pisan.
+   *
+   * Si el servidor no responde, la columna sigue mostrando lo asignado y ya: esto es
+   * informativo y no puede trabar la pantalla de usuarios.
+   */
+  let _temasEnUso = null;
+  const traerTemasEnUso = async () => {
+      try {
+          const entorno = window.PULSE_ES_BETA ? 'beta' : 'production';
+          const r = await fetch(`${API_BASE}/logistics/temas_en_uso?date=MASTER&t=${Date.now()}`,
+                                { headers: { 'X-Environment': entorno }, cache: 'no-store' });
+          if (!r.ok) return null;
+          const j = await r.json();
+          const m = {};
+          (Array.isArray(j.data) ? j.data : []).forEach(x => { if (x && x.id) m[x.id] = x; });
+          return m;
+      } catch (e) { return null; }
+  };
+
   const renderUsuariosSection = (container) => {
     const users = adminService.getUsers();
+    // Se pide una vez y se repinta cuando llega: la tabla sale enseguida con lo asignado
+    // y la linea de "usa" aparece un instante despues. Sin esperar a nadie.
+    if (_temasEnUso === null) {
+        _temasEnUso = {};
+        traerTemasEnUso().then(m => {
+            if (!m) return;
+            _temasEnUso = m;
+            if (container.isConnected) renderUsuariosSection(container);
+        });
+    }
     container.innerHTML = `
         <div style="display:grid; grid-template-columns: 1fr 300px; gap:1.5rem;">
             <div>
@@ -5863,7 +5901,7 @@ export const renderDashboard = async (container, user, onLogout) => {
                                 <th class="celda-izq">Usuario</th>
                                 <th class="celda-izq">Contraseña</th>
                                 <th class="celda-izq">Rol</th>
-                                <th class="celda-izq" title="Con que colores abre la plataforma esta persona la primera vez. Si despues ella elige otro en Configuracion, manda el suyo.">Tema</th>
+                                <th class="celda-izq" title="Arriba, el tema que le dejas asignado. Abajo, el que esta usando de verdad: si eligio otro en Configuracion, el suyo manda.">Tema</th>
                                 <th class="celda">Acciones</th>
                             </tr>
                         </thead>
@@ -5891,6 +5929,17 @@ export const renderDashboard = async (container, user, onLogout) => {
                                             <option value="" ${!u.tema ? 'selected' : ''}>— sin asignar —</option>
                                             ${TEMAS.map(t => `<option value="${t.id}" ${u.tema === t.id ? 'selected' : ''}>${t.nombre}</option>`).join('')}
                                         </select>
+                                        ${(() => {
+                                            const enUso = _temasEnUso && _temasEnUso[u.username];
+                                            if (!enUso || !enUso.tema) return '';
+                                            const t = TEMAS.find(x => x.id === enUso.tema);
+                                            const nombre = t ? t.nombre : enUso.tema;
+                                            const distinto = (u.tema || '') !== enUso.tema;
+                                            const cuando = String(enUso.cuando || '').replace('T', ' ').slice(0, 16);
+                                            return `<div title="${distinto ? 'Eligio otro tema en Configuracion. El suyo manda sobre el asignado.' : 'Esta usando el que le asignaste.'}${cuando ? ' Visto: ' + esc(cuando) : ''}"
+                                                style="font-size:var(--t-xs); margin-top:4px; color:${distinto ? 'var(--warning-soft)' : 'rgba(var(--ink-rgb), 0.4)'}; font-weight:${distinto ? 800 : 600};">
+                                                ${distinto ? '⇢' : '✓'} usa <b>${esc(nombre)}</b></div>`;
+                                        })()}
                                     </td>
                                     <td class="celda">
                                         <div style="display:flex; gap:0.8rem; justify-content:center;">
@@ -18237,7 +18286,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0448 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0449 | MOBILE PORTAL
                             </div>
                     </div>
 

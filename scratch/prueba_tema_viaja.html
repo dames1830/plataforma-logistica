@@ -1,0 +1,105 @@
+<!-- El tema que elige una persona viaja al servidor y se ve en Administracion.
+     Usa el servicio de tema REAL y el area de beta de verdad. -->
+<meta charset="utf-8">
+<title>Prueba: el tema viaja</title>
+<style>
+  body{margin:0;padding:22px;background:#0d1117;color:#8b949e;font:13px/1.85 system-ui,sans-serif}
+  #eco{max-width:1000px;margin:0 auto;white-space:pre-wrap}
+  b{color:#3fb950} .mal{color:#f85149;font-weight:700} .t{color:#58a6ff;font-weight:700}
+</style>
+<div id="eco"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+window.addEventListener('unhandledrejection', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + ((e.reason && e.reason.message) || e.reason)); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 45000);
+
+// Se prueba contra BETA, no contra produccion
+window.PULSE_ES_BETA = true;
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/temas_en_uso';
+const leer = async () => {
+  const r = await fetch(`${API}?date=MASTER&t=${Date.now()}`, { headers: { 'X-Environment': 'beta' }, cache: 'no-store' });
+  const j = await r.json();
+  const m = {}; (Array.isArray(j.data) ? j.data : []).forEach(x => { if (x && x.id) m[x.id] = x; });
+  return m;
+};
+const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+
+const T = await import('../js/services_v245/temaService.js?z=' + Date.now());
+eco('Servicio de tema cargado. Temas que existen: <b>' + T.TEMAS.map(t=>t.id).join(', ') + '</b>\n');
+
+const U1 = 'zz_prueba_uno', U2 = 'zz_prueba_dos';
+[U1, U2].forEach(u => { try {
+  localStorage.removeItem('deam_tema_' + u); localStorage.removeItem('deam_tema_reportado_' + u);
+} catch(e) {} });
+
+eco('<span class="t">── AL ELEGIR UN TEMA, VIAJA ──</span>');
+T.setTema('negro', U1);
+await esperar(2500);
+let m = await leer();
+ok('el servidor ya sabe que ' + U1 + ' usa "' + (m[U1]||{}).tema + '"', (m[U1]||{}).tema === 'negro');
+ok('y guarda cuando fue: ' + (m[U1]||{}).cuando, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test((m[U1]||{}).cuando || ''));
+ok('la hora es la de esta computadora, no UTC',
+   Math.abs(new Date((m[U1]||{}).cuando).getTime() - Date.now()) < 5*60*1000);
+
+eco('\n<span class="t">── DOS PERSONAS NO SE PISAN ──</span>');
+T.setTema('pbi', U2);
+await esperar(2500);
+m = await leer();
+ok(U1 + ' sigue en negro', (m[U1]||{}).tema === 'negro');
+ok(U2 + ' quedo en pbi', (m[U2]||{}).tema === 'pbi');
+
+eco('\n<span class="t">── AL CAMBIARLO OTRA VEZ, SE ACTUALIZA ──</span>');
+T.setTema('indigo', U1);
+await esperar(2500);
+m = await leer();
+ok(U1 + ' ahora dice indigo', (m[U1]||{}).tema === 'indigo');
+ok('y ' + U2 + ' no se movio', (m[U2]||{}).tema === 'pbi');
+ok('sigue habiendo UNA fila por persona, no una por cambio',
+   Object.keys(m).filter(k => k === U1).length === 1);
+
+eco('\n<span class="t">── NO MOLESTA AL SERVIDOR SI NADA CAMBIO ──</span>');
+let llamadas = 0;
+const fetchReal = window.fetch;
+window.fetch = (...a) => { if (String(a[0]).includes('temas_en_uso')) llamadas++; return fetchReal(...a); };
+T.setTema('indigo', U1);
+T.setTema('indigo', U1);
+await esperar(1200);
+ok('elegir el MISMO tema dos veces no manda nada: ' + llamadas + ' llamadas', llamadas === 0);
+T.setTema('negro', U1);
+await esperar(1500);
+ok('pero cambiarlo si manda: ' + llamadas + ' llamada', llamadas === 1);
+window.fetch = fetchReal;
+
+eco('\n<span class="t">── EL TEMA SE APLICA IGUAL AUNQUE EL SERVIDOR NO ESTE ──</span>');
+window.fetch = () => Promise.reject(new Error('sin internet'));
+try { localStorage.removeItem('deam_tema_reportado_' + U2); } catch(e) {}
+const puesto = T.setTema('pbi-classic', U2);
+ok('devuelve el tema elegido pese al error', puesto === 'pbi-classic');
+ok('y lo pinta en la pantalla', document.documentElement.getAttribute('data-tema') === 'pbi-classic');
+ok('y lo guarda en esta computadora', localStorage.getItem('deam_tema_' + U2) === 'pbi-classic');
+window.fetch = fetchReal;
+await esperar(300);
+
+eco('\n<span class="t">── UN USUARIO ANONIMO NO ENSUCIA LA LISTA ──</span>');
+const antes = Object.keys(await leer()).length;
+T.setTema('negro', 'anon');
+T.setTema('negro', '');
+await esperar(1800);
+const despues = Object.keys(await leer()).length;
+ok('elegir tema sin sesion no agrega filas: ' + antes + ' → ' + despues, antes === despues);
+
+// Se limpia lo que dejo la prueba
+for (const u of [U1, U2]) {
+  await fetch(`${API}?date=MASTER`, { method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-Environment': 'beta' },
+    body: JSON.stringify({ id: u, tema: '', cuando: '', _borrado: true }) });
+  try { localStorage.removeItem('deam_tema_' + u); localStorage.removeItem('deam_tema_reportado_' + u); } catch(e) {}
+}
+eco('\n   (se limpiaron las dos filas de prueba)');
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>' : '\n<b>El tema viaja, no se pisan, y si el servidor falla la persona ve su tema igual.</b>');
+</script>

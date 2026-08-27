@@ -1,0 +1,92 @@
+<!-- La celda de Administracion > Usuarios que dice que tema usa cada persona.
+     Se saca del dashboard y se dibuja con casos a mano: compilar no es dibujar. -->
+<meta charset="utf-8">
+<title>Prueba: la columna del tema</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body{margin:0;padding:22px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1000px;margin:0 auto 18px;white-space:pre-wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+  table{border-collapse:collapse;background:var(--panel-solid);border-radius:10px;overflow:hidden;max-width:1000px;margin:0 auto}
+  th,td{padding:.6rem .9rem;text-align:left;border-bottom:1px solid rgba(var(--ink-rgb),.06)}
+  th{font-size:11px;text-transform:uppercase;color:var(--text-muted)}
+</style>
+<div id="eco"></div>
+<table><thead><tr><th>Usuario</th><th>Tema</th></tr></thead><tbody id="cuerpo"></tbody></table>
+<script type="module">
+document.documentElement.setAttribute('data-tema','indigo');
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 15000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z='+Date.now())).text()).split(CR).join('');
+const T = await import('../js/services_v245/temaService.js?z=' + Date.now());
+
+// La celda, tal cual esta escrita en el dashboard
+const a = src.indexOf('${(() => {\n                                            const enUso = _temasEnUso');
+const b = src.indexOf('})()}', a) + 5;
+if (a < 0) throw new Error('no encontre la celda');
+const CELDA = src.slice(a, b);
+eco('De la pantalla de usuarios salieron <b>' + CELDA.length + '</b> caracteres de la celda.\n');
+
+// La celda ES una interpolacion `${ ... }`: se le quitan las llaves y queda la expresion
+// tal cual, sin volver a escapar nada. Escapar las comillas invertidas rompia el
+// template que la celda tiene adentro.
+const EXPRESION = CELDA.slice(2, -1);
+const mod = await import('data:text/javascript,' + encodeURIComponent(
+  'export const pintar = (u, _temasEnUso, TEMAS, esc) => ' + EXPRESION + ';'));
+const esc = (v) => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+const casos = [
+  ['coincide',      { username:'ana',  tema:'pbi' },    { ana:  { id:'ana',  tema:'pbi',    cuando:'2026-08-27T03:40:00' } }],
+  ['eligio otro',   { username:'luis', tema:'pbi' },    { luis: { id:'luis', tema:'indigo', cuando:'2026-08-27T03:41:00' } }],
+  ['sin asignar',   { username:'jose', tema:'' },       { jose: { id:'jose', tema:'negro',  cuando:'2026-08-27T03:42:00' } }],
+  ['nunca entro',   { username:'rosa', tema:'pbi' },    {}],
+  ['servidor caido',{ username:'juan', tema:'negro' },  null],
+  ['tema raro',     { username:'kata', tema:'pbi' },    { kata: { id:'kata', tema:'inventado', cuando:'' } }],
+  // Lo que viene de AFUERA es lo que el servidor guardo, no el nombre de usuario:
+  // si alguien mete HTML ahi, no puede colarse en la pantalla del administrador.
+  ['dato con HTML',  { username:'kata2', tema:'' },
+     { kata2: { id:'kata2', tema:'<img src=x onerror=alert(1)>', cuando:'<b>ya</b>' } }]
+];
+document.getElementById('cuerpo').innerHTML = casos.map(([et,u,m]) =>
+  `<tr><td>${et}<div style="font-size:11px;opacity:.5">asignado: ${u.tema||'—'}</div></td>
+       <td>${mod.pintar(u, m, T.TEMAS, esc)}</td></tr>`).join('');
+
+const celda = (i) => document.querySelectorAll('#cuerpo tr')[i].children[1].innerText.trim();
+const html  = (i) => document.querySelectorAll('#cuerpo tr')[i].children[1].innerHTML;
+
+eco('<span class="t">── LO QUE TIENE QUE MOSTRAR ──</span>');
+// El nombre sale de TEMAS, no se escribe a mano: "Gerencial · Power BI", "Índigo Noche"...
+const nombreDe = (id) => (T.TEMAS.find(t => t.id === id) || {}).nombre;
+ok('cuando usa el asignado, lo dice con un visto: "' + celda(0) + '"',
+   celda(0) === '✓ usa ' + nombreDe('pbi'));
+ok('cuando eligio OTRO, lo marca distinto: "' + celda(1) + '"',
+   celda(1) === '⇢ usa ' + nombreDe('indigo'));
+ok('y lo pinta en ambar, para que salte a la vista', /warning-soft/.test(html(1)));
+ok('el que coincide va apagado, sin llamar la atencion', !/warning-soft/.test(html(0)));
+ok('sin tema asignado pero usando uno, tambien lo marca: "' + celda(2) + '"',
+   celda(2) === '⇢ usa ' + nombreDe('negro'));
+
+eco('\n<span class="t">── LO QUE NO TIENE QUE ROMPER ──</span>');
+ok('quien nunca entro no muestra nada', celda(3) === '');
+ok('si el servidor no respondio, tampoco', celda(4) === '');
+ok('un tema que ya no existe se muestra tal cual, sin reventar: "' + celda(5) + '"', /inventado/.test(celda(5)));
+ok('un dato con HTML adentro no se cuela: sale como texto',
+   !/<img/i.test(html(6)) && /&lt;img/.test(html(6)) && document.querySelectorAll('#cuerpo img').length === 0);
+ok('y en el titulo tampoco',
+   !/<b>ya<\/b>/.test(html(6)));
+
+eco('\n<span class="t">── LA FECHA SE LEE ──</span>');
+ok('el titulo dice cuando se lo vio: "' + (document.querySelectorAll('#cuerpo [title]')[1]||{}).title + '"',
+   /Visto: 2026-08-27 03:41/.test((document.querySelectorAll('#cuerpo [title]')[1]||{}).title || ''));
+ok('y explica que el suyo manda sobre el asignado',
+   /manda sobre el asignado/i.test((document.querySelectorAll('#cuerpo [title]')[1]||{}).title || ''));
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>' : '\n<b>La columna dibuja bien los siete casos.</b>');
+</script>
