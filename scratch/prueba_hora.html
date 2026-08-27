@@ -51,7 +51,10 @@ eco('Tareas bajadas del servidor: <b>' + tareas.length + '</b>');
 const fechas = [...new Set(tareas.map(t => t.fecha).filter(Boolean))].sort();
 eco('Van del ' + fechas[0] + ' al ' + fechas[fechas.length - 1] + ' (<b>' + fechas.length + ' jornadas</b>)');
 
-window.renderAlmacenajeTareas = () => { pintar(); };
+// El respaldo cuenta cuantas veces se pidio rehacer la pestana ENTERA: si el arreglo
+// funciona, tiene que quedarse en cero.
+window.__redibujosCompletos = 0;
+window.renderAlmacenajeTareas = () => { window.__redibujosCompletos++; pintar(); };
 const pintar = () => { document.getElementById('salida').innerHTML = render(tareas); };
 pintar();
 
@@ -85,5 +88,26 @@ const capa = document.getElementById('fotoHora');
 ok('abre la vista para WhatsApp', !!capa);
 ok('va en blanco, no en el oscuro del tablero', /background:#fff/.test(window.__hourlyFotoHTML));
 ok('y trae la misma jornada', /26-Ago/.test(window.__hourlyFotoHTML));
+eco('\n── EL PARPADEO ──');
+window.__redibujosCompletos = 0;
+const antesCaja = document.getElementById('cuadroPorHora');
+window.__hourlySetRango('desde', '2026-08-24');
+const despuesCaja = document.getElementById('cuadroPorHora');
+ok('cambiar la fecha NO rehace la pestaña entera (' + window.__redibujosCompletos + ' redibujos completos)',
+   window.__redibujosCompletos === 0);
+ok('el cuadro se reemplaza a sí mismo', !!despuesCaja && despuesCaja !== antesCaja);
+window.__hourlySetPage(0);
+ok('la paginación tampoco la rehace', window.__redibujosCompletos === 0);
+window.__hourlyHoy();
+ok('el botón HOY tampoco', window.__redibujosCompletos === 0);
+ok('y sigue quedando la jornada de hoy', filas().length === 1 && filas()[0] === '26-Ago');
+
+// Acá NO se puede comparar cuánto DOM se ahorra: en este banco el contenedor solo tiene
+// el cuadro, mientras que en la plataforma `renderAlmacenajeTareas` rehace la pestaña
+// entera —tarjetas, lista de tareas y los cuatro reportes—. Lo que sí se prueba, y es lo
+// que importa, es que ese redibujado completo ya no se pide: el contador quedó en cero.
+eco('   el cuadro pesa <b>' + document.getElementById('cuadroPorHora').outerHTML.length.toLocaleString('es-PE')
+  + '</b> caracteres, y es lo único que se rehace.');
+
 eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>' : '\n<b>Todo como se pidió.</b>');
 </script>
