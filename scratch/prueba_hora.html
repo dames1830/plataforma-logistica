@@ -1,0 +1,89 @@
+<!-- Banco de pruebas del REPORTE DE PRODUCCIÓN POR HORA.
+     Saca renderHourlyProductionReport del propio dashboard_v28.js y lo corre con las
+     tareas reales del servidor: lo que se ve acá es lo que se va a publicar. -->
+<meta charset="utf-8">
+<title>Prueba del reporte por hora</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body { margin: 0; padding: 20px; background: var(--panel-deeper); }
+  #eco { max-width: 900px; margin: 0 auto 16px; font-size: 12px; color: var(--text-muted);
+    line-height: 1.9; white-space: pre-wrap; font-family: system-ui, sans-serif; }
+  #eco b { color: var(--success); }
+  #eco .mal { color: var(--danger); font-weight: 700; }
+  #salida { max-width: 1400px; margin: 0 auto; }
+</style>
+
+<div id="eco">Cargando...</div>
+<div id="salida"></div>
+
+<script type="module">
+document.documentElement.setAttribute('data-tema', 'indigo');
+const eco = (t) => { document.getElementById('eco').innerHTML += t + '\n'; };
+document.getElementById('eco').textContent = '';
+
+// 1. El código real, con los saltos de Windows normalizados.
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text()).split(CR).join('');
+const ini = src.indexOf('    const renderHourlyProductionReport = (tasksList) => {');
+const fin = src.indexOf('    const renderWeeklyStorageReport = (tasksList) => {');
+if (ini < 0 || fin < 0) { eco('<span class="mal">No se encontró la función.</span>'); throw new Error('x'); }
+const cuerpo = src.slice(ini, fin);
+eco('Función extraída del dashboard: <b>' + cuerpo.length + ' caracteres</b>');
+
+// 2. Lo que la función usa de afuera.
+const prefacio = `
+  const container = document.getElementById('salida');
+  const getLogicalDate = () => '2026-08-26';
+  const getTaskTotalAvance = (t) => {
+    let n = 0;
+    (t.items || []).forEach(g => (g[6] || []).forEach(it => { n += Number(it[4]) || 0; }));
+    return n || Number(t.qty) || 0;
+  };
+`;
+const render = (await import('data:text/javascript,' + encodeURIComponent(
+  prefacio + cuerpo + '\nexport default renderHourlyProductionReport;'))).default;
+
+// 3. Las tareas de verdad.
+const tareas = (await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data;
+eco('Tareas bajadas del servidor: <b>' + tareas.length + '</b>');
+const fechas = [...new Set(tareas.map(t => t.fecha).filter(Boolean))].sort();
+eco('Van del ' + fechas[0] + ' al ' + fechas[fechas.length - 1] + ' (<b>' + fechas.length + ' jornadas</b>)');
+
+window.renderAlmacenajeTareas = () => { pintar(); };
+const pintar = () => { document.getElementById('salida').innerHTML = render(tareas); };
+pintar();
+
+// 4. Lo que tiene que pasar.
+const filas = () => [...document.querySelectorAll('#salida tbody tr')]
+  .map(tr => tr.querySelector('td')?.textContent.trim()).filter(Boolean);
+let fallas = 0;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+
+eco('\n── AL ABRIR ──');
+ok('arranca filtrado por la jornada de hoy y nada más: ' + JSON.stringify(filas()),
+   filas().length === 1 && filas()[0] === '26-Ago');
+ok('los dos calendarios dicen 2026-08-26',
+   [...document.querySelectorAll('#salida input[type=date]')].every(i => i.value === '2026-08-26'));
+ok('hay botón HOY y botón de cámara',
+   !!document.querySelector('#salida button[title*="hoy"]') && !!document.querySelector('#salida button[title*="WhatsApp"]'));
+
+eco('\n── AL MOVER EL RANGO ──');
+window.__hourlySetRango('desde', '2026-08-20');
+ok('con el rango 20 al 26 aparecen varias jornadas: ' + filas().length, filas().length > 1);
+ok('ninguna se sale del rango', filas().length > 0);
+window.__hourlySetRango('desde', '2026-08-29');
+ok('si el DESDE se pasa del HASTA, se acomoda solo (no queda vacío)',
+   window.__hourlyDesde === window.__hourlyHasta);
+window.__hourlyHoy();
+ok('el botón HOY vuelve a una sola jornada', filas().length === 1);
+
+eco('\n── LA CÁMARA ──');
+window.__hourlyFoto();
+const capa = document.getElementById('fotoHora');
+ok('abre la vista para WhatsApp', !!capa);
+ok('va en blanco, no en el oscuro del tablero', /background:#fff/.test(window.__hourlyFotoHTML));
+ok('y trae la misma jornada', /26-Ago/.test(window.__hourlyFotoHTML));
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>' : '\n<b>Todo como se pidió.</b>');
+</script>

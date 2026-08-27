@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0430';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0431';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0430';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0430';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0430';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0430';
-import * as metasService from '../services_v245/metasService.js?v=29.0430';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0430';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0430';
+import * as adminService from '../services_v245/adminService.js?v=29.0431';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0431';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0431';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0431';
+import * as metasService from '../services_v245/metasService.js?v=29.0431';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0431';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0431';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0430';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0430';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0430';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0430';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0430';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0430';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0430';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0430';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0430';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0430';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0430';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0430';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0430';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0430';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0430';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0430';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0430';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0430';
-import { montarSlotting } from './slotting.js?v=29.0430';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0431';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0431';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0431';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0431';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0431';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0431';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0431';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0431';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0431';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0431';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0431';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0431';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0431';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0431';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0431';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0431';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0431';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0431';
+import { montarSlotting } from './slotting.js?v=29.0431';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0430';
+const VERSION = '29.0431';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5338,7 +5338,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0430');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0431');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5601,7 +5601,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0430');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0431');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18167,7 +18167,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0430 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0431 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -34114,7 +34114,42 @@ window.__menuMapa = (btn) => {
     const renderHourlyProductionReport = (tasksList) => {
         const targetHours = [20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6];
         const hourlyData = {};
-        
+
+        /* EL CUADRO ARRANCA EN EL DÍA DE HOY, NO EN TODO EL HISTORIAL.
+         *
+         * Daniel, 26-ago-2026: *"quiero que le pongas un rango de fechas con su ícono de
+         * calendario, y que cada vez que abra la web se filtre por la fecha actual. Quiero que
+         * desaparezca toda esa data y que solamente aparezca la que estoy filtrando"*.
+         *
+         * Traía las 25 jornadas más recientes con paginación, así que para ver la noche de hoy
+         * había que leerla entre veinte filas de días viejos.
+         *
+         * VA CON `getLogicalDate()` Y NO CON LA FECHA DEL CALENDARIO: el turno entra a las
+         * 20:00 y cruza la medianoche; con la fecha de calendario, a las 00:30 el cuadro se
+         * vaciaría solo en mitad del turno. */
+        const _hoy = getLogicalDate();
+        if (!window.__hourlyDesde) window.__hourlyDesde = _hoy;
+        if (!window.__hourlyHasta) window.__hourlyHasta = _hoy;
+        const desde = window.__hourlyDesde, hasta = window.__hourlyHasta;
+
+        if (!window.__hourlySetRango) window.__hourlySetRango = (cual, valor) => {
+            const _sy = window.scrollY;
+            if (cual === 'desde') window.__hourlyDesde = valor || _hoy;
+            else window.__hourlyHasta = valor || _hoy;
+            // Si el rango queda al revés, se acomoda solo en vez de mostrar un cuadro vacío.
+            if (window.__hourlyDesde > window.__hourlyHasta) {
+                if (cual === 'desde') window.__hourlyHasta = window.__hourlyDesde;
+                else window.__hourlyDesde = window.__hourlyHasta;
+            }
+            window.__hourlyPage = 0;
+            if (window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container);
+            requestAnimationFrame(() => window.scrollTo({ top: _sy, behavior: 'instant' }));
+        };
+        if (!window.__hourlyHoy) window.__hourlyHoy = () => {
+            window.__hourlyDesde = window.__hourlyHasta = getLogicalDate();
+            window.__hourlySetRango('hasta', window.__hourlyHasta);
+        };
+
         tasksList.forEach(t => {
             if (t.status !== 'Finalizado') return;
             if (!t.termino) return;
@@ -34134,7 +34169,10 @@ window.__menuMapa = (btn) => {
             hourlyData[dateKey][hr] += getTaskTotalAvance(t);
         });
 
+        // Las fechas del área son 'YYYY-MM-DD', así que se comparan como texto sin convertir
+        // nada: cualquier `new Date()` en el medio arrastraría el problema del huso horario.
         const activeDates = Object.keys(hourlyData).filter(dateKey => {
+            if (dateKey < desde || dateKey > hasta) return false;
             const total = targetHours.reduce((sum, hr) => sum + hourlyData[dateKey][hr], 0);
             return total > 0;
         });
@@ -34160,15 +34198,112 @@ window.__menuMapa = (btn) => {
             return `${day}-${months[monthIdx] || parts[1]}`;
         };
 
+        /* ══════════════════════════════════════════════════════════════════════════════
+         * LA FOTO PARA WHATSAPP
+         *
+         * Daniel, 26-ago-2026: *"un ícono de cámara que me muestre la misma pantalla pero
+         * más reducida, como para mandarlo a un WhatsApp. Le hago un recorte y lo mando"*.
+         *
+         * NO SACA UNA IMAGEN: arma la misma tabla en chico y él recorta con la herramienta de
+         * Windows. Bajar una imagen desde el navegador pedía una librería nueva de 200 KB para
+         * ahorrarle un recorte que ya sabe hacer.
+         *
+         * VA EN BLANCO Y NEGRO, sin el cian ni el fondo oscuro del tablero: en WhatsApp la
+         * foto se ve en un cuadrito y el neón sobre oscuro no se lee. Es el mismo criterio de
+         * la hoja impresa.
+         *
+         * SIN PAGINACIÓN: la foto lleva TODAS las jornadas del rango. Recortar media tabla y
+         * mandarla sería peor que no mandar nada.
+         * ══════════════════════════════════════════════════════════════════════════════ */
+        const _rangoTxt = desde === hasta
+            ? formatLogicalDate(desde)
+            : `${formatLogicalDate(desde)} al ${formatLogicalDate(hasta)}`;
+        const _granTotal = activeDates.reduce((s, d) =>
+            s + targetHours.reduce((a, hr) => a + hourlyData[d][hr], 0), 0);
+        const _totPorHora = targetHours.map(hr =>
+            activeDates.reduce((s, d) => s + hourlyData[d][hr], 0));
+
+        window.__hourlyFotoHTML = `
+          <div style="background:#fff; color:#111; padding:14px 16px; border-radius:10px; font-family:Arial, sans-serif;">
+            <div style="font-size:15px; font-weight:900; letter-spacing:0.5px;">PRODUCCIÓN POR HORA</div>
+            <div style="font-size:11px; color:#666; margin-bottom:9px;">${_rangoTxt} · unidades almacenadas</div>
+            <table style="border-collapse:collapse; font-size:11px;">
+              <thead>
+                <tr style="background:#12365c; color:#fff;">
+                  <th style="padding:4px 7px; text-align:left;">FECHA</th>
+                  ${targetHours.map(hr => `<th style="padding:4px 5px; text-align:center;">${String(hr).padStart(2, '0')}</th>`).join('')}
+                  <th style="padding:4px 7px; text-align:center;">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${activeDates.length === 0
+                  ? `<tr><td colspan="${targetHours.length + 2}" style="padding:18px; text-align:center; color:#888;">Sin producción en el rango.</td></tr>`
+                  : activeDates.map((d, i) => {
+                      const fila = hourlyData[d];
+                      const tot = targetHours.reduce((a, hr) => a + fila[hr], 0);
+                      return `<tr style="background:${i % 2 ? '#f4f6f9' : '#fff'};">
+                        <td style="padding:3px 7px; font-weight:700; border-bottom:1px solid #e3e7ee;">${formatLogicalDate(d)}</td>
+                        ${targetHours.map(hr => `<td style="padding:3px 5px; text-align:center; border-bottom:1px solid #e3e7ee; color:${fila[hr] > 0 ? '#111' : '#c3c9d4'};">${fila[hr] > 0 ? fila[hr].toLocaleString('es-PE') : '-'}</td>`).join('')}
+                        <td style="padding:3px 7px; text-align:center; font-weight:900; border-bottom:1px solid #e3e7ee; background:#eef3f9;">${tot.toLocaleString('es-PE')}</td>
+                      </tr>`;
+                    }).join('')}
+              </tbody>
+              ${activeDates.length > 1 ? `<tfoot><tr style="background:#12365c; color:#fff; font-weight:900;">
+                  <td style="padding:4px 7px;">TOTAL</td>
+                  ${_totPorHora.map(v => `<td style="padding:4px 5px; text-align:center;">${v > 0 ? v.toLocaleString('es-PE') : '-'}</td>`).join('')}
+                  <td style="padding:4px 7px; text-align:center;">${_granTotal.toLocaleString('es-PE')}</td>
+                </tr></tfoot>` : ''}
+            </table>
+            <div style="font-size:10px; color:#888; margin-top:7px;">${activeDates.length} ${activeDates.length === 1 ? 'jornada' : 'jornadas'} · ${_granTotal.toLocaleString('es-PE')} unidades</div>
+          </div>`;
+
+        if (!window.__hourlyFoto) window.__hourlyFoto = () => {
+            document.getElementById('fotoHora')?.remove();
+            const capa = document.createElement('div');
+            capa.id = 'fotoHora';
+            // Nada de glass-panel acá: el desenfoque recorta lo que se sale del recuadro y la
+            // tabla es ancha. Fondo sólido y a un costado el botón de cerrar.
+            capa.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(8,12,20,0.86);'
+                + 'display:flex; align-items:center; justify-content:center; padding:22px; overflow:auto;';
+            capa.innerHTML = `<div style="display:flex; flex-direction:column; gap:9px; align-items:flex-end; max-width:100%;">
+                <button style="padding:6px 14px; border-radius:8px; border:none; background:#fff; color:#12365c;
+                               font-weight:800; font-size:13px; cursor:pointer; font-family:Arial, sans-serif;">✕ Cerrar</button>
+                <div style="overflow:auto; max-width:100%;">${window.__hourlyFotoHTML}</div>
+                <div style="color:#9fb3cc; font-size:11px; font-family:Arial, sans-serif;">Recorte con Win + Shift + S y mándelo por WhatsApp</div>
+              </div>`;
+            const cerrar = () => capa.remove();
+            capa.querySelector('button').addEventListener('click', cerrar);
+            capa.addEventListener('click', (e) => { if (e.target === capa) cerrar(); });
+            document.addEventListener('keydown', function esc(e) {
+                if (e.key === 'Escape') { cerrar(); document.removeEventListener('keydown', esc); }
+            });
+            document.body.appendChild(capa);
+        };
+
         return `
         <!-- REPORTE DE PRODUCCIÓN POR HORA (ANCHO COMPLETO) -->
         <div style="background:var(--bg-dark); border:2px solid var(--cyan-neon); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--cyan-neon-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
-            <div style="border-left: 4px solid var(--cyan-neon); padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
-                <h3 style="color:var(--cyan-neon); font-weight:900; margin:0; font-size:var(--t-lg); letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
-                    REPORTE DE PRODUCCIÓN POR HORA
-                </h3>
-                <div style="font-size:var(--t-xs); color:rgba(var(--cyan-neon-rgb), 0.6); font-weight:700; letter-spacing:0.5px;">
-                    CANTIDAD DE UNIDADES PROCESADAS POR RANGO HORARIO (TAREA FINALIZADA)
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+                <div style="border-left: 4px solid var(--cyan-neon); padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+                    <h3 style="color:var(--cyan-neon); font-weight:900; margin:0; font-size:var(--t-lg); letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
+                        REPORTE DE PRODUCCIÓN POR HORA
+                    </h3>
+                    <div style="font-size:var(--t-xs); color:rgba(var(--cyan-neon-rgb), 0.6); font-weight:700; letter-spacing:0.5px;">
+                        CANTIDAD DE UNIDADES PROCESADAS POR RANGO HORARIO (TAREA FINALIZADA)
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:var(--t-xs); color:rgba(var(--cyan-neon-rgb), 0.7); font-weight:800; letter-spacing:0.5px;">📅 DE:</span>
+                    <input type="date" value="${desde}" onchange="window.__hourlySetRango('desde', this.value)"
+                           style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
+                    <span style="font-size:var(--t-xs); color:rgba(var(--cyan-neon-rgb), 0.7); font-weight:800; letter-spacing:0.5px;">HASTA:</span>
+                    <input type="date" value="${hasta}" onchange="window.__hourlySetRango('hasta', this.value)"
+                           style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
+                    <button onclick="window.__hourlyHoy()" title="Volver a la jornada de hoy"
+                            style="padding:5px 10px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--cyan-neon); font-size:var(--t-xs); font-weight:800; cursor:pointer; font-family:inherit;">HOY</button>
+                    <!-- La cámara arma la misma tabla en chico para recortarla y mandarla por WhatsApp. -->
+                    <button onclick="window.__hourlyFoto()" title="Verlo en chico para mandar por WhatsApp"
+                            style="padding:5px 11px; border-radius:7px; border:1px solid var(--cyan-neon); background:rgba(var(--cyan-neon-rgb), 0.14); color:var(--cyan-neon); font-size:var(--t-md); cursor:pointer; line-height:1; font-family:inherit;">📷</button>
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:0.4rem;">

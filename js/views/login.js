@@ -1,4 +1,4 @@
-import { login as authLogin } from '../services_v245/auth.js?v=29.0430';
+import { login as authLogin } from '../services_v245/auth.js?v=29.0431';
 
 export const renderLogin = (container, onLoginSuccess) => {
   /* Si venimos de una sesion vieja invalidada por falta de token, se avisa por que
@@ -72,7 +72,7 @@ export const renderLogin = (container, onLoginSuccess) => {
       
       </form>
       <div style="text-align: center; margin-top: 1.5rem; font-size:var(--t-xs); color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em;">
-        SYSTEM BUILD: v29.0430 | SECURE SYNC
+        SYSTEM BUILD: v29.0431 | SECURE SYNC
       </div>
     </div>
   `;
