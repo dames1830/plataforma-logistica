@@ -1,0 +1,110 @@
+<!-- La regla que le da cara de Power BI a los otros cuatro reportes.
+     Arma tablas con la misma forma que las de la plataforma y mide lo que el navegador
+     termina aplicando, en Power BI y en los otros tres temas. -->
+<meta charset="utf-8">
+<title>Prueba: los reportes con cara de Power BI</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1020px;margin:0 auto 18px;white-space:pre-wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+  #lienzo{max-width:1020px;margin:0 auto}
+</style>
+<div id="eco"></div>
+<div id="lienzo"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 15000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z='+Date.now())).text()).split(CR).join('');
+const css = (await (await fetch('../css/temas.css?z='+Date.now())).text()).split(CR).join('');
+
+eco('<span class="t">── LA REGLA ESTA Y LAS CLASES TAMBIEN ──</span>');
+ok('la regla vive en temas.css', /\[data-tema="pbi"\] \.rep-pbi thead th/.test(css));
+ok('y solo dentro del tema Power BI',
+   !/(^|\n)\s*\.rep-pbi thead th/.test(css.replace(/\[data-tema="pbi"\] /g, '@@')));
+const cuantas = (re) => (src.match(re) || []).length;
+ok('las cuatro tablas llevan la clase: ' + cuantas(/class="rep-pbi"/g), cuantas(/class="rep-pbi"/g) === 4);
+ok('las filas normales estan marcadas: ' + cuantas(/<tr class="f"/g), cuantas(/<tr class="f"/g) === 4);
+ok('los subtotales: ' + cuantas(/<tr class="sub-tot"/g), cuantas(/<tr class="sub-tot"/g) === 1);
+ok('los totales generales: ' + cuantas(/<tr class="gran-tot"/g), cuantas(/<tr class="gran-tot"/g) === 2);
+ok('Marcas NO lleva la clase: ese se viste por su propio modulo',
+   !/class="rep-pbi"[^]{0,400}cabeceraMarcas/.test(src));
+
+/* Se arma una tabla con la MISMA forma que las de la plataforma: los estilos pegados en
+   cada fila, que son los que la regla tiene que poder pisar. */
+const lienzo = document.getElementById('lienzo');
+const armar = () => `
+  <table class="rep-pbi" style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
+    <thead><tr style="color:var(--cyan-neon); text-transform:uppercase; font-size:var(--t-xs); font-weight:800; border-bottom:2px solid var(--cyan-neon);">
+      <th style="padding:6px 8px; text-align:left;">FECHA</th><th style="padding:6px 8px;">TURNO</th><th style="padding:6px 8px;">QTY</th>
+    </tr></thead>
+    <tbody>
+      ${[1,2,3,4].map(i => `<tr class="f" style="border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--bg-dark);">
+        <td style="padding:5px 6px; color:var(--text-muted);">26-Ago</td>
+        <td style="padding:5px 6px; color:var(--text-strong);">NOCHE</td>
+        <td style="padding:5px 6px; color:var(--text-strong);">${i}00</td></tr>`).join('')}
+      <tr class="sub-tot" style="background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.12) 0%, rgba(var(--bg-rgb), 0.5) 100%); border-top: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6);">
+        <td colspan="2" style="padding:7px 8px; color:var(--cyan-neon); font-weight:900;">TOTAL CDBUFFER-B</td>
+        <td style="padding:7px 8px; color:var(--text-strong);">1,000</td></tr>
+      <tr class="gran-tot" style="background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.25) 0%, rgba(var(--bg-rgb), 0.8) 100%); border-top: 2px solid var(--cyan-neon);">
+        <td colspan="2" style="padding:9px 8px; color:var(--text-strong); font-weight:900;">TOTAL GENERAL</td>
+        <td style="padding:9px 8px;"><span style="color:var(--success); font-weight:900;">1,000</span></td></tr>
+    </tbody></table>`;
+const pintar = (tema) => { document.documentElement.setAttribute('data-tema', tema); lienzo.innerHTML = armar(); };
+const bg = (sel) => { const e = lienzo.querySelector(sel); return e ? getComputedStyle(e).backgroundColor : 'no hay'; };
+const fg = (sel) => { const e = lienzo.querySelector(sel); return e ? getComputedStyle(e).color : 'no hay'; };
+const fuente = (sel) => { const e = lienzo.querySelector(sel); return e ? getComputedStyle(e).fontFamily.split(',')[0].replace(/"/g,'') : ''; };
+const lum = (c) => { const m = c.match(/\d+/g); return m ? 0.299*+m[0]+0.587*+m[1]+0.114*+m[2] : null; };
+
+eco('\n<span class="t">── EN POWER BI, LA REGLA LE GANA AL ESTILO PEGADO ──</span>');
+pintar('pbi');
+ok('el encabezado queda en el azul de la foto: ' + bg('thead th'), bg('thead th') === 'rgb(18, 54, 92)');
+ok('con letras blancas y en Arial: ' + fuente('thead th'), fg('thead th') === 'rgb(255, 255, 255)' && fuente('thead th') === 'Arial');
+const fs = [...lienzo.querySelectorAll('tr.f')].map(tr => getComputedStyle(tr).backgroundColor);
+ok('las filas alternan: ' + [...new Set(fs)].join('  /  '), new Set(fs).size === 2);
+ok('ninguna seguida repite', fs.every((f,i) => i===0 || f !== fs[i-1]));
+ok('el celeste es muy suave', lum(fs.find(f => f !== 'rgb(255, 255, 255)')) > 235);
+ok('el subtotal va en tono suave: ' + bg('tr.sub-tot td'), bg('tr.sub-tot td') === 'rgb(219, 228, 240)');
+ok('y con letras oscuras', lum(fg('tr.sub-tot td')) < 130);
+ok('el TOTAL GENERAL en azul fuerte: ' + bg('tr.gran-tot td'), bg('tr.gran-tot td') === 'rgb(18, 54, 92)');
+ok('con letras blancas', fg('tr.gran-tot td') === 'rgb(255, 255, 255)');
+ok('y el número de dentro también, aunque traía su propio color verde',
+   fg('tr.gran-tot span') === 'rgb(255, 255, 255)');
+ok('el subtotal y el total NO son iguales', bg('tr.sub-tot td') !== bg('tr.gran-tot td'));
+
+eco('\n<span class="t">── TODO SE LEE ──</span>');
+const flojas = [...lienzo.querySelectorAll('th,td')].filter(e => {
+  if (!e.innerText.trim()) return false;
+  let el = e, f = getComputedStyle(e).backgroundColor;
+  while (f === 'rgba(0, 0, 0, 0)' && el.parentElement) { el = el.parentElement; f = getComputedStyle(el).backgroundColor; }
+  const a = lum(getComputedStyle(e).color), b = lum(f);
+  return a !== null && b !== null && Math.abs(a-b) < 45;
+});
+ok('ninguna celda queda casi invisible' + (flojas.length ? ': "' + flojas[0].innerText.trim() + '"' : ''), !flojas.length);
+
+eco('\n<span class="t">── LOS OTROS TRES TEMAS NO SE MUEVEN ──</span>');
+for (const tema of ['indigo','pbi-classic','negro']) {
+  pintar(tema);
+  ok(tema + ': el encabezado no se pone azul', bg('thead th') !== 'rgb(18, 54, 92)');
+}
+pintar('negro');
+ok('en Negro nada queda invisible', [...lienzo.querySelectorAll('th,td')].every(e => {
+  if (!e.innerText.trim()) return true;
+  let el = e, f = getComputedStyle(e).backgroundColor;
+  while (f === 'rgba(0, 0, 0, 0)' && el.parentElement) { el = el.parentElement; f = getComputedStyle(el).backgroundColor; }
+  const a = lum(getComputedStyle(e).color), b = lum(f);
+  return a === null || b === null || Math.abs(a-b) >= 40;
+}));
+
+document.documentElement.setAttribute('data-tema','pbi'); pintar('pbi');
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>Los cuatro reportes quedan con la cara de la foto, y solo en Power BI.</b>');
+</script>

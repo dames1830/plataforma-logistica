@@ -919,3 +919,54 @@ table td { padding-top: var(--e-2); padding-bottom: var(--e-2); }
 /* Las cifras, siempre alineadas por columna: comparar de un vistazo y sumar
    sin equivocarse. */
 table { font-variant-numeric: tabular-nums; }
+
+/* ── LOS REPORTES CON CARA DE POWER BI ────────────────────────────────────────
+   Daniel, 27-ago-2026, comparando la pantalla con la foto que manda por WhatsApp:
+   *"seria bueno que estos reportes de la web sean igualitos a ese de ahi, siempre y
+   cuando este en el tema de Power BI. No me vayas a poner en todos los temas"*.
+
+   Las tablas de estos reportes estan escritas a mano, cada una distinta y con estilos
+   pegados en cada celda. Tocarlas una por una seria enorme y se romperia al primer
+   cambio; en vez de eso llevan una clase y esta regla las cubre a todas.
+
+     .rep-pbi           en la <table>
+     tr.f               una fila normal: alterna blanco y celeste muy suave
+     tr.sub-tot         un subtotal: tono suave, para que se lea como un escalon
+     tr.gran-tot        el total de verdad: azul fuerte con letras blancas
+
+   VA CON !important A PROPOSITO. Los estilos de estas tablas estan escritos en el
+   atributo `style` de cada fila, y eso le gana a cualquier hoja de estilos. Es la unica
+   forma de vestirlas sin reescribirlas.
+
+   SOLO EN ESTE TEMA. En Indigo y en Negro el fondo ya es oscuro y este azul se veria
+   como un parche: fuera de [data-tema="pbi"] no aplica ninguna de estas reglas.
+   ──────────────────────────────────────────────────────────────────────────── */
+[data-tema="pbi"] .rep-pbi thead th {
+  background: #12365c !important;
+  color: #fff !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  border-bottom: none !important;
+  letter-spacing: .04em;
+}
+[data-tema="pbi"] .rep-pbi tbody tr.f          { background: #ffffff !important; }
+[data-tema="pbi"] .rep-pbi tbody tr.f:nth-of-type(even) { background: #f4f6f9 !important; }
+[data-tema="pbi"] .rep-pbi tbody tr.f > td     { border-bottom: 1px solid #eef1f5 !important; }
+
+[data-tema="pbi"] .rep-pbi tbody tr.sub-tot,
+[data-tema="pbi"] .rep-pbi tbody tr.sub-tot > td {
+  background: #dbe4f0 !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  border-top: none !important; border-bottom: none !important;
+}
+/* Sobre el azul fuerte manda el blanco: los colores de semaforo que traiga cada celda
+   —verde, ambar, rojo— no se leen ahi, asi que se apagan todos. En la foto el TOTAL
+   tambien va entero en blanco. */
+[data-tema="pbi"] .rep-pbi tbody tr.gran-tot,
+[data-tema="pbi"] .rep-pbi tbody tr.gran-tot > td,
+[data-tema="pbi"] .rep-pbi tbody tr.gran-tot * {
+  background: #12365c !important;
+  color: #fff !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  border-top: none !important; border-bottom: none !important;
+  text-shadow: none !important;
+}

@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0454';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0455';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0454';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0454';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0454';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0454';
-import * as metasService from '../services_v245/metasService.js?v=29.0454';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0454';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0454';
+import * as adminService from '../services_v245/adminService.js?v=29.0455';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0455';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0455';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0455';
+import * as metasService from '../services_v245/metasService.js?v=29.0455';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0455';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0455';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0454';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0454';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0454';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0454';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0454';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0454';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0454';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0454';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0454';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0454';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0454';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0454';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0454';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0454';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0454';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0454';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0454';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0454';
-import { montarSlotting } from './slotting.js?v=29.0454';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0455';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0455';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0455';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0455';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0455';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0455';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0455';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0455';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0455';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0455';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0455';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0455';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0455';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0455';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0455';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0455';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0455';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0455';
+import { montarSlotting } from './slotting.js?v=29.0455';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0454';
+const VERSION = '29.0455';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5412,7 +5412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0454');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0455');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5675,7 +5675,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0454');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0455');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18325,7 +18325,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0454 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0455 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -34585,7 +34585,7 @@ window.__menuMapa = (btn) => {
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:0.4rem;">
-                <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
+                <table class="rep-pbi" style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
                     <thead>
                         <tr style="color:var(--cyan-neon); text-transform:uppercase; font-size:var(--t-xs); font-weight:800; letter-spacing:0.05em; border-bottom:2px solid var(--cyan-neon);">
                             <th style="padding:6px 8px; text-align:left; width:80px;">FECHA</th>
@@ -34598,7 +34598,7 @@ window.__menuMapa = (btn) => {
                             const rowData = hourlyData[dateKey];
                             const rowTotal = targetHours.reduce((sum, hr) => sum + rowData[hr], 0);
                             return `
-                                <tr style="border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--bg-dark);">
+                                <tr class="f" style="border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--bg-dark);">
                                     <td style="padding:6px 8px; color:var(--text-strong); font-weight:700;">${formatLogicalDate(dateKey)}</td>
                                     ${targetHours.map(hr => {
                                         const qty = rowData[hr];
@@ -34762,7 +34762,7 @@ window.__menuMapa = (btn) => {
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:0.4rem;">
-                <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
+                <table class="rep-pbi" style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
                     <thead>
                         <tr style="color:var(--violet-soft); text-transform:uppercase; font-size:var(--t-xs); font-weight:800; letter-spacing:0.05em; border-bottom:2px solid var(--violet);">
                             <th style="padding:6px 8px; text-align:left; width:120px;">SEMANA</th>
@@ -34797,7 +34797,7 @@ window.__menuMapa = (btn) => {
                             }).join('');
 
                             return `
-                                <tr onclick="window.toggleStorageReportWeek('${w}')" style="border-bottom: 1px solid rgba(var(--violet-rgb), 0.08); background:var(--bg-dark); cursor:pointer;" onmouseover="this.style.background='rgba(var(--ink-rgb), 0.03)'" onmouseout="this.style.background='var(--bg-dark)'">
+                                <tr class="f" onclick="window.toggleStorageReportWeek('${w}')" style="border-bottom: 1px solid rgba(var(--violet-rgb), 0.08); background:var(--bg-dark); cursor:pointer;" onmouseover="this.style.background='rgba(var(--ink-rgb), 0.03)'" onmouseout="this.style.background='var(--bg-dark)'">
                                     <td style="padding:6px 8px; color:var(--text-strong); font-weight:700; white-space:nowrap;">
                                         ${w.replace(/ \(\d{4}\)$/, '')}
                                     </td>
@@ -34811,7 +34811,7 @@ window.__menuMapa = (btn) => {
                             `;
                         }).join('')}
                         ${sortedWeeks.length > 0 ? `
-                            <tr style="background: linear-gradient(90deg, rgba(var(--violet-rgb), 0.2) 0%, rgba(var(--bg-rgb), 0.8) 100%); border-top: 2px solid var(--violet); font-weight:900;">
+                            <tr class="gran-tot" style="background: linear-gradient(90deg, rgba(var(--violet-rgb), 0.2) 0%, rgba(var(--bg-rgb), 0.8) 100%); border-top: 2px solid var(--violet); font-weight:900;">
                                 <td style="padding:8px 8px; color:var(--text-strong); font-weight:900;">TOTAL GENERAL</td>
                                 ${sortedBrands.map(b => {
                                     const qty = colTotals[b];
@@ -36291,7 +36291,7 @@ window.__menuMapa = (btn) => {
                     </div>
                     
                     <div style="${cuerpoReporte()}">
-                        <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
+                        <table class="rep-pbi" style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
                             <thead>
                                 <tr style="color:var(--cyan-neon); text-transform:uppercase; font-size:var(--t-xs); font-weight:800; letter-spacing:0.05em; border-bottom:2px solid var(--cyan-neon);">
                                     <th style="padding:6px 8px; text-align:left; width: 120px;">AREA</th>
@@ -36421,7 +36421,7 @@ window.__menuMapa = (btn) => {
                                             grandAvance += data.avance;
 
                                             genderTableRows += `
-                                                <tr style="border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--bg-dark);">
+                                                <tr class="f" style="border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--bg-dark);">
                                                     <td style="padding:5px 6px; color:var(--text-muted); font-size:var(--t-sm); font-weight:600;">${area}</td>
                                                     <td style="padding:5px 6px;"><b style="color:var(--text-strong); font-weight:800; font-size:var(--t-sm); font-family:'Outfit', sans-serif;">${gender}</b></td>
                                                     <td style="padding:5px 6px; text-align:center; font-weight:700; color:var(--text-strong); font-size:var(--t-sm);">${data.buffer.toLocaleString('es-PE')}</td>
@@ -36437,7 +36437,7 @@ window.__menuMapa = (btn) => {
                                         const areaPendiente = areaBufferSum - areaAvanceSum;
 
                                         genderTableRows += `
-                                            <tr style="background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.12) 0%, rgba(var(--bg-rgb), 0.5) 100%); border-top: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6); border-bottom: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6); font-weight: 900;">
+                                            <tr class="sub-tot" style="background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.12) 0%, rgba(var(--bg-rgb), 0.5) 100%); border-top: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6); border-bottom: 1.5px solid rgba(var(--cyan-neon-rgb), 0.6); font-weight: 900;">
                                                 <td colspan="2" style="padding:7px 8px; color:var(--cyan-neon); font-weight:900; font-size:var(--t-sm); text-transform:uppercase; letter-spacing:0.5px; font-family:'Outfit', sans-serif; border-left: 4px solid var(--cyan-neon);">Total ${area}</td>
                                                 <td style="padding:7px 8px; text-align:center; color:var(--text-strong); font-size:var(--t-sm); font-weight:800;">${areaBufferSum.toLocaleString('es-PE')}</td>
                                                 <td style="padding:7px 8px; text-align:center; color:var(--text-strong); font-size:var(--t-sm); font-weight:800;">${areaAvanceSum.toLocaleString('es-PE')}</td>
@@ -36452,7 +36452,7 @@ window.__menuMapa = (btn) => {
                                     const grandPendiente = grandBuffer - grandAvance;
                                     
                                     genderTableRows += `
-                                        <tr style="background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.25) 0%, rgba(var(--bg-rgb), 0.8) 100%); border-top: 2px solid var(--cyan-neon); border-bottom: 2px solid var(--cyan-neon); font-weight: 900;">
+                                        <tr class="gran-tot" style="background: linear-gradient(90deg, rgba(var(--cyan-neon-rgb), 0.25) 0%, rgba(var(--bg-rgb), 0.8) 100%); border-top: 2px solid var(--cyan-neon); border-bottom: 2px solid var(--cyan-neon); font-weight: 900;">
                                             <td colspan="2" style="padding:9px 8px; color:var(--text-strong); font-size:var(--t-md); text-transform:uppercase; letter-spacing:1px; font-family:'Outfit', sans-serif; font-weight:900; border-left: 6px solid var(--cyan-neon);">TOTAL GENERAL CDBUFFER</td>
                                             <td style="padding:9px 8px; text-align:center; color:var(--cyan-neon); font-size:var(--t-md); font-weight:900;">${grandBuffer.toLocaleString('es-PE')}</td>
                                             <td style="padding:9px 8px; text-align:center; color:var(--cyan-neon); font-size:var(--t-md); font-weight:900;">${grandAvance.toLocaleString('es-PE')}</td>
@@ -36486,7 +36486,7 @@ window.__menuMapa = (btn) => {
                 </div>
                 
                 <div style="overflow-x:auto; margin-top:0.4rem;">
-                    <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
+                    <table class="rep-pbi" style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
                         <thead>
                             <tr style="color:var(--cyan-neon); text-transform:uppercase; font-size:var(--t-xs); font-weight:800; letter-spacing:0.05em; border-bottom:2px solid var(--cyan-neon);">
                                 <th style="padding:6px 4px; text-align:left; width:70px; white-space:nowrap;">FECHA</th>
@@ -36705,7 +36705,7 @@ window.__menuMapa = (btn) => {
                                         return `${parts[2]}/${parts[1]}`;
                                     })();
                                     return `
-                                        <tr style="border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--bg-dark);">
+                                        <tr class="f" style="border-bottom: 1px solid rgba(var(--cyan-neon-rgb), 0.08); background:var(--bg-dark);">
                                             <td style="padding:6px 4px; color:var(--text-strong); font-weight:700; width:70px; white-space:nowrap;">${displayDate}</td>
                                             <td style="padding:6px 4px; text-align:center; width:65px; white-space:nowrap;"><span style="background:${row.turno === 'NOCHE' ? 'rgba(var(--cyan-neon-rgb), 0.2)' : 'rgba(var(--yellow-rgb), 0.2)'}; color:${row.turno === 'NOCHE' ? 'var(--cyan-neon)' : 'var(--warning-pale)'}; padding:2px 6px; border-radius:4px; font-size:var(--t-xs); font-weight:800;">${row.turno}</span></td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:800; color:var(--text-strong);">${row.operators.size}</td>
