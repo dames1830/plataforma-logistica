@@ -1,0 +1,170 @@
+<!-- Prueba de la nueva cuenta del tiempo permitido: el piso de 10 minutos y la reserva
+     a su propio ritmo. Saca las funciones del dashboard y del motor de sincronizacion,
+     no las copia, y las corre contra las tareas reales del servidor. -->
+<meta charset="utf-8">
+<title>Prueba del tiempo permitido</title>
+<style>
+  body{margin:0;padding:22px;background:#0d1117;color:#8b949e;font:13px/1.85 system-ui,sans-serif}
+  #eco{max-width:1000px;margin:0 auto;white-space:pre-wrap}
+  b{color:#3fb950} .mal{color:#f85149;font-weight:700} .t{color:#58a6ff;font-weight:700}
+</style>
+<div id="eco"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+window.addEventListener('unhandledrejection', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + (e.reason && e.reason.message || e.reason)); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 25000);
+
+const CR = String.fromCharCode(13);
+const leer = async f => (await (await fetch(f + '?z=' + Date.now())).text()).split(CR).join('');
+const trozo = (src, desde, hasta) => {
+  const a = src.indexOf(desde); if (a < 0) throw new Error('no esta: ' + desde);
+  const b = src.indexOf(hasta, a); if (b < 0) throw new Error('no cierra');
+  return src.slice(a, b);
+};
+
+const DB = await leer('../js/views/dashboard_v28.js');
+const SY = await leer('../js/services_v245/sync_engine_v24_9.js');
+
+// Las tres funciones del dashboard, tal cual estan escritas
+const BLOQUE = trozo(DB, 'const getTaskTotalAvance = (t) => {', "/** Deja una categoría en formato legible");
+// Y el descompresor, porque el servidor manda los items como arreglos
+const DESC = trozo(SY, 'function descomprimirTareas(data) {', '\n/**');
+eco('Del dashboard: <b>' + BLOQUE.length + '</b> caracteres. Del motor de sync: <b>' + DESC.length + '</b>.');
+
+const mod = await import('data:text/javascript,' + encodeURIComponent(
+  BLOQUE + '\n' + DESC + '\nexport { getTaskTotalAvance, getTaskDestinos, minutosPermitidos, descomprimirTareas };'));
+
+const crudas = (await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data;
+const tareas = mod.descomprimirTareas(crudas);
+eco('Tareas del servidor: <b>' + tareas.length + '</b>\n');
+
+const META = { metaUph: 300, tiempoBase: 10, metaReserva: 1200 };
+const uno = (piso, reserva) => ({ status: 'Finalizado', items: [{ items: [
+  { ubi: 'CDBUFFER-A-00-001', qty: piso + reserva, almacenar: piso, paletizar: reserva }
+]}]});
+const P = (t, m) => Math.round(mod.minutosPermitidos(t, m || META));
+
+eco('<span class="t">── LOS 10 MINUTOS SON UN PISO, NO UNA SUMA ──</span>');
+ok('300 pares al piso dan 60 minutos, no 70: ' + P(uno(300, 0)) + ' min', P(uno(300,0)) === 60);
+ok('600 pares al piso dan 120 minutos: ' + P(uno(600, 0)) + ' min', P(uno(600,0)) === 120);
+ok('3.000 pares dan 600 minutos, sin los 10 de regalo: ' + P(uno(3000,0)) + ' min', P(uno(3000,0)) === 600);
+ok('5 pares NO dan 1 minuto: se les da el minimo de 10 → ' + P(uno(5,0)) + ' min', P(uno(5,0)) === 10);
+ok('1 par tambien: ' + P(uno(1,0)) + ' min', P(uno(1,0)) === 10);
+ok('50 pares es justo el punto de quiebre: ' + P(uno(50,0)) + ' min', P(uno(50,0)) === 10);
+ok('51 pares ya pasa del minimo: ' + P(uno(51,0)) + ' min', P(uno(51,0)) === 10);
+
+eco('\n<span class="t">── LA RESERVA VA A SU PROPIO RITMO ──</span>');
+ok('200 pares a reserva dan 10 minutos: ' + P(uno(0,200)) + ' min', P(uno(0,200)) === 10);
+ok('600 pares a reserva dan 30 minutos, no 120: ' + P(uno(0,600)) + ' min', P(uno(0,600)) === 30);
+ok('mitad y mitad de 600: 60 del piso + 15 de reserva = ' + P(uno(300,300)) + ' min', P(uno(300,300)) === 75);
+ok('la reserva es 4 veces mas rapida que el piso',
+   Math.round(P(uno(0,1200)) * 4) === P(uno(1200,0)));
+
+eco('\n<span class="t">── SI NO SE CONFIGURA, NO SE ROMPE ──</span>');
+ok('sin metaReserva cae al ritmo del piso: ' + P(uno(0,600), {metaUph:300, tiempoBase:10}) + ' min',
+   P(uno(0,600), {metaUph:300, tiempoBase:10}) === 120);
+ok('una reserva mas lenta tambien vale: 600 a 600/h = ' + P(uno(0,600), {metaUph:300, tiempoBase:10, metaReserva:600}) + ' min',
+   P(uno(0,600), {metaUph:300, tiempoBase:10, metaReserva:600}) === 60);
+
+eco('\n<span class="t">── LAS TAREAS VIEJAS NO SE INVENTAN ──</span>');
+const vieja = { items: [{ items: [{ ubi: 'CDBUFFER-A-00-001', qty: 600, avance: 600 }] }], status: 'Finalizado' };
+ok('sin desglose grabado se mide todo al ritmo del piso: ' + P(vieja) + ' min', P(vieja) === 120);
+ok('y no dice tener desglose', mod.getTaskDestinos(vieja).hayDesglose === false);
+
+eco('\n<span class="t">── UNA TAREA A MEDIAS NO COBRA POR LO QUE NO HIZO ──</span>');
+// El desglose es lo que mandaba el papel. Si se avanzo la mitad, el tiempo permitido
+// tiene que salir de la mitad, repartida en la misma proporcion.
+const medias = { status: 'Finalizado', items: [{ items: [
+  { ubi: 'CDBUFFER-A-00-001', qty: 600, avance: 300, almacenar: 400, paletizar: 200 }
+]}]};
+const dm = mod.getTaskDestinos(medias);
+ok('planificaba 400 al piso y 200 a paleta, avanzo 300: queda 200 y 100 → piso=' + Math.round(dm.piso) + ' reserva=' + Math.round(dm.reserva),
+   Math.round(dm.piso) === 200 && Math.round(dm.reserva) === 100);
+ok('el desglose cuadra clavado con el avance de la tarea',
+   Math.round(dm.piso + dm.reserva) === Math.round(mod.getTaskTotalAvance(medias)));
+ok('y el permitido sale de los 300 hechos, no de los 600 del papel: ' + P(medias) + ' min', P(medias) === 45);
+
+eco('\n<span class="t">── NO SE CUENTA LO QUE NO ES BUFFER ──</span>');
+const mezcla = { status: 'Finalizado', items: [{ items: [
+  { ubi: 'CDBUFFER-A-00-001', qty: 300, almacenar: 300, paletizar: 0 },
+  { ubi: 'CDBUFFER-C-00-009', qty: 900, almacenar: 900, paletizar: 0 },
+  { ubi: 'MZN03-20-02',       qty: 900, almacenar: 900, paletizar: 0 }
+]}]};
+const d = mod.getTaskDestinos(mezcla);
+ok('el buffer C y las ubicaciones de piso quedan fuera: piso=' + d.piso + ' reserva=' + d.reserva, d.piso === 300 && d.reserva === 0);
+ok('y el permitido sale de esos 300: ' + P(mezcla) + ' min', P(mezcla) === 60);
+
+eco('\n<span class="t">── CONTRA LAS TAREAS REALES ──</span>');
+const fin = tareas.filter(t => t.status === 'Finalizado' && t.inicio && t.termino);
+let conD = 0, piso = 0, res = 0, pasados = 0;
+fin.forEach(t => {
+  const dd = mod.getTaskDestinos(t);
+  if (dd.hayDesglose) { conD++; piso += dd.piso; res += dd.reserva; }
+  if (dd.piso + dd.reserva > mod.getTaskTotalAvance(t) + 1) pasados++;
+});
+eco('   finalizadas: ' + fin.length + ' · con desglose: <b>' + conD + '</b> · sin desglose: ' + (fin.length - conD));
+eco('   pares al piso: <b>' + Math.round(piso).toLocaleString('es-PE') + '</b> · a reserva: <b>' + Math.round(res).toLocaleString('es-PE') + '</b>');
+ok('piso + reserva nunca se pasa del total de la tarea (' + pasados + ' casos)', pasados === 0);
+ok('ninguna tarea real queda con menos de 10 minutos permitidos',
+   fin.every(t => mod.minutosPermitidos(t, META) >= 10));
+ok('ninguna queda en cero o en NaN',
+   fin.every(t => Number.isFinite(mod.minutosPermitidos(t, META)) && mod.minutosPermitidos(t, META) > 0));
+
+const ago = fin.filter(t => (t.fecha || '') >= '2026-08-01' && mod.getTaskDestinos(t).hayDesglose);
+const hs = ago.reduce((a, t) => a + mod.minutosPermitidos(t, META), 0) / 60;
+eco('\n   Agosto, ' + ago.length + ' tareas con desglose: <b>' + Math.round(hs) + ' h</b> permitidas.');
+eco('   (con todo al ritmo del piso serian ' + Math.round(ago.reduce((a,t) => a + mod.minutosPermitidos(t, {metaUph:300, tiempoBase:10}), 0)/60) + ' h)');
+ok('la reserva a su ritmo baja el permitido al menos un 25%',
+   hs < ago.reduce((a,t) => a + mod.minutosPermitidos(t, {metaUph:300, tiempoBase:10}), 0)/60 * 0.75);
+
+eco('\n<span class="t">── CUANTO CAMBIA EL RENDIMIENTO ──</span>');
+// El reloj real de la tarea, sacado tambien del dashboard (descuenta la cena y la medianoche)
+const MIN = await import('data:text/javascript,' + encodeURIComponent(
+  trozo(DB, 'const getTaskMinutos = (t) => {', '\n/**') + '\nexport { getTaskMinutos };'));
+const reales = ago.reduce((a, t) => a + MIN.getTaskMinutos(t), 0) / 60;
+const conRes = ago.reduce((a, t) => a + mod.minutosPermitidos(t, META), 0) / 60;
+const soloPiso = ago.reduce((a, t) => a + mod.minutosPermitidos(t, { metaUph: 300, tiempoBase: 10 }), 0) / 60;
+const okRes = ago.filter(t => MIN.getTaskMinutos(t) > 0 && MIN.getTaskMinutos(t) <= mod.minutosPermitidos(t, META)).length;
+const okPiso = ago.filter(t => MIN.getTaskMinutos(t) > 0 && MIN.getTaskMinutos(t) <= mod.minutosPermitidos(t, { metaUph: 300, tiempoBase: 10 })).length;
+eco('   horas que tomo de verdad:           <b>' + Math.round(reales) + ' h</b>');
+eco('   permitidas contando todo como piso:  ' + Math.round(soloPiso) + ' h  →  ' + Math.round(soloPiso / reales * 100) + '%  ·  ' + okPiso + ' de ' + ago.length + ' a tiempo');
+eco('   permitidas con reserva a 1.200:      ' + Math.round(conRes) + ' h  →  ' + Math.round(conRes / reales * 100) + '%  ·  ' + okRes + ' de ' + ago.length + ' a tiempo');
+ok('la medicion se acerca a la realidad en vez de alejarse',
+   Math.abs(conRes - reales) < Math.abs(soloPiso - reales));
+
+eco('\n<span class="t">── EL REPORTE DE KPI SIGUE EN PIE ──</span>');
+// buildKpiDataset es la base de las tarjetas y de las cuatro tablas del KPI. Se saca del
+// archivo y se corre con las tareas reales: compilar no alcanza, tiene que dar numeros.
+const KPI = await import('data:text/javascript,' + encodeURIComponent(
+  trozo(DB, 'const getTaskTotalAvance = (t) => {', "/** Deja una categoría en formato legible")
+  + trozo(DB, 'const getTaskMinutos = (t) => {', '\n/**')
+  + `
+  const diaOperativoDeTarea = (t) => t.fecha || String(t.inicio || '').slice(0,10);
+  const getTaskCategoria = () => ({ familia:'FOOTWEAR', detalle:'', mixta:false, etiqueta:'Calzado', etiquetaCorta:'Calzado' });
+  const getTaskMeta = () => ({ metaUph:300, tamanoTarea:300, tiempoBase:10, metaReserva:1200, origen:'global' });
+  const marcaNormalizada = (m) => m || 'S/M';
+  `
+  + trozo(DB, 'const buildKpiDataset = (tasks, desde, hasta) => {', '\n/** hh:mm a partir de minutos')
+  + '\nexport { buildKpiDataset };'));
+
+const filasKpi = KPI.buildKpiDataset(tareas, '2026-08-01', '2026-08-31');
+eco('   filas que arma el KPI de agosto: <b>' + filasKpi.length + '</b>');
+ok('arma filas y no una lista vacia', filasKpi.length > 300);
+ok('ningun campo sale en NaN',
+   filasKpi.every(f => [f.qty, f.mins, f.minutosEsperados, f.esperado, f.pct].every(Number.isFinite)));
+ok('el porcentaje y el cumplimiento dicen lo mismo (los cuadros cuadran)',
+   filasKpi.filter(f => f.mins > 0 && f.esperado > 0)
+           .every(f => Math.abs((f.qty / f.esperado * 100) - f.pct) < 0.5));
+ok('el semaforo coincide con el porcentaje',
+   filasKpi.every(f => f.ok === (f.mins > 0 && f.mins <= f.minutosEsperados)));
+const conRes2 = filasKpi.filter(f => f.pct > 0);
+eco('   rendimiento ponderado que veran las tarjetas: <b>'
+    + Math.round(100 * filasKpi.reduce((a,f)=>a+f.minutosEsperados,0) / filasKpi.reduce((a,f)=>a+f.mins,0)) + '%</b>'
+    + '  ·  a tiempo: ' + filasKpi.filter(f=>f.ok).length + ' de ' + filasKpi.length);
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>' : '\n<b>La cuenta quedo como la definio Daniel.</b>');
+</script>

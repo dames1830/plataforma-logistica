@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0442';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0443';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0442';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0442';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0442';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0442';
-import * as metasService from '../services_v245/metasService.js?v=29.0442';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0442';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0442';
+import * as adminService from '../services_v245/adminService.js?v=29.0443';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0443';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0443';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0443';
+import * as metasService from '../services_v245/metasService.js?v=29.0443';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0443';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0443';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0442';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0442';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0442';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0442';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0442';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0442';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0442';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0442';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0442';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0442';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0442';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0442';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0442';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0442';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0442';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0442';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0442';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0442';
-import { montarSlotting } from './slotting.js?v=29.0442';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0443';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0443';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0443';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0443';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0443';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0443';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0443';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0443';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0443';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0443';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0443';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0443';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0443';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0443';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0443';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0443';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0443';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0443';
+import { montarSlotting } from './slotting.js?v=29.0443';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0442';
+const VERSION = '29.0443';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -413,6 +413,73 @@ const getTaskTotalAvance = (t) => {
         });
     });
     return sum;
+};
+
+/**
+ * LO QUE FUE AL PISO Y LO QUE FUE A PALETA.
+ *
+ * No cuestan lo mismo. Llenar el piso es repisa por repisa; mandar a reserva es armar la
+ * curva sobre la paleta, enfilarla, ponerle el LPN y dejarla en la zona. Daniel, 27-ago-2026:
+ * *"cinco, diez minutos para doscientos pares"*, contra 300 pares la hora en el piso.
+ *
+ * El desglose lo graba la tarea al generarse (`almacenar` y `paletizar` por talla). Las
+ * tareas anteriores a que eso existiera NO lo traen: en esas `hayDesglose` viene en false y
+ * quien la use tiene que medirlas como antes —todo al ritmo del piso—, porque no hay de
+ * dónde sacar el dato. Inventarlo cambiaría números ya presentados en comité.
+ *
+ * Se mira el MISMO conjunto de ubicaciones que getTaskTotalAvance —buffer sin el C—, así
+ * que piso + reserva no puede pasarse del total que ese otro devuelve.
+ */
+const getTaskDestinos = (t) => {
+    let piso = 0, reserva = 0, hayDesglose = false;
+    (t && t.items || []).forEach(art => {
+        (art.items || []).forEach(i => {
+            const ubi = String(i.ubi || '').toUpperCase().trim();
+            if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C')) return;
+            if (i.almacenar === undefined && i.paletizar === undefined) return;
+            hayDesglose = true;
+            // EL DESGLOSE ES LO PLANIFICADO; LO QUE VALE ES LO QUE SE AVANZO.
+            // Si la tarea se dejo a medias, `almacenar` y `paletizar` siguen diciendo lo que
+            // el papel mandaba. Contarlos tal cual daba tiempo permitido por pares que nunca
+            // se movieron: en 10 tareas reales la suma pasaba del avance. Se usan como
+            // PROPORCION y se reparte lo realmente hecho, con el mismo criterio de avance
+            // que getTaskTotalAvance, para que las dos cuentas cierren siempre.
+            const hecho = (i.avance !== undefined && i.avance !== null)
+                ? (parseFloat(i.avance) || 0)
+                : (t.status === 'Finalizado' ? (parseFloat(i.qty) || 0) : 0);
+            const pl = parseFloat(i.almacenar) || 0, pr = parseFloat(i.paletizar) || 0;
+            const plan = pl + pr;
+            // Sin proporcion que aplicar, va todo al piso: es el ritmo mas lento, asi que
+            // ante la duda no se le regala tiempo a nadie.
+            if (plan <= 0) { piso += hecho; return; }
+            reserva += hecho * (pr / plan);
+            piso += hecho * (pl / plan);
+        });
+    });
+    return { piso, reserva, hayDesglose };
+};
+
+/**
+ * MINUTOS QUE UNA TAREA TENÍA PERMITIDOS.
+ *
+ * Los 10 minutos de recorrido son un PISO, no una suma. Daniel, 27-ago-2026: *"la hora de
+ * producción tiene que ser trescientos pares; dentro de esos sesenta minutos tiene que estar
+ * metido esos diez minutos de tarea base"*. Una tarea de 300 pares es de 60 minutos, no de 70.
+ *
+ * Antes se sumaban, y eso le regalaba 10 minutos a cada tarea —incluso a una de 3.000 pares,
+ * que no los necesita—. El piso solo hace falta abajo: una tarea de 5 pares pediría 1 minuto
+ * y no la cumpliría nadie. En agosto-2026 protegía a 22 tareas de 711; a las otras 689 se les
+ * estaba regalando el tiempo sin motivo.
+ */
+const minutosPermitidos = (t, meta) => {
+    const base = meta.tiempoBase || 0;
+    const uph = meta.metaUph > 0 ? meta.metaUph : 0;
+    const uphR = meta.metaReserva > 0 ? meta.metaReserva : uph;
+    const d = getTaskDestinos(t);
+    const trabajo = d.hayDesglose
+        ? (uph ? d.piso / uph * 60 : 0) + (uphR ? d.reserva / uphR * 60 : 0)
+        : (uph ? getTaskTotalAvance(t) / uph * 60 : 0);   // tarea vieja: no hay desglose que usar
+    return Math.max(base, trabajo);
 };
 
 /** Deja una categoría en formato legible: '08 ACCESORIES' → 'Accesories'. */
@@ -722,10 +789,12 @@ const buildKpiDataset = (tasks, desde, hasta) => {
         // artículo, volver) más lo que toma mover la cantidad al ritmo de la meta. Sin ese
         // recorrido, una tarea de 20 pares tendría 4 minutos y saldría reprobada siempre.
         const tiempoBase = meta.tiempoBase || 0;
-        const minutosEsperados = tiempoBase + (meta.metaUph > 0 ? (qty / meta.metaUph) * 60 : 0);
-        // Y al revés: de los minutos gastados, los que quedaron para mover mercadería
-        const minutosUtiles = Math.max(0, mins - tiempoBase);
-        const esperado = meta.metaUph * (minutosUtiles / 60);
+        const minutosEsperados = minutosPermitidos(t, meta);
+        // Y al revés: cuántos pares cabían en el tiempo que de verdad gastó, al mismo ritmo
+        // mezclado que se le exigió. Sin esto, una tarea de pura reserva pediría el ritmo del
+        // piso para lo esperado y el de reserva para lo permitido, y las dos cifras no cerrarían.
+        const ritmoMezclado = minutosEsperados > 0 ? (qty / minutosEsperados) * 60 : meta.metaUph;
+        const esperado = ritmoMezclado * (mins / 60);
         const usuarios = [t.u1, t.u2].filter(u => u && u !== '---');
 
         filas.push({
@@ -1049,13 +1118,14 @@ const buildJornadas = (tasksAll, desde, hasta, familia) => {
             const m = getTaskMinutos(t);
             const a = getTaskTotalAvance(t);
             const metaTarea = getTaskMeta(t);
-            const metaUph = metaTarea.metaUph;
-            const tBase = metaTarea.tiempoBase || 0;
+            const permitidos = minutosPermitidos(t, metaTarea);
             qty += a; mins += m;
             if (m > 0) {
-                // Mismo criterio que el KPI: se descuenta el recorrido antes de exigir la meta
-                meta += metaUph * (Math.max(0, m - tBase) / 60);
-                if (m <= tBase + (metaUph > 0 ? (a / metaUph) * 60 : 0)) ok++;
+                // La MISMA cuenta del KPI, no una parecida: sale de minutosPermitidos, que ya
+                // sabe separar el piso de la reserva. Antes se repetía acá a mano y las dos
+                // pantallas podían decir cosas distintas del mismo día.
+                meta += (permitidos > 0 ? (a / permitidos) * 60 : 0) * (m / 60);
+                if (m <= permitidos) ok++;
             } else {
                 sinHora++; // finalizada sin inicio o término marcado: no se puede medir
             }
@@ -5338,7 +5408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0442');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0443');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5601,7 +5671,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0442');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0443');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18167,7 +18237,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0442 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0443 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -33504,7 +33574,8 @@ window.__menuMapa = (btn) => {
                         <thead style="background:rgba(var(--shadow-rgb), 0.6);">
                             <tr style="color:rgba(var(--brand-pale-rgb), 0.85); text-transform:uppercase; font-size:var(--t-xs); letter-spacing:0.06em; border-bottom:2px solid rgba(var(--primary2-rgb), 0.25);">
                                 <th style="padding:0.8rem 1rem; text-align:left;">Categoría</th>
-                                <th style="padding:0.8rem 0.6rem; text-align:right;">Meta U/H</th>
+                                <th style="padding:0.8rem 0.6rem; text-align:right;" title="Pares por hora del grupo cuando la mercadería va al piso">Meta U/H</th>
+                                <th style="padding:0.8rem 0.6rem; text-align:right;" title="Pares por hora cuando la mercadería sale en paleta a reserva: armar la curva, enfilar, LPN y dejarla en la zona">Reserva U/H</th>
                                 <th style="padding:0.8rem 0.6rem; text-align:right;">Tamaño Tarea</th>
                                 <th style="padding:0.8rem 0.6rem; text-align:right;" title="Minutos fijos por tarea: el recorrido al buffer y de vuelta">T. Base</th>
                                 <th style="padding:0.8rem 1rem; text-align:left;">Vigencia</th>
@@ -33513,7 +33584,7 @@ window.__menuMapa = (btn) => {
                             </tr>
                         </thead>
                         <tbody>
-                            ${ordenadas.length === 0 ? `<tr><td colspan="7" style="padding:3rem; text-align:center; color:rgba(var(--ink-rgb), 0.25);">No hay reglas configuradas.</td></tr>` : ordenadas.map(r => {
+                            ${ordenadas.length === 0 ? `<tr><td colspan="8" style="padding:3rem; text-align:center; color:rgba(var(--ink-rgb), 0.25);">No hay reglas configuradas.</td></tr>` : ordenadas.map(r => {
                                 // "Vigente" solo decía que hoy cae dentro de su rango, y eso confundía:
                                 // dos reglas de la misma categoría podían decir VIGENTE las dos, cuando
                                 // en realidad solo una se usa. Ahora se dice cuál manda.
@@ -33538,6 +33609,7 @@ window.__menuMapa = (btn) => {
                                 return `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03); ${fondo}">
                                     <td style="padding:0.75rem 1rem;"><b style="color:var(--text-strong);">${esc(r.categoria)}</b>${chipGender(r.categoria)}${nivelBadge}${r.base ? ' <span style="font-size:var(--t-xs); color:var(--brand-light); border:1px solid rgba(var(--brand-rgb), 0.4); padding:1px 5px; border-radius:5px; vertical-align:middle;">BASE</span>' : ''}${nota}${fueraMaestro}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:var(--brand-pale); font-weight:900; font-size:var(--t-md);">${Number(r.metaUph).toLocaleString('es-PE')}</td>
+                                    <td style="padding:0.75rem 0.6rem; text-align:right; color:var(--warning-soft); font-weight:900; font-size:var(--t-md);">${metasService.metaReservaDe(r).toLocaleString('es-PE')}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:rgba(var(--ink-rgb), 0.65); font-weight:700;">${Number(r.tamanoTarea).toLocaleString('es-PE')}</td>
                                     <td style="padding:0.75rem 0.6rem; text-align:right; color:rgba(var(--ink-rgb), 0.45); font-weight:700; font-size:var(--t-sm);">${metasService.tiempoBaseDe(r)} min</td>
                                     <td style="padding:0.75rem 1rem; color:rgba(var(--ink-rgb), 0.6); font-size:var(--t-sm);">${vig}</td>
@@ -33646,7 +33718,7 @@ window.__menuMapa = (btn) => {
 
     const abrirModal = (regla) => {
         const editando = !!regla;
-        const r = regla || { categoria: 'FOOTWEAR', metaUph: 300, tamanoTarea: 300, desde: hoyStr, hasta: '', nota: '' };
+        const r = regla || { categoria: 'FOOTWEAR', metaUph: 300, metaReserva: metasService.RESERVA_FALLBACK, tamanoTarea: 300, desde: hoyStr, hasta: '', nota: '' };
         const prev = document.getElementById('cfg_meta_modal');
         if (prev) prev.remove();
 
@@ -33689,7 +33761,7 @@ window.__menuMapa = (btn) => {
 
                 <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:0.5rem;">
                     <div style="flex:1;">
-                        <label style="display:block; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Meta U/H (grupo de 2)</label>
+                        <label style="display:block; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Meta U/H piso (grupo de 2)</label>
                         <input type="number" id="cfg_meta" min="1" value="${r.metaUph}" style="width:100%; padding:9px 11px; background:rgba(var(--ink-rgb), 0.04); border:1px solid rgba(var(--ink-rgb), 0.12); border-radius:8px; color:var(--text-strong); font-size:var(--t-md); font-weight:800;">
                     </div>
                     <div style="flex:1;">
@@ -33701,9 +33773,13 @@ window.__menuMapa = (btn) => {
                     <input type="checkbox" id="cfg_link" checked style="accent-color:var(--primary-2); width:15px; height:15px; cursor:pointer;"> 🔗 Mover el tamaño de tarea junto con la meta
                 </label>
 
+                <label style="display:block; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Producción de reserva <span style="text-transform:none; font-weight:600;">(pares por hora en paleta)</span></label>
+                <input type="number" id="cfg_reserva" min="1" value="${metasService.metaReservaDe(r)}" style="width:100%; padding:9px 11px; background:rgba(var(--ink-rgb), 0.04); border:1px solid rgba(var(--warning-soft-rgb), 0.35); border-radius:8px; color:var(--text-strong); font-size:var(--t-md); font-weight:800; margin-bottom:0.4rem;">
+                <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.3); margin-bottom:1rem;">Mandar a reserva no cuesta lo mismo que llenar el piso: se arma la curva sobre la paleta, se enfila, se le pone el LPN y se deja en la zona. Medido: 200 pares en 10 minutos, o sea 1.200 por hora. Los pares de cada tarea se miden a un ritmo o al otro según a dónde fueron.</div>
+
                 <label style="display:block; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.45); text-transform:uppercase; font-weight:800; letter-spacing:0.5px; margin-bottom:5px;">Tiempo base <span style="text-transform:none; font-weight:600;">(minutos por tarea)</span></label>
                 <input type="number" id="cfg_tbase" min="0" max="120" value="${metasService.tiempoBaseDe(r)}" style="width:100%; padding:9px 11px; background:rgba(var(--ink-rgb), 0.04); border:1px solid rgba(var(--ink-rgb), 0.12); border-radius:8px; color:var(--text-strong); font-size:var(--t-md); font-weight:800; margin-bottom:0.4rem;">
-                <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.3); margin-bottom:1rem;">Minutos que toma la tarea sin importar la cantidad: ir a la zona buffer, ubicar el artículo y volver. Se suman al tiempo que exige la meta, para que una tarea de pocos pares no salga reprobada solo por el recorrido.</div>
+                <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.3); margin-bottom:1rem;">Es el MÍNIMO que se le da a cualquier tarea, no algo que se sume: son los minutos del recorrido —ir a la zona buffer, ubicar el artículo y volver—. Una tarea de 300 pares a 300 u/h sigue siendo de 60 minutos; el mínimo solo entra cuando la cantidad es tan chica que el tiempo que le tocaría no alcanza ni para el recorrido.</div>
 
                 <div style="display:flex; gap:12px; margin-bottom:1rem;">
                     <div style="flex:1;">
@@ -33751,12 +33827,14 @@ window.__menuMapa = (btn) => {
             const meta = parseInt(inMeta.value, 10);
             const tam = parseInt(inTam.value, 10);
             const tbase = parseInt(modal.querySelector('#cfg_tbase').value, 10);
+            const reserva = parseInt(modal.querySelector('#cfg_reserva').value, 10);
             const desde = modal.querySelector('#cfg_desde').value;
             const hasta = modal.querySelector('#cfg_hasta').value;
 
             if (!meta || meta <= 0) { showPremiumAlert('DATO INVÁLIDO', 'La meta U/H debe ser un número mayor a cero.', 'error'); return; }
             if (!tam || tam <= 0) { showPremiumAlert('DATO INVÁLIDO', 'El tamaño de tarea debe ser un número mayor a cero.', 'error'); return; }
             if (!Number.isFinite(tbase) || tbase < 0 || tbase > 120) { showPremiumAlert('DATO INVÁLIDO', 'El tiempo base debe ser un número entre 0 y 120 minutos.', 'error'); return; }
+            if (!reserva || reserva <= 0) { showPremiumAlert('DATO INVÁLIDO', 'La producción de reserva debe ser un número mayor a cero.', 'error'); return; }
             if (!desde) { showPremiumAlert('DATO INVÁLIDO', 'La fecha de inicio de vigencia es obligatoria.', 'error'); return; }
             if (hasta && hasta < desde) { showPremiumAlert('FECHAS INVERTIDAS', 'La fecha final no puede ser anterior a la de inicio.', 'error'); return; }
 
@@ -33778,6 +33856,7 @@ window.__menuMapa = (btn) => {
                     ? metasService.NIVEL.GLOBAL
                     : (metasService.pareceDetalle(categoria) ? metasService.NIVEL.DETALLE : metasService.NIVEL.FAMILIA),
                 metaUph: meta,
+                metaReserva: reserva,
                 tamanoTarea: tam,
                 tiempoBase: tbase,
                 desde,
