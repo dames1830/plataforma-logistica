@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0444';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0445';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0444';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0444';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0444';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0444';
-import * as metasService from '../services_v245/metasService.js?v=29.0444';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0444';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0444';
+import * as adminService from '../services_v245/adminService.js?v=29.0445';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0445';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0445';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0445';
+import * as metasService from '../services_v245/metasService.js?v=29.0445';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0445';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0445';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0444';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0444';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0444';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0444';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0444';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0444';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0444';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0444';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0444';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0444';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0444';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0444';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0444';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0444';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0444';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0444';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0444';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0444';
-import { montarSlotting } from './slotting.js?v=29.0444';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0445';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0445';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0445';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0445';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0445';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0445';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0445';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0445';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0445';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0445';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0445';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0445';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0445';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0445';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0445';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0445';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0445';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0445';
+import { montarSlotting } from './slotting.js?v=29.0445';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0444';
+const VERSION = '29.0445';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5408,7 +5408,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0444');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0445');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5671,7 +5671,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0444');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0445');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18237,7 +18237,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0444 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0445 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -35471,6 +35471,8 @@ window.__menuMapa = (btn) => {
                 if (!window.__kpiSetCat) window.__kpiSetCat = (c) => { window.__kpiCatFiltro = c; repintar(); };
                 if (!window.__kpiVista) window.__kpiVista = 'grupos';
                 window.__kpiSetVista = (v) => { window.__kpiVista = v; repintarPanel(); };
+                // Todos / los mas eficientes / los que no cumplen
+                window.__kpiSetEf = (v) => { window.__kpiEfVista = v; repintarPanel(); };
 
                 /* Los nombres de usuario vienen del servidor: se escapan antes de entrar al HTML.
                    Va aquí arriba, no dentro del panel, porque la foto también lo usa y estaba
@@ -35510,6 +35512,82 @@ window.__menuMapa = (btn) => {
                     const TH = `${BASE} padding:${px(5)} ${px(5)}; text-align:center; background:#12365c; color:#fff; font-weight:700; border:none;`;
                     const TD = `${BASE} padding:${px(4)} ${px(5)}; text-align:center; border-bottom:1px solid #e3e7ee; color:#111; font-weight:400;`;
                     const rango = desdeH === hastaH ? fD(desdeH) : `${fD(desdeH)} al ${fD(hastaH)}`;
+
+                    /* LA VISTA DE EFICIENCIA TIENE SU PROPIA FOTO: sus columnas no son las horas
+                       del turno, son los dos tiempos. Todo va escrito en cada celda —tamano,
+                       color, peso, relleno— porque la hoja de estilos de la pantalla le gana a
+                       lo que se herede, y por eso los nombres salian en blanco sobre blanco. */
+                    if (vista === 'eficiencia' && window.__kpiEfDatos) {
+                        const { E: EF, filasEf, puesto } = window.__kpiEfDatos;
+                        const hmF = (m) => {
+                            m = Math.round(m);
+                            if (m < 60) return m + ' min';
+                            const h = Math.floor(m / 60), r = m % 60;
+                            return h + ' h' + (r ? ' ' + String(r).padStart(2, '0') : '');
+                        };
+                        const CAB = ['#', 'PERSONA', 'PARES', 'DEBÍA', 'LE TOMÓ', 'DIFERENCIA', 'REND.', 'A TIEMPO'];
+                        let k = 0;
+                        const filasFoto = filasEf.map(([u, d]) => {
+                            const pct = d.esp / d.min * 100, dif = d.esp - d.min, n = puesto.get(u);
+                            const fondo = k++ % 2 ? '#f4f6f9' : '#fff';
+                            const c = pct >= 100 ? '#1a6336' : pct >= 85 ? '#8a6100' : '#991b1b';
+                            const celdas = [
+                                `<td style="${TD} background:${fondo}; color:#8a94a6; font-weight:700;">${n}</td>`,
+                                `<td style="${TD} background:${fondo}; text-align:left; padding-left:${px(8)}; font-weight:700; white-space:nowrap;">${escKpi(u)}</td>`,
+                                `<td style="${TD} background:${fondo}; font-weight:700;">${nM(d.q)}</td>`,
+                                `<td style="${TD} background:${fondo}; color:#666;">${hmF(d.esp)}</td>`,
+                                `<td style="${TD} background:${fondo}; font-weight:900; color:${c};">${hmF(d.min)}</td>`,
+                                `<td style="${TD} background:${fondo}; font-weight:700; color:${dif >= 0 ? '#1a6336' : '#991b1b'};">${dif >= 0 ? '&minus;' : '+'} ${hmF(Math.abs(dif))}</td>`,
+                                `<td style="${TD} background:${fondo}; font-weight:900; color:${c};">${nM(pct)}%</td>`,
+                                `<td style="${TD} background:${fondo}; color:#666;">${d.ok} de ${d.n}</td>`
+                            ];
+                            return `<tr>${celdas.join('')}</tr>`;
+                        }).join('');
+
+                        const cual = window.__kpiEfVista === 'mejores' ? 'LOS MÁS EFICIENTES'
+                                   : window.__kpiEfVista === 'flojos' ? 'LOS QUE NO CUMPLEN LA HORA' : 'TODOS';
+                        const fotoEf = `<div style="background:#fff; color:#111; padding:${px(14)} ${px(16)}; border-radius:${px(10)}; font-family:Arial, sans-serif;">
+                            <div style="${BASE} font-size:${px(15)}; font-weight:900; color:#111;">EFICIENCIA POR PERSONA · ${cual}</div>
+                            <div style="${BASE} color:#666; margin-bottom:${px(9)};">${rango} · 100% = terminó justo en el tiempo permitido · general ${nM(EF.gen)}%</div>
+                            <table style="border-collapse:collapse;"><thead><tr>
+                                ${CAB.map((t, i) => `<th style="${TH} ${i === 1 ? 'text-align:left; padding-left:' + px(8) + ';' : ''}">${t}</th>`).join('')}
+                            </tr></thead><tbody>${filasFoto}</tbody></table>
+                            <div style="${BASE} font-size:${px(10)}; color:#888; margin-top:${px(7)};">${filasEf.length} de ${EF.todas.length} personas · ${nM(EF.qT)} pares · ${EF.okT} de ${EF.nT} tareas dentro del tiempo${EF.fuera ? ' · ' + EF.fuera + ' tareas apartadas por dar un número imposible' : ''}</div>
+                        </div>`;
+
+                        document.getElementById('fotoKpiPH')?.remove();
+                        const capaEf = document.createElement('div');
+                        capaEf.id = 'fotoKpiPH';
+                        capaEf.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(8,12,20,0.88);'
+                            + 'display:flex; align-items:center; justify-content:center; padding:22px; overflow:auto;';
+                        const btEf = (on) => `padding:5px 12px; border-radius:8px; border:1px solid #fff; background:${on ? '#fff' : 'transparent'};`
+                            + `color:${on ? '#12365c' : '#fff'}; font-weight:800; font-size:13px; cursor:pointer; font-family:Arial, sans-serif;`;
+                        capaEf.innerHTML = `<div style="display:flex; flex-direction:column; gap:9px; align-items:flex-end; max-width:100%;">
+                            <div style="display:flex; gap:7px; align-items:center;">
+                              <span style="color:#9fb3cc; font-size:12px; font-family:Arial, sans-serif; margin-right:3px;">Tamaño:</span>
+                              <button data-e="1" style="${btEf(E === 1)}">Chico</button>
+                              <button data-e="1.5" style="${btEf(E === 1.5)}">Mediano</button>
+                              <button data-e="2" style="${btEf(E === 2)}">Grande</button>
+                              <button data-x="1" style="${btEf(false)} margin-left:10px;">✕ Cerrar</button>
+                            </div>
+                            <div style="overflow:auto; max-width:100%;">${fotoEf}</div>
+                            <div style="color:#9fb3cc; font-size:11px; font-family:Arial, sans-serif; text-align:right; max-width:520px; line-height:1.6;">
+                              Recorte con <b style="color:#fff;">Win + Shift + S</b> y mándelo por WhatsApp.<br>
+                              Mándelo en <b style="color:#fff;">Grande</b>: WhatsApp achica la imagen igual, y una foto grande llega nítida.
+                            </div></div>`;
+                        const cerrarEf = () => capaEf.remove();
+                        capaEf.querySelectorAll('button[data-e]').forEach(b => b.addEventListener('click', () => {
+                            window.__kpiPHEscala = Number(b.dataset.e); cerrarEf(); window.__kpiFotoPH();
+                        }));
+                        capaEf.querySelector('button[data-x]').addEventListener('click', cerrarEf);
+                        capaEf.addEventListener('click', (ev) => { if (ev.target === capaEf) cerrarEf(); });
+                        document.addEventListener('keydown', function escEf(ev) {
+                            if (ev.key === 'Escape') { cerrarEf(); document.removeEventListener('keydown', escEf); }
+                        });
+                        document.body.appendChild(capaEf);
+                        return;
+                    }
+
                     let i = 0;
                     const cuerpoFoto = filas.map(r => {
                         const hh = r.dia ? r.suma : r.h;
@@ -35737,7 +35815,7 @@ window.__menuMapa = (btn) => {
                 if (!window.__kpiPHHasta) window.__kpiPHHasta = hoyLog;
                 if (!window.__kpiVista) window.__kpiVista = 'grupos';
                 if (!window.__kpiPHEscala) window.__kpiPHEscala = 2;
-                const vista = window.__kpiVista === 'personas' ? 'personas' : 'grupos';
+                const vista = ['personas', 'eficiencia'].includes(window.__kpiVista) ? window.__kpiVista : 'grupos';
                 const desdeH = window.__kpiPHDesde, hastaH = window.__kpiPHHasta;
 
                 /* Se acumula por jornada y por grupo/persona, repartido en las horas en que
@@ -35783,7 +35861,7 @@ window.__menuMapa = (btn) => {
                 const armar = () => {
                     const filas = [], gran = {};
                     dias.forEach(f => {
-                        const hijos = porDia[f][vista];
+                        const hijos = porDia[f][vista === 'personas' ? 'personas' : 'grupos'] || {};
                         const suma = {};
                         Object.values(hijos).forEach(c => HRS.forEach(x => { suma[x] = (suma[x] || 0) + (c.h[x] || 0); }));
                         HRS.forEach(x => { gran[x] = (gran[x] || 0) + (suma[x] || 0); });
@@ -35801,7 +35879,8 @@ window.__menuMapa = (btn) => {
                 const { filas, gran } = armar();
                 const VISTAS = [
                     { id: 'grupos', icono: '👥', label: 'Grupos', sub: '¿Cómo avanza cada grupo por hora?' },
-                    { id: 'personas', icono: '🧑', label: 'Personas', sub: '¿Cómo avanza cada persona por hora?' }
+                    { id: 'personas', icono: '🧑', label: 'Personas', sub: '¿Cómo avanza cada persona por hora?' },
+                    { id: 'eficiencia', icono: '🎯', label: 'Eficiencia', sub: '¿Cumple con su hora de producción?' }
                 ];
                 const nav = VISTAS.map(v => {
                     const on = v.id === vista;
@@ -35813,6 +35892,66 @@ window.__menuMapa = (btn) => {
                         <div style="color:${on ? 'rgba(var(--brand-pale-rgb), 0.75)' : 'rgba(var(--ink-rgb), 0.25)'}; font-size:var(--t-xs); margin-top:2px;">${v.sub}</div>
                     </button>`;
                 }).join('');
+
+                /* ══════════════════════════════════════════════════════════════════════
+                 * TERCERA VISTA: ¿ES EFICIENTE ESTA PERSONA?
+                 *
+                 * Daniel, 27-ago-2026: *"quiero saber si cada persona es eficiente en su
+                 * trabajo. En base a lo que almacena, en qué tiempo lo almacena"*. Y sobre el
+                 * filtro: *"quiero saber quiénes son más eficientes; ese es el corazón de este
+                 * cuadro"*.
+                 *
+                 * La fila cuenta la historia sola: cuántos pares movió, cuánto DEBÍA tomarle
+                 * y cuánto LE TOMÓ. El tiempo permitido sale de minutosPermitidos(), la misma
+                 * cuenta del resto de la plataforma, que ya sabe separar el piso de la reserva.
+                 *
+                 * LA VARA NO ES 100%. El almacén entero corre por encima de eso, así que 100%
+                 * no separa a nadie: se compara contra el rendimiento general del rango que se
+                 * está mirando, el mismo de la primera tarjeta.
+                 *
+                 * LA EFICIENCIA DE UNA PERSONA ES LA DE LOS GRUPOS EN QUE TRABAJÓ. A dos que
+                 * hicieron la misma tarea juntos no hay forma de separarlos, y por eso salen
+                 * con el mismo número. Los pares SÍ se parten —con el par de más al primero,
+                 * igual que en la pestaña Personas—; las horas no, porque los dos estuvieron
+                 * ahí todo el tiempo.
+                 * ══════════════════════════════════════════════════════════════════════ */
+                const TOPE_EF = 400;   // arriba de esto la tarea no se hizo de verdad en ese tiempo
+                const hm = (m) => {
+                    m = Math.round(m);
+                    if (m < 60) return m + ' min';
+                    const h = Math.floor(m / 60), r = m % 60;
+                    return h + ' h' + (r ? ' ' + String(r).padStart(2, '0') + ' min' : '');
+                };
+                const colEf = (p) => p >= 100 ? 'var(--success)' : p >= 85 ? 'var(--warning)' : 'var(--danger)';
+
+                const armarEficiencia = () => {
+                    const per = {};
+                    let fuera = 0, qFuera = 0, espT = 0, minT = 0, okT = 0, nT = 0, qT = 0;
+                    (buildKpiDataset(tasks, desdeH, hastaH) || []).forEach(r => {
+                        if (!r.mins || !r.usuarios || !r.usuarios.length) return;
+                        const q = Math.round(r.qty);
+                        if (q <= 0) return;
+                        // Una tarea cerrada toda junta al final no se hizo en ese tiempo: se aparta
+                        // y se dice cuántas fueron, en vez de promediarla e inflarle el número a alguien.
+                        if (r.pct > TOPE_EF) { fuera++; qFuera += q; return; }
+                        espT += r.minutosEsperados; minT += r.mins; nT++; qT += q;
+                        if (r.ok) okT++;
+                        const base = Math.floor(q / r.usuarios.length), resto = q % r.usuarios.length;
+                        r.usuarios.forEach((u, i) => {
+                            const d = per[u] || (per[u] = { esp: 0, min: 0, q: 0, n: 0, ok: 0, soc: {} });
+                            d.esp += r.minutosEsperados; d.min += r.mins;
+                            d.q += base + (i < resto ? 1 : 0);
+                            d.n++; if (r.ok) d.ok++;
+                            r.usuarios.forEach(o => { if (o !== u) d.soc[o] = (d.soc[o] || 0) + 1; });
+                        });
+                    });
+                    const gen = minT > 0 ? espT / minT * 100 : 0;
+                    const todas = Object.entries(per)
+                        .filter(([, d]) => d.min > 0)
+                        .sort((a, b) => b[1].esp / b[1].min - a[1].esp / a[1].min);
+                    return { per, todas, gen, fuera, qFuera, espT, minT, okT, nT, qT };
+                };
+                window.__kpiEfArmar = armarEficiencia;
 
                 const celda = (v, esDia) => `<td style="padding:0.55rem 0.5rem; text-align:center; font-variant-numeric:tabular-nums;
                     color:${v ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.2)'}; font-weight:${esDia ? 800 : 400};">${v ? nM(v) : '–'}</td>`;
@@ -35832,6 +35971,112 @@ window.__menuMapa = (btn) => {
                              ${HRS.map(x => celda(r.h[x], false)).join('')}
                              <td style="padding:0.5rem 0.9rem; text-align:center; color:var(--brand-light); font-weight:900; background:rgba(var(--primary2-rgb), 0.07);">${nM(totH(r.h))}</td>
                            </tr>`).join('');
+
+                /* La barra de fechas y la camara son las mismas para las tres vistas: se arman
+                   una sola vez y cada vista pone su propio cuerpo debajo. */
+                const barra = `
+                    <div style="display:flex; align-items:center; gap:8px; padding:10px 14px; flex-wrap:wrap; border-bottom:1px solid rgba(var(--ink-rgb), 0.10);">
+                        <span style="font-size:var(--t-xs); color:rgba(var(--brand-pale-rgb), 0.85); font-weight:800; letter-spacing:0.5px;">📅 DE:</span>
+                        <input type="date" value="${desdeH}" onchange="window.__kpiSetRangoPH('desde', this.value)"
+                               style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--brand-pale-rgb), 0.4); background:rgba(var(--ink-rgb), 0.05); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
+                        <span style="font-size:var(--t-xs); color:rgba(var(--brand-pale-rgb), 0.85); font-weight:800; letter-spacing:0.5px;">HASTA:</span>
+                        <input type="date" value="${hastaH}" onchange="window.__kpiSetRangoPH('hasta', this.value)"
+                               style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--brand-pale-rgb), 0.4); background:rgba(var(--ink-rgb), 0.05); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
+                        <button onclick="window.__kpiFotoPH()" title="Verlo en chico para mandar por WhatsApp"
+                                style="background:none; border:none; cursor:pointer; font-size:var(--t-lg); color:var(--brand-light); line-height:1; padding:2px 4px;">📷</button>
+                        <span style="margin-left:auto;"><button onclick="window.exportarKpiTareas(this)" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button></span>
+                    </div>
+                    <div style="display:flex; border-bottom:1px solid rgba(var(--ink-rgb), 0.12);">${nav}</div>`;
+
+                if (vista === 'eficiencia') {
+                    const E = armarEficiencia();
+                    if (!window.__kpiEfVista) window.__kpiEfVista = 'todos';
+                    const pctDe = (d) => d.esp / d.min * 100;
+                    const sobre = E.todas.filter(([, d]) => pctDe(d) > E.gen).length;
+                    const bajo = E.todas.filter(([, d]) => pctDe(d) < 100).length;
+                    const VF = window.__kpiEfVista;
+                    const filasEf = VF === 'mejores' ? E.todas.filter(([, d]) => pctDe(d) > E.gen)
+                                  : VF === 'flojos' ? E.todas.filter(([, d]) => pctDe(d) < 100)
+                                  : E.todas;
+                    /* El puesto sale del orden COMPLETO, no del filtrado: mirando "los que no
+                       cumplen" se sigue viendo en que lugar de todos esta parado cada uno. */
+                    const puesto = new Map(E.todas.map(([u], i) => [u, i + 1]));
+                    window.__kpiEfDatos = { E, filasEf, puesto };
+
+                    const tarjeta = (n, l, c, d) => `<div style="background:rgba(var(--shadow-rgb), 0.35); border:1px solid rgba(var(--ink-rgb), 0.08); border-radius:10px; padding:11px 14px;">
+                        <div style="font-size:var(--t-xl); font-weight:900; line-height:1.15; color:${c};">${n}</div>
+                        <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35); text-transform:uppercase; font-weight:800; letter-spacing:0.4px; margin-top:2px;">${l}</div>
+                        <div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:5px;">${d}</div></div>`;
+
+                    const botones = [
+                        ['todos', 'Todos', E.todas.length],
+                        ['mejores', 'Los más eficientes', sobre],
+                        ['flojos', 'Los que no cumplen la hora', bajo]
+                    ].map(([id, et, n]) => `<button onclick="window.__kpiSetEf('${id}')" style="
+                        padding:6px 13px; border-radius:8px; font:inherit; font-size:var(--t-xs); font-weight:800; cursor:pointer;
+                        border:1px solid ${VF === id ? 'var(--brand-light)' : 'rgba(var(--ink-rgb), 0.12)'};
+                        background:${VF === id ? 'rgba(var(--primary2-rgb), 0.16)' : 'rgba(var(--ink-rgb), 0.03)'};
+                        color:${VF === id ? 'var(--text-strong)' : 'var(--text-muted)'};">${et}<span style="font-weight:900; opacity:0.65; margin-left:5px;">${n}</span></button>`).join('');
+
+                    const ORO = { 1: '#e3b341', 2: '#adbac7', 3: '#c08552' };
+                    const cuerpoEf = !filasEf.length
+                        ? `<tr><td colspan="8" style="padding:3.5rem; text-align:center; color:rgba(var(--ink-rgb), 0.2);">Nadie en el rango elegido.</td></tr>`
+                        : filasEf.map(([u, d]) => {
+                            const pct = pctDe(d), dif = d.esp - d.min, n = puesto.get(u);
+                            const soc = Object.entries(d.soc).sort((a, b) => b[1] - a[1]).slice(0, 2);
+                            return `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.04);">
+                                <td style="padding:0.5rem 0.9rem; white-space:nowrap;">
+                                    <span style="display:inline-flex; align-items:center; justify-content:center; width:21px; height:21px; border-radius:50%; font-size:var(--t-xs); font-weight:900; margin-right:7px;
+                                        background:${ORO[n] || 'rgba(var(--ink-rgb), 0.07)'}; color:${ORO[n] ? 'var(--bg-dark)' : 'rgba(var(--ink-rgb), 0.4)'};">${n}</span>
+                                    <b style="color:var(--text-strong);">${escKpi(u)}</b>
+                                    ${n === 1 && pct > 100 ? `<span style="font-size:var(--t-xs); font-weight:900; letter-spacing:0.4px; text-transform:uppercase; color:var(--bg-dark); background:var(--success); padding:1px 7px; border-radius:9px; margin-left:7px;">el más eficiente</span>` : ''}
+                                </td>
+                                <td style="padding:0.5rem 0.9rem; text-align:center; font-weight:800; color:var(--text-strong); font-variant-numeric:tabular-nums;">${nM(d.q)}</td>
+                                <td style="padding:0.5rem 0.9rem; text-align:center; color:var(--text-muted); font-variant-numeric:tabular-nums;">${hm(d.esp)}</td>
+                                <td style="padding:0.5rem 0.9rem; text-align:center; font-weight:900; font-size:var(--t-md); color:${colEf(pct)}; font-variant-numeric:tabular-nums;">${hm(d.min)}</td>
+                                <td style="padding:0.5rem 0.9rem; text-align:center; font-weight:800; color:${dif >= 0 ? 'var(--success)' : 'var(--danger)'}; font-variant-numeric:tabular-nums;">
+                                    ${dif >= 0 ? '&minus; ' + hm(dif) : '+ ' + hm(-dif)}
+                                    <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.34); font-weight:600;">${dif >= 0 ? 'terminó antes' : 'se pasó'}</div></td>
+                                <td style="padding:0.5rem 0.9rem; text-align:center;">
+                                    <span style="font-weight:900; font-size:var(--t-md); color:${colEf(pct)};">${nM(pct)}%</span>
+                                    <div style="height:5px; border-radius:3px; background:rgba(var(--ink-rgb), 0.07); overflow:hidden; width:92px; margin:4px auto 0;">
+                                        <div style="height:100%; border-radius:3px; width:${Math.min(100, pct / 2.5)}%; background:${colEf(pct)};"></div></div></td>
+                                <td style="padding:0.5rem 0.9rem; text-align:center; color:var(--text-strong);">${d.ok} <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.34);">de ${d.n}</span></td>
+                                <td style="padding:0.5rem 0.9rem; color:var(--text-muted); white-space:nowrap;">${soc.map(([o, c]) => escKpi(o) + ` <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.34);">x${c}</span>`).join(' · ') || '&ndash;'}</td>
+                            </tr>`;
+                        }).join('');
+
+                    return `
+                    <div class="glass-panel" style="padding:0; overflow:hidden; margin-top:1.5rem;">
+                        ${barra}
+                        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; padding:14px;">
+                            ${tarjeta(nM(E.gen) + '%', 'Rendimiento general', colEf(E.gen), hm(E.espT) + ' permitidas contra ' + hm(E.minT) + ' reales')}
+                            ${tarjeta(E.okT + ' de ' + E.nT, 'Tareas dentro del tiempo', (E.nT && E.okT / E.nT >= 0.5) ? 'var(--success)' : 'var(--warning)', nM(E.nT ? E.okT / E.nT * 100 : 0) + '% de las tareas')}
+                            ${tarjeta(E.todas.length, 'Personas medidas', 'var(--brand-light)', 'ordenadas de más a menos eficiente')}
+                            ${tarjeta(nM(E.qT), 'Pares almacenados', 'var(--brand-light)', E.qFuera ? nM(E.qFuera) + ' más quedaron fuera de la medición' : 'en el rango elegido')}
+                        </div>
+                        <div style="background:rgba(var(--warning-soft-rgb), 0.07); border-left:3px solid var(--warning-soft); padding:9px 13px; border-radius:0 7px 7px 0; margin:0 14px 14px; font-size:var(--t-xs); color:rgba(var(--brand-pale-rgb), 0.9); line-height:1.7;">
+                            <b>100% = terminó justo en el tiempo permitido.</b> Ese tiempo sale de la meta de la categoría de cada tarea: lo que va al piso a un ritmo y lo que va a paleta al suyo, con un mínimo por el recorrido. Se cambia en <b>Config. Tareas</b>.
+                        </div>
+                        <div style="display:flex; gap:7px; padding:0 14px 13px; flex-wrap:wrap; align-items:center;">
+                            ${botones}
+                            <span style="margin-left:6px; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.34);">${VF === 'mejores' ? 'la vara es el ' + nM(E.gen) + '% general del rango' : VF === 'flojos' ? 'tardaron más de lo permitido' : 'ordenados de más a menos eficiente'}</span>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
+                                <thead><tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.12);">
+                                    ${['Persona', 'Pares<br>almacenados', 'Debía<br>tomarle', 'Le tomó', 'Diferencia', 'Rendimiento', 'Tareas<br>a tiempo', 'Con quién trabajó']
+                                      .map((t, i) => `<th style="padding:0.6rem 0.9rem; text-align:${(i === 0 || i === 7) ? 'left' : 'center'}; font-weight:700; font-size:var(--t-xs); color:var(--text-muted); text-transform:uppercase;${i === 0 ? ' width:210px;' : ''}">${t}</th>`).join('')}
+                                </tr></thead>
+                                <tbody>${cuerpoEf}</tbody>
+                            </table>
+                        </div>
+                        <div style="padding:0.8rem 1rem; font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.42); line-height:1.85;">
+                            ${E.fuera ? `<b>Se apartaron ${E.fuera} tareas (${nM(E.qFuera)} pares)</b> porque dan un número imposible: se cerraron todas juntas al final. No se promedian, para que no le inflen el número a nadie.<br>` : ''}
+                            <b>La eficiencia de una persona es la de los grupos en que trabajó:</b> a dos que hicieron la misma tarea juntos no hay forma de separarlos, y por eso salen con el mismo número. Los pares sí se parten a la mitad; las horas no, porque los dos estuvieron ahí todo el tiempo.
+                        </div>
+                    </div>`;
+                }
 
                 return `
                 <div class="glass-panel" style="padding:0; overflow:hidden; margin-top:1.5rem;">

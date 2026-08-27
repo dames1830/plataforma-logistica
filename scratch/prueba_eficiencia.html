@@ -1,0 +1,185 @@
+<!-- Prueba de la tercera pestana: Eficiencia por persona.
+     Saca el panel del propio dashboard_v28.js, con las funciones de medicion que usa
+     de verdad, y lo corre contra las tareas y las METAS reales del servidor.
+     Los dos ambientes del archivo se arman SEPARADOS, como en el original. -->
+<meta charset="utf-8">
+<title>Prueba de la pestana Eficiencia</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body { margin:0; padding:20px; background:var(--panel-deeper); }
+  #eco { max-width:1000px; margin:0 auto 16px; font-size:12.5px; color:var(--text-muted);
+    line-height:1.9; white-space:pre-wrap; font-family:system-ui, sans-serif; }
+  #eco b { color:var(--success); } #eco .mal { color:var(--danger); font-weight:700; }
+  #eco .t { color:var(--brand-light); font-weight:700; }
+  #panelKpiVistas { max-width:1500px; margin:0 auto; }
+</style>
+<div id="eco"></div>
+<div id="panelKpiVistas"></div>
+
+<script type="module">
+document.documentElement.setAttribute('data-tema','indigo');
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+window.addEventListener('unhandledrejection', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + ((e.reason && e.reason.message) || e.reason)); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL: lo de arriba no alcanza para dar nada por bueno.</span>'); }, 30000);
+
+const CR = String.fromCharCode(13);
+const leer = async f => (await (await fetch(f+'?z='+Date.now())).text()).split(CR).join('');
+const trozo = (s, a, b) => { const i = s.indexOf(a); if (i<0) throw new Error('no esta: '+a); const j = s.indexOf(b, i); return s.slice(i, j); };
+
+const DB = await leer('../js/views/dashboard_v28.js');
+const SY = await leer('../js/services_v245/sync_engine_v24_9.js');
+
+// Las piezas de medicion, tal cual estan escritas
+// Todo el bloque de medicion de un tirón: el avance, el destino piso/reserva, el tiempo
+// permitido, la categoria de la tarea y su meta. Se corta justo antes del Maestro.
+const MEDIR = trozo(DB, 'const getTaskTotalAvance = (t) => {', '/* ── EL MAESTRO DE ARTÍCULOS')
+            + trozo(DB, 'const getTaskMinutos = (t) => {', '\n/**')
+            + trozo(DB, 'const buildKpiDataset = (tasks, desde, hasta) => {', '\n/** hh:mm a partir de minutos');
+// Los dos ambientes hermanos del panel
+const AYUDA = trozo(DB, '                const repintarPanel = () => {', '                // Clic en un día lo aísla');
+const iniP = DB.indexOf('${(window.__kpiRenderPanel = ');
+const PANEL = DB.slice(DB.indexOf('() => {', iniP), DB.indexOf('\n            })()}', iniP)) + '\n            }';
+const DESC = trozo(SY, 'function descomprimirTareas(data) {', '\n/**');
+eco('Del dashboard salieron <b>' + (MEDIR.length + AYUDA.length + PANEL.length) + '</b> caracteres.');
+
+// Las metas de VERDAD, del servidor
+const metas = await import('../js/services_v245/metasService.js?z=' + Date.now());
+await metas.cargarReglas(true);
+const reglas = metas.getReglas();
+eco('Metas del servidor: <b>' + reglas.length + '</b> reglas.');
+reglas.forEach(r => eco('   ' + r.categoria.padEnd(14) + ' piso ' + String(r.metaUph).padStart(5)
+  + ' · reserva ' + String(metas.metaReservaDe(r)).padStart(5) + ' · desde ' + r.desde));
+
+const mod0 = await import('data:text/javascript,' + encodeURIComponent(DESC + '\nexport { descomprimirTareas };'));
+const tareas = mod0.descomprimirTareas((await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data);
+eco('Tareas del servidor: <b>' + tareas.length + '</b>\n');
+
+const mod = await import('data:text/javascript,' + encodeURIComponent(`
+import * as metasService from '${location.origin}/js/services_v245/metasService.js';
+export const montar = (tasks, ayuda) => {
+  const { getLogicalDate, diaOperativoDeTarea, icono, indexarMaestro, marcaNormalizada } = ayuda;
+  const repintar = () => {};
+${MEDIR}
+  (() => {
+${AYUDA}
+  })();
+  (() => {
+    window.__kpiRenderPanel = ${PANEL};
+  })();
+};`));
+
+mod.montar(tareas, {
+  getLogicalDate: () => '2026-08-26',
+  diaOperativoDeTarea: (t) => t.fecha || String(t.inicio || '').slice(0,10),
+  icono: () => '',
+  // El Maestro no hace falta: las tareas nuevas traen el gender adentro
+  indexarMaestro: () => ({ porSku: new Map(), familias: [], detalles: [], padres: {} }),
+  marcaNormalizada: (m) => m || 'S/M'
+});
+await metas.cargarReglas(true);
+const pintar = () => { document.getElementById('panelKpiVistas').innerHTML = window.__kpiRenderPanel(); };
+window.__kpiPHDesde = '2026-08-01'; window.__kpiPHHasta = '2026-08-26';
+window.__kpiVista = 'eficiencia';
+pintar();
+
+const filas = () => [...document.querySelectorAll('#panelKpiVistas tbody tr')];
+const cel = (tr, i) => tr.children[i].innerText.trim().replace(/\s+/g,' ');
+const num = (tr, i) => Number(cel(tr, i).replace(/[^\d]/g,''));
+const tarjeta = (i) => document.querySelectorAll('#panelKpiVistas [style*="font-size:var(--t-xl)"]')[i].innerText.trim();
+
+eco('<span class="t">── LA PESTANA EXISTE Y ABRE ──</span>');
+const pest = [...document.querySelectorAll('#panelKpiVistas button[onclick*="__kpiSetVista"]')];
+ok('hay TRES pestanas: ' + pest.map(b=>b.innerText.split('\n')[0]).join(' · '), pest.length === 3);
+const cab = [...document.querySelectorAll('#panelKpiVistas thead th')].map(t=>t.innerText.replace(/\s+/g,' ').trim().toUpperCase());
+ok('las columnas son las que pidio: ' + cab.join(' | '),
+   cab.join('|') === 'PERSONA|PARES ALMACENADOS|DEBÍA TOMARLE|LE TOMÓ|DIFERENCIA|RENDIMIENTO|TAREAS A TIEMPO|CON QUIÉN TRABAJÓ');
+ok('trae los dos calendarios y la camara',
+   document.querySelectorAll('#panelKpiVistas input[type=date]').length === 2 && !!document.querySelector('#panelKpiVistas button[onclick*="FotoPH"]'));
+ok('el icono de la camara va sin marco ni fondo',
+   /background:\s*none/.test(document.querySelector('#panelKpiVistas button[onclick*="FotoPH"]').getAttribute('style')));
+
+eco('\n<span class="t">── USA LAS METAS DE VERDAD ──</span>');
+const gen = Number(tarjeta(0).replace(/[^\d]/g,''));
+eco('   rendimiento general de agosto: <b>' + gen + '%</b>  ·  ' + tarjeta(1) + ' tareas a tiempo');
+ok('el rendimiento cae cerca del 100%, no en el 175% de antes', gen > 85 && gen < 130);
+ok('y no dice 0% ni NaN', Number.isFinite(gen) && gen > 0);
+
+eco('\n<span class="t">── EL ORDEN DE MERITO ──</span>');
+const F = filas();
+ok('hay filas de personas: ' + F.length, F.length > 10);
+const pcts = F.map(tr => Number(cel(tr,5).replace(/[^\d]/g,'')));
+ok('vienen de mas a menos eficiente: de ' + pcts[0] + '% a ' + pcts[pcts.length-1] + '%',
+   pcts.every((v,i) => i === 0 || pcts[i-1] >= v));
+ok('el primero lleva la medalla', /EL MÁS EFICIENTE/i.test(cel(F[0], 0)));
+ok('solo hay UNA medalla', (document.querySelector('#panelKpiVistas tbody').innerHTML.match(/el más eficiente/gi) || []).length === 1);
+ok('los puestos van 1, 2, 3...', F.slice(0,5).every((tr,i) => cel(tr,0).startsWith(String(i+1))));
+
+eco('\n<span class="t">── LOS DOS TIEMPOS, QUE ES LO QUE PIDIO ──</span>');
+const p0 = F[0];
+eco('   ' + cel(p0,0).replace(/EL MÁS EFICIENTE/i,'').trim() + ': ' + cel(p0,1) + ' pares · debia ' + cel(p0,2) + ' · le tomo ' + cel(p0,3) + ' · ' + cel(p0,4) + ' · ' + cel(p0,5));
+const enMin = (t) => { const h = /(\d+) h/.exec(t), m = /(\d+) min/.exec(t); return (h?+h[1]*60:0) + (m?+m[1]:0); };
+ok('todas dicen los minutos, no solo las horas', F.every(tr => /min|h/.test(cel(tr,2)) && /min|h/.test(cel(tr,3))));
+ok('el porcentaje cuadra con los dos tiempos',
+   F.every(tr => { const e = enMin(cel(tr,2)), r = enMin(cel(tr,3)), p = Number(cel(tr,5).replace(/[^\d]/g,'')); return r > 0 && Math.abs(e/r*100 - p) < 3; }));
+ok('la diferencia cuadra con la resta',
+   F.every(tr => { const e = enMin(cel(tr,2)), r = enMin(cel(tr,3)), d = enMin(cel(tr,4)); return Math.abs(Math.abs(e-r) - d) <= 2; }));
+ok('quien terminó antes sale en verde y quien se pasó en rojo',
+   F.every(tr => { const e = enMin(cel(tr,2)), r = enMin(cel(tr,3)); const col = tr.children[4].getAttribute('style'); return e >= r ? /success/.test(col) : /danger/.test(col); }));
+
+eco('\n<span class="t">── LOS CUADROS CUADRAN ──</span>');
+const sumaPares = F.reduce((a,tr) => a + num(tr,1), 0);
+const tarjPares = Number(tarjeta(3).replace(/[^\d]/g,''));
+ok('la suma de los pares de cada persona da el total de la tarjeta: ' + sumaPares.toLocaleString('es-PE') + ' = ' + tarjPares.toLocaleString('es-PE'), sumaPares === tarjPares);
+ok('nadie sale repetido', new Set(F.map(tr => cel(tr,0).replace(/^\d+\s*/,'').split(' ')[0])).size === F.length);
+ok('la cuenta de personas coincide con la tarjeta: ' + F.length, Number(tarjeta(2)) === F.length);
+
+eco('\n<span class="t">── EL FILTRO, QUE ES EL CORAZON ──</span>');
+const bot = () => [...document.querySelectorAll('#panelKpiVistas button[onclick*="__kpiSetEf"]')];
+ok('hay tres botones: ' + bot().map(b=>b.innerText.replace(/\s+/g,' ')).join(' · '), bot().length === 3);
+const nTodos = F.length;
+window.__kpiEfVista = 'mejores'; pintar();
+const mej = filas();
+ok('"los mas eficientes" deja ' + mej.length + ' de ' + nTodos, mej.length > 0 && mej.length < nTodos);
+ok('y todos estan por encima del ' + gen + '% general',
+   mej.every(tr => Number(cel(tr,5).replace(/[^\d]/g,'')) > gen));
+window.__kpiEfVista = 'flojos'; pintar();
+const flo = filas();
+ok('"los que no cumplen" deja ' + flo.length + ', todos por debajo de 100%',
+   flo.length > 0 && flo.every(tr => Number(cel(tr,5).replace(/[^\d]/g,'')) < 100));
+ok('el puesto NO se renumera al filtrar: el primero es el ' + cel(flo[0],0).split(' ')[0],
+   Number(cel(flo[0],0).split(' ')[0]) > 3);
+window.__kpiEfVista = 'todos'; pintar();
+
+eco('\n<span class="t">── LA FOTO PARA WHATSAPP ──</span>');
+window.__kpiFotoPH();
+const capa = document.getElementById('fotoKpiPH');
+ok('abre la vista reducida', !!capa);
+if (capa) {
+  const lum = c => { const [r,g,b] = c.match(/\d+/g).map(Number); return 0.299*r+0.587*g+0.114*b; };
+  const contr = e => Math.abs(lum(getComputedStyle(e).color) - lum(getComputedStyle(e).backgroundColor));
+  const celdas = [...capa.querySelectorAll('th,td')];
+  const flojas = celdas.filter(e => e.innerText.trim() && contr(e) < 60);
+  ok('todo lo escrito se lee' + (flojas.length ? ': ' + flojas.length + ' celdas casi invisibles ("' + flojas[0].innerText + '")' : ''), !flojas.length);
+  const tallas = [...new Set(celdas.map(e => getComputedStyle(e).fontSize))];
+  ok('el encabezado tiene la misma letra que los numeros: ' + tallas.join(' / '), tallas.length === 1);
+  ok('dice de que es: ' + capa.querySelector('div[style*="font-weight:900"]').innerText, /EFICIENCIA POR PERSONA/.test(capa.querySelector('div[style*="font-weight:900"]').innerText));
+  ok('trae una fila por persona', capa.querySelectorAll('tbody tr').length === filas().length);
+  capa.remove();
+}
+
+eco('\n<span class="t">── LAS OTRAS DOS PESTANAS SIGUEN VIVAS ──</span>');
+window.__kpiVista = 'grupos'; pintar();
+ok('Grupos sigue dibujando sus horas', [...document.querySelectorAll('#panelKpiVistas thead th')].map(t=>t.innerText).includes('20:00'));
+window.__kpiVista = 'personas'; pintar();
+ok('Personas tambien', [...document.querySelectorAll('#panelKpiVistas thead th')].map(t=>t.innerText).includes('20:00'));
+window.__kpiVista = 'eficiencia'; pintar();
+ok('y se vuelve a Eficiencia sin problema', [...document.querySelectorAll('#panelKpiVistas thead th')].map(t=>t.innerText.toUpperCase()).includes('RENDIMIENTO'));
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>' : '\n<b>La pestana quedo como la maqueta que aprobo.</b>');
+</script>
