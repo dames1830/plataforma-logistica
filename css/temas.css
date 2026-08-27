@@ -970,3 +970,48 @@ table { font-variant-numeric: tabular-nums; }
   border-top: none !important; border-bottom: none !important;
   text-shadow: none !important;
 }
+
+/* LA CABECERA ENTERA DEL RECUADRO, no solo la fila de titulos.
+   Daniel: *"se supone que toda la cabecera debe ser con el mismo fondo; de todos los
+   reportes deben tener el mismo formato"*. El titulo, el subtitulo, las fechas del rango
+   y los nombres de las columnas quedan en un solo bloque azul, sin corte.
+   Y: *"la fecha del rango esta de azul y no se nota; ponle blanco"*. */
+[data-tema="pbi"] .caja-pbi {
+  background: #fff !important;
+  border-color: #12365c !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow: none !important;
+}
+[data-tema="pbi"] .caja-pbi > .tapa-pbi {
+  background: #12365c !important;
+  padding: .7rem 1.1rem .75rem !important;
+  margin: 0 !important;
+  align-items: center !important;
+}
+/* Todo lo que va sobre el azul se lee en blanco: el titulo, el subtitulo y los rotulos
+   del rango, que antes eran celestes sobre blanco y casi no se veian. */
+[data-tema="pbi"] .caja-pbi > .tapa-pbi,
+[data-tema="pbi"] .caja-pbi > .tapa-pbi h3,
+[data-tema="pbi"] .caja-pbi > .tapa-pbi span,
+[data-tema="pbi"] .caja-pbi > .tapa-pbi div { color: #fff !important; }
+[data-tema="pbi"] .caja-pbi > .tapa-pbi h3 {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 15px !important; font-weight: 700 !important; letter-spacing: 1.2px !important;
+}
+/* La rayita de la izquierda del titulo, en dorado. Segun el reporte, esta en la franja
+   misma o en el bloque de adentro: se cubren las dos formas. */
+[data-tema="pbi"] .caja-pbi > .tapa-pbi,
+[data-tema="pbi"] .caja-pbi > .tapa-pbi > div:first-child { border-left-color: #F5C97A !important; }
+/* El subtitulo, mas apagado que el titulo. Se lo reconoce por su tamano de letra, que es
+   lo unico comun a los cuatro reportes: unos lo tienen colgando del bloque del titulo y
+   otros directo en la franja. */
+[data-tema="pbi"] .caja-pbi .tapa-pbi div[style*="--t-xs"] { color: #9fb3cc !important; font-weight: 400 !important; }
+/* La casilla de la fecha se deja clara: sobre el azul, en blanco no se leeria lo escrito. */
+[data-tema="pbi"] .caja-pbi > .tapa-pbi input[type="date"] {
+  background: #fff !important; color: #111 !important;
+  border-color: rgba(255,255,255,.45) !important;
+}
+[data-tema="pbi"] .caja-pbi > .tapa-pbi button { color: #fff !important; }
+/* La tabla lleva su propio aire, porque el recuadro ya no tiene. */
+[data-tema="pbi"] .caja-pbi > div:not(.tapa-pbi) { padding: 0 .2rem .2rem !important; }

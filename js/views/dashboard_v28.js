@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0455';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0456';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0455';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0455';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0455';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0455';
-import * as metasService from '../services_v245/metasService.js?v=29.0455';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0455';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0455';
+import * as adminService from '../services_v245/adminService.js?v=29.0456';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0456';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0456';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0456';
+import * as metasService from '../services_v245/metasService.js?v=29.0456';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0456';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0456';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0455';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0455';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0455';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0455';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0455';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0455';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0455';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0455';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0455';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0455';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0455';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0455';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0455';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0455';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0455';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0455';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0455';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0455';
-import { montarSlotting } from './slotting.js?v=29.0455';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0456';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0456';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0456';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0456';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0456';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0456';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0456';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0456';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0456';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0456';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0456';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0456';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0456';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0456';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0456';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0456';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0456';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0456';
+import { montarSlotting } from './slotting.js?v=29.0456';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0455';
+const VERSION = '29.0456';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5412,7 +5412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0455');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0456');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5675,7 +5675,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0455');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0456');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18325,7 +18325,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0455 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0456 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -34360,11 +34360,6 @@ window.__menuMapa = (btn) => {
                 window.renderAlmacenajeTareas(container);
             }
         };
-        window.__hourlyHoy = () => {
-            window.__hourlyDesde = window.__hourlyHasta = getLogicalDate();
-            window.__hourlySetRango('hasta', window.__hourlyHasta);
-        };
-
         tasksList.forEach(t => {
             if (t.status !== 'Finalizado') return;
             if (!t.termino) return;
@@ -34557,8 +34552,8 @@ window.__menuMapa = (btn) => {
 
         return `
         <!-- REPORTE DE PRODUCCIÓN POR HORA (ANCHO COMPLETO) -->
-        <div id="cuadroPorHora" style="background:var(--bg-dark); border:2px solid var(--cyan-neon); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--cyan-neon-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
-            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+        <div class="caja-pbi" id="cuadroPorHora" style="background:var(--bg-dark); border:2px solid var(--cyan-neon); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--cyan-neon-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
+            <div class="tapa-pbi" style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;">
                 <div style="border-left: 4px solid var(--cyan-neon); padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                     <h3 style="color:var(--cyan-neon); font-weight:900; margin:0; font-size:var(--t-lg); letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                         REPORTE DE PRODUCCIÓN POR HORA
@@ -34574,8 +34569,6 @@ window.__menuMapa = (btn) => {
                     <span style="font-size:var(--t-xs); color:rgba(var(--cyan-neon-rgb), 0.7); font-weight:800; letter-spacing:0.5px;">HASTA:</span>
                     <input type="date" value="${hasta}" onchange="window.__hourlySetRango('hasta', this.value)"
                            style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
-                    <button onclick="window.__hourlyHoy()" title="Volver a la jornada de hoy"
-                            style="padding:5px 10px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--cyan-neon); font-size:var(--t-xs); font-weight:800; cursor:pointer; font-family:inherit;">HOY</button>
                     <!-- La cámara arma la misma tabla en chico para recortarla y mandarla por WhatsApp.
                          SIN MARCO NI FONDO, como los otros 22 botones de icono del tablero: yo lo
                          habia puesto con recuadro y era el unico de todo el archivo. Daniel,
@@ -34752,8 +34745,8 @@ window.__menuMapa = (btn) => {
 
         return `
         <!-- REPORTE DE ALMACENADO POR SEMANA (ANCHO COMPLETO) -->
-        <div style="background:var(--bg-dark); border:2px solid var(--violet); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--violet-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
-            <div style="border-left: 4px solid var(--violet); padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
+        <div class="caja-pbi" style="background:var(--bg-dark); border:2px solid var(--violet); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--violet-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem; margin-top:1.5rem; width:100%;">
+            <div class="tapa-pbi" style="border-left: 4px solid var(--violet); padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                 <h3 style="color:var(--violet-soft); font-weight:900; margin:0; font-size:var(--t-lg); letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                     REPORTE DE ALMACENADO POR SEMANA Y MARCA
                 </h3>
@@ -36473,8 +36466,8 @@ window.__menuMapa = (btn) => {
             </div>
 
             <!-- REPORTE RENDIMIENTO DE OPERARIOS (ANCHO COMPLETO) -->
-                <div style="background:var(--bg-dark); border:2px solid var(--cyan-neon); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--cyan-neon-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem; min-width:0;">
-                <div class="fila-entre">
+                <div class="caja-pbi" style="background:var(--bg-dark); border:2px solid var(--cyan-neon); border-radius:12px; padding:0.8rem 1.2rem; box-shadow: 0 0 25px rgba(var(--cyan-neon-rgb), 0.2); font-family:var(--font-sans, 'Inter', sans-serif); color:var(--text-strong); display:flex; flex-direction:column; gap:0.6rem; min-width:0;">
+                <div class="fila-entre tapa-pbi">
                     <div style="border-left: 4px solid var(--cyan-neon); padding-left: 10px; display:flex; flex-direction:column; gap:2px;">
                         <h3 style="color:var(--cyan-neon); font-weight:900; margin:0; font-size:var(--t-lg); letter-spacing:1.5px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                             RENDIMIENTO DE OPERARIOS
