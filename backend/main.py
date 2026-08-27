@@ -611,12 +611,18 @@ def _mb(ruta: str) -> float:
 
 
 @app.get("/api/admin/entornos")
-def estado_entornos(detalle: bool = False):
+def estado_entornos(detalle: bool = False, top: int = 25):
     """
     Radiografía de los dos entornos: qué tan grandes son y cuánto disco queda.
 
     Con ?detalle=true agrega el desglose de qué áreas están ocupando el espacio
-    en producción (útil para saber qué conviene limpiar).
+    en producción, y `en_que_se_va`, que cierra la cuenta del archivo entero:
+    cuánto son datos, cuánto son páginas libres que recuperaría un VACUUM, y
+    cuánto queda sin explicar.
+
+    ?top=N cambia cuántas áreas trae el desglose (25 por defecto, 500 como tope).
+    Con top=25 la suma NO cuadra con el tamaño del archivo, y no es un error: son
+    las 25 más pesadas de 77.
     """
     try:
         _, _, libre = shutil.disk_usage(os.path.dirname(DB_PATH) or ".")
@@ -638,14 +644,62 @@ def estado_entornos(detalle: bool = False):
                     FROM logistics_snapshots
                     GROUP BY area_id
                     ORDER BY bytes DESC
-                    LIMIT 25
-                """).fetchall()
+                    LIMIT :tope
+                """, {"tope": max(1, min(int(top or 25), 500))}).fetchall()
+
+                # ── EN QUÉ SE VA EL ARCHIVO, SIN SUPONER NADA ────────────────────
+                #
+                # El detalle de arriba trae solo las áreas más pesadas, así que su
+                # suma NUNCA cuadra con el tamaño del archivo. El 26-ago-2026 esa
+                # resta —347 MB de archivo contra 295 MB de las 25 listadas— se leyó
+                # como "50 MB de espacio desperdiciado", y era una conjetura: había
+                # 77 áreas, no 25. Estas tres cifras cierran la cuenta de verdad.
+                #
+                # OJO CON LENGTH(): sobre TEXT cuenta CARACTERES, no bytes. Una tilde
+                # ocupa 2 bytes en UTF-8 y cuenta como 1. Por eso se mide aparte con
+                # LENGTH(CAST(... AS BLOB)), que sí devuelve bytes.
+                total_areas, copias, chars, bytes_reales = conn.execute("""
+                    SELECT COUNT(DISTINCT area_id), COUNT(*),
+                           SUM(LENGTH(data_json)),
+                           SUM(LENGTH(CAST(data_json AS BLOB)))
+                    FROM logistics_snapshots
+                """).fetchone()
+
+                # Páginas que SQLite ya no usa y no devolvió al disco: esto es lo que
+                # un VACUUM recupera de verdad. Ni más ni menos.
+                libres = conn.execute("PRAGMA freelist_count").fetchone()[0]
+                pagina = conn.execute("PRAGMA page_size").fetchone()[0]
+
+                # Todo lo que no son snapshots: usuarios, permisos, auditoría, KPIs...
+                otras = {}
+                for t in ('users', 'role_permissions', 'buffer_config', 'audit_logs',
+                          'shared_data', 'buffer_history', 'buffer_kpi_results'):
+                    try:
+                        n = conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+                        if n:
+                            otras[t] = n
+                    except Exception:
+                        pass   # la tabla puede no existir en bases viejas
             finally:
                 conn.close()
+
             respuesta["areas_mas_pesadas"] = [
                 {"area": f[0], "copias_guardadas": f[1], "peso_mb": round((f[2] or 0) / (1024*1024), 2)}
                 for f in filas
             ]
+            archivo_mb = respuesta["produccion"]["tamano_mb"]
+            datos_mb = round((bytes_reales or 0) / (1024*1024), 2)
+            libres_mb = round((libres * pagina) / (1024*1024), 2)
+            respuesta["en_que_se_va"] = {
+                "areas_distintas": total_areas,
+                "copias_guardadas": copias,
+                "datos_mb": datos_mb,
+                "datos_mb_sin_contar_tildes": round((chars or 0) / (1024*1024), 2),
+                "paginas_libres_mb": libres_mb,
+                "recupera_un_vacuum_mb": libres_mb,
+                "sin_explicar_mb": round(archivo_mb - datos_mb - libres_mb, 2),
+                "otras_tablas_filas": otras,
+            }
 
         return respuesta
     except Exception as e:
@@ -896,8 +950,8 @@ def get_area_data(area: str, date: Optional[str] = None):
                     if snap_usernames:
                         cursor.execute("DELETE FROM users WHERE username NOT IN ({})".format(','.join(['?']*len(snap_usernames))), list(snap_usernames))
                     else:
-                        cursor.execute("DELETE FROM users")
-
+                        cursor.execute("DELETE FROM users")
+
                 # LOS DATOS se copian SIEMPRE, no solo cuando hay altas o bajas.
                 # El comentario de arriba decia "y datos", pero el bucle estaba dentro
                 # del if: cambiarle el rol o el tema a alguien que ya existia no altera
