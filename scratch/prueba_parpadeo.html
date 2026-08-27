@@ -1,0 +1,88 @@
+<!-- Prueba del parpadeo al redibujar la pestaña de Almacenaje.
+     No se puede abrir esa pestaña sin sesión, así que se prueba EL MECANISMO: en qué
+     momento se devuelve el scroll después de reescribir el HTML.
+
+     La regla del navegador: al terminar un bloque de JavaScript se vacía la cola de
+     MICROTAREAS y recién después se pinta. O sea que lo que se encola con
+     `queueMicrotask` se aplica ANTES del primer pintado, y lo que se encola con
+     `requestAnimationFrame` se aplica DESPUÉS de que ya se pintó una vez — y ese pintado
+     intermedio, con la pantalla movida, es el parpadeo. -->
+<meta charset="utf-8">
+<title>Prueba del parpadeo</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0e1622; color: #dbe6f5; padding: 22px; }
+  #eco { font-size: 13px; line-height: 1.9; white-space: pre-wrap; max-width: 860px; }
+  b { color: #7ee2a8; } .mal { color: #ff8a80; font-weight: 700; }
+  #caja { height: 140px; overflow-y: auto; border: 1px solid #2b3f63; margin-top: 14px; border-radius: 8px; }
+</style>
+
+<div id="eco"></div>
+<div id="caja"></div>
+
+<script>
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+const caja = document.getElementById('caja');
+const llenar = () => { caja.innerHTML = Array.from({length: 60}, (_, i) => '<div style="padding:8px">fila ' + i + '</div>').join(''); };
+let fallas = 0;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+
+llenar();
+caja.scrollTop = 400;
+const guardado = caja.scrollTop;
+eco('Se guarda el scroll en <b>' + guardado + '</b> y se reescribe el HTML, como hace el redibujado.\n');
+
+// El orden en que llegan los avisos es lo que decide si se ve o no el salto.
+const orden = [];
+queueMicrotask(() => { orden.push('microtarea'); });
+requestAnimationFrame(() => { orden.push('rAF (ya se pintó una vez)'); });
+setTimeout(() => { orden.push('setTimeout'); }, 0);
+
+/* Esto es el `container.innerHTML = ...`. Se vacía primero a propósito: rellenar con el
+   mismo alto conserva el scrollTop y la prueba no reproduciría nada. En el redibujado de
+   verdad el contenido cambia de altura y el scroll se pierde igual. */
+caja.innerHTML = '';
+llenar();
+eco('Apenas se reescribe, el scroll queda en <b>' + caja.scrollTop + '</b> — de ahí el salto.');
+
+// COMO QUEDÓ: la microtarea lo devuelve antes de que el navegador pinte.
+queueMicrotask(() => { caja.scrollTop = guardado; });
+
+queueMicrotask(() => {
+  eco('Al terminar el bloque de JavaScript, la microtarea ya lo dejó en <b>' + caja.scrollTop + '</b>,');
+  eco('y el navegador todavía no pintó nada.\n');
+  ok('el scroll vuelve a su sitio antes del primer pintado', caja.scrollTop === guardado);
+});
+
+setTimeout(async () => {
+  eco('En qué orden llegaron los avisos: <b>' + orden.join(' → ') + '</b>');
+  ok('la microtarea corre PRIMERO, antes que todo lo demás', orden[0] === 'microtarea');
+  // Con el panel del navegador oculto el rAF no corre —la página no pinta—, así que su
+  // ausencia acá no dice nada del código. Lo que importa ya quedó probado: la microtarea
+  // llega primero, y el rAF, cuando corre, llega después de pintar.
+  if (!orden.includes('rAF (ya se pintó una vez)')) {
+    eco('   (el rAF no llegó a correr: este panel está oculto y la página no pinta. No es un fallo.)');
+  }
+
+  // Y que el arreglo esté de verdad en el archivo que se publica.
+  // SE MIRAN LAS LÍNEAS DE CÓDIGO, NO EL TEXTO CRUDO: los comentarios de ese bloque
+  // NOMBRAN requestAnimationFrame para explicar el defecto, y buscar la palabra suelta
+  // daba un falso fallo. Este mismo descuido casi me hace reportar un problema que no era.
+  const CR = String.fromCharCode(13);
+  const src = (await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text()).split(CR).join('');
+  const i = src.indexOf('const __restoreScroll = () => {');
+  const lineas = src.slice(i, i + 3000).split('\n')
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith('*') && !l.startsWith('//') && !l.startsWith('/*'));
+  const nMicro = lineas.findIndex(l => l.startsWith('queueMicrotask(__restoreScroll)'));
+  const nRaf = lineas.findIndex(l => l.startsWith('requestAnimationFrame(() => { __restoreScroll()'));
+  const nTimeout = lineas.findIndex(l => l.startsWith('setTimeout(__restoreScroll, 80)'));
+  eco('');
+  ok('el dashboard devuelve el scroll con queueMicrotask', nMicro >= 0);
+  ok('conserva los dos rAF como red de seguridad', nRaf >= 0);
+  ok('y el setTimeout de respaldo', nTimeout >= 0);
+  ok('la microtarea va ANTES que los rAF en el código', nMicro >= 0 && nRaf > nMicro);
+
+  eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+             : '\n<b>El salto que causaba el parpadeo ya no llega a verse.</b>');
+}, 60);
+</script>

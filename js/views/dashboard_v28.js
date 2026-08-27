@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0434';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0435';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0434';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0434';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0434';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0434';
-import * as metasService from '../services_v245/metasService.js?v=29.0434';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0434';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0434';
+import * as adminService from '../services_v245/adminService.js?v=29.0435';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0435';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0435';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0435';
+import * as metasService from '../services_v245/metasService.js?v=29.0435';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0435';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0435';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0434';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0434';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0434';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0434';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0434';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0434';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0434';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0434';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0434';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0434';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0434';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0434';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0434';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0434';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0434';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0434';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0434';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0434';
-import { montarSlotting } from './slotting.js?v=29.0434';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0435';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0435';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0435';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0435';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0435';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0435';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0435';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0435';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0435';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0435';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0435';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0435';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0435';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0435';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0435';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0435';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0435';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0435';
+import { montarSlotting } from './slotting.js?v=29.0435';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0434';
+const VERSION = '29.0435';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5338,7 +5338,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0434');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0435');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5601,7 +5601,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0434');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0435');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18167,7 +18167,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0434 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0435 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -33893,9 +33893,26 @@ window.__menuMapa = (btn) => {
             if (tb && __savedTablaTop > 0) tb.scrollTop = __savedTablaTop;
             if (__savedWindowY > 0) window.scrollTo({ top: __savedWindowY, behavior: 'instant' });
         };
+        /* EL SCROLL SE DEVUELVE ANTES DEL PRIMER PINTADO. ESTO ES EL PARPADEO.
+         *
+         * Daniel, 27-ago-2026, ya en producción: *"sigo viendo el parpadeo"*. Yo había
+         * arreglado el cuadro por hora para que no rehiciera la pestaña, pero **el filtro que
+         * él usa es otro** —el DE/HASTA del panel de arriba— y hay 33 sitios más que sí la
+         * rehacen: los cinco filtros de fecha, la búsqueda, las semanas del gráfico...
+         *
+         * Parchearlos de a uno es inviable. La causa es una sola y está acá: el redibujado
+         * escribe el HTML nuevo y devuelve el scroll a su sitio recién en el frame SIGUIENTE
+         * (`requestAnimationFrame`). O sea que el navegador alcanza a pintar un cuadro con la
+         * pantalla arriba de todo y después salta. Ese ida y vuelta es lo que se ve parpadear.
+         *
+         * `queueMicrotask` corre apenas se vacía la pila —cuando esta función termina— y
+         * SIEMPRE ANTES de que el navegador pinte. El DOM ya está escrito, así que el scroll
+         * se acomoda sin que nadie llegue a ver el salto.
+         *
+         * Los dos rAF y el setTimeout se quedan como red: si la tabla todavía no tenía su
+         * altura final, el scrollTop se recorta a 0 y el salto volvería igual. */
+        queueMicrotask(__restoreScroll);
         requestAnimationFrame(() => { __restoreScroll(); requestAnimationFrame(__restoreScroll); });
-        // Red de seguridad: si en esos dos frames la tabla todavía no tenía su altura final,
-        // el scrollTop se recorta a 0 y el salto vuelve igual.
         setTimeout(__restoreScroll, 80);
     }
 
