@@ -39,23 +39,39 @@ const parejo = repartoParejo;
  * sin configurar, para que se note que hay que revisarlas y no se tomen por buenas.
  */
 /**
- * CUÁNTO BAJA AL PISO, según la marca. Tres reglas distintas:
+ * CUÁNTO BAJA AL PISO, según la marca. Tres reglas, en el orden en que ganan:
  *
- *   PORCENTAJE  las marcas grandes —Bata, North Star, Bubblegummers— dejan la mitad del
- *               stock TOTAL (buffer + piso + reserva) abajo. Tienen cuerpos de sobra.
- *   CUERPOS     las medianas —Power, Weinbrenner, Puma, Industrials— llenan UN SOLO CUERPO
- *               y nada más, por más que lleguen mil pares. Si a Power le entran 330 en un
- *               cuerpo, se almacenan 330. Poner la mitad les comería dos o tres cuerpos y
- *               no quedaría lugar para el resto de los artículos de esa misma marca.
- *   TODO        Adidas y Skechers: lo que hay en el buffer se almacena entero, sin recorte.
+ *   TODO     Adidas, Puma, Skechers y Marie Claire: lo que hay en el buffer se almacena
+ *            entero, sin recorte, y nada sube a reserva. Le gana hasta al escolar, porque
+ *            capar en 50 por talla dejaría el sobrante parado en el buffer: no tienen
+ *            reserva a donde mandarlo.
+ *   CUERPOS  Power, Weinbrenner y Bata Industrials: UN cuerpo por artículo y nada más, por
+ *            más que lleguen mil pares. El escolar sí les gana: ese va con sus 50 por talla.
+ *   CASO     el resto —Bata, North Star, Bubblegummers, B.G Licenses—: la marca no manda,
+ *            manda el caso del artículo (código nuevo 60%, reposición un cuerpo).
  *
- * Una marca que no esté en la lista se trata como mediana: un cuerpo. Es lo prudente — de
- * más se llena el selectivo, de menos solo se repone más seguido.
+ * Una marca que no esté en la lista va a 'caso', que es no decidir nada por ella.
+ *
+ * OJO CON LA HISTORIA: hasta el 27-ago-2026 solo 'todo' se leía de verdad. 'porcentaje' y
+ * 'cuerpos' estaban escritos pero el caso decidía antes, así que la pantalla dejaba escribir
+ * números que no hacían nada. Daniel lo cazó leyendo la maqueta de Capacidad.
  */
+/* LOS MODOS QUE SE PUEDEN ELEGIR PARA UNA MARCA son solo los tres primeros. Los otros
+ * existen porque el CASO del artículo los usa por dentro —el 60% del código nuevo es un
+ * 'porcentaje' y los 50 pares del escolar son un 'paresPorTalla'—, pero no son una opción
+ * de marca: ver MODOS_DE_MARCA más abajo. */
 export const MODOS = {
-    porcentaje: 'Un % del stock total',
+    /* Lo normal. La marca no manda: manda el caso del artículo, que es lo que de verdad
+     * decidía desde siempre. Se hizo explícito el 27-ago-2026, cuando Daniel vio en la
+     * pantalla un '50%' para Bata que no lo leía nadie. */
+    caso:       'La decide el caso (nuevo 60% · reposición 1 cuerpo)',
     cuerpos:    'Llenar N cuerpos',
     todo:       'Todo lo del buffer',
+    /* RETIRADO COMO OPCIÓN DE MARCA, 27-ago-2026. Decía "el 50% del stock total queda
+     * abajo" y era la regla vieja, la de antes del 60%/1 cuerpo. Ya no la leía nadie, así
+     * que encenderla habría sido una regresión, no un arreglo. Sigue acá porque el código
+     * nuevo la usa por dentro y porque una configuración vieja puede traerla. */
+    porcentaje: 'Un % del stock total (retirado)',
     // Un tope fijo en pares para el artículo entero, repartido entre sus tallas.
     pares:      'Un tope fijo de pares',
     /* Un tope fijo POR TALLA, que es otra cosa. Lo pide el escolar: tienen que quedar 50
@@ -64,18 +80,28 @@ export const MODOS = {
     paresPorTalla: 'Un tope fijo de pares por talla'
 };
 
-export const modoPorDefecto = () => ({ modo: 'cuerpos', valor: 1 });
+/* Lo único que se le puede poner a una marca desde la pantalla. Si una marca trae un modo
+ * viejo, la pantalla lo muestra igual para que se vea qué tiene, pero no se puede elegir. */
+export const MODOS_DE_MARCA = ['caso', 'cuerpos', 'todo'];
+
+export const modoPorDefecto = () => ({ modo: 'caso', valor: 0 });
 
 export const marcasPorDefecto = () => ({
-    'Bata':          { modo: 'porcentaje', valor: 50 },
-    'North Star':    { modo: 'porcentaje', valor: 50 },
-    'Bubblegummers': { modo: 'porcentaje', valor: 50 },
+    /* ESTAS CUATRO NO TIENEN REGLA PROPIA: manda el caso del artículo. Estaban escritas
+       como 'porcentaje 50' —la regla vieja, de antes del 60%/1 cuerpo— y no las leía nadie.
+       Se pasaron a 'caso' el 27-ago-2026 para que la pantalla diga lo que de verdad pasa. */
+    'Bata':          { modo: 'caso', valor: 0 },
+    'North Star':    { modo: 'caso', valor: 0 },
+    'Bubblegummers': { modo: 'caso', valor: 0 },
     // Es la misma marca que Bubblegummers, así que va con la misma regla
-    'B.G Licenses':  { modo: 'porcentaje', valor: 50 },
+    'B.G Licenses':  { modo: 'caso', valor: 0 },
     'Power':         { modo: 'cuerpos', valor: 1 },
     'Weinbrenner':   { modo: 'cuerpos', valor: 1 },
     'Bata Industrials': { modo: 'cuerpos', valor: 1 },
-    'Marie Claire':  { modo: 'cuerpos', valor: 1 },
+    /* Marie Claire no manda nada a reserva, igual que las tres del mezzanine 3. Estaba
+       escrita como 'cuerpos 1' —un modo que entonces no leía nadie— y lo corrigió Daniel
+       el 27-ago-2026: *"Adidas, Puma, Skechers, Marie Claire, todo lo que llega se almacena"*. */
+    'Marie Claire':  { modo: 'todo', valor: 0 },
     // LAS TRES DEL MEZZANINE 3 NO MANDAN NADA A RESERVA, llegue lo que llegue. Puma estaba en
     // un cuerpo y pasó acá el 05-ago-2026, con Adidas y Skechers, por regla de Daniel: las tres
     // viven en el mezzanine 3 y ahí se quedan. Si la zona se llena, lo que no entra se queda en
@@ -113,6 +139,9 @@ export const cuantoAlPiso = ({ marca, buffer, piso = 0, reserva = 0, paresPorCue
     let objetivo;                       // cuánto TENDRÍA que haber en piso al terminar
     if (regla.modo === 'todo')            objetivo = p + b;
     else if (regla.modo === 'cuerpos')    objetivo = Math.max(1, Number(regla.valor) || 1) * paresPorCuerpo;
+    /* 'caso' quiere decir que la marca no decide: acá, sin saber si es código nuevo o
+       reposición, lo prudente es un cuerpo. No es el 50% viejo. */
+    else if (regla.modo === 'caso')       objetivo = paresPorCuerpo;
     else                                  objetivo = (b + p + r) * ((Number(regla.valor) || 50) / 100);
 
     // Lo que falta para llegar al objetivo, sin pasarse de lo que hay en el buffer
@@ -203,7 +232,10 @@ const normalizar = (crudo) => {
     const mSrc = (c.marcas && typeof c.marcas === 'object') ? c.marcas : def.marcas;
     Object.keys(mSrc).forEach(k => {
         const v = mSrc[k] || {};
-        const modo = MODOS[v.modo] ? v.modo : 'cuerpos';
+        /* EL RESPALDO ES 'caso', NO 'cuerpos'. Hasta el 27-ago-2026 daba igual porque
+           'cuerpos' no lo leía nadie; desde que vuelve a funcionar, dejarlo de respaldo le
+           daría un cuerpo por artículo a cualquier marca con un modo mal escrito. */
+        const modo = MODOS[v.modo] ? v.modo : 'caso';
         let valor = Number(v.valor);
         if (!Number.isFinite(valor) || valor < 0) valor = modo === 'porcentaje' ? 50 : 1;
         if (modo === 'porcentaje') valor = Math.min(100, valor);
@@ -367,6 +399,10 @@ export const planificarPorTalla = ({ marca, categoria, porTalla, paresPorCuerpo 
                                         objetivoArt = Math.max(0, Number(regla.valor) || 0) * claves.length;
     // TOPE FIJO EN PARES para el artículo entero, repartido entre las tallas.
     else if (regla.modo === 'pares')    objetivoArt = Math.max(0, Number(regla.valor) || 0);
+    /* 'caso' quiere decir que la marca no decide nada. Acá solo llega por el camino de
+       'sin-zona', que no fuerza regla; sin saber si es código nuevo o reposición, lo
+       prudente es un cuerpo. Antes caía en el `else` de abajo y le salía el 50% viejo. */
+    else if (regla.modo === 'caso')     objetivoArt = paresPorCuerpo;
     else                                objetivoArt = (bufferTotal + pisoTotal + (Number(reserva) || 0)) * ((Number(regla.valor) || 50) / 100);
 
     // EL CANDADO. Un cuerpo no se comparte entre dos artículos, así que ocuparlo cuesta lo

@@ -1,0 +1,160 @@
+<!-- Los dos defectos de la pantalla de configuración: la regla por marca que no hacía nada
+     y el bloqueo del tope que solo vigilaba una de sus cuatro puertas. Saca del dashboard
+     el código de verdad —el `casoDelItem` y el `fijar` con su tope— y lo corre contra la
+     configuración y el stock del servidor. -->
+<meta charset="utf-8">
+<title>Prueba: la regla por marca y las cuatro puertas del tope</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1040px;margin:0 auto;white-space:pre-wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 25000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text()).split(CR).join('');
+const tallasService = await import('../js/services_v245/tallasService.js?z=' + Date.now());
+const zonasService  = await import('../js/services_v245/zonasService.js?z=' + Date.now());
+
+/* ══ DEFECTO 1 · LA REGLA POR MARCA ══════════════════════════════════════ */
+eco('<span class="t">── LOS MODOS QUE SE PUEDEN ELEGIR ──</span>');
+ok('existe el modo "caso" — ' + (tallasService.MODOS.caso || 'NO'), !!tallasService.MODOS.caso);
+ok('solo se ofrecen tres: ' + tallasService.MODOS_DE_MARCA.join(', '),
+   JSON.stringify(tallasService.MODOS_DE_MARCA) === JSON.stringify(['caso', 'cuerpos', 'todo']));
+ok('"porcentaje" queda marcado como retirado', /retirado/i.test(tallasService.MODOS.porcentaje));
+ok('el respaldo de una marca sin regla es "caso", no un cuerpo — '
+   + tallasService.modoPorDefecto().modo, tallasService.modoPorDefecto().modo === 'caso');
+/* Que la pantalla dibuje el selector con la lista corta, no con MODOS entero. */
+ok('el selector de la pantalla usa la lista corta',
+   /MODOS_DE_MARCA, r\.modo\]/.test(src) && !/Object\.keys\(MODOS\)\.map/.test(src));
+ok('un modo viejo se sigue mostrando, para poder cambiarlo', /new Set\(\[\.\.\.tallasService\.MODOS_DE_MARCA, r\.modo\]\)/.test(src));
+
+eco('\n<span class="t">── LA REGLA DE LA MARCA AHORA SE APLICA ──</span>');
+const desde = src.indexOf('  const PCT_CODIGO_NUEVO');
+const hasta = src.indexOf('  /**', src.indexOf('const casoDelItem'));
+ok('se sacó el casoDelItem del archivo', desde > 0 && hasta > desde);
+const trozo = src.slice(desde, hasta);
+ok('trae el caso marca-cuerpos', /marca-cuerpos/.test(trozo));
+
+await tallasService.cargarTallas();
+const conMarcas = (marcas) => {
+  const modoDeMarca = (marca) => {
+    const m = String(marca || '').trim();
+    if (marcas[m]) return marcas[m];
+    const b = m.toUpperCase().replace(/\s+/g, ' ');
+    const h = Object.keys(marcas).find(k => k.toUpperCase().replace(/\s+/g, ' ') === b);
+    return h ? marcas[h] : tallasService.modoPorDefecto();
+  };
+  return new Function('tallasService', 'zonasService', 'sugActuales',
+    trozo + '\n  return casoDelItem;')(
+      { ...tallasService, modoDeMarca }, zonasService, () => []);
+};
+/* La configuración de beta, que es la que se arregló. */
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/config';
+const traer = async (env) => {
+  const r = await fetch(API + '?t=' + Date.now(), env ? { headers: { 'X-Environment': env } } : {});
+  const c = await r.json();
+  return (c && c.data !== undefined) ? c.data : c;
+};
+const [beta, prod] = await Promise.all([traer('beta'), traer(null)]);
+const mB = (beta.tallas || {}).marcas || {}, mP = (prod.tallas || {}).marcas || {};
+const caso = conMarcas(mB);
+const ctx = (piso = 0, reserva = 0) => ({
+  origenDe: new Map(), porTallaDe: new Map([['1111111', { '40': { piso } }]]),
+  reservaDe: new Map([['1111111', reserva]]), casaDe: new Map(), ficha: new Map()
+});
+const correr = (fn, marca, gender, piso = 0, reserva = 0) =>
+  fn('1111111', { marca, genderRims: gender, gGender: '01 FOOTWEAR' }, 1000, 'MZN03', ctx(piso, reserva));
+
+[['Power'], ['Weinbrenner'], ['Bata Industrials']].forEach(([m]) => {
+  const nuevo = correr(caso, m, '04 SPORT', 0, 0);
+  ok(`${m} código nuevo -> ${nuevo.nombre} · ${nuevo.regla.modo} ${nuevo.regla.valor}`,
+     nuevo.nombre === 'marca-cuerpos' && nuevo.regla.modo === 'cuerpos' && nuevo.regla.valor === 1);
+  const rep = correr(caso, m, '04 SPORT', 300, 500);
+  ok(`${m} con 800 en el almacén -> ${rep.nombre} · ${rep.regla.modo} ${rep.regla.valor}`,
+     rep.regla.modo === 'cuerpos' && rep.regla.valor === 1);
+});
+
+eco('\n<span class="t">── PERO EL ESCOLAR SIGUE GANANDO, Y "TODO" TAMBIÉN ──</span>');
+['Power', 'Weinbrenner', 'Bata Industrials'].forEach(m => {
+  const r = correr(caso, m, '05 SCHOOL');
+  ok(`${m} escolar -> ${r.nombre} (${r.regla.valor} por talla)`,
+     r.nombre === 'escolar' && r.regla.valor === 50);
+});
+['Adidas', 'Puma', 'Skechers', 'Marie Claire'].forEach(m => {
+  const r = correr(caso, m, '05 SCHOOL');
+  ok(`${m} escolar -> ${r.nombre}`, r.nombre === 'marca-sin-reserva');
+});
+
+eco('\n<span class="t">── LAS DE "CASO" SIGUEN CON LA REGLA GENERAL ──</span>');
+[['Bata', 0, 0, 'codigo-nuevo'], ['Bata', 300, 500, 'reposicion-fabrica'],
+ ['North Star', 0, 0, 'codigo-nuevo'], ['Bubblegummers', 50, 0, 'reposicion-fabrica'],
+ ['B.G Licenses', 0, 0, 'codigo-nuevo']].forEach(([m, p, r, esperado]) => {
+  const x = correr(caso, m, '02 WOMEN', p, r);
+  ok(`${m} con ${p + r} en el almacén -> ${x.nombre}`, x.nombre === esperado);
+});
+ok('las cuatro pasaron a "caso" en beta',
+   ['Bata', 'North Star', 'Bubblegummers', 'B.G Licenses'].every(m => (mB[m] || {}).modo === 'caso'));
+ok('producción NO se tocó — Bata sigue en ' + (mP['Bata'] || {}).modo,
+   (mP['Bata'] || {}).modo === 'porcentaje');
+
+eco('\n<span class="t">── UNA MARCA DESCONOCIDA NO SE LLEVA UN CUERPO POR ERROR ──</span>');
+/* Al revivir 'cuerpos', dejarlo de respaldo le habría dado un cuerpo a cualquier marca mal
+   escrita. Tiene que caer en la regla general. */
+const rara = correr(conMarcas(mB), 'Marca Que No Existe', '02 WOMEN', 0, 0);
+ok('marca desconocida, código nuevo -> ' + rara.nombre, rara.nombre === 'codigo-nuevo');
+
+eco('\n<span class="t">── SE PONE ROJA SI SE QUITA EL ARREGLO ──</span>');
+const sinArreglo = new Function('tallasService', 'zonasService', 'sugActuales',
+  trozo.replace(/if \(suRegla && suRegla\.modo === 'cuerpos'\) \{/, 'if (false) {')
+  + '\n  return casoDelItem;')({ ...tallasService,
+    modoDeMarca: (m) => mB[String(m).trim()] || tallasService.modoPorDefecto() }, zonasService, () => []);
+const viejo = correr(sinArreglo, 'Power', '04 SPORT', 0, 0);
+ok('sin el arreglo, Power nuevo volvía al 60% — ' + viejo.nombre + ' ' + viejo.regla.valor + '%',
+   viejo.nombre === 'codigo-nuevo' && viejo.regla.valor === 60);
+
+/* ══ DEFECTO 2 · LAS CUATRO PUERTAS DEL TOPE ═════════════════════════════ */
+eco('\n<span class="t">── EL TOPE SE COMPRUEBA UNA SOLA VEZ, ADENTRO DE fijar ──</span>');
+const iF = src.indexOf('const fijar = (m, g, t, crudo)');
+const bloqueFijar = src.slice(iF, src.indexOf('\n      };', iF));
+ok('fijar consulta el tope', /topePorClave\.get\(clave\)/.test(bloqueFijar));
+ok('y devuelve por qué no se pudo', /porque: 'tope'/.test(bloqueFijar));
+ok('topeDeFactor salió de pintarTabla y lo ven las cuatro puertas',
+   src.indexOf('const topeDeFactor') < src.indexOf('const pintarTabla'));
+
+eco('\n<span class="t">── LAS CUATRO PUERTAS ──</span>');
+const puerta = (nombre, re) => ok(nombre, re.test(src));
+puerta('1. la casilla talla por talla usa el resultado de fijar', /const r = fijar\(el\.dataset\.m/);
+puerta('2. "aplicar a todas" pasa por aplicarAMuchas', /data-mg[^]{0,400}aplicarAMuchas\(filas\.filter/);
+puerta('3. "aplicar a toda la marca" también', /data-marca[^]{0,400}aplicarAMuchas\(filas\.filter\(f => f\.marca === m\)/);
+puerta('4. la carga por Excel comprueba el tope', /const lim = topeDeFactor\(hallada\);[^]{0,120}noEntran\.push/);
+ok('ninguna puerta escribe ya en _configMarcaGenero sin pasar por el tope',
+   (src.match(/_configMarcaGenero\[_claveMGT\([^)]*\)\] = /g) || []).length === 1);
+puerta('las masivas dejan como estaba lo que no entra y avisan cuántas', /se quedaron como estaban porque no entran/);
+puerta('el Excel lo dice en su resumen', /no entran en su cuerpo y se dejaron/);
+
+eco('\n<span class="t">── EL TOPE, CONTRA EL CUBICAJE DE VERDAD ──</span>');
+const armarTope = new Function('zonasService',
+  src.slice(src.indexOf('    const TALLAS_POR_RANGO'), src.indexOf('\n    };', src.indexOf('    const topeDeFactor')) + 6)
+  + '\n return topeDeFactor;');
+const topeDeFactor = armarTope(zonasService);
+await zonasService.cargarZonas();
+const fila = { marca: 'Bata Industrials', genero: '07 INDUSTRIAL', talla: '34', tipos: { ZAPATO: 500 } };
+const lim = topeDeFactor(fila);
+ok('Bata Industrials talla 34 tiene tope — ' + (lim ? `${lim.tope} (cuerpo ${lim.cap} ÷ ${lim.tallas})` : 'NO'), !!lim);
+ok('y 60 se pasa de ese tope', !!lim && 60 > lim.tope);
+ok('sin cubicaje NO se inventa un tope',
+   topeDeFactor({ marca: 'Marca Rara', genero: 'X', talla: '38', tipos: {} }) === null);
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>La regla de la marca se aplica, la pantalla dice la verdad, y las cuatro puertas del tope están tapadas.</b>');
+</script>

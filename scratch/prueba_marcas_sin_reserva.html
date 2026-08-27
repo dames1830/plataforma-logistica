@@ -37,10 +37,14 @@ const SIN_RESERVA = ['Adidas', 'Puma', 'Skechers', 'Marie Claire'];
 SIN_RESERVA.forEach(m => ok(`${m} va en 'todo' en beta — ${(mB[m] || {}).modo}`, (mB[m] || {}).modo === 'todo'));
 ok('produccion NO se tocó: Marie Claire sigue como estaba — ' + (mP['Marie Claire'] || {}).modo,
    (mP['Marie Claire'] || {}).modo === 'cuerpos');
-/* Las otras siete no se movieron: un arreglo que cambia lo que no se pidió es otro defecto. */
-const OTRAS = Object.keys(mP).filter(m => !SIN_RESERVA.includes(m));
+/* Las que no se pidió tocar no se movieron. Las cuatro del modo retirado SÍ cambian a
+   propósito —ver prueba_regla_marca_y_topes.html—, así que se comprueban aparte. */
+const A_CASO = ['Bata', 'North Star', 'Bubblegummers', 'B.G Licenses'];
+const OTRAS = Object.keys(mP).filter(m => !SIN_RESERVA.includes(m) && !A_CASO.includes(m));
 ok(`las otras ${OTRAS.length} marcas quedaron igual que en producción`,
    OTRAS.every(m => JSON.stringify(mB[m]) === JSON.stringify(mP[m])));
+ok('y las cuatro del modo retirado pasaron a "caso" a propósito',
+   A_CASO.every(m => (mB[m] || {}).modo === 'caso' && (mP[m] || {}).modo === 'porcentaje'));
 
 eco('\n<span class="t">── SE SACA EL casoDelItem DE VERDAD DEL DASHBOARD ──</span>');
 /* Se recorta desde las constantes hasta el final de casoDelItem. No es una copia pegada:
@@ -61,7 +65,7 @@ const modoDeMarcaBeta = (marca) => {
   if (cfgBeta.marcas[m]) return cfgBeta.marcas[m];
   const b = m.toUpperCase().replace(/\s+/g, ' ');
   const h = Object.keys(cfgBeta.marcas).find(k => k.toUpperCase().replace(/\s+/g, ' ') === b);
-  return h ? cfgBeta.marcas[h] : { modo: 'porcentaje', valor: 50 };
+  return h ? cfgBeta.marcas[h] : tallasService.modoPorDefecto();
 };
 const armar = (cuerpo) => new Function('tallasService', 'zonasService', 'sugActuales',
   cuerpo + '\n  return casoDelItem;')(
@@ -96,8 +100,11 @@ SIN_RESERVA.forEach(m => {
   const r = correr(m, '04 SPORT');
   ok(`${m} sport -> ${r.nombre}`, r.nombre === 'marca-sin-reserva');
 });
+/* Power ya no cae en 'codigo-nuevo': desde el 27-ago-2026 su regla de marca —un cuerpo por
+   artículo— vuelve a aplicarse. Lo cubre prueba_regla_marca_y_topes.html; acá se afirma
+   para que si alguien la desactiva, esta prueba también se entere. */
 [['Bata', '02 WOMEN', 0, 0, 'codigo-nuevo'], ['Bata', '02 WOMEN', 300, 500, 'reposicion-fabrica'],
- ['Power', '04 SPORT', 0, 0, 'codigo-nuevo'], ['Bubblegummers', '03 KIDS', 50, 0, 'reposicion-fabrica']]
+ ['Power', '04 SPORT', 0, 0, 'marca-cuerpos'], ['Bubblegummers', '03 KIDS', 50, 0, 'reposicion-fabrica']]
   .forEach(([m, g, p, res, esperado]) => {
     const r = correr(m, g, p, res);
     ok(`${m} ${g} con ${p + res} en el almacén -> ${r.nombre}`, r.nombre === esperado);

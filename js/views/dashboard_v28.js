@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0459';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0460';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0459';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0459';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0459';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0459';
-import * as metasService from '../services_v245/metasService.js?v=29.0459';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0459';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0459';
+import * as adminService from '../services_v245/adminService.js?v=29.0460';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0460';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0460';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0460';
+import * as metasService from '../services_v245/metasService.js?v=29.0460';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0460';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0460';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0459';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0459';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0459';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0459';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0459';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0459';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0459';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0459';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0459';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0459';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0459';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0459';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0459';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0459';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0459';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0459';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0459';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0459';
-import { montarSlotting } from './slotting.js?v=29.0459';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0460';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0460';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0460';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0460';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0460';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0460';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0460';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0460';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0460';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0460';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0460';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0460';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0460';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0460';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0460';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0460';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0460';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0460';
+import { montarSlotting } from './slotting.js?v=29.0460';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0459';
+const VERSION = '29.0460';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5412,7 +5412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0459');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0460');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5675,7 +5675,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0459');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0460');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18335,7 +18335,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0459 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0460 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -19476,20 +19476,28 @@ const renderRFSection = (container) => {
             <tbody>
               ${Object.keys(marcasCfg).sort().map(m => {
                 const r = marcasCfg[m];
+                /* QUÉ HACE DE VERDAD CADA REGLA. Hasta el 27-ago-2026 esta columna
+                   describía el '50%' como si se aplicara, y no se aplicaba: el caso del
+                   artículo decidía antes. Ahora dice lo que pasa. */
                 const explica = r.modo === 'todo'
-                    ? 'Se almacena TODO lo que hay en el buffer, sin recorte.'
+                    ? 'Se almacena TODO lo que hay en el buffer, sin recorte. Nada sube a reserva, ni siquiera el escolar.'
                     : r.modo === 'cuerpos'
-                        ? `Se llena${r.valor > 1 ? 'n' : ''} ${r.valor} cuerpo${r.valor > 1 ? 's' : ''} y nada más, por más que llegue de a mil.`
-                        : `La mitad —${r.valor}%— del stock total (buffer + piso + reserva) queda abajo.`;
+                        ? `Se llena${r.valor > 1 ? 'n' : ''} ${r.valor} cuerpo${r.valor > 1 ? 's' : ''} por artículo y nada más, por más que llegue de a mil. El escolar le gana: ese va con sus 50 por talla.`
+                        : r.modo === 'caso'
+                            ? 'Manda el caso del artículo: código nuevo baja el 60%, reposición completa un cuerpo.'
+                            : `MODO VIEJO, no se aplica: manda el caso del artículo. Elige una de las tres opciones para que la marca decida.`;
                 return `<tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
                   <td style="padding:0.5rem 1.1rem; color:var(--text-strong); font-weight:700;">${esc(m)}</td>
                   <td style="padding:0.4rem;">
                     <select data-mmodo="${esc(m)}" style="background:rgba(var(--ink-rgb), 0.05); border:1px solid rgba(var(--ink-rgb), 0.12); border-radius:6px; color:var(--text-strong); font-size:var(--t-xs); padding:4px 6px; cursor:pointer;">
-                      ${Object.keys(MODOS).map(k => `<option value="${k}" ${r.modo === k ? 'selected' : ''}>${MODOS[k]}</option>`).join('')}
+                      ${/* Solo lo elegible; si la marca trae un modo viejo se muestra igual,
+                            para que se vea qué tiene y se pueda cambiar. */
+                        [...new Set([...tallasService.MODOS_DE_MARCA, r.modo])]
+                          .map(k => `<option value="${k}" ${r.modo === k ? 'selected' : ''}>${MODOS[k] || k}</option>`).join('')}
                     </select>
                   </td>
                   <td style="padding:0.4rem; text-align:center;">
-                    ${r.modo === 'todo' ? '<span style="color:rgba(var(--ink-rgb), 0.25);">—</span>' : `
+                    ${(r.modo === 'todo' || r.modo === 'caso') ? '<span style="color:rgba(var(--ink-rgb), 0.25);">—</span>' : `
                     <input type="number" data-mval="${esc(m)}" min="1" max="${r.modo === 'porcentaje' ? 100 : 20}" value="${r.valor}"
                       style="width:66px; padding:5px; background:rgba(var(--ink-rgb), 0.04); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:6px; color:var(--text-strong); font-weight:800; text-align:center;">
                     <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35);">${r.modo === 'porcentaje' ? '%' : 'cuerpos'}</span>`}
@@ -21954,6 +21962,27 @@ const renderRFSection = (container) => {
       return { nombre: 'marca-sin-reserva', regla: { modo: 'todo', valor: 0 },
                motivo: `${datos.marca} no manda nada a reserva: todo se almacena en su zona`
                      + `${esEscolar(datos.genderRims) ? ', y eso vale también para el escolar' : ''}.` };
+    }
+
+    /* HAY MARCAS QUE OCUPAN UN CUERPO POR ARTÍCULO, Y ESO TAMBIÉN LE GANA AL CASO.
+     *
+     * Daniel, 27-ago-2026: *"industrial es solamente un cuerpo, nada más por artículo; en
+     * Power también es un cuerpo por artículo y en Weinbrenner también"*.
+     *
+     * La regla estaba escrita en la configuración desde siempre —`modo: 'cuerpos'`— pero no
+     * la leía nadie: el caso decidía antes y estas marcas caían en la regla general. Para la
+     * REPOSICIÓN daba igual, porque también es un cuerpo; el que salía distinto era el
+     * CÓDIGO NUEVO, que bajaba el 60% de lo que llegara. Medido sobre el almacén de hoy:
+     * a 348 artículos de estas marcas no les cambia nada y a 278 sí, más todos los códigos
+     * que todavía no han pisado el almacén.
+     *
+     * Va DESPUÉS del escolar a propósito: un Power escolar son 50 pares por talla. */
+    const suRegla = tallasService.modoDeMarca(datos.marca);
+    if (suRegla && suRegla.modo === 'cuerpos') {
+      const n = Math.max(1, Number(suRegla.valor) || 1);
+      return { nombre: 'marca-cuerpos', regla: { modo: 'cuerpos', valor: n },
+               motivo: `${datos.marca} ocupa ${n} cuerpo${n > 1 ? 's' : ''} por artículo, `
+                     + `llegue lo que llegue.` };
     }
 
     /* EL CORTE DE LOS 20 PARES — ACTIVO + RESERVA, Y NO LA COLUMNA DONDE VIVE.
@@ -24598,6 +24627,36 @@ const renderRFSection = (container) => {
     };
 
     // ── Resumen: el impacto de lo que hay escrito, sobre lo que se está viendo ──
+    /* ══════════════════════════════════════════════════════════════════════════
+     * EL TOPE: lo que entra en el cuerpo, repartido entre las tallas del rango
+     * ══════════════════════════════════════════════════════════════════════════
+     *
+     * El factor es POR TALLA, pero el cuerpo guarda el articulo ENTERO. Con 8 tallas y
+     * factor 40 se estan pidiendo 320 pares para un cuerpo que aguanta 233.
+     *
+     * La capacidad sale del cubicaje MEDIDO, con la misma precedencia que usa el
+     * almacenaje. La tabla vieja por serie no se mira: estaba inventada. */
+    const TALLAS_POR_RANGO = { '18-25': 8, '26-30': 5, '31-35': 5, '36-39': 4, '40-44': 5, '45+': 3 };
+    const topeDeFactor = (f) => {
+      try {
+      const rango = zonasService.rangoDeTalla(f.talla);
+        if (!rango) return null;
+      const tipos = Object.entries(f.tipos || {});
+        if (!tipos.length) return null;
+      const tipo = tipos.sort((a, b) => b[1] - a[1])[0][0];   // el que mas pares tiene
+      const cfg = (zonasService.zonasActual && zonasService.zonasActual()) || {};
+      const d = cfg.densidadMarcaTipo || {};
+      const cap = d[`${f.marca}|${tipo}|${rango}`]
+                 ?? d[`${tipo}|${rango}`]
+                 ?? d[`${f.marca}|${tipo}`];
+        if (!cap || cap <= 0) return null;      // sin medida no se pone tope: no se inventa
+      const n = TALLAS_POR_RANGO[rango] || 4;
+        return { cap: cap, tipo: tipo, rango: rango, tallas: n, tope: Math.floor(cap / n) };
+      } catch (e) { return null; }
+    };
+    /* Sin medida NO hay tope, y eso es a proposito: bloquear con un numero inventado seria
+       peor que no bloquear. Se avisa en la pantalla que ese grupo no tiene cubicaje. */
+
     const pintarResumen = () => {
       const v = visibles();
       let conObjetivo = 0, aBajar = 0, skusPorReponer = 0;
@@ -24692,53 +24751,38 @@ const renderRFSection = (container) => {
         </div>`;
       }).join('');
 
-      /* ══════════════════════════════════════════════════════════════════════════
-       * EL TOPE: lo que entra en el cuerpo, repartido entre las tallas del rango
-       * ══════════════════════════════════════════════════════════════════════════
-       *
-       * El factor es POR TALLA, pero el cuerpo guarda el articulo ENTERO. Con 8 tallas y
-       * factor 40 se estan pidiendo 320 pares para un cuerpo que aguanta 233.
-       *
-       * La capacidad sale del cubicaje MEDIDO, con la misma precedencia que usa el
-       * almacenaje. La tabla vieja por serie no se mira: estaba inventada. */
-      const TALLAS_POR_RANGO = { '18-25': 8, '26-30': 5, '31-35': 5, '36-39': 4, '40-44': 5, '45+': 3 };
-      const topeDeFactor = (f) => {
-        try {
-          const rango = zonasService.rangoDeTalla(f.talla);
-          if (!rango) return null;
-          const tipos = Object.entries(f.tipos || {});
-          if (!tipos.length) return null;
-          const tipo = tipos.sort((a, b) => b[1] - a[1])[0][0];   // el que mas pares tiene
-          const cfg = (zonasService.zonasActual && zonasService.zonasActual()) || {};
-          const d = cfg.densidadMarcaTipo || {};
-          const cap = d[`${f.marca}|${tipo}|${rango}`]
-                   ?? d[`${tipo}|${rango}`]
-                   ?? d[`${f.marca}|${tipo}`];
-          if (!cap || cap <= 0) return null;      // sin medida no se pone tope: no se inventa
-          const n = TALLAS_POR_RANGO[rango] || 4;
-          return { cap: cap, tipo: tipo, rango: rango, tallas: n, tope: Math.floor(cap / n) };
-        } catch (e) { return null; }
-      };
-      /* Sin medida NO hay tope, y eso es a proposito: bloquear con un numero inventado seria
-         peor que no bloquear. Se avisa en la pantalla que ese grupo no tiene cubicaje. */
-
-      const fijar = (m, g, t, crudo) => {
-        const clave = _claveMGT(m, g, t);
-        if (crudo === '') delete _configMarcaGenero[clave];
-        else {
-          const val = parseInt(crudo, 10);
-          if (!Number.isFinite(val) || val < 0) return false;
-          _configMarcaGenero[clave] = val;
-        }
-        return true;
-      };
-
-      /* Cada fila sabe su tope, para poder comprobarlo al escribir. */
+      /* Cada fila sabe su tope. Se arma ANTES que `fijar`, porque `fijar` lo consulta. */
       const topePorClave = new Map();
       filas.forEach(f => {
         const t = topeDeFactor(f);
         if (t) topePorClave.set(_claveMGT(f.marca, f.genero, f.talla), t);
       });
+
+      /* EL TOPE SE COMPRUEBA ACÁ ADENTRO, Y NO EN CADA BOTÓN.
+       *
+       * Hasta el 27-ago-2026 el aviso vivía solo en el `change` de la casilla talla por
+       * talla. Las otras dos puertas —"aplicar a todas" y "aplicar a toda la marca"— y la
+       * carga por Excel llamaban a `fijar` directo y escribían lo que fuera. Por ahí entraron
+       * los 60 en las 619 combinaciones, sin un solo aviso. Poniéndolo adentro de `fijar`,
+       * las cuatro puertas quedan tapadas de una vez y una puerta nueva nace tapada.
+       *
+       * Devuelve por qué NO se pudo, para que quien llame decida cómo avisar: la casilla
+       * suelta muestra el cartel, las masivas cuentan cuántas quedaron fuera. */
+      const fijar = (m, g, t, crudo) => {
+        const clave = _claveMGT(m, g, t);
+        if (crudo === '') { delete _configMarcaGenero[clave]; return { ok: true }; }
+        const val = parseInt(crudo, 10);
+        if (!Number.isFinite(val) || val < 0) return { ok: false, porque: 'no es un número' };
+        const lim = topePorClave.get(clave);
+        if (lim && val > lim.tope) return { ok: false, porque: 'tope', lim, val };
+        _configMarcaGenero[clave] = val;
+        return { ok: true };
+      };
+
+      /* El cartel de "no entra", igual para las cuatro puertas. */
+      const carteldeTope = (m, t, lim) =>
+          `En ${m} · ${lim.tipo} · talla ${t} el cuerpo aguanta ${lim.cap} pares y el rango `
+        + `${lim.rango} tiene ${lim.tallas} tallas: el máximo por talla es ${lim.tope}.`;
 
       // Escribir un objetivo suelto
       elCuerpo.querySelectorAll('input[data-t]').forEach(inp => {
@@ -24748,23 +24792,21 @@ const renderRFSection = (container) => {
         inp.dataset.previo = inp.value;
         inp.addEventListener('change', e => {
           const el = e.target;
-          const lim = topePorClave.get(_claveMGT(el.dataset.m, el.dataset.g, el.dataset.t));
-          const val = parseInt(String(el.value).trim(), 10);
-          if (lim && Number.isFinite(val) && val > lim.tope) {
+          const r = fijar(el.dataset.m, el.dataset.g, el.dataset.t, String(el.value).trim());
+          if (!r.ok && r.porque === 'tope') {
+            const lim = r.lim;
             el.value = el.dataset.previo || '';
             el.style.borderColor = 'var(--danger-soft)';
             el.style.background = 'rgba(var(--danger-rgb), .15)';
             setTimeout(() => { el.style.borderColor = ''; el.style.background = 'var(--panel-solid)'; }, 1600);
             showPremiumAlert('NO ENTRA EN EL CUERPO',
-                `En ${el.dataset.m} · ${lim.tipo} · talla ${el.dataset.t} el cuerpo aguanta `
-                + `${lim.cap} pares y el rango ${lim.rango} tiene ${lim.tallas} tallas: `
-                + `el máximo por talla es ${lim.tope}.
+                carteldeTope(el.dataset.m, el.dataset.t, lim) + `
 
 Se dejó el valor anterior.`, 'warning');
             return;
           }
+          if (!r.ok) { el.value = el.dataset.previo || ''; return; }
           el.dataset.previo = el.value;
-          if (!fijar(el.dataset.m, el.dataset.g, el.dataset.t, el.value.trim())) return;
           _guardarFactoresLocal();
           marcarSinPublicar();
           pintarTabla();
@@ -24772,16 +24814,37 @@ Se dejó el valor anterior.`, 'warning');
         });
       });
 
+      /* APLICAR A MUCHAS A LA VEZ. Se escribe en las que entran y se deja como estaba en
+         las que no, igual que la casilla suelta —regla de Daniel, 25-ago-2026: *"que se
+         regrese al número donde estaba antes"*—. Después un solo cartel dice cuántas
+         quedaron fuera y cuál es la más apretada, para que no pase en silencio. */
+      const aplicarAMuchas = (queFilas, crudo, aQuien) => {
+        const fuera = [];
+        queFilas.forEach(f => {
+          const r = fijar(f.marca, f.genero, f.talla, crudo);
+          if (!r.ok && r.porque === 'tope') fuera.push({ f, lim: r.lim });
+        });
+        _guardarFactoresLocal();
+        marcarSinPublicar();
+        pintarTabla();
+        pintarResumen();
+        if (!fuera.length) return;
+        const peor = fuera.reduce((a, b) => (b.lim.tope < a.lim.tope ? b : a));
+        showPremiumAlert('NO ENTRAN TODAS EN SU CUERPO',
+            `Se puso <b>${crudo}</b> en ${queFilas.length - fuera.length} de las `
+          + `${queFilas.length} tallas de ${aQuien}.
+
+`
+          + `<b>${fuera.length}</b> se quedaron como estaban porque no entran. La más `
+          + `apretada: ` + carteldeTope(peor.f.marca, peor.f.talla, peor.lim), 'warning');
+      };
+
       // Aplicar a todas las tallas de un género de esa marca
       elCuerpo.querySelectorAll('input[data-mg]').forEach(inp => {
         inp.addEventListener('change', e => {
           const [m, g] = e.target.dataset.mg.split('||');
-          const crudo = e.target.value.trim();
-          filas.filter(f => f.marca === m && f.genero === g).forEach(f => fijar(f.marca, f.genero, f.talla, crudo));
-          _guardarFactoresLocal();
-          marcarSinPublicar();
-          pintarTabla();
-          pintarResumen();
+          aplicarAMuchas(filas.filter(f => f.marca === m && f.genero === g),
+                         e.target.value.trim(), `${m} · ${g}`);
         });
       });
 
@@ -24789,12 +24852,7 @@ Se dejó el valor anterior.`, 'warning');
       elCuerpo.querySelectorAll('input[data-marca]').forEach(inp => {
         inp.addEventListener('change', e => {
           const m = e.target.dataset.marca;
-          const crudo = e.target.value.trim();
-          filas.filter(f => f.marca === m).forEach(f => fijar(f.marca, f.genero, f.talla, crudo));
-          _guardarFactoresLocal();
-          marcarSinPublicar();
-          pintarTabla();
-          pintarResumen();
+          aplicarAMuchas(filas.filter(f => f.marca === m), e.target.value.trim(), m);
         });
       });
     };
@@ -24954,6 +25012,10 @@ Se dejó el valor anterior.`, 'warning');
 
           let entraron = 0, vacias = 0, sinMarca = 0;
           const noCruzan = [];
+          /* LA CUARTA PUERTA. El Excel escribía directo en la configuración, sin mirar el
+             cubicaje: era la más peligrosa de las cuatro, porque entra de a cientos de filas
+             y de una sola vez. Ahora el que no entra en su cuerpo se rechaza como los demás. */
+          const noEntran = [];
 
           if (hojaFactores) {
             _configMarcaGenero = {};
@@ -24969,6 +25031,11 @@ Se dejó el valor anterior.`, 'warning');
 
               const hallada = existentes.get(_claveMGT(m, g, t)) || existentes.get(_claveMGT(m, g, String(parseFloat(t))));
               if (!hallada) { noCruzan.push(`${m} / ${g} / talla ${t}`); return; }
+              const lim = topeDeFactor(hallada);
+              if (lim && v > lim.tope) {
+                noEntran.push({ f: hallada, lim, v });
+                return;
+              }
               _configMarcaGenero[_claveMGT(hallada.marca, hallada.genero, hallada.talla)] = v;
               entraron++;
             });
@@ -24996,6 +25063,13 @@ Se dejó el valor anterior.`, 'warning');
           if (entraronSku) partes.push(`Y <b>${entraronSku}</b> excepciones por SKU.`);
           if (vacias)   partes.push(`<b>${vacias}</b> filas venían sin número y se dejaron en blanco.`);
           if (sinMarca) partes.push(`<b>${sinMarca}</b> filas venían sin marca y se descartaron.`);
+          if (noEntran.length) {
+            const peor = noEntran.reduce((a, b) => (b.lim.tope < a.lim.tope ? b : a));
+            partes.push(`<br><b>${noEntran.length}</b> no entran en su cuerpo y se dejaron `
+              + `como estaban. La más apretada: ${_escF(peor.f.marca)} · ${_escF(peor.lim.tipo)} · `
+              + `talla ${_escF(peor.f.talla)} pedía ${peor.v} y el máximo por talla es `
+              + `<b>${peor.lim.tope}</b> (cuerpo de ${peor.lim.cap} entre ${peor.lim.tallas} tallas).`);
+          }
           if (noCruzan.length) {
             const muestra = noCruzan.slice(0, 6).map(_escF).join(' · ');
             partes.push(`<br><b>${noCruzan.length}</b> no cruzaron con el stock de hoy: ${muestra}${noCruzan.length > 6 ? '…' : ''}.`);
