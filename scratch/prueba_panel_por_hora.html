@@ -1,0 +1,159 @@
+<!-- Prueba del panel de KPI nuevo: Grupos y Personas por hora.
+     Saca el codigo del propio dashboard_v28.js y lo corre con las tareas reales del servidor.
+     No es una copia: si el dashboard cambia, esta prueba cambia con el. -->
+<meta charset="utf-8">
+<title>Prueba del panel por hora</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body { margin:0; padding:20px; background:var(--panel-deeper); }
+  #eco { max-width:980px; margin:0 auto 16px; font-size:12.5px; color:var(--text-muted);
+    line-height:1.9; white-space:pre-wrap; font-family:system-ui, sans-serif; }
+  #eco b { color:var(--success); } #eco .mal { color:var(--danger); font-weight:700; }
+  #panelKpiVistas { max-width:1500px; margin:0 auto; }
+</style>
+<div id="eco"></div>
+<div id="panelKpiVistas"></div>
+
+<script type="module">
+document.documentElement.setAttribute('data-tema','indigo');
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0;
+const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
+
+// El repo guarda con fin de linea de Windows; sin quitar el CR los indexOf fallan.
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z='+Date.now())).text()).split(CR).join('');
+
+const trozo = (desde, hasta, extra='') => {
+  const a = src.indexOf(desde); if (a < 0) throw new Error('no esta: ' + desde);
+  const b = src.indexOf(hasta, a); if (b < 0) throw new Error('no cierra: ' + hasta);
+  return src.slice(a, b) + extra;
+};
+// Los ayudantes: repintarPanel, el cambio de pestana, el rango, la foto y el desplegar.
+const BLOQUE = trozo('                const repintarPanel = () => {', '                // Clic en un dia lo aisla'.replace('dia','día').replace('aisla','aísla'));
+// El panel: la funcion que dibuja la tabla.
+const iniP = src.indexOf('${(window.__kpiRenderPanel = ');
+const PANEL = src.slice(src.indexOf('() => {', iniP), src.indexOf('\n            })()}', iniP)) + '\n            }';
+eco('Del dashboard salieron <b>' + BLOQUE.length + '</b> caracteres de ayudantes y <b>' + PANEL.length + '</b> del panel.');
+
+const tareas = (await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/almacenaje_tasks')).json()).data;
+eco('Tareas del servidor: <b>' + tareas.length + '</b>');
+
+// Lo unico que se finge es lo que el panel toma prestado del resto del modulo.
+const mod = await import('data:text/javascript,' + encodeURIComponent(`
+export const montar = (tasks, ayuda) => {
+  const { getLogicalDate, diaOperativoDeTarea, getTaskTotalAvance, icono } = ayuda;
+  const repintar = () => {};
+${BLOQUE}
+  window.__kpiRenderPanel = ${PANEL};
+  return repintarPanel;
+};`));
+
+const pintar = mod.montar(tareas, {
+  getLogicalDate: () => '2026-08-26',
+  diaOperativoDeTarea: (t) => t.fecha || String(t.inicio || '').slice(0,10),
+  getTaskTotalAvance: (t) => Number(t.qty) || 0,
+  icono: () => ''
+});
+pintar();
+
+const filas = () => [...document.querySelectorAll('#panelKpiVistas tbody tr')];
+const texto = (tr) => tr.querySelector('td').innerText.trim().replace(/\s+/g,' ');
+const total = (tr) => Number(tr.lastElementChild.innerText.replace(/[^\d]/g,''));
+const fila = (t) => filas().find(tr => texto(tr).startsWith(t));
+
+eco('\n── COMO ABRE ──');
+const pest = [...document.querySelectorAll('#panelKpiVistas button[onclick*="__kpiSetVista"]')];
+ok('hay DOS pestanas, no tres: ' + pest.map(b=>b.innerText.split('\n')[0]).join(' · '), pest.length === 2);
+ok('Producto ya no esta', !document.getElementById('panelKpiVistas').innerText.includes('Producto'));
+// El CSS de la pagina pone el encabezado en mayusculas: se compara con lo que se ve.
+const cab = [...document.querySelectorAll('#panelKpiVistas thead th')].map(t=>t.innerText.toUpperCase());
+ok('las columnas son las once horas del turno, de 20:00 a 06:00',
+   cab.join(',') === 'FECHA · GRUPO,20:00,21:00,22:00,23:00,00:00,01:00,02:00,03:00,04:00,05:00,06:00,TOTAL');
+ok('trae los dos calendarios y la camara',
+   document.querySelectorAll('#panelKpiVistas input[type=date]').length === 2 && !!document.querySelector('#panelKpiVistas button[onclick*="FotoPH"]'));
+const cam = document.querySelector('#panelKpiVistas button[onclick*="FotoPH"]');
+ok('el icono de la camara va sin marco ni fondo',
+   /background:\s*none/.test(cam.getAttribute('style')) && /border:\s*none/.test(cam.getAttribute('style')));
+ok('arranca en la jornada de hoy', [...document.querySelectorAll('#panelKpiVistas input[type=date]')].every(i=>i.value==='2026-08-26'));
+ok('y no hay boton HOY', !/>\s*HOY\s*</i.test(document.getElementById('panelKpiVistas').innerHTML));
+
+eco('\n── AL HACER CLIC EN LA JORNADA SE ABRE ──');
+const antes = filas().length;
+document.querySelector('#panelKpiVistas tbody tr[onclick]').click();
+const desp = filas().length;
+ok('el clic despliega los grupos: ' + antes + ' filas → ' + desp, desp > antes);
+ok('la flecha cambia a abierta', texto(filas()[0]).startsWith('▾'));
+
+eco('\n── EL GRUPO VA ACUMULADO ──');
+const hijas = filas().filter(tr => /tareas?$/.test(texto(tr).replace(/^.*?(\d+ tareas?)$/,'$1')));
+const dobles = hijas.map(tr => texto(tr).split(/\s+\d+ tareas?$/)[0])
+   .filter((n,i,a) => a.indexOf(n) !== i);
+ok('ningun grupo sale dos veces en la misma jornada' + (dobles.length ? ': ' + dobles.join(', ') : ''), !dobles.length);
+const rep = hijas.find(tr => texto(tr).includes('jyauyo'));
+ok('jyauyo + pmurayari es UNA sola fila → ' + (rep ? texto(rep) + ' = ' + total(rep) : 'NO ESTA'),
+   !!rep && /\+/.test(texto(rep)) && /[2-9] tareas/.test(texto(rep)));
+const totGrupos = total(fila('TOTAL'));
+eco('   total de la jornada en Grupos: <b>' + totGrupos.toLocaleString('es-PE') + '</b>');
+const sumaGrupos = hijas.reduce((a,tr) => a + total(tr), 0);
+ok('la suma de los grupos cuadra con el TOTAL: ' + sumaGrupos.toLocaleString('es-PE'), sumaGrupos === totGrupos);
+const filaDia = filas()[0];
+const porHoraDia = [...filaDia.querySelectorAll('td')].slice(1,-1).map(td => Number(td.innerText.replace(/[^\d]/g,''))||0);
+ok('y las once horas de la jornada suman lo mismo: ' + porHoraDia.reduce((a,b)=>a+b,0).toLocaleString('es-PE'),
+   porHoraDia.reduce((a,b)=>a+b,0) === totGrupos);
+
+eco('\n── PERSONAS: EL GRUPO SE PARTE ENTRE SUS INTEGRANTES ──');
+window.__kpiSetVista('personas');
+ok('cambiar de pestana no cierra la jornada abierta', filas().length > 1 && texto(filas()[0]).startsWith('▾'));
+const gente = filas().filter(tr => /\d+ tareas?$/.test(texto(tr)));
+const totPersonas = total(fila('TOTAL'));
+ok('el total de Personas CUADRA con el de Grupos: ' + totPersonas.toLocaleString('es-PE') + ' contra ' + totGrupos.toLocaleString('es-PE'),
+   totPersonas === totGrupos);
+const sumaGente = gente.reduce((a,tr) => a + total(tr), 0);
+ok('y la suma de las personas tambien: ' + sumaGente.toLocaleString('es-PE'), sumaGente === totGrupos);
+const nombres = gente.map(tr => texto(tr).split(/\s+\d+ tareas?$/)[0]);
+ok('nadie sale repetido (' + nombres.length + ' personas)', new Set(nombres).size === nombres.length);
+ok('ninguna fila mezcla dos nombres', !nombres.some(n => n.includes('+')));
+
+eco('\n── EL PAR DE MAS VA AL PRIMERO ──');
+// La regla de Daniel: 1.001 pares entre dos son 501 y 500, nunca 500,5 ni 502.
+const impares = tareas.filter(t => t && t.status === 'Finalizado' && t.termino
+  && [t.u1,t.u2,t.u3].filter(u => u && u !== '---').length > 1
+  && (Number(t.qty)||0) % [t.u1,t.u2,t.u3].filter(u => u && u !== '---').length !== 0);
+eco('   tareas con cantidad que no se parte exacta: <b>' + impares.length + '</b>');
+ok('aun asi ninguna persona queda con decimales',
+   gente.every(tr => [...tr.querySelectorAll('td')].slice(1).every(td => !/[.,]\d\b/.test(td.innerText.replace(/\./g,'')))));
+
+eco('\n── CADA CUADRO CON SU PROPIO RANGO ──');
+window.__kpiSetRangoPH('desde', '2026-08-20');
+const varios = [...document.querySelectorAll('#panelKpiVistas tbody tr')].filter(tr => /^[▸▾]/.test(texto(tr))).length;
+ok('pedir del 20 al 26 trae varias jornadas: ' + varios, varios > 1);
+window.__kpiSetRangoPH('hasta', '2026-08-10');
+ok('si se pone el hasta antes del desde, se acomoda solo en vez de salir vacio',
+   window.__kpiPHDesde === '2026-08-10' && window.__kpiPHHasta === '2026-08-10');
+window.__kpiSetRangoPH('desde', '2026-08-26'); window.__kpiSetRangoPH('hasta', '2026-08-26');
+
+eco('\n── LA FOTO PARA WHATSAPP ──');
+window.__kpiFotoPH();
+const capa = document.getElementById('fotoKpiPH');
+ok('abre la vista reducida', !!capa);
+if (capa) {
+  const lum = (c) => { const [r,g,b] = c.match(/\d+/g).map(Number); return 0.299*r+0.587*g+0.114*b; };
+  const contr = (e) => Math.abs(lum(getComputedStyle(e).color) - lum(getComputedStyle(e).backgroundColor));
+  const celdas = [...capa.querySelectorAll('th,td')];
+  // El guion de una hora sin produccion tambien tiene que sobrevivir a la recompresion.
+  const flojas = celdas.filter(e => e.innerText.trim() && contr(e) < 60);
+  ok('todo lo escrito se lee' + (flojas.length ? ': ' + flojas.length + ' celdas casi invisibles ("' + flojas[0].innerText + '")' : ''), !flojas.length);
+  const tallas = [...new Set(celdas.map(e => getComputedStyle(e).fontSize))];
+  ok('el encabezado tiene la misma letra que los numeros: ' + tallas.join(' / '), tallas.length === 1);
+  ok('dice a que vista corresponde: ' + capa.querySelector('div[style*="font-weight:900"]').innerText,
+     /PERSONAS/.test(capa.querySelector('div[style*="font-weight:900"]').innerText));
+  const fotoTot = Number([...capa.querySelectorAll('tfoot td')].pop().innerText.replace(/[^\d]/g,''));
+  ok('el total de la foto es el mismo de la pantalla: ' + fotoTot.toLocaleString('es-PE'), fotoTot === totGrupos);
+  ok('arranca en Grande, que es lo que sobrevive a WhatsApp', capa.querySelector('table').getBoundingClientRect().width > 900);
+  capa.remove();
+}
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>' : '\n<b>El panel quedo como la maqueta.</b>');
+</script>
