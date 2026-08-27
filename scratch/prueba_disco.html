@@ -1,0 +1,62 @@
+<!-- Banco de pruebas del panel de disco de Configuracion -> Mantenimiento.
+     El HTML y la funcion pintarDisco se EXTRAEN de dashboard_v28.js, no se copian:
+     asi lo que se prueba es lo que se va a publicar. -->
+<meta charset="utf-8">
+<title>Prueba del panel de disco</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body { margin: 0; padding: 22px; background: var(--panel-deeper); }
+  #eco { max-width: 560px; margin: 14px 0; font-size: 12px; color: var(--text-muted);
+    line-height: 1.8; white-space: pre-wrap; }
+  #eco b { color: var(--success); }
+  #eco .mal { color: var(--danger); font-weight: 700; }
+</style>
+
+<div id="configContent"></div>
+<div id="eco">Cargando el codigo real del dashboard...</div>
+
+<script type="module">
+document.documentElement.setAttribute('data-tema', 'indigo');
+const eco = (t) => { document.getElementById('eco').innerHTML += '\n' + t; };
+document.getElementById('eco').textContent = '';
+
+// 1. Traer el archivo real y sacarle el trozo del panel.
+const src = await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text();
+
+const iniHtml = src.indexOf(`<div class="glass-panel" style="max-width:560px; padding:1.5rem; margin-bottom:1.2rem`);
+const finHtml = src.indexOf('<h4 style="color:var(--danger-soft)');
+if (iniHtml < 0 || finHtml < 0) { eco('<span class="mal">No se encontro el HTML del panel.</span>'); throw new Error('sin html'); }
+// Solo la tarjeta del disco, hasta donde arranca la Zona de Peligro.
+let html = src.slice(iniHtml, src.lastIndexOf('</div>', finHtml));
+document.getElementById('configContent').innerHTML = html;
+eco(`HTML del panel montado: <b>${html.length} caracteres</b>`);
+
+// 2. Sacar API_ADMIN y pintarDisco tal cual estan escritos.
+const iniFn = src.indexOf('        const API_ADMIN =');
+const finFn = src.indexOf('        pintarDisco();');
+if (iniFn < 0 || finFn < 0) { eco('<span class="mal">No se encontro pintarDisco.</span>'); throw new Error('sin fn'); }
+const cuerpo = src.slice(iniFn, finFn);
+const arrancar = new Function(`${cuerpo}\n return { pintarDisco, cabecerasAdmin, API_ADMIN };`)();
+eco('Funciones extraidas: <b>pintarDisco, cabecerasAdmin</b>');
+
+// 3. Dibujar de verdad, contra el servidor real.
+await arrancar.pintarDisco();
+const texto = document.getElementById('discoEstado').textContent.replace(/\s+/g, ' ').trim();
+eco(`Lo que dibujo: <b>${texto}</b>`);
+eco(texto.includes('Produccion') || texto.includes('Producción')
+  ? 'El panel trajo los datos del servidor: <b>OK</b>'
+  : '<span class="mal">El panel no trajo datos.</span>');
+
+// 4. Sin sesion iniciada, el boton tiene que AVISAR, no quedarse colgado.
+const h = arrancar.cabecerasAdmin();
+eco(`Cabeceras sin sesion: <b>${JSON.stringify(h)}</b> (sin X-Auth-Token, como corresponde)`);
+const res = await fetch(`${arrancar.API_ADMIN}/clonar-a-beta?confirmar=COPIAR-A-BETA&modo=ligera`,
+  { method: 'POST', headers: h });
+const r = await res.json();
+eco(`El servidor sin sesion responde <b>${res.status}</b>: ${r.message || JSON.stringify(r)}`);
+eco(res.status === 403
+  ? 'Un anonimo NO puede aligerar la base: <b>OK</b>'
+  : '<span class="mal">CUIDADO: respondio sin exigir sesion.</span>');
+</script>
