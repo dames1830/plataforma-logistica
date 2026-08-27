@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0450';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0451';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0450';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0450';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0450';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0450';
-import * as metasService from '../services_v245/metasService.js?v=29.0450';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0450';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0450';
+import * as adminService from '../services_v245/adminService.js?v=29.0451';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0451';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0451';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0451';
+import * as metasService from '../services_v245/metasService.js?v=29.0451';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0451';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0451';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0450';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0450';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0450';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0450';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0450';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0450';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0450';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0450';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0450';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0450';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0450';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0450';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0450';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0450';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0450';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0450';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0450';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0450';
-import { montarSlotting } from './slotting.js?v=29.0450';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0451';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0451';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0451';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0451';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0451';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0451';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0451';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0451';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0451';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0451';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0451';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0451';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0451';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0451';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0451';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0451';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0451';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0451';
+import { montarSlotting } from './slotting.js?v=29.0451';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0450';
+const VERSION = '29.0451';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2237,6 +2237,10 @@ let __versionTareasPintada = null;
  * entra la siguiente. Sin esto se encimarían descargas y cada una repintaría la pantalla.
  */
 let __radarOcupado = false;
+
+/* EL RELOJ DE LA PLATAFORMA ES ESTE Y NO HAY OTRO.
+   Se avisa antes de que el motor arranque, para que no encienda el suyo. */
+window.__relojUnicoDelDashboard = true;
 
 setInterval(async () => {
     if (document.visibilityState === 'visible') {
@@ -5408,7 +5412,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0450');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0451');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5671,7 +5675,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0450');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0451');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -13465,6 +13469,8 @@ const renderRFSection = (container) => {
       // Evitar múltiples intervalos si se re-renderiza el dashboard
       if (window._pulseSyncInterval) clearInterval(window._pulseSyncInterval);
       
+      /* Este reloj NO le pregunta al servidor: solo reenvia lo que quedo sin subir y
+         mira si Inicio cambio. La bajada la hace el radar, que es el reloj unico. */
       window._pulseSyncInterval = setInterval(async () => {
           // No sincronizar si el usuario está en Asistencia (Evita el "parpadeo" reportado)
           if (currentTab === 'admin_pers' && activeAdminSub === 'asistencia') return;
@@ -18293,7 +18299,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0450 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0451 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -34001,6 +34007,11 @@ window.__menuMapa = (btn) => {
 
   window.renderAlmacenajeTareas = (container) => {
     window.__almacenajeContainer = container;
+    /* ¿Lo que hay en pantalla lo dibujamos NOSOTROS la vez pasada? Se pregunta ANTES de
+       marcar el contenedor, porque abajo lo marcamos igual. Sin esto, viniendo de otra
+       vista se compararia contra un dibujo que ya nadie tiene puesto. */
+    const __eraNuestro = !!(container && container.dataset && container.dataset.vista === 'almacenaje');
+    let __seRedibujo = false;
     // Se dispara sin esperarla: si hay algo que corregir, guarda y vuelve a dibujar sola.
     limpiarTareasAlAbrir();
     // Marca el contenedor como suyo: si Config. Tareas venía cargando reglas, al terminar
@@ -34022,6 +34033,9 @@ window.__menuMapa = (btn) => {
     const __savedWindowY = window.scrollY;
     if (__savedScrollTop > 0 || __savedTablaTop > 0 || __savedWindowY > 0) {
         const __restoreScroll = () => {
+            // Si no se redibujo, no hay nada que devolver: la pantalla nunca se movio, y
+            // forzar el scroll 80 ms despues le arrebataria la rueda a quien este bajando.
+            if (!__seRedibujo) return;
             const el = document.getElementById('almacenajeScrollArea');
             if (el && __savedScrollTop > 0) el.scrollTop = __savedScrollTop;
             const tb = document.getElementById('almacenajeTablaScroll');
@@ -35386,7 +35400,7 @@ window.__menuMapa = (btn) => {
     // sola de BLOQUEADA a REIMPRIMIR sin que nadie recargue.
     if (!isKpi && !isDetail) refrescarLimpiosDeSlotting(container);
 
-    container.innerHTML = `
+    const __nuevoDibujo = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.05); padding-bottom:0.4rem; gap:1rem; flex-wrap:wrap;">
             ${!isKpi ? `
             <nav style="display:flex; gap:1.5rem; align-items:center;">
@@ -36982,6 +36996,44 @@ window.__menuMapa = (btn) => {
     </div>
 </div>
     `;
+
+    /* ══════════════════════════════════════════════════════════════════════════
+     * SI EL DIBUJO QUEDO IGUAL, NO SE TOCA LA PANTALLA. ESTA ES LA CAUSA DEL PARPADEO.
+     *
+     * Daniel lo reclamo cuatro veces —*"hace rato te vengo diciendo lo mismo, me dice ya
+     * esta, ya esta, y sigo viendo"*— y tenia razon: los arreglos anteriores atacaron
+     * sintomas (el scroll que se devolvia tarde, la pestana que se rehacia, las filas que
+     * se cerraban solas). Los tres eran reales, pero ninguno tocaba esto.
+     *
+     * `container.innerHTML = ...` DESTRUYE la tabla entera y la vuelve a construir. Entre
+     * una cosa y la otra el navegador pinta un cuadro con la tabla a medio armar: eso es
+     * lo que se ve como "las filas se encogen y vuelven a su sitio".
+     *
+     * Y pasaba AUNQUE EN PANTALLA NO CAMBIARA NADA: si en otra PC alguien tocaba cualquier
+     * cosa, la version del area cambiaba, el radar redibujaba, y aca parpadeaba una tabla
+     * que quedaba identica.
+     *
+     * SE COMPARA CONTRA LO ULTIMO QUE ESCRIBIMOS, no contra `container.innerHTML`. Leer el
+     * innerHTML del DOM devuelve el HTML NORMALIZADO por el navegador —comillas, atributos,
+     * etiquetas cerradas— que casi nunca coincide con la cadena que uno asigno, asi que esa
+     * comparacion daria distinto siempre y no serviria de nada.
+     *
+     * Al saltar tambien se saltea lo de mas abajo, y eso es lo correcto: como el DOM no se
+     * toco, los botones y los graficos que ya estaban siguen enganchados donde estaban.
+     * ══════════════════════════════════════════════════════════════════════════ */
+    /* El contador queda encendido siempre: cuesta dos numeros y es la unica forma de
+       comprobar en la pantalla de verdad que esto funciona. Con la web abierta un rato,
+       escribiendo `__contarDibujos` en la consola tiene que verse muchos "saltados" y
+       pocos "pintados". Si se ven iguales, el arreglo no esta haciendo nada. */
+    if (!window.__contarDibujos) window.__contarDibujos = { pintados: 0, saltados: 0, desde: new Date().toLocaleTimeString('es-PE') };
+    if (__eraNuestro && container.__ultimoDibujo === __nuevoDibujo) {
+        window.__contarDibujos.saltados++;
+        return;
+    }
+    window.__contarDibujos.pintados++;
+    __seRedibujo = true;
+    container.__ultimoDibujo = __nuevoDibujo;
+    container.innerHTML = __nuevoDibujo;
 
     window.setTaskMode = (mode) => { 
         almacenajeTaskMode = mode; 

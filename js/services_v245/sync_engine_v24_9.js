@@ -75,10 +75,13 @@ export const syncStore = window._pulseSyncState.syncStore;
 
 export let isFirstPullDone = window._pulseSyncState.isFirstPullDone;
 
-// Mantener la variable exportada en sincronía con el estado global (live binding)
-setInterval(() => {
+/* Mantener la variable exportada en sincronia con el estado global (live binding).
+   SE APAGA SOLO al primer aviso: la bandera se levanta una vez y no vuelve a bajar, asi
+   que seguir mirandola diez veces por segundo durante todo el turno no sirve de nada. */
+const _vigilarPrimerPull = setInterval(() => {
     if (window._pulseSyncState.isFirstPullDone && !isFirstPullDone) {
         isFirstPullDone = true;
+        clearInterval(_vigilarPrimerPull);
     }
 }, 100);
 
@@ -97,7 +100,20 @@ export async function initSync(force = false) {
         window._pulseSyncState.isFirstPullDone = true;
         isFirstPullDone = true;
         console.log("✅ [PULSE] Primera sincronización completada.");
-        if (!window._pulseSyncIntervalSet) {
+        /* UN SOLO RELOJ LE PREGUNTA AL SERVIDOR.
+         *
+         * Aca habia un `setInterval(pullGlobal, 30000)` que corria por su cuenta, ademas
+         * del radar del dashboard —cada 20 s, y ese FUERZA otra bajada— y del sync en vivo
+         * —otros 20 s—. Tres relojes preguntando lo mismo, y cada bajada podia disparar un
+         * redibujo: de ahi salian los parpadeos encimados.
+         *
+         * Daniel, 27-ago-2026: *"no deberia haber solamente un reloj para eso, un reloj para
+         * toda la pagina web, y que cada vez que ese unico reloj se sincronice, no parpadee"*.
+         *
+         * Se queda el del dashboard, que es el que sabe QUE hay en pantalla y por lo tanto
+         * que conviene refrescar. Este se apaga. Si alguna vez el dashboard no esta —una
+         * pantalla suelta que use el motor— se enciende igual: por eso la comprobacion. */
+        if (!window._pulseSyncIntervalSet && !window.__relojUnicoDelDashboard) {
             setInterval(pullGlobal, 30000);
             window._pulseSyncIntervalSet = true;
         }

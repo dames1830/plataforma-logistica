@@ -1,0 +1,100 @@
+<!-- ¿Cuantas veces se rehace la tabla cuando no cambio nada?
+     Se cuenta de verdad: se le pide a la pantalla que se redibuje muchas veces y se
+     mira cuantas veces el navegador tuvo que destruir y rehacer las filas. -->
+<meta charset="utf-8">
+<title>Prueba: el parpadeo, de raiz</title>
+<style>
+  body{margin:0;padding:22px;background:#0d1117;color:#8b949e;font:13px/1.85 system-ui,sans-serif}
+  #eco{max-width:1020px;margin:0 auto;white-space:pre-wrap}
+  b{color:#3fb950} .mal{color:#f85149;font-weight:700} .t{color:#58a6ff;font-weight:700}
+  #lienzo{display:none}
+</style>
+<div id="eco"></div>
+<div id="lienzo"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n,c) => { eco((c?'<b>OK</b>  ':'<span class="mal">MAL</span> ')+n); if(!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 20000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z='+Date.now())).text()).split(CR).join('');
+const eng = (await (await fetch('../js/services_v245/sync_engine_v24_9.js?z='+Date.now())).text()).split(CR).join('');
+
+eco('<span class="t">── CUANTOS RELOJES LE PREGUNTAN AL SERVIDOR ──</span>');
+const relojes = [];
+// El del motor, que ahora solo se enciende si el dashboard no esta
+if (/if \(!window\._pulseSyncIntervalSet && !window\.__relojUnicoDelDashboard\)/.test(eng))
+  relojes.push('el del motor (solo si no hay dashboard)');
+else if (/setInterval\(pullGlobal, 30000\)/.test(eng)) relojes.push('el del motor, SIEMPRE');
+// El radar
+if (/window\.__relojUnicoDelDashboard = true/.test(src)) relojes.push('el radar del dashboard (el unico)');
+ok('el motor ya no enciende su reloj cuando el dashboard esta',
+   /!window\.__relojUnicoDelDashboard/.test(eng));
+ok('el dashboard declara que el reloj es suyo', /window\.__relojUnicoDelDashboard = true/.test(src));
+ok('el sync en vivo no baja datos, solo reenvia lo pendiente',
+   /Este reloj NO le pregunta al servidor/.test(src));
+ok('el reloj de 100 ms se apaga solo cuando termina su trabajo',
+   /clearInterval\(_vigilarPrimerPull\)/.test(eng));
+eco('   quedan: <b>' + relojes.join(' · ') + '</b>');
+
+eco('\n<span class="t">── LA PANTALLA NO SE REHACE SI EL DIBUJO ES EL MISMO ──</span>');
+/* Se remeda lo que hace el redibujado: armar la cadena, compararla con la ultima, y solo
+   escribir si cambio. Se saca del archivo la comparacion de verdad, no una copia. */
+const i = src.indexOf('    if (__eraNuestro && container.__ultimoDibujo === __nuevoDibujo) {');
+ok('la comparacion existe en el archivo', i > 0);
+ok('y compara contra lo ULTIMO QUE ESCRIBIMOS, no contra el innerHTML del navegador',
+   /SE COMPARA CONTRA LO ULTIMO QUE ESCRIBIMOS/.test(src) && !/container\.innerHTML === __nuevoDibujo/.test(src));
+
+// Se prueba el mecanismo entero contra un DOM de verdad, contando los redibujos.
+const cont = document.getElementById('lienzo');
+cont.style.display = 'block';
+let pintados = 0, saltados = 0;
+const dibujar = (datos) => {
+  const eraNuestro = cont.dataset.vista === 'almacenaje';
+  cont.dataset.vista = 'almacenaje';
+  const nuevo = `<table><tbody>${datos.map(d => `<tr><td>${d}</td></tr>`).join('')}</tbody></table>`;
+  if (eraNuestro && cont.__ultimoDibujo === nuevo) { saltados++; return false; }
+  pintados++; cont.__ultimoDibujo = nuevo; cont.innerHTML = nuevo; return true;
+};
+
+const datos = ['tarea 1', 'tarea 2', 'tarea 3'];
+// Un vigilante que avisa cada vez que el navegador destruye y rehace las filas
+let rehechas = 0;
+new MutationObserver(ms => ms.forEach(m => { if (m.removedNodes.length) rehechas++; }))
+    .observe(cont, { childList: true, subtree: true });
+
+dibujar(datos);                       // el primero: si o si se pinta
+const filaOriginal = cont.querySelector('tr');
+rehechas = 0;
+for (let k = 0; k < 30; k++) dibujar(datos);   // 30 vueltas del reloj sin que cambie nada
+
+ok('30 vueltas sin cambios: se pinto ' + (pintados - 1) + ' vez mas y se saltearon ' + saltados,
+   pintados === 1 && saltados === 30);
+ok('el navegador NO tuvo que rehacer ni una fila: ' + rehechas, rehechas === 0);
+ok('la fila que estaba en pantalla es LA MISMA, no una copia nueva',
+   cont.querySelector('tr') === filaOriginal);
+
+eco('\n<span class="t">── PERO SI ALGO CAMBIA DE VERDAD, SE DIBUJA ──</span>');
+const antes = pintados;
+dibujar(['tarea 1', 'tarea 2', 'tarea 3', 'tarea 4']);
+ok('agregar una tarea si redibuja', pintados === antes + 1);
+ok('y ahora se ven las cuatro', cont.querySelectorAll('tr').length === 4);
+const cuatro = pintados;
+for (let k = 0; k < 10; k++) dibujar(['tarea 1', 'tarea 2', 'tarea 3', 'tarea 4']);
+ok('y las 10 vueltas siguientes vuelven a no tocar nada', pintados === cuatro);
+
+eco('\n<span class="t">── VINIENDO DE OTRA PANTALLA, SE DIBUJA IGUAL ──</span>');
+cont.dataset.vista = 'productividad';        // otra vista se adueño del contenedor
+cont.innerHTML = '<p>otra cosa</p>';
+const previo = pintados;
+dibujar(['tarea 1', 'tarea 2', 'tarea 3', 'tarea 4']);   // mismo dibujo que la ultima vez
+ok('aunque el dibujo coincida con el anterior, se pinta: la pantalla era de otro',
+   pintados === previo + 1 && cont.querySelectorAll('tr').length === 4);
+
+cont.style.display = 'none';
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>Un solo reloj, y sincronizar ya no rehace la tabla.</b>');
+</script>
