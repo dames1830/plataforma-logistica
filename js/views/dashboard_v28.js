@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0435';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0436';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0435';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0435';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0435';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0435';
-import * as metasService from '../services_v245/metasService.js?v=29.0435';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0435';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0435';
+import * as adminService from '../services_v245/adminService.js?v=29.0436';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0436';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0436';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0436';
+import * as metasService from '../services_v245/metasService.js?v=29.0436';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0436';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0436';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0435';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0435';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0435';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0435';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0435';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0435';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0435';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0435';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0435';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0435';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0435';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0435';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0435';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0435';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0435';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0435';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0435';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0435';
-import { montarSlotting } from './slotting.js?v=29.0435';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0436';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0436';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0436';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0436';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0436';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0436';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0436';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0436';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0436';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0436';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0436';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0436';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0436';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0436';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0436';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0436';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0436';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0436';
+import { montarSlotting } from './slotting.js?v=29.0436';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0435';
+const VERSION = '29.0436';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5338,7 +5338,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0435');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0436');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5601,7 +5601,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0435');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0436');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18167,7 +18167,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0435 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0436 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -35351,22 +35351,58 @@ window.__menuMapa = (btn) => {
                 if (window.__kpiCatFiltro !== 'TODAS' && !familiasDisponibles.includes(window.__kpiCatFiltro)) {
                     window.__kpiCatFiltro = 'TODAS';
                 }
+                /* CAMBIAR DE PESTAÑA REHACE SOLO ESTE PANEL, NO LA PANTALLA ENTERA.
+                 *
+                 * Daniel, 27-ago-2026: *"cada vez que cambio a una pestaña en ese reporte hay
+                 * un parpadeo fuerte"*. Pasar de Operación a Personas rehacía TODA la pestaña
+                 * de Almacenaje, y ahí adentro se vuelven a crear los SIETE gráficos. Ese
+                 * costo es lo que se ve como parpadeo, y no tiene nada que ver con las tres
+                 * vistas: las tres salen de `window.__kpiFilas`, que ya está calculado.
+                 *
+                 * El respaldo al redibujado entero se queda para el arranque, cuando el panel
+                 * todavía no existe en pantalla. */
+                /* DOS REPINTADOS, Y LA DIFERENCIA IMPORTA.
+                 *
+                 * `repintar` rehace la pantalla entera y es lo que necesitan los filtros de
+                 * CATEGORÍA y de DÍA: esos no son del panel, filtran TODO el módulo —el
+                 * gráfico de arriba los lee, y la barra de estado dice "todo el módulo está
+                 * filtrado por…"—. Dejarlos redibujando solo el panel habría hecho que el
+                 * gráfico se quedara mostrando otra cosa.
+                 *
+                 * `repintarPanel` rehace SOLO las tres vistas, y es lo que necesita cambiar de
+                 * pestaña. Daniel, 27-ago-2026: *"cada vez que cambio a una pestaña hay un
+                 * parpadeo fuerte"*. Pasar de Operación a Personas rehacía toda la pantalla y
+                 * volvía a crear los SIETE gráficos, cuando las tres vistas salen de
+                 * `window.__kpiFilas`, que ya está calculado y no cambia. */
                 const repintar = () => {
                     const _sy = window.scrollY;
                     window.__kpiPage = 0; window.__accPage = 0; window.__rkPage = 0;
                     if (window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(window.__almacenajeContainer);
                     requestAnimationFrame(() => window.scrollTo({ top: _sy, behavior: 'instant' }));
                 };
+                const repintarPanel = () => {
+                    window.__kpiPage = 0; window.__accPage = 0; window.__rkPage = 0;
+                    const caja = document.getElementById('panelKpiVistas');
+                    if (caja && window.__kpiRenderPanel) caja.innerHTML = window.__kpiRenderPanel();
+                    else repintar();   // al arrancar, el panel todavía no está en pantalla
+                };
                 if (!window.__kpiSetCat) window.__kpiSetCat = (c) => { window.__kpiCatFiltro = c; repintar(); };
                 if (!window.__kpiVista) window.__kpiVista = 'operacion';
-                if (!window.__kpiSetVista) window.__kpiSetVista = (v) => { window.__kpiVista = v; repintar(); };
+                window.__kpiSetVista = (v) => { window.__kpiVista = v; repintarPanel(); };
                 // Despliegue de filas sin volver a dibujar todo: los gráficos no se recrean
-                if (!window.__kpiToggleFila) window.__kpiToggleFila = (id) => {
-                    let abierto = false;
+                /* QUE JORNADAS ESTAN DESPLEGADAS SE RECUERDA, NO SE LEE DE LA PANTALLA.
+                 *
+                 * Daniel, 27-ago-2026: *"cuando lo tengo expandido, se parpadea y cierra la
+                 * semana"*. El estado vivia UNICAMENTE en el `style.display` de cada fila, asi
+                 * que cualquier redibujado -cambiar de pestana, tocar un filtro, la
+                 * sincronizacion automatica- lo borraba y la jornada se cerraba sola.
+                 * Con el Set, la fila vuelve a dibujarse abierta. */
+                if (!window.__kpiAbiertas) window.__kpiAbiertas = new Set();
+                window.__kpiToggleFila = (id) => {
+                    const abierto = !window.__kpiAbiertas.has(id);
+                    if (abierto) window.__kpiAbiertas.add(id); else window.__kpiAbiertas.delete(id);
                     document.querySelectorAll(`[data-parent="${id}"]`).forEach(el => {
-                        const oculto = el.style.display === 'none';
-                        el.style.display = oculto ? '' : 'none';
-                        abierto = oculto;
+                        el.style.display = abierto ? '' : 'none';
                     });
                     const ic = document.getElementById('ic_' + id);
                     if (ic) ic.textContent = abierto ? '▾' : '▸';
@@ -35487,8 +35523,11 @@ window.__menuMapa = (btn) => {
                 </div>`;
             })()}
 
-            <!-- PANEL DE ANÁLISIS: tres vistas, una por pregunta -->
-            ${(() => {
+            <!-- PANEL DE ANÁLISIS: tres vistas, una por pregunta.
+                 Sale de una funcion con nombre y NO de un bloque suelto, para que cambiar de
+                 pestana pueda rehacer solo este panel en vez de toda la pantalla. -->
+            <div id="panelKpiVistas">
+            ${(window.__kpiRenderPanel = () => {
                 const filas = window.__kpiFilas || [];
                 const vista = window.__kpiVista || 'operacion';
                 const promGrupo = buildPromedioPorGrupo(filas);
@@ -35553,7 +35592,7 @@ window.__menuMapa = (btn) => {
                                     ? '<span style="color:rgba(var(--ink-rgb), 0.28);">en su promedio</span>'
                                     : (delta > 0 ? `<span style="color:var(--success);">▲ ${Math.round(delta)}pp</span>` : `<span style="color:var(--warning);">▼ ${Math.round(Math.abs(delta))}pp</span>`);
                                 const catColor = String(r.familia).toUpperCase() === 'FOOTWEAR' ? 'var(--brand-light)' : 'var(--warning)';
-                                return `<tr data-parent="${id}" style="display:none; background:rgba(var(--shadow-rgb), 0.28); border-bottom:1px solid rgba(var(--ink-rgb), 0.02);">
+                                return `<tr data-parent="${id}" style="display:${window.__kpiAbiertas.has(id) ? '' : 'none'}; background:rgba(var(--shadow-rgb), 0.28); border-bottom:1px solid rgba(var(--ink-rgb), 0.02);">
                                     <td></td>
                                     <td style="padding:0.5rem 0.8rem 0.5rem 2rem; color:var(--text-strong); font-weight:700; font-size:var(--t-xs); white-space:nowrap;">${r.grupo}
                                         <span style="background:${catColor}1f; color:${catColor}; border:1px solid ${catColor}44; padding:1px 6px; border-radius:6px; font-size:var(--t-xs); font-weight:800; margin-left:6px;">${r.categoria}</span>
@@ -35573,7 +35612,7 @@ window.__menuMapa = (btn) => {
                             const nada = `<span style="${gris}">—</span>`;
 
                             return `<tr onclick="window.__kpiToggleFila('${id}')" style="border-bottom:1px solid rgba(var(--ink-rgb), 0.04); cursor:pointer;" onmouseover="this.style.background='rgba(var(--primary2-rgb), 0.05)'" onmouseout="this.style.background=''">
-                                <td style="padding:0.7rem 0.5rem; text-align:center; color:var(--brand-light); font-weight:900; width:26px;"><span id="ic_${id}">▸</span></td>
+                                <td style="padding:0.7rem 0.5rem; text-align:center; color:var(--brand-light); font-weight:900; width:26px;"><span id="ic_${id}">${window.__kpiAbiertas.has(id) ? '▾' : '▸'}</span></td>
                                 <td style="padding:0.7rem 0.8rem; white-space:nowrap;"><b style="color:var(--text-strong); font-size:var(--t-md);">${f.split('-').reverse().join('/')}</b>${j.sinHora > 0 ? ` <span title="${j.sinHora} tarea(s) finalizada(s) sin hora de inicio o término: no se pueden medir" style="color:var(--warning); font-size:var(--t-xs);">⚠️</span>` : ''}</td>
                                 ${cel(j.finalizadas > 0 ? `<b style="color:var(--cyan); font-size:var(--t-md);">${Math.round(q).toLocaleString('es-PE')}</b>` : nada)}
                                 ${cel(mt > 0 ? `<span style="color:rgba(var(--ink-rgb), 0.4); font-weight:700;">${Math.round(mt).toLocaleString('es-PE')}</span>` : nada)}
@@ -35646,7 +35685,7 @@ window.__menuMapa = (btn) => {
                             const detalle = o.dias.map(d => {
                                 const p = d.meta > 0 ? (d.qty / d.meta) * 100 : 0;
                                 const c2 = colorPorPct(p);
-                                return `<tr data-parent="${id}" style="display:none; background:rgba(var(--shadow-rgb), 0.28); border-bottom:1px solid rgba(var(--ink-rgb), 0.02);">
+                                return `<tr data-parent="${id}" style="display:${window.__kpiAbiertas.has(id) ? '' : 'none'}; background:rgba(var(--shadow-rgb), 0.28); border-bottom:1px solid rgba(var(--ink-rgb), 0.02);">
                                     <td></td><td></td>
                                     <td style="padding:0.5rem 0.8rem 0.5rem 2rem; color:rgba(var(--ink-rgb), 0.7); font-size:var(--t-sm);">${d.fecha.split('-').reverse().join('/')}</td>
                                     <td style="padding:0.5rem 0.8rem; text-align:center; color:rgba(var(--ink-rgb), 0.35);">${d.tareas}</td>
@@ -35660,7 +35699,7 @@ window.__menuMapa = (btn) => {
                             }).join('');
 
                             return `<tr onclick="window.__kpiToggleFila('${id}')" style="border-bottom:1px solid rgba(var(--ink-rgb), 0.04); cursor:pointer;" onmouseover="this.style.background='rgba(var(--violet-rgb), 0.05)'" onmouseout="this.style.background=''">
-                                <td style="padding:0.75rem 0.5rem; text-align:center; color:var(--violet-soft); font-weight:900; width:30px;"><span id="ic_${id}">▸</span></td>
+                                <td style="padding:0.75rem 0.5rem; text-align:center; color:var(--violet-soft); font-weight:900; width:30px;"><span id="ic_${id}">${window.__kpiAbiertas.has(id) ? '▾' : '▸'}</span></td>
                                 <td style="padding:0.75rem 0.5rem; text-align:center; font-size:var(--t-lg);">${medallas[i] || `<span style="color:rgba(var(--ink-rgb), 0.35); font-weight:700;">${i + 1}</span>`}</td>
                                 <td style="padding:0.75rem 0.8rem;"><b style="color:var(--text-strong); text-transform:uppercase; font-size:var(--t-md);">${o.user}</b><div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.28); margin-top:2px;">${o.dias.length} jornada${o.dias.length !== 1 ? 's' : ''}</div></td>
                                 <td style="padding:0.75rem 0.8rem; text-align:center; color:rgba(var(--ink-rgb), 0.5); font-weight:700;">${o.tareas}</td>
@@ -35759,6 +35798,7 @@ window.__menuMapa = (btn) => {
                     <div style="overflow-x:auto;">${cuerpo}</div>
                 </div>`;
             })()}
+            </div>
 
             <!-- FILA INFERIOR DE REPORTES (2 COLUMNAS) -->
             <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem; align-items:start;">
