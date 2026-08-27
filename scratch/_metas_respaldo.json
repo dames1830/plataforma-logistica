@@ -1,0 +1,54 @@
+[
+ {
+  "id": "base_footwear",
+  "categoria": "FOOTWEAR",
+  "nivel": "familia",
+  "metaUph": 300,
+  "tamanoTarea": 300,
+  "desde": "2026-01-01",
+  "hasta": "",
+  "nota": "Regla base calzado — 300 pares/hora por grupo de 2",
+  "base": true
+ },
+ {
+  "id": "base_global",
+  "categoria": "GLOBAL",
+  "nivel": "global",
+  "metaUph": 300,
+  "tamanoTarea": 300,
+  "desde": "2026-01-01",
+  "hasta": "",
+  "nota": "Respaldo para categorias sin regla propia — pendiente de calibrar",
+  "base": true
+ },
+ {
+  "categoria": "PROMOTIONS",
+  "nivel": "familia",
+  "metaUph": 1000,
+  "tamanoTarea": 1000,
+  "desde": "2026-07-30",
+  "hasta": "",
+  "nota": "Tareas",
+  "id": "rms7waudve87g"
+ },
+ {
+  "categoria": "09 CLOTHING",
+  "nivel": "detalle",
+  "metaUph": 1000,
+  "tamanoTarea": 1000,
+  "desde": "2026-07-30",
+  "hasta": "",
+  "nota": "Tareas",
+  "id": "rms7wbtera34u"
+ },
+ {
+  "categoria": "06 OTHERS",
+  "nivel": "detalle",
+  "metaUph": 600,
+  "tamanoTarea": 600,
+  "desde": "2026-07-30",
+  "hasta": "",
+  "nota": "Tareas",
+  "id": "rms7wceer5w3l"
+ }
+]
