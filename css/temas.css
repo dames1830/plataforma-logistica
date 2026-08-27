@@ -1007,10 +1007,14 @@ table { font-variant-numeric: tabular-nums; }
    lo unico comun a los cuatro reportes: unos lo tienen colgando del bloque del titulo y
    otros directo en la franja. */
 [data-tema="pbi"] .caja-pbi .tapa-pbi div[style*="--t-xs"] { color: #9fb3cc !important; font-weight: 400 !important; }
-/* La casilla de la fecha se deja clara: sobre el azul, en blanco no se leeria lo escrito. */
+/* La casilla de la fecha, como una pastilla de vidrio sobre el azul: el mismo aspecto que
+   el selector de rango de Marcas y Gender Rims, para que los cinco reportes se vean igual.
+   `color-scheme: dark` hace que el iconito del calendario del navegador salga claro. */
 [data-tema="pbi"] .caja-pbi > .tapa-pbi input[type="date"] {
-  background: #fff !important; color: #111 !important;
+  background: rgba(255,255,255,.14) !important;
+  color: #fff !important;
   border-color: rgba(255,255,255,.45) !important;
+  color-scheme: dark;
 }
 [data-tema="pbi"] .caja-pbi > .tapa-pbi button { color: #fff !important; }
 /* La tabla lleva su propio aire, porque el recuadro ya no tiene. */

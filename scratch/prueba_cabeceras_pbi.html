@@ -93,9 +93,29 @@ if (conFechas) {
   ok('los rótulos DE y HASTA salen en blanco: ' + rotulos.map(r => fg(r)).join(' / '),
      rotulos.length > 0 && rotulos.every(r => fg(r) === 'rgb(255, 255, 255)'));
   const casilla = conFechas.querySelector('input[type=date]');
-  ok('la casilla de la fecha queda clara, para poder leer lo escrito: ' + bg(casilla), lum(bg(casilla)) > 200);
-  ok('y su texto oscuro', lum(fg(casilla)) < 120);
+  ok('la casilla es una pastilla clara sobre el azul: ' + bg(casilla), /rgba\(255, 255, 255/.test(bg(casilla)));
+  ok('y lo que dice adentro va en blanco', fg(casilla) === 'rgb(255, 255, 255)');
+  ok('el iconito del calendario sale claro, no negro sobre azul',
+     getComputedStyle(casilla).colorScheme === 'dark');
 }
+
+eco('\n<span class="t">── EL SELECTOR DE MARCAS Y GENDER RIMS TAMBIÉN ──</span>');
+/* Ese no sale del dashboard sino de reportesComunes, con las opciones que le pasa la
+   pantalla cuando el tema es Power BI. Es el que Daniel vio celeste sobre azul. */
+const RC = await import('../js/services_v245/reportesComunes.js?z=' + Date.now());
+const cajita = document.createElement('div');
+cajita.style.cssText = 'background:#12365c; padding:10px;';
+cajita.innerHTML = RC.selectorRango('2026-08-26', '2026-08-26', 'window.nada',
+   { color: '#ffffff', fondo: 'rgba(255,255,255,0.14)', texto: '#ffffff', esquema: 'dark' });
+document.getElementById('lienzo').appendChild(cajita);
+const rot = [...cajita.querySelectorAll('span')];
+ok('los rótulos DE y A salen en blanco: ' + rot.map(r => r.innerText + '=' + fg(r)).join('   '),
+   rot.length === 2 && rot.every(r => fg(r) === 'rgb(255, 255, 255)'));
+ok('y la fecha de adentro también', fg(cajita.querySelector('input')) === 'rgb(255, 255, 255)');
+ok('los dos se leen sobre el azul', rot.every(r => Math.abs(lum(fg(r)) - lum('rgb(18,54,92)')) > 45));
+ok('la pantalla se los pasa así cuando el tema es Power BI',
+   /esPBI\(\)\s*\?\s*\{ color: '#ffffff'/.test(src));
+cajita.remove();
 ok('el botón HOY ya no está en ningún lado', !/>HOY</.test(src) && !/__hourlyHoy/.test(src));
 
 eco('\n<span class="t">── TODO LO DE LA FRANJA SE LEE ──</span>');
