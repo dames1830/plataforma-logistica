@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0433';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0434';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0433';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0433';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0433';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0433';
-import * as metasService from '../services_v245/metasService.js?v=29.0433';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0433';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0433';
+import * as adminService from '../services_v245/adminService.js?v=29.0434';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0434';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0434';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0434';
+import * as metasService from '../services_v245/metasService.js?v=29.0434';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0434';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0434';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0433';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0433';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0433';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0433';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0433';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0433';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0433';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0433';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0433';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0433';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0433';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0433';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0433';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0433';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0433';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0433';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0433';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0433';
-import { montarSlotting } from './slotting.js?v=29.0433';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0434';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0434';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0434';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0434';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0434';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0434';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0434';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0434';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0434';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0434';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0434';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0434';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0434';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0434';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0434';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0434';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0434';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0434';
+import { montarSlotting } from './slotting.js?v=29.0434';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0433';
+const VERSION = '29.0434';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5338,7 +5338,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0433');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0434');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5601,7 +5601,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0433');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0434');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18167,7 +18167,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0433 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0434 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -34259,69 +34259,108 @@ window.__menuMapa = (btn) => {
         const _totPorHora = targetHours.map(hr =>
             activeDates.reduce((s, d) => s + hourlyData[d][hr], 0));
 
-        window.__hourlyFotoHTML = `
-          <div style="background:#fff; color:#111; padding:14px 16px; border-radius:10px; font-family:Arial, sans-serif;">
-            <div style="font-size:15px; font-weight:900; letter-spacing:0.5px;">PRODUCCIÓN POR HORA</div>
-            <div style="font-size:11px; color:#666; margin-bottom:9px;">${_rangoTxt} · unidades almacenadas</div>
-            <table style="border-collapse:collapse; font-size:11px;">
-              <!-- EL FONDO Y EL COLOR VAN EN CADA CELDA, NO EN LA FILA.
-                   La hoja temas.css tiene una regla global para toda cabecera de tabla que le
-                   pone el fondo del tema, y tapa el que se le ponga al TR. Con el texto en
-                   blanco, el encabezado de las horas salia invisible en la foto y Daniel lo vio
-                   faltando; el TOTAL de abajo se veia bien porque usa TD, que no cae en esa
-                   regla. El position:static desarma el sticky de la misma hoja: en una foto
-                   para recortar, una cabecera que se despega del cuerpo no tiene sentido.
-                   OJO: nada de acentos graves en este comentario, que vive dentro de un
-                   template literal y uno suelto lo cierra a la mitad. Ya paso dos veces. -->
+        /* EL TAMAÑO DE LA FOTO LO DECIDE WHATSAPP, Y VA AL REVES DE LO QUE PARECE.
+         *
+         * Daniel, 26-ago-2026, mandando la foto a su jefe: *"mira como se pixelea al momento
+         * de mandarlo por WhatsApp"*. La foto salia de 613 x 198 px con letra de 11 px.
+         *
+         * WhatsApp RECOMPRIME toda imagen que se manda como foto. Una letra de 11 px con sus
+         * bordes suavizados no sobrevive esa pasada: queda el borron de la captura.
+         *
+         * La salida es hacerla MAS GRANDE, no mas chica. WhatsApp la va a achicar igual, y
+         * achicar una imagen grande se ve nitido; agrandar una chica, no. Por eso arranca en
+         * DOBLE tamaño, que es lo que se manda, y quedan los otros dos por si la pantalla es
+         * angosta y no entra para recortarla. */
+        if (!window.__hourlyEscala) window.__hourlyEscala = 2;
+
+        window.__hourlyFotoDe = (E) => {
+            const px = (n) => Math.round(n * E) + 'px';
+            const celdaTh = `padding:${px(4)} ${px(5)}; text-align:center; background:#12365c !important; color:#fff; position:static; font-weight:700;`;
+            const celdaTd = `padding:${px(3)} ${px(5)}; text-align:center; border-bottom:1px solid #e3e7ee;`;
+            return `
+          <div style="background:#fff; color:#111; padding:${px(14)} ${px(16)}; border-radius:${px(10)}; font-family:Arial, sans-serif;">
+            <div style="font-size:${px(15)}; font-weight:900; letter-spacing:0.5px;">PRODUCCIÓN POR HORA</div>
+            <div style="font-size:${px(11)}; color:#666; margin-bottom:${px(9)};">${_rangoTxt} · unidades almacenadas</div>
+            <table style="border-collapse:collapse; font-size:${px(11)};">
+              <!-- El fondo y el color van en CADA celda: temas.css le pone a toda cabecera de
+                   tabla el fondo del tema y tapa el que se le ponga al TR. Nada de acentos
+                   graves en este comentario, que vive dentro de un template literal. -->
               <thead>
                 <tr>
-                  <th style="padding:4px 7px; text-align:left; background:#12365c !important; color:#fff; position:static; font-weight:700;">FECHA</th>
-                  ${targetHours.map(hr => `<th style="padding:4px 5px; text-align:center; background:#12365c !important; color:#fff; position:static; font-weight:700;">${String(hr).padStart(2, '0')}:00</th>`).join('')}
-                  <th style="padding:4px 7px; text-align:center; background:#12365c !important; color:#fff; position:static; font-weight:700;">TOTAL</th>
+                  <th style="${celdaTh} text-align:left; padding:${px(4)} ${px(7)};">FECHA</th>
+                  ${targetHours.map(hr => `<th style="${celdaTh}">${String(hr).padStart(2, '0')}:00</th>`).join('')}
+                  <th style="${celdaTh} padding:${px(4)} ${px(7)};">TOTAL</th>
                 </tr>
               </thead>
               <tbody>
                 ${activeDates.length === 0
-                  ? `<tr><td colspan="${targetHours.length + 2}" style="padding:18px; text-align:center; color:#888;">Sin producción en el rango.</td></tr>`
+                  ? `<tr><td colspan="${targetHours.length + 2}" style="padding:${px(18)}; text-align:center; color:#888;">Sin producción en el rango.</td></tr>`
                   : activeDates.map((d, i) => {
                       const fila = hourlyData[d];
                       const tot = targetHours.reduce((a, hr) => a + fila[hr], 0);
                       return `<tr style="background:${i % 2 ? '#f4f6f9' : '#fff'};">
-                        <td style="padding:3px 7px; font-weight:700; border-bottom:1px solid #e3e7ee;">${formatLogicalDate(d)}</td>
-                        ${targetHours.map(hr => `<td style="padding:3px 5px; text-align:center; border-bottom:1px solid #e3e7ee; color:${fila[hr] > 0 ? '#111' : '#c3c9d4'};">${fila[hr] > 0 ? fila[hr].toLocaleString('es-PE') : '-'}</td>`).join('')}
-                        <td style="padding:3px 7px; text-align:center; font-weight:900; border-bottom:1px solid #e3e7ee; background:#eef3f9;">${tot.toLocaleString('es-PE')}</td>
+                        <td style="${celdaTd} text-align:left; padding:${px(3)} ${px(7)}; font-weight:700;">${formatLogicalDate(d)}</td>
+                        ${targetHours.map(hr => `<td style="${celdaTd} color:${fila[hr] > 0 ? '#111' : '#c3c9d4'};">${fila[hr] > 0 ? fila[hr].toLocaleString('es-PE') : '-'}</td>`).join('')}
+                        <td style="${celdaTd} padding:${px(3)} ${px(7)}; font-weight:900; background:#eef3f9;">${tot.toLocaleString('es-PE')}</td>
                       </tr>`;
                     }).join('')}
               </tbody>
               ${activeDates.length > 1 ? `<tfoot><tr style="background:#12365c; color:#fff; font-weight:900;">
-                  <td style="padding:4px 7px;">TOTAL</td>
-                  ${_totPorHora.map(v => `<td style="padding:4px 5px; text-align:center;">${v > 0 ? v.toLocaleString('es-PE') : '-'}</td>`).join('')}
-                  <td style="padding:4px 7px; text-align:center;">${_granTotal.toLocaleString('es-PE')}</td>
+                  <td style="padding:${px(4)} ${px(7)}; color:#fff;">TOTAL</td>
+                  ${_totPorHora.map(v => `<td style="padding:${px(4)} ${px(5)}; text-align:center; color:#fff;">${v > 0 ? v.toLocaleString('es-PE') : '-'}</td>`).join('')}
+                  <td style="padding:${px(4)} ${px(7)}; text-align:center; color:#fff;">${_granTotal.toLocaleString('es-PE')}</td>
                 </tr></tfoot>` : ''}
             </table>
-            <div style="font-size:10px; color:#888; margin-top:7px;">${activeDates.length} ${activeDates.length === 1 ? 'jornada' : 'jornadas'} · ${_granTotal.toLocaleString('es-PE')} unidades</div>
+            <div style="font-size:${px(10)}; color:#888; margin-top:${px(7)};">${activeDates.length} ${activeDates.length === 1 ? 'jornada' : 'jornadas'} · ${_granTotal.toLocaleString('es-PE')} unidades</div>
           </div>`;
+        };
+        window.__hourlyFotoHTML = window.__hourlyFotoDe(window.__hourlyEscala);
 
-        if (!window.__hourlyFoto) window.__hourlyFoto = () => {
+        window.__hourlyFoto = () => {
             document.getElementById('fotoHora')?.remove();
             const capa = document.createElement('div');
             capa.id = 'fotoHora';
             // Nada de glass-panel acá: el desenfoque recorta lo que se sale del recuadro y la
-            // tabla es ancha. Fondo sólido y a un costado el botón de cerrar.
+            // tabla es ancha. Fondo sólido y a un costado los controles.
             capa.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(8,12,20,0.86);'
                 + 'display:flex; align-items:center; justify-content:center; padding:22px; overflow:auto;';
-            capa.innerHTML = `<div style="display:flex; flex-direction:column; gap:9px; align-items:flex-end; max-width:100%;">
-                <button style="padding:6px 14px; border-radius:8px; border:none; background:#fff; color:#12365c;
-                               font-weight:800; font-size:13px; cursor:pointer; font-family:Arial, sans-serif;">✕ Cerrar</button>
-                <div style="overflow:auto; max-width:100%;">${window.__hourlyFotoHTML}</div>
-                <div style="color:#9fb3cc; font-size:11px; font-family:Arial, sans-serif;">Recorte con Win + Shift + S y mándelo por WhatsApp</div>
-              </div>`;
+
+            const btn = (txt, activo) => `padding:5px 12px; border-radius:8px; border:1px solid #fff;`
+                + `background:${activo ? '#fff' : 'transparent'}; color:${activo ? '#12365c' : '#fff'};`
+                + `font-weight:800; font-size:12px; cursor:pointer; font-family:Arial, sans-serif;`;
+
+            const dibujar = () => {
+                const E = window.__hourlyEscala;
+                capa.innerHTML = `<div style="display:flex; flex-direction:column; gap:9px; align-items:flex-end; max-width:100%;">
+                    <div style="display:flex; gap:7px; align-items:center;">
+                      <span style="color:#9fb3cc; font-size:12px; font-family:Arial, sans-serif; margin-right:3px;">Tamaño:</span>
+                      <button data-e="1" style="${btn('1', E === 1)}">Chico</button>
+                      <button data-e="1.5" style="${btn('1.5', E === 1.5)}">Mediano</button>
+                      <button data-e="2" style="${btn('2', E === 2)}">Grande</button>
+                      <button data-cerrar="1" style="${btn('x', false)} margin-left:10px;">✕ Cerrar</button>
+                    </div>
+                    <div style="overflow:auto; max-width:100%;">${window.__hourlyFotoDe(E)}</div>
+                    <div style="color:#9fb3cc; font-size:11px; font-family:Arial, sans-serif; text-align:right; max-width:520px; line-height:1.6;">
+                      Recorte con <b style="color:#fff;">Win + Shift + S</b> y mándelo por WhatsApp.<br>
+                      Mándelo en <b style="color:#fff;">Grande</b>: WhatsApp achica la imagen igual, y una foto grande
+                      llega nítida mientras que una chica se pixela.<br>
+                      Si aun así se ve borrosa, en WhatsApp adjúntela como <b style="color:#fff;">Documento</b> en vez de
+                      como Foto — así no la comprime.
+                    </div>
+                  </div>`;
+                capa.querySelectorAll('button[data-e]').forEach(b => b.addEventListener('click', () => {
+                    window.__hourlyEscala = Number(b.dataset.e);
+                    dibujar();
+                }));
+                capa.querySelector('button[data-cerrar]').addEventListener('click', cerrar);
+            };
+
             const cerrar = () => capa.remove();
-            capa.querySelector('button').addEventListener('click', cerrar);
             capa.addEventListener('click', (e) => { if (e.target === capa) cerrar(); });
             document.addEventListener('keydown', function esc(e) {
                 if (e.key === 'Escape') { cerrar(); document.removeEventListener('keydown', esc); }
             });
+            dibujar();
             document.body.appendChild(capa);
         };
 

@@ -109,7 +109,26 @@ const tds = [...cap.querySelectorAll('tfoot td')];
 ok('el TOTAL de abajo también se lee: ' + Math.round(contraste(tds[0])), tds.every(t => contraste(t) > 60));
 const cuerpo1 = cap.querySelector('tbody td');
 ok('y las filas del cuerpo: ' + Math.round(contraste(cuerpo1)), contraste(cuerpo1) > 60);
-cap.remove(); window.__hourlyHoy();
+
+// EL TAMAÑO, que es lo que decide si WhatsApp la destroza al comprimirla.
+const medir = () => {
+  const c = document.querySelector('#fotoHora div[style*="background:#fff"]');
+  const r = c.getBoundingClientRect();
+  return { ancho: Math.round(r.width), fuente: parseFloat(getComputedStyle(c.querySelector('table')).fontSize) };
+};
+const grande = medir();
+ok('arranca en Grande: ' + grande.ancho + ' px de ancho, letra de ' + grande.fuente + ' px',
+   grande.fuente >= 20 && grande.ancho > 1000);
+cap.querySelector('button[data-e="1"]').click();
+const chico = medir();
+ok('el botón Chico lo baja a ' + chico.ancho + ' px', chico.ancho < grande.ancho);
+cap.querySelector('button[data-e="2"]').click();
+ok('y vuelve a Grande', medir().ancho === grande.ancho);
+ok('en Grande sigue cuadrando el total: ' + document.querySelector('#fotoHora tfoot td:last-child').textContent,
+   document.querySelector('#fotoHora tfoot td:last-child').textContent.replace(/[^\d]/g, '') ===
+   String([...document.querySelectorAll('#fotoHora tbody tr')]
+     .reduce((s, tr) => s + Number(tr.lastElementChild.textContent.replace(/[^\d]/g, '')), 0)));
+document.getElementById('fotoHora')?.remove(); window.__hourlyHoy();
 
 eco('\n── EL PARPADEO ──');
 window.__redibujosCompletos = 0;
