@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0426';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, logSystemAction, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0427';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0426';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0426';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0426';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0426';
-import * as metasService from '../services_v245/metasService.js?v=29.0426';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0426';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0426';
+import * as adminService from '../services_v245/adminService.js?v=29.0427';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0427';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0427';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0427';
+import * as metasService from '../services_v245/metasService.js?v=29.0427';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0427';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0427';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0426';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0426';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0426';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0426';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0426';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0426';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0426';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0426';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0426';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0426';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0426';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0426';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0426';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0426';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0426';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0426';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0426';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0426';
-import { montarSlotting } from './slotting.js?v=29.0426';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0427';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0427';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0427';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0427';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0427';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0427';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0427';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO } from '../reportes/marcas.js?v=29.0427';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0427';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0427';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0427';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0427';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0427';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0427';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0427';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0427';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0427';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0427';
+import { montarSlotting } from './slotting.js?v=29.0427';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0426';
+const VERSION = '29.0427';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5338,7 +5338,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0426');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0427');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5601,7 +5601,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0426');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0427');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -12046,13 +12046,88 @@ const renderRFSection = (container) => {
     } else if (activeConfigSub === 'informacion') {
         await renderInfoRobots(document.getElementById('configContent'));
     } else if (activeConfigSub === 'mantenimiento') {
+        /* EL DISCO DEL SERVIDOR, A LA VISTA Y CON SU BOTÓN.
+         *
+         * El 26-ago-2026 Render mandó un aviso de disco al 93,71 %. La causa: la base
+         * de PRUEBAS pesaba 338 MB porque alguien la clonó en modo completo, y con las
+         * dos bases juntas —685 MB de 1 GB— cualquier respaldo o compactación que
+         * necesite espacio temporal llena el disco.
+         *
+         * Arreglarlo obligaba a pegar un comando en la consola del navegador. Eso no es
+         * algo que se le pueda pedir a nadie a las nueve de la noche, así que el botón
+         * vive acá. Vuelve a copiar producción a pruebas en modo LIGERO, que es lo que
+         * debió ser siempre; el endpoint abre producción en modo lectura y nunca le
+         * escribe. */
         document.getElementById('configContent').innerHTML = `
-            <div class="glass-panel" style="max-width:450px; padding:1.5rem; border: 1px solid rgba(var(--danger-rgb), 0.2);">
+            <div class="glass-panel" style="max-width:560px; padding:1.5rem; margin-bottom:1.2rem; border:1px solid rgba(var(--ink-rgb), 0.1);">
+                <h4 style="color:var(--primary); font-size:var(--t-md); margin-top:0;">💾 Disco del servidor</h4>
+                <div id="discoEstado" style="font-size:var(--t-sm); color:var(--text-muted); line-height:1.9;">Consultando...</div>
+                <button id="aligerarBetaBtn" class="btn" style="margin-top:1rem; font-size:var(--t-sm); padding:0.6rem 1rem; font-weight:700;">🧹 ALIGERAR LA BASE DE PRUEBAS</button>
+                <div style="font-size:var(--t-xs); color:var(--text-dim); margin-top:0.7rem; line-height:1.7;">
+                    Deja el entorno de pruebas con lo justo para probar y libera el resto.
+                    <b>No toca producción</b>: el servidor la abre en modo lectura.
+                </div>
+            </div>
+            <div class="glass-panel" style="max-width:560px; padding:1.5rem; border: 1px solid rgba(var(--danger-rgb), 0.2);">
                 <h4 style="color:var(--danger-soft); font-size:var(--t-md); margin-top:0;">Zona de Peligro</h4>
                 <p style="font-size:var(--t-sm); color:var(--text-muted); margin-bottom:1.5rem;">Utiliza estas opciones para limpiar la base de datos de pruebas. Esta acción no se puede deshacer.</p>
                 <button id="resetDataBtn" class="btn" style="background:var(--danger); font-size:var(--t-md); padding:0.7rem; font-weight:700;">⚠️ REINICIAR ASISTENCIA Y PERFORMANCE</button>
             </div>
         `;
+
+        const API_ADMIN = 'https://logistics-backend-wv0x.onrender.com/api/admin';
+        const cabecerasAdmin = () => {
+            const h = { 'Content-Type': 'application/json' };
+            try {
+                const t = (JSON.parse(localStorage.getItem('logistics_session') || '{}') || {}).token;
+                if (t) h['X-Auth-Token'] = t;
+            } catch (e) { /* sin token el servidor responde 403 y se avisa */ }
+            return h;
+        };
+
+        const pintarDisco = async () => {
+            const caja = document.getElementById('discoEstado');
+            if (!caja) return;
+            try {
+                const res = await fetch(`${API_ADMIN}/entornos?t=${Date.now()}`);
+                const d = await res.json();
+                const prod = (d.produccion || {}).tamano_mb || 0;
+                const prue = (d.pruebas || {}).tamano_mb || 0;
+                const libre = d.disco_libre_mb || 0;
+                // El disco de Render es de 1 GB; el ocupado se mide contra ese total.
+                const total = 1024;
+                const pct = Math.round(((total - libre) / total) * 100);
+                const color = pct >= 85 ? 'var(--danger)' : pct >= 70 ? 'var(--warning)' : 'var(--success)';
+                caja.innerHTML =
+                    `Producción: <b>${prod.toLocaleString('es-PE')} MB</b><br>`
+                    + `Pruebas: <b style="color:${prue > 100 ? 'var(--warning)' : 'inherit'}">${prue.toLocaleString('es-PE')} MB</b>`
+                    + `${prue > 100 ? ' &nbsp;<span style="color:var(--warning)">— muy grande para un entorno de pruebas</span>' : ''}<br>`
+                    + `Libre: <b>${libre.toLocaleString('es-PE')} MB</b> &nbsp;·&nbsp; `
+                    + `ocupado <b style="color:${color}">${pct} %</b>`;
+            } catch (e) {
+                caja.innerHTML = '<span style="color:var(--danger)">No se pudo consultar el disco del servidor.</span>';
+            }
+        };
+        pintarDisco();
+
+        document.getElementById('aligerarBetaBtn').onclick = async function () {
+            const ok = await showPremiumConfirm(
+                'ALIGERAR LA BASE DE PRUEBAS',
+                'Se reemplaza el entorno de pruebas por una copia ligera de producción y se libera el espacio que ocupaba. '
+                + 'Lo que haya cargado en pruebas se pierde. Producción NO se toca. ¿Continuar?', 'danger');
+            if (!ok) return;
+            await withLoading(this, '⏳ ALIGERANDO...', async () => {
+                const res = await fetch(`${API_ADMIN}/clonar-a-beta?confirmar=COPIAR-A-BETA&modo=ligera`,
+                    { method: 'POST', headers: cabecerasAdmin() });
+                const r = await res.json();
+                // Si falla se DICE, con el motivo del servidor: un botón que no hace nada
+                // deja a uno esperando un espacio que nunca se libera.
+                if (!res.ok || r.status === 'error') throw new Error(r.message || 'El servidor respondió ' + res.status);
+            });
+            await pintarDisco();
+            alert('✅ Base de pruebas aligerada. Arriba se ve el espacio que quedó libre.');
+        };
+
         document.getElementById('resetDataBtn').onclick = async function() {
             if (await showPremiumConfirm("ZONA DE PELIGRO - REINICIAR DATOS", "¿ESTÁS SEGURO? Se borrará TODO el historial de asistencia y performance de forma permanente. Los trabajadores NO se borrarán.", "danger")) {
                 await withLoading(this, '⏳ REINICIANDO...', async () => {
@@ -18092,7 +18167,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0426 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0427 | MOBILE PORTAL
                             </div>
                     </div>
 
