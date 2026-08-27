@@ -1,0 +1,123 @@
+<!-- Las marcas que no mandan nada a reserva: Adidas, Puma, Skechers y Marie Claire.
+     Saca del dashboard el `casoDelItem` de verdad —no una copia— y lo corre contra la
+     configuración y el stock del servidor. Comprueba las dos cosas que se arreglaron: que
+     Marie Claire esté en 'todo' y que el escolar ya no les gane. -->
+<meta charset="utf-8">
+<title>Prueba: las marcas que no usan reserva</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1000px;margin:0 auto;white-space:pre-wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 25000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text()).split(CR).join('');
+const tallasService = await import('../js/services_v245/tallasService.js?z=' + Date.now());
+const zonasService  = await import('../js/services_v245/zonasService.js?z=' + Date.now());
+
+eco('<span class="t">── LA CONFIGURACION DE BETA ──</span>');
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/config';
+const traer = async (env) => {
+  const r = await fetch(API + '?t=' + Date.now(), env ? { headers: { 'X-Environment': env } } : {});
+  const c = await r.json();
+  return (c && c.data !== undefined) ? c.data : c;
+};
+const [beta, prod] = await Promise.all([traer('beta'), traer(null)]);
+const mB = (beta.tallas || {}).marcas || {}, mP = (prod.tallas || {}).marcas || {};
+const SIN_RESERVA = ['Adidas', 'Puma', 'Skechers', 'Marie Claire'];
+SIN_RESERVA.forEach(m => ok(`${m} va en 'todo' en beta — ${(mB[m] || {}).modo}`, (mB[m] || {}).modo === 'todo'));
+ok('produccion NO se tocó: Marie Claire sigue como estaba — ' + (mP['Marie Claire'] || {}).modo,
+   (mP['Marie Claire'] || {}).modo === 'cuerpos');
+/* Las otras siete no se movieron: un arreglo que cambia lo que no se pidió es otro defecto. */
+const OTRAS = Object.keys(mP).filter(m => !SIN_RESERVA.includes(m));
+ok(`las otras ${OTRAS.length} marcas quedaron igual que en producción`,
+   OTRAS.every(m => JSON.stringify(mB[m]) === JSON.stringify(mP[m])));
+
+eco('\n<span class="t">── SE SACA EL casoDelItem DE VERDAD DEL DASHBOARD ──</span>');
+/* Se recorta desde las constantes hasta el final de casoDelItem. No es una copia pegada:
+   si mañana alguien mueve el bloque del escolar, esto se entera. */
+const desde = src.indexOf('  const PCT_CODIGO_NUEVO');
+const hasta = src.indexOf('  /**', src.indexOf('const casoDelItem'));
+ok('se encontró el trozo', desde > 0 && hasta > desde);
+const trozo = src.slice(desde, hasta);
+ok('trae el bloque del escolar', /esEscolar\(datos\.genderRims\)/.test(trozo));
+ok('trae el caso marca-sin-reserva', /marca-sin-reserva/.test(trozo));
+
+await tallasService.cargarTallas();
+/* Se le fuerza la config de beta, que es la que se arregló. */
+const cfgBeta = JSON.parse(JSON.stringify(tallasService.tallasActual()));
+cfgBeta.marcas = mB;
+const modoDeMarcaBeta = (marca) => {
+  const m = String(marca || '').trim();
+  if (cfgBeta.marcas[m]) return cfgBeta.marcas[m];
+  const b = m.toUpperCase().replace(/\s+/g, ' ');
+  const h = Object.keys(cfgBeta.marcas).find(k => k.toUpperCase().replace(/\s+/g, ' ') === b);
+  return h ? cfgBeta.marcas[h] : { modo: 'porcentaje', valor: 50 };
+};
+const armar = (cuerpo) => new Function('tallasService', 'zonasService', 'sugActuales',
+  cuerpo + '\n  return casoDelItem;')(
+    { ...tallasService, modoDeMarca: modoDeMarcaBeta }, zonasService, () => []);
+const casoDelItem = armar(trozo);
+
+/* El contexto mínimo que pide: nada en el piso ni en reserva = código nuevo. */
+const ctx = (piso = 0, reserva = 0) => ({
+  origenDe: new Map(), porTallaDe: new Map([['1111111', { '30': { piso } }]]),
+  reservaDe: new Map([['1111111', reserva]]), casaDe: new Map(), ficha: new Map()
+});
+const correr = (marca, gender, piso = 0, reserva = 0, zona = 'MZN03') =>
+  casoDelItem('1111111', { marca, genderRims: gender, gGender: '01 FOOTWEAR' }, 1000, zona, ctx(piso, reserva));
+
+eco('\n<span class="t">── EL ESCOLAR YA NO LES GANA ──</span>');
+SIN_RESERVA.forEach(m => {
+  const r = correr(m, '05 SCHOOL');
+  ok(`${m} escolar -> ${r.nombre} (${r.regla.modo})`,
+     r.nombre === 'marca-sin-reserva' && r.regla.modo === 'todo');
+});
+
+eco('\n<span class="t">── PERO A LAS DEMAS SI, QUE ERA LA REGLA DE ANTES ──</span>');
+[['Bata', 'reposición'], ['Power', 'un cuerpo'], ['Bubblegummers', 'porcentaje'], ['Weinbrenner', 'un cuerpo']]
+  .forEach(([m]) => {
+    const r = correr(m, '05 SCHOOL');
+    ok(`${m} escolar -> ${r.nombre} · ${r.regla.modo} ${r.regla.valor}`,
+       r.nombre === 'escolar' && r.regla.modo === 'paresPorTalla' && r.regla.valor === 50);
+  });
+
+eco('\n<span class="t">── Y LO QUE NO ES ESCOLAR NO SE MOVIO ──</span>');
+SIN_RESERVA.forEach(m => {
+  const r = correr(m, '04 SPORT');
+  ok(`${m} sport -> ${r.nombre}`, r.nombre === 'marca-sin-reserva');
+});
+[['Bata', '02 WOMEN', 0, 0, 'codigo-nuevo'], ['Bata', '02 WOMEN', 300, 500, 'reposicion-fabrica'],
+ ['Power', '04 SPORT', 0, 0, 'codigo-nuevo'], ['Bubblegummers', '03 KIDS', 50, 0, 'reposicion-fabrica']]
+  .forEach(([m, g, p, res, esperado]) => {
+    const r = correr(m, g, p, res);
+    ok(`${m} ${g} con ${p + res} en el almacén -> ${r.nombre}`, r.nombre === esperado);
+  });
+
+eco('\n<span class="t">── UN ACCESORIO SCHOOL SIGUE YENDO AL MEZZANINE 4 ──</span>');
+/* El escolar nunca se aplicó a lo que va sin ubicación, y eso no se tocó. */
+const acc = casoDelItem('1111111', { marca: 'Bata', genderRims: '05 SCHOOL', gGender: '08 ACCESORIES' },
+                        1000, 'MZN04', ctx());
+ok('accesorio SCHOOL de Bata -> ' + acc.nombre, acc.nombre === 'mezzanine-4');
+
+eco('\n<span class="t">── LA PRUEBA SE PONE ROJA SI SE QUITA EL ARREGLO ──</span>');
+/* Se vuelve a armar el mismo caso SIN la condición nueva. Si esto pasara, la prueba no
+   estaría probando nada. */
+const sinArreglo = armar(trozo.replace('&& !esMarcaSinReserva(datos.marca)', ''));
+const viejo = sinArreglo('1111111', { marca: 'Adidas', genderRims: '05 SCHOOL', gGender: '01 FOOTWEAR' },
+                         1000, 'MZN03', ctx());
+ok('sin el arreglo, Adidas escolar volvía a caer en escolar — ' + viejo.nombre, viejo.nombre === 'escolar');
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>Las cuatro marcas se almacenan enteras, escolar incluido, y nada más cambió.</b>');
+</script>

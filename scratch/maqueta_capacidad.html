@@ -1,0 +1,545 @@
+<!-- MAQUETA: el módulo CAPACIDAD.
+     Junta en una sola pantalla las seis configuraciones que hoy están repartidas en tres
+     módulos distintos, puestas en el orden en que se leen: primero cuánto entra en un
+     cuerpo, y de ahí para abajo todo lo demás. Los números son de verdad: salen del stock
+     y de la configuración del servidor. -->
+<meta charset="utf-8">
+<title>Módulo Capacidad</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body { margin:0; padding:0; background:var(--panel-deeper); }
+  .marco { max-width:1120px; margin:0 auto; padding:20px 18px 70px; }
+
+  /* ── La cabecera ── */
+  .tapa { background:#12365c; border-radius:12px 12px 0 0; padding:.9rem 1.2rem;
+          display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .tapa h1 { margin:0; color:#fff; font:800 17px/1.2 Arial,Helvetica,sans-serif;
+             letter-spacing:1.1px; text-transform:uppercase; }
+  .tapa .sub { color:#9fb3cc; font-size:12px; }
+  .sello { margin-left:auto; color:#9fb3cc; font-size:11.5px; text-align:right; line-height:1.5; }
+
+  /* ── El semáforo ── */
+  .semaforo { background:var(--panel-solid); border:1px solid var(--border); border-top:0;
+              border-radius:0 0 12px 12px; padding:1rem 1.2rem 1.1rem; margin-bottom:1.1rem; }
+  .barra { display:flex; height:26px; border-radius:5px; overflow:hidden;
+           background:rgba(var(--ink-rgb),.05); margin:5px 0 3px; }
+  .barra i { display:block; height:100%; }
+  .rot { display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+         font-size:11.5px; color:var(--text-muted); }
+  .rot b { color:var(--text-strong); font-size:13px; font-weight:800; }
+  .veredicto { margin-top:.8rem; padding:.6rem .85rem; border-radius:8px; font-size:13px;
+               display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .veredicto b { font-size:15px; font-weight:900; }
+  .mal  { background:rgba(var(--danger-rgb),.12);  color:var(--danger);  border:1px solid rgba(var(--danger-rgb),.35); }
+  .bien { background:rgba(var(--success-rgb),.12); color:var(--success); border:1px solid rgba(var(--success-rgb),.35); }
+
+  /* ── Los cinco pasos ── */
+  .paso { background:var(--panel-solid); border:1px solid var(--border); border-radius:11px;
+          margin-bottom:.7rem; overflow:hidden; }
+  .paso > summary { list-style:none; cursor:pointer; padding:.75rem 1rem; display:flex;
+                    align-items:center; gap:12px; user-select:none; }
+  .paso > summary::-webkit-details-marker { display:none; }
+  .paso > summary:hover { background:rgba(var(--ink-rgb),.03); }
+  .num { flex:none; width:25px; height:25px; border-radius:50%; background:#12365c; color:#fff;
+         font:800 12px/25px Arial,sans-serif; text-align:center; }
+  .tit { color:var(--text-strong); font-weight:800; font-size:13.5px; letter-spacing:.4px; }
+  .qhace { color:var(--text-muted); font-size:11.5px; }
+  .chev { margin-left:auto; color:var(--text-muted); font-size:11px; transition:transform .15s; }
+  .paso[open] .chev { transform:rotate(90deg); }
+  .cuerpo { padding:0 1rem 1rem; }
+
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { padding:.42rem .6rem; text-align:left; font-size:10.5px; font-weight:700;
+       letter-spacing:.07em; color:var(--text-muted); text-transform:uppercase;
+       border-bottom:1px solid var(--border); white-space:nowrap; }
+  td { padding:.36rem .6rem; color:var(--text-main); border-bottom:1px solid rgba(var(--ink-rgb),.04); }
+  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
+  td.c, th.c { text-align:center; }
+  .celda { display:flex; flex-direction:column; align-items:center; gap:1px; }
+  .celda .v { color:var(--text-strong); font-weight:800; font-size:13px; }
+  .chip { font-size:9.5px; padding:1px 5px; border-radius:20px; letter-spacing:.03em; white-space:nowrap; }
+  .medido   { background:rgba(var(--success-rgb),.14); color:var(--success); }
+  .heredado { background:rgba(var(--ink-rgb),.08);     color:var(--text-muted); }
+  .sinmed   { background:rgba(var(--danger-rgb),.12);  color:var(--danger); }
+  .apagado { color:var(--text-muted); }
+
+  input[type=number] { width:64px; padding:.24rem 0; text-align:center; font-weight:800;
+     font-size:12.5px; background:var(--panel-deeper); color:var(--text-strong);
+     border:1px solid var(--border); border-radius:6px; outline:none; }
+  input.rojo { border-color:var(--danger); background:rgba(var(--danger-rgb),.12); }
+  .boton { background:#12365c; color:#fff; border:0; border-radius:7px; padding:.45rem .85rem;
+     font:700 12px Arial,sans-serif; cursor:pointer; letter-spacing:.3px; }
+  .boton.claro { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
+  .boton:hover { filter:brightness(1.15); }
+  .filtros { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:.2rem 0 .7rem; }
+  .f { border:1px solid var(--border); background:transparent; color:var(--text-muted);
+       border-radius:20px; padding:.22rem .7rem; font-size:11.5px; cursor:pointer; }
+  .f.on { background:#12365c; color:#fff; border-color:#12365c; }
+  .nota { font-size:11.5px; color:var(--text-muted); line-height:1.65; margin:.1rem 0 .7rem; }
+  .aviso { margin-top:.5rem; padding:.5rem .7rem; border-radius:7px; font-size:11.5px;
+           background:rgba(var(--danger-rgb),.1); color:var(--danger);
+           border:1px solid rgba(var(--danger-rgb),.3); }
+  .scroll { max-height:430px; overflow:auto; border:1px solid var(--border); border-radius:8px; }
+  .scroll thead th { position:sticky; top:0; background:var(--panel-solid); z-index:1; }
+  .rejilla { display:grid; grid-template-columns:repeat(auto-fill,minmax(215px,1fr)); gap:.5rem; }
+  .tarj { border:1px solid var(--border); border-radius:8px; padding:.5rem .7rem; }
+  .tarj .m { color:var(--text-strong); font-weight:800; font-size:12.5px; }
+  .tarj .d { color:var(--text-muted); font-size:11px; }
+  .franja { display:flex; height:6px; border-radius:4px; overflow:hidden;
+            background:rgba(var(--ink-rgb),.06); margin-top:3px; }
+  /* Las tallas envueltas: casilla de ancho fijo que baja de renglón cuando no entra. */
+  .tallas { display:flex; flex-wrap:wrap; gap:5px; margin-top:.45rem; }
+  .tll { width:44px; text-align:center; }
+  .tll b { display:block; font-size:11.5px; font-weight:400; color:var(--text-muted); }
+  .tll span { display:block; font-size:10px; color:var(--text-muted); }
+  .tll.com b { font-weight:900; color:var(--text-strong); }
+  .tll.com span { color:var(--text-strong); }
+  .todo     { background:rgba(var(--cyan-neon-rgb),.16); color:var(--cyan-neon); }
+  .escolar  { background:rgba(var(--violet-rgb),.16);  color:var(--violet); }
+  .uncuerpo { background:rgba(var(--primary-rgb),.16); color:var(--primary); }
+  .estimada { background:rgba(var(--warning-rgb),.14); color:var(--warning); }
+  input.estimada { border-color:rgba(var(--warning-rgb),.5); }
+</style>
+
+<div class="marco">
+  <div class="tapa">
+    <div>
+      <h1>Capacidad</h1>
+      <div class="sub">Todo lo que decide cuánta mercadería aguanta el piso, en un solo lugar</div>
+    </div>
+    <div class="sello" id="sello">cargando…</div>
+  </div>
+  <div class="semaforo" id="semaforo"></div>
+  <div id="pasos"></div>
+</div>
+
+<script type="module">
+document.documentElement.setAttribute('data-tema', 'pbi');
+const $ = (s) => document.querySelector(s);
+const mil = (n) => Math.round(n).toLocaleString('es-PE');
+const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+const D = await (await fetch('_capacidad.json?z=' + Date.now())).json();
+/* El objetivo escrito a mano vive acá: la maqueta no toca el servidor. */
+const tuyo = new Map(D.topes.map((t, i) => [i, t.tuyo]));
+
+/* SE RECALCULA SOLO. Daniel, 27-ago-2026: *"yo quiero que eso se arme en automático cada
+   vez que carga el stock"*. La pantalla no guarda medidas propias: lee la foto que ya sube
+   el robot y vuelve a medir. Lo escrito a mano —los objetivos— es lo único que se guarda. */
+$('#sello').innerHTML = 'medido sobre la foto de stock del <b style="color:#fff">27-ago-2026</b><br>'
+  + mil(D.semaforo.cuerpos) + ' cuerpos ocupados · ' + mil(D.semaforo.vacios) + ' vacíos'
+  + '<br>se vuelve a medir con cada foto que sube el robot';
+
+/* ══ EL SEMÁFORO ══════════════════════════════════════════════════════════
+   Dos barras a la misma escala: lo que el piso aguanta y lo que los topes piden.
+   Es la pregunta que hoy no hace nadie —la de "¿entra en el cuerpo?" ya está en el
+   paso 5, pero nadie mira si entra en el ALMACÉN. */
+const pintarSemaforo = () => {
+  const pide = D.topes.reduce((a, t, i) => a + t.skus * (tuyo.get(i) || 0), 0);
+  const cabe = D.semaforo.hay + D.semaforo.libre;
+  const tope = Math.max(pide, cabe);
+  const p = (v) => (v / tope * 100).toFixed(2) + '%';
+  const falta = pide - cabe;
+  $('#semaforo').innerHTML = `
+    <div class="rot"><span>EL PISO AGUANTA</span><span><b>${mil(cabe)}</b> pares</span></div>
+    <div class="barra">
+      <i style="width:${p(D.semaforo.hay)}; background:#12365c;" title="ya hay"></i>
+      <i style="width:${p(D.semaforo.libre)}; background:#8fa9c6;" title="queda libre"></i>
+    </div>
+    <div class="rot" style="margin-bottom:.9rem;">
+      <span>ya hay <b style="font-size:11.5px;">${mil(D.semaforo.hay)}</b>
+        · queda libre <b style="font-size:11.5px;">${mil(D.semaforo.libre)}</b></span>
+    </div>
+    <div class="rot"><span>LO QUE PIDEN TUS TOPES</span><span><b>${mil(pide)}</b> pares</span></div>
+    <div class="barra">
+      <i style="width:${p(Math.min(pide, cabe))}; background:#3f7d3f;"></i>
+      ${falta > 0 ? `<i style="width:${p(falta)}; background:var(--danger);"></i>` : ''}
+    </div>
+    <div class="veredicto ${falta > 0 ? 'mal' : 'bien'}">
+      ${falta > 0
+        ? `<b>NO ENTRA</b> faltan ${mil(falta)} pares de sitio, unos
+           ${mil(falta / D.semaforo.capProm)} cuerpos más de los que tiene el almacén.`
+        : `<b>ENTRA</b> sobran ${mil(-falta)} pares de sitio — el piso quedaría al
+           <b>${(pide / cabe * 100).toFixed(1).replace('.', ',')}%</b>.`}
+    </div>
+    ${falta <= 0 && pide / cabe > 0.92 ? `<div class="nota" style="margin:.5rem 0 0;">
+      Entra, pero <b style="color:var(--text-strong)">sin aire</b>: una llegada grande no
+      tendría dónde caer. Bajando la perilla del paso 5 se deja colchón.</div>` : ''}`;
+};
+
+/* ══ PASO 1 · CUÁNTO ENTRA ════════════════════════════════════════════════ */
+const ETIQ_FUENTE = { medido: 'medido', estimado: 'estimado', sin: 'sin medir' };
+const paso1 = () => {
+  const filas = D.cubicaje.map(f => `<tr>
+      <td style="color:var(--text-strong); font-weight:800;">${esc(f.tipo)}</td>
+      ${D.rangos.map(r => {
+        const c = f.rangos[r];
+        if (!c.cap) return `<td class="c"><span class="chip sinmed">sin medir</span></td>`;
+        return `<td class="c"><div class="celda">
+            <input type="number" value="${c.cap}" data-cub="${esc(f.tipo)}|${r}"
+                   class="${c.fuente === 'estimado' ? 'estimada' : ''}">
+            <span class="chip ${c.fuente === 'medido' ? 'medido' : 'estimada'}">${
+              c.fuente === 'medido' ? c.n + ' art. medidos' : 'estimado'}</span>
+          </div></td>`;
+      }).join('')}
+    </tr>`).join('');
+  const faltan = D.rangos.reduce((a, r) => a + (D.sinCubicar[r] || 0), 0);
+  return `
+    <p class="nota"><b style="color:var(--text-strong)">De acá sale todo lo demás.</b>
+      Un cuerpo guarda el artículo entero, así que lo que entra se reparte entre las tallas
+      de su rango. Un deportivo chico entra <b style="color:var(--text-strong)">3,2 veces
+      más</b> que uno grande: por eso un tope parejo de 60 no puede estar bien en las dos puntas.</p>
+    <table>
+      <thead><tr><th>TIPO</th>${D.rangos.map(r =>
+        `<th class="c">${r}<br><span style="font-weight:400; text-transform:none;">${
+          D.tallasPorRango[r]} tallas</span></th>`).join('')}</tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+    <p class="nota" style="margin-top:.7rem;">
+      <span class="chip medido">medido</span> sale de los artículos que el robot ya cubicó.
+      <span class="chip estimada">estimado</span> no está cubicado: se baja desde el rango
+      medido más cercano con el encogimiento que muestran los propios datos
+      (<b style="color:var(--text-strong)">×${D.encoge}</b> de un rango al siguiente).
+      Antes esos casilleros salían de una tabla plana que daba el mismo número para todas
+      las tallas —500 para cualquier zapato—, y un 45 no puede entrar más que un 42.</p>
+    <div class="aviso" style="background:rgba(var(--ink-rgb),.05); color:var(--text-muted);
+         border-color:var(--border);">Para que dejen de ser estimados hay que cubicar
+      <b style="color:var(--text-strong)">${mil(D.sinCubicar['45+'])} artículos de 45 a más</b>
+      —hoy no hay ninguno medido—. En todo el almacén quedan ${mil(faltan)} artículos sin cubicar.</div>`;
+};
+
+/* ══ PASO 2 · DÓNDE VA ════════════════════════════════════════════════════ */
+const paso2 = () => `
+  <p class="nota">La marca manda la zona, y dentro de la zona sus columnas. Esto no cambia:
+    solo se muestra acá para no tener que ir a otra pantalla a mirarlo.</p>
+  <div class="rejilla">${Object.keys(D.zonasMarca).sort().map(m => {
+    const z = D.zonasMarca[m];
+    return `<div class="tarj">
+      <div class="m">${esc(m)}</div>
+      <div class="d">${esc(z.zona)} · ${z.columnas && z.columnas.length
+        ? 'columnas ' + z.columnas.join(', ') : 'toda la zona'}</div>
+    </div>`;
+  }).join('')}</div>`;
+
+/* ══ PASO 3 · CUÁNTO BAJA ═════════════════════════════════════════════════
+ *
+ * LO DECIDE EL CASO DEL ARTÍCULO, NO LA MARCA. Daniel, 27-ago-2026: *"un código nuevo debe
+ * bajar el sesenta por ciento y un código de reposición baja a un cuerpo; ahí en Bata está
+ * poniendo cincuenta por ciento"*. Tenía razón, y es peor de lo que se ve: de los tres
+ * modos de la tabla por marca, el almacenaje solo sigue leyendo `todo`. El caso fuerza la
+ * regla antes de que la marca llegue a opinar, así que el 50% de Bata y el 1 cuerpo de
+ * Power son números que no los mira nadie.
+ */
+const paso3 = () => {
+  const ETIQ = { porcentaje: 'porcentaje del stock', cuerpos: 'llenar N cuerpos', todo: 'todo lo que llegue' };
+  return `
+    <p class="nota">De lo que Recepción deja en el buffer, cuánto se almacena abajo y cuánto
+      sube a reserva. <b style="color:var(--text-strong)">Lo decide el caso del artículo, no
+      su marca.</b> Se pregunta en este orden y manda el primero que dice que sí.</p>
+    <table>
+      <thead><tr><th class="n" style="width:26px;">#</th><th>SI EL ARTÍCULO ES…</th>
+        <th>BAJA AL PISO</th><th>POR QUÉ</th></tr></thead>
+      <tbody>${D.casos.map((c, i) => `<tr>
+        <td class="n apagado">${i + 1}</td>
+        <td style="color:var(--text-strong); font-weight:700;">${esc(c.n)}</td>
+        <td style="color:var(--text-strong); font-weight:800;">${esc(c.q)}</td>
+        <td class="apagado">${esc(c.p)}</td></tr>`).join('')}</tbody>
+    </table>
+    <div class="aviso" style="margin:.9rem 0 .5rem;">
+      <b>La tabla por marca de abajo ya casi no se usa.</b> Solo se lee la fila de las marcas
+      que van en <i>todo</i> —Adidas, Puma y Skechers—. Los porcentajes y los cuerpos de las
+      otras ocho marcas se pueden editar y no cambian nada: el caso ya decidió antes.
+    </div>
+    <table>
+      <thead><tr><th>MARCA</th><th>REGLA</th><th class="c">CUÁNTO</th><th>SE LEE HOY</th></tr></thead>
+      <tbody>${Object.keys(D.cuantoBaja).sort().map(m => {
+        const r = D.cuantoBaja[m], viva = r.modo === 'todo';
+        return `<tr style="${viva ? '' : 'opacity:.5;'}">
+          <td style="color:var(--text-strong); font-weight:700;">${esc(m)}</td>
+          <td class="apagado">${ETIQ[r.modo] || r.modo}</td>
+          <td class="c">${r.modo === 'todo' ? '<span class="apagado">—</span>'
+            : `<b style="color:var(--text-strong)">${r.valor}</b>
+               <span class="apagado">${r.modo === 'porcentaje' ? '%' : 'cuerpos'}</span>`}</td>
+          <td>${viva ? '<span class="chip medido">sí</span>'
+                     : '<span class="chip heredado">no — manda el caso</span>'}</td></tr>`;
+      }).join('')}</tbody>
+    </table>`;
+};
+
+/* ══ PASO 4 · CÓMO SE REPARTE ═════════════════════════════════════════════ */
+const paso4 = () => {
+  const cats = Object.keys(D.tallasComerciales);
+  return `
+    <p class="nota">Cuando bajan 800 pares de un artículo, esto decide cuántos van a cada
+      talla. Las <b style="color:var(--text-strong)">comerciales</b> se llevan más: son las
+      que se piden y las que dejan el hueco cuando faltan.</p>
+    <div class="rejilla" style="grid-template-columns:repeat(auto-fill,minmax(330px,1fr));">
+      ${cats.map(c => {
+        const x = D.tallasComerciales[c];
+        const com = new Set(x.comerciales || []);
+        /* LAS TALLAS SE ENVUELVEN, NO SE APRETUJAN. Estaban en una sola fila de tabla y con
+           veinte tallas se montaban una encima de otra. Daniel, 27-ago-2026: *"se están
+           superponiendo"*. Cada talla es una casilla de ancho fijo que baja de renglón. */
+        const mayor = Math.max(1, ...x.tallas.map(t => Number(x.porcentajes[t]) || 0));
+        return `<div class="tarj">
+          <div class="m">${esc(c)}</div>
+          <div class="d">${x.tallas.length} tallas · ${com.size} comerciales</div>
+          <div class="tallas">
+            ${x.tallas.map(t => {
+              const p = Number(x.porcentajes[t]) || 0;
+              return `<div class="tll ${com.has(t) ? 'com' : ''}">
+                <b>${esc(t)}</b><span>${p}%</span>
+                <div class="franja"><i style="width:${(p / mayor * 100).toFixed(1)}%;
+                     background:${com.has(t) ? '#12365c' : '#8fa9c6'};"></i></div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+};
+
+/* ══ PASO 5 · HASTA CUÁNTO ════════════════════════════════════════════════
+ *
+ * EL TOPE TIENE DOS TECHOS, Y ESE ES EL NUDO DE TODO:
+ *
+ *   1. EL CUERPO  — no puede pasar de lo que entra en un cuerpo, repartido entre las
+ *                   tallas de su rango. Es el que ya revisa la pantalla de Factores hoy.
+ *   2. EL ALMACÉN — la SUMA de todos no puede pasar de lo que aguanta el piso. Este no
+ *                   lo revisa nadie, y es el que se está pasando.
+ *
+ * Llenar todos los cuerpos hasta el primer techo pide 1.223.845 pares y el piso aguanta
+ * 625.173: por eso el número no se pone, se REPARTE. Cada talla se lleva la misma parte
+ * de SU cuerpo, y así la 20 recibe más pares que la 42 sin tener que pensarlo.
+ */
+let filtro = 'todas';
+let pctCuerpo = null;          // null = como está hoy, escrito a mano
+
+const capCuerpo = D.topes.reduce((a, t) => a + t.skus * (t.propone || 0), 0);
+const pisoAguanta = D.semaforo.hay + D.semaforo.libre;
+/* El porcentaje más alto con el que TODAVÍA ENTRA. Se prueba de verdad en vez de dividir:
+   los objetivos se redondean y los que no tienen medida se quedan como están, así que la
+   división de servilleta se pasa por unos cientos de pares y el semáforo quedaría rojo. */
+/* Lo que ya está apartado y la perilla no mueve: el escolar y las marcas de un cuerpo. */
+const FIJO = D.topes.reduce((a, t) => a + (t.regimen === 'perilla' ? 0 : t.skus * (t.fijo || 0)), 0);
+const PCT_ELEGIDO = 45;        // la orden de Daniel, 27-ago-2026
+/* Cuanto pide el piso con la perilla en `p`. Lo fijo no se mueve. */
+const totalCon = (p) => FIJO + D.topes.reduce((a, t, i) => a + (t.regimen !== 'perilla' ? 0
+    : t.skus * (t.propone === null ? tuyo.get(i) : Math.max(1, Math.round(t.propone * p / 100)))), 0);
+const buscar = (limite) => { for (let p = 100; p > 1; p--) if (totalCon(p) <= limite) return p; return 1; };
+const pctQueEntra   = buscar(pisoAguanta);
+const pctConColchon = buscar(pisoAguanta * 0.88);
+
+const paso5 = () => `
+  <p class="nota">El tope es cuántos pares tiene que haber abajo de cada SKU en esa talla.
+    Tiene <b style="color:var(--text-strong)">dos techos</b>: lo que entra en su cuerpo
+    (paso 1) y lo que aguanta el piso entero (el semáforo de arriba). El primero ya se
+    revisa hoy; el segundo no lo revisa nadie.</p>
+  <table style="margin-bottom:.8rem;">
+    <thead><tr><th>ESTAS FILAS…</th><th>SU TOPE ES</th><th class="n">FILAS</th>
+      <th class="n">PIDEN AL PISO</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip todo">todo</span> ${D.todoAlPiso.join(' · ')}</td>
+        <td style="color:var(--text-strong); font-weight:800;">sin tope — todo lo que llega baja</td>
+        <td class="n">${D.resumenTopes.todo}</td><td class="n" id="pideTodo"></td></tr>
+      <tr><td><span class="chip escolar">escolar</span> las demás marcas</td>
+        <td style="color:var(--text-strong); font-weight:800;">${D.paresEscolar} pares por talla, fijo</td>
+        <td class="n">${D.resumenTopes.escolar}</td><td class="n" id="pideEscolar"></td></tr>
+      <tr><td><span class="chip uncuerpo">un cuerpo</span> ${D.unCuerpo.join(' · ')}</td>
+        <td style="color:var(--text-strong); font-weight:800;">el cuerpo entero, repartido entre sus tallas</td>
+        <td class="n">${D.resumenTopes.unCuerpo}</td><td class="n" id="pideCuerpo"></td></tr>
+      <tr><td><span class="chip heredado">se reparten</span> todo lo demás</td>
+        <td style="color:var(--text-strong); font-weight:800;">lo que quede de piso, con la perilla</td>
+        <td class="n">${D.resumenTopes.perilla}</td><td class="n" id="pidePerilla"></td></tr>
+    </tbody>
+  </table>
+  <p class="nota">Las tres primeras <b style="color:var(--text-strong)">no las toca la
+    perilla</b>: su número lo puso Daniel y no se negocia. <b style="color:var(--text-strong)">El
+    orden manda</b>: <i>todo</i> le gana al escolar —un Adidas escolar baja entero, no 50—, y el
+    escolar le gana a <i>un cuerpo</i> —un Power escolar son ${D.paresEscolar} pares por talla—.</p>
+  <div class="tarj" style="margin-bottom:.8rem; padding:.7rem .9rem;">
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <span class="tit">LLENAR EL CUERPO AL</span>
+      <input type="number" id="pct" min="1" max="100" value="${pctCuerpo || 100}" style="width:58px;">
+      <span style="color:var(--text-muted); font-size:12.5px;">%</span>
+      <input type="range" id="pctBarra" min="1" max="100" value="${pctCuerpo || 100}"
+             style="flex:1 1 180px; accent-color:#12365c;">
+      <button class="boton claro" id="ajustar">El máximo que entra (${pctQueEntra}%)</button>
+      <button class="boton claro" id="colchon">Con colchón (${pctConColchon}%)</button>
+      <button class="boton claro" id="volver60">Ver cómo está hoy (60 en todo)</button>
+    </div>
+    <div class="d" style="margin-top:.45rem;" id="explicaPct"></div>
+  </div>
+  <div class="filtros">
+    <span style="font-size:11.5px; color:var(--text-muted);">ver:</span>
+    <button class="f" data-f="pasan">se pasan del cuerpo</button>
+    <button class="f" data-f="entran">entran</button>
+    <button class="f" data-f="sin">sin medida (${D.resumenTopes.sinMedida})</button>
+    <button class="f" data-f="todas">todas (${D.resumenTopes.total})</button>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr>
+      <th>MARCA</th><th>GÉNERO</th><th class="n">TALLA</th><th class="n">SKUS</th>
+      <th class="n">EN PISO</th><th class="c">PROPONE</th><th class="c">TU OBJETIVO</th>
+      <th class="n">PIDE AL PISO</th>
+    </tr></thead>
+    <tbody id="tbTopes"></tbody>
+  </table></div>
+  <div class="aviso" id="avisoTope" style="display:none;"></div>`;
+
+/* Lo que le toca a cada talla. NO TODAS SE REPARTEN: el escolar tiene su numero dado y
+   las marcas de un cuerpo por articulo se llevan el cuerpo entero. La perilla solo mueve
+   al resto. Nunca por encima de su cuerpo: el porcentaje baja del techo, nunca lo sube. */
+const proponeCon = (t) => {
+  if (t.regimen === 'todo')      return t.fijo;   // no lleva tope: es lo que hay
+  if (t.regimen === 'escolar')   return D.paresEscolar;
+  if (t.regimen === 'un-cuerpo') return t.propone;
+  return t.propone === null ? null
+    : Math.max(1, Math.round(t.propone * (pctCuerpo === null ? 100 : pctCuerpo) / 100));
+};
+
+const pintarTopes = () => {
+  const cae = (t, i) => filtro === 'todas'
+    || (filtro === 'sin'    && t.propone === null)
+    || (filtro === 'pasan'  && t.propone !== null && tuyo.get(i) > t.propone)
+    || (filtro === 'entran' && t.propone !== null && tuyo.get(i) <= t.propone);
+  const filas = D.topes.map((t, i) => [t, i]).filter(([t, i]) => cae(t, i));
+  $('#tbTopes').innerHTML = filas.length ? filas.map(([t, i]) => {
+    const v = tuyo.get(i), pasa = t.propone !== null && v > t.propone;
+    const prop = proponeCon(t);
+    return `<tr>
+      <td style="color:var(--text-strong); font-weight:700;">${esc(t.marca)}
+        ${t.regimen === 'todo' ? '<span class="chip todo">todo</span>'
+        : t.regimen === 'escolar' ? '<span class="chip escolar">escolar</span>'
+        : t.regimen === 'un-cuerpo' ? '<span class="chip uncuerpo">un cuerpo</span>' : ''}</td>
+      <td class="apagado">${esc(t.genero)}</td>
+      <td class="n" style="font-weight:700;">${esc(t.talla)}</td>
+      <td class="n apagado">${mil(t.skus)}</td>
+      <td class="n">${mil(t.piso)}</td>
+      <td class="c">${t.regimen === 'todo'
+        ? '<span class="apagado" style="font-size:11px;">no lleva tope</span>'
+        : prop === null
+          ? '<span class="chip sinmed">sin medida</span>'
+          : `<b style="color:var(--text-strong)">${prop}</b>
+             <div style="font-size:10px; color:var(--text-muted);">en el cuerpo caben ${
+               t.propone} (${t.cap} ÷ ${D.tallasPorRango[t.rango]} tallas)</div>`}</td>
+      <td class="c">${t.regimen === 'todo'
+        ? '<span class="apagado">—</span>'
+        : `<input type="number" min="0" value="${v}" data-i="${i}" class="${pasa ? 'rojo' : ''}">`}</td>
+      <td class="n ${pasa ? '' : 'apagado'}" style="${pasa ? 'color:var(--danger); font-weight:700;' : ''}">
+        ${mil(t.skus * v)}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8" class="c apagado" style="padding:1.6rem;">
+      Nada en este grupo.</td></tr>`;
+  const c = document.querySelectorAll('.f');
+  if (c.length) {
+    const pasan = D.topes.filter((t, i) => t.propone !== null && tuyo.get(i) > t.propone).length;
+    c[0].innerText = `se pasan del cuerpo (${pasan})`;
+    c[1].innerText = `entran (${D.resumenTopes.total - pasan - D.resumenTopes.sinMedida})`;
+  }
+  const suma = (r) => D.topes.reduce((a, t, i) => a + (t.regimen === r ? t.skus * (tuyo.get(i) || 0) : 0), 0);
+  [['#pideTodo', 'todo'], ['#pideEscolar', 'escolar'], ['#pideCuerpo', 'un-cuerpo'], ['#pidePerilla', 'perilla']]
+    .forEach(([sel, r]) => { const e = $(sel); if (e) e.innerHTML = `<b style="color:var(--text-strong)">${mil(suma(r))}</b>`; });
+  const ex = $('#explicaPct');
+  const pideAhora = D.topes.reduce((a, t, i) => a + t.skus * (tuyo.get(i) || 0), 0);
+  if (ex) ex.innerHTML = pctCuerpo === null
+    ? `Ahora mismo los topes están escritos a mano —60 en todo—, sin mirar el cuerpo ni el
+       piso: piden <b style="color:var(--text-strong)">${mil(pideAhora)} pares</b>.
+       Llenar los cuerpos enteros pediría ${mil(capCuerpo)} y el piso aguanta
+       ${mil(pisoAguanta)}: por eso el número no se pone, se reparte.`
+    : `Las ${D.resumenTopes.perilla} filas que se reparten se llevan el
+       <b style="color:var(--text-strong)">${pctCuerpo}%</b> de SU cuerpo, así que la 20
+       recibe más pares que la 42 sin tener que pensarlo. Con lo fijo —escolar y un
+       cuerpo— ya apartado, el total queda en
+       <b style="color:var(--text-strong)">${mil(pideAhora)} pares</b> contra
+       ${mil(pisoAguanta)} que aguanta el piso. Lo fijo solo ya se lleva
+       <b style="color:var(--text-strong)">${mil(FIJO)}</b>, el
+       ${(FIJO / pisoAguanta * 100).toFixed(0)}% del piso.`;
+};
+
+/* Poner el porcentaje: se recalculan todos los objetivos de una. */
+const aplicarPct = (p) => {
+  pctCuerpo = Math.min(100, Math.max(1, p));
+  D.topes.forEach((t, i) => { const v = proponeCon(t); if (v !== null) tuyo.set(i, v); });
+  const a = $('#pct'), b = $('#pctBarra');
+  if (a) a.value = pctCuerpo;
+  if (b) b.value = pctCuerpo;
+  pintarTopes(); pintarSemaforo();
+  $('#avisoTope').style.display = 'none';
+};
+
+/* ── Se arma la pantalla ── */
+$('#pasos').innerHTML = [
+  ['1', 'CUÁNTO ENTRA EN UN CUERPO', 'el cubicaje medido, por tipo y por talla', paso1(), true],
+  ['2', 'DÓNDE VA', 'la zona y las columnas de cada marca', paso2(), false],
+  ['3', 'CUÁNTO BAJA AL PISO', 'qué parte se almacena y qué parte sube a reserva', paso3(), false],
+  ['4', 'CÓMO SE REPARTE POR TALLA', 'las tallas comerciales se llevan más', paso4(), false],
+  ['5', 'HASTA CUÁNTO — LOS TOPES', 'lo que pide la reposición, calculado del paso 1', paso5(), true],
+].map(([n, tit, q, html, abierto]) => `
+  <details class="paso" ${abierto ? 'open' : ''}>
+    <summary><span class="num">${n}</span>
+      <span><span class="tit">${tit}</span><br><span class="qhace">${q}</span></span>
+      <span class="chev">▶</span></summary>
+    <div class="cuerpo">${html}</div>
+  </details>`).join('');
+
+/* SE ABRE CON LA PROPUESTA, NO CON LOS 60. Daniel, 27-ago-2026: *"yo le he puesto el
+   sesenta solamente para hacer algunas pruebas, pero tú deberías adaptarlo a la
+   necesidad"*. Los 60 quedan a un botón de distancia, para poder comparar.
+
+   Y ARRANCA EN 45, NO EN EL MÁXIMO QUE ENTRA. Al 51% entra pero al ras —el piso queda al
+   99%— y una llegada grande no tendría dónde caer. Daniel eligió 45 el 27-ago-2026:
+   *"ponlo del cuarenta y cinco por ciento"*. El botón de al lado sigue mostrando cuál es
+   el máximo, para saber cuánto colchón se está dejando. */
+aplicarPct(PCT_ELEGIDO);
+
+/* ── Lo que se puede tocar ── */
+document.addEventListener('click', (e) => {
+  const f = e.target.closest('.f');
+  if (f) {
+    filtro = f.dataset.f;
+    document.querySelectorAll('.f').forEach(b => b.classList.toggle('on', b === f));
+    pintarTopes();
+    return;
+  }
+  /* EL BOTÓN QUE HACE EL TRABAJO: busca el porcentaje más alto con el que todavía entra.
+     Los que no tienen medida se dejan como están: no se inventa un número. */
+  if (e.target.id === 'ajustar') aplicarPct(pctQueEntra);
+  if (e.target.id === 'colchon') aplicarPct(pctConColchon);
+  if (e.target.id === 'volver60') {
+    pctCuerpo = null;
+    D.topes.forEach((t, i) => tuyo.set(i, 60));
+    pintarTopes(); pintarSemaforo();
+  }
+});
+/* La casilla y la barra son lo mismo, para que se pueda escribir o arrastrar. */
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'pctBarra') aplicarPct(+e.target.value);
+});
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'pct') aplicarPct(parseInt(e.target.value, 10) || 100);
+});
+document.querySelector('.f[data-f="todas"]').classList.add('on');
+
+/* Escribir un objetivo: se avisa y se deja el anterior, igual que ya hace la pantalla de
+   Factores. La diferencia es que acá el aviso también sale desde el botón de arriba. */
+document.addEventListener('change', (e) => {
+  const inp = e.target.closest('input[data-i]');
+  if (!inp) return;
+  const i = +inp.dataset.i, t = D.topes[i], v = parseInt(inp.value, 10);
+  if (!Number.isFinite(v) || v < 0) { inp.value = tuyo.get(i); return; }
+  if (t.propone !== null && v > t.propone) {
+    $('#avisoTope').style.display = '';
+    $('#avisoTope').innerHTML = `<b>NO ENTRA EN EL CUERPO.</b> En ${esc(t.marca)} ·
+      ${esc((t.tipo || '').toLowerCase())} · talla ${esc(t.talla)} el cuerpo aguanta
+      ${t.cap} pares y el rango ${t.rango} tiene ${D.tallasPorRango[t.rango]} tallas:
+      el máximo por talla es <b>${t.propone}</b>. Se puede dejar igual, pero queda marcado.`;
+  } else {
+    $('#avisoTope').style.display = 'none';
+  }
+  tuyo.set(i, v);
+  pintarTopes(); pintarSemaforo();
+});
+</script>
