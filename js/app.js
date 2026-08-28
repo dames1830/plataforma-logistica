@@ -1,11 +1,11 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0493';
-import * as adminService from './services_v245/adminService.js?v=29.0493';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0493';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0493';
-import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0493';
+import { getSession, logout } from './services_v245/auth.js?v=29.0494';
+import * as adminService from './services_v245/adminService.js?v=29.0494';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0494';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0494';
+import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0494';
 
 
 /**
@@ -433,7 +433,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0493';
+      this.APP_VERSION = 'v29.0494';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está

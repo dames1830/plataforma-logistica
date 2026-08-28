@@ -15,23 +15,39 @@
 <!-- Monta la pantalla DE VERDAD -`montarSlotting`, vista tareas_dia- para ver el selector
      de zonas sin tener que entrar con usuario y clave. PROCESAR no procesa: escribe abajo
      con que zonas se habria llamado. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 <div id="aviso">Pantalla real. <b>PROCESAR SLOTTING</b> no procesa nada: escribe abajo las zonas que habría mandado.</div>
 <div id="app"></div>
 <div id="eco">— todavía no se apretó PROCESAR —</div>
 
 <script type="module">
+  const HOY = new Date().toISOString().slice(0, 10);
   import { montarSlotting } from '../js/views/slotting.js';
   import * as slottingService from '../js/services_v245/slottingService.js';
 
   const dibujar = () => montarSlotting(document.getElementById('app'), {
     vista: 'tareas_dia',
     svc: slottingService,
-    cajon: {},
+    cajon: { [HOY]: { fecha: HOY, zona: 'MZN02', generado: HOY + ' 20:10', cuerpos: 3, pares: 415, tareas: [
+      { n: 1, pares: 272, marca: 'North Star', status: 'Creada', prioridad: true,
+        lineas: [{ ubi: 'MZN02-07-05', sku7: '8811905', pares: 150, marca: 'North Star', temporada: 'T. Actual',
+                   llevarA: 'MZN02-01-03', motivo: 'le toca anterior', detalle: [{ubi:'MZN02-07-05-A-01',talla:'38',qty:90},{ubi:'MZN02-07-05-B-01',talla:'39',qty:60}] },
+                 { ubi: 'MZN02-11-02', sku7: '5566814', pares: 122, marca: 'North Star', temporada: 'T. Actual',
+                   llevarA: 'MZN02-04-07', motivo: 'es saldoGrande', detalle: [] }] },
+      { n: 2, pares: 143, marca: 'North Star', status: 'Creada',
+        lineas: [{ ubi: 'MZN02-15-09', sku7: '7613738', pares: 143, marca: 'North Star', temporada: 'T. Anterior',
+                   llevarA: 'MZN02-01-11', motivo: 'le toca anterior', detalle: [] }] }
+    ] } },
     operarios: [],
-    jornadaHoy: new Date().toISOString().slice(0, 10),
+    jornadaHoy: HOY,
     jornadaVencida: () => false,
     alertar: (t, m) => console.log('[aviso]', t, m),
     alGuardar: async () => true,
+    alExportar: async (P) => {
+      window.__ultimoPaquete = P;
+      document.getElementById('eco').textContent =
+        'alExportar recibio: ' + JSON.stringify(P, null, 2).slice(0, 900) + ' ...';
+    },
     alProcesar: async (zonas) => {
       document.getElementById('eco').textContent =
         'barrerParaSlotting se habría llamado con:\n' + JSON.stringify(zonas, null, 2);

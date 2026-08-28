@@ -33,7 +33,8 @@
 /* El rango de fechas es el mismo de toda la plataforma: se dibuja una sola vez, en
    `reportesComunes.js`. Este archivo recibe todo lo demás por `OPC` y no lee del
    servidor — el selector no lee nada, solo dibuja. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0493';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0494';
+import { icono } from '../services_v245/iconos.js?v=29.0494';
 
 export const montarSlotting = (container, OPC = {}) => {
   const svc = OPC.svc;
@@ -121,9 +122,9 @@ export const montarSlotting = (container, OPC = {}) => {
             </div>
             <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
               ${selectorRango(esc(desde), esc(hasta), null, { idDesde: 'slt_desde', idHasta: 'slt_hasta' })}
-              ${lista.length ? `<button id="slt_imprimir" class="btn" style="background:rgba(var(--ink-rgb), 0.06);
-                       border:1px solid var(--border); color:var(--text-pale); width:auto; padding:0.5rem 1.1rem;
-                       border-radius:8px; font-size:var(--t-sm); font-weight:800;">🖨️ IMPRIMIR</button>` : ''}
+              ${lista.length ? `
+                <button id="slt_imprimir" class="btn-icono" title="Imprimir las hojas de las tareas">${icono('imprimir', 18)}</button>
+                <button id="slt_excel" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>` : ''}
               ${selectorZonasCorrida()}
               <button id="slt_procesar" class="btn" style="background:var(--btn-fill); width:auto;
                       padding:0.5rem 1.1rem; border-radius:8px; font-size:var(--t-sm); font-weight:800;">
@@ -1105,6 +1106,40 @@ export const montarSlotting = (container, OPC = {}) => {
 
     const imp = container.querySelector('#slt_imprimir');
     if (imp) imp.addEventListener('click', imprimirTareas);
+
+    /* EXPORTAR. Este archivo no arma el Excel —no conoce ExcelJS ni tiene por qué—: avisa
+       hacia afuera con las filas YA ORDENADAS como se están viendo. Si el Excel saliera en
+       otro orden que la pantalla, el que lo abre pensaría que son dos reportes distintos.
+       Mismo reparto que `sku_sin_salida`. */
+    const xls = container.querySelector('#slt_excel');
+    if (xls && OPC.alExportar) xls.addEventListener('click', async () => {
+      const antes = xls.innerHTML;
+      xls.disabled = true; xls.style.opacity = '0.5';
+      try {
+        /* `tareasDelRango()` y no `lista`: esa es una variable LOCAL de la funcion que
+           dibuja, y desde el enganche no se alcanza -reventaba en ejecucion con "lista is
+           not defined" y el chequeo de sintaxis no lo ve-. Se pide de nuevo, que ademas
+           devuelve lo que hay AHORA, no lo que habia cuando se dibujo. */
+        await OPC.alExportar({
+          desde, hasta,
+          tareas: tareasDelRango().map(t => ({
+            fecha: t.fecha, n: t.n, pares: t.pares,
+            cuerpos: new Set((t.lineas || []).map(l => l.ubi)).size,
+            marca: t.marca || '', estado: svc.migrarEstado(t),
+            u1: t.u1 || '', u2: t.u2 || '', inicio: t.inicio || '', termino: t.termino || '',
+            prioridad: !!t.prioridad,
+            lineas: (t.lineas || []).map(l => ({
+              origen: l.ubi, sku7: l.sku7, marca: l.marca || '', temporada: l.temporada || '',
+              pares: l.pares, destino: l.llevarA || '', motivo: l.motivo || '',
+              detalle: l.detalle || []
+            }))
+          }))
+        });
+      } catch (e) {
+        avisar('NO SE PUDO EXPORTAR', (e && e.message) || String(e), 'error');
+      }
+      xls.disabled = false; xls.style.opacity = ''; xls.innerHTML = antes;
+    });
 
     container.querySelectorAll('.slt-fila').forEach(tr =>
       tr.addEventListener('click', () => abrirAsignar(tr.dataset.f, tr.dataset.n)));
