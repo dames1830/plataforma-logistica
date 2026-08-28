@@ -33,7 +33,7 @@
 /* El rango de fechas es el mismo de toda la plataforma: se dibuja una sola vez, en
    `reportesComunes.js`. Este archivo recibe todo lo demás por `OPC` y no lee del
    servidor — el selector no lee nada, solo dibuja. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0492';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0493';
 
 export const montarSlotting = (container, OPC = {}) => {
   const svc = OPC.svc;
@@ -183,21 +183,49 @@ export const montarSlotting = (container, OPC = {}) => {
     const v = conf.filter(z => zonasCorrida.has(z));
     return v.length ? v : conf.slice();
   };
+  /* UN COMBO, NO CASILLAS SUELTAS. Daniel, 28-ago-2026: *"quiero un combo box que sea
+     múltiple, para selección múltiple. No quiero que me pongas esas cosas de ahí"*. La
+     barra de arriba ya lleva el rango de fechas, imprimir y procesar; tres casillas sueltas
+     más la ensuciaban.
+
+     EL PANEL VA CON `position: fixed` Y SE UBICA AL ABRIRLO. Dentro de un `glass-panel` el
+     desenfoque recorta lo que se sale del recuadro, y un menú cortado parece que llegara
+     vacío. Con `fixed` no lo recorta ningún padre. */
   const selectorZonasCorrida = () => {
     const conf = (svc.configActual().zonas || []);
     if (conf.length <= 1) return '';          // con una sola zona no hay nada que elegir
-    const sel = new Set(zonasElegidas());
+    const sel = zonasElegidas();
+    const rotulo = sel.length === conf.length ? 'Todas las zonas'
+                 : sel.length === 1 ? sel[0]
+                 : `${sel.length} zonas`;
     return `
-      <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(var(--ink-rgb), 0.04);
-                  border:1px solid var(--border); border-radius:9px; padding:5px 12px;">
-        <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;
-                     white-space:nowrap;" title="Lo que traba una tarea de almacenaje entra igual, se tilde o no">
-          Ordenar</span>
-        ${conf.map(z => `
-          <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer;
-                        font-size:11px; font-weight:700; color:var(--text-strong);">
-            <input type="checkbox" class="slt_zona_corrida" value="${esc(z)}" ${sel.has(z) ? 'checked' : ''}>
-            ${esc(z)}</label>`).join('')}
+      <div style="position:relative; display:inline-block;">
+        <button type="button" id="slt_zonas_btn"
+                title="Las zonas que se revisan al procesar. Lo que traba una tarea de almacenaje sale igual, esté marcada su zona o no."
+                style="display:inline-flex; align-items:center; gap:8px; background:rgba(var(--ink-rgb), 0.04);
+                       border:1px solid var(--border); border-radius:9px; padding:0.5rem 0.9rem; cursor:pointer;
+                       font-family:inherit; font-size:var(--t-sm); font-weight:700; color:var(--text-strong);">
+          <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;">Zonas</span>
+          <span id="slt_zonas_txt">${esc(rotulo)}</span>
+          <span style="color:var(--text-muted); font-size:10px;">▼</span>
+        </button>
+        <div id="slt_zonas_menu" hidden
+             style="position:fixed; z-index:9999; min-width:190px; background:var(--panel-solid);
+                    border:1px solid var(--border); border-radius:10px; padding:6px;
+                    box-shadow:0 10px 30px rgba(var(--shadow-rgb), 0.45);">
+          ${conf.map(z => `
+            <label style="display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:7px;
+                          cursor:pointer; font-size:var(--t-sm); font-weight:700; color:var(--text-strong);"
+                   onmouseover="this.style.background='rgba(var(--ink-rgb), 0.06)'"
+                   onmouseout="this.style.background='transparent'">
+              <input type="checkbox" class="slt_zona_corrida" value="${esc(z)}" ${sel.includes(z) ? 'checked' : ''}
+                     style="width:15px; height:15px; cursor:pointer; accent-color:var(--primary-2);">
+              ${esc(z)}</label>`).join('')}
+          <div style="border-top:1px solid var(--border); margin:5px 0 0; padding:7px 9px 3px;
+                      font-size:var(--t-xs); color:var(--text-muted); line-height:1.5; max-width:210px;">
+            Lo que traba una tarea de almacenaje sale igual, esté marcada su zona o no.
+          </div>
+        </div>
       </div>`;
   };
 
@@ -1110,17 +1138,43 @@ export const montarSlotting = (container, OPC = {}) => {
         pintar();
       }));
 
-    /* La elección de zonas se recoge al vuelo y no se guarda: es de esta noche. */
-    container.querySelectorAll('.slt_zona_corrida').forEach(ch => {
-      ch.addEventListener('change', () => {
-        zonasCorrida = new Set([...container.querySelectorAll('.slt_zona_corrida')]
-          .filter(x => x.checked).map(x => x.value));
-        if (!zonasCorrida.size) {          // sin ninguna no se puede correr: se vuelve a tildar
-          ch.checked = true;
-          zonasCorrida = new Set([ch.value]);
-        }
+    /* EL COMBO DE ZONAS. La elección no se guarda: es la decisión de esta noche.
+       El panel se ubica al abrirlo porque va `fixed` —para que no lo recorte el desenfoque
+       del panel de vidrio—, así que su sitio hay que calcularlo contra el botón. */
+    const zBtn = container.querySelector('#slt_zonas_btn');
+    const zMenu = container.querySelector('#slt_zonas_menu');
+    if (zBtn && zMenu) {
+      const cerrar = () => { zMenu.hidden = true; document.removeEventListener('click', alClicFuera, true); };
+      const alClicFuera = (e) => { if (!zMenu.contains(e.target) && !zBtn.contains(e.target)) cerrar(); };
+      zBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!zMenu.hidden) { cerrar(); return; }
+        const r = zBtn.getBoundingClientRect();
+        zMenu.style.left = `${Math.min(r.left, window.innerWidth - 230)}px`;
+        zMenu.style.top = `${r.bottom + 6}px`;
+        zMenu.hidden = false;
+        document.addEventListener('click', alClicFuera, true);
       });
-    });
+
+      const resumen = () => {
+        const conf = (svc.configActual().zonas || []);
+        const sel = zonasElegidas();
+        const t = container.querySelector('#slt_zonas_txt');
+        if (t) t.textContent = sel.length === conf.length ? 'Todas las zonas'
+                             : sel.length === 1 ? sel[0] : `${sel.length} zonas`;
+      };
+      container.querySelectorAll('.slt_zona_corrida').forEach(ch => {
+        ch.addEventListener('change', () => {
+          zonasCorrida = new Set([...container.querySelectorAll('.slt_zona_corrida')]
+            .filter(x => x.checked).map(x => x.value));
+          if (!zonasCorrida.size) {        // sin ninguna no se puede correr: se vuelve a marcar
+            ch.checked = true;
+            zonasCorrida = new Set([ch.value]);
+          }
+          resumen();
+        });
+      });
+    }
 
     const btn = container.querySelector('#slt_procesar');
     if (btn) btn.addEventListener('click', async () => {
