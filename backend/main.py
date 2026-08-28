@@ -453,6 +453,36 @@ def init_db(ruta: Optional[str] = None):
     cursor.execute('CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, username TEXT NOT NULL, role TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, expires_at TEXT NOT NULL)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_exp ON sessions (expires_at)')
 
+    # ── EL REGISTRO DE LO QUE PASA ──────────────────────────────────────────────
+    #
+    # Daniel, 28-ago-2026: *"¿como me doy cuenta de que el robot no esta corriendo?
+    # Creame un modulo en la web que se llame log [...] ahi ponme todo lo que pasa, lo
+    # que el robot haga, lo que descargue, lo que el usuario haga con nombre"*.
+    #
+    # Nacio de que el Stock Reserva de las 07:00 llevaba SEIS DIAS sin bajar y nadie se
+    # entero: el robot lo dejaba escrito en un log del servidor que nadie abre.
+    #
+    # TABLA PROPIA Y NO UN AREA. Las areas guardan un bloque entero por fecha y se
+    # reescriben completas; esto son miles de renglones que solo se agregan al final.
+    # Con una tabla, escribir es una fila y leer es un filtro.
+    #
+    # SIETE DIAS. Regla suya: *"un historial de una semana nada mas, para que no consuma
+    # tantos recursos"*. Se limpia al escribir, no con una tarea aparte: asi no hay nada
+    # mas que se pueda quedar dormido.
+    #
+    # `cuando` va en HORA DE LIMA y como texto ordenable. No se usa CURRENT_TIMESTAMP
+    # porque SQLite lo escribe en UTC y a las 19:00 -justo cuando entra el turno noche-
+    # ya seria el dia siguiente.
+    cursor.execute('CREATE TABLE IF NOT EXISTS eventos ('
+                   'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+                   'cuando TEXT NOT NULL, '        # 'AAAA-MM-DD HH:MM:SS', hora de Lima
+                   'origen TEXT NOT NULL, '        # 'robot' | 'web' | 'servidor'
+                   'quien TEXT, '                  # usuario o nombre del robot
+                   'tipo TEXT NOT NULL, '          # 'ok' | 'aviso' | 'error'
+                   'accion TEXT NOT NULL, '        # que paso, en una linea
+                   'detalle TEXT)')                # lo que haga falta para entenderlo
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_eventos_cuando ON eventos (cuando)')
+
     # 'tema' llego despues: el administrador le deja puesto un tema a cada usuario y ese
     # es con el que abre la primera vez, en la PC que sea. Antes el tema vivia solo en el
     # navegador, asi que cada maquina era un mundo y una persona nueva siempre arrancaba
@@ -601,6 +631,83 @@ for _ruta_db in (DB_PATH, DB_PATH_BETA):
         if _n or _limpio:
             print(f"[SEGURIDAD] {_ruta_db}: {_n} contraseña(s) cifrada(s)"
                   + (", snapshot de usuarios limpiado" if _limpio else ""))
+
+
+DIAS_QUE_SE_GUARDAN = 7
+
+
+@app.post("/api/eventos")
+async def registrar_eventos(request: Request):
+    """Anota lo que pasa. Acepta uno o varios de una vez.
+
+    NO PIDE CREDENCIAL, a proposito: el robot escribe desde el Contabo sin sesion, y un
+    registro que se pierde por un candado no sirve de nada. Lo que se guarda no es
+    sensible —quien, que y cuando— y `quien` lo manda el que escribe.
+
+    NUNCA DEVUELVE ERROR AL QUE ESCRIBE. Si anotar falla, falla callado: que el registro
+    se caiga no puede tumbar una tarea del turno.
+    """
+    try:
+        cuerpo = await request.json()
+        filas = cuerpo if isinstance(cuerpo, list) else [cuerpo]
+        ahora_txt = ahora().strftime("%Y-%m-%d %H:%M:%S")
+        conn = sqlite3.connect(db_path())
+        cur = conn.cursor()
+        n = 0
+        for e in filas[:500]:                       # tope por peticion, por las dudas
+            if not isinstance(e, dict) or not e.get('accion'):
+                continue
+            cur.execute('INSERT INTO eventos (cuando, origen, quien, tipo, accion, detalle) '
+                        'VALUES (?, ?, ?, ?, ?, ?)',
+                        (str(e.get('cuando') or ahora_txt)[:19],
+                         str(e.get('origen') or 'web')[:20],
+                         str(e.get('quien') or '')[:60],
+                         str(e.get('tipo') or 'ok')[:10],
+                         str(e.get('accion'))[:200],
+                         str(e.get('detalle') or '')[:2000]))
+            n += 1
+        # La limpieza va acá y no en una tarea aparte: una tarea mas es una cosa mas que
+        # se puede quedar dormida sin que nadie lo note.
+        corte = (ahora() - timedelta(days=DIAS_QUE_SE_GUARDAN)).strftime("%Y-%m-%d %H:%M:%S")
+        cur.execute('DELETE FROM eventos WHERE cuando < ?', (corte,))
+        borrados = cur.rowcount
+        conn.commit()
+        conn.close()
+        return {"status": "ok", "guardados": n, "borrados": max(0, borrados)}
+    except Exception as e:
+        print(f"[EVENTOS] no se pudo anotar: {e}")
+        return {"status": "ok", "guardados": 0}     # callado a proposito
+
+
+@app.get("/api/eventos")
+async def leer_eventos(dias: int = 7, origen: Optional[str] = None,
+                       tipo: Optional[str] = None, q: Optional[str] = None,
+                       limite: int = 1000):
+    """Lo anotado, lo mas nuevo primero."""
+    try:
+        corte = (ahora() - timedelta(days=max(1, min(dias, DIAS_QUE_SE_GUARDAN)))
+                 ).strftime("%Y-%m-%d %H:%M:%S")
+        sql = 'SELECT cuando, origen, quien, tipo, accion, detalle FROM eventos WHERE cuando >= ?'
+        args = [corte]
+        if origen:
+            sql += ' AND origen = ?'; args.append(origen)
+        if tipo:
+            sql += ' AND tipo = ?'; args.append(tipo)
+        if q:
+            sql += ' AND (accion LIKE ? OR detalle LIKE ? OR quien LIKE ?)'
+            args += [f'%{q}%'] * 3
+        sql += ' ORDER BY cuando DESC, id DESC LIMIT ?'
+        args.append(max(1, min(limite, 5000)))
+        conn = sqlite3.connect(db_path())
+        cur = conn.cursor()
+        filas = cur.execute(sql, args).fetchall()
+        total = cur.execute('SELECT COUNT(*) FROM eventos').fetchone()[0]
+        conn.close()
+        return {"status": "ok", "total": total, "eventos": [
+            {"cuando": f[0], "origen": f[1], "quien": f[2], "tipo": f[3],
+             "accion": f[4], "detalle": f[5]} for f in filas]}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "eventos": []}
 
 
 @app.get("/api/health")

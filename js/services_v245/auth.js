@@ -1,3 +1,5 @@
+import { registrar } from './eventosService.js?v=29.0498';
+
 const getApiBase = (defaultUrl) => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has('local')) {
@@ -14,7 +16,7 @@ const getApiBase = (defaultUrl) => {
   return defaultUrl;
 };
 const AUTH_API = getApiBase("https://logistics-backend-wv0x.onrender.com/api");
-const VERSION = '29.0497';
+const VERSION = '29.0498';
 
 /**
  * [SEGURIDAD v26.5.572] La validación la hace EL SERVIDOR.
@@ -63,6 +65,8 @@ export const login = async (username, password) => {
                         token: respuesta.token || null };
   localStorage.setItem('logistics_session', JSON.stringify(sessionData));
   console.log(`[AUTH] Acceso concedido para ${sessionData.username}.`);
+  /* AL LOG. Se anota DESPUES de guardar la sesion: `registrar` lee de ahi el nombre. */
+  try { registrar('Entro a la plataforma', sessionData.name || sessionData.username); } catch (e) {}
 
   // La lista de usuarios (ya SIN contraseñas) se guarda solo para poder revocar
   // sesiones de usuarios desactivados. Si falla, el login igual es válido.

@@ -145,6 +145,34 @@ WEB_DATOS_API = "https://logistics-backend-wv0x.onrender.com/api/logistics"
 # sesion, asi que lleva su propio token, leido del entorno del Contabo -NUNCA escrito
 # aca, o estaria publico en el repo-. Si la variable no esta, se manda vacio y el
 # servidor, mientras el candado siga apagado, lo deja pasar igual.
+# ── EL LOG DE LA WEB ─────────────────────────────────────────────────────────
+#
+# Daniel, 28-ago-2026: *"¿como me doy cuenta de que el robot no esta corriendo? Creame un
+# modulo en la web que se llame log"*. Nacio de que el Stock Reserva de las 07:00 llevaba
+# SEIS DIAS sin bajar: el robot lo dejaba escrito en un archivo del servidor que nadie abre.
+#
+# ANOTAR NUNCA PUEDE TUMBAR LA CORRIDA. Todo va dentro de un `try` que se traga cualquier
+# error: si el registro falla, el turno sigue igual. Un log que rompe el trabajo no sirve.
+API_EVENTOS = "https://logistics-backend-wv0x.onrender.com/api/eventos"
+
+
+def anotar(accion, detalle="", tipo="ok", quien=None):
+    """Deja una linea en el Log de la web. Falla callado a proposito."""
+    try:
+        cuerpo = json.dumps({
+            "origen": "robot",
+            "quien": quien or ("ancla_noche" if es_corrida_de_la_noche() else "ancla_manana"),
+            "tipo": tipo, "accion": accion, "detalle": str(detalle)[:2000]
+        }, ensure_ascii=False).encode("utf-8")
+        p = urllib.request.Request(API_EVENTOS, data=cuerpo, method="POST",
+                                   headers={"Content-Type": "application/json"})
+        if ROBOT_TOKEN:
+            p.add_header("X-Robot-Token", ROBOT_TOKEN)
+        urllib.request.urlopen(p, timeout=20).read()
+    except Exception:
+        pass
+
+
 ROBOT_TOKEN = os.environ.get('ROBOT_TOKEN', '')
 
 AREA_ACTIVO = "almacenaje_activo"
@@ -1463,6 +1491,9 @@ def run(fecha=None, ruta_act_dada=None, ruta_res_dada=None, igualmente=False):
         res_web = datos_reserva_web(ruta_res)
         stocks_ok = subir_datos(AREA_ACTIVO, act_web) and stocks_ok
         stocks_ok = subir_datos(AREA_RESERVA, res_web) and stocks_ok
+        anotar("Stocks publicados en la web" if stocks_ok else "Los stocks NO se publicaron",
+               "activo %s filas · reserva %s filas" % (format(len(act_web), ",d"), format(len(res_web), ",d")),
+               "ok" if stocks_ok else "error")
         if not stocks_ok:
             log("Los stocks no se publicaron: la web va a seguir usando los anteriores", "WARN")
 
@@ -1621,6 +1652,7 @@ def run(fecha=None, ruta_act_dada=None, ruta_res_dada=None, igualmente=False):
     mb = os.path.getsize(final) / (1024.0 * 1024.0)
     log("=" * 58)
     log("LISTO en %.1f minutos - %.2f MB" % ((time.time() - inicio) / 60.0, mb))
+    anotar("Corrida terminada", "%.1f minutos · %.2f MB" % ((time.time() - inicio) / 60.0, mb))
     log(final)
     log("=" * 58)
 
