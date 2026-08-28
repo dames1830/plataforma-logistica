@@ -10,7 +10,12 @@
  *   OPC.alertar   (titulo, mensaje, tipo)
  *
  * TODO VA ENCERRADO BAJO `#evt`.
+ *
+ * EL MARCO SE DIBUJA UNA SOLA VEZ Y NO SE VUELVE A TOCAR. Ver más abajo, en `cargar`:
+ * redibujarlo en cada filtro era lo que hacía parpadear la pantalla.
  */
+
+import { icono } from '../services_v245/iconos.js?v=29.0499';
 
 const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -24,18 +29,30 @@ const COLOR = {
 };
 const ICONO_ORIGEN = { robot: '🤖', web: '👤', servidor: '🖥️' };
 
+/* Los tres filtros. Cada uno es una lista aparte y no una sola mezclada, porque así se
+   pueden cruzar —los errores DEL ROBOT de los últimos 3 días— cosa que los botones no
+   dejaban: apretar uno apagaba al otro. */
+const LISTAS = [
+    { id: 'evt_dias', rotulo: 'Cuándo', campo: 'dias', ancho: '135px', opciones: [
+        { v: 1, t: 'Hoy' }, { v: 3, t: 'Últimos 3 días' }, { v: 7, t: 'La semana' } ] },
+    { id: 'evt_origen', rotulo: 'Origen', campo: 'origen', ancho: '130px', opciones: [
+        { v: '', t: 'Todo' }, { v: 'robot', t: 'El robot' }, { v: 'web', t: 'Las personas' } ] },
+    { id: 'evt_tipo', rotulo: 'Estado', campo: 'tipo', ancho: '130px', opciones: [
+        { v: '', t: 'Todo' }, { v: 'error', t: 'Solo errores' },
+        { v: 'aviso', t: 'Solo avisos' }, { v: 'ok', t: 'Solo lo que salió bien' } ] }
+];
+
 export const montarEventos = (container, OPC = {}) => {
     const avisar = OPC.alertar || ((t, m) => alert(t + '\n\n' + m));
-    let filtros = { dias: 1, origen: '', tipo: '', q: '' };
+    const filtros = { dias: 1, origen: '', tipo: '', q: '' };
     let datos = { eventos: [], total: 0 };
-    let cargando = false;
 
     /* La hora sale como viene del servidor —hora de Lima— y solo se le da vuelta a la
        fecha. Nada de `new Date()`: interpretarla como UTC correría todo cinco horas. */
     const cuandoBonito = (s) => {
         const [f, h] = String(s || '').split(' ');
-        const [a, m, d] = String(f || '').split('-');
-        return { dia: (d && m) ? `${d}/${m}` : (f || ''), hora: (h || '').slice(0, 8), fecha: f || '' };
+        const [, m, d] = String(f || '').split('-');
+        return { dia: (d && m) ? `${d}/${m}` : (f || ''), hora: (h || '').slice(0, 8) };
     };
 
     const pastilla = (tipo) => {
@@ -45,30 +62,20 @@ export const montarEventos = (container, OPC = {}) => {
                        border:1px solid ${c.texto}; border-radius:6px; padding:2px 7px;">${c.etiqueta}</span>`;
     };
 
-    const boton = (id, texto, activo) => `
-        <button class="evt-f" data-id="${id}" style="background:${activo ? 'var(--btn-fill)' : 'rgba(var(--ink-rgb), 0.05)'};
-                color:${activo ? 'var(--on-primary)' : 'var(--text-pale)'}; border:1px solid ${activo ? 'transparent' : 'var(--border)'};
-                border-radius:8px; padding:0.45rem 0.9rem; font-size:var(--t-xs); font-weight:800;
-                cursor:pointer; font-family:inherit; white-space:nowrap;">${texto}</button>`;
+    const lista = (L) => `
+        <label style="display:flex; align-items:center; gap:0.45rem;">
+          <span style="font-size:var(--t-xs); font-weight:800; letter-spacing:0.04em;
+                       color:var(--text-muted); text-transform:uppercase;">${L.rotulo}</span>
+          <select id="${L.id}" style="background:var(--panel-deep); border:1px solid rgba(var(--ink-rgb), 0.14);
+                       color:var(--text-strong); padding:0.38rem 0.7rem; border-radius:6px; width:${L.ancho};
+                       font-size:var(--t-xs); font-weight:700; cursor:pointer; outline:none; font-family:inherit;">
+            ${L.opciones.map(o => `<option value="${o.v}"${o.v === filtros[L.campo] ? ' selected' : ''}
+                >${esc(o.t)}</option>`).join('')}
+          </select>
+        </label>`;
 
-    const pintar = () => {
-        const hayErrores = datos.eventos.filter(e => e.tipo === 'error').length;
-        const filas = datos.eventos.map(e => {
-            const c = cuandoBonito(e.cuando);
-            const col = COLOR[e.tipo] || COLOR.ok;
-            return `
-            <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.05);">
-              <td style="padding:9px 10px; white-space:nowrap; font-family:var(--font-num); font-size:var(--t-xs);
-                         color:var(--text-muted);">${esc(c.dia)}<span style="color:var(--text-strong);
-                         font-weight:700; margin-left:6px;">${esc(c.hora)}</span></td>
-              <td style="padding:9px 10px; white-space:nowrap;">${pastilla(e.tipo)}</td>
-              <td style="padding:9px 10px; white-space:nowrap; font-size:var(--t-sm);">
-                  ${ICONO_ORIGEN[e.origen] || '•'} <b style="color:var(--text-strong);">${esc(e.quien || e.origen)}</b></td>
-              <td style="padding:9px 10px; font-size:var(--t-sm); color:${col.texto}; font-weight:600;">${esc(e.accion)}</td>
-              <td style="padding:9px 10px; font-size:var(--t-xs); color:var(--text-muted);">${esc(e.detalle)}</td>
-            </tr>`;
-        }).join('');
-
+    /* ---------- El marco. Se dibuja UNA vez ---------- */
+    const armar = () => {
         container.innerHTML = `
         <div id="evt" class="animate-fade-in" style="display:flex; flex-direction:column; gap:1rem;">
 
@@ -77,25 +84,16 @@ export const montarEventos = (container, OPC = {}) => {
             <div>
               <h4 style="margin:0; color:var(--text-strong); font-size:var(--t-lg); font-weight:800;
                          letter-spacing:0.5px;">📜 LOG DE LA PLATAFORMA</h4>
-              <div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:3px;">
-                ${datos.eventos.length} de ${datos.total} anotaciones ·
-                ${hayErrores ? `<b style="color:var(--danger-soft);">${hayErrores} con error</b> · ` : ''}se guarda una semana
-              </div>
+              <div id="evt_cuenta" style="font-size:var(--t-xs); color:var(--text-muted); margin-top:3px;">
+                Leyendo...</div>
             </div>
-            <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
-              ${boton('d1', 'Hoy', filtros.dias === 1)}
-              ${boton('d3', '3 días', filtros.dias === 3)}
-              ${boton('d7', 'La semana', filtros.dias === 7)}
-              <span style="width:1px; height:22px; background:var(--border); margin:0 4px;"></span>
-              ${boton('o', 'Todo', !filtros.origen && !filtros.tipo)}
-              ${boton('orobot', '🤖 Robot', filtros.origen === 'robot')}
-              ${boton('oweb', '👤 Personas', filtros.origen === 'web')}
-              ${boton('terror', '⚠️ Solo errores', filtros.tipo === 'error')}
-              <input id="evt_q" type="text" value="${esc(filtros.q)}" placeholder="🔍 Buscar..."
+            <div style="display:flex; gap:0.7rem; align-items:center; flex-wrap:wrap;">
+              ${LISTAS.map(lista).join('')}
+              <input id="evt_q" type="text" placeholder="🔍 Buscar..."
                      style="background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border);
                             color:var(--text-strong); padding:0.45rem 0.8rem; border-radius:8px;
                             font-size:var(--t-xs); outline:none; width:170px; font-family:inherit;">
-              <button id="evt_refrescar" class="btn-icono" title="Volver a leer">🔄</button>
+              <button id="evt_refrescar" class="btn-icono" title="Volver a leer">${icono('refrescar', 22)}</button>
             </div>
           </div>
 
@@ -112,54 +110,100 @@ export const montarEventos = (container, OPC = {}) => {
                     <th style="padding:10px; text-align:left;">Detalle</th>
                   </tr>
                 </thead>
-                <tbody>${filas || `
-                  <tr><td colspan="5" style="padding:2.5rem; text-align:center; color:var(--text-muted);
-                          font-size:var(--t-sm);">${cargando ? 'Leyendo...'
-                          : 'No hay nada anotado con estos filtros.'}</td></tr>`}</tbody>
+                <tbody id="evt_cuerpo" style="transition:opacity .12s;"></tbody>
               </table>
             </div>
           </div>
         </div>`;
 
-        enganchar();
-    };
-
-    const enganchar = () => {
-        container.querySelectorAll('.evt-f').forEach(b => b.addEventListener('click', () => {
-            const id = b.dataset.id;
-            if (id === 'd1') filtros.dias = 1;
-            else if (id === 'd3') filtros.dias = 3;
-            else if (id === 'd7') filtros.dias = 7;
-            else if (id === 'o') { filtros.origen = ''; filtros.tipo = ''; }
-            else if (id === 'orobot') { filtros.origen = filtros.origen === 'robot' ? '' : 'robot'; filtros.tipo = ''; }
-            else if (id === 'oweb') { filtros.origen = filtros.origen === 'web' ? '' : 'web'; filtros.tipo = ''; }
-            else if (id === 'terror') { filtros.tipo = filtros.tipo === 'error' ? '' : 'error'; filtros.origen = ''; }
-            cargar();
-        }));
-        const q = container.querySelector('#evt_q');
-        if (q) {
-            /* Se busca al soltar Enter y no en cada tecla: cada letra sería una consulta
-               al servidor, y con una semana de anotaciones eso se nota. */
-            q.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') { filtros.q = q.value.trim(); cargar(); }
+        LISTAS.forEach(L => {
+            const s = container.querySelector('#' + L.id);
+            if (s) s.addEventListener('change', () => {
+                const v = s.value;
+                filtros[L.campo] = (L.campo === 'dias') ? Number(v) : v;
+                cargar();
             });
-        }
+        });
+        const q = container.querySelector('#evt_q');
+        /* Se busca al soltar Enter y no en cada tecla: cada letra sería una consulta al
+           servidor, y con una semana de anotaciones eso se nota. */
+        if (q) q.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { filtros.q = q.value.trim(); cargar(); }
+        });
         const r = container.querySelector('#evt_refrescar');
         if (r) r.addEventListener('click', cargar);
     };
 
-    const cargar = async () => {
-        if (!OPC.traer) return;
-        cargando = true; pintar();
-        try {
-            datos = await OPC.traer(filtros);
-        } catch (e) {
-            datos = { eventos: [], total: 0 };
-            avisar('NO SE PUDO LEER EL LOG', (e && e.message) || String(e), 'error');
+    /* ---------- Lo único que cambia al filtrar: las filas y la cuenta ---------- */
+    const pintarFilas = () => {
+        const cuerpo = container.querySelector('#evt_cuerpo');
+        const cuenta = container.querySelector('#evt_cuenta');
+        if (!cuerpo) return;
+
+        cuerpo.innerHTML = datos.eventos.map(e => {
+            const c = cuandoBonito(e.cuando);
+            const col = COLOR[e.tipo] || COLOR.ok;
+            return `
+            <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.05);">
+              <td style="padding:9px 10px; white-space:nowrap; font-family:var(--font-num); font-size:var(--t-xs);
+                         color:var(--text-muted);">${esc(c.dia)}<span style="color:var(--text-strong);
+                         font-weight:700; margin-left:6px;">${esc(c.hora)}</span></td>
+              <td style="padding:9px 10px; white-space:nowrap;">${pastilla(e.tipo)}</td>
+              <td style="padding:9px 10px; white-space:nowrap; font-size:var(--t-sm);">
+                  ${ICONO_ORIGEN[e.origen] || '•'} <b style="color:var(--text-strong);">${esc(e.quien || e.origen)}</b></td>
+              <td style="padding:9px 10px; font-size:var(--t-sm); color:${col.texto}; font-weight:600;">${esc(e.accion)}</td>
+              <td style="padding:9px 10px; font-size:var(--t-xs); color:var(--text-muted);">${esc(e.detalle)}</td>
+            </tr>`;
+        }).join('') || `
+            <tr><td colspan="5" style="padding:2.5rem; text-align:center; color:var(--text-muted);
+                    font-size:var(--t-sm);">No hay nada anotado con estos filtros.</td></tr>`;
+
+        if (cuenta) {
+            const conError = datos.eventos.filter(e => e.tipo === 'error').length;
+            cuenta.innerHTML = `${datos.eventos.length} de ${datos.total} anotaciones · `
+                + (conError ? `<b style="color:var(--danger-soft);">${conError} con error</b> · ` : '')
+                + 'se guarda una semana';
         }
-        cargando = false;
-        pintar();
     };
 
+    /* ---------- Leer ----------
+       DOS COSAS QUE EVITAN EL PARPADEO, y las dos hacen falta:
+
+       1. No se toca el marco. Antes se redibujaba el contenedor entero dos veces por clic
+          —una en blanco con "Leyendo..." y otra con el resultado—, así que los filtros
+          desaparecían y volvían, y el que acababas de apretar perdía el foco.
+       2. No se avisa que está leyendo si tarda poco. Por debajo de un cuarto de segundo el
+          aviso molesta más que la espera: aparece y se va antes de que alcances a leerlo. */
+    let temporizador = null;
+    let pedido = 0;
+
+    const cargar = async () => {
+        if (!OPC.traer) return;
+        const cuerpo = container.querySelector('#evt_cuerpo');
+        const mio = ++pedido;
+
+        clearTimeout(temporizador);
+        if (cuerpo) temporizador = setTimeout(() => { cuerpo.style.opacity = '0.4'; }, 250);
+
+        let leido, falla = null;
+        try { leido = await OPC.traer({ ...filtros }); } catch (e) { falla = e; }
+
+        /* Si mientras tanto se apretó otro filtro, esta respuesta ya no sirve: pintarla
+           dejaría en pantalla el resultado del filtro viejo. */
+        if (mio !== pedido) return;
+
+        clearTimeout(temporizador);
+        if (cuerpo) cuerpo.style.opacity = '1';
+
+        if (falla) {
+            datos = { eventos: [], total: 0 };
+            avisar('NO SE PUDO LEER EL LOG', (falla && falla.message) || String(falla), 'error');
+        } else {
+            datos = leido;
+        }
+        pintarFilas();
+    };
+
+    armar();
     cargar();
 };
