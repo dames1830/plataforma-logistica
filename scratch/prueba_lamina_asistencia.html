@@ -56,7 +56,8 @@ const ddmm = (d) => String(d.getDate()).padStart(2,'0') + '/' + String(d.getMont
 const numeroDeSemana = () => 35;
 const semanasDelRango = () => [{ semana: 35 }];
 const colorTema = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
-const maestroDe = () => ({ cargo: 'AYUDANTE DE ALMACEN' });
+const SEXOS = {};   // se llena más abajo, cuando ya existen los DNI
+const maestroDe = (dni) => ({ cargo: 'AYUDANTE DE ALMACEN', sexo: SEXOS[dni] || '' });
 const simboloDe = (m) => !m ? { s: '–', color: 'var(--text-muted)' }
   : m.obs ? { s: 'O', color: 'var(--bronze)' }
   : m.vino ? { s: '✓', color: 'var(--success)' } : { s: '✗', color: 'var(--danger)' };
@@ -70,6 +71,9 @@ const filas = [...Array(42).keys()].map(i => ({
   marcas: Object.fromEntries(dias.slice(0, 4).map((d, k) => [claveDe(d),
     { vino: (i + k) % 7 !== 0, obs: (i + k) % 11 === 0 }]))
 }));
+/* 25 hombres, 15 mujeres y 2 sin marcar: así se comprueba que la tarjeta avise en vez de
+   repartir a ojo a los que faltan. */
+filas.forEach((f, i) => { SEXOS[f.dni] = i < 25 ? 'H' : i < 40 ? 'M' : ''; });
 const estadoDelRango = () => ({ ultimo, abiertos: [] });
 
 const DEP = ['ESCALA_FOTO','escalaParaFoto','paraFoto','botonCopiar','filasPorBloque','enBloques','aRGB',
@@ -126,32 +130,30 @@ ok('en foto normal también gana: ' + filaTrasTope(cvs[0], LAM.TOPE_NORMAL).toFi
 ok('y el bloque queda más cuadrado que largo — ' + (cvs[0].width / cvs[0].height).toFixed(2),
    cvs[0].width >= cvs[0].height);
 
-eco('\n<span class="t">── EL COLOR, QUE ES LO QUE ARRUINA WHATSAPP ──</span>');
-/* OJO: `--bg-dark` no siempre es oscura pese al nombre. Vale #0f172a en indigo y negro,
-   pero #F3F2F1 en los dos temas claros. Así que hay que comprobar los dos casos: sobre
-   fondo claro tiene que oscurecer, y sobre fondo oscuro aclarar. */
-const brillo = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
-const verdeEn = (tema) => {
-  document.documentElement.setAttribute('data-tema', tema);
-  const t = brillo(LAM.aRGB(colorTema('--success')));
-  const f = brillo(LAM.aRGB(LAM.paraFoto(colorTema('--success'), colorTema('--bg-dark'), 0.16, 0.86)));
-  return { fondo: brillo(LAM.aRGB(colorTema('--bg-dark'))), tema: t, foto: f };
-};
-const claro = verdeEn('pbi'), oscuro = verdeEn('negro');
-ok('tema claro (fondo ' + claro.fondo.toFixed(2) + '): OSCURECE, el verde va de '
-   + claro.tema.toFixed(3) + ' a ' + claro.foto.toFixed(3), claro.foto < claro.tema);
-ok('y queda bien oscuro (≤0,22)', claro.foto <= 0.22);
-ok('tema oscuro (fondo ' + oscuro.fondo.toFixed(2) + '): ACLARA, el verde va de '
-   + oscuro.tema.toFixed(3) + ' a ' + oscuro.foto.toFixed(3), oscuro.foto > oscuro.tema);
-ok('y llega bien alto (≥0,80)', oscuro.foto >= 0.80);
-document.documentElement.setAttribute('data-tema', 'pbi');
-ok('los grises NO se tocan: su borde ya vive en el brillo',
-   /tieneTono\(c\) \? paraFoto/.test(trozo));
-ok('la lámina lo aplica de verdad, no solo lo define',
-   /const colorReal = \(v\) => \{[^]{0,120}tieneTono/.test(trozo));
+eco('\n<span class="t">── HOMBRES Y MUJERES ──</span>');
+/* Daniel los cuenta contra OPERARIOS, así que la tarjeta no puede repartir a ojo a quien no
+   esté marcado en el maestro: los 2 sin marcar tienen que salir a la vista. */
+ok('el sexo sale del maestro por DNI', /const enMaestro = maestroDe\(f\.dni\);/.test(trozo));
+ok('NO se deduce del nombre — sería inventar un dato sobre una persona',
+   /NO se deduce[\s\S]{0,40}del nombre/.test(trozo));
+ok('avisa cuántos quedaron sin marcar en vez de repartirlos', /SIN MARCAR/.test(trozo));
+ok('los dos dibujos se hacen a mano: un canvas no tiene los íconos SVG',
+   /const dibujarSexo = \(x, y, r, esHombre, color\)/.test(trozo));
+ok('el ancho de tarjeta se reparte entre las que haya, no entre 4 fijas',
+   /anchoTar = \(ancho - MARGEN \* 2 - huecoTar \* \(tarjetas\.length - 1\)\) \/ tarjetas\.length/.test(trozo));
+
+eco('\n<span class="t">── LOS COLORES, COMO LOS PIDIÓ DANIEL ──</span>');
+/* 27-ago-2026: rechazó el oscurecido. Aquí el código de color pesa más que el borde: son 33
+   símbolos chiquitos que hay que distinguir de un vistazo. */
+/* Se busca una LLAMADA, no la palabra: el comentario que explica por qué no se usa la
+   nombra, y buscarla a secas hacía fallar la comprobación por el comentario. */
+ok('los símbolos van con el color del tema, sin oscurecer', !/paraFoto\s*\(/.test(trozo));
+ok('y el porqué queda escrito en el código', /Daniel lo rechazo el 27-ago-2026/.test(trozo));
+ok('y colorReal vuelve a ser la traducción directa',
+   /const colorReal = \(v\) => !v \? colorTema/.test(trozo));
+ok('ya no queda el rótulo "BLOQUE 1 DE 2"', !/BLOQUE \$\{nBloque\}/.test(trozo));
 
 eco('\n<span class="t">── LO QUE DICE CADA BLOQUE ──</span>');
-ok('cada uno se identifica: "BLOQUE 1 DE 2"', /BLOQUE \$\{nBloque\} DE \$\{bloques\.length\}/.test(trozo));
 ok('la numeración sigue de largo entre bloques', /texto\(desde0 \+ i \+ 1, xNum/.test(trozo));
 ok('la leyenda del pie va en los dos', (trozo.match(/falta injustificada/g) || []).length === 1
    && /const yPie = yCab \+ 19 \+ deBloque\.length/.test(trozo));

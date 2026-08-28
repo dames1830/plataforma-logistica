@@ -60,6 +60,22 @@ Los rótulos van a medio camino a propósito: se siguen leyendo como secundarios
 contraste que el gris del tema. **No pintar todo de negro**: se pierde el código de color, y
 Daniel eligió expresamente conservarlo.
 
+### Pero NO en todas las láminas
+
+**En el cuadro de asistencia va el color del tema, sin tocar.** Se probó oscurecerlo y Daniel
+lo rechazó el 27-ago-2026: *"toma los mismos colores... el rojito para la x, el amarillo para
+los círculos y el verde para los visto buenos"*.
+
+La diferencia es qué hay que hacer con el color:
+
+| | Qué es el color | Qué pesa más |
+|---|---|---|
+| **UCA** | decoración de un número que se LEE | el borde limpio |
+| **Asistencia** | el dato mismo: 33 símbolos que hay que DISTINGUIR de un vistazo | el código de color |
+
+Si el color es el dato, no se toca. La nitidez de esa lámina sale del botón Copiar y de
+partirla en bloques, que no cuestan nada a cambio.
+
 ## Reducir NO ensucia, limpia
 
 Cuando WhatsApp promedia dos o tres puntos del original en cada punto final, el borde sale
@@ -98,7 +114,8 @@ solo en cuanto el alto baja del ancho, y reparte **parejo**: 21 y 21, no 27 y 15
 
 Cada bloque tiene que **valerse solo**, porque llegan como fotos sueltas:
 
-- **Se identifica**: "BLOQUE 1 DE 2 · 1 al 21 de 42".
+- **Sin rótulo de bloque.** Se puso un "BLOQUE 1 DE 2" y Daniel lo mandó quitar el mismo día:
+  *"quítale lo que dice bloque uno y bloque dos"*. La numeración de la izquierda ya lo dice.
 - **La numeración sigue de largo**: el 22 del segundo bloque es el 22 de la lista, no otro 1.
 - **La leyenda del pie va en los dos.**
 - **Las tarjetas del resumen cuentan a TODOS**, no a los del bloque. Si el bloque 1 dijera
@@ -149,6 +166,11 @@ nada. Ofrecerlo solo si Daniel lo pide.
 - **El porcentaje va con la cantidad**, y diciendo de qué es. En el UCA va el de **OCUPACIÓN**
   (ocupadas ÷ analizadas), no el de disponibilidad que muestra la tarjeta de la pantalla — lo
   pidió así Daniel, es el número con el que reporta.
+- **El sexo NO se deduce del nombre.** La tarjeta de hombres y mujeres sale del campo `sexo`
+  del maestro de trabajadores, cruzado por DNI, y arranca vacío. Suponerlo sería inventar un
+  dato sobre una persona de verdad, y una tarjeta que reparte a 88 personas por una suposición
+  dice una cifra falsa con cara de cierta. Quien no esté marcado no suma a ninguno de los dos
+  y la tarjeta lo dice: "3 SIN MARCAR", en rojo.
 - **Sin firma al pie.** Se sacó el 27-ago-2026: *"quita esa palabra que dice Logística
   Deam1830"*.
 - **Los colores salen del tema activo**, pasados por `paraFoto()`. Así la lámina se ve como la
