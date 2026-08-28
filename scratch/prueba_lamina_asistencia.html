@@ -1,0 +1,185 @@
+<!-- La lámina del cuadro de asistencia, partida en bloques.
+     Saca mostrarImagen() del archivo de verdad y la corre con 42 personas y 7 días —el caso
+     del 27-ago-2026, cuando Daniel dijo que se le cortaba la leyenda del pie—. -->
+<meta charset="utf-8">
+<title>Prueba: la lámina de asistencia</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1100px;margin:0 auto 16px;white-space:pre-wrap}
+  #lienzo{max-width:1100px;margin:0 auto;display:flex;gap:14px;flex-wrap:wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<div id="lienzo"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 20000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text()).split(CR).join('');
+const LAM = await import('../js/services_v245/laminas.js?z=' + Date.now());
+document.documentElement.setAttribute('data-tema', 'pbi');
+
+eco('<span class="t">── LAS CUENTAS DEL MÓDULO COMPARTIDO ──</span>');
+/* El tope de WhatsApp cae sobre el LADO MÁS LARGO. Con 632 de ancho y 162 fijos + 17 por
+   fila, la forma cuadrada son 27 filas; de ahí sale el reparto. */
+ok('42 personas se reparten en 2 bloques de 21',
+   LAM.filasPorBloque(42, 632, 162, 17) === 21);
+ok('20 personas no se parten: ya entra cuadrada',
+   LAM.filasPorBloque(20, 632, 162, 17) === 20);
+ok('los bloques quedan parejos, no uno lleno y otro con las sobras',
+   LAM.enBloques([...Array(42).keys()], 21).map(b => b.length).join('+') === '21+21');
+ok('60 personas dan 3 bloques de 20, no 2 de 27 y uno de 6',
+   LAM.enBloques([...Array(60).keys()], LAM.filasPorBloque(60, 632, 162, 17))
+      .map(b => b.length).join('+') === '20+20+20');
+
+eco('\n<span class="t">── SE SACA LA LÁMINA DEL DASHBOARD ──</span>');
+const desde = src.indexOf('    const mostrarImagen = (dias, filas) => {');
+const hasta = src.indexOf('    // color-scheme: var(--scheme) es lo que hace');
+ok('se encontró mostrarImagen', desde > 0 && hasta > desde);
+const trozo = src.slice(desde, hasta);
+
+/* Lo que la función usa de su módulo y de la plataforma. Un `new Function` no ve nada de
+   eso, así que se le entrega a mano: lo del módulo compartido es el de VERDAD; el resto son
+   piezas mínimas que devuelven lo mismo que las reales para este caso. */
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
+               'septiembre','octubre','noviembre','diciembre'];
+const claveDe = (d) => d.toISOString().slice(0, 10);
+const desdeClave = (k) => new Date(k + 'T12:00:00');
+const ddmm = (d) => String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+const numeroDeSemana = () => 35;
+const semanasDelRango = () => [{ semana: 35 }];
+const colorTema = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
+const maestroDe = () => ({ cargo: 'AYUDANTE DE ALMACEN' });
+const simboloDe = (m) => !m ? { s: '–', color: 'var(--text-muted)' }
+  : m.obs ? { s: 'O', color: 'var(--bronze)' }
+  : m.vino ? { s: '✓', color: 'var(--success)' } : { s: '✗', color: 'var(--danger)' };
+
+/* 42 personas y 7 días, como la corrida que Daniel tenía en pantalla. */
+const dias = [...Array(7).keys()].map(i => new Date(2026, 7, 17 + i, 12));
+const ultimo = dias[3];
+const filas = [...Array(42).keys()].map(i => ({
+  nombre: 'APELLIDO APELLIDO, NOMBRE ' + (i + 1),
+  dni: String(40000000 + i * 137),
+  marcas: Object.fromEntries(dias.slice(0, 4).map((d, k) => [claveDe(d),
+    { vino: (i + k) % 7 !== 0, obs: (i + k) % 11 === 0 }]))
+}));
+const estadoDelRango = () => ({ ultimo, abiertos: [] });
+
+const DEP = ['ESCALA_FOTO','escalaParaFoto','paraFoto','botonCopiar','filasPorBloque','enBloques','aRGB',
+             'MESES','claveDe','desdeClave','ddmm','numeroDeSemana','semanasDelRango',
+             'colorTema','maestroDe','simboloDe','estadoDelRango','desde','hasta'];
+const VAL = [LAM.ESCALA_FOTO, LAM.escalaParaFoto, LAM.paraFoto, LAM.botonCopiar, LAM.filasPorBloque, LAM.enBloques,
+             LAM.aRGB, MESES, claveDe, desdeClave, ddmm, numeroDeSemana, semanasDelRango,
+             colorTema, maestroDe, simboloDe, estadoDelRango, claveDe(dias[0]), claveDe(dias[6])];
+const mostrarImagen = new Function(...DEP, trozo + '\n return mostrarImagen;')(...VAL);
+
+eco('\n<span class="t">── SE PARTE EN DOS, Y CADA BLOQUE SE VALE SOLO ──</span>');
+mostrarImagen(dias, filas);
+const vent = [...document.querySelectorAll('body > div')].pop();
+const cvs = [...vent.querySelectorAll('canvas')];
+ok('dibujó 2 bloques, no uno solo largo', cvs.length === 2);
+ok('los dos miden lo mismo: ' + cvs.map(c => c.width + '×' + c.height).join('  ·  '),
+   cvs[0].width === cvs[1].width && cvs[0].height === cvs[1].height);
+
+const bots = [...vent.querySelectorAll('button')].map(b => b.textContent);
+ok('cada bloque tiene su Copiar — ' + bots.join(' · '),
+   bots.filter(t => /Copiar bloque/.test(t)).length === 2);
+ok('y un solo Cerrar', bots.filter(t => t === 'Cerrar').length === 1);
+
+/* LOS CUADROS TIENEN QUE CUADRAR: las cuatro tarjetas cuentan a TODOS, no a los del
+   bloque. Se comprueba comparando punto por punto la franja de las tarjetas entre los dos
+   bloques: si contaran distinto, los dibujos no serían idénticos. */
+/* Solo la franja de las TARJETAS. Arriba de ellas está el rótulo "BLOQUE 1 DE 2", que
+   por supuesto cambia entre bloques: incluirlo hacía fallar la comprobación por lo que
+   NO se estaba midiendo. Las tarjetas van de la 58 a la 100 en unidades de diseño. */
+const ESC_D = cvs[0].width / 632;
+const franja = (c) => c.getContext('2d').getImageData(
+  0, Math.round(58 * ESC_D), c.width, Math.round(42 * ESC_D)).data;
+const a1 = franja(cvs[0]), a2 = franja(cvs[1]);
+let iguales = a1.length === a2.length;
+for (let i = 0; iguales && i < a1.length; i += 4) if (a1[i] !== a2[i]) iguales = false;
+ok('las tarjetas dicen lo mismo en los dos bloques — cuentan a los 42, no a los 21', iguales);
+
+eco('\n<span class="t">── EL TAMAÑO QUE LE QUEDA A CADA FILA ──</span>');
+/* Lo que decide si se lee en el celular: cuántos puntos mide una fila DESPUÉS del tope. */
+const ALTO_FILA = 17, ESC = cvs[0].width / 632;      // la escala real del dibujo
+const filaTrasTope = (c, tope) => ALTO_FILA * ESC * Math.min(1, tope / Math.max(c.width, c.height));
+const unSolo = { width: cvs[0].width, height: 162 * ESC + 42 * ALTO_FILA * ESC };
+const conDos = filaTrasTope(cvs[0], LAM.TOPE_HD);
+const conUno = filaTrasTope(unSolo, LAM.TOPE_HD);
+ok('partida en dos, la fila mide ' + conDos.toFixed(0) + ' puntos en HD; entera medía '
+   + conUno.toFixed(0), conDos > conUno);
+ok('la mejora es de al menos un 35% — ×' + (conDos / conUno).toFixed(2), conDos / conUno >= 1.35);
+ok('el bloque llena el tope de HD: ' + Math.max(cvs[0].width, cvs[0].height)
+   + ' contra 2.560 — dibujar por debajo es regalar nitidez',
+   Math.max(cvs[0].width, cvs[0].height) >= LAM.TOPE_HD - 2);
+ok('en foto normal también gana: ' + filaTrasTope(cvs[0], LAM.TOPE_NORMAL).toFixed(0)
+   + ' contra ' + filaTrasTope(unSolo, LAM.TOPE_NORMAL).toFixed(0),
+   filaTrasTope(cvs[0], LAM.TOPE_NORMAL) > filaTrasTope(unSolo, LAM.TOPE_NORMAL));
+ok('y el bloque queda más cuadrado que largo — ' + (cvs[0].width / cvs[0].height).toFixed(2),
+   cvs[0].width >= cvs[0].height);
+
+eco('\n<span class="t">── EL COLOR, QUE ES LO QUE ARRUINA WHATSAPP ──</span>');
+/* OJO: `--bg-dark` no siempre es oscura pese al nombre. Vale #0f172a en indigo y negro,
+   pero #F3F2F1 en los dos temas claros. Así que hay que comprobar los dos casos: sobre
+   fondo claro tiene que oscurecer, y sobre fondo oscuro aclarar. */
+const brillo = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+const verdeEn = (tema) => {
+  document.documentElement.setAttribute('data-tema', tema);
+  const t = brillo(LAM.aRGB(colorTema('--success')));
+  const f = brillo(LAM.aRGB(LAM.paraFoto(colorTema('--success'), colorTema('--bg-dark'), 0.16, 0.86)));
+  return { fondo: brillo(LAM.aRGB(colorTema('--bg-dark'))), tema: t, foto: f };
+};
+const claro = verdeEn('pbi'), oscuro = verdeEn('negro');
+ok('tema claro (fondo ' + claro.fondo.toFixed(2) + '): OSCURECE, el verde va de '
+   + claro.tema.toFixed(3) + ' a ' + claro.foto.toFixed(3), claro.foto < claro.tema);
+ok('y queda bien oscuro (≤0,22)', claro.foto <= 0.22);
+ok('tema oscuro (fondo ' + oscuro.fondo.toFixed(2) + '): ACLARA, el verde va de '
+   + oscuro.tema.toFixed(3) + ' a ' + oscuro.foto.toFixed(3), oscuro.foto > oscuro.tema);
+ok('y llega bien alto (≥0,80)', oscuro.foto >= 0.80);
+document.documentElement.setAttribute('data-tema', 'pbi');
+ok('los grises NO se tocan: su borde ya vive en el brillo',
+   /tieneTono\(c\) \? paraFoto/.test(trozo));
+ok('la lámina lo aplica de verdad, no solo lo define',
+   /const colorReal = \(v\) => \{[^]{0,120}tieneTono/.test(trozo));
+
+eco('\n<span class="t">── LO QUE DICE CADA BLOQUE ──</span>');
+ok('cada uno se identifica: "BLOQUE 1 DE 2"', /BLOQUE \$\{nBloque\} DE \$\{bloques\.length\}/.test(trozo));
+ok('la numeración sigue de largo entre bloques', /texto\(desde0 \+ i \+ 1, xNum/.test(trozo));
+ok('la leyenda del pie va en los dos', (trozo.match(/falta injustificada/g) || []).length === 1
+   && /const yPie = yCab \+ 19 \+ deBloque\.length/.test(trozo));
+ok('se muestra, no se descarga', !/\.download/.test(trozo));
+
+/* Y que los botones entreguen la imagen de verdad. */
+const real = navigator.clipboard;
+let entregado = null;
+Object.defineProperty(navigator, 'clipboard', { configurable: true,
+  value: { write: (its) => { entregado = its; return Promise.resolve(); } } });
+[...vent.querySelectorAll('button')].find(b => /Copiar bloque 2/.test(b.textContent)).click();
+await new Promise(r => setTimeout(r, 150));
+ok('Copiar entrega una imagen PNG al portapapeles',
+   !!entregado && entregado[0].types.indexOf('image/png') !== -1);
+Object.defineProperty(navigator, 'clipboard', { configurable: true, value: real });
+
+/* Se copian a la página para poder mirarlas, y se cierra la ventana. */
+cvs.forEach((cv, i) => {
+  const c = document.createElement('canvas');
+  c.width = cv.width; c.height = cv.height;
+  c.style.cssText = 'width:520px;max-width:100%;height:auto;border-radius:8px;display:block';
+  c.getContext('2d').drawImage(cv, 0, 0);
+  document.getElementById('lienzo').appendChild(c);
+});
+[...vent.querySelectorAll('button')].pop().click();
+ok('la ventana se cierra con Cerrar', !vent.isConnected);
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>Se parte en dos, las tarjetas cuadran en los dos, y la fila gana un tercio.</b>');
+</script>

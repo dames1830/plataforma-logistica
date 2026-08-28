@@ -43,8 +43,13 @@ eco('\n<span class="t">── SE SACA LA LÁMINA DEL DASHBOARD ──</span>');
 const desde = src.indexOf('  const laminaUCA = (total, vacias, ocupadas) => {');
 const hasta = src.indexOf('  const displayReporteUCA = (results) => {');
 ok('se encontró la función', desde > 0 && hasta > desde);
+const LAM = await import('../js/services_v245/laminas.js?z=' + Date.now());
+const DEL_MODULO = ['ESCALA_FOTO', 'escalaParaFoto', 'paraFoto', 'botonCopiar', 'filasPorBloque', 'enBloques', 'aRGB'];
+const sacar = (t, desde, hasta) =>
+  new Function(...DEL_MODULO, t.slice(desde, hasta) + '\n return laminaUCA;')(
+    ...DEL_MODULO.map(n => LAM[n]));
 const trozo = src.slice(desde, hasta);
-const laminaUCA = new Function(trozo + '\n return laminaUCA;')();
+const laminaUCA = sacar(src, desde, hasta);
 
 /* Los números de verdad del 27-ago, los que Daniel tenía en pantalla. */
 const TOTAL = 2486, VACIAS = 178, OCUPADAS = 2308;

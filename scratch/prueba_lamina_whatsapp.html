@@ -31,7 +31,12 @@ async function laminaDe(archivo) {
   const a = t.indexOf('  const laminaUCA = (total, vacias, ocupadas) => {');
   const b = t.indexOf('  const displayReporteUCA = (results) => {');
   if (a < 0 || b < a) throw new Error('no se encontró laminaUCA en ' + archivo);
-  return new Function(t.slice(a, b) + ' return laminaUCA;')();
+  /* Un `new Function` no ve los import del archivo: hay que entregarle a mano lo que la
+     lámina usa del módulo compartido. */
+  const LAM = await import('../js/services_v245/laminas.js?z=' + Date.now());
+  const DEL_MODULO = ['ESCALA_FOTO', 'escalaParaFoto', 'paraFoto', 'botonCopiar', 'filasPorBloque', 'enBloques', 'aRGB'];
+  return new Function(...DEL_MODULO, t.slice(a, b) + ' return laminaUCA;')(
+    ...DEL_MODULO.map(n => LAM[n]));
 }
 const laminaUCA = await laminaDe('../js/views/dashboard_v28.js');
 /* Para volver a comparar contra una version anterior, se la baja primero:

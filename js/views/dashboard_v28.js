@@ -1,33 +1,34 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0468';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0469';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0468';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0468';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0468';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0468';
-import * as metasService from '../services_v245/metasService.js?v=29.0468';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0468';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0468';
+import * as adminService from '../services_v245/adminService.js?v=29.0469';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0469';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0469';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0469';
+import * as metasService from '../services_v245/metasService.js?v=29.0469';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0469';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0469';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0468';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0468';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0468';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0468';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0468';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0468';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0468';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0468';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0468';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0468';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0468';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0468';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0468';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0468';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0468';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0468';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0468';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0468';
-import { montarSlotting } from './slotting.js?v=29.0468';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0469';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0469';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0469';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0469';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0469';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0469';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0469';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0469';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0469';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0469';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0469';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0469';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0469';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0469';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0469';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0469';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0469';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0469';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0469';
+import { montarSlotting } from './slotting.js?v=29.0469';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +391,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0468';
+const VERSION = '29.0469';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5463,7 +5464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0468');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0469');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5726,7 +5727,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0468');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0469');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -6870,7 +6871,6 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
      * borroso en las pantallas de los celulares.
      */
     const mostrarImagen = (dias, filas) => {
-        const ESCALA = 2;
         // Cuanto mas grande se ve la imagen. Todo el dibujo se amplia junto, asi que
         // subirlo o bajarlo no descuadra nada: es el unico numero que hay que tocar.
         const ZOOM = 1.25;
@@ -6899,7 +6899,43 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
         };
 
         const ancho = MARGEN * 2 + ANCHO_NUM + ANCHO_NOMBRE + ANCHO_DNI + ANCHO_CARGO + dias.length * ANCHO_DIA;
-        const alto = ALTO_CAB + ALTO_TARJETAS + ALTO_2DA_LINEA + filas.length * ALTO_FILA + ALTO_PIE + MARGEN;
+        const ALTO_FIJO = ALTO_CAB + ALTO_TARJETAS + ALTO_2DA_LINEA + ALTO_PIE + MARGEN;
+
+        /* SE PARTE EN BLOQUES CUANDO LA TABLA ES MAS ALTA QUE ANCHA.
+         *
+         * Daniel, 27-ago-2026: *"no me agarra para tomarle toda la leyenda de abajo, me
+         * falta todavia... si lo haces en dos bloques"*.
+         *
+         * El tope de WhatsApp cae sobre el LADO MAS LARGO, no sobre el total de puntos.
+         * Con 42 personas la lamina mide 632 x 876: el alto se lleva todo el presupuesto y
+         * a cada fila le tocan 50 puntos. Partida en dos, cada bloque mide 632 x 519 y la
+         * fila sube a 69 -un 38% mas-. En tres no gana nada mas: desde ahi el lado largo
+         * pasa a ser el ancho. Por eso `filasPorBloque` se detiene solo. */
+        const porBloque = filasPorBloque(filas.length, ancho, ALTO_FIJO, ALTO_FILA);
+        const bloques = enBloques(filas, porBloque);
+
+        /* Cuantas veces se dibuja por dentro. No cambia lo que se ve en pantalla: cambia con
+           cuanto material se lleva el boton Copiar. Se calcula DESPUES de repartir, porque
+           depende de cuanto mide un bloque: dibujarlo por debajo del tope de HD es regalar
+           nitidez -partido en dos llegaba con 2.370 y WhatsApp no agranda-. */
+        const ESCALA = escalaParaFoto(Math.max(ancho, ALTO_FIJO + porBloque * ALTO_FILA), ZOOM);
+
+        /* LAS TARJETAS CUENTAN A TODOS, no a los del bloque. Si el bloque 1 dijera "21
+           operarios" y el 2 tambien, ninguno de los dos cuadraria con la realidad. */
+        const { ultimo } = estadoDelRango(dias);
+        let vino = 0, falto = 0, conObs = 0, gente = 0;
+        if (ultimo) {
+            const kUlt = claveDe(ultimo);
+            filas.forEach(f => {
+                const m = f.marcas[kUlt];
+                if (!m) return;
+                gente++;
+                if (m.obs) conObs++; else if (m.vino) vino++; else falto++;
+            });
+        }
+
+        const dibujarBloque = (deBloque, desde0, nBloque) => {
+        const alto = ALTO_FIJO + deBloque.length * ALTO_FILA;
 
         const lienzo = document.createElement('canvas');
         lienzo.width = Math.round(ancho * ESCALA * ZOOM);
@@ -6914,8 +6950,19 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
            que traducirlo a color de verdad antes de pintar, o el navegador lo
            descarta y el texto sale del color anterior. Es el mismo problema que
            tenian los graficos, resuelto en el unico sitio por donde pasa todo. */
-        const colorReal = (v) => !v ? colorTema('--text-soft')
+        const crudo = (v) => !v ? colorTema('--text-soft')
             : String(v).replace(/var\(\s*(--[a-z0-9-]+)\s*\)/gi, (_, n) => colorTema(n) || '#888');
+        /* Y despues, el color que aguanta WhatsApp. Solo se toca lo que TIENE TONO -el
+           verde del visto, el rojo de la falta, el bronce de la observacion-: son los que
+           salen con halo, porque el JPEG guarda el color a la mitad de resolucion que el
+           brillo. Los grises se dejan como estan: su borde ya vive en el brillo, y moverlos
+           aplastaria la jerarquia entre el nombre, el cargo y el rotulo. */
+        const FONDO_HOJA = colorTema('--bg-dark');
+        const tieneTono = (c) => { const r = aRGB(c); return Math.max(...r) - Math.min(...r) > 25; };
+        const colorReal = (v) => {
+            const c = crudo(v);
+            return tieneTono(c) ? paraFoto(c, FONDO_HOJA, 0.16, 0.86) : c;
+        };
         const texto = (t, x, y, opciones) => {
             const o = opciones || {};
             g.fillStyle = colorReal(o.color);
@@ -6932,18 +6979,8 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
 
         // Las tarjetas cuentan SOLO el ultimo dia cerrado, no toda la semana. Un acumulado
         // crece sin referencia: "132 asistencias" no dice nada sin saber que el maximo
-        // eran 186. El dia suelto se entiende solo.
-        const { ultimo } = estadoDelRango(dias);
-        let vino = 0, falto = 0, conObs = 0, gente = 0;
-        if (ultimo) {
-            const k = claveDe(ultimo);
-            filas.forEach(f => {
-                const m = f.marcas[k];
-                if (!m) return;
-                gente++;
-                if (m.obs) conObs++; else if (m.vino) vino++; else falto++;
-            });
-        }
+        // eran 186. El dia suelto se entiende solo. Se cuentan arriba, sobre TODA la
+        // gente, para que los dos bloques digan lo mismo.
 
         g.fillStyle = colorTema('--bg-dark');
         g.fillRect(0, 0, ancho, alto);
@@ -6965,6 +7002,12 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
         if (ultimo) {
             texto(`RESUMEN DEL ${DIAS_TRES[ultimo.getDay()]} ${ultimo.getDate()}`,
                   ancho - MARGEN, 44, { color: 'var(--text-muted)', tam: 8.5, peso: 700, alinear: 'right' });
+        }
+        // Con la tabla partida, cada imagen tiene que decir cual es: llegan como dos fotos
+        // sueltas al grupo y nadie sabe que hay una segunda si no se lo dicen.
+        if (bloques.length > 1) {
+            texto(`BLOQUE ${nBloque} DE ${bloques.length}  ·  ${desde0 + 1} al ${desde0 + deBloque.length} de ${filas.length}`,
+                  MARGEN, 52, { color: 'var(--text-muted)', tam: 8.5, peso: 700 });
         }
         texto('LOGÍSTICA', ancho - MARGEN, 16, { color: 'var(--text-muted)', tam: 9, alinear: 'right' });
         texto('DEAM1830', ancho - MARGEN, 29, { color: 'var(--blue-mid)', tam: 11, peso: 700, alinear: 'right' });
@@ -7019,13 +7062,15 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
         });
 
         // --- Filas ----------------------------------------------------------------
-        filas.forEach((f, i) => {
+        deBloque.forEach((f, i) => {
             const y = yCab + 19 + i * ALTO_FILA;
             if (i % 2) {
                 g.fillStyle = colorTema('--panel-deep');
                 g.fillRect(MARGEN, y - ALTO_FILA / 2, ancho - MARGEN * 2, ALTO_FILA);
             }
-            texto(i + 1, xNum, y, { color: 'var(--text-muted)', tam: 9.5, alinear: 'center' });
+            // La numeracion sigue de largo entre bloques: el 22 del segundo es el 22 de la
+            // lista, no otro 1. Daniel los cuenta contra el listado del turno.
+            texto(desde0 + i + 1, xNum, y, { color: 'var(--text-muted)', tam: 9.5, alinear: 'center' });
             texto(recortar(f.nombre, ANCHO_NOMBRE - 8, 10.5), xNombre, y, { color: 'var(--text-main)', tam: 10.5 });
             texto(f.dni, xDni, y, { color: 'var(--text-main)', tam: 10.5 });
             texto(recortar(cargoDe(f.dni), ANCHO_CARGO - 8, 10.5), xCargo, y, { color: 'var(--text-main)', tam: 10.5 });
@@ -7038,7 +7083,7 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
         });
 
         // --- Pie: la leyenda, en una sola fila ------------------------------------
-        const yPie = yCab + 19 + filas.length * ALTO_FILA + 6;
+        const yPie = yCab + 19 + deBloque.length * ALTO_FILA + 6;
         g.fillStyle = colorTema('--border');
         g.fillRect(MARGEN, yPie, ancho - MARGEN * 2, 1);
 
@@ -7062,11 +7107,18 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
             xLey += w + 3 + g.measureText(rotulo).width + 11;
         });
 
+        return lienzo;
+        };   /* ── fin de dibujarBloque ─────────────────────────────────────────── */
+
         // --- En pantalla, no descargada ------------------------------------------
         // El 18-ago-2026 la descarga directa fallo: en un navegador con restricciones
         // el atributo download se ignora y el archivo cae sin la extension .png, así
-        // que Windows no sabe con qué abrirlo. Mostrándola, Daniel la captura o la
-        // guarda con clic derecho, que sí conserva el nombre.
+        // que Windows no sabe con qué abrirlo.
+        //
+        // Y ahora tampoco hace falta capturarla: el boton COPIAR se lleva el dibujo
+        // entero al portapapeles y se pega con Ctrl+V. Una captura solo entrega lo que
+        // la lamina mide en pantalla, y si no entra en la ventana ademas sale cortada
+        // -a Daniel le faltaba la leyenda del pie-.
         const fondo = document.createElement('div');
         fondo.style.cssText = 'position:fixed; inset:0; background:rgba(var(--shadow-rgb), 0.88); z-index:99999; display:flex; align-items:center; justify-content:center; padding:1.5rem; overflow:auto;';
 
@@ -7074,15 +7126,32 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
         // Sin glass-panel a propósito: su desenfoque recorta lo que sobresale.
         caja.style.cssText = 'display:flex; flex-direction:column; gap:0.8rem; align-items:flex-end; max-width:95vw;';
 
-        lienzo.style.cssText = `width:${Math.round(ancho * ZOOM)}px; max-width:100%; height:auto; border-radius:8px; display:block; box-shadow:0 8px 40px rgba(var(--shadow-rgb), 0.6);`;
-
-        const cerrar = document.createElement('button');
-        cerrar.textContent = 'Cerrar';
-        cerrar.style.cssText = 'padding:0.5rem 1.4rem; font-size:var(--t-sm); border-radius:8px; ' +
+        const ESTILO_BOTON_LAM = 'padding:0.5rem 1.4rem; font-size:var(--t-sm); border-radius:8px; ' +
             'background:rgba(var(--ink-rgb), 0.08); color:var(--text-pale); font-weight:600; cursor:pointer; ' +
             'border:1px solid rgba(var(--ink-rgb), 0.18); font-family:inherit;';
 
-        caja.appendChild(lienzo);
+        // Los bloques van uno al lado del otro si la pantalla da, y uno debajo del otro si
+        // no. Cada uno con SU boton: al portapapeles va una imagen por vez.
+        const tira = document.createElement('div');
+        tira.style.cssText = 'display:flex; gap:0.8rem; flex-wrap:wrap; justify-content:center; align-items:flex-start;';
+        bloques.forEach((deBloque, i) => {
+            const lienzo = dibujarBloque(deBloque, i * porBloque, i + 1);
+            lienzo.style.cssText = 'width:100%; height:auto; border-radius:8px; display:block; '
+                + 'box-shadow:0 8px 40px rgba(var(--shadow-rgb), 0.6);';
+            const col = document.createElement('div');
+            col.style.cssText = 'display:flex; flex-direction:column; gap:0.5rem; align-items:center; '
+                + `flex:1 1 340px; max-width:${Math.round(ancho * ZOOM)}px;`;
+            col.appendChild(lienzo);
+            col.appendChild(botonCopiar(lienzo, ESTILO_BOTON_LAM,
+                bloques.length > 1 ? `Copiar bloque ${i + 1}` : 'Copiar imagen'));
+            tira.appendChild(col);
+        });
+
+        const cerrar = document.createElement('button');
+        cerrar.textContent = 'Cerrar';
+        cerrar.style.cssText = ESTILO_BOTON_LAM;
+
+        caja.appendChild(tira);
         caja.appendChild(cerrar);
         fondo.appendChild(caja);
         document.body.appendChild(fondo);
@@ -16262,7 +16331,7 @@ const renderRFSection = (container) => {
          - foto normal -> recorta a ~1.600 por el lado largo
          - foto en HD  -> recorta a ~2.560
        Con 3 se pasan los dos topes y siempre queda reduccion a favor. */
-    const ESCALA = 3;
+    const ESCALA = ESCALA_FOTO;
     /* CUANTO MAS GRANDE SE DIBUJE, MEJOR LLEGA POR WHATSAPP. Daniel la captura de la
        pantalla y la manda al grupo de sus jefes; WhatsApp reencoda la foto y en un dibujo
        chico eso se come los trazos de los numeros. Antes salia a 575 puntos de ancho.
@@ -16292,56 +16361,14 @@ const renderRFSection = (container) => {
     const LINEA = col('--border') || 'rgba(255,255,255,.1)';
     const FUERTE = col('--text-strong') || '#fff';
 
-    /* POR QUE NO SE USA EL COLOR DEL TEMA TAL CUAL.
-     *
-     * Daniel, 27-ago-2026: *"lo veo no tan nitido en WhatsApp; se distorsiona un poco los
-     * bordes de los numeros, los bordes de las letras"*.
-     *
-     * WhatsApp reencoda la foto en JPEG, y el JPEG guarda el COLOR a la mitad de
-     * resolucion que el brillo. Un numero de color claro sobre fondo claro tiene su borde
-     * casi solo en el color -que es lo que se resume-, asi que sale con halo: verdoso de
-     * un lado, calido del otro.
-     *
-     * MEDIDO, no supuesto: `scratch/prueba_lamina_whatsapp.html` pasa la lamina por la
-     * misma tuberia -achicar a 1.600 y reencodar- y compara. Con el numero oscurecido el
-     * borde queda casi limpio, y le gana incluso a subir la resolucion de 1.013 a 1.600.
-     * El tamano ayuda poco; el brillo lo arregla casi entero.
-     *
-     * Asi que se conserva el TONO -el verde sigue verde, el dorado sigue dorado- y se le
-     * lleva el BRILLO lo mas lejos que se pueda del fondo. En tema claro oscurece; en
-     * tema oscuro aclara. Un solo camino para los cuatro temas. */
-    const aRGB = (c) => {
-      const t = document.createElement('canvas').getContext('2d');
-      t.fillStyle = '#000';
-      t.fillStyle = c;                      /* el navegador normaliza cualquier formato */
-      const v = t.fillStyle;
-      if (v.charAt(0) === '#') return [parseInt(v.substr(1, 2), 16),
-                                       parseInt(v.substr(3, 2), 16),
-                                       parseInt(v.substr(5, 2), 16)];
-      const n = (v.match(/[\d.]+/g) || [0, 0, 0]).map(Number);
-      return [n[0] || 0, n[1] || 0, n[2] || 0];
-    };
-    /* Brillo percibido: el ojo ve el verde mucho mas que el azul. */
-    const brillo = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
-    const FONDO_CLARO = brillo(aRGB(CAJA)) > 0.5;
-    const paraFoto = (color, metaClaro, metaOscuro) => {
-      const c = aRGB(color);
-      const b = brillo(c);
-      const meta = FONDO_CLARO ? metaClaro : metaOscuro;
-      let r;
-      if (meta < b) {
-        r = c.map((x) => x * (b > 0 ? meta / b : 1));          /* oscurecer: se escala */
-      } else {
-        const t = b < 1 ? (meta - b) / (1 - b) : 0;            /* aclarar: se mezcla con blanco */
-        r = c.map((x) => x + (255 - x) * t);
-      }
-      return 'rgb(' + r.map((x) => Math.max(0, Math.min(255, Math.round(x)))).join(',') + ')';
-    };
-    /* Las cifras van al extremo; los rotulos a medio camino, para que se sigan leyendo
-       como secundarios pero con mas contraste que antes. */
-    const VERDE = paraFoto(col('--success') || '#3fb950', 0.16, 0.86);
-    const DORADO = paraFoto(col('--warning') || '#d29922', 0.16, 0.86);
-    const SUAVE = paraFoto(col('--text-muted') || '#8b949e', 0.34, 0.72);
+    /* Los colores no se dibujan como vienen del tema: `paraFoto` conserva el tono y lleva
+       el brillo lo mas lejos posible del fondo, que es lo que hace que WhatsApp no le
+       ensucie el borde. El porque, medido, esta en services_v245/laminas.js.
+       Las cifras van al extremo; los rotulos a medio camino, para que se sigan leyendo
+       como secundarios pero con mas contraste que el gris del tema. */
+    const VERDE = paraFoto(col('--success') || '#3fb950', CAJA, 0.16, 0.86);
+    const DORADO = paraFoto(col('--warning') || '#d29922', CAJA, 0.16, 0.86);
+    const SUAVE = paraFoto(col('--text-muted') || '#8b949e', CAJA, 0.34, 0.72);
 
     g.fillStyle = FONDO;
     g.fillRect(0, 0, ANCHO, ALTO);
@@ -16405,28 +16432,7 @@ const renderRFSection = (container) => {
       + 'background:rgba(var(--ink-rgb), 0.08); color:var(--text-pale); font-weight:600; cursor:pointer; '
       + 'border:1px solid rgba(var(--ink-rgb), 0.18); font-family:inherit;';
 
-    /* COPIAR: el camino sin captura de pantalla.
-     * Una captura entrega solo lo que la lamina mide EN PANTALLA -1.013 puntos-; el
-     * portapapeles se lleva el dibujo entero, que es el doble. WhatsApp recibe mas
-     * material del que recortar y el resultado llega mas limpio. Se pega con Ctrl+V. */
-    const copiar = document.createElement('button');
-    copiar.textContent = 'Copiar imagen';
-    copiar.style.cssText = ESTILO_BOTON;
-    copiar.onclick = () => {
-      /* El blob va como PROMESA dentro del ClipboardItem, sin esperarlo antes: si se
-         espera, el navegador ya no reconoce que esto viene de un clic y niega el permiso. */
-      let escribir;
-      try {
-        const png = new Promise((res) => lienzo.toBlob(res, 'image/png'));
-        escribir = navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
-      } catch (e) {
-        escribir = Promise.reject(e);
-      }
-      escribir.then(
-        () => { copiar.textContent = 'Copiada · pégala con Ctrl+V'; },
-        () => { copiar.textContent = 'No se pudo copiar · usa clic derecho'; }
-      );
-    };
+    const copiar = botonCopiar(lienzo, ESTILO_BOTON);
 
     const cerrar = document.createElement('button');
     cerrar.textContent = 'Cerrar';
@@ -18604,7 +18610,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0468 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0469 | MOBILE PORTAL
                             </div>
                     </div>
 

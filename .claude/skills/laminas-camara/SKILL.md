@@ -12,7 +12,15 @@ celular, y WhatsApp reencoda todo lo que pasa por él.
 **Todas las láminas van iguales.** Si agregas una cámara a un reporte nuevo, copia el formato;
 no inventes uno. El jefe que las recibe tiene que reconocerlas de una mirada.
 
-Referencia viva: `laminaUCA` en `js/views/dashboard_v28.js`.
+Lo que comparten todas vive en **`js/services_v245/laminas.js`** —no copiado en cada módulo—:
+`escalaParaFoto`, `paraFoto`, `botonCopiar`, `filasPorBloque` y `enBloques`.
+
+Las dos que existen hoy, las dos en `js/views/dashboard_v28.js`:
+
+| | Qué es | Fondo | Se parte |
+|---|---|---|---|
+| `laminaUCA` | una tarjeta de resumen | el del tema | no |
+| `mostrarImagen` | el cuadro de asistencia, una tabla | `--bg-dark` | sí, en bloques |
 
 ## LA REGLA DE ORO
 
@@ -40,7 +48,8 @@ mitad chica del problema.
 
 Se conserva el **tono** —el verde sigue verde, el dorado sigue dorado— y se lleva el **brillo**
 lo más lejos posible del fondo. En tema claro oscurece; en tema **oscuro aclara**. Un solo
-camino para los cuatro temas. Es `paraFoto(color, metaClaro, metaOscuro)`.
+camino para los cuatro temas. Es `paraFoto(color, fondo, metaClaro, metaOscuro)` — **el fondo
+se le pasa**, no lo adivina: cada lámina se dibuja sobre uno distinto.
 
 | Qué | Meta en fondo claro | Meta en fondo oscuro |
 |---|---|---|
@@ -57,18 +66,44 @@ Cuando WhatsApp promedia dos o tres puntos del original en cada punto final, el 
 **más suave**. Lo que rompe es el JPEG al tamaño final. Así que hay que entregarle **de sobra,
 no justo**.
 
-    canvas = ANCHO × ESCALA × ZOOM        ESCALA = 3
+    canvas = ANCHO × ESCALA × ZOOM        ESCALA = escalaParaFoto(ladoLargo, ZOOM)
 
-Con el diseño de 460 puntos eso da **3.038 de ancho**, y se pasa de los dos topes de WhatsApp:
+**Y WHATSAPP NO AGRANDA.** Si la lámina llega con menos de 2.560 por el lado largo, la deja
+como está: dibujarla por debajo del tope es regalar nitidez. Pasó con el cuadro de asistencia
+partido en dos —llegaba con 2.370 y se quedaba ahí, con la fila en 64 puntos en vez de 69—.
+Por eso la escala no es un número fijo: `escalaParaFoto()` la calcula para **llenar el tope de
+HD**, y nunca baja de `ESCALA_FOTO` (3), porque para la foto normal entregar de sobra sigue
+conviniendo.
 
-| Cómo la manda | Recorta a | Le sobra |
-|---|---|---|
-| foto normal | ~1.600 | ×1,90 |
-| foto en **HD** | ~2.560 | ×1,19 |
+El **ZOOM** —lo que se ve en pantalla— es otra cosa. En la del UCA se calcula contra la
+ventana, con dos candados: que la lámina **entre entera sin scroll** y que no pase de 2,4 veces
+el diseño. En la de asistencia es fijo en 1,25, porque ahí no se captura: se copia.
 
-El **ZOOM** —lo que se ve en pantalla— se calcula contra la ventana, no es fijo, con dos
-candados: que la lámina **entre entera sin scroll** (si no, la captura sale cortada) y que no
-pase de 2,4 veces el diseño.
+## SI LA TABLA ES MAS ALTA QUE ANCHA, SE PARTE EN BLOQUES
+
+El tope cae sobre el **lado más largo**. Una tabla alta y angosta gasta todo el presupuesto en
+el alto, y a cada fila le tocan menos puntos. Partirla en bloques más cuadrados se los devuelve.
+
+Medido con el cuadro de asistencia de 42 personas (632 de ancho, 162 fijos + 17 por fila):
+
+| Bloques | Filas | Forma | Fila en HD | En foto normal |
+|---|---|---|---|---|
+| 1 | 42 | 632×876 | 50 puntos | 31 |
+| **2** | **21** | **632×519** | **69 puntos** | **43** |
+| 3 | 14 | 632×400 | 69 | 43 |
+
+**Dos bloques ganan un 38%. Tres no ganan nada más** —desde ahí el lado largo pasa a ser el
+ancho— y cada bloque extra es un mensaje extra a cambio de cero. `filasPorBloque()` se detiene
+solo en cuanto el alto baja del ancho, y reparte **parejo**: 21 y 21, no 27 y 15.
+
+Cada bloque tiene que **valerse solo**, porque llegan como fotos sueltas:
+
+- **Se identifica**: "BLOQUE 1 DE 2 · 1 al 21 de 42".
+- **La numeración sigue de largo**: el 22 del segundo bloque es el 22 de la lista, no otro 1.
+- **La leyenda del pie va en los dos.**
+- **Las tarjetas del resumen cuentan a TODOS**, no a los del bloque. Si el bloque 1 dijera
+  "21 operarios" y el 2 también, ninguno cuadraría con la realidad. Los cuadros tienen que
+  cuadrar.
 
 ## La ruta que Daniel tiene que usar
 
@@ -142,6 +177,9 @@ El dibujo vive en el catálogo `js/services_v245/iconos.js`, no suelto en el mó
 - **Dejar que la lámina no entre en la pantalla.** La captura sale cortada y Daniel manda media
   tarjeta.
 - **Hacer `await` del blob antes de `clipboard.write()`.** Se pierde el permiso del clic.
+- **Creer que `--bg-dark` es oscura.** Pese al nombre vale `#0f172a` en indigo y negro, pero
+  `#F3F2F1` en los dos temas claros. Por eso `paraFoto` recibe el fondo y decide sola, y por eso
+  una prueba que dé por hecho que oscurece **falla en la mitad de los temas**.
 - **Probar el color sin fijar el tema.** Un bucle que recorre los cuatro deja el **negro**
   puesto; el punto más oscuro del dibujo pasa a ser el fondo y no el número, y la comprobación
   sale **verde por la razón equivocada**. Pasó el 27-ago-2026. Fijar `data-tema` antes de medir,
@@ -154,7 +192,11 @@ busca el extremo —el más oscuro en tema claro, el más claro en tema oscuro�
 del número.
 
     scratch/prueba_camara_uca.html        el botón, los dos botones, el color y el tamaño
+    scratch/prueba_lamina_asistencia.html el reparto en bloques y que las tarjetas cuadren
     scratch/prueba_lamina_whatsapp.html   pasa la lámina por la tubería de WhatsApp y compara
+
+Las láminas usan el módulo compartido, y un `new Function` **no ve los import del archivo**:
+hay que entregarle a mano lo que la lámina saca de `laminas.js`.
 
 La segunda saca la lámina **del archivo de verdad** con `indexOf`, y puede comparar contra una
 versión anterior bajándola primero:
