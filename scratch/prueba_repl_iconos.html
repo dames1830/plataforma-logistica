@@ -1,0 +1,115 @@
+<!-- Los dos iconos del Replenishment: cambiar archivo y quitar, iguales a los de PEDIDOS.
+     Saca del dashboard la tarjeta de verdad —no una copia— y la dibuja en sus cuatro
+     estados para comprobar que los iconos estén en todos y hagan lo que dicen. -->
+<meta charset="utf-8">
+<title>Prueba: los iconos del Replenishment</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1040px;margin:0 auto 16px;white-space:pre-wrap}
+  #lienzo{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:.6rem}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<div id="lienzo"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 20000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text()).split(CR).join('');
+
+eco('<span class="t">── LA TARJETA SE SACA DEL DASHBOARD ──</span>');
+const desde = src.indexOf('  const renderReplenishmentNube = (container) => {');
+const hasta = src.indexOf("  let activeBufferSub = 'reportes';", desde);
+ok('se encontró renderReplenishmentNube', desde > 0 && hasta > desde);
+const trozo = src.slice(desde, hasta);
+
+/* Se arma la función de verdad con lo mínimo que necesita alrededor. Nada se copia a mano:
+   si mañana alguien saca un icono, esta prueba se entera. */
+const dataStore = { tallas: [] };
+const icono = (n, t) => `<svg width="${t}" height="${t}" data-ico="${n}"></svg>`;
+const armar = (cuerpo, corridas, traidos) => {
+  dataStore.tallas = traidos;
+  const fn = new Function('dataStore', 'icono', 'getLogicalDate', '_urlReplDia', 'fetch',
+    'guardarAreaManual', 'clearAreaData', 'parseFile', 'renderTabContent',
+    'showPremiumAlert', 'showPremiumConfirm', 'user',
+    cuerpo + '\n  return renderReplenishmentNube;')(
+      dataStore, icono, () => '2026-08-27',
+      () => 'about:blank',
+      async () => ({ ok: true, json: async () => ({ data: corridas }) }),
+      async () => {}, async () => true, async () => {}, async () => {},
+      () => {}, async () => true, { username: 'prueba' });
+  return fn;
+};
+
+const CORRIDAS = {
+  hoy:    { '2026-08-27': { fecha: '2026-08-27', generado: '2026-08-27 07:10', skus: 1610, pares: 206100, quebrados: 242, porQuebrar: 926, lista: [['1', 2]] } },
+  vieja:  { '2026-08-26': { fecha: '2026-08-26', generado: '2026-08-26 19:10', skus: 1610, pares: 206100, quebrados: 242, porQuebrar: 926, lista: [['1', 2]] } },
+  ninguna: {}
+};
+
+const dibujar = async (titulo, corridas, traidos) => {
+  const caja = document.createElement('div');
+  caja.innerHTML = `<div style="color:var(--text-muted); font-size:11.5px; margin:.4rem 0 .2rem;">${titulo}</div>`;
+  document.getElementById('lienzo').appendChild(caja);
+  armar(trozo, corridas, traidos)(caja);
+  await new Promise(r => setTimeout(r, 120));   // la tarjeta se pinta en una función async
+  return caja;
+};
+
+eco('\n<span class="t">── LOS DOS ICONOS ESTÁN EN LOS CUATRO ESTADOS ──</span>');
+const casos = [
+  ['TRAÍDO',            CORRIDAS.hoy,     [['1', 2], ['2', 3]], true],
+  ['LISTO PARA TRAER',  CORRIDAS.hoy,     [],                   false],
+  ['NO CORRIÓ HOY',     CORRIDAS.vieja,   [],                   false],
+  ['SIN CORRIDAS',      CORRIDAS.ninguna, [],                   false]
+];
+for (const [nombre, corridas, traidos, esTraido] of casos) {
+  const caja = await dibujar(nombre, corridas, traidos);
+  const subir = caja.querySelector('#up_repl');
+  const borrar = caja.querySelector('#del_repl');
+  ok(`${nombre}: tiene el icono de poner archivo`, !!subir);
+  ok(`${nombre}: acepta xlsx y csv — ${subir ? subir.accept : '—'}`,
+     !!subir && /xlsx/.test(subir.accept) && /csv/.test(subir.accept));
+  ok(`${nombre}: el de quitar ${esTraido ? 'está' : 'NO está, y es correcto'}`, !!borrar === esTraido);
+  if (esTraido) ok(`${nombre}: el de quitar usa el mismo estilo que PEDIDOS`,
+     borrar.classList.contains('btn-icono') && borrar.classList.contains('btn-peligro'));
+}
+
+eco('\n<span class="t">── LOS BOTONES DE SIEMPRE NO SE PERDIERON ──</span>');
+const c2 = await dibujar('(comprobando TRAER)', CORRIDAS.hoy, []);
+ok('sigue el botón TRAER', !!c2.querySelector('#repl_traer'));
+const c3 = await dibujar('(comprobando TRAER EL DEL 26)', CORRIDAS.vieja, []);
+const bv = c3.querySelector('#repl_traer_viejo');
+ok('sigue el botón TRAER EL DEL 26 — ' + (bv ? bv.textContent.trim() : '—'),
+   !!bv && /TRAER EL DEL 26/.test(bv.textContent));
+
+eco('\n<span class="t">── EL ARCHIVO VA AL ÁREA QUE CORRESPONDE ──</span>');
+ok("el que se sube va al área 'tallas', la misma del botón TRAER",
+   /parseFile\(f, 'tallas'\)/.test(trozo) && /guardarAreaManual\('tallas'/.test(trozo));
+ok("el de quitar vacía 'tallas'", /clearAreaData\('tallas'/.test(trozo));
+ok('avisa que lo usan todas las computadoras',
+   (trozo.match(/todas las computadoras/g) || []).length >= 2);
+ok('si el archivo no se puede leer, la tarjeta vuelve a como estaba',
+   /div\.innerHTML = antes;/.test(trozo));
+
+eco('\n<span class="t">── SE PONE ROJA SI SE QUITAN LOS ICONOS ──</span>');
+const sinIconos = armar(trozo.replace(/\+ iconos\(false\)/g, '').replace(/iconos\(true\)/, "''"),
+                        CORRIDAS.hoy, [['1', 2]]);
+const caja = document.createElement('div');
+document.getElementById('lienzo').appendChild(caja);
+sinIconos(caja);
+await new Promise(r => setTimeout(r, 120));
+ok('sin el arreglo, la tarjeta no tenía iconos', !caja.querySelector('#up_repl'));
+caja.remove();
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>El Replenishment tiene los mismos dos iconos que PEDIDOS, en sus cuatro estados.</b>');
+</script>

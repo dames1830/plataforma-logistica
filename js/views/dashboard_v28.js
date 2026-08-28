@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0460';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0461';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0460';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0460';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0460';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0460';
-import * as metasService from '../services_v245/metasService.js?v=29.0460';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0460';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0460';
+import * as adminService from '../services_v245/adminService.js?v=29.0461';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0461';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0461';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0461';
+import * as metasService from '../services_v245/metasService.js?v=29.0461';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0461';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0461';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0460';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0460';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0460';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0460';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0460';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0460';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0460';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0460';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0460';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0460';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0460';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0460';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0460';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0460';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0460';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0460';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0460';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0460';
-import { montarSlotting } from './slotting.js?v=29.0460';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0461';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0461';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0461';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0461';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0461';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0461';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0461';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0461';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0461';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0461';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0461';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0461';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0461';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0461';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0461';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0461';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0461';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0461';
+import { montarSlotting } from './slotting.js?v=29.0461';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0460';
+const VERSION = '29.0461';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4047,6 +4047,24 @@ export const renderDashboard = async (container, user, onLogout) => {
     const btn = (id, texto, fondo, borde, color) => `
       <button id="${id}" style="background:${fondo}; color:${color}; border:1px solid ${borde}; padding:0.45rem 1rem; border-radius:6px; cursor:pointer; font-size:var(--t-xs); font-weight:800; letter-spacing:0.5px; transition:all 0.2s;" onmouseover="this.style.opacity='0.82'" onmouseout="this.style.opacity='1'">${texto}</button>`;
 
+    /* LOS MISMOS DOS ICONOS QUE PEDIDOS. Daniel, 27-ago-2026: *"dame la opción igual que
+     * los pedidos, poder eliminar o poder cambiar. Yo quiero que corra en automático, pero
+     * a veces no lo quiero correr o cambiar de archivo"*.
+     *
+     * El automático se queda como está —el botón TRAER sigue ahí— y estos dos son la
+     * salida de emergencia: poner otro archivo a mano, o sacarlo del análisis.
+     *
+     * El archivo va al área `tallas`, la misma que llena el botón TRAER, y con el mismo
+     * formato: dos columnas, código y cantidad. Es el mismo par que OTRAS SOLICITUDES, así
+     * que `parseFile` ya sabe leerlo y el motor del buffer no cambia una línea. */
+    const iconos = (traido) => `
+      <label title="${traido ? 'Poner otro archivo en vez del que trajo el robot' : 'Poner un archivo a mano'}"
+             style="background:${traido ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--primary)'}; color:${traido ? 'var(--primary)' : 'var(--text-strong)'}; border:1px solid ${traido ? 'var(--primary)' : 'transparent'}; width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:var(--t-md); transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+          <input type="file" id="up_repl" accept=".xlsx,.csv" style="display:none;">
+          ${traido ? '🔄' : '📤'}
+      </label>
+      ${traido ? `<button id="del_repl" title="Quitar del análisis" style="width:32px; height:32px; border-radius:6px; cursor:pointer; font-size:var(--t-sm); display:flex; align-items:center; justify-content:center; transition:all 0.2s" class="btn-icono btn-peligro">${icono('borrar', 17)}</button>` : ''}`;
+
     div.innerHTML = fila('var(--text-dim)', '🔄', 'CONSULTANDO...', '', '', '');
 
     (async () => {
@@ -4074,20 +4092,21 @@ export const renderDashboard = async (container, user, onLogout) => {
       if (traido) {
         div.innerHTML = fila('var(--success)', '✅', 'TRAÍDO',
           `${num(dataStore.tallas.length)} SKU en el análisis`,
-          btn('repl_quitar', 'QUITAR', 'rgba(var(--danger-rgb), 0.1)', 'var(--danger)', 'var(--danger)'),
-          'Ya entra como fuente del análisis.<br>Se puede quitar si esta noche no se baja.');
+          iconos(true),
+          'Ya entra como fuente del análisis.<br>🔄 pone otro archivo · 🗑 lo saca.');
       } else if (deHoy) {
         div.innerHTML = fila('var(--sky)', '🔄', 'LISTO PARA TRAER', resumen(deHoy),
-          btn('repl_traer', 'TRAER', 'var(--primary)', 'transparent', 'var(--text-strong)'),
-          `Corrió hoy a las <b>${String(deHoy.generado || '').substring(11, 16)}</b>`);
+          btn('repl_traer', 'TRAER', 'var(--primary)', 'transparent', 'var(--text-strong)') + iconos(false),
+          `Corrió hoy a las <b>${String(deHoy.generado || '').substring(11, 16)}</b>`
+          + '<br>o pon otro archivo a mano con 📤');
       } else if (ultima) {
         div.innerHTML = fila('var(--warning)', '🕘', 'NO CORRIÓ HOY',
           `El último es del <b>${ultima.fecha}</b> · ${resumen(ultima)}`,
-          btn('repl_traer_viejo', `TRAER EL DEL ${String(ultima.fecha).substring(8, 10)}`, 'rgba(var(--warning-rgb), 0.12)', 'var(--warning)', 'var(--warning)'),
-          'Ojo: es de otro día.<br>Manda a bajar contra un stock que ya cambió.');
+          btn('repl_traer_viejo', `TRAER EL DEL ${String(ultima.fecha).substring(8, 10)}`, 'rgba(var(--warning-rgb), 0.12)', 'var(--warning)', 'var(--warning)') + iconos(false),
+          'Ojo: es de otro día.<br>Manda a bajar contra un stock que ya cambió.<br>Con 📤 pones otro a mano.');
       } else {
-        div.innerHTML = fila('var(--text-dim)', '🔄', 'SIN CORRIDAS', '', '',
-          'Se publica sola al procesar<br><b>Análisis SKU → Replenishment</b>');
+        div.innerHTML = fila('var(--text-dim)', '🔄', 'SIN CORRIDAS', '', iconos(false),
+          'Se publica sola al procesar<br><b>Análisis SKU → Replenishment</b>, o ponla con 📤');
       }
 
       const traer = async (corrida) => {
@@ -4110,8 +4129,9 @@ export const renderDashboard = async (container, user, onLogout) => {
       if (bt) bt.addEventListener('click', () => traer(deHoy));
       const bv = document.getElementById('repl_traer_viejo');
       if (bv) bv.addEventListener('click', () => traer(ultima));
-      const bq = document.getElementById('repl_quitar');
-      if (bq) bq.addEventListener('click', async () => {
+      /* QUITAR. El botón viejo se llamaba `repl_quitar` y ahora es el iconito `del_repl`;
+         se escuchan los dos por si queda alguno dibujado. */
+      const quitar = async () => {
         if (await showPremiumConfirm('QUITAR EL REPLENISHMENT',
               '¿Sacar la reposición del análisis? El pedido de comercial y las otras solicitudes no se tocan.'
               + '<br><br>La reposición la usan <b>todas las computadoras</b>: al sacarla, se saca para todas.', 'danger')) {
@@ -4122,6 +4142,37 @@ export const renderDashboard = async (container, user, onLogout) => {
               'El servidor no respondió, así que la reposición sigue publicada y va a volver a aparecer.<br><br>Vuelve a intentarlo en un momento.',
               'error');
           }
+        }
+      };
+      ['repl_quitar', 'del_repl'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.addEventListener('click', quitar);
+      });
+
+      /* PONER UN ARCHIVO A MANO. Mismo camino que PEDIDOS y OTRAS SOLICITUDES: `parseFile`
+         lo lee, lo deja en el área `tallas` y lo publica para todas las PC. Mientras tanto
+         la tarjeta muestra que está trabajando, o parece que no pasó nada. */
+      const inp = document.getElementById('up_repl');
+      if (inp) inp.addEventListener('change', async (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        const antes = div.innerHTML;
+        div.innerHTML = `<div style="background:rgba(var(--primary-rgb), 0.05); border:1px dashed var(--primary); border-radius:10px; padding:0.6rem 1.2rem; display:flex; align-items:center; justify-content:center; gap:1rem; height:54px;">
+            <div class="spinner" style="width:16px; height:16px; border:2px solid rgba(var(--primary-rgb), 0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+            <span style="font-size:var(--t-sm); color:var(--primary); font-weight:800; letter-spacing:1px;">PROCESANDO ARCHIVO...</span>
+        </div>`;
+        try {
+          await parseFile(f, 'tallas');
+          await renderTabContent();
+          showPremiumAlert('REPLENISHMENT PUESTO A MANO',
+            'Entró el archivo que elegiste y reemplaza a la corrida del robot.'
+            + '<br><br>Lo usan <b>todas las computadoras</b>.', 'success');
+        } catch (err) {
+          div.innerHTML = antes;
+          showPremiumAlert('NO SE PUDO LEER EL ARCHIVO',
+            (err && err.message) || String(err)
+            + '<br><br>Tiene que traer dos columnas: <b>código</b> y <b>cantidad</b>.', 'error');
+          await renderTabContent();
         }
       });
     })();
@@ -5412,7 +5463,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0460');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0461');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5675,7 +5726,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0460');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0461');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18335,7 +18386,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0460 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0461 | MOBILE PORTAL
                             </div>
                     </div>
 
