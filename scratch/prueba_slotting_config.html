@@ -1,0 +1,47 @@
+<!doctype html>
+<html data-tema="indigo">
+<meta charset="utf-8">
+<title>Config. Slotting — la pantalla de verdad</title>
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  body { margin:0; padding:18px; background:var(--bg-dark); color:var(--text-pale); font-family:var(--font-ui); }
+  #aviso { margin-bottom:14px; padding:10px 14px; border-radius:9px; font-size:13px;
+           background:rgba(var(--warning-rgb),0.12); border:1px solid rgba(var(--warning-rgb),0.35);
+           color:var(--warning-soft); }
+  #guardado { margin-top:14px; padding:10px 14px; border-radius:9px; font-family:ui-monospace,monospace;
+              font-size:12px; background:rgba(var(--ink-rgb),0.05); border:1px solid var(--border);
+              color:var(--text-pale); white-space:pre-wrap; }
+</style>
+
+<!-- ESTA NO ES UNA MAQUETA: monta la pantalla de verdad con `montarSlotting`, la misma
+     funcion que usa la plataforma. Sirve para ver Config. Slotting sin tener que entrar
+     con usuario y clave. Ver la nota de "comprobar con el codigo de verdad". -->
+<div id="aviso">Pantalla real, montada con <b>montarSlotting({ vista: 'config' })</b>. Guardar no publica nada: lo escribe aquí abajo.</div>
+<div id="app"></div>
+<div id="guardado">— todavía no se apretó GUARDAR —</div>
+
+<script type="module">
+  import { montarSlotting } from '../js/views/slotting.js';
+  import * as slottingService from '../js/services_v245/slottingService.js';
+
+  /* La configuracion publicada se pide EN PARALELO, no con `await`: el servidor de Render
+     duerme y la primera consulta puede tardar un minuto. Con el await la pantalla se quedaba
+     EN BLANCO esperando y parecia rota. Se dibuja con lo de fabrica y se vuelve a dibujar
+     cuando llega la publicada. */
+  const dibujar = () => montarSlotting(document.getElementById('app'), {
+    vista: 'config',
+    svc: slottingService,
+    cajon: {},
+    operarios: [],
+    alGuardarConfig: async (cfg) => {
+      document.getElementById('guardado').textContent =
+        'Lo que se publicaría:\n' + JSON.stringify(cfg, null, 2);
+    }
+  });
+
+  dibujar();
+  slottingService.cargarConfig()
+    .then(dibujar)
+    .catch(e => console.warn('[prueba] sin config publicada, se ve la de fabrica:', e && e.message));
+</script>

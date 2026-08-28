@@ -111,7 +111,31 @@ export const configPorDefecto = () => ({
      *
      * EL BOTÓN NO SE OCULTA NI SE DESHABILITA, decisión suya: queda igual y al apretarlo sale
      * el aviso. Un botón que desaparece hace pensar que se rompió algo. */
-    unaVezPorTurno: true
+    unaVezPorTurno: true,
+
+    /* UN ARTÍCULO, UN CUERPO — APAGADA. Daniel, 28-ago-2026: *"hay una regla que puse que
+     * está mal [...] por el momento no la vamos a usar"*.
+     *
+     * La regla junta en un solo cuerpo un artículo repartido en varios, y **lo que no entra
+     * sube a reserva**. Medida contra el stock del 28-ago con la capacidad de verdad
+     * (`densidadDe`), sobre el selectivo:
+     *
+     *   55 artículos con más de un cuerpo
+     *      534 pares se ordenan en el piso
+     *   16.584 pares SUBEN A RESERVA          ← 31 pares arriba por cada 1 ordenado abajo
+     *
+     * Y el fondo del asunto: **48 de esos 55 no entran en un solo cuerpo ni aunque se vacíe
+     * entero** —les sobran 14.022 pares—. O sea que para el 87% de los casos la regla no se
+     * puede cumplir, y lo que hace el código es mandar el resto arriba. Casi todos son
+     * temporada actual: mercadería que está en el piso porque se está vendiendo.
+     *
+     * Además la reserva está al 90% de ubicaciones ocupadas: el espacio de allá arriba es
+     * más escaso que el de abajo.
+     *
+     * Queda el interruptor y no se borra el código: la regla en sí es sana cuando el artículo
+     * SÍ entra en un cuerpo. Lo que falta es que no mande a reserva lo que no entra, y esa
+     * decisión es de Daniel. */
+    consolidarUnCuerpo: false
 });
 
 let _config = configPorDefecto();
@@ -133,7 +157,11 @@ const normalizar = (c) => {
         // en la pantalla no se podría guardar nunca.
         zonas: (Array.isArray(c && c.zonas) && c.zonas.length ? c.zonas : d.zonas)
             .filter(z => ZONAS_POSIBLES.includes(z)),
-        unaVezPorTurno: typeof (c && c.unaVezPorTurno) === 'boolean' ? c.unaVezPorTurno : d.unaVezPorTurno
+        unaVezPorTurno: typeof (c && c.unaVezPorTurno) === 'boolean' ? c.unaVezPorTurno : d.unaVezPorTurno,
+        /* Nace APAGADA a propósito, igual que el Modelo 2 del buffer: una regla que mueve
+           mercadería a reserva no se puede encender sola en una PC que todavía no tiene la
+           configuración guardada. */
+        consolidarUnCuerpo: (c && c.consolidarUnCuerpo) === true
     };
 };
 

@@ -33,7 +33,7 @@
 /* El rango de fechas es el mismo de toda la plataforma: se dibuja una sola vez, en
    `reportesComunes.js`. Este archivo recibe todo lo demás por `OPC` y no lee del
    servidor — el selector no lee nada, solo dibuja. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0489';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0490';
 
 export const montarSlotting = (container, OPC = {}) => {
   const svc = OPC.svc;
@@ -690,8 +690,11 @@ export const montarSlotting = (container, OPC = {}) => {
                   <input type="checkbox" disabled> MZN04</label>
               </div>
               <div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:6px; max-width:520px; line-height:1.6;">
-                Hoy solo el <b style="color:var(--text-pale);">selectivo</b>: los mezzanines todavía no tienen
-                reglas propias de Slotting. Se tildan el día que las tengan.
+                Hoy solo el <b style="color:var(--text-pale);">selectivo</b>. Los mezzanines
+                <b style="color:var(--text-pale);">sí tienen reglas</b> —son las mismas de almacenaje, comprobado
+                el 28-ago-2026—, pero tildarlos suma de golpe
+                <b style="color:var(--text-pale);">262 cuerpos mezclados y unas 74 tareas</b>, contra las 7 del
+                selectivo. Conviene tildarlos de a uno.
               </div>
             </div>
           </div>
@@ -707,6 +710,28 @@ export const montarSlotting = (container, OPC = {}) => {
                   <br><b style="color:var(--text-pale);">Por qué conviene dejarlo puesto:</b> volver a procesar rehace
                   el reparto entero, así que las tareas que el equipo tiene en la mano dejan de existir y
                   las que ya empezó cambian de número.
+                </div>
+              </span>
+            </label>
+          </div>
+          <div style="margin-top:1rem; padding-top:0.9rem; border-top:1px solid var(--border);">
+            <label style="display:flex; align-items:flex-start; gap:9px; cursor:pointer;">
+              <input type="checkbox" id="cfg_consolidar" ${c.consolidarUnCuerpo ? 'checked' : ''} style="margin-top:3px;">
+              <span>
+                <b style="color:var(--text-strong); font-size:var(--t-sm);">Juntar cada artículo en un solo cuerpo</b>
+                <span style="margin-left:8px; font-size:var(--t-xs); font-weight:800; color:var(--warning-soft);
+                             background:rgba(var(--warning-rgb), 0.14); border:1px solid rgba(var(--warning-rgb), 0.4);
+                             border-radius:6px; padding:2px 7px;">SUBE MERCADERÍA A RESERVA</span>
+                <div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:5px; line-height:1.6; max-width:760px;">
+                  Un artículo repartido en varios cuerpos se junta en el más cargado, y
+                  <b style="color:var(--text-pale);">lo que no entra sube a reserva</b>.
+                  <br><b style="color:var(--warning-soft);">Va apagada, y conviene dejarla así.</b>
+                  Medido sobre el selectivo el 28-ago-2026: se ordenan <b style="color:var(--text-pale);">534 pares</b>
+                  en el piso y suben <b style="color:var(--text-pale);">16.584</b> a reserva — 31 arriba por cada
+                  uno ordenado abajo. Y de los 55 artículos con varios cuerpos,
+                  <b style="color:var(--text-pale);">48 no entran en uno solo ni aunque se vacíe entero</b>:
+                  para esos la regla no se puede cumplir y todo el resto termina arriba.
+                  Casi todos son temporada actual, que está abajo porque se está vendiendo.
                 </div>
               </span>
             </label>
@@ -733,7 +758,8 @@ export const montarSlotting = (container, OPC = {}) => {
           tiempoBase: v('cfg_base'), minutosPorCuerpoExtra: v('cfg_extra'),
           uphSolo: v('cfg_solo'), uphGrupo: v('cfg_grupo'),
           paresPorTarea: v('cfg_tope'), zonas,
-          unaVezPorTurno: container.querySelector('#cfg_unaVez').checked
+          unaVezPorTurno: container.querySelector('#cfg_unaVez').checked,
+          consolidarUnCuerpo: container.querySelector('#cfg_consolidar').checked
         });
         avisar('CONFIGURACIÓN PUBLICADA', 'Las tareas que se procesen desde ahora usan estos números.', 'success');
       } catch (e) {
