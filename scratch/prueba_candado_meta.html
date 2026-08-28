@@ -1,0 +1,146 @@
+<!-- El candado de la meta del turno. Monta el módulo de verdad —turno_actividades.js— y
+     comprueba lo que Daniel pidió: con el candado abierto la meta sigue a la última
+     corrida del buffer por más veces que se corra, y una vez congelada no se mueve. -->
+<meta charset="utf-8">
+<title>Prueba: el candado de la meta del turno</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1040px;margin:0 auto 16px;white-space:pre-wrap}
+  #lienzo{max-width:1180px;margin:0 auto}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<div id="lienzo"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 20000);
+
+const { montarTurno } = await import('../js/reportes/turno_actividades.js?z=' + Date.now());
+
+/* Se monta el módulo de verdad. `fuentes` es lo que le llega calculado desde el análisis
+   del buffer: cambiarlo es exactamente lo que pasa cuando Daniel corre el análisis otra vez. */
+const raiz = document.getElementById('lienzo');
+let guardado = null;
+let respuesta = true;               // lo que contesta el diálogo de confirmación
+let preguntas = 0;
+const montar = (estado, fuentes) => {
+  raiz.innerHTML = '';
+  montarTurno(raiz, {
+    estado, fuentes, fecha: '2026-08-27',
+    alGuardar: (e) => { guardado = JSON.parse(JSON.stringify(e)); },
+    alPreguntar: () => { preguntas++; return Promise.resolve(respuesta); }
+  });
+};
+const corrida = (paletas) => ({
+  jornadaCerrada: false,
+  paletas: { meta: paletas, avance: 0 }
+});
+const cand = () => raiz.querySelector('#ta_cand');
+/* LA META SE LEE DE LA PANTALLA, no de lo guardado: montar el módulo NO guarda —eso es
+   justo lo que se arregló el 13-ago— así que `guardado` sigue en nulo hasta que hay una
+   acción de verdad. Lo que el usuario ve es la casilla. */
+const metaDe = (nombre) => {
+  const filas = [...raiz.querySelectorAll('#ta_t_cum tbody tr')];
+  const f = filas.find(tr => {
+    const n = tr.querySelector('[data-k="n"]');
+    return n && n.value === nombre;
+  });
+  const m = f && f.querySelector('[data-k="meta"]');
+  return m ? Number(m.value) : null;
+};
+const esperar = () => new Promise(r => setTimeout(r, 90));
+
+eco('<span class="t">── EL CANDADO ESTÁ Y ARRANCA ABIERTO ──</span>');
+montar(null, corrida(369));
+await esperar();
+ok('el botón del candado existe', !!cand());
+ok('arranca ABIERTO — ' + (cand() ? cand().innerText.replace(/\s+/g, ' ') : ''),
+   !!cand() && !cand().classList.contains('fija'));
+ok('y al pasar el mouse dice qué va a hacer',
+   /ÚLTIMA corrida|ULTIMA corrida/i.test(cand().title) && /Clic para congelarla/.test(cand().title));
+
+eco('\n<span class="t">── ABIERTO: CORRE LAS VECES QUE QUIERAS ──</span>');
+/* Esto es lo de Daniel: *"puedo correr una, dos, tres, cuatro veces, y cuando lo abra
+   recién me captura la última"*. Cada montaje con otra fuente es otra corrida. */
+for (const [n, paletas] of [[1, 369], [2, 412], [3, 288], [4, 501]]) {
+  montar(guardado, corrida(paletas));
+  await esperar();
+  ok(`corrida ${n} de ${paletas} paletas → la meta dice ${metaDe('Bajada de paletas')}`,
+     metaDe('Bajada de paletas') === paletas);
+}
+
+eco('\n<span class="t">── Y ESCRIBIR EN OTRO CAMPO YA NO LA CONGELA ──</span>');
+/* Antes, tocar CUALQUIER casilla clavaba la meta sin avisar. Ese era el defecto. */
+const avance = raiz.querySelector('[data-t="c"][data-k="av"]');
+ok('hay una casilla de avance', !!avance);
+avance.value = '120';
+avance.dispatchEvent(new Event('input', { bubbles: true }));
+await esperar();
+ok('el candado sigue abierto después de escribir', !cand().classList.contains('fija'));
+montar(guardado, corrida(640));
+await esperar();
+ok('y una corrida nueva sigue moviendo la meta → ' + metaDe('Bajada de paletas'),
+   metaDe('Bajada de paletas') === 640);
+
+eco('\n<span class="t">── CONGELAR VA DIRECTO, SIN PREGUNTAR ──</span>');
+preguntas = 0;
+cand().click();
+await esperar();
+ok('no preguntó nada al congelar', preguntas === 0);
+ok('el candado quedó cerrado — ' + cand().innerText.replace(/\s+/g, ' '),
+   cand().classList.contains('fija'));
+ok('se guardó la marca', guardado.metaFija === true);
+ok('y el número no se movió al congelar', metaDe('Bajada de paletas') === 640);
+
+eco('\n<span class="t">── CONGELADO: NINGUNA CORRIDA LO MUEVE ──</span>');
+for (const paletas of [999, 111]) {
+  montar(guardado, corrida(paletas));
+  await esperar();
+  ok(`corrida de ${paletas} paletas → la meta sigue en ${metaDe('Bajada de paletas')}`,
+     metaDe('Bajada de paletas') === 640);
+}
+
+eco('\n<span class="t">── DESCONGELAR PREGUNTA, Y SE PUEDE DECIR QUE NO ──</span>');
+preguntas = 0; respuesta = false;
+cand().click();
+await esperar();
+ok('preguntó', preguntas === 1);
+ok('al decir que NO, sigue congelada', cand().classList.contains('fija') && guardado.metaFija === true);
+respuesta = true;
+cand().click();
+await esperar();
+ok('al decir que SÍ, se abre', !cand().classList.contains('fija') && guardado.metaFija === false);
+montar(guardado, corrida(777));
+await esperar();
+ok('y vuelve a seguir la última corrida → ' + metaDe('Bajada de paletas'),
+   metaDe('Bajada de paletas') === 777);
+
+eco('\n<span class="t">── CON LA JORNADA CERRADA NO SE TOCA ──</span>');
+montar(guardado, { jornadaCerrada: true, paletas: { meta: 123, avance: 50 } });
+await esperar();
+ok('el candado se apaga', cand().disabled);
+ok('y se muestra cerrado', cand().classList.contains('fija'));
+ok('dice por qué', /ya cerr/i.test(cand().title));
+ok('y la meta no la mueve una corrida nueva → ' + metaDe('Bajada de paletas'),
+   metaDe('Bajada de paletas') === 777);
+
+eco('\n<span class="t">── UNA JORNADA VIEJA NO CAMBIA DE COMPORTAMIENTO ──</span>');
+/* Las guardadas antes de que el candado existiera no traen la marca: conservan la regla
+   de antes —con meta, congelada— para no moverle los números a un turno ya reportado. */
+const vieja = JSON.parse(JSON.stringify(guardado));
+delete vieja.metaFija;
+montar(vieja, corrida(444));
+await esperar();
+ok('sin la marca y con meta puesta, sale congelada', cand().classList.contains('fija'));
+ok('y la corrida nueva no la pisa → ' + metaDe('Bajada de paletas'),
+   metaDe('Bajada de paletas') === 777);
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>Abierto sigue a la última corrida; cerrado no se mueve; descongelar pregunta.</b>');
+</script>
