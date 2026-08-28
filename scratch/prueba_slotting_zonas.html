@@ -32,7 +32,7 @@
       { n: 1, pares: 272, marca: 'North Star', status: 'Creada', prioridad: true,
         lineas: [{ ubi: 'MZN02-07-05', sku7: '8811905', pares: 150, marca: 'North Star', temporada: 'T. Actual',
                    llevarA: 'MZN02-01-03', motivo: 'le toca anterior',
-                   detalle: [{ubi:'MZN02-07-05-A-01',talla:'38',qty:90},{ubi:'MZN02-07-05-B-01',talla:'39',qty:60}] },
+                   detalle: [{ubi:'MZN02-07-05-A-01',skuFull:'8811905-1-38',talla:'38',pares:90},{ubi:'MZN02-07-05-B-01',skuFull:'8811905-1-39',talla:'39',pares:60}] },
                  { ubi: 'MZN02-11-02', sku7: '5566814', pares: 122, marca: 'North Star', temporada: 'T. Actual',
                    llevarA: 'MZN02-04-07', motivo: 'es saldoGrande', detalle: [] }] },
       { n: 2, pares: 143, marca: 'North Star', status: 'Asignado', u1: 'kcasahuaman', inicio: '21:10',
@@ -45,10 +45,15 @@
         lineas: [{ ubi: 'MZN02-23-08', sku7: '2891507', pares: 75, marca: 'North Star', temporada: 'T. Actual',
                    llevarA: 'MZN02-04-05', motivo: 'es saldoGrande', detalle: [] }] }
     ] } },
-    operarios: [],
+    operarios: [
+      { usuario: 'acespedes',   nombre: 'ANGELA MILAGROS', turno: 'DÍA' },
+      { usuario: 'jmaicelo',    nombre: 'JUAN',            turno: 'NOCHE' },
+      { usuario: 'kcasahuaman', nombre: 'KEVIN',           turno: 'NOCHE' },
+      { usuario: 'mtorres',     nombre: 'MARIA',           turno: 'DÍA' }
+    ],
     jornadaHoy: HOY,
     jornadaVencida: () => false,
-    alertar: (t, m) => console.log('[aviso]', t, m),
+    alertar: (t, m) => { window.__ultimoAviso = t + ' :: ' + String(m).replace(/<[^>]+>/g,''); console.log('[aviso]', t, m); },
     alGuardar: async () => true,
     alExportar: async (P) => {
       window.__ultimoPaquete = P;

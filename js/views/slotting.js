@@ -33,8 +33,8 @@
 /* El rango de fechas es el mismo de toda la plataforma: se dibuja una sola vez, en
    `reportesComunes.js`. Este archivo recibe todo lo demás por `OPC` y no lee del
    servidor — el selector no lee nada, solo dibuja. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0495';
-import { icono } from '../services_v245/iconos.js?v=29.0495';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0496';
+import { icono } from '../services_v245/iconos.js?v=29.0496';
 
 export const montarSlotting = (container, OPC = {}) => {
   const svc = OPC.svc;
@@ -536,8 +536,15 @@ export const montarSlotting = (container, OPC = {}) => {
     const viejo = document.getElementById('slt_modal');
     if (viejo) viejo.remove();
 
-    const opciones = operarios.map(o =>
-      `<option value="${esc(o.usuario)}">${esc(o.usuario)} (${esc(o.nombre)})</option>`).join('');
+    /* EL TURNO VA EN LA ETIQUETA Y ADEMÁS FILTRA. Daniel, 28-ago-2026, viendo el modal con
+       una persona de día y otra de noche: *"eso es imposible"*. La comprobación al guardar ya
+       existía y saltaba, pero el desplegable dejaba ELEGIR la pareja imposible y recién se
+       quejaba al apretar el botón — que es lo que se siente como que sí deja.
+       Ahora el Usuario 2 solo ofrece gente del mismo turno que el Usuario 1. */
+    const etiqueta = (o) => `${esc(o.usuario)} (${esc(o.nombre)})${o.turno ? ' · ' + esc(o.turno) : ''}`;
+    const opcionesDe = (lista) => lista.map(o =>
+      `<option value="${esc(o.usuario)}">${etiqueta(o)}</option>`).join('');
+    const opciones = opcionesDe(operarios);
 
     const modal = document.createElement('div');
     modal.id = 'slt_modal';
@@ -561,6 +568,7 @@ export const montarSlotting = (container, OPC = {}) => {
                     padding:0.8rem; border-radius:8px; color:var(--text-strong); outline:none; font-weight:700; font-size:var(--t-md);">
               <option value="">Ninguno</option>${opciones}
             </select>
+            <div id="slt_nota_turno" style="font-size:var(--t-xs); color:var(--text-muted); margin-top:6px;"></div>
           </div>
           <div style="font-size:var(--t-xs); color:var(--text-muted); line-height:1.5;">
             Con un operario la meta es <b style="color:var(--text-pale);">${num(svc.configActual().uphSolo)} pares/h</b>;
@@ -577,13 +585,32 @@ export const montarSlotting = (container, OPC = {}) => {
       </div>`;
     document.body.appendChild(modal);
 
-    if (t.u1) modal.querySelector('#slt_u1').value = t.u1;
-    if (t.u2) modal.querySelector('#slt_u2').value = t.u2;
 
     const turnoDe = (usuario) => {
       const o = operarios.find(x => x.usuario === usuario);
       return o ? o.turno : null;
     };
+
+    /* El Usuario 2 se rearma cada vez que cambia el Usuario 1: solo su mismo turno. Si el que
+       ya estaba elegido deja de pertenecer, se limpia — dejarlo puesto y en gris haría creer
+       que quedó asignado. Sin Usuario 1 se ofrecen todos, que es el estado de partida. */
+    const selU1 = modal.querySelector('#slt_u1');
+    const selU2 = modal.querySelector('#slt_u2');
+    const rearmarU2 = () => {
+      const t1 = turnoDe(selU1.value);
+      const caben = t1 ? operarios.filter(o => o.turno === t1) : operarios;
+      const antes = selU2.value;
+      selU2.innerHTML = `<option value="">Ninguno</option>${opcionesDe(caben)}`;
+      selU2.value = caben.some(o => o.usuario === antes) ? antes : '';
+      const nota = modal.querySelector('#slt_nota_turno');
+      if (nota) nota.textContent = t1
+        ? `Solo se ofrece gente del turno ${t1}: una tarea no se reparte entre dos turnos.`
+        : '';
+    };
+    selU1.addEventListener('change', rearmarU2);
+    if (t.u1) selU1.value = t.u1;
+    rearmarU2();
+    if (t.u2) selU2.value = t.u2;
 
     modal.querySelector('#slt_cerrar').onclick = () => modal.remove();
 
@@ -1129,6 +1156,10 @@ export const montarSlotting = (container, OPC = {}) => {
            dibuja, y desde el enganche no se alcanza -reventaba en ejecucion con "lista is
            not defined" y el chequeo de sintaxis no lo ve-. Se pide de nuevo, que ademas
            devuelve lo que hay AHORA, no lo que habia cuando se dibujo. */
+        /* LAS MISMAS FILAS QUE EL PAPEL. Daniel, 28-ago-2026: *"en el Excel quiero la misma
+           estructura que tiene el PDF, solo que en tres pestanas segun el estado"*. Se manda
+           lo que devuelve `filasDelPapel`, la misma funcion que imprime — no una segunda
+           version que el dia de manana diga otra cosa. Ver `feedback_copiar_del_codigo`. */
         await OPC.alExportar({
           desde, hasta,
           tareas: tareasDelRango().map(t => ({
@@ -1137,11 +1168,9 @@ export const montarSlotting = (container, OPC = {}) => {
             marca: t.marca || '', estado: svc.migrarEstado(t),
             u1: t.u1 || '', u2: t.u2 || '', inicio: t.inicio || '', termino: t.termino || '',
             prioridad: !!t.prioridad,
-            lineas: (t.lineas || []).map(l => ({
-              origen: l.ubi, sku7: l.sku7, marca: l.marca || '', temporada: l.temporada || '',
-              pares: l.pares, destino: l.llevarA || '', motivo: l.motivo || '',
-              detalle: l.detalle || []
-            }))
+            /* Los bloques del papel: uno por articulo, con sus filas de detalle y su total.
+               `nuevaColumna` marca donde el papel dibuja la banda de la columna del almacen. */
+            bloques: filasDelPapel(t)
           }))
         });
       } catch (e) {
