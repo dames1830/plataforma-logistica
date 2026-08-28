@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Caza-errores</title>
+<style>body{font:14px system-ui;padding:20px}pre{background:#f4f4f4;padding:12px;border-radius:6px}</style></head>
+<body><h3>Que los errores caigan solos en el Log</h3><pre id="s">probando...</pre>
+<script type="module">
+window.API_BASE_URL = 'http://127.0.0.1:8097';   // el backend de prueba, no el de verdad
+const { registrar, traer } = await import('../js/services_v245/eventosService.js');
+
+/* Los mismos manejadores que quedaron en app.js, recortados del archivo para no copiarlos. */
+const src = await (await fetch('../js/app.js')).text();
+const i = src.indexOf('const _yaAnotados = new Set();');
+const j = src.indexOf('});', src.indexOf("addEventListener('unhandledrejection'")) + 3;
+new Function('registrar', src.slice(i, j))(registrar);
+
+const log = [];
+const antes = (await traer({ dias: 1 })).total;
+log.push('anotaciones antes: ' + antes);
+
+// 1. un error de verdad
+setTimeout(() => { null.x; }, 10);
+// 2. el MISMO error otra vez -no se debe repetir-
+setTimeout(() => { null.x; }, 60);
+// 3. una promesa que nadie atrapa
+setTimeout(() => { Promise.reject(new Error('se quedo cargando para siempre')); }, 110);
+
+setTimeout(async () => {
+  const d = await traer({ dias: 1 });
+  log.push('anotaciones despues: ' + d.total + '   (deberian ser ' + (antes + 2) + ': el repetido no cuenta)');
+  log.push('');
+  d.eventos.slice(0, 3).forEach(e => log.push('  [' + e.tipo + '] ' + e.accion + '  ·  ' + e.detalle));
+  document.getElementById('s').textContent = log.join('\n');
+}, 1500);
+</script></body></html>

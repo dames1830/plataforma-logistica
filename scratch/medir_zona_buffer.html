@@ -1,0 +1,39 @@
+<!doctype html>
+<html data-tema="indigo"><head><meta charset="utf-8"><title>Zona Buffer: cuanto tarda cada pieza</title>
+<style>body{font:14px system-ui;padding:20px;background:#0f172a;color:#e2e8f0}
+pre{background:#1e293b;padding:14px;border-radius:8px;line-height:1.6}</style></head>
+<body><h3>Zona Buffer — que tarda y que se cuelga</h3><pre id="s">midiendo...</pre>
+<script type="module">
+/* Corre las MISMAS llamadas que `renderBufferTab`, una por una y con reloj, para ver
+   cual es la que se queda colgada. Usa el csvHub de verdad, el de produccion. */
+const log = [];
+const pinta = () => document.getElementById('s').textContent = log.join('\n');
+const paso = async (nom, fn) => {
+  const t = performance.now();
+  log.push(`  ${nom.padEnd(26)} ... corriendo`); pinta();
+  try {
+    const r = await fn();
+    const n = Array.isArray(r) ? r.length + ' filas' : (r === null ? 'null' : (r === undefined ? 'undefined' : typeof r));
+    log[log.length-1] = `  ${nom.padEnd(26)} ${String(Math.round(performance.now()-t)).padStart(6)} ms   ${n}`;
+  } catch (e) {
+    log[log.length-1] = `  ${nom.padEnd(26)} ${String(Math.round(performance.now()-t)).padStart(6)} ms   FALLA: ${e.message}`;
+  }
+  pinta();
+};
+
+const T0 = performance.now();
+const M = await import('../js/services_v245/csvHub_v6.js');
+log.push('  csvHub cargado'); pinta();
+
+for (const a of ['buffer_activo','buffer_reserva','buffer','solicitud','articulos',
+                 'tallas','validar_activo','validar_reserva','validar_lpn'])
+  await paso('getAreaData ' + a, () => M.getAreaData(a));
+
+await paso('fetchBufferConfig', () => M.fetchBufferConfig());
+await paso('loadLastBufferKPI', () => M.loadLastBufferKPI());
+await paso('traerAnalisisBuffer hoy', () => M.traerAnalisisBuffer('2026-08-28'));
+
+log.push('');
+log.push('  TOTAL: ' + Math.round(performance.now() - T0) + ' ms');
+pinta();
+</script></body></html>

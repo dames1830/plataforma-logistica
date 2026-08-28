@@ -1,11 +1,48 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0501';
-import * as adminService from './services_v245/adminService.js?v=29.0501';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0501';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0501';
-import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0501';
+import { getSession, logout } from './services_v245/auth.js?v=29.0502';
+import * as adminService from './services_v245/adminService.js?v=29.0502';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0502';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0502';
+import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0502';
+import { registrar } from './services_v245/eventosService.js?v=29.0502';
+
+
+/* ── LO QUE SE ROMPE, SE ANOTA ──────────────────────────────────────────────────
+ *
+ * Daniel, 28-ago-2026, con la Zona Buffer clavada en "CARGANDO MODULO": no habia forma
+ * de saber que habia fallado sin abrir la consola del navegador, y el la usa para
+ * trabajar, no para depurar. Un error que solo se ve apretando F12 es un error que nadie
+ * ve.
+ *
+ * Ahora cae en Configuracion -> LOG con el mensaje y el archivo, igual que los avisos del
+ * robot. Anotar no puede romper nada: `registrar` falla callado.
+ *
+ * NO SE REPITE. Un error dentro de un dibujado puede dispararse cientos de veces por
+ * segundo; sin este freno, un solo problema llenaria la semana entera de anotaciones y
+ * taparia todo lo demas. Se anota una vez por mensaje y como mucho 20 por sesion. */
+const _yaAnotados = new Set();
+const anotarFalla = (que, detalle) => {
+    const clave = que + '|' + detalle;
+    if (_yaAnotados.has(clave) || _yaAnotados.size >= 20) return;
+    _yaAnotados.add(clave);
+    try { registrar(que, String(detalle || '').slice(0, 300), 'error'); } catch (e) {}
+};
+
+window.addEventListener('error', (e) => {
+    const d = (e && e.filename)
+        ? `${e.message} — ${String(e.filename).split('/').pop()}:${e.lineno}`
+        : (e && e.message) || 'sin detalle';
+    anotarFalla('Se rompió la pantalla', d);
+});
+
+/* Una promesa que falla y nadie atrapa no dispara 'error': es el caso tipico de una
+   pantalla que se queda cargando para siempre, que es justo lo que hay que cazar. */
+window.addEventListener('unhandledrejection', (e) => {
+    const r = e && e.reason;
+    anotarFalla('Quedó algo a medias', (r && (r.message || r.name)) || String(r || '').slice(0, 200));
+});
 
 
 /**
@@ -433,7 +470,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0501';
+      this.APP_VERSION = 'v29.0502';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
