@@ -52,12 +52,20 @@ leen la variable.
    volver a subir al Contabo por curl son `generar_rotacion.py` y
    `archivar_tareas.py`. Ver [[robot-scripts-versionados]] para cómo se suben.
 
-**4. Mirar el contador.** En `https://deam1830.com/api/health`, el campo
-   `candado_escritura.escrituras_anonimas.total`. Déjalo un día entero —que
-   pasen todos los robots y todos los turnos— y fíjate si sigue subiendo:
+**4. Mirar el contador.** En
+   `https://logistics-backend-wv0x.onrender.com/api/health` —**esa** es la
+   dirección del servidor; `deam1830.com/api/health` da 404, ahí solo vive la web—,
+   el campo `candado_escritura.escrituras_anonimas`. Desde v29.0488 trae el
+   **desglose**: `por_area` dice qué se está escribiendo sin credencial y
+   `por_quien` si viene de un navegador o de un script, los dos de mayor a menor.
+   Déjalo un día entero —que pasen todos los robots y todos los turnos— y fíjate si
+   sigue subiendo:
    - Si **dejó de subir**: ya nadie escribe sin token. Se puede encender.
-   - Si **sigue subiendo**: `ultima_area` dice quién falta. Revísalo antes de
-     encender, o dejarías ese fuera.
+   - Si **sigue subiendo**: `por_area` dice exactamente qué falta y `por_quien`
+     de dónde viene. Revísalo antes de encender, o dejarías ese fuera.
+
+   **El contador vive en la memoria del servidor: un despliegue lo pone en cero.**
+   Así que se cuenta desde el último despliegue, no desde siempre.
 
 ## POR QUÉ EL CONTADOR NUNCA BAJABA (28-ago-2026, v29.0487)
 
