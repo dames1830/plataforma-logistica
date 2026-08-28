@@ -1,0 +1,107 @@
+<!-- Esc cierra cualquier ventana que tenga su propia salida.
+     Daniel eligió "la B": un solo escuchador para las 43, no 43 arreglos. -->
+<meta charset="utf-8">
+<title>Prueba: Esc cierra las ventanas</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1000px;margin:0 auto;white-space:pre-wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 15000);
+
+const S = await import('../js/services_v245/salidas.js?z=' + Date.now());
+ok('se instala una sola vez', S.instalarSalidaConEsc() === true && S.instalarSalidaConEsc() === false);
+
+const esc = () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+/* Una ventana como las de la plataforma: capa fija que tapa todo, con estilo pegado al
+   elemento —no tienen clase, por eso se reconocen por cómo se comportan—. */
+function abrir(rotulos, opciones) {
+  const o = opciones || {};
+  const capa = document.createElement('div');
+  capa.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:'
+    + (o.z || 9999) + '; display:flex; align-items:center; justify-content:center;';
+  capa.dataset.marca = o.marca || '';
+  const caja = document.createElement('div');
+  rotulos.forEach(r => {
+    const b = document.createElement('button');
+    b.textContent = r;
+    b.onclick = () => { capa.dataset.pulsado = r; capa.remove(); };
+    caja.appendChild(b);
+  });
+  capa.appendChild(caja);
+  document.body.appendChild(capa);
+  return capa;
+}
+
+eco('\n<span class="t">── CIERRA LO QUE TIENE SALIDA ──</span>');
+for (const r of ['Cerrar', 'Cancelar', 'Salir', 'Volver', 'No']) {
+  const c = abrir([r]);
+  esc();
+  ok('"' + r + '" cierra con Esc', !c.isConnected && c.dataset.pulsado === r);
+  if (c.isConnected) c.remove();
+}
+
+eco('\n<span class="t">── Y NO TOCA LO QUE NO LA TIENE ──</span>');
+/* Sin botón de salida es un paso obligatorio: no se descarta con una tecla. */
+const obligatoria = abrir(['GUARDAR CAMBIOS']);
+esc();
+ok('una ventana sin Cerrar ni Cancelar NO se cierra', obligatoria.isConnected);
+ok('y no se le pulsó nada', !obligatoria.dataset.pulsado);
+obligatoria.remove();
+
+/* Se le da clic a SU botón, no se arranca el nodo: la ventana puede tener que avisar,
+   guardar un borrador o soltar un candado antes de irse. */
+const conAviso = abrir(['Cancelar']);
+let aviso = false;
+conAviso.querySelector('button').addEventListener('click', () => { aviso = true; });
+esc();
+ok('cierra pulsando SU botón, no arrancando la ventana', aviso && !conAviso.isConnected);
+
+eco('\n<span class="t">── ELIGE BIEN CUÁL CERRAR ──</span>');
+const abajo = abrir(['Cerrar'], { z: 100, marca: 'abajo' });
+const arriba = abrir(['Cerrar'], { z: 200, marca: 'arriba' });
+esc();
+ok('cierra la de ARRIBA, no la de abajo', !arriba.isConnected && abajo.isConnected);
+esc();
+ok('y al volver a apretar cierra la de abajo', !abajo.isConnected);
+
+const dos = abrir(['Guardar', 'Cancelar', 'Cerrar']);
+esc();
+ok('con varios botones prefiere Cerrar', dos.dataset.pulsado === 'Cerrar');
+
+eco('\n<span class="t">── NO SE METE CON LO QUE NO ES UNA VENTANA ──</span>');
+/* Un aviso de esquina también va fijo, pero no tapa la pantalla: no es una ventana. */
+const avisito = document.createElement('div');
+avisito.style.cssText = 'position:fixed; right:20px; bottom:20px; width:220px; height:60px; z-index:99999;';
+avisito.innerHTML = '<button>Cerrar</button>';
+document.body.appendChild(avisito);
+esc();
+ok('un aviso de esquina no se cierra con Esc', avisito.isConnected);
+avisito.remove();
+
+const oculta = abrir(['Cerrar']);
+oculta.style.display = 'none';
+esc();
+ok('una ventana escondida tampoco', oculta.isConnected);
+oculta.remove();
+
+eco('\n<span class="t">── Y OTRA TECLA NO HACE NADA ──</span>');
+const c2 = abrir(['Cerrar']);
+document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+ok('con otra tecla la ventana sigue abierta', c2.isConnected);
+esc();
+ok('y con Esc se va', !c2.isConnected);
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>Un solo escuchador cierra las que tienen salida y no toca las obligatorias.</b>');
+</script>

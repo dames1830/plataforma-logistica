@@ -1,10 +1,11 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0480';
-import * as adminService from './services_v245/adminService.js?v=29.0480';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0480';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0480';
+import { getSession, logout } from './services_v245/auth.js?v=29.0481';
+import * as adminService from './services_v245/adminService.js?v=29.0481';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0481';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0481';
+import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0481';
 
 
 /**
@@ -432,7 +433,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0480';
+      this.APP_VERSION = 'v29.0481';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -660,6 +661,11 @@ class App {
     // Deja ordenables las 79 tablas de la plataforma. Va aqui y no en cada vista
     // porque las tablas se insertan con innerHTML desde 312 sitios distintos.
     observarTablas();
+    /* LA TECLA Esc CIERRA CUALQUIER VENTANA QUE TENGA SU PROPIA SALIDA.
+       Una sola vez, al arrancar: vale para las 43 de hoy y para las que se hagan manana.
+       El porque y el candado —solo cierra lo que ya tiene boton de Cerrar o Cancelar—
+       estan en services_v245/salidas.js. */
+    instalarSalidaConEsc();
     try {
         // La pantalla de carga va en su propia capa (ver pantallaCarga): asi el
         // dashboard se dibuja debajo y la barra alcanza a llegar al final.
