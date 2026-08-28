@@ -229,13 +229,21 @@ export function laminaResumen({ titulo, tarjetas, grande, pie }) {
   const LINEA = col('--border') || 'rgba(255,255,255,.1)';
   const FUERTE = paraFoto(col('--text-strong') || '#fff', CAJA, 0.16, 0.86);
   const SUAVE = paraFoto(col('--text-muted') || '#8b949e', CAJA, 0.34, 0.72);
+  /* UN LIENZO NO ENTIENDE var(). Lo que llega como 'var(--danger)' lo descarta en
+     silencio y sigue pintando con el color anterior -por eso las cifras salian todas
+     grises el 28-ago-2026-. Hay que traducirlo antes. Es la misma trampa que ya tenia
+     documentada la lamina de asistencia; aca volvio porque la prueba resolvia los colores
+     por su cuenta y no ejercitaba el camino de verdad. */
+  const deVar = (c) => String(c || '').replace(/var\(\s*(--[a-z0-9-]+)\s*\)/gi,
+                                              (_, n) => col(n) || '#888');
+
   /* LAS CIFRAS VAN CON EL COLOR QUE LES PASAN, SIN TOCAR.
      Daniel, 28-ago-2026: *"ponle colores, pues: los quebrados en rojo, por quebrar en
      amarillo"*. Aca el color ES el dato -dice el estado de un vistazo-, no la decoracion de
      un numero que se lee. Es la misma decision que en el cuadro de asistencia: cuando el
      color significa algo, no se oscurece aunque el JPEG de WhatsApp lo trate peor.
      Los grises SI pasan por paraFoto: su borde ya vive en el brillo y no pierden nada. */
-  const tinta = (c) => c || FUERTE;
+  const tinta = (c) => (c ? deVar(c) : FUERTE);
 
   g.fillStyle = FONDO;
   g.fillRect(0, 0, ANCHO, ALTO);
@@ -254,37 +262,44 @@ export function laminaResumen({ titulo, tarjetas, grande, pie }) {
         + ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
         24, 55, 11, SUAVE, 400);
 
+  /* Sin numero grande, las tarjetas se reparten TODO el alto: una lamina con un hueco
+     abajo se lee como que falta algo. */
   const cuantas = Math.max(1, tarjetas.length);
   const hueco = 8;
   const anchoT = (ANCHO - 48 - hueco * (cuantas - 1)) / cuantas;
+  const altoT = grande ? 66 : 162;
   tarjetas.forEach((t, i) => {
     const x = 24 + i * (anchoT + hueco);
     g.fillStyle = CAJA;
     g.strokeStyle = LINEA;
     g.beginPath();
-    g.roundRect(x, 74, anchoT, 66, 9);
+    g.roundRect(x, 74, anchoT, altoT, 9);
     g.fill();
     g.stroke();
-    texto(t.rotulo, x + anchoT / 2, 94, 10, SUAVE, 700, 'center');
+    /* El rotulo y la cifra van a la misma ALTURA RELATIVA en los dos casos, para que la
+       tarjeta alta no quede con la cifra arriba y un vacio abajo. */
+    texto(t.rotulo, x + anchoT / 2, 74 + altoT * 0.30, 10, SUAVE, 700, 'center');
     /* La cifra se encoge si no entra: con cuatro tarjetas y seis digitos se salia. */
-    let tam = 24;
+    let tam = grande ? 24 : 40;
     const v = mil(t.valor);
     g.font = '800 ' + tam + 'px ' + FUENTE;
     while (tam > 12 && g.measureText(v).width > anchoT - 12) {
       tam -= 1;
       g.font = '800 ' + tam + 'px ' + FUENTE;
     }
-    texto(v, x + anchoT / 2, 119, tam, tinta(t.color), 800, 'center');
+    texto(v, x + anchoT / 2, 74 + altoT * 0.68, tam, tinta(t.color), 800, 'center');
   });
 
-  g.fillStyle = CAJA;
-  g.strokeStyle = LINEA;
-  g.beginPath();
-  g.roundRect(24, 152, ANCHO - 48, 84, 9);
-  g.fill();
-  g.stroke();
-  texto(grande.rotulo, ANCHO / 2, 174, 11, SUAVE, 700, 'center');
-  texto(mil(grande.valor), ANCHO / 2, 206, 40, tinta(grande.color), 800, 'center');
+  if (grande) {
+    g.fillStyle = CAJA;
+    g.strokeStyle = LINEA;
+    g.beginPath();
+    g.roundRect(24, 152, ANCHO - 48, 84, 9);
+    g.fill();
+    g.stroke();
+    texto(grande.rotulo, ANCHO / 2, 174, 11, SUAVE, 700, 'center');
+    texto(mil(grande.valor), ANCHO / 2, 206, 40, tinta(grande.color), 800, 'center');
+  }
 
   if (pie) texto(pie, ANCHO - 24, 252, 10, SUAVE, 400, 'right');
 

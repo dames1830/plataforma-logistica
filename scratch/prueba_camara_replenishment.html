@@ -80,29 +80,33 @@ const r3 = armar([{ sku: 'A', aBajar: 100 }],
 ok('si arriba no alcanza, cubre menos: ' + r3.cubren + ' de ' + r3.pedido,
    r3.cubren === 30 && r3.pedido === 100);
 ok('sin nada que bajar, cero paletas', armar([], reserva)().paletas === 0);
-/* EL PIE TIENE QUE CUADRAR: si las paletas no tapan todo lo pedido, se dice cuánto tapan
-   en vez de mostrar un número suelto que se lee como error. */
-ok('cuando no alcanza, el pie dice "cubren X de Y"',
-   /cubren ' \+ Math\.round\(p\.cubren\)/.test(src));
-ok('y cuando alcanza, dice los pares que van en esas paletas',
-   /pares en esas paletas/.test(src));
+/* La lámina YA NO lleva las paletas: ese análisis lo hace otro módulo y dos sitios
+   diciendo lo mismo con números distintos es peor que uno solo. La simulación queda en el
+   código por si se retoma, y por eso se sigue probando arriba. */
+/* Se mira SOLO la llamada de la lámina, no el archivo entero: la frase "las paletas que
+   hay que bajar" también está en un comentario de otro módulo, y buscarla suelta hacía
+   fallar la comprobación por algo que no tiene nada que ver. */
+const llamada = src.slice(src.indexOf("laminaResumen({"),
+                          src.indexOf("laminaResumen({") + 700);
+ok('la lámina no muestra las paletas', !/grande:/.test(llamada));
+ok('y solo lleva las tres cifras que pidió Daniel',
+   /rotulo: 'QUEBRADOS'[^]{0,400}rotulo: 'POR QUEBRAR'[^]{0,400}rotulo: 'PARES A BAJAR'/.test(src)
+   && !/grande: \{ rotulo: 'PALETAS/.test(src));
 
 eco('\n<span class="t">── LA LÁMINA, EN LOS CUATRO TEMAS ──</span>');
 /* Con las cifras reales de la corrida del 27-ago. */
-const CIFRAS = { quebrados: 248, porQuebrar: 945, pares: 195226, paletas: 1465, cubren: 145392 };
+const CIFRAS = { quebrados: 240, porQuebrar: 834, pares: 107328 };   // la corrida ya sin lo que no es calzado
 let ultima = null;
 for (const tema of ['indigo', 'pbi', 'pbi-classic', 'negro']) {
   document.documentElement.setAttribute('data-tema', tema);
   const cv = LAM.laminaResumen({
     titulo: 'REPOSICIÓN AL PISO',
     tarjetas: [
-      { rotulo: 'QUEBRADOS', valor: CIFRAS.quebrados, color: getComputedStyle(document.documentElement).getPropertyValue('--danger').trim() },
-      { rotulo: 'POR QUEBRAR', valor: CIFRAS.porQuebrar, color: getComputedStyle(document.documentElement).getPropertyValue('--warning').trim() },
-      { rotulo: 'PARES A BAJAR', valor: CIFRAS.pares, color: getComputedStyle(document.documentElement).getPropertyValue('--brand-light').trim() }
+      { rotulo: 'QUEBRADOS', valor: CIFRAS.quebrados, color: 'var(--danger)' },
+      { rotulo: 'POR QUEBRAR', valor: CIFRAS.porQuebrar, color: 'var(--warning)' },
+      { rotulo: 'PARES A BAJAR', valor: CIFRAS.pares, color: 'var(--brand-light)' }
     ],
-    grande: { rotulo: 'PALETAS QUE HAY QUE BAJAR', valor: CIFRAS.paletas,
-              color: getComputedStyle(document.documentElement).getPropertyValue('--warning').trim() },
-    pie: CIFRAS.cubren.toLocaleString('es-PE') + ' pares en esas paletas'
+    pie: 'Solo calzado'
   });
   const fondo = [...document.querySelectorAll('body > div')].pop();
   ok(tema + ': dibujó ' + cv.width + '×' + cv.height, cv.width > 0);
@@ -146,14 +150,19 @@ eco('\n<span class="t">── LOS COLORES SON EL DATO ──</span>');
    oscurecido. */
 document.documentElement.setAttribute('data-tema', 'pbi');
 const rojoTema = getComputedStyle(document.documentElement).getPropertyValue('--danger').trim();
+/* SE LE PASA 'var(--danger)', que es lo que hace la pantalla de verdad. Antes esta prueba
+   le entregaba el color ya resuelto y por eso no vio el defecto: un lienzo NO entiende
+   var(), lo descarta en silencio y sigue pintando con el color anterior —las cifras salían
+   todas grises—. Una prueba que no recorre el camino de verdad no prueba nada. */
 const cv2 = LAM.laminaResumen({
-  titulo: 'PRUEBA', tarjetas: [{ rotulo: 'QUEBRADOS', valor: 248, color: rojoTema }],
-  grande: { rotulo: 'X', valor: 1, color: rojoTema }, pie: ''
+  titulo: 'PRUEBA', tarjetas: [{ rotulo: 'QUEBRADOS', valor: 248, color: 'var(--danger)' }],
+  pie: ''
 });
 const vent2 = [...document.querySelectorAll('body > div')].pop();
 const escD = cv2.width / 460;
+/* Sin número grande la tarjeta se estira: la cifra queda más abajo. */
 const px = cv2.getContext('2d').getImageData(
-  Math.round(30 * escD), Math.round(108 * escD), Math.round(180 * escD), Math.round(24 * escD)).data;
+  Math.round(30 * escD), Math.round(163 * escD), Math.round(180 * escD), Math.round(40 * escD)).data;
 let masRojo = null, mejor = -1;
 for (let i = 0; i < px.length; i += 4) {
   const d = px[i] - Math.max(px[i + 1], px[i + 2]);
@@ -164,7 +173,10 @@ const brilloTema = bril(LAM.aRGB(rojoTema));
 ok('el rojo sale con el brillo del tema (' + bril(masRojo).toFixed(2)
    + ' contra ' + brilloTema.toFixed(2) + '), no oscurecido',
    Math.abs(bril(masRojo) - brilloTema) < 0.08);
-ok('y es rojo de verdad, no marrón', masRojo[0] - Math.max(masRojo[1], masRojo[2]) > 60);
+ok('y es rojo de verdad, no gris ni marrón', masRojo[0] - Math.max(masRojo[1], masRojo[2]) > 60);
+ok('sin número grande, las tarjetas se estiran y no queda un hueco abajo',
+   /const altoT = grande \? 66 : 162;/.test(
+     await (await fetch('../js/services_v245/laminas.js?z=' + Date.now())).text()));
 [...vent2.querySelectorAll('button')].pop().click();
 
 document.documentElement.setAttribute('data-tema', 'pbi');
