@@ -24,7 +24,7 @@
  * }
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0499';
+import { icono } from '../services_v245/iconos.js?v=29.0500';
 
 const nf = (n) => Number(n || 0).toLocaleString('es-PE');
 

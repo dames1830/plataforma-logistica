@@ -23,7 +23,7 @@
  * 43. El ultimo tramo del SKU es un indice, y la talla de verdad viene al final de la
  * descripcion -`...BATA INDUSTRIALS-1-43`-. Se usa `extractTalla`, que es la que ya
  * resuelve esto en toda la plataforma; escribir otra aca seria tener dos verdades. */
-import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0499';
+import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0500';
 
 export const NIVELES_RESERVA = ['H', 'G', 'F', 'E', 'D'];
 export const COLS_RESERVA = 12;
@@ -218,38 +218,68 @@ export const consolidacionDeReserva = (filas, idx) => {
 
 
 /**
- * DE QUE DIA ES LA FOTO QUE HAY AHORA MISMO EN LA RESERVA.
+ * DE CUANDO ES LA FOTO QUE HAY AHORA MISMO EN LA RESERVA.
  *
- * Se guarda UNA sola foto por dia, la del ancla de la NOCHE. Regla de Daniel, 21-ago-2026:
- * *"en la mañana no quiero que se actualice, solo en la noche nada mas"*.
+ * LOS DOS CORTES CUENTAN: el ancla de la NOCHE y el de la MAÑANA. Daniel, 28-ago-2026:
+ * *"quiero que ese reporte se actualice tambien con el stock ancla de las siete de la
+ * mañana [...] que el dia de hoy se actualice solamente por hoy dia a estas horas"*.
  *
- * LA HORA NO ESTA ESCRITA ACA. Entra por parametro desde Configuracion -> Parametros
- * (`ancla_noche`), que es
- * donde Daniel la cambia: *"la cosa es que siempre tiene que mirar a la hora de la interfaz.
- * No es una hora fija, porque yo lo puedo cambiar"*. Si la mueve a las 20:00, esto la sigue
- * sin tocar una linea. Si apaga el dia en los checks, ese dia no hay foto y el calendario
- * lo muestra vacio, que es la verdad.
+ * Cambia una regla suya anterior -21-ago-2026: *"en la mañana no quiero que se actualice,
+ * solo en la noche nada mas"*-. El motivo del cambio: a media mañana el reporte mostraba
+ * el dia ANTERIOR, porque hasta las 19:00 el sello no avanzaba. Con el ancla de las 07:00
+ * ya publicando stock, esperar doce horas para ver el numero de hoy no tenia sentido.
  *
- * Antes del ancla, lo que hay cargado sigue siendo la foto de ANOCHE: por eso el dia
- * retrocede uno. Devuelve null si hoy no toca ancla de noche.
+ * QUEDA UNA SOLA FOTO POR DIA, no dos. La de la mañana ocupa el dia hasta que la noche la
+ * reemplaza, asi que los dias pasados siguen siendo la foto de la noche -que es el
+ * compromiso- y solo el dia en curso muestra el corte de la mañana. La `hora` que devuelve
+ * dice cual de los dos se esta viendo, y por eso quien busca una foto guardada de HOY tiene
+ * que comparar fecha Y hora: si no, a las 19:00 encontraria la de la mañana y no se
+ * actualizaria nunca.
+ *
+ * LAS HORAS NO ESTAN ESCRITAS ACA. Entran por parametro desde Configuracion -> Parametros
+ * (`ancla_noche` y `ancla_manana`), que es donde Daniel las cambia: *"la cosa es que
+ * siempre tiene que mirar a la hora de la interfaz. No es una hora fija, porque yo lo puedo
+ * cambiar"*. Si mueve una a las 20:00, esto la sigue sin tocar una linea, y un dia apagado
+ * en los checks no tiene foto -que es la verdad-.
+ *
+ * Llamarla con un solo ancla sigue funcionando igual que antes.
  */
-export const selloDeLaFoto = (ahora, anclaNoche) => {
-    const noche = anclaNoche || {};
-    if (noche.activa === false) return null;
-    const hhmm = String(noche.hora || '19:00');
-    const m = hhmm.match(/^(\d{1,2}):(\d{2})$/);
-    if (!m) return null;
-    const corte = (parseInt(m[1], 10) * 60) + parseInt(m[2], 10);
+export const selloDeLaFoto = (ahora, anclaNoche, anclaManana) => {
     const ref = ahora instanceof Date ? ahora : new Date();
-    const ahoraMin = (ref.getHours() * 60) + ref.getMinutes();
-    const dia = new Date(ref);
-    if (ahoraMin < corte) dia.setDate(dia.getDate() - 1);
+    const DIAS = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
     const dd = (n) => String(n).padStart(2, '0');
-    const fecha = `${dia.getFullYear()}-${dd(dia.getMonth() + 1)}-${dd(dia.getDate())}`;
-    // Los dias apagados en los checks no tienen ancla, asi que no tienen foto.
-    const clave = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'][dia.getDay()];
-    if (noche.dias && noche.dias[clave] === false) return null;
-    return { fecha, hora: hhmm };
+
+    // Los cortes que publican stock, del mas tarde al mas temprano: asi, al mirar un dia,
+    // el primero que calce es el ultimo que corrio.
+    const cortes = [];
+    [anclaNoche, anclaManana].forEach((a) => {
+        const c = a || {};
+        if (!a || c.activa === false) return;
+        const m = String(c.hora || '').match(/^(\d{1,2}):(\d{2})$/);
+        if (!m) return;
+        cortes.push({ min: (parseInt(m[1], 10) * 60) + parseInt(m[2], 10),
+                      hora: String(c.hora), dias: c.dias });
+    });
+    if (!cortes.length) return null;
+    cortes.sort((a, b) => b.min - a.min);
+
+    /* Se camina hacia atras dia por dia hasta dar con un corte que ya paso y cuyo dia este
+       encendido. Ocho dias de margen: con la semana entera apagada no hay foto y punto,
+       pero una semana con dias sueltos apagados -el domingo- si tiene que encontrarla. */
+    const ahoraMin = (ref.getHours() * 60) + ref.getMinutes();
+    for (let atras = 0; atras < 8; atras++) {
+        const dia = new Date(ref);
+        dia.setDate(dia.getDate() - atras);
+        const clave = DIAS[dia.getDay()];
+        for (let i = 0; i < cortes.length; i++) {
+            const c = cortes[i];
+            if (atras === 0 && c.min > ahoraMin) continue;   // hoy, pero todavia no llego
+            if (c.dias && c.dias[clave] === false) continue; // ese dia no corre
+            return { fecha: `${dia.getFullYear()}-${dd(dia.getMonth() + 1)}-${dd(dia.getDate())}`,
+                     hora: c.hora };
+        }
+    }
+    return null;
 };
 
 /**
