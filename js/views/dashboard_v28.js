@@ -1,34 +1,34 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0470';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0471';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0470';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0470';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0470';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0470';
-import * as metasService from '../services_v245/metasService.js?v=29.0470';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0470';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0470';
+import * as adminService from '../services_v245/adminService.js?v=29.0471';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0471';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0471';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0471';
+import * as metasService from '../services_v245/metasService.js?v=29.0471';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0471';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0471';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0470';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0470';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0470';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0470';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0470';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0470';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0470';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0470';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0470';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0470';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0470';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0470';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0470';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0470';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0470';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0470';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0470';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0470';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0470';
-import { montarSlotting } from './slotting.js?v=29.0470';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0471';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0471';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0471';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0471';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0471';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0471';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0471';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0471';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0471';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0471';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0471';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0471';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0471';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0471';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0471';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0471';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0471';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0471';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0471';
+import { montarSlotting } from './slotting.js?v=29.0471';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -391,7 +391,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0470';
+const VERSION = '29.0471';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5464,7 +5464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0470');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0471');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5727,7 +5727,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0470');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0471');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -7049,32 +7049,33 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
         const huecoTar = 7;
         const anchoTar = (ancho - MARGEN * 2 - huecoTar * (tarjetas.length - 1)) / tarjetas.length;
 
-        /* Los dos simbolos de siempre, dibujados a mano: un canvas no tiene los iconos de
-           la plataforma, que son SVG. El circulo es igual en los dos; lo que cambia es la
-           flecha al sesgo del hombre y la cruz debajo de la mujer. */
-        const dibujarSexo = (x, y, r, esHombre, color) => {
-            g.strokeStyle = colorReal(color);
-            g.lineWidth = 1.5;
-            g.lineCap = 'round';
+        /* LAS DOS SILUETAS, del tipo de las de un cartel de servicios: cabeza y cuerpo, en
+           relleno. Se dibujan a mano porque un canvas no tiene los iconos de la
+           plataforma, que son SVG. Lo pidio asi Daniel el 27-ago-2026: *"iconos de hombre
+           y mujer (como sombras)"*.
+           La cabeza es igual en las dos; lo unico que cambia es el cuerpo, que en el
+           hombre baja casi recto desde los hombros y en la mujer se abre hacia abajo. */
+        const ANCHO_SILUETA = 13;
+        const dibujarSexo = (cx, cy, alto, esHombre, color) => {
+            const r = alto * 0.19;                       // la cabeza
+            const yCab = cy - alto / 2 + r;
+            const yHom = yCab + r + alto * 0.05;         // donde arrancan los hombros
+            const yPie = cy + alto / 2;
+            const hom = alto * 0.29;                     // medio ancho de hombros
+            const pie = esHombre ? alto * 0.24 : alto * 0.42;
+            g.fillStyle = colorReal(color);
             g.beginPath();
-            g.arc(x, y, r, 0, Math.PI * 2);
-            g.stroke();
+            g.arc(cx, yCab, r, 0, Math.PI * 2);
+            g.fill();
             g.beginPath();
-            if (esHombre) {
-                const d = r * 0.72, px = x + d, py = y - d;      // la flecha, hacia arriba
-                g.moveTo(x + r * 0.72, y - r * 0.72);
-                g.lineTo(px + r * 0.95, py - r * 0.95);
-                g.moveTo(px + r * 0.95, py - r * 0.95);
-                g.lineTo(px + r * 0.25, py - r * 0.95);
-                g.moveTo(px + r * 0.95, py - r * 0.95);
-                g.lineTo(px + r * 0.95, py - r * 0.25);
-            } else {
-                g.moveTo(x, y + r);                              // la cruz, hacia abajo
-                g.lineTo(x, y + r * 2.3);
-                g.moveTo(x - r * 0.65, y + r * 1.7);
-                g.lineTo(x + r * 0.65, y + r * 1.7);
-            }
-            g.stroke();
+            g.moveTo(cx - hom, yHom + alto * 0.10);
+            g.quadraticCurveTo(cx - hom, yHom, cx - hom * 0.5, yHom);
+            g.lineTo(cx + hom * 0.5, yHom);
+            g.quadraticCurveTo(cx + hom, yHom, cx + hom, yHom + alto * 0.10);
+            g.lineTo(cx + pie, yPie);
+            g.lineTo(cx - pie, yPie);
+            g.closePath();
+            g.fill();
         };
 
         tarjetas.forEach((t, i) => {
@@ -7097,10 +7098,10 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
                    cifras el conjunto se corria a la derecha y el segundo rozaba el borde. */
                 g.font = `700 19px ${FUENTE}`;
                 const anchoNum = g.measureText(String(n)).width;
-                const total = 9.2 + 6 + anchoNum;                 // dibujo + hueco + numero
+                const total = ANCHO_SILUETA + 6 + anchoNum;       // silueta + hueco + numero
                 const izq = cx - total / 2;
-                dibujarSexo(izq + 4.6, yTar + 15, 4.6, esH, col);
-                texto(n, izq + 9.2 + 6, yTar + 15, { color: col, tam: 19, peso: 700, alinear: 'left' });
+                dibujarSexo(izq + ANCHO_SILUETA / 2, yTar + 14, 16, esH, col);
+                texto(n, izq + ANCHO_SILUETA + 6, yTar + 15, { color: col, tam: 19, peso: 700, alinear: 'left' });
             });
             /* Si alguien no esta marcado en el maestro NO se reparte a ojo: se dice. Un
                cuadro que no cuadra con OPERARIOS se lee como error, y con razon. */
@@ -18684,7 +18685,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0470 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0471 | MOBILE PORTAL
                             </div>
                     </div>
 

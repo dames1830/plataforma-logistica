@@ -138,7 +138,10 @@ ok('NO se deduce del nombre — sería inventar un dato sobre una persona',
    /NO se deduce[\s\S]{0,40}del nombre/.test(trozo));
 ok('avisa cuántos quedaron sin marcar en vez de repartirlos', /SIN MARCAR/.test(trozo));
 ok('los dos dibujos se hacen a mano: un canvas no tiene los íconos SVG',
-   /const dibujarSexo = \(x, y, r, esHombre, color\)/.test(trozo));
+   /const dibujarSexo = \(cx, cy, alto, esHombre, color\)/.test(trozo));
+ok('son siluetas rellenas, no trazos', !/strokeStyle/.test(trozo.slice(trozo.indexOf('dibujarSexo'), trozo.indexOf('dibujarSexo') + 1200)));
+ok('y la de la mujer se abre hacia abajo, la del hombre no',
+   /pie = esHombre \? alto \* 0\.24 : alto \* 0\.42/.test(trozo));
 ok('el ancho de tarjeta se reparte entre las que haya, no entre 4 fijas',
    /anchoTar = \(ancho - MARGEN \* 2 - huecoTar \* \(tarjetas\.length - 1\)\) \/ tarjetas\.length/.test(trozo));
 
