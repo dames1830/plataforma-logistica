@@ -63,12 +63,18 @@
   (function () {
     try {
       var TEMAS = ['indigo', 'pbi', 'pbi-classic', 'negro'];
-      var usuario = 'anon';
+      var usuario = null;
       var ses = localStorage.getItem('logistics_session');
       if (ses) { var u = JSON.parse(ses); if (u && u.username) usuario = u.username; }
       // El de esta persona; si no hay -tipico en el login, que corre ANTES de
       // que nadie entre-, el ultimo que se uso en esta computadora.
-      var t = localStorage.getItem('deam_tema_' + usuario);
+      //
+      // SIN USUARIO NO SE PREGUNTA POR 'deam_tema_anon'. Esa clave no es de nadie, y
+      // leerla hacia que una eleccion vieja guardada sin dueno le ganara al tema de
+      // verdad: el login salia negro con la plataforma en Power BI. Es la misma regla
+      // que aplica getTema() en temaService.js -y hay que cambiarla en LOS DOS, porque
+      // este adelanto es una copia a mano del servicio.
+      var t = usuario ? localStorage.getItem('deam_tema_' + usuario) : null;
       if (TEMAS.indexOf(t) < 0) t = localStorage.getItem('deam_tema_ultimo');
       document.documentElement.setAttribute('data-tema', TEMAS.indexOf(t) >= 0 ? t : 'indigo');
     } catch (e) {
@@ -78,7 +84,7 @@
   </script>
 
   <!-- ENTORNO: decide produccion vs pruebas. DEBE ir antes que cualquier otro script. -->
-  <script src="js/env.js?v=29.0477"></script>
+  <script src="js/env.js?v=29.0478"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logística Deam1830</title>
@@ -92,14 +98,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   
-  <link rel="stylesheet" href="css/main.css?v=29.0477" id="main_css">
+  <link rel="stylesheet" href="css/main.css?v=29.0478" id="main_css">
   <!-- Los temas van DESPUES de main.css a proposito: redefinen las mismas
        variables (--primary, --bg-dark, --text-muted...) y con la misma
        especificidad gana la ultima hoja que se carga. -->
-  <link rel="stylesheet" href="css/temas.css?v=29.0477" id="temas_css">
+  <link rel="stylesheet" href="css/temas.css?v=29.0478" id="temas_css">
   <!-- Los componentes van DESPUES de los temas: usan sus tokens y sus clases
        tienen que poder ganarle a lo generico de main.css. -->
-  <link rel="stylesheet" href="css/componentes.css?v=29.0477" id="componentes_css">
+  <link rel="stylesheet" href="css/componentes.css?v=29.0478" id="componentes_css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
   <style>
     #sync-indicator {
@@ -179,11 +185,11 @@
   <div id="sync-indicator" class="sync-online">
     <span id="sync-icon" style="font-size:var(--t-lg); user-select: none;">…</span>
     <div class="sync-tooltip">
-      <div id="sync-text" style="font-weight: 800; font-size:var(--t-sm); color: var(--text-strong); white-space: nowrap;">SISTEMA v29.0477 ONLINE</div>
+      <div id="sync-text" style="font-weight: 800; font-size:var(--t-sm); color: var(--text-strong); white-space: nowrap;">SISTEMA v29.0478 ONLINE</div>
       <div style="font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.4); margin-top: 4px; white-space: nowrap;">System is currently up to date and syncing.</div>
     </div>
   </div>
-  <script src="js/app.js?v=29.0477" type="module">
+  <script src="js/app.js?v=29.0478" type="module">
     document.addEventListener('DOMContentLoaded', () => {
       const syncIndicator = document.getElementById('sync-indicator');
       syncIndicator.addEventListener('click', (e) => {

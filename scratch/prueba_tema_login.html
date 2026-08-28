@@ -1,0 +1,94 @@
+<!-- El tema del login: no puede ganarle una elección vieja guardada sin usuario.
+     Daniel, 28-ago-2026: "estoy en el tema de Power BI y me aparece el login negro". -->
+<meta charset="utf-8">
+<title>Prueba: el tema del login</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1000px;margin:0 auto;white-space:pre-wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 15000);
+
+const T = await import('../js/services_v245/temaService.js?z=' + Date.now());
+const guardado = {};
+['deam_tema_anon','deam_tema_ultimo','deam_tema_dames1830'].forEach(k => guardado[k] = localStorage.getItem(k));
+const limpiar = () => ['deam_tema_anon','deam_tema_ultimo','deam_tema_dames1830']
+  .forEach(k => localStorage.removeItem(k));
+
+eco('<span class="t">── EL CASO DE DANIEL ──</span>');
+/* Su máquina: eligió Power BI estando dentro, y arrastraba un "negro" viejo guardado
+   bajo la clave anónima. El login preguntaba por la anónima y salía negro. */
+limpiar();
+localStorage.setItem('deam_tema_anon', 'negro');
+localStorage.setItem('deam_tema_ultimo', 'pbi');
+localStorage.setItem('deam_tema_dames1830', 'pbi');
+ok('dentro, con su usuario, sale Power BI — ' + T.getTema('dames1830', null),
+   T.getTema('dames1830', null) === 'pbi');
+ok('y en el login, SIN usuario, también — ' + T.getTema(null, null),
+   T.getTema(null, null) === 'pbi');
+ok('ya no le gana el "negro" guardado sin dueño', T.getTema(undefined, null) !== 'negro');
+
+eco('\n<span class="t">── Y LO DEMÁS SIGUE FUNCIONANDO ──</span>');
+limpiar();
+localStorage.setItem('deam_tema_dames1830', 'negro');
+localStorage.setItem('deam_tema_ultimo', 'pbi');
+ok('la elección de la persona le gana al último de la máquina — ' + T.getTema('dames1830', null),
+   T.getTema('dames1830', null) === 'negro');
+limpiar();
+localStorage.setItem('deam_tema_ultimo', 'pbi-classic');
+ok('quien nunca eligió hereda el último de la máquina — ' + T.getTema('otro', null),
+   T.getTema('otro', null) === 'pbi-classic');
+limpiar();
+ok('sin nada guardado, el tema asignado por el administrador manda — ' + T.getTema('otro', 'negro'),
+   T.getTema('otro', 'negro') === 'negro');
+
+eco('\n<span class="t">── ELEGIR NO ENSUCIA LA CLAVE ANÓNIMA ──</span>');
+limpiar();
+T.setTema('negro', undefined);          // una pantalla que llama sin usuario
+ok('elegir sin usuario NO escribe deam_tema_anon — ' + localStorage.getItem('deam_tema_anon'),
+   localStorage.getItem('deam_tema_anon') === null);
+ok('pero sí queda como el último de la máquina — ' + localStorage.getItem('deam_tema_ultimo'),
+   localStorage.getItem('deam_tema_ultimo') === 'negro');
+T.setTema('pbi', 'dames1830');
+ok('y con usuario sí se guarda el suyo — ' + localStorage.getItem('deam_tema_dames1830'),
+   localStorage.getItem('deam_tema_dames1830') === 'pbi');
+
+eco('\n<span class="t">── Y EL ADELANTO DE index.html, QUE ES UNA COPIA A MANO ──</span>');
+/* Lo primero que pinta la pantalla es un <script> dentro de index.html que repite esta
+   misma cuenta. Si se arregla solo el servicio, el login sigue saliendo mal el primer
+   instante —y ese instante es justo el login—. */
+const boot = await (await fetch('../index.html?z=' + Date.now())).text();
+ok('el adelanto tampoco pregunta por la clave anónima',
+   /var t = usuario \? localStorage\.getItem\('deam_tema_' \+ usuario\) : null;/.test(boot));
+ok('y arranca con usuario en null, no en la cadena "anon"',
+   /var usuario = null;/.test(boot) && !/var usuario = 'anon';/.test(boot));
+ok('deja escrito que hay que cambiar los dos sitios',
+   /hay que cambiarla en LOS DOS/.test(boot));
+
+eco('\n<span class="t">── SE PONE ROJA SI SE QUITA EL ARREGLO ──</span>');
+/* Con el código viejo -leer la clave anónima siempre- el login volvía a salir negro. */
+const viejo = (usuario) => {
+  const g = localStorage.getItem('deam_tema_' + (usuario || 'anon'));
+  return g || localStorage.getItem('deam_tema_ultimo');
+};
+limpiar();
+localStorage.setItem('deam_tema_anon', 'negro');
+localStorage.setItem('deam_tema_ultimo', 'pbi');
+ok('el código viejo daba "' + viejo(null) + '" en el login, el nuevo da "' + T.getTema(null, null) + '"',
+   viejo(null) === 'negro' && T.getTema(null, null) === 'pbi');
+
+limpiar();
+Object.entries(guardado).forEach(([k, v]) => { if (v !== null) localStorage.setItem(k, v); });
+document.documentElement.setAttribute('data-tema', 'pbi');
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>El login usa el último tema de la máquina y ya no una elección sin dueño.</b>');
+</script>

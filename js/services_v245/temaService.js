@@ -150,8 +150,20 @@ export const existeTema = (id) => TEMAS.some(t => t.id === id);
  */
 export const getTema = (usuario, asignado) => {
   try {
-    const g = localStorage.getItem(claveDe(usuario));
-    if (g && existeTema(g)) return g;
+    /* SIN USUARIO NO HAY ELECCION PERSONAL QUE VALGA.
+     *
+     * El login y la pantalla de carga corren ANTES de saber quien entra, asi que llegan
+     * aca con `usuario` vacio y `claveDe` devuelve `deam_tema_anon`. Leer esa clave hacia
+     * que una eleccion vieja -guardada alguna vez sin usuario- le ganara al tema de verdad:
+     * Daniel, 28-ago-2026, *"estoy en el tema de Power BI y me aparece el login negro"*.
+     * Medido en su maquina: `deam_tema_anon` decia negro sin que nadie lo hubiera elegido.
+     *
+     * Sin usuario se salta directo al ultimo de ESTA computadora, que si esta al dia
+     * -lo escribe `aplicarTemaDeUsuario` cada vez que alguien entra-. */
+    if (usuario) {
+      const g = localStorage.getItem(claveDe(usuario));
+      if (g && existeTema(g)) return g;
+    }
     if (asignado && existeTema(asignado)) return asignado;
     // Sin nada guardado para esta persona, se hereda el ultimo de la maquina:
     // es mucho mejor que saltar de golpe al tema de fabrica.
@@ -184,7 +196,10 @@ export const aplicarTema = (id) => {
 export const setTema = (id, usuario) => {
   const tema = aplicarTema(id);
   try {
-    localStorage.setItem(claveDe(usuario), tema);
+    /* Y NO SE GUARDA BAJO 'anon'. Esa clave no es de nadie: la escribia cualquier pantalla
+       que llamara sin usuario, y despues el login la leia como si fuera una eleccion. El
+       ultimo de la maquina alcanza para ese caso. */
+    if (usuario) localStorage.setItem(claveDe(usuario), tema);
     // Y aparte, suelto: es el que van a usar el login y la pantalla de carga,
     // que corren antes de saber quien entra.
     localStorage.setItem(CLAVE_ULTIMO, tema);
