@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0465';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0466';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0465';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0465';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0465';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0465';
-import * as metasService from '../services_v245/metasService.js?v=29.0465';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0465';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0465';
+import * as adminService from '../services_v245/adminService.js?v=29.0466';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0466';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0466';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0466';
+import * as metasService from '../services_v245/metasService.js?v=29.0466';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0466';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0466';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0465';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0465';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0465';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0465';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0465';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0465';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0465';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0465';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0465';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0465';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0465';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0465';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0465';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0465';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0465';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0465';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0465';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0465';
-import { montarSlotting } from './slotting.js?v=29.0465';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0466';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0466';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0466';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0466';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0466';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0466';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0466';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0466';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0466';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0466';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0466';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0466';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0466';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0466';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0466';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0466';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0466';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0466';
+import { montarSlotting } from './slotting.js?v=29.0466';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0465';
+const VERSION = '29.0466';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5463,7 +5463,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0465');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0466');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5726,7 +5726,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0465');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0466');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -16253,8 +16253,20 @@ const renderRFSection = (container) => {
    * la matriz de ubicaciones -ocupadas sobre existentes-.
    * ══════════════════════════════════════════════════════════════════════════════ */
   const laminaUCA = (total, vacias, ocupadas) => {
-    const ESCALA = 2, ZOOM = 1.25;
     const ANCHO = 460, ALTO = 268;
+    const ESCALA = 2;
+    /* CUANTO MAS GRANDE SE DIBUJE, MEJOR LLEGA POR WHATSAPP. Daniel la captura de la
+       pantalla y la manda al grupo de sus jefes; WhatsApp reencoda la foto y en un dibujo
+       chico eso se come los trazos de los numeros. Antes salia a 575 puntos de ancho.
+       Ahora se hace tan grande como entre en la pantalla, con dos candados:
+         - COMPLETA, SIN SCROLL. Los 130 puntos que se restan del alto son el boton Cerrar,
+           el espacio entre medio y el margen de la ventana. Si la lamina no entra entera,
+           la captura sale cortada y no sirve.
+         - HASTA 2,4 VECES. WhatsApp achica las fotos que pasan de ~1.600 puntos, asi que
+           mas grande que eso no agrega nitidez: solo pesa mas. */
+    const cabe = Math.min((window.innerWidth * 0.92) / ANCHO,
+                          (window.innerHeight - 130) / ALTO);
+    const ZOOM = Math.max(1.25, Math.min(2.4, cabe));
     const FUENTE = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 
     const lienzo = document.createElement('canvas');
@@ -16321,7 +16333,6 @@ const renderRFSection = (container) => {
     texto('OCUPACIÓN DE LA RESERVA', ANCHO / 2, 174, 11, SUAVE, 700, 'center');
     texto(pct + '%', ANCHO / 2, 206, 40, col('--warning') || '#d29922', 800, 'center');
 
-    texto('Logística Deam1830', 24, 252, 10, SUAVE, 400);
     texto(mil(vacias) + ' ubicaciones libres', ANCHO - 24, 252, 10, SUAVE, 400, 'right');
 
     /* La misma ventana que usa el cuadro de asistencia: fondo oscuro, la lamina y Cerrar. */
@@ -18505,7 +18516,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0465 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0466 | MOBILE PORTAL
                             </div>
                     </div>
 

@@ -53,13 +53,15 @@ ok('las tres cifras cuadran: ' + VACIAS + ' + ' + OCUPADAS + ' = ' + TOTAL,
 
 eco('\n<span class="t">── LA LÁMINA, EN LOS CUATRO TEMAS ──</span>');
 const lienzo = document.getElementById('lienzo');
-let ultima = null;
+let ultima = null, medidas = null;
 for (const tema of ['indigo', 'pbi', 'pbi-classic', 'negro']) {
   document.documentElement.setAttribute('data-tema', tema);
   laminaUCA(TOTAL, VACIAS, OCUPADAS);
   const fondo = [...document.querySelectorAll('body > div')].pop();
   const cv = fondo.querySelector('canvas');
   ok(tema + ': dibujó una lámina de ' + cv.width + '×' + cv.height, !!cv && cv.width > 0);
+  medidas = { interna: cv.width, pantalla: Math.round(cv.getBoundingClientRect().width),
+              seCorta: fondo.scrollHeight > fondo.clientHeight + 1 };
   /* Se copia a la página para poder mirarla, y se cierra la ventana. */
   const fig = document.createElement('figure');
   fig.innerHTML = '<figcaption>' + tema + '</figcaption>';
@@ -74,6 +76,23 @@ for (const tema of ['indigo', 'pbi', 'pbi-classic', 'negro']) {
 }
 ok('la ventana se cierra con el botón', !ultima.isConnected);
 
+eco('\n<span class="t">── EL TAMAÑO, QUE ES LO QUE DECIDE SI WHATSAPP LA ARRUINA ──</span>');
+/* Daniel captura la pantalla y la manda al grupo de sus jefes. WhatsApp reencoda la foto,
+   y en un dibujo chico eso se come los trazos de los números. Antes salía a 575 puntos. */
+ok('en pantalla mide ' + medidas.pantalla + ' puntos de ancho, contra los 575 de antes',
+   medidas.pantalla > 575);
+ok('le saca al menos un 40% a la de antes — ×' + (medidas.pantalla / 575).toFixed(2),
+   medidas.pantalla >= 575 * 1.4);
+ok('el dibujo interno es el doble de fino: ' + medidas.interna + ' puntos',
+   medidas.interna >= medidas.pantalla * 1.9);
+ok('no pasa de ~1.600, que es donde WhatsApp achica y deja de ganar nitidez',
+   medidas.pantalla <= 1600);
+/* SIN SCROLL: si la lámina no entra entera, la captura sale cortada y no sirve. */
+ok('entra entera, sin scroll — en una ventana de ' + window.innerHeight + ' de alto',
+   !medidas.seCorta);
+ok('el tamaño se calcula contra la pantalla, no es un número fijo',
+   /window\.innerWidth/.test(trozo) && /window\.innerHeight/.test(trozo));
+
 eco('\n<span class="t">── LO QUE DICE LA LÁMINA ──</span>');
 /* No se puede leer el texto de un canvas, así que se comprueba la CUENTA que decide el
    número grande: el porcentaje de OCUPACIÓN, que es el que Daniel reporta. */
@@ -85,6 +104,7 @@ ok('la lámina lo calcula así', /ocupadas \/ total \* 100/.test(trozo));
 ok('el título dice UBICACIONES DE LA RESERVA', /UBICACIONES DE LA RESERVA/.test(trozo));
 ok('lleva las tres cifras', /ANALIZADAS/.test(trozo) && /VACÍAS/.test(trozo) && /OCUPADAS/.test(trozo));
 ok('y la fecha y hora', /toLocaleDateString\('es-PE'\)/.test(trozo));
+ok('ya NO lleva la firma "Logística Deam1830" al pie', !/Logística Deam1830/.test(trozo));
 ok('se muestra, no se descarga — como el cuadro de asistencia',
    /document\.body\.appendChild\(fondo\)/.test(trozo) && !/\.download/.test(trozo));
 
