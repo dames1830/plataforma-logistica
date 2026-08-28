@@ -250,3 +250,40 @@ curl.exe -L -o horario_robot.py https://raw.githubusercontent.com/dames1830/plat
 
 schtasks /Create /TN "Robot Archivado" /TR "C:\wms_scraping\archivar.bat" /SC MINUTE /MO 10 /ST 00:00 /RU SYSTEM /F
 ```
+
+---
+
+## `avisar_log.py` — le cuenta a la web cómo le fue a la corrida
+
+Daniel, 28-ago-2026: *"¿cómo me doy cuenta de que no está corriendo?"*. El Stock Reserva de
+las 07:00 llevaba seis días sin bajar y nadie se enteró, porque el robot lo dejaba escrito en
+un `run_*.log` del servidor que nadie abre.
+
+Este lee el `run_*.log` más nuevo, traduce el resumen a anotaciones y las manda al módulo
+**Configuración → LOG** de la web.
+
+**Va aparte del robot grande a propósito.** Cuando una descarga falla, `wms_automation_final.py`
+se rinde y `generar_slotting.py` **nunca corre** — o sea que un aviso metido ahí adentro se
+quedaría callado justo el día que hace falta. Este corre después, pase lo que pase.
+
+```powershell
+python C:\wms_scraping\avisar_log.py --solo-ver
+python C:\wms_scraping\avisar_log.py
+```
+
+Con `--solo-ver` muestra lo que mandaría sin mandarlo. Si el envío falla no devuelve error:
+avisar no puede tumbar una corrida.
+
+### Instalarlo
+
+```powershell
+cd C:\wms_scraping
+curl.exe -L -o avisar_log.py https://raw.githubusercontent.com/dames1830/plataforma-logistica/beta/robot/avisar_log.py
+```
+
+Y agregarlo al final del `.bat` que llama al robot, después de la línea del
+`wms_automation_final.py`:
+
+```
+python C:\wms_scraping\avisar_log.py
+```
