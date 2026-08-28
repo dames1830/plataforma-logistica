@@ -1,0 +1,118 @@
+<!-- El servicio de Capacidad tiene que dar EXACTAMENTE lo mismo que el script que armó la
+     maqueta, con los mismos datos de entrada. Es la única forma de saber que la cuenta se
+     portó bien y no "parecida". -->
+<meta charset="utf-8">
+<title>Prueba: el servicio de Capacidad</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1100px;margin:0 auto;white-space:pre-wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 90000);
+const mil = (n) => Number(n || 0).toLocaleString('es-PE');
+
+const S = await import('../js/services_v245/capacidadService.js?z=' + Date.now());
+eco('bajando los mismos datos con los que se armó la maqueta…');
+const [cfg, act, art, patron] = await Promise.all(
+  ['_config.json', '_activo.json', '_art.json', '_capacidad.json']
+    .map(f => fetch(f + '?z=' + Date.now()).then(r => r.json())));
+eco('config ' + Object.keys(cfg.data).length + ' claves · activo ' + mil(act.data.length)
+  + ' filas · maestro ' + mil(art.data.length) + ' filas\n');
+
+const t0 = performance.now();
+const D = S.calcularCapacidad(cfg.data, art.data, act.data);
+const ms = Math.round(performance.now() - t0);
+
+eco('<span class="t">── EL SEMÁFORO ──</span>');
+['hay', 'pide', 'libre', 'cuerpos', 'vacios', 'capProm', 'falta', 'cuerposFalta'].forEach(k =>
+  ok(k + ': ' + mil(D.semaforo[k]) + (D.semaforo[k] === patron.semaforo[k] ? ''
+     : '  ← el patrón dice ' + mil(patron.semaforo[k])),
+     D.semaforo[k] === patron.semaforo[k]));
+
+eco('\n<span class="t">── PASO 1 · CUÁNTO ENTRA ──</span>');
+ok('el encogimiento entre rangos: ×' + D.encoge, D.encoge === patron.encoge);
+let malCub = [];
+patron.cubicaje.forEach((f, i) => {
+  S.RANGOS.forEach(r => {
+    const a = D.cubicaje[i].rangos[r], b = f.rangos[r];
+    if (a.cap !== b.cap || a.fuente !== b.fuente || a.n !== b.n)
+      malCub.push(f.tipo + ' ' + r + ': ' + a.cap + '/' + a.fuente + ' vs ' + b.cap + '/' + b.fuente);
+  });
+});
+ok('las 24 casillas del cubicaje, iguales' + (malCub.length ? ' — ' + malCub.slice(0, 4).join(' · ') : ''),
+   malCub.length === 0);
+ok('los que faltan por cubicar, iguales',
+   S.RANGOS.every(r => D.sinCubicar[r] === patron.sinCubicar[r]));
+
+eco('\n<span class="t">── PASO 5 · LOS TOPES ──</span>');
+ok('salen ' + mil(D.topes.length) + ' filas', D.topes.length === patron.topes.length);
+['total', 'pasan', 'entran', 'sinMedida', 'todo', 'escolar', 'unCuerpo', 'perilla'].forEach(k =>
+  ok(k + ': ' + mil(D.resumenTopes[k]) + (D.resumenTopes[k] === patron.resumenTopes[k] ? ''
+     : '  ← el patrón dice ' + mil(patron.resumenTopes[k])),
+     D.resumenTopes[k] === patron.resumenTopes[k]));
+
+/* Fila por fila, todos los campos que se dibujan o se calculan. */
+const CAMPOS = ['marca', 'genero', 'talla', 'rango', 'tipo', 'skus', 'piso', 'tuyo', 'propone', 'cap', 'regimen', 'fijo'];
+let malFilas = [];
+patron.topes.forEach((p, i) => {
+  const m = D.topes[i];
+  if (!m) { malFilas.push('falta la fila ' + i); return; }
+  CAMPOS.forEach(c => {
+    if (JSON.stringify(m[c]) !== JSON.stringify(p[c]))
+      malFilas.push({ q: p.marca + '|' + p.genero + '|' + p.talla, campo: c,
+                      regimen: p.regimen, mio: m[c], pat: p[c],
+                      div: p.skus ? (p.piso / p.skus).toFixed(1) : '' });
+  });
+});
+/* LA UNICA DIFERENCIA PERMITIDA: el redondeo del punto cinco. Python redondea al par
+   —10,5 → 10— y el navegador sube —10,5 → 11—. No es un error de porte, y la del
+   navegador es la que espera una persona. Se exige que sea SOLO eso: el campo `fijo`, en
+   filas de régimen `todo`, y que la división caiga exactamente en .5. */
+const permitida = (d) => d.campo === 'fijo' && d.regimen === 'todo'
+  && Math.abs(d.mio - d.pat) === 1 && String(d.div).endsWith('.5');
+const noPermitidas = malFilas.filter(d => !permitida(d));
+ok('las ' + mil(patron.topes.length) + ' filas coinciden en sus ' + CAMPOS.length + ' campos'
+   + (noPermitidas.length ? ' — ' + noPermitidas.length + ' diferencias: '
+      + noPermitidas.slice(0, 3).map(d => d.q + ' → ' + d.campo).join(' · ') : ''),
+   noPermitidas.length === 0);
+eco('   <span style="color:var(--text-muted)">' + malFilas.length
+  + ' filas difieren en 1 por el redondeo del punto cinco, y solo por eso.</span>');
+ok('y en el mismo orden — primero los que entran',
+   D.topes.slice(0, 30).every((t, i) => t.marca === patron.topes[i].marca
+     && t.genero === patron.topes[i].genero && t.talla === patron.topes[i].talla));
+
+eco('\n<span class="t">── LA PERILLA ──</span>');
+/* Con la perilla al 100% cada fila pide su cuerpo entero; al 45% —lo que eligió Daniel—
+   pide menos. Y lo FIJO no se mueve: el escolar sigue en 50 pase lo que pase. */
+const cabe = D.semaforo.hay + D.semaforo.libre;
+const p100 = S.pideConPerilla(D, 100), p45 = S.pideConPerilla(D, 45);
+ok('al 100% pide ' + mil(p100) + ' y el piso aguanta ' + mil(cabe), p100 > cabe);
+ok('al 45% pide ' + mil(p45) + ', que es menos', p45 < p100);
+const max = S.perillaQueEntra(D, cabe);
+ok('el máximo con el que todavía entra: ' + max + '%',
+   S.pideConPerilla(D, max) <= cabe && S.pideConPerilla(D, max + 1) > cabe);
+const fijo = D.topes.reduce((a, t) => a + (t.regimen === 'perilla' ? 0 : t.skus * (t.fijo || 0)), 0);
+ok('lo fijo —escolar y un cuerpo— no lo mueve la perilla: ' + mil(fijo) + ' pares',
+   S.pideConPerilla(D, 1) >= fijo && S.pideConPerilla(D, 100) >= fijo);
+
+eco('\n<span class="t">── LO QUE SE MUESTRA SIN CALCULAR ──</span>');
+ok('las zonas por marca', Object.keys(D.zonasMarca).length === Object.keys(patron.zonasMarca).length);
+ok('la tabla de cuánto baja', Object.keys(D.cuantoBaja).length === Object.keys(patron.cuantoBaja).length);
+ok('las tallas comerciales', Object.keys(D.tallasComerciales).length === Object.keys(patron.tallasComerciales).length);
+ok('los 7 casos, en orden', D.casos.length === 7 && D.casos[0].n === 'Escolar');
+
+eco('\n<span class="t">── Y QUE NO TARDE ──</span>');
+ok('la cuenta entera tarda ' + mil(ms) + ' ms', ms < 8000);
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>El servicio da exactamente los mismos números que la maqueta aprobada.</b>');
+</script>

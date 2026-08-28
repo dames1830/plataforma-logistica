@@ -1,0 +1,69 @@
+<!-- La pantalla de Capacidad, montada con los datos de verdad. -->
+<meta charset="utf-8">
+<title>Prueba: la pantalla de Capacidad</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{margin:0;padding:14px;background:var(--panel-deeper);font:13px/1.7 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1120px;margin:0 auto 14px;white-space:pre-wrap}
+  #donde{max-width:1120px;margin:0 auto}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<div id="donde"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 60000);
+document.documentElement.setAttribute('data-tema', 'pbi');
+
+const { renderCapacidad } = await import('../js/views/capacidad.js?z=' + Date.now());
+const [cfg, act, art] = await Promise.all(['_config.json','_activo.json','_art.json']
+  .map(f => fetch(f + '?z=' + Date.now()).then(r => r.json())));
+
+const donde = document.getElementById('donde');
+await renderCapacidad(donde, { config: cfg.data, maestro: art.data, activo: act.data });
+
+const txt = donde.innerText;
+eco('<span class="t">── SE DIBUJA ──</span>');
+ok('el semáforo está', !!donde.querySelector('#capSemaforo .barra'));
+ok('los cinco pasos están', donde.querySelectorAll('details.paso').length === 5);
+ok('el paso 1 y el 5 arrancan abiertos', donde.querySelectorAll('details.paso[open]').length === 2);
+ok('la tabla de topes tiene filas', donde.querySelectorAll('#capTbody tr').length > 300);
+
+eco('\n<span class="t">── DICE LOS NÚMEROS DE VERDAD ──</span>');
+['302,983', '624,952', '714,060'].forEach(n =>
+  ok('aparece ' + n, txt.includes(n)));
+ok('avisa que NO ENTRA', /NO ENTRA/.test(txt));
+ok('y dice cuántos cuerpos faltan', /208 cuerpos/.test(txt));
+
+eco('\n<span class="t">── LA PERILLA ──</span>');
+const antes = donde.querySelector('#capTbody input[type=number]').value;
+donde.querySelector('#capMax').click();
+await new Promise(r => setTimeout(r, 60));
+ok('el botón del máximo la mueve — la perilla quedó en ' + donde.querySelector('#capPct').value,
+   donde.querySelector('#capPct').value === '49');
+ok('y ahora SÍ entra', /ENTRA/.test(donde.innerText) && !/NO ENTRA/.test(donde.innerText));
+ok('el botón de guardar se enciende', !donde.querySelector('#capGuardar').disabled);
+/* El escolar no lo mueve la perilla: sigue en 50 pase lo que pase. */
+const escolares = [...donde.querySelectorAll('#capTbody tr')]
+  .filter(tr => tr.innerHTML.includes('chip escolar'));
+ok('las ' + escolares.length + ' filas de escolar siguen en 50',
+   escolares.length > 0 && escolares.every(tr => tr.querySelector('input').value === '50'));
+
+eco('\n<span class="t">── LOS FILTROS ──</span>');
+donde.querySelector('.f[data-f="pasan"]').click();
+await new Promise(r => setTimeout(r, 60));
+const nPasan = donde.querySelectorAll('#capTbody tr').length;
+donde.querySelector('.f[data-f="todas"]').click();
+await new Promise(r => setTimeout(r, 60));
+ok('"se pasan del cuerpo" filtra a ' + nPasan + ' filas',
+   nPasan > 0 && nPasan < donde.querySelectorAll('#capTbody tr').length);
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>La pantalla dibuja, la perilla mueve lo que debe y respeta lo fijo.</b>');
+</script>

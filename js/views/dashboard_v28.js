@@ -1,34 +1,35 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0481';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0482';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0481';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0481';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0481';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0481';
-import * as metasService from '../services_v245/metasService.js?v=29.0481';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0481';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0481';
+import * as adminService from '../services_v245/adminService.js?v=29.0482';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0482';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0482';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0482';
+import * as metasService from '../services_v245/metasService.js?v=29.0482';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0482';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0482';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0481';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0481';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0481';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0481';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0481';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0481';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0481';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0481';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0481';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0481';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0481';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0481';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0481';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0481';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0481';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0481';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0481';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0481';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0481';
-import { montarSlotting } from './slotting.js?v=29.0481';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0482';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0482';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0482';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0482';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0482';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0482';
+import { renderCapacidad } from './capacidad.js?v=29.0482';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0482';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0482';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0482';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0482';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0482';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0482';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0482';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0482';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0482';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0482';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0482';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0482';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0482';
+import { montarSlotting } from './slotting.js?v=29.0482';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -391,7 +392,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0481';
+const VERSION = '29.0482';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2419,6 +2420,11 @@ const TABS = [
     // completo —cuánto había en activo, cuánto en reserva, qué regla se aplicó y por qué
     // salieron esos cuerpos—. Para verla, poner oculta:false acá.
     { id: 'sugerencia', label: 'Sugerencia (prueba)', icon: '🧭', oculta: true },
+    /* CAPACIDAD junta en una sola pantalla lo que estaba repartido en tres modulos.
+       Daniel, 27-ago-2026: *"esta disperso ahorita por todo; deberia haber un modulo nada
+       mas para todo"*. Va colgada de Almacenaje porque es donde el lo pidio y donde vive
+       la mitad de lo que junta. */
+    { id: 'capacidad', label: 'Capacidad', icon: '📐' },
     { id: 'config_tareas', label: 'Config. Tareas', icon: '⚙️' }
   ]},
   /* SLOTTING VA COMO MÓDULO PRINCIPAL, no colgado de Inventario. Lo pidió así Daniel el
@@ -5464,7 +5470,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0481');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0482');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5727,7 +5733,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0481');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0482');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -16827,6 +16833,15 @@ const renderRFSection = (container) => {
     } else if (tabId === 'almacenaje' && activeSub === 'sugerencia') {
         await new Promise(r => setTimeout(r, 0));
         renderSugerenciaAlmacenaje(container);
+    } else if (tabId === 'almacenaje' && activeSub === 'capacidad') {
+        await new Promise(r => setTimeout(r, 0));
+        /* La configuracion la trae la propia pantalla del servidor: los objetivos los
+           puede haber cambiado otro desde otra PC. */
+        renderCapacidad(container, {
+            maestro: dataStore.analisis_sku_maestro || [],
+            activo: dataStore.analisis_sku_activo || [],
+            avisar: (t, m, tipo) => showPremiumAlert(t, m, tipo)
+        });
     } else if (tabId === 'almacenaje' && activeSub === 'config_tareas') {
         await new Promise(r => setTimeout(r, 0));
         renderConfigTareas(container);
@@ -18705,7 +18720,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0481 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0482 | MOBILE PORTAL
                             </div>
                     </div>
 
