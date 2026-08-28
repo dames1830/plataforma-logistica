@@ -35,16 +35,19 @@ const [beta, prod] = await Promise.all([traer('beta'), traer(null)]);
 const mB = (beta.tallas || {}).marcas || {}, mP = (prod.tallas || {}).marcas || {};
 const SIN_RESERVA = ['Adidas', 'Puma', 'Skechers', 'Marie Claire'];
 SIN_RESERVA.forEach(m => ok(`${m} va en 'todo' en beta — ${(mB[m] || {}).modo}`, (mB[m] || {}).modo === 'todo'));
-ok('produccion NO se tocó: Marie Claire sigue como estaba — ' + (mP['Marie Claire'] || {}).modo,
-   (mP['Marie Claire'] || {}).modo === 'cuerpos');
+/* Estas comprobaciones vigilaban un momento que ya paso: 'arreglado en beta,
+   produccion todavia no'. El 27-ago-2026 salio a produccion, asi que ahora lo que
+   hay que exigir es que LOS DOS ENTORNOS digan lo mismo -y lo correcto-. */
+SIN_RESERVA.forEach(m => ok(`${m} va en 'todo' en producción — ${(mP[m] || {}).modo}`,
+                            (mP[m] || {}).modo === 'todo'));
 /* Las que no se pidió tocar no se movieron. Las cuatro del modo retirado SÍ cambian a
    propósito —ver prueba_regla_marca_y_topes.html—, así que se comprueban aparte. */
 const A_CASO = ['Bata', 'North Star', 'Bubblegummers', 'B.G Licenses'];
 const OTRAS = Object.keys(mP).filter(m => !SIN_RESERVA.includes(m) && !A_CASO.includes(m));
 ok(`las otras ${OTRAS.length} marcas quedaron igual que en producción`,
    OTRAS.every(m => JSON.stringify(mB[m]) === JSON.stringify(mP[m])));
-ok('y las cuatro del modo retirado pasaron a "caso" a propósito',
-   A_CASO.every(m => (mB[m] || {}).modo === 'caso' && (mP[m] || {}).modo === 'porcentaje'));
+ok('y las cuatro del modo retirado están en "caso" en los dos entornos',
+   A_CASO.every(m => (mB[m] || {}).modo === 'caso' && (mP[m] || {}).modo === 'caso'));
 
 eco('\n<span class="t">── SE SACA EL casoDelItem DE VERDAD DEL DASHBOARD ──</span>');
 /* Se recorta desde las constantes hasta el final de casoDelItem. No es una copia pegada:
@@ -67,9 +70,13 @@ const modoDeMarcaBeta = (marca) => {
   const h = Object.keys(cfgBeta.marcas).find(k => k.toUpperCase().replace(/\s+/g, ' ') === b);
   return h ? cfgBeta.marcas[h] : tallasService.modoPorDefecto();
 };
-const armar = (cuerpo) => new Function('tallasService', 'zonasService', 'sugActuales',
+/* `esEscolar` salio del dashboard a reportesComunes -la usan el almacenaje y el
+   replenishment, que no se ven entre si-. Un `new Function` no ve los import, asi
+   que hay que entregarsela. */
+const { esEscolar } = await import('../js/services_v245/reportesComunes.js?z=' + Date.now());
+const armar = (cuerpo) => new Function('tallasService', 'zonasService', 'sugActuales', 'esEscolar',
   cuerpo + '\n  return casoDelItem;')(
-    { ...tallasService, modoDeMarca: modoDeMarcaBeta }, zonasService, () => []);
+    { ...tallasService, modoDeMarca: modoDeMarcaBeta }, zonasService, () => [], esEscolar);
 const casoDelItem = armar(trozo);
 
 /* El contexto mínimo que pide: nada en el piso ni en reserva = código nuevo. */

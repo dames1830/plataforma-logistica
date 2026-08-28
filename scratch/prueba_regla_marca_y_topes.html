@@ -41,6 +41,10 @@ eco('\n<span class="t">── LA REGLA DE LA MARCA AHORA SE APLICA ──</span>
 const desde = src.indexOf('  const PCT_CODIGO_NUEVO');
 const hasta = src.indexOf('  /**', src.indexOf('const casoDelItem'));
 ok('se sacó el casoDelItem del archivo', desde > 0 && hasta > desde);
+/* `esEscolar` salio del dashboard a reportesComunes -la usan el almacenaje y el
+   replenishment, que no se ven entre si-. Un `new Function` no ve los import, asi
+   que hay que entregarsela. */
+const { esEscolar } = await import('../js/services_v245/reportesComunes.js?z=' + Date.now());
 const trozo = src.slice(desde, hasta);
 ok('trae el caso marca-cuerpos', /marca-cuerpos/.test(trozo));
 
@@ -53,9 +57,9 @@ const conMarcas = (marcas) => {
     const h = Object.keys(marcas).find(k => k.toUpperCase().replace(/\s+/g, ' ') === b);
     return h ? marcas[h] : tallasService.modoPorDefecto();
   };
-  return new Function('tallasService', 'zonasService', 'sugActuales',
+  return new Function('tallasService', 'zonasService', 'sugActuales', 'esEscolar',
     trozo + '\n  return casoDelItem;')(
-      { ...tallasService, modoDeMarca }, zonasService, () => []);
+      { ...tallasService, modoDeMarca }, zonasService, () => [], esEscolar);
 };
 /* La configuración de beta, que es la que se arregló. */
 const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/config';
@@ -103,8 +107,11 @@ eco('\n<span class="t">── LAS DE "CASO" SIGUEN CON LA REGLA GENERAL ──</
 });
 ok('las cuatro pasaron a "caso" en beta',
    ['Bata', 'North Star', 'Bubblegummers', 'B.G Licenses'].every(m => (mB[m] || {}).modo === 'caso'));
-ok('producción NO se tocó — Bata sigue en ' + (mP['Bata'] || {}).modo,
-   (mP['Bata'] || {}).modo === 'porcentaje');
+/* Estas comprobaciones vigilaban un momento que ya paso: 'arreglado en beta,
+   produccion todavia no'. El 27-ago-2026 salio a produccion, asi que ahora lo que
+   hay que exigir es que LOS DOS ENTORNOS digan lo mismo -y lo correcto-. */
+ok('y en producción también — Bata está en ' + (mP['Bata'] || {}).modo,
+   ['Bata', 'North Star', 'Bubblegummers', 'B.G Licenses'].every(m => (mP[m] || {}).modo === 'caso'));
 
 eco('\n<span class="t">── UNA MARCA DESCONOCIDA NO SE LLEVA UN CUERPO POR ERROR ──</span>');
 /* Al revivir 'cuerpos', dejarlo de respaldo le habría dado un cuerpo a cualquier marca mal
@@ -113,10 +120,11 @@ const rara = correr(conMarcas(mB), 'Marca Que No Existe', '02 WOMEN', 0, 0);
 ok('marca desconocida, código nuevo -> ' + rara.nombre, rara.nombre === 'codigo-nuevo');
 
 eco('\n<span class="t">── SE PONE ROJA SI SE QUITA EL ARREGLO ──</span>');
-const sinArreglo = new Function('tallasService', 'zonasService', 'sugActuales',
+const sinArreglo = new Function('tallasService', 'zonasService', 'sugActuales', 'esEscolar',
   trozo.replace(/if \(suRegla && suRegla\.modo === 'cuerpos'\) \{/, 'if (false) {')
   + '\n  return casoDelItem;')({ ...tallasService,
-    modoDeMarca: (m) => mB[String(m).trim()] || tallasService.modoPorDefecto() }, zonasService, () => []);
+    modoDeMarca: (m) => mB[String(m).trim()] || tallasService.modoPorDefecto() }, zonasService, () => [],
+    esEscolar);
 const viejo = correr(sinArreglo, 'Power', '04 SPORT', 0, 0);
 ok('sin el arreglo, Power nuevo volvía al 60% — ' + viejo.nombre + ' ' + viejo.regla.valor + '%',
    viejo.nombre === 'codigo-nuevo' && viejo.regla.valor === 60);

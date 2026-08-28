@@ -208,3 +208,15 @@ export const selectorRango = (desde, hasta, setter, opciones = {}) => {
             </div>`).join('')}
     </div>`;
 };
+
+/**
+ * ES ESCOLAR.
+ *
+ * Vive aca y no dentro de un modulo porque la usan dos que no se ven entre si: el
+ * almacenaje -que reparte 50 pares por talla a rajatabla- y el replenishment -que por eso
+ * mismo no le rellena el cuerpo-. Estuvo declarada dentro del almacenaje hasta el
+ * 27-ago-2026; el replenishment no la alcanzaba, y escribir una segunda copia es como
+ * vuelven los problemas que una regla unica ya habia resuelto.
+ */
+export const esEscolar = (genderRims) =>
+  String(genderRims || '').toUpperCase().includes('SCHOOL');

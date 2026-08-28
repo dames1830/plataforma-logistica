@@ -1,0 +1,65 @@
+<!-- El escolar no se rellena: 50 pares por talla y punto.
+     Daniel, 27-ago-2026, viendo un 05 SCHOOL con tope 50 al que se le mandaban bajar 142. -->
+<meta charset="utf-8">
+<title>Prueba: el escolar no se rellena</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1000px;margin:0 auto;white-space:pre-wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 15000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text()).split(CR).join('');
+const RC = await import('../js/services_v245/reportesComunes.js?z=' + Date.now());
+
+eco('<span class="t">── LA REGLA, EN UN SOLO SITIO ──</span>');
+ok('esEscolar sale de reportesComunes', typeof RC.esEscolar === 'function');
+ok('"05 SCHOOL" es escolar', RC.esEscolar('05 SCHOOL') === true);
+ok('"02 WOMEN" no lo es', RC.esEscolar('02 WOMEN') === false);
+ok('y sin dato no revienta', RC.esEscolar(null) === false && RC.esEscolar(undefined) === false);
+ok('el dashboard la importa, no la copia',
+   /import \{[^}]*esEscolar[^}]*\} from '\.\.\/services_v245\/reportesComunes\.js/.test(src));
+/* Si alguien escribe una segunda copia, vuelve el problema que la regla unica resolvio. */
+ok('no queda ninguna otra definición de la regla en el dashboard',
+   (src.match(/toUpperCase\(\)\.includes\('SCHOOL'\)/g) || []).length === 0);
+
+eco('\n<span class="t">── EL ESCOLAR SE QUEDA EN SU TOPE ──</span>');
+/* El "+92" que Daniel vio es `relleno`, y se reparte en `repartir()`. Se comprueba sobre el
+   CODIGO que ningún camino llegue ahí siendo escolar: el guardia tiene que estar antes. */
+const iRell = src.indexOf('const repartir = (candidatas)');
+const iGuard = src.indexOf('if (lista.some(i => esEscolar(i.genderRims))) return;');
+ok('existe el guardia del escolar', iGuard > 0);
+ok('y está ANTES del reparto del hueco, así que no hay camino que lo esquive',
+   iGuard > 0 && iRell > iGuard);
+/* Entre el guardia y el reparto no puede haber otro `repartir(` suelto. */
+const enMedio = src.slice(iGuard, iRell);
+ok('no hay un reparto anterior que se le escape', !/repartir\(/.test(enMedio));
+ok('el guardia corta con return, no solo avisa',
+   /esEscolar\(i\.genderRims\)\)\) return;/.test(src));
+ok('y queda escrito por qué: el cuerpo del escolar se comparte',
+   /se comparte con otros/.test(src.slice(Math.max(0, iGuard - 900), iGuard)));
+
+eco('\n<span class="t">── LO QUE TIENE QUE PASAR EN LA PANTALLA ──</span>');
+/* El caso exacto que Daniel señaló. `relleno` es lo que la tabla pinta como "+92". */
+const CASO = { sku: '2816305-1-03', gen: '05 SCHOOL', tope: 50, aBajarAntes: 142 };
+ok(CASO.sku + ' (' + CASO.gen + ') es escolar', RC.esEscolar(CASO.gen));
+ok('antes bajaba ' + CASO.aBajarAntes + ' con tope ' + CASO.tope
+   + ' — ' + (CASO.aBajarAntes - CASO.tope) + ' de relleno',
+   CASO.aBajarAntes - CASO.tope === 92);
+ok('ahora tiene que bajar ' + CASO.tope + ', sin relleno', true);
+eco('   <span style="color:var(--text-muted)">La cifra final la confirma REPROCESAR en la pantalla:'
+  + ' esta prueba comprueba que el camino al relleno queda cortado, no la corrida entera.</span>');
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>La regla vive en un solo sitio y el escolar no llega al relleno.</b>');
+</script>

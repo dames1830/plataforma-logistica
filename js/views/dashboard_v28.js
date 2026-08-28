@@ -1,34 +1,34 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0472';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0473';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0472';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0472';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0472';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0472';
-import * as metasService from '../services_v245/metasService.js?v=29.0472';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0472';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0472';
+import * as adminService from '../services_v245/adminService.js?v=29.0473';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0473';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0473';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0473';
+import * as metasService from '../services_v245/metasService.js?v=29.0473';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0473';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0473';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0472';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0472';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0472';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0472';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0472';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0472';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0472';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0472';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0472';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0472';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0472';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0472';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0472';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0472';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0472';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0472';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0472';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0472';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0472';
-import { montarSlotting } from './slotting.js?v=29.0472';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0473';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0473';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0473';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0473';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0473';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0473';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0473';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0473';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0473';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0473';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0473';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0473';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0473';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0473';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0473';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0473';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0473';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0473';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0473';
+import { montarSlotting } from './slotting.js?v=29.0473';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -391,7 +391,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0472';
+const VERSION = '29.0473';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5464,7 +5464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0472');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0473');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5727,7 +5727,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0472');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0473');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18695,7 +18695,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0472 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0473 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22062,9 +22062,6 @@ const renderRFSection = (container) => {
    * Bubblegummers y B.G Licenses, la 1 para Power y la 4 del MZN02 para North Star.
    */
   const PARES_ESCOLAR = 50;
-  const esEscolar = (genderRims) =>
-    String(genderRims || '').toUpperCase().includes('SCHOOL');
-
   /**
    * LAS MARCAS QUE NO MANDAN NADA A RESERVA.
    *
@@ -26209,6 +26206,20 @@ Se dejó el valor anterior.`, 'warning');
         // Basta con que UNA de sus tallas tenga objetivo: ahí el artículo entra en juego
         // y el cuerpo se completa con las tallas que haya, tengan objetivo propio o no.
         if (!lista.some(i => (Number(i.factor) || 0) > 0)) return;
+
+        /* EL ESCOLAR NO SE RELLENA.
+         *
+         * Daniel, 27-ago-2026, viendo un 05 SCHOOL con tope 50 al que se le mandaban bajar
+         * 142: *"en el caso de school, para todas las marcas, es a rajatabla cincuenta pares
+         * nomas. Por que cincuenta? Porque esos articulos se van a mezclar con otros
+         * articulos, no importa si en el cuerpo hay varios articulos. Por ahi puede uno o
+         * dos o tres mas, pero de cincuenta no deberia pasar"*.
+         *
+         * El llenado de abajo existe para no dejar a medias un cuerpo que es DEL ARTICULO.
+         * El del escolar no lo es: se comparte con otros, asi que el hueco que quede lo
+         * llena el vecino y bajar de mas solo saca mercaderia de reserva sin necesidad.
+         * El tope manda solo. */
+        if (lista.some(i => esEscolar(i.genderRims))) return;
 
         /* LA REPOSICIÓN SON DOS CUERPOS, NO LOS QUE EL ARTÍCULO TENGA HOY.
          *
