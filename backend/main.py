@@ -273,7 +273,31 @@ def _exigir_token_escritura() -> bool:
 
 # Cuantas escrituras llegan sin credencial mientras el interruptor esta apagado.
 # Se mira en /health para saber si ya se puede encender sin dejar a nadie fuera.
-_escrituras_anonimas = {"total": 0, "ultima_area": None, "ultima_hora": None}
+#
+# GUARDA EL DESGLOSE, no solo la ultima. Con solo `ultima_area` no se puede saber
+# QUIENES faltan: el 28-ago-2026 el contador marcaba 1.547 y lo unico que se sabia
+# era que la ultima habia sido `tabla_tallas`. Hubo que auditar el codigo entero para
+# descubrir que la web escribia desde ~30 sitios sin credencial. Con el desglose, la
+# proxima vez la respuesta esta en /health.
+#
+# `quien` sale del User-Agent: distingue un navegador de un robot de Python sin
+# guardar nada de la persona -ni IP, ni usuario, ni sesion-.
+_escrituras_anonimas = {"total": 0, "ultima_area": None, "ultima_hora": None,
+                        "por_area": {}, "por_quien": {}}
+# Tope de nombres distintos que se guardan. Las areas son ~77; el tope es un freno
+# por si alguna vez llega basura, para que el diccionario no crezca sin fin.
+_TOPE_DESGLOSE = 200
+
+
+def _quien_escribe(request: Request) -> str:
+    ua = (request.headers.get('user-agent') or '').lower()
+    if not ua:
+        return 'sin user-agent'
+    if 'mozilla' in ua or 'chrome' in ua or 'safari' in ua or 'edg' in ua:
+        return 'navegador'
+    if 'python' in ua or 'urllib' in ua or 'curl' in ua:
+        return 'script/robot'
+    return ua[:40]
 
 def token_de_robot_valido(request: Request) -> bool:
     t = request.headers.get('X-Robot-Token') or ''
@@ -295,6 +319,10 @@ def _control_escritura(request: Request, area: str):
     _escrituras_anonimas["total"] += 1
     _escrituras_anonimas["ultima_area"] = area
     _escrituras_anonimas["ultima_hora"] = ahora().isoformat()
+    for casilla, clave in (("por_area", str(area)), ("por_quien", _quien_escribe(request))):
+        d = _escrituras_anonimas[casilla]
+        if clave in d or len(d) < _TOPE_DESGLOSE:
+            d[clave] = d.get(clave, 0) + 1
     return None
 
 
@@ -593,7 +621,16 @@ def health():
             "candado_escritura": {
                 "exigiendo": _exigir_token_escritura(),
                 "robot_token_puesto": bool(ROBOT_TOKEN),
-                "escrituras_anonimas": dict(_escrituras_anonimas)
+                # El desglose va ordenado de mayor a menor: lo primero de la lista es
+                # lo que hay que arreglar antes de encender.
+                "escrituras_anonimas": {
+                    **{k: v for k, v in _escrituras_anonimas.items()
+                       if k not in ("por_area", "por_quien")},
+                    "por_area": dict(sorted(_escrituras_anonimas["por_area"].items(),
+                                            key=lambda p: -p[1])),
+                    "por_quien": dict(sorted(_escrituras_anonimas["por_quien"].items(),
+                                             key=lambda p: -p[1])),
+                }
             }
         }
     except Exception as e: return {"status": "error", "message": str(e)}
