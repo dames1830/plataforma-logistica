@@ -33,8 +33,8 @@
 /* El rango de fechas es el mismo de toda la plataforma: se dibuja una sola vez, en
    `reportesComunes.js`. Este archivo recibe todo lo demás por `OPC` y no lee del
    servidor — el selector no lee nada, solo dibuja. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0496';
-import { icono } from '../services_v245/iconos.js?v=29.0496';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0497';
+import { icono } from '../services_v245/iconos.js?v=29.0497';
 
 export const montarSlotting = (container, OPC = {}) => {
   const svc = OPC.svc;
@@ -536,7 +536,12 @@ export const montarSlotting = (container, OPC = {}) => {
     const viejo = document.getElementById('slt_modal');
     if (viejo) viejo.remove();
 
-    /* EL TURNO VA EN LA ETIQUETA Y ADEMÁS FILTRA. Daniel, 28-ago-2026, viendo el modal con
+    /* SIN TEXTOS EXPLICATIVOS EN EL MODAL. Daniel, 28-ago-2026: *"borra las tonterías que
+       hay ahí, no pongas frases ni oraciones"*. Estaban la nota del turno y la de las metas
+       por hora; el turno ya se ve en la etiqueta de cada persona y las metas viven en
+       Config. Slotting. El modal es para elegir gente, no para leer.
+
+       EL TURNO VA EN LA ETIQUETA Y ADEMÁS FILTRA. Daniel, 28-ago-2026, viendo el modal con
        una persona de día y otra de noche: *"eso es imposible"*. La comprobación al guardar ya
        existía y saltaba, pero el desplegable dejaba ELEGIR la pareja imposible y recién se
        quejaba al apretar el botón — que es lo que se siente como que sí deja.
@@ -551,7 +556,7 @@ export const montarSlotting = (container, OPC = {}) => {
     modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--shadow-rgb), 0.8);'
                 + 'z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);';
     modal.innerHTML = `
-      <div class="glass-panel" style="width:380px; padding:2rem; border:1px solid var(--primary); border-radius:16px;">
+      <div class="glass-panel" style="width:420px; max-width:92vw; padding:2rem; border:1px solid var(--primary); border-radius:16px;">
         <h3 style="margin:0 0 1.5rem 0; color:var(--text-strong); font-size:var(--t-lg); text-align:center;">
           Asignar Tarea: <span style="color:var(--primary);">Slot ${esc(t.n)}</span></h3>
         <div style="display:flex; flex-direction:column; gap:1.2rem;">
@@ -568,16 +573,10 @@ export const montarSlotting = (container, OPC = {}) => {
                     padding:0.8rem; border-radius:8px; color:var(--text-strong); outline:none; font-weight:700; font-size:var(--t-md);">
               <option value="">Ninguno</option>${opciones}
             </select>
-            <div id="slt_nota_turno" style="font-size:var(--t-xs); color:var(--text-muted); margin-top:6px;"></div>
-          </div>
-          <div style="font-size:var(--t-xs); color:var(--text-muted); line-height:1.5;">
-            Con un operario la meta es <b style="color:var(--text-pale);">${num(svc.configActual().uphSolo)} pares/h</b>;
-            con dos, <b style="color:var(--text-pale);">${num(svc.configActual().uphGrupo)} pares/h</b>.
-            Más ${svc.configActual().tiempoBase} minutos de recorrido.
           </div>
           <div style="margin-top:0.4rem; display:flex; gap:10px;">
-            <button id="slt_asignar" class="btn" style="flex:1; padding:0.8rem; font-size:var(--t-sm); font-weight:800;">ASIGNAR E INICIAR</button>
-            ${est === 'Asignado' ? `<button id="slt_finalizar" class="btn" style="flex:1; background:var(--success); padding:0.8rem; font-size:var(--t-sm); font-weight:800;">FINALIZAR</button>` : ''}
+            <button id="slt_asignar" class="btn" style="flex:1; width:auto; padding:0.8rem 0.6rem; font-size:var(--t-sm); font-weight:800; white-space:nowrap;">ASIGNAR E INICIAR</button>
+            ${est === 'Asignado' ? `<button id="slt_finalizar" class="btn" style="flex:1; width:auto; background:var(--success); padding:0.8rem 0.6rem; font-size:var(--t-sm); font-weight:800; white-space:nowrap;">FINALIZAR</button>` : ''}
           </div>
           <button id="slt_cerrar" style="background:none; border:none; color:var(--text-muted);
                   cursor:pointer; font-size:var(--t-xs); margin-top:0.5rem; width:100%;">Cerrar sin cambios</button>
@@ -602,10 +601,6 @@ export const montarSlotting = (container, OPC = {}) => {
       const antes = selU2.value;
       selU2.innerHTML = `<option value="">Ninguno</option>${opcionesDe(caben)}`;
       selU2.value = caben.some(o => o.usuario === antes) ? antes : '';
-      const nota = modal.querySelector('#slt_nota_turno');
-      if (nota) nota.textContent = t1
-        ? `Solo se ofrece gente del turno ${t1}: una tarea no se reparte entre dos turnos.`
-        : '';
     };
     selU1.addEventListener('change', rearmarU2);
     if (t.u1) selU1.value = t.u1;
