@@ -1,39 +1,32 @@
-<!doctype html>
-<html data-tema="indigo"><head><meta charset="utf-8"><title>Zona Buffer: cuanto tarda cada pieza</title>
+<!doctype html><html><head><meta charset="utf-8"><title>Zona Buffer: cuanto tarda</title>
 <style>body{font:14px system-ui;padding:20px;background:#0f172a;color:#e2e8f0}
 pre{background:#1e293b;padding:14px;border-radius:8px;line-height:1.6}</style></head>
-<body><h3>Zona Buffer — que tarda y que se cuelga</h3><pre id="s">midiendo...</pre>
+<body><h3>Zona Buffer — las mismas llamadas que hace la pantalla</h3><pre id="s">midiendo...</pre>
 <script type="module">
-/* Corre las MISMAS llamadas que `renderBufferTab`, una por una y con reloj, para ver
-   cual es la que se queda colgada. Usa el csvHub de verdad, el de produccion. */
-const log = [];
-const pinta = () => document.getElementById('s').textContent = log.join('\n');
-const paso = async (nom, fn) => {
-  const t = performance.now();
-  log.push(`  ${nom.padEnd(26)} ... corriendo`); pinta();
-  try {
-    const r = await fn();
-    const n = Array.isArray(r) ? r.length + ' filas' : (r === null ? 'null' : (r === undefined ? 'undefined' : typeof r));
-    log[log.length-1] = `  ${nom.padEnd(26)} ${String(Math.round(performance.now()-t)).padStart(6)} ms   ${n}`;
-  } catch (e) {
-    log[log.length-1] = `  ${nom.padEnd(26)} ${String(Math.round(performance.now()-t)).padStart(6)} ms   FALLA: ${e.message}`;
+const AREAS = ['buffer_activo','buffer_reserva','buffer','solicitud','articulos',
+               'tallas','validar_activo','validar_reserva','validar_lpn'];
+const log = []; const pinta = () => document.getElementById('s').textContent = log.join('\n');
+const M = await import('../js/services_v245/csvHub_v6.js');
+
+const vuelta = async (titulo) => {
+  // se vacia la memoria RAM del modulo, como cuando se recarga la pagina
+  AREAS.forEach(a => { M.dataStore[a] = null; });
+  ['almacenaje_activo','analisis_sku_reserva'].forEach(a => { M.dataStore[a] = null; });
+  log.push(''); log.push(titulo); pinta();
+  const T = performance.now();
+  for (const a of AREAS) {
+    const t = performance.now();
+    let r = null; try { r = await M.getAreaData(a); } catch (e) {}
+    const ms = Math.round(performance.now() - t);
+    if (ms > 40) log.push(`   ${a.padEnd(20)} ${String(ms).padStart(6)} ms  ${Array.isArray(r) ? r.length + ' filas' : ''}`);
   }
-  pinta();
+  const tot = Math.round(performance.now() - T);
+  log.push(`   ${'TOTAL'.padEnd(20)} ${String(tot).padStart(6)} ms`); pinta();
+  return tot;
 };
 
-const T0 = performance.now();
-const M = await import('../js/services_v245/csvHub_v6.js');
-log.push('  csvHub cargado'); pinta();
-
-for (const a of ['buffer_activo','buffer_reserva','buffer','solicitud','articulos',
-                 'tallas','validar_activo','validar_reserva','validar_lpn'])
-  await paso('getAreaData ' + a, () => M.getAreaData(a));
-
-await paso('fetchBufferConfig', () => M.fetchBufferConfig());
-await paso('loadLastBufferKPI', () => M.loadLastBufferKPI());
-await paso('traerAnalisisBuffer hoy', () => M.traerAnalisisBuffer('2026-08-28'));
-
-log.push('');
-log.push('  TOTAL: ' + Math.round(performance.now() - T0) + ' ms');
+const a = await vuelta('PRIMERA VEZ (esta PC no tiene nada guardado)');
+const b = await vuelta('SEGUNDA VEZ (ya lo tiene, y el robot no publico nada nuevo)');
+log.push(''); log.push(`   ==> de ${(a/1000).toFixed(1)} s a ${(b/1000).toFixed(1)} s`);
 pinta();
 </script></body></html>

@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0502';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0503';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0502';
+const VERSION = '29.0503';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1452,6 +1452,54 @@ const repartirCanonica = (canonica, datos) => {
     });
 };
 
+/* ── LA MARCA DEL SERVIDOR, PARA NO BAJAR LO QUE YA ESTA ────────────────────────
+ *
+ * Daniel, 28-ago-2026: *"se demora 15 segundos para abrir la pagina de zona buffer"*.
+ *
+ * Las areas del robot se bajaban del servidor CADA VEZ que se entraba a una pestaña, con
+ * un motivo bueno: la copia de una PC puede tener la foto de hace semanas y no hay manera
+ * de saberlo sin preguntar. Pero preguntar y BAJAR no son lo mismo. Zona Buffer se traia
+ * 715 KB comprimidos que el navegador tiene que descomprimir y convertir en 53.000
+ * objetos, y el robot publica dos veces al dia: casi siempre era exactamente lo mismo que
+ * ya estaba guardado.
+ *
+ * `/api/sync/versiones` cuesta 1 KB y trae la marca de las 78 areas de una sola vez. Si
+ * coincide con la del archivo guardado, se usa el local y no se baja nada.
+ *
+ * SE PIDE UNA SOLA VEZ POR CARGA. Una pestaña pide varias areas a la vez -Zona Buffer
+ * pide nueve-; sin esto serian nueve llamadas para la misma respuesta. */
+let _versionesCache = null, _versionesTs = 0;
+const versionesDelServidor = async () => {
+    if (_versionesCache && (Date.now() - _versionesTs) < 15000) return _versionesCache;
+    try {
+        const r = await fetch(`${API_BASE}/sync/versiones?t=${Date.now()}`);
+        if (!r.ok) return null;
+        const j = await r.json();
+        _versionesCache = (j && j.versiones) || null;
+        _versionesTs = Date.now();
+        return _versionesCache;
+    } catch (e) { return null; }
+};
+
+/**
+ * true si lo guardado en esta PC es EXACTAMENTE lo que hay en el servidor.
+ *
+ * Se exige que coincidan la marca Y la cantidad de filas. Con la marca sola, una descarga
+ * cortada a la mitad quedaria marcada como buena para siempre; ante la menor duda se baja
+ * de nuevo, que es lo que se hacia antes y nunca fallo.
+ */
+const yaEstaLoDelServidor = async (area) => {
+    if (currentDateFilter) return null;      // mirando un dia viejo: eso no es MASTER
+    const vs = await versionesDelServidor();
+    if (!vs || !vs[area]) return null;
+    let meta = null;
+    try { meta = JSON.parse(localStorage.getItem('meta_' + area) || 'null'); } catch (e) { return null; }
+    if (!meta || meta.timestamp !== vs[area]) return null;
+    const local = await loadFromDB(area);
+    if (!Array.isArray(local) || !local.length || local.length !== meta.length) return null;
+    return local;
+};
+
 export const getAreaData = async (area, forceRefresh = false) => {
   // Un nombre viejo se resuelve por el nuevo y se guarda en los dos
   const canonica = AREA_CANONICA[area];
@@ -1475,6 +1523,17 @@ export const getAreaData = async (area, forceRefresh = false) => {
   const vieneDeLaNube = laPublicaElRobot || esAreaDeDemanda(area);
 
   if (!forceRefresh && dataStore[area] !== undefined && dataStore[area] !== null) return dataStore[area];
+
+  /* Antes de salir a la red: si el servidor tiene lo mismo que esta PC, no se baja. */
+  if (!forceRefresh && vieneDeLaNube) {
+      const local = await yaEstaLoDelServidor(area);
+      if (local) {
+          dataStore[area] = local;
+          repartirCanonica(area, local);
+          if (area.endsWith('_activo') || area.endsWith('_reserva')) updateTablaTallas();
+          return local;
+      }
+  }
 
   // EN LAS DEL ROBOT MANDA EL SERVIDOR, no la copia de esta PC.
   //
