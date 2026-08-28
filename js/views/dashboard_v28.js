@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0464';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0465';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0464';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0464';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0464';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0464';
-import * as metasService from '../services_v245/metasService.js?v=29.0464';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0464';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0464';
+import * as adminService from '../services_v245/adminService.js?v=29.0465';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0465';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0465';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0465';
+import * as metasService from '../services_v245/metasService.js?v=29.0465';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0465';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0465';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0464';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0464';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0464';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0464';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0464';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0464';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0464';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0464';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0464';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0464';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0464';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0464';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0464';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0464';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0464';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0464';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0464';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0464';
-import { montarSlotting } from './slotting.js?v=29.0464';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0465';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0465';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0465';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0465';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0465';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0465';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0465';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0465';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0465';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0465';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0465';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0465';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0465';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0465';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0465';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0465';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0465';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0465';
+import { montarSlotting } from './slotting.js?v=29.0465';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0464';
+const VERSION = '29.0465';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5463,7 +5463,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0464');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0465');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5726,7 +5726,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0464');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0465');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -16237,6 +16237,114 @@ const renderRFSection = (container) => {
     }
   };
 
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * LA LAMINA DEL RESUMEN, PARA MANDARLA POR WHATSAPP
+   *
+   * Daniel manda estos numeros al grupo de sus jefes. Una captura de la pantalla entera
+   * llega ilegible en el celular: van las cuatro cifras y nada mas.
+   *
+   * SE DIBUJA, NO SE DESCARGA. Es el mismo camino que el cuadro de asistencia: el
+   * 18-ago-2026 la descarga directa fallo -en un navegador con restricciones el atributo
+   * `download` se ignora y el archivo cae sin extension-. Mostrandola, se captura o se
+   * guarda con clic derecho.
+   *
+   * EL PORCENTAJE QUE VA ES EL DE OCUPACION, no el de disponibilidad. Lo pidio asi Daniel
+   * el 27-ago-2026: es el numero con el que reporta, y es el mismo 93% que sale al pie de
+   * la matriz de ubicaciones -ocupadas sobre existentes-.
+   * ══════════════════════════════════════════════════════════════════════════════ */
+  const laminaUCA = (total, vacias, ocupadas) => {
+    const ESCALA = 2, ZOOM = 1.25;
+    const ANCHO = 460, ALTO = 268;
+    const FUENTE = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+
+    const lienzo = document.createElement('canvas');
+    lienzo.width = Math.round(ANCHO * ESCALA * ZOOM);
+    lienzo.height = Math.round(ALTO * ESCALA * ZOOM);
+    const g = lienzo.getContext('2d');
+    g.scale(ESCALA * ZOOM, ESCALA * ZOOM);
+    g.textBaseline = 'middle';
+
+    /* Los colores salen del tema que Daniel tenga puesto: la lamina se ve igual que la
+       pantalla de la que la saco, y no hay que mantener dos paletas. */
+    const col = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    const FONDO = col('--panel-deeper') || '#0d1117';
+    const CAJA = col('--panel-solid') || '#161b22';
+    const LINEA = col('--border') || 'rgba(255,255,255,.1)';
+    const FUERTE = col('--text-strong') || '#fff';
+    const SUAVE = col('--text-muted') || '#8b949e';
+
+    g.fillStyle = FONDO;
+    g.fillRect(0, 0, ANCHO, ALTO);
+
+    const texto = (t, x, y, tam, color, peso, alin) => {
+      g.font = (peso || 400) + ' ' + tam + 'px ' + FUENTE;
+      g.fillStyle = color;
+      g.textAlign = alin || 'left';
+      g.fillText(String(t), x, y);
+    };
+    const mil = (n) => Number(n || 0).toLocaleString('es-PE');
+
+    texto('UBICACIONES DE LA RESERVA', 24, 34, 15, FUERTE, 800);
+    const ahora = new Date();
+    texto(ahora.toLocaleDateString('es-PE') + '  ·  '
+          + ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
+          24, 55, 11, SUAVE, 400);
+
+    /* Las tres cifras que se suman, en fila. Analizadas primero porque es el total contra
+       el que se leen las otras dos. */
+    const TARJETAS = [
+      ['ANALIZADAS', mil(total), FUERTE],
+      ['VACÍAS', mil(vacias), col('--success') || '#3fb950'],
+      ['OCUPADAS', mil(ocupadas), col('--warning') || '#d29922']
+    ];
+    const anchoT = (ANCHO - 48 - 16) / 3;
+    TARJETAS.forEach(([rot, val, c], i) => {
+      const x = 24 + i * (anchoT + 8);
+      g.fillStyle = CAJA;
+      g.strokeStyle = LINEA;
+      g.beginPath();
+      g.roundRect(x, 74, anchoT, 66, 9);
+      g.fill();
+      g.stroke();
+      texto(rot, x + anchoT / 2, 94, 10, SUAVE, 700, 'center');
+      texto(val, x + anchoT / 2, 119, 24, c, 800, 'center');
+    });
+
+    /* EL NUMERO GRANDE: el porcentaje de ocupacion. Es lo que se reporta. */
+    const pct = total > 0 ? Math.round(ocupadas / total * 100) : 0;
+    g.fillStyle = CAJA;
+    g.strokeStyle = LINEA;
+    g.beginPath();
+    g.roundRect(24, 152, ANCHO - 48, 84, 9);
+    g.fill();
+    g.stroke();
+    texto('OCUPACIÓN DE LA RESERVA', ANCHO / 2, 174, 11, SUAVE, 700, 'center');
+    texto(pct + '%', ANCHO / 2, 206, 40, col('--warning') || '#d29922', 800, 'center');
+
+    texto('Logística Deam1830', 24, 252, 10, SUAVE, 400);
+    texto(mil(vacias) + ' ubicaciones libres', ANCHO - 24, 252, 10, SUAVE, 400, 'right');
+
+    /* La misma ventana que usa el cuadro de asistencia: fondo oscuro, la lamina y Cerrar. */
+    const fondo = document.createElement('div');
+    fondo.style.cssText = 'position:fixed; inset:0; background:rgba(var(--shadow-rgb), 0.88); '
+      + 'z-index:99999; display:flex; align-items:center; justify-content:center; padding:1.5rem; overflow:auto;';
+    const caja = document.createElement('div');
+    caja.style.cssText = 'display:flex; flex-direction:column; gap:0.8rem; align-items:flex-end; max-width:95vw;';
+    lienzo.style.cssText = 'width:' + Math.round(ANCHO * ZOOM) + 'px; max-width:100%; height:auto; '
+      + 'border-radius:10px; display:block; box-shadow:0 8px 40px rgba(var(--shadow-rgb), 0.6);';
+    const cerrar = document.createElement('button');
+    cerrar.textContent = 'Cerrar';
+    cerrar.style.cssText = 'padding:0.5rem 1.4rem; font-size:var(--t-sm); border-radius:8px; '
+      + 'background:rgba(var(--ink-rgb), 0.08); color:var(--text-pale); font-weight:600; cursor:pointer; '
+      + 'border:1px solid rgba(var(--ink-rgb), 0.18); font-family:inherit;';
+    caja.appendChild(lienzo);
+    caja.appendChild(cerrar);
+    fondo.appendChild(caja);
+    document.body.appendChild(fondo);
+    cerrar.onclick = () => fondo.remove();
+    fondo.onclick = (e) => { if (e.target === fondo) fondo.remove(); };
+  };
+
   const displayReporteUCA = (results) => {
     const container = document.getElementById('uca_results_area');
     if (!container) return;
@@ -16277,7 +16385,10 @@ const renderRFSection = (container) => {
             <h3 style="font-size:var(--t-md); font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-strong); display:flex; align-items:center;">
               REPORTE UCA GENERAL ${tsSpan}
             </h3>
-            <button id="btnExportUCA" class="btn-icono btn-excel" title="Exportar uca a Excel">${icono('excel', 18)}</button>
+            <div style="display:flex; gap:2px;">
+              <button id="btnFotoUCA" class="btn-icono" title="Armar la lámina del resumen para mandarla por WhatsApp">${icono('camara', 18)}</button>
+              <button id="btnExportUCA" class="btn-icono btn-excel" title="Exportar uca a Excel">${icono('excel', 18)}</button>
+            </div>
           </div>
           
           <div class="data-table-container" style="max-height:400px; border-radius:8px;">
@@ -16349,6 +16460,10 @@ const renderRFSection = (container) => {
 
     // Vincular exportación
     if (document.getElementById('btnExportUCA')) document.getElementById('btnExportUCA').addEventListener('click', () => exportUCAtoExcel(results));
+    /* La camara arma la lamina con las mismas cifras que las tarjetas de arriba: se le
+       pasan calculadas, no se vuelven a contar, o un dia dirian cosas distintas. */
+    const btnFoto = document.getElementById('btnFotoUCA');
+    if (btnFoto) btnFoto.addEventListener('click', () => laminaUCA(total, vacias, ocupadas));
   };
 
   const renderGenericAreaTab = async (tabId, subtitle) => {
@@ -18390,7 +18505,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0464 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0465 | MOBILE PORTAL
                             </div>
                     </div>
 

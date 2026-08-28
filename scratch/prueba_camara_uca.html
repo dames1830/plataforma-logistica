@@ -1,0 +1,95 @@
+<!-- La cámara del reporte UCA: arma la lámina del resumen para mandarla por WhatsApp.
+     Saca del dashboard la función de verdad y la dibuja con los números del 27-ago para
+     verla tal cual va a salir, en los cuatro temas. -->
+<meta charset="utf-8">
+<title>Prueba: la cámara del reporte UCA</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1000px;margin:0 auto 16px;white-space:pre-wrap}
+  #lienzo{max-width:1000px;margin:0 auto;display:flex;gap:14px;flex-wrap:wrap}
+  #lienzo figure{margin:0}
+  #lienzo figcaption{font-size:11.5px;color:var(--text-muted);margin-bottom:5px}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<div id="lienzo"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 15000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text()).split(CR).join('');
+const { icono } = await import('../services_v245/iconos.js?z=' + Date.now())
+  .catch(() => import('../js/services_v245/iconos.js?z=' + Date.now()));
+
+eco('<span class="t">── EL DIBUJO Y EL BOTÓN ──</span>');
+ok('la cámara está en el catálogo de íconos', !!icono('camara', 18));
+ok('y sale como <svg> del catálogo', /class="ic-svg"/.test(icono('camara', 18)));
+ok('el botón está al lado del de Excel',
+   /btnFotoUCA[^]{0,220}btnExportUCA/.test(src));
+ok('usa btn-icono, o sea sin fondo ni borde', /id="btnFotoUCA" class="btn-icono"/.test(src));
+ok('y tiene title, que con solo dibujo es obligatorio',
+   /btnFotoUCA[^>]*title="Armar la lámina/.test(src));
+ok('se engancha con las cifras ya calculadas, no las cuenta de nuevo',
+   /laminaUCA\(total, vacias, ocupadas\)/.test(src));
+
+eco('\n<span class="t">── SE SACA LA LÁMINA DEL DASHBOARD ──</span>');
+const desde = src.indexOf('  const laminaUCA = (total, vacias, ocupadas) => {');
+const hasta = src.indexOf('  const displayReporteUCA = (results) => {');
+ok('se encontró la función', desde > 0 && hasta > desde);
+const trozo = src.slice(desde, hasta);
+const laminaUCA = new Function(trozo + '\n return laminaUCA;')();
+
+/* Los números de verdad del 27-ago, los que Daniel tenía en pantalla. */
+const TOTAL = 2486, VACIAS = 178, OCUPADAS = 2308;
+ok('las tres cifras cuadran: ' + VACIAS + ' + ' + OCUPADAS + ' = ' + TOTAL,
+   VACIAS + OCUPADAS === TOTAL);
+
+eco('\n<span class="t">── LA LÁMINA, EN LOS CUATRO TEMAS ──</span>');
+const lienzo = document.getElementById('lienzo');
+let ultima = null;
+for (const tema of ['indigo', 'pbi', 'pbi-classic', 'negro']) {
+  document.documentElement.setAttribute('data-tema', tema);
+  laminaUCA(TOTAL, VACIAS, OCUPADAS);
+  const fondo = [...document.querySelectorAll('body > div')].pop();
+  const cv = fondo.querySelector('canvas');
+  ok(tema + ': dibujó una lámina de ' + cv.width + '×' + cv.height, !!cv && cv.width > 0);
+  /* Se copia a la página para poder mirarla, y se cierra la ventana. */
+  const fig = document.createElement('figure');
+  fig.innerHTML = '<figcaption>' + tema + '</figcaption>';
+  const copia = document.createElement('canvas');
+  copia.width = cv.width; copia.height = cv.height;
+  copia.style.cssText = 'width:300px;height:auto;border-radius:8px;display:block';
+  copia.getContext('2d').drawImage(cv, 0, 0);
+  fig.appendChild(copia);
+  lienzo.appendChild(fig);
+  ultima = fondo;
+  fondo.querySelector('button').click();
+}
+ok('la ventana se cierra con el botón', !ultima.isConnected);
+
+eco('\n<span class="t">── LO QUE DICE LA LÁMINA ──</span>');
+/* No se puede leer el texto de un canvas, así que se comprueba la CUENTA que decide el
+   número grande: el porcentaje de OCUPACIÓN, que es el que Daniel reporta. */
+const pct = Math.round(OCUPADAS / TOTAL * 100);
+ok('el porcentaje que va es el de OCUPACIÓN: ' + pct + '%', pct === 93);
+ok('y NO el de disponibilidad, que sería ' + (VACIAS / TOTAL * 100).toFixed(2) + '%',
+   pct !== Number((VACIAS / TOTAL * 100).toFixed(0)));
+ok('la lámina lo calcula así', /ocupadas \/ total \* 100/.test(trozo));
+ok('el título dice UBICACIONES DE LA RESERVA', /UBICACIONES DE LA RESERVA/.test(trozo));
+ok('lleva las tres cifras', /ANALIZADAS/.test(trozo) && /VACÍAS/.test(trozo) && /OCUPADAS/.test(trozo));
+ok('y la fecha y hora', /toLocaleDateString\('es-PE'\)/.test(trozo));
+ok('se muestra, no se descarga — como el cuadro de asistencia',
+   /document\.body\.appendChild\(fondo\)/.test(trozo) && !/\.download/.test(trozo));
+
+document.documentElement.setAttribute('data-tema', 'pbi');
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>La lámina sale con las cuatro cifras y el 93% de ocupación, en los cuatro temas.</b>');
+</script>

@@ -79,6 +79,8 @@ const TRAZOS = {
   borrar:      '<path d="M4 7h16"/><path d="M10 4h4"/><path d="M6.6 7 7.6 20.2h8.8L17.4 7"/><path d="M10.4 10.6v6M13.6 10.6v6"/>',
   guardar:     '<path d="M5 3h11l3.5 3.5V21H5z"/><path d="M8.5 3v5.5h6.5V3"/><path d="M8.5 21v-6.5h7V21"/>',
   cerrar:      '<path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/>',
+  /* La camara: arma la lamina de un reporte para mandarla por WhatsApp. */
+  camara:      '<path d="M3 8.5h3.5L8 6h8l1.5 2.5H21v11H3z"/><circle cx="12" cy="13.7" r="3.4"/>',
   /* El candado, en sus dos estados. Mismo cuerpo, lo unico que cambia es el arco:
      cerrado baja a los dos lados; abierto solo a la izquierda y se levanta. */
   candado:     '<rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/>'
