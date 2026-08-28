@@ -60,6 +60,13 @@ export const FRANJAS = {
     saldoGrande: { etiqueta: 'Saldo grande',       corta: 'SALDO+',   color: '#fb923c' },
     escolar:     { etiqueta: 'Escolar',            corta: 'ESCOLAR',  color: '#22c55e' },
     catalogo:    { etiqueta: 'Catálogo',           corta: 'CATÁLOGO', color: '#a855f7' },
+    /* TODO JUNTO — las marcas que no se ordenan por temporada. Daniel, 28-ago-2026, sobre
+       Puma, Adidas, Skechers y Marie Claire: *"ahí todo se almacena, no se diferencia por
+       temporadas ni por saldos"*. Sus columnas son propias y nadie más entra ahí, así que
+       separar por temporada adentro no le ahorra un paso al operario y sí le llena el papel
+       de renglones. Comparte cuerpo —está en FRANJAS_QUE_COMPARTEN—, y por eso Slotting no
+       va a mandar desarmar sus cuerpos mezclados: son mezclados a propósito. */
+    marca:       { etiqueta: 'Todo junto',         corta: 'TODO',     color: '#14b8a6' },
     ninguna:     { etiqueta: 'Sin uso',            corta: '',         color: '#64748b' }
 };
 
@@ -1101,15 +1108,36 @@ export const franjaDeArticulo = (art, zona) => {
     // EL BUFFER D MANDA SOBRE TODO LO DEMÁS. Lo que se matricula ahí va a la columna de
     // catálogo entero, no importa la marca ni la temporada ni cuántos pares sean.
     if (art.origen === 'D' && columnasDeFranja(zona, 'catalogo').length) return 'catalogo';
+
+    /* LA MARCA QUE NO SE ORDENA POR TEMPORADA. Va antes que todo lo demás —salvo el
+       catálogo, que manda sobre cualquier marca—: si sus columnas son de la franja `marca`,
+       ahí entra todo suyo sin preguntar cantidad ni temporada. Puma, Adidas, Skechers y
+       Marie Claire, dictado el 28-ago-2026. */
+    if (columnasDeMarcaEnFranja(art.marca, 'marca').length
+        && columnasDeFranja(zona, 'marca').length) return 'marca';
+
+    /* EL SALDO SE PREGUNTA ANTES QUE EL ESCOLAR. Daniel, 28-ago-2026: *"el escolar, saldos,
+       también debería ir en la zona de saldos, que se comporte como si fuera un código
+       normal"*. Hasta acá el escolar ganaba siempre y un escolar de cinco pares se llevaba
+       sitio en la columna de escolar en vez de irse a saldos con los demás restos. Son 150
+       artículos y 816 pares, medidos ese día.
+
+       NO MEZCLA MARCAS: cada una va a SUS columnas de saldos —Power a la 2 y la 3 del MZN01,
+       Bubblegummers y sus licencias a la 23—, porque quien elige la columna filtra por marca.
+       *"Son marcas diferentes, no tienes que juntar Power con Bubblegummers."*
+
+       Ojo: esto decide DÓNDE va, no CUÁNTO baja. El tope de 50 pares por talla del escolar
+       vive en `casoDelItem` y sigue mandando igual.
+
+       EL CORTE ES POR ZONA, no uno solo para todas. Valía 20 en las cuatro; el 28-ago-2026
+       Daniel puso **100 en el MZN03** —*"menores a cien van ahí"*, por Weinbrenner y Bata
+       Industrials—. En el selectivo y en los mezzanines 1 y 2 sigue en 20, que es el mismo
+       número con el que se decide si un código es nuevo o reposición: las dos preguntas
+       miran lo mismo, si al artículo le queda algo de verdad en el almacén. */
+    if (Number(art.pares) < z.saldoMenorA && columnasDeFranja(zona, 'saldos').length) return 'saldos';
+
     const esEscolar = String(art.genderRims || '').toUpperCase().includes('SCHOOL');
     if (esEscolar && columnasDeFranja(zona, 'escolar').length) return 'escolar';
-    /* EL CORTE DE SALDO ES 20 EN TODAS LAS ZONAS. Daniel, 14-ago-2026: *"el saldo es para el
-     * uno, el dos y parte del tres. Menos de veinte es un saldo; igual o mayor a veinte ya no"*.
-     * Los mezzanines tenían 80 y era un número inventado: con ese corte, un artículo con 60
-     * pares de temporada actual se iba a la columna de saldos. Es el MISMO 20 con el que se
-     * decide si un código es nuevo o reposición, y eso no es casualidad — las dos preguntas
-     * miran lo mismo: si al artículo le queda algo de verdad en el almacén. */
-    if (Number(art.pares) < z.saldoMenorA && columnasDeFranja(zona, 'saldos').length) return 'saldos';
     /* EL SALDO GRANDE: de 20 a 199 pares Y de temporada actual. Daniel, 14-ago-2026: *"los
      * saldos que son mayores o igual a veinte se enviarán al SEL cuatro. Todo ese selectivo
      * puede tener más de un artículo en un cuerpo. Siempre y cuando el saldo sea T. Actual"*.
@@ -1213,7 +1241,7 @@ export const columnaSirveParaFranja = (zona, columna, franja) => {
  * 284 compartidos —el 30%—; las otras cuatro van del 74% al 100% de compartido, que es
  * exactamente lo que dice la regla.
  * ══════════════════════════════════════════════════════════════════════════════ */
-const FRANJAS_QUE_COMPARTEN = ['anterior', 'saldos', 'saldoGrande', 'escolar', 'catalogo'];
+const FRANJAS_QUE_COMPARTEN = ['anterior', 'saldos', 'saldoGrande', 'escolar', 'catalogo', 'marca'];
 
 /** ¿En esta columna se puede poner más de un artículo por cuerpo? */
 export const columnaAdmiteVariosArticulos = (zona, columna) => {
