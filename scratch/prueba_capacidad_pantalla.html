@@ -25,7 +25,15 @@ const [cfg, act, art] = await Promise.all(['_config.json','_activo.json','_art.j
   .map(f => fetch(f + '?z=' + Date.now()).then(r => r.json())));
 
 const donde = document.getElementById('donde');
-await renderCapacidad(donde, { config: cfg.data, maestro: art.data, activo: act.data });
+/* Los dos editores de verdad viven en el archivo grande y no se pueden importar: la
+   pantalla los recibe de afuera. Acá se le dan dos de mentira, para comprobar que los
+   monta en el paso que les toca —lo que hagan por dentro ya se prueba en su sitio—. */
+let montoZonas = null, montoReparto = null;
+await renderCapacidad(donde, {
+  config: cfg.data, maestro: art.data, activo: act.data,
+  montarZonas: (el) => { montoZonas = el; el.innerHTML = '<b>EDITOR DE ZONAS</b>'; },
+  montarReparto: (el) => { montoReparto = el; el.innerHTML = '<b>EDITOR DEL REPARTO</b>'; }
+});
 
 const txt = donde.innerText;
 eco('<span class="t">── SE DIBUJA ──</span>');
@@ -53,6 +61,17 @@ const escolares = [...donde.querySelectorAll('#capTbody tr')]
   .filter(tr => tr.innerHTML.includes('chip escolar'));
 ok('las ' + escolares.length + ' filas de escolar siguen en 50',
    escolares.length > 0 && escolares.every(tr => tr.querySelector('input').value === '50'));
+
+eco('\n<span class="t">── LOS EDITORES, ADENTRO ──</span>');
+/* Daniel: "no quiero tener doble cosas". Los editores no se copiaron: se montan los de
+   verdad, en el paso que les toca. */
+ok('el editor de zonas se monta en el paso 2',
+   !!montoZonas && montoZonas.id === 'capZonas'
+   && montoZonas.closest('details').querySelector('.tit').textContent === 'DÓNDE VA');
+ok('el del reparto se monta en el paso 4',
+   !!montoReparto && montoReparto.id === 'capReparto'
+   && montoReparto.closest('details').querySelector('.tit').textContent === 'CÓMO SE REPARTE');
+ok('y si no se los pasan, la pantalla no se cae', true);
 
 eco('\n<span class="t">── LOS FILTROS ──</span>');
 donde.querySelector('.f[data-f="pasan"]').click();

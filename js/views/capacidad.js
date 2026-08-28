@@ -17,7 +17,7 @@
  * ══════════════════════════════════════════════════════════════════════════════ */
 
 import { calcularCapacidad, pideConPerilla, perillaQueEntra, traerConfig, publicarTopes, RANGOS }
-  from '../services_v245/capacidadService.js?v=29.0483';
+  from '../services_v245/capacidadService.js?v=29.0484';
 
 const mil = (n) => Math.round(Number(n) || 0).toLocaleString('es-PE');
 const esc = (s) => String(s == null ? '' : s)
@@ -257,7 +257,10 @@ export async function renderCapacidad(container, opciones) {
         <div class="d">${esc(z.zona || '—')} · ${z.columnas && z.columnas.length
           ? 'columnas ' + z.columnas.join(', ') : 'toda la zona'}</div>
       </div>`;
-    }).join('')}</div>`;
+    }).join('')}</div>
+    <!-- Acá se monta el editor DE VERDAD, el mismo que estaba en Análisis SKU → Zonas de
+         Almacenaje. No es una copia: es esa pantalla, traída a su paso. -->
+    <div id="capZonas" style="margin-top:1rem;"></div>`;
 
   /* ══ PASO 3 · CUANTO BAJA ════════════════════════════════════════════════ */
   const paso3 = () => {
@@ -321,7 +324,10 @@ export async function renderCapacidad(container, opciones) {
           </div>
         </div>`;
       }).join('')}
-    </div>`;
+    </div>
+    <!-- Y acá el editor de verdad: el mismo que estaba abajo de Config. Tareas. Trae
+         además "cuánto baja al piso", que es el paso 3. -->
+    <div id="capReparto" style="margin-top:1rem;"></div>`;
 
   /* ══ PASO 5 · HASTA CUANTO ═══════════════════════════════════════════════ */
   const paso5 = () => `
@@ -460,6 +466,18 @@ export async function renderCapacidad(container, opciones) {
   pintarSemaforo();
   pintarTopes();
   explicar();
+
+  /* LOS EDITORES DE VERDAD, montados adentro. Se pasan desde afuera porque viven en el
+     archivo grande y no se pueden importar; traerlos asi es lo que evita reescribirlos
+     —y reescribir un editor que ya funciona es como se pierden comportamientos—. */
+  if (typeof O.montarZonas === 'function') {
+    try { await O.montarZonas($('#capZonas')); }
+    catch (e) { console.warn('[CAPACIDAD] no se pudo montar el editor de zonas:', e && e.message); }
+  }
+  if (typeof O.montarReparto === 'function') {
+    try { await O.montarReparto($('#capReparto')); }
+    catch (e) { console.warn('[CAPACIDAD] no se pudo montar el reparto:', e && e.message); }
+  }
 
   /* ── Lo que se toca ── */
   container.addEventListener('input', (e) => {
