@@ -256,6 +256,25 @@ ya vienen descontadas de lo que hay dentro de cada cuerpo suyo, así que la cuen
 —*"si tienes cuatro cuerpos, pero en un cuerpo te falta llenar, solamente hay cien, y hay que
 llenar unos doscientos treinta más, hay que llenar, no me importa"*—.
 
+**EL ESCOLAR NO SE LLENA. Nunca.** Daniel, 27-ago-2026, viendo un 05 SCHOOL con tope 50 al
+que se le mandaban bajar 142:
+
+> *"En el caso de school, para todas las marcas, es a rajatabla cincuenta pares nomás. ¿Por
+> qué cincuenta? Porque esos artículos se van a mezclar con otros artículos, no importa si en
+> el cuerpo hay varios artículos. Por ahí puede uno o dos o tres más, pero de cincuenta no
+> debería pasar."*
+
+Toda esta regla descansa en que **el cuerpo es del artículo**: por eso ocuparlo cuesta lo
+mismo lleno que a medias, y por eso conviene llenarlo. **El del escolar no lo es** — se
+comparte —, así que el hueco lo tapa el vecino y bajar de más solo saca mercadería de reserva
+sin necesidad. Vale para el almacenaje y para el llenado del Replenishment, que es la misma
+idea aplicada dos veces.
+
+**La regla vive en `esEscolar()` de `reportesComunes.js`, y en un solo sitio.** Estuvo
+declarada dentro del almacenaje hasta el 27-ago-2026, a una profundidad de llaves que el
+Replenishment no alcanzaba: usarla desde ahí reventaba en ejecución y **el chequeo de sintaxis
+no lo ve**. Si hace falta en un tercer módulo, se importa — no se copia.
+
 **Tres candados:**
 
 - **NUNCA RECORTA.** Si el 60% ya pasaba la capacidad, se queda como estaba. Esto solo agrega
