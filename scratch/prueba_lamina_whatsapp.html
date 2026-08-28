@@ -55,8 +55,8 @@ function dibujar(cual) {
 /* Lo que le hace WhatsApp a una foto: la achica si pasa de 1.600 por el lado largo
    y la reencoda en JPEG. El JPEG guarda el COLOR a la mitad de resolucion que el
    brillo, y ahi es donde se ensucian los bordes de un numero de color. */
-function porWhatsApp(cv, calidad) {
-  const TOPE = 1600;
+function porWhatsApp(cv, calidad, tope) {
+  const TOPE = tope || 1600;
   const f = Math.min(1, TOPE / Math.max(cv.width, cv.height));
   const c = document.createElement('canvas');
   c.width = Math.round(cv.width * f); c.height = Math.round(cv.height * f);
@@ -88,8 +88,9 @@ function lupa(img, anchoReal, disenoX, disenoY, disenoW, disenoH, veces) {
    Lo único que cambia entre A, C y D es el COLOR del número. */
 const CASOS = [
   { n: 'ANTES · captura de pantalla', ancho: 1013, ver: laminaAntes, saltar: !laminaAntes },
-  { n: 'AHORA · captura de pantalla', ancho: 1013, ver: null },
-  { n: 'AHORA · botón Copiar + Ctrl+V', ancho: 0, ver: null }
+  { n: 'Captura de pantalla · foto normal', ancho: 1013, ver: null },
+  { n: 'Botón Copiar · foto normal', ancho: 0, ver: null },
+  { n: 'Botón Copiar · foto en HD', ancho: 0, ver: null, tope: 2560 }
 ];
 
 const guardados = [];
@@ -117,7 +118,7 @@ for (const caso of CASOS) {
     g.drawImage(cv, 0, 0, c.width, c.height);   // desde la del caso, no desde la original
     cv = c;
   }
-  const { img, ancho } = await porWhatsApp(cv, 0.70);
+  const { img, ancho } = await porWhatsApp(cv, 0.70, caso.tope);
   guardados.push({ n: caso.n, img, ancho });
   eco('  ' + caso.n + ': llega a WhatsApp con ' + cv.width + ' y sale con ' + ancho);
 

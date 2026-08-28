@@ -153,10 +153,14 @@ ok('en pantalla mide ' + medidas.pantalla + ' puntos de ancho, contra los 575 de
    medidas.pantalla > 575);
 ok('le saca al menos un 40% a la de antes — ×' + (medidas.pantalla / 575).toFixed(2),
    medidas.pantalla >= 575 * 1.4);
-ok('el dibujo interno es el doble de fino: ' + medidas.interna + ' puntos',
-   medidas.interna >= medidas.pantalla * 1.9);
-ok('no pasa de ~1.600, que es donde WhatsApp achica y deja de ganar nitidez',
-   medidas.pantalla <= 1600);
+ok('el dibujo interno es el triple de fino: ' + medidas.interna + ' puntos',
+   medidas.interna >= medidas.pantalla * 2.9);
+/* Lo que se copia al portapapeles tiene que PASARSE de los dos topes de WhatsApp, para
+   que siempre haya reducción a favor: reducir promedia puntos y suaviza el borde. */
+ok('le sobra para la foto normal, que recorta a ~1.600 — ×'
+   + (medidas.interna / 1600).toFixed(2), medidas.interna >= 1600 * 1.5);
+ok('y le sobra para la foto en HD, que recorta a ~2.560 — ×'
+   + (medidas.interna / 2560).toFixed(2), medidas.interna >= 2560);
 /* SIN SCROLL: si la lámina no entra entera, la captura sale cortada y no sirve. */
 ok('entra entera, sin scroll — en una ventana de ' + window.innerHeight + ' de alto',
    !medidas.seCorta);
