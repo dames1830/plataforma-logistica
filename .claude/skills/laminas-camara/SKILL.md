@@ -66,12 +66,17 @@ Daniel eligió expresamente conservarlo.
 lo rechazó el 27-ago-2026: *"toma los mismos colores... el rojito para la x, el amarillo para
 los círculos y el verde para los visto buenos"*.
 
+Lo mismo en el **Replenishment**: *"ponle colores, pues: los quebrados en rojo, por quebrar
+en amarillo"* (28-ago-2026). `laminaResumen()` dibuja las cifras con el color que le pasan,
+sin tocar — los grises sí pasan por `paraFoto`, que no pierden nada.
+
 La diferencia es qué hay que hacer con el color:
 
 | | Qué es el color | Qué pesa más |
 |---|---|---|
 | **UCA** | decoración de un número que se LEE | el borde limpio |
 | **Asistencia** | el dato mismo: 33 símbolos que hay que DISTINGUIR de un vistazo | el código de color |
+| **Replenishment** | el estado: rojo quebrado, amarillo por quebrar | el código de color |
 
 Si el color es el dato, no se toca. La nitidez de esa lámina sale del botón Copiar y de
 partirla en bloques, que no cuestan nada a cambio.

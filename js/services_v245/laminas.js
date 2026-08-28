@@ -229,7 +229,13 @@ export function laminaResumen({ titulo, tarjetas, grande, pie }) {
   const LINEA = col('--border') || 'rgba(255,255,255,.1)';
   const FUERTE = paraFoto(col('--text-strong') || '#fff', CAJA, 0.16, 0.86);
   const SUAVE = paraFoto(col('--text-muted') || '#8b949e', CAJA, 0.34, 0.72);
-  const tinta = (c) => paraFoto(c || FUERTE, CAJA, 0.16, 0.86);
+  /* LAS CIFRAS VAN CON EL COLOR QUE LES PASAN, SIN TOCAR.
+     Daniel, 28-ago-2026: *"ponle colores, pues: los quebrados en rojo, por quebrar en
+     amarillo"*. Aca el color ES el dato -dice el estado de un vistazo-, no la decoracion de
+     un numero que se lee. Es la misma decision que en el cuadro de asistencia: cuando el
+     color significa algo, no se oscurece aunque el JPEG de WhatsApp lo trate peor.
+     Los grises SI pasan por paraFoto: su borde ya vive en el brillo y no pierden nada. */
+  const tinta = (c) => c || FUERTE;
 
   g.fillStyle = FONDO;
   g.fillRect(0, 0, ANCHO, ALTO);

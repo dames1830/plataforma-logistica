@@ -140,6 +140,33 @@ ok('la cifra se encoge si no entra —195.226 en una tarjeta de cuatro—',
 ok('la lámina no lleva tablas ni listas: solo el resumen',
    !/forEach\(fila/.test(trozo));
 
+eco('\n<span class="t">── LOS COLORES SON EL DATO ──</span>');
+/* Daniel: "ponle colores, los quebrados en rojo, por quebrar en amarillo". Se comprueba
+   leyendo los PUNTOS del dibujo: el tono que sale tiene que ser el del tema, no uno
+   oscurecido. */
+document.documentElement.setAttribute('data-tema', 'pbi');
+const rojoTema = getComputedStyle(document.documentElement).getPropertyValue('--danger').trim();
+const cv2 = LAM.laminaResumen({
+  titulo: 'PRUEBA', tarjetas: [{ rotulo: 'QUEBRADOS', valor: 248, color: rojoTema }],
+  grande: { rotulo: 'X', valor: 1, color: rojoTema }, pie: ''
+});
+const vent2 = [...document.querySelectorAll('body > div')].pop();
+const escD = cv2.width / 460;
+const px = cv2.getContext('2d').getImageData(
+  Math.round(30 * escD), Math.round(108 * escD), Math.round(180 * escD), Math.round(24 * escD)).data;
+let masRojo = null, mejor = -1;
+for (let i = 0; i < px.length; i += 4) {
+  const d = px[i] - Math.max(px[i + 1], px[i + 2]);
+  if (d > mejor) { mejor = d; masRojo = [px[i], px[i + 1], px[i + 2]]; }
+}
+const bril = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+const brilloTema = bril(LAM.aRGB(rojoTema));
+ok('el rojo sale con el brillo del tema (' + bril(masRojo).toFixed(2)
+   + ' contra ' + brilloTema.toFixed(2) + '), no oscurecido',
+   Math.abs(bril(masRojo) - brilloTema) < 0.08);
+ok('y es rojo de verdad, no marrón', masRojo[0] - Math.max(masRojo[1], masRojo[2]) > 60);
+[...vent2.querySelectorAll('button')].pop().click();
+
 document.documentElement.setAttribute('data-tema', 'pbi');
 llegoAlFinal = true;
 eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
