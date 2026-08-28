@@ -1,0 +1,596 @@
+<!-- MAQUETA: Picking Hoy, el submódulo nuevo de Picking.
+     Se pica lo que pidió comercial, siempre y cuando esté en zona activa: el picker no sube
+     al rack alto. La ola va SKU por SKU buscando en el orden del almacén —buffer, selectivo,
+     mezzanines, andamios— y dice cuánto le toca a cada zona y de qué marca. Los números son
+     de verdad: pedido, stock y reserva del servidor. -->
+<meta charset="utf-8">
+<title>Picking Hoy</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body { margin:0; padding:0; background:var(--panel-deeper); }
+  .marco { max-width:1180px; margin:0 auto; padding:20px 18px 70px; }
+
+  .tapa { background:#12365c; border-radius:12px 12px 0 0; padding:.9rem 1.2rem;
+          display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .tapa h1 { margin:0; color:#fff; font:800 17px/1.2 Arial,Helvetica,sans-serif;
+             letter-spacing:1.1px; text-transform:uppercase; }
+  .tapa .sub { color:#9fb3cc; font-size:12px; }
+  .sello { margin-left:auto; color:#9fb3cc; font-size:11.5px; text-align:right; line-height:1.5; }
+
+  .resumen { background:var(--panel-solid); border:1px solid var(--border); border-top:0;
+             border-radius:0 0 12px 12px; padding:1rem 1.2rem; margin-bottom:1.1rem; }
+  .cifras { display:flex; gap:10px; flex-wrap:wrap; }
+  .cifra { flex:1 1 165px; border:1px solid var(--border); border-radius:9px; padding:.6rem .8rem; }
+  .cifra .r { font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--text-muted); }
+  .cifra .v { font-size:23px; font-weight:900; color:var(--text-strong); line-height:1.25;
+              font-variant-numeric:tabular-nums; }
+  .cifra .d { font-size:11px; color:var(--text-muted); line-height:1.5; }
+  .cifra.fuerte { background:#12365c; border-color:#12365c; }
+  .cifra.fuerte .r { color:#9fb3cc; } .cifra.fuerte .v { color:#fff; } .cifra.fuerte .d { color:#9fb3cc; }
+  .flecha { align-self:center; color:var(--text-muted); font-size:18px; }
+
+  .caja { background:var(--panel-solid); border:1px solid var(--border); border-radius:11px;
+          margin-bottom:.8rem; overflow:hidden; }
+  .cab { padding:.7rem 1rem; border-bottom:1px solid var(--border);
+         display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .cab h2 { margin:0; color:var(--text-strong); font-size:13.5px; font-weight:800; letter-spacing:.5px; }
+  .cab .q { color:var(--text-muted); font-size:11.5px; }
+  .cuerpo { padding:.8rem 1rem 1rem; }
+
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { padding:.4rem .6rem; text-align:left; font-size:10.5px; font-weight:700;
+       letter-spacing:.07em; color:var(--text-muted); text-transform:uppercase;
+       border-bottom:1px solid var(--border); white-space:nowrap; }
+  td { padding:.36rem .6rem; color:var(--text-main); border-bottom:1px solid rgba(var(--ink-rgb),.04); }
+  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
+  tr.tot td { border-top:1.5px solid var(--border); border-bottom:0; font-weight:800;
+              color:var(--text-strong); }
+  .apagado { color:var(--text-muted); }
+  .fuerte  { color:var(--text-strong); font-weight:800; }
+  .mono { font-family:ui-monospace,Consolas,monospace; font-size:11.5px; }
+
+  /* El recorrido: las zonas en el orden en que se camina */
+  .ruta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:.7rem;
+          font-size:11.5px; color:var(--text-muted); }
+  .ruta b { background:rgba(var(--ink-rgb),.06); border-radius:20px; padding:.15rem .6rem;
+            color:var(--text-strong); font-weight:700; }
+  .zonas { display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:.7rem; }
+  .tabla { overflow-x:auto; }
+  /* LA CAJA QUE SE DESLIZA. Sin `overflow` la altura se recorta pero el contenido se
+     dibuja igual, encima de lo que viene abajo: por eso la pantalla salia toda montada.
+     La regla existia y se perdio al rehacer el archivo. */
+  .scroll { max-height:430px; overflow:auto; border:1px solid var(--border);
+            border-radius:8px; }
+  .scroll thead th { position:sticky; top:0; z-index:1;
+                     background:var(--panel-solid); box-shadow:0 1px 0 var(--border); }
+  /* Las dos tablas grandes tienen muchas columnas: si no se les da un ancho minimo, el
+     navegador las aplasta y los textos se pisan. Con esto se deslizan de costado. */
+  .scroll table { min-width:900px; }
+  .scroll td, .scroll th { white-space:nowrap; }
+  .scroll td:last-child { white-space:normal; }
+  .zona table { table-layout:fixed; min-width:390px; }
+  .zona th:first-child, .zona td:first-child { width:auto; }
+  .zona th:not(:first-child), .zona td:not(:first-child) { width:88px; }
+  .zona { border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .zona > .z { background:#12365c; padding:.55rem .8rem; display:flex; align-items:baseline;
+               gap:8px; flex-wrap:wrap; }
+  .zona > .z .o { background:rgba(255,255,255,.18); color:#fff; border-radius:50%; width:18px;
+                  height:18px; font:800 10px/18px Arial,sans-serif; text-align:center; flex:none; }
+  .zona > .z b { color:#fff; font:800 13px Arial,sans-serif; letter-spacing:.5px; }
+  .zona > .z .s { color:#9fb3cc; font-size:11px; margin-left:auto; }
+  .zona > .z .p { color:#fff; font-size:17px; font-weight:900; font-variant-numeric:tabular-nums; }
+  .zona table { font-size:12px; }
+  .zona td, .zona th { padding:.3rem .55rem; }
+  .barra { height:5px; border-radius:3px; background:rgba(var(--ink-rgb),.07); margin-top:3px; overflow:hidden; }
+  .barra i { display:block; height:100%; background:#12365c; }
+
+  .saldo { border:1px solid var(--border); border-radius:9px; padding:.6rem .8rem; margin-bottom:.5rem; }
+  .saldo .t { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .saldo .t b { color:var(--text-strong); font-size:12.5px; font-weight:800; }
+  .saldo .t .v { margin-left:auto; font-size:16px; font-weight:900; color:var(--text-strong);
+                 font-variant-numeric:tabular-nums; }
+  .saldo .d { color:var(--text-muted); font-size:11.5px; }
+  .saldo.rojo { border-color:rgba(var(--danger-rgb),.4); background:rgba(var(--danger-rgb),.06); }
+  .saldo.rojo .t b, .saldo.rojo .t .v { color:var(--danger); }
+  .urgente { border:2px solid var(--warning); background:rgba(var(--warning-rgb),.08); }
+  .urgente .t b, .urgente .t .v { color:var(--warning); }
+  .verlos { background:transparent; border:1px solid var(--border); color:var(--text-muted);
+            border-radius:20px; padding:.15rem .6rem; font-size:11px; cursor:pointer; margin-top:.4rem; }
+  .chicos { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:.7rem; }
+  /* LOS FILTROS SE ABREN HACIA ABAJO, EN EL FLUJO, no flotando. Un menu flotante se
+     corta contra el `overflow:hidden` del recuadro —ya paso antes con los glass-panel— y
+     ademas con 39 rutas necesita altura propia. */
+  .abrir { display:inline-flex; gap:5px; align-items:baseline; }
+  .panel { border:1px solid var(--border); border-radius:9px; padding:.6rem .7rem;
+           margin-bottom:.6rem; background:rgba(var(--ink-rgb),.02); }
+  .panel .acciones { display:flex; gap:6px; align-items:center; margin-bottom:.5rem; }
+  .panel input[type=search] { flex:1 1 160px; max-width:240px; padding:.22rem .5rem;
+     font-size:11.5px; background:var(--panel-solid); color:var(--text-main);
+     border:1px solid var(--border); border-radius:7px; outline:none; }
+  .mini { background:transparent; border:1px solid var(--border); color:var(--text-muted);
+          border-radius:20px; padding:.14rem .6rem; font-size:11px; cursor:pointer; }
+  .mini:hover { color:var(--text-strong); }
+  .marcas { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+            gap:.15rem .5rem; max-height:230px; overflow:auto; }
+  .mk { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-main);
+        padding:.16rem .3rem; border-radius:6px; cursor:pointer; }
+  .mk:hover { background:rgba(var(--ink-rgb),.05); }
+  .mk input { accent-color:#12365c; cursor:pointer; }
+  .mk span { margin-left:auto; font-size:11px; }
+  .chip { display:inline-block; font-size:11px; padding:.1rem .5rem; border-radius:20px;
+          background:rgba(var(--ink-rgb),.06); color:var(--text-muted); white-space:nowrap; }
+  .chip b { color:var(--text-strong); font-weight:800; }
+  .chip.aqui { background:#12365c; color:#fff; }
+  .cajas { margin:.5rem .55rem 0; padding:.4rem .6rem; border-radius:7px; font-size:11px;
+           line-height:1.55; background:rgba(var(--violet-rgb),.1); color:var(--violet); }
+  .cajas .mono { font-size:10.5px; }
+</style>
+
+<div class="marco">
+  <div class="tapa">
+    <div>
+      <h1>Picking Hoy</h1>
+      <div class="sub">Lo que se pica del piso hoy, zona por zona y marca por marca</div>
+      <div class="sub" id="aviso"></div>
+    </div>
+    <div class="sello" id="sello">cargando…</div>
+  </div>
+  <div class="resumen" id="resumen"></div>
+  <div id="todo"></div>
+</div>
+
+<script type="module">
+document.documentElement.setAttribute('data-tema', 'pbi');
+const $ = (s) => document.querySelector(s);
+const mil = (n) => Math.round(n || 0).toLocaleString('es-PE');
+const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+const D = await (await fetch('_picking_hoy.json?z=' + Date.now())).json();
+const P = await (await fetch('_pedidos_por_zona.json?z=' + Date.now())).json();
+const T = D.totales, NC = D.noCalzado;
+
+/* LOS TRES SELLOS, A LA VISTA. No son de la misma hora y eso importa: el stock es del
+   ancla de las 07:00 de hoy —la que se guarda y no se publica— y el pedido es el de anoche,
+   porque comercial manda el correo de noche y se arma una sola vez. */
+$('#sello').innerHTML =
+    'stock&nbsp;&nbsp;&nbsp;<b style="color:#fff">' + esc(D.fechaStock) + '</b>'
+  + ' <span style="opacity:.75">ancla de la mañana</span>'
+  + '<br>pedido&nbsp;<b style="color:#fff">' + esc(D.fecha) + '</b>'
+  + ' <span style="opacity:.75">el correo de comercial</span>'
+  + '<br>reserva <b style="color:#fff">' + esc(D.fechaReserva) + '</b>'
+  + ' <span style="opacity:.75">solo para clasificar</span>';
+
+/* ══ LOS NÚMEROS DE ARRIBA ════════════════════════════════════════════════
+   LA BASE ES EL PENDIENTE POR DESPACHAR, el mismo que muestra Zona Buffer. Daniel,
+   27-ago-2026: *"pueden haber un millón de pedidos en el WMS, pero solamente vamos a tener
+   lo que dice el correo de comercial [...] ese número debería estar en una tarjeta, y en
+   base a eso se hace el cálculo"*. */
+/* LAS BOLSAS ENTRAN A LA CORRIDA. Si comercial las pidió, alguien las tiene que levantar.
+   Se cuentan aparte —abajo hay un cuadro "por tipo"— porque no es lo mismo picar cien pares
+   que cinco mil bolsas, pero el número grande las incluye. */
+const CALZADO = T.picar - NC.picar;
+$('#resumen').innerHTML = `
+  <div class="cifras">
+    <div class="cifra"><div class="r">Comercial pidió</div><div class="v">${mil(T.sol)}</div>
+      <div class="d">el correo del ${esc(D.fecha.slice(8, 10))}, ya filtrado</div></div>
+    <span class="flecha">−</span>
+    <div class="cifra"><div class="r">El WMS ya asignó</div><div class="v">${mil(T.asig)}</div>
+      <div class="d">eso ya está atendido</div></div>
+    <span class="flecha">=</span>
+    <div class="cifra" style="border-color:#12365c; border-width:2px;">
+      <div class="r">Por despachar</div><div class="v">${mil(T.falta)}</div>
+      <div class="d"><b class="fuerte">este es el número de Zona Buffer → Pendiente</b></div></div>
+    <span class="flecha">→</span>
+    <div class="cifra fuerte"><div class="r">A picar hoy</div><div class="v">${mil(T.picar)}</div>
+      <div class="d">lo que de eso está en zona activa · ${mil(T.skus)} SKUs<br>
+        ${mil(CALZADO)} de calzado y ${mil(NC.picar)} de bolsas y complementos</div></div>
+  </div>`;
+
+/* ══ EN QUÉ SE PARTE EL PENDIENTE ════════════════════════════════════════ */
+const dePicar = `
+  <div class="caja">
+    <div class="cab"><h2>EN QUÉ SE PARTEN LOS ${mil(T.falta)} POR DESPACHAR</h2>
+      <span class="q">uno por uno, según dónde los encontró la ola</span></div>
+    <div class="cuerpo">
+      <table><tbody>
+        <tr><td class="fuerte">Está en zona activa — <b>esto es el trabajo de hoy</b></td>
+          <td class="n fuerte" style="font-size:15px; width:100px;">${mil(T.picar)}</td>
+          <td class="n apagado" style="width:90px;">${mil(T.skus)} SKUs</td></tr>
+        ${D.saldos.map(x => `<tr><td class="apagado">${esc(x.titulo)}</td>
+          <td class="n ${x.clave === 'reserva' ? '' : 'apagado'}"
+              style="${x.clave === 'reserva' ? 'color:var(--warning); font-weight:800;' : ''}">${mil(x.pares)}</td>
+          <td class="n apagado">${mil(x.skus)} SKUs</td></tr>`).join('')}
+        <tr class="tot"><td>TOTAL POR DESPACHAR</td>
+          <td class="n">${mil(T.picar + D.saldos.reduce((a, x) => a + x.pares, 0))}</td>
+          <td></td></tr>
+      </tbody></table>
+      <p class="q" style="margin:.7rem 0 0;">Las <b class="fuerte">bolsas y complementos van
+        adentro</b>: si comercial los pidió, alguien los tiene que levantar. Se cuentan
+        aparte en el cuadro <i>por tipo</i> de más abajo, porque no es lo mismo picar cien
+        pares que cinco mil bolsas — un solo código, BOLSAS BATA GRANDE, pide 47.238
+        unidades y vive en la Zona Buffer.</p>
+    </div>
+  </div>`;
+
+/* ══ POR ZONA — EN EL ORDEN EN QUE SE CAMINA ══════════════════════════════
+   La jerarquía la dictó Daniel: buffer, selectivo, los cuatro mezzanines y los andamios.
+   Se toma de cada zona lo que tenga hasta cubrir la asignación de ese SKU. */
+const zonas = `
+  <div class="caja">
+    <div class="cab"><h2>POR ZONA</h2>
+      <span class="q">repartido por dónde lo va a encontrar el picker · <b class="fuerte">CALZADO</b>
+        y <b class="fuerte">NO CALZADO</b> van separados a propósito: sumarlos dice que Bata tiene
+        46 mil pares de zapatos en el buffer, y son bolsas · <b class="fuerte">TIENE HOY</b> es
+        todo el stock de esa marca en esa zona, para saber si alcanza · todo en pares, con las
+        cajas de prepack ya abiertas</span></div>
+    <div class="cuerpo">
+      <div class="ruta">se busca en este orden: ${D.orden.map(o => `<b>${esc(o)}</b>`).join(' → ')}</div>
+      <p class="q" style="margin:0 0 .7rem;">Sumando las nueve zonas:
+        <b class="fuerte">${mil(D.zonas.reduce((a, z) => a + z.calzado, 0))} pares de calzado</b>
+        y <b style="color:var(--violet); font-weight:800;">${
+        mil(D.zonas.reduce((a, z) => a + z.noCalzado, 0))} de bolsas y complementos</b>,
+        con las cajas de prepack ya abiertas.</p>
+      <div class="zonas">
+        ${D.zonas.map((z, i) => `
+          <div class="zona">
+            <div class="z"><span class="o">${i + 1}</span><b>${esc(z.etiqueta)}</b>
+              <span class="s">${mil(z.skus)} SKUs</span>
+              <span class="p">${mil(z.picar)}</span></div>
+            ${z.enCajas ? `<div class="cajas">
+              📦 acá hay <b>prepack</b>: el WMS cuenta
+              <b>${mil(z.picar)} cajas</b> y adentro son <b>${mil(z.pares)} pares</b>. Los dos
+              primeros dígitos del sufijo del SKU dicen cuántos trae cada una —
+              <span class="mono">5898515-1-<b>04</b>042</span> son 4.</div>` : ''}
+            <div class="tabla"><table><thead><tr>
+              <th>MARCA</th><th class="n">CALZADO</th><th class="n">NO&nbsp;CALZADO</th>
+              <th class="n">TIENE&nbsp;HOY</th>
+            </tr></thead><tbody>
+              ${z.marcas.map(m => `<tr>
+                <td class="fuerte">${esc(m.marca)}
+                  <div class="barra"><i style="width:${(m.pares / z.pares * 100).toFixed(1)}%"></i></div></td>
+                <td class="n fuerte">${m.calzado ? mil(m.calzado) : '<span class="apagado">—</span>'}</td>
+                <td class="n" style="color:var(--violet); font-weight:800;">${
+                  m.noCalzado ? mil(m.noCalzado) : '<span class="apagado" style="font-weight:400;">—</span>'}</td>
+                <td class="n apagado">${mil(m.stockPares)}</td></tr>`).join('')}
+              <tr class="tot"><td>TOTAL</td>
+                <td class="n">${mil(z.calzado)}</td>
+                <td class="n" style="color:var(--violet);">${z.noCalzado ? mil(z.noCalzado) : '—'}</td>
+                <td class="n">${mil(z.stockPares)}</td></tr>
+            </tbody></table></div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+/* ══ LO URGENTE: BAJAR DE RESERVA ANTES DEL TURNO ═════════════════════════
+   El picker no sube al rack alto, así que lo que está arriba no se pica: alguien lo tiene
+   que bajar. Es lo único de la pantalla que hay que resolver HOY. */
+const RES = D.saldos.find(x => x.clave === 'reserva');
+const baseUrgente = T.picar + (RES ? RES.pares : 0);
+const bajar = !RES ? '' : `
+  <div class="caja">
+    <div class="cab"><h2>ANTES DE QUE ARRANQUE EL TURNO</h2>
+      <span class="q">lo que hay que despachar y está arriba, no abajo</span></div>
+    <div class="cuerpo">
+      <div class="saldo urgente">
+        <div class="t"><b>Bajar de reserva</b>
+          <span class="q apagado">${mil(RES.skus)} SKUs</span>
+          <span class="v">${mil(RES.pares)}</span></div>
+        <div class="d">Si no baja, el picker va a la ubicación y no encuentra nada.
+          Son el ${(RES.pares / baseUrgente * 100).toFixed(1)}% de lo que hay que despachar.</div>
+        <button class="verlos" data-ver="urgente">ver los ${RES.top.length} que más pesan</button>
+        <div id="lista_urgente" style="display:none; margin-top:.5rem;">
+          <table><thead><tr><th>SKU</th><th>MARCA</th><th class="n">FALTA BAJAR</th>
+            <th class="n">HAY ARRIBA</th></tr></thead>
+          <tbody>${RES.top.map(x => `<tr><td class="mono">${esc(x.sku)}</td>
+            <td class="apagado">${esc(x.marca)}</td><td class="n fuerte">${mil(x.pares)}</td>
+            <td class="n apagado">${mil(x.extra)}</td></tr>`).join('')}</tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+/* ══ LO QUE NO SE VA A PICAR HOY ══════════════════════════════════════════ */
+const saldos = `
+  <div class="caja">
+    <div class="cab"><h2>LO QUE NO SE VA A PICAR HOY</h2>
+      <span class="q">de los ${mil(T.falta)} por despachar, lo que la ola no encontró en
+        zona activa · cada uno se resuelve distinto</span></div>
+    <div class="cuerpo">
+      ${D.saldos.map(s => `
+        <div class="saldo ${s.clave === 'noEsta' ? 'rojo' : ''}">
+          <div class="t"><b>${esc(s.titulo)}</b>
+            <span class="q apagado">${mil(s.skus)} SKUs</span>
+            <span class="v">${mil(s.pares)}</span></div>
+          <div class="d">${esc(s.dice)}</div>
+          ${s.top.length ? `<button class="verlos" data-ver="${s.clave}">ver los ${
+            s.top.length} que más pesan</button>
+          <div id="lista_${s.clave}" style="display:none; margin-top:.5rem;">
+            <table><thead><tr><th>SKU</th><th>MARCA</th><th class="n">FALTA</th>
+              ${['reserva','libre','otra'].includes(s.clave)
+                ? `<th class="n">${s.clave === 'reserva' ? 'HAY ARRIBA'
+                   : s.clave === 'libre' ? 'LIBRE ABAJO' : 'HAY AHÍ'}</th>` : ''}</tr></thead>
+            <tbody>${s.top.map(x => `<tr><td class="mono">${esc(x.sku)}</td>
+              <td class="apagado">${esc(x.marca)}</td><td class="n fuerte">${mil(x.pares)}</td>
+              ${['reserva','libre','otra'].includes(s.clave)
+                ? `<td class="n apagado">${mil(x.extra)}</td>` : ''}</tr>`).join('')}
+            </tbody></table>
+          </div>` : ''}
+        </div>`).join('')}
+      <table style="margin-top:.7rem;"><tbody><tr class="tot">
+        <td>SUMA DE LO QUE NO SE PICA</td>
+        <td class="n">${mil(D.saldos.reduce((a, s) => a + s.pares, 0))}</td>
+        <td class="apagado" style="border-top:1.5px solid var(--border);">más los
+          ${mil(T.picar)} que sí se pican dan ${mil(T.falta)}, que es lo por despachar</td>
+      </tr></tbody></table>
+    </div>
+  </div>`;
+
+/* ══ LOS REPORTES CHICOS ══════════════════════════════════════════════════ */
+const tablita = (titulo, filas, quees) => {
+  const total = filas.reduce((a, f) => a + f.picar, 0);
+  return `<div class="zona">
+    <div class="z"><b>${esc(titulo)}</b><span class="p" style="margin-left:auto;">${mil(total)}</span></div>
+    <table><thead><tr><th>${esc(quees)}</th><th class="n">A PICAR</th><th class="n">%</th>
+      <th class="n">SKUS</th></tr></thead>
+    <tbody>${filas.map(f => `<tr>
+      <td class="fuerte">${esc(f.nombre)}
+        <div class="barra"><i style="width:${(f.picar / total * 100).toFixed(1)}%"></i></div></td>
+      <td class="n fuerte">${mil(f.picar)}</td>
+      <td class="n apagado">${(f.picar / total * 100).toFixed(1)}%</td>
+      <td class="n apagado">${f.skus !== undefined ? mil(f.skus) : ''}</td></tr>`).join('')}
+      <tr class="tot"><td>TOTAL</td><td class="n">${mil(total)}</td><td class="n">100%</td><td></td></tr>
+    </tbody></table>
+  </div>`;
+};
+const chicos = `
+  <div class="caja">
+    <div class="cab"><h2>Y LO MISMO, MIRADO DE OTRA MANERA</h2>
+      <span class="q">los tres suman lo mismo que las zonas: ${mil(T.picar)} pares de calzado</span></div>
+    <div class="cuerpo"><div class="chicos">
+      ${tablita('Por tipo', D.porTipo, 'TIPO')}
+      ${tablita('Por colección', D.porColeccion, 'COLECCIÓN')}
+      ${tablita('Por Gender RIMS', D.porGender, 'GENDER')}
+      ${tablita('Por marca', D.porMarca.map(m => ({...m, skus: undefined})), 'MARCA')}
+    </div></div>
+  </div>`;
+
+/* SI LAS DOS FOTOS SON DE DÍAS DISTINTOS HAY QUE DECIRLO. El pedido no se refresca —se
+   arma una vez por noche— así que lo que el turno noche ya picó puede seguir figurando. */
+if (D.fechaStock.slice(0, 10) !== D.fecha.slice(0, 10)) {
+  $('#aviso').innerHTML = '⚠ el stock es de hoy y el pedido de anoche: lo que el turno '
+    + 'noche ya picó puede seguir apareciendo';
+  $('#aviso').style.color = '#F5C97A';
+}
+
+/* ══ QUÉ PEDIDOS APUNTAN A CADA ZONA ══════════════════════════════════════
+   Daniel, 27-ago-2026: *"la ola se corre en el WMS cada treinta pedidos. Imaginate correr
+   mil pedidos en la zona buffer: es hora muerta para un asistente"*. Por eso la columna que
+   importa no son los pares sino los PEDIDOS y, sobre todo, las OLAS que hacen falta. */
+const PT = P.totales;
+const maxPed = Math.max(...P.zonas.map(z => z.pedidos));
+const solos = (P.reparto.find(r => r.zonas === 1) || {}).pedidos || 0;
+const pedidos = `
+  <div class="caja">
+    <div class="cab"><h2>QUÉ PEDIDOS APUNTAN A CADA ZONA</h2>
+      <span class="q">${mil(PT.pedidos)} pedidos · la ola del WMS corre de a
+        <b class="fuerte">${P.porOla}</b>, así que lo que cuesta tiempo no son los pares sino
+        cuántas olas hay que lanzar contra cada zona</span></div>
+    <div class="cuerpo">
+      <table><thead><tr><th>ZONA</th><th class="n">PEDIDOS</th><th class="n">OLAS</th>
+        <th class="n">PARES</th><th style="width:34%;">PESO</th></tr></thead>
+      <tbody>${P.zonas.map(z => `<tr>
+        <td class="fuerte">${esc(z.etiqueta)}</td>
+        <td class="n fuerte">${mil(z.pedidos)}</td>
+        <td class="n" style="color:var(--warning); font-weight:800;">${mil(z.olas)}</td>
+        <td class="n apagado">${mil(z.pares)}</td>
+        <td><div class="barra"><i style="width:${(z.pedidos / maxPed * 100).toFixed(1)}%"></i></div></td>
+      </tr>`).join('')}</tbody></table>
+      <div class="cab" style="border:0; padding:.9rem 0 .5rem;">
+        <h2>Y LO MISMO POR RUTA DE DESPACHO</h2>
+        <span class="q">una ruta sale junta, así que agrupar la ola por ruta cuesta
+          <b class="fuerte">${mil(P.olasPorRuta)} olas</b> contra las
+          <b class="fuerte">${mil(P.olasPorZona)}</b> de agrupar por zona — y cada ruta se
+          despacha completa, sin dejar pedidos a medias</span></div>
+      <div class="scroll" style="max-height:300px;"><table>
+        <thead><tr><th>RUTA</th><th>ZONA</th><th>TURNO</th><th class="n">TIENDAS</th>
+          <th class="n">PEDIDOS</th><th class="n">OLAS</th><th class="n">PARES</th>
+          <th>ZONAS DEL ALMACÉN QUE TOCA</th></tr></thead>
+        <tbody>${P.rutas.map(r => `<tr>
+          <td class="mono fuerte">${esc(r.ruta)}</td>
+          <td class="apagado">${esc(r.zona)}</td>
+          <td class="apagado">${esc(r.turno)}</td>
+          <td class="n apagado">${mil(r.tiendas)}</td>
+          <td class="n fuerte">${mil(r.pedidos)}</td>
+          <td class="n" style="color:var(--warning); font-weight:800;">${mil(r.olas)}</td>
+          <td class="n apagado">${mil(r.pares)}</td>
+          <td>${r.zonas.slice(0, 4).map(z => `<span class="chip">${esc(z.etiqueta)} <b>${
+            mil(z.pedidos)}</b></span>`).join(' ')}${r.zonas.length > 4
+            ? `<span class="chip">+${r.zonas.length - 4}</span>` : ''}</td>
+        </tr>`).join('')}</tbody></table></div>
+
+      <p class="q" style="margin:.8rem 0 .4rem;">
+        <b class="fuerte">${mil(solos)} de los ${mil(PT.pedidos)} pedidos van a UNA sola zona</b>
+        — esos se despachan de una pasada. Los que se reparten entre varias son los que
+        obligan a repetir la ola.</p>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:.8rem;">
+        ${P.reparto.map(r => `<span class="chip">${r.zonas === 0 ? 'ninguna zona'
+          : r.zonas + (r.zonas === 1 ? ' zona' : ' zonas')}: <b>${mil(r.pedidos)}</b></span>`).join('')}
+      </div>
+      <div class="cab" style="border:0; padding:.9rem 0 .3rem;">
+        <h2>PEDIDO POR PEDIDO</h2>
+        <span class="q">filtra por zona del almacén, por ruta de despacho, o por las dos a la vez</span></div>
+      <div class="filtros">
+        <button class="boton claro abrir" data-abre="fzona">Zona del almacén
+          <span id="rotZona" class="apagado">· todas</span> ▾</button>
+        <button class="boton claro abrir" data-abre="fruta">Ruta de despacho
+          <span id="rotRuta" class="apagado">· todas</span> ▾</button>
+        <button class="boton claro" id="limpiar">Limpiar</button>
+        <button class="boton" id="bajarCsv" style="margin-left:auto;">⤓ Exportar a Excel</button>
+      </div>
+      <div class="panel" id="fzona" style="display:none;">
+        <div class="acciones"><button class="mini" data-todo="z">todas</button>
+          <button class="mini" data-nada="z">ninguna</button></div>
+        <div class="marcas">${P.zonas.map(z => `<label class="mk">
+          <input type="checkbox" data-z="${z.z}"> ${esc(z.etiqueta)}
+          <span class="apagado">${mil(z.pedidos)}</span></label>`).join('')}</div>
+      </div>
+      <div class="panel" id="fruta" style="display:none;">
+        <div class="acciones"><button class="mini" data-todo="r">todas</button>
+          <button class="mini" data-nada="r">ninguna</button>
+          <input type="search" id="buscaRuta" placeholder="buscar ruta o tienda…"></div>
+        <div class="marcas">${P.rutas.map(r => `<label class="mk" data-busca="${
+          esc((r.ruta + ' ' + r.zona + ' ' + r.turno).toLowerCase())}">
+          <input type="checkbox" data-r="${esc(r.ruta)}"> ${esc(r.ruta)}
+          <span class="apagado">${esc(r.zona)} · ${mil(r.pedidos)}</span></label>`).join('')}</div>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>PEDIDO</th><th>RUTA</th><th>TIENDA</th><th>TURNO</th>
+          <th>DÍA DE DESPACHO</th><th class="n">SKUS</th><th class="n">PARES</th>
+          <th>ZONAS QUE TIENE QUE VISITAR</th></tr></thead>
+        <tbody id="tbPed"></tbody>
+      </table></div>
+      <p class="q" style="margin:.6rem 0 0;"><span id="cuantosPed"></span> · el Excel baja
+        <b class="fuerte">lo que estás viendo</b>, una fila por pedido y zona, con su ruta,
+        turno y día de despacho. Sin filtros son los ${mil(PT.pedidos)} completos.</p>
+    </div>
+  </div>`;
+
+$('#todo').innerHTML = dePicar + zonas + bajar + saldos + chicos + pedidos;
+
+/* ── La tabla de pedidos, filtrable ── */
+/* DOS FILTROS QUE SE CRUZAN, Y CADA UNO CON VARIAS OPCIONES A LA VEZ. Daniel, 27-ago-2026:
+   *"en vez de botones, pon filtros donde pueda seleccionar más de una opción"*. Dentro de
+   un filtro las opciones suman —zona A O zona B—; entre los dos se cruzan —esa zona Y esa
+   ruta—. Vacío quiere decir todas: es lo que espera cualquiera y evita el estado inútil de
+   "ninguna seleccionada, no se ve nada". */
+const zonaSel = new Set(), rutaSel = new Set();
+const pintarPed = () => {
+  const todos = P.pedidos.filter(p =>
+       (!zonaSel.size || p.zonas.some(z => zonaSel.has(z.z)))
+    && (!rutaSel.size || rutaSel.has(p.ruta)));
+  const filas = todos.slice(0, 300);
+  $('#tbPed').innerHTML = filas.length ? filas.map(p => `<tr>
+    <td class="mono fuerte">${esc(p.orden)}</td>
+    <td class="mono">${esc(p.ruta || '—')}</td>
+    <td>${esc(p.nombre || '—')}
+      <div class="apagado" style="font-size:10.5px;">${esc(p.cdg)}${
+        p.prioridad ? ' · ' + esc(p.prioridad) : ''}</div></td>
+    <td class="apagado">${esc(p.turno || '—')}</td>
+    <td class="apagado">${esc(p.diaRuta || '—')}</td>
+    <td class="n apagado">${mil(p.skus)}</td>
+    <td class="n fuerte">${mil(p.pend)}</td>
+    <td>${p.zonas.length ? p.zonas.map(z => `<span class="chip ${
+      zonaSel.has(z.z) ? 'aqui' : ''}">${esc(z.etiqueta)} ${mil(z.pares)}</span>`).join(' ')
+      : '<span class="apagado">no está en zona activa</span>'}</td>
+  </tr>`).join('') : `<tr><td colspan="8" class="apagado" style="padding:1.4rem; text-align:center;">
+      Ningún pedido cumple los dos filtros.</td></tr>`;
+  const c = $('#cuantosPed');
+  if (c) c.innerHTML = `<b class="fuerte">${mil(todos.length)}</b> pedido${
+    todos.length === 1 ? '' : 's'}${todos.length > 300 ? ' · se muestran los 300 más grandes' : ''}`;
+  /* El rótulo del botón dice qué hay elegido sin tener que abrir el panel. */
+  const rot = (sel, nombres) => !sel.size ? '· todas'
+    : sel.size === 1 ? '· ' + nombres(0)
+    : '· ' + sel.size + ' elegidas';
+  $('#rotZona').textContent = rot(zonaSel, () =>
+    (P.zonas.find(z => zonaSel.has(z.z)) || {}).etiqueta || '');
+  $('#rotRuta').textContent = rot(rutaSel, () => [...rutaSel][0]);
+  filtrados = todos;
+};
+/* Lo que el Excel tiene que bajar: lo que se está viendo, no siempre todo. */
+let filtrados = P.pedidos;
+pintarPed();
+
+/* Marcar y desmarcar una opción. */
+document.addEventListener('change', (e) => {
+  const x = e.target.closest('.panel input[type=checkbox]');
+  if (!x) return;
+  const sel = x.dataset.z ? zonaSel : rutaSel;
+  const v = x.dataset.z || x.dataset.r;
+  x.checked ? sel.add(v) : sel.delete(v);
+  pintarPed();
+});
+
+/* Buscar entre las 39 rutas. */
+document.addEventListener('input', (e) => {
+  if (e.target.id !== 'buscaRuta') return;
+  const t = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('#fruta .mk').forEach(m => {
+    m.style.display = (!t || (m.dataset.busca || '').includes(t)) ? '' : 'none';
+  });
+});
+
+document.addEventListener('click', (e) => {
+  const ab = e.target.closest('[data-abre]');
+  if (ab) {
+    const pan = document.getElementById(ab.dataset.abre);
+    pan.style.display = pan.style.display === 'none' ? '' : 'none';
+    return;
+  }
+  const todo = e.target.closest('[data-todo]'), nada = e.target.closest('[data-nada]');
+  if (todo || nada) {
+    const cual = (todo || nada).dataset.todo || (todo || nada).dataset.nada;
+    const sel = cual === 'z' ? zonaSel : rutaSel;
+    sel.clear();
+    document.querySelectorAll(`#${cual === 'z' ? 'fzona' : 'fruta'} input[type=checkbox]`)
+      .forEach(x => {
+        x.checked = !!todo;
+        if (todo) sel.add(x.dataset.z || x.dataset.r);
+      });
+    /* "Todas" marcadas es lo mismo que ninguna: se deja el conjunto vacío para que el
+       rótulo diga "todas" y no "9 elegidas". */
+    if (todo) sel.clear();
+    pintarPed();
+    return;
+  }
+  if (e.target.id === 'limpiar') {
+    zonaSel.clear(); rutaSel.clear();
+    document.querySelectorAll('.panel input[type=checkbox]').forEach(x => { x.checked = false; });
+    pintarPed();
+    return;
+  }
+  /* EL EXCEL: una fila por PEDIDO Y ZONA, que es como se trabaja —el asistente arma la ola
+     de una zona—. Se baja como CSV con punto y coma, que es lo que abre el Excel en español
+     sin preguntar nada. */
+  if (e.target.id === 'bajarCsv') {
+    const cab = ['PEDIDO', 'RUTA', 'ZONA DE LA RUTA', 'TURNO', 'DIA DE DESPACHO',
+                 'CODIGO TIENDA', 'TIENDA', 'CADENA', 'PRIORIDAD', 'FECHA',
+                 'ZONA DEL ALMACEN', 'PARES EN ESA ZONA', 'PARES DEL PEDIDO', 'SKUS',
+                 'LINEAS', 'ZONAS QUE VISITA', 'SIN UBICAR'];
+    const lin = [cab.join(';')];
+    /* SE BAJA LO QUE SE ESTA VIENDO. Si hay filtros puestos, bajar los 2.100 seria
+       ignorar lo que el asistente acaba de elegir. */
+    filtrados.forEach(p => {
+      const zs = (p.zonas.length ? p.zonas : [{ etiqueta: '(no está en zona activa)', pares: 0 }])
+        .filter(z => !zonaSel.size || zonaSel.has(z.z) || !p.zonas.length);
+      zs.forEach(z => lin.push([p.orden, p.ruta, p.zonaRuta, p.turno, p.diaRuta,
+        p.cdg, p.nombre, p.cadena, p.prioridad, p.fecha,
+        z.etiqueta, z.pares, p.pend, p.skus, p.lineas, p.nZonas, p.sinUbicar]
+        .map(v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`).join(';')));
+    });
+    /* EL BOM Y EL SALTO DE LINEA, SIN ESCAPES. Escritos como ﻿ y 
+ se colapsan
+       al generar el archivo y la cadena queda partida en dos. String.fromCharCode no se
+       colapsa nunca. El BOM es lo que hace que Excel abra el CSV en UTF-8 sin preguntar. */
+    const BOM = String.fromCharCode(0xFEFF), CRLF = String.fromCharCode(13, 10);
+    const url = URL.createObjectURL(new Blob([BOM + lin.join(CRLF)],
+      { type: 'text/csv;charset=utf-8;' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Pedidos por zona y ruta ${P.fechaDetalle.slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+});
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ver]');
+  if (!b) return;
+  const l = document.getElementById('lista_' + b.dataset.ver);
+  const abierto = l.style.display !== 'none';
+  l.style.display = abierto ? 'none' : '';
+  b.textContent = abierto ? b.textContent.replace('ocultar', 'ver') : b.textContent.replace('ver', 'ocultar');
+});
+</script>
