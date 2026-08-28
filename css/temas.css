@@ -890,7 +890,13 @@ thead tr:nth-child(2) th { top: 2.1rem; z-index: 4; }
    recorta es el envoltorio directo de una tabla, se le deja desplazar. */
 [style*="overflow:hidden"]:has(> table),
 [style*="overflow: hidden"]:has(> table) {
-  overflow: auto !important;
+  /* SOLO EL VERTICAL. Poniendo `overflow: auto` a secas se destapaba tambien el
+     horizontal, y un recuadro que antes recortaba en silencio paso a mostrar barra:
+     Daniel lo vio en el ANALISIS BUFFER SKU, que se pasa por 6px de su columna de 580.
+     Con `overflow-x: hidden` vuelve a recortar como antes, y `overflow-y: auto` sigue
+     dando el contenedor que la cabecera pegajosa necesita. */
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   max-height: 68vh;
 }
 

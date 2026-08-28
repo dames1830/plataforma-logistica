@@ -1,0 +1,122 @@
+<!-- El cuadro ANÁLISIS BUFFER SKU tiene que entrar entero en su columna de 580px, sin
+     barra de desplazamiento. Saca la tabla de verdad del dashboard y la mide a ese ancho,
+     con los cuatro temas. -->
+<meta charset="utf-8">
+<title>Prueba: el Análisis Buffer SKU sin scroll</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1000px;margin:0 auto 16px;white-space:pre-wrap}
+  /* La MISMA columna que usa la pantalla: 580px fijos. */
+  #col{width:580px;display:flex;flex-direction:column;gap:.6rem}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<div id="col"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 15000);
+
+const CR = String.fromCharCode(13);
+const src = (await (await fetch('../js/views/dashboard_v28.js?z=' + Date.now())).text()).split(CR).join('');
+
+eco('<span class="t">── SE SACA EL CUADRO DEL DASHBOARD ──</span>');
+/* Desde el <div> que abre el recuadro con borde ámbar hasta que cierra su tabla. */
+const i = src.indexOf('ANÁLISIS BUFFER SKU ${tsHtml}');
+ok('se encontró el cuadro', i > 0);
+const desde = src.lastIndexOf('<div style="background:rgba(var(--bg-rgb), 0.9); border:2px solid var(--warning)', i);
+const fin = src.indexOf('</table>', i) + '</table>'.length;
+const trozo = src.slice(desde, fin) + '\n</div>';
+ok('trae el envoltorio con overflow:hidden', /overflow:hidden/.test(trozo));
+ok('y la tabla con white-space:nowrap', /white-space:nowrap/.test(trozo));
+
+/* Las filas de verdad del 27-ago, tal como salen en la pantalla de Daniel. */
+const FILAS = [
+  { fuente: 'PEDIDOS', tipo: 'SolidPack', paletas: 723, skus: 829, parcaja: 73619 },
+  { fuente: 'PEDIDOS', tipo: 'PreePack', paletas: 48, skus: 42, parcaja: 1269 },
+  { fuente: 'TOTAL PEDIDOS', tipo: '', paletas: 771, skus: 871, parcaja: 74888 },
+  { fuente: 'OTRAS SOLICITUDES', tipo: 'SolidPack', paletas: 20, skus: 22, parcaja: 1965 },
+  { fuente: 'OTRAS SOLICITUDES', tipo: 'PreePack', paletas: 0, skus: 0, parcaja: 0 },
+  { fuente: 'TOTAL OTRAS SOLICITUDES', tipo: '', paletas: 20, skus: 22, parcaja: 1965 },
+  { fuente: 'REPLENISHMENT', tipo: 'SolidPack', paletas: 0, skus: 0, parcaja: 0 },
+  { fuente: 'REPLENISHMENT', tipo: 'PreePack', paletas: 0, skus: 0, parcaja: 0 },
+  { fuente: 'TOTAL REPLENISHMENT', tipo: '', paletas: 0, skus: 0, parcaja: 0 },
+  { fuente: 'TOTAL GENERAL', tipo: '', paletas: 791, skus: 893, parcaja: 76853 }
+];
+const data = { resumenSKU: FILAS };
+const tsHtml = '<span style="font-size:var(--t-xs); color:var(--text-muted);">(27/08/2026, 08:29:50 p. m.)</span>';
+/* El trozo YA es una plantilla con sus comillas invertidas balanceadas —el .map() de
+   adentro abre y cierra la suya—, asi que se usa tal cual. Escapandolas se rompia. */
+const html = new Function('data', 'tsHtml', 'return ' + String.fromCharCode(96)
+  + trozo + String.fromCharCode(96) + ';')(data, tsHtml);
+document.getElementById('col').innerHTML = html;
+
+const caja = document.querySelector('#col > div');
+const tabla = caja.querySelector('table');
+
+eco('\n<span class="t">── ¿ENTRA EN LOS 580px? ──</span>');
+const medir = (tema) => {
+  document.documentElement.setAttribute('data-tema', tema);
+  const anchoCaja = caja.clientWidth, anchoTabla = tabla.scrollWidth;
+  const desliza = caja.scrollWidth > caja.clientWidth + 1;
+  return { tema, anchoCaja, anchoTabla, sobra: anchoTabla - anchoCaja, desliza,
+           ov: getComputedStyle(caja).overflowX };
+};
+let peor = null;
+for (const tema of ['indigo', 'pbi', 'pbi-classic', 'negro']) {
+  const m = medir(tema);
+  if (!peor || m.sobra > peor.sobra) peor = m;
+  ok(`${tema}: la tabla mide ${m.anchoTabla}px y la caja ${m.anchoCaja}px`
+     + (m.sobra > 0 ? ` — SE PASA POR ${m.sobra}px` : ' — entra'), m.sobra <= 0);
+}
+ok('ninguna barra de desplazamiento en el cuadro',
+   !['indigo','pbi','pbi-classic','negro'].some(t => medir(t).desliza));
+
+eco('\n<span class="t">── POR QUÉ APARECIÓ ──</span>');
+/* La regla de la v29.0395 convierte el `overflow:hidden` del recuadro en `auto` para que
+   la cabecera pegajosa funcione. Con eso, lo que antes se recortaba en silencio ahora
+   muestra barra. */
+const css = await (await fetch('../css/temas.css?z=' + Date.now())).text();
+ok('existe la regla que convierte overflow:hidden en auto',
+   /\[style\*="overflow:hidden"\]:has\(> table\)/.test(css));
+ok('el cuadro es hijo directo con tabla adentro, así que la regla le pega',
+   !!caja.querySelector(':scope > table'));
+
+eco('\n<span class="t">── Y LA CABECERA PEGAJOSA NO SE ROMPE ──</span>');
+document.documentElement.setAttribute('data-tema', 'indigo');
+ok('la cabecera sigue declarada como sticky',
+   getComputedStyle(tabla.querySelector('thead th')).position === 'sticky');
+
+/* LO QUE ARREGLO LA v29.0396 TIENE QUE SEGUIR EN PIE. Se arma una tabla LARGA dentro de un
+   envoltorio con overflow:hidden -el caso que rompia el sticky- y se comprueba que al
+   desplazar, la cabecera no se vaya con las filas. Es lo que se podria haber roto al
+   cambiar `overflow: auto` por `overflow-x: hidden; overflow-y: auto`. */
+const larga = document.createElement('div');
+larga.style.cssText = 'width:500px; overflow:hidden; border-radius:12px;';
+larga.innerHTML = '<table style="width:100%; border-collapse:collapse;"><thead><tr>'
+  + '<th style="padding:.5rem;">COL</th></tr></thead><tbody>'
+  + Array.from({ length: 120 }, (_, k) => '<tr><td style="padding:.5rem;">fila ' + k + '</td></tr>').join('')
+  + '</tbody></table>';
+document.body.appendChild(larga);
+const cs = getComputedStyle(larga);
+ok('el envoltorio se desplaza a lo alto y recorta a lo ancho — ' + cs.overflowX + ' / ' + cs.overflowY,
+   cs.overflowX === 'hidden' && cs.overflowY === 'auto');
+ok('y le queda un alto máximo: ' + cs.maxHeight, parseFloat(cs.maxHeight) > 100);
+const thL = larga.querySelector('th');
+const arriba = thL.getBoundingClientRect().top;
+larga.scrollTop = 400;
+await new Promise(r => setTimeout(r, 60));
+ok('al desplazar 400px, la cabecera se queda quieta',
+   Math.abs(thL.getBoundingClientRect().top - arriba) < 2);
+ok('y una tabla larga no gana barra horizontal', larga.scrollWidth <= larga.clientWidth);
+larga.remove();
+
+llegoAlFinal = true;
+eco(fallas ? `\n<span class="mal">${fallas} FALLARON</span> · lo peor: ${peor.tema} se pasa por ${peor.sobra}px`
+           : '\n<b>El cuadro entra entero en su columna, sin barra, en los cuatro temas.</b>');
+</script>
