@@ -55,6 +55,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import generar_evolucion as ev          # los lectores de fotos y del Maestro
 
 API = "https://logistics-backend-wv0x.onrender.com/api/logistics"
+
+# LA CREDENCIAL DEL ROBOT. Vive en el entorno del Contabo y en Render, NUNCA en el
+# repo: una vez se subio por error y hubo que cambiarla. Si falta, el robot escribe
+# igual mientras el candado del servidor este en modo aviso.
+ROBOT_TOKEN = os.environ.get("ROBOT_TOKEN", "")
 AREA = "rotacion_permanencia"
 
 # ── LO QUE SE PUEDE TOCAR ────────────────────────────────────────────────────────────
@@ -292,9 +297,10 @@ def subir(paquete, intentos=3):
     url = "%s/%s?date=MASTER" % (API, AREA)
     for i in range(1, intentos + 1):
         try:
-            req = urllib.request.Request(url, data=cuerpo,
-                                         headers={"Content-Type": "application/json"},
-                                         method="POST")
+            cab = {"Content-Type": "application/json"}
+            if ROBOT_TOKEN:
+                cab["X-Robot-Token"] = ROBOT_TOKEN
+            req = urllib.request.Request(url, data=cuerpo, headers=cab, method="POST")
             with urllib.request.urlopen(req, timeout=300) as r:
                 if r.status < 300:
                     log("publicado en '%s' (%d KB)" % (AREA, len(cuerpo) // 1024))

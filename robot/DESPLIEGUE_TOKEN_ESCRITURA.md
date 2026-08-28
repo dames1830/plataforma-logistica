@@ -47,12 +47,51 @@ leen la variable.
    y entrar de nuevo UNA vez: así su navegador recibe el token nuevo. La web ya
    lo manda en cada guardado; solo falta que lo tenga.
 
+**3 bis. Desplegar la web v29.0487 y volver a subir DOS robots.** Sin esto el
+   paso 4 no llega nunca — ver la sección de abajo. Los robots que hay que
+   volver a subir al Contabo por curl son `generar_rotacion.py` y
+   `archivar_tareas.py`. Ver [[robot-scripts-versionados]] para cómo se suben.
+
 **4. Mirar el contador.** En `https://deam1830.com/api/health`, el campo
    `candado_escritura.escrituras_anonimas.total`. Déjalo un día entero —que
    pasen todos los robots y todos los turnos— y fíjate si sigue subiendo:
    - Si **dejó de subir**: ya nadie escribe sin token. Se puede encender.
    - Si **sigue subiendo**: `ultima_area` dice quién falta. Revísalo antes de
      encender, o dejarías ese fuera.
+
+## POR QUÉ EL CONTADOR NUNCA BAJABA (28-ago-2026, v29.0487)
+
+El 28-ago el contador marcaba **1.547** escrituras anónimas y la última era de
+minutos antes, sobre `tabla_tallas`. No era una PC con sesión vieja: **era la web
+misma**.
+
+El token lo mandaba **solo el motor de sincronización** (`pushChange`). Pero la web
+escribe al servidor desde **~30 sitios más** que no pasan por el motor: la tabla de
+tallas, el análisis del buffer, la configuración del análisis, la jornada, las
+metas, el slotting, las zonas, las tallas, los robots, la capacidad, el tema de
+cada usuario, el layout del activo, el plan del buffer, las actividades del turno,
+el caché de No Retail… Todos anónimos. El paso 4 no iba a llegar nunca.
+
+**El arreglo no fue tocar los 30**, que es repetir el mismo descuido 30 veces y
+olvidarse en el sitio 31. La credencial se pone en `js/env.js`, que ya envolvía el
+`fetch` para sellar el entorno: es el ÚNICO sitio por donde pasan todas las
+llamadas. Reglas:
+
+- Solo en las que **escriben** (POST/PATCH/PUT/DELETE). Un GET sin cabeceras raras
+  es una petición "simple" y sale directo; agregarle una cabecera obligaría a una
+  consulta previa y **duplicaría todas las lecturas**.
+- Solo a **este** servidor, nunca a un dominio ajeno.
+- Si la llamada ya trae su credencial, no se le pisa (puede ser la de un robot).
+- **Sin sesión no se pone nada** y la llamada sale igual que antes: hoy no rompe a
+  nadie, y el día que se encienda el candado esas escrituras darán 403 — que es
+  justamente el punto.
+
+Y **dos robots escribían sin token**: `generar_rotacion.py` (publica Rotación y
+Permanencia) y `archivar_tareas.py`. Los otros cuatro ya estaban sellados.
+
+**Ojo con los reportes públicos.** Se abren sin sesión y desde ahí se pueden
+editar y borrar registros del historial del buffer. Con el candado encendido eso
+deja de funcionar: es una decisión, no un efecto secundario.
 
 **5. Encender.** Poner `EXIGIR_TOKEN_ESCRITURA=true` en Render. Desde ese
    momento, escribir datos sin token de sesión o de robot devuelve 403.

@@ -10,14 +10,17 @@
         las llamadas al servidor. El servidor lee ese sello y usa una base de
         datos APARTE. Asi nada de lo que hagas en pruebas toca lo real.
 
-     3. Pinta un marco naranja y un cartel para que sea imposible confundirse
+     3. Le pone la CREDENCIAL de quien esta usando la web a toda llamada que
+        ESCRIBA, en los dos entornos. Es el unico sitio por donde pasan todas.
+
+     4. Pinta un marco naranja y un cartel para que sea imposible confundirse
         de entorno.
 
    REGLA DE ORO: si no esta clarisimo que es produccion, se asume PRUEBAS.
    Equivocarse hacia "pruebas" no rompe nada; equivocarse hacia "produccion" si.
 
-   En produccion este archivo NO cambia absolutamente nada: no toca el fetch,
-   no pinta nada, no agrega cabeceras. Se comporta igual que antes de existir.
+   En produccion lo unico que hace este archivo es lo del punto 3, y solo cuando
+   hay sesion iniciada: ni pinta, ni sella el entorno, ni toca las lecturas.
    ============================================================================ */
 (function () {
   'use strict';
@@ -92,7 +95,9 @@
               'font-weight:bold;color:' + (ES_BETA ? '#f97316' : '#16a34a'));
 
   /* ------------------------------------------------------------------ */
-  /* 2. Sellar las llamadas al servidor (SOLO en pruebas)               */
+  /* 2. Sellar las llamadas al servidor                                  */
+  /*    - el sello del entorno, SOLO en pruebas                          */
+  /*    - la credencial de quien escribe, en los dos entornos            */
   /* ------------------------------------------------------------------ */
 
   function esLlamadaAlBackend(url) {
@@ -104,22 +109,61 @@
     }
   }
 
-  // En produccion NO se toca el fetch: cero cabeceras nuevas, cero preflights,
-  // cero cambios de comportamiento respecto a como funciona hoy.
-  if (ES_BETA && typeof window.fetch === 'function') {
+  /* LA CREDENCIAL VA ACA Y NO EN CADA LLAMADA. 28-ago-2026.
+   *
+   * El servidor puede exigir credencial para escribir (EXIGIR_TOKEN_ESCRITURA en
+   * backend/main.py), y estaba planeado encenderlo cuando el contador de escrituras
+   * anonimas de `/health` llegara a cero. NUNCA iba a llegar: el token lo mandaba
+   * SOLO el motor de sincronizacion, y la web escribe al servidor desde ~30 sitios
+   * mas —la tabla de tallas, el analisis del buffer, cada configuracion, el layout,
+   * las actividades del turno, el tema de cada usuario...—. Todos anonimos.
+   *
+   * Ponerselo a los 30 a mano era repetir el mismo descuido 30 veces y volver a
+   * olvidarse en el sitio 31. Va en el UNICO lugar por donde pasan todas.
+   *
+   * SOLO EN LAS QUE ESCRIBEN. Un GET sin cabeceras raras es una peticion "simple" y
+   * el navegador la manda directa; agregarle una cabecera propia obligaria a una
+   * consulta previa (preflight) y DUPLICARIA todas las lecturas. Las escrituras ya
+   * mandan `Content-Type: application/json`, asi que ya la hacen: la credencial no
+   * agrega ni un viaje.
+   *
+   * Si no hay sesion no se pone nada, y la llamada sale como salia. */
+  var ESCRIBEN = { POST: 1, PATCH: 1, PUT: 1, DELETE: 1 };
+
+  function metodoDe(input, init) {
+    var m = (init && init.method) ||
+            (typeof input !== 'string' && input && input.method) || 'GET';
+    return String(m).toUpperCase();
+  }
+
+  function tokenDeSesion() {
+    try {
+      return (JSON.parse(localStorage.getItem('logistics_session') || '{}') || {}).token || '';
+    } catch (e) { return ''; }
+  }
+
+  if (typeof window.fetch === 'function') {
     var fetchOriginal = window.fetch.bind(window);
 
     window.fetch = function (input, init) {
       try {
         var url = (typeof input === 'string') ? input : (input && input.url) || '';
         if (esLlamadaAlBackend(url)) {
-          var opciones = init ? Object.assign({}, init) : {};
-          var base = opciones.headers ||
-                     ((typeof input !== 'string' && input && input.headers) || undefined);
-          var cabeceras = new Headers(base);
-          cabeceras.set('X-Environment', 'beta');
-          opciones.headers = cabeceras;
-          return fetchOriginal(input, opciones);
+          var token = ESCRIBEN[metodoDe(input, init)] ? tokenDeSesion() : '';
+          if (ES_BETA || token) {
+            var opciones = init ? Object.assign({}, init) : {};
+            var base = opciones.headers ||
+                       ((typeof input !== 'string' && input && input.headers) || undefined);
+            var cabeceras = new Headers(base);
+            if (ES_BETA) cabeceras.set('X-Environment', 'beta');
+            /* Si la llamada ya trae la suya —el motor de sincronizacion la pone— se
+               respeta: puede ser un token de robot y no el de esta sesion. */
+            if (token && !cabeceras.has('X-Auth-Token') && !cabeceras.has('X-Robot-Token')) {
+              cabeceras.set('X-Auth-Token', token);
+            }
+            opciones.headers = cabeceras;
+            return fetchOriginal(input, opciones);
+          }
         }
       } catch (e) {
         // Si el sellado falla por lo que sea, la llamada sigue su curso normal.

@@ -29,6 +29,7 @@ archivar_tareas.py  -  Mueve las tareas de almacenaje viejas al historico.
 """
 
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -36,6 +37,9 @@ import urllib.request
 from datetime import datetime, timedelta
 
 API = 'https://logistics-backend-wv0x.onrender.com'
+
+# La credencial del robot: entorno del Contabo y Render, nunca el repo.
+ROBOT_TOKEN = os.environ.get('ROBOT_TOKEN', '')
 TIMEOUT = 180
 
 # El corte va por ANTIGUEDAD y no por una fecha fija: asi el robot lo corre todas
@@ -51,9 +55,12 @@ ESTADOS_CERRADOS = {'finalizado', 'vencida'}
 
 def _pedir(ruta, datos=None, metodo=None):
     cuerpo = json.dumps(datos).encode('utf-8') if datos is not None else None
+    cab = {'Content-Type': 'application/json', 'User-Agent': 'archivar-tareas'}
+    if ROBOT_TOKEN:
+        cab['X-Robot-Token'] = ROBOT_TOKEN
     req = urllib.request.Request(
         f'{API}{ruta}', data=cuerpo, method=metodo or ('POST' if datos else 'GET'),
-        headers={'Content-Type': 'application/json', 'User-Agent': 'archivar-tareas'})
+        headers=cab)
     with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
         return json.loads(r.read().decode('utf-8'))
 
