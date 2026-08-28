@@ -33,8 +33,8 @@
 /* El rango de fechas es el mismo de toda la plataforma: se dibuja una sola vez, en
    `reportesComunes.js`. Este archivo recibe todo lo demás por `OPC` y no lee del
    servidor — el selector no lee nada, solo dibuja. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0494';
-import { icono } from '../services_v245/iconos.js?v=29.0494';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0495';
+import { icono } from '../services_v245/iconos.js?v=29.0495';
 
 export const montarSlotting = (container, OPC = {}) => {
   const svc = OPC.svc;
@@ -123,8 +123,8 @@ export const montarSlotting = (container, OPC = {}) => {
             <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
               ${selectorRango(esc(desde), esc(hasta), null, { idDesde: 'slt_desde', idHasta: 'slt_hasta' })}
               ${lista.length ? `
-                <button id="slt_imprimir" class="btn-icono" title="Imprimir las hojas de las tareas">${icono('imprimir', 18)}</button>
-                <button id="slt_excel" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>` : ''}
+                <button id="slt_imprimir" class="btn-icono" title="Imprimir las hojas de las tareas CREADAS">${icono('imprimir', 22)}</button>
+                <button id="slt_excel" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 22)}</button>` : ''}
               ${selectorZonasCorrida()}
               <button id="slt_procesar" class="btn" style="background:var(--btn-fill); width:auto;
                       padding:0.5rem 1.1rem; border-radius:8px; font-size:var(--t-sm); font-weight:800;">
@@ -949,8 +949,17 @@ export const montarSlotting = (container, OPC = {}) => {
   const ALTO = { det: 8.5, tot: 7.5, banda: 8, titulos: 7, tabla: 3, total: 8, nota: 14.5 };
 
   function imprimirTareas() {
-    const tareas = tareasDelRango();
-    if (!tareas.length) return;
+    /* SOLO LAS CREADAS. Daniel, 28-ago-2026: *"la impresion solamente tiene que imprimir las
+       tareas que estan creadas; las asignadas y las finalizadas no debe de imprimir"*.
+       Tiene sentido: una asignada ya esta impresa y en manos de alguien, y una finalizada
+       ya se trabajo. Volver a sacarlas es papel de mas y dos operarios con la misma hoja. */
+    const tareas = tareasDelRango().filter(t => svc.migrarEstado(t) === 'Creada');
+    if (!tareas.length) {
+      avisar('NO HAY NADA QUE IMPRIMIR',
+             'En este rango no queda ninguna tarea <b>CREADA</b>. Las asignadas y las finalizadas no se imprimen.',
+             'info');
+      return;
+    }
 
     const win = window.open('', '_blank');
     if (!win) { avisar('EL NAVEGADOR BLOQUEÓ LA VENTANA', 'Permití las ventanas emergentes de este sitio para poder imprimir.', 'warning'); return; }

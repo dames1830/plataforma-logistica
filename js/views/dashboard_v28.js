@@ -1,35 +1,35 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0494';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0495';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0494';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0494';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0494';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0494';
-import * as metasService from '../services_v245/metasService.js?v=29.0494';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0494';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0494';
+import * as adminService from '../services_v245/adminService.js?v=29.0495';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0495';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0495';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0495';
+import * as metasService from '../services_v245/metasService.js?v=29.0495';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0495';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0495';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0494';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0494';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0494';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0494';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0494';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0494';
-import { renderCapacidad } from './capacidad.js?v=29.0494';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0494';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0494';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0494';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0494';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0494';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0494';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0494';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0494';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0494';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0494';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0494';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0494';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0494';
-import { montarSlotting } from './slotting.js?v=29.0494';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0495';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0495';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0495';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0495';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0495';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0495';
+import { renderCapacidad } from './capacidad.js?v=29.0495';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0495';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0495';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0495';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0495';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0495';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0495';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0495';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0495';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0495';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0495';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0495';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0495';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0495';
+import { montarSlotting } from './slotting.js?v=29.0495';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -392,7 +392,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0494';
+const VERSION = '29.0495';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5474,7 +5474,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0494');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0495');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5737,7 +5737,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0494');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0495');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18715,7 +18715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0494 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0495 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -21441,76 +21441,86 @@ const renderRFSection = (container) => {
       alGuardarConfig: async (cfg) => { await slottingService.guardarConfig(cfg); },
 
       /* EL EXCEL DE LAS TAREAS DE SLOTTING. La pantalla manda las filas ya ordenadas como se
-       * ven; acá solo se arma el archivo. Dos hojas, porque son dos preguntas distintas:
-       *   RESUMEN — una fila por tarea, lo mismo que la tabla de la pantalla
-       *   DETALLE — una fila por línea, que es lo que se va a mover de verdad
+       * ven; acá solo se arma el archivo.
+       *
+       * TRES PESTAÑAS, UNA POR ESTADO. Daniel, 28-ago-2026: *"necesito que hagas tres
+       * pestañas: una para las tareas que están asignadas, dos para las creadas y tres para
+       * las finalizadas"*. Son tres preguntas distintas —qué falta repartir, qué está en
+       * manos de alguien y qué se hizo— y mezcladas en una hoja hay que filtrar a mano.
+       *
+       * Cada pestaña lleva el RESUMEN de sus tareas y debajo el DETALLE por talla, que es lo
+       * que de verdad se mueve. Una pestaña sin tareas sale igual, con su aviso: que falte
+       * es información, y una hoja que desaparece hace dudar de si el archivo salió bien.
+       *
        * Sin colores de tema: en un .xlsx `var()` no existe, van fijos. */
       alExportar: async (P) => {
         if (typeof ExcelJS === 'undefined') {
           showPremiumAlert('FALTA UNA LIBRERÍA', 'No se pudo cargar ExcelJS.', 'error'); return;
         }
         const libro = new ExcelJS.Workbook();
+        const titulo = (hoja, texto, ancho) => {
+          const f = hoja.addRow([texto]);
+          f.font = { bold: true, size: 11, color: { argb: 'FF1E293B' } };
+          hoja.mergeCells(f.number, 1, f.number, ancho);
+          f.height = 18;
+        };
         const cabecera = (hoja, cols) => {
-          hoja.columns = cols;
-          const f = hoja.getRow(1);
+          const f = hoja.addRow(cols.map(c => c.header));
           f.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
           f.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
           f.alignment = { vertical: 'middle' };
           f.height = 20;
+          cols.forEach((c, i) => { hoja.getColumn(i + 1).width = Math.max(hoja.getColumn(i + 1).width || 0, c.width); });
         };
+        const COLS_RES = [
+          { header: 'FECHA', width: 12 }, { header: 'TAREA', width: 9 }, { header: 'PRIORIDAD', width: 11 },
+          { header: 'PARES', width: 9 }, { header: 'CUERPOS', width: 9 }, { header: 'MARCA', width: 22 },
+          { header: 'USUARIO 1', width: 15 }, { header: 'USUARIO 2', width: 15 },
+          { header: 'INICIO', width: 10 }, { header: 'TÉRMINO', width: 10 }
+        ];
+        const COLS_DET = [
+          { header: 'TAREA', width: 9 }, { header: 'ORIGEN', width: 18 }, { header: 'SKU', width: 12 },
+          { header: 'TALLA', width: 8 }, { header: 'PARES', width: 9 }, { header: 'DESTINO', width: 18 },
+          { header: 'MARCA', width: 20 }, { header: 'TEMPORADA', width: 14 }, { header: 'POR QUÉ', width: 34 }
+        ];
 
-        const res = libro.addWorksheet('RESUMEN');
-        cabecera(res, [
-          { header: 'FECHA', key: 'fecha', width: 12 },
-          { header: 'TAREA', key: 'n', width: 9 },
-          { header: 'PRIORIDAD', key: 'pri', width: 11 },
-          { header: 'PARES', key: 'pares', width: 9 },
-          { header: 'CUERPOS', key: 'cuerpos', width: 9 },
-          { header: 'MARCA', key: 'marca', width: 22 },
-          { header: 'ESTADO', key: 'estado', width: 12 },
-          { header: 'USUARIO 1', key: 'u1', width: 15 },
-          { header: 'USUARIO 2', key: 'u2', width: 15 },
-          { header: 'INICIO', key: 'inicio', width: 10 },
-          { header: 'TÉRMINO', key: 'termino', width: 10 }
-        ]);
-        (P.tareas || []).forEach(t => res.addRow({
-          fecha: t.fecha, n: `Slot ${t.n}`, pri: t.prioridad ? 'SÍ' : '',
-          pares: t.pares, cuerpos: t.cuerpos, marca: t.marca, estado: t.estado,
-          u1: t.u1, u2: t.u2, inicio: t.inicio, termino: t.termino
-        }));
-
-        const det = libro.addWorksheet('DETALLE');
-        cabecera(det, [
-          { header: 'FECHA', key: 'fecha', width: 12 },
-          { header: 'TAREA', key: 'n', width: 9 },
-          { header: 'ORIGEN', key: 'origen', width: 16 },
-          { header: 'SKU', key: 'sku7', width: 12 },
-          { header: 'TALLA', key: 'talla', width: 8 },
-          { header: 'PARES', key: 'pares', width: 9 },
-          { header: 'DESTINO', key: 'destino', width: 16 },
-          { header: 'MARCA', key: 'marca', width: 20 },
-          { header: 'TEMPORADA', key: 'temporada', width: 14 },
-          { header: 'POR QUÉ', key: 'motivo', width: 34 }
-        ]);
-        (P.tareas || []).forEach(t => (t.lineas || []).forEach(l => {
-          /* UNA FILA POR TALLA cuando el detalle la trae: es lo que el operario va a sacar.
-             Si no lo trae, la línea sale entera y no se inventa la talla. */
-          const porTalla = (l.detalle || []).filter(d => d && d.qty);
-          if (porTalla.length) {
-            porTalla.forEach(d => det.addRow({
-              fecha: t.fecha, n: `Slot ${t.n}`, origen: d.ubi || l.origen, sku7: l.sku7,
-              talla: d.talla || '', pares: Math.round(d.qty), destino: l.destino,
-              marca: l.marca, temporada: l.temporada, motivo: l.motivo
-            }));
-          } else {
-            det.addRow({
-              fecha: t.fecha, n: `Slot ${t.n}`, origen: l.origen, sku7: l.sku7,
-              talla: '', pares: l.pares, destino: l.destino,
-              marca: l.marca, temporada: l.temporada, motivo: l.motivo
-            });
+        const PESTANAS = [
+          { nombre: 'ASIGNADAS',   estado: 'Asignado' },
+          { nombre: 'CREADAS',     estado: 'Creada' },
+          { nombre: 'FINALIZADAS', estado: 'Finalizado' }
+        ];
+        PESTANAS.forEach(({ nombre, estado }) => {
+          const h = libro.addWorksheet(nombre);
+          const suyas = (P.tareas || []).filter(t => t.estado === estado);
+          const pares = suyas.reduce((a, t) => a + (Number(t.pares) || 0), 0);
+          titulo(h, `TAREAS ${nombre} · ${P.desde || ''}${P.hasta && P.hasta !== P.desde ? ' a ' + P.hasta : ''}`
+                  + `  ·  ${suyas.length} tarea(s) · ${pares.toLocaleString('es-PE')} pares`, 10);
+          if (!suyas.length) {
+            const v = h.addRow(['No hay tareas en este estado dentro del rango elegido.']);
+            v.font = { italic: true, color: { argb: 'FF64748B' } };
+            h.getColumn(1).width = 60;
+            return;
           }
-        }));
-        [res, det].forEach(h => { h.views = [{ state: 'frozen', ySplit: 1 }]; });
+          cabecera(h, COLS_RES);
+          suyas.forEach(t => h.addRow([t.fecha, `Slot ${t.n}`, t.prioridad ? 'SÍ' : '',
+            t.pares, t.cuerpos, t.marca, t.u1, t.u2, t.inicio, t.termino]));
+
+          h.addRow([]);
+          titulo(h, 'DETALLE — lo que se mueve, talla por talla', 9);
+          cabecera(h, COLS_DET);
+          suyas.forEach(t => (t.lineas || []).forEach(l => {
+            /* UNA FILA POR TALLA cuando el detalle la trae: es lo que el operario va a sacar.
+               Si no lo trae, la línea sale entera y no se inventa la talla. */
+            const porTalla = (l.detalle || []).filter(d => d && d.qty);
+            if (porTalla.length) {
+              porTalla.forEach(d => h.addRow([`Slot ${t.n}`, d.ubi || l.origen, l.sku7,
+                d.talla || '', Math.round(d.qty), l.destino, l.marca, l.temporada, l.motivo]));
+            } else {
+              h.addRow([`Slot ${t.n}`, l.origen, l.sku7, '', l.pares, l.destino,
+                l.marca, l.temporada, l.motivo]);
+            }
+          }));
+        });
 
         const buf = await libro.xlsx.writeBuffer();
         const url = URL.createObjectURL(new Blob([buf],
