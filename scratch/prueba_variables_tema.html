@@ -1,0 +1,121 @@
+<!-- LOS COLORES QUE NO SIGUEN AL TEMA.
+     Daniel, 28-ago-2026: "eso supone que debe ser una clase... se modifica esa clase y se
+     arreglan uno o mil botones. Por que no lo estandarizas todo?". Tiene razon, y esta
+     prueba es la que lo mantiene estandarizado: barre TODO el codigo y no deja pasar un
+     color que no pueda seguir al tema. -->
+<meta charset="utf-8">
+<title>Prueba: los colores siguen al tema</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body{margin:0;padding:20px;background:var(--panel-deeper);font:13px/1.85 system-ui,sans-serif;color:var(--text-muted)}
+  #eco{max-width:1100px;margin:0 auto;white-space:pre-wrap}
+  b{color:var(--success)} .mal{color:var(--danger);font-weight:700} .t{color:var(--brand-light);font-weight:700}
+</style>
+<div id="eco"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+let fallas = 0, llegoAlFinal = false;
+const ok = (n, c) => { eco((c ? '<b>OK</b>  ' : '<span class="mal">MAL</span> ') + n); if (!c) fallas++; };
+window.addEventListener('error', e => { fallas++; eco('<span class="mal">SE CORTO</span> ' + e.message); });
+setTimeout(() => { if (!llegoAlFinal) eco('\n<span class="mal">LA PRUEBA NO LLEGO AL FINAL.</span>'); }, 30000);
+
+const bajar = async (r) => (await (await fetch(r + '?z=' + Date.now())).text());
+const TEMAS = ['indigo', 'pbi', 'pbi-classic', 'negro'];
+
+eco('<span class="t">── LOS CUATRO TEMAS DEFINEN LO MISMO ──</span>');
+/* Si a un tema le falta una variable, esa línea la tira el navegador y el elemento se
+   queda con su color de fábrica —blanco— aunque el tema sea negro. */
+const css = await bajar('../css/temas.css');
+const bloques = {};
+TEMAS.forEach(t => {
+  const i = css.indexOf('html[data-tema="' + t + '"]');
+  const j = css.indexOf('}', i);
+  bloques[t] = new Set([...css.slice(i, j).matchAll(/(--[a-z0-9-]+)\s*:/g)].map(m => m[1]));
+});
+const todas = new Set(TEMAS.flatMap(t => [...bloques[t]]));
+TEMAS.forEach(t => {
+  const faltan = [...todas].filter(v => !bloques[t].has(v));
+  ok(t + ' define las ' + todas.size + ' variables' + (faltan.length ? ' — le faltan: ' + faltan.join(', ') : ''),
+     faltan.length === 0);
+});
+
+eco('\n<span class="t">── NADIE USA UNA VARIABLE QUE NO EXISTE ──</span>');
+/* `var(--x)` sin valor de respaldo, con `--x` inexistente, es una línea que el navegador
+   descarta. Fue el fondo blanco del buscador del Replenishment: `var(--bg-secondary)` no
+   existía, el campo se quedó blanco y encima con letra blanca. */
+const ARCHIVOS = [
+  '../js/views/dashboard_v28.js', '../js/views/login.js', '../js/views/slotting.js',
+  '../js/views/reportes_publicos.js', '../js/views/public_layout_activo.js', '../js/app.js',
+  '../js/reportes/turno_actividades.js', '../js/reportes/simulador.js',
+  '../js/reportes/sku_sin_salida.js', '../js/reportes/pendiente.js', '../js/reportes/marcas.js',
+  '../js/reportes/picking_cuadros.js', '../js/reportes/picking_piso.js',
+  '../js/reportes/rotacion.js', '../js/reportes/reserva_consolidacion.js',
+  '../js/reportes/layout_calculo.js', '../js/reportes/picking_prepack.js',
+  '../css/main.css', '../css/componentes.css', '../css/temas.css'
+];
+/* SIN LOS COMENTARIOS. Varios explican el problema nombrando la variable —"var(--x) no
+   es CSS dentro de un canvas"— y contarlos hacía fallar la prueba por el texto que
+   justamente advierte del defecto. */
+const sinComentarios = (t) => t.replace(/\/\*[^]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
+const fuentes = {};
+for (const a of ARCHIVOS) {
+  try { fuentes[a] = sinComentarios(await bajar(a)); } catch (e) { /* no está: se salta */ }
+}
+
+/* Todo lo que define algún css, más lo que cada módulo declara para sí mismo. */
+const oficiales = new Set(todas);
+Object.values(fuentes).forEach(s =>
+  [...s.matchAll(/(--[a-z0-9-]+)\s*:\s*[^;\s]/g)].forEach(m => oficiales.add(m[1])));
+
+const rotas = [];
+Object.entries(fuentes).forEach(([a, s]) => {
+  /* Con respaldo —var(--x, algo)— no hay problema: si falta, usa el respaldo. */
+  [...s.matchAll(/var\(\s*(--[a-z0-9-]+)\s*\)/g)].forEach(m => {
+    if (!oficiales.has(m[1])) rotas.push(a.split('/').pop() + ' → ' + m[1]);
+  });
+});
+/* LAS PÁGINAS PÚBLICAS SON OTRA SUPERFICIE. Se abren sin entrar, no tienen usuario y
+   por lo tanto no tienen tema: van con la marca de la empresa. Se cuentan aparte —y no
+   pueden CRECER—, pero no arrastran a la plataforma. */
+const PUBLICAS = ['reportes_publicos.js', 'public_layout_activo.js'];
+const esPublica = (t) => PUBLICAS.some(p => t.startsWith(p));
+const unicas = [...new Set(rotas)];
+const enPlataforma = unicas.filter(t => !esPublica(t));
+const enPublicas = unicas.filter(esPublica);
+ok('en la plataforma, ninguna variable usada sin existir ni respaldo'
+   + (enPlataforma.length ? ' — ' + enPlataforma.join(' · ') : ''),
+   enPlataforma.length === 0);
+ok('y en las páginas públicas no crecen — hay ' + enPublicas.length
+   + (enPublicas.length ? ': ' + enPublicas.join(' · ') : ''),
+   enPublicas.length <= 3);
+
+eco('\n<span class="t">── LOS BOTONES NO SE PINTAN CON COLORES FIJOS ──</span>');
+/* Un color escrito a mano no puede seguir al tema: se ve igual en los cuatro. */
+const fijos = [];
+Object.entries(fuentes).forEach(([a, s]) => {
+  if (a.endsWith('.css')) return;
+  [...s.matchAll(/<button\b[^>]*style="([^"]*)"[^>]*>/g)].forEach(m => {
+    const e = m[1];
+    if (/#[0-9a-fA-F]{3,8}\b/.test(e) && !/var\(--/.test(e)) fijos.push(a.split('/').pop());
+  });
+});
+const porArchivo = {};
+fijos.forEach(a => { porArchivo[a] = (porArchivo[a] || 0) + 1; });
+eco('   ' + (fijos.length
+  ? fijos.length + ' botones con color fijo: '
+    + Object.entries(porArchivo).map(([a, n]) => a + ' (' + n + ')').join(' · ')
+  : 'ninguno'));
+/* Los reportes públicos van con la marca de la empresa a propósito: no siguen el tema. */
+ok('en la plataforma, ningún botón lleva color fijo',
+   Object.keys(porArchivo).every(esPublica));
+ok('y en las públicas no crecen — hay ' + fijos.length, fijos.length <= 10);
+
+eco('\n   <span style="color:var(--text-muted)">PENDIENTE, para verlo con Daniel: las dos'
+  + ' páginas públicas usan 3 variables que no existen y 10 botones con color fijo.'
+  + ' Se abren sin entrar, así que no tienen tema; hay que decidir si se les da uno.</span>');
+
+llegoAlFinal = true;
+eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'
+           : '\n<b>Todo el color de la plataforma pasa por el tema. Un color suelto hace fallar esta prueba.</b>');
+</script>
