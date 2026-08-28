@@ -203,7 +203,14 @@ export function enBloques(lista, tam) {
  * @param pie      texto chico abajo a la derecha (opcional)
  */
 export function laminaResumen({ titulo, tarjetas, grande, pie }) {
-  const ANCHO = 460, ALTO = 268;
+  /* EL ALTO DEPENDE DE LO QUE HAY QUE DIBUJAR. Con numero grande la lamina es un cuadro;
+     sin el son solo tres cifras, y estirarlas para rellenar los mismos 268 puntos la deja
+     con aire de sobra —Daniel, 28-ago-2026: *"lo veo muy vacio"*—. Se acorta en vez de
+     estirar: menos cosas, menos lamina. */
+  const ANCHO = 460;
+  const ALTO_TARJETA = grande ? 66 : 96;
+  const Y_TARJETAS = 74;
+  const ALTO = grande ? 268 : Y_TARJETAS + ALTO_TARJETA + 32;
   const FUENTE = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 
   /* Tan grande como entre en la pantalla, con dos candados: que entre ENTERA -si no, una
@@ -267,27 +274,27 @@ export function laminaResumen({ titulo, tarjetas, grande, pie }) {
   const cuantas = Math.max(1, tarjetas.length);
   const hueco = 8;
   const anchoT = (ANCHO - 48 - hueco * (cuantas - 1)) / cuantas;
-  const altoT = grande ? 66 : 162;
+  const altoT = ALTO_TARJETA;
   tarjetas.forEach((t, i) => {
     const x = 24 + i * (anchoT + hueco);
     g.fillStyle = CAJA;
     g.strokeStyle = LINEA;
     g.beginPath();
-    g.roundRect(x, 74, anchoT, altoT, 9);
+    g.roundRect(x, Y_TARJETAS, anchoT, altoT, 9);
     g.fill();
     g.stroke();
     /* El rotulo y la cifra van a la misma ALTURA RELATIVA en los dos casos, para que la
        tarjeta alta no quede con la cifra arriba y un vacio abajo. */
-    texto(t.rotulo, x + anchoT / 2, 74 + altoT * 0.30, 10, SUAVE, 700, 'center');
+    texto(t.rotulo, x + anchoT / 2, Y_TARJETAS + altoT * 0.30, 10, SUAVE, 700, 'center');
     /* La cifra se encoge si no entra: con cuatro tarjetas y seis digitos se salia. */
-    let tam = grande ? 24 : 40;
+    let tam = grande ? 24 : 34;
     const v = mil(t.valor);
     g.font = '800 ' + tam + 'px ' + FUENTE;
     while (tam > 12 && g.measureText(v).width > anchoT - 12) {
       tam -= 1;
       g.font = '800 ' + tam + 'px ' + FUENTE;
     }
-    texto(v, x + anchoT / 2, 74 + altoT * 0.68, tam, tinta(t.color), 800, 'center');
+    texto(v, x + anchoT / 2, Y_TARJETAS + altoT * 0.68, tam, tinta(t.color), 800, 'center');
   });
 
   if (grande) {
@@ -301,7 +308,7 @@ export function laminaResumen({ titulo, tarjetas, grande, pie }) {
     texto(mil(grande.valor), ANCHO / 2, 206, 40, tinta(grande.color), 800, 'center');
   }
 
-  if (pie) texto(pie, ANCHO - 24, 252, 10, SUAVE, 400, 'right');
+  if (pie) texto(pie, ANCHO - 24, ALTO - 16, 10, SUAVE, 400, 'right');
 
   /* SE MUESTRA, NO SE DESCARGA: el 18-ago-2026 la descarga directa fallo -el navegador
      ignora el atributo `download` y el archivo cae sin extension-. Y tres salidas: el

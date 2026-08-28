@@ -88,10 +88,16 @@ ok('sin nada que bajar, cero paletas', armar([], reserva)().paletas === 0);
    fallar la comprobación por algo que no tiene nada que ver. */
 const llamada = src.slice(src.indexOf("laminaResumen({"),
                           src.indexOf("laminaResumen({") + 700);
-ok('la lámina no muestra las paletas', !/grande:/.test(llamada));
-ok('y solo lleva las tres cifras que pidió Daniel',
-   /rotulo: 'QUEBRADOS'[^]{0,400}rotulo: 'POR QUEBRAR'[^]{0,400}rotulo: 'PARES A BAJAR'/.test(src)
-   && !/grande: \{ rotulo: 'PALETAS/.test(src));
+ok('la lámina no muestra las paletas', !/PALETAS/.test(llamada));
+ok('el titular son los PARES A BAJAR, no las paletas',
+   /grande: \{ rotulo: 'PARES A BAJAR'/.test(llamada));
+ok('y lleva las tres cifras que pidió Daniel, ni una más',
+   /rotulo: 'SKUs QUEBRADOS'[^]{0,300}rotulo: 'SKUs POR QUEBRAR'/.test(llamada)
+   && !/rotulo: 'OK'/.test(llamada));
+/* Cada rótulo dice SU UNIDAD: 240 SKUs y 107.328 pares no son la misma clase de cosa. */
+ok('cada rótulo dice la unidad — SKUs o pares',
+   /rotulo: 'SKUs QUEBRADOS'/.test(llamada) && /rotulo: 'SKUs POR QUEBRAR'/.test(llamada)
+   && /rotulo: 'PARES A BAJAR'/.test(llamada));
 
 eco('\n<span class="t">── LA LÁMINA, EN LOS CUATRO TEMAS ──</span>');
 /* Con las cifras reales de la corrida del 27-ago. */
@@ -102,10 +108,10 @@ for (const tema of ['indigo', 'pbi', 'pbi-classic', 'negro']) {
   const cv = LAM.laminaResumen({
     titulo: 'REPOSICIÓN AL PISO',
     tarjetas: [
-      { rotulo: 'QUEBRADOS', valor: CIFRAS.quebrados, color: 'var(--danger)' },
-      { rotulo: 'POR QUEBRAR', valor: CIFRAS.porQuebrar, color: 'var(--warning)' },
-      { rotulo: 'PARES A BAJAR', valor: CIFRAS.pares, color: 'var(--brand-light)' }
+      { rotulo: 'SKUs QUEBRADOS', valor: CIFRAS.quebrados, color: 'var(--danger)' },
+      { rotulo: 'SKUs POR QUEBRAR', valor: CIFRAS.porQuebrar, color: 'var(--warning)' }
     ],
+    grande: { rotulo: 'PARES A BAJAR', valor: CIFRAS.pares, color: 'var(--brand-light)' },
     pie: 'Solo calzado'
   });
   const fondo = [...document.querySelectorAll('body > div')].pop();
@@ -156,13 +162,13 @@ const rojoTema = getComputedStyle(document.documentElement).getPropertyValue('--
    todas grises—. Una prueba que no recorre el camino de verdad no prueba nada. */
 const cv2 = LAM.laminaResumen({
   titulo: 'PRUEBA', tarjetas: [{ rotulo: 'QUEBRADOS', valor: 248, color: 'var(--danger)' }],
-  pie: ''
+  grande: { rotulo: 'X', valor: 1, color: 'var(--brand-light)' }, pie: ''
 });
 const vent2 = [...document.querySelectorAll('body > div')].pop();
 const escD = cv2.width / 460;
 /* Sin número grande la tarjeta se estira: la cifra queda más abajo. */
 const px = cv2.getContext('2d').getImageData(
-  Math.round(30 * escD), Math.round(163 * escD), Math.round(180 * escD), Math.round(40 * escD)).data;
+  Math.round(30 * escD), Math.round(106 * escD), Math.round(180 * escD), Math.round(26 * escD)).data;
 let masRojo = null, mejor = -1;
 for (let i = 0; i < px.length; i += 4) {
   const d = px[i] - Math.max(px[i + 1], px[i + 2]);
@@ -174,9 +180,11 @@ ok('el rojo sale con el brillo del tema (' + bril(masRojo).toFixed(2)
    + ' contra ' + brilloTema.toFixed(2) + '), no oscurecido',
    Math.abs(bril(masRojo) - brilloTema) < 0.08);
 ok('y es rojo de verdad, no gris ni marrón', masRojo[0] - Math.max(masRojo[1], masRojo[2]) > 60);
-ok('sin número grande, las tarjetas se estiran y no queda un hueco abajo',
-   /const altoT = grande \? 66 : 162;/.test(
-     await (await fetch('../js/services_v245/laminas.js?z=' + Date.now())).text()));
+/* Sin número grande la lámina se ACORTA en vez de estirar las tarjetas: estirarlas la
+   dejaba con aire de sobra —"lo veo muy vacío"—. */
+const fuenteLam = await (await fetch('../js/services_v245/laminas.js?z=' + Date.now())).text();
+ok('sin número grande la lámina se acorta, no se estira',
+   /const ALTO = grande \? 268 : Y_TARJETAS \+ ALTO_TARJETA \+ 32;/.test(fuenteLam));
 [...vent2.querySelectorAll('button')].pop().click();
 
 document.documentElement.setAttribute('data-tema', 'pbi');
