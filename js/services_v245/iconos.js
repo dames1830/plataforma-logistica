@@ -79,6 +79,12 @@ const TRAZOS = {
   borrar:      '<path d="M4 7h16"/><path d="M10 4h4"/><path d="M6.6 7 7.6 20.2h8.8L17.4 7"/><path d="M10.4 10.6v6M13.6 10.6v6"/>',
   guardar:     '<path d="M5 3h11l3.5 3.5V21H5z"/><path d="M8.5 3v5.5h6.5V3"/><path d="M8.5 21v-6.5h7V21"/>',
   cerrar:      '<path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/>',
+  /* El candado, en sus dos estados. Mismo cuerpo, lo unico que cambia es el arco:
+     cerrado baja a los dos lados; abierto solo a la izquierda y se levanta. */
+  candado:     '<rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/>'
+             + '<path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.7" r="1.3"/>',
+  candado_abierto: '<rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/>'
+             + '<path d="M8 10.5V7.5a4 4 0 0 1 7.6-1.7"/><circle cx="12" cy="15.7" r="1.3"/>',
   config:      '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>'
 };
 

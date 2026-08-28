@@ -59,8 +59,17 @@ eco('<span class="t">── EL CANDADO ESTÁ Y ARRANCA ABIERTO ──</span>');
 montar(null, corrida(369));
 await esperar();
 ok('el botón del candado existe', !!cand());
-ok('arranca ABIERTO — ' + (cand() ? cand().innerText.replace(/\s+/g, ' ') : ''),
-   !!cand() && !cand().classList.contains('fija'));
+ok('arranca ABIERTO', !!cand() && !cand().classList.contains('fija'));
+/* REGLA DE LA CASA para los iconos, desde la v29.0404: van SOLOS —sin fondo, sin borde y
+   sin texto al lado—. Lo que hacen se lee al pasar el mouse, por eso el `title` es
+   obligatorio. Es la misma que sigue `.btn-icono` en componentes.css. */
+const est = () => getComputedStyle(cand());
+ok('es SOLO el dibujo, sin texto al lado — "' + cand().innerText.trim() + '"',
+   cand().innerText.trim() === '');
+ok('y ese dibujo es un <svg> del catálogo', !!cand().querySelector('svg.ic-svg'));
+ok('sin fondo — ' + est().backgroundColor, est().backgroundColor === 'rgba(0, 0, 0, 0)');
+ok('sin borde a la vista — ' + est().borderTopColor,
+   est().borderTopColor === 'rgba(0, 0, 0, 0)' || est().borderTopStyle === 'none');
 ok('y al pasar el mouse dice qué va a hacer',
    /ÚLTIMA corrida|ULTIMA corrida/i.test(cand().title) && /Clic para congelarla/.test(cand().title));
 
@@ -87,13 +96,18 @@ await esperar();
 ok('y una corrida nueva sigue moviendo la meta → ' + metaDe('Bajada de paletas'),
    metaDe('Bajada de paletas') === 640);
 
+const abiertoSVG = cand().querySelector('svg').innerHTML;
 eco('\n<span class="t">── CONGELAR VA DIRECTO, SIN PREGUNTAR ──</span>');
 preguntas = 0;
 cand().click();
 await esperar();
 ok('no preguntó nada al congelar', preguntas === 0);
-ok('el candado quedó cerrado — ' + cand().innerText.replace(/\s+/g, ' '),
-   cand().classList.contains('fija'));
+ok('el candado quedó cerrado', cand().classList.contains('fija'));
+ok('sigue siendo solo el dibujo', cand().innerText.trim() === '' && !!cand().querySelector('svg'));
+ok('y el dibujo cambió: ahora es el cerrado',
+   cand().querySelector('svg').innerHTML !== abiertoSVG);
+ok('cerrado tampoco tiene fondo — ' + getComputedStyle(cand()).backgroundColor,
+   getComputedStyle(cand()).backgroundColor === 'rgba(0, 0, 0, 0)');
 ok('se guardó la marca', guardado.metaFija === true);
 ok('y el número no se movió al congelar', metaDe('Bajada de paletas') === 640);
 
