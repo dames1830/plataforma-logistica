@@ -1,37 +1,37 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0500';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0501';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0500';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0500';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0500';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0500';
-import * as metasService from '../services_v245/metasService.js?v=29.0500';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0500';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0500';
+import * as adminService from '../services_v245/adminService.js?v=29.0501';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0501';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0501';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0501';
+import * as metasService from '../services_v245/metasService.js?v=29.0501';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0501';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0501';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0500';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0500';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0500';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0500';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0500';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0500';
-import { renderCapacidad } from './capacidad.js?v=29.0500';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0500';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0500';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0500';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0500';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0500';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0500';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0500';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0500';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0500';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0500';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0500';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0500';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0500';
-import { montarSlotting } from './slotting.js?v=29.0500';
-import { montarEventos } from './eventos.js?v=29.0500';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0500';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0501';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0501';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0501';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0501';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0501';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0501';
+import { renderCapacidad } from './capacidad.js?v=29.0501';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0501';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0501';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0501';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0501';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0501';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0501';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0501';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0501';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0501';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0501';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0501';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0501';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0501';
+import { montarSlotting } from './slotting.js?v=29.0501';
+import { montarEventos } from './eventos.js?v=29.0501';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0501';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -394,7 +394,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0500';
+const VERSION = '29.0501';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5482,7 +5482,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0500');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0501');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5745,7 +5745,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0500');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0501');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18738,7 +18738,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0500 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0501 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -26128,39 +26128,106 @@ Se dejó el valor anterior.`, 'warning');
         </div>`).join('');
     };
 
-    const renderTable = () => {
-      let filtered = items;
-      if (colFilterEstado.size > 0) filtered = filtered.filter(i => colFilterEstado.has(i.estado));
-      if (colFilterTipo.size   > 0) filtered = filtered.filter(i => colFilterTipo.has(i.tipo));
+    /* ── LA TABLA SE DIBUJA DE A TANDAS ──────────────────────────────────────────
+     *
+     * Daniel, 28-ago-2026: *"en este modulo, puntualmente en esa pestaña, demora mucho
+     * la carga"*.
+     *
+     * Dibujaba las ~17.000 filas de golpe. Medido con la plantilla real: 31 MB de HTML y
+     * 257.429 elementos, tres segundos en una laptop rapida y SIN el desenfoque del
+     * glass-panel, que el navegador tiene que recalcular sobre cada uno de esos elementos.
+     * Y como el buscador redibujaba en cada tecla, escribir un SKU de siete digitos eran
+     * siete veces eso.
+     *
+     * Con 500 por tanda baja a 113 ms. El boton de abajo trae las siguientes; el Excel y
+     * la lamina siguen saliendo con TODO, porque esos no los dibuja el navegador. */
+    const POR_TANDA = 500;
+    let mostrando = POR_TANDA;
+
+    const filtrarItems = () => {
+      let f = items;
+      if (colFilterEstado.size > 0) f = f.filter(i => colFilterEstado.has(i.estado));
+      if (colFilterTipo.size   > 0) f = f.filter(i => colFilterTipo.has(i.tipo));
       if (filterTexto) {
         const q = filterTexto.toLowerCase();
-        filtered = filtered.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
+        f = f.filter(i => i.sku.toLowerCase().includes(q) || i.art7.toLowerCase().includes(q));
       }
+      return f;
+    };
+
+    const renderTable = (masDeLoMismo) => {
+      /* Al cambiar un filtro se vuelve a la primera tanda: si no, filtrar con 8.000 filas
+         ya abiertas seguiria costando lo mismo que antes. Solo el boton "ver mas" suma. */
+      if (!masDeLoMismo) mostrando = POR_TANDA;
+      const filtered = filtrarItems();
       const tBody = document.getElementById('repl_tbody');
       if (!tBody) return;
-      tBody.innerHTML = filtered.map((i, idx) => `
-        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.04); transition:background 0.15s;"
-            onmouseover="this.style.background='rgba(var(--ink-rgb), 0.04)'"
-            onmouseout="this.style.background='transparent'">
-          <td style="padding:0.6rem 1rem; color:var(--text-muted); font-size:var(--t-sm);">${idx+1}</td>
-          <td style="padding:0.6rem 1rem; color:var(--text-muted); font-size:var(--t-sm);">${i.art7}</td>
-          <td style="padding:0.6rem 1rem; font-family:monospace; font-size:var(--t-sm); color:var(--text-pale);">${i.sku}</td>
-          <td style="padding:0.6rem 1rem; text-align:center; font-size:var(--t-sm); font-weight:700; color:var(--brand-pale);">${i.talla}</td>
-          <td style="padding:0.6rem 1rem; font-size:var(--t-sm); color:var(--warning-soft);">${i.marcas}</td>
-          <td style="padding:0.6rem 1rem; font-size:var(--t-sm); color:var(--success-mid);">${i.genderRims}</td>
-          <td style="padding:0.6rem 1rem; font-size:var(--t-sm); color:var(--pink-soft);">${i.temporada}</td>
-          <td style="padding:0.6rem 1rem; text-align:center; font-size:var(--t-sm); font-weight:700; color:var(--brand-light); background:rgba(var(--primary2-rgb), 0.05);">${i.factor !== undefined ? i.factor : umbral}</td>
-          <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; color:${i.qAct===0?'var(--danger)':i.qAct<=(i.factor !== undefined ? i.factor : umbral)?'var(--warning)':'var(--text-pale)'};">${i.qAct.toLocaleString('es-PE')}</td>
-          <td style="padding:0.6rem 1rem; text-align:right; color:${i.qRes>0?'var(--success)':'#ef444488'}; font-weight:600;">${i.qRes.toLocaleString('es-PE')}</td>
-          <td style="padding:0.6rem 1rem; text-align:right; font-weight:800; font-size:var(--t-md); color:${aBajarDe(i) > 0 ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.2)'};"
-              ${i.relleno > 0 ? `title="Incluye ${i.relleno} pares por encima del tope, para no dejar el cuerpo a medio llenar"` : ''}>${aBajarDe(i) > 0 ? aBajarDe(i).toLocaleString('es-PE') : '—'}${i.relleno > 0 ? '<span style="color:var(--brand-pale); font-weight:700; font-size:var(--t-xs);"> +' + i.relleno.toLocaleString('es-PE') + '</span>' : ''}</td>
-          <td style="padding:0.6rem 1rem; text-align:right; font-weight:700; font-size:var(--t-sm); color:${solicitudDe(i) > 0 ? 'var(--brand-pale)' : 'rgba(var(--ink-rgb), 0.2)'};">${solicitudDe(i) > 0 ? solicitudDe(i).toLocaleString('es-PE') : '—'}</td>
-          <td style="padding:0.6rem 1rem; text-align:center;">${estadoBadge(i.estado)}</td>
+      const visibles = filtered.slice(0, mostrando);
+      /* Los `style` repetidos se fueron a clases -ver #repl_estilos-. Aca solo quedan los
+         colores que cambian fila por fila, que son los unicos que no se pueden compartir.
+         El HTML por fila baja de 1.986 a unos 450 caracteres. */
+      tBody.innerHTML = visibles.map((i, idx) => `
+        <tr>
+          <td class="rq-m">${idx + 1}</td>
+          <td class="rq-m">${i.art7}</td>
+          <td class="rq-sku">${i.sku}</td>
+          <td class="rq-c rq-talla">${i.talla}</td>
+          <td class="rq-marca">${i.marcas}</td>
+          <td class="rq-gen">${i.genderRims}</td>
+          <td class="rq-temp">${i.temporada}</td>
+          <td class="rq-c rq-fac">${i.factor !== undefined ? i.factor : umbral}</td>
+          <td class="rq-d rq-act" style="color:${i.qAct === 0 ? 'var(--danger)' : i.qAct <= (i.factor !== undefined ? i.factor : umbral) ? 'var(--warning)' : 'var(--text-pale)'};">${i.qAct.toLocaleString('es-PE')}</td>
+          <td class="rq-d rq-res" style="color:${i.qRes > 0 ? 'var(--success)' : '#ef444488'};">${i.qRes.toLocaleString('es-PE')}</td>
+          <td class="rq-d rq-baj" style="color:${aBajarDe(i) > 0 ? 'var(--text-strong)' : 'rgba(var(--ink-rgb), 0.2)'};"${i.relleno > 0 ? ` title="Incluye ${i.relleno} pares por encima del tope, para no dejar el cuerpo a medio llenar"` : ''}>${aBajarDe(i) > 0 ? aBajarDe(i).toLocaleString('es-PE') : '—'}${i.relleno > 0 ? '<span class="rq-mas"> +' + i.relleno.toLocaleString('es-PE') + '</span>' : ''}</td>
+          <td class="rq-d rq-sol" style="color:${solicitudDe(i) > 0 ? 'var(--brand-pale)' : 'rgba(var(--ink-rgb), 0.2)'};">${solicitudDe(i) > 0 ? solicitudDe(i).toLocaleString('es-PE') : '—'}</td>
+          <td class="rq-c">${estadoBadge(i.estado)}</td>
         </tr>`).join('');
+
+      /* El pie dice siempre cuantas se ven de cuantas hay: sin eso, una tabla cortada en
+         500 se lee como si el reporte tuviera 500 filas. */
+      const pie = document.getElementById('repl_pie');
+      if (pie) {
+        const quedan = filtered.length - visibles.length;
+        pie.innerHTML = !filtered.length ? '' :
+          `<span style="color:var(--text-muted); font-size:var(--t-sm);">Se ven
+             <b style="color:var(--text-strong);">${visibles.length.toLocaleString('es-PE')}</b>
+             de <b style="color:var(--text-strong);">${filtered.length.toLocaleString('es-PE')}</b> filas</span>`
+          + (quedan > 0
+              ? `<button id="repl_mas" class="btn-primary" style="padding:0.4rem 1.1rem; font-size:var(--t-sm);
+                     font-weight:700; border-radius:8px;">Ver ${Math.min(POR_TANDA, quedan).toLocaleString('es-PE')} más</button>`
+              : '');
+        const bmas = document.getElementById('repl_mas');
+        if (bmas) bmas.addEventListener('click', () => { mostrando += POR_TANDA; renderTable(true); });
+      }
     };
 
     // ── Render HTML ──
     container.innerHTML = `
+      <!-- LOS ESTILOS DE LA TABLA, UNA VEZ Y NO EN CADA CELDA.
+           Estaban escritos dentro de cada <td>: con 13 celdas por fila y miles de filas,
+           el mismo texto se repetia cientos de miles de veces. Aca el navegador lo lee una
+           sola vez. El :hover tambien: antes iba como onmouseover/onmouseout en cada <tr>,
+           o sea dos funciones por fila que el navegador tenia que compilar. -->
+      <style id="repl_estilos">
+        #repl_tbody tr { border-bottom:1px solid rgba(var(--ink-rgb), 0.04); transition:background 0.15s; }
+        #repl_tbody tr:hover { background:rgba(var(--ink-rgb), 0.04); }
+        #repl_tbody td { padding:0.6rem 1rem; font-size:var(--t-sm); }
+        #repl_tbody .rq-c { text-align:center; }
+        #repl_tbody .rq-d { text-align:right; }
+        #repl_tbody .rq-m { color:var(--text-muted); }
+        #repl_tbody .rq-sku { font-family:monospace; color:var(--text-pale); }
+        #repl_tbody .rq-talla { font-weight:700; color:var(--brand-pale); }
+        #repl_tbody .rq-marca { color:var(--warning-soft); }
+        #repl_tbody .rq-gen { color:var(--success-mid); }
+        #repl_tbody .rq-temp { color:var(--pink-soft); }
+        #repl_tbody .rq-fac { font-weight:700; color:var(--brand-light); background:rgba(var(--primary2-rgb), 0.05); }
+        #repl_tbody .rq-act { font-weight:700; }
+        #repl_tbody .rq-res { font-weight:600; }
+        #repl_tbody .rq-baj { font-weight:800; font-size:var(--t-md); }
+        #repl_tbody .rq-sol { font-weight:700; }
+        #repl_tbody .rq-mas { color:var(--brand-pale); font-weight:700; font-size:var(--t-xs); }
+      </style>
+
       <!-- KPIs -->
       <div id="repl_kpis" style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:0.8rem;"></div>
 
@@ -26212,7 +26279,12 @@ Se dejó el valor anterior.`, 'warning');
           </thead>
           <tbody id="repl_tbody"></tbody>
         </table>
-      </div>`;
+      </div>
+
+      <!-- Cuantas filas se ven de cuantas hay, y el boton para traer la tanda siguiente.
+           Va FUERA del recuadro que hace scroll, para que no se vaya con la tabla. -->
+      <div id="repl_pie" style="display:flex; align-items:center; justify-content:center;
+                  gap:1rem; padding:0.9rem; flex-wrap:wrap;"></div>`;
 
     // ── Poblar KPIs y tabla ──
     renderKPIs();
@@ -26237,9 +26309,15 @@ Se dejó el valor anterior.`, 'warning');
       renderReplenishment(container);
     });
 
+    /* SE ESPERA A QUE TERMINE DE ESCRIBIR. Antes redibujaba en cada tecla: escribir un
+       SKU de siete digitos eran siete tablas completas, y las primeras -las que menos
+       filtran- son las mas pesadas. Con 250 ms alcanza para que no se note la espera y
+       para que un SKU entero cueste un solo dibujado. */
+    let _replTimer = null;
     document.getElementById('repl_search').addEventListener('input', e => {
-      filterTexto = e.target.value.trim();
-      renderTable();
+      const v = e.target.value.trim();
+      clearTimeout(_replTimer);
+      _replTimer = setTimeout(() => { filterTexto = v; renderTable(); }, 250);
     });
 
     /* La lámina: SOLO EL RESUMEN. Nada de tablas ni listas —en el celular no se leen—. */

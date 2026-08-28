@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Cuanto tarda Replenishment</title>
+<style>body{font:14px system-ui;padding:20px;background:#fff;color:#111}
+pre{background:#f4f4f4;padding:14px;border-radius:6px;font-size:13px;line-height:1.5}</style></head>
+<body>
+<h3>Cuanto tarda dibujar la tabla de Replenishment</h3>
+<pre id="salida">midiendo...</pre>
+<table><tbody id="repl_tbody"></tbody></table>
+<script type="module">
+import { fila } from './_fila_repl.mjs';
+
+const badge = (e) => '<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:800">' + e + '</span>';
+const aBajarDe = (i) => i.aBajar;
+const solicitudDe = (i) => i.solicitud;
+
+const items = (n) => Array.from({ length: n }, (_, k) => ({
+  art7: '361146' + (k % 10), sku: '0611465-1-0' + (k % 10), talla: 38,
+  marcas: 'Bubblegummers', genderRims: '03 KIDS', temporada: 'T. Actual',
+  factor: 44, qAct: k % 300, qRes: 330, relleno: k % 7 === 0 ? 53 : 0,
+  aBajar: 44, solicitud: 44, estado: k % 3 === 0 ? 'QUEBRADO' : 'OK'
+}));
+
+const medir = (n) => {
+  const datos = items(n);
+  const tb = document.getElementById('repl_tbody');
+  tb.innerHTML = '';
+  const t0 = performance.now();
+  const html = datos.map((i, idx) => fila(i, idx, 6, badge, aBajarDe, solicitudDe)).join('');
+  const t1 = performance.now();
+  tb.innerHTML = html;
+  const t2 = performance.now();
+  document.body.offsetHeight;                 // obliga al navegador a calcular el dibujo
+  const t3 = performance.now();
+  const nodos = tb.querySelectorAll('*').length;
+  return { n, mb: (html.length / 1048576).toFixed(1), nodos,
+           armar: Math.round(t1 - t0), meter: Math.round(t2 - t1),
+           dibujar: Math.round(t3 - t2), total: Math.round(t3 - t0) };
+};
+
+const col = (s, w) => String(s).padStart(w);
+const r = [500, 2000, 8000, 17000].map(medir);
+document.getElementById('salida').textContent =
+  'FILAS'.padEnd(9) + col('HTML', 9) + col('NODOS', 10) + col('armar', 9)
+  + col('innerHTML', 11) + col('dibujar', 10) + col('TOTAL', 10) + '\n'
+  + r.map(x => String(x.n).padEnd(9) + col(x.mb + ' MB', 9) + col(x.nodos.toLocaleString('es-PE'), 10)
+      + col(x.armar + ' ms', 9) + col(x.meter + ' ms', 11)
+      + col(x.dibujar + ' ms', 10) + col(x.total + ' ms', 10)).join('\n');
+document.getElementById('repl_tbody').innerHTML = '';
+</script>
+</body></html>

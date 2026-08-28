@@ -1,0 +1,56 @@
+<!doctype html>
+<html data-tema="indigo"><head><meta charset="utf-8"><title>Replenishment: como se ve</title>
+<link rel="stylesheet" href="../css/temas.css"><link rel="stylesheet" href="../css/main.css">
+<style>body{margin:0;padding:20px;background:var(--bg-dark);color:var(--text-pale);font-family:var(--font-ui)}
+th{padding:0.8rem 1rem;text-align:left;font-size:var(--t-xs);font-weight:700;letter-spacing:1px;color:var(--text-muted)}</style>
+<style id="repl_estilos">
+        #repl_tbody tr { border-bottom:1px solid rgba(var(--ink-rgb), 0.04); transition:background 0.15s; }
+        #repl_tbody tr:hover { background:rgba(var(--ink-rgb), 0.04); }
+        #repl_tbody td { padding:0.6rem 1rem; font-size:var(--t-sm); }
+        #repl_tbody .rq-c { text-align:center; }
+        #repl_tbody .rq-d { text-align:right; }
+        #repl_tbody .rq-m { color:var(--text-muted); }
+        #repl_tbody .rq-sku { font-family:monospace; color:var(--text-pale); }
+        #repl_tbody .rq-talla { font-weight:700; color:var(--brand-pale); }
+        #repl_tbody .rq-marca { color:var(--warning-soft); }
+        #repl_tbody .rq-gen { color:var(--success-mid); }
+        #repl_tbody .rq-temp { color:var(--pink-soft); }
+        #repl_tbody .rq-fac { font-weight:700; color:var(--brand-light); background:rgba(var(--primary2-rgb), 0.05); }
+        #repl_tbody .rq-act { font-weight:700; }
+        #repl_tbody .rq-res { font-weight:600; }
+        #repl_tbody .rq-baj { font-weight:800; font-size:var(--t-md); }
+        #repl_tbody .rq-sol { font-weight:700; }
+        #repl_tbody .rq-mas { color:var(--brand-pale); font-weight:700; font-size:var(--t-xs); }
+      </style>
+</head><body>
+<div style="margin-bottom:10px"><button onclick="document.documentElement.dataset.tema='pbi-classic'">pbi-classic</button>
+<button onclick="document.documentElement.dataset.tema='negro'">negro</button>
+<button onclick="document.documentElement.dataset.tema='pbi-classic'">pbi-classic</button>
+<button onclick="document.documentElement.dataset.tema='pbi'">pbi</button></div>
+<table style="width:100%;border-collapse:collapse;font-size:var(--t-sm)">
+<thead><tr style="border-bottom:2px solid rgba(var(--primary2-rgb),0.3)">
+<th>#</th><th>ARTICULO</th><th>SKU COMPLETO</th><th style="text-align:center;color:var(--brand-pale)">TALLA</th>
+<th style="color:var(--warning-soft)">MARCA</th><th style="color:var(--success-mid)">GENDER RIMS</th>
+<th style="color:var(--pink-soft)">TEMPORADA</th><th style="text-align:center;color:var(--brand-light);background:rgba(var(--primary2-rgb),0.05)">TOPE</th>
+<th style="text-align:right">STOCK ACTIVO</th><th style="text-align:right">STOCK RESERVA</th>
+<th style="text-align:right;color:var(--brand-pale);background:rgba(var(--primary2-rgb),0.05)">A BAJAR</th>
+<th style="text-align:right;color:var(--brand-pale);background:rgba(var(--primary2-rgb),0.05)">SOLICITUD</th>
+<th style="text-align:center">ESTADO</th></tr></thead>
+<tbody id="repl_tbody"></tbody></table>
+<div id="repl_pie" style="display:flex;align-items:center;justify-content:center;gap:1rem;padding:0.9rem"></div>
+<script type="module">
+import { fila } from './_fila_repl.mjs';
+const estadoBadge = (e) => `<span style="padding:3px 10px;border-radius:12px;font-size:var(--t-xs);font-weight:800;
+  color:${e==='QUEBRADO'?'var(--danger)':e==='POR QUEBRAR'?'var(--warning)':'var(--success)'};
+  background:rgba(var(--ink-rgb),0.06)">${e}</span>`;
+const filas = [
+ {art7:'0611465',sku:'0611465-1-04',talla:19,marcas:'Bubblegummers',genderRims:'03 KIDS',temporada:'T. Actual',factor:44,qAct:0,qRes:330,relleno:0,aBajar:44,solicitud:44,estado:'QUEBRADO'},
+ {art7:'5818976',sku:'5818976-1-06',talla:37,marcas:'North Star',genderRims:'02 WOMEN',temporada:'T. Actual',factor:61,qAct:0,qRes:320,relleno:53,aBajar:114,solicitud:114,estado:'QUEBRADO'},
+ {art7:'8566849',sku:'8566849-1-05',talla:41,marcas:'Bata',genderRims:'05 SCHOOL',temporada:'T. Actual',factor:50,qAct:38,qRes:322,relleno:0,aBajar:50,solicitud:50,estado:'POR QUEBRAR'},
+ {art7:'8056905',sku:'8056905-1-05',talla:41,marcas:'Bata Industrials',genderRims:'07 INDUSTRIAL',temporada:'T. Actual',factor:66,qAct:210,qRes:0,relleno:0,aBajar:0,solicitud:0,estado:'OK'}];
+document.getElementById('repl_tbody').innerHTML =
+  filas.map((i,idx) => fila(i, idx, 6, estadoBadge, x=>x.aBajar, x=>x.solicitud)).join('');
+document.getElementById('repl_pie').innerHTML =
+  '<span style="color:var(--text-muted);font-size:var(--t-sm)">Se ven <b style="color:var(--text-strong)">500</b> de <b style="color:var(--text-strong)">17.482</b> filas</span>'
+  + '<button class="btn-primary" style="padding:0.4rem 1.1rem;font-size:var(--t-sm);font-weight:700;border-radius:8px">Ver 500 más</button>';
+</script></body></html>

@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0500';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0501';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,21 +204,34 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0500';
+const VERSION = '29.0501';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
+/* LO NORMALIZADO SE GUARDA. `getCol` corre una vez POR FILA Y POR COLUMNA, y las claves
+   son siempre las mismas -salen del mismo Excel-, asi que sin esto la misma palabra se
+   volvia a limpiar decenas de miles de veces. Medido sobre el Maestro de 30.176 filas:
+   755 ms solo en normalizar. La tabla no crece sola: solo entran nombres de columna. */
+const _normCache = new Map();
+const _normalizarClave = (str) => {
+    const s = String(str || '');
+    let v = _normCache.get(s);
+    if (v === undefined) {
+        v = s.toUpperCase()
+             .normalize("NFD").replace(/[̀-ͯ]/g, "")  // Quitar acentos
+             .replace(/[^A-Z0-9]/g, '');                        // Quitar todo lo que no sea letra o numero
+        if (_normCache.size < 5000) _normCache.set(s, v);
+    }
+    return v;
+};
+
 export const getCol = (row, names) => {
     if (!row) return null;
-    const normalize = (str) => String(str || '').toUpperCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar acentos
-        .replace(/[^A-Z0-9]/g, ''); // Quitar todo lo que no sea letra o número
-
     const rowKeys = Object.keys(row);
     for (let n of names) {
         if (row[n] !== undefined) return row[n];
-        const target = normalize(n);
-        const found = rowKeys.find(k => normalize(k) === target);
+        const target = _normalizarClave(n);
+        const found = rowKeys.find(k => _normalizarClave(k) === target);
         if (found) return row[found];
     }
     return null;
