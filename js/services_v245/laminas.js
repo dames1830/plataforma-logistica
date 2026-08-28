@@ -127,6 +127,27 @@ export function botonCopiar(lienzo, estilo, rotulo) {
 }
 
 /**
+ * LA TERCERA SALIDA DE UNA VENTANA: LA TECLA ESC.
+ *
+ * Las otras dos son el boton Cerrar y tocar fuera. Es la convencion de la casa -la usan las
+ * fichas de KPI y los modales del dashboard, cinco sitios- y a las laminas les faltaba:
+ * Daniel, 27-ago-2026, *"en algunas imagenes le aprieto Esc y me deja ver la web; en este
+ * caso no me deja"*.
+ *
+ * Devuelve la funcion que quita el oyente. Hay que llamarla CIERRE COMO CIERRE la ventana,
+ * o queda un oyente suelto escuchando para siempre.
+ */
+export function cerrarConEsc(cerrar) {
+  const esc = (e) => {
+    if (e.key !== 'Escape') return;
+    document.removeEventListener('keydown', esc);
+    cerrar();
+  };
+  document.addEventListener('keydown', esc);
+  return () => document.removeEventListener('keydown', esc);
+}
+
+/**
  * EN CUANTOS BLOQUES CONVIENE PARTIR UNA TABLA LARGA.
  *
  * El tope de WhatsApp cae sobre el LADO MAS LARGO, asi que una lamina alta y angosta gasta

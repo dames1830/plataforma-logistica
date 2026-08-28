@@ -114,8 +114,10 @@ solo en cuanto el alto baja del ancho, y reparte **parejo**: 21 y 21, no 27 y 15
 
 Cada bloque tiene que **valerse solo**, porque llegan como fotos sueltas:
 
-- **Sin rótulo de bloque.** Se puso un "BLOQUE 1 DE 2" y Daniel lo mandó quitar el mismo día:
-  *"quítale lo que dice bloque uno y bloque dos"*. La numeración de la izquierda ya lo dice.
+- **La palabra "bloque" no aparece en ningún lado.** Se puso un "BLOQUE 1 DE 2" dentro del
+  dibujo y Daniel lo mandó quitar: *"quítale lo que dice bloque uno y bloque dos"*. Ojo: **los
+  botones también contaban** —decían "Copiar bloque 1"— y hubo que volver sobre ello. Ahora
+  dicen qué filas se llevan: "Copiar 1 al 21". La numeración de la izquierda ya dice el resto.
 - **La numeración sigue de largo**: el 22 del segundo bloque es el 22 de la lista, no otro 1.
 - **La leyenda del pie va en los dos.**
 - **Las tarjetas del resumen cuentan a TODOS**, no a los del bloque. Si el bloque 1 dijera
@@ -140,6 +142,26 @@ Misma ventana que el cuadro de asistencia: fondo oscuro, la lámina, y los boton
 
 El 18-ago-2026 la descarga directa falló: en un navegador con restricciones el atributo
 `download` se ignora y el archivo cae sin extensión. **No volver a intentarlo.**
+
+### La ventana tiene TRES salidas, siempre
+
+El botón **Cerrar**, **tocar fuera** y la tecla **Esc**. Es la convención de la casa —la
+siguen las fichas de KPI y los modales del dashboard— y a las láminas les faltaba la tercera:
+Daniel, 27-ago-2026, *"en algunas imágenes le aprieto Esc y me deja ver la web; en este caso
+no me deja"*. Lo que se pega en la pantalla tiene que poder despegarse.
+
+Va por `cerrarConEsc()` de `laminas.js`, que **devuelve la función que quita el oyente**. Hay
+que llamarla **cierre como cierre** la ventana, o queda un oyente suelto escuchando para
+siempre:
+
+    const quitarEsc = cerrarConEsc(() => fondo.remove());
+    const cerrarTodo = () => { quitarEsc(); fondo.remove(); };
+    cerrar.onclick = cerrarTodo;
+    fondo.onclick = (e) => { if (e.target === fondo) cerrarTodo(); };
+
+Que el oyente se quitó no se puede ver desde fuera —no hay forma de listar los oyentes de un
+documento—, así que eso se comprueba leyendo el código: las dos salidas tienen que pasar por
+`cerrarTodo`.
 
 ## VECTORIZAR NO SIRVE
 

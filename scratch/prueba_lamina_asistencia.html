@@ -76,10 +76,10 @@ const filas = [...Array(42).keys()].map(i => ({
 filas.forEach((f, i) => { SEXOS[f.dni] = i < 25 ? 'H' : i < 40 ? 'M' : ''; });
 const estadoDelRango = () => ({ ultimo, abiertos: [] });
 
-const DEP = ['ESCALA_FOTO','escalaParaFoto','paraFoto','botonCopiar','filasPorBloque','enBloques','aRGB',
+const DEP = ['ESCALA_FOTO','escalaParaFoto','paraFoto','botonCopiar','cerrarConEsc','filasPorBloque','enBloques','aRGB',
              'MESES','claveDe','desdeClave','ddmm','numeroDeSemana','semanasDelRango',
              'colorTema','maestroDe','simboloDe','estadoDelRango','desde','hasta'];
-const VAL = [LAM.ESCALA_FOTO, LAM.escalaParaFoto, LAM.paraFoto, LAM.botonCopiar, LAM.filasPorBloque, LAM.enBloques,
+const VAL = [LAM.ESCALA_FOTO, LAM.escalaParaFoto, LAM.paraFoto, LAM.botonCopiar, LAM.cerrarConEsc, LAM.filasPorBloque, LAM.enBloques,
              LAM.aRGB, MESES, claveDe, desdeClave, ddmm, numeroDeSemana, semanasDelRango,
              colorTema, maestroDe, simboloDe, estadoDelRango, claveDe(dias[0]), claveDe(dias[6])];
 const mostrarImagen = new Function(...DEP, trozo + '\n return mostrarImagen;')(...VAL);
@@ -93,9 +93,13 @@ ok('los dos miden lo mismo: ' + cvs.map(c => c.width + '×' + c.height).join('  
    cvs[0].width === cvs[1].width && cvs[0].height === cvs[1].height);
 
 const bots = [...vent.querySelectorAll('button')].map(b => b.textContent);
-ok('cada bloque tiene su Copiar — ' + bots.join(' · '),
-   bots.filter(t => /Copiar bloque/.test(t)).length === 2);
+ok('cada parte tiene su Copiar — ' + bots.join(' · '),
+   bots.filter(t => /^Copiar /.test(t)).length === 2);
 ok('y un solo Cerrar', bots.filter(t => t === 'Cerrar').length === 1);
+/* Daniel mandó quitar la palabra "bloque": ni dentro del dibujo ni en los botones. */
+ok('ningún botón dice "bloque"', !bots.some(t => /bloque/i.test(t)));
+ok('dicen qué filas se llevan, para saber cuál se copió sin contar',
+   bots.filter(t => /^Copiar \d+ al \d+$/.test(t)).length === 2);
 
 /* LOS CUADROS TIENEN QUE CUADRAR: las cuatro tarjetas cuentan a TODOS, no a los del
    bloque. Se comprueba comparando punto por punto la franja de las tarjetas entre los dos
@@ -167,7 +171,7 @@ const real = navigator.clipboard;
 let entregado = null;
 Object.defineProperty(navigator, 'clipboard', { configurable: true,
   value: { write: (its) => { entregado = its; return Promise.resolve(); } } });
-[...vent.querySelectorAll('button')].find(b => /Copiar bloque 2/.test(b.textContent)).click();
+[...vent.querySelectorAll('button')].filter(b => /^Copiar /.test(b.textContent))[1].click();
 await new Promise(r => setTimeout(r, 150));
 ok('Copiar entrega una imagen PNG al portapapeles',
    !!entregado && entregado[0].types.indexOf('image/png') !== -1);
@@ -181,8 +185,24 @@ cvs.forEach((cv, i) => {
   c.getContext('2d').drawImage(cv, 0, 0);
   document.getElementById('lienzo').appendChild(c);
 });
-[...vent.querySelectorAll('button')].pop().click();
-ok('la ventana se cierra con Cerrar', !vent.isConnected);
+/* TRES SALIDAS. La de la tecla se comprueba primero, volviendo a abrir después. */
+document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+ok('la tecla Esc cierra la ventana', !vent.isConnected);
+mostrarImagen(dias, filas);
+const v3 = [...document.querySelectorAll('body > div')].pop();
+v3.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+ok('y tocar fuera también', !v3.isConnected);
+mostrarImagen(dias, filas);
+const v4 = [...document.querySelectorAll('body > div')].pop();
+[...v4.querySelectorAll('button')].pop().click();
+ok('la ventana se cierra con Cerrar', !v4.isConnected);
+/* Y que el oyente de la tecla NO quede suelto cuando se cierra por otro lado. Esto no se
+   puede ver desde fuera —no hay forma de listar los oyentes—, así que se comprueba en el
+   código: las dos salidas tienen que pasar por `cerrarTodo`, que lo quita. */
+ok('quitar el oyente y cerrar van juntos',
+   /const cerrarTodo = \(\) => \{ quitarEsc\(\); fondo\.remove\(\); \};/.test(trozo));
+ok('el botón Cerrar pasa por ahí', /cerrar\.onclick = cerrarTodo;/.test(trozo));
+ok('y tocar fuera también', /if \(e\.target === fondo\) cerrarTodo\(\);/.test(trozo));
 
 llegoAlFinal = true;
 eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'

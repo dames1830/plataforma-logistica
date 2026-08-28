@@ -34,7 +34,7 @@ async function laminaDe(archivo) {
   /* Un `new Function` no ve los import del archivo: hay que entregarle a mano lo que la
      lámina usa del módulo compartido. */
   const LAM = await import('../js/services_v245/laminas.js?z=' + Date.now());
-  const DEL_MODULO = ['ESCALA_FOTO', 'escalaParaFoto', 'paraFoto', 'botonCopiar', 'filasPorBloque', 'enBloques', 'aRGB'];
+  const DEL_MODULO = ['ESCALA_FOTO', 'escalaParaFoto', 'paraFoto', 'botonCopiar', 'filasPorBloque', 'enBloques', 'aRGB', 'cerrarConEsc'];
   return new Function(...DEL_MODULO, t.slice(a, b) + ' return laminaUCA;')(
     ...DEL_MODULO.map(n => LAM[n]));
 }
