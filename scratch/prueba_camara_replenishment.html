@@ -150,6 +150,32 @@ ok('la cifra se encoge si no entra —195.226 en una tarjeta de cuatro—',
 ok('la lámina no lleva tablas ni listas: solo el resumen',
    !/forEach\(fila/.test(trozo));
 
+eco('\n<span class="t">── EL MARCO ──</span>');
+/* Sin marco, el fondo de la lámina se confunde con el del chat y no se ve dónde empieza.
+   Se comprueba leyendo los PUNTOS: en el borde tiene que haber una línea distinta del
+   fondo, en los cuatro lados. */
+document.documentElement.setAttribute('data-tema', 'pbi');
+const cvM = LAM.laminaResumen({
+  titulo: 'PRUEBA', tarjetas: [{ rotulo: 'X', valor: 1, color: 'var(--danger)' }],
+  grande: { rotulo: 'Y', valor: 2, color: 'var(--brand-light)' }, pie: ''
+});
+const ventM = [...document.querySelectorAll('body > div')].pop();
+const gM = cvM.getContext('2d');
+const eM = cvM.width / 460;
+const bri = (p) => (0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2]) / 255;
+const punto = (x, y) => bri(gM.getImageData(Math.round(x), Math.round(y), 1, 1).data);
+const fondoM = punto(cvM.width / 2, 8 * eM);          // dentro, arriba del título
+const lados = {
+  arriba:   punto(cvM.width / 2, 1.5 * eM),
+  abajo:    punto(cvM.width / 2, cvM.height - 1.5 * eM),
+  izquierda:punto(1.5 * eM, cvM.height / 2),
+  derecha:  punto(cvM.width - 1.5 * eM, cvM.height / 2)
+};
+Object.entries(lados).forEach(([lado, v]) =>
+  ok('hay línea en el borde de ' + lado + ' — ' + v.toFixed(3)
+     + ' contra un fondo de ' + fondoM.toFixed(3), Math.abs(v - fondoM) > 0.01));
+[...ventM.querySelectorAll('button')].pop().click();
+
 eco('\n<span class="t">── LOS COLORES SON EL DATO ──</span>');
 /* Daniel: "ponle colores, los quebrados en rojo, por quebrar en amarillo". Se comprueba
    leyendo los PUNTOS del dibujo: el tono que sale tiene que ser el del tema, no uno

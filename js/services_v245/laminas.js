@@ -255,6 +255,16 @@ export function laminaResumen({ titulo, tarjetas, grande, pie }) {
   g.fillStyle = FONDO;
   g.fillRect(0, 0, ANCHO, ALTO);
 
+  /* EL MARCO. Sin el, el fondo de la lamina se confunde con el de la pantalla —y en
+     WhatsApp, con el del propio chat—: no se ve donde empieza y donde termina la imagen.
+     Lo pidio Daniel el 28-ago-2026. Va por dentro del borde para que no se coma un punto
+     al recortar, y con las esquinas redondeadas como las tarjetas. */
+  g.strokeStyle = LINEA;
+  g.lineWidth = 1.5;
+  g.beginPath();
+  g.roundRect(1, 1, ANCHO - 2, ALTO - 2, 12);
+  g.stroke();
+
   const texto = (t, x, y, tam, color, peso, alin) => {
     g.font = (peso || 400) + ' ' + tam + 'px ' + FUENTE;
     g.fillStyle = color;
