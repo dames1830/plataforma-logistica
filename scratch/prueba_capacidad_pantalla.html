@@ -28,11 +28,14 @@ const donde = document.getElementById('donde');
 /* Los dos editores de verdad viven en el archivo grande y no se pueden importar: la
    pantalla los recibe de afuera. Acá se le dan dos de mentira, para comprobar que los
    monta en el paso que les toca —lo que hagan por dentro ya se prueba en su sitio—. */
-let montoZonas = null, montoReparto = null;
+let montoZonas = null, montoReparto = null, montoTopes = null, vecesTopes = 0;
 await renderCapacidad(donde, {
   config: cfg.data, maestro: art.data, activo: act.data,
   montarZonas: (el) => { montoZonas = el; el.innerHTML = '<b>EDITOR DE ZONAS</b>'; },
-  montarReparto: (el) => { montoReparto = el; el.innerHTML = '<b>EDITOR DEL REPARTO</b>'; }
+  montarReparto: (el) => { montoReparto = el; el.innerHTML = '<b>EDITOR DEL REPARTO</b>'; },
+  montarTopes: (el) => { montoTopes = el; vecesTopes++; el.innerHTML = '<b>TABLA DE TOPES</b>'; },
+  /* No se publica de verdad en una prueba: se comprueba QUE se publique y con qué. */
+  guardar: async (nuevos) => { window.__publicado = nuevos; }
 });
 
 const txt = donde.innerText;
@@ -40,7 +43,7 @@ eco('<span class="t">── SE DIBUJA ──</span>');
 ok('el semáforo está', !!donde.querySelector('#capSemaforo .barra'));
 ok('los cinco pasos están', donde.querySelectorAll('details.paso').length === 5);
 ok('el paso 1 y el 5 arrancan abiertos', donde.querySelectorAll('details.paso[open]').length === 2);
-ok('la tabla de topes tiene filas', donde.querySelectorAll('#capTbody tr').length > 300);
+ok('el hueco de la tabla de topes está', !!donde.querySelector('#capTopes'));
 
 eco('\n<span class="t">── DICE LOS NÚMEROS DE VERDAD ──</span>');
 ['302,983', '624,952', '714,060'].forEach(n =>
@@ -49,18 +52,25 @@ ok('avisa que NO ENTRA', /NO ENTRA/.test(txt));
 ok('y dice cuántos cuerpos faltan', /208 cuerpos/.test(txt));
 
 eco('\n<span class="t">── LA PERILLA ──</span>');
-const antes = donde.querySelector('#capTbody input[type=number]').value;
 donde.querySelector('#capMax').click();
 await new Promise(r => setTimeout(r, 60));
 ok('el botón del máximo la mueve — la perilla quedó en ' + donde.querySelector('#capPct').value,
    donde.querySelector('#capPct').value === '49');
 ok('y ahora SÍ entra', /ENTRA/.test(donde.innerText) && !/NO ENTRA/.test(donde.innerText));
-ok('el botón de guardar se enciende', !donde.querySelector('#capGuardar').disabled);
-/* El escolar no lo mueve la perilla: sigue en 50 pase lo que pase. */
-const escolares = [...donde.querySelectorAll('#capTbody tr')]
-  .filter(tr => tr.innerHTML.includes('chip escolar'));
-ok('las ' + escolares.length + ' filas de escolar siguen en 50',
-   escolares.length > 0 && escolares.every(tr => tr.querySelector('input').value === '50'));
+ok('el botón de aplicar se enciende', !donde.querySelector('#capGuardar').disabled);
+/* El escolar no lo mueve la perilla: sigue en 50 pase lo que pase. Se comprueba en lo
+   que se PUBLICA, que es lo que de verdad llega al almacén. */
+donde.querySelector('#capGuardar').click();
+await new Promise(r => setTimeout(r, 250));
+const pub = window.__publicado || {};
+const claves = Object.keys(pub);
+ok('publica las ' + claves.length + ' combinaciones', claves.length > 300);
+const esco = claves.filter(k => k.split('|')[1].includes('SCHOOL')
+  && !['ADIDAS','PUMA','SKECHERS','MARIE CLAIRE'].includes(k.split('|')[0]));
+ok('las ' + esco.length + ' de escolar salen en 50 pese a la perilla',
+   esco.length > 0 && esco.every(k => pub[k] === 50));
+ok('y la tabla se vuelve a montar, para no mostrar lo viejo — se montó '
+   + vecesTopes + ' veces', vecesTopes === 2);
 
 eco('\n<span class="t">── LOS EDITORES, ADENTRO ──</span>');
 /* Daniel: "no quiero tener doble cosas". Los editores no se copiaron: se montan los de
@@ -71,16 +81,10 @@ ok('el editor de zonas se monta en el paso 2',
 ok('el del reparto se monta en el paso 4',
    !!montoReparto && montoReparto.id === 'capReparto'
    && montoReparto.closest('details').querySelector('.tit').textContent === 'CÓMO SE REPARTE');
-ok('y si no se los pasan, la pantalla no se cae', true);
-
-eco('\n<span class="t">── LOS FILTROS ──</span>');
-donde.querySelector('.f[data-f="pasan"]').click();
-await new Promise(r => setTimeout(r, 60));
-const nPasan = donde.querySelectorAll('#capTbody tr').length;
-donde.querySelector('.f[data-f="todas"]').click();
-await new Promise(r => setTimeout(r, 60));
-ok('"se pasan del cuerpo" filtra a ' + nPasan + ' filas',
-   nPasan > 0 && nPasan < donde.querySelectorAll('#capTbody tr').length);
+ok('y la tabla de topes en el paso 5',
+   !!montoTopes && montoTopes.id === 'capTopes'
+   && montoTopes.closest('details').querySelector('.tit').textContent === 'HASTA CUÁNTO');
+ok('no queda ninguna tabla propia que la duplique', !donde.querySelector('#capTbody'));
 
 llegoAlFinal = true;
 eco(fallas ? '\n<span class="mal">' + fallas + ' FALLARON</span>'

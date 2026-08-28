@@ -17,7 +17,7 @@
  * ══════════════════════════════════════════════════════════════════════════════ */
 
 import { calcularCapacidad, pideConPerilla, perillaQueEntra, traerConfig, publicarTopes, RANGOS }
-  from '../services_v245/capacidadService.js?v=29.0484';
+  from '../services_v245/capacidadService.js?v=29.0485';
 
 const mil = (n) => Math.round(Number(n) || 0).toLocaleString('es-PE');
 const esc = (s) => String(s == null ? '' : s)
@@ -148,7 +148,6 @@ export async function renderCapacidad(container, opciones) {
   /* Lo escrito a mano. Es lo UNICO que se guarda: todo lo demas se vuelve a medir con
      cada foto que sube el robot. */
   const tuyo = new Map(D.topes.map((t, i) => [i, t.tuyo]));
-  let filtro = 'todas';
   let pctCuerpo = null;                 // null = como está hoy, escrito a mano
   let tocado = false;
 
@@ -364,27 +363,15 @@ export async function renderCapacidad(container, opciones) {
                style="flex:1 1 180px; accent-color:var(--primary-2);">
         <button class="boton claro" id="capMax">El máximo que entra (${pctQueEntra}%)</button>
         <button class="boton claro" id="capColchon">Con colchón (${pctConColchon}%)</button>
+        <button class="boton" id="capGuardar" disabled>Aplicar a la tabla</button>
       </div>
       <div class="d" style="margin-top:.45rem;" id="capExplica"></div>
     </div>
-    <div class="filtros">
-      <span style="font-size:var(--t-xs); color:var(--text-muted);">ver:</span>
-      <button class="f" data-f="pasan">se pasan del cuerpo (${D.resumenTopes.pasan})</button>
-      <button class="f" data-f="entran">entran (${D.resumenTopes.entran})</button>
-      <button class="f" data-f="sin">sin medida (${D.resumenTopes.sinMedida})</button>
-      <button class="f on" data-f="todas">todas (${D.resumenTopes.total})</button>
-      <span style="margin-left:auto; display:flex; gap:6px;">
-        <button class="boton" id="capGuardar" disabled>Guardar los objetivos</button>
-      </span>
-    </div>
-    <div class="scroll"><table>
-      <thead><tr>
-        <th>MARCA</th><th>GÉNERO</th><th class="n">TALLA</th><th class="n">SKUS</th>
-        <th class="n">EN PISO</th><th class="c">PROPONE</th><th class="c">TU OBJETIVO</th>
-        <th class="n">PIDE AL PISO</th>
-      </tr></thead>
-      <tbody id="capTbody"></tbody>
-    </table></div>`;
+    <!-- LA TABLA ES LA DE SIEMPRE, montada aca. Trae el Excel, el aplicar a toda la
+         marca y las excepciones por SKU. Encima queda el semaforo y la perilla, que es
+         lo que esta pantalla agrega. Una sola tabla: Daniel, 28-ago-2026, *"no quiero
+         tener doble cosas"*. -->
+    <div id="capTopes"></div>`;
 
   /* Lo que le toca a cada talla. NO TODAS SE REPARTEN: el escolar tiene su numero dado y
      las marcas de un cuerpo se llevan el cuerpo entero. La perilla solo mueve al resto. */
@@ -394,34 +381,6 @@ export async function renderCapacidad(container, opciones) {
     if (t.regimen === 'un-cuerpo') return t.propone;
     return t.propone === null ? null
       : Math.max(1, Math.round(t.propone * (pctCuerpo === null ? 100 : pctCuerpo) / 100));
-  };
-
-  const pintarTopes = () => {
-    const cae = (t, i) => filtro === 'todas'
-      || (filtro === 'sin' && t.propone === null)
-      || (filtro === 'pasan' && t.propone !== null && tuyo.get(i) > t.propone)
-      || (filtro === 'entran' && t.propone !== null && tuyo.get(i) <= t.propone);
-    const filas = D.topes.map((t, i) => [t, i]).filter(([t, i]) => cae(t, i));
-    $('#capTbody').innerHTML = filas.length ? filas.map(([t, i]) => {
-      const v = tuyo.get(i), pasa = t.propone !== null && v > t.propone;
-      const prop = proponeCon(t);
-      return `<tr>
-        <td style="color:var(--text-strong); font-weight:700;">${esc(t.marca)}
-          ${t.regimen === 'todo' ? '<span class="chip todo">todo</span>'
-          : t.regimen === 'escolar' ? '<span class="chip escolar">escolar</span>'
-          : t.regimen === 'un-cuerpo' ? '<span class="chip uncuerpo">un cuerpo</span>' : ''}</td>
-        <td class="apagado">${esc(t.genero)}</td>
-        <td class="n" style="font-weight:700;">${esc(t.talla)}</td>
-        <td class="n apagado">${mil(t.skus)}</td>
-        <td class="n">${mil(t.piso)}</td>
-        <td class="c">${prop === null ? '<span class="chip sinmed">sin medida</span>'
-          : `<b style="color:var(--text-strong)">${mil(prop)}</b>`}</td>
-        <td class="c"><input type="number" min="0" value="${v}" data-i="${i}"
-             class="${pasa ? 'rojo' : ''}"></td>
-        <td class="n">${mil(t.skus * v)}</td>
-      </tr>`;
-    }).join('') : `<tr><td colspan="8" class="c apagado" style="padding:1.4rem;">
-        No hay filas con ese filtro.</td></tr>`;
   };
 
   const explicar = () => {
@@ -444,8 +403,15 @@ export async function renderCapacidad(container, opciones) {
     $('#capPct').value = p;
     $('#capBarra').value = p;
     explicar();
-    pintarTopes();
     pintarSemaforo();
+  };
+
+  /* La tabla de siempre lee los objetivos del servidor al dibujarse, asi que despues de
+     publicar hay que pedirle que se rehaga o seguiria mostrando los de antes. */
+  const montarTabla = async () => {
+    if (typeof O.montarTopes !== 'function') return;
+    try { await O.montarTopes($('#capTopes')); }
+    catch (e) { console.warn('[CAPACIDAD] no se pudo montar la tabla de topes:', e && e.message); }
   };
 
   const PASOS = [
@@ -464,7 +430,6 @@ export async function renderCapacidad(container, opciones) {
     </details>`).join('');
 
   pintarSemaforo();
-  pintarTopes();
   explicar();
 
   /* LOS EDITORES DE VERDAD, montados adentro. Se pasan desde afuera porque viven en el
@@ -478,22 +443,10 @@ export async function renderCapacidad(container, opciones) {
     try { await O.montarReparto($('#capReparto')); }
     catch (e) { console.warn('[CAPACIDAD] no se pudo montar el reparto:', e && e.message); }
   }
+  await montarTabla();
 
   /* ── Lo que se toca ── */
   container.addEventListener('input', (e) => {
-    const inp = e.target.closest('#capTbody input[type=number]');
-    if (inp) {
-      const i = Number(inp.dataset.i);
-      const v = Math.max(0, parseInt(inp.value, 10) || 0);
-      tuyo.set(i, v);
-      const t = D.topes[i];
-      inp.classList.toggle('rojo', t.propone !== null && v > t.propone);
-      inp.closest('tr').lastElementChild.textContent = mil(t.skus * v);
-      tocado = true;
-      $('#capGuardar').disabled = false;
-      pintarSemaforo();
-      return;
-    }
     if (e.target.id === 'capBarra' || e.target.id === 'capPct') {
       const p = Math.max(1, Math.min(100, parseInt(e.target.value, 10) || 1));
       aplicarPerilla(p);
@@ -501,13 +454,6 @@ export async function renderCapacidad(container, opciones) {
   });
 
   container.addEventListener('click', async (e) => {
-    const f = e.target.closest('.f');
-    if (f) {
-      filtro = f.dataset.f;
-      container.querySelectorAll('.f').forEach(x => x.classList.toggle('on', x === f));
-      pintarTopes();
-      return;
-    }
     if (e.target.id === 'capMax') { aplicarPerilla(pctQueEntra); return; }
     if (e.target.id === 'capColchon') { aplicarPerilla(pctConColchon); return; }
     if (e.target.id === 'capGuardar') {
@@ -521,9 +467,12 @@ export async function renderCapacidad(container, opciones) {
       D.topes.forEach((t, i) => { nuevos[t.clave] = tuyo.get(i); });
       try {
         await (O.guardar ? O.guardar(nuevos) : publicarTopes(nuevos));
-        b.textContent = 'Guardado';
+        b.textContent = 'Aplicado';
         tocado = false;
-        if (O.avisar) O.avisar('OBJETIVOS GUARDADOS',
+        /* Sin volver a montarla, la tabla de abajo seguiria mostrando los objetivos de
+           antes y pareceria que no paso nada. */
+        await montarTabla();
+        if (O.avisar) O.avisar('OBJETIVOS APLICADOS',
           Object.keys(nuevos).length + ' combinaciones publicadas. Todas las PC las bajan solas.', 'success');
       } catch (err) {
         b.textContent = 'No se pudo guardar';
