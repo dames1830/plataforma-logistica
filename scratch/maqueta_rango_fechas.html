@@ -1,0 +1,691 @@
+<meta charset="utf-8">
+<title>Rango de fechas — uno solo para toda la plataforma</title>
+
+<!-- Los tokens de los 4 temas, sacados con un script de css/temas.css. Van pegados
+     aca -y no por <link>- porque la maqueta se abre suelta, sin servidor. El unico
+     cambio es el selector: html[data-tema] -> [data-tema], para poder poner varios
+     temas en una misma pagina. -->
+<style>
+[data-tema="indigo"] {
+  --tema-nombre: "indigo";
+
+  /* Tipografia ---------------------------------------------------------- */
+  --font-ui:        'Inter', sans-serif;
+  --font-num:       'Inter', sans-serif;
+
+  /* Superficies --------------------------------------------------------- */
+  --bg-dark:        #0f172a;
+  --bg-image:       radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
+                    radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
+  --bg-card:        rgba(30, 41, 59, 0.7);
+  --panel:          rgba(30, 41, 59, 0.5);
+  --panel-solid:    #1e293b;
+  --panel-alt:      #1c2b3a;
+  --panel-deep:     #0b1120;
+  --panel-deeper:   #101a2c;
+  --surface-max:    #000000;
+  --glass-bg:       rgba(15, 23, 42, 0.6);
+  --glass-border:   rgba(255, 255, 255, 0.08);
+  --glass-shadow:   0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --glass-blur:     blur(16px);
+  --border:         rgba(255, 255, 255, 0.1);
+  --input-bg:       #1e293b;
+  --scheme:         dark;             /* color-scheme de los <input> */
+
+  /* Tinta — de mas fuerte a mas apagada ---------------------------------- */
+  --text-strong:    #ffffff;
+  --text-main:      #f8fafc;
+  --text-pale:      #e2e8f0;
+  --text-soft:      #cbd5e1;
+  --text-muted:     #94a3b8;
+  --text-dim:       #64748b;
+  --text-faint:     #475569;
+  --text-grey:      #d1d5db;
+  --text-grey2:     #9ca3af;
+
+  /* Marca ---------------------------------------------------------------- */
+  --primary:        #4f46e5;
+  --primary-hover:  #4338ca;
+  --primary-2:      #6366f1;
+  --brand-light:    #818cf8;
+  --brand-pale:     #a5b4fc;
+  --brand-paler:    #c4b5fd;
+  --on-primary:     #ffffff;
+  --btn-fill:      var(--primary);
+
+  /* Semaforo — el color aca SI significa algo ----------------------------- */
+  --danger:         #ef4444;
+  --danger-soft:    #f87171;
+  --danger-pale:    #fca5a5;
+  --danger-deep:    #b91c1c;
+  --danger-deeper:  #991b1b;
+  --success:        #22c55e;
+  --success-alt:    #10b981;
+  --success-soft:   #4ade80;
+  --success-pale:   #6ee7b7;
+  --success-mid:    #34d399;
+  --success-deep:   #059669;
+  --success-dark:   #1a6336;
+  --warning:        #f59e0b;
+  --warning-soft:   #fbbf24;
+  --warning-pale:   #fde68a;
+  --yellow:         #facc15;
+  --yellow-deep:    #eab308;
+  --bronze:         #b45309;
+  --orange:         #f97316;
+
+  /* El punto del semaforo: version viva, para rellenos chicos ------------- */
+  --sem-ok:         #22c55e;
+  --sem-warn:       #fbbf24;
+  --sem-bad:        #ef4444;
+
+  /* Acentos de apoyo ------------------------------------------------------ */
+  --cyan-neon:      #00e5ff;
+  --cyan:           #22d3ee;
+  --cyan-deep:      #06b6d4;
+  --sky:            #38bdf8;
+  --sky-deep:       #0ea5e9;
+  --blue:           #3b82f6;
+  --blue-soft:      #93c5fd;
+  --blue-mid:       #60a5fa;
+  --blue-deep:      #024dbd;
+  --blue-pale:      #e6edf7;
+  --violet:         #8b5cf6;
+  --violet-soft:    #a78bfa;
+  --pink:           #ec4899;
+  --pink-soft:      #f472b6;
+
+  /* Trios RGB para las transparencias ------------------------------------- */
+  --ink-rgb:            255, 255, 255;   /* la tinta que contrasta con el fondo */
+
+  /* EL VELO DEL RIBBON DE NAVEGACION. Daniel, 26-ago-2026: "le pueden poner un
+     fondo oscuro, ojo oscuro leve, solo leve para que no se vea muy blanco".
+     El ribbon usaba --bg-card, que en los temas claros es BLANCO PURO -mas claro
+     todavia que el area de trabajo de abajo-, asi que la banda no se distinguia
+     de nada.
+
+     Va GRADUADO POR TEMA y no con un solo numero: en los claros la tinta es negra
+     y el velo oscurece, pero en el negro la tinta es BLANCA y el mismo 10% subiria
+     la barra a un gris medio. Ese tema Daniel lo quiere negro, asi que ahi el velo
+     es minimo: lo justo para que la banda se despegue del fondo. */
+  --ribbon-veil:        rgba(255, 255, 255, 0.045);
+  --shadow-rgb:           0,   0,   0;
+  --bg-rgb:              15,  23,  42;
+  --card-rgb:            30,  41,  59;
+  --primary-rgb:         79,  70, 229;
+  --primary2-rgb:        99, 102, 241;
+  --brand-rgb:          129, 140, 248;
+  --brand-pale-rgb:     165, 180, 252;
+  --success-rgb:         34, 197,  94;
+  --success-alt-rgb:     16, 185, 129;
+  --danger-rgb:         239,  68,  68;
+  --warning-rgb:        245, 158,  11;
+  --warning-soft-rgb:   251, 191,  36;
+  --yellow-rgb:         250, 204,  21;
+  --cyan-neon-rgb:        0, 229, 255;
+  --cyan-rgb:            34, 211, 238;
+  --cyan-deep-rgb:        6, 182, 212;
+  --sky-rgb:             56, 189, 248;
+  --blue-rgb:            59, 130, 246;
+  --violet-rgb:         139,  92, 246;
+  --on-accent:           #000000;
+  --text-muted-rgb:      148, 163, 184;
+  --pink-rgb:            236,  72, 153;
+  --orange-rgb:          249, 115,  22;
+
+  /* Formas ---------------------------------------------------------------- */
+  --r-lg:           16px;
+  --r-md:           12px;
+  --r-sm:           8px;
+
+  /* Los emoji del menu van a color ---------------------------------------- */
+  --icon-filter:    none;
+}
+
+[data-tema="pbi"] {
+  --tema-nombre: "pbi";
+
+  --font-ui:        'Segoe UI', 'Inter', sans-serif;
+  --font-num:       'Segoe UI', 'Inter', sans-serif;
+
+  --bg-dark:        #F3F2F1;
+  --bg-image:       none;
+  --bg-card:        #FFFFFF;
+  --panel:          #FFFFFF;
+  --panel-solid:    #FFFFFF;
+  --panel-alt:      #FAF9F8;
+  --panel-deep:     #F3F2F1;
+  --panel-deeper:   #EDEBE9;
+  --surface-max:    #FFFFFF;
+  --glass-bg:       #FFFFFF;
+  --glass-border:   #E1DFDD;
+  --glass-shadow:   0 1px 3px rgba(0, 0, 0, 0.08);
+  --glass-blur:     none;
+  --border:         #E1DFDD;
+  --input-bg:       #FFFFFF;
+  --scheme:         light;
+
+  --text-strong:    #201F1E;
+  --text-main:      #252423;
+  --text-pale:      #323130;
+  --text-soft:      #3B3A39;
+  --text-muted:     #605E5C;
+  --text-dim:       #8A8886;
+  --text-faint:     #A19F9D;
+  --text-grey:      #484644;
+  --text-grey2:     #6E6C6A;
+
+  --primary:        #0E76D6;
+  --primary-hover:  #0B5EAC;
+  --primary-2:      #118DFF;
+  --brand-light:    #12239E;
+  --brand-pale:     #12239E;
+  --brand-paler:    #744EC2;
+  --on-primary:     #FFFFFF;
+  --btn-fill:      var(--primary);
+
+  --danger:         #D1434E;
+  --danger-soft:    #C0454F;
+  --danger-pale:    #A83A44;
+  --danger-deep:    #A32A34;
+  --danger-deeper:  #8C242C;
+  --success:        #148833;
+  --success-alt:    #197278;
+  --success-soft:   #148833;
+  --success-pale:   #12742C;
+  --success-mid:    #197278;
+  --success-deep:   #0F6B26;
+  --success-dark:   #0C5620;
+  --warning:        #7D6700;
+  --warning-soft:   #6E5B00;
+  --warning-pale:   #6E5B00;
+  --yellow:         #7D6700;
+  --yellow-deep:    #6E5B00;
+  --bronze:         #8A5A12;
+  --orange:         #B8541F;
+
+  --sem-ok:         #1AAB40;
+  --sem-warn:       #D9B300;
+  --sem-bad:        #D64550;
+
+  --cyan-neon:      #0E76D6;
+  --cyan:           #197278;
+  --cyan-deep:      #0F5C60;
+  --sky:            #0E76D6;
+  --sky-deep:       #0B5EAC;
+  --blue:           #0E76D6;
+  --blue-soft:      #12239E;
+  --blue-mid:       #0E76D6;
+  --blue-deep:      #12239E;
+  --blue-pale:      #12239E;
+  --violet:         #744EC2;
+  --violet-soft:    #6B007B;
+  --pink:           #C13A8E;
+  --pink-soft:      #A83079;
+
+  --ink-rgb:               0,   0,   0;   /* tinta oscura: el reves del blanco */
+
+  --ribbon-veil:        rgba(  0,   0,   0, 0.10);
+  --shadow-rgb:          232, 231, 229;
+  --bg-rgb:             243, 242, 241;
+  --card-rgb:           255, 255, 255;
+  --primary-rgb:          14, 118, 214;
+  --primary2-rgb:        18,  35, 158;
+  --brand-rgb:           18,  35, 158;
+  --brand-pale-rgb:        18,  35, 158;
+  --success-rgb:          20, 136,  51;
+  --success-alt-rgb:     25, 114, 120;
+  --danger-rgb:         214,  69,  80;
+  --warning-rgb:        138, 114,   0;
+  --warning-soft-rgb:   138, 114,   0;
+  --yellow-rgb:         138, 114,   0;
+  --cyan-neon-rgb:        14, 118, 214;
+  --cyan-rgb:            25, 114, 120;
+  --cyan-deep-rgb:       15,  92,  96;
+  --sky-rgb:              14, 118, 214;
+  --blue-rgb:             14, 118, 214;
+  --violet-rgb:         116,  78, 194;
+  --on-accent:           #FFFFFF;
+  --text-muted-rgb:       96,  94,  92;
+  --pink-rgb:            193,  58, 142;
+  --orange-rgb:          184,  84,  31;
+
+  --r-lg:           4px;
+  --r-md:           2px;
+  --r-sm:           2px;
+
+  --icon-filter:    none;
+}
+
+[data-tema="pbi-classic"] {
+  --tema-nombre: "pbi-classic";
+
+  --font-ui:        'Segoe UI', 'Inter', sans-serif;
+  --font-num:       'Segoe UI', 'Inter', sans-serif;
+
+  --bg-dark:        #F5F5F5;
+  --bg-image:       none;
+  --bg-card:        #FFFFFF;
+  --panel:          #FFFFFF;
+  --panel-solid:    #FFFFFF;
+  --panel-alt:      #FAFAFA;
+  --panel-deep:     #F5F5F5;
+  --panel-deeper:   #EEEEEE;
+  --surface-max:    #FFFFFF;
+  --glass-bg:       #FFFFFF;
+  --glass-border:   #E0E0E0;
+  --glass-shadow:   0 1px 3px rgba(0, 0, 0, 0.08);
+  --glass-blur:     none;
+  --border:         #E0E0E0;
+  --input-bg:       #FFFFFF;
+  --scheme:         light;
+
+  --text-strong:    #263133;
+  --text-main:      #374649;
+  --text-pale:      #415255;
+  --text-soft:      #4B5E61;
+  --text-muted:     #5F6B6D;
+  --text-dim:       #849093;
+  --text-faint:     #9AA5A7;
+  --text-grey:      #46585B;
+  --text-grey2:     #6D797B;
+
+  --primary:        #00847A;
+  --primary-hover:  #006B63;
+  --primary-2:      #01B8AA;
+  --brand-light:    #374649;
+  --brand-pale:     #374649;
+  --brand-paler:    #8A5580;
+  --on-primary:     #FFFFFF;
+  --btn-fill:      var(--primary);
+
+  --danger:         #C54C49;
+  --danger-soft:    #B8433F;
+  --danger-pale:    #A63A36;
+  --danger-deep:    #9C332F;
+  --danger-deeper:  #872C29;
+  --success:        #00847A;
+  --success-alt:    #00847A;
+  --success-soft:   #00776E;
+  --success-pale:   #006B63;
+  --success-mid:    #00847A;
+  --success-deep:   #006158;
+  --success-dark:   #00534C;
+  --warning:        #7F6907;
+  --warning-soft:   #6E5A06;
+  --warning-pale:   #705C06;
+  --yellow:         #7F6907;
+  --yellow-deep:    #705C06;
+  --bronze:         #8A5A12;
+  --orange:         #B85A2E;
+
+  --sem-ok:         #01B8AA;
+  --sem-warn:       #F2C80F;
+  --sem-bad:        #FD625E;
+
+  --cyan-neon:      #00847A;
+  --cyan:           #00847A;
+  --cyan-deep:      #006B63;
+  --sky:            #2C7A96;
+  --sky-deep:       #23657D;
+  --blue:           #2C7A96;
+  --blue-soft:      #23657D;
+  --blue-mid:       #2C7A96;
+  --blue-deep:      #1D5468;
+  --blue-pale:      #23657D;
+  --violet:         #8A5580;
+  --violet-soft:    #7A4A71;
+  --pink:           #A66999;
+  --pink-soft:      #94587F;
+
+  --ink-rgb:               0,   0,   0;
+
+  --ribbon-veil:        rgba(  0,   0,   0, 0.10);
+  --shadow-rgb:          230, 232, 232;
+  --bg-rgb:             245, 245, 245;
+  --card-rgb:           255, 255, 255;
+  --primary-rgb:            0, 132, 122;
+  --primary2-rgb:           0, 132, 122;
+  --brand-rgb:           55,  70,  73;
+  --brand-pale-rgb:          55,  70,  73;
+  --success-rgb:            0, 132, 122;
+  --success-alt-rgb:        0, 132, 122;
+  --danger-rgb:         197,  76,  73;
+  --warning-rgb:        140, 115,   8;
+  --warning-soft-rgb:   140, 115,   8;
+  --yellow-rgb:         140, 115,   8;
+  --cyan-neon-rgb:       44, 122, 150;
+  --cyan-rgb:             0, 132, 122;
+  --cyan-deep-rgb:          0, 132, 122;
+  --sky-rgb:             44, 122, 150;
+  --blue-rgb:            44, 122, 150;
+  --violet-rgb:         138,  85, 128;
+  --on-accent:           #FFFFFF;
+  --text-muted-rgb:       95, 107, 109;
+  --pink-rgb:            148,  88, 127;
+  --orange-rgb:          184,  90,  46;
+
+  --r-lg:           4px;
+  --r-md:           2px;
+  --r-sm:           2px;
+
+  --icon-filter:    none;
+}
+
+[data-tema="negro"] {
+  --tema-nombre: "negro";
+
+  --font-ui:        'Inter', sans-serif;
+  --font-num:       'Inter', sans-serif;
+
+  --bg-dark:        #000000;
+  --bg-image:       none;
+  --bg-card:        #0C0C0C;
+  --panel:          #0C0C0C;
+  --panel-solid:    #121212;
+  --panel-alt:      #0F0F0F;
+  --panel-deep:     #060606;
+  --panel-deeper:   #030303;
+  --surface-max:    #000000;
+  --glass-bg:       #0A0A0A;
+  --glass-border:   #1C1C1C;
+  --glass-shadow:   none;
+  --glass-blur:     none;
+  --border:         #1F1F1F;
+  --input-bg:       #101010;
+  --scheme:         dark;
+
+  --text-strong:    #FFFFFF;
+  --text-main:      #D6D6D6;
+  --text-pale:      #C8C8C8;
+  --text-soft:      #B4B4B4;
+  --text-muted:     #828282;
+  --text-dim:       #606060;
+  --text-faint:     #4A4A4A;
+  --text-grey:      #BDBDBD;
+  --text-grey2:     #8E8E8E;
+
+  --primary:        #FFFFFF;
+  --primary-hover:  #D6D6D6;
+  --primary-2:      #E0E0E0;
+  --brand-light:    #C8C8C8;
+  --brand-pale:     #A8A8A8;
+  --brand-paler:    #909090;
+  --on-primary:     #FFFFFF;
+  --btn-fill:      #2A2A2A;
+
+  --danger:         #C7554D;
+  --danger-soft:    #D4675F;
+  --danger-pale:    #E08A84;
+  --danger-deep:    #A6423B;
+  --danger-deeper:  #8C3831;
+  --success:        #3FA968;
+  --success-alt:    #3FA968;
+  --success-soft:   #55BC7C;
+  --success-pale:   #7FD09F;
+  --success-mid:    #4AB271;
+  --success-deep:   #338C56;
+  --success-dark:   #2A7347;
+  --warning:        #B08A38;
+  --warning-soft:   #C39B45;
+  --warning-pale:   #D6B472;
+  --yellow:         #B08A38;
+  --yellow-deep:    #97762E;
+  --bronze:         #8E6E2C;
+  --orange:         #B07440;
+
+  --sem-ok:         #3FA968;
+  --sem-warn:       #B08A38;
+  --sem-bad:        #C7554D;
+
+  /* Grises escalonados: sin color, pero todavia distinguibles entre si */
+  --cyan-neon:      #FFFFFF;
+  --cyan:           #D6D6D6;
+  --cyan-deep:      #A8A8A8;
+  --sky:            #C0C0C0;
+  --sky-deep:       #9A9A9A;
+  --blue:           #B4B4B4;
+  --blue-soft:      #DADADA;
+  --blue-mid:       #C4C4C4;
+  --blue-deep:      #8A8A8A;
+  --blue-pale:      #C8C8C8;
+  --violet:         #9E9E9E;
+  --violet-soft:    #BABABA;
+  --pink:           #AEAEAE;
+  --pink-soft:      #CACACA;
+
+  --ink-rgb:            255, 255, 255;
+
+  --ribbon-veil:        rgba(255, 255, 255, 0.035);
+  --shadow-rgb:           0,   0,   0;
+  --bg-rgb:               0,   0,   0;
+  --card-rgb:            12,  12,  12;
+  --primary-rgb:        255, 255, 255;
+  --primary2-rgb:       224, 224, 224;
+  --brand-rgb:          200, 200, 200;
+  --brand-pale-rgb:     168, 168, 168;
+  --success-rgb:         63, 169, 104;
+  --success-alt-rgb:     63, 169, 104;
+  --danger-rgb:         199,  85,  77;
+  --warning-rgb:        176, 138,  56;
+  --warning-soft-rgb:   176, 138,  56;
+  --yellow-rgb:         176, 138,  56;
+  --cyan-neon-rgb:      255, 255, 255;
+  --cyan-rgb:           214, 214, 214;
+  --cyan-deep-rgb:      168, 168, 168;
+  --sky-rgb:            192, 192, 192;
+  --blue-rgb:           180, 180, 180;
+  --violet-rgb:         158, 158, 158;
+  --on-accent:           #000000;
+  --text-muted-rgb:      130, 130, 130;
+  --pink-rgb:            174, 174, 174;
+  --orange-rgb:          176, 116,  64;
+
+  --r-lg:           6px;
+  --r-md:           4px;
+  --r-sm:           3px;
+
+  /* Los emoji del menu se apagan: es lo que mas "colorido" dejaba al tema */
+  --icon-filter:    grayscale(1) opacity(.68);
+}
+</style>
+
+<style>
+  body { margin:0; font-family:'Inter', system-ui, sans-serif; background:#0b1120; color:#e2e8f0; }
+  .wrap { max-width:1180px; margin:0 auto; padding:28px 22px 60px; }
+  h1 { font-size:22px; letter-spacing:.5px; margin:0 0 4px; font-weight:900; }
+  .sub { color:#94a3b8; font-size:13px; margin:0 0 26px; }
+  h2 { font-size:14px; letter-spacing:1.2px; text-transform:uppercase; color:#818cf8;
+       margin:34px 0 12px; font-weight:900; border-bottom:1px solid #1e293b; padding-bottom:7px; }
+  .nota { color:#94a3b8; font-size:12.5px; line-height:1.55; margin:0 0 14px; }
+  .nota b { color:#e2e8f0; }
+
+  /* Cada muestra se pinta con su tema de verdad puesto en el contenedor. */
+  .tema { background:var(--bg-dark); border:1px solid var(--border); border-radius:12px;
+          padding:16px 18px; margin-bottom:12px; font-family:var(--font-ui); }
+  .tema .eti { font-size:10.5px; letter-spacing:1.4px; text-transform:uppercase;
+               color:var(--text-muted); font-weight:900; margin-bottom:11px; }
+
+  .par { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+  .col-eti { font-size:10.5px; letter-spacing:1.2px; font-weight:900; margin-bottom:8px; }
+  .antes .col-eti { color:#f87171; }
+  .despues .col-eti { color:#4ade80; }
+  .caja { background:var(--bg-dark); border:1px solid var(--border); border-radius:10px;
+          padding:14px; font-family:var(--font-ui); min-height:64px;
+          display:flex; align-items:center; }
+  .caso { margin-bottom:18px; }
+  .caso > .donde { font-size:12px; color:#cbd5e1; font-weight:700; margin-bottom:7px; }
+  .caso > .donde span { color:#64748b; font-weight:400; }
+  @media (max-width:820px) { .par { grid-template-columns:1fr; } }
+</style>
+
+<div class="wrap" data-tema="indigo">
+
+  <h1>Un solo rango de fechas para toda la plataforma</h1>
+  <p class="sub">Hoy hay <b>21 rangos escritos a mano</b> y cada uno se ve distinto. En la mayoría el
+     primer campo no dice qué es: solo <i>"DE:"</i>, o nada.</p>
+
+  <h2>1 · El control propuesto, en los cuatro temas</h2>
+  <p class="nota">Una sola caja que se lee como una frase: <b>Desde … hasta …</b>, con el ícono de
+     calendario adelante. Todo sale de las variables del tema, así que cambia solo cuando cambia el tema.</p>
+
+  <div data-tema="indigo" class="tema">
+    <div class="eti">Índigo</div>
+    <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border); border-radius:9px; padding:5px 12px; font-family:var(--font-ui);">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+      <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;">Desde</span>
+      <input type="date" value="2026-08-01" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+      <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;">hasta</span>
+      <input type="date" value="2026-08-28" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+    </div>
+  </div>
+
+  <div data-tema="pbi" class="tema">
+    <div class="eti">Power BI</div>
+    <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border); border-radius:9px; padding:5px 12px; font-family:var(--font-ui);">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+      <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;">Desde</span>
+      <input type="date" value="2026-08-01" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+      <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;">hasta</span>
+      <input type="date" value="2026-08-28" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+    </div>
+  </div>
+
+  <div data-tema="pbi-classic" class="tema">
+    <div class="eti">Power BI clásico</div>
+    <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border); border-radius:9px; padding:5px 12px; font-family:var(--font-ui);">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+      <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;">Desde</span>
+      <input type="date" value="2026-08-01" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+      <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;">hasta</span>
+      <input type="date" value="2026-08-28" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+    </div>
+  </div>
+
+  <div data-tema="negro" class="tema">
+    <div class="eti">Negro</div>
+    <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border); border-radius:9px; padding:5px 12px; font-family:var(--font-ui);">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+      <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;">Desde</span>
+      <input type="date" value="2026-08-01" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+      <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;">hasta</span>
+      <input type="date" value="2026-08-28" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+    </div>
+  </div>
+
+  <h2>2 · Cómo se ve hoy, y cómo quedaría</h2>
+  <p class="nota">Lo de la izquierda está <b>copiado tal cual del archivo</b>, con su línea. No es un dibujo mío.</p>
+
+  <div data-tema="indigo">
+
+    <div class="caso">
+      <div class="donde">KPI No Retail <span>· dashboard_v28.js:18029</span></div>
+      <div class="par">
+        <div class="antes"><div class="col-eti">HOY</div><div class="caja">
+          <div style="display:flex; align-items:center; gap:0.8rem; background:rgba(var(--shadow-rgb), 0.2); border:1px solid rgba(var(--ink-rgb), 0.08); padding:0.4rem 1rem; border-radius:10px;">
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+              <span style="color:var(--text-muted); font-size:11px; font-weight:800;">DE:</span>
+              <input type="date" value="2026-08-01" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; outline:none; font-family:inherit; cursor:pointer; color-scheme: var(--scheme);">
+            </div>
+            <div style="width:1px; height:15px; background:rgba(var(--ink-rgb), 0.15);"></div>
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+              <span style="color:var(--text-muted); font-size:11px; font-weight:800;">HASTA:</span>
+              <input type="date" value="2026-08-28" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; outline:none; font-family:inherit; cursor:pointer; color-scheme: var(--scheme);">
+            </div>
+          </div>
+        </div></div>
+        <div class="despues"><div class="col-eti">PROPUESTA</div><div class="caja">
+          <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border); border-radius:9px; padding:5px 12px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+            <span style="font-size:11px; color:var(--text-muted); font-weight:800;">Desde</span>
+            <input type="date" value="2026-08-01" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+            <span style="font-size:11px; color:var(--text-muted); font-weight:800;">hasta</span>
+            <input type="date" value="2026-08-28" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="caso">
+      <div class="donde">Historial de tareas <span>· dashboard_v28.js:12587</span></div>
+      <div class="par">
+        <div class="antes"><div class="col-eti">HOY</div><div class="caja">
+          <div style="display:flex; align-items:center; gap:0.4rem; font-size:12.5px; font-weight:700; color:rgba(var(--ink-rgb), 0.7);">
+            <span>📅 DE:</span>
+            <input type="date" value="2026-08-01" style="background:var(--panel-deep); color:var(--text-strong); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:11px; outline:none; cursor:pointer; color-scheme: var(--scheme);" />
+            <span>HASTA:</span>
+            <input type="date" value="2026-08-28" style="background:var(--panel-deep); color:var(--text-strong); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:11px; outline:none; cursor:pointer; color-scheme: var(--scheme);" />
+          </div>
+        </div></div>
+        <div class="despues"><div class="col-eti">PROPUESTA</div><div class="caja">
+          <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border); border-radius:9px; padding:5px 12px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+            <span style="font-size:11px; color:var(--text-muted); font-weight:800;">Desde</span>
+            <input type="date" value="2026-08-01" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+            <span style="font-size:11px; color:var(--text-muted); font-weight:800;">hasta</span>
+            <input type="date" value="2026-08-28" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="caso">
+      <div class="donde">Slotting · limpieza de cuerpos <span>· slotting.js:119</span></div>
+      <div class="par">
+        <div class="antes"><div class="col-eti">HOY</div><div class="caja">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.06em;">DE:</span>
+            <input type="date" value="2026-08-01" style="background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.42rem 0.6rem; font-size:12.5px;">
+            <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.06em;">HASTA:</span>
+            <input type="date" value="2026-08-28" style="background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.42rem 0.6rem; font-size:12.5px;">
+          </div>
+        </div></div>
+        <div class="despues"><div class="col-eti">PROPUESTA</div><div class="caja">
+          <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border); border-radius:9px; padding:5px 12px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+            <span style="font-size:11px; color:var(--text-muted); font-weight:800;">Desde</span>
+            <input type="date" value="2026-08-01" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+            <span style="font-size:11px; color:var(--text-muted); font-weight:800;">hasta</span>
+            <input type="date" value="2026-08-28" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="caso">
+      <div class="donde">Reporte de Marcas · el componente compartido de hoy <span>· reportesComunes.js:195</span></div>
+      <div class="par">
+        <div class="antes"><div class="col-eti">HOY</div><div class="caja">
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; background:rgba(var(--shadow-rgb), 0.45); border:1px solid rgba(var(--cyan-neon-rgb), 0.35); border-radius:8px; padding:3px 8px; gap:6px;">
+              <span style="font-size:0.6rem; color:var(--cyan-neon); font-weight:800; letter-spacing:0.5px;">DE</span>
+              <input type="date" value="2026-08-01" style="background:transparent; border:none; color:var(--text-strong); font-size:0.68rem; font-weight:700; outline:none; cursor:pointer; font-family:var(--font-ui); color-scheme:var(--scheme);">
+            </div>
+            <div style="display:flex; align-items:center; background:rgba(var(--shadow-rgb), 0.45); border:1px solid rgba(var(--cyan-neon-rgb), 0.35); border-radius:8px; padding:3px 8px; gap:6px;">
+              <span style="font-size:0.6rem; color:var(--cyan-neon); font-weight:800; letter-spacing:0.5px;">A</span>
+              <input type="date" value="2026-08-28" style="background:transparent; border:none; color:var(--text-strong); font-size:0.68rem; font-weight:700; outline:none; cursor:pointer; font-family:var(--font-ui); color-scheme:var(--scheme);">
+            </div>
+          </div>
+        </div></div>
+        <div class="despues"><div class="col-eti">PROPUESTA</div><div class="caja">
+          <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border); border-radius:9px; padding:5px 12px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+            <span style="font-size:11px; color:var(--text-muted); font-weight:800;">Desde</span>
+            <input type="date" value="2026-08-01" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+            <span style="font-size:11px; color:var(--text-muted); font-weight:800;">hasta</span>
+            <input type="date" value="2026-08-28" style="background:transparent; border:none; color:var(--text-strong); font-size:12.5px; font-weight:700; outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <h2>3 · Los 21 sitios que se tocarían</h2>
+  <p class="nota">Conté <b>21 pares de fechas</b> en los archivos vivos: <b>16</b> en el dashboard,
+     <b>3</b> en reportes públicos y <b>2</b> en Slotting. Cuatro de ellos ya usan el componente
+     compartido y solo cambian de forma; los otros <b>17</b> pasan a usarlo.<br>
+     Aparte quedan <b>7 campos de una sola fecha</b> (asistencia del día, fecha de revisión, picking del
+     día…) que <b>no se tocan</b>: no son rangos.</p>
+
+</div>

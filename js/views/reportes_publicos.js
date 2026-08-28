@@ -11,13 +11,13 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0485';
+} from '../services_v245/csvHub_v6.js?v=29.0486';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0485';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0485';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0485';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0485';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0485';
+import * as adminService from '../services_v245/adminService.js?v=29.0486';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0486';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0486';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0486';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0486';
 
 /**
  * El día operativo, no el del calendario.
@@ -28,6 +28,24 @@ import * as jornadaService from '../services_v245/jornadaService.js?v=29.0485';
  * principal, para que los dos digan lo mismo.
  */
 const getLogicalDate = () => jornadaService.fechaLogicaDe();
+
+/**
+ * LOS COLORES DEL RANGO DE FECHAS EN ESTAS PÁGINAS.
+ *
+ * `selectorRango` se pinta solo con las variables del tema, pero estas páginas se
+ * abren sin sesión y no cargan `main.css` ni `temas.css`: ahí no hay ninguna
+ * variable que resolver. Por eso se le pasan los colores de la paleta clara
+ * escritos, los mismos de `TEMA_CLARO`. El día que los reportes públicos tengan
+ * tema, se borra esta constante y el selector queda igual que en la plataforma.
+ */
+const RANGO_CLARO = {
+    color:  '#B45309',
+    fondo:  '#F4F1EC',
+    borde:  '#DDD8CF',
+    texto:  '#1C2B3A',
+    rotulo: '#7A736E',
+    esquema: 'light'
+};
 
 /**
  * EN QUE DIA CUENTA UNA TAREA. La misma regla que usa el dashboard, importada del archivo
@@ -288,7 +306,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0485</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0486</span>
     </div>`;
 
   buildTabNav();
@@ -449,6 +467,14 @@ window.__almacenajeDateChange = function(field, value) {
   renderContent();
 };
 
+/* El selector compartido avisa con (desde, hasta) y null en el que no cambió; este
+   filtro nació con (campo, valor). Se traduce acá en vez de darle dos formas al
+   componente. */
+window.__almacenajeRango = function(desde, hasta) {
+  if (desde !== null) window.__almacenajeDateChange('start', desde);
+  if (hasta !== null) window.__almacenajeDateChange('end', hasta);
+};
+
 /* Cada reporte lleva ADEMÁS su propio rango, igual que en el dashboard desde v27:
    sirve para comparar Marcas de una semana contra Gender RIMS de otra sin tener
    que mover el filtro general y perder lo que se estaba mirando. */
@@ -469,14 +495,7 @@ async function renderAlmacenajeModule() {
 
   // El gráfico de rendimiento tiene su propio selector de fechas interno; los demás usan este filtro global
   const filterHtml = currentSubTab === 'grafico_rendimiento' ? '' : `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
-    <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">DE</label>
-    <input type="date" value="${filterStart}"
-      onchange="window.__almacenajeDateChange('start', this.value)"
-      style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 10px;font-size:0.75rem;font-weight:600;outline:none;" />
-    <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">HASTA</label>
-    <input type="date" value="${filterEnd}"
-      onchange="window.__almacenajeDateChange('end', this.value)"
-      style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 10px;font-size:0.75rem;font-weight:600;outline:none;" />
+    ${selectorRango(filterStart, filterEnd, 'window.__almacenajeRango', RANGO_CLARO)}
   </div>`;
 
   area.innerHTML = filterHtml + `<div id="almacenajeContent"></div>`;
@@ -573,7 +592,7 @@ function renderMarcasReport() {
 Período: ${rotuloRango(window.__repMarcasStart, window.__repMarcasEnd, '#9C9590')}
                             </div>
                         </div>
-                        ${selectorRango(window.__repMarcasStart, window.__repMarcasEnd, 'window.setRepMarcasRange', { color:'#B45309', fondo:'#F4F1EC', texto:'#1C2B3A', esquema:'light' })}
+                        ${selectorRango(window.__repMarcasStart, window.__repMarcasEnd, 'window.setRepMarcasRange', RANGO_CLARO)}
                         <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:none; border:none; color:#9C9590; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.color='#B45309'" onmouseout="this.style.color='#9C9590'">
                             🔄
                         </button>
@@ -602,7 +621,7 @@ Período: ${rotuloRango(window.__repMarcasStart, window.__repMarcasEnd, '#9C9590
 Período: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd, '#9C9590')}
                             </div>
                         </div>
-                        ${selectorRango(window.__repGenderStart, window.__repGenderEnd, 'window.setRepGenderRange', { color:'#B45309', fondo:'#F4F1EC', texto:'#1C2B3A', esquema:'light' })}
+                        ${selectorRango(window.__repGenderStart, window.__repGenderEnd, 'window.setRepGenderRange', RANGO_CLARO)}
                         <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:none; border:none; color:#9C9590; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.color='#B45309'" onmouseout="this.style.color='#9C9590'">
                             🔄
                         </button>
@@ -1681,16 +1700,8 @@ const renderWeeklyDailyChartSection = (tasksList) => {
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-family:'Inter', sans-serif;">
-                    <div style="display:flex; align-items:center; background:#F4F1EC; border:1px solid #DDD8CF; border-radius:4px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:0.85rem; color:#eab308;">📅</span>
-                        <span style="font-size:0.68rem; color:#9C9590; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Desde:</span>
-                        <input type="date" id="chartStartDateInput" value="${window.__chartStartDate}" onchange="window.setChartDateRange(this.value, null)" style="background:transparent; border:none; color:#1C2B3A; font-size:0.75rem; font-weight:600; outline:none; cursor:pointer; font-family:'Inter', sans-serif;" />
-                    </div>
-                    <div style="display:flex; align-items:center; background:#F4F1EC; border:1px solid #DDD8CF; border-radius:4px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:0.85rem; color:#eab308;">📅</span>
-                        <span style="font-size:0.68rem; color:#9C9590; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Hasta:</span>
-                        <input type="date" id="chartEndDateInput" value="${window.__chartEndDate}" onchange="window.setChartDateRange(null, this.value)" style="background:transparent; border:none; color:#1C2B3A; font-size:0.75rem; font-weight:600; outline:none; cursor:pointer; font-family:'Inter', sans-serif;" />
-                    </div>
+                    ${selectorRango(window.__chartStartDate, window.__chartEndDate, 'window.setChartDateRange',
+                        { ...RANGO_CLARO, idDesde: 'chartStartDateInput', idHasta: 'chartEndDateInput' })}
                 </div>
             </div>
             <div style="position:relative; width:100%; height:250px; margin-top:0.5rem;">
@@ -1817,12 +1828,8 @@ async function renderHistorialBuffer() {
             <!-- TOOLBAR: filtros + exportar (100% ANCHO) -->
             <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.8rem; background:#F4F1EC; padding:0.6rem 1rem; border-radius:4px; border:1px solid #DDD8CF; width:100%;">
                 <!-- Rango de fecha -->
-                <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.72rem; font-weight:600; color:#4A4540;">
-                    <span>📅 DE:</span>
-                    <input type="date" id="hist_date_from" value="${savedFrom}" style="background:#fff; color:#1C2B3A; border:1px solid #DDD8CF; padding:0.3rem 0.5rem; border-radius:4px; font-size:0.72rem; outline:none; cursor:pointer;" />
-                    <span>HASTA:</span>
-                    <input type="date" id="hist_date_to" value="${savedTo}" style="background:#fff; color:#1C2B3A; border:1px solid #DDD8CF; padding:0.3rem 0.5rem; border-radius:4px; font-size:0.72rem; outline:none; cursor:pointer;" />
-                </div>
+                ${selectorRango(savedFrom, savedTo, null,
+                    { ...RANGO_CLARO, idDesde: 'hist_date_from', idHasta: 'hist_date_to' })}
                 <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
                     <button id="btn_hist_sync" title="Sincronizar Historial" style="background:none; border:none; width:28px; height:28px; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'">
                         🔄

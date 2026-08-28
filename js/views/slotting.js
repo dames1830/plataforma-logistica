@@ -30,6 +30,11 @@
  * TODO VA ENCERRADO BAJO `#slt`: los nombres que usa chocarían sueltos con los del tablero.
  */
 
+/* El rango de fechas es el mismo de toda la plataforma: se dibuja una sola vez, en
+   `reportesComunes.js`. Este archivo recibe todo lo demás por `OPC` y no lee del
+   servidor — el selector no lee nada, solo dibuja. */
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0486';
+
 export const montarSlotting = (container, OPC = {}) => {
   const svc = OPC.svc;
   let cajon = OPC.cajon || {};
@@ -115,14 +120,7 @@ export const montarSlotting = (container, OPC = {}) => {
               </div>
             </div>
             <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-              <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:var(--t-xs); color:var(--text-muted); font-weight:800; letter-spacing:0.06em;">DE:</span>
-                <input type="date" id="slt_desde" value="${esc(desde)}" style="background:rgba(var(--ink-rgb), 0.04);
-                       border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.42rem 0.6rem; font-size:var(--t-sm);">
-                <span style="font-size:var(--t-xs); color:var(--text-muted); font-weight:800; letter-spacing:0.06em;">HASTA:</span>
-                <input type="date" id="slt_hasta" value="${esc(hasta)}" style="background:rgba(var(--ink-rgb), 0.04);
-                       border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.42rem 0.6rem; font-size:var(--t-sm);">
-              </div>
+              ${selectorRango(esc(desde), esc(hasta), null, { idDesde: 'slt_desde', idHasta: 'slt_hasta' })}
               ${lista.length ? `<button id="slt_imprimir" class="btn" style="background:rgba(var(--ink-rgb), 0.06);
                        border:1px solid var(--border); color:var(--text-pale); width:auto; padding:0.5rem 1.1rem;
                        border-radius:8px; font-size:var(--t-sm); font-weight:800;">🖨️ IMPRIMIR</button>` : ''}
@@ -599,12 +597,7 @@ export const montarSlotting = (container, OPC = {}) => {
     container.innerHTML = `
       <div id="slt">
         <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
-          <span style="font-size:var(--t-xs); color:var(--text-muted); font-weight:800; letter-spacing:0.06em;">DE:</span>
-          <input type="date" id="slt_desde" value="${esc(desde)}" style="background:rgba(var(--ink-rgb), 0.04);
-                 border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.42rem 0.6rem; font-size:var(--t-sm);">
-          <span style="font-size:var(--t-xs); color:var(--text-muted); font-weight:800; letter-spacing:0.06em;">HASTA:</span>
-          <input type="date" id="slt_hasta" value="${esc(hasta)}" style="background:rgba(var(--ink-rgb), 0.04);
-                 border:1px solid var(--border); color:var(--text-strong); border-radius:7px; padding:0.42rem 0.6rem; font-size:var(--t-sm);">
+          ${selectorRango(esc(desde), esc(hasta), null, { idDesde: 'slt_desde', idHasta: 'slt_hasta' })}
           <span style="font-size:var(--t-xs); color:var(--text-muted); margin-left:0.6rem;">
             ${k.fechas.length} jornada${k.fechas.length === 1 ? '' : 's'} · las metas salen de Config. Slotting</span>
         </div>

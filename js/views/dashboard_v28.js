@@ -1,35 +1,35 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0485';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0486';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0485';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0485';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0485';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0485';
-import * as metasService from '../services_v245/metasService.js?v=29.0485';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0485';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0485';
+import * as adminService from '../services_v245/adminService.js?v=29.0486';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0486';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0486';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0486';
+import * as metasService from '../services_v245/metasService.js?v=29.0486';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0486';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0486';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0485';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0485';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0485';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0485';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0485';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0485';
-import { renderCapacidad } from './capacidad.js?v=29.0485';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0485';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0485';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0485';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0485';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0485';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0485';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0485';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0485';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0485';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0485';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0485';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0485';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0485';
-import { montarSlotting } from './slotting.js?v=29.0485';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0486';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0486';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0486';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0486';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0486';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0486';
+import { renderCapacidad } from './capacidad.js?v=29.0486';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0486';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0486';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0486';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0486';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0486';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0486';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0486';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0486';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0486';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0486';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0486';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0486';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0486';
+import { montarSlotting } from './slotting.js?v=29.0486';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -392,7 +392,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0485';
+const VERSION = '29.0486';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5474,7 +5474,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0485');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0486');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5737,7 +5737,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0485');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0486');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -5987,9 +5987,13 @@ export const renderDashboard = async (container, user, onLogout) => {
  * azul de la franja casi no se ve. La casilla queda como una pastilla de vidrio: fondo
  * blanco muy transparente y letras blancas. `esquema: dark` es para que el iconito del
  * calendario que dibuja el navegador salga claro y no negro sobre azul. */
+/* En Power BI el rango va montado sobre la franja azul de la tapa del reporte, que
+   es un color fijo y no una variable del tema: ahí sí hay que forzar blanco. Fuera
+   de esa franja el selector se pinta solo con los tokens del tema. */
 const opcionesRango = () => esPBI()
-    ? { color: '#ffffff', fondo: 'rgba(255,255,255,0.14)', texto: '#ffffff', esquema: 'dark' }
-    : { color: 'var(--cyan-neon)', fondo: 'rgba(var(--shadow-rgb), 0.45)', texto: 'var(--text-strong)', esquema: 'var(--scheme)' };
+    ? { color: '#ffffff', fondo: 'rgba(255,255,255,0.14)', borde: 'rgba(255,255,255,0.35)',
+        texto: '#ffffff', rotulo: 'rgba(255,255,255,0.75)', esquema: 'dark' }
+    : {};
 
 const esPBI = () => { try { return document.documentElement.getAttribute('data-tema') === 'pbi'; } catch (e) { return false; } };
 const AZUL_PBI = '#12365c';
@@ -7252,12 +7256,11 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
         fondo.onclick = (e) => { if (e.target === fondo) cerrarTodo(); };
     };
 
-    // color-scheme: var(--scheme) es lo que hace que el navegador dibuje el icono del calendario
-    // en claro. Sin eso sale negro sobre fondo negro y parece que el campo no lo tuviera.
-    const ESTILO_FECHA = 'background:rgba(var(--shadow-rgb), 0.35); color:var(--text-pale); border:1px solid rgba(var(--ink-rgb), 0.12); ' +
-                         'border-radius:8px; padding:0.42rem 0.6rem; font-size:var(--t-sm); color-scheme: var(--scheme); ' +
-                         'cursor:pointer; font-family:inherit;';
-    const ESTILO_BOTON = 'padding:0.42rem 0.9rem; font-size:var(--t-sm); border-radius:8px; ' +
+    /* Las fechas ya no llevan estilo propio: van por `selectorRango`, el mismo de toda
+       la plataforma. Ahí adentro vive el `color-scheme: var(--scheme)` que hace que el
+       navegador dibuje el ícono del calendario en claro — sin eso sale negro sobre
+       fondo negro y parece que el campo no lo tuviera. */
+    const ESTILO_BOTON ='padding:0.42rem 0.9rem; font-size:var(--t-sm); border-radius:8px; ' +
                          'background:rgba(var(--ink-rgb), 0.06); color:var(--text-pale); font-weight:600; cursor:pointer; ' +
                          'border:1px solid rgba(var(--ink-rgb), 0.15); display:inline-flex; align-items:center; gap:6px; ' +
                          'font-family:inherit; transition:background 0.15s;';
@@ -7327,10 +7330,7 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
                         <span id="rotuloSemana" style="font-size:var(--t-sm); color:var(--text-muted);">${rotulo}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                        <label style="font-size:var(--t-sm); color:var(--text-muted);">Desde</label>
-                        <input type="date" id="fDesde" value="${desde}" style="${ESTILO_FECHA}">
-                        <label style="font-size:var(--t-sm); color:var(--text-muted);">Hasta</label>
-                        <input type="date" id="fHasta" value="${hasta}" style="${ESTILO_FECHA}">
+                        ${selectorRango(desde, hasta, null, { idDesde: 'fDesde', idHasta: 'fHasta' })}
                         <button id="btnImagen" style="${ESTILO_BOTON}" title="Arma la imagen del cuadro para mandarla por WhatsApp">🖼️ Imagen</button>
                     </div>
                 </div>
@@ -7481,12 +7481,7 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1.5rem; flex-wrap:wrap;">
                 <h4 style="margin:0; color:var(--primary); font-size:var(--t-lg); font-weight:800;">📊 CONSOLIDADO KPI</h4>
                 <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
-                    <div style="display:flex; align-items:center; gap:8px; background:rgba(var(--ink-rgb), 0.03); border:1px solid var(--border); padding:4px 10px; border-radius:8px;">
-                         <span class="txt-chico">DESDE:</span>
-                         <input type="date" id="kpi_start" value="${kpiStart}" style="background:none; border:none; color:var(--text-strong); font-size:var(--t-sm); outline:none;">
-                         <span class="txt-chico">HASTA:</span>
-                         <input type="date" id="kpi_end" value="${kpiEnd}" style="background:none; border:none; color:var(--text-strong); font-size:var(--t-sm); outline:none;">
-                    </div>
+                    ${selectorRango(kpiStart, kpiEnd, null, { idDesde: 'kpi_start', idHasta: 'kpi_end' })}
                     <input type="text" id="kpi_search" placeholder="🔍 Buscar operario..." value="${kpiSearch}" style="background:rgba(var(--ink-rgb), 0.03); border:1px solid var(--border); color:var(--text-strong); padding:6px 12px; border-radius:8px; font-size:var(--t-sm); outline:none; width:200px;">
                     <button onclick='exportKPIConsolidado(${JSON.stringify(consolidado).replace(/'/g, "&apos;")})' class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
                 </div>
@@ -12583,12 +12578,7 @@ const renderRFSection = (container) => {
             <!-- TOOLBAR: filtros + exportar (100% ANCHO) -->
             <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.8rem; background:rgba(var(--ink-rgb), 0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(var(--ink-rgb), 0.06); width:100%;">
                 <!-- Rango de fecha -->
-                <div style="display:flex; align-items:center; gap:0.4rem; font-size:var(--t-sm); font-weight:700; color:rgba(var(--ink-rgb), 0.7);">
-                    <span>📅 DE:</span>
-                    <input type="date" id="hist_date_from" value="${savedFrom}" style="background:var(--panel-deep); color:var(--text-strong); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:var(--t-xs); outline:none; cursor:pointer; color-scheme: var(--scheme);" />
-                    <span>HASTA:</span>
-                    <input type="date" id="hist_date_to" value="${savedTo}" style="background:var(--panel-deep); color:var(--text-strong); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:var(--t-xs); outline:none; cursor:pointer; color-scheme: var(--scheme);" />
-                </div>
+                ${selectorRango(savedFrom, savedTo, null, { idDesde: 'hist_date_from', idHasta: 'hist_date_to' })}
                 <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
                     <button id="btn_hist_sync" title="Sincronizar Historial" style="width:30px; height:30px; border-radius:6px; font-size:var(--t-md); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'" class="btn-icono">${icono('refrescar', 17)}</button>
                     <button id="btn_hist_export" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
@@ -13525,12 +13515,7 @@ const renderRFSection = (container) => {
                     <input type="text" id="kpi_text_search" placeholder="🔍 Buscar LPN, SKU, ubicación..." style="background:var(--panel-deep); color:var(--text-strong); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.4rem 0.8rem; border-radius:6px; font-size:var(--t-sm); outline:none; width:200px; transition:all 0.2s;" />
 
                     <!-- Date Range Filters — auto-fetch desde servidor al cambiar -->
-                    <div style="display:flex; align-items:center; gap:0.4rem; font-size:var(--t-sm); font-weight:700; color:rgba(var(--ink-rgb), 0.7);">
-                        <span>📅 DE:</span>
-                        <input type="date" id="kpi_date_from" value="${todayStr}" style="background:var(--panel-deep); color:var(--text-strong); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:var(--t-xs); outline:none; cursor:pointer; transition:all 0.2s; color-scheme: var(--scheme);" />
-                        <span>HASTA:</span>
-                        <input type="date" id="kpi_date_to" value="${todayStr}" style="background:var(--panel-deep); color:var(--text-strong); border:1px solid rgba(var(--ink-rgb), 0.15); padding:0.35rem 0.5rem; border-radius:6px; font-size:var(--t-xs); outline:none; cursor:pointer; transition:all 0.2s; color-scheme: var(--scheme);" />
-                    </div>
+                    ${selectorRango(todayStr, todayStr, null, { idDesde: 'kpi_date_from', idHasta: 'kpi_date_to' })}
                 </div>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
                     <button id="btn_reprocess_kpi" class="btn" style="background:var(--btn-fill); width:auto; padding:0.4rem 1rem; border-radius:6px; font-size:var(--t-sm); font-weight:700;">🔄 REPROCESAR</button>
@@ -18024,17 +18009,7 @@ const renderRFSection = (container) => {
                           <p style="margin:0; font-size:var(--t-sm); color:var(--text-muted);">Indicadores y rendimiento de despachos No Retail</p>
                       </div>
                   </div>
-                  <div style="display:flex; align-items:center; gap:0.8rem; background:rgba(var(--shadow-rgb), 0.2); border:1px solid rgba(var(--ink-rgb), 0.08); padding:0.4rem 1rem; border-radius:10px;">
-                      <div style="display:flex; align-items:center; gap:0.4rem;">
-                          <span style="color:var(--text-muted); font-size:var(--t-xs); font-weight:800;">DE:</span>
-                          <input type="date" id="kpi_nr_desde" value="${dateDesde}" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); outline:none; font-family:inherit; cursor:pointer; color-scheme: var(--scheme);">
-                      </div>
-                      <div style="width:1px; height:15px; background:rgba(var(--ink-rgb), 0.15);"></div>
-                      <div style="display:flex; align-items:center; gap:0.4rem;">
-                          <span style="color:var(--text-muted); font-size:var(--t-xs); font-weight:800;">HASTA:</span>
-                          <input type="date" id="kpi_nr_hasta" value="${dateHasta}" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); outline:none; font-family:inherit; cursor:pointer; color-scheme: var(--scheme);">
-                      </div>
-                  </div>
+                  ${selectorRango(dateDesde, dateHasta, null, { idDesde: 'kpi_nr_desde', idHasta: 'kpi_nr_hasta' })}
               </div>
 
               <!-- Fila de Tarjetas (Resumen de Métricas) -->
@@ -18373,19 +18348,7 @@ const renderRFSection = (container) => {
               </div>
               
               <div style="display:flex; gap:0.5rem; align-items:center;">
-                  <div style="display:flex; gap:1rem; align-items:center; background:rgba(var(--ink-rgb), 0.02); padding:0.5rem 1rem; border-radius:8px; border:1px solid rgba(var(--ink-rgb), 0.1);">
-                      <div style="display:flex; align-items:center; gap:0.5rem;">
-                          <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
-                          <span style="color:var(--text-muted); font-size:var(--t-sm); font-weight:700;">De:</span>
-                          <input type="date" id="tracking_desde" value="${dateDesde}" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); outline:none; font-family:inherit; cursor:pointer; color-scheme: var(--scheme);">
-                      </div>
-                      <div style="width:1px; height:20px; background:rgba(var(--ink-rgb), 0.1);"></div>
-                      <div style="display:flex; align-items:center; gap:0.5rem;">
-                          <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
-                          <span style="color:var(--text-muted); font-size:var(--t-sm); font-weight:700;">Hasta:</span>
-                          <input type="date" id="tracking_hasta" value="${dateHasta}" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); outline:none; font-family:inherit; cursor:pointer; color-scheme: var(--scheme);">
-                      </div>
-                  </div>
+                  ${selectorRango(dateDesde, dateHasta, null, { idDesde: 'tracking_desde', idHasta: 'tracking_hasta' })}
                   <button id="btn_sync_tracking" style="background:transparent; border:none; color:var(--text-strong); padding:0.5rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s; height: 38px; width: 38px; font-size:var(--t-lg); outline:none;" title="Sincronizar de Servidor">
                       🔄
                   </button>
@@ -18752,7 +18715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0485 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0486 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -23684,14 +23647,7 @@ const renderRFSection = (container) => {
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <button id="sug_excel" class="btn-icono btn-excel" title="Descargar el papel que se imprime: una tarea por página, vertical, en blanco y negro" style="width:auto; padding:6px 14px; font-size:var(--t-xs); font-weight:800; margin-right:6px">${icono('excel', 18)}</button>
-              <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); font-weight:700;">DE:</span>
-                <input type="date" id="sug_desde" value="${desde}" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); font-weight:700; outline:none; cursor:pointer; color-scheme: var(--scheme);">
-              </div>
-              <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); font-weight:700;">HASTA:</span>
-                <input type="date" id="sug_hasta" value="${hasta}" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); font-weight:700; outline:none; cursor:pointer; color-scheme: var(--scheme);">
-              </div>
+              ${selectorRango(desde, hasta, null, { idDesde: 'sug_desde', idHasta: 'sug_hasta' })}
             </div>
           </div>
 
@@ -34381,16 +34337,8 @@ window.__menuMapa = (btn) => {
                     <div style="font-size:var(--t-xs); color:rgba(var(--yellow-rgb), 0.6); font-weight:600;">Cuando el Maestro venía con un dato mal — marca, temporada, familia o categoría</div>
                 </div>
                 <div style="padding:1.1rem 1.2rem; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                    <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:var(--t-md); color:var(--yellow);">📅</span>
-                        <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">DE:</span>
-                        <input type="date" id="cfg_corr_desde" value="${window.__correccionDesde}" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); font-weight:700; outline:none; cursor:pointer; font-family: var(--font-ui); color-scheme: var(--scheme);">
-                    </div>
-                    <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:var(--t-md); color:var(--yellow);">📅</span>
-                        <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">HASTA:</span>
-                        <input type="date" id="cfg_corr_hasta" value="${window.__correccionHasta}" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); font-weight:700; outline:none; cursor:pointer; font-family: var(--font-ui); color-scheme: var(--scheme);">
-                    </div>
+                    ${selectorRango(window.__correccionDesde, window.__correccionHasta, null,
+                        { color: 'var(--yellow)', idDesde: 'cfg_corr_desde', idHasta: 'cfg_corr_hasta' })}
                     <button id="cfg_corregir" class="btn" style="width:auto; padding:7px 16px; font-size:var(--t-xs); background:rgba(var(--yellow-rgb), 0.12); color:var(--yellow); border:1px solid rgba(var(--yellow-rgb), 0.35); font-weight:800;">🏷️ CORREGIR DATOS</button>
                 </div>
                 <div style="padding:0.8rem 1.2rem; background:rgba(var(--shadow-rgb), 0.3); border-top:1px solid rgba(var(--yellow-rgb), 0.12); font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35); line-height:1.7;">
@@ -35004,6 +34952,12 @@ window.__menuMapa = (btn) => {
                 window.renderAlmacenajeTareas(container);
             }
         };
+        /* El selector compartido avisa con (desde, hasta) y null en el que no cambió;
+           este cuadro nació con (cuál, valor). Se traduce acá. */
+        window.__hourlyRango = (desde, hasta) => {
+            if (desde !== null) window.__hourlySetRango('desde', desde);
+            if (hasta !== null) window.__hourlySetRango('hasta', hasta);
+        };
         tasksList.forEach(t => {
             if (t.status !== 'Finalizado') return;
             if (!t.termino) return;
@@ -35207,12 +35161,7 @@ window.__menuMapa = (btn) => {
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span style="font-size:var(--t-xs); color:rgba(var(--cyan-neon-rgb), 0.7); font-weight:800; letter-spacing:0.5px;">📅 DE:</span>
-                    <input type="date" value="${desde}" onchange="window.__hourlySetRango('desde', this.value)"
-                           style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
-                    <span style="font-size:var(--t-xs); color:rgba(var(--cyan-neon-rgb), 0.7); font-weight:800; letter-spacing:0.5px;">HASTA:</span>
-                    <input type="date" value="${hasta}" onchange="window.__hourlySetRango('hasta', this.value)"
-                           style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--cyan-neon-rgb), 0.4); background:rgba(var(--ink-rgb), 0.04); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
+                    ${selectorRango(desde, hasta, 'window.__hourlyRango', { color: 'var(--cyan-neon)' })}
                     <!-- La cámara arma la misma tabla en chico para recortarla y mandarla por WhatsApp.
                          SIN MARCO NI FONDO, como los otros 22 botones de icono del tablero: yo lo
                          habia puesto con recuadro y era el unico de todo el archivo. Daniel,
@@ -35838,16 +35787,8 @@ window.__menuMapa = (btn) => {
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-family: var(--font-ui);">
-                    <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:var(--t-md); color:var(--yellow-deep);">📅</span>
-                        <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Desde:</span>
-                        <input type="date" id="chartStartDateInput" value="${window.__chartStartDate}" onchange="window.setChartDateRange(this.value, null)" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); font-weight:700; outline:none; cursor:pointer; font-family: var(--font-ui); color-scheme: var(--scheme);" />
-                    </div>
-                    <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:var(--t-md); color:var(--yellow-deep);">📅</span>
-                        <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Hasta:</span>
-                        <input type="date" id="chartEndDateInput" value="${window.__chartEndDate}" onchange="window.setChartDateRange(null, this.value)" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); font-weight:700; outline:none; cursor:pointer; font-family: var(--font-ui); color-scheme: var(--scheme);" />
-                    </div>
+                    ${selectorRango(window.__chartStartDate, window.__chartEndDate, 'window.setChartDateRange',
+                        { color: 'var(--yellow-deep)', idDesde: 'chartStartDateInput', idHasta: 'chartEndDateInput' })}
                 </div>
             </div>
             <div style="position:relative; width:100%; height:250px; margin-top:0.5rem;">
@@ -36104,18 +36045,8 @@ window.__menuMapa = (btn) => {
                      botón del aviso es lo que ocupa su lugar. -->
 
                 <!-- RANGO DE FECHAS DE : HASTA -->
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:var(--t-md); color:var(--primary);">📅</span>
-                        <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">DE:</span>
-                        <input type="date" id="almacenajeStartDateInput" value="${window.__almacenajeStartDate}" onchange="window.setAlmacenajeDateRange(this.value, null)" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); font-weight:700; outline:none; cursor:pointer; font-family: var(--font-ui); color-scheme: var(--scheme);" />
-                    </div>
-                    <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                        <span style="font-size:var(--t-md); color:var(--primary);">📅</span>
-                        <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">HASTA:</span>
-                        <input type="date" id="almacenajeEndDateInput" value="${window.__almacenajeEndDate}" onchange="window.setAlmacenajeDateRange(null, this.value)" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); font-weight:700; outline:none; cursor:pointer; font-family: var(--font-ui); color-scheme: var(--scheme);" />
-                    </div>
-                </div>
+                ${selectorRango(window.__almacenajeStartDate, window.__almacenajeEndDate, 'window.setAlmacenajeDateRange',
+                    { color: 'var(--primary)', idDesde: 'almacenajeStartDateInput', idHasta: 'almacenajeEndDateInput' })}
 
                 <!-- BOTONES CIRCULARES (REFRESCO Y BASURA) -->
                 <div style="display:flex; gap:10px; align-items:center;">
@@ -36130,18 +36061,8 @@ window.__menuMapa = (btn) => {
                 <h4 style="margin:0; color:var(--primary); font-size:var(--t-sm); font-weight:800; letter-spacing:1px; text-transform:uppercase;">📊 Panel de Rendimiento Individual</h4>
                 <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                     <!-- RANGO DE FECHAS DE : HASTA PARA KPI -->
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                            <span style="font-size:var(--t-md); color:var(--primary);">📅</span>
-                            <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">DE:</span>
-                            <input type="date" id="kpiStartDateInput" value="${window.__kpiStartDate}" onchange="window.setKpiDateRange(this.value, null)" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); font-weight:700; outline:none; cursor:pointer; font-family: var(--font-ui); color-scheme: var(--scheme);" />
-                        </div>
-                        <div style="display:flex; align-items:center; background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.1); border-radius:8px; padding:4px 10px; gap:8px;">
-                            <span style="font-size:var(--t-md); color:var(--primary);">📅</span>
-                            <span style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">HASTA:</span>
-                            <input type="date" id="kpiEndDateInput" value="${window.__kpiEndDate}" onchange="window.setKpiDateRange(null, this.value)" style="background:transparent; border:none; color:var(--text-strong); font-size:var(--t-sm); font-weight:700; outline:none; cursor:pointer; font-family: var(--font-ui); color-scheme: var(--scheme);" />
-                        </div>
-                    </div>
+                    ${selectorRango(window.__kpiStartDate, window.__kpiEndDate, 'window.setKpiDateRange',
+                        { color: 'var(--primary)', idDesde: 'kpiStartDateInput', idHasta: 'kpiEndDateInput' })}
                     <button id="btn_refresh_almacenaje" title="Refrescar Datos" style="width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:var(--t-lg); transition:all 0.2s" class="btn-icono">${icono('refrescar', 17)}</button>
                 </div>
             </div>
@@ -36223,6 +36144,12 @@ window.__menuMapa = (btn) => {
                         else window.__kpiPHDesde = window.__kpiPHHasta;
                     }
                     repintarPanel();
+                };
+                /* Igual que el cuadro por hora: el selector compartido avisa con
+                   (desde, hasta) y este panel nació con (cuál, valor). */
+                window.__kpiRangoPH = (desde, hasta) => {
+                    if (desde !== null) window.__kpiSetRangoPH('desde', desde);
+                    if (hasta !== null) window.__kpiSetRangoPH('hasta', hasta);
                 };
                 /* LA FOTO PARA WHATSAPP, la misma idea que el cuadro de Producción por hora:
                  * la tabla en chico, en blanco y negro, para recortarla con Win+Shift+S.
@@ -36736,12 +36663,7 @@ window.__menuMapa = (btn) => {
                    una sola vez y cada vista pone su propio cuerpo debajo. */
                 const barra = `
                     <div style="display:flex; align-items:center; gap:8px; padding:10px 14px; flex-wrap:wrap; border-bottom:1px solid rgba(var(--ink-rgb), 0.10);">
-                        <span style="font-size:var(--t-xs); color:rgba(var(--brand-pale-rgb), 0.85); font-weight:800; letter-spacing:0.5px;">📅 DE:</span>
-                        <input type="date" value="${desdeH}" onchange="window.__kpiSetRangoPH('desde', this.value)"
-                               style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--brand-pale-rgb), 0.4); background:rgba(var(--ink-rgb), 0.05); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
-                        <span style="font-size:var(--t-xs); color:rgba(var(--brand-pale-rgb), 0.85); font-weight:800; letter-spacing:0.5px;">HASTA:</span>
-                        <input type="date" value="${hastaH}" onchange="window.__kpiSetRangoPH('hasta', this.value)"
-                               style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--brand-pale-rgb), 0.4); background:rgba(var(--ink-rgb), 0.05); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
+                        ${selectorRango(desdeH, hastaH, 'window.__kpiRangoPH', { color: 'var(--brand-pale)' })}
                         <button onclick="window.__kpiFotoPH()" title="Verlo en chico para mandar por WhatsApp"
                                 style="background:none; border:none; cursor:pointer; font-size:var(--t-lg); color:var(--brand-light); line-height:1; padding:2px 4px;">📷</button>
                         <span style="margin-left:auto;"><button onclick="window.exportarKpiTareas(this)" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button></span>
@@ -36844,12 +36766,7 @@ window.__menuMapa = (btn) => {
                 return `
                 <div class="glass-panel" style="padding:0; overflow:hidden; margin-top:1.5rem;">
                     <div style="display:flex; align-items:center; gap:8px; padding:10px 14px; flex-wrap:wrap; border-bottom:1px solid rgba(var(--ink-rgb), 0.10);">
-                        <span style="font-size:var(--t-xs); color:rgba(var(--brand-pale-rgb), 0.85); font-weight:800; letter-spacing:0.5px;">📅 DE:</span>
-                        <input type="date" value="${desdeH}" onchange="window.__kpiSetRangoPH('desde', this.value)"
-                               style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--brand-pale-rgb), 0.4); background:rgba(var(--ink-rgb), 0.05); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
-                        <span style="font-size:var(--t-xs); color:rgba(var(--brand-pale-rgb), 0.85); font-weight:800; letter-spacing:0.5px;">HASTA:</span>
-                        <input type="date" value="${hastaH}" onchange="window.__kpiSetRangoPH('hasta', this.value)"
-                               style="padding:5px 8px; border-radius:7px; border:1px solid rgba(var(--brand-pale-rgb), 0.4); background:rgba(var(--ink-rgb), 0.05); color:var(--text-strong); font-size:var(--t-xs); font-weight:700; font-family:inherit;">
+                        ${selectorRango(desdeH, hastaH, 'window.__kpiRangoPH', { color: 'var(--brand-pale)' })}
                         <button onclick="window.__kpiFotoPH()" title="Verlo en chico para mandar por WhatsApp"
                                 style="background:none; border:none; cursor:pointer; font-size:var(--t-lg); color:var(--brand-light); line-height:1; padding:2px 4px;">📷</button>
                         <span style="margin-left:auto;"><button onclick="window.exportarKpiTareas(this)" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button></span>
