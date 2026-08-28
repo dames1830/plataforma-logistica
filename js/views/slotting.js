@@ -33,7 +33,7 @@
 /* El rango de fechas es el mismo de toda la plataforma: se dibuja una sola vez, en
    `reportesComunes.js`. Este archivo recibe todo lo demás por `OPC` y no lee del
    servidor — el selector no lee nada, solo dibuja. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0491';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0492';
 
 export const montarSlotting = (container, OPC = {}) => {
   const svc = OPC.svc;
@@ -124,6 +124,7 @@ export const montarSlotting = (container, OPC = {}) => {
               ${lista.length ? `<button id="slt_imprimir" class="btn" style="background:rgba(var(--ink-rgb), 0.06);
                        border:1px solid var(--border); color:var(--text-pale); width:auto; padding:0.5rem 1.1rem;
                        border-radius:8px; font-size:var(--t-sm); font-weight:800;">🖨️ IMPRIMIR</button>` : ''}
+              ${selectorZonasCorrida()}
               <button id="slt_procesar" class="btn" style="background:var(--btn-fill); width:auto;
                       padding:0.5rem 1.1rem; border-radius:8px; font-size:var(--t-sm); font-weight:800;">
                 ⚙️ PROCESAR SLOTTING</button>
@@ -161,6 +162,44 @@ export const montarSlotting = (container, OPC = {}) => {
       </div>`;
     engancharTareas();
   }
+
+  /* ── QUÉ ZONAS SE ORDENAN ESTA NOCHE ──────────────────────────────────────────
+   *
+   * Daniel, 28-ago-2026: *"dame la opción de procesar tareas según las zonas, porque si yo
+   * corro de todas me van a salir como quinientas tareas"*. Medido con el layout nuevo: las
+   * cuatro zonas juntas dan unas 176 tareas de una sentada.
+   *
+   * NO ES LA CONFIGURACIÓN. Las zonas de Config. Slotting dicen dónde puede trabajar el
+   * módulo; esto dice cuál se limpia HOY. Arranca con todas las configuradas tildadas y la
+   * elección dura lo que dura la pantalla: no se guarda, porque es una decisión de la noche.
+   *
+   * Y LO QUE TRABA UNA TAREA DE ALMACENAJE ENTRA IGUAL, se tilde su zona o no. Por eso el
+   * rótulo lo dice: si no, alguien va a creer que destildando una zona deja de ver sus
+   * urgencias. */
+  let zonasCorrida = null;    // null = todavía no se tocó; se toman las configuradas
+  const zonasElegidas = () => {
+    const conf = (svc.configActual().zonas || []);
+    if (!zonasCorrida) return conf.slice();
+    const v = conf.filter(z => zonasCorrida.has(z));
+    return v.length ? v : conf.slice();
+  };
+  const selectorZonasCorrida = () => {
+    const conf = (svc.configActual().zonas || []);
+    if (conf.length <= 1) return '';          // con una sola zona no hay nada que elegir
+    const sel = new Set(zonasElegidas());
+    return `
+      <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(var(--ink-rgb), 0.04);
+                  border:1px solid var(--border); border-radius:9px; padding:5px 12px;">
+        <span style="font-size:11px; color:var(--text-muted); font-weight:800; letter-spacing:0.04em;
+                     white-space:nowrap;" title="Lo que traba una tarea de almacenaje entra igual, se tilde o no">
+          Ordenar</span>
+        ${conf.map(z => `
+          <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer;
+                        font-size:11px; font-weight:700; color:var(--text-strong);">
+            <input type="checkbox" class="slt_zona_corrida" value="${esc(z)}" ${sel.has(z) ? 'checked' : ''}>
+            ${esc(z)}</label>`).join('')}
+      </div>`;
+  };
 
   /* EL AVISO ARRIBA DE TODO. Daniel, 15-ago-2026: *"si él no ve que diga prioridad en rojo,
    * él no lo va a imprimir la hoja"*. El asistente entra a la pantalla antes que a la
@@ -1071,13 +1110,25 @@ export const montarSlotting = (container, OPC = {}) => {
         pintar();
       }));
 
+    /* La elección de zonas se recoge al vuelo y no se guarda: es de esta noche. */
+    container.querySelectorAll('.slt_zona_corrida').forEach(ch => {
+      ch.addEventListener('change', () => {
+        zonasCorrida = new Set([...container.querySelectorAll('.slt_zona_corrida')]
+          .filter(x => x.checked).map(x => x.value));
+        if (!zonasCorrida.size) {          // sin ninguna no se puede correr: se vuelve a tildar
+          ch.checked = true;
+          zonasCorrida = new Set([ch.value]);
+        }
+      });
+    });
+
     const btn = container.querySelector('#slt_procesar');
     if (btn) btn.addEventListener('click', async () => {
       if (!OPC.alProcesar) return;
       btn.disabled = true;
       btn.textContent = '⌛ REVISANDO EL ALMACÉN...';
       try {
-        const nuevo = await OPC.alProcesar();
+        const nuevo = await OPC.alProcesar(zonasElegidas());
         if (nuevo) {
           cajon = nuevo;
           const f = svc.fechasDe(cajon)[0];

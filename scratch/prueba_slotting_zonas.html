@@ -1,0 +1,46 @@
+<!doctype html>
+<html data-tema="indigo">
+<meta charset="utf-8">
+<title>Slotting · Tareas Día — el selector de zonas</title>
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  body { margin:0; padding:18px; background:var(--bg-dark); color:var(--text-pale); font-family:var(--font-ui); }
+  #aviso { margin-bottom:14px; padding:10px 14px; border-radius:9px; font-size:13px;
+           background:rgba(var(--warning-rgb),0.12); border:1px solid rgba(var(--warning-rgb),0.35); color:var(--warning-soft); }
+  #eco { margin-top:14px; padding:10px 14px; border-radius:9px; font-family:ui-monospace,monospace; font-size:12px;
+         background:rgba(var(--ink-rgb),0.05); border:1px solid var(--border); color:var(--text-pale); white-space:pre-wrap; }
+</style>
+
+<!-- Monta la pantalla DE VERDAD -`montarSlotting`, vista tareas_dia- para ver el selector
+     de zonas sin tener que entrar con usuario y clave. PROCESAR no procesa: escribe abajo
+     con que zonas se habria llamado. -->
+<div id="aviso">Pantalla real. <b>PROCESAR SLOTTING</b> no procesa nada: escribe abajo las zonas que habría mandado.</div>
+<div id="app"></div>
+<div id="eco">— todavía no se apretó PROCESAR —</div>
+
+<script type="module">
+  import { montarSlotting } from '../js/views/slotting.js';
+  import * as slottingService from '../js/services_v245/slottingService.js';
+
+  const dibujar = () => montarSlotting(document.getElementById('app'), {
+    vista: 'tareas_dia',
+    svc: slottingService,
+    cajon: {},
+    operarios: [],
+    jornadaHoy: new Date().toISOString().slice(0, 10),
+    jornadaVencida: () => false,
+    alertar: (t, m) => console.log('[aviso]', t, m),
+    alGuardar: async () => true,
+    alProcesar: async (zonas) => {
+      document.getElementById('eco').textContent =
+        'barrerParaSlotting se habría llamado con:\n' + JSON.stringify(zonas, null, 2);
+      return null;
+    }
+  });
+
+  dibujar();
+  slottingService.cargarConfig()
+    .then(() => { console.log('config publicada:', JSON.stringify(slottingService.configActual().zonas)); dibujar(); })
+    .catch(e => console.warn('[prueba] sin config publicada:', e && e.message));
+</script>

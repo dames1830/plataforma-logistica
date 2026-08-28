@@ -1,35 +1,35 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0491';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0492';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0491';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0491';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0491';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0491';
-import * as metasService from '../services_v245/metasService.js?v=29.0491';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0491';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0491';
+import * as adminService from '../services_v245/adminService.js?v=29.0492';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0492';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0492';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0492';
+import * as metasService from '../services_v245/metasService.js?v=29.0492';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0492';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0492';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0491';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0491';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0491';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0491';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0491';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0491';
-import { renderCapacidad } from './capacidad.js?v=29.0491';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0491';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0491';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0491';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0491';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0491';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0491';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0491';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0491';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0491';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0491';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0491';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0491';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0491';
-import { montarSlotting } from './slotting.js?v=29.0491';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0492';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0492';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0492';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0492';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0492';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0492';
+import { renderCapacidad } from './capacidad.js?v=29.0492';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0492';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0492';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0492';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0492';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0492';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0492';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0492';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0492';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0492';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0492';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0492';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0492';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0492';
+import { montarSlotting } from './slotting.js?v=29.0492';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -392,7 +392,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0491';
+const VERSION = '29.0492';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5474,7 +5474,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0491');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0492');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5737,7 +5737,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0491');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0492');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18715,7 +18715,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0491 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0492 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -20531,7 +20531,29 @@ const renderRFSection = (container) => {
 
   const SEMANAS_PARA_CONSOLIDAR = 2;
 
+  /* ══════════════════════════════════════════════════════════════════════════════
+   * DOS COSAS DISTINTAS QUE HASTA ACÁ ERAN UNA SOLA
+   * ══════════════════════════════════════════════════════════════════════════════
+   *
+   * Daniel, 28-ago-2026: *"dame la opción de procesar tareas según las zonas [...] porque
+   * si yo corro de todas, me van a salir como quinientas tareas. Pero por más que yo corra
+   * el mezzanine uno, si hay tareas bloqueadas en el selectivo o en el mezzanine dos, me
+   * tienen que aparecer sí o sí como tareas principales, en rojo, prioridad"*.
+   *
+   *   `zonas`  — las que se ORDENAN en esta corrida. Es la elección de la noche, y sirve
+   *              para no sacar 176 tareas de una: se limpia una zona por vez.
+   *   TODAS    — de donde se LEE el almacén. Siempre las cuatro, pase lo que pase.
+   *
+   * Lo que traba una tarea de almacenaje NO se filtra por zona: es la posta del módulo
+   * anterior y entra siempre, venga de donde venga. Hasta acá se descartaba —`if (tr.zona
+   * && !zonasOk.has(tr.zona)) return`— y por eso el 15-ago, de 18 artículos trabados,
+   * entraban 2: los otros 16 eran de los mezzanines y Slotting no se enteraba.
+   *
+   * Por eso el almacén se lee ENTERO aunque se ordene una sola zona: sin el cuerpo del
+   * otro lado no se puede saber qué intruso sacar para destrabar la tarea. */
   const barrerParaSlotting = async (zonas = ZONAS_SLOTTING) => {
+    const TODAS = slottingService.ZONAS_POSIBLES;
+    const zonasQueSeOrdenan = new Set(zonas && zonas.length ? zonas : ZONAS_SLOTTING);
     await zonasService.cargarZonas();
     await rescatarMaestro();
 
@@ -20588,7 +20610,9 @@ const renderRFSection = (container) => {
       if (!ubi || ubi.startsWith('CDBUFFER')) return;
       const p = ubi.split('-');
       const zona = p[0];
-      if (!zonas.includes(zona)) return;
+      /* Se lee el almacen ENTERO aunque se ordene una sola zona: sin el cuerpo del otro
+         lado no se puede saber que intruso sacar para destrabar una tarea de alla. */
+      if (!TODAS.includes(zona)) return;
       if (zonasService.esZonaSinUbicacion(zona)) return;
       const col = parseInt(p[1], 10), cue = parseInt(p[2], 10);
       if (!col || !cue) return;
@@ -20822,6 +20846,7 @@ const renderRFSection = (container) => {
     const lineas = [];
     let mezclados = 0, porTarea = 0, retenidas = 0;
     cuerpos.forEach((c, k) => {
+      if (!zonasQueSeOrdenan.has(c.zona)) return;
       if (c.m.size <= 1) return;
       if (zonasService.columnaAdmiteVariosArticulos(c.zona, c.col)) return;
       mezclados++;
@@ -21003,6 +21028,7 @@ const renderRFSection = (container) => {
     zonas.forEach(z => { bloqueadas[z] = new Set(zonasService.columnasBloqueadasDe(z).map(Number)); });
     let enBloqueada = 0, paresBloqueada = 0;
     cuerpos.forEach((c, k) => {
+      if (!zonasQueSeOrdenan.has(c.zona)) return;
       if (!bloqueadas[c.zona] || !bloqueadas[c.zona].has(Number(c.col))) return;
       c.m.forEach((pares, s7) => {
         const p = Math.round(pares);
@@ -21051,6 +21077,7 @@ const renderRFSection = (container) => {
        cuerpo y artículo, para no mandar dos veces la misma mercadería. */
     const yaEnLineaPorClave = new Map(lineas.map(l => [String(l.ubi) + '|' + String(l.sku7), l]));
     cuerpos.forEach((c, k) => {
+      if (!zonasQueSeOrdenan.has(c.zona)) return;
       if (bloqueadas[c.zona] && bloqueadas[c.zona].has(Number(c.col))) return;   // ya salió arriba
       if (zonasService.columnaAdmiteVariosArticulos(c.zona, c.col)) return;
       const suya = zonasService.franjaDeColumna(c.zona, c.col);
@@ -21099,6 +21126,7 @@ const renderRFSection = (container) => {
       : new Set();
     const porArticulo = new Map();
     if (consolidarOn) cuerpos.forEach((c, k) => {
+      if (!zonasQueSeOrdenan.has(c.zona)) return;
       if (zonasService.columnaAdmiteVariosArticulos(c.zona, c.col)) return;
       const cue = parseInt(String(k).split('-')[2], 10);
       c.m.forEach((pares, s7) => {
@@ -21199,9 +21227,10 @@ const renderRFSection = (container) => {
      * marca y su columna de la temporada—, lo que falta es un cuerpo VACÍO adentro de esa
      * columna. Como no hay un intruso puntual que sacar, sale como aviso y no como línea.
      *
-     * SE RESPETAN LAS ZONAS CONFIGURADAS: si Slotting hoy solo barre el selectivo, un trabado
-     * del mezzanine no entra. Se amplía tildando la zona en Configuración, sin tocar código. */
-    const zonasOk = new Set(zonas);
+     * LAS TRABAS NO MIRAN LA ZONA ELEGIDA, desde el 28-ago-2026. Antes sí: si Slotting corría
+     * solo el selectivo, un trabado del mezzanine no entraba —el 15-ago, de 18 artículos
+     * parados entraban 2—. Ahora la elección de zonas dice qué se ORDENA esta noche, no qué
+     * se atiende: lo que traba una tarea de almacenaje entra siempre y sale con prioridad. */
     const avisos = [];
     const yaEnLinea = new Map(lineas.map(l => [String(l.ubi) + '|' + String(l.sku7), l]));
 
@@ -21222,7 +21251,10 @@ const renderRFSection = (container) => {
       const tr = art && art.traba;
       if (!tr || !tr.pares) return;
       if (String(t.fecha || '') !== jornadaHoy) { trabasViejas++; return; }
-      if (tr.zona && !zonasOk.has(tr.zona)) return;
+      /* SIN FILTRO DE ZONA, a proposito. Lo que traba una tarea de almacenaje entra
+         siempre, se este ordenando esa zona o no: es la posta del modulo anterior.
+         Daniel, 28-ago-2026: *"por mas que yo corra el mezzanine uno, si hay tareas
+         bloqueadas en el selectivo me tienen que aparecer si o si"*. */
       const s7 = String(art.sku7 || '').trim();
       avisos.push({ sku7: s7, marca: art.marca || '', pares: tr.pares,
                     tipo: tr.tipo || 'sin-cuerpo-libre', motivo: tr.motivo || '',
@@ -21401,7 +21433,10 @@ const renderRFSection = (container) => {
         }
       },
       alGuardarConfig: async (cfg) => { await slottingService.guardarConfig(cfg); },
-      alProcesar: async () => {
+      /* `zonasDeLaCorrida` son las que se ORDENAN esta noche —las que el asistente tildó
+         en la pantalla—. Si no llega ninguna se usan las configuradas. Las trabas de
+         almacenaje entran igual, vengan de la zona que vengan. */
+      alProcesar: async (zonasDeLaCorrida) => {
         /* UNA SOLA CORRIDA POR TURNO, si la configuración lo pide. El botón queda igual —no se
          * oculta ni se apaga— y el aviso sale al apretarlo: fue la decisión de Daniel, porque
          * un botón que desaparece hace pensar que se rompió algo.
@@ -21422,7 +21457,10 @@ const renderRFSection = (container) => {
           return null;
         }
         try {
-          const corrida = await barrerParaSlotting(slottingService.configActual().zonas);
+          const corrida = await barrerParaSlotting(
+            (Array.isArray(zonasDeLaCorrida) && zonasDeLaCorrida.length)
+              ? zonasDeLaCorrida
+              : slottingService.configActual().zonas);
           showPremiumAlert('ALMACÉN REVISADO',
             `<b>${corrida.cuerpos}</b> cuerpos con más de un artículo.<br>`
             + `${corrida.pares.toLocaleString('es-PE')} pares por sacar en <b>${corrida.tareas.length}</b> tareas.`
