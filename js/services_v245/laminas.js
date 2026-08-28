@@ -185,3 +185,132 @@ export function enBloques(lista, tam) {
   for (let i = 0; i < lista.length; i += tam) r.push(lista.slice(i, i + tam));
   return r;
 }
+
+
+/**
+ * LA LAMINA DE RESUMEN, EN SU FORMATO CERRADO.
+ *
+ * Titulo, fecha, una fila de cifras que se suman y UN numero grande: el que se reporta.
+ * Todas las laminas de camara van iguales para que el jefe que las recibe las reconozca de
+ * una mirada -el estandar completo esta en .claude/skills/laminas-camara/SKILL.md-.
+ *
+ * Vive aca y no copiada en cada modulo: la usan el reporte UCA y el Replenishment, y ya
+ * hubo que volver sobre las dos cuando cambio una regla.
+ *
+ * @param titulo   en mayusculas, arriba a la izquierda
+ * @param tarjetas [{ rotulo, valor, color }] — las cifras que se suman, en fila
+ * @param grande   { rotulo, valor, color } — el numero que se reporta
+ * @param pie      texto chico abajo a la derecha (opcional)
+ */
+export function laminaResumen({ titulo, tarjetas, grande, pie }) {
+  const ANCHO = 460, ALTO = 268;
+  const FUENTE = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+
+  /* Tan grande como entre en la pantalla, con dos candados: que entre ENTERA -si no, una
+     captura sale cortada- y que no pase de 2,4 veces el diseno. Los 130 puntos que se
+     restan del alto son los botones, el espacio entre medio y el margen. */
+  const cabe = Math.min((window.innerWidth * 0.92) / ANCHO, (window.innerHeight - 130) / ALTO);
+  const ZOOM = Math.max(1.25, Math.min(2.4, cabe));
+  const ESCALA = escalaParaFoto(Math.max(ANCHO, ALTO), ZOOM);
+
+  const lienzo = document.createElement('canvas');
+  lienzo.width = Math.round(ANCHO * ESCALA * ZOOM);
+  lienzo.height = Math.round(ALTO * ESCALA * ZOOM);
+  const g = lienzo.getContext('2d');
+  g.scale(ESCALA * ZOOM, ESCALA * ZOOM);
+  g.textBaseline = 'middle';
+
+  /* Los colores salen del tema puesto: la lamina se ve como la pantalla de la que salio y
+     no hay dos paletas que mantener. Pasados por paraFoto, que es lo que hace que WhatsApp
+     no le ensucie el borde. */
+  const col = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const FONDO = col('--panel-deeper') || '#0d1117';
+  const CAJA = col('--panel-solid') || '#161b22';
+  const LINEA = col('--border') || 'rgba(255,255,255,.1)';
+  const FUERTE = paraFoto(col('--text-strong') || '#fff', CAJA, 0.16, 0.86);
+  const SUAVE = paraFoto(col('--text-muted') || '#8b949e', CAJA, 0.34, 0.72);
+  const tinta = (c) => paraFoto(c || FUERTE, CAJA, 0.16, 0.86);
+
+  g.fillStyle = FONDO;
+  g.fillRect(0, 0, ANCHO, ALTO);
+
+  const texto = (t, x, y, tam, color, peso, alin) => {
+    g.font = (peso || 400) + ' ' + tam + 'px ' + FUENTE;
+    g.fillStyle = color;
+    g.textAlign = alin || 'left';
+    g.fillText(String(t), x, y);
+  };
+  const mil = (n) => Number(n || 0).toLocaleString('es-PE');
+
+  texto(titulo, 24, 34, 15, FUERTE, 800);
+  const ahora = new Date();
+  texto(ahora.toLocaleDateString('es-PE') + '  ·  '
+        + ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
+        24, 55, 11, SUAVE, 400);
+
+  const cuantas = Math.max(1, tarjetas.length);
+  const hueco = 8;
+  const anchoT = (ANCHO - 48 - hueco * (cuantas - 1)) / cuantas;
+  tarjetas.forEach((t, i) => {
+    const x = 24 + i * (anchoT + hueco);
+    g.fillStyle = CAJA;
+    g.strokeStyle = LINEA;
+    g.beginPath();
+    g.roundRect(x, 74, anchoT, 66, 9);
+    g.fill();
+    g.stroke();
+    texto(t.rotulo, x + anchoT / 2, 94, 10, SUAVE, 700, 'center');
+    /* La cifra se encoge si no entra: con cuatro tarjetas y seis digitos se salia. */
+    let tam = 24;
+    const v = mil(t.valor);
+    g.font = '800 ' + tam + 'px ' + FUENTE;
+    while (tam > 12 && g.measureText(v).width > anchoT - 12) {
+      tam -= 1;
+      g.font = '800 ' + tam + 'px ' + FUENTE;
+    }
+    texto(v, x + anchoT / 2, 119, tam, tinta(t.color), 800, 'center');
+  });
+
+  g.fillStyle = CAJA;
+  g.strokeStyle = LINEA;
+  g.beginPath();
+  g.roundRect(24, 152, ANCHO - 48, 84, 9);
+  g.fill();
+  g.stroke();
+  texto(grande.rotulo, ANCHO / 2, 174, 11, SUAVE, 700, 'center');
+  texto(mil(grande.valor), ANCHO / 2, 206, 40, tinta(grande.color), 800, 'center');
+
+  if (pie) texto(pie, ANCHO - 24, 252, 10, SUAVE, 400, 'right');
+
+  /* SE MUESTRA, NO SE DESCARGA: el 18-ago-2026 la descarga directa fallo -el navegador
+     ignora el atributo `download` y el archivo cae sin extension-. Y tres salidas: el
+     boton Cerrar, tocar fuera y la tecla Esc. */
+  const fondo = document.createElement('div');
+  fondo.style.cssText = 'position:fixed; inset:0; background:rgba(var(--shadow-rgb), 0.88); '
+    + 'z-index:99999; display:flex; align-items:center; justify-content:center; padding:1.5rem; overflow:auto;';
+  const caja = document.createElement('div');
+  caja.style.cssText = 'display:flex; flex-direction:column; gap:0.8rem; align-items:flex-end; max-width:95vw;';
+  lienzo.style.cssText = 'width:' + Math.round(ANCHO * ZOOM) + 'px; max-width:100%; height:auto; '
+    + 'border-radius:10px; display:block; box-shadow:0 8px 40px rgba(var(--shadow-rgb), 0.6);';
+  const ESTILO = 'padding:0.5rem 1.4rem; font-size:var(--t-sm); border-radius:8px; '
+    + 'background:rgba(var(--ink-rgb), 0.08); color:var(--text-pale); font-weight:600; cursor:pointer; '
+    + 'border:1px solid rgba(var(--ink-rgb), 0.18); font-family:inherit;';
+  const copiar = botonCopiar(lienzo, ESTILO);
+  const cerrar = document.createElement('button');
+  cerrar.textContent = 'Cerrar';
+  cerrar.style.cssText = ESTILO;
+  const botones = document.createElement('div');
+  botones.style.cssText = 'display:flex; gap:0.5rem;';
+  botones.appendChild(copiar);
+  botones.appendChild(cerrar);
+  caja.appendChild(lienzo);
+  caja.appendChild(botones);
+  fondo.appendChild(caja);
+  document.body.appendChild(fondo);
+
+  const quitarEsc = cerrarConEsc(() => fondo.remove());
+  const cerrarTodo = () => { quitarEsc(); fondo.remove(); };
+  cerrar.onclick = cerrarTodo;
+  fondo.onclick = (e) => { if (e.target === fondo) cerrarTodo(); };
+  return lienzo;
+}

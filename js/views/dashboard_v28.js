@@ -1,34 +1,34 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0473';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0474';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0473';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0473';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0473';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0473';
-import * as metasService from '../services_v245/metasService.js?v=29.0473';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0473';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0473';
+import * as adminService from '../services_v245/adminService.js?v=29.0474';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0474';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0474';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0474';
+import * as metasService from '../services_v245/metasService.js?v=29.0474';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0474';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0474';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0473';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0473';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0473';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0473';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0473';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0473';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0473';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0473';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0473';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0473';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0473';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0473';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0473';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0473';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0473';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0473';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0473';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0473';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0473';
-import { montarSlotting } from './slotting.js?v=29.0473';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0474';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0474';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0474';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0474';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0474';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0474';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0474';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0474';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0474';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0474';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0474';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0474';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0474';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0474';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0474';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0474';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0474';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0474';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0474';
+import { montarSlotting } from './slotting.js?v=29.0474';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -391,7 +391,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0473';
+const VERSION = '29.0474';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5464,7 +5464,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0473');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0474');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5727,7 +5727,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0473');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0474');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18695,7 +18695,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0473 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0474 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -25592,6 +25592,60 @@ Se dejó el valor anterior.`, 'warning');
       paresABajar: items.reduce((a, i) => a + aBajarDe(i), 0),
     });
 
+    /**
+     * CUANTAS PALETAS AMARRA LO QUE HAY QUE BAJAR.
+     *
+     * Los pares no bajan sueltos: bajan dentro de paletas, y una paleta puede traer varias
+     * tallas del mismo articulo. Saber cuantos pares faltan no dice cuanto trabajo es; lo
+     * dice cuantas paletas hay que mover.
+     *
+     * Se toman primero las que MAS tapan de lo pedido, que es lo que hace el
+     * montacarguista: bajar las menos posibles. Es una estimacion, no una asignacion: no
+     * decide que paleta baja, solo cuantas hacen falta.
+     *
+     * Se calcula con la MISMA reserva que uso el analisis, asi que el numero cuadra con los
+     * pares a bajar de al lado por construccion.
+     */
+    const paletasQueAmarra = () => {
+      const falta = new Map();
+      items.forEach(i => { const d = aBajarDe(i); if (d > 0) falta.set(i.sku, d); });
+      if (!falta.size) return { paletas: 0, cubren: 0, pedido: 0 };
+
+      const porPaleta = new Map();
+      (reserva || []).forEach(r => {
+        /* SOLO EL NIVEL ALTO, el mismo filtro con el que el analisis contó la reserva. Sin
+           esto las dos mitades de la lamina miden cosas distintas: los pares saldrian de un
+           universo y las paletas de otro mas grande, y el pie no cuadraria con la cifra de
+           al lado. */
+        if (!String(r['NIVEL'] || '').trim().toUpperCase().includes('ALTO')) return;
+        const lpn = String(getCol(r, ['LPN','Lpn','PALETA','Paleta']) || '').trim();
+        const sku = String(getCol(r, ['PRODUCTO','Articulo','Artículo','SKU','CODIGO']) || '').trim();
+        if (!lpn || !falta.has(sku)) return;
+        const q = Number(getCol(r, ['CANTIDAD','Cantidad','QTY','Qty']) || 0) || 0;
+        if (q <= 0) return;
+        if (!porPaleta.has(lpn)) porPaleta.set(lpn, new Map());
+        const m = porPaleta.get(lpn);
+        m.set(sku, (m.get(sku) || 0) + q);
+      });
+
+      const orden = [...porPaleta.keys()].sort((a, b) =>
+        [...porPaleta.get(b).values()].reduce((x, y) => x + y, 0)
+        - [...porPaleta.get(a).values()].reduce((x, y) => x + y, 0));
+
+      let paletas = 0, cubren = 0, pendiente = [...falta.values()].reduce((a, b) => a + b, 0);
+      for (const lpn of orden) {
+        if (pendiente <= 0) break;
+        let da = 0;
+        porPaleta.get(lpn).forEach((hay, sku) => {
+          const d = Math.min(falta.get(sku) || 0, hay);
+          if (d > 0) { falta.set(sku, (falta.get(sku) || 0) - d); da += d; }
+        });
+        if (da > 0) { paletas++; cubren += da; pendiente -= da; }
+      }
+      return { paletas, cubren: Math.round(cubren),
+               pedido: Math.round([...items].reduce((a, i) => a + aBajarDe(i), 0)) };
+    };
+
     const estadoColor = { 'QUEBRADO':'var(--danger)', 'POR QUEBRAR':'var(--warning)', 'OK':'var(--success)' };
     const estadoBadge = (e) => `<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:var(--t-xs);font-weight:700;background:${estadoColor[e]}22;color:${estadoColor[e]};border:1px solid ${estadoColor[e]}44;">${e}</span>`;
 
@@ -25761,6 +25815,7 @@ Se dejó el valor anterior.`, 'warning');
           <button id="repl_reprocesar" style="background:rgba(var(--ink-rgb), 0.04); border:1px solid rgba(var(--ink-rgb), 0.12); border-radius:8px; color:rgba(var(--ink-rgb), 0.5); padding:0.4rem 0.9rem; font-size:var(--t-sm); cursor:pointer; font-weight:600; transition:all 0.15s; white-space:nowrap; line-height:1;"
             onmouseover="this.style.background='rgba(var(--ink-rgb), 0.09)'; this.style.color='var(--text-strong)';"
             onmouseout="this.style.background='rgba(var(--ink-rgb), 0.04)'; this.style.color='rgba(var(--ink-rgb), 0.5)';">🔄 REPROCESAR</button>
+          <button id="repl_foto" class="btn-icono" title="Armar la lámina del resumen para mandarla por WhatsApp">${icono('camara', 18)}</button>
           <button id="repl_export" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 18)}</button>
         </div>
       </div>
@@ -25817,6 +25872,30 @@ Se dejó el valor anterior.`, 'warning');
     document.getElementById('repl_search').addEventListener('input', e => {
       filterTexto = e.target.value.trim();
       renderTable();
+    });
+
+    /* La lámina: SOLO EL RESUMEN. Nada de tablas ni listas —en el celular no se leen—. */
+    const btnFotoRepl = document.getElementById('repl_foto');
+    if (btnFotoRepl) btnFotoRepl.addEventListener('click', () => {
+      const k = calcKPIs();
+      const p = paletasQueAmarra();
+      laminaResumen({
+        titulo: 'REPOSICIÓN AL PISO',
+        tarjetas: [
+          { rotulo: 'QUEBRADOS', valor: k.nQuebrado, color: 'var(--danger)' },
+          { rotulo: 'POR QUEBRAR', valor: k.nPorQuebrar, color: 'var(--warning)' },
+          { rotulo: 'PARES A BAJAR', valor: Math.round(k.paresABajar), color: 'var(--brand-light)' }
+        ],
+        grande: { rotulo: 'PALETAS QUE HAY QUE BAJAR', valor: p.paletas, color: 'var(--warning)' },
+        /* El pie tiene que CUADRAR con la cifra de al lado. Si las paletas no llegan a
+           tapar todo lo pedido, se dice cuanto tapan en vez de mostrar un numero suelto
+           que parece un error. */
+        pie: !p.paletas ? ''
+             : p.cubren >= p.pedido
+               ? Math.round(p.cubren).toLocaleString('es-PE') + ' pares en esas paletas'
+               : 'cubren ' + Math.round(p.cubren).toLocaleString('es-PE') + ' de '
+                 + Math.round(p.pedido).toLocaleString('es-PE') + ' pares'
+      });
     });
 
     document.getElementById('repl_export').addEventListener('click', () => {
