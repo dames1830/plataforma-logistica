@@ -72,9 +72,79 @@ for (const tema of ['indigo', 'pbi', 'pbi-classic', 'negro']) {
   fig.appendChild(copia);
   lienzo.appendChild(fig);
   ultima = fondo;
-  fondo.querySelector('button').click();
+  [...fondo.querySelectorAll('button')].pop().click();   // el último es Cerrar
 }
 ok('la ventana se cierra con el botón', !ultima.isConnected);
+
+eco('\n<span class="t">── LOS DOS BOTONES ──</span>');
+laminaUCA(TOTAL, VACIAS, OCUPADAS);
+const vent = [...document.querySelectorAll('body > div')].pop();
+const bots = [...vent.querySelectorAll('button')];
+ok('hay dos botones: ' + bots.map(b => b.textContent).join(' · '), bots.length === 2);
+ok('el primero es Copiar', /Copiar/.test(bots[0].textContent));
+/* Se reemplaza el portapapeles de verdad por uno de mentira, para ver QUE le entregan. */
+const real = navigator.clipboard;
+let entregado = null;
+Object.defineProperty(navigator, 'clipboard', { configurable: true,
+  value: { write: (its) => { entregado = its; return Promise.resolve(); } } });
+bots[0].click();
+await new Promise(r => setTimeout(r, 120));
+ok('Copiar le entrega algo al portapapeles', !!entregado && entregado.length === 1);
+ok('y es una imagen PNG — ' + (entregado ? entregado[0].types.join() : ''),
+   !!entregado && entregado[0].types.indexOf('image/png') !== -1);
+ok('el botón avisa que quedó copiada — "' + bots[0].textContent + '"',
+   /Ctrl\+V/.test(bots[0].textContent));
+Object.defineProperty(navigator, 'clipboard', { configurable: true, value: real });
+bots[1].click();
+
+eco('\n<span class="t">── EL COLOR, QUE ES LO QUE ARRUINA WHATSAPP ──</span>');
+/* WhatsApp guarda el color a la mitad de resolución que el brillo, así que un número
+   claro sale con halo. Se comprueba leyendo los PUNTOS del dibujo, no el código. */
+const brilloDe = (r, g2, b) => (0.2126 * r + 0.7152 * g2 + 0.0722 * b) / 255;
+const delTema = (v) => {
+  const t = document.createElement('canvas').getContext('2d');
+  t.fillStyle = '#000';
+  t.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const h = t.fillStyle;
+  if (h.charAt(0) === '#') return brilloDe(parseInt(h.substr(1, 2), 16),
+                                           parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16));
+  const n = (h.match(/[\d.]+/g) || [0, 0, 0]).map(Number);
+  return brilloDe(n[0], n[1], n[2]);
+};
+/* Se leen los puntos del 93% y se busca el extremo: en tema claro el más OSCURO es la
+   tinta del número; en tema oscuro es el más CLARO. Sin fijar el tema aquí, esto corre
+   con el que dejó el bucle de arriba —el negro— y mide el fondo en vez del número. */
+function tintaDel93() {
+  laminaUCA(TOTAL, VACIAS, OCUPADAS);
+  const v2 = [...document.querySelectorAll('body > div')].pop();
+  const cv2 = v2.querySelector('canvas');
+  const esc = cv2.width / 460;
+  const px = cv2.getContext('2d').getImageData(
+    Math.round(150 * esc), Math.round(186 * esc), Math.round(160 * esc), Math.round(40 * esc)).data;
+  let min = 1, max = 0;
+  for (let i = 0; i < px.length; i += 4) {
+    const b = brilloDe(px[i], px[i + 1], px[i + 2]);
+    if (b < min) min = b;
+    if (b > max) max = b;
+  }
+  [...v2.querySelectorAll('button')].pop().click();
+  return { min, max };
+}
+
+document.documentElement.setAttribute('data-tema', 'pbi');       // fondo CLARO
+const claro = tintaDel93(), temaClaro = delTema('--warning');
+ok('tema claro: el 93% se dibuja a ' + claro.min.toFixed(3)
+   + ' de brillo, contra el ' + temaClaro.toFixed(3) + ' del tema',
+   claro.min < temaClaro - 0.15);
+ok('y queda bien oscuro (≤0,22), que es lo que aguanta el JPEG', claro.min <= 0.22);
+
+document.documentElement.setAttribute('data-tema', 'negro');     // fondo OSCURO
+const oscuro = tintaDel93(), temaOscuro = delTema('--warning');
+ok('tema oscuro: ahí NO oscurece, aclara — el 93% llega a ' + oscuro.max.toFixed(3)
+   + ' contra el ' + temaOscuro.toFixed(3) + ' del tema', oscuro.max > temaOscuro + 0.10);
+ok('y el fondo sigue siendo oscuro (' + oscuro.min.toFixed(3) + '), así que hay contraste',
+   oscuro.max - oscuro.min > 0.55);
+document.documentElement.setAttribute('data-tema', 'pbi');
 
 eco('\n<span class="t">── EL TAMAÑO, QUE ES LO QUE DECIDE SI WHATSAPP LA ARRUINA ──</span>');
 /* Daniel captura la pantalla y la manda al grupo de sus jefes. WhatsApp reencoda la foto,

@@ -1,33 +1,33 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0466';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0467';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0466';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0466';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0466';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0466';
-import * as metasService from '../services_v245/metasService.js?v=29.0466';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0466';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0466';
+import * as adminService from '../services_v245/adminService.js?v=29.0467';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0467';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0467';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0467';
+import * as metasService from '../services_v245/metasService.js?v=29.0467';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0467';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0467';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0466';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0466';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0466';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0466';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0466';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0466';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0466';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0466';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0466';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0466';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0466';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0466';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0466';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0466';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0466';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0466';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0466';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0466';
-import { montarSlotting } from './slotting.js?v=29.0466';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0467';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0467';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0467';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0467';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0467';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0467';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0467';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0467';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0467';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0467';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0467';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0467';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0467';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0467';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0467';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0467';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0467';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0467';
+import { montarSlotting } from './slotting.js?v=29.0467';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -390,7 +390,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0466';
+const VERSION = '29.0467';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5463,7 +5463,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0466');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0467');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5726,7 +5726,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0466');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0467');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -16283,7 +16283,57 @@ const renderRFSection = (container) => {
     const CAJA = col('--panel-solid') || '#161b22';
     const LINEA = col('--border') || 'rgba(255,255,255,.1)';
     const FUERTE = col('--text-strong') || '#fff';
-    const SUAVE = col('--text-muted') || '#8b949e';
+
+    /* POR QUE NO SE USA EL COLOR DEL TEMA TAL CUAL.
+     *
+     * Daniel, 27-ago-2026: *"lo veo no tan nitido en WhatsApp; se distorsiona un poco los
+     * bordes de los numeros, los bordes de las letras"*.
+     *
+     * WhatsApp reencoda la foto en JPEG, y el JPEG guarda el COLOR a la mitad de
+     * resolucion que el brillo. Un numero de color claro sobre fondo claro tiene su borde
+     * casi solo en el color -que es lo que se resume-, asi que sale con halo: verdoso de
+     * un lado, calido del otro.
+     *
+     * MEDIDO, no supuesto: `scratch/prueba_lamina_whatsapp.html` pasa la lamina por la
+     * misma tuberia -achicar a 1.600 y reencodar- y compara. Con el numero oscurecido el
+     * borde queda casi limpio, y le gana incluso a subir la resolucion de 1.013 a 1.600.
+     * El tamano ayuda poco; el brillo lo arregla casi entero.
+     *
+     * Asi que se conserva el TONO -el verde sigue verde, el dorado sigue dorado- y se le
+     * lleva el BRILLO lo mas lejos que se pueda del fondo. En tema claro oscurece; en
+     * tema oscuro aclara. Un solo camino para los cuatro temas. */
+    const aRGB = (c) => {
+      const t = document.createElement('canvas').getContext('2d');
+      t.fillStyle = '#000';
+      t.fillStyle = c;                      /* el navegador normaliza cualquier formato */
+      const v = t.fillStyle;
+      if (v.charAt(0) === '#') return [parseInt(v.substr(1, 2), 16),
+                                       parseInt(v.substr(3, 2), 16),
+                                       parseInt(v.substr(5, 2), 16)];
+      const n = (v.match(/[\d.]+/g) || [0, 0, 0]).map(Number);
+      return [n[0] || 0, n[1] || 0, n[2] || 0];
+    };
+    /* Brillo percibido: el ojo ve el verde mucho mas que el azul. */
+    const brillo = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+    const FONDO_CLARO = brillo(aRGB(CAJA)) > 0.5;
+    const paraFoto = (color, metaClaro, metaOscuro) => {
+      const c = aRGB(color);
+      const b = brillo(c);
+      const meta = FONDO_CLARO ? metaClaro : metaOscuro;
+      let r;
+      if (meta < b) {
+        r = c.map((x) => x * (b > 0 ? meta / b : 1));          /* oscurecer: se escala */
+      } else {
+        const t = b < 1 ? (meta - b) / (1 - b) : 0;            /* aclarar: se mezcla con blanco */
+        r = c.map((x) => x + (255 - x) * t);
+      }
+      return 'rgb(' + r.map((x) => Math.max(0, Math.min(255, Math.round(x)))).join(',') + ')';
+    };
+    /* Las cifras van al extremo; los rotulos a medio camino, para que se sigan leyendo
+       como secundarios pero con mas contraste que antes. */
+    const VERDE = paraFoto(col('--success') || '#3fb950', 0.16, 0.86);
+    const DORADO = paraFoto(col('--warning') || '#d29922', 0.16, 0.86);
+    const SUAVE = paraFoto(col('--text-muted') || '#8b949e', 0.34, 0.72);
 
     g.fillStyle = FONDO;
     g.fillRect(0, 0, ANCHO, ALTO);
@@ -16306,8 +16356,8 @@ const renderRFSection = (container) => {
        el que se leen las otras dos. */
     const TARJETAS = [
       ['ANALIZADAS', mil(total), FUERTE],
-      ['VACÍAS', mil(vacias), col('--success') || '#3fb950'],
-      ['OCUPADAS', mil(ocupadas), col('--warning') || '#d29922']
+      ['VACÍAS', mil(vacias), VERDE],
+      ['OCUPADAS', mil(ocupadas), DORADO]
     ];
     const anchoT = (ANCHO - 48 - 16) / 3;
     TARJETAS.forEach(([rot, val, c], i) => {
@@ -16331,7 +16381,7 @@ const renderRFSection = (container) => {
     g.fill();
     g.stroke();
     texto('OCUPACIÓN DE LA RESERVA', ANCHO / 2, 174, 11, SUAVE, 700, 'center');
-    texto(pct + '%', ANCHO / 2, 206, 40, col('--warning') || '#d29922', 800, 'center');
+    texto(pct + '%', ANCHO / 2, 206, 40, DORADO, 800, 'center');
 
     texto(mil(vacias) + ' ubicaciones libres', ANCHO - 24, 252, 10, SUAVE, 400, 'right');
 
@@ -16343,13 +16393,43 @@ const renderRFSection = (container) => {
     caja.style.cssText = 'display:flex; flex-direction:column; gap:0.8rem; align-items:flex-end; max-width:95vw;';
     lienzo.style.cssText = 'width:' + Math.round(ANCHO * ZOOM) + 'px; max-width:100%; height:auto; '
       + 'border-radius:10px; display:block; box-shadow:0 8px 40px rgba(var(--shadow-rgb), 0.6);';
-    const cerrar = document.createElement('button');
-    cerrar.textContent = 'Cerrar';
-    cerrar.style.cssText = 'padding:0.5rem 1.4rem; font-size:var(--t-sm); border-radius:8px; '
+    const ESTILO_BOTON = 'padding:0.5rem 1.4rem; font-size:var(--t-sm); border-radius:8px; '
       + 'background:rgba(var(--ink-rgb), 0.08); color:var(--text-pale); font-weight:600; cursor:pointer; '
       + 'border:1px solid rgba(var(--ink-rgb), 0.18); font-family:inherit;';
+
+    /* COPIAR: el camino sin captura de pantalla.
+     * Una captura entrega solo lo que la lamina mide EN PANTALLA -1.013 puntos-; el
+     * portapapeles se lleva el dibujo entero, que es el doble. WhatsApp recibe mas
+     * material del que recortar y el resultado llega mas limpio. Se pega con Ctrl+V. */
+    const copiar = document.createElement('button');
+    copiar.textContent = 'Copiar imagen';
+    copiar.style.cssText = ESTILO_BOTON;
+    copiar.onclick = () => {
+      /* El blob va como PROMESA dentro del ClipboardItem, sin esperarlo antes: si se
+         espera, el navegador ya no reconoce que esto viene de un clic y niega el permiso. */
+      let escribir;
+      try {
+        const png = new Promise((res) => lienzo.toBlob(res, 'image/png'));
+        escribir = navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+      } catch (e) {
+        escribir = Promise.reject(e);
+      }
+      escribir.then(
+        () => { copiar.textContent = 'Copiada · pégala con Ctrl+V'; },
+        () => { copiar.textContent = 'No se pudo copiar · usa clic derecho'; }
+      );
+    };
+
+    const cerrar = document.createElement('button');
+    cerrar.textContent = 'Cerrar';
+    cerrar.style.cssText = ESTILO_BOTON;
+
+    const botones = document.createElement('div');
+    botones.style.cssText = 'display:flex; gap:0.5rem;';
+    botones.appendChild(copiar);
+    botones.appendChild(cerrar);
     caja.appendChild(lienzo);
-    caja.appendChild(cerrar);
+    caja.appendChild(botones);
     fondo.appendChild(caja);
     document.body.appendChild(fondo);
     cerrar.onclick = () => fondo.remove();
@@ -18516,7 +18596,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0466 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0467 | MOBILE PORTAL
                             </div>
                     </div>
 

@@ -23,7 +23,7 @@
  * 43. El ultimo tramo del SKU es un indice, y la talla de verdad viene al final de la
  * descripcion -`...BATA INDUSTRIALS-1-43`-. Se usa `extractTalla`, que es la que ya
  * resuelve esto en toda la plataforma; escribir otra aca seria tener dos verdades. */
-import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0466';
+import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0467';
 
 export const NIVELES_RESERVA = ['H', 'G', 'F', 'E', 'D'];
 export const COLS_RESERVA = 12;

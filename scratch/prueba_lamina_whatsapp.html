@@ -1,0 +1,156 @@
+<!-- ¿QUE ES LO QUE ARRUINA LA LAMINA EN WHATSAPP?
+     Daniel, 27-ago-2026: "no se pixelea, pero se distorsiona un poco los bordes de los
+     numeros y de las letras". Esto no adivina: pasa la lamina de verdad por una tuberia
+     igual a la de WhatsApp -achicar a 1.600 y reencodar en JPEG- y compara tres caminos
+     con la misma lupa, para ver cual aguanta. -->
+<meta charset="utf-8">
+<title>Prueba: que aguanta WhatsApp</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{margin:0;padding:18px;background:var(--panel-deeper);font:13px/1.7 system-ui,sans-serif;color:var(--text-muted)}
+  h2{font-size:14px;color:var(--brand-light);margin:22px 0 8px}
+  .fila{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+  .caso{border:1px solid var(--border);border-radius:9px;padding:10px;background:var(--panel-solid)}
+  .caso b{display:block;font-size:12px;color:var(--text-strong);margin-bottom:2px}
+  .caso i{display:block;font-size:11px;font-style:normal;color:var(--text-muted);margin-bottom:7px}
+  canvas{display:block;border-radius:5px;image-rendering:pixelated}
+  #eco{white-space:pre-wrap;font-size:12px}
+</style>
+<div id="eco"></div>
+<div id="salida"></div>
+<script type="module">
+const eco = (t) => document.getElementById('eco').innerHTML += t + '\n';
+const CR = String.fromCharCode(13);
+/* Se sacan LAS DOS laminas: la de ahora y la de la versión anterior -guardada con
+   `git show HEAD:...` antes de tocar nada-. Así el antes/después es real y no una
+   imitación mía del código viejo. */
+async function laminaDe(archivo) {
+  const t = (await (await fetch(archivo + '?z=' + Date.now())).text()).split(CR).join('');
+  const a = t.indexOf('  const laminaUCA = (total, vacias, ocupadas) => {');
+  const b = t.indexOf('  const displayReporteUCA = (results) => {');
+  if (a < 0 || b < a) throw new Error('no se encontró laminaUCA en ' + archivo);
+  return new Function(t.slice(a, b) + ' return laminaUCA;')();
+}
+const laminaUCA = await laminaDe('../js/views/dashboard_v28.js');
+/* Para volver a comparar contra una version anterior, se la baja primero:
+      git show <commit>:js/views/dashboard_v28.js > scratch/_dashboard_antes.js
+   y se descomenta la linea de abajo. No se guarda en el repo: pesa 2,4 MB. */
+const laminaAntes = null;   // await laminaDe('./_dashboard_antes.js');
+document.documentElement.setAttribute('data-tema', 'pbi');
+
+/* Dibuja la lamina y devuelve el lienzo, cerrando la ventana. */
+function dibujar(cual) {
+  (cual || laminaUCA)(2486, 178, 2308);
+  const fondo = [...document.querySelectorAll('body > div')].pop();
+  const cv = fondo.querySelector('canvas');
+  const copia = document.createElement('canvas');
+  copia.width = cv.width; copia.height = cv.height;
+  copia.getContext('2d').drawImage(cv, 0, 0);
+  [...fondo.querySelectorAll('button')].pop().click();   // el último es Cerrar
+  return copia;
+}
+
+/* Lo que le hace WhatsApp a una foto: la achica si pasa de 1.600 por el lado largo
+   y la reencoda en JPEG. El JPEG guarda el COLOR a la mitad de resolucion que el
+   brillo, y ahi es donde se ensucian los bordes de un numero de color. */
+function porWhatsApp(cv, calidad) {
+  const TOPE = 1600;
+  const f = Math.min(1, TOPE / Math.max(cv.width, cv.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(cv.width * f); c.height = Math.round(cv.height * f);
+  const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
+  g.drawImage(cv, 0, 0, c.width, c.height);
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => res({ img: im, ancho: c.width });
+    im.src = c.toDataURL('image/jpeg', calidad);
+  });
+}
+
+/* Recorta el 93% y lo agranda para poder ver los bordes. */
+function lupa(img, anchoReal, disenoX, disenoY, disenoW, disenoH, veces) {
+  const f = anchoReal / 460;   // 460 es el ancho de diseño de la lamina
+  const c = document.createElement('canvas');
+  c.width = Math.round(disenoW * f * veces);
+  c.height = Math.round(disenoH * f * veces);
+  const g = c.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.drawImage(img, disenoX * f, disenoY * f, disenoW * f, disenoH * f, 0, 0, c.width, c.height);
+  return c;
+}
+
+/* Los tres caminos se comparan a la MISMA medida final, que es como se ven en el
+   celular. Lo que cambia es con cuánto material llegan y de qué color es el número. */
+/* Los cuatro caminos se comparan a la MISMA medida final, que es como se ven en el
+   celular. Todos salen de una captura de 1.013 salvo B, que es pegar la imagen entera.
+   Lo único que cambia entre A, C y D es el COLOR del número. */
+const CASOS = [
+  { n: 'ANTES · captura de pantalla', ancho: 1013, ver: laminaAntes, saltar: !laminaAntes },
+  { n: 'AHORA · captura de pantalla', ancho: 1013, ver: null },
+  { n: 'AHORA · botón Copiar + Ctrl+V', ancho: 0, ver: null }
+];
+
+const guardados = [];
+const base = dibujar();
+eco('la lámina se dibuja a ' + base.width + '×' + base.height + ' puntos');
+eco('WhatsApp achica a 1.600 por el lado largo y reencoda en JPEG (aquí, calidad 0,70)');
+
+const salida = document.getElementById('salida');
+for (const titulo of ['LA LÁMINA COMPLETA, DESPUÉS DE WHATSAPP', 'EL 93% CON LUPA (×3) — ahí se ven los bordes', 'LAS CIFRAS CON LUPA (×3)']) {
+  const h = document.createElement('h2'); h.textContent = titulo;
+  const f = document.createElement('div'); f.className = 'fila';
+  salida.appendChild(h); salida.appendChild(f);
+}
+const filas = [...document.querySelectorAll('.fila')];
+
+for (const caso of CASOS) {
+  if (caso.saltar) { eco('  ' + caso.n + ': se salta, no hay versión anterior bajada'); continue; }
+  /* Si el caso pide otro color, se cambia la variable del tema y se vuelve a dibujar:
+     así se compara la MISMA lámina, con lo único distinto que se quiere medir. */
+  let cv = caso.ver ? dibujar(caso.ver) : base;
+  if (caso.ancho) {                       // simula la captura de pantalla: se ve chico
+    const c = document.createElement('canvas');
+    c.width = caso.ancho; c.height = Math.round(base.height * caso.ancho / base.width);
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
+    g.drawImage(cv, 0, 0, c.width, c.height);   // desde la del caso, no desde la original
+    cv = c;
+  }
+  const { img, ancho } = await porWhatsApp(cv, 0.70);
+  guardados.push({ n: caso.n, img, ancho });
+  eco('  ' + caso.n + ': llega a WhatsApp con ' + cv.width + ' y sale con ' + ancho);
+
+  const caja = (fila, hijo) => {
+    const d = document.createElement('div'); d.className = 'caso';
+    d.innerHTML = '<b>' + caso.n + '</b><i>' + caso.d + '</i>';
+    d.appendChild(hijo); filas[fila].appendChild(d);
+  };
+  const chico = document.createElement('canvas');
+  chico.width = 430; chico.height = Math.round(img.height * 430 / img.width);
+  chico.getContext('2d').drawImage(img, 0, 0, chico.width, chico.height);
+  caja(0, chico);
+  caja(1, lupa(img, ancho, 150, 185, 160, 45, 3));   // el 93%
+  caja(2, lupa(img, ancho, 24, 74, 200, 66, 3));     // ANALIZADAS y VACÍAS
+}
+/* UNA SOLA IMAGEN CON LAS DOS, para poder mirarlas juntas. Los dos recortes se dibujan
+   al MISMO tamaño final: así es como se ven en el celular, una debajo de la otra. */
+const FIN_W = 660, FIN_H = 190;
+const comp = document.createElement('canvas');
+comp.width = FIN_W + 24;
+comp.height = (FIN_H + 34) * guardados.length + 12;
+const gc = comp.getContext('2d');
+gc.fillStyle = '#ffffff'; gc.fillRect(0, 0, comp.width, comp.height);
+gc.imageSmoothingEnabled = false;
+guardados.forEach((q, i) => {
+  const y = 10 + i * (FIN_H + 34);
+  gc.fillStyle = '#111'; gc.font = '700 15px system-ui, sans-serif'; gc.textAlign = 'left';
+  gc.fillText(q.n + '  —  ' + q.ancho + ' puntos al salir de WhatsApp', 12, y + 15);
+  const f = q.ancho / 460;
+  gc.drawImage(q.img, 148 * f, 180 * f, 180 * f, 52 * f, 12, y + 24, FIN_W, FIN_H);
+  gc.strokeStyle = '#ccc'; gc.strokeRect(12.5, y + 24.5, FIN_W, FIN_H);
+});
+window.__c = comp.toDataURL('image/png').split(',')[1];
+eco('\ncomparativa: ' + comp.width + '×' + comp.height + ' · ' + window.__c.length + ' caracteres');
+eco('listo');
+</script>
