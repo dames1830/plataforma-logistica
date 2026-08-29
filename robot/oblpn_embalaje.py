@@ -117,6 +117,43 @@ def etiqueta_que_exista(page, candidatas, prefijo="dijit_form_DateTextBox_"):
     return None
 
 
+def dias_pedidos():
+    """Los días que hay que bajar, en orden.
+
+    Sin nada, uno solo: el que decide `dia_pedido()` de picking_y_orden —ayer, o el que
+    diga `--dia`—. Con `--desde` y `--hasta` se bajan todos los de ese tramo.
+
+    Daniel, 29-ago-2026: *"no puedes hacer un solo comando para todos los días, del 24 al
+    28. Primero bajas uno, de ahí termina y comienza de nuevo con el otro"*. Se hacen
+    seguidos y EN LA MISMA SESION: entrar al WMS cuesta unos 20 segundos, y repetirlo
+    cinco veces es un minuto y medio tirado además de cinco veces la chance de que el
+    login falle.
+    """
+    def leer(bandera):
+        for i, a in enumerate(sys.argv):
+            if a.startswith(bandera + "="):
+                return a.split("=", 1)[1]
+            if a == bandera and i + 1 < len(sys.argv):
+                return sys.argv[i + 1]
+        return None
+
+    d1, d2 = leer("--desde"), leer("--hasta")
+    if not d1 and not d2:
+        return [po.dia_pedido()]
+    if not (d1 and d2):
+        po.log("--desde y --hasta van juntos. Se baja un solo día.", "WARN")
+        return [po.dia_pedido()]
+    try:
+        a = datetime.strptime(d1, "%d-%m-%Y").date()
+        b = datetime.strptime(d2, "%d-%m-%Y").date()
+    except ValueError:
+        po.log("Las fechas van como 24-08-2026. Se baja un solo día.", "WARN")
+        return [po.dia_pedido()]
+    if b < a:
+        a, b = b, a
+    return [a + timedelta(days=k) for k in range((b - a).days + 1)]
+
+
 def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
     """El OBLPN de UN día, con todos sus estados.
 
@@ -186,10 +223,14 @@ def run():
 
     a_la_vista = "--ver" in sys.argv
     sin_exportar = "--sin-exportar" in sys.argv
-    dia = po.dia_pedido()
+    dias = dias_pedidos()
 
     po.log("=" * 58)
-    po.log("OBLPN / EMBALAJE — %s" % dia.strftime("%d-%m-%Y"))
+    if len(dias) == 1:
+        po.log("OBLPN / EMBALAJE — %s" % dias[0].strftime("%d-%m-%Y"))
+    else:
+        po.log("OBLPN / EMBALAJE — %d días, del %s al %s"
+               % (len(dias), dias[0].strftime("%d-%m-%Y"), dias[-1].strftime("%d-%m-%Y")))
     po.log("=" * 58)
 
     base = wms._base_onedrive()
@@ -201,8 +242,8 @@ def run():
         os.makedirs(carpeta)
         po.log("Se creó la carpeta %s" % carpeta)
     # El mismo formato que viene usando Daniel a mano: "OBLPN 27-08.csv"
-    destino = os.path.join(carpeta, "OBLPN %s.csv" % dia.strftime("%d-%m"))
-    po.log("Va a quedar en -> %s" % destino)
+    destino_de = lambda d: os.path.join(carpeta, "OBLPN %s.csv" % d.strftime("%d-%m"))
+    po.log("Van a quedar en -> %s" % carpeta)
 
     # ESTE ROBOT CEDE EL PASO. Tarda 12 minutos y corre una vez al día; si el del picking
     # o el de los stocks está adentro, conviene esperarlos a que terminen antes que
@@ -213,7 +254,7 @@ def run():
         return 2
     bloqueo_wms.tomar("OBLPN de embalaje")
 
-    ok = False
+    hechos = []
     try:
         with sync_playwright() as p:
             # SIN channel="chrome". En el servidor no hay Chrome instalado y se usa el
@@ -234,18 +275,34 @@ def run():
             po.log("Sesión iniciada como %s" % wms.WMS_USER)
             time.sleep(15)
 
-            ok = wms.con_reintentos(
-                "OBLPN",
-                lambda: descargar_oblpn(page, destino, dia,
-                                        sin_exportar=sin_exportar, con_fotos=sin_exportar),
-                page)
+            # UN DIA POR VEZ, uno detrás del otro y sin salir de la sesión.
+            #
+            # SI UN DIA FALLA NO SE CORTAN LOS DEMAS. Bajando cinco de una, que el tercero
+            # se caiga y arrastrara al cuarto y al quinto sería peor que el problema: se
+            # sigue con los que quedan y al final se dice cuáles salieron y cuáles no.
+            for d in dias:
+                try:
+                    r = wms.con_reintentos(
+                        "OBLPN %s" % d.strftime("%d-%m"),
+                        lambda dd=d: descargar_oblpn(page, destino_de(dd), dd,
+                                                     sin_exportar=sin_exportar,
+                                                     con_fotos=sin_exportar),
+                        page)
+                except Exception as e:
+                    po.log("El %s no se pudo bajar: %s: %s"
+                           % (d.strftime("%d-%m"), type(e).__name__, str(e)[:160]), "WARN")
+                    r = False
+                hechos.append((d, bool(r)))
             navegador.close()
     finally:
         bloqueo_wms.soltar()
 
+    ok = bool(hechos) and all(r for _, r in hechos) and len(hechos) == len(dias)
     po.log("=" * 58)
-    po.log("OBLPN: %s" % ("bajado" if ok else "NO se bajo"))
-    po.log("LISTO en %.1f minutos" % ((time.time() - t0) / 60.0))
+    for d, r in hechos:
+        po.log("   %s  %s" % (d.strftime("%d-%m-%Y"), "bajado" if r else "NO se bajo"))
+    po.log("LISTO en %.1f minutos — %d de %d"
+           % ((time.time() - t0) / 60.0, sum(1 for _, r in hechos if r), len(dias)))
     po.log("=" * 58)
     return 0 if ok else 1
 
