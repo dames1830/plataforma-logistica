@@ -184,7 +184,12 @@ def run():
     ok = False
     try:
         with sync_playwright() as p:
-            navegador = p.chromium.launch(headless=not a_la_vista, channel="chrome")
+            # SIN channel="chrome". En el servidor no hay Chrome instalado y se usa el
+            # Chromium que trae Playwright, igual que los otros cinco robots. El
+            # channel="chrome" hace falta SOLO en la laptop de Daniel, donde Windows
+            # bloquea ese Chromium con una directiva de control de aplicaciones.
+            navegador = p.chromium.launch(headless=not a_la_vista,
+                                          slow_mo=300 if a_la_vista else 0)
             page = navegador.new_context().new_page()
             url = "https://a10.wms.ocs.oraclecloud.com/bata/index/"
             po.log("Entrando a %s" % url)
