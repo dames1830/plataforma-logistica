@@ -69,17 +69,23 @@ ETQ_MOD_DESDE = ("De registro de hora de modificación de LPN",
 ETQ_MOD_HASTA = ("A registro de hora de modificación de LPN",
                  "A registro de hora de modificación")
 
-# LA CREACION VA COMO PISO, no como filtro del día. Daniel puso 1 de enero de 2026; acá va
-# un año hacia atrás para que siga sirviendo al cambiar de año. Es amplio a propósito: lo
-# que selecciona de verdad es la modificación.
+# LA CREACION LLEVA SOLO EL "DE", Y EL "HASTA" VA VACIO. Daniel, 29-ago-2026: *"con la
+# fecha de creación solamente tienes que poner el desde, desde el primero de enero de dos
+# mil veintiséis, y en el hasta no va nada, va vacío"*.
 #
-# Estas dos etiquetas están COMPROBADAS: la corrida del 29-ago las encontró y las escribió
-# en el log. Las de modificación no, y por eso van con dos candidatas cada una.
+# ES UN PISO, no una ventana, y por eso la fecha NO se mueve con el tiempo: 1 de enero de
+# 2026, y siempre. Cada año que pase el piso queda más atrás, que es exactamente lo que
+# tiene que pasar. Calcularlo como "un año hacia atrás" —que fue mi primer intento— iría
+# dejando afuera los bultos viejos que todavía se mueven.
+#
+# Poner también el "hasta" recortaría por arriba sin ninguna necesidad: lo que elige el día
+# es la modificación. Como `limpiar_panel` deja el panel vacío, alcanza con no tocarlo.
+#
+# Esta etiqueta está COMPROBADA: la corrida del 29-ago la encontró y la escribió en el log.
+# Las de modificación no, y por eso van con dos candidatas cada una.
 ETQ_CRE_DESDE = ("De registro de hora de creación de LPN",
                  "De registro de hora de creación")
-ETQ_CRE_HASTA = ("A registro de hora de creación de LPN",
-                 "A registro de hora de creación")
-DIAS_PISO_CREACION = 365
+PISO_CREACION = "01/01/2026"
 
 CARPETA = "OBLPN Embalaje"       # la misma donde Daniel viene guardando los suyos
 # El archivo del 27-ago pesó 16,7 MB con 29.827 filas. El piso va bien abajo: lo que tiene
@@ -141,13 +147,10 @@ def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
 
     # El piso de creación va primero: si la pantalla dispara una búsqueda por su cuenta al
     # tocar un campo, que salga con el piso puesto y no con el histórico entero.
+    # SOLO EL "DE". El "hasta" de creación se deja vacío, tal como lo hace Daniel.
     cre_d = etiqueta_que_exista(page, ETQ_CRE_DESDE)
-    cre_h = etiqueta_que_exista(page, ETQ_CRE_HASTA)
-    if cre_d and cre_h:
-        piso = dia - timedelta(days=DIAS_PISO_CREACION)
-        po.poner_fecha_y_hora(page, cre_d, piso.strftime("%d/%m/%Y"), "0:00:00")
-        po.poner_fecha_y_hora(page, cre_h,
-                              (dia + timedelta(days=1)).strftime("%d/%m/%Y"), "0:00:00")
+    if cre_d:
+        po.poner_fecha_y_hora(page, cre_d, PISO_CREACION, "0:00:00")
     else:
         po.log("   El panel no tiene fecha de creación; se filtra solo por modificación")
 
