@@ -497,11 +497,26 @@ def total_paginas(page):
     y "0 / 0 Páginas" mientras busca. Son 125 filas por página, así que 116 páginas
     son unas 14.500 líneas: un día entero.
     """
+    # GANA EL PIE QUE TRAE LA HORA. En la pantalla del OBLPN hay varios elementos con la
+    # palabra "Páginas" y el último es uno pelado —"/ 282 Páginas"—, sin el "Recuperados
+    # <fecha> <hora>" de adelante. Sin la hora, dos búsquedas iguales se ven idénticas y
+    # `esperar_resultado` espera un cambio que nunca llega: el 29-ago-2026 el reintento del
+    # 27 se quedó 11 minutos mirando el mismo número, con el resultado ya en pantalla.
+    txt = ""
     try:
-        txt = page.locator("xpath=//*[contains(text(),'Páginas')]").filter(
-            visible=True).last.inner_text()
+        con_hora = page.locator(
+            "xpath=//*[contains(text(),'Páginas') and contains(text(),'Recuperados')]"
+        ).filter(visible=True)
+        if con_hora.count():
+            txt = con_hora.last.inner_text()
     except Exception:
-        return None, ""
+        txt = ""
+    if not txt:
+        try:
+            txt = page.locator("xpath=//*[contains(text(),'Páginas')]").filter(
+                visible=True).last.inner_text()
+        except Exception:
+            return None, ""
     txt = " ".join(txt.split())
     m = re.search(r"/\s*([\d.,]+)\s*P", txt)
     if not m:
