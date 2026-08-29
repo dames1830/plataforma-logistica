@@ -48,22 +48,36 @@ import picking_y_orden as po        # los ayudantes, ya probados contra el WMS
 # El nombre de la pantalla, tal cual lo grabó Daniel el 29-ago-2026.
 PANTALLA_OBLPN = "TRX_OBLPN/CARTON"
 
-# LAS ETIQUETAS DE LAS FECHAS VAN COMO LISTA DE CANDIDATAS, no como una sola.
+# ══ LAS DOS FECHAS, Y CUAL MANDA ═══════════════════════════════════════════════
 #
-# La grabación llegó a las fechas a fuerza de clics en el calendario, así que no dejó
-# escrito cómo se llaman los campos. Lo que sí se sabe es cómo se llama la COLUMNA en el
-# CSV que sale —"Registro de hora de creación de LPN"— y en el Detalle de Orden el panel
-# usa el mismo texto con "De " y "A " adelante.
+# SE FILTRA POR FECHA DE MODIFICACION, NO DE CREACION. Lo corrigió Daniel el 29-ago-2026
+# leyendo el log de la primera prueba: *"en la grabación yo puse fecha de creación el
+# primero de enero, y en la de modificación del 26 a las 00:00 al 27 a las 00:00. Veo en tu
+# comando que está seleccionando fecha de creación desde-hasta, cuando yo no lo hice así"*.
 #
-# Se prueban en orden y gana la primera que exista. Si no está ninguna, el robot ANOTA las
-# etiquetas que sí encontró en el panel, que es lo que hace falta para corregirlo en un
-# minuto en vez de volver a grabar.
-ETQ_DESDE = ("De registro de hora de creación de LPN",
-             "De registro de hora de creación",
-             "De fecha de creación")
-ETQ_HASTA = ("A registro de hora de creación de LPN",
-             "A registro de hora de creación",
-             "A fecha de creación")
+# Y no son lo mismo: el bulto se CREA cuando arranca el picking, pero se MODIFICA cada vez
+# que cambia de estado —empaquetado, cargado, enviado—. Para ver la actividad de un día hay
+# que mirar la modificación. Filtrando por creación se pierde lo que nació ayer y se movió
+# hoy, que es justamente lo que interesa medir.
+#
+# LA VENTANA VA DE DIA 00:00 A DIA+1 00:00, tal como la hace él: un día entero, sin el
+# 23:59:59 que deja fuera el último minuto.
+ETQ_MOD_DESDE = ("De registro de hora de modificación de LPN",
+                 "De registro de hora de modificación")
+ETQ_MOD_HASTA = ("A registro de hora de modificación de LPN",
+                 "A registro de hora de modificación")
+
+# LA CREACION VA COMO PISO, no como filtro del día. Daniel puso 1 de enero de 2026; acá va
+# un año hacia atrás para que siga sirviendo al cambiar de año. Es amplio a propósito: lo
+# que selecciona de verdad es la modificación.
+#
+# Estas dos etiquetas están COMPROBADAS: la corrida del 29-ago las encontró y las escribió
+# en el log. Las de modificación no, y por eso van con dos candidatas cada una.
+ETQ_CRE_DESDE = ("De registro de hora de creación de LPN",
+                 "De registro de hora de creación")
+ETQ_CRE_HASTA = ("A registro de hora de creación de LPN",
+                 "A registro de hora de creación")
+DIAS_PISO_CREACION = 365
 
 CARPETA = "OBLPN Embalaje"       # la misma donde Daniel viene guardando los suyos
 # El archivo del 27-ago pesó 16,7 MB con 29.827 filas. El piso va bien abajo: lo que tiene
@@ -115,16 +129,30 @@ def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
     po.abrir_panel(page)
     po.limpiar_panel(page)
 
-    etq_d = etiqueta_que_exista(page, ETQ_DESDE)
-    etq_h = etiqueta_que_exista(page, ETQ_HASTA)
-    if not etq_d or not etq_h:
-        po.log("No se encontraron los campos de fecha en el panel. Sin fecha esto traeria "
-               "el historico entero: no se baja.", "ERROR")
+    mod_d = etiqueta_que_exista(page, ETQ_MOD_DESDE)
+    mod_h = etiqueta_que_exista(page, ETQ_MOD_HASTA)
+    if not mod_d or not mod_h:
+        po.log("No estan los campos de fecha de MODIFICACION en el panel. Son los que "
+               "eligen el dia: sin ellos no se baja.", "ERROR")
         wms.captura(page, "oblpn_sin_campos_de_fecha")
         return False
 
-    po.poner_fecha_y_hora(page, etq_d, dia.strftime("%d/%m/%Y"), "0:00:00")
-    po.poner_fecha_y_hora(page, etq_h, dia.strftime("%d/%m/%Y"), "23:59:59")
+    # El piso de creación va primero: si la pantalla dispara una búsqueda por su cuenta al
+    # tocar un campo, que salga con el piso puesto y no con el histórico entero.
+    cre_d = etiqueta_que_exista(page, ETQ_CRE_DESDE)
+    cre_h = etiqueta_que_exista(page, ETQ_CRE_HASTA)
+    if cre_d and cre_h:
+        piso = dia - timedelta(days=DIAS_PISO_CREACION)
+        po.poner_fecha_y_hora(page, cre_d, piso.strftime("%d/%m/%Y"), "0:00:00")
+        po.poner_fecha_y_hora(page, cre_h,
+                              (dia + timedelta(days=1)).strftime("%d/%m/%Y"), "0:00:00")
+    else:
+        po.log("   El panel no tiene fecha de creación; se filtra solo por modificación")
+
+    # LA QUE ELIGE EL DIA: de las 00:00 del día a las 00:00 del siguiente.
+    po.poner_fecha_y_hora(page, mod_d, dia.strftime("%d/%m/%Y"), "0:00:00")
+    po.poner_fecha_y_hora(page, mod_h,
+                          (dia + timedelta(days=1)).strftime("%d/%m/%Y"), "0:00:00")
     if con_fotos:
         po.foto(page, "oblpn_filtros_puestos")
 
