@@ -233,7 +233,7 @@ def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
     if sin_exportar:
         po.log("MODO PRUEBA: no se exporta")
         return True
-    return po.exportar_csv(page, destino, MINIMO_KB)
+    return po.exportar_csv(page, destino, MINIMO_KB, minutos_armado=MINUTOS_ARMADO)
 
 
 def run():

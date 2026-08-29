@@ -222,6 +222,10 @@ MINIMO_KB_ORDEN = 300
 # 30 KB, no un mes flojo.
 MINIMO_KB_PENDIENTES = 300
 
+# CUANTO SE LE DA A ORACLE PARA ARMAR EL CSV, en minutos. Los reportes de siempre lo
+# arman en dos o tres; el OBLPN es mucho mas pesado y le pasa su propio valor.
+MINUTOS_ARMADO = 15
+
 _LOG = None
 _PASO = 0
 
@@ -630,11 +634,15 @@ def sello_exportacion(page):
         return ""
 
 
-def exportar_csv(page, destino, minimo_kb):
+def exportar_csv(page, destino, minimo_kb, minutos_armado=MINUTOS_ARMADO):
     """Exportar -> Exportar a CSV -> Aceptar -> esperar el sello nuevo -> Descargar.
 
     Es el mismo camino que baja el Stock Activo todos los días desde el 30-jul-2026,
-    con el seguro del sello agregado."""
+    con el seguro del sello agregado.
+
+    `minutos_armado` es cuánto se le da a Oracle para armar el archivo. Son 15 para los
+    reportes de siempre y 30 para el OBLPN, que es el más pesado: la corrida del 29-ago a
+    las 04:16 se rindió a los 15 minutos con el archivo todavía armándose."""
     import wms_automation_final as wms
 
     sello_viejo = sello_exportacion(page)
@@ -647,11 +655,11 @@ def exportar_csv(page, destino, minimo_kb):
     time.sleep(1)
     wms.boton_visible(page, "Aceptar").click(force=True)
 
-    log("Esperando a que el servidor arme el archivo (hasta 15 minutos)...")
+    log("Esperando a que el servidor arme el archivo (hasta %d minutos)..." % minutos_armado)
     inicio = time.time()
     aviso = 0
     sello_nuevo = ""
-    while time.time() - inicio < 900:
+    while time.time() - inicio < minutos_armado * 60:
         sello_nuevo = sello_exportacion(page)
         if sello_nuevo and sello_nuevo != sello_viejo:
             log("Archivo listo: %s  (%.1f min)" % (sello_nuevo, (time.time() - inicio) / 60.0))
@@ -662,8 +670,9 @@ def exportar_csv(page, destino, minimo_kb):
             log("   armando el archivo... %d min" % (transcurrido // 60))
         time.sleep(5)
     else:
-        log("Pasaron 15 minutos y la exportación sigue diciendo lo mismo (%s). No se "
-            "descarga nada: sería el archivo anterior." % (sello_viejo or "nada"), "ERROR")
+        log("Pasaron %d minutos y la exportación sigue diciendo lo mismo (%s). No se "
+            "descarga nada: sería el archivo anterior."
+            % (minutos_armado, sello_viejo or "nada"), "ERROR")
         wms.captura(page, "export_no_llego")
         return False
 
