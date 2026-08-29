@@ -33,6 +33,7 @@ import io
 import json
 import os
 import sys
+import urllib.parse
 import urllib.request
 from datetime import datetime
 
@@ -41,6 +42,13 @@ VERSIONES = BASE + "/api/sync/versiones"
 EVENTOS = BASE + "/api/eventos"
 ROBOT_TOKEN = os.environ.get("ROBOT_TOKEN", "")
 REGISTRO = os.path.join(os.environ.get("WMS_LOGS", r"C:\wms_scraping\logs"), "vigia.log")
+
+# WhatsApp por CallMeBot. Las dos variables se ponen a mano en el servidor, como
+# variables de MAQUINA, porque las tareas corren como SYSTEM y no ven las del usuario.
+# Si faltan, el vigia sigue funcionando igual: avisa al Log y no manda WhatsApp.
+CALLMEBOT = "https://api.callmebot.com/whatsapp.php"
+WA_KEY = os.environ.get("CALLMEBOT_KEY", "")
+WA_TEL = os.environ.get("CALLMEBOT_TEL", "")
 
 # Las áreas que publica el ancla. Si el robot corrió de verdad, las tres cambian.
 # Se miran las tres y no una sola: el 28-ago bajó el Stock Activo pero no la Reserva,
@@ -104,6 +112,24 @@ def revisar(turno):
     return (len(malas) == 0), malas
 
 
+def whatsapp(texto):
+    """Le escribe a Daniel al celular. Devuelve un texto corto para el registro.
+
+    El mensaje lleva SOLO estados y numeros: nunca la clave del WMS ni datos de stock.
+    El texto pasa por el servidor de CallMeBot, que es un tercero gratuito.
+    """
+    if not (WA_KEY and WA_TEL):
+        return "sin WhatsApp (faltan CALLMEBOT_KEY o CALLMEBOT_TEL)"
+    url = "%s?%s" % (CALLMEBOT, urllib.parse.urlencode(
+        {"phone": WA_TEL, "text": texto[:350], "apikey": WA_KEY}))
+    try:
+        with urllib.request.urlopen(url, timeout=30) as r:
+            return "WhatsApp enviado (%s)" % r.status
+    except Exception as e:
+        # Nunca revienta: si CallMeBot esta caido, el aviso del Log ya salio igual.
+        return "WhatsApp NO salio: %s" % type(e).__name__
+
+
 def avisar(eventos):
     cuerpo = json.dumps(eventos, ensure_ascii=False).encode("utf-8")
     p = urllib.request.Request(EVENTOS, data=cuerpo, method="POST",
@@ -127,16 +153,19 @@ def main():
         ev = [{"origen": "robot", "quien": "vigia_" + turno, "tipo": "ok",
                "accion": "El stock %s se publicó" % cfg["texto"],
                "detalle": "las 3 áreas del ancla están al día"}]
+        wa = "Stock %s OK. Piso, reserva y tallas al dia." % cfg["texto"]
         anotar("[%s] OK - las 3 areas al dia" % turno)
     else:
         detalle = " · ".join("%s: %s" % (q, p) for q, p in malas)
         ev = [{"origen": "robot", "quien": "vigia_" + turno, "tipo": "error",
                "accion": "NO se publicó el stock %s" % cfg["texto"],
                "detalle": detalle[:400]}]
+        wa = "FALTA el stock %s. %s" % (cfg["texto"], detalle)
         anotar("[%s] FALTA - %s" % (turno, detalle))
 
     if "--solo-ver" in sys.argv:
         print(json.dumps(ev, ensure_ascii=False, indent=1))
+        print("WhatsApp que se mandaria: %s" % wa)
         print("(sin enviar)")
         return 0
 
@@ -144,6 +173,14 @@ def main():
         anotar("aviso enviado: %s" % avisar(ev))
     except Exception as e:
         anotar("NO se pudo avisar a la plataforma: %s: %s" % (type(e).__name__, str(e)[:120]))
+
+    # El WhatsApp va DESPUES del Log, y a proposito: si CallMeBot esta caido —es un
+    # servicio gratuito de terceros—, el aviso de la plataforma ya quedo guardado.
+    # Con `--solo-fallas` solo escribe cuando algo falta, por si los OK diarios molestan.
+    if bien and "--solo-fallas" in sys.argv:
+        anotar("WhatsApp omitido (--solo-fallas y esta todo bien)")
+    else:
+        anotar(whatsapp(wa))
     return 0
 
 
