@@ -1,0 +1,4 @@
+# Los .bat se guardan TAL CUAL, sin convertir finales de linea.
+# Un .bat con finales de Unix cmd.exe no lo ejecuta: se queda mudo, sin error.
+# Paso el 29-ago-2026 con "GRABAR - Embalaje.bat", que llego con 92 lineas LF.
+*.bat -text
