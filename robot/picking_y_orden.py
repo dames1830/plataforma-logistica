@@ -189,12 +189,12 @@ ARCHIVO_PENDIENTES = "Detalle Orden Pendientes.csv"
 #
 #   Cargado  →  están pistoleando caja por caja por ruta. Está en el camión, PERO
 #               TODAVÍA SIN GUÍA. Ese "cargado" se le manda por interfaz a otro
-#               sistema, el CIS.
-#   Enviado  →  el CIS emitió la guía —el WMS no guía— y le devuelve una interfaz al
+#               sistema, el SIS.
+#   Enviado  →  el SIS emitió la guía —el WMS no guía— y le devuelve una interfaz al
 #               WMS que le cambia el estado. Esto sí es despachado.
 #
 # POR ESO ENTRAN LOS DOS Y NO SE MEZCLAN. Una orden parada en "Cargado" no es un
-# problema del almacén: el almacén ya hizo su parte y está esperando la guía del CIS.
+# problema del almacén: el almacén ya hizo su parte y está esperando la guía del SIS.
 # Contarla como "no despachada" le echaría al picking una demora que no es suya.
 #
 # NO SIRVE EL ESTADO DEL DETALLE DIARIO. Ese archivo trae las órdenes CREADAS ese día
@@ -981,7 +981,7 @@ def descargar_despachados(page, destino, hasta_dia, dias=DIAS_DESPACHADOS,
 
     POR QUE EXISTE. El fill rate del picking dice cuanto salio del rack; no dice si eso
     llego al camion. Con este archivo se puede preguntar, para cada orden que se pico,
-    si termino en "Enviado" -guiada por el CIS y despachada- o si sigue en el patio.
+    si termino en "Enviado" -guiada por el SIS y despachada- o si sigue en el patio.
 
     EL FILTRO VA DE "Cargado" A "Enviado", los dos ultimos de la cadena del WMS. Ver el
     bloque de arriba: son dos cosas distintas y el reporte no las puede juntar.
