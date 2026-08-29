@@ -43,6 +43,25 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 if AQUI not in sys.path:
     sys.path.insert(0, AQUI)
 
+# ══ DONDE ESTA EL NAVEGADOR, PARA PODER CORRER COMO TAREA ══════════════════════
+#
+# Playwright guarda su Chromium en el perfil del usuario. Corriendo como tarea programada
+# con SYSTEM el perfil es otro, no lo encuentra y el robot muere al abrir el navegador —
+# codigo 1, en segundos, justo despues de anunciar donde iba a guardar los archivos.
+#
+# Eso paso el 29-ago-2026 y costo cuatro intentos. La otra salida era crear la tarea con el
+# usuario Administrator, pero eso pide la contraseña de Windows y falla si no se acierta.
+# Apuntar la variable de entorno no pide nada y funciona con cualquier usuario.
+#
+# VA ANTES DE IMPORTAR NADA de playwright: la lee al arrancar, no al lanzar el navegador.
+if not os.environ.get("PLAYWRIGHT_BROWSERS_PATH"):
+    for _p in (os.path.join(os.environ.get("LOCALAPPDATA", ""), "ms-playwright"),
+               os.path.join("C:", os.sep, "Users", "Administrator", "AppData", "Local", "ms-playwright"),
+               os.path.join("C:", os.sep, "Users", "dames", "AppData", "Local", "ms-playwright")):
+        if _p and os.path.isdir(_p):
+            os.environ["PLAYWRIGHT_BROWSERS_PATH"] = _p
+            break
+
 import picking_y_orden as po        # los ayudantes, ya probados contra el WMS
 
 # El nombre de la pantalla, tal cual lo grabó Daniel el 29-ago-2026.
