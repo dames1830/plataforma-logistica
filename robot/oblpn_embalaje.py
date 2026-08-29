@@ -246,7 +246,8 @@ def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
 
     _, pie_antes = po.total_paginas(page)
     po.ejecutar_busqueda(page)
-    po.log("Esperando a que Oracle traiga las filas... (esta pantalla tarda 10 a 12 min)")
+    po.log("Esperando a que Oracle traiga las filas... (hasta %d min; despues, hasta %d "
+           "min mas para armar el archivo)" % (ESPERA_SEG // 60, MINUTOS_ARMADO))
     if not po.esperar_resultado(page, timeout_seg=ESPERA_SEG, distinto_de=pie_antes):
         wms.captura(page, "oblpn_sin_datos")
         raise TimeoutError("El OBLPN no trajo ninguna fila en %d minutos" % (ESPERA_SEG // 60))
