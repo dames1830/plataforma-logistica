@@ -60,8 +60,10 @@ PANTALLA_OBLPN = "TRX_OBLPN/CARTON"
 # que mirar la modificación. Filtrando por creación se pierde lo que nació ayer y se movió
 # hoy, que es justamente lo que interesa medir.
 #
-# LA VENTANA VA DE DIA 00:00 A DIA+1 00:00, tal como la hace él: un día entero, sin el
-# 23:59:59 que deja fuera el último minuto.
+# LA VENTANA ES DEL DIA 00:00 AL MISMO DIA 23:59, pedido por Daniel el 29-ago-2026: *"que
+# sea de 28 a las 00:00 hasta las 28 23:59"*. En la grabación lo había hecho del 26 00:00 al
+# 27 00:00 —un día de diferencia—, pero así el corte queda dentro del mismo día y no toma la
+# medianoche del siguiente.
 ETQ_MOD_DESDE = ("De registro de hora de modificación de LPN",
                  "De registro de hora de modificación")
 ETQ_MOD_HASTA = ("A registro de hora de modificación de LPN",
@@ -149,10 +151,9 @@ def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
     else:
         po.log("   El panel no tiene fecha de creación; se filtra solo por modificación")
 
-    # LA QUE ELIGE EL DIA: de las 00:00 del día a las 00:00 del siguiente.
+    # LA QUE ELIGE EL DIA: del día a las 00:00 al mismo día a las 23:59.
     po.poner_fecha_y_hora(page, mod_d, dia.strftime("%d/%m/%Y"), "0:00:00")
-    po.poner_fecha_y_hora(page, mod_h,
-                          (dia + timedelta(days=1)).strftime("%d/%m/%Y"), "0:00:00")
+    po.poner_fecha_y_hora(page, mod_h, dia.strftime("%d/%m/%Y"), "23:59:00")
     if con_fotos:
         po.foto(page, "oblpn_filtros_puestos")
 
