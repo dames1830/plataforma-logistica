@@ -117,6 +117,10 @@ CARPETA = "OBLPN Embalaje"       # la misma donde Daniel viene guardando los suy
 MINIMO_KB = 400
 # El WMS tarda 10 a 12 minutos en esta pantalla. Se le dan 20 de margen.
 ESPERA_SEG = 1200
+# Y TREINTA MINUTOS PARA ARMAR EL CSV, no los 15 de los otros reportes. Pedido por Daniel
+# el 29-ago-2026 viendo la corrida de las 04:16: Oracle seguía armando el archivo cuando el
+# robot se rindió y no descargó nada. Este es el más pesado de los cuatro, 11 a 16 MB.
+MINUTOS_ARMADO = 30
 
 
 def etiqueta_que_exista(page, candidatas, prefijo="dijit_form_DateTextBox_"):
