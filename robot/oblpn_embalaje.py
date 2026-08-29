@@ -87,6 +87,30 @@ ETQ_CRE_DESDE = ("De registro de hora de creación de LPN",
                  "De registro de hora de creación")
 PISO_CREACION = "01/01/2026"
 
+# ══ LA CARPETA DE ONEDRIVE SE BUSCA, NO SE HEREDA ══════════════════════════════
+#
+# Corriendo como tarea programada el usuario es SYSTEM, no Administrator, y su perfil es
+# otro: `~/OneDrive` no existe y la variable de entorno tampoco está. Por eso van también
+# las dos rutas fijas, igual que en `armar_pendiente.py`, `correo_guias.py` y
+# `generar_slotting.py`.
+#
+# Antes esto usaba `wms._base_onedrive()`, que vive solo en el servidor y no se puede
+# comprobar desde acá. La primera corrida como tarea programada murió con código 1 en
+# segundos, y ésta es la causa más probable.
+def base_onedrive():
+    """La carpeta `scraping Stock`, probando las rutas de las dos máquinas."""
+    for c in (os.environ.get("OneDrive"), os.environ.get("OneDriveCommercial"),
+              os.path.join(os.path.expanduser("~"), "OneDrive"),
+              os.path.join("C:", os.sep, "Users", "Administrator", "OneDrive"),
+              os.path.join("C:", os.sep, "Users", "dames", "OneDrive")):
+        if not c:
+            continue
+        ruta = os.path.join(c, "danielames.bata", "scraping Stock")
+        if os.path.isdir(ruta):
+            return ruta
+    return None
+
+
 CARPETA = "OBLPN Embalaje"       # la misma donde Daniel viene guardando los suyos
 # El archivo del 27-ago pesó 16,7 MB con 29.827 filas. El piso va bien abajo: lo que tiene
 # que delatar es una búsqueda mal filtrada de unos KB, no un domingo flojo.
@@ -233,10 +257,12 @@ def run():
                % (len(dias), dias[0].strftime("%d-%m-%Y"), dias[-1].strftime("%d-%m-%Y")))
     po.log("=" * 58)
 
-    base = wms._base_onedrive()
+    base = base_onedrive()
     if not base or not os.path.isdir(base):
-        po.log("No se encontró la carpeta de OneDrive (%s)." % base, "ERROR")
+        po.log("No se encontró la carpeta de OneDrive en ninguna de las rutas conocidas. "
+               "Corriendo como SYSTEM el perfil es otro; ver base_onedrive().", "ERROR")
         return 1
+    po.log("Carpeta de OneDrive: %s" % base)
     carpeta = os.path.join(base, CARPETA)
     if not os.path.isdir(carpeta):
         os.makedirs(carpeta)
