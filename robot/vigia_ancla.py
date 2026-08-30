@@ -50,14 +50,18 @@ CALLMEBOT = "https://api.callmebot.com/whatsapp.php"
 WA_KEY = os.environ.get("CALLMEBOT_KEY", "")
 WA_TEL = os.environ.get("CALLMEBOT_TEL", "")
 
-# Las áreas que publica el ancla. Si el robot corrió de verdad, las tres cambian.
-# Se miran las tres y no una sola: el 28-ago bajó el Stock Activo pero no la Reserva,
-# y mirar solo `almacenaje_activo` habría dado "todo bien" con media corrida.
+# Las áreas que el ancla reescribe SIEMPRE que corre, una por cada archivo que baja.
+# Se miran las dos y no una sola: el 28-ago bajó el Stock Activo pero no la Reserva, y
+# mirar solo `almacenaje_activo` habría dado "todo bien" con media corrida.
 AREAS = {
     "almacenaje_activo": "el stock del piso",
     "analisis_sku_reserva": "el stock de reserva",
-    "tabla_tallas": "la tabla de tallas",
 }
+
+# `tabla_tallas` NO va acá. El robot la republica solo cuando cambió —"Tabla de tallas sin
+# novedades: 24,726 SKU, no se vuelve a publicar"—, así que un día normal queda con la
+# fecha del día anterior. Exigirla dio una falsa alarma el 30-ago, con la corrida perfecta.
+# Un vigía que grita en falso se termina ignorando, que es justo lo que vino a evitar.
 
 ANCLAS = {
     "manana": {"hora": 7, "nombre": "ancla_manana", "texto": "de las 07:00"},
@@ -152,9 +156,9 @@ def main():
     if bien:
         ev = [{"origen": "robot", "quien": "vigia_" + turno, "tipo": "ok",
                "accion": "El stock %s se publicó" % cfg["texto"],
-               "detalle": "las 3 áreas del ancla están al día"}]
-        wa = "Stock %s OK. Piso, reserva y tallas al dia." % cfg["texto"]
-        anotar("[%s] OK - las 3 areas al dia" % turno)
+               "detalle": "las 2 áreas del ancla están al día"}]
+        wa = "Stock %s OK. Piso y reserva publicados." % cfg["texto"]
+        anotar("[%s] OK - las 2 areas al dia" % turno)
     else:
         detalle = " · ".join("%s: %s" % (q, p) for q, p in malas)
         ev = [{"origen": "robot", "quien": "vigia_" + turno, "tipo": "error",
