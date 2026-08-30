@@ -32,6 +32,7 @@ Nunca devuelve error: si el vigía se rompe, no puede tumbar nada.
 import io
 import json
 import os
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -128,10 +129,20 @@ def whatsapp(texto):
         {"phone": WA_TEL, "text": texto[:350], "apikey": WA_KEY}))
     try:
         with urllib.request.urlopen(url, timeout=30) as r:
-            return "WhatsApp enviado (%s)" % r.status
+            cuerpo = r.read().decode("utf-8", "replace")
     except Exception as e:
         # Nunca revienta: si CallMeBot esta caido, el aviso del Log ya salio igual.
         return "WhatsApp NO salio: %s" % type(e).__name__
+
+    # EL CODIGO HTTP NO ALCANZA. Con una apikey invalida CallMeBot contesta 203 y mete el
+    # motivo en el HTML: "APIKey is invalid". Mirando solo el codigo, el 29-ago di por
+    # enviado un mensaje que nunca salio. El exito de verdad dice "Message queued".
+    limpio = re.sub("<[^>]+>", " ", cuerpo)
+    limpio = " ".join(limpio.split())
+    if "queued" in limpio.lower():
+        return "WhatsApp enviado"
+    # La clave no se registra nunca; el cuerpo que devuelve CallMeBot no la trae.
+    return "WhatsApp RECHAZADO: %s" % limpio[:160]
 
 
 def avisar(eventos):
