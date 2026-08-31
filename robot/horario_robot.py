@@ -85,8 +85,15 @@ DE_FABRICA = {
     # los dos. Antes de esa hora el cuadro saldria con la demanda de anteayer.
     'sin_salida':   {'activa': True, 'hora': '07:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # El OBLPN del embalaje va a la MISMA hora y los MISMOS dias que `reportes`, que es
+    # el Detalle de Orden. Lo pidio Daniel el 30-ago-2026 y tiene sentido: los dos bajan
+    # el DIA DE AYER ya cerrado, asi que tienen que mirar la misma jornada. Si uno
+    # corriera a otra hora, un dia cualquiera cruzarian jornadas distintas.
+    # Los dos entran al WMS, y el candado los ordena: el segundo espera su turno.
+    'oblpn':        {'activa': True, 'hora': '06:45', 'dias': {'lun': True, 'mar': True, 'mie': True,
+                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
 }
-DIARIAS = ('ancla_noche', 'ancla_manana', 'reportes', 'respaldo', 'archivado', 'sin_salida')
+DIARIAS = ('ancla_noche', 'ancla_manana', 'reportes', 'respaldo', 'archivado', 'sin_salida', 'oblpn')
 
 
 def _leer_web(timeout=20):
