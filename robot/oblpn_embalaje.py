@@ -136,6 +136,10 @@ CARPETA = "OBLPN Embalaje"       # la misma donde Daniel viene guardando los suy
 MINIMO_KB = 400
 # El WMS tarda 10 a 12 minutos en esta pantalla. Se le dan 20 de margen.
 ESPERA_SEG = 1200
+
+# Los dias que Oracle contesto sin una sola fila. No son fallas: son domingos sin
+# operacion. Se anotan aca para que el resumen final los liste aparte de los bajados.
+SIN_MOVIMIENTO = set()
 # Y TREINTA MINUTOS PARA ARMAR EL CSV, no los 15 de los otros reportes. Pedido por Daniel
 # el 29-ago-2026 viendo la corrida de las 04:16: Oracle seguía armando el archivo cuando el
 # robot se rindió y no descargó nada. Este es el más pesado de los cuatro, 11 a 16 MB.
@@ -248,7 +252,30 @@ def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
     po.ejecutar_busqueda(page)
     po.log("Esperando a que Oracle traiga las filas... (hasta %d min; despues, hasta %d "
            "min mas para armar el archivo)" % (ESPERA_SEG // 60, MINUTOS_ARMADO))
-    if not po.esperar_resultado(page, timeout_seg=ESPERA_SEG, distinto_de=pie_antes):
+    hubo = po.esperar_resultado(page, timeout_seg=ESPERA_SEG, distinto_de=pie_antes)
+    _, pie_ahora = po.total_paginas(page)
+
+    # UN DIA SIN MOVIMIENTO NO ES UN ERROR: ES UN DOMINGO.
+    #
+    # El CD no embala todos los domingos. Pedirle uno al WMS costaba MEDIA HORA LARGA:
+    # el 30-ago-2026, con el 02-08, el intento 1 tardo 23 segundos y los dos reintentos
+    # 20 minutos cada uno. Cuarenta minutos para descubrir que no habia nada.
+    #
+    # Y la senal estaba a los 3 SEGUNDOS. Cuando no hay filas, el pie de la grilla dice
+    # "/ 1 Paginas" PELADO, sin el "Recuperados <fecha> <hora>" que trae siempre que hubo
+    # datos. El robot lo leia, lo daba por bueno, se iba a exportar, y el boton "Exportar
+    # a CSV" no aparecia nunca —porque no hay nada que exportar—, fallando a los 15
+    # segundos por un motivo que no tenia nada que ver con la causa real.
+    #
+    # Asi que se mira el pie: sin "Recuperados" no hay data, y se sale SIN reintentar.
+    # No se toca `esperar_resultado`, que la comparten los otros robots.
+    if "Recuperados" not in (pie_ahora or ""):
+        po.log("El %s no tiene movimiento: Oracle contesto \"%s\" y no hay nada que exportar."
+               % (dia.strftime("%d-%m-%Y"), (pie_ahora or "sin pie").strip()), "WARN")
+        SIN_MOVIMIENTO.add(dia.strftime("%d-%m-%Y"))
+        return True
+
+    if not hubo:
         wms.captura(page, "oblpn_sin_datos")
         raise TimeoutError("El OBLPN no trajo ninguna fila en %d minutos" % (ESPERA_SEG // 60))
     if con_fotos:
@@ -350,7 +377,14 @@ def run():
     ok = bool(hechos) and all(r for _, r in hechos) and len(hechos) == len(dias)
     po.log("=" * 58)
     for d, r in hechos:
-        po.log("   %s  %s" % (d.strftime("%d-%m-%Y"), "bajado" if r else "NO se bajo"))
+        clave = d.strftime("%d-%m-%Y")
+        if clave in SIN_MOVIMIENTO:
+            estado = "sin movimiento (no se embalo ese dia)"
+        elif r:
+            estado = "bajado"
+        else:
+            estado = "NO se bajo"
+        po.log("   %s  %s" % (clave, estado))
     po.log("LISTO en %.1f minutos — %d de %d"
            % ((time.time() - t0) / 60.0, sum(1 for _, r in hechos if r), len(dias)))
     po.log("=" * 58)
