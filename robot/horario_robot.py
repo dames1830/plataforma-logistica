@@ -60,7 +60,7 @@ DE_FABRICA = {
     'ancla_manana': {'activa': True, 'hora': '07:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'stock_hora':   {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}},
-    'picking_hora': {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}},
+    'picking_hora': {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00'},
     # EL TRIO PASO DE CADA HORA A CADA 2 HORAS el 30-ago-2026, medido: entre stock (9,2
     # min) y picking (16,9) tenian el WMS ocupado 10,4 horas al dia, y el picking de las
     # 06:50 terminaba 07:07 pisando al ancla de las 07:00. Ahora son 5,2 horas y ningun
@@ -108,7 +108,7 @@ DE_FABRICA = {
     # dos entran al WMS y solo cabe uno; si arrancara antes, uno perderia la vuelta.
     # Baja el dia EN CURSO (--hoy) y pisa el archivo en cada pase: siempre queda el
     # ultimo estado. El ultimo pase del dia es a las 22:40.
-    'oblpn_hora':   {'activa': True, 'minuto': 40, 'cadaMin': 120, 'dias': {d: True for d in DIAS}},
+    'oblpn_hora':   {'activa': True, 'minuto': 40, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00'},
 }
 DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida')
 
@@ -170,6 +170,17 @@ def _de(cfg, tarea):
     return base
 
 
+def _minutos_de(hhmm):
+    """'10:00' -> 600. None si no viene o no se entiende, que significa 'sin limite'."""
+    if not hhmm:
+        return None
+    try:
+        h, m = str(hhmm).split(':')
+        return int(h) * 60 + int(m)
+    except Exception:
+        return None
+
+
 def franja_actual(tarea, cfg, ahora=None):
     """
     En que franja horaria cae este momento, o None si no le toca.
@@ -197,10 +208,28 @@ def franja_actual(tarea, cfg, ahora=None):
         return None
 
     cada = max(1, int(c.get('cadaMin') or 60))
-    desde = int(c.get('minuto') or 0)
-    base = desde
+    arranque = int(c.get('minuto') or 0)
+
+    # LA VENTANA DE HORAS: `desde` y `hasta`, en HH:MM. Sin ellas corre las 24 horas.
+    #
+    # Daniel, 31-ago-2026: *"el avance de picking y el avance de embalaje a partir de las
+    # nueve de la noche ya no lo pongas. El 95% de ese flujo se saca del turno dia, de las
+    # ocho de la manana a las siete de la noche. Es en vano que le pongas a las doce de la
+    # noche un avance cuando solo se va a hacer un par de pares. Ahi nos ahorramos
+    # interfaz. Y a las ocho recien entra el turno dia: que avance vamos a dar si recien
+    # esta entrando"*.
+    #
+    # No se pierde lo del turno noche: el archivo del avance trae el dia entero desde las
+    # 00:00, asi que el primer pase de la manana ya lo incluye.
+    lim_i, lim_f = _minutos_de(c.get('desde')), _minutos_de(c.get('hasta'))
+
+    base = arranque
     while base < 24 * 60:
         if base <= minutos < base + VENTANA_MIN:
+            if lim_i is not None and base < lim_i:
+                return None
+            if lim_f is not None and base > lim_f:
+                return None
             return f'{ahora:%Y-%m-%d} {base // 60:02d}:{base % 60:02d}'
         base += cada
     return None
