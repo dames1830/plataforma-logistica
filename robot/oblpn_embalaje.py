@@ -252,30 +252,8 @@ def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
     po.ejecutar_busqueda(page)
     po.log("Esperando a que Oracle traiga las filas... (hasta %d min; despues, hasta %d "
            "min mas para armar el archivo)" % (ESPERA_SEG // 60, MINUTOS_ARMADO))
-    hubo = po.esperar_resultado(page, timeout_seg=ESPERA_SEG, distinto_de=pie_antes)
-    _, pie_ahora = po.total_paginas(page)
-
-    # UN DIA SIN MOVIMIENTO NO ES UN ERROR: ES UN DOMINGO.
-    #
-    # El CD no embala todos los domingos. Pedirle uno al WMS costaba MEDIA HORA LARGA:
-    # el 30-ago-2026, con el 02-08, el intento 1 tardo 23 segundos y los dos reintentos
-    # 20 minutos cada uno. Cuarenta minutos para descubrir que no habia nada.
-    #
-    # Y la senal estaba a los 3 SEGUNDOS. Cuando no hay filas, el pie de la grilla dice
-    # "/ 1 Paginas" PELADO, sin el "Recuperados <fecha> <hora>" que trae siempre que hubo
-    # datos. El robot lo leia, lo daba por bueno, se iba a exportar, y el boton "Exportar
-    # a CSV" no aparecia nunca —porque no hay nada que exportar—, fallando a los 15
-    # segundos por un motivo que no tenia nada que ver con la causa real.
-    #
-    # Asi que se mira el pie: sin "Recuperados" no hay data, y se sale SIN reintentar.
-    # No se toca `esperar_resultado`, que la comparten los otros robots.
-    if "Recuperados" not in (pie_ahora or ""):
-        po.log("El %s no tiene movimiento: Oracle contesto \"%s\" y no hay nada que exportar."
-               % (dia.strftime("%d-%m-%Y"), (pie_ahora or "sin pie").strip()), "WARN")
-        SIN_MOVIMIENTO.add(dia.strftime("%d-%m-%Y"))
-        return True
-
-    if not hubo:
+    paginas = po.esperar_resultado(page, timeout_seg=ESPERA_SEG, distinto_de=pie_antes)
+    if not paginas:
         wms.captura(page, "oblpn_sin_datos")
         raise TimeoutError("El OBLPN no trajo ninguna fila en %d minutos" % (ESPERA_SEG // 60))
     if con_fotos:
@@ -284,7 +262,28 @@ def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
     if sin_exportar:
         po.log("MODO PRUEBA: no se exporta")
         return True
-    return po.exportar_csv(page, destino, MINIMO_KB, minutos_armado=MINUTOS_ARMADO)
+    # UN DIA SIN MOVIMIENTO NO ES UN ERROR: ES UN DOMINGO O UN FERIADO.
+    #
+    # NO SE PUEDE MIRAR EL PIE DE LA GRILLA. En esta pantalla viene PELADO siempre
+    # —"/ 192 Paginas"—, sin el "Recuperados <fecha> <hora>" que traen las otras. Lo
+    # probe el 30-ago-2026 y marque seis dias buenos como vacios: el 03-08 trajo 192
+    # paginas de data y lo di por domingo.
+    #
+    # LA SENAL DE VERDAD es que el boton "Exportar a CSV" NO APARECE cuando no hay
+    # filas, porque no hay nada que exportar. Cuesta 15 segundos descubrirlo, contra
+    # los 40 minutos que costaba antes reintentando tres veces.
+    #
+    # Se exigen las DOS cosas —una sola pagina Y sin boton— para no confundir un dia
+    # flojo con uno vacio: un dia con pocas filas igual exporta sin problema.
+    try:
+        return po.exportar_csv(page, destino, MINIMO_KB, minutos_armado=MINUTOS_ARMADO)
+    except Exception as e:
+        if paginas <= 1 and "Exportar" in str(e):
+            po.log("El %s no tiene movimiento: una sola pagina y sin boton de exportar. "
+                   "No se reintenta." % dia.strftime("%d-%m-%Y"), "WARN")
+            SIN_MOVIMIENTO.add(dia.strftime("%d-%m-%Y"))
+            return True
+        raise
 
 
 def run():
