@@ -59,12 +59,15 @@ DE_FABRICA = {
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'ancla_manana': {'activa': True, 'hora': '07:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
-    'stock_hora':   {'activa': True, 'minuto': 30, 'cadaMin': 60, 'dias': {d: True for d in DIAS}},
-    'picking_hora': {'activa': True, 'minuto': 50, 'cadaMin': 60, 'dias': {d: True for d in DIAS}},
-    # El mapa de calor se dibuja con el stock que publica `stock_hora` al minuto 30, y
-    # esa corrida tarda unos 8 minutos. Por eso va al 45: ya esta el stock nuevo y no se
-    # cruza con el picking, que entra al 50.
-    'mapa_hora':    {'activa': True, 'minuto': 45, 'cadaMin': 60, 'dias': {d: True for d in DIAS}},
+    'stock_hora':   {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}},
+    'picking_hora': {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}},
+    # EL TRIO PASO DE CADA HORA A CADA 2 HORAS el 30-ago-2026, medido: entre stock (9,2
+    # min) y picking (16,9) tenian el WMS ocupado 10,4 horas al dia, y el picking de las
+    # 06:50 terminaba 07:07 pisando al ancla de las 07:00. Ahora son 5,2 horas y ningun
+    # choque. Van como bloque y en punto, que se recuerda de memoria a las 3 de la manana.
+    # El mapa se dibuja con el stock que `stock_hora` acaba de publicar y esa corrida
+    # tarda hasta 9,2 minutos: por eso va 15 despues, no antes. El picking, 20.
+    'mapa_hora':    {'activa': True, 'minuto': 15, 'cadaMin': 120, 'dias': {d: True for d in DIAS}},
     # A las 06:45: el turno noche cierra 06:30 y el de la manana entra 08:00, asi que
     # el almacen esta quieto y el dia de ayer ya cerro. Estaba a las 08:00 y eso
     # empujaba a SKUs sin salida fuera de la manana.
