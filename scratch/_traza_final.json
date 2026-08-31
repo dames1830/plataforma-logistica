@@ -1,0 +1,540 @@
+{
+ "bulto": {
+  "lpn": "508004111790",
+  "tipo": "H30",
+  "estado": "Enviado",
+  "ruta": "PLAZA NORTE",
+  "tienda": "50208",
+  "lineas": 18,
+  "pares": 30.0,
+  "ordenes": [
+   "8001839",
+   "8003497"
+  ],
+  "lineas_de_1_par": 7,
+  "recorrido_min": 28.0,
+  "primera_parada": "10:06:28",
+  "ultima_parada": "10:33:58",
+  "detalle": [
+   {
+    "orden": "8003497",
+    "sku": "5553848-1-03",
+    "desc": "MOCASIN PAULINA CAMEL BATA COMFIT-1-34",
+    "pares": 2.0,
+    "ubic": "SEL-06-13-B-01",
+    "hora": "10:06:28",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "5616911-1-09",
+    "desc": "WEDGE/PLATFORM HEIGHT 3 - CUYLER - BLACK/NEGRO - BATA COMFIT-1-40",
+    "pares": 2.0,
+    "ubic": "SEL-08-19-A-01",
+    "hora": "10:12:14",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "5616911-1-08",
+    "desc": "WEDGE/PLATFORM HEIGHT 3 - CUYLER - BLACK/NEGRO - BATA COMFIT-1-39",
+    "pares": 3.0,
+    "ubic": "SEL-08-19-B-01",
+    "hora": "10:12:24",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "6616466-1-07",
+    "desc": "WEDGE/PLATFORM HEIGHT 3 - CARLA - BLACK/NEGRO - BATA COMFIT-1-38",
+    "pares": 2.0,
+    "ubic": "SEL-07-04-A-01",
+    "hora": "10:18:40",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "6616466-1-08",
+    "desc": "WEDGE/PLATFORM HEIGHT 3 - CARLA - BLACK/NEGRO - BATA COMFIT-1-39",
+    "pares": 2.0,
+    "ubic": "SEL-07-04-B-01",
+    "hora": "10:18:49",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "6616466-1-09",
+    "desc": "WEDGE/PLATFORM HEIGHT 3 - CARLA - BLACK/NEGRO - BATA COMFIT-1-40",
+    "pares": 2.0,
+    "ubic": "SEL-07-04-C-01",
+    "hora": "10:19:07",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "6116913-1-07",
+    "desc": "PUMPS TACO 3 - LUNA - BLACK/NEGRO - BATA-1-38",
+    "pares": 2.0,
+    "ubic": "SEL-07-03-A-01",
+    "hora": "10:19:37",
+    "es_nuestro": true,
+    "marca": "001_BATA"
+   },
+   {
+    "orden": "8003497",
+    "sku": "6616466-1-06",
+    "desc": "WEDGE/PLATFORM HEIGHT 3 - CARLA - BLACK/NEGRO - BATA COMFIT-1-37",
+    "pares": 2.0,
+    "ubic": "SEL-07-01-A-01",
+    "hora": "10:20:05",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "6616466-1-05",
+    "desc": "WEDGE/PLATFORM HEIGHT 3 - CARLA - BLACK/NEGRO - BATA COMFIT-1-36",
+    "pares": 2.0,
+    "ubic": "SEL-07-01-B-01",
+    "hora": "10:20:21",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "5616325-1-08",
+    "desc": "FLAT - CARISSLY - BLACK/NEGRO - BATA COMFIT-1-39",
+    "pares": 1.0,
+    "ubic": "SEL-09-17-C-01",
+    "hora": "10:25:24",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "5616325-1-06",
+    "desc": "FLAT - CARISSLY - BLACK/NEGRO - BATA COMFIT-1-37",
+    "pares": 1.0,
+    "ubic": "SEL-09-18-C-01",
+    "hora": "10:25:31",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "6516312-1-04",
+    "desc": "MOCCASINS - ANNA - BLACK/NEGRO - BATA COMFIT-1-35",
+    "pares": 2.0,
+    "ubic": "SEL-11-05-A-01",
+    "hora": "10:30:23",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "5613325-1-07",
+    "desc": "FLAT - CARISSLY - CAMEL/CAMEL - BATA COMFIT-1-38",
+    "pares": 1.0,
+    "ubic": "SEL-11-04-A-01",
+    "hora": "10:31:02",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "5613325-1-06",
+    "desc": "FLAT - CARISSLY - CAMEL/CAMEL - BATA COMFIT-1-37",
+    "pares": 1.0,
+    "ubic": "SEL-11-04-B-01",
+    "hora": "10:31:13",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8003497",
+    "sku": "5613325-1-05",
+    "desc": "FLAT - CARISSLY - CAMEL/CAMEL - BATA COMFIT-1-36",
+    "pares": 1.0,
+    "ubic": "SEL-11-04-C-01",
+    "hora": "10:31:23",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   },
+   {
+    "orden": "8001839",
+    "sku": "6611310-1-09",
+    "desc": "WEDGE/PLATFORM HEIGHT 5 - YORK50 S - WHITE/BLANCO - BATA-1-40",
+    "pares": 1.0,
+    "ubic": "SEL-13-08-B-01",
+    "hora": "10:32:35",
+    "es_nuestro": false,
+    "marca": "001_BATA"
+   },
+   {
+    "orden": "8001839",
+    "sku": "6611310-1-08",
+    "desc": "WEDGE/PLATFORM HEIGHT 5 - YORK50 S - WHITE/BLANCO - BATA-1-39",
+    "pares": 2.0,
+    "ubic": "SEL-13-08-C-01",
+    "hora": "10:32:47",
+    "es_nuestro": false,
+    "marca": "001_BATA"
+   },
+   {
+    "orden": "8003497",
+    "sku": "5616493-1-08",
+    "desc": "FLAT - CICILY - BLACK - BATA COMFIT-1-39",
+    "pares": 1.0,
+    "ubic": "SEL-13-16-B-01",
+    "hora": "10:33:58",
+    "es_nuestro": false,
+    "marca": "003_BATA COMFIT"
+   }
+  ],
+  "creado": "27/08/2026 12:10:55",
+  "empacado": "27/08/2026 12:11:07",
+  "etiqueta": "27/08/2026 12:11:33",
+  "cargado": "28/08/2026 10:48:24",
+  "carga": "OS5000800030218",
+  "user_pick": "rvalladares",
+  "user_lpn": "rsantibanez2",
+  "user_asig": "chuanca3",
+  "user_carga": "tquispe",
+  "ejecucion": "WV5000800046897"
+ },
+ "linea": {
+  "sku": "6116913-1-07",
+  "desc": "PUMPS TACO 3 - LUNA - BLACK/NEGRO - BATA-1-38",
+  "talla": "38",
+  "pares": 2.0,
+  "ubic": "SEL-07-03-A-01",
+  "picado": "27/08/2026 10:19:37",
+  "jer": [
+   "WOMEN",
+   "DRESS",
+   "PUMPS TACO 3",
+   "001_BATA"
+  ],
+  "barra": "1611691310065"
+ },
+ "orden": {
+  "orden": "8003497",
+  "tipo": "Aldeas Bata",
+  "estado": "Creada",
+  "tienda": "50208",
+  "solicitada": 2.0,
+  "creada": "26/08/2026 17:29:20",
+  "requerida": "26/08/2026",
+  "skus": 246,
+  "pares": 473.0
+ },
+ "pick": {
+  "tarea": "",
+  "ejecucion": "WV5000800046897",
+  "de_ubic": "SEL-07-03-A-01",
+  "usuario": "rvalladares",
+  "hora": "27/08/2026 10:19:37",
+  "creador": "chuanca3",
+  "orig": 2.0,
+  "emp": 2.0
+ },
+ "asn": [
+  {
+   "envio": "20260873001BA.6116913",
+   "estado": "Verificado",
+   "tipo": "IMP",
+   "enviado": 380.0,
+   "recibido": 380.0,
+   "fecha_envio": "06/08/2026",
+   "verificado": "15/08/2026 08:17:27",
+   "proveedor": "2026000220",
+   "ubicacion": "",
+   "origen": "",
+   "marca": "001_BATA",
+   "desc": "PUMPS TACO 3 - LUNA - BLACK/NEGRO - BATA-1-38"
+  },
+  {
+   "envio": "20260873101VM.6116913",
+   "estado": "Verificado",
+   "tipo": "IMP",
+   "enviado": 6.0,
+   "recibido": 6.0,
+   "fecha_envio": "06/08/2026",
+   "verificado": "15/08/2026 09:34:55",
+   "proveedor": "2026000264",
+   "ubicacion": "",
+   "origen": "",
+   "marca": "001_BATA",
+   "desc": "PUMPS TACO 3 - LUNA - BLACK/NEGRO - BATA-1-38"
+  },
+  {
+   "envio": "20260873101CA.6116913",
+   "estado": "Verificado",
+   "tipo": "IMP",
+   "enviado": 12.0,
+   "recibido": 12.0,
+   "fecha_envio": "06/08/2026",
+   "verificado": "15/08/2026 09:34:57",
+   "proveedor": "2026000264",
+   "ubicacion": "",
+   "origen": "",
+   "marca": "001_BATA",
+   "desc": "PUMPS TACO 3 - LUNA - BLACK/NEGRO - BATA-1-38"
+  },
+  {
+   "envio": "20260873101BA.6116913",
+   "estado": "Verificado",
+   "tipo": "IMP",
+   "enviado": 640.0,
+   "recibido": 640.0,
+   "fecha_envio": "06/08/2026",
+   "verificado": "15/08/2026 09:34:59",
+   "proveedor": "2026000264",
+   "ubicacion": "",
+   "origen": "",
+   "marca": "001_BATA",
+   "desc": "PUMPS TACO 3 - LUNA - BLACK/NEGRO - BATA-1-38"
+  }
+ ],
+ "stock": [
+  {
+   "area": "SEL",
+   "ubicacion": "SEL-07-03-C-01",
+   "cant": 245.0,
+   "asignada": 0.0,
+   "tipo_ubic": "Active",
+   "modificado": "25/08/2026 21:42:46"
+  },
+  {
+   "area": "SEL",
+   "ubicacion": "SEL-07-03-B-01",
+   "cant": 44.0,
+   "asignada": 0.0,
+   "tipo_ubic": "Active",
+   "modificado": "28/08/2026 17:13:11"
+  },
+  {
+   "area": "AND",
+   "ubicacion": "AND-06-01-B",
+   "cant": 2.0,
+   "asignada": 0.0,
+   "tipo_ubic": "Active",
+   "modificado": "09/07/2026 14:10:17"
+  },
+  {
+   "area": "SEL",
+   "ubicacion": "SEL-07-03-A-01",
+   "cant": 2.0,
+   "asignada": 0.0,
+   "tipo_ubic": "Active",
+   "modificado": "28/08/2026 17:03:00"
+  },
+  {
+   "area": "AND",
+   "ubicacion": "AND-17-08-D",
+   "cant": 1.0,
+   "asignada": 0.0,
+   "tipo_ubic": "Active",
+   "modificado": "26/05/2026 15:37:29"
+  },
+  {
+   "area": "AND",
+   "ubicacion": "AND-17-07-B",
+   "cant": 1.0,
+   "asignada": 0.0,
+   "tipo_ubic": "Active",
+   "modificado": "26/05/2026 15:25:32"
+  },
+  {
+   "area": "AND",
+   "ubicacion": "AND-17-09-B",
+   "cant": 1.0,
+   "asignada": 0.0,
+   "tipo_ubic": "Active",
+   "modificado": "26/05/2026 16:28:29"
+  }
+ ],
+ "sku_totales": {
+  "picking": {
+   "lineas": 93,
+   "pares": 157.0,
+   "tiendas": 85,
+   "usuarios": [
+    "VLLONTOP",
+    "aflores",
+    "agutierrezc",
+    "alajara2",
+    "avillalobos3",
+    "bleon",
+    "cchavez",
+    "chuanca3",
+    "dciriaco",
+    "fsalazar3",
+    "ggonzales3",
+    "hcrespo",
+    "jcruzc",
+    "jlunae",
+    "jportal",
+    "jrojas2",
+    "kcayo",
+    "mballeta",
+    "mhuillca2",
+    "nrimarachin3",
+    "ogarcia2",
+    "pquispe3",
+    "rlajara2",
+    "rluna3",
+    "rvalladares",
+    "zdavila"
+   ],
+   "ubicaciones": [
+    "SEL-07-03-A-01",
+    "SEL-07-03-B-01",
+    "SEL-07-03-C-01"
+   ]
+  },
+  "bultos": {
+   "bultos": 149,
+   "pares": 234.0,
+   "enviados": 127,
+   "en_patio": 18,
+   "pares_patio": 35.0,
+   "rutas": [
+    "AGUSTINO",
+    "BELLAVISTA - FAUCETT",
+    "CENTRO LIMA",
+    "CHORRILLOS",
+    "CHOSICA-HUAYCAN",
+    "CIVICO - MINKA",
+    "COMAS",
+    "CRUZ 2",
+    "DIVAL",
+    "GAMARRA",
+    "HUANCAVELICA",
+    "ITTSA",
+    "ITTSA 2",
+    "JESUS M - SLVRRY",
+    "JR UNION",
+    "LOG",
+    "LOG - ARQ",
+    "MIRAFLORES",
+    "OLIVOS",
+    "PLAZA NORTE",
+    "PRO",
+    "PRVMERA-CANADA",
+    "PUENTE PIEDRA",
+    "PURUCHUCO - MOLINA",
+    "RUTA CALLAO",
+    "SAN JUAN L",
+    "SAN JUAN MIRAFLORES",
+    "SAN MARITIN",
+    "SAN MIGUEL",
+    "SANTA ANITA",
+    "SANTA CLARA",
+    "TOSCANO",
+    "TOSCANO - SUR CHICO",
+    "TRANSA",
+    "VILLA"
+   ]
+  }
+ },
+ "linea_tiempo": [
+  {
+   "hito": "Salio del proveedor",
+   "cuando": "06/08/2026",
+   "dia": "jueves",
+   "archivo": "ASN Revisar.csv",
+   "quien": "4 envios IMP",
+   "ts": "2026-08-06T00:00:00"
+  },
+  {
+   "hito": "Verificado en el CD",
+   "cuando": "15/08/2026 08:17:27",
+   "dia": "sabado",
+   "archivo": "ASN Revisar.csv",
+   "quien": "1.038 de 1.038 pares",
+   "ts": "2026-08-15T08:17:27"
+  },
+  {
+   "hito": "Comercial lo pidio",
+   "cuando": "26/08/2026 17:29:20",
+   "dia": "miercoles",
+   "archivo": "Detalle Orden",
+   "quien": "orden 8003497",
+   "ts": "2026-08-26T17:29:20"
+  },
+  {
+   "hito": "Lo picaron del rack",
+   "cuando": "27/08/2026 10:19:37",
+   "dia": "jueves",
+   "archivo": "Picking / OBLPN",
+   "quien": "rvalladares",
+   "ts": "2026-08-27T10:19:37"
+  },
+  {
+   "hito": "Se cerro el bulto",
+   "cuando": "27/08/2026 12:11:07",
+   "dia": "jueves",
+   "archivo": "OBLPN",
+   "quien": "LPN 508004111790",
+   "ts": "2026-08-27T12:11:07"
+  },
+  {
+   "hito": "Se imprimio la etiqueta",
+   "cuando": "27/08/2026 12:11:33",
+   "dia": "jueves",
+   "archivo": "OBLPN",
+   "quien": "",
+   "ts": "2026-08-27T12:11:33"
+  },
+  {
+   "hito": "Subio al camion",
+   "cuando": "28/08/2026 10:48:24",
+   "dia": "viernes",
+   "archivo": "OBLPN",
+   "quien": "tquispe",
+   "ts": "2026-08-28T10:48:24"
+  }
+ ],
+ "tramos": [
+  {
+   "t": "Viaje del proveedor al CD",
+   "d": 9,
+   "u": "dias"
+  },
+  {
+   "t": "Esperando en el piso a que lo pidan",
+   "d": 11,
+   "u": "dias"
+  },
+  {
+   "t": "Del pedido al picking",
+   "h": 16.8
+  },
+  {
+   "t": "Picar y cerrar el bulto",
+   "h": 1.9
+  },
+  {
+   "t": "Esperando el camion",
+   "h": 22.6
+  }
+ ],
+ "total_h": 41.3,
+ "total_dias_cd": 13,
+ "total_dias_todo": 22,
+ "tienda": {
+  "cdg": "50208",
+  "nombre": "B PLAZA NORTE",
+  "zona": "LIMA",
+  "turno": "NOCHE",
+  "ruta2": "R028",
+  "dias": "LUNES - MIERCOLES - VIERNES"
+ }
+}

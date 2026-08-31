@@ -1,0 +1,326 @@
+{
+ "asn": {
+  "archivo": "ASN Revisar.csv",
+  "filas": 31070,
+  "columnas": 44,
+  "estados": {
+   "En tránsito": {
+    "lineas": 19130,
+    "enviado": 968771.0,
+    "recibido": 0.0
+   },
+   "Verificado": {
+    "lineas": 11523,
+    "enviado": 1462653.0,
+    "recibido": 1462746.0
+   },
+   "Recepción completa": {
+    "lineas": 82,
+    "enviado": 3277.0,
+    "recibido": 3277.0
+   },
+   "Recepción iniciada": {
+    "lineas": 325,
+    "enviado": 22098.0,
+    "recibido": 3191.0
+   },
+   "Cancelado": {
+    "lineas": 10,
+    "enviado": 702.0,
+    "recibido": 0.0
+   }
+  },
+  "tipos": {
+   "DEV": {
+    "enviado": 32086.0,
+    "recibido": 3788.0
+   },
+   "NAC": {
+    "enviado": 985921.0,
+    "recibido": 985130.0
+   },
+   "IMP": {
+    "enviado": 1363597.0,
+    "recibido": 480296.0
+   }
+  },
+  "en_transito_futuro": 765238.0,
+  "ola": [
+   [
+    "2026-09-05",
+    143064.0
+   ],
+   [
+    "2026-09-28",
+    56872.0
+   ],
+   [
+    "2026-09-20",
+    51682.0
+   ],
+   [
+    "2026-08-31",
+    46449.0
+   ],
+   [
+    "2026-10-03",
+    45974.0
+   ],
+   [
+    "2026-09-26",
+    43878.0
+   ]
+  ],
+  "vencidas_lineas": 10582,
+  "vencidas_unid": 203533.0,
+  "mas_vieja": "29/01/2025",
+  "dias_mas_vieja": 577
+ },
+ "pedido": {
+  "archivo": "Detalle Orden <d>-<m>.csv",
+  "dias": [
+   "24-08",
+   "25-08",
+   "26-08",
+   "27-08",
+   "28-08"
+  ],
+  "lineas_unicas": 75541,
+  "ordenes": 4746,
+  "estados": {
+   "Enviado": {
+    "lineas": 1942,
+    "orig": 2227.0,
+    "emp": 2190.0
+   },
+   "Creada": {
+    "lineas": 72836,
+    "orig": 138532.0,
+    "emp": 0.0
+   },
+   "Cancelado": {
+    "lineas": 66,
+    "orig": 71.0,
+    "emp": 0.0
+   },
+   "Parcialmente asignado": {
+    "lineas": 275,
+    "orig": 288.0,
+    "emp": 253.0
+   },
+   "Empaquetado": {
+    "lineas": 106,
+    "orig": 27920.0,
+    "emp": 27918.0
+   },
+   "Asignado": {
+    "lineas": 38,
+    "orig": 29844.0,
+    "emp": 0.0
+   },
+   "En empaquetado": {
+    "lineas": 110,
+    "orig": 128.0,
+    "emp": 124.0
+   },
+   "Cargado": {
+    "lineas": 168,
+    "orig": 236.0,
+    "emp": 236.0
+   }
+  }
+ },
+ "pendiente": {
+  "archivo": "Detalle Orden Pendientes.csv",
+  "filas": 83299,
+  "estados": {
+   "Parcialmente asignado": {
+    "lineas": 55645,
+    "unid": 48728.0
+   },
+   "Creada": {
+    "lineas": 27654,
+    "unid": 113776.0
+   }
+  },
+  "edad": {
+   "0-7 dias": {
+    "lineas": 64673,
+    "unid": 62152.0
+   },
+   "8-30": {
+    "lineas": 17867,
+    "unid": 44293.0
+   },
+   "31-90": {
+    "lineas": 287,
+    "unid": 4454.0
+   },
+   "91-180": {
+    "lineas": 200,
+    "unid": 18698.0
+   },
+   "+180": {
+    "lineas": 272,
+    "unid": 32907.0
+   }
+  }
+ },
+ "picking": {
+  "archivo": "Picking <d>-<m>.csv",
+  "dias": {
+   "24-08": {
+    "filas": 22148,
+    "finalizadas": 13244,
+    "orig": 360757.0,
+    "emp": 110818.0
+   },
+   "25-08": {
+    "filas": 20770,
+    "finalizadas": 11865,
+    "orig": 309129.0,
+    "emp": 96084.0
+   },
+   "26-08": {
+    "filas": 25181,
+    "finalizadas": 15052,
+    "orig": 130486.0,
+    "emp": 74213.0
+   },
+   "27-08": {
+    "filas": 27141,
+    "finalizadas": 17381,
+    "orig": 189683.0,
+    "emp": 78105.0
+   },
+   "28-08": {
+    "filas": 20112,
+    "finalizadas": 14944,
+    "orig": 117320.0,
+    "emp": 62206.0
+   }
+  },
+  "estados": {
+   "Finalizada": {
+    "lineas": 72486,
+    "orig": 1107375.0,
+    "emp": 421426.0
+   },
+   "Cancelado": {
+    "lineas": 42860,
+    "orig": 72478.0,
+    "emp": 0.0
+   },
+   "Asignado": {
+    "lineas": 2,
+    "orig": 364.0,
+    "emp": 0.0
+   },
+   "Procesamiento iniciado": {
+    "lineas": 4,
+    "orig": 29.0,
+    "emp": 10.0
+   }
+  }
+ },
+ "oblpn": {
+  "archivo": "OBLPN <d>-<m>.csv",
+  "dias": [
+   "24-08",
+   "25-08",
+   "26-08",
+   "27-08",
+   "28-08"
+  ],
+  "filas_brutas": 141554,
+  "filas_unicas": 140067,
+  "columnas": 83,
+  "estados": {
+   "Enviado": {
+    "lineas": 58500,
+    "unid": 304293.0,
+    "bultos": 14038
+   },
+   "Cancelado": {
+    "lineas": 54958,
+    "unid": 0.0,
+    "bultos": 2986
+   },
+   "Empaquetado": {
+    "lineas": 25432,
+    "unid": 120343.0,
+    "bultos": 5348
+   },
+   "En empaquetado": {
+    "lineas": 990,
+    "unid": 1776.0,
+    "bultos": 25
+   },
+   "Cargado": {
+    "lineas": 187,
+    "unid": 236.0,
+    "bultos": 10
+   }
+  },
+  "medianas_h": {
+   "pick_emp": 2.4,
+   "emp_carga": 23.0,
+   "carga_env": -25.2,
+   "pick_carga": 27.0
+  },
+  "n_medidos": {
+   "pick_emp": 85109,
+   "emp_carga": 84752,
+   "carga_env": 73022,
+   "pick_carga": 84752
+  },
+  "patio_tramos": {
+   "mas de 4 dias": {
+    "lineas": 399,
+    "unid": 1107.0
+   },
+   "2 a 4 dias": {
+    "lineas": 2963,
+    "unid": 12809.0
+   },
+   "1 a 2 dias": {
+    "lineas": 5800,
+    "unid": 43996.0
+   },
+   "menos de 24 h": {
+    "lineas": 16270,
+    "unid": 62431.0
+   }
+  },
+  "espera_patio_mediana": 18.7,
+  "espera_patio_max": 259.3,
+  "transportistas": 63,
+  "destinos": 396,
+  "top_rutas": [
+   [
+    "ITTSA",
+    65824.0
+   ],
+   [
+    "LOG",
+    37089.0
+   ],
+   [
+    "MUESTRA CATALOGO",
+    35812.0
+   ],
+   [
+    "TOSCANO - SUR CHICO",
+    31891.0
+   ],
+   [
+    "TOSCANO",
+    22288.0
+   ],
+   [
+    "LOG - ARQ",
+    18991.0
+   ]
+  ]
+ }
+}

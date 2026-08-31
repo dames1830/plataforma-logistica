@@ -1,0 +1,583 @@
+<title>El circuito del CD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EDEFEE; --panel:#FFFFFF; --panel-2:#F6F8F7;
+  --ink:#151B1D; --ink-2:#556366; --ink-3:#7C8A8D;
+  --rule:#CDD4D4; --rule-soft:#E1E6E5;
+  --flow:#1C5C58; --flow-2:#3E8C86; --flow-wash:#E2EFED;
+  --alert:#BF421A; --alert-wash:#FBE8E0;
+  --warn:#8F6410; --warn-wash:#F8EEDA;
+  --shadow:0 1px 2px rgba(21,27,29,.06), 0 8px 24px -16px rgba(21,27,29,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1314; --panel:#171D1E; --panel-2:#1D2426;
+    --ink:#E4E9E8; --ink-2:#95A5A7; --ink-3:#74868A;
+    --rule:#2B3639; --rule-soft:#222B2D;
+    --flow:#66B9B1; --flow-2:#48948D; --flow-wash:#16302F;
+    --alert:#F0764A; --alert-wash:#37201A;
+    --warn:#D6A64A; --warn-wash:#2E2617;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1314; --panel:#171D1E; --panel-2:#1D2426;
+  --ink:#E4E9E8; --ink-2:#95A5A7; --ink-3:#74868A;
+  --rule:#2B3639; --rule-soft:#222B2D;
+  --flow:#66B9B1; --flow-2:#48948D; --flow-wash:#16302F;
+  --alert:#F0764A; --alert-wash:#37201A;
+  --warn:#D6A64A; --warn-wash:#2E2617;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15.5px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1360px; margin:0 auto; padding:0 24px 90px}
+h1,h2,h3{font-family:"Archivo Narrow","Arial Narrow",sans-serif; text-wrap:balance; margin:0}
+code{font-family:"IBM Plex Mono",ui-monospace,"Courier New",monospace; font-size:.88em; background:var(--panel-2); padding:1px 5px; border-radius:2px; border:1px solid var(--rule-soft)}
+
+/* ---------- cabecera ---------- */
+.top{border-bottom:2px solid var(--ink); padding:44px 0 18px; margin-bottom:38px}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--flow); margin-bottom:14px;
+}
+h1{font-size:clamp(40px,7vw,74px); font-weight:700; line-height:.94; letter-spacing:-.015em}
+.lede{margin:18px 0 0; max-width:64ch; color:var(--ink-2); font-size:17px}
+.stamp{
+  display:flex; flex-wrap:wrap; gap:8px 26px; margin-top:22px;
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3);
+  letter-spacing:.04em; text-transform:uppercase;
+}
+.stamp b{color:var(--ink-2); font-weight:500}
+
+/* ---------- secciones ---------- */
+section{margin-top:64px}
+.sec-head{display:flex; align-items:baseline; gap:16px; border-bottom:1px solid var(--rule); padding-bottom:10px; margin-bottom:28px; flex-wrap:wrap}
+.sec-head h2{font-size:29px; font-weight:600; letter-spacing:-.01em}
+.sec-head .note{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-left:auto}
+
+/* ---------- diagrama ---------- */
+figure{margin:0}
+.canvas{
+  background:var(--panel); border:1px solid var(--rule); border-radius:3px;
+  padding:8px; overflow-x:auto; box-shadow:var(--shadow);
+}
+.canvas svg{display:block; min-width:1040px; width:100%; height:auto}
+figcaption{margin-top:14px; color:var(--ink-2); font-size:14px; max-width:80ch}
+figcaption b{color:var(--ink)}
+
+.d-band{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.14em; fill:var(--ink-3)}
+.d-name{font-family:"Archivo Narrow","Arial Narrow",sans-serif; font-size:16px; font-weight:700; letter-spacing:.06em; fill:var(--ink)}
+.d-num{font-family:"IBM Plex Mono",monospace; font-size:20px; font-weight:600; fill:var(--flow)}
+.d-sub{font-size:11px; fill:var(--ink-2)}
+.d-arw{font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:500; fill:var(--ink-2); letter-spacing:.02em}
+.d-arw.hot{fill:var(--alert); font-weight:600; font-size:12.5px}
+.d-leak{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500; fill:var(--alert)}
+.d-leak.sm{font-size:10px; font-weight:400; fill:var(--ink-2)}
+.d-foot{font-family:"IBM Plex Mono",monospace; font-size:10px; fill:var(--ink-3)}
+.bx{fill:var(--panel-2); stroke:var(--rule); stroke-width:1.4}
+.bx.hot{fill:var(--alert-wash); stroke:var(--alert); stroke-width:2}
+.slab{fill:var(--flow-wash); stroke:var(--flow-2); stroke-width:1.4}
+.ln{stroke:var(--ink-2); stroke-width:1.6; fill:none}
+.ln.hot{stroke:var(--alert); stroke-width:3.4}
+.ln.leak{stroke:var(--alert); stroke-width:1.6; stroke-dasharray:5 4}
+.ln.rule{stroke:var(--rule); stroke-width:1}
+.mk-flow{fill:var(--ink-2)}
+.mk-alert{fill:var(--alert)}
+.divx{stroke:var(--flow-2); stroke-width:1.2; stroke-dasharray:4 4}
+
+/* ---------- hallazgos ---------- */
+.finds{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule)}
+.find{background:var(--panel); padding:26px 24px 28px}
+.find .n{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em; color:var(--ink-3); display:block; margin-bottom:12px}
+.find h3{font-size:22px; font-weight:600; line-height:1.15; margin-bottom:10px}
+.find p{margin:0; font-size:14.5px; color:var(--ink-2)}
+.find .big{font-family:"IBM Plex Mono",monospace; font-size:34px; font-weight:600; color:var(--alert); display:block; line-height:1.1; margin:14px 0 4px}
+.find .big.ok{color:var(--flow)}
+.find .big-lbl{font-size:12px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace; letter-spacing:.05em; display:block; margin-bottom:14px}
+
+/* ---------- estaciones ---------- */
+.stations{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:18px}
+.st{background:var(--panel); border:1px solid var(--rule); border-radius:3px; padding:22px 22px 20px; box-shadow:var(--shadow); display:flex; flex-direction:column}
+.st-top{display:flex; align-items:baseline; gap:10px; margin-bottom:4px}
+.st-n{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; color:var(--flow); letter-spacing:.06em}
+.st h3{font-size:21px; font-weight:700; letter-spacing:.02em}
+.st .what{font-size:14px; color:var(--ink-2); margin:6px 0 14px}
+.st table{width:100%; border-collapse:collapse; font-size:13.5px; margin-bottom:14px}
+.st td{padding:6px 0; border-bottom:1px solid var(--rule-soft); vertical-align:baseline}
+.st td:last-child{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-weight:500; white-space:nowrap; padding-left:10px}
+.st tr:last-child td{border-bottom:none}
+.src{margin-top:auto; padding-top:12px; border-top:1px solid var(--rule); font-size:12px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace; line-height:1.75}
+.src b{color:var(--ink-2); font-weight:500}
+.flag{display:inline-flex; align-items:center; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500; letter-spacing:.05em; text-transform:uppercase; padding:3px 9px; border-radius:2px; margin-bottom:14px; align-self:flex-start}
+.flag.ok{background:var(--flow-wash); color:var(--flow)}
+.flag.hot{background:var(--alert-wash); color:var(--alert)}
+.flag.gap{background:var(--warn-wash); color:var(--warn)}
+
+/* ---------- tablas ---------- */
+.tw{overflow-x:auto; background:var(--panel); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow)}
+table.data{width:100%; border-collapse:collapse; font-size:14px; min-width:640px}
+table.data th{
+  text-align:left; font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600;
+  letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3);
+  padding:14px 16px; border-bottom:1.5px solid var(--rule); white-space:nowrap;
+}
+table.data td{padding:11px 16px; border-bottom:1px solid var(--rule-soft); vertical-align:top}
+table.data tbody tr:last-child td{border-bottom:none}
+table.data .num{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+table.data th.num{text-align:right}
+table.data tr.total td{border-top:1.5px solid var(--rule); font-weight:600; background:var(--panel-2)}
+table.data .hot{color:var(--alert); font-weight:600}
+table.data .dim{color:var(--ink-3)}
+
+/* ---------- cuello ---------- */
+.neck{display:grid; grid-template-columns:minmax(280px,1fr) minmax(300px,1.3fr); gap:22px; align-items:start}
+.neck-big{background:var(--alert-wash); border:1px solid var(--alert); border-radius:3px; padding:28px 24px}
+.neck-big .k{font-family:"IBM Plex Mono",monospace; font-size:58px; font-weight:600; color:var(--alert); line-height:1; letter-spacing:-.02em}
+.neck-big .k-lbl{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--alert); margin-top:8px}
+.neck-big p{font-size:14.5px; color:var(--ink-2); margin:18px 0 0}
+.neck-big b{color:var(--ink)}
+.bars{margin-top:22px; display:flex; flex-direction:column; gap:11px}
+.bar-row{display:grid; grid-template-columns:118px 1fr 76px; align-items:center; gap:12px; font-size:13px}
+.bar-row .lbl{color:var(--ink-2)}
+.bar-track{height:20px; background:var(--panel-2); border:1px solid var(--rule-soft); position:relative; overflow:hidden}
+.bar-fill{position:absolute; top:0; bottom:0; left:0; background:var(--flow-2)}
+.bar-fill.hot{background:var(--alert)}
+.bar-row .v{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-weight:500}
+.neck-note{font-size:13.5px; color:var(--ink-2); margin-top:16px}
+.neck-note b{color:var(--ink)}
+
+/* ---------- ciclo ---------- */
+.cycle{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule); margin-top:26px}
+.cyc{background:var(--panel); padding:18px 16px}
+.cyc .d{font-family:"Archivo Narrow","Arial Narrow",sans-serif; font-size:17px; font-weight:700; letter-spacing:.05em; text-transform:uppercase}
+.cyc .t{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-3); margin:4px 0 8px}
+.cyc p{margin:0; font-size:13.5px; color:var(--ink-2)}
+.cyc.now{background:var(--alert-wash)}
+.cyc.now .d{color:var(--alert)}
+.cyc.now .t{color:var(--alert)}
+
+/* ---------- huecos ---------- */
+.gaps{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px}
+.gap-card{background:var(--panel); border:1px solid var(--rule); border-left:3px solid var(--warn); border-radius:3px; padding:20px 22px}
+.gap-card.trap{border-left-color:var(--alert)}
+.gap-card h3{font-size:18px; font-weight:600; margin-bottom:8px}
+.gap-card p{margin:0; font-size:14px; color:var(--ink-2)}
+.gap-card p + p{margin-top:9px}
+.gap-card b{color:var(--ink)}
+
+.foot{margin-top:70px; padding-top:22px; border-top:1px solid var(--rule); font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3); line-height:1.9}
+
+@media (max-width:760px){
+  .wrap{padding:0 16px 60px}
+  .neck{grid-template-columns:1fr}
+  .bar-row{grid-template-columns:96px 1fr 68px; font-size:12px}
+}
+@media print{
+  body{background:#fff}
+  .canvas,.st,.tw{box-shadow:none}
+  section{break-inside:avoid}
+}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">Maqueta &middot; Web Log&iacute;stica Deam1830</div>
+  <h1>El circuito del CD</h1>
+  <p class="lede">De lo que todav&iacute;a viene en cami&oacute;n hasta el bulto que sale por la puerta, con el archivo que mide cada tramo y el n&uacute;mero que tiene hoy. Todo lo que sigue est&aacute; medido sobre los archivos reales, no estimado.</p>
+  <div class="stamp">
+    <span>Ventana <b>24 al 28 de agosto de 2026</b></span>
+    <span>Stock <b>foto del 28-08 a las 19:00</b></span>
+    <span>ASN <b>al 29-08</b></span>
+    <span>Fuentes <b>7 archivos del WMS + 2 maestros</b></span>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head">
+    <h2>El recorrido completo</h2>
+    <span class="note">rojo = donde se traba</span>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1300 648" role="img" aria-label="Diagrama del circuito del centro de distribuci&oacute;n: la mercader&iacute;a entra por el ASN, pasa por recepci&oacute;n, buffer y almacenaje hasta el stock; del piso se pica, se embala, se carga y se despacha. El cuello de botella est&aacute; entre embalar y cargar, con 23 horas de mediana.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="mk-flow" points="0,1 10,5 0,9"></polygon>
+          </marker>
+          <marker id="arh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon class="mk-alert" points="0,1 10,5 0,9"></polygon>
+          </marker>
+        </defs>
+
+        <text class="d-band" x="40" y="30">ENTRADA &middot; LO QUE LLEGA AL CD</text>
+        <line class="ln rule" x1="40" y1="42" x2="1240" y2="42"></line>
+
+        <rect class="bx" x="40" y="62" width="230" height="88" rx="2"></rect>
+        <text class="d-name" x="56" y="86">ASN</text>
+        <text class="d-num" x="56" y="116">968.771</text>
+        <text class="d-sub" x="56" y="135">unidades anunciadas, a&uacute;n no llegan</text>
+
+        <rect class="bx" x="330" y="62" width="230" height="88" rx="2"></rect>
+        <text class="d-name" x="346" y="86">RECEPCI&Oacute;N</text>
+        <text class="d-num" x="346" y="116">35.207</text>
+        <text class="d-sub" x="346" y="135">unidades en zona RECEP, sin ubicar</text>
+
+        <rect class="bx" x="620" y="62" width="230" height="88" rx="2"></rect>
+        <text class="d-name" x="636" y="86">BUFFER</text>
+        <text class="d-num" x="636" y="116">50.934</text>
+        <text class="d-sub" x="636" y="135">unidades en 293 ubicaciones</text>
+
+        <rect class="bx" x="910" y="62" width="230" height="88" rx="2"></rect>
+        <text class="d-name" x="926" y="86">ALMACENAJE</text>
+        <text class="d-num" x="926" y="116">tareas</text>
+        <text class="d-sub" x="926" y="135">la plataforma dice d&oacute;nde va cada cuerpo</text>
+
+        <line class="ln" x1="272" y1="106" x2="326" y2="106" marker-end="url(#ar)"></line>
+        <text class="d-arw" x="299" y="97" text-anchor="middle">llega</text>
+        <line class="ln" x1="562" y1="106" x2="616" y2="106" marker-end="url(#ar)"></line>
+        <text class="d-arw" x="589" y="97" text-anchor="middle">pistoleo</text>
+        <line class="ln" x1="852" y1="106" x2="906" y2="106" marker-end="url(#ar)"></line>
+        <text class="d-arw" x="879" y="97" text-anchor="middle">tarea</text>
+
+        <line class="ln leak" x1="155" y1="150" x2="155" y2="180" marker-end="url(#arh)"></line>
+        <text class="d-leak" x="170" y="170">203.533 vencidas sin recibir</text>
+        <text class="d-leak sm" x="170" y="186">la m&aacute;s vieja lleva 577 d&iacute;as &ldquo;en camino&rdquo;</text>
+
+        <line class="ln" x1="1025" y1="150" x2="1025" y2="222" marker-end="url(#ar)"></line>
+        <text class="d-arw" x="1037" y="192">se ubica</text>
+
+        <text class="d-band" x="40" y="212">STOCK &middot; LA FOTO DEL 28-08 A LAS 19:00</text>
+
+        <rect class="slab" x="40" y="226" width="1200" height="106" rx="2"></rect>
+        <line class="divx" x1="640" y1="226" x2="640" y2="332"></line>
+
+        <text class="d-name" x="66" y="255">PISO &mdash; SE PICA</text>
+        <text class="d-num" x="66" y="285">493.572</text>
+        <text class="d-sub" x="66" y="304">unidades de calzado en mezzanines, andamio, pared y buffer</text>
+
+        <text class="d-name" x="666" y="255">RESERVA &mdash; NO SE PICA</text>
+        <text class="d-num" x="666" y="285">635.420</text>
+        <text class="d-sub" x="666" y="304">unidades en altura &middot; el picking nunca baja de ac&aacute;</text>
+
+        <line class="ln" x1="700" y1="321" x2="578" y2="321" marker-end="url(#ar)"></line>
+        <text class="d-arw" x="568" y="325" text-anchor="end">reposici&oacute;n</text>
+
+        <line class="ln" x1="392" y1="332" x2="392" y2="404" marker-end="url(#ar)"></line>
+        <text class="d-arw" x="404" y="374">se pica del piso</text>
+
+        <text class="d-band" x="40" y="394">SALIDA &middot; LO QUE SE VA</text>
+
+        <rect class="bx" x="40" y="408" width="195" height="88" rx="2"></rect>
+        <text class="d-name" x="56" y="432">PEDIDO</text>
+        <text class="d-num" x="56" y="462">138.532</text>
+        <text class="d-sub" x="56" y="481">unidades pedidas en 5 d&iacute;as</text>
+
+        <rect class="bx" x="287" y="408" width="210" height="88" rx="2"></rect>
+        <text class="d-name" x="303" y="432">PICKING</text>
+        <text class="d-num" x="303" y="462">421.426</text>
+        <text class="d-sub" x="303" y="481">unidades sacadas del rack</text>
+
+        <rect class="bx hot" x="549" y="408" width="210" height="88" rx="2"></rect>
+        <text class="d-name" x="565" y="432">EMBALAJE</text>
+        <text class="d-num" x="565" y="462">426.648</text>
+        <text class="d-sub" x="565" y="481">unidades en 19.421 bultos</text>
+
+        <rect class="bx" x="811" y="408" width="165" height="88" rx="2"></rect>
+        <text class="d-name" x="827" y="432">CARGA</text>
+        <text class="d-num" x="827" y="462">236</text>
+        <text class="d-sub" x="827" y="481">unidades ahora mismo</text>
+
+        <rect class="bx" x="1028" y="408" width="212" height="88" rx="2"></rect>
+        <text class="d-name" x="1044" y="432">DESPACHO</text>
+        <text class="d-num" x="1044" y="462">304.293</text>
+        <text class="d-sub" x="1044" y="481">unidades enviadas &middot; el 71%</text>
+
+        <line class="ln" x1="237" y1="452" x2="283" y2="452" marker-end="url(#ar)"></line>
+        <text class="d-arw" x="260" y="443" text-anchor="middle">libera</text>
+        <line class="ln" x1="499" y1="452" x2="545" y2="452" marker-end="url(#ar)"></line>
+        <text class="d-arw" x="522" y="443" text-anchor="middle">2,4 h</text>
+        <line class="ln hot" x1="761" y1="452" x2="807" y2="452" marker-end="url(#arh)"></line>
+        <text class="d-arw hot" x="784" y="441" text-anchor="middle">23,0 h</text>
+        <line class="ln" x1="978" y1="452" x2="1024" y2="452" marker-end="url(#ar)"></line>
+        <text class="d-arw" x="1001" y="443" text-anchor="middle">gu&iacute;a SIS</text>
+
+        <line class="ln leak" x1="137" y1="496" x2="137" y2="526" marker-end="url(#arh)"></line>
+        <text class="d-leak" x="152" y="516">162.504 pendientes</text>
+        <text class="d-leak sm" x="152" y="532">acumulados de 365 d&iacute;as &middot; 32.907 con m&aacute;s de 180</text>
+
+        <line class="ln leak" x1="654" y1="496" x2="654" y2="526" marker-end="url(#arh)"></line>
+        <text class="d-leak" x="669" y="516">120.343 unidades paradas en el patio</text>
+        <text class="d-leak sm" x="669" y="532">5.348 bultos empaquetados sin subir al cami&oacute;n</text>
+
+        <line class="ln rule" x1="40" y1="578" x2="1240" y2="578"></line>
+        <text class="d-foot" x="40" y="600">ASN Revisar.csv &middot; Stock Reserva.xlsx &middot; Stock Activo.csv &middot; Slotting.xlsx &middot; Detalle Orden.csv &middot; Picking.csv &middot; OBLPN.csv &middot; RUTAS - TURNOS.xlsx</text>
+        <text class="d-foot" x="40" y="618">La salida cierra sola: 304.293 enviadas + 120.343 en el patio + 2.012 en tr&aacute;nsito interno = 426.648 embaladas.</text>
+      </svg>
+    </div>
+    <figcaption>El circuito completo. La mercader&iacute;a entra por el ASN y baja hasta el stock; del <b>piso</b> se pica &mdash;nunca de reserva&mdash;, se embala, se carga y sale. Las flechas punteadas rojas son fugas: lo que se queda en cada escal&oacute;n. La flecha gruesa entre embalaje y carga es el &uacute;nico tramo que se mide en d&iacute;as y no en horas.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Lo que dice el dibujo</h2></div>
+  <div class="finds">
+    <div class="find">
+      <span class="n">01 &mdash; EL CUELLO</span>
+      <h3>No es picar ni embalar. Es el patio.</h3>
+      <span class="big">23,0 h</span>
+      <span class="big-lbl">de empaquetar a cargar &middot; mediana</span>
+      <p>Contra <b>2,4 h</b> de picar a empaquetar. El almac&eacute;n hace su parte en una ma&ntilde;ana y despu&eacute;s el bulto espera casi un d&iacute;a entero a que lo suban al cami&oacute;n. Hoy hay <b>120.343 unidades</b> en <b>5.348 bultos</b> esperando ah&iacute;.</p>
+    </div>
+    <div class="find">
+      <span class="n">02 &mdash; LA ENTRADA</span>
+      <h3>Nadie mira lo que viene.</h3>
+      <span class="big">143.064</span>
+      <span class="big-lbl">unidades que llegan el 5 de septiembre</span>
+      <p>El ASN ya lo dice y no est&aacute; en ninguna pantalla. Y hacia atr&aacute;s: <b>203.533 unidades</b> figuran &ldquo;en tr&aacute;nsito&rdquo; con fecha vencida, la m&aacute;s vieja de <b>enero de 2025</b>. O se perdieron, o nadie cerr&oacute; el ASN.</p>
+    </div>
+    <div class="find">
+      <span class="n">03 &mdash; LA MEDICI&Oacute;N</span>
+      <h3>El circuito ya se puede medir entero.</h3>
+      <span class="big ok">8 de 10</span>
+      <span class="big-lbl">tramos con archivo, robot y n&uacute;mero</span>
+      <p>El OBLPN cerr&oacute; la salida: trae embalaje, carga y despacho con hora y con nombre. Faltan dos: el <b>robot del ASN</b> &mdash;hay que grabar esa pantalla&mdash; y la <b>recepci&oacute;n</b>, que hoy solo se deduce del stock.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>Estaci&oacute;n por estaci&oacute;n</h2>
+    <span class="note">cada tramo, su archivo y su n&uacute;mero</span>
+  </div>
+  <div class="stations">
+
+    <article class="st">
+      <div class="st-top"><span class="st-n">01</span><h3>ASN</h3></div>
+      <p class="what">Lo que el proveedor anunci&oacute; y todav&iacute;a no lleg&oacute;. Es el &uacute;nico aviso anticipado de qu&eacute; va a poner recepci&oacute;n en el buffer.</p>
+      <span class="flag gap">falta el robot</span>
+      <table>
+        <tr><td>En tr&aacute;nsito</td><td>968.771</td></tr>
+        <tr><td>Verificado</td><td>1.462.653</td></tr>
+        <tr><td>Recepci&oacute;n iniciada</td><td>22.098</td></tr>
+        <tr><td>Recepci&oacute;n completa</td><td>3.277</td></tr>
+        <tr><td>Cancelado</td><td>702</td></tr>
+        <tr><td><b>Total anunciado</b></td><td><b>2.457.501</b></td></tr>
+      </table>
+      <div class="src"><b>Archivo</b> ASN Revisar.csv<br>31.070 filas &middot; 44 columnas<br><b>Lo baja</b> Daniel, a mano</div>
+    </article>
+
+    <article class="st">
+      <div class="st-top"><span class="st-n">02</span><h3>Recepci&oacute;n</h3></div>
+      <p class="what">La mercader&iacute;a que ya lleg&oacute; y todav&iacute;a no tiene ubicaci&oacute;n. Se ve en la foto de reserva, en la zona RECEP.</p>
+      <span class="flag gap">se deduce, no se mide</span>
+      <table>
+        <tr><td>En zona RECEP</td><td>35.207</td></tr>
+        <tr><td>L&iacute;neas</td><td>415</td></tr>
+        <tr><td>En zona AEREO</td><td>9.007</td></tr>
+      </table>
+      <div class="src"><b>Archivo</b> Stock Reserva &lt;d-m-a&gt; 1900.xlsx<br>113 fotos guardadas<br><b>Lo baja</b> el robot, 19:00 lun-s&aacute;b</div>
+    </article>
+
+    <article class="st">
+      <div class="st-top"><span class="st-n">03</span><h3>Buffer</h3></div>
+      <p class="what">Donde recepci&oacute;n deja la mercader&iacute;a para que el turno noche la almacene. La letra de la ubicaci&oacute;n dice de d&oacute;nde vino.</p>
+      <span class="flag ok">medido</span>
+      <table>
+        <tr><td>Unidades</td><td>50.934</td></tr>
+        <tr><td>Ubicaciones ocupadas</td><td>293</td></tr>
+        <tr><td>L&iacute;neas</td><td>594</td></tr>
+      </table>
+      <div class="src"><b>Archivo</b> Stock Activo &lt;d-m-a&gt; 1900.csv<br>&aacute;reas CDBUFFER-A/B/C/D<br><b>Lo baja</b> el robot, 19:00 lun-s&aacute;b</div>
+    </article>
+
+    <article class="st">
+      <div class="st-top"><span class="st-n">04</span><h3>Almacenaje</h3></div>
+      <p class="what">El turno noche sube la mercader&iacute;a del buffer a su cuerpo. La plataforma arma la tarea y el Slotting dice d&oacute;nde va.</p>
+      <span class="flag ok">lo hace la plataforma</span>
+      <table>
+        <tr><td>Meta por grupo de 2</td><td>450 pares/h</td></tr>
+        <tr><td>Jornada efectiva</td><td>7 h</td></tr>
+        <tr><td>Fotos de Slotting</td><td>26</td></tr>
+      </table>
+      <div class="src"><b>Archivo</b> Slotting &lt;d-m-a&gt;.xlsx<br><b>Lo baja</b> el robot, 19:00 lun-s&aacute;b<br>las tareas viven en la plataforma</div>
+    </article>
+
+    <article class="st">
+      <div class="st-top"><span class="st-n">05</span><h3>Stock</h3></div>
+      <p class="what">La foto de las 19:00. El piso es lo que se pica; la reserva es lo que espera en altura. El material de empaque va aparte y no se mezcla con el calzado.</p>
+      <span class="flag ok">medido</span>
+      <table>
+        <tr><td>Piso (se pica)</td><td>493.572</td></tr>
+        <tr><td>Reserva (altura)</td><td>635.420</td></tr>
+        <tr><td>Material de empaque</td><td>2.910.495</td></tr>
+        <tr><td>Paletas en reserva</td><td>3.450</td></tr>
+      </table>
+      <div class="src"><b>Archivos</b> Stock Activo .csv + Stock Reserva .xlsx<br>118 y 113 fotos guardadas<br><b>Los baja</b> el robot, 19:00 lun-s&aacute;b</div>
+    </article>
+
+    <article class="st">
+      <div class="st-top"><span class="st-n">06</span><h3>Pedido</h3></div>
+      <p class="what">Comercial manda las gu&iacute;as por correo y el WMS crea la orden. Lo que comercial nunca liber&oacute; queda como pendiente, y se acumula.</p>
+      <span class="flag hot">162.504 pendientes</span>
+      <table>
+        <tr><td>&Oacute;rdenes en 5 d&iacute;as</td><td>4.746</td></tr>
+        <tr><td>Unidades pedidas</td><td>138.532</td></tr>
+        <tr><td>Pendiente, 0 a 7 d&iacute;as</td><td>62.152</td></tr>
+        <tr><td>Pendiente, 8 a 30</td><td>44.293</td></tr>
+        <tr><td>Pendiente, m&aacute;s de 180</td><td>32.907</td></tr>
+      </table>
+      <div class="src"><b>Archivos</b> Gu&iacute;as &lt;d.m&gt;.xlsx + Detalle Orden &lt;d-m&gt;.csv<br>81 correos &middot; 135 detalles<br><b>Los bajan</b> correo_guias.py 22:05 &middot; picking_y_orden.py 06:45</div>
+    </article>
+
+    <article class="st">
+      <div class="st-top"><span class="st-n">07</span><h3>Picking</h3></div>
+      <p class="what">Se saca del rack. Siempre de los niveles A, B y C: en 8 jornadas comprobadas no baj&oacute; una sola l&iacute;nea de reserva.</p>
+      <span class="flag ok">medido</span>
+      <table>
+        <tr><td>L&iacute;neas finalizadas</td><td>72.486</td></tr>
+        <tr><td>Unidades picadas</td><td>421.426</td></tr>
+        <tr><td>L&iacute;neas &ldquo;Cancelado&rdquo;</td><td>42.860</td></tr>
+        <tr><td>Unidades en esas l&iacute;neas</td><td>0</td></tr>
+      </table>
+      <div class="src"><b>Archivo</b> Picking &lt;d-m&gt;.csv<br>33 jornadas guardadas<br><b>Lo baja</b> picking_y_orden.py, 06:45</div>
+    </article>
+
+    <article class="st">
+      <div class="st-top"><span class="st-n">08</span><h3>Embalaje, carga y despacho</h3></div>
+      <p class="what">Un solo archivo cubre los tres tramos, con hora y con el nombre de qui&eacute;n hizo cada paso. Es la pieza que faltaba.</p>
+      <span class="flag hot">ac&aacute; est&aacute; el cuello</span>
+      <table>
+        <tr><td>Enviado</td><td>304.293</td></tr>
+        <tr><td>Empaquetado, sin salir</td><td>120.343</td></tr>
+        <tr><td>En empaquetado</td><td>1.776</td></tr>
+        <tr><td>Cargado</td><td>236</td></tr>
+        <tr><td><b>Total embalado</b></td><td><b>426.648</b></td></tr>
+      </table>
+      <div class="src"><b>Archivo</b> OBLPN &lt;d-m&gt;.csv<br>83 columnas &middot; 5 d&iacute;as bajados<br>63 transportistas &middot; 396 destinos<br><b>Lo baja</b> oblpn_embalaje.py &mdash; falta programarlo</div>
+    </article>
+
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>El cuello de botella</h2>
+    <span class="note">medido sobre 84.752 bultos</span>
+  </div>
+  <div class="neck">
+    <div class="neck-big">
+      <div class="k">23,0 h</div>
+      <div class="k-lbl">de empaquetar a cargar</div>
+      <p><b>Picar &rarr; empaquetar: 2,4 h.</b> El almac&eacute;n saca la mercader&iacute;a del rack y arma el bulto en una ma&ntilde;ana.</p>
+      <p><b>Empaquetar &rarr; cargar: 23,0 h.</b> Despu&eacute;s el bulto se queda quieto. Ah&iacute; es donde se pierde el d&iacute;a.</p>
+      <p><b>Picar &rarr; cargar: 27,0 h</b> en total: el 85% de ese tiempo el bulto no se mueve.</p>
+      <p>Es exactamente la mercader&iacute;a que se ve parada en el patio, la que parece de picking y en realidad ya est&aacute; embalada.</p>
+    </div>
+    <div>
+      <div class="tw">
+        <table class="data">
+          <thead>
+            <tr><th>Cu&aacute;nto lleva esperando</th><th class="num">L&iacute;neas</th><th class="num">Unidades</th><th class="num">%</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Menos de 24 horas</td><td class="num">16.270</td><td class="num">62.431</td><td class="num">51,9%</td></tr>
+            <tr><td>1 a 2 d&iacute;as</td><td class="num">5.800</td><td class="num">43.996</td><td class="num">36,6%</td></tr>
+            <tr><td class="hot">2 a 4 d&iacute;as</td><td class="num">2.963</td><td class="num hot">12.809</td><td class="num">10,6%</td></tr>
+            <tr><td class="hot">M&aacute;s de 4 d&iacute;as</td><td class="num">399</td><td class="num hot">1.107</td><td class="num">0,9%</td></tr>
+            <tr class="total"><td>Parado en el patio</td><td class="num">25.432</td><td class="num">120.343</td><td class="num">100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bars">
+        <div class="bar-row"><span class="lbl">Picar &rarr; embalar</span><span class="bar-track"><span class="bar-fill" style="width:8.9%"></span></span><span class="v">2,4 h</span></div>
+        <div class="bar-row"><span class="lbl">Embalar &rarr; cargar</span><span class="bar-track"><span class="bar-fill hot" style="width:85.2%"></span></span><span class="v">23,0 h</span></div>
+        <div class="bar-row"><span class="lbl">Picar &rarr; cargar</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="v">27,0 h</span></div>
+      </div>
+      <p class="neck-note">La espera mediana de lo que sigue en el patio es de <b>18,7 horas</b>, y el bulto m&aacute;s viejo lleva <b>10,8 d&iacute;as</b> sin salir.</p>
+    </div>
+  </div>
+
+  <div class="cycle">
+    <div class="cyc"><div class="d">Lunes</div><div class="t">19:00 &ndash; 21:00</div><p>Llega el correo de comercial con las gu&iacute;as.</p></div>
+    <div class="cyc"><div class="d">Martes</div><div class="t">turno noche</div><p>Se pica. El bulto queda armado en 2,4 h.</p></div>
+    <div class="cyc now"><div class="d">Mi&eacute;rcoles</div><div class="t">todo el d&iacute;a</div><p>Se prepara. Ac&aacute; es donde el bulto espera las 23 horas.</p></div>
+    <div class="cyc"><div class="d">Jueves</div><div class="t">ma&ntilde;ana</div><p>Sale. El SIS emite la gu&iacute;a y el estado pasa a Enviado.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>Los archivos, y qui&eacute;n los baja</h2>
+    <span class="note">9 fuentes</span>
+  </div>
+  <div class="tw">
+    <table class="data">
+      <thead>
+        <tr><th>Archivo</th><th>Qu&eacute; tramo mide</th><th>Qui&eacute;n lo baja</th><th>Cada cu&aacute;nto</th><th class="num">Guardados</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>ASN Revisar.csv</code></td><td>lo que va a llegar</td><td class="hot">Daniel, a mano</td><td class="hot">sin programar</td><td class="num">1</td></tr>
+        <tr><td><code>Stock Reserva &hellip;.xlsx</code></td><td>recepci&oacute;n y altura</td><td>robot</td><td>19:00 lun-s&aacute;b</td><td class="num">113</td></tr>
+        <tr><td><code>Stock Activo &hellip;.csv</code></td><td>piso y buffer</td><td>robot</td><td>19:00 lun-s&aacute;b</td><td class="num">118</td></tr>
+        <tr><td><code>Slotting &hellip;.xlsx</code></td><td>d&oacute;nde va cada cuerpo</td><td>robot</td><td>19:00 lun-s&aacute;b</td><td class="num">26</td></tr>
+        <tr><td><code>Gu&iacute;as &lt;d.m&gt;.xlsx</code></td><td>lo que comercial manda</td><td><code>correo_guias.py</code></td><td>diario 22:05</td><td class="num">81</td></tr>
+        <tr><td><code>Detalle Orden &hellip;.csv</code></td><td>lo pedido y lo pendiente</td><td><code>picking_y_orden.py</code></td><td>diario 06:45</td><td class="num">135</td></tr>
+        <tr><td><code>Picking &lt;d-m&gt;.csv</code></td><td>lo picado</td><td><code>picking_y_orden.py</code></td><td>diario 06:45</td><td class="num">33</td></tr>
+        <tr><td><code>OBLPN &lt;d-m&gt;.csv</code></td><td>embalaje, carga y despacho</td><td><code>oblpn_embalaje.py</code></td><td class="hot">falta programarlo</td><td class="num">5</td></tr>
+        <tr><td><code>RUTAS - TURNOS.xlsx</code></td><td>tienda &rarr; ruta &rarr; d&iacute;a de reparto</td><td class="dim">maestro fijo</td><td class="dim">274 tiendas &middot; 39 rutas</td><td class="num">1</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Los dos huecos y las tres trampas</h2></div>
+  <div class="gaps">
+    <div class="gap-card">
+      <h3>Hueco 1 &middot; el robot del ASN</h3>
+      <p>Es el &uacute;nico archivo del circuito que todav&iacute;a se baja a mano, y es el que avisa con anticipaci&oacute;n qu&eacute; va a poner recepci&oacute;n en el buffer.</p>
+      <p><b>Qu&eacute; falta:</b> grabar esa pantalla del WMS, igual que se grab&oacute; la del embalaje.</p>
+    </div>
+    <div class="gap-card">
+      <h3>Hueco 2 &middot; las dos corridas</h3>
+      <p>Hoy los robots bajan una vez, a las 06:45. La corrida importante ser&iacute;a a las <b>21:00</b>, cuando ya lleg&oacute; el correo de comercial y cerr&oacute; el picking.</p>
+      <p><b>Qu&eacute; falta:</b> programar el OBLPN y agregar la segunda corrida diaria.</p>
+    </div>
+    <div class="gap-card trap">
+      <h3>Trampa 1 &middot; &ldquo;Cancelado&rdquo; es una copia vac&iacute;a</h3>
+      <p>En el picking son <b>42.860 l&iacute;neas de 115.352</b>; en el OBLPN, <b>54.958 de 140.067</b>, todas con cero unidades. Contarlas duplica el archivo entero.</p>
+    </div>
+    <div class="gap-card trap">
+      <h3>Trampa 2 &middot; un d&iacute;a contra un d&iacute;a no cruza</h3>
+      <p>El picking del 27 contra el OBLPN del 27 cruza el <b>63,8%</b>. Contra el Detalle de Orden del mismo d&iacute;a, el <b>15%</b>; con 14 d&iacute;as, el <b>97,7%</b>. Todo cruce necesita ventana, no un d&iacute;a.</p>
+    </div>
+    <div class="gap-card trap">
+      <h3>Trampa 3 &middot; &ldquo;unidades&rdquo; no es &ldquo;pares&rdquo;</h3>
+      <p>La jornada del 27 daba 94.468 unidades y el calzado real fueron <b>39.215 pares</b>. La diferencia eran <b>45.140 bolsas</b> y <b>5.900 hang tags</b>. Los tres bloques no se suman entre s&iacute;.</p>
+    </div>
+    <div class="gap-card">
+      <h3>Y una decisi&oacute;n de fondo</h3>
+      <p>El ciclo actual cumple la meta pero gasta de m&aacute;s: el bulto queda armado el martes y sale el jueves. El reporte no es para vigilar al turno, es para mostrar d&oacute;nde se gasta cumpliendo igual.</p>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  Maqueta &middot; Web Log&iacute;stica Deam1830 &middot; 29 de agosto de 2026<br>
+  Medido con <code>_medir_flujo_cd.py</code>, <code>_medir_stock_flujo.py</code> y <code>_medir_reserva_flujo.py</code> sobre los archivos reales del WMS.<br>
+  Salida sobre el OBLPN del 24 al 28-08 &middot; stock sobre la foto del 28-08 19:00 &middot; ASN al 29-08.
+</div>
+
+</div>

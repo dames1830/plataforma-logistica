@@ -37,7 +37,11 @@ export const DIAS = [
 ];
 
 /**
- * LAS CINCO TAREAS DEL SERVIDOR, con lo que hacían al 18-ago-2026.
+ * LAS TAREAS DEL SERVIDOR. Al 31-ago-2026 son diez.
+ *
+ * Los nombres dicen PARA QUÉ es cada una, no cada cuánto corre: la frecuencia
+ * se cambia desde esta misma pantalla, así que meterla en el nombre lo deja
+ * mintiendo. 'Stock por hora' corría cada dos horas y confundía.
  *
  * `tipo` dice cómo se lee la hora, y hay dos formas que no se pueden mezclar:
  *   'diaria'  corre UNA vez, a la hora exacta        -> `hora`
@@ -52,14 +56,16 @@ export const TAREAS = [
       detalle: 'la foto sobre la que se calcula todo el turno', area: 'almacenaje_activo' },
     { id: 'ancla_manana', tipo: 'diaria', etiqueta: 'Stock ancla · mañana',
       detalle: 'la foto del día que empieza', area: 'almacenaje_activo' },
-    { id: 'stock_hora', tipo: 'cada', etiqueta: 'Stock por hora',
-      detalle: 'el avance del turno: activo y reserva', area: 'layout_stock_hora' },
-    { id: 'picking_hora', tipo: 'cada', etiqueta: 'Picking por hora',
-      detalle: 'el avance del picking', area: 'picking_dias' },
+    { id: 'stock_hora', tipo: 'cada', etiqueta: 'Actividades del turno noche',
+      detalle: 'el buffer, las paletas y el activo, para el Cumplimiento del turno', area: 'layout_stock_hora' },
+    { id: 'picking_hora', tipo: 'cada', etiqueta: 'Avance de picking',
+      detalle: 'lo que va picado en el dia', area: 'picking_dias' },
+    { id: 'oblpn_hora', tipo: 'cada', etiqueta: 'Avance de embalaje',
+      detalle: 'lo que va embalado en el dia', area: null },
     { id: 'mapa_hora', tipo: 'cada', etiqueta: 'Mapa de calor',
-      detalle: 'publica las cuatro zonas con el stock de la hora', area: 'layout_activo_SEL' },
-    { id: 'reportes', tipo: 'diaria', etiqueta: 'Reportes diarios',
-      detalle: 'los dos archivos del día que cerró', area: null },
+      detalle: 'las cuatro zonas; se dibuja con la foto del turno noche', area: 'layout_activo_SEL' },
+    { id: 'reportes', tipo: 'cada', etiqueta: 'Detalle de Orden',
+      detalle: 'el pendiente del día que cerró, detrás de cada ancla', area: null },
     { id: 'respaldo', tipo: 'diaria', etiqueta: 'Respaldo de datos',
       detalle: 'la copia de seguridad de las 63 áreas', area: null },
     { id: 'archivado', tipo: 'diaria', etiqueta: 'Archivar tareas viejas',
@@ -74,7 +80,8 @@ export const CADA = [
     { min: 60, texto: 'cada 1 hora' },
     { min: 120, texto: 'cada 2 horas' },
     { min: 180, texto: 'cada 3 horas' },
-    { min: 360, texto: 'cada 6 horas' }
+    { min: 360, texto: 'cada 6 horas' },
+    { min: 720, texto: 'dos veces al día' }
 ];
 
 const LUN_A_SAB = { lun: true, mar: true, mie: true, jue: true, vie: true, sab: true, dom: false };

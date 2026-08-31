@@ -1,0 +1,365 @@
+<title>El horario de los robots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EDEFEE; --panel:#FFFFFF; --panel-2:#F6F8F7;
+  --ink:#151B1D; --ink-2:#556366; --ink-3:#7C8A8D;
+  --rule:#CDD4D4; --rule-soft:#E1E6E5;
+  --flow:#1C5C58; --flow-2:#3E8C86; --flow-wash:#E2EFED;
+  --alert:#BF421A; --alert-wash:#FBE8E0;
+  --warn:#8F6410; --warn-wash:#F8EEDA;
+  --shadow:0 1px 2px rgba(21,27,29,.06), 0 8px 24px -16px rgba(21,27,29,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1314; --panel:#171D1E; --panel-2:#1D2426;
+    --ink:#E4E9E8; --ink-2:#95A5A7; --ink-3:#74868A;
+    --rule:#2B3639; --rule-soft:#222B2D;
+    --flow:#66B9B1; --flow-2:#48948D; --flow-wash:#16302F;
+    --alert:#F0764A; --alert-wash:#37201A;
+    --warn:#D6A64A; --warn-wash:#2E2617;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1314; --panel:#171D1E; --panel-2:#1D2426;
+  --ink:#E4E9E8; --ink-2:#95A5A7; --ink-3:#74868A;
+  --rule:#2B3639; --rule-soft:#222B2D;
+  --flow:#66B9B1; --flow-2:#48948D; --flow-wash:#16302F;
+  --alert:#F0764A; --alert-wash:#37201A;
+  --warn:#D6A64A; --warn-wash:#2E2617;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15.5px; line-height:1.6; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1260px; margin:0 auto; padding:0 24px 80px}
+h1,h2,h3{font-family:"Archivo Narrow","Arial Narrow",sans-serif; text-wrap:balance; margin:0}
+code{font-family:"IBM Plex Mono",monospace; font-size:.88em; background:var(--panel-2); padding:1px 5px; border-radius:2px; border:1px solid var(--rule-soft)}
+
+.top{border-bottom:2px solid var(--ink); padding:44px 0 20px; margin-bottom:32px}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--flow); margin-bottom:14px}
+h1{font-size:clamp(36px,6vw,62px); font-weight:700; line-height:.96; letter-spacing:-.015em}
+.lede{margin:18px 0 0; max-width:64ch; color:var(--ink-2); font-size:17px}
+.lede b{color:var(--ink)}
+
+section{margin-top:52px}
+.sec-head{display:flex; align-items:baseline; gap:16px; border-bottom:1px solid var(--rule); padding-bottom:10px; margin-bottom:24px; flex-wrap:wrap}
+.sec-head h2{font-size:27px; font-weight:600; letter-spacing:-.01em}
+.sec-head .note{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-left:auto}
+
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule)}
+.kpi{background:var(--panel); padding:20px 20px 22px}
+.kpi .v{font-family:"IBM Plex Mono",monospace; font-size:34px; font-weight:600; line-height:1}
+.kpi .v.hot{color:var(--alert)} .kpi .v.ok{color:var(--flow)}
+.kpi .l{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); margin-top:9px}
+.kpi p{margin:8px 0 0; font-size:13.5px; color:var(--ink-2)}
+
+figure{margin:0}
+.canvas{background:var(--panel); border:1px solid var(--rule); border-radius:3px; padding:10px; overflow-x:auto; box-shadow:var(--shadow)}
+.canvas svg{display:block; min-width:1000px; width:100%; height:auto}
+figcaption{margin-top:14px; color:var(--ink-2); font-size:14px; max-width:82ch}
+figcaption b{color:var(--ink)}
+.hh{font-family:"IBM Plex Mono",monospace; font-size:11px; fill:var(--ink-3)}
+.fila{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; fill:var(--ink-2)}
+.filanota{font-size:11px; fill:var(--ink-3)}
+.eje{stroke:var(--rule-soft); stroke-width:1}
+.carril{fill:var(--panel-2); stroke:var(--rule-soft); stroke-width:1}
+.b-stock{fill:var(--flow-2)}
+.b-pick{fill:var(--flow)}
+.b-fijo{fill:var(--alert)}
+.leyenda{font-size:12px; fill:var(--ink-2)}
+
+.opts{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px; margin-top:6px}
+.opt{background:var(--panel); border:1px solid var(--rule); border-radius:3px; padding:22px}
+.opt.gana{border:2px solid var(--flow); box-shadow:var(--shadow)}
+.opt h3{font-size:21px; font-weight:700; margin-bottom:2px}
+.opt .sub{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); margin-bottom:14px}
+.opt .horas{font-family:"IBM Plex Mono",monospace; font-size:13px; line-height:2; color:var(--ink); word-spacing:4px}
+.opt dl{margin:16px 0 0; display:grid; grid-template-columns:auto 1fr; gap:6px 14px; font-size:13.5px}
+.opt dt{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); padding-top:3px}
+.opt dd{margin:0}
+.sello{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; padding:3px 10px; border-radius:2px; background:var(--flow-wash); color:var(--flow); margin-bottom:12px}
+
+.tw{overflow-x:auto; background:var(--panel); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow)}
+table.data{width:100%; border-collapse:collapse; font-size:14px; min-width:600px}
+table.data th{text-align:left; font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); padding:13px 15px; border-bottom:1.5px solid var(--rule); white-space:nowrap}
+table.data td{padding:10px 15px; border-bottom:1px solid var(--rule-soft)}
+table.data tbody tr:last-child td{border-bottom:none}
+table.data .num{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+table.data th.num{text-align:right}
+table.data .hot{color:var(--alert); font-weight:600}
+table.data .ok{color:var(--flow); font-weight:600}
+
+.notes{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px}
+.note-card{background:var(--panel); border:1px solid var(--rule); border-left:3px solid var(--flow-2); border-radius:3px; padding:20px 22px}
+.note-card.hot{border-left-color:var(--alert)}
+.note-card h3{font-size:18px; font-weight:600; margin-bottom:8px}
+.note-card p{margin:0; font-size:14px; color:var(--ink-2)}
+.note-card p + p{margin-top:9px}
+.note-card b{color:var(--ink)}
+.foot{margin-top:64px; padding-top:20px; border-top:1px solid var(--rule); font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3); line-height:1.9}
+@media (max-width:700px){ .wrap{padding:0 16px 60px} }
+@media print{ body{background:#fff} .canvas,.tw{box-shadow:none} section{break-inside:avoid} }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">Maqueta &middot; Web Log&iacute;stica Deam1830 &middot; horarios del servidor</div>
+  <h1>El horario de los robots</h1>
+  <p class="lede">Los tres robots por hora entran al WMS <b>24 veces al d&iacute;a</b> y lo tienen ocupado <b>10 horas y media</b>. Pasarlos a cada 2 o cada 2 horas y media libera la mitad del d&iacute;a. Ac&aacute; est&aacute;n las dos opciones, con los tiempos medidos en el servidor.</p>
+</header>
+
+<section>
+  <div class="sec-head"><h2>Lo que tarda cada uno</h2><span class="note">medido el 30-08, no estimado</span></div>
+  <div class="kpis">
+    <div class="kpi"><div class="v">9,2</div><div class="l">min &middot; stock por hora</div><p>Entre 5,6 y 9,2 seg&uacute;n la corrida. Entra al WMS.</p></div>
+    <div class="kpi"><div class="v hot">16,9</div><div class="l">min &middot; picking por hora</div><p>Clavado en 16,9 en las 7 corridas medidas. Es el que m&aacute;s pesa.</p></div>
+    <div class="kpi"><div class="v ok">0</div><div class="l">min de WMS &middot; mapa de calor</div><p><b>No entra a Oracle:</b> lee de la API lo ya publicado. Solo tiene que ir despu&eacute;s del stock.</p></div>
+    <div class="kpi"><div class="v hot">10,4 h</div><div class="l">de WMS ocupado hoy</div><p>626 minutos al d&iacute;a solo con los robots por hora.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>El d&iacute;a completo, hoy y las dos opciones</h2><span class="note">cada bloque es tiempo de WMS ocupado</span></div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1200 330" role="img" aria-label="Tres l&iacute;neas de tiempo de 24 horas. La de hoy muestra los robots por hora entrando al WMS 24 veces. La opci&oacute;n A, cada 2 horas en punto, 12 veces. La opci&oacute;n B, cada 2 horas y media, 10 veces. En rojo, los robots fijos de la ma&ntilde;ana y el ancla de la noche, que ninguna opci&oacute;n pisa.">
+        <text class="hh" x="78" y="24" text-anchor="start">HORA DEL D&Iacute;A</text>
+        <line class="eje" x1="78.0" y1="66" x2="78.0" y2="286"></line>
+<text class="hh" x="78.0" y="58" text-anchor="middle">00</text>
+<line class="eje" x1="169.0" y1="66" x2="169.0" y2="286"></line>
+<text class="hh" x="169.0" y="58" text-anchor="middle">02</text>
+<line class="eje" x1="260.0" y1="66" x2="260.0" y2="286"></line>
+<text class="hh" x="260.0" y="58" text-anchor="middle">04</text>
+<line class="eje" x1="351.0" y1="66" x2="351.0" y2="286"></line>
+<text class="hh" x="351.0" y="58" text-anchor="middle">06</text>
+<line class="eje" x1="442.0" y1="66" x2="442.0" y2="286"></line>
+<text class="hh" x="442.0" y="58" text-anchor="middle">08</text>
+<line class="eje" x1="533.0" y1="66" x2="533.0" y2="286"></line>
+<text class="hh" x="533.0" y="58" text-anchor="middle">10</text>
+<line class="eje" x1="624.0" y1="66" x2="624.0" y2="286"></line>
+<text class="hh" x="624.0" y="58" text-anchor="middle">12</text>
+<line class="eje" x1="715.0" y1="66" x2="715.0" y2="286"></line>
+<text class="hh" x="715.0" y="58" text-anchor="middle">14</text>
+<line class="eje" x1="806.0" y1="66" x2="806.0" y2="286"></line>
+<text class="hh" x="806.0" y="58" text-anchor="middle">16</text>
+<line class="eje" x1="897.0" y1="66" x2="897.0" y2="286"></line>
+<text class="hh" x="897.0" y="58" text-anchor="middle">18</text>
+<line class="eje" x1="988.0" y1="66" x2="988.0" y2="286"></line>
+<text class="hh" x="988.0" y="58" text-anchor="middle">20</text>
+<line class="eje" x1="1079.0" y1="66" x2="1079.0" y2="286"></line>
+<text class="hh" x="1079.0" y="58" text-anchor="middle">22</text>
+<line class="eje" x1="1170.0" y1="66" x2="1170.0" y2="286"></line>
+<text class="hh" x="1170.0" y="58" text-anchor="middle">00</text>
+
+        <text class="fila" x="10" y="100">HOY</text>
+        <text class="filanota" x="10" y="114">cada hora</text>
+        <rect class="carril" x="78" y="92" width="1092" height="22" rx="2"></rect>
+        <rect class="b-stock" x="100.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="146.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="191.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="237.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="282.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="328.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="373.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="419.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="464.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="510.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="555.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="601.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="646.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="692.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="737.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="783.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="828.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="874.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="919.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="965.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="1010.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="1056.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="1101.8" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="1147.2" y="92" width="7.0" height="22" rx="1"></rect>
+<rect class="b-pick" x="115.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="161.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="206.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="252.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="297.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="343.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="388.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="434.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="479.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="525.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="570.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="616.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="661.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="707.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="752.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="798.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="843.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="889.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="934.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="980.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="1025.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="1071.4" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="1116.9" y="92" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="1162.4" y="92" width="12.8" height="22" rx="1"></rect>
+
+        <text class="fila" x="10" y="176">OPCI&Oacute;N A</text>
+        <text class="filanota" x="10" y="190">cada 2 h</text>
+        <rect class="carril" x="78" y="168" width="1092" height="22" rx="2"></rect>
+        <rect class="b-stock" x="78.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="169.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="260.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="351.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="442.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="533.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="624.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="715.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="806.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="897.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="988.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="1079.0" y="168" width="7.0" height="22" rx="1"></rect>
+<rect class="b-pick" x="93.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="184.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="275.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="366.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="457.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="548.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="639.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="730.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="821.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="912.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="1003.2" y="168" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="1094.2" y="168" width="12.8" height="22" rx="1"></rect>
+
+        <text class="fila" x="10" y="252">OPCI&Oacute;N B</text>
+        <text class="filanota" x="10" y="266">cada 2,5 h</text>
+        <rect class="carril" x="78" y="244" width="1092" height="22" rx="2"></rect>
+        <rect class="b-stock" x="85.6" y="244" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="199.3" y="244" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="313.1" y="244" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="426.8" y="244" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="540.6" y="244" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="654.3" y="244" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="768.1" y="244" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="881.8" y="244" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="995.6" y="244" width="7.0" height="22" rx="1"></rect>
+<rect class="b-stock" x="1109.3" y="244" width="7.0" height="22" rx="1"></rect>
+<rect class="b-pick" x="100.8" y="244" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="214.5" y="244" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="328.2" y="244" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="442.0" y="244" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="555.8" y="244" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="669.5" y="244" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="783.2" y="244" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="897.0" y="244" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="1010.8" y="244" width="12.8" height="22" rx="1"></rect>
+<rect class="b-pick" x="1124.5" y="244" width="12.8" height="22" rx="1"></rect>
+
+        <rect class="b-fijo" x="385.1" y="92" width="19.0" height="22" rx="1"></rect>
+<rect class="b-fijo" x="396.5" y="92" width="30.3" height="22" rx="1"></rect>
+<rect class="b-fijo" x="942.5" y="92" width="11.4" height="22" rx="1"></rect>
+<rect class="b-fijo" x="385.1" y="168" width="19.0" height="22" rx="1"></rect>
+<rect class="b-fijo" x="396.5" y="168" width="30.3" height="22" rx="1"></rect>
+<rect class="b-fijo" x="942.5" y="168" width="11.4" height="22" rx="1"></rect>
+<rect class="b-fijo" x="385.1" y="244" width="19.0" height="22" rx="1"></rect>
+<rect class="b-fijo" x="396.5" y="244" width="30.3" height="22" rx="1"></rect>
+<rect class="b-fijo" x="942.5" y="244" width="11.4" height="22" rx="1"></rect>
+
+        <rect class="b-stock" x="78" y="302" width="14" height="11" rx="1"></rect>
+        <text class="leyenda" x="98" y="312">stock por hora</text>
+        <rect class="b-pick" x="212" y="302" width="14" height="11" rx="1"></rect>
+        <text class="leyenda" x="232" y="312">picking por hora</text>
+        <rect class="b-fijo" x="352" y="302" width="14" height="11" rx="1"></rect>
+        <text class="leyenda" x="372" y="312">robots fijos: reportes y OBLPN 06:45, ancla 07:00 y 19:00</text>
+      </svg>
+    </div>
+    <figcaption>Los bloques rojos son los robots que ya tienen hora fija y no se mueven. <b>Ninguna de las dos opciones los pisa</b> &mdash;lo comprob&eacute; corrida por corrida&mdash;. Lo que se ve a simple vista es cu&aacute;nto respira el WMS: hoy casi no hay hueco, y con cualquiera de las dos queda libre m&aacute;s de la mitad del d&iacute;a.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Las dos opciones</h2></div>
+  <div class="opts">
+    <div class="opt gana">
+      <span class="sello">La que recomiendo</span>
+      <h3>Cada 2 horas, en punto</h3>
+      <div class="sub">12 corridas al d&iacute;a</div>
+      <div class="horas">00:00 &nbsp;02:00 &nbsp;04:00 &nbsp;06:00 &nbsp;08:00 &nbsp;10:00<br>12:00 &nbsp;14:00 &nbsp;16:00 &nbsp;18:00 &nbsp;20:00 &nbsp;22:00</div>
+      <dl>
+        <dt>Stock</dt><dd>en punto &mdash; termina :09</dd>
+        <dt>Mapa</dt><dd>y cuarto &mdash; ya est&aacute; el stock nuevo</dd>
+        <dt>Picking</dt><dd>y veinte &mdash; termina :37</dd>
+        <dt>WMS</dt><dd>5,2 h ocupado (la mitad de hoy)</dd>
+        <dt>Choques</dt><dd class="ok">ninguno</dd>
+      </dl>
+    </div>
+    <div class="opt">
+      <h3>Cada 2 horas y media</h3>
+      <div class="sub">10 corridas al d&iacute;a</div>
+      <div class="horas">00:10 &nbsp;02:40 &nbsp;05:10 &nbsp;07:40 &nbsp;10:10<br>12:40 &nbsp;15:10 &nbsp;17:40 &nbsp;20:10 &nbsp;22:40</div>
+      <dl>
+        <dt>Stock</dt><dd>a esas horas &mdash; termina 9 min despu&eacute;s</dd>
+        <dt>Mapa</dt><dd>15 min despu&eacute;s del stock</dd>
+        <dt>Picking</dt><dd>20 min despu&eacute;s del stock</dd>
+        <dt>WMS</dt><dd>4,4 h ocupado</dd>
+        <dt>Choques</dt><dd class="ok">ninguno</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Lado a lado</h2></div>
+  <div class="tw">
+    <table class="data">
+      <thead>
+        <tr><th>&nbsp;</th><th class="num">Hoy</th><th class="num">Cada 2 h</th><th class="num">Cada 2,5 h</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Entradas al WMS por d&iacute;a</td><td class="num hot">24</td><td class="num">12</td><td class="num">10</td></tr>
+        <tr><td>WMS ocupado</td><td class="num hot">10,4 h</td><td class="num">5,2 h</td><td class="num">4,4 h</td></tr>
+        <tr><td>Fotos en el turno noche <span style="color:var(--ink-3)">(20:30 a 06:00)</span></td><td class="num">10</td><td class="num ok">5</td><td class="num">4</td></tr>
+        <tr><td>Choques con robots fijos</td><td class="num hot">s&iacute;</td><td class="num ok">no</td><td class="num ok">no</td></tr>
+        <tr><td>Horas f&aacute;ciles de recordar</td><td class="num">no</td><td class="num ok">s&iacute;</td><td class="num hot">no</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Por qu&eacute; recomiendo la de 2 horas</h2></div>
+  <div class="notes">
+    <div class="note-card">
+      <h3>La diferencia real es chica</h3>
+      <p>Entre las dos hay <b>48 minutos</b> de WMS al d&iacute;a. Las dos bajan la carga a la mitad o menos; el problema que te est&aacute; molestando lo resuelven igual.</p>
+    </div>
+    <div class="note-card">
+      <h3>En punto se entiende de un vistazo</h3>
+      <p>&laquo;Corre a las pares, en punto&raquo; se dice y se recuerda. La de 2,5 horas cae en <b>00:10, 02:40, 05:10, 07:40&hellip;</b> y hay que ir a mirar la tabla cada vez que quieras saber si ya corri&oacute;.</p>
+      <p>Cuando algo falle a las 3 de la ma&ntilde;ana, eso importa.</p>
+    </div>
+    <div class="note-card hot">
+      <h3>Y una foto m&aacute;s en el turno noche</h3>
+      <p>El turno trabaja de <b>20:30 a 06:00</b>, que es cuando el stock por hora m&aacute;s se mira. Con 2 horas quedan <b>5 fotos</b> en esa franja; con 2,5, solo <b>4</b>.</p>
+    </div>
+    <div class="note-card">
+      <h3>Lo que hoy s&iacute; choca</h3>
+      <p>El picking de las <b>06:50</b> termina a las <b>07:07</b> y pisa al ancla de las 07:00, que tiene que esperar. Con cualquiera de las dos opciones eso desaparece.</p>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  Maqueta &middot; Web Log&iacute;stica Deam1830 &middot; 30 de agosto de 2026<br>
+  Duraciones medidas sobre los registros del servidor: 8 corridas de <code>hora_*</code> y 7 de <code>pickinghora_*</code> del 30-08.<br>
+  Los horarios salen de la misma cuenta que usa <code>horario_robot.py</code>: arranque + intervalo, desde el minuto 0 del d&iacute;a.
+</div>
+
+</div>

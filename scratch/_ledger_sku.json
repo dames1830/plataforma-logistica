@@ -1,0 +1,1063 @@
+{
+ "sku": "6116913-1-07",
+ "asn": {
+  "lineas": [
+   {
+    "envio": "20260873001BA.6116913",
+    "estado": "Verificado",
+    "tipo": "IMP",
+    "enviado": 380.0,
+    "recibido": 380.0,
+    "fecha_envio": "06/08/2026",
+    "verificado": "15/08/2026 08:17:27",
+    "proveedor": "2026000220"
+   },
+   {
+    "envio": "20260873101VM.6116913",
+    "estado": "Verificado",
+    "tipo": "IMP",
+    "enviado": 6.0,
+    "recibido": 6.0,
+    "fecha_envio": "06/08/2026",
+    "verificado": "15/08/2026 09:34:55",
+    "proveedor": "2026000264"
+   },
+   {
+    "envio": "20260873101CA.6116913",
+    "estado": "Verificado",
+    "tipo": "IMP",
+    "enviado": 12.0,
+    "recibido": 12.0,
+    "fecha_envio": "06/08/2026",
+    "verificado": "15/08/2026 09:34:57",
+    "proveedor": "2026000264"
+   },
+   {
+    "envio": "20260873101BA.6116913",
+    "estado": "Verificado",
+    "tipo": "IMP",
+    "enviado": 640.0,
+    "recibido": 640.0,
+    "fecha_envio": "06/08/2026",
+    "verificado": "15/08/2026 09:34:59",
+    "proveedor": "2026000264"
+   }
+  ],
+  "enviado": 1038.0,
+  "recibido": 1038.0
+ },
+ "serie": [
+  {
+   "foto": "2026-08-06 08:23",
+   "total": 78.0,
+   "buffer": 0,
+   "selectivo": 73.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-06 19:00",
+   "total": 77.0,
+   "buffer": 0,
+   "selectivo": 72.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-07 00:27",
+   "total": 77.0,
+   "buffer": 0,
+   "selectivo": 72.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-07 02:02",
+   "total": 77.0,
+   "buffer": 0,
+   "selectivo": 72.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-07 02:31",
+   "total": 77.0,
+   "buffer": 0,
+   "selectivo": 72.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-07 06:00",
+   "total": 77.0,
+   "buffer": 0,
+   "selectivo": 72.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-07 09:21",
+   "total": 77.0,
+   "buffer": 0,
+   "selectivo": 72.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-07 19:00",
+   "total": 77.0,
+   "buffer": 0,
+   "selectivo": 72.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-08 19:24",
+   "total": 75.0,
+   "buffer": 0,
+   "selectivo": 70.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-10 06:00",
+   "total": 75.0,
+   "buffer": 0,
+   "selectivo": 70.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-10 19:00",
+   "total": 75.0,
+   "buffer": 0,
+   "selectivo": 70.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-11 06:00",
+   "total": 75.0,
+   "buffer": 0,
+   "selectivo": 70.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-11 19:00",
+   "total": 75.0,
+   "buffer": 0,
+   "selectivo": 70.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-12 06:00",
+   "total": 75.0,
+   "buffer": 0,
+   "selectivo": 70.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-12 19:00",
+   "total": 75.0,
+   "buffer": 0,
+   "selectivo": 70.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-13 06:00",
+   "total": 75.0,
+   "buffer": 0,
+   "selectivo": 70.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-13 07:00",
+   "total": 75.0,
+   "buffer": 0,
+   "selectivo": 70.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-13 19:00",
+   "total": 74.0,
+   "buffer": 0,
+   "selectivo": 69.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-14 07:00",
+   "total": 74.0,
+   "buffer": 0,
+   "selectivo": 69.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-14 19:00",
+   "total": 73.0,
+   "buffer": 0,
+   "selectivo": 68.0,
+   "andamio": 5.0,
+   "ubicaciones": 6
+  },
+  {
+   "foto": "2026-08-15 07:00",
+   "total": 73.0,
+   "buffer": 0,
+   "selectivo": 68.0,
+   "andamio": 5.0,
+   "ubicaciones": 5
+  },
+  {
+   "foto": "2026-08-15 19:00",
+   "total": 807.0,
+   "buffer": 738.0,
+   "selectivo": 64.0,
+   "andamio": 5.0,
+   "ubicaciones": 9
+  },
+  {
+   "foto": "2026-08-17 07:00",
+   "total": 697.0,
+   "buffer": 0,
+   "selectivo": 692.0,
+   "andamio": 5.0,
+   "ubicaciones": 9
+  },
+  {
+   "foto": "2026-08-17 19:00",
+   "total": 697.0,
+   "buffer": 0,
+   "selectivo": 692.0,
+   "andamio": 5.0,
+   "ubicaciones": 9
+  },
+  {
+   "foto": "2026-08-18 07:00",
+   "total": 697.0,
+   "buffer": 0,
+   "selectivo": 692.0,
+   "andamio": 5.0,
+   "ubicaciones": 9
+  },
+  {
+   "foto": "2026-08-18 19:45",
+   "total": 697.0,
+   "buffer": 0,
+   "selectivo": 692.0,
+   "andamio": 5.0,
+   "ubicaciones": 9
+  },
+  {
+   "foto": "2026-08-19 07:00",
+   "total": 697.0,
+   "buffer": 0,
+   "selectivo": 692.0,
+   "andamio": 5.0,
+   "ubicaciones": 9
+  },
+  {
+   "foto": "2026-08-19 19:20",
+   "total": 620.0,
+   "buffer": 0,
+   "selectivo": 615.0,
+   "andamio": 5.0,
+   "ubicaciones": 9
+  },
+  {
+   "foto": "2026-08-20 07:00",
+   "total": 620.0,
+   "buffer": 0,
+   "selectivo": 615.0,
+   "andamio": 5.0,
+   "ubicaciones": 9
+  },
+  {
+   "foto": "2026-08-20 19:20",
+   "total": 530.0,
+   "buffer": 0,
+   "selectivo": 525.0,
+   "andamio": 5.0,
+   "ubicaciones": 8
+  },
+  {
+   "foto": "2026-08-21 07:00",
+   "total": 530.0,
+   "buffer": 0,
+   "selectivo": 525.0,
+   "andamio": 5.0,
+   "ubicaciones": 8
+  },
+  {
+   "foto": "2026-08-21 19:20",
+   "total": 455.0,
+   "buffer": 0,
+   "selectivo": 450.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-22 07:00",
+   "total": 455.0,
+   "buffer": 0,
+   "selectivo": 450.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-22 19:20",
+   "total": 453.0,
+   "buffer": 0,
+   "selectivo": 448.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-23 16:40",
+   "total": 453.0,
+   "buffer": 0,
+   "selectivo": 448.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-24 07:02",
+   "total": 453.0,
+   "buffer": 0,
+   "selectivo": 448.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-24 19:50",
+   "total": 407.0,
+   "buffer": 0,
+   "selectivo": 402.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-25 07:00",
+   "total": 407.0,
+   "buffer": 0,
+   "selectivo": 402.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-25 19:00",
+   "total": 347.0,
+   "buffer": 0,
+   "selectivo": 342.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-26 07:00",
+   "total": 347.0,
+   "buffer": 0,
+   "selectivo": 342.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-26 19:00",
+   "total": 338.0,
+   "buffer": 0,
+   "selectivo": 333.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-27 07:00",
+   "total": 338.0,
+   "buffer": 0,
+   "selectivo": 333.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-27 19:00",
+   "total": 333.0,
+   "buffer": 0,
+   "selectivo": 328.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-28 07:00",
+   "total": 333.0,
+   "buffer": 0,
+   "selectivo": 328.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  },
+  {
+   "foto": "2026-08-28 19:00",
+   "total": 296.0,
+   "buffer": 0,
+   "selectivo": 291.0,
+   "andamio": 5.0,
+   "ubicaciones": 7
+  }
+ ],
+ "buffer_eventos": [
+  {
+   "area": "CDBUFFER",
+   "ubic": "CDBUFFER-A-00-055",
+   "cant": 350.0,
+   "mod": "15/08/2026 15:10:45",
+   "user": "jlaureano",
+   "foto": "2026-08-15 19:00"
+  },
+  {
+   "area": "CDBUFFER",
+   "ubic": "CDBUFFER-A-00-054",
+   "cant": 30.0,
+   "mod": "15/08/2026 15:10:41",
+   "user": "jlaureano",
+   "foto": "2026-08-15 19:00"
+  },
+  {
+   "area": "CDBUFFER",
+   "ubic": "CDBUFFER-A-00-020",
+   "cant": 2.0,
+   "mod": "15/08/2026 14:55:18",
+   "user": "jlaureano",
+   "foto": "2026-08-15 19:00"
+  },
+  {
+   "area": "CDBUFFER",
+   "ubic": "CDBUFFER-A-00-018",
+   "cant": 356.0,
+   "mod": "15/08/2026 14:55:06",
+   "user": "jlaureano",
+   "foto": "2026-08-15 19:00"
+  }
+ ],
+ "picking": [
+  {
+   "dia": "2026-07-20",
+   "lineas": 2,
+   "pares": 4.0,
+   "tiendas": 2,
+   "personas": 2,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     4.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-07-21",
+   "lineas": 4,
+   "pares": 8.0,
+   "tiendas": 4,
+   "personas": 4,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     8.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-07-25",
+   "lineas": 2,
+   "pares": 5.0,
+   "tiendas": 2,
+   "personas": 2,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     5.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-07-27",
+   "lineas": 5,
+   "pares": 12.0,
+   "tiendas": 5,
+   "personas": 4,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     12.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-07-31",
+   "lineas": 1,
+   "pares": 3.0,
+   "tiendas": 1,
+   "personas": 1,
+   "ubic": [
+    [
+     "PISO-600-00-400",
+     3.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-03",
+   "lineas": 1,
+   "pares": 1.0,
+   "tiendas": 1,
+   "personas": 1,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     1.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-04",
+   "lineas": 5,
+   "pares": 11.0,
+   "tiendas": 5,
+   "personas": 5,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     11.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-05",
+   "lineas": 3,
+   "pares": 3.0,
+   "tiendas": 3,
+   "personas": 3,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     3.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-06",
+   "lineas": 1,
+   "pares": 1.0,
+   "tiendas": 1,
+   "personas": 1,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     1.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-08",
+   "lineas": 1,
+   "pares": 2.0,
+   "tiendas": 1,
+   "personas": 1,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     2.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-13",
+   "lineas": 1,
+   "pares": 1.0,
+   "tiendas": 1,
+   "personas": 1,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     1.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-14",
+   "lineas": 1,
+   "pares": 1.0,
+   "tiendas": 1,
+   "personas": 1,
+   "ubic": [
+    [
+     "SEL-07-21-B-01",
+     1.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-15",
+   "lineas": 2,
+   "pares": 4.0,
+   "tiendas": 2,
+   "personas": 2,
+   "ubic": [
+    [
+     "SEL-04-21-B-01",
+     4.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-19",
+   "lineas": 44,
+   "pares": 77.0,
+   "tiendas": 40,
+   "personas": 22,
+   "ubic": [
+    [
+     "SEL-04-21-B-01",
+     60.0
+    ],
+    [
+     "SEL-07-04-A-01",
+     17.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-20",
+   "lineas": 54,
+   "pares": 90.0,
+   "tiendas": 51,
+   "personas": 17,
+   "ubic": [
+    [
+     "SEL-07-04-A-01",
+     86.0
+    ],
+    [
+     "SEL-04-21-B-01",
+     4.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-21",
+   "lineas": 46,
+   "pares": 75.0,
+   "tiendas": 43,
+   "personas": 15,
+   "ubic": [
+    [
+     "SEL-07-03-C-01",
+     72.0
+    ],
+    [
+     "SEL-07-04-A-01",
+     3.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-24",
+   "lineas": 29,
+   "pares": 46.0,
+   "tiendas": 26,
+   "personas": 18,
+   "ubic": [
+    [
+     "SEL-07-03-C-01",
+     46.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-25",
+   "lineas": 37,
+   "pares": 60.0,
+   "tiendas": 33,
+   "personas": 17,
+   "ubic": [
+    [
+     "SEL-07-03-C-01",
+     60.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-26",
+   "lineas": 5,
+   "pares": 9.0,
+   "tiendas": 5,
+   "personas": 4,
+   "ubic": [
+    [
+     "SEL-07-03-A-01",
+     9.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-27",
+   "lineas": 2,
+   "pares": 5.0,
+   "tiendas": 2,
+   "personas": 2,
+   "ubic": [
+    [
+     "SEL-07-03-A-01",
+     5.0
+    ]
+   ]
+  },
+  {
+   "dia": "2026-08-28",
+   "lineas": 20,
+   "pares": 37.0,
+   "tiendas": 19,
+   "personas": 14,
+   "ubic": [
+    [
+     "SEL-07-03-A-01",
+     27.0
+    ],
+    [
+     "SEL-07-03-B-01",
+     10.0
+    ]
+   ]
+  }
+ ],
+ "picking_total": {
+  "dias": 21,
+  "lineas": 266,
+  "pares": 455.0
+ },
+ "oblpn": {
+  "Cancelado": {
+   "lineas": 74,
+   "pares": 0.0,
+   "bultos": 72
+  },
+  "Enviado": {
+   "lineas": 127,
+   "pares": 192.0,
+   "bultos": 125
+  },
+  "Empaquetado": {
+   "lineas": 18,
+   "pares": 35.0,
+   "bultos": 17
+  },
+  "En empaquetado": {
+   "lineas": 4,
+   "pares": 7.0,
+   "bultos": 4
+  }
+ },
+ "patio": [
+  {
+   "lpn": "508003984673",
+   "pares": 2.0,
+   "ruta": "SAN JUAN MIRAFLORES",
+   "tienda": "50350",
+   "empacado": "24/08/2026 10:07:15",
+   "horas": 115.9
+  },
+  {
+   "lpn": "508003982365",
+   "pares": 3.0,
+   "ruta": "TRANSA",
+   "tienda": "50601",
+   "empacado": "27/08/2026 12:14:28",
+   "horas": 41.8
+  },
+  {
+   "lpn": "PRE500080002011288",
+   "pares": 2.0,
+   "ruta": "LOG - ARQ",
+   "tienda": "50720",
+   "empacado": "28/08/2026 11:36:45",
+   "horas": 18.4
+  },
+  {
+   "lpn": "PRE500080002014139",
+   "pares": 2.0,
+   "ruta": "LOG - ARQ",
+   "tienda": "50704",
+   "empacado": "28/08/2026 11:44:32",
+   "horas": 18.3
+  },
+  {
+   "lpn": "PRE500080002010916",
+   "pares": 2.0,
+   "ruta": "LOG - ARQ",
+   "tienda": "50709",
+   "empacado": "28/08/2026 12:00:58",
+   "horas": 18.0
+  },
+  {
+   "lpn": "508004092163",
+   "pares": 2.0,
+   "ruta": "TOSCANO - SUR CHICO",
+   "tienda": "50457",
+   "empacado": "28/08/2026 13:05:16",
+   "horas": 16.9
+  },
+  {
+   "lpn": "PRE500080002014104",
+   "pares": 2.0,
+   "ruta": "LOG - ARQ",
+   "tienda": "50711",
+   "empacado": "28/08/2026 13:12:58",
+   "horas": 16.8
+  },
+  {
+   "lpn": "508004024741",
+   "pares": 2.0,
+   "ruta": "TOSCANO - SUR CHICO",
+   "tienda": "50441",
+   "empacado": "28/08/2026 13:28:40",
+   "horas": 16.5
+  },
+  {
+   "lpn": "PRE500080002013220",
+   "pares": 2.0,
+   "ruta": "LOG - ARQ",
+   "tienda": "50719",
+   "empacado": "28/08/2026 14:14:45",
+   "horas": 15.8
+  },
+  {
+   "lpn": "PRE500080002011162",
+   "pares": 2.0,
+   "ruta": "LOG - ARQ",
+   "tienda": "50701",
+   "empacado": "28/08/2026 14:31:44",
+   "horas": 15.5
+  },
+  {
+   "lpn": "PRE500080002011441",
+   "pares": 2.0,
+   "ruta": "CRUZ 2",
+   "tienda": "50753",
+   "empacado": "28/08/2026 15:36:55",
+   "horas": 14.4
+  },
+  {
+   "lpn": "PRE500080002013249",
+   "pares": 2.0,
+   "ruta": "LOG - ARQ",
+   "tienda": "50705",
+   "empacado": "28/08/2026 16:25:00",
+   "horas": 13.6
+  },
+  {
+   "lpn": "PRE500080002011440",
+   "pares": 2.0,
+   "ruta": "LOG - ARQ",
+   "tienda": "50710",
+   "empacado": "28/08/2026 16:22:09",
+   "horas": 13.6
+  },
+  {
+   "lpn": "PRE500080002013449",
+   "pares": 1.0,
+   "ruta": "CRUZ 2",
+   "tienda": "50756",
+   "empacado": "28/08/2026 16:42:33",
+   "horas": 13.3
+  },
+  {
+   "lpn": "PRE500080002013450",
+   "pares": 2.0,
+   "ruta": "CRUZ 2",
+   "tienda": "50725",
+   "empacado": "28/08/2026 16:59:55",
+   "horas": 13.0
+  },
+  {
+   "lpn": "PRE500080002013820",
+   "pares": 2.0,
+   "ruta": "CRUZ 2",
+   "tienda": "50723",
+   "empacado": "28/08/2026 17:03:00",
+   "horas": 12.9
+  },
+  {
+   "lpn": "PRE500080002013820",
+   "pares": 1.0,
+   "ruta": "CRUZ 2",
+   "tienda": "50723",
+   "empacado": "28/08/2026 17:03:30",
+   "horas": 12.9
+  },
+  {
+   "lpn": "PRE500080002010918",
+   "pares": 2.0,
+   "ruta": "CRUZ 2",
+   "tienda": "50726",
+   "empacado": "28/08/2026 17:13:11",
+   "horas": 12.8
+  }
+ ],
+ "rutas": [
+  [
+   "LOG - ARQ",
+   21.0
+  ],
+  [
+   "TOSCANO",
+   20.0
+  ],
+  [
+   "ITTSA",
+   19.0
+  ],
+  [
+   "TOSCANO - SUR CHICO",
+   19.0
+  ],
+  [
+   "TRANSA",
+   13.0
+  ],
+  [
+   "CRUZ 2",
+   12.0
+  ],
+  [
+   "VILLA",
+   10.0
+  ],
+  [
+   "JR UNION",
+   9.0
+  ],
+  [
+   "COMAS",
+   8.0
+  ],
+  [
+   "GAMARRA",
+   8.0
+  ],
+  [
+   "RUTA CALLAO",
+   6.0
+  ],
+  [
+   "PURUCHUCO - MOLINA",
+   6.0
+  ],
+  [
+   "JESUS M - SLVRRY",
+   6.0
+  ],
+  [
+   "CENTRO LIMA",
+   6.0
+  ],
+  [
+   "SAN MARITIN",
+   6.0
+  ],
+  [
+   "OLIVOS",
+   6.0
+  ],
+  [
+   "SANTA ANITA",
+   5.0
+  ],
+  [
+   "DIVAL",
+   5.0
+  ],
+  [
+   "SAN MIGUEL",
+   5.0
+  ],
+  [
+   "SAN JUAN L",
+   5.0
+  ],
+  [
+   "SAN JUAN MIRAFLORES",
+   4.0
+  ],
+  [
+   "PUENTE PIEDRA",
+   4.0
+  ],
+  [
+   "LOG",
+   4.0
+  ],
+  [
+   "CHOSICA-HUAYCAN",
+   4.0
+  ],
+  [
+   "CHORRILLOS",
+   3.0
+  ],
+  [
+   "MIRAFLORES",
+   3.0
+  ],
+  [
+   "AGUSTINO",
+   2.0
+  ],
+  [
+   "PRVMERA-CANADA",
+   2.0
+  ],
+  [
+   "HUANCAVELICA",
+   2.0
+  ],
+  [
+   "PRO",
+   2.0
+  ],
+  [
+   "CIVICO - MINKA",
+   2.0
+  ],
+  [
+   "SANTA CLARA",
+   2.0
+  ],
+  [
+   "BELLAVISTA - FAUCETT",
+   2.0
+  ],
+  [
+   "PLAZA NORTE",
+   2.0
+  ],
+  [
+   "ITTSA 2",
+   1.0
+  ]
+ ],
+ "balance": {
+  "stock_antes": 73.0,
+  "foto_antes": "2026-08-15 07:00",
+  "asn_recibido": 1038.0,
+  "buffer_matriculado": 738.0,
+  "stock_pico": 807.0,
+  "foto_pico": "2026-08-15 19:00",
+  "picado_desde_15": 403.0,
+  "stock_final": 296.0,
+  "foto_final": "2026-08-28 19:00",
+  "cuadre": 108.0
+ }
+}

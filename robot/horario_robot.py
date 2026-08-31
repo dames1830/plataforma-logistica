@@ -59,7 +59,7 @@ DE_FABRICA = {
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'ancla_manana': {'activa': True, 'hora': '07:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
-    'stock_hora':   {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}},
+    'stock_hora':   {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '22:00', 'hasta': '06:00'},
     'picking_hora': {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00'},
     # EL TRIO PASO DE CADA HORA A CADA 2 HORAS el 30-ago-2026, medido: entre stock (9,2
     # min) y picking (16,9) tenian el WMS ocupado 10,4 horas al dia, y el picking de las
@@ -67,7 +67,7 @@ DE_FABRICA = {
     # choque. Van como bloque y en punto, que se recuerda de memoria a las 3 de la manana.
     # El mapa se dibuja con el stock que `stock_hora` acaba de publicar y esa corrida
     # tarda hasta 9,2 minutos: por eso va 15 despues, no antes. El picking, 20.
-    'mapa_hora':    {'activa': True, 'minuto': 15, 'cadaMin': 120, 'dias': {d: True for d in DIAS}},
+    'mapa_hora':    {'activa': True, 'minuto': 15, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '22:00', 'hasta': '06:15'},
     # A las 06:45: el turno noche cierra 06:30 y el de la manana entra 08:00, asi que
     # el almacen esta quieto y el dia de ayer ya cerro. Estaba a las 08:00 y eso
     # empujaba a SKUs sin salida fuera de la manana.
@@ -181,6 +181,24 @@ def _minutos_de(hhmm):
         return None
 
 
+def _en_ventana(base, desde, hasta):
+    """Si ese minuto del dia cae dentro de la ventana. Sin ventana, siempre.
+
+    LA VENTANA PUEDE CRUZAR LA MEDIANOCHE, y hace falta: el avance del turno noche va de
+    22:00 a 06:00, o sea que `hasta` es MENOR que `desde`. Cuando pasa eso, dentro es
+    "de las 22:00 en adelante O hasta las 06:00", no el tramo entre las dos.
+    """
+    if desde is None and hasta is None:
+        return True
+    if desde is not None and hasta is not None:
+        if desde <= hasta:
+            return desde <= base <= hasta
+        return base >= desde or base <= hasta
+    if desde is not None:
+        return base >= desde
+    return base <= hasta
+
+
 def franja_actual(tarea, cfg, ahora=None):
     """
     En que franja horaria cae este momento, o None si no le toca.
@@ -226,9 +244,7 @@ def franja_actual(tarea, cfg, ahora=None):
     base = arranque
     while base < 24 * 60:
         if base <= minutos < base + VENTANA_MIN:
-            if lim_i is not None and base < lim_i:
-                return None
-            if lim_f is not None and base > lim_f:
+            if not _en_ventana(base, lim_i, lim_f):
                 return None
             return f'{ahora:%Y-%m-%d} {base // 60:02d}:{base % 60:02d}'
         base += cada

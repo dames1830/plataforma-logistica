@@ -1,0 +1,3225 @@
+[
+ {
+  "foto": "2026-08-01 00:00",
+  "total": 38.0,
+  "alto": 30.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 59.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-05",
+    "ubic": "SEL-05-06-F-02",
+    "lpn": "PRE500080001822836",
+    "cant": 30.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-02 00:00",
+  "total": 38.0,
+  "alto": 30.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 59.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-05",
+    "ubic": "SEL-05-06-F-02",
+    "lpn": "PRE500080001822836",
+    "cant": 30.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-03 00:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 29.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-04 00:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 29.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-05 00:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 29.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-06 08:23",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 29.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-06 19:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 29.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-07 00:27",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 29.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-07 02:31",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 29.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-07 06:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 29.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-07 09:21",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 29.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-07 19:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 29.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-08 19:24",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-10 06:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-10 19:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-11 06:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-11 19:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-12 06:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-12 19:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-13 06:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-13 07:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA-",
+    "ubic": "MERMA-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-13 19:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-14 07:00",
+  "total": 8.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 28.0,
+  "detalle": [
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-14 19:00",
+  "total": 1046.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 1038.0,
+  "estilo": 4110.0,
+  "detalle": [
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964742",
+    "cant": 30.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964886",
+    "cant": 350.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964914",
+    "cant": 2.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964916",
+    "cant": 6.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964917",
+    "cant": 12.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964918",
+    "cant": 338.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-15 07:00",
+  "total": 1046.0,
+  "alto": 0,
+  "merma": 8.0,
+  "otros": 1038.0,
+  "estilo": 4110.0,
+  "detalle": [
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964742",
+    "cant": 30.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964886",
+    "cant": 350.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964914",
+    "cant": 2.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964916",
+    "cant": 6.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964917",
+    "cant": 12.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964918",
+    "cant": 338.0
+   },
+   {
+    "nivel": "CROSS",
+    "zona": "RECEP-",
+    "ubic": "RECEP-IMP-00-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-15 19:00",
+  "total": 308.0,
+  "alto": 300.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1128.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-17 07:00",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-17 19:00",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-18 07:00",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-18 19:45",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-19 07:00",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-19 19:20",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-20 07:00",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-20 19:20",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-21 19:20",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-22 07:00",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-22 19:20",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-23 16:40",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1758.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-24 19:50",
+  "total": 418.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 0.0,
+  "estilo": 1738.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-25 19:00",
+  "total": 419.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 1.0,
+  "estilo": 1739.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "DEV-00",
+    "ubic": "DEV-00-00-01",
+    "lpn": "PRE500080002003614",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-26 19:00",
+  "total": 419.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 1.0,
+  "estilo": 1739.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "DEV-00",
+    "ubic": "DEV-00-00-01",
+    "lpn": "PRE500080002003614",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-27 19:00",
+  "total": 419.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 1.0,
+  "estilo": 1622.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "DEV-00",
+    "ubic": "DEV-00-00-01",
+    "lpn": "PRE500080002003614",
+    "cant": 1.0
+   }
+  ]
+ },
+ {
+  "foto": "2026-08-28 19:00",
+  "total": 419.0,
+  "alto": 410.0,
+  "merma": 8.0,
+  "otros": 1.0,
+  "estilo": 1622.0,
+  "detalle": [
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-09",
+    "ubic": "SEL-09-05-F-01",
+    "lpn": "IMP500080001964930",
+    "cant": 300.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA0",
+    "ubic": "MERMA04-00-00-01",
+    "lpn": "PRE500080001566248",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA11-00-00-01",
+    "lpn": "PRE500080001594439",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA14-00-00-01",
+    "lpn": "PRE500080001594471",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA1",
+    "ubic": "MERMA15-00-00-01",
+    "lpn": "PRE500080001594480",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA3",
+    "ubic": "MERMA37-00-00-01",
+    "lpn": "PRE500080001636225",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA5",
+    "ubic": "MERMA56-00-00-01",
+    "lpn": "PRE500080001701677",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA6",
+    "ubic": "MERMA61-00-00-01",
+    "lpn": "PRE500080001737829",
+    "cant": 1.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "MERMA8",
+    "ubic": "MERMA86-00-00-01",
+    "lpn": "PRE500080001804710",
+    "cant": 1.0
+   },
+   {
+    "nivel": "ALTO",
+    "zona": "SEL-10",
+    "ubic": "SEL-10-04-E-01",
+    "lpn": "PRE500080001957732",
+    "cant": 110.0
+   },
+   {
+    "nivel": "VER",
+    "zona": "DEV-00",
+    "ubic": "DEV-00-00-01",
+    "lpn": "PRE500080002003614",
+    "cant": 1.0
+   }
+  ]
+ }
+]

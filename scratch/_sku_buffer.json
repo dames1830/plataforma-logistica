@@ -1,0 +1,989 @@
+[
+ {
+  "foto": "2026-08-06 08:23",
+  "archivo": "Stock Activo 06-08-26 0823.csv",
+  "sku_total": 78.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 400.0
+ },
+ {
+  "foto": "2026-08-06 19:00",
+  "archivo": "Stock Activo 06-08-26 1900.csv",
+  "sku_total": 77.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 394.0
+ },
+ {
+  "foto": "2026-08-07 00:27",
+  "archivo": "Stock Activo 07-08-26 0027.csv",
+  "sku_total": 77.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 394.0
+ },
+ {
+  "foto": "2026-08-07 02:02",
+  "archivo": "Stock Activo 07-08-26 0202.csv",
+  "sku_total": 77.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 394.0
+ },
+ {
+  "foto": "2026-08-07 02:31",
+  "archivo": "Stock Activo 07-08-26 0231.csv",
+  "sku_total": 77.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 394.0
+ },
+ {
+  "foto": "2026-08-07 06:00",
+  "archivo": "Stock Activo 07-08-26 0600.csv",
+  "sku_total": 77.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 394.0
+ },
+ {
+  "foto": "2026-08-07 09:21",
+  "archivo": "Stock Activo 07-08-26 0921.csv",
+  "sku_total": 77.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 394.0
+ },
+ {
+  "foto": "2026-08-07 19:00",
+  "archivo": "Stock Activo 07-08-26 1900.csv",
+  "sku_total": 77.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 375.0
+ },
+ {
+  "foto": "2026-08-08 19:24",
+  "archivo": "Stock Activo 08-08-26 1924.csv",
+  "sku_total": 75.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 372.0
+ },
+ {
+  "foto": "2026-08-10 06:00",
+  "archivo": "Stock Activo 10-08-26 0600.csv",
+  "sku_total": 75.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 372.0
+ },
+ {
+  "foto": "2026-08-10 19:00",
+  "archivo": "Stock Activo 10-08-26 1900.csv",
+  "sku_total": 75.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 370.0
+ },
+ {
+  "foto": "2026-08-11 06:00",
+  "archivo": "Stock Activo 11-08-26 0600.csv",
+  "sku_total": 75.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 370.0
+ },
+ {
+  "foto": "2026-08-11 19:00",
+  "archivo": "Stock Activo 11-08-26 1900.csv",
+  "sku_total": 75.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 368.0
+ },
+ {
+  "foto": "2026-08-12 06:00",
+  "archivo": "Stock Activo 12-08-26 0600.csv",
+  "sku_total": 75.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 368.0
+ },
+ {
+  "foto": "2026-08-12 19:00",
+  "archivo": "Stock Activo 12-08-26 1900.csv",
+  "sku_total": 75.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 367.0
+ },
+ {
+  "foto": "2026-08-13 06:00",
+  "archivo": "Stock Activo 13-08-26 0600.csv",
+  "sku_total": 75.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 367.0
+ },
+ {
+  "foto": "2026-08-13 07:00",
+  "archivo": "Stock Activo 13-08-26 0700.csv",
+  "sku_total": 75.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 367.0
+ },
+ {
+  "foto": "2026-08-13 19:00",
+  "archivo": "Stock Activo 13-08-26 1900.csv",
+  "sku_total": 74.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 362.0
+ },
+ {
+  "foto": "2026-08-14 07:00",
+  "archivo": "Stock Activo 14-08-26 0700.csv",
+  "sku_total": 74.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 361.0
+ },
+ {
+  "foto": "2026-08-14 19:00",
+  "archivo": "Stock Activo 14-08-26 1900.csv",
+  "sku_total": 73.0,
+  "sku_ubic": 6,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 359.0
+ },
+ {
+  "foto": "2026-08-15 07:00",
+  "archivo": "Stock Activo 15-08-26 0700.csv",
+  "sku_total": 73.0,
+  "sku_ubic": 5,
+  "sku_buffer": [],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [],
+  "estilo_total": 359.0
+ },
+ {
+  "foto": "2026-08-15 19:00",
+  "archivo": "Stock Activo 15-08-26 1900.csv",
+  "sku_total": 807.0,
+  "sku_ubic": 9,
+  "sku_buffer": [
+   {
+    "sku": "6116913-1-07",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-055",
+    "cant": 350.0,
+    "mod": "15/08/2026 15:10:45",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-054",
+    "cant": 30.0,
+    "mod": "15/08/2026 15:10:41",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-020",
+    "cant": 2.0,
+    "mod": "15/08/2026 14:55:18",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-018",
+    "cant": 356.0,
+    "mod": "15/08/2026 14:55:06",
+    "user": "jlaureano"
+   }
+  ],
+  "sku_cuerpo": 0,
+  "cuerpo_det": [],
+  "estilo_buffer": [
+   {
+    "sku": "6116913-1-04",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-051",
+    "cant": 90.0,
+    "mod": "15/08/2026 15:10:25",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-04",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-021",
+    "cant": 160.0,
+    "mod": "15/08/2026 14:55:35",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-05",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-052",
+    "cant": 310.0,
+    "mod": "15/08/2026 15:10:31",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-05",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-020",
+    "cant": 326.0,
+    "mod": "15/08/2026 14:55:27",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-06",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-054",
+    "cant": 80.0,
+    "mod": "15/08/2026 15:10:41",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-06",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-053",
+    "cant": 350.0,
+    "mod": "15/08/2026 15:10:36",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-06",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-019",
+    "cant": 338.0,
+    "mod": "15/08/2026 14:55:14",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-055",
+    "cant": 350.0,
+    "mod": "15/08/2026 15:10:45",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-054",
+    "cant": 30.0,
+    "mod": "15/08/2026 15:10:41",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-020",
+    "cant": 2.0,
+    "mod": "15/08/2026 14:55:18",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-018",
+    "cant": 356.0,
+    "mod": "15/08/2026 14:55:06",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-08",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-056",
+    "cant": 260.0,
+    "mod": "15/08/2026 15:10:50",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-08",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-020",
+    "cant": 1.0,
+    "mod": "15/08/2026 14:55:21",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-08",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-017",
+    "cant": 253.0,
+    "mod": "15/08/2026 14:54:58",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-09",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-051",
+    "cant": 30.0,
+    "mod": "15/08/2026 15:10:25",
+    "user": "jlaureano"
+   },
+   {
+    "sku": "6116913-1-09",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-A-00-021",
+    "cant": 46.0,
+    "mod": "15/08/2026 14:55:35",
+    "user": "jlaureano"
+   }
+  ],
+  "estilo_total": 3335.0
+ },
+ {
+  "foto": "2026-08-17 07:00",
+  "archivo": "Stock Activo 17-08-26 0700.csv",
+  "sku_total": 697.0,
+  "sku_ubic": 9,
+  "sku_buffer": [],
+  "sku_cuerpo": 252.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 252.0,
+    "mod": "16/08/2026 04:52:59",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 2705.0
+ },
+ {
+  "foto": "2026-08-17 19:00",
+  "archivo": "Stock Activo 17-08-26 1900.csv",
+  "sku_total": 697.0,
+  "sku_ubic": 9,
+  "sku_buffer": [],
+  "sku_cuerpo": 252.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 252.0,
+    "mod": "16/08/2026 04:52:59",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 2702.0
+ },
+ {
+  "foto": "2026-08-18 07:00",
+  "archivo": "Stock Activo 18-08-26 0700.csv",
+  "sku_total": 697.0,
+  "sku_ubic": 9,
+  "sku_buffer": [],
+  "sku_cuerpo": 252.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 252.0,
+    "mod": "16/08/2026 04:52:59",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 2702.0
+ },
+ {
+  "foto": "2026-08-18 19:45",
+  "archivo": "Stock Activo 18-08-26 1945.csv",
+  "sku_total": 697.0,
+  "sku_ubic": 9,
+  "sku_buffer": [],
+  "sku_cuerpo": 252.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 252.0,
+    "mod": "16/08/2026 04:52:59",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 2697.0
+ },
+ {
+  "foto": "2026-08-19 07:00",
+  "archivo": "Stock Activo 19-08-26 0700.csv",
+  "sku_total": 697.0,
+  "sku_ubic": 9,
+  "sku_buffer": [],
+  "sku_cuerpo": 252.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 252.0,
+    "mod": "16/08/2026 04:52:59",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 2697.0
+ },
+ {
+  "foto": "2026-08-19 19:20",
+  "archivo": "Stock Activo 19-08-26 1920.csv",
+  "sku_total": 620.0,
+  "sku_ubic": 9,
+  "sku_buffer": [],
+  "sku_cuerpo": 252.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 252.0,
+    "mod": "16/08/2026 04:52:59",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 2362.0
+ },
+ {
+  "foto": "2026-08-20 07:00",
+  "archivo": "Stock Activo 20-08-26 0700.csv",
+  "sku_total": 620.0,
+  "sku_ubic": 9,
+  "sku_buffer": [],
+  "sku_cuerpo": 252.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 252.0,
+    "mod": "16/08/2026 04:52:59",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 2362.0
+ },
+ {
+  "foto": "2026-08-20 19:20",
+  "archivo": "Stock Activo 20-08-26 1920.csv",
+  "sku_total": 530.0,
+  "sku_ubic": 8,
+  "sku_buffer": [],
+  "sku_cuerpo": 252.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 252.0,
+    "mod": "16/08/2026 04:52:59",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1986.0
+ },
+ {
+  "foto": "2026-08-21 07:00",
+  "archivo": "Stock Activo 21-08-26 0700.csv",
+  "sku_total": 530.0,
+  "sku_ubic": 8,
+  "sku_buffer": [],
+  "sku_cuerpo": 252.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 252.0,
+    "mod": "16/08/2026 04:52:59",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1986.0
+ },
+ {
+  "foto": "2026-08-21 19:20",
+  "archivo": "Stock Activo 21-08-26 1920.csv",
+  "sku_total": 455.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 180.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 180.0,
+    "mod": "21/08/2026 17:36:39",
+    "user": "hcrespo"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1678.0
+ },
+ {
+  "foto": "2026-08-22 07:00",
+  "archivo": "Stock Activo 22-08-26 0700.csv",
+  "sku_total": 455.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 180.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 180.0,
+    "mod": "21/08/2026 17:36:39",
+    "user": "hcrespo"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1678.0
+ },
+ {
+  "foto": "2026-08-22 19:20",
+  "archivo": "Stock Activo 22-08-26 1920.csv",
+  "sku_total": 453.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 178.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 178.0,
+    "mod": "22/08/2026 09:41:04",
+    "user": "externoaldeas11"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1669.0
+ },
+ {
+  "foto": "2026-08-23 16:40",
+  "archivo": "Stock Activo 23-08-26 1640.csv",
+  "sku_total": 453.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 178.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 178.0,
+    "mod": "22/08/2026 09:41:04",
+    "user": "externoaldeas11"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1669.0
+ },
+ {
+  "foto": "2026-08-24 07:02",
+  "archivo": "Stock Activo 24-08-26 0702.csv",
+  "sku_total": 453.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 178.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 178.0,
+    "mod": "22/08/2026 09:41:04",
+    "user": "externoaldeas11"
+   }
+  ],
+  "estilo_buffer": [
+   {
+    "sku": "6116913-1-08",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-B-00-011",
+    "cant": 20.0,
+    "mod": "23/08/2026 20:42:57",
+    "user": "mbravo"
+   }
+  ],
+  "estilo_total": 1689.0
+ },
+ {
+  "foto": "2026-08-24 19:50",
+  "archivo": "Stock Activo 24-08-26 1950.csv",
+  "sku_total": 407.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 132.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 132.0,
+    "mod": "24/08/2026 16:30:02",
+    "user": "rluna3"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1531.0
+ },
+ {
+  "foto": "2026-08-25 07:00",
+  "archivo": "Stock Activo 25-08-26 0700.csv",
+  "sku_total": 407.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 132.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 132.0,
+    "mod": "24/08/2026 16:30:02",
+    "user": "rluna3"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1531.0
+ },
+ {
+  "foto": "2026-08-25 19:00",
+  "archivo": "Stock Activo 25-08-26 1900.csv",
+  "sku_total": 347.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 72.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 72.0,
+    "mod": "25/08/2026 15:52:03",
+    "user": "VLLONTOP"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1321.0
+ },
+ {
+  "foto": "2026-08-26 07:00",
+  "archivo": "Stock Activo 26-08-26 0700.csv",
+  "sku_total": 347.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 342.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-A-01",
+    "cant": 43.0,
+    "mod": "25/08/2026 21:43:16",
+    "user": "bquispe"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-B-01",
+    "cant": 54.0,
+    "mod": "25/08/2026 21:41:52",
+    "user": "bquispe"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 245.0,
+    "mod": "25/08/2026 21:42:46",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1321.0
+ },
+ {
+  "foto": "2026-08-26 19:00",
+  "archivo": "Stock Activo 26-08-26 1900.csv",
+  "sku_total": 338.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 333.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-B-01",
+    "cant": 54.0,
+    "mod": "25/08/2026 21:41:52",
+    "user": "bquispe"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 245.0,
+    "mod": "25/08/2026 21:42:46",
+    "user": "bquispe"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-A-01",
+    "cant": 34.0,
+    "mod": "26/08/2026 12:29:08",
+    "user": "pquispe3"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1287.0
+ },
+ {
+  "foto": "2026-08-27 07:00",
+  "archivo": "Stock Activo 27-08-26 0700.csv",
+  "sku_total": 338.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 333.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-A-01",
+    "cant": 34.0,
+    "mod": "26/08/2026 12:29:08",
+    "user": "pquispe3"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-B-01",
+    "cant": 54.0,
+    "mod": "25/08/2026 21:41:52",
+    "user": "bquispe"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 245.0,
+    "mod": "25/08/2026 21:42:46",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [
+   {
+    "sku": "6116913-1-08",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-B-00-021",
+    "cant": 120.0,
+    "mod": "27/08/2026 05:16:05",
+    "user": "mtaco"
+   }
+  ],
+  "estilo_total": 1407.0
+ },
+ {
+  "foto": "2026-08-27 19:00",
+  "archivo": "Stock Activo 27-08-26 1900.csv",
+  "sku_total": 333.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 328.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-A-01",
+    "cant": 29.0,
+    "mod": "27/08/2026 10:49:50",
+    "user": "rlajara2"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-B-01",
+    "cant": 54.0,
+    "mod": "25/08/2026 21:41:52",
+    "user": "bquispe"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 245.0,
+    "mod": "25/08/2026 21:42:46",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [
+   {
+    "sku": "6116913-1-08",
+    "area": "CDBUFFER",
+    "ubic": "CDBUFFER-B-00-021",
+    "cant": 69.0,
+    "mod": "27/08/2026 17:02:17",
+    "user": "ogarcia2"
+   }
+  ],
+  "estilo_total": 1347.0
+ },
+ {
+  "foto": "2026-08-28 07:00",
+  "archivo": "Stock Activo 28-08-26 0700.csv",
+  "sku_total": 333.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 328.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-A-01",
+    "cant": 29.0,
+    "mod": "27/08/2026 10:49:50",
+    "user": "rlajara2"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-B-01",
+    "cant": 54.0,
+    "mod": "25/08/2026 21:41:52",
+    "user": "bquispe"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 245.0,
+    "mod": "25/08/2026 21:42:46",
+    "user": "bquispe"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1347.0
+ },
+ {
+  "foto": "2026-08-28 19:00",
+  "archivo": "Stock Activo 28-08-26 1900.csv",
+  "sku_total": 296.0,
+  "sku_ubic": 7,
+  "sku_buffer": [],
+  "sku_cuerpo": 291.0,
+  "cuerpo_det": [
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-B-01",
+    "cant": 44.0,
+    "mod": "28/08/2026 17:13:11",
+    "user": "rlajara2"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-C-01",
+    "cant": 245.0,
+    "mod": "25/08/2026 21:42:46",
+    "user": "bquispe"
+   },
+   {
+    "sku": "6116913-1-07",
+    "area": "SEL",
+    "ubic": "SEL-07-03-A-01",
+    "cant": 2.0,
+    "mod": "28/08/2026 17:03:00",
+    "user": "hcrespo"
+   }
+  ],
+  "estilo_buffer": [],
+  "estilo_total": 1183.0
+ }
+]

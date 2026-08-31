@@ -1,0 +1,540 @@
+<title>El historial de un SKU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EDEFEE; --panel:#FFFFFF; --panel-2:#F6F8F7;
+  --ink:#151B1D; --ink-2:#556366; --ink-3:#7C8A8D;
+  --rule:#CDD4D4; --rule-soft:#E1E6E5;
+  --flow:#1C5C58; --flow-2:#3E8C86; --flow-wash:#E2EFED;
+  --alert:#BF421A; --alert-wash:#FBE8E0;
+  --warn:#8F6410; --warn-wash:#F8EEDA;
+  --shadow:0 1px 2px rgba(21,27,29,.06), 0 8px 24px -16px rgba(21,27,29,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1314; --panel:#171D1E; --panel-2:#1D2426;
+    --ink:#E4E9E8; --ink-2:#95A5A7; --ink-3:#74868A;
+    --rule:#2B3639; --rule-soft:#222B2D;
+    --flow:#66B9B1; --flow-2:#48948D; --flow-wash:#16302F;
+    --alert:#F0764A; --alert-wash:#37201A;
+    --warn:#D6A64A; --warn-wash:#2E2617;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1314; --panel:#171D1E; --panel-2:#1D2426;
+  --ink:#E4E9E8; --ink-2:#95A5A7; --ink-3:#74868A;
+  --rule:#2B3639; --rule-soft:#222B2D;
+  --flow:#66B9B1; --flow-2:#48948D; --flow-wash:#16302F;
+  --alert:#F0764A; --alert-wash:#37201A;
+  --warn:#D6A64A; --warn-wash:#2E2617;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15.5px; line-height:1.6; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px; margin:0 auto; padding:0 24px 90px}
+h1,h2,h3{font-family:"Archivo Narrow","Arial Narrow",sans-serif; text-wrap:balance; margin:0}
+code{font-family:"IBM Plex Mono",ui-monospace,"Courier New",monospace; font-size:.88em; background:var(--panel-2); padding:1px 5px; border-radius:2px; border:1px solid var(--rule-soft)}
+
+.top{border-bottom:2px solid var(--ink); padding:44px 0 20px; margin-bottom:34px}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:var(--flow); margin-bottom:14px}
+h1{font-size:clamp(36px,6vw,64px); font-weight:700; line-height:.96; letter-spacing:-.015em}
+.lede{margin:18px 0 0; max-width:64ch; color:var(--ink-2); font-size:17px}
+
+.tag{display:grid; grid-template-columns:minmax(240px,1.1fr) minmax(260px,1fr);
+  background:var(--panel); border:1.5px solid var(--ink); border-radius:2px; margin-top:30px; overflow:hidden}
+.tag-l{padding:24px 26px; border-right:1.5px dashed var(--rule)}
+.tag-r{padding:24px 26px; background:var(--panel-2)}
+.tag-code{font-family:"IBM Plex Mono",monospace; font-size:27px; font-weight:600; color:var(--flow); line-height:1.1}
+.tag-desc{font-family:"Archivo Narrow","Arial Narrow",sans-serif; font-size:23px; font-weight:700; letter-spacing:.02em; margin-top:10px; line-height:1.15}
+.tag-talla{display:inline-block; margin-top:14px; font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; background:var(--ink); color:var(--ground); padding:5px 12px; border-radius:2px}
+.tag-r dl{margin:0; display:grid; grid-template-columns:auto 1fr; gap:7px 18px; font-size:13.5px}
+.tag-r dt{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); padding-top:2px}
+.tag-r dd{margin:0; font-weight:500}
+
+section{margin-top:58px}
+.sec-head{display:flex; align-items:baseline; gap:16px; border-bottom:1px solid var(--rule); padding-bottom:10px; margin-bottom:26px; flex-wrap:wrap}
+.sec-head h2{font-size:28px; font-weight:600; letter-spacing:-.01em}
+.sec-head .note{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-left:auto}
+
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule)}
+.kpi{background:var(--panel); padding:22px 22px 24px}
+.kpi .v{font-family:"IBM Plex Mono",monospace; font-size:38px; font-weight:600; line-height:1; letter-spacing:-.02em}
+.kpi .v.hot{color:var(--alert)} .kpi .v.ok{color:var(--flow)}
+.kpi .l{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); margin-top:10px}
+.kpi p{margin:8px 0 0; font-size:13.5px; color:var(--ink-2)}
+.kpi b{color:var(--ink)}
+
+figure{margin:0}
+.canvas{background:var(--panel); border:1px solid var(--rule); border-radius:3px; padding:10px; overflow-x:auto; box-shadow:var(--shadow)}
+.canvas svg{display:block; min-width:960px; width:100%; height:auto}
+figcaption{margin-top:14px; color:var(--ink-2); font-size:14px; max-width:82ch}
+figcaption b{color:var(--ink)}
+.g-esc{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.13em; fill:var(--ink-3)}
+.g-fec{font-family:"IBM Plex Mono",monospace; font-size:11px; fill:var(--ink-2)}
+.g-in{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; fill:var(--ink)}
+.g-lbl{font-size:12px; fill:var(--ink-2)}
+.g-call{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; fill:var(--flow)}
+.g-mk{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; fill:var(--ink-3)}
+.sg{stroke-width:1.2}
+.sg.mut{fill:var(--panel-2); stroke:var(--rule)}
+.sg.work{fill:var(--flow); stroke:var(--flow)}
+.sg.wait{fill:var(--alert-wash); stroke:var(--alert)}
+.sg.zoom{fill:none; stroke:var(--ink); stroke-width:1.6}
+.brk{stroke:var(--ink-3); stroke-width:1.2; fill:none}
+.lead{stroke:var(--flow); stroke-width:1.4; fill:none}
+.tick{stroke:var(--rule); stroke-width:1}
+
+.tl-row{display:grid; grid-template-columns:158px 30px 1fr; align-items:stretch}
+.tl-when{padding:16px 18px 16px 0; text-align:right; font-family:"IBM Plex Mono",monospace; font-size:13px; font-variant-numeric:tabular-nums}
+.tl-when .d{display:block; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-top:3px}
+.tl-spine{position:relative}
+.tl-spine::before{content:""; position:absolute; left:50%; top:0; bottom:0; width:1.5px; background:var(--rule); transform:translateX(-50%)}
+.tl-dot{position:absolute; left:50%; top:22px; width:11px; height:11px; border-radius:50%; background:var(--panel); border:2px solid var(--ink-3); transform:translateX(-50%)}
+.tl-dot.ok{border-color:var(--flow); background:var(--flow)}
+.tl-dot.hot{border-color:var(--alert); background:var(--alert)}
+.tl-body{padding:16px 0 18px 20px; border-bottom:1px solid var(--rule-soft)}
+.tl-body h3{font-size:19px; font-weight:600; margin-bottom:4px}
+.tl-body p{margin:0; font-size:14px; color:var(--ink-2)}
+.tl-body b{color:var(--ink)}
+.tl-meta{margin-top:8px; font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3); display:flex; flex-wrap:wrap; gap:4px 18px}
+.tl-meta b{color:var(--ink-2); font-weight:500}
+.gapline{display:grid; grid-template-columns:158px 30px 1fr}
+.gapline .g{grid-column:3; padding-left:20px; margin:-3px 0}
+.gapline .g span{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.05em;
+  color:var(--ink-3); background:var(--panel-2); border:1px solid var(--rule-soft); padding:2px 10px; border-radius:2px}
+.gapline .g span.hot{color:var(--alert); background:var(--alert-wash); border-color:var(--alert); font-weight:600}
+.gapline .g span.ok{color:var(--flow); background:var(--flow-wash); border-color:var(--flow-2); font-weight:600}
+
+.tw{overflow-x:auto; background:var(--panel); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow)}
+table.data{width:100%; border-collapse:collapse; font-size:13.5px; min-width:660px}
+table.data th{text-align:left; font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); padding:13px 14px; border-bottom:1.5px solid var(--rule); white-space:nowrap}
+table.data td{padding:9px 14px; border-bottom:1px solid var(--rule-soft); vertical-align:baseline}
+table.data tbody tr:last-child td{border-bottom:none}
+table.data .num{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+table.data th.num{text-align:right}
+table.data .mono{font-family:"IBM Plex Mono",monospace; font-size:12.5px; white-space:nowrap}
+table.data tr.total td{border-top:1.5px solid var(--rule); font-weight:600; background:var(--panel-2)}
+table.data tr.mine td{background:var(--flow-wash); font-weight:600}
+table.data tr.mine td:first-child{box-shadow:inset 3px 0 0 var(--flow)}
+table.data tr.hueco td{background:var(--alert-wash)}
+table.data tr.hueco td:first-child{box-shadow:inset 3px 0 0 var(--alert)}
+table.data .dim{color:var(--ink-3)}
+table.data .hot{color:var(--alert); font-weight:600}
+table.data .ok{color:var(--flow); font-weight:600}
+
+.notes{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px}
+.note-card{background:var(--panel); border:1px solid var(--rule); border-left:3px solid var(--flow-2); border-radius:3px; padding:20px 22px}
+.note-card.hot{border-left-color:var(--alert)}
+.note-card.warn{border-left-color:var(--warn)}
+.note-card h3{font-size:18px; font-weight:600; margin-bottom:8px}
+.note-card p{margin:0; font-size:14px; color:var(--ink-2)}
+.note-card p + p{margin-top:9px}
+.note-card b{color:var(--ink)}
+
+.foot{margin-top:70px; padding-top:22px; border-top:1px solid var(--rule); font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3); line-height:1.9}
+
+@media (max-width:700px){
+  .wrap{padding:0 16px 60px}
+  .tag{grid-template-columns:1fr}
+  .tag-l{border-right:none; border-bottom:1.5px dashed var(--rule)}
+  .tl-row,.gapline{grid-template-columns:112px 24px 1fr}
+  .tl-when{padding-right:12px; font-size:12px}
+}
+@media print{ body{background:#fff} .canvas,.tw{box-shadow:none} section{break-inside:avoid} }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">Maqueta &middot; Web Log&iacute;stica Deam1830 &middot; historial completo de un SKU</div>
+  <h1>El historial de un SKU</h1>
+  <p class="lede">Los <b>1.038 pares</b> que llegaron de una sola talla, seguidos etapa por etapa: verificaci&oacute;n, reparto entre piso y reserva, matr&iacute;cula en el buffer, almacenaje en su cuerpo, picking, embalaje, patio y despacho. Con nombre y hora en cada paso. <b>Cada par est&aacute; ubicado: la cuenta cierra sin sobrantes.</b></p>
+
+  <div class="tag">
+    <div class="tag-l">
+      <div class="tag-code">6116913-1-07</div>
+      <div class="tag-desc">PUMPS TACO 3 &middot; LUNA<br>BLACK / NEGRO &middot; BATA</div>
+      <span class="tag-talla">Talla 38 &middot; dama</span>
+    </div>
+    <div class="tag-r">
+      <dl>
+        <dt>Familia</dt><dd>WOMEN &rarr; DRESS &rarr; PUMPS TACO 3</dd>
+        <dt>Marca</dt><dd>001_BATA</dd>
+        <dt>C&oacute;digo de barras</dt><dd><code>1611691310065</code></dd>
+        <dt>Su casa</dt><dd>Cuerpo SEL-07-03, niveles A / B / C</dd>
+        <dt>Ventana</dt><dd>6 al 28 de agosto de 2026</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head"><h2>El balance de los 1.038 pares</h2><span class="note">etapa por etapa</span></div>
+  <div class="tw">
+    <table class="data">
+      <thead>
+        <tr><th>Etapa</th><th class="num">Pares</th><th>Cu&aacute;ndo</th><th>Qui&eacute;n</th><th>Qu&eacute; archivo lo prueba</th><th class="num">Cuadre</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><b>Lleg&oacute; al CD</b> <span class="dim">(4 paletas IMP, 2 tandas)</span></td><td class="num">1.038</td><td class="mono">14/08 08:42 y 16:26</td><td class="mono dim">2 proveedores</td><td class="mono dim">Stock Reserva 14-08 19:00</td><td class="num dim">&mdash;</td></tr>
+        <tr><td>&nbsp;&nbsp;&rarr; verificado, 1.&ordf; tanda</td><td class="num">380</td><td class="mono">15/08 08:17:27</td><td class="mono">ktorres3</td><td class="mono dim">proveedor 2026000220</td><td class="num dim">&mdash;</td></tr>
+        <tr><td>&nbsp;&nbsp;&rarr; verificado, 2.&ordf; tanda</td><td class="num">658</td><td class="mono">15/08 09:34:55&ndash;59</td><td class="mono">ktorres3</td><td class="mono dim">proveedor 2026000264, 3 env&iacute;os</td><td class="num dim">&mdash;</td></tr>
+        <tr class="total"><td><b>Recibido y verificado</b></td><td class="num">1.038</td><td class="mono">15/08, en dos tandas</td><td class="mono">ktorres3</td><td class="mono dim">ASN Revisar.csv</td><td class="num ok">100%</td></tr>
+        <tr><td>&nbsp;&nbsp;&rarr; subi&oacute; entero a <b>reserva</b></td><td class="num">300</td><td class="mono">15/08, mismo d&iacute;a</td><td class="mono dim">SEL-09-05-F-01</td><td class="mono dim">Stock Reserva 15-08 19:00</td><td class="num dim">&mdash;</td></tr>
+        <tr><td>&nbsp;&nbsp;&rarr; <b>matriculado en el buffer</b></td><td class="num">738</td><td class="mono">15/08 14:55&ndash;15:11</td><td class="mono">jlaureano</td><td class="mono dim">Stock Activo 15-08 19:00</td><td class="num dim">&mdash;</td></tr>
+        <tr class="total"><td>Reparto de la recepci&oacute;n</td><td class="num">1.038</td><td colspan="3" class="dim">300 a reserva + 738 al buffer</td><td class="num ok">cuadra</td></tr>
+        <tr><td>&nbsp;&nbsp;&rarr; <b>ubicado en su cuerpo</b></td><td class="num">628</td><td class="mono">16/08 04:51&ndash;04:55</td><td class="mono">bquispe &middot; smorelia</td><td class="mono dim">Stock Activo 17-08 07:00</td><td class="num dim">&mdash;</td></tr>
+        <tr><td>&nbsp;&nbsp;&rarr; <b>subido a reserva</b></td><td class="num">110</td><td class="mono">16/08 madrugada</td><td class="mono dim">SEL-10-04-E-01</td><td class="mono dim">Stock Reserva 17-08 07:00</td><td class="num dim">&mdash;</td></tr>
+        <tr class="total"><td>Reparto del buffer</td><td class="num">738</td><td colspan="3" class="dim">628 al piso + 110 a reserva</td><td class="num ok">cuadra</td></tr>
+        <tr><td><b>Picado del rack</b></td><td class="num">403</td><td class="mono">15 al 28-08, 9 jornadas</td><td class="mono">54 personas</td><td class="mono dim">Picking &lt;d&gt;-8.csv</td><td class="num ok">cuadra</td></tr>
+        <tr><td><b>Embalado</b> <span class="dim">(24 al 28)</span></td><td class="num">234</td><td class="mono">24 al 28-08</td><td class="mono dim">146 bultos</td><td class="mono dim">OBLPN &lt;d-m&gt;.csv</td><td class="num dim">ventana corta</td></tr>
+        <tr><td>&nbsp;&nbsp;&rarr; despachado</td><td class="num">192</td><td class="mono">hasta el 28-08</td><td class="mono dim">125 bultos, 35 rutas</td><td class="mono dim">estado Enviado</td><td class="num dim">&mdash;</td></tr>
+        <tr><td>&nbsp;&nbsp;&rarr; parado en el patio</td><td class="num hot">35</td><td class="mono">al 29-08 06:00</td><td class="mono dim">17 bultos</td><td class="mono dim">estado Empaquetado</td><td class="num dim">&mdash;</td></tr>
+        <tr><td>&nbsp;&nbsp;&rarr; en empaquetado</td><td class="num">7</td><td class="mono">al 29-08 06:00</td><td class="mono dim">4 bultos</td><td class="mono dim">estado En empaquetado</td><td class="num dim">&mdash;</td></tr>
+        <tr class="total"><td>Todav&iacute;a en el piso</td><td class="num">296</td><td class="mono">28/08 19:00</td><td class="mono dim">7 ubicaciones</td><td class="mono dim">Stock Activo 28-08 19:00</td><td class="num ok">cuadra</td></tr>
+        <tr class="total"><td>Todav&iacute;a en reserva, sin bajar</td><td class="num hot">410</td><td class="mono">28/08 19:00</td><td class="mono dim">2 paletas en altura</td><td class="mono dim">Stock Reserva 28-08 19:00</td><td class="num ok">cuadra</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:14px;color:var(--ink-2);margin-top:14px;max-width:82ch">La recepci&oacute;n parti&oacute; la llegada en dos: <b>300 pares subieron enteros a reserva</b> en su paleta de importaci&oacute;n, sin abrir, y <b>738 fueron al buffer</b>. Y el turno noche volvi&oacute; a partir esos 738: <b>628 al piso</b> y <b>110 otra vez a reserva</b>. Resultado: <b>628 abajo (60%) y 410 arriba (40%)</b>. Cada par est&aacute; ubicado.</p>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Lo que tard&oacute; y lo que se trabaj&oacute;</h2></div>
+  <div class="kpis">
+    <div class="kpi"><div class="v">22</div><div class="l">d&iacute;as, del proveedor al cami&oacute;n</div><p>Del 6 de agosto al 28. Son <b>539 horas</b>.</p></div>
+    <div class="kpi"><div class="v ok">2,2 h</div><div class="l">de trabajo real</div><p>Matricular, ubicar, picar y embalar, todo sumado: el <b>0,4%</b> de las 539 horas.</p></div>
+    <div class="kpi"><div class="v hot">410</div><div class="l">pares que nunca bajaron</div><p>El <b>40%</b> de lo que lleg&oacute; sigue en reserva, en dos paletas, desde el 15 y el 16 de agosto.</p></div>
+    <div class="kpi"><div class="v hot">22,6 h</div><div class="l">esperando el cami&oacute;n</div><p>Con el bulto cerrado y la etiqueta impresa. La mediana del CD es 23,0 h.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Las tres escalas</h2><span class="note">todo &middot; la entrada &middot; la salida</span></div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1200 540" role="img" aria-label="Tres barras proporcionales. La primera reparte los 22 d&iacute;as del par: 8,4 de tr&aacute;nsito, 1 esperando la verificaci&oacute;n, 0,9 de entrada al almac&eacute;n, 10,5 quieto en su cuerpo y 1,7 de salida. La segunda amplia la entrada: 20,6 horas de las que 13,7 son espera en el buffer y solo 19 minutos son trabajo. La tercera amplia la salida: 41,3 horas de las que 22,6 son espera del cami&oacute;n y 1,9 son trabajo.">
+        <text class="g-esc" x="40" y="26">ESCALA REAL &middot; LOS 22 D&Iacute;AS DEL PAR</text>
+
+        <text class="g-fec" x="60" y="56" text-anchor="start">6 ago &middot; fecha del ASN</text>
+        <text class="g-fec" x="466" y="40" text-anchor="middle">14 ago &middot; llegan las paletas</text>
+        <text class="g-fec" x="513" y="56" text-anchor="start">15 ago &middot; verificado</text>
+        <text class="g-fec" x="1050" y="40" text-anchor="end">26 ago &middot; lo piden</text>
+        <text class="g-fec" x="1140" y="56" text-anchor="end">28 ago &middot; sale</text>
+        <line class="tick" x1="462" y1="46" x2="462" y2="70"></line>
+        <line class="tick" x1="509" y1="62" x2="509" y2="70"></line>
+        <line class="tick" x1="1057" y1="46" x2="1057" y2="70"></line>
+
+        <rect class="sg mut"  x="60"   y="70" width="402" height="50" rx="2"></rect>
+        <rect class="sg mut"  x="462"  y="70" width="47"  height="50" rx="2"></rect>
+        <rect class="sg zoom" x="509"  y="70" width="41"  height="50" rx="2"></rect>
+        <rect class="sg mut"  x="550"  y="70" width="507" height="50" rx="2"></rect>
+        <rect class="sg zoom" x="1057" y="70" width="83"  height="50" rx="2"></rect>
+        <text class="g-in" x="261" y="101" text-anchor="middle">8,4 d&iacute;as de tr&aacute;nsito</text>
+        <text class="g-in" x="803" y="101" text-anchor="middle">10,5 d&iacute;as quieto en su cuerpo</text>
+
+        <path class="brk" d="M509 128 L509 134 L550 134 L550 128"></path>
+        <line class="brk" x1="529" y1="134" x2="529" y2="142"></line>
+        <text class="g-mk" x="529" y="156" text-anchor="middle">A &middot; LA ENTRADA</text>
+        <path class="brk" d="M1057 128 L1057 134 L1140 134 L1140 128"></path>
+        <line class="brk" x1="1098" y1="134" x2="1098" y2="142"></line>
+        <text class="g-mk" x="1098" y="156" text-anchor="middle">B &middot; LA SALIDA</text>
+
+        <text class="g-esc" x="40" y="200">AMPLIACI&Oacute;N A &middot; LA ENTRADA &mdash; 20,6 HORAS DE VERIFICADO A GUARDADO</text>
+        <rect class="sg mut"  x="60"   y="214" width="347" height="50" rx="2"></rect>
+        <rect class="sg work" x="407"  y="214" width="14"  height="50"></rect>
+        <rect class="sg mut"  x="421"  y="214" width="716" height="50" rx="2"></rect>
+        <rect class="sg work" x="1137" y="214" width="3"   height="50"></rect>
+        <text class="g-in" x="233" y="245" text-anchor="middle">6,6 h</text>
+        <text class="g-in" x="779" y="245" text-anchor="middle">13,7 h en el buffer</text>
+        <text class="g-lbl" x="60" y="284" text-anchor="start">verificado, esperando a que recepci&oacute;n lo matricule</text>
+        <text class="g-lbl" x="1140" y="284" text-anchor="end">en el buffer, esperando al turno noche</text>
+        <line class="lead" x1="414" y1="264" x2="414" y2="296"></line>
+        <text class="g-call" x="414" y="312" text-anchor="middle">16 min &mdash; recepci&oacute;n matricula 738 pares en 4 paletas</text>
+        <line class="lead" x1="1138" y1="264" x2="1138" y2="326"></line>
+        <text class="g-call" x="1140" y="342" text-anchor="end">3 min 18 s &mdash; almacenaje ubica 628 pares en 4 cuerpos</text>
+
+        <text class="g-esc" x="40" y="396">AMPLIACI&Oacute;N B &middot; LA SALIDA &mdash; 41,3 HORAS DE PEDIDO A CAMI&Oacute;N</text>
+        <rect class="sg mut"  x="60"  y="410" width="440" height="50" rx="2"></rect>
+        <rect class="sg work" x="500" y="410" width="49"  height="50"></rect>
+        <rect class="sg wait" x="549" y="410" width="591" height="50" rx="2"></rect>
+        <text class="g-in" x="280" y="441" text-anchor="middle">16,8 h</text>
+        <text class="g-in" x="845" y="441" text-anchor="middle">22,6 h</text>
+        <text class="g-lbl" x="60" y="480" text-anchor="start">del pedido al picking &mdash; el WMS libera y espera al turno</text>
+        <text class="g-lbl" x="1140" y="480" text-anchor="end">esperando el cami&oacute;n, con la etiqueta ya impresa</text>
+        <line class="lead" x1="524" y1="460" x2="524" y2="492"></line>
+        <text class="g-call" x="524" y="508" text-anchor="middle">1,9 h &mdash; picar y cerrar el bulto</text>
+      </svg>
+    </div>
+    <figcaption>Los bloques verdes son lo &uacute;nico que el almac&eacute;n hizo con esta mercader&iacute;a. En la entrada suman <b>19 minutos</b>; en la salida, <b>1,9 horas</b>. Todo lo dem&aacute;s &mdash;el 99,6% de las 539 horas&mdash; es espera.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="sec-head"><h2>La cadena, hito por hito</h2><span class="note">cada fecha, su archivo</span></div>
+
+  <div class="tl-row">
+    <div class="tl-when">06/08/2026<span class="d">fecha de env&iacute;o</span></div>
+    <div class="tl-spine"><span class="tl-dot"></span></div>
+    <div class="tl-body">
+      <h3>La fecha que declara el ASN</h3>
+      <p>Los cuatro env&iacute;os traen la misma <code>Fecha de env&iacute;o</code>: 06/08/2026, <b>sin hora</b>. Es lo que dice el documento, no un evento medido en el CD &mdash;el WMS no registra la salida del proveedor&mdash;. Son dos proveedores distintos, con RUC distintos: <b>380 pares</b> de uno y <b>658</b> del otro.</p>
+      <div class="tl-meta"><span><b>Archivo</b> ASN Revisar.csv</span><span><b>Columna</b> Fecha de env&iacute;o</span><span><b>Tipo</b> IMP</span></div>
+    </div>
+  </div>
+  <div class="gapline"><div class="g"><span>8,4 d&iacute;as entre la fecha declarada y la llegada</span></div></div>
+
+  <div class="tl-row">
+    <div class="tl-when">14/08 08:42 y 16:26<span class="d">viernes</span></div>
+    <div class="tl-spine"><span class="tl-dot ok"></span></div>
+    <div class="tl-body">
+      <h3>Llegaron las paletas al CD</h3>
+      <p>Cuatro paletas de importaci&oacute;n, en <b>dos tandas del mismo d&iacute;a</b>: por la ma&ntilde;ana, a las 08:42&ndash;08:43, las tres del proveedor 2026000264 (<b>658 pares</b>); por la tarde, a las 16:26, la del proveedor 2026000220 (<b>380 pares</b>).</p>
+      <div class="tl-meta"><span><b>Columna</b> Registro de hora de recepci&oacute;n de &uacute;ltima LPN</span><span><b>LPN</b> IMP&hellip;931882 &middot; 931883 &middot; 931884 &middot; 964886</span></div>
+    </div>
+  </div>
+  <div class="gapline"><div class="g"><span>una noche en el patio de recepci&oacute;n</span></div></div>
+
+  <div class="tl-row">
+    <div class="tl-when">15/08 08:17 y 09:35<span class="d">s&aacute;bado</span></div>
+    <div class="tl-spine"><span class="tl-dot ok"></span></div>
+    <div class="tl-body">
+      <h3>Recepci&oacute;n lo verific&oacute;, en dos tandas</h3>
+      <p><b>No fue de un solo golpe.</b> <b>ktorres3</b> verific&oacute; primero, a las <b>08:17:27</b>, los <b>380 pares</b> del proveedor 2026000220 &mdash;la paleta que hab&iacute;a llegado &uacute;ltima, la de la tarde&mdash;; y una hora y 17 minutos despu&eacute;s, entre las <b>09:34:55 y las 09:34:59</b>, los <b>658 pares</b> del otro proveedor, los tres env&iacute;os seguidos.</p>
+      <p>Llegaron <b>1.038 de 1.038</b>: el fill rate de recepci&oacute;n de esta talla fue del 100%.</p>
+      <div class="tl-meta"><span><b>Columna</b> Hora de verificaci&oacute;n</span><span><b>Estado</b> Verificado &middot; LPN Consumido</span><span><b>Espera</b> 15,8 h y 24,9 h desde que lleg&oacute; cada una</span></div>
+    </div>
+  </div>
+  <div class="gapline"><div class="g"><span>6,6 h desde la primera verificaci&oacute;n hasta la matr&iacute;cula</span></div></div>
+
+  <div class="tl-row">
+    <div class="tl-when">15/08 14:55&ndash;15:11<span class="d">s&aacute;bado</span></div>
+    <div class="tl-spine"><span class="tl-dot ok"></span></div>
+    <div class="tl-body">
+      <h3>Recepci&oacute;n lo parti&oacute; en dos</h3>
+      <p><b>300 pares</b> subieron enteros a <b>reserva</b> &mdash;la paleta de importaci&oacute;n <code>IMP&hellip;964930</code> completa, sin abrir, a <code>SEL-09-05-F-01</code>&mdash;. Los otros <b>738</b> los matricul&oacute; <b>jlaureano</b> en cuatro paletas del <code>CDBUFFER-A</code>, en 16 minutos. La letra A dice de d&oacute;nde vino: recepci&oacute;n. El buffer no es su casa &mdash;es el pulm&oacute;n donde recepci&oacute;n la deja para que almacenaje la recoja&mdash;.</p>
+      <div class="tl-meta"><span><b>Archivos</b> Stock Activo + Stock Reserva 15-08 19:00</span><span><b>Paletas</b> A-00-018 &middot; 020 &middot; 054 &middot; 055</span></div>
+    </div>
+  </div>
+  <div class="gapline"><div class="g"><span class="hot">13,7 h quieto en el buffer, esperando al turno noche</span></div></div>
+
+  <div class="tl-row">
+    <div class="tl-when">16/08 04:51&ndash;04:55<span class="d">domingo</span></div>
+    <div class="tl-spine"><span class="tl-dot ok"></span></div>
+    <div class="tl-body">
+      <h3>Almacenaje lo sac&oacute; del buffer</h3>
+      <p>El turno noche vaci&oacute; el buffer entero y volvi&oacute; a partirlo: <b>bquispe</b> y <b>smorelia</b> ubicaron <b>628 pares</b> en cuatro cuerpos del selectivo &mdash;en <b>3 minutos y 18 segundos</b>&mdash;, y los otros <b>110</b> los subieron a reserva, a <code>SEL-10-04-E-01</code>. Abajo va lo que se va a picar; arriba, lo que no cabe.</p>
+      <div class="tl-meta"><span><b>Archivos</b> Stock Activo + Stock Reserva 17-08 07:00</span><span><b>Cuerpos</b> SEL-07-01-B y C &middot; SEL-07-03-C &middot; SEL-07-04-A</span></div>
+    </div>
+  </div>
+  <div class="gapline"><div class="g"><span>10,5 d&iacute;as en el rack, esperando que alguien lo pida</span></div></div>
+
+  <div class="tl-row">
+    <div class="tl-when">25/08 21:41&ndash;21:43<span class="d">martes</span></div>
+    <div class="tl-spine"><span class="tl-dot"></span></div>
+    <div class="tl-body">
+      <h3>Lo reacomodaron a un solo cuerpo</h3>
+      <p><b>bquispe</b> junt&oacute; lo que quedaba en el cuerpo <b>SEL-07-03</b>: 245 pares en el nivel C, 54 en el B y 43 en el A. De ah&iacute; en adelante todo el picking sali&oacute; de ese cuerpo.</p>
+      <div class="tl-meta"><span><b>Archivo</b> Stock Activo 26-08-26 0700.csv</span><span><b>Dur&oacute;</b> 1 min 24 s</span></div>
+    </div>
+  </div>
+  <div class="gapline"><div class="g"><span>19,8 h</span></div></div>
+
+  <div class="tl-row">
+    <div class="tl-when">26/08 17:29<span class="d">mi&eacute;rcoles</span></div>
+    <div class="tl-spine"><span class="tl-dot"></span></div>
+    <div class="tl-body">
+      <h3>Comercial lo pidi&oacute;</h3>
+      <p>Ese d&iacute;a entraron 5 &oacute;rdenes con esta talla, 9 pares en total. Seguimos una: la orden <b>8003497</b> de la tienda <b>B PLAZA NORTE</b>, que pidi&oacute; 2 pares dentro de un pedido de 246 SKU y 473 pares.</p>
+      <div class="tl-meta"><span><b>Archivo</b> Detalle Orden 26-08.csv</span><span><b>Canal</b> Aldeas Bata</span></div>
+    </div>
+  </div>
+  <div class="gapline"><div class="g"><span>16,8 h &mdash; el WMS libera y espera al turno</span></div></div>
+
+  <div class="tl-row">
+    <div class="tl-when">27/08 10:19:37<span class="d">jueves</span></div>
+    <div class="tl-spine"><span class="tl-dot ok"></span></div>
+    <div class="tl-body">
+      <h3>Lo picaron del rack</h3>
+      <p><b>rvalladares</b> sac&oacute; los 2 pares de <code>SEL-07-03-A-01</code>. Nivel A: sali&oacute; del activo. Ninguna de las 239 l&iacute;neas de picking del mes toc&oacute; los <b>410 pares de reserva</b>: siguen arriba, intactos desde el 16 de agosto.</p>
+      <div class="tl-meta"><span><b>Archivos</b> Picking 27-8.csv + OBLPN</span><span><b>Ejecuci&oacute;n</b> WV5000800046897</span></div>
+    </div>
+  </div>
+  <div class="gapline"><div class="g"><span class="ok">1,9 h &mdash; picar y cerrar el bulto</span></div></div>
+
+  <div class="tl-row">
+    <div class="tl-when">27/08 12:11:07<span class="d">jueves</span></div>
+    <div class="tl-spine"><span class="tl-dot ok"></span></div>
+    <div class="tl-body">
+      <h3>Se cerr&oacute; el bulto</h3>
+      <p>Entr&oacute; al LPN <b>508004111790</b>, un bulto con <b>18 l&iacute;neas y 30 pares</b> de dos &oacute;rdenes, todas para la misma tienda. La etiqueta de env&iacute;o se imprimi&oacute; 26 segundos despu&eacute;s.</p>
+      <div class="tl-meta"><span><b>Archivo</b> OBLPN 27-08.csv</span><span><b>Cerr&oacute; el LPN</b> rsantibanez2</span></div>
+    </div>
+  </div>
+  <div class="gapline"><div class="g"><span class="hot">22,6 h parado en el patio</span></div></div>
+
+  <div class="tl-row">
+    <div class="tl-when">28/08 10:48:24<span class="d">viernes</span></div>
+    <div class="tl-spine"><span class="tl-dot hot"></span></div>
+    <div class="tl-body" style="border-bottom:none">
+      <h3>Subi&oacute; al cami&oacute;n</h3>
+      <p><b>tquispe</b> lo asign&oacute; a la carga <b>OS5000800030218</b>, ruta <b>PLAZA NORTE</b>. Estado final: <b>Enviado</b>. Viernes es d&iacute;a de reparto de esa tienda, as&iacute; que lleg&oacute; a tiempo &mdash;pero esper&oacute; casi un d&iacute;a entero para hacerlo&mdash;.</p>
+      <div class="tl-meta"><span><b>Archivo</b> OBLPN 28-08.csv</span><span><b>Ruta</b> R028 &middot; reparto lunes, mi&eacute;rcoles y viernes</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>El paso por el buffer</h2><span class="note">de 4 paletas a 4 cuerpos, en 14 horas</span></div>
+  <div class="tw">
+    <table class="data">
+      <thead>
+        <tr><th>Paso</th><th>Ubicaci&oacute;n</th><th class="num">Pares</th><th>Hora</th><th>Qui&eacute;n</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Recepci&oacute;n matricula</td><td class="mono">CDBUFFER-A-00-018</td><td class="num">356</td><td class="mono">15/08 14:55:06</td><td class="mono">jlaureano</td></tr>
+        <tr><td>Recepci&oacute;n matricula</td><td class="mono">CDBUFFER-A-00-020</td><td class="num">2</td><td class="mono">15/08 14:55:18</td><td class="mono">jlaureano</td></tr>
+        <tr><td>Recepci&oacute;n matricula</td><td class="mono">CDBUFFER-A-00-054</td><td class="num">30</td><td class="mono">15/08 15:10:41</td><td class="mono">jlaureano</td></tr>
+        <tr><td>Recepci&oacute;n matricula</td><td class="mono">CDBUFFER-A-00-055</td><td class="num">350</td><td class="mono">15/08 15:10:45</td><td class="mono">jlaureano</td></tr>
+        <tr class="total"><td>En el buffer</td><td class="mono">4 paletas</td><td class="num">738</td><td class="mono">15/08 19:00</td><td class="mono dim">&mdash;</td></tr>
+        <tr><td>Almacenaje ubica</td><td class="mono">SEL-07-01-C-01</td><td class="num">18</td><td class="mono">16/08 04:51:46</td><td class="mono">bquispe</td></tr>
+        <tr><td>Almacenaje ubica</td><td class="mono">SEL-07-01-B-01</td><td class="num">252</td><td class="mono">16/08 04:51:51</td><td class="mono">bquispe</td></tr>
+        <tr><td>Almacenaje ubica</td><td class="mono">SEL-07-03-C-01</td><td class="num">252</td><td class="mono">16/08 04:52:59</td><td class="mono">bquispe</td></tr>
+        <tr><td>Almacenaje ubica</td><td class="mono">SEL-07-04-A-01</td><td class="num">106</td><td class="mono">16/08 04:55:04</td><td class="mono">smorelia</td></tr>
+        <tr><td>Almacenaje sube a reserva</td><td class="mono">SEL-10-04-E-01</td><td class="num">110</td><td class="mono">16/08 madrugada</td><td class="mono dim">paleta PRE&hellip;957732</td></tr>
+        <tr class="total"><td>Sali&oacute; del buffer</td><td class="mono">628 abajo + 110 arriba</td><td class="num">738</td><td class="mono">17/08 07:00</td><td class="mono ok">cuadra</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:14px;color:var(--ink-2);margin-top:14px;max-width:82ch">El buffer se vaci&oacute; entero: entraron 738 pares y salieron 738. Almacenaje no lo baj&oacute; todo al piso &mdash;subi&oacute; <b>110</b> a una paleta de reserva&mdash;, que es exactamente lo que manda la regla de cu&aacute;nto almacenar abajo.</p>
+</section>
+
+<section>
+  <div class="sec-head"><h2>El picking, jornada por jornada</h2><span class="note">la baja de stock cuadra con el picking todos los d&iacute;as</span></div>
+  <div class="tw">
+    <table class="data">
+      <thead>
+        <tr><th>Jornada</th><th class="num">L&iacute;neas</th><th class="num">Pares</th><th class="num">Tiendas</th><th class="num">Personas</th><th>De d&oacute;nde sali&oacute;</th><th class="num">Baj&oacute; el stock</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">15/08 s&aacute;bado</td><td class="num">2</td><td class="num">4</td><td class="num">2</td><td class="num">2</td><td class="mono">SEL-04-21-B-01</td><td class="num ok">4</td></tr>
+        <tr><td class="mono">19/08 mi&eacute;rcoles</td><td class="num">44</td><td class="num">77</td><td class="num">40</td><td class="num">22</td><td class="mono">SEL-04-21-B &middot; SEL-07-04-A</td><td class="num ok">77</td></tr>
+        <tr><td class="mono">20/08 jueves</td><td class="num">54</td><td class="num">90</td><td class="num">51</td><td class="num">17</td><td class="mono">SEL-07-04-A</td><td class="num ok">90</td></tr>
+        <tr><td class="mono">21/08 viernes</td><td class="num">46</td><td class="num">75</td><td class="num">43</td><td class="num">15</td><td class="mono">SEL-07-03-C</td><td class="num ok">75</td></tr>
+        <tr><td class="mono dim">22/08 s&aacute;bado</td><td class="num dim">&mdash;</td><td class="num dim">&mdash;</td><td class="num dim">&mdash;</td><td class="num dim">&mdash;</td><td class="mono dim">no hay archivo de ese d&iacute;a</td><td class="num dim">2</td></tr>
+        <tr><td class="mono">24/08 lunes</td><td class="num">29</td><td class="num">46</td><td class="num">26</td><td class="num">18</td><td class="mono">SEL-07-03-C</td><td class="num ok">46</td></tr>
+        <tr><td class="mono">25/08 martes</td><td class="num">37</td><td class="num">60</td><td class="num">33</td><td class="num">17</td><td class="mono">SEL-07-03-C</td><td class="num ok">60</td></tr>
+        <tr><td class="mono">26/08 mi&eacute;rcoles</td><td class="num">5</td><td class="num">9</td><td class="num">5</td><td class="num">4</td><td class="mono">SEL-07-03-A</td><td class="num ok">9</td></tr>
+        <tr class="mine"><td class="mono">27/08 jueves</td><td class="num">2</td><td class="num">5</td><td class="num">2</td><td class="num">2</td><td class="mono">SEL-07-03-A</td><td class="num">5</td></tr>
+        <tr><td class="mono">28/08 viernes</td><td class="num">20</td><td class="num">37</td><td class="num">19</td><td class="num">14</td><td class="mono">SEL-07-03-A y B</td><td class="num ok">37</td></tr>
+        <tr class="total"><td>9 jornadas</td><td class="num">239</td><td class="num">403</td><td class="num dim">&mdash;</td><td class="num dim">&mdash;</td><td class="mono dim">&mdash;</td><td class="num">405</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:14px;color:var(--ink-2);margin-top:14px;max-width:82ch">Los &uacute;nicos 2 pares de diferencia son los del <b>s&aacute;bado 22</b>, la &uacute;nica jornada de agosto cuyo archivo de picking no se baj&oacute;. Del 17 al 28 el stock del piso cierra exactamente con el picking: <b>697 &minus; 399 = 298</b>, contra 296 en la foto.</p>
+</section>
+
+<section>
+  <div class="sec-head"><h2>D&oacute;nde est&aacute; hoy</h2><span class="note">296 en el piso &middot; 35 en el patio</span></div>
+  <div class="tw">
+    <table class="data">
+      <thead>
+        <tr><th>&Aacute;rea</th><th>Ubicaci&oacute;n</th><th class="num">Pares</th><th>&Uacute;ltimo movimiento</th><th>Qu&eacute; es</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SEL</td><td class="mono">SEL-07-03-C-01</td><td class="num">245</td><td class="mono">25/08 21:42</td><td>el grueso del cuerpo</td></tr>
+        <tr><td>SEL</td><td class="mono">SEL-07-03-B-01</td><td class="num">44</td><td class="mono">28/08 17:13</td><td>cara de picking</td></tr>
+        <tr><td>SEL</td><td class="mono">SEL-07-03-A-01</td><td class="num">2</td><td class="mono">28/08 17:03</td><td>cara de picking</td></tr>
+        <tr><td>AND</td><td class="mono">AND-06-01-B</td><td class="num">2</td><td class="mono dim">09/07 14:10</td><td class="dim">saldo, 51 d&iacute;as sin tocar</td></tr>
+        <tr><td>AND</td><td class="mono">AND-17-08-D</td><td class="num">1</td><td class="mono hot">26/05 15:37</td><td class="hot">saldo, 94 d&iacute;as sin tocar</td></tr>
+        <tr><td>AND</td><td class="mono">AND-17-07-B</td><td class="num">1</td><td class="mono hot">26/05 15:25</td><td class="hot">saldo, 94 d&iacute;as sin tocar</td></tr>
+        <tr><td>AND</td><td class="mono">AND-17-09-B</td><td class="num">1</td><td class="mono hot">26/05 16:28</td><td class="hot">saldo, 94 d&iacute;as sin tocar</td></tr>
+        <tr class="total"><td colspan="2">En el piso &middot; 7 ubicaciones</td><td class="num">296</td><td colspan="2">foto del 28/08 19:00</td></tr>
+        <tr class="hueco"><td>SEL alto</td><td class="mono">SEL-09-05-F-01</td><td class="num">300</td><td class="mono hot">15/08, sin tocar</td><td class="hot">reserva &middot; paleta de importaci&oacute;n sin abrir</td></tr>
+        <tr class="hueco"><td>SEL alto</td><td class="mono">SEL-10-04-E-01</td><td class="num">110</td><td class="mono hot">16/08, sin tocar</td><td class="hot">reserva &middot; la que subi&oacute; almacenaje</td></tr>
+        <tr class="total"><td colspan="2">En reserva &middot; 2 paletas en altura</td><td class="num">410</td><td colspan="2">no baj&oacute; un solo par en todo el mes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tw" style="margin-top:20px">
+    <table class="data">
+      <thead>
+        <tr><th>Bulto parado en el patio</th><th class="num">Pares</th><th>Ruta</th><th>Tienda</th><th>Empacado</th><th class="num">Lleva</th></tr>
+      </thead>
+      <tbody>
+        <tr class="hueco"><td class="mono">508003984673</td><td class="num">2</td><td>SAN JUAN MIRAFLORES</td><td class="mono">50350</td><td class="mono">24/08 10:07</td><td class="num hot">115,9 h</td></tr>
+        <tr><td class="mono">508003982365</td><td class="num">3</td><td>TRANSA</td><td class="mono">50601</td><td class="mono">27/08 12:14</td><td class="num">41,8 h</td></tr>
+        <tr><td class="mono">PRE500080002011288</td><td class="num">2</td><td>LOG - ARQ</td><td class="mono">50720</td><td class="mono">28/08 11:36</td><td class="num">18,4 h</td></tr>
+        <tr><td class="mono">PRE500080002014139</td><td class="num">2</td><td>LOG - ARQ</td><td class="mono">50704</td><td class="mono">28/08 11:44</td><td class="num">18,3 h</td></tr>
+        <tr><td class="mono">PRE500080002010916</td><td class="num">2</td><td>LOG - ARQ</td><td class="mono">50709</td><td class="mono">28/08 12:00</td><td class="num">18,0 h</td></tr>
+        <tr><td class="mono dim" colspan="6">&hellip; y 12 bultos m&aacute;s, todos empacados el 28 entre las 13:05 y las 18:40</td></tr>
+        <tr class="total"><td>17 bultos en Empaquetado</td><td class="num">35</td><td colspan="3" class="dim">m&aacute;s 4 bultos en empaquetado, 7 pares</td><td class="num dim">&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>D&oacute;nde qued&oacute; cada par</h2><span class="note">la cuenta cierra dos veces</span></div>
+  <div class="notes">
+    <div class="note-card">
+      <h3>Primer reparto: recepci&oacute;n</h3>
+      <p>De los <b>1.038</b> que verific&oacute; ktorres3, recepci&oacute;n mand&oacute; <b>300 directo a reserva</b> &mdash;la paleta de importaci&oacute;n entera, sin abrir&mdash; y <b>738 al buffer</b>.</p>
+      <p>300 + 738 = 1.038. <b>Cierra.</b></p>
+    </div>
+    <div class="note-card">
+      <h3>Segundo reparto: almacenaje</h3>
+      <p>De los <b>738</b> del buffer, el turno noche baj&oacute; <b>628 a cuatro cuerpos</b> del piso y subi&oacute; <b>110 a reserva</b>. El buffer qued&oacute; vac&iacute;o.</p>
+      <p>628 + 110 = 738. <b>Cierra.</b></p>
+    </div>
+    <div class="note-card hot">
+      <h3>410 pares llevan dos semanas arriba</h3>
+      <p>El <b>40%</b> de lo que lleg&oacute; sigue en altura, en dos paletas, sin que baje un solo par: la de importaci&oacute;n desde el <b>15 de agosto</b> y la de almacenaje desde el <b>16</b>.</p>
+      <p>Mientras tanto el piso se vaci&oacute; de 697 a 296 pares. Ninguna de las 239 l&iacute;neas de picking del mes toc&oacute; la reserva.</p>
+    </div>
+    <div class="note-card">
+      <h3>Y el piso cierra jornada por jornada</h3>
+      <p>Desde que se ubic&oacute; en su cuerpo, la baja del stock es <b>exactamente</b> el picking de ese d&iacute;a, todos los d&iacute;as. La &uacute;nica diferencia son <b>2 pares del s&aacute;bado 22</b>, el &uacute;nico d&iacute;a de agosto cuyo archivo de picking no se baj&oacute;.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Lo que este SKU deja ver</h2></div>
+  <div class="notes">
+    <div class="note-card hot">
+      <h3>El d&iacute;a se pierde despu&eacute;s de embalar</h3>
+      <p>De las 41,3 horas entre el pedido y el cami&oacute;n, el almac&eacute;n trabaj&oacute; <b>1,9</b>. Y no es un caso raro: la mediana del CD es 23,0 h de embalar a cargar. Hoy quedan <b>17 bultos</b> de esta talla en el patio, y el m&aacute;s viejo lleva <b>4,8 d&iacute;as</b>.</p>
+    </div>
+    <div class="note-card">
+      <h3>El buffer funcion&oacute; bien</h3>
+      <p>Recepci&oacute;n matricul&oacute; el s&aacute;bado a las 15:11 y el turno noche lo vaci&oacute; entero el domingo a las 04:52: <b>13,7 horas de tr&aacute;nsito</b> y cero pares olvidados. La mercader&iacute;a no se qued&oacute; parada en el pulm&oacute;n.</p>
+      <p>Lo que s&iacute; cost&oacute; fue lo de antes: <b>6,6 horas</b> entre verificar y matricular.</p>
+    </div>
+    <div class="note-card">
+      <h3>85 tiendas, 1,8 pares cada una</h3>
+      <p>Los 403 pares picados se fueron en <b>239 l&iacute;neas a 85 tiendas</b>, movidos por 54 personas distintas. Cada l&iacute;nea es una parada del picking y casi siempre un bulto aparte.</p>
+    </div>
+    <div class="note-card">
+      <h3>Cinco pares olvidados en el andamio</h3>
+      <p>Mientras 291 pares viven ordenados en el cuerpo SEL-07-03, hay <b>5 sueltos</b> en cuatro ubicaciones del andamio. Tres no se tocan desde el <b>26 de mayo</b>: 94 d&iacute;as. El picking no los va a agarrar y nadie los junta con el resto.</p>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  Maqueta &middot; Web Log&iacute;stica Deam1830 &middot; 29 de agosto de 2026<br>
+  SKU 6116913-1-07 &middot; hilo de ejemplo: orden 8003497 &middot; LPN 508004111790 &middot; carga OS5000800030218 &middot; tienda 50208<br>
+  Medido con <code>_ledger_sku.py</code>, <code>_seguir_sku_buffer.py</code>, <code>_reserva_sku.py</code> y <code>_traza_final.py</code> sobre ASN Revisar.csv, 45 fotos de Stock Activo, 43 de Stock Reserva, 21 jornadas de Picking, Detalle Orden, 5 d&iacute;as de OBLPN y RUTAS - TURNOS.xlsx.<br>
+  Nota de lectura: en el Stock Reserva la columna <code>ARTICULO</code> viene vac&iacute;a y el c&oacute;digo del SKU va en <code>PRODUCTO</code>. Leerla mal hace desaparecer toda la reserva de un art&iacute;culo.
+</div>
+
+</div>

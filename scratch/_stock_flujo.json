@@ -1,0 +1,71 @@
+{
+ "activo": {
+  "MATE": {
+   "lineas": 103,
+   "unid": 2910495.0,
+   "ubicaciones": 1
+  },
+  "MZN04": {
+   "lineas": 3521,
+   "unid": 167334.0,
+   "ubicaciones": 2469
+  },
+  "MZN01": {
+   "lineas": 4125,
+   "unid": 110414.0,
+   "ubicaciones": 1154
+  },
+  "PISO": {
+   "lineas": 199,
+   "unid": 81418.0,
+   "ubicaciones": 27
+  },
+  "SEL": {
+   "lineas": 3186,
+   "unid": 80662.0,
+   "ubicaciones": 814
+  },
+  "MZN02": {
+   "lineas": 2469,
+   "unid": 66899.0,
+   "ubicaciones": 713
+  },
+  "BUFFER": {
+   "lineas": 594,
+   "unid": 50934.0,
+   "ubicaciones": 293
+  },
+  "MZN03": {
+   "lineas": 4243,
+   "unid": 41828.0,
+   "ubicaciones": 916
+  },
+  "AND": {
+   "lineas": 9368,
+   "unid": 37808.0,
+   "ubicaciones": 966
+  },
+  "PARED": {
+   "lineas": 9,
+   "unid": 23609.0,
+   "ubicaciones": 4
+  },
+  "DIS": {
+   "lineas": 4526,
+   "unid": 16517.0,
+   "ubicaciones": 2
+  },
+  "RECLAMOS": {
+   "lineas": 295,
+   "unid": 385.0,
+   "ubicaciones": 1
+  }
+ },
+ "activo_total": 3588303.0,
+ "reserva": {
+  "filas": 20871,
+  "unid": 0.0,
+  "ubicaciones": 0
+ },
+ "foto": "28-08-26 19:00"
+}

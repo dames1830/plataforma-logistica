@@ -1,0 +1,83 @@
+{
+ "foto": "28-08-26 19:00",
+ "filas": 20869,
+ "total": 1270840.0,
+ "ubicaciones": 2408,
+ "paletas": 3450,
+ "niveles": {
+  "": {
+   "lineas": 1,
+   "unid": 635420.0,
+   "ubic": 1
+  },
+  "AEREO": {
+   "lineas": 36,
+   "unid": 9007.0,
+   "ubic": 1
+  },
+  "ALTO": {
+   "lineas": 3763,
+   "unid": 445133.0,
+   "ubic": 2267
+  },
+  "CROSS": {
+   "lineas": 415,
+   "unid": 35207.0,
+   "ubic": 1
+  },
+  "INS": {
+   "lineas": 35,
+   "unid": 115865.0,
+   "ubic": 2
+  },
+  "VER": {
+   "lineas": 16619,
+   "unid": 30208.0,
+   "ubic": 137
+  }
+ },
+ "zonas": {
+  "": {
+   "lineas": 1,
+   "unid": 635420.0
+  },
+  "SEL": {
+   "lineas": 3763,
+   "unid": 445133.0
+  },
+  "INS": {
+   "lineas": 35,
+   "unid": 115865.0
+  },
+  "RECEP": {
+   "lineas": 415,
+   "unid": 35207.0
+  },
+  "AEREO": {
+   "lineas": 36,
+   "unid": 9007.0
+  },
+  "MERMA19": {
+   "lineas": 5,
+   "unid": 3454.0
+  },
+  "MERMA128": {
+   "lineas": 6,
+   "unid": 1056.0
+  },
+  "DEV": {
+   "lineas": 718,
+   "unid": 742.0
+  },
+  "MERMA132": {
+   "lineas": 57,
+   "unid": 583.0
+  },
+  "MERMA92": {
+   "lineas": 139,
+   "unid": 572.0
+  }
+ },
+ "abc_unid": 0,
+ "reserva_unid": 1270840.0
+}

@@ -1,0 +1,325 @@
+<title>La agenda de los robots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EDEFEE; --panel:#FFFFFF; --panel-2:#F6F8F7;
+  --ink:#151B1D; --ink-2:#556366; --ink-3:#7C8A8D;
+  --rule:#CDD4D4; --rule-soft:#E1E6E5;
+  --flow:#1C5C58; --flow-2:#3E8C86; --flow-wash:#E2EFED;
+  --alert:#BF421A; --alert-wash:#FBE8E0;
+  --warn:#8F6410; --azul:#2A5C8A; --violeta:#5B4B8A;
+  --shadow:0 1px 2px rgba(21,27,29,.06), 0 8px 24px -16px rgba(21,27,29,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1314; --panel:#171D1E; --panel-2:#1D2426;
+    --ink:#E4E9E8; --ink-2:#95A5A7; --ink-3:#74868A;
+    --rule:#2B3639; --rule-soft:#222B2D;
+    --flow:#66B9B1; --flow-2:#48948D; --flow-wash:#16302F;
+    --alert:#F0764A; --alert-wash:#37201A;
+    --warn:#D6A64A; --azul:#6FA8DC; --violeta:#A08BD6;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1314; --panel:#171D1E; --panel-2:#1D2426;
+  --ink:#E4E9E8; --ink-2:#95A5A7; --ink-3:#74868A;
+  --rule:#2B3639; --rule-soft:#222B2D;
+  --flow:#66B9B1; --flow-2:#48948D; --flow-wash:#16302F;
+  --alert:#F0764A; --alert-wash:#37201A;
+  --warn:#D6A64A; --azul:#6FA8DC; --violeta:#A08BD6;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif; font-size:15.5px; line-height:1.6; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px; margin:0 auto; padding:0 24px 80px}
+h1,h2,h3{font-family:"Archivo Narrow","Arial Narrow",sans-serif; text-wrap:balance; margin:0}
+code{font-family:"IBM Plex Mono",monospace; font-size:.88em; background:var(--panel-2); padding:1px 5px; border-radius:2px; border:1px solid var(--rule-soft)}
+.top{border-bottom:2px solid var(--ink); padding:44px 0 20px; margin-bottom:32px}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--flow); margin-bottom:14px}
+h1{font-size:clamp(36px,6vw,62px); font-weight:700; line-height:.96; letter-spacing:-.015em}
+.lede{margin:18px 0 0; max-width:66ch; color:var(--ink-2); font-size:17px}
+.lede b{color:var(--ink)}
+section{margin-top:50px}
+.sec-head{display:flex; align-items:baseline; gap:16px; border-bottom:1px solid var(--rule); padding-bottom:10px; margin-bottom:24px; flex-wrap:wrap}
+.sec-head h2{font-size:27px; font-weight:600; letter-spacing:-.01em}
+.sec-head .note{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-left:auto}
+figure{margin:0}
+.canvas{background:var(--panel); border:1px solid var(--rule); border-radius:3px; padding:10px; overflow-x:auto; box-shadow:var(--shadow)}
+.canvas svg{display:block; min-width:1020px; width:100%; height:auto}
+figcaption{margin-top:14px; color:var(--ink-2); font-size:14px; max-width:82ch}
+figcaption b{color:var(--ink)}
+.hh{font-family:"IBM Plex Mono",monospace; font-size:11px; fill:var(--ink-3)}
+.fila{font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600; fill:var(--ink-2)}
+.eje{stroke:var(--rule-soft); stroke-width:1}
+.ejeanc{stroke:var(--azul); stroke-width:1.5; stroke-dasharray:3 3}
+.carril{fill:var(--panel-2); stroke:var(--rule-soft); stroke-width:1}
+.b-stock{fill:var(--flow-2)} .b-pick{fill:var(--flow)} .b-emb{fill:var(--warn)}
+.b-anc{fill:var(--azul)} .b-det{fill:var(--violeta)}
+.b-mapa{fill:var(--ink-3)} .b-sin{fill:var(--ink-3)}
+.leyenda{font-size:11.5px; fill:var(--ink-2)}
+.tw{overflow-x:auto; background:var(--panel); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow)}
+table.data{width:100%; border-collapse:collapse; font-size:14px; min-width:620px}
+table.data th{text-align:left; font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); padding:13px 15px; border-bottom:1.5px solid var(--rule); white-space:nowrap}
+table.data td{padding:10px 15px; border-bottom:1px solid var(--rule-soft); vertical-align:baseline}
+table.data tbody tr:last-child td{border-bottom:none}
+table.data .num{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+table.data th.num{text-align:right}
+table.data .mono{font-family:"IBM Plex Mono",monospace; font-size:13px; white-space:nowrap}
+table.data tr.anc td{background:var(--flow-wash); font-weight:600}
+table.data tr.anc td:first-child{box-shadow:inset 3px 0 0 var(--azul)}
+table.data .dim{color:var(--ink-3)}
+.notes{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px}
+.note-card{background:var(--panel); border:1px solid var(--rule); border-left:3px solid var(--flow-2); border-radius:3px; padding:20px 22px}
+.note-card.hot{border-left-color:var(--alert)}
+.note-card h3{font-size:18px; font-weight:600; margin-bottom:8px}
+.note-card p{margin:0; font-size:14px; color:var(--ink-2)}
+.note-card p + p{margin-top:9px}
+.note-card b{color:var(--ink)}
+.foot{margin-top:60px; padding-top:20px; border-top:1px solid var(--rule); font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3); line-height:1.9}
+@media (max-width:700px){ .wrap{padding:0 16px 60px} }
+@media print{ body{background:#fff} .canvas,.tw{box-shadow:none} section{break-inside:avoid} }
+
+table.crono{width:100%; border-collapse:collapse; font-size:13.5px; min-width:620px}
+table.crono th{text-align:left; font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); padding:12px 14px; border-bottom:1.5px solid var(--rule); white-space:nowrap; position:sticky; top:0; background:var(--panel)}
+table.crono td{padding:7px 14px; border-bottom:1px solid var(--rule-soft); vertical-align:baseline}
+table.crono tbody tr:last-child td{border-bottom:none}
+table.crono tr.nuevahora td{border-top:1px solid var(--rule)}
+table.crono .num{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+table.crono th.num{text-align:right}
+table.crono .mono{font-family:"IBM Plex Mono",monospace; font-weight:600; white-space:nowrap}
+table.crono .dim{color:var(--ink-3)}
+table.crono .justo{color:var(--warn); font-weight:600}
+table.crono .choca{color:var(--alert); font-weight:700}
+table.crono .e-anc{color:var(--azul)} table.crono .e-det{color:var(--violeta)}
+table.crono .e-stock{color:var(--flow-2)} table.crono .e-pick{color:var(--flow)}
+table.crono .e-emb{color:var(--warn)} table.crono .e-sin{color:var(--ink-3)}
+.crono-wrap{max-height:640px; overflow:auto; background:var(--panel); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Web Log&iacute;stica Deam1830 &middot; horarios del servidor &middot; vigente</div>
+  <h1>La agenda de los robots</h1>
+  <p class="lede">Once robots comparten un solo WMS y solo cabe uno por vez. Este es el d&iacute;a como qued&oacute; configurado hoy: <b>el avance cada 2 horas pero solo en el turno d&iacute;a, el pendiente dos veces al d&iacute;a, y el ancla sola en su hora</b>. Son <b>45 corridas</b>, no 57: los avances de la madrugada se sacaron porque no aportaban.</p>
+</header>
+
+<section>
+  <div class="sec-head"><h2>El d&iacute;a completo</h2><span class="note">las rayas azules son el ancla</span></div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1200 200" role="img" aria-label="L&iacute;nea de tiempo de 24 horas con los robots del servidor. Arriba los que entran al WMS: stock en punto, picking al veinte y embalaje al cuarenta, cada dos horas; el ancla a las 07:00 y 19:00; el Detalle de Orden a las 07:20 y 19:20. Abajo los que no entran al WMS.">
+        <text class="hh" x="96" y="22" text-anchor="start">HORA DEL D&Iacute;A</text>
+        <line class="eje" x1="96.0" y1="56" x2="96.0" y2="152"></line>
+<text class="hh" x="96.0" y="48" text-anchor="middle">00</text>
+<line class="eje" x1="186.0" y1="56" x2="186.0" y2="152"></line>
+<text class="hh" x="186.0" y="48" text-anchor="middle">02</text>
+<line class="eje" x1="276.0" y1="56" x2="276.0" y2="152"></line>
+<text class="hh" x="276.0" y="48" text-anchor="middle">04</text>
+<line class="eje" x1="366.0" y1="56" x2="366.0" y2="152"></line>
+<text class="hh" x="366.0" y="48" text-anchor="middle">06</text>
+<line class="eje" x1="456.0" y1="56" x2="456.0" y2="152"></line>
+<text class="hh" x="456.0" y="48" text-anchor="middle">08</text>
+<line class="eje" x1="546.0" y1="56" x2="546.0" y2="152"></line>
+<text class="hh" x="546.0" y="48" text-anchor="middle">10</text>
+<line class="eje" x1="636.0" y1="56" x2="636.0" y2="152"></line>
+<text class="hh" x="636.0" y="48" text-anchor="middle">12</text>
+<line class="eje" x1="726.0" y1="56" x2="726.0" y2="152"></line>
+<text class="hh" x="726.0" y="48" text-anchor="middle">14</text>
+<line class="eje" x1="816.0" y1="56" x2="816.0" y2="152"></line>
+<text class="hh" x="816.0" y="48" text-anchor="middle">16</text>
+<line class="eje" x1="906.0" y1="56" x2="906.0" y2="152"></line>
+<text class="hh" x="906.0" y="48" text-anchor="middle">18</text>
+<line class="eje" x1="996.0" y1="56" x2="996.0" y2="152"></line>
+<text class="hh" x="996.0" y="48" text-anchor="middle">20</text>
+<line class="eje" x1="1086.0" y1="56" x2="1086.0" y2="152"></line>
+<text class="hh" x="1086.0" y="48" text-anchor="middle">22</text>
+<line class="eje" x1="1176.0" y1="56" x2="1176.0" y2="152"></line>
+<text class="hh" x="1176.0" y="48" text-anchor="middle">00</text>
+<line class="ejeanc" x1="411.0" y1="56" x2="411.0" y2="152"></line>
+<line class="ejeanc" x1="951.0" y1="56" x2="951.0" y2="152"></line>
+        <text class="fila" x="10" y="89">ENTRAN</text>
+        <text class="fila" x="10" y="107">AL WMS</text>
+        <rect class="carril" x="96" y="78" width="1080" height="20" rx="2"></rect>
+        <rect class="b-stock" x="96.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-stock" x="186.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-stock" x="276.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-stock" x="366.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-anc" x="411.0" y="78" width="11.2" height="20" rx="1"></rect>
+<rect class="b-det" x="426.0" y="78" width="30.0" height="20" rx="1"></rect>
+<rect class="b-stock" x="456.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-stock" x="546.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-pick" x="561.0" y="78" width="14.2" height="20" rx="1"></rect>
+<rect class="b-emb" x="576.0" y="78" width="11.2" height="20" rx="1"></rect>
+<rect class="b-stock" x="636.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-pick" x="651.0" y="78" width="14.2" height="20" rx="1"></rect>
+<rect class="b-emb" x="666.0" y="78" width="11.2" height="20" rx="1"></rect>
+<rect class="b-stock" x="726.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-pick" x="741.0" y="78" width="14.2" height="20" rx="1"></rect>
+<rect class="b-emb" x="756.0" y="78" width="11.2" height="20" rx="1"></rect>
+<rect class="b-stock" x="816.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-pick" x="831.0" y="78" width="14.2" height="20" rx="1"></rect>
+<rect class="b-emb" x="846.0" y="78" width="11.2" height="20" rx="1"></rect>
+<rect class="b-stock" x="906.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-pick" x="921.0" y="78" width="14.2" height="20" rx="1"></rect>
+<rect class="b-emb" x="936.0" y="78" width="11.2" height="20" rx="1"></rect>
+<rect class="b-anc" x="951.0" y="78" width="11.2" height="20" rx="1"></rect>
+<rect class="b-det" x="966.0" y="78" width="30.0" height="20" rx="1"></rect>
+<rect class="b-stock" x="996.0" y="78" width="4.6" height="20" rx="1"></rect>
+<rect class="b-pick" x="1011.0" y="78" width="14.2" height="20" rx="1"></rect>
+<rect class="b-emb" x="1026.0" y="78" width="11.2" height="20" rx="1"></rect>
+<rect class="b-stock" x="1086.0" y="78" width="4.6" height="20" rx="1"></rect>
+        <text class="fila" x="10" y="133">NO TOCAN</text>
+        <text class="fila" x="10" y="151">EL WMS</text>
+        <rect class="carril" x="96" y="122" width="1080" height="20" rx="2"></rect>
+        <rect class="b-sin" x="107.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="197.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="231.0" y="122" width="9.0" height="20" rx="1"></rect>
+<rect class="b-sin" x="287.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="377.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="399.8" y="122" width="3.8" height="20" rx="1"></rect>
+<rect class="b-sin" x="456.0" y="122" width="2.0" height="20" rx="1"></rect>
+<rect class="b-sin" x="467.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="501.0" y="122" width="2.0" height="20" rx="1"></rect>
+<rect class="b-sin" x="557.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="647.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="737.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="827.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="917.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="996.0" y="122" width="2.0" height="20" rx="1"></rect>
+<rect class="b-sin" x="1007.2" y="122" width="2.2" height="20" rx="1"></rect>
+<rect class="b-sin" x="1097.2" y="122" width="2.2" height="20" rx="1"></rect>
+        <rect class="b-anc" x="96" y="172" width="13" height="10" rx="1"></rect>
+        <text class="leyenda" x="114" y="181">ANCLA 07:00 y 19:00</text>
+        <rect class="b-det" x="272" y="172" width="13" height="10" rx="1"></rect>
+        <text class="leyenda" x="290" y="181">Detalle de Orden</text>
+        <rect class="b-stock" x="414" y="172" width="13" height="10" rx="1"></rect>
+        <text class="leyenda" x="432" y="181">stock</text>
+        <rect class="b-pick" x="500" y="172" width="13" height="10" rx="1"></rect>
+        <text class="leyenda" x="518" y="181">picking</text>
+        <rect class="b-emb" x="596" y="172" width="13" height="10" rx="1"></rect>
+        <text class="leyenda" x="614" y="181">embalaje</text>
+        <rect class="b-sin" x="706" y="172" width="13" height="10" rx="1"></rect>
+        <text class="leyenda" x="724" y="181">mapa, archivado, respaldo, SKUs sin salida</text>
+      </svg>
+    </div>
+    <figcaption>Arriba, los que pelean el WMS. Las dos rayas azules punteadas son las <b>07:00 y las 19:00</b>: el ancla entra sola y nadie la pisa. Abajo, los que no necesitan el WMS y pueden correr cuando sea.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Hora por hora</h2><span class="note">tiempos medidos en el servidor</span></div>
+  <div class="tw">
+    <table class="data">
+      <thead><tr><th>Robot</th><th>Qu&eacute; trae</th><th class="num">Hora</th><th class="num">Tarda</th><th class="num">Al d&iacute;a</th></tr></thead>
+      <tbody>
+        <tr class="anc"><td>Ancla ma&ntilde;ana</td><td>los dos stocks + Slotting</td><td class="num mono">07:00</td><td class="num">6 a 15 min</td><td class="num">1</td></tr>
+        <tr class="anc"><td>Ancla noche</td><td>los dos stocks + Slotting + Descargas</td><td class="num mono">19:00</td><td class="num">6 a 15 min</td><td class="num">1</td></tr>
+        <tr><td>Detalle de Orden</td><td>el pendiente y el pendiente de despacho</td><td class="num mono">07:20 y 19:20</td><td class="num">25 a 40 min</td><td class="num">2</td></tr>
+        <tr><td>Stock por hora</td><td>foto del piso</td><td class="num mono">:00</td><td class="num">6 min</td><td class="num">12</td></tr>
+        <tr><td>Mapa de calor</td><td>dibuja el mapa</td><td class="num mono">:15</td><td class="num dim">3 min</td><td class="num">12</td></tr>
+        <tr><td>Avance de picking</td><td>lo que va picado hoy</td><td class="num mono">:20, de 10 a 21</td><td class="num">19 min</td><td class="num">6</td></tr>
+        <tr><td>Avance de embalaje</td><td>lo que va embalado hoy</td><td class="num mono">:40, de 10 a 21</td><td class="num">15 min</td><td class="num">6</td></tr>
+        <tr><td>SKUs sin salida</td><td>an&aacute;lisis del d&iacute;a</td><td class="num mono">09:00</td><td class="num dim">20 seg</td><td class="num">1</td></tr>
+        <tr><td>Archivado</td><td>ordena las tareas</td><td class="num mono">03:00</td><td class="num dim">12 min</td><td class="num">1</td></tr>
+        <tr><td>Respaldo</td><td>copia de la base</td><td class="num mono">06:45</td><td class="num dim">5 min</td><td class="num">1</td></tr>
+        <tr><td>Vig&iacute;a del ancla</td><td>avisa si el stock no lleg&oacute;</td><td class="num mono">08:00 y 20:00</td><td class="num dim">3 seg</td><td class="num">2</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:14px;color:var(--ink-2);margin-top:14px;max-width:82ch">Todos caen en las <b>horas pares</b>. El stock y el mapa dan doce pases, las 24 horas. Los dos avances dan <b>seis</b>, de 10:20 a 20:40: el 95% del picking y del embalaje se hace en el turno d&iacute;a, y a las 08:00 el turno reci&eacute;n entra.</p>
+</section>
+
+
+<section>
+  <div class="sec-head"><h2>El d&iacute;a en orden</h2><span class="note">de 00:00 a 23:59, uno detr&aacute;s de otro</span></div>
+  <div class="crono-wrap">
+    <table class="crono">
+      <thead><tr><th class="num">Entra</th><th>Robot</th><th class="num">Termina</th><th class="num">Tarda</th><th class="num">Hueco hasta el siguiente</th></tr></thead>
+      <tbody>
+<tr class="nuevahora"><td class="mono e-stock">00:00</td><td>Stock por hora</td><td class="num mono">00:06</td><td class="num">6 min</td><td class="num dim">114 min</td></tr>
+<tr><td class="mono e-sin">00:15</td><td>Mapa de calor</td><td class="num mono">00:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">02:00</td><td>Stock por hora</td><td class="num mono">02:06</td><td class="num">6 min</td><td class="num dim">114 min</td></tr>
+<tr><td class="mono e-sin">02:15</td><td>Mapa de calor</td><td class="num mono">02:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr class="nuevahora"><td class="mono e-sin">03:00</td><td>Archivado</td><td class="num mono">03:12</td><td class="num">12 min</td><td class="num dim">&mdash;</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">04:00</td><td>Stock por hora</td><td class="num mono">04:06</td><td class="num">6 min</td><td class="num dim">114 min</td></tr>
+<tr><td class="mono e-sin">04:15</td><td>Mapa de calor</td><td class="num mono">04:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">06:00</td><td>Stock por hora</td><td class="num mono">06:06</td><td class="num">6 min</td><td class="num dim">54 min</td></tr>
+<tr><td class="mono e-sin">06:15</td><td>Mapa de calor</td><td class="num mono">06:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr><td class="mono e-sin">06:45</td><td>Respaldo</td><td class="num mono">06:50</td><td class="num">5 min</td><td class="num dim">&mdash;</td></tr>
+<tr class="nuevahora"><td class="mono e-anc">07:00</td><td>ANCLA de la manana</td><td class="num mono">07:15</td><td class="num">15 min</td><td class="num justo">5 min</td></tr>
+<tr><td class="mono e-det">07:20</td><td>Detalle de Orden</td><td class="num mono">08:00</td><td class="num">40 min</td><td class="num justo">0 min</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">08:00</td><td>Stock por hora</td><td class="num mono">08:06</td><td class="num">6 min</td><td class="num dim">114 min</td></tr>
+<tr><td class="mono e-sin">08:00</td><td>Vigia del ancla</td><td class="num mono">08:00</td><td class="num">segundos</td><td class="num dim">&mdash;</td></tr>
+<tr><td class="mono e-sin">08:15</td><td>Mapa de calor</td><td class="num mono">08:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr class="nuevahora"><td class="mono e-sin">09:00</td><td>SKUs sin salida</td><td class="num mono">09:00</td><td class="num">segundos</td><td class="num dim">&mdash;</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">10:00</td><td>Stock por hora</td><td class="num mono">10:06</td><td class="num">6 min</td><td class="num dim">14 min</td></tr>
+<tr><td class="mono e-sin">10:15</td><td>Mapa de calor</td><td class="num mono">10:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr><td class="mono e-pick">10:20</td><td>Avance de picking</td><td class="num mono">10:39</td><td class="num">19 min</td><td class="num justo">1 min</td></tr>
+<tr><td class="mono e-emb">10:40</td><td>Avance de embalaje</td><td class="num mono">10:55</td><td class="num">15 min</td><td class="num dim">65 min</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">12:00</td><td>Stock por hora</td><td class="num mono">12:06</td><td class="num">6 min</td><td class="num dim">14 min</td></tr>
+<tr><td class="mono e-sin">12:15</td><td>Mapa de calor</td><td class="num mono">12:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr><td class="mono e-pick">12:20</td><td>Avance de picking</td><td class="num mono">12:39</td><td class="num">19 min</td><td class="num justo">1 min</td></tr>
+<tr><td class="mono e-emb">12:40</td><td>Avance de embalaje</td><td class="num mono">12:55</td><td class="num">15 min</td><td class="num dim">65 min</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">14:00</td><td>Stock por hora</td><td class="num mono">14:06</td><td class="num">6 min</td><td class="num dim">14 min</td></tr>
+<tr><td class="mono e-sin">14:15</td><td>Mapa de calor</td><td class="num mono">14:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr><td class="mono e-pick">14:20</td><td>Avance de picking</td><td class="num mono">14:39</td><td class="num">19 min</td><td class="num justo">1 min</td></tr>
+<tr><td class="mono e-emb">14:40</td><td>Avance de embalaje</td><td class="num mono">14:55</td><td class="num">15 min</td><td class="num dim">65 min</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">16:00</td><td>Stock por hora</td><td class="num mono">16:06</td><td class="num">6 min</td><td class="num dim">14 min</td></tr>
+<tr><td class="mono e-sin">16:15</td><td>Mapa de calor</td><td class="num mono">16:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr><td class="mono e-pick">16:20</td><td>Avance de picking</td><td class="num mono">16:39</td><td class="num">19 min</td><td class="num justo">1 min</td></tr>
+<tr><td class="mono e-emb">16:40</td><td>Avance de embalaje</td><td class="num mono">16:55</td><td class="num">15 min</td><td class="num dim">65 min</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">18:00</td><td>Stock por hora</td><td class="num mono">18:06</td><td class="num">6 min</td><td class="num dim">14 min</td></tr>
+<tr><td class="mono e-sin">18:15</td><td>Mapa de calor</td><td class="num mono">18:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr><td class="mono e-pick">18:20</td><td>Avance de picking</td><td class="num mono">18:39</td><td class="num">19 min</td><td class="num justo">1 min</td></tr>
+<tr><td class="mono e-emb">18:40</td><td>Avance de embalaje</td><td class="num mono">18:55</td><td class="num">15 min</td><td class="num justo">5 min</td></tr>
+<tr class="nuevahora"><td class="mono e-anc">19:00</td><td>ANCLA de la noche</td><td class="num mono">19:15</td><td class="num">15 min</td><td class="num justo">5 min</td></tr>
+<tr><td class="mono e-det">19:20</td><td>Detalle de Orden</td><td class="num mono">20:00</td><td class="num">40 min</td><td class="num justo">0 min</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">20:00</td><td>Stock por hora</td><td class="num mono">20:06</td><td class="num">6 min</td><td class="num dim">14 min</td></tr>
+<tr><td class="mono e-sin">20:00</td><td>Vigia del ancla</td><td class="num mono">20:00</td><td class="num">segundos</td><td class="num dim">&mdash;</td></tr>
+<tr><td class="mono e-sin">20:15</td><td>Mapa de calor</td><td class="num mono">20:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+<tr><td class="mono e-pick">20:20</td><td>Avance de picking</td><td class="num mono">20:39</td><td class="num">19 min</td><td class="num justo">1 min</td></tr>
+<tr><td class="mono e-emb">20:40</td><td>Avance de embalaje</td><td class="num mono">20:55</td><td class="num">15 min</td><td class="num dim">65 min</td></tr>
+<tr class="nuevahora"><td class="mono e-stock">22:00</td><td>Stock por hora</td><td class="num mono">22:06</td><td class="num">6 min</td><td class="num dim">&mdash;</td></tr>
+<tr><td class="mono e-sin">22:15</td><td>Mapa de calor</td><td class="num mono">22:18</td><td class="num">3 min</td><td class="num dim">&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:14px;color:var(--ink-2);margin-top:14px;max-width:82ch">El <b>hueco</b> se mide solo entre los que entran al WMS &mdash;los grises no cuentan, porque no pelean con nadie&mdash;. En <b style="color:var(--warn)">&aacute;mbar</b> los que quedan con menos de 6 minutos de margen: son los que hay que vigilar.</p>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Los dos m&aacute;rgenes que hay que vigilar</h2></div>
+  <div class="notes">
+    <div class="note-card hot">
+      <h3>08:00 y 20:00 &mdash; margen cero</h3>
+      <p>El Detalle de Orden entra 07:20 y puede tardar <b>hasta 40 minutos</b>: termina justo cuando el stock por hora entra a las 08:00.</p>
+      <p>Si se pasa, el stock encuentra el WMS ocupado y <b>se salta esa foto</b>. No se rompe nada &mdash;los de cada hora se rinden en vez de forzar la entrada&mdash;, pero pierdes un snapshot.</p>
+    </div>
+    <div class="note-card hot">
+      <h3>18:55 &mdash; cinco minutos antes del ancla</h3>
+      <p>El embalaje de las 18:40 termina cerca de las 18:55 y el ancla de la noche entra a las 19:00. Es el &uacute;ltimo pase del d&iacute;a y el archivo ya viene grande, as&iacute; que es el m&aacute;s ajustado de los dos.</p>
+      <p>El de la ma&ntilde;ana ya no existe: al sacar los avances de madrugada, <b>el ancla de las 07:00 quedo con casi una hora libre por delante</b>.</p>
+    </div>
+    <div class="note-card">
+      <h3>Por qu&eacute; el ancla es intocable</h3>
+      <p>Es la foto con la que se simula el picking del d&iacute;a. Y es el &uacute;nico robot que <b>entra igual</b> si encuentra el WMS ocupado, tras esperar 12 minutos: <i>"la corrida del turno no se puede perder"</i>.</p>
+      <p>Por eso hay que dejarle la hora libre. Si entra encima de otro, fallan los dos &mdash;pas&oacute; el 31 de agosto&mdash;.</p>
+    </div>
+    <div class="note-card">
+      <h3>Todo se cambia desde la web</h3>
+      <p>Configuraci&oacute;n &rarr; Par&aacute;metros. Ah&iacute; se toca la hora, los d&iacute;as y el interruptor de cada robot. Windows solo despierta al robot cada 10 minutos; el horario lo manda la web.</p>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  Web Log&iacute;stica Deam1830 &middot; 31 de agosto de 2026 &middot; configuraci&oacute;n vigente<br>
+  Duraciones medidas sobre los registros del servidor del 30 y 31-ago.<br>
+  Comprobado minuto a minuto sobre las 24 horas: ning&uacute;n robot queda dentro de otro. 45 corridas al d&iacute;a.
+</div>
+</div>
