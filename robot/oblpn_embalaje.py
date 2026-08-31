@@ -188,6 +188,16 @@ def dias_pedidos():
                 return sys.argv[i + 1]
         return None
 
+    # EL AVANCE DEL DIA, cada 2 horas. Daniel, 31-ago-2026: *"el avance de picking, el
+    # avance de embalaje tiene que ser cada dos horas. Necesitamos un estatus cada dos
+    # horas"*. Con `--hoy` se baja el dia en curso, que es lo que mira el turno; sin
+    # nada se baja AYER, que es la salida de emergencia para recuperar un dia perdido.
+    #
+    # El archivo se llama igual —OBLPN DD-MM.csv— y se pisa en cada pase: siempre queda
+    # el ultimo estado del dia, que es lo que se quiere de un avance.
+    if "--hoy" in sys.argv:
+        return [datetime.now()]
+
     d1, d2 = leer("--desde"), leer("--hasta")
     if not d1 and not d2:
         return [po.dia_pedido()]

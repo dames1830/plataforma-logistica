@@ -71,8 +71,18 @@ DE_FABRICA = {
     # A las 06:45: el turno noche cierra 06:30 y el de la manana entra 08:00, asi que
     # el almacen esta quieto y el dia de ayer ya cerro. Estaba a las 08:00 y eso
     # empujaba a SKUs sin salida fuera de la manana.
-    'reportes':     {'activa': True, 'hora': '06:45', 'dias': {'lun': True, 'mar': True, 'mie': True,
-                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # DOS VECES AL DIA, DETRAS DE CADA ANCLA. Daniel, 31-ago-2026: *"el detalle de orden
+    # se necesita para ver las ordenes pendientes, no para avance. Puede ser dos veces al
+    # dia nada mas [...] tiene que ser despues del stock ancla, porque se necesita para
+    # empezar el turno dia, y para tener una vision el turno noche"*.
+    #
+    # minuto 440 = 07:20, y cada 720 min cae la segunda en 19:20. Sale de DIARIAS y pasa
+    # a repetirse, que es la unica forma de tener dos horas fijas en el dia.
+    #
+    # ESTABA A LAS 06:45 Y ERA EL QUE ROMPIA EL ANCLA: tarda hasta 40 minutos, asi que
+    # seguia adentro del WMS a las 07:00. El 31-ago el ancla espero 12 minutos, entro
+    # igual encima, y el Stock Reserva fallo sus tres intentos.
+    'reportes':     {'activa': True, 'minuto': 440, 'cadaMin': 720, 'dias': {d: True for d in DIAS}},
     # El respaldo va al final del dia, cuando la corrida de las 19:00 ya termino
     # y nadie esta escribiendo. La hora se cambia desde la web como las demas.
     'respaldo':     {'activa': True, 'hora': '23:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
@@ -86,17 +96,21 @@ DE_FABRICA = {
     # manana: necesita el Detalle de Orden del dia que cerro y la foto de stock de
     # hoy. Con los reportes a las 06:45 y el ancla a las 07:00, a las 07:30 ya estan
     # los dos. Antes de esa hora el cuadro saldria con la demanda de anteayer.
-    'sin_salida':   {'activa': True, 'hora': '07:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
+    # A LAS 09:00, no a las 07:30: necesita el Detalle de Orden del dia que cerro, y
+    # ahora ese archivo llega recien a las 08:00. A las 07:30 leeria el de anteayer.
+    'sin_salida':   {'activa': True, 'hora': '09:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
-    # El OBLPN del embalaje va a la MISMA hora y los MISMOS dias que `reportes`, que es
-    # el Detalle de Orden. Lo pidio Daniel el 30-ago-2026 y tiene sentido: los dos bajan
-    # el DIA DE AYER ya cerrado, asi que tienen que mirar la misma jornada. Si uno
-    # corriera a otra hora, un dia cualquiera cruzarian jornadas distintas.
-    # Los dos entran al WMS, y el candado los ordena: el segundo espera su turno.
-    'oblpn':        {'activa': True, 'hora': '06:45', 'dias': {'lun': True, 'mar': True, 'mie': True,
-                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # EL AVANCE DE EMBALAJE, cada 2 horas como el de picking. Daniel, 31-ago-2026:
+    # *"el avance de picking, el avance de embalaje tiene que ser cada dos horas.
+    # Necesitamos un estatus cada dos horas"*.
+    #
+    # Va al minuto 40, DETRAS del picking que entra al :20 y tarda unos 19 minutos. Los
+    # dos entran al WMS y solo cabe uno; si arrancara antes, uno perderia la vuelta.
+    # Baja el dia EN CURSO (--hoy) y pisa el archivo en cada pase: siempre queda el
+    # ultimo estado. El ultimo pase del dia es a las 22:40.
+    'oblpn_hora':   {'activa': True, 'minuto': 40, 'cadaMin': 120, 'dias': {d: True for d in DIAS}},
 }
-DIARIAS = ('ancla_noche', 'ancla_manana', 'reportes', 'respaldo', 'archivado', 'sin_salida', 'oblpn')
+DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida')
 
 
 def _leer_web(timeout=20):
