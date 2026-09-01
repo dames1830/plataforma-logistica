@@ -237,8 +237,9 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
   <div class="selec" id="sel"></div>
   <div class="sc"><table>
     <thead><tr><th>#</th><th>Persona</th><th class="n">08</th><th class="n">09</th><th class="n">10</th><th class="n">11</th><th class="n">12</th><th class="n">13</th><th class="n">14</th><th class="n">15</th><th class="n">16</th><th class="n">17</th><th class="n">18</th><th class="n">19</th>
+      <th class="n">Pares</th>
       <th class="n" id="th_tot" title="líneas por hora sobre el tiempo trabajado">Lín/h</th>
-      <th class="n">Pares</th><th class="n">Líneas</th>
+      <th class="n">Líneas</th>
       <th class="n" title="del primer al último movimiento">Min</th></tr></thead>
     <tbody id="cuerpo"></tbody></table></div>
   <div class="nota" id="mtz_nota"></div>
@@ -578,8 +579,8 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
         <td class="k nom">${esc(g.usuario)}${mins < C.muestraCortaMin
           ? ` <span class="eti eti-corta" title="menos de ${C.muestraCortaMin} min trabajados">corta</span>` : ''}</td>
         ${celdas}
-        <td class="n tot${rit ? '' : ' z'}">${rit ? m(rit) : '–'}</td>
         <td class="n tot">${m(T[suf] || 0)}</td>
+        <td class="n tot${rit ? '' : ' z'}">${rit ? m(rit) : '–'}</td>
         <td class="n sub">${m(T[suf + '_l'] != null ? T[suf + '_l'] : T.lineas)}</td>
         <td class="n sub">${m(mins)}</td></tr>`;
     }).join('');
@@ -611,8 +612,9 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
       el('cuerpo').insertAdjacentHTML('beforeend', `<tr class="total">
         <td class="k"></td><td class="k">TOTAL</td>
         ${celdas}
+        <td class="n">${m(pares)}</td>
         <td class="n${prom ? '' : ' z'}">${prom ? m(prom) : '–'}</td>
-        <td class="n">${m(pares)}</td><td class="n">${m(lin)}</td>
+        <td class="n">${m(lin)}</td>
         <td class="n">–</td></tr>`);
     }
 
