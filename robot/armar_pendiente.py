@@ -73,6 +73,7 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import traceback
@@ -131,6 +132,13 @@ MAESTRO_CANDIDATOS = [
     os.path.join(os.path.dirname(BASE), 'Maestro_Articulos.xlsx'),
     os.path.join(BASE, 'Archivos', 'Maestro_Articulos.xlsx'),
     os.path.join(os.path.dirname(BASE), 'Pruebas Sistema', 'Maestro_Articulos.xlsx'),
+]
+# EL MAESTRO DE RUTAS. Dice de cada tienda si es LIMA o PROVINCIA, que dia sale y
+# con que transportista. OJO: el nombre lleva DOS ESPACIOS entre RUTAS y TURNOS.
+RUTAS_CANDIDATOS = [
+    os.path.join(os.path.dirname(BASE), 'Proyecto web Logistico',
+                 'RUTAS -  TURNOS.xlsx'),
+    os.path.join(os.path.dirname(BASE), 'RUTAS -  TURNOS.xlsx'),
 ]
 AQUI = os.path.dirname(os.path.abspath(__file__))
 LOG = os.path.join(AQUI, 'logs', 'armar_pendiente.log')
@@ -358,6 +366,63 @@ def leer_maestro():
     return gen, rims, colec
 
 
+def leer_rutas():
+    """Cada tienda -> zona, transportista, turno y dia de despacho.
+
+    SE COPIA ANTES DE ABRIRLO. El archivo esta *solo en la nube* en OneDrive y
+    openpyxl lo ve como un zip roto -"File is not a zip file"-. Copiarlo lo baja,
+    asi que siempre se lee de la copia.
+
+    EL CODIGO DE TIENDA DEL CORREO LLEVA 50 DELANTE. El correo dice 238 y el
+    maestro 50238. Regla de Daniel, 01-sep-2026.
+    """
+    ruta = next((r for r in RUTAS_CANDIDATOS if os.path.isfile(r)), None)
+    if not ruta:
+        log('No se encontro el maestro de rutas. El corte por ruta va a salir '
+            'vacio.', 'AVISO')
+        return {}
+    copia = os.path.join(AQUI, 'logs', '_rutas_copia.xlsx')
+    try:
+        os.makedirs(os.path.dirname(copia), exist_ok=True)
+        shutil.copyfile(ruta, copia)
+    except Exception as e:
+        log('No se pudo copiar el maestro de rutas (%s). Se intenta el original.'
+            % type(e).__name__, 'AVISO')
+        copia = ruta
+    try:
+        wb = openpyxl.load_workbook(copia, read_only=True, data_only=True)
+    except Exception as e:
+        log('No se pudo abrir el maestro de rutas (%s).' % type(e).__name__, 'AVISO')
+        return {}
+    it = wb.worksheets[0].iter_rows(values_only=True)
+    cab = [str(c).strip() if c is not None else '' for c in next(it)]
+
+    def col(nombre):
+        for i, c in enumerate(cab):
+            if c.strip().upper() == nombre:
+                return i
+        return None
+
+    iC, iZ = col('CDG'), col('ZONA')
+    iP, iT, iD = col('PROVEEDOR'), col('TURNO'), col('DIA')
+    if iC is None or iZ is None:
+        log('El maestro de rutas no trae CDG o ZONA. Se ignora.', 'AVISO')
+        return {}
+
+    def txt(r, i):
+        return (str(r[i]).strip().upper()
+                if i is not None and i < len(r) and r[i] is not None else '')
+
+    rutas = {}
+    for r in it:
+        if iC >= len(r) or r[iC] is None:
+            continue
+        rutas[str(r[iC]).strip()] = (txt(r, iZ), txt(r, iP), txt(r, iT), txt(r, iD))
+    wb.close()
+    log('Maestro de rutas: %d tiendas' % len(rutas))
+    return rutas
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  3. EL CRUCE
 # ══════════════════════════════════════════════════════════════════════════════
@@ -456,6 +521,7 @@ def refrescar_pendientes():
 def armar(hoy):
     guias, cabecera, IQ, IG = leer_correos()
     gen, rims, colec = leer_maestro()
+    rutas = leer_rutas()
 
     if not os.path.isfile(PENDIENTES):
         raise SystemExit('No esta el pendiente del WMS: %s' % PENDIENTES)
@@ -479,6 +545,10 @@ def armar(hoy):
     r_col = collections.defaultdict(lambda: [set(), 0.0])
     r_pri = collections.defaultdict(lambda: [set(), 0.0])
     r_gen = collections.defaultdict(float)
+    # (zona, fila) -> [accesorios, calzado]. La fila es DIA + TURNO en Lima y el
+    # transportista en provincia: asi lo arma comercial en su dinamica.
+    r_rut = collections.defaultdict(lambda: [0.0, 0.0])
+    rut_sin = [0.0, set()]
     r_ant = collections.defaultdict(lambda: [set(), 0.0])
     ord_dentro, ord_fuera = set(), set()
     und_dentro = und_fuera = 0.0
@@ -542,6 +612,22 @@ def armar(hoy):
         r_col[cc][0].add(orden); r_col[cc][1] += pend
         r_pri[prioridad][0].add(orden); r_pri[prioridad][1] += pend
         r_gen[gg] += pend
+
+        # EL CORTE POR RUTA. Al codigo de tienda del correo se le pone 50 delante
+        # para encontrarlo en el maestro de rutas.
+        cod = campo(1)
+        info = rutas.get('50' + cod.lstrip('0').zfill(3)) if cod else None
+        if info:
+            zona, prov, turno, dsp = info
+            if zona.startswith('LIMA'):
+                clave = ('LIMA', ('%s %s' % (dsp, turno)).strip() or '(sin ruta)')
+            else:
+                clave = ('PROVINCIA', prov or '(sin transportista)')
+            r_rut[clave][0 if gg != 'Footwear' else 1] += pend
+        elif rutas:
+            rut_sin[0] += pend
+            rut_sin[1].add(cod)
+
         t = tramo(mes, dia)
         r_ant[t][0].add(orden); r_ant[t][1] += pend
 
@@ -606,6 +692,13 @@ def armar(hoy):
         'gender': [{'k': k, 'und': int(round(v))}
                    for k, v in sorted(r_gen.items(), key=lambda x: -x[1]) if v > 0],
         'repetidasDescartadas': repetidas,
+        # EL CUADRO DE COMERCIAL. Mismo corte que la dinamica del asistente:
+        # zona -> ruta, partido en calzado y no calzado.
+        'rutas': [{'z': k[0], 'k': k[1], 'acc': int(round(v[0])),
+                   'cal': int(round(v[1])), 'und': int(round(v[0] + v[1]))}
+                  for k, v in sorted(r_rut.items(), key=lambda x: -(x[1][0] + x[1][1]))],
+        'rutasSinCruce': {'und': int(round(rut_sin[0])),
+                          'tiendas': len(rut_sin[1])},
     }
     return datos, guias, cabecera, IQ, por_guia, por_sku
 

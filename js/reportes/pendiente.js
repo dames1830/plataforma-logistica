@@ -24,7 +24,7 @@
  * }
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0510';
+import { icono } from '../services_v245/iconos.js?v=29.0511';
 
 const nf = (n) => Number(n || 0).toLocaleString('es-PE');
 
@@ -88,6 +88,74 @@ const cuadro = (titulo, pie, filas, opciones) => {
         </table>
         ${resto > 0 ? `<span class="pend-mas">▸ y ${nf(resto)} más</span>` : ''}
         ${o.nota ? `<div class="pend-nota">${o.nota}</div>` : ''}
+      </div>`;
+};
+
+/**
+ * EL CUADRO DE COMERCIAL: ZONA -> RUTA, PARTIDO EN CALZADO Y ACCESORIOS.
+ *
+ * Es la misma dinamica que arma el asistente de comercial en Excel, para poder
+ * ponerlos lado a lado. Daniel, 01-sep-2026: *"replica su mismo cuadro y quiero
+ * ver donde se ve la distorsion"*.
+ *
+ * En LIMA la fila es el DIA de despacho mas el TURNO; en PROVINCIA es el
+ * transportista. Sale del maestro RUTAS - TURNOS, cruzado por codigo de tienda
+ * con 50 delante.
+ */
+const cuadroRutas = (filas, sinCruce) => {
+    const lista = filas || [];
+    if (!lista.length) {
+        return `<div class="pend-panel pend-ancho"><h3>POR RUTA DE DESPACHO</h3>
+            <div class="pend-cap">Zona y ruta, partido en calzado y accesorios</div>
+            <div class="pend-vacio">Sin datos para esta fecha</div></div>`;
+    }
+
+    const tot = { acc: 0, cal: 0 };
+    lista.forEach(f => { tot.acc += Number(f.acc) || 0; tot.cal += Number(f.cal) || 0; });
+
+    const bloque = (zona) => {
+        const suyas = lista.filter(f => f.z === zona);
+        if (!suyas.length) return '';
+        const sa = suyas.reduce((s, f) => s + (Number(f.acc) || 0), 0);
+        const sc = suyas.reduce((s, f) => s + (Number(f.cal) || 0), 0);
+        return `<tr class="pend-zona">
+            <td>${esc(zona)}</td>
+            <td class="n">${nf(sa)}</td><td class="n">${nf(sc)}</td>
+            <td class="n">${nf(sa + sc)}</td></tr>` +
+          suyas.map(f => `<tr>
+            <td class="pend-sangria">${esc(f.k)}</td>
+            <td class="n">${nf(f.acc)}</td><td class="n">${nf(f.cal)}</td>
+            <td class="n">${nf(f.und)}</td></tr>`).join('');
+    };
+
+    const perdidas = sinCruce && Number(sinCruce.und) > 0
+        ? `<div class="pend-nota"><b>${nf(sinCruce.und)} unidades</b> de
+           ${nf(sinCruce.tiendas)} tiendas no figuran en el maestro de rutas y quedan
+           fuera de este cuadro.</div>`
+        : '';
+
+    return `<div class="pend-panel pend-ancho">
+        <h3>POR RUTA DE DESPACHO</h3>
+        <div class="pend-cap">El mismo corte que arma comercial: zona y ruta, partido
+          en calzado y accesorios</div>
+        <table>
+          <thead><tr>
+            <th>ZONA / RUTA</th>
+            <th class="n">ACCESORIOS</th><th class="n">CALZADO</th>
+            <th class="n">TOTAL</th>
+          </tr></thead>
+          <tbody>
+            ${bloque('LIMA')}${bloque('PROVINCIA')}
+            <tr class="pend-total">
+              <td>TOTAL GENERAL</td>
+              <td class="n">${nf(tot.acc)}</td><td class="n">${nf(tot.cal)}</td>
+              <td class="n">${nf(tot.acc + tot.cal)}</td></tr>
+          </tbody>
+        </table>
+        ${perdidas}
+        <div class="pend-nota">En Lima la fila es el <b>día de despacho + turno</b>;
+          en provincia, el <b>transportista</b>. Accesorios junta todo lo que el
+          Maestro no marca como Footwear.</div>
       </div>`;
 };
 
@@ -245,6 +313,7 @@ function cuerpo(d, fecha, dias) {
                  etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
                  nota: 'Un total que mezcla zapatos con cajas no dice nada.'
                }),
+        cuadroRutas(d.rutas, d.rutasSinCruce),
     ].join('');
 
     return cab + tarjetas + `<div class="pend-grid">${cuadros}${origen}</div>`;
@@ -255,6 +324,14 @@ function cuerpo(d, fecha, dias) {
 function estilos() {
     return `<style>
     #pend{--pend-amber:var(--warning)}
+    /* El cuadro de rutas ocupa la fila entera: son 22 filas y en una columna
+       angosta los numeros se parten. */
+    #pend .pend-ancho{grid-column:1/-1}
+    #pend .pend-zona td{font-weight:800;color:var(--text-strong);
+      background:rgba(var(--ink-rgb),.05)}
+    #pend .pend-total td{font-weight:900;color:var(--text-strong);
+      border-top:2px solid rgba(var(--ink-rgb),.15)}
+    #pend .pend-sangria{padding-left:22px;color:var(--text-muted)}
     #pend .pend-head{display:flex;justify-content:space-between;align-items:center;
       flex-wrap:wrap;gap:12px;margin-bottom:16px}
     #pend h2{font-size:var(--t-lg);font-weight:800;margin:0;color:var(--text-strong)}
