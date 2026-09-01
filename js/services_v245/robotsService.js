@@ -71,7 +71,9 @@ export const TAREAS = [
     { id: 'archivado', tipo: 'diaria', etiqueta: 'Archivar tareas viejas',
       detalle: 'manda al histórico lo que pasó de 30 días', area: null },
     { id: 'sin_salida', tipo: 'diaria', etiqueta: 'SKUs sin salida',
-      detalle: 'el cuadro de lo que llegó y no se movió', area: 'sku_sin_salida' }
+      detalle: 'el cuadro de lo que llegó y no se movió', area: 'sku_sin_salida' },
+    { id: 'asn_web', tipo: 'diaria', etiqueta: 'ASN · seis meses',
+      detalle: 'lo que viene en camino: un archivo por mes, seis meses atrás', area: null }
 ];
 
 /** Cada cuánto puede correr una tarea de las que se repiten. */
@@ -103,7 +105,8 @@ export const robotsPorDefecto = () => ({
     reportes:     { activa: true, hora: '06:45', dias: { ...LUN_A_SAB } },
     respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } },
     archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } },
-    sin_salida:   { activa: true, hora: '07:30', dias: { ...LUN_A_SAB } }
+    sin_salida:   { activa: true, hora: '07:30', dias: { ...LUN_A_SAB } },
+    asn_web:      { activa: true, hora: '04:30', dias: { ...TODOS } }
 });
 
 const _hhmm = (v, respaldo) => {
