@@ -1,4 +1,4 @@
-import { icono } from '../services_v245/iconos.js?v=29.0508';
+import { icono } from '../services_v245/iconos.js?v=29.0509';
 /**
  * SKUs SIN SALIDA — los que llegaron y no se están moviendo
  *
