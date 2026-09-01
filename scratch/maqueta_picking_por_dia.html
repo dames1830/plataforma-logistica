@@ -84,7 +84,8 @@ tr.off td{color:var(--dim)}
 .mtz thead th:nth-child(1),.mtz tbody td:nth-child(1){left:0;width:34px;color:var(--dim)}
 .mtz thead th:nth-child(2),.mtz tbody td:nth-child(2){left:34px}
 .mtz td.tot{font-weight:700;border-left:1px solid var(--ln2)}
-.mtz td.c.z{color:var(--dim)}
+.mtz td.c.z,.mtz td.tot.z{color:var(--ln2);font-weight:400}
+.mtz td.c.z{background:none !important}
 .mtz td.sub{color:var(--mut)}
 .mtz tbody tr:hover td:nth-child(-n+2){background:var(--alt)}
 
@@ -208,8 +209,10 @@ tr.off td{color:var(--dim)}
     filas.forEach(tr => {
       [...tr.querySelectorAll('td.c'), tr.querySelector('td.tot')].forEach(td => {
         const v = val(td);
-        td.textContent = v == null ? '\u00b7' : v.toLocaleString('es-PE');
-        td.classList.toggle('z', v == null);
+        // 0 y "no se pudo medir" se dibujan IGUAL: una rayita apagada. Un
+        // cero suelto pesa lo mismo que un numero de verdad y marea la lectura.
+        td.textContent = v ? v.toLocaleString('es-PE') : '\u2013';
+        td.classList.toggle('z', !v);
         if (td.classList.contains('tot')) return;
         td.style.background = v
           ? 'color-mix(in srgb, var(--mtz) ' + Math.round(3 + 26 * v / (max || 1)) + '%, transparent)'
