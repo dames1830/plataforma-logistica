@@ -185,6 +185,7 @@ tr.off td{color:var(--dim)}
   const cuerpo = document.getElementById('cuerpo');
   const filas = [...cuerpo.querySelectorAll('tr')];
   const COLOR = { t: null, s: null, p: 'var(--pre)', x: 'var(--nc)' };
+  const NOMBRE = {"t": "algo", "s": "calzado suelto", "p": "calzado prepack", "x": "no calzado"};
   let vista = 'vol', clase = 't';
 
   const val = (td) => {
@@ -225,16 +226,28 @@ tr.off td{color:var(--dim)}
       if (y == null) return -1;
       return y - x;
     });
-    orden.forEach((tr, i) => { tr.querySelector('td.pos').textContent = i + 1;
-                               cuerpo.appendChild(tr); });
+
+    // Y SOLO QUEDAN LOS QUE MOVIERON ALGO EN ESTA CLASE. El filtro mira el
+    // VOLUMEN aunque se este viendo efectividad: asi la lista es la misma en las
+    // dos vistas, y quien trabajo pero no da para medirle velocidad igual figura
+    // con un punto. Filtrando por ritmo desapareceria gente que si trabajo.
+    let vistos = 0;
+    orden.forEach((tr) => {
+      const hizo = +tr.querySelector('td.tot').dataset[clase] > 0;
+      tr.hidden = !hizo;
+      if (hizo) tr.querySelector('td.pos').textContent = ++vistos;
+      cuerpo.appendChild(tr);
+    });
 
     const esEf = vista === 'ef';
     document.getElementById('th_tot').textContent = esEf ? "L\u00edn/h" : 'Total';
     document.getElementById('mtz_tit').textContent = esEf
       ? 'Efectividad por persona y hora' : 'Productividad por persona y hora';
     document.getElementById('mtz_pie').innerHTML = esEf ? "Cada celda son las <b>l\u00edneas por hora</b> sobre el tiempo que esa persona estuvo realmente trabajando. No depende de cu\u00e1nto trabajo le tocara." : "Cada celda son los <b>pares</b> que esa persona pic\u00f3 en esa hora.";
-    document.getElementById('mtz_nota').innerHTML = esEf
-      ? "L&iacute;neas por hora sobre el tiempo trabajado, <b>sin la equivalencia del prepack</b>: suelto y prepack se miden por separado, cada uno con sus propias l&iacute;neas.<br>Se ve el caso que import&aacute;bamos: <b>fsalazar3</b> hizo apenas 54 pares &mdash;&uacute;ltimo en volumen&mdash; y sin embargo es el m&aacute;s r&aacute;pido en calzado suelto con <b>87 l&iacute;neas/hora</b>. Su muestra es corta (27 min), y por eso lleva la marca.<br>Un punto no es un cero: es que no alcanza la muestra. Hace falta un m&iacute;nimo de 8 l&iacute;neas y 5 minutos en la celda (20 y 15 min en el total del d&iacute;a), y se descartan los tramos de menos de 5 segundos por l&iacute;nea, que no son alguien picando sino una confirmaci&oacute;n en bloque del WMS." : "Ordenado por pares. Manda <b>marmas2</b> con 1.815 pares, pero eso dice cu&aacute;nto trabajo le toc\u00f3, no qu\u00e9 tan r\u00e1pido lo hizo: para eso est\u00e1 Efectividad.";
+    document.getElementById('mtz_nota').innerHTML =
+      '<b>' + vistos + ' de ' + filas.length + ' personas</b> movieron '
+      + NOMBRE[clase] + " ese d\u00eda; el resto no figura. "
+      + (esEf ? "L&iacute;neas por hora sobre el tiempo trabajado, <b>sin la equivalencia del prepack</b>: suelto y prepack se miden por separado, cada uno con sus propias l&iacute;neas.<br>Se ve el caso que import&aacute;bamos: <b>fsalazar3</b> hizo apenas 54 pares &mdash;&uacute;ltimo en volumen&mdash; y sin embargo es el m&aacute;s r&aacute;pido en calzado suelto con <b>87 l&iacute;neas/hora</b>. Su muestra es corta (27 min), y por eso lleva la marca.<br>Un punto no es un cero: es que no alcanza la muestra. Hace falta un m&iacute;nimo de 8 l&iacute;neas y 5 minutos en la celda (20 y 15 min en el total del d&iacute;a), y se descartan los tramos de menos de 5 segundos por l&iacute;nea, que no son alguien picando sino una confirmaci&oacute;n en bloque del WMS." : "Ordenado por pares. Manda <b>marmas2</b> con 1.815 pares, pero eso dice cu&aacute;nto trabajo le toc\u00f3, no qu\u00e9 tan r\u00e1pido lo hizo: para eso est\u00e1 Efectividad.");
   };
 
   sel.addEventListener('click', (e) => {
