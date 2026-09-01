@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pendiente de despacho — vista de prueba</title>
+<!--
+  PANTALLA REAL, DATOS REALES, SIN CONTRASENA.
+
+  Monta el modulo `js/reportes/pendiente.js` tal cual lo dibuja la plataforma y
+  le pasa lo que el robot publico en el servidor. Sirve para mostrarle la
+  pantalla a Daniel sin tener que entrar con su usuario.
+
+  Se abre con el servidor local:  python -m http.server 5599 --bind 127.0.0.1
+  y despues  http://127.0.0.1:5599/scratch/ver_pendiente.html
+-->
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;padding:18px;font-family:Inter,system-ui,sans-serif}
+  #aviso{padding:8px 14px;margin-bottom:14px;border-radius:8px;font-weight:700;
+         font-size:.82rem;letter-spacing:.04em;background:rgba(245,158,11,.14);
+         color:#B45309;border:1px solid rgba(245,158,11,.35)}
+</style>
+</head>
+<body>
+<div id="aviso">VISTA DE PRUEBA · pantalla real con los datos publicados</div>
+<div id="pend"></div>
+
+<script type="module">
+import { montarPendiente } from '../js/reportes/pendiente.js';
+
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+const AREA = 'pendiente_despacho';
+
+const raiz = document.getElementById('pend');
+raiz.innerHTML = '<p style="opacity:.6">Trayendo lo publicado...</p>';
+
+const fechas = await fetch(`${API}/${AREA}/dates`).then(r => r.json())
+    .then(j => j.dates || []).catch(() => []);
+const fecha = fechas[0];
+const datos = fecha
+    ? await fetch(`${API}/${AREA}?date=${fecha}`).then(r => r.json())
+        .then(j => (j.data && !Array.isArray(j.data)) ? j.data : null)
+        .catch(() => null)
+    : null;
+
+montarPendiente(raiz, {
+    datos, fecha, fechas,
+    alCambiarFecha: () => {},
+    alDescargar: () => {},
+});
+</script>
+</body>
+</html>

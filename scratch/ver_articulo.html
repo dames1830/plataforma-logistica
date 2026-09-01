@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Análisis SKU → Artículo — vista de prueba</title>
+<!--
+  EL TABLERO REAL, SIN CONTRASENA.
+
+  `renderDashboard(container, user, onLogout)` recibe el usuario como parametro,
+  asi que se le puede pasar uno de mentira para DIBUJAR la pantalla. No entra a
+  ningun lado: solo sirve para ver el tercer nivel de Analisis SKU > Articulo.
+
+  Compilar no alcanza -el import no ve un identificador mal escrito adentro de
+  una plantilla-, y este cambio agrega dos pestanas nuevas.
+
+  http://127.0.0.1:5599/scratch/ver_articulo.html
+-->
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif}</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="../js/env.js"></script>
+<script type="module">
+import { renderDashboard } from '../js/views/dashboard_v28.js';
+
+window.__pruebaErrores = [];
+window.addEventListener('error', e => window.__pruebaErrores.push(String(e.message)));
+window.addEventListener('unhandledrejection',
+    e => window.__pruebaErrores.push(String(e.reason)));
+
+await renderDashboard(document.getElementById('app'),
+    { id: 0, username: 'prueba', name: 'Vista de prueba', role: 'admin' },
+    () => {});
+window.__pruebaLista = true;
+</script>
+</body>
+</html>
