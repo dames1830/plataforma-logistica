@@ -1,37 +1,37 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0506';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0507';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0506';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0506';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0506';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0506';
-import * as metasService from '../services_v245/metasService.js?v=29.0506';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0506';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0506';
+import * as adminService from '../services_v245/adminService.js?v=29.0507';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0507';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0507';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0507';
+import * as metasService from '../services_v245/metasService.js?v=29.0507';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0507';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0507';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0506';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0506';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0506';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0506';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0506';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0506';
-import { renderCapacidad } from './capacidad.js?v=29.0506';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0506';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0506';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0506';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0506';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0506';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0506';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0506';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0506';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0506';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0506';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0506';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0506';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0506';
-import { montarSlotting } from './slotting.js?v=29.0506';
-import { montarEventos } from './eventos.js?v=29.0506';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0506';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0507';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0507';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0507';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0507';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0507';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0507';
+import { renderCapacidad } from './capacidad.js?v=29.0507';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0507';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0507';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0507';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0507';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0507';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0507';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0507';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0507';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0507';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0507';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0507';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0507';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0507';
+import { montarSlotting } from './slotting.js?v=29.0507';
+import { montarEventos } from './eventos.js?v=29.0507';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0507';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -394,7 +394,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0506';
+const VERSION = '29.0507';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2410,7 +2410,11 @@ const TABS = [
   ]},
   { id: 'recepcion', label: 'Recepción', icon: '📥', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_recepcion', label: 'Archivo Recepción', icon: '🗂️' },
-    { id: 'reportes_recepcion', label: 'Reportes Recepción', icon: '📊' }
+    { id: 'reportes_recepcion', label: 'Reportes Recepción', icon: '📊' },
+    /* LO QUE VIENE EN CAMINO. Sale del ASN del WMS, que el robot baja en seis
+     * archivos -uno por mes- y un proceso resume a unos KB. Va acá adentro y no
+     * como módulo suelto: lo pidió Daniel el 01-sep-2026. */
+    { id: 'asn_recepcion', label: 'ASN Detalle', icon: '🚛' }
   ]},
   { id: 'almacenaje', label: 'Almacenaje', icon: '🏭', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_almacenaje', label: 'Archivo Almacenaje', icon: '🗂️' },
@@ -5482,7 +5486,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0506');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0507');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5745,7 +5749,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0506');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0507');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -16904,6 +16908,9 @@ const renderRFSection = (container) => {
     } else if (tabId === 'recepcion' && activeSub === 'reportes_recepcion') {
         await new Promise(r => setTimeout(r, 0));
         renderRecepcionReportTab(container);
+    } else if (tabId === 'recepcion' && activeSub === 'asn_recepcion') {
+        await new Promise(r => setTimeout(r, 0));
+        renderASNRecepcion(container);
     } else if (tabId === 'despacho' && activeSub === 'monitoreo_despacho') {
         await new Promise(r => setTimeout(r, 0));
         renderDespachoMonitoreo(container);
@@ -18738,7 +18745,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0506 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0507 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -34069,6 +34076,173 @@ ${donde}${resto}`);
    * SE PIDE APARTE Y NO FRENA LA PANTALLA. El estudio de la evolución ya está
    * dibujado cuando esto sale a buscar su paquete: si el robot todavía no lo
    * publicó, o el servidor tarda, el resto del reporte no se entera. */
+  /* ── ASN DETALLE · lo que viene en camino ──────────────────────────────────
+   *
+   * Sale del ASN del WMS. El robot lo baja en SEIS archivos -uno por mes, 64 MB
+   * en total- y `asn_resumen.py` los reduce a unos 10 KB, que es lo que se lee
+   * aca. Daniel no abre los Excel; abre esta pantalla.
+   *
+   * El calzado va separado del resto cruzando con el Maestro por `G. Gender`:
+   * Footwear es calzado y todo lo demas no. Importa, porque el material de
+   * embalaje se atrasa mucho mas que los zapatos y mezclados no se veia. */
+  const AREA_ASN = 'asn_recepcion';
+
+  const asnNum = (v) => Number(v || 0).toLocaleString('es-PE', { maximumFractionDigits: 0 });
+  const asnPct = (rec, env) => env ? (100 * rec / env) : 0;
+  const asnColor = (p) => p >= 95 ? 'var(--success)'
+                        : (p >= 80 ? 'var(--warning, #C98A17)' : 'var(--danger, #C2451F)');
+
+  const renderASNRecepcion = async (container) => {
+    container.innerHTML = `
+      <div class="glass-panel" style="padding:1.4rem;">
+        <div style="color:var(--text-muted);">Trayendo el ASN...</div>
+      </div>`;
+
+    let p = null;
+    try {
+      const base = window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com';
+      const res = await fetch(`${base}/api/logistics/${AREA_ASN}?date=MASTER&t=${Date.now()}`);
+      if (res.ok) {
+        const cuerpo = await res.json();
+        const d = cuerpo && cuerpo.data;
+        // El backend guarda las areas como lista de filas; esta es un objeto solo,
+        // asi que segun como haya viajado puede llegar envuelto en un arreglo.
+        p = Array.isArray(d) ? d[0] : d;
+        if (!p || !p.totales || !p.clase) p = null;
+      }
+    } catch (e) {
+      console.warn('[ASN] no se pudo traer:', e && e.message);
+    }
+    if (!container.isConnected) return;
+
+    if (!p) {
+      container.innerHTML = `
+        <div class="glass-panel" style="padding:2rem; text-align:center;">
+          <div style="font-size:var(--t-xl); margin-bottom:.5rem;">&#128666;</div>
+          <h4 style="margin:0 0 .5rem; color:var(--text-main); font-weight:800;">Todavia no hay ASN publicado</h4>
+          <p style="margin:0 auto; max-width:58ch; color:var(--text-muted); font-size:var(--t-sm); line-height:1.6;">
+            Lo baja el robot a las 04:30, un archivo por mes, y despues lo resume para esta pantalla.
+            Si ya corrio y esto sigue vacio, conviene mirar el registro de la corrida.
+          </p>
+        </div>`;
+      return;
+    }
+
+    const cal = p.clase.calzado || { lineas: 0, enviado: 0, recibido: 0 };
+    const noc = p.clase.no_calzado || { lineas: 0, enviado: 0, recibido: 0 };
+    const T = p.totales;
+    const cum = p.cumplimiento || {};
+
+    const th = (txt, num) => `<th style="text-align:${num ? 'right' : 'left'}; padding:.55rem .9rem;
+        font-size:var(--t-xs); text-transform:uppercase; letter-spacing:.08em; font-weight:700;
+        color:var(--text-muted); border-bottom:1px solid rgba(var(--ink-rgb),.12);
+        white-space:nowrap;">${txt}</th>`;
+    const td = (txt, num, extra) => `<td style="padding:.55rem .9rem; text-align:${num ? 'right' : 'left'};
+        border-bottom:1px solid rgba(var(--ink-rgb),.06); white-space:nowrap;
+        ${num ? 'font-variant-numeric:tabular-nums;' : ''} ${extra || ''}">${txt}</td>`;
+    const cuadro = (titulo, nota, cuerpo, pie) => `
+      <div class="glass-panel" style="padding:0; overflow:hidden; margin-bottom:1rem;">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:1rem;
+                    flex-wrap:wrap; padding:.9rem 1.1rem; border-bottom:1px solid rgba(var(--ink-rgb),.12);">
+          <h3 style="margin:0; font-size:var(--t-md); font-weight:800; color:var(--text-strong);">${titulo}</h3>
+          ${nota ? `<span style="font-size:var(--t-xs); color:var(--text-muted);">${nota}</span>` : ''}
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">${cuerpo}</table>
+        </div>
+        ${pie ? `<div style="padding:.7rem 1.1rem; font-size:var(--t-xs); color:var(--text-muted);
+                             border-top:1px solid rgba(var(--ink-rgb),.06);">${pie}</div>` : ''}
+      </div>`;
+
+    const filaClase = (et, c) => {
+      const pc = asnPct(c.recibido, c.enviado);
+      return `<tr>${td(et)}${td(asnNum(c.lineas), true)}${td(asnNum(c.enviado), true)}
+        ${td(asnNum(c.recibido), true)}
+        ${td(pc.toFixed(1) + '%', true, `color:${asnColor(pc)}; font-weight:700;`)}
+        ${td(asnNum(c.enviado - c.recibido), true)}</tr>`;
+    };
+
+    const pcTot = asnPct(T.recibido, T.enviado);
+    const t1 = `<thead><tr>${th('')}${th('Lineas', 1)}${th('Enviado', 1)}${th('Recibido', 1)}
+        ${th('Cumple', 1)}${th('Falta', 1)}</tr></thead>
+      <tbody>
+        ${filaClase('&#128095; Calzado', cal)}
+        ${filaClase('&#128230; No calzado', noc)}
+        <tr style="font-weight:800; background:rgba(var(--ink-rgb),.04);">
+          ${td('Total')}${td(asnNum(T.lineas), true)}${td(asnNum(T.enviado), true)}
+          ${td(asnNum(T.recibido), true)}
+          ${td(pcTot.toFixed(1) + '%', true, `color:${asnColor(pcTot)};`)}
+          ${td(asnNum(T.enviado - T.recibido), true)}
+        </tr>
+      </tbody>`;
+
+    const t2 = `<thead><tr>${th('Mes')}${th('Enviado', 1)}${th('Recibido', 1)}${th('Cumple', 1)}
+        ${th('Falta', 1)}</tr></thead>
+      <tbody>${(p.meses || []).map(m => {
+        const pc = asnPct(m.recibido, m.enviado);
+        return `<tr>${td(m.mes)}${td(asnNum(m.enviado), true)}${td(asnNum(m.recibido), true)}
+          ${td(pc.toFixed(1) + '%', true, `color:${asnColor(pc)}; font-weight:700;`)}
+          ${td(asnNum(m.enviado - m.recibido), true)}</tr>`;
+      }).join('')}</tbody>`;
+
+    const t3 = `<thead><tr>${th('Estado')}${th('ASN', 1)}${th('Enviado', 1)}${th('Recibido', 1)}
+        ${th('Cumple', 1)}</tr></thead>
+      <tbody>${(p.estados || []).map(e => {
+        const pc = asnPct(e.recibido, e.enviado);
+        const rojo = e.estado === 'Cancelled' ? 'color:var(--danger,#C2451F); font-weight:700;' : '';
+        return `<tr>${td(e.estado)}${td(asnNum(e.asn), true, rojo)}
+          ${td(asnNum(e.enviado), true)}${td(asnNum(e.recibido), true)}
+          ${td(e.enviado ? pc.toFixed(1) + '%' : '&mdash;', true,
+               `color:${asnColor(pc)}; font-weight:700;`)}</tr>`;
+      }).join('')}</tbody>`;
+
+    const et4 = { completo: 'Completo', parcial: 'Parcial',
+                  sin_recibir: 'Sin recibir nada', de_mas: 'Recibido de mas' };
+    const t4 = `<thead><tr>${th('')}${th('ASN', 1)}${th('Enviado', 1)}${th('Recibido', 1)}
+        ${th('Cumple', 1)}</tr></thead>
+      <tbody>${['completo', 'parcial', 'sin_recibir', 'de_mas'].map(k => {
+        const c = cum[k] || {};
+        const env = Number(c.env || 0), rec = Number(c.rec || 0);
+        const pc = asnPct(rec, env);
+        const rojo = k === 'sin_recibir' ? 'color:var(--danger,#C2451F); font-weight:700;' : '';
+        return `<tr>${td(et4[k])}${td(asnNum(c.asn), true, rojo)}
+          ${td(asnNum(env), true)}${td(asnNum(rec), true)}
+          ${td(env ? pc.toFixed(1) + '%' : '&mdash;', true,
+               `color:${asnColor(pc)}; font-weight:700;`)}</tr>`;
+      }).join('')}</tbody>`;
+
+    const t5 = `<thead><tr>${th('ASN')}${th('Fecha de envio')}${th('Estado')}${th('Enviado', 1)}
+        ${th('Recibido', 1)}${th('Falta', 1)}${th('Cumple', 1)}</tr></thead>
+      <tbody>${(p.parciales || []).slice(0, 25).map(x => `<tr>
+        ${td(x.asn)}${td(x.envio)}${td(x.estado)}${td(asnNum(x.enviado), true)}
+        ${td(asnNum(x.recibido), true)}
+        ${td(asnNum(x.falta), true, 'color:var(--danger,#C2451F); font-weight:700;')}
+        ${td(Number(x.cumple || 0).toFixed(1) + '%', true,
+             `color:${asnColor(Number(x.cumple || 0))}; font-weight:700;`)}</tr>`).join('')}</tbody>`;
+
+    container.innerHTML = `
+      <div style="margin-bottom:1rem;">
+        <h2 style="margin:0 0 .2rem; font-size:var(--t-xl); font-weight:800; color:var(--text-strong);">
+          Lo que viene y lo que llego</h2>
+        <div style="font-size:var(--t-xs); color:var(--text-muted);">
+          ${p.generado || ''} &middot; ${(p.archivos || []).length} meses &middot;
+          ${asnNum(T.lineas)} lineas &middot; ${asnNum(T.asn)} ASN</div>
+      </div>
+      ${cuadro('Enviado contra recibido',
+               'el calzado se separa cruzando cada articulo con el Maestro', t1)}
+      ${cuadro('Mes a mes', 'por fecha de creacion del ASN', t2,
+               'El cumplimiento baja hacia los meses recientes porque esos ASN todavia estan en camino.')}
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:1rem;">
+        ${cuadro('Estado de los ASN', '', t3)}
+        ${cuadro('Llego lo que dijo el ASN?', 'por ASN entero', t4,
+                 'A nivel de linea no existen los parciales: cada linea es un LPN y llega entera o no llega.')}
+      </div>
+      ${cuadro('Los ' + asnNum(p.parciales_total) + ' parciales',
+               'llego una parte y falta la otra &middot; ' + asnNum(p.parciales_falta) + ' unidades en total',
+               t5,
+               'Son los que hay que perseguir: el resto del pendiente son ASN que no recibieron nada.')}`;
+  };
+
   const AREA_SIN_SALIDA = 'sku_sin_salida';
 
   const pintarSinSalida = async (container) => {

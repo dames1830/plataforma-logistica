@@ -15,7 +15,7 @@
  * redibujarlo en cada filtro era lo que hacía parpadear la pantalla.
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0506';
+import { icono } from '../services_v245/iconos.js?v=29.0507';
 
 const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
