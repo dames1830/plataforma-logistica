@@ -451,6 +451,57 @@ def salir_del_editor(fr):
         pass
 
 
+def dejar_el_arbol_como_estaba(fr):
+    """CIERRA LAS PESTANAS Y VUELVE A PLEGAR LA CARPETA.
+
+    Oracle recuerda las carpetas abiertas ENTRE SESIONES y por usuario, y este
+    robot entra con la misma cuenta que todos los demas. Dejar `Dames`
+    desplegada le mueve el arbol a los otros robots.
+
+    El 01-sep-2026 eso tumbo el ancla de las 07:00: `descargar_stock_reserva()`
+    buscaba el informe por posicion, no lo encontro, y el turno arranco sin
+    stock de reserva. Aquella funcion ya se arreglo -ahora busca por nombre-,
+    pero igual corresponde salir dejando todo como estaba: el que ensucia,
+    limpia.
+    """
+    try:
+        cerradas = 0
+        for _ in range(6):
+            aspas = fr.locator(".wrTabCloseIcon, [class*='TabClose']")
+            if aspas.count() == 0:
+                break
+            aspas.last.click(force=True, timeout=4000)
+            cerradas += 1
+            time.sleep(2)
+        if cerradas:
+            po.log("   pestanas de informe cerradas: %d" % cerradas)
+    except Exception:
+        pass
+
+    # Si el informe ASN se ve en el arbol, es que la carpeta quedo abierta.
+    for _ in range(3):
+        try:
+            visible = False
+            obj = fr.get_by_text(INFORME, exact=True)
+            for i in range(obj.count()):
+                c = obj.nth(i).bounding_box()
+                if c and c["x"] < 360:
+                    visible = True
+                    break
+            if not visible:
+                return
+            el, _ = en_arbol(fr, CARPETA)
+            if el is None:
+                return
+            cont = el.locator(
+                "xpath=ancestor::*[contains(@class,'wrTrNodeTextHighlightContainer')][1]")
+            cont.locator(".wrTrEi").first.click(timeout=8000)
+            po.log("   carpeta %s vuelta a plegar" % CARPETA)
+            time.sleep(4)
+        except Exception:
+            return
+
+
 # ──────────────────────────────── un mes ────────────────────────────────
 
 def bajar_mes(anio, mes):
@@ -501,6 +552,7 @@ def bajar_mes(anio, mes):
                 poner_fechas(fr, page, desde, hasta)
                 ok = ejecutar_y_exportar(fr, page, destino)
                 salir_del_editor(fr)
+                dejar_el_arbol_como_estaba(fr)
                 return ok
             finally:
                 try:
