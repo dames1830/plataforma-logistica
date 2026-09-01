@@ -366,14 +366,22 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
 
   /* ── la matriz persona x hora ────────────────────────────────────────── */
   function pintarMatriz() {
-    const v = V(), esEf = vista === 'ef';
+    /* ESTE CUADRO ES SOLO DE RETAIL, no sigue la barra de canal. Daniel,
+       01-sep-2026: *"solamente quiero el canal de retail nada más"*. Lo dice en
+       su encabezado para que no parezca que la barra no funciona. */
+    const v = D.vistas.RETAIL || V();
+    const esEf = vista === 'ef';
     const suf = { t: 'total', s: 'cal_suelto', p: 'cal_prepack', x: 'no_cal' }[clase];
     const dato = (c) => esEf ? c[suf + '_r'] : c[suf];
 
-    /* SOLO LOS QUE MOVIERON ALGO EN ESTA CLASE. El filtro mira el VOLUMEN aunque
-       se esté viendo efectividad: así la lista es la misma en las dos vistas, y
-       quien trabajó pero no da para medirle velocidad igual figura, con una raya. */
-    const gente = v.gente.filter(g => g.total[suf] > 0).sort((a, b) => {
+    /* CADA VISTA FILTRA POR LO SUYO.
+       En VOLUMEN entra quien movió pares. En EFECTIVIDAD entra solo quien tiene
+       ritmo medible: antes el filtro miraba el volumen en las dos, y en
+       "efectividad + no calzado" quedaban filas enteras de rayas —gente que movió
+       tan poco que no da para medirle velocidad—. Daniel: *"solamente debes
+       mostrarme registros con datos"*. */
+    const gente = v.gente.filter(g => esEf ? dato(g.total) != null : g.total[suf] > 0)
+      .sort((a, b) => {
       const x = dato(a.total), y = dato(b.total);
       if (x == null && y == null) return 0;
       if (x == null) return 1;
@@ -390,8 +398,8 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
        aviso el cuadro quedaba en blanco y parecia roto. */
     if (!gente.length) {
       el('cuerpo').innerHTML = `<tr><td colspan="${HORAS.length + 5}" class="vacio">
-        Nadie movió <b>${NOMBRE[clase]}</b> en el canal
-        <b>${esc(canal === 'TODOS' ? 'todos' : canal)}</b> ese día.</td></tr>`;
+        ${esEf ? 'Nadie tiene ritmo medible en' : 'Nadie movió'}
+        <b>${NOMBRE[clase]}</b> en retail ese día.</td></tr>`;
     } else
     el('cuerpo').innerHTML = gente.map((g, i) => {
       const celdas = HORAS.map(h => {
@@ -415,15 +423,17 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
     }).join('');
 
     el('th_tot').textContent = esEf ? 'Lín/h' : 'Total';
-    el('mtz_tit').textContent = esEf ? 'Efectividad por persona y hora'
-                                     : 'Productividad por persona y hora';
-    el('mtz_pie').innerHTML = esEf
-      ? 'Cada celda son las <b>líneas por hora</b> sobre el tiempo que esa persona '
-        + 'estuvo realmente trabajando. No depende de cuánto trabajo le tocara.'
-      : 'Cada celda son los <b>pares</b> que esa persona picó en esa hora.';
+    el('mtz_tit').textContent = 'Picking por hora';
+    el('mtz_pie').innerHTML = '<b>Solo canal retail</b> —las tiendas—: este cuadro '
+      + 'no sigue la barra de canal de arriba. ' + (esEf
+        ? 'Cada celda son las <b>líneas por hora</b> sobre el tiempo que esa persona '
+          + 'estuvo realmente trabajando. No depende de cuánto trabajo le tocara.'
+        : 'Cada celda son los <b>pares</b> que esa persona picó en esa hora.');
     el('mtz_nota').innerHTML =
-      `<b>${gente.length} de ${v.gente.length} personas</b> de este canal movieron `
-      + `${NOMBRE[clase]} ese día; el resto no figura. `
+      `<b>${gente.length} de ${v.gente.length} personas</b> de retail `
+      + (esEf ? `tienen ritmo medible en ${NOMBRE[clase]}`
+              : `movieron ${NOMBRE[clase]}`)
+      + ' ese día; el resto no figura. '
       + (esEf
         ? `Líneas por hora, <b>sin la equivalencia del prepack</b>: suelto y prepack se
            miden por separado. Una raya no es un cero: es que no alcanza la muestra
