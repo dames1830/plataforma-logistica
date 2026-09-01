@@ -252,6 +252,11 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
    entero y de aca sale todo. Cambiar de canal es volver a dibujar, nada mas. */
 (function () {
   const D = JSON.parse(document.getElementById('datos').textContent);
+  /* Las cuatro palabras que cambian entre picking y embalaje. Vienen en el dato;
+     si no vinieran, la pantalla sigue hablando de picking. */
+  const T = Object.assign({
+    cuadro: 'Picking por hora', verbo: 'picó', accion: 'movieron',
+    origen: 'De dónde la sacan' }, D.textos || {});
   const HORAS = D.horas, C = D.cortes;
   const CLASES = [['total', 'Todo'], ['cal_suelto', 'Calzado suelto'],
                   ['cal_prepack', 'Calzado prepack'], ['no_cal', 'No calzado']];
@@ -476,7 +481,7 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
        aviso el cuadro quedaba en blanco y parecia roto. */
     if (!gente.length) {
       el('cuerpo').innerHTML = `<tr><td colspan="${HORAS.length + 5}" class="vacio">
-        ${esEf ? 'Nadie tiene ritmo medible en' : 'Nadie movió'}
+        ${esEf ? 'Nadie tiene ritmo medible en' : 'Nadie ' + T.verbo}
         <b>${NOMBRE[clase]}</b> en retail ese día.</td></tr>`;
     } else
     el('cuerpo').innerHTML = gente.map((g, i) => {
@@ -523,16 +528,17 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
     }
 
     el('th_tot').textContent = esEf ? 'Lín/h' : 'Total';
-    el('mtz_tit').textContent = 'Picking por hora';
+    el('mtz_tit').textContent = T.cuadro;
     el('mtz_pie').innerHTML = '<b>Solo canal retail</b> —las tiendas—: este cuadro '
       + 'no sigue la barra de canal de arriba. ' + (esEf
         ? 'Cada celda son las <b>líneas por hora</b> sobre el tiempo que esa persona '
           + 'estuvo realmente trabajando. No depende de cuánto trabajo le tocara.'
-        : 'Cada celda son los <b>pares</b> que esa persona picó en esa hora.');
+        : 'Cada celda son los <b>pares</b> que esa persona ' + T.verbo
+          + ' en esa hora.');
     el('mtz_nota').innerHTML =
       `<b>${gente.length} de ${v.gente.length} personas</b> de retail `
       + (esEf ? `tienen ritmo medible en ${NOMBRE[clase]}`
-              : `movieron ${NOMBRE[clase]}`)
+              : `${T.accion} ${NOMBRE[clase]}`)
       + ' ese día; el resto no figura. '
       + (esEf
         ? `Líneas por hora, <b>sin la equivalencia del prepack</b>: suelto y prepack se
