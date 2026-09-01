@@ -237,8 +237,9 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
   <div class="selec" id="sel"></div>
   <div class="sc"><table>
     <thead><tr><th>#</th><th>Persona</th><th class="n">08</th><th class="n">09</th><th class="n">10</th><th class="n">11</th><th class="n">12</th><th class="n">13</th><th class="n">14</th><th class="n">15</th><th class="n">16</th><th class="n">17</th><th class="n">18</th><th class="n">19</th>
-      <th class="n" id="th_tot">Total</th><th class="n">Líneas</th>
-      <th class="n">Min</th></tr></thead>
+      <th class="n" id="th_tot" title="líneas por hora sobre el tiempo trabajado">Lín/h</th>
+      <th class="n">Pares</th><th class="n">Líneas</th>
+      <th class="n" title="del primer al último movimiento">Min</th></tr></thead>
     <tbody id="cuerpo"></tbody></table></div>
   <div class="nota" id="mtz_nota"></div>
 </div>
@@ -570,13 +571,17 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
           ${d ? `style="background:color-mix(in srgb, var(--mtz) ${Math.round(3 + 26 * d / (max || 1))}%, transparent)"` : ''}
           >${d ? m(d) : '–'}</td>`;
       }).join('');
-      const T = g.total, dt = dato(T, 1);
+      const T = g.total;
+      const rit = ritmo(T.total_l, T.total_lo, T.total_hi, 1);
+      const mins = Math.round((T.total_hi - T.total_lo) / 60) || 0;
       return `<tr><td class="k">${i + 1}</td>
-        <td class="k nom">${esc(g.usuario)}${(T.total_hi - T.total_lo) < C.muestraCortaMin * 60
+        <td class="k nom">${esc(g.usuario)}${mins < C.muestraCortaMin
           ? ` <span class="eti eti-corta" title="menos de ${C.muestraCortaMin} min trabajados">corta</span>` : ''}</td>
-        ${celdas}<td class="n tot${dt ? '' : ' z'}">${dt ? m(dt) : '–'}</td>
-        <td class="n sub">${m(T.lineas)}</td>
-        <td class="n sub">${m(Math.round((T.total_hi - T.total_lo) / 60) || 0)}</td></tr>`;
+        ${celdas}
+        <td class="n tot${rit ? '' : ' z'}">${rit ? m(rit) : '–'}</td>
+        <td class="n tot">${m(T[suf] || 0)}</td>
+        <td class="n sub">${m(T[suf + '_l'] != null ? T[suf + '_l'] : T.lineas)}</td>
+        <td class="n sub">${m(mins)}</td></tr>`;
     }).join('');
 
     /* LA FILA DE ABAJO. En volumen SUMA; en efectividad PROMEDIA, porque sumar
@@ -593,15 +598,24 @@ tr.elegida td{background:color-mix(in srgb,var(--pri) 8%,transparent)}
         const x = col(g => dato(g.horas[h]));
         return `<td class="n${x ? '' : ' z'}">${x ? m(x) : '–'}</td>`;
       }).join('');
-      const fin = col(g => dato(g.total, 1));
+      /* LAS CUATRO COLUMNAS DEL FINAL, siempre: el ritmo se PROMEDIA y los
+         totales se SUMAN, porque sumar ritmos daría la velocidad de alguien que
+         no existe. */
+      const ritmos = gente.map(g => ritmo(g.total.total_l, g.total.total_lo,
+                                          g.total.total_hi, 1)).filter(Boolean);
+      const prom = ritmos.length
+        ? Math.round(ritmos.reduce((a, b) => a + b, 0) / ritmos.length) : null;
+      const pares = gente.reduce((s, g) => s + (g.total[suf] || 0), 0);
+      const lin = gente.reduce((s, g) => s + (g.total[suf + '_l'] != null
+        ? g.total[suf + '_l'] : g.total.lineas), 0);
       el('cuerpo').insertAdjacentHTML('beforeend', `<tr class="total">
-        <td class="k"></td><td class="k">${esEf ? 'PROMEDIO' : 'TOTAL'}</td>
-        ${celdas}<td class="n${fin ? '' : ' z'}">${fin ? m(fin) : '–'}</td>
-        <td class="n">${m(gente.reduce((s, g) => s + g.total.lineas, 0))}</td>
+        <td class="k"></td><td class="k">TOTAL</td>
+        ${celdas}
+        <td class="n${prom ? '' : ' z'}">${prom ? m(prom) : '–'}</td>
+        <td class="n">${m(pares)}</td><td class="n">${m(lin)}</td>
         <td class="n">–</td></tr>`);
     }
 
-    el('th_tot').textContent = esEf ? 'Lín/h' : 'Total';
     el('mtz_tit').textContent = T.cuadro;
     el('mtz_pie').innerHTML = 'Sigue el <b>filtro de canal</b> de arriba. ' + (esEf
         ? 'Cada celda son las <b>líneas por hora</b> sobre el tiempo que esa persona '
