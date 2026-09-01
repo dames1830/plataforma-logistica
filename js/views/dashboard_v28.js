@@ -1,37 +1,37 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0505';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0506';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0505';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0505';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0505';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0505';
-import * as metasService from '../services_v245/metasService.js?v=29.0505';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0505';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0505';
+import * as adminService from '../services_v245/adminService.js?v=29.0506';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0506';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0506';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0506';
+import * as metasService from '../services_v245/metasService.js?v=29.0506';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0506';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0506';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0505';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0505';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0505';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0505';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0505';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0505';
-import { renderCapacidad } from './capacidad.js?v=29.0505';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0505';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0505';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0505';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0505';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0505';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0505';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0505';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0505';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0505';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0505';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0505';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0505';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0505';
-import { montarSlotting } from './slotting.js?v=29.0505';
-import { montarEventos } from './eventos.js?v=29.0505';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0505';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0506';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0506';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0506';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0506';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0506';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0506';
+import { renderCapacidad } from './capacidad.js?v=29.0506';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0506';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0506';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0506';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0506';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0506';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0506';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0506';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0506';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0506';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0506';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0506';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0506';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0506';
+import { montarSlotting } from './slotting.js?v=29.0506';
+import { montarEventos } from './eventos.js?v=29.0506';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0506';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -394,7 +394,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0505';
+const VERSION = '29.0506';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5482,7 +5482,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0505');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0506');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5745,7 +5745,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0505');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0506');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18738,7 +18738,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0505 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0506 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -31006,26 +31006,65 @@ window.__menuMapa = (btn) => {
         almacenajeTasksCache = Array.isArray(almacenajeTasksCache) ? almacenajeTasksCache : []; // [REVERTIDO: YA NO SE BORRAN LAS TAREAS CREADAS]
 
         const allowedAreas = ['MZN01', 'MZN02', 'MZN03', 'MZN04', 'SEL', 'CDBUFFER'];
+
+        /* QUE CODIGOS SON CALZADO, ANTES DE FILTRAR.
+         * Hace falta acá arriba porque de eso depende si un prepack entra o no a
+         * las tareas, y el artMap de más abajo se arma después del filtro. Es la
+         * columna `G. Gender` del Maestro: Footwear es calzado, todo lo demás no. */
+        const skuEsCalzado = new Set();
+        maestro.forEach(row => {
+            const raw = Array.isArray(row) ? row : Object.values(row);
+            const sku7 = String(raw[1] || '').trim().substring(0, 7);
+            if (sku7 && String(raw[2] || '').trim().toUpperCase() === 'FOOTWEAR') skuEsCalzado.add(sku7);
+        });
+
+        /* Los prepack de CALZADO que aparezcan fuera de CDBUFFER-C. No deberían
+         * existir: se juntan acá para avisarlos, porque son un error de ubicación. */
+        const prepackCalzadoMalUbicado = [];
+
         const filtered = stock.filter(row => {
             const area = String(row['Ãrea'] || row['Area'] || row['Área'] || '').trim().toUpperCase();
             const ubi = String(row['Ubicación actual'] || row['Ubicacion'] || row['Ubicación'] || '').trim().toUpperCase();
             
-            // [REGLA CRÍTICA] Omitir ubicaciones de PreePack (15 dígitos)
+            /* CDBUFFER-C NO SE ALMACENA NUNCA: es la zona del prepack.
+             *
+             * OJO AL TOCAR ESTO: el ÚNICO buffer que se nombra es el C. Todos los demás
+             * entran por la regla general de más abajo -que el área contenga 'CDBUFFER'-,
+             * así que si mañana crean el E, el F o el H funcionan solos. Daniel lo pidió
+             * expresamente el 01-sep-2026: *"no te enfoques solamente en el buffer A, B, D,
+             * porque pueden crearse más... mañana más tarde pueden crear el buffer H y tú
+             * lo tienes que detectar"*. NO listar buffers uno por uno acá. */
             if (ubi.startsWith('CDBUFFER-C')) return false;
 
-            /* EL PREPACK NO SE ALMACENA, VENGA DE DONDE VENGA. Regla de Daniel, 23-ago-2026:
-             * *"el prepack y el suelto son distintos. Nosotros no almacenamos prepack,
-             * almacenamos suelto nada más. Bórralas de almacenaje, no lo analices, no lo
-             * consideres"*.
+            /* EL PREPACK DE CALZADO NO SE ALMACENA. EL DE ACCESORIOS SÍ.
              *
-             * Hasta acá el prepack se sacaba SOLO POR LA UBICACIÓN —CDBUFFER-C— y eso deja
-             * pasar el que recepción dejó en otra sub-zona: el 22-ago había 156 pares en
-             * CDBUFFER-A (9900064 y 9900068) que entraban a las tareas como si fueran sueltos.
+             * Regla de Daniel del 23-ago-2026: *"el prepack y el suelto son distintos.
+             * Nosotros no almacenamos prepack, almacenamos suelto nada más"*. Y precisada
+             * el 01-sep-2026, después de ver accesorios físicamente en el buffer que no
+             * salían en las tareas: *"todo lo que está en el buffer, salvo el C, se
+             * almacena. Si es prepack, tienes que verificar que sea NO CALZADO, porque si
+             * es calzado hay un error"*.
              *
-             * Se reconoce por el CÓDIGO, con la misma regla que ya usa el picking
-             * (`esPrepack`, 7 dígitos - 1 dígito - 5 dígitos): una sola forma de decir qué es
-             * prepack en todo el sistema. */
-            if (esPrepack(String((Array.isArray(row) ? row : Object.values(row))[1] || '').trim())) return false;
+             * QUÉ PASABA: se sacaba TODO lo que tuviera forma de prepack, y con eso se
+             * iban también los accesorios. El 31-ago fueron 17 líneas en CDBUFFER-A
+             * —9900008-1-12298, 9900030-1-12298, 9900083-1-12298, 9000301-1-12298 y
+             * compañía, todas 08 ACCESORIES— que había que almacenar y no aparecían.
+             *
+             * Antes de eso, el prepack se sacaba SOLO por la ubicación CDBUFFER-C, y eso
+             * dejaba pasar el que recepción dejaba en otra sub-zona: el 22-ago había 156
+             * pares en CDBUFFER-A (9900064 y 9900068) entrando como si fueran sueltos.
+             *
+             * La forma del código —`esPrepack`, 7 dígitos - 1 dígito - 5 dígitos— es la
+             * misma que usa el picking: una sola manera de decir qué es prepack. */
+            const skuFila = String((Array.isArray(row) ? row : Object.values(row))[1] || '').trim();
+            if (esPrepack(skuFila)) {
+                if (skuEsCalzado.has(skuFila.substring(0, 7))) {
+                    // Prepack de calzado FUERA del C: no se almacena, y se avisa.
+                    prepackCalzadoMalUbicado.push({ sku: skuFila, ubicacion: ubi });
+                    return false;
+                }
+                // Prepack que NO es calzado —accesorios— sí se almacena.
+            }
 
             return allowedAreas.some(a => area.includes(a));
         });
@@ -31111,6 +31150,30 @@ window.__menuMapa = (btn) => {
 
         // Y se les recalcula la antigüedad, que viaja grabada y no se arregla sola.
         const refrescadas = refrescarEspera(almacenajeTasksCache);
+
+        /* UN PREPACK DE CALZADO FUERA DE CDBUFFER-C ES UN ERROR DE UBICACIÓN.
+         * No se almacena -por eso quedó afuera del filtro-, pero hay que decirlo:
+         * alguien lo dejó donde no va. Daniel, 01-sep-2026: *"si es prepack, tienes
+         * que verificar que sea no calzado, porque si es calzado hay un error"*. */
+        if (prepackCalzadoMalUbicado.length) {
+            const donde = prepackCalzadoMalUbicado
+                .slice(0, 6)
+                .map(p => `${p.sku} en ${p.ubicacion}`)
+                .join('
+');
+            const resto = prepackCalzadoMalUbicado.length > 6
+                ? `
+...y ${prepackCalzadoMalUbicado.length - 6} más` : '';
+            console.warn('[Almacenaje] Prepack de CALZADO fuera de CDBUFFER-C:',
+                         prepackCalzadoMalUbicado);
+            alert(`⚠️ ${prepackCalzadoMalUbicado.length} prepack de CALZADO están fuera de `
+                + `CDBUFFER-C.
+
+No entran a las tareas —el prepack de calzado no se `
+                + `almacena— pero están mal ubicados:
+
+${donde}${resto}`);
+        }
 
         if (cuantasVencieron > 0 || noTrabajadas > 0 || ajuste.cambiadas > 0 || refrescadas > 0) {
             await guardarBloqueFusionado(base => {

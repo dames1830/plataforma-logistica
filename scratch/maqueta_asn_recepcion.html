@@ -1,0 +1,199 @@
+<title>ASN Detalle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+  :root{
+    --ground:#F5F5F2; --panel:#FFFFFF; --panel-2:#FAFAF8; --cab:#F0F0EC;
+    --ink:#1A1D22;    --ink-2:#4B525C; --ink-3:#7C848F;
+    --rule:#DDDED9;   --rule-2:#ECECE8;
+    --flow:#0E7C7B;   --mal:#C2451F;   --bien:#2E7D5B; --medio:#C98A17;
+    --sombra:0 1px 2px rgba(20,24,30,.05), 0 3px 12px rgba(20,24,30,.05);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0F1216; --panel:#171B21; --panel-2:#1B2027; --cab:#1F252D;
+      --ink:#E9EBEE;    --ink-2:#A8B0BA; --ink-3:#79828E;
+      --rule:#2A313A;   --rule-2:#222831;
+      --flow:#3FB3AF;   --mal:#F0846A;  --bien:#5CBE92; --medio:#E3B25A;
+      --sombra:0 1px 2px rgba(0,0,0,.3), 0 3px 14px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0F1216; --panel:#171B21; --panel-2:#1B2027; --cab:#1F252D;
+    --ink:#E9EBEE;    --ink-2:#A8B0BA; --ink-3:#79828E;
+    --rule:#2A313A;   --rule-2:#222831;
+    --flow:#3FB3AF;   --mal:#F0846A;  --bien:#5CBE92; --medio:#E3B25A;
+    --sombra:0 1px 2px rgba(0,0,0,.3), 0 3px 14px rgba(0,0,0,.28);
+  }
+
+  body{margin:0; background:var(--ground); color:var(--ink);
+    font:400 14.5px/1.5 "IBM Plex Sans", system-ui, sans-serif; -webkit-font-smoothing:antialiased;}
+  .marco{max-width:1140px; margin:0 auto; padding:24px 20px 56px;}
+
+  .ruta{font:600 12px/1 "Archivo Narrow", sans-serif; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--ink-3); margin-bottom:8px;}
+  .ruta b{color:var(--flow); font-weight:700;}
+  h1{margin:0 0 6px; font:700 27px/1.15 "IBM Plex Sans", sans-serif; letter-spacing:-.02em;}
+  .sello{font:500 12px/1 "IBM Plex Mono", monospace; color:var(--ink-3); margin-bottom:22px;}
+
+  .cuadro{background:var(--panel); border:1px solid var(--rule); border-radius:10px;
+    box-shadow:var(--sombra); margin-bottom:18px; overflow:hidden;}
+  .cuadro > .tit{display:flex; align-items:baseline; justify-content:space-between;
+    gap:12px; padding:14px 18px 12px; border-bottom:1px solid var(--rule); flex-wrap:wrap;}
+  .cuadro h2{margin:0; font:600 15.5px/1.3 "IBM Plex Sans", sans-serif; letter-spacing:-.01em;}
+  .cuadro .nota{font-size:12.5px; color:var(--ink-3);}
+  .scroll{overflow-x:auto;}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{background:var(--cab); text-align:left; white-space:nowrap;
+    font:600 10.5px/1 "Archivo Narrow", sans-serif; letter-spacing:.09em;
+    text-transform:uppercase; color:var(--ink-2); padding:9px 14px;
+    border-bottom:1px solid var(--rule);}
+  th.n, td.n{text-align:right;}
+  td{padding:9px 14px; border-bottom:1px solid var(--rule-2); white-space:nowrap;}
+  tbody tr:last-child td{border-bottom:none;}
+  tr.tot td{background:var(--panel-2); font-weight:600;
+    border-top:2px solid var(--rule); border-bottom:none;}
+  .n{font-family:"IBM Plex Mono", monospace; font-variant-numeric:tabular-nums;}
+  .pc{font-family:"IBM Plex Mono", monospace; font-variant-numeric:tabular-nums; font-weight:600;}
+  .mal{color:var(--mal);} .bien{color:var(--bien);} .medio{color:var(--medio);}
+  .cero{color:var(--ink-3);}
+  .et{font-family:"IBM Plex Mono", monospace; font-size:12.5px;}
+  .desc{color:var(--ink-3); font-size:12px; white-space:normal;}
+  .par{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .par > .cuadro{margin-bottom:0;}
+
+  .pie{margin-top:8px; padding:12px 18px; background:var(--panel-2);
+    border-top:1px solid var(--rule-2); font-size:12.5px; color:var(--ink-2);}
+  .pie b{color:var(--ink); font-weight:600;}
+
+  .cierre{margin-top:22px; padding-top:14px; border-top:1px solid var(--rule);
+    font-size:12.5px; color:var(--ink-3);}
+
+  @media (max-width:880px){ .par{grid-template-columns:1fr;} .par > .cuadro{margin-bottom:18px;} }
+</style>
+
+<div class="marco">
+
+  <div class="ruta">📥 Recepción · <b>ASN Detalle</b></div>
+  <h1>Lo que viene y lo que llegó</h1>
+  <div class="sello">01-09-2026 · seis meses · 1.553.878 líneas · 16.151 ASN</div>
+
+  <!-- 1 ─────────────────────────────────────────────────────── -->
+  <div class="cuadro">
+    <div class="tit"><h2>Enviado contra recibido</h2>
+      <span class="nota">calzado separado cruzando cada artículo con el Maestro</span></div>
+    <div class="scroll"><table>
+      <thead><tr>
+        <th></th><th class="n">Líneas</th><th class="n">Enviado</th>
+        <th class="n">Recibido</th><th class="n">Cumple</th><th class="n">Falta</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>👟 Calzado</td><td class="n">1.466.168</td><td class="n">36.661.983</td>
+            <td class="n">30.366.348</td><td class="pc medio">82,8%</td><td class="n mal">6.295.635</td></tr>
+        <tr><td>📦 No calzado</td><td class="n">87.710</td><td class="n">16.843.857</td>
+            <td class="n">16.283.049</td><td class="pc bien">96,7%</td><td class="n">560.808</td></tr>
+        <tr class="tot"><td>Total</td><td class="n">1.553.878</td><td class="n">53.505.840</td>
+            <td class="n">46.649.397</td><td class="pc medio">87,2%</td><td class="n mal">6.856.443</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- 2 ─────────────────────────────────────────────────────── -->
+  <div class="cuadro">
+    <div class="tit"><h2>Mes a mes</h2>
+      <span class="nota">por fecha de creación del ASN</span></div>
+    <div class="scroll"><table>
+      <thead><tr>
+        <th>Mes</th><th class="n">Enviado</th><th class="n">Recibido</th>
+        <th class="n">Cumple</th><th class="n">Falta</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="et">2026-04</td><td class="n">8.063.346</td><td class="n">7.902.573</td><td class="pc bien">98,0%</td><td class="n">160.773</td></tr>
+        <tr><td class="et">2026-05</td><td class="n">8.677.600</td><td class="n">8.605.160</td><td class="pc bien">99,2%</td><td class="n">72.440</td></tr>
+        <tr><td class="et">2026-06</td><td class="n">9.467.890</td><td class="n">8.762.413</td><td class="pc bien">92,5%</td><td class="n">705.477</td></tr>
+        <tr><td class="et">2026-07</td><td class="n">13.162.889</td><td class="n">11.185.595</td><td class="pc medio">85,0%</td><td class="n">1.977.294</td></tr>
+        <tr><td class="et">2026-08</td><td class="n">14.131.673</td><td class="n">10.193.656</td><td class="pc mal">72,1%</td><td class="n mal">3.938.017</td></tr>
+        <tr><td class="et">2026-09</td><td class="n">2.442</td><td class="n cero">0</td><td class="pc cero">0,0%</td><td class="n">2.442</td></tr>
+        <tr class="tot"><td>Total</td><td class="n">53.505.840</td><td class="n">46.649.397</td><td class="pc medio">87,2%</td><td class="n mal">6.856.443</td></tr>
+      </tbody>
+    </table></div>
+    <div class="pie">El cumplimiento baja hacia los meses recientes porque esos ASN todavía están en camino.
+      <b>Agosto en 72,1%</b> es lo normal a esta altura; <b>junio en 92,5%</b> ya debería estar cerrado.</div>
+  </div>
+
+  <!-- 3 y 4 ────────────────────────────────────────────────── -->
+  <div class="par">
+
+    <div class="cuadro">
+      <div class="tit"><h2>Estado de los ASN</h2></div>
+      <div class="scroll"><table>
+        <thead><tr><th>Estado</th><th class="n">ASN</th><th class="n">Enviado</th><th class="n">Recibido</th><th class="n">Cumple</th></tr></thead>
+        <tbody>
+          <tr><td>Verified</td><td class="n">9.823</td><td class="n">46.650.769</td><td class="n">46.642.920</td><td class="pc bien">100,0%</td></tr>
+          <tr><td>In Transit</td><td class="n">6.256</td><td class="n">6.760.397</td><td class="n cero">0</td><td class="pc cero">0,0%</td></tr>
+          <tr><td>Cancelled</td><td class="n mal">41</td><td class="n">89.094</td><td class="n cero">0</td><td class="pc cero">—</td></tr>
+          <tr><td>Receiving Started</td><td class="n">17</td><td class="n">5.560</td><td class="n">6.446</td><td class="pc medio">115,9%</td></tr>
+          <tr><td>Receiving Complete</td><td class="n">14</td><td class="n">20</td><td class="n">31</td><td class="pc medio">155,0%</td></tr>
+          <tr class="tot"><td>Total</td><td class="n">16.151</td><td class="n">53.505.840</td><td class="n">46.649.397</td><td class="pc medio">87,2%</td></tr>
+        </tbody>
+      </table></div>
+      <div class="pie"><b>41 ASN cancelados</b> con 89.094 unidades. No vienen: hay que descontarlos del pendiente.</div>
+    </div>
+
+    <div class="cuadro">
+      <div class="tit"><h2>¿Llegó lo que dijo el ASN?</h2><span class="nota">por ASN entero</span></div>
+      <div class="scroll"><table>
+        <thead><tr><th></th><th class="n">ASN</th><th class="n">Enviado</th><th class="n">Recibido</th><th class="n">Cumple</th></tr></thead>
+        <tbody>
+          <tr><td>Completo</td><td class="n">9.402</td><td class="n">45.435.276</td><td class="n">45.435.276</td><td class="pc bien">100,0%</td></tr>
+          <tr><td><b>Parcial</b></td><td class="n medio">122</td><td class="n">1.213.580</td><td class="n">1.182.141</td><td class="pc medio">97,4%</td></tr>
+          <tr><td>Sin recibir nada</td><td class="n mal">6.322</td><td class="n">6.849.717</td><td class="n cero">0</td><td class="pc cero">0,0%</td></tr>
+          <tr><td>Recibido de más</td><td class="n">305</td><td class="n">7.267</td><td class="n">31.980</td><td class="pc mal">440,1%</td></tr>
+          <tr class="tot"><td>Total</td><td class="n">16.151</td><td class="n">53.505.840</td><td class="n">46.649.397</td><td class="pc medio">87,2%</td></tr>
+        </tbody>
+      </table></div>
+      <div class="pie"><b>A nivel de línea no existen los parciales:</b> cada línea es un LPN y llega entera o no llega.
+        Los parciales aparecen sólo al mirar el ASN completo.</div>
+    </div>
+
+  </div>
+
+  <!-- 5 ─────────────────────────────────────────────────────── -->
+  <div class="cuadro">
+    <div class="tit"><h2>Los 122 parciales</h2>
+      <span class="nota">llegó una parte y falta la otra · 31.439 unidades en total</span></div>
+    <div class="scroll"><table>
+      <thead><tr>
+        <th>ASN</th><th>Fecha de envío</th><th>Estado</th>
+        <th class="n">Enviado</th><th class="n">Recibido</th><th class="n">Falta</th><th class="n">Cumple</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="et">20260527901BA</td><td class="et">08/06/2026</td><td>Verified</td><td class="n">34.416</td><td class="n">26.784</td><td class="n mal">7.632</td><td class="pc mal">77,8%</td></tr>
+        <tr><td class="et">RA00841</td><td class="et">14/04/2026</td><td>Verified</td><td class="n">11.600</td><td class="n">4.900</td><td class="n mal">6.700</td><td class="pc mal">42,2%</td></tr>
+        <tr><td class="et">RA00850</td><td class="et">14/04/2026</td><td>Verified</td><td class="n">7.840</td><td class="n">2.480</td><td class="n mal">5.360</td><td class="pc mal">31,6%</td></tr>
+        <tr><td class="et">20260945201CA</td><td class="et">15/06/2026</td><td>Verified</td><td class="n">94.240</td><td class="n">90.592</td><td class="n">3.648</td><td class="pc medio">96,1%</td></tr>
+        <tr><td class="et">20260505301BA</td><td class="et">04/05/2026</td><td>Verified</td><td class="n">3.384</td><td class="n">1.536</td><td class="n mal">1.848</td><td class="pc mal">45,4%</td></tr>
+        <tr><td class="et">T05000000177</td><td class="et">17/06/2026</td><td>Verified</td><td class="n">16.236</td><td class="n">15.576</td><td class="n">660</td><td class="pc bien">95,9%</td></tr>
+        <tr><td class="et">G00900000001</td><td class="et">19/08/2026</td><td>Verified</td><td class="n">245.690</td><td class="n">245.379</td><td class="n">311</td><td class="pc bien">99,9%</td></tr>
+        <tr><td class="et">20250644103BA</td><td class="et">13/04/2026</td><td>Verified</td><td class="n">2.760</td><td class="n">2.460</td><td class="n">300</td><td class="pc bien">89,1%</td></tr>
+        <tr><td class="et">20260894901BA</td><td class="et">28/04/2026</td><td>Verified</td><td class="n">92.934</td><td class="n">92.691</td><td class="n">243</td><td class="pc bien">99,7%</td></tr>
+        <tr><td class="et">T05000000161</td><td class="et">13/05/2026</td><td>Verified</td><td class="n">56.165</td><td class="n">55.926</td><td class="n">239</td><td class="pc bien">99,6%</td></tr>
+        <tr><td class="et">T26800001091</td><td class="et">01/05/2026</td><td>Verified</td><td class="n">352</td><td class="n">143</td><td class="n mal">209</td><td class="pc mal">40,6%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="pie">Los tres primeros son los que valen la pena perseguir: <b>RA00841 y RA00850</b> llegaron
+      a un tercio y ya pasaron cuatro meses. <b>El resto son colas de menos de 700 unidades.</b></div>
+  </div>
+
+  <div class="cierre">
+    <b>Falta la fecha de recepción.</b> El informe trae fecha de envío y de creación, pero no la de
+    ingreso al sistema. Para poder filtrar "lo recibido entre tal y tal fecha" hay que agregarle
+    una columna al web report y volver a bajar los seis meses.
+    <br><br>
+    Maqueta · 01-09-2026 · Web Logística Deam1830 — Recepción → ASN Detalle
+  </div>
+
+</div>
