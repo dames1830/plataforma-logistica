@@ -117,6 +117,11 @@ def construir():
     mes = defaultdict(lambda: {"env": 0.0, "rec": 0.0})
     estado = defaultdict(lambda: {"asn": set(), "env": 0.0, "rec": 0.0})
     asn_env, asn_rec, asn_info = defaultdict(float), defaultdict(float), {}
+    # Lo RECIBIDO, por el mes en que entro de verdad al sistema. Es la unica
+    # fecha que responde 'que se recibio entre tal y tal dia': ni la de envio
+    # ni la de creacion sirven para eso.
+    recep = defaultdict(lambda: {'unid': 0.0, 'asn': set(), 'lineas': 0})
+    sin_fecha_rec = {'unid': 0.0, 'lineas': 0}
     archivos = []
 
     for nombre in sorted(f for f in os.listdir(CARPETA_ASN) if f.lower().endswith(".xlsx")):
@@ -140,6 +145,9 @@ def construir():
         iN, iA = idx.get("Número de ASN"), idx.get("Artículo")
         iE, iR = idx.get("Cantidad enviada"), idx.get("Cantidad recibida")
         iS, iF, iD = idx.get("Estado"), idx.get("Fecha de envío"), idx.get("Descripción")
+        # La columna se agrego el 01-sep-2026. Los archivos bajados antes no la
+        # traen: se acepta que falte y el bloque queda vacio hasta la proxima bajada.
+        iV = idx.get("Fecha de recepción") or idx.get("verified_ts")
 
         n = 0
         for fila in it:
@@ -169,6 +177,17 @@ def construir():
 
             asn_env[asn] += env
             asn_rec[asn] += rec
+
+            if rec > 0:
+                fv = fecha_de(fila[iV]) if iV is not None and iV < len(fila) else None
+                if fv is None:
+                    sin_fecha_rec["unid"] += rec
+                    sin_fecha_rec["lineas"] += 1
+                else:
+                    r = recep["%04d-%02d" % (fv.year, fv.month)]
+                    r["unid"] += rec
+                    r["asn"].add(asn)
+                    r["lineas"] += 1
             if asn not in asn_info:
                 fe = fecha_de(fila[iF]) if iF is not None and iF < len(fila) else None
                 asn_info[asn] = {
@@ -219,6 +238,10 @@ def construir():
                   for k, v in clase.items()},
         "meses": [{"mes": m, "enviado": d["env"], "recibido": d["rec"]}
                   for m, d in sorted(mes.items())],
+        "recepciones": [{"mes": m, "unidades": d["unid"], "asn": len(d["asn"]),
+                         "lineas": d["lineas"]}
+                        for m, d in sorted(recep.items())],
+        "recibido_sin_fecha": sin_fecha_rec,
         "estados": sorted(
             [{"estado": k, "asn": len(v["asn"]), "enviado": v["env"], "recibido": v["rec"]}
              for k, v in estado.items()],
@@ -269,6 +292,11 @@ def main(log_externo=None):
     log("%s lineas · %s ASN · enviado %s · recibido %s"
         % ("{:,}".format(t["lineas"]), "{:,}".format(t["asn"]),
            "{:,.0f}".format(t["enviado"]), "{:,.0f}".format(t["recibido"])))
+    if p.get("recepciones"):
+        log("recepciones: %d meses con fecha; %s unidades sin fecha de recepcion"
+            % (len(p["recepciones"]), "{:,.0f}".format(p["recibido_sin_fecha"]["unid"])))
+    else:
+        log("los archivos todavia no traen la fecha de recepcion", "WARN")
     log("parciales: %s ASN, faltan %s unidades"
         % ("{:,}".format(p["parciales_total"]), "{:,.0f}".format(p["parciales_falta"])))
     if "--solo-calcular" in sys.argv:

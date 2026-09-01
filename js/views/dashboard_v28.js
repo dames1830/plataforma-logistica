@@ -1,37 +1,37 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0507';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0508';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0507';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0507';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0507';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0507';
-import * as metasService from '../services_v245/metasService.js?v=29.0507';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0507';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0507';
+import * as adminService from '../services_v245/adminService.js?v=29.0508';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0508';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0508';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0508';
+import * as metasService from '../services_v245/metasService.js?v=29.0508';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0508';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0508';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0507';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0507';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0507';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0507';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0507';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0507';
-import { renderCapacidad } from './capacidad.js?v=29.0507';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0507';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0507';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0507';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0507';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0507';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0507';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0507';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0507';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0507';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0507';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0507';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0507';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0507';
-import { montarSlotting } from './slotting.js?v=29.0507';
-import { montarEventos } from './eventos.js?v=29.0507';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0507';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0508';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0508';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0508';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0508';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0508';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0508';
+import { renderCapacidad } from './capacidad.js?v=29.0508';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0508';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0508';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0508';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0508';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0508';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0508';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0508';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0508';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0508';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0508';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0508';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0508';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0508';
+import { montarSlotting } from './slotting.js?v=29.0508';
+import { montarEventos } from './eventos.js?v=29.0508';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0508';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -394,7 +394,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0507';
+const VERSION = '29.0508';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5486,7 +5486,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0507');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0508');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5749,7 +5749,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0507');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0508');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18745,7 +18745,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0507 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0508 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -34220,6 +34220,23 @@ ${donde}${resto}`);
         ${td(Number(x.cumple || 0).toFixed(1) + '%', true,
              `color:${asnColor(Number(x.cumple || 0))}; font-weight:700;`)}</tr>`).join('')}</tbody>`;
 
+    /* LO RECIBIDO, POR EL MES EN QUE ENTRO DE VERDAD.
+     * Es la unica fecha que responde "que se recibio entre tal y tal dia": ni la
+     * de envio ni la de creacion sirven. La columna se agrego al informe el
+     * 01-sep-2026, asi que los archivos bajados antes no la traen y el cuadro no
+     * se dibuja hasta la primera bajada con la columna nueva. */
+    const rec = p.recepciones || [];
+    const sinF = (p.recibido_sin_fecha || {}).unid || 0;
+    const t6 = rec.length ? `<thead><tr>${th('Mes de recepcion')}${th('Unidades', 1)}
+        ${th('ASN', 1)}${th('Lineas', 1)}</tr></thead>
+      <tbody>${rec.map(r => `<tr>${td(r.mes)}${td(asnNum(r.unidades), true)}
+        ${td(asnNum(r.asn), true)}${td(asnNum(r.lineas), true)}</tr>`).join('')}
+        <tr style="font-weight:800; background:rgba(var(--ink-rgb),.04);">
+          ${td('Total')}${td(asnNum(rec.reduce((a, r) => a + Number(r.unidades || 0), 0)), true)}
+          ${td('', true)}${td(asnNum(rec.reduce((a, r) => a + Number(r.lineas || 0), 0)), true)}
+        </tr>
+      </tbody>` : '';
+
     container.innerHTML = `
       <div style="margin-bottom:1rem;">
         <h2 style="margin:0 0 .2rem; font-size:var(--t-xl); font-weight:800; color:var(--text-strong);">
@@ -34232,6 +34249,15 @@ ${donde}${resto}`);
                'el calzado se separa cruzando cada articulo con el Maestro', t1)}
       ${cuadro('Mes a mes', 'por fecha de creacion del ASN', t2,
                'El cumplimiento baja hacia los meses recientes porque esos ASN todavia estan en camino.')}
+      ${t6 ? cuadro('Lo recibido, por mes de recepcion',
+                    'cuando entro de verdad al sistema', t6,
+                    sinF ? asnNum(sinF) + ' unidades llegaron sin fecha de recepcion.' : '')
+           : `<div class="glass-panel" style="padding:1rem 1.1rem; margin-bottom:1rem;
+                          color:var(--text-muted); font-size:var(--t-sm);">
+                <b style="color:var(--text-main);">Falta la fecha de recepcion.</b>
+                La columna se agrego al informe el 01-sep-2026; este cuadro aparece
+                despues de la primera bajada que la traiga.
+              </div>`}
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:1rem;">
         ${cuadro('Estado de los ASN', '', t3)}
         ${cuadro('Llego lo que dijo el ASN?', 'por ASN entero', t4,
