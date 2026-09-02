@@ -563,13 +563,35 @@ def main():
     lee en `logs/armar_pendiente.log`.
     """
     ahora = datetime.now()
+    correo_hoy = os.path.join(DESTINO, 'Guías %02d.%02d.xlsx' % (ahora.day, ahora.month))
+    hay_correo_de_hoy = os.path.isfile(correo_hoy)
+
+    # NO ALCANZA CON QUE EL SELLO DIGA HOY: TIENE QUE SER POSTERIOR AL CORREO.
+    #
+    # El 01-sep-2026 se armo el pendiente A MANO a las 09:47 y eso sello el dia.
+    # El correo entro a las 18:02, y a las 19:02 y 19:32 el robot vio "ya esta
+    # armado" y no lo rehizo: la pantalla se quedo con la foto de la manana, sin
+    # los pedidos que comercial acababa de mandar. Daniel lo cazo mirando la hora
+    # del archivo PEDIDOS: *"tiene fecha de hoy pero 9:47, y el correo llego a
+    # las 5:27; algo no me cuadra"*.
+    #
+    # Cualquier corrida -a mano o del robot- anterior al correo del dia deja de
+    # contar como armada.
+    ya_armado = False
     try:
-        ya_armado = io.open(SELLO_PENDIENTE, encoding='utf-8').read().strip() \
-            == ahora.strftime('%Y-%m-%d')
+        sellado = io.open(SELLO_PENDIENTE, encoding='utf-8').read().strip()
+        if sellado == ahora.strftime('%Y-%m-%d'):
+            ya_armado = True
+            viejo = (hay_correo_de_hoy and os.path.getmtime(SELLO_PENDIENTE)
+                     < os.path.getmtime(correo_hoy))
+            if viejo:
+                ya_armado = False
+                log('El sello dice hoy pero es ANTERIOR al correo de las %s: el '
+                    'pendiente se rehace.'
+                    % datetime.fromtimestamp(
+                        os.path.getmtime(correo_hoy)).strftime('%H:%M'))
     except Exception:
         ya_armado = False
-    hay_correo_de_hoy = os.path.isfile(
-        os.path.join(DESTINO, 'Guías %02d.%02d.xlsx' % (ahora.day, ahora.month)))
 
     if (guardados or (hay_correo_de_hoy and not ya_armado)) and not probar \
             and not paso_la_hora(cfg, ahora):

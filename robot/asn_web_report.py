@@ -603,4 +603,9 @@ def main():
     return 0 if not malos else 1
 
 
-sys.exit(main())
+# EL GUARDIA QUE FALTABA. Sin esto, `import asn_web_report` ARRANCA la bajada
+# entera de los seis meses: paso el 01-sep-2026 al reusar `ejecutar_y_exportar`
+# desde otro script, que se llevo el WMS 45 minutos sin que nadie lo pidiera.
+# Un modulo que se puede importar no puede correr solo al importarse.
+if __name__ == "__main__":
+    sys.exit(main())
