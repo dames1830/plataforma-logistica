@@ -1,62 +1,60 @@
 /**
  * PICKING → PRODUCCIÓN PICKING EMBALAJE
  *
- * Lo pidió Daniel el 02-sep-2026: *"que me hagas un cálculo de cuánto se demora,
- * en cuánto va creciendo el picking por día, desde el historial que tenemos...
- * Quiero saber cuánto se demora por categoría, por gender, por calzado, no
- * calzado, promotional. Anda armándome la proyección"*. Y enseguida: *"En ese
- * módulo de productividad de picking y embalaje necesito gráficos"*.
+ * Cuánto se pica y cuánto se embala POR SEMANA, cuánto sube cada semana y cuánto
+ * se proyecta. Abierto en calzado y no calzado, que se miran por separado.
  *
- * LOS METROS QUE CAMINA EL PICKER QUEDAN PARA DESPUÉS. Los dejó fuera él mismo:
- * *"se me hace interesante decirte cuántos metros recorre... pero eso lo dejamos
- * para después"*.
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║ POR QUÉ VA EN PARES Y POR SEMANA. Esta pantalla se hizo mal dos veces    ║
+ * ║ seguidas y las dos las corrigió Daniel.                                  ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ *
+ * PRIMER INTENTO: pares por día, calzado y no calzado SUMADOS. Decía que del 24
+ * al 28 de agosto el CD había triplicado la producción —de 40.000 pares diarios a
+ * 124.000— y era mentira: el calzado no se movió y todo el salto estaba en no
+ * calzado, donde la unidad del WMS no es un par sino una bolsa o una caja de
+ * accesorio.
+ *
+ * SEGUNDO INTENTO: medirlo todo en LÍNEAS, que sí salen planas. Daniel,
+ * 02-sep-2026: *"¿por qué me estás calculando líneas? Yo para qué quiero
+ * calcular líneas... yo no veo nada en línea, yo veo pares"*. Y tiene razón: la
+ * línea sirve para medir esfuerzo, pero él reporta VOLUMEN, y el volumen del CD
+ * se cuenta en pares.
+ *
+ * EL ARREGLO NO ERA CAMBIAR DE UNIDAD, ERA NO MEZCLARLAS. Cada categoría con su
+ * cuadro y su unidad: el calzado en pares, el no calzado en unidades. Así el
+ * número no miente y sigue siendo el que él usa para reportar.
+ *
+ * POR SEMANA Y NO POR DÍA porque es como Daniel mira el CD: *"me lo das por
+ * semana... en la semana treinta, cuánto subió el picking o cuánto se estima
+ * subir"*. De un día al siguiente manda el tamaño del pedido; la semana ya deja
+ * ver el ritmo.
+ *
+ * ESTE CUADRO COPIA A ALMACENAJE → PRODUCTIVIDAD, que él mismo señaló como
+ * referencia: las mismas cinco cajas —cierre de la última semana, cierre de la
+ * anterior, últimas cuatro, promedio general y cuánto sube por semana—, el mismo
+ * gráfico semanal con su recta punteada, y la semana en curso aparte. La cuenta
+ * de la semana ISO es la misma, así que la S35 de acá es la S35 de allá.
+ *
+ * LA SEMANA EN CURSO NO ENTRA EN NADA, Y TAMPOCO SE DIBUJA. Está a medio hacer,
+ * y acá el eje es un TOTAL de la semana, no una velocidad: una semana con un día
+ * siempre va a valer la sexta parte, así que dibujarla es un despeñadero al final
+ * del gráfico que no dice nada —y en un cuadro que se mira de reojo, se lee como
+ * que la producción se cayó—. Se cuenta con palabras debajo del gráfico.
+ *
+ * (En Almacenaje → Productividad sí se dibuja, y está bien: ahí el eje son
+ * unidades POR HORA, y una semana a medias ya da un número comparable.)
+ *
+ * LAS SEMANAS CORTAS TAMPOCO. Una semana con dos días de datos —porque el robot
+ * no corrió, o porque el histórico arranca ahí— no es una semana mala: es una
+ * semana incompleta. Se muestran marcadas y con sus días a la vista, pero fuera
+ * de la cuenta.
  *
  * ESTE ARCHIVO NO LEE DEL SERVIDOR. Recibe `OPC.picking` y `OPC.embalaje` —los
  * días ya bajados de las áreas `picking_por_hora` y `embalaje_por_hora`— y solo
- * calcula y dibuja. Igual que `produccion_hora.js` y `pendiente.js`.
+ * calcula y dibuja.
  *
- * TODO EL CSS VA ENCERRADO BAJO `#pp` Y LOS IDS LLEVAN PREFIJO `pp_`, por lo
- * mismo que en `produccion_hora.js`: los nombres cortos —card, barra, nota—
- * chocarían con los del tablero.
- *
- * ╔══════════════════════════════════════════════════════════════════════════╗
- * ║ EL CRECIMIENTO SE MIDE EN LÍNEAS, NO EN PARES. Esto no es un detalle:    ║
- * ║ es lo único que hace que este cuadro sirva.                              ║
- * ╚══════════════════════════════════════════════════════════════════════════╝
- *
- * La primera versión de esta pantalla medía en pares, y decía que del 24 al 28
- * de agosto el CD había TRIPLICADO la producción: de 40.000 pares por día a
- * 124.000. Es mentira. Las líneas de esos días son las de siempre —entre 11.000
- * y 17.000, como los 31 días anteriores— y todo el salto está en NO CALZADO:
- *
- *     24-ago   13.244 líneas   ·   17.436 calzado suelto   ·   98.321 no calzado
- *     21-ago   11.231 líneas   ·   14.621 calzado suelto   ·    6.098 no calzado
- *
- * El calzado suelto ni se movió. Lo que se movió es que en no calzado la unidad
- * del WMS no es un par: son bolsas, medias, cajas de accesorio. Sumarlas como
- * pares infla el total sin que nadie haya trabajado más.
- *
- * LA LÍNEA ES LA TAREA. Un picker va a una ubicación, saca lo que le piden y
- * confirma: eso es una línea, y cuesta más o menos lo mismo sea un par de
- * zapatos o una bolsa de medias. Por eso el ritmo en líneas por persona-hora sale
- * plano —entre 46 y 66 en los 31 días— y el de pares salta de 105 a 472.
- *
- * Los pares SIGUEN ESTANDO, abiertos por categoría, que es donde dicen algo. Lo
- * que no se hace es mezclarlos en un solo número de crecimiento.
- *
- * ═══ OTRAS DOS COSAS AL LEER EL CUADRO ═══
- *
- * 1. LOS DÍAS DE JULIO DEL EMBALAJE SON PARCIALES, LOS DEL PICKING NO. El
- *    archivo más viejo del OBLPN es del 1 de agosto, así que de julio solo
- *    quedaron las líneas sueltas que ese archivo arrastraba (30-07: 4.804 líneas
- *    contra las ~12.000 de un día normal). El picking sí tiene julio completo
- *    —cada archivo trae su día entero—, así que la marca va POR LADO y no por
- *    fecha: marcar el picking de julio escondería días buenos.
- *
- * 2. EL DOMINGO NO SE TRABAJA. Un domingo en cero arrastra el promedio y aplana
- *    la tendencia. Los días sin movimiento quedan fuera de los promedios y de la
- *    proyección, pero SE SIGUEN VIENDO en el cuadro: esconderlos daría la
- *    impresión de que falta información.
+ * Los metros que camina el picker quedan para después, los dejó fuera él mismo.
  *
  * OPC = {
  *   picking:  [{fecha, datos}] de `picking_por_hora`
@@ -66,8 +64,8 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0556';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0556';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0557';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0557';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
@@ -75,111 +73,89 @@ const esc = (t) => String(t == null ? '' : t)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-const DIAS_SEMANA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
 
-/* EL EMBALAJE NO TIENE JULIO COMPLETO. Ver la cabecera. */
-const EMBALAJE_DESDE = '2026-08-01';
-
 /* LA FECHA SE PARTE A MANO, NO CON `new Date(iso)`. Un 'AAAA-MM-DD' suelto se
-   interpreta como UTC y en Lima retrocede al día anterior: el 1 de agosto se
-   dibujaría como 31 de julio. Misma trampa que `toISOString()`, al revés. */
+   interpreta como UTC y en Lima retrocede al día anterior. Misma trampa que
+   `toISOString()`, al revés. */
 const partir = (f) => {
     const p = String(f || '').split('-');
     return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1);
 };
-const diaSemana = (f) => partir(f).getDay();
 const corta = (f) => {
     const d = partir(f);
     return d.getDate() + ' ' + MESES[d.getMonth()];
 };
-const etiquetaDia = (f) => DIAS_SEMANA[diaSemana(f)] + ' ' + corta(f);
-const aISO = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
-    + '-' + String(d.getDate()).padStart(2, '0');
+
+/* SEMANA ISO: el jueves decide a qué semana pertenece un día. Es la misma cuenta
+   que usa Almacenaje → Productividad, para que la semana 35 sea la misma en las
+   dos pantallas. */
+const semanaDe = (f) => {
+    const d = partir(f);
+    if (isNaN(d)) return null;
+    const jue = new Date(d);
+    jue.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const ene4 = new Date(jue.getFullYear(), 0, 4);
+    const n = 1 + Math.round(((jue - ene4) / 86400000 - 3 + ((ene4.getDay() + 6) % 7)) / 7);
+    return { anio: jue.getFullYear(), sem: n,
+             clave: jue.getFullYear() + '-' + String(n).padStart(2, '0') };
+};
+
+const lunesDe = (anio, sem) => {
+    const ene4 = new Date(anio, 0, 4);
+    const lun = new Date(ene4);
+    lun.setDate(ene4.getDate() - ((ene4.getDay() + 6) % 7) + (sem - 1) * 7);
+    return lun;
+};
 
 /* ══════════════════════════════════════════════════════════════════════════
-   LA CUENTA
+   LAS CUATRO SERIES QUE SE MIRAN
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* LAS TRES CATEGORÍAS QUE HOY SE PUEDEN SEPARAR.
- *
- * Salen del Maestro: el robot mira `G. Gender` y todo lo que NO es Footwear cae
- * en `no_cal`. Así que hoy "promotional" está ADENTRO de no calzado y no se
- * puede abrir desde acá — habría que volver a pasar los archivos del WMS en el
- * servidor. El cuadro lo dice donde se ve; no lo esconde.
- *
- * Si algún día el robot publica `gender` abierto, `categorias()` lo usa solo y
- * esta pantalla no se toca. */
-const CLASES = [
-    { id: 'cal_suelto',  eti: 'Calzado suelto',  color: '#6366f1' },
-    { id: 'cal_prepack', eti: 'Calzado prepack', color: '#22c55e' },
-    { id: 'no_cal',      eti: 'No calzado',      color: '#f59e0b' }
+/* El calzado son las dos formas juntas —suelto y prepack—: las dos son pares de
+   zapatos y Daniel las reporta juntas. El desglose se sigue viendo en el pie de
+   la primera caja, porque se trabajan distinto.
+
+   El no calzado va aparte Y CON SU PROPIA UNIDAD. Ahí el WMS no cuenta pares:
+   cuenta bolsas, medias y cajas de accesorio. Sumarlo con el calzado fue el error
+   de la primera versión de esta pantalla. */
+const SERIES = [
+    { id: 'pick_cal',   lado: 'p', cat: 'cal',   titulo: 'PICKING · CALZADO',
+      color: '#2563eb', unidad: 'pares' },
+    { id: 'pick_nocal', lado: 'p', cat: 'nocal', titulo: 'PICKING · NO CALZADO',
+      color: '#d97706', unidad: 'unidades' },
+    { id: 'emb_cal',    lado: 'e', cat: 'cal',   titulo: 'EMBALAJE · CALZADO',
+      color: '#16a34a', unidad: 'pares' },
+    { id: 'emb_nocal',  lado: 'e', cat: 'nocal', titulo: 'EMBALAJE · NO CALZADO',
+      color: '#9333ea', unidad: 'unidades' },
 ];
 
-const PALETA = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4', '#a855f7'];
-
-const categorias = (vista) => {
-    const g = vista && vista.gender;
-    if (g && typeof g === 'object' && Object.keys(g).length) {
-        return Object.keys(g).sort().map((k, i) => ({
-            id: k, eti: k, color: PALETA[i % PALETA.length], valor: Number(g[k]) || 0
-        }));
-    }
-    const t = (vista && vista.totales) || {};
-    return CLASES.map(c => ({ id: c.id, eti: c.eti, color: c.color, valor: Number(t[c.id]) || 0 }));
-};
-
-/* CUÁNTAS PERSONAS-HORA SE TRABAJARON.
- *
- * Se suma la gente que tuvo movimiento en cada hora, NO la gente del día. Dos
- * pickers de cuatro horas cada uno son ocho personas-hora, y con eso el ritmo se
- * puede comparar entre un día de doce personas y otro de cuatro. Contar
- * "personas del día" mezclaría al que estuvo el turno entero con el que entró una
- * hora, y el día corto saldría siempre peor. */
-const personasHora = (vista) => {
-    const ph = (vista && vista.por_hora) || {};
-    let s = 0;
-    Object.keys(ph).forEach(h => { s += Number((ph[h] || {}).personas) || 0; });
-    return s;
-};
-
-const gentePorDia = (vista) => {
-    const g = vista && vista.gente;
-    if (Array.isArray(g)) return g.length;
-    if (g && typeof g === 'object') return Object.keys(g).length;
-    return 0;
-};
-
-/** Un día de un lado, resumido. */
+/** Un día de un lado, reducido a lo que hace falta. */
 const resumirDia = (entrada) => {
     const d = (entrada && entrada.datos) || {};
-    const v = (d.vistas && d.vistas.TODOS) || {};
-    const t = v.totales || {};
+    const t = ((d.vistas && d.vistas.TODOS) || {}).totales || {};
+    const suelto = Number(t.cal_suelto) || 0;
+    const prepack = Number(t.cal_prepack) || 0;
     return {
         fecha: entrada.fecha,
-        lineas: Number(t.lineas) || 0,
-        pares: Number(t.total) || 0,
-        gente: gentePorDia(v),
-        ph: personasHora(v),
-        cat: categorias(v)
+        cal: suelto + prepack,
+        suelto: suelto,
+        prepack: prepack,
+        nocal: Number(t.no_cal) || 0,
     };
 };
 
-/* LA RECTA DE LA TENDENCIA, por mínimos cuadrados.
- *
- * La `x` es la posición del día dentro de los días TRABAJADOS, no la fecha: si
- * fuera la fecha, cada domingo saltado metería un hueco y la recta saldría más
- * plana de lo que es. Devuelve null con menos de tres días, que es donde una
- * recta ya no dice nada. */
-const tendencia = (valores) => {
-    const n = valores.length;
-    if (n < 3) return null;
-    let sx = 0, sy = 0, sxy = 0, sxx = 0;
-    for (let i = 0; i < n; i++) { sx += i; sy += valores[i]; sxy += i * valores[i]; sxx += i * i; }
-    const den = n * sxx - sx * sx;
-    if (!den) return null;
-    const b = (n * sxy - sx * sy) / den;
-    return { a: (sy - b * sx) / n, b: b, en: (i) => ((sy - b * sx) / n) + b * i };
+/* MÍNIMOS CUADRADOS sobre los puntos que se le pasen. Devuelve cuánto sube por
+   paso —acá, por semana— y dónde arranca la recta. */
+const recta = (ys) => {
+    const n = ys.length;
+    if (n < 2) return { m: 0, b: n ? ys[0] : 0 };
+    const mx = (n - 1) / 2;
+    const my = ys.reduce((a, b) => a + b, 0) / n;
+    let num = 0, den = 0;
+    ys.forEach((y, i) => { num += (i - mx) * (y - my); den += (i - mx) * (i - mx); });
+    const m = den ? num / den : 0;
+    return { m: m, b: my - m * mx };
 };
 
 const promedio = (v) => v.length ? v.reduce((s, x) => s + x, 0) / v.length : 0;
@@ -189,62 +165,34 @@ const promedio = (v) => v.length ? v.reduce((s, x) => s + x, 0) / v.length : 0;
    ══════════════════════════════════════════════════════════════════════════ */
 
 const CSS = [
-'#pp { --pp-pick:#6366f1; --pp-emb:#22c55e; }',
-/* LA CABECERA SE PARTE, NO EMPUJA. Sin el `min-width:0` el bloque del titulo no
-   puede achicarse por debajo de su texto, el rango de fechas no baja de linea y
-   la PAGINA ENTERA queda con barra horizontal: en una laptop de 1.366 se veia
-   media caja de avisos cortada. */
+'#pp .pp-caja { background:var(--panel-deep); border:1px solid var(--border); border-radius:14px; padding:18px 20px; margin-bottom:18px; }',
 '#pp .pp-cab { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px; }',
 '#pp .pp-cab > .pp-quien { flex:1 1 280px; min-width:0; }',
 '#pp .pp-cab h2 { margin:0 0 5px; font-size:var(--t-xl); font-weight:800; color:var(--text-strong); text-wrap:balance; }',
 '#pp .pp-cab .pp-cuantos { font-size:var(--t-xs); color:var(--text-muted); }',
 '#pp .pp-cab .rango-fechas { flex:0 0 auto; }',
-'#pp .pp-caja { background:var(--panel-deep); border:1px solid var(--border); border-radius:14px; padding:18px 20px; margin-bottom:18px; }',
-'#pp .pp-titulo { font-size:var(--t-xs); font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); margin:0 0 4px; }',
-'#pp .pp-sub { font-size:var(--t-xs); color:var(--text-muted); margin:0 0 14px; line-height:1.6; }',
-'#pp .pp-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(215px, 1fr)); gap:14px; margin-bottom:18px; }',
-'#pp .pp-card { background:var(--panel-deep); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }',
-'#pp .pp-card .rot { font-size:var(--t-xs); font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; }',
-'#pp .pp-card .cifra { font-size:26px; font-weight:800; color:var(--text-strong); line-height:1.1; font-variant-numeric:tabular-nums; }',
-'#pp .pp-card .uni { font-size:12px; font-weight:700; color:var(--text-muted); margin-left:4px; }',
-'#pp .pp-card .pie { font-size:var(--t-xs); color:var(--text-muted); margin-top:7px; line-height:1.55; }',
-'#pp .pp-sube { color:var(--success); font-weight:800; }',
-'#pp .pp-baja { color:var(--warning); font-weight:800; }',
-'#pp .pp-graf { position:relative; height:300px; width:0; min-width:100%; }',
-'#pp .pp-dos { display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:18px; }',
-/* NADA DE ESTA PANTALLA PUEDE EMPUJAR LA PÁGINA A LO ANCHO.
-   La tabla del día por día son diez columnas que no se parten, y su ancho mínimo
-   —922 px medidos— se contagiaba hacia arriba: `#pp` se estiraba a 963, los
-   gráficos se dibujaban de 921 y LA PÁGINA ENTERA salía con barra horizontal. En
-   una laptop de 1.366 se veía media caja de avisos cortada.
-   `overflow-x:auto` por sí solo NO alcanza: el recuadro sigue reclamando el ancho
-   de su contenido. El par `width:0` + `min-width:100%` sí: el ancho propio pasa a
-   ser cero —así no reclama nada— y después se estira al 100% del padre. La tabla
-   scrollea adentro y los gráficos se dibujan del tamaño que hay. */
+'#pp .pp-titulo { font-size:var(--t-sm); font-weight:900; letter-spacing:0.06em; margin:0 0 3px; }',
+'#pp .pp-sub { font-size:var(--t-xs); color:var(--text-muted); margin:0 0 14px; line-height:1.65; }',
+'#pp .pp-cajas { display:grid; grid-template-columns:repeat(auto-fit, minmax(148px, 1fr)); gap:12px; margin-bottom:16px; }',
+'#pp .pp-c { background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.08); border-radius:10px; padding:0.85rem 1rem; }',
+'#pp .pp-c .r { font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.45); }',
+'#pp .pp-c .v { font-size:var(--t-2xl); font-weight:900; color:var(--text-strong); line-height:1.15; font-variant-numeric:tabular-nums; }',
+'#pp .pp-c .p { font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35); line-height:1.45; }',
+'#pp .pp-graf { position:relative; height:260px; width:0; min-width:100%; }',
 '#pp .pp-scroll { overflow-x:auto; width:0; min-width:100%; }',
-'#pp, #pp .pp-caja, #pp .pp-card { max-width:100%; min-width:0; }',
 '#pp table.pp-tabla { width:100%; border-collapse:collapse; font-size:var(--t-xs); font-variant-numeric:tabular-nums; }',
 '#pp table.pp-tabla th { text-align:right; padding:9px 10px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; border-bottom:2px solid var(--border); white-space:nowrap; font-size:10.5px; }',
 '#pp table.pp-tabla th.pp-grupo { text-align:center; border-bottom:1px solid var(--border); padding-bottom:5px; }',
 '#pp table.pp-tabla th:first-child, #pp table.pp-tabla td:first-child { text-align:left; }',
 '#pp table.pp-tabla td { padding:8px 10px; text-align:right; color:var(--text-main); border-bottom:1px solid rgba(var(--ink-rgb), 0.06); white-space:nowrap; }',
 '#pp table.pp-tabla td.pp-sep, #pp table.pp-tabla th.pp-sep { border-left:1px solid var(--border); }',
-'#pp table.pp-tabla tr.pp-libre td { color:var(--text-muted); font-style:italic; }',
+'#pp table.pp-tabla tr.pp-parcial td { color:var(--text-muted); font-style:italic; }',
 '#pp table.pp-tabla tfoot td { font-weight:800; color:var(--text-strong); border-top:2px solid var(--border); border-bottom:none; padding-top:11px; }',
-'#pp .pp-aviso { background:rgba(var(--warning-rgb), 0.10); border:1px solid rgba(var(--warning-rgb), 0.35); border-radius:11px; padding:13px 16px; font-size:var(--t-xs); color:var(--text-main); line-height:1.65; margin-bottom:18px; }',
+'#pp .pp-nota { font-size:var(--t-xs); color:var(--text-muted); line-height:1.65; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }',
 '#pp .pp-vacio { text-align:center; padding:3rem 1rem; color:var(--text-muted); font-size:var(--t-sm); line-height:1.7; }',
-'#pp .pp-leyenda { display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; font-size:var(--t-xs); color:var(--text-muted); }',
-'#pp .pp-leyenda i { width:11px; height:11px; border-radius:3px; display:inline-block; margin-right:6px; vertical-align:-1px; }',
-'#pp .pp-proy { display:grid; grid-template-columns:repeat(auto-fit, minmax(148px, 1fr)); gap:12px; margin-top:14px; }',
-'#pp .pp-proy .pp-p { background:var(--panel-deeper); border:1px solid var(--border); border-radius:11px; padding:12px 14px; }',
-'#pp .pp-proy .d { font-size:var(--t-xs); color:var(--text-muted); font-weight:700; }',
-'#pp .pp-proy .v { font-size:19px; font-weight:800; color:var(--text-strong); font-variant-numeric:tabular-nums; margin-top:4px; }',
-'#pp .pp-nota { font-size:var(--t-xs); color:var(--text-muted); line-height:1.65; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }'
+'#pp, #pp .pp-caja { max-width:100%; min-width:0; }',
 ].join('\n');
 
-/* LOS GRÁFICOS SE SUELTAN ANTES DE REDIBUJAR. Chart.js se queda con el canvas y
-   con los escuchas del mouse; sin `destroy()` cada cambio de rango deja uno vivo
-   y a la quinta vuelta la pantalla se arrastra. */
 let _graficos = [];
 const soltarGraficos = () => {
     _graficos.forEach(g => { try { g.destroy(); } catch (e) { /* ya estaba muerto */ } });
@@ -256,19 +204,14 @@ export function montarProduccionProyeccion(cont, OPC) {
     soltarGraficos();
 
     const O = OPC || {};
-    const pick = (O.picking || []).map(resumirDia).sort((a, b) => a.fecha < b.fecha ? -1 : 1);
-    const emb = (O.embalaje || []).map(resumirDia).sort((a, b) => a.fecha < b.fecha ? -1 : 1);
+    const dias = { p: {}, e: {} };
+    (O.picking || []).forEach(x => { const d = resumirDia(x); dias.p[d.fecha] = d; });
+    (O.embalaje || []).forEach(x => { const d = resumirDia(x); dias.e[d.fecha] = d; });
 
-    const porFecha = {};
-    const meter = (lista, lado) => lista.forEach(d => {
-        porFecha[d.fecha] = porFecha[d.fecha] || { fecha: d.fecha };
-        porFecha[d.fecha][lado] = d;
-    });
-    meter(pick, 'p');
-    meter(emb, 'e');
-    const filas = Object.keys(porFecha).sort().map(f => porFecha[f]);
+    const fechas = Array.from(new Set(
+        Object.keys(dias.p).concat(Object.keys(dias.e)))).sort();
 
-    if (!filas.length) {
+    if (!fechas.length) {
         cont.innerHTML = '<style>' + CSS + '</style><div id="pp"><div class="pp-vacio">'
             + 'No hay días guardados en este rango.<br>'
             + 'Los publica el robot del servidor todas las noches, en Picking por día y Embalaje por día.'
@@ -276,279 +219,249 @@ export function montarProduccionProyeccion(cont, OPC) {
         return;
     }
 
-    /* QUÉ CUENTA COMO DÍA TRABAJADO. No alcanza con "tiene una fila": un día con
-       doscientas líneas es un rezago, no una jornada. El corte va en el 20% de la
-       mediana de las líneas, que separa limpio los domingos y los parciales sin
-       dejar afuera ningún día real.
-
-       LA MARCA DE PARCIAL VA POR LADO: el embalaje no tiene julio completo y el
-       picking sí. Ver la cabecera del archivo. */
-    const lineasPick = pick.map(d => d.lineas).filter(x => x > 0).sort((a, b) => a - b);
-    const medianaP = lineasPick.length ? lineasPick[Math.floor(lineasPick.length / 2)] : 0;
-    const CORTE = medianaP * 0.2;
-
-    filas.forEach(f => {
-        if (f.p) f.p.vale = CORTE > 0 && f.p.lineas >= CORTE;
-        if (f.e) {
-            f.e.parcial = f.fecha < EMBALAJE_DESDE;
-            f.e.vale = CORTE > 0 && f.e.lineas >= CORTE && !f.e.parcial;
-        }
-        f.trabajado = !!((f.p && f.p.vale) || (f.e && f.e.vale));
+    /* ─── SE AGRUPA POR SEMANA ─────────────────────────────────────────────
+       Un día cuenta para la semana solo si ESE LADO tuvo movimiento: si el robot
+       del picking no corrió un sábado, esa semana tiene cinco días de picking y
+       seis de embalaje. Hay que saberlo para no leer un bajón donde lo único que
+       falta es un archivo. */
+    const semanas = {};
+    fechas.forEach(f => {
+        const s = semanaDe(f);
+        if (!s) return;
+        const w = semanas[s.clave] || (semanas[s.clave] = {
+            clave: s.clave, sem: s.sem, anio: s.anio, lunes: lunesDe(s.anio, s.sem),
+            p: { cal: 0, nocal: 0, suelto: 0, prepack: 0, dias: 0 },
+            e: { cal: 0, nocal: 0, suelto: 0, prepack: 0, dias: 0 },
+        });
+        ['p', 'e'].forEach(lado => {
+            const d = dias[lado][f];
+            if (!d || (!d.cal && !d.nocal)) return;
+            w[lado].cal += d.cal;
+            w[lado].nocal += d.nocal;
+            w[lado].suelto += d.suelto;
+            w[lado].prepack += d.prepack;
+            w[lado].dias++;
+        });
     });
 
-    const dP = filas.filter(f => f.p && f.p.vale);
-    const dE = filas.filter(f => f.e && f.e.vale);
-    const buenos = filas.filter(f => f.trabajado);
-    const hayParciales = filas.some(f => f.e && f.e.parcial);
+    const orden = Object.keys(semanas).sort().map(k => semanas[k]);
 
-    // ─── LAS SERIES. TODO EN LÍNEAS. ─────────────────────────────────────────
-    const serieP = dP.map(f => f.p.lineas);
-    const serieE = dE.map(f => f.e.lineas);
-    const promP = promedio(serieP);
-    const promE = promedio(serieE);
+    /* LA SEMANA EN CURSO es la de hoy, si está en la lista. No entra en promedios
+       ni en la recta: está a medio hacer, y tirar de ella hacia abajo haría
+       parecer que la producción cayó. */
+    const hoy = new Date();
+    const hoyISO = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0')
+        + '-' + String(hoy.getDate()).padStart(2, '0');
+    const claveEnCurso = (semanaDe(hoyISO) || {}).clave;
 
-    /* EL CRECIMIENTO SE MIDE ENTRE SEMANAS, NO ENTRE DÍAS. De un día al siguiente
-       manda el tamaño del pedido, no el ritmo del equipo. A seis días trabajados
-       por semana, comparar los últimos seis contra los seis anteriores ya deja
-       ver si el CD viene levantando o cayendo. */
-    const VENTANA = 6;
-    const ventanas = (serie) => {
-        const u = serie.slice(-VENTANA);
-        const p = serie.slice(-VENTANA * 2, -VENTANA);
-        const au = promedio(u), ap = promedio(p);
-        return { au: au, ap: ap, crece: (p.length >= 3 && ap > 0) ? (au - ap) / ap : null };
+    /* UNA SEMANA CORTA NO ES UNA SEMANA MALA. Con menos de cuatro días de datos de
+       ese lado, el total no se puede comparar con una semana entera: queda a la
+       vista pero fuera de la cuenta. */
+    const DIAS_MINIMOS = 4;
+
+    const serieDe = (cfg) => {
+        const puntos = orden.map(w => ({
+            clave: w.clave, sem: w.sem, lunes: w.lunes,
+            valor: w[cfg.lado][cfg.cat],
+            dias: w[cfg.lado].dias,
+            suelto: w[cfg.lado].suelto,
+            prepack: w[cfg.lado].prepack,
+            enCurso: w.clave === claveEnCurso,
+        }));
+        const cerradas = puntos.filter(p => !p.enCurso && p.dias >= DIAS_MINIMOS && p.valor > 0);
+        const enCurso = puntos.filter(p => p.enCurso && p.valor > 0)[0] || null;
+        const cortas = puntos.filter(p => !p.enCurso && p.valor > 0 && p.dias < DIAS_MINIMOS);
+        if (!cerradas.length) return { cfg: cfg, puntos: puntos, cerradas: cerradas,
+                                       enCurso: enCurso, cortas: cortas, vacio: true };
+        const ult4 = cerradas.slice(-4);
+        const r = recta(cerradas.map(p => p.valor));
+        return {
+            cfg: cfg, puntos: puntos, cerradas: cerradas, enCurso: enCurso, cortas: cortas,
+            vacio: false,
+            ultima: cerradas[cerradas.length - 1],
+            anterior: cerradas.length > 1 ? cerradas[cerradas.length - 2] : null,
+            prom4: promedio(ult4.map(p => p.valor)),
+            promTodas: promedio(cerradas.map(p => p.valor)),
+            pendiente: r.m,
+            recta: r,
+        };
     };
-    const vP = ventanas(serieP);
-    const vE = ventanas(serieE);
 
-    const tP = tendencia(serieP);
-    const tE = tendencia(serieE);
-
-    /* EL PORCENTAJE NUNCA VA SOLO: al lado va la diferencia en líneas por día. Un
-       "12% más" no dice nada si no se sabe si son 200 líneas o 2.000. */
-    const flecha = (v, ant, act, uni) => {
-        if (v === null) return '<span style="color:var(--text-muted);">Faltan días para comparar</span>';
-        const arriba = v >= 0;
-        return '<span class="' + (arriba ? 'pp-sube' : 'pp-baja') + '">'
-            + (arriba ? '▲' : '▼') + ' ' + n1(Math.abs(v) * 100) + '%</span> '
-            + (arriba ? 'más' : 'menos') + ' que la semana anterior<br>'
-            + nf(Math.abs(act - ant)) + ' ' + uni + ' por día de diferencia';
-    };
-
-    // EL RITMO. Líneas por persona y hora — el número que sale plano.
-    const ritmoP = dP.map(f => f.p.ph ? f.p.lineas / f.p.ph : 0).filter(x => x > 0);
-    const ritmoE = dE.map(f => f.e.ph ? f.e.lineas / f.e.ph : 0).filter(x => x > 0);
-    const promRitP = promedio(ritmoP);
-    const promRitE = promedio(ritmoE);
-
-    const mejor = dP.slice().sort((a, b) => b.p.lineas - a.p.lineas)[0];
-
-    // ─── LA PROYECCIÓN ───────────────────────────────────────────────────────
-    /* SEIS DÍAS HACIA ADELANTE, que es la semana del CD (lunes a sábado). Va
-       sobre la recta de la tendencia y no sobre el promedio: el promedio no
-       sabría que viene creciendo. */
-    const PROX = 6;
-    const proy = [];
-    /* ARRANCA DESPUES DEL ULTIMO DIA CON DATOS DE CUALQUIER LADO, no del ultimo
-       de picking. El picking suele ir un dia atras del embalaje —el robot lo
-       calcula despues—, y arrancando en el ultimo de picking la proyeccion
-       "predecia" un dia que el embalaje ya tenia trabajado y publicado. */
-    if (tP && dP.length && buenos.length) {
-        const base = dP.length;
-        const cur = partir(buenos[buenos.length - 1].fecha);
-        let puestos = 0;
-        while (puestos < PROX) {
-            cur.setDate(cur.getDate() + 1);
-            if (cur.getDay() === 0) continue;              // el domingo no se trabaja
-            proy.push({
-                fecha: aISO(cur),
-                p: Math.max(0, tP.en(base + puestos)),
-                e: tE ? Math.max(0, tE.en(dE.length + puestos)) : 0
-            });
-            puestos++;
-        }
-    }
-    const totProyP = proy.reduce((s, x) => s + x.p, 0);
-    const totProyE = proy.reduce((s, x) => s + x.e, 0);
-
-    // ─── LAS CATEGORÍAS. ACÁ SÍ VAN LOS PARES. ───────────────────────────────
-    const catAcum = {};
-    dP.forEach(f => f.p.cat.forEach(c => {
-        catAcum[c.id] = catAcum[c.id] || { eti: c.eti, color: c.color, valor: 0 };
-        catAcum[c.id].valor += c.valor;
-    }));
-    const catLista = Object.keys(catAcum).map(k => ({
-        id: k, eti: catAcum[k].eti, color: catAcum[k].color, valor: catAcum[k].valor
-    }));
-    const totCat = catLista.reduce((s, c) => s + c.valor, 0);
-    /* ¿Vino el gender abierto del robot, o son las tres clases de siempre? Si vino
-       abierto no hace falta la advertencia de que promotional está adentro. */
-    const abierto = catLista.length > 0 && !catLista.some(c => c.id === 'no_cal');
-
-    const totLinP = dP.reduce((s, f) => s + f.p.lineas, 0);
-    const totLinE = dE.reduce((s, f) => s + f.e.lineas, 0);
-    const totParP = dP.reduce((s, f) => s + f.p.pares, 0);
-    const totParE = dE.reduce((s, f) => s + f.e.pares, 0);
+    const resumenes = SERIES.map(serieDe);
 
     // ─── HTML ────────────────────────────────────────────────────────────────
-    const desde = O.desde || filas[0].fecha;
-    const hasta = O.hasta || filas[filas.length - 1].fecha;
+    const desde = O.desde || fechas[0];
+    const hasta = O.hasta || fechas[fechas.length - 1];
+    const nSem = Math.max.apply(null, resumenes.map(r => r.cerradas.length).concat([0]));
 
     const T = [];
-    T.push('<style>' + CSS + '</style>');
-    T.push('<div id="pp">');
+    T.push('<style>' + CSS + '</style><div id="pp">');
 
-    T.push(
-      '<div class="pp-cab"><div class="pp-quien">'
+    T.push('<div class="pp-cab"><div class="pp-quien">'
     + '<h2>Producción Picking y Embalaje</h2>'
     + '<div class="pp-cuantos">'
-    + dP.length + ' días de picking y ' + dE.length + ' de embalaje, del '
-    + corta(filas[0].fecha) + ' al ' + corta(filas[filas.length - 1].fecha)
-    + (filas.length - buenos.length > 0
-        ? ' · ' + (filas.length - buenos.length) + ' fuera del promedio (domingos y días sin trabajo)'
+    + nSem + (nSem === 1 ? ' semana cerrada' : ' semanas cerradas')
+    + ', del ' + corta(fechas[0]) + ' al ' + corta(fechas[fechas.length - 1])
+    + (claveEnCurso && semanas[claveEnCurso]
+        ? ' · la semana ' + semanas[claveEnCurso].sem + ' está en curso y no entra en la cuenta'
         : '')
     + '</div></div>'
     + selectorRango(desde, hasta, 'window.__ppRango')
     + '</div>');
 
-    T.push('<div class="pp-aviso">'
-    + '<b>Este cuadro mide en LÍNEAS, no en pares.</b> Una línea es una tarea: el picker va a '
-    + 'una ubicación, saca lo que le piden y confirma. En no calzado la unidad del WMS no es un '
-    + 'par —son bolsas, medias, cajas de accesorio—, así que sumarlas como pares infla el total '
-    + 'sin que nadie haya trabajado más: del 24 al 28 de agosto los pares del picking se '
-    + 'triplicaron mientras las líneas seguían iguales. <b>Los pares están más abajo, abiertos '
-    + 'por categoría</b>, que es donde sí dicen algo.'
-    + (hayParciales
-        ? '<br><br><b>El embalaje de julio está incompleto</b> —el archivo más viejo del OBLPN '
-        + 'es del 1 de agosto— y queda fuera del promedio y de la proyección. El picking de '
-        + 'julio sí está completo y cuenta normal.'
-        : '')
-    + '</div>');
+    /* ─── UNA TARJETA GRANDE POR SERIE ─────────────────────────────────────
+       Mismo formato que Almacenaje → Productividad, que es el que Daniel ya lee. */
+    const caja = (rot, val, pie, color) =>
+        '<div class="pp-c"' + (color ? ' style="background:' + color + '18; border-color:' + color + '44;"' : '')
+        + '><div class="r"' + (color ? ' style="color:' + color + ';"' : '') + '>' + rot + '</div>'
+        + '<div class="v"' + (color ? ' style="color:' + color + ';"' : '') + '>' + val + '</div>'
+        + '<div class="p"' + (color ? ' style="color:' + color + 'bb;"' : '') + '>' + pie + '</div></div>';
 
-    T.push('<div class="pp-cards">'
-    + '<div class="pp-card"><div class="rot" style="color:var(--pp-pick);">Picking · por día</div>'
-    + '<div class="cifra">' + nf(promP) + '<span class="uni">líneas</span></div>'
-    + '<div class="pie">promedio de ' + dP.length + ' días trabajados<br>'
-    + flecha(vP.crece, vP.ap, vP.au, 'líneas') + '</div></div>'
+    resumenes.forEach(r => {
+        const c = r.cfg;
+        T.push('<div class="pp-caja" style="border-color:' + c.color + '55;">');
+        T.push('<p class="pp-titulo" style="color:' + c.color + ';">' + c.titulo + '</p>');
 
-    + '<div class="pp-card"><div class="rot" style="color:var(--pp-emb);">Embalaje · por día</div>'
-    + '<div class="cifra">' + nf(promE) + '<span class="uni">líneas</span></div>'
-    + '<div class="pie">promedio de ' + dE.length + ' días trabajados<br>'
-    + flecha(vE.crece, vE.ap, vE.au, 'líneas') + '</div></div>'
+        if (r.vacio) {
+            T.push('<p class="pp-sub">Todavía no hay ninguna semana cerrada con datos suficientes.</p></div>');
+            return;
+        }
 
-    + '<div class="pp-card"><div class="rot">Ritmo del picking</div>'
-    + '<div class="cifra">' + nf(promRitP) + '<span class="uni">líneas / persona-hora</span></div>'
-    + '<div class="pie">El embalaje va a <b>' + nf(promRitE) + '</b> líneas por persona y hora.<br>'
-    + 'Se cuenta la gente que tuvo movimiento en cada hora, no la del día.</div></div>'
+        const sube = r.pendiente >= 0;
+        const dif = r.anterior ? r.ultima.valor - r.anterior.valor : null;
 
-    + '<div class="pp-card"><div class="rot">El día más alto</div>'
-    + '<div class="cifra">' + (mejor ? nf(mejor.p.lineas) : '–') + '<span class="uni">líneas</span></div>'
-    + '<div class="pie">' + (mejor ? etiquetaDia(mejor.fecha) + ' · ' + nf(mejor.p.gente)
-        + ' personas · ' + nf(mejor.p.ph ? mejor.p.lineas / mejor.p.ph : 0)
-        + ' líneas por persona-hora' : 'sin datos') + '</div></div>'
-    + '</div>');
+        T.push('<p class="pp-sub">'
+            + nf(r.cerradas.reduce((s, p) => s + p.valor, 0)) + ' ' + c.unidad + ' en '
+            + r.cerradas.length + (r.cerradas.length === 1 ? ' semana cerrada' : ' semanas cerradas')
+            + (c.cat === 'nocal'
+                ? '. <b>Acá la unidad del WMS no es un par</b>: son bolsas, medias y cajas de '
+                + 'accesorio. Por eso va en su propio cuadro y nunca sumado al calzado.'
+                : '. Van juntos el suelto y el prepack, que es como se reporta; el desglose está '
+                + 'en el pie de la primera caja.')
+            + '</p>');
 
-    T.push('<div class="pp-caja">'
-    + '<p class="pp-titulo">Cómo viene creciendo</p>'
-    + '<p class="pp-sub">Líneas por día. La línea gris punteada es la tendencia de los '
-    + dP.length + ' días de picking, estirada ' + PROX + ' días hacia adelante. '
-    + (tP ? 'El picking viene <b>' + (tP.b >= 0 ? 'subiendo' : 'bajando') + ' '
-        + n1(Math.abs(tP.b)) + ' líneas por día trabajado</b>'
-        + (Math.abs(tP.b) * dP.length < promP * 0.1
-            ? ', que sobre ' + nf(promP) + ' líneas diarias es prácticamente plano.'
-            : '.')
-        : '')
-    + '</p><div class="pp-graf"><canvas id="pp_g_serie"></canvas></div></div>');
+        T.push('<div class="pp-cajas">'
+        /* EL PROMEDIO POR DIA VA AL LADO DEL TOTAL, y no es adorno: una semana de
+           cinco dias contra una de seis no se pueden comparar de frente. La S34
+           parecia una caida contra la S33 y lo unico que le faltaba era un dia. */
+        + caja('Cierre semana ' + r.ultima.sem, nf(r.ultima.valor),
+               r.ultima.dias + (r.ultima.dias === 1 ? ' día' : ' días') + ' · '
+               + nf(r.ultima.valor / r.ultima.dias) + ' por día'
+               + (c.cat === 'cal' && r.ultima.suelto
+                   ? '<br>' + nf(r.ultima.suelto) + ' sueltos · ' + nf(r.ultima.prepack) + ' prepack'
+                   : ''))
+        + (r.anterior ? caja('Cierre semana ' + r.anterior.sem, nf(r.anterior.valor),
+               r.anterior.dias + (r.anterior.dias === 1 ? ' día' : ' días') + ' · '
+               + nf(r.anterior.valor / r.anterior.dias) + ' por día') : '')
+        + caja('Últimas 4 semanas', nf(r.prom4), 'promedio por semana')
+        + caja('Promedio general', nf(r.promTodas), r.cerradas.length + ' semanas cerradas')
+        + caja((sube ? 'Sube cada semana' : 'Baja cada semana'),
+               (sube ? '+' : '−') + nf(Math.abs(r.pendiente)),
+               c.unidad + ' por semana', sube ? '#16a34a' : '#dc2626')
+        + '</div>');
 
-    T.push('<div class="pp-dos">'
-    + '<div class="pp-caja"><p class="pp-titulo">Qué se pica, por categoría</p>'
-    + '<p class="pp-sub">' + nf(totCat) + ' unidades en ' + dP.length + ' días. '
-    + '<b>Acá la barra naranja no son pares</b>: en no calzado el WMS cuenta bolsas y unidades '
-    + 'sueltas. Por eso esta caja se mira por su forma —qué proporción de cada cosa entra— y no '
-    + 'por el total.'
-    + (abierto ? ''
-        : ' Sale del <b>G. Gender</b> del Maestro, y hoy <b>promotional está adentro de «no '
-        + 'calzado»</b>. Con la misma pasada se podría medir <b>cuánto tiempo se lleva cada '
-        + 'categoría</b> —el robot tiene la hora de cada línea, pero no la publica abierta por '
-        + 'categoría—: las dos cosas salen de volver a pasar los archivos del WMS en el servidor.')
-    + '</p><div class="pp-graf" style="height:270px;"><canvas id="pp_g_cat"></canvas></div>'
-    + '<div class="pp-leyenda">'
-    + catLista.map(c => '<span><i style="background:' + c.color + ';"></i>' + esc(c.eti)
-        + ' — ' + nf(c.valor) + ' (' + n1(totCat ? c.valor * 100 / totCat : 0) + '% del total)</span>').join('')
-    + '</div></div>'
+        T.push('<div class="pp-graf"><canvas id="pp_g_' + c.id + '"></canvas></div>');
 
-    + '<div class="pp-caja"><p class="pp-titulo">El ritmo, día por día</p>'
-    + '<p class="pp-sub">Líneas por persona y hora. Este es el número que dice si el equipo está '
-    + 'rindiendo: no lo mueve el tamaño del pedido, solo el trabajo. Si un día se cae, ahí hubo '
-    + 'algo —falta de mercadería, una zona trabada, gente parada.</p>'
-    + '<div class="pp-graf" style="height:270px;"><canvas id="pp_g_ritmo"></canvas></div></div>'
-    + '</div>');
+        const linea = [];
+        if (dif !== null) {
+            linea.push('De la semana ' + r.anterior.sem + ' a la ' + r.ultima.sem + ' '
+                + (dif >= 0 ? 'subió' : 'bajó') + ' <b>' + nf(Math.abs(dif)) + ' ' + c.unidad + '</b>'
+                + (r.anterior.valor ? ' (' + n1(Math.abs(dif) * 100 / r.anterior.valor) + '%)' : '') + '.');
+            /* SI LAS DOS SEMANAS NO TIENEN LOS MISMOS DIAS, la comparacion de
+               frente engaña y hay que decirlo con el numero al lado. */
+            if (r.ultima.dias !== r.anterior.dias) {
+                const dd = (r.ultima.valor / r.ultima.dias) - (r.anterior.valor / r.anterior.dias);
+                linea.push('Ojo que no tienen los mismos días —' + r.ultima.dias + ' contra '
+                    + r.anterior.dias + '—: <b>por día</b> ' + (dd >= 0 ? 'subió' : 'bajó') + ' '
+                    + nf(Math.abs(dd)) + ' ' + c.unidad + '.');
+            }
+        }
+        linea.push('Si sigue este ritmo, la semana ' + (r.ultima.sem + 1) + ' daría <b>'
+            + nf(Math.max(0, r.recta.b + r.recta.m * r.cerradas.length)) + ' ' + c.unidad + '</b>.');
+        if (r.enCurso) {
+            linea.push('La semana ' + r.enCurso.sem + ' va por <b>' + nf(r.enCurso.valor) + ' '
+                + c.unidad + '</b> en ' + r.enCurso.dias
+                + (r.enCurso.dias === 1 ? ' día' : ' días') + ', o sea '
+                + nf(r.enCurso.valor / r.enCurso.dias) + ' por día; todavía no cerró y por eso '
+                + 'no está en el gráfico ni en los promedios.');
+        }
+        if (r.cortas.length) {
+            linea.push('Quedan fuera de la cuenta ' + r.cortas.length
+                + (r.cortas.length === 1 ? ' semana corta' : ' semanas cortas')
+                + ' —' + r.cortas.map(p => 'S' + p.sem + ' con ' + p.dias
+                    + (p.dias === 1 ? ' día' : ' días')).join(', ')
+                + '—: con menos de ' + DIAS_MINIMOS + ' días no se comparan con una semana entera.');
+        }
+        T.push('<div class="pp-nota">' + linea.join(' ') + '</div>');
+        T.push('</div>');
+    });
 
-    if (proy.length) {
-        T.push('<div class="pp-caja">'
-        + '<p class="pp-titulo">Lo que viene, si sigue este ritmo</p>'
-        + '<p class="pp-sub">Los próximos ' + PROX + ' días de trabajo, sacados de la tendencia. '
-        + '<b>No es una promesa</b>: es lo que daría si los pedidos, el equipo y la gente siguen '
-        + 'como en estos ' + dP.length + ' días. Un pico de campaña o una semana con menos '
-        + 'personal lo cambia entero.</p>'
-        + '<div class="pp-proy">'
-        + proy.map(x => '<div class="pp-p"><div class="d">' + etiquetaDia(x.fecha) + '</div>'
-            + '<div class="v">' + nf(x.p) + '</div>'
-            + '<div class="d" style="margin-top:3px;">líneas · embalaje ' + nf(x.e) + '</div></div>').join('')
-        + '</div>'
-        + '<div class="pp-nota">'
-        + 'Suman <b>' + nf(totProyP) + ' líneas</b> de picking y <b>' + nf(totProyE) + ' líneas</b> '
-        + 'de embalaje en la semana. Con el promedio de hoy —' + nf(promP) + ' por día— serían '
-        + nf(promP * PROX) + ' líneas en esos ' + PROX + ' días.<br>'
-        + 'Para hacerlas harían falta unas <b>' + nf(promRitP ? totProyP / promRitP : 0)
-        + ' personas-hora</b> de picking, al ritmo actual de ' + nf(promRitP) + ' líneas por '
-        + 'persona y hora.'
-        + '</div></div>');
+    /* ─── LA PROYECCIÓN DE LAS PRÓXIMAS SEMANAS ──────────────────────────── */
+    const PROX = 4;
+    const conRecta = resumenes.filter(r => !r.vacio);
+    if (conRecta.length) {
+        const ultimaSem = Math.max.apply(null, conRecta.map(r => r.ultima.sem));
+        T.push('<div class="pp-caja"><p class="pp-titulo" style="color:var(--text-strong);">'
+            + 'LO QUE VIENE, SI SIGUE ESTE RITMO</p>'
+            + '<p class="pp-sub">Las próximas ' + PROX + ' semanas, sacadas de la recta de cada '
+            + 'cuadro de arriba. <b>No es una promesa</b>: es lo que daría si los pedidos, el '
+            + 'equipo y la gente siguen como en estas ' + nSem + ' semanas. Un pico de campaña o '
+            + 'una semana con menos personal lo cambia entero.</p>'
+            + '<div class="pp-scroll"><table class="pp-tabla"><thead><tr><th>Semana</th>'
+            + conRecta.map(r => '<th>' + esc(r.cfg.titulo.replace(' · ', ' ')) + '<br>'
+                + '<span style="opacity:0.6; font-weight:600;">' + r.cfg.unidad + '</span></th>').join('')
+            + '</tr></thead><tbody>'
+            + Array.from({ length: PROX }, (v, k) =>
+                '<tr><td>Semana ' + (ultimaSem + 1 + k) + '</td>'
+                + conRecta.map(r => '<td>'
+                    + nf(Math.max(0, r.recta.b + r.recta.m * (r.cerradas.length + k)))
+                    + '</td>').join('') + '</tr>').join('')
+            + '</tbody></table></div></div>');
     }
 
-    T.push('<div class="pp-caja">'
-    + '<p class="pp-titulo">Día por día</p>'
-    + '<p class="pp-sub">Las líneas y los pares son los del archivo del WMS. «Ritmo» son las '
-    + 'líneas divididas entre las personas-hora de ese día. La última columna dice cuánto embaló '
-    + 'el CD de lo que picó: <b>no tiene por qué dar 100%</b>, porque lo que se pica un día se '
-    + 'embala en parte al día siguiente.</p>'
+    /* ─── LA TABLA SEMANA A SEMANA ───────────────────────────────────────── */
+    const totalCerradas = (i) => resumenes[i].cerradas.reduce((s, p) => s + p.valor, 0);
+    T.push('<div class="pp-caja"><p class="pp-titulo" style="color:var(--text-strong);">SEMANA A SEMANA</p>'
+    + '<p class="pp-sub">Los números son los del archivo del WMS. «Días» es cuántos días de esa '
+    + 'semana tienen datos <b>de ese lado</b>: si son menos de ' + DIAS_MINIMOS + ', esa mitad '
+    + 'sale en gris con un ✎ y no entra en los promedios ni en la recta. La marca va por lado y '
+    + 'no por fila, porque una semana puede estar completa en picking y corta en embalaje.</p>'
     + '<div class="pp-scroll"><table class="pp-tabla"><thead>'
-    + '<tr><th></th><th class="pp-grupo" colspan="4">Picking</th>'
-    + '<th class="pp-grupo pp-sep" colspan="4">Embalaje</th><th class="pp-sep"></th></tr>'
-    + '<tr><th>Día</th>'
-    + '<th>Líneas</th><th>Pares</th><th>Gente</th><th>Ritmo</th>'
-    + '<th class="pp-sep">Líneas</th><th>Pares</th><th>Gente</th><th>Ritmo</th>'
-    + '<th class="pp-sep">Embalado / picado</th></tr></thead><tbody>'
-    + filas.slice().reverse().map(f => {
-        const p = f.p, e = f.e;
-        const rp = (p && p.ph) ? p.lineas / p.ph : 0;
-        const re = (e && e.ph) ? e.lineas / e.ph : 0;
-        /* SOLO SE COMPARA CONTRA UN EMBALAJE COMPLETO. Con el embalaje parcial de
-           julio salia "34,4% de lo picado", que se lee como que el CD no embalo
-           dos tercios de lo que pico, y lo que falta es el archivo. */
-        const rel = (p && p.vale && e && e.vale && e.lineas) ? (e.lineas * 100 / p.lineas) : null;
-        let nota = '';
-        if (!f.trabajado) nota = ' <span style="font-size:10px;">(sin trabajo)</span>';
-        else if (e && e.parcial) nota = ' <span style="font-size:10px;">(embalaje parcial)</span>';
-        return '<tr class="' + (f.trabajado ? '' : 'pp-libre') + '">'
-            + '<td>' + etiquetaDia(f.fecha) + nota + '</td>'
-            + '<td>' + nf(p ? p.lineas : null) + '</td><td>' + nf(p ? p.pares : null) + '</td>'
-            + '<td>' + nf(p ? p.gente : null) + '</td><td>' + (rp ? nf(rp) : '–') + '</td>'
-            + '<td class="pp-sep">' + nf(e ? e.lineas : null) + '</td><td>' + nf(e ? e.pares : null) + '</td>'
-            + '<td>' + nf(e ? e.gente : null) + '</td><td>' + (re ? nf(re) : '–') + '</td>'
-            + '<td class="pp-sep">' + (rel === null ? '–' : n1(rel) + '%') + '</td></tr>';
+    + '<tr><th></th><th class="pp-grupo" colspan="3">Picking</th>'
+    + '<th class="pp-grupo pp-sep" colspan="3">Embalaje</th></tr>'
+    + '<tr><th>Semana</th><th>Días</th><th>Calzado</th><th>No calzado</th>'
+    + '<th class="pp-sep">Días</th><th>Calzado</th><th>No calzado</th></tr></thead><tbody>'
+    /* LA MARCA DE CORTA VA POR LADO, NO POR FILA. La S31 tiene 4 dias de picking
+       -completa- y 3 de embalaje -corta-: marcar la fila entera decia que el
+       picking de esa semana no servia, y si servia. Se pinta la mitad que
+       corresponde y el resto de la fila queda normal. */
+    + orden.slice().reverse().map(w => {
+        const enCurso = w.clave === claveEnCurso;
+        const cortoP = !enCurso && w.p.dias > 0 && w.p.dias < DIAS_MINIMOS;
+        const cortoE = !enCurso && w.e.dias > 0 && w.e.dias < DIAS_MINIMOS;
+        const nota = enCurso ? ' <span style="font-size:10px;">(en curso)</span>' : '';
+        const flojo = ' style="color:var(--text-muted); font-style:italic;"';
+        const pd = cortoP ? flojo : '';
+        const ed = cortoE ? flojo : '';
+        const l = w.lunes;
+        return '<tr class="' + (enCurso ? 'pp-parcial' : '') + '">'
+            + '<td>Semana ' + w.sem + nota + '<br><span style="font-size:10px; opacity:0.6;">desde el '
+            + l.getDate() + ' ' + MESES[l.getMonth()] + '</span></td>'
+            + '<td' + pd + '>' + (w.p.dias || '–') + (cortoP ? ' ✎' : '') + '</td>'
+            + '<td' + pd + '>' + nf(w.p.cal || null) + '</td>'
+            + '<td' + pd + '>' + nf(w.p.nocal || null) + '</td>'
+            + '<td class="pp-sep"' + ed.replace(' style=', ' style=') + '>' + (w.e.dias || '–')
+            + (cortoE ? ' ✎' : '') + '</td>'
+            + '<td' + ed + '>' + nf(w.e.cal || null) + '</td>'
+            + '<td' + ed + '>' + nf(w.e.nocal || null) + '</td></tr>';
     }).join('')
-    + '</tbody><tfoot><tr>'
-    + '<td>Total · ' + dP.length + ' días de picking, ' + dE.length + ' de embalaje</td>'
-    + '<td>' + nf(totLinP) + '</td><td>' + nf(totParP) + '</td>'
-    + '<td>–</td><td>' + nf(promRitP) + '</td>'
-    + '<td class="pp-sep">' + nf(totLinE) + '</td><td>' + nf(totParE) + '</td>'
-    + '<td>–</td><td>' + nf(promRitE) + '</td>'
-    + '<td class="pp-sep">–</td>'
+    + '</tbody><tfoot><tr><td>Total de las semanas cerradas</td>'
+    + '<td>–</td><td>' + nf(totalCerradas(0)) + '</td><td>' + nf(totalCerradas(1)) + '</td>'
+    + '<td class="pp-sep">–</td><td>' + nf(totalCerradas(2)) + '</td><td>' + nf(totalCerradas(3)) + '</td>'
     + '</tr></tfoot></table></div>'
-    + '<div class="pp-nota">Los totales suman solo los días trabajados de cada lado, que no son '
-    + 'los mismos: por eso la última columna no se totaliza —dividir dos totales de días '
-    + 'distintos daría un porcentaje que no significa nada.</div>'
+    + '<div class="pp-nota">Cada total suma solo las semanas cerradas DE ESA COLUMNA, que no son '
+    + 'siempre las mismas: una semana puede estar completa en embalaje y corta en picking. Por eso '
+    + 'las cuatro columnas no tienen por qué sumar los mismos días.</div>'
     + '</div>');
 
     T.push('</div>');
@@ -564,138 +477,62 @@ export function montarProduccionProyeccion(cont, OPC) {
         return;
     }
 
-    /* EL EJE ES EL DE TODOS LOS DÍAS TRABAJADOS, no el del picking: el embalaje
-       tiene días que el picking no tiene —el 22 y el 29 de agosto, por ejemplo— y
-       si cada serie usara su propio eje quedarían corridas una respecto de otra y
-       el cuadro mentiría sin que se note. Cada serie pone `null` donde no tiene. */
-    const ejeDias = buenos.map(f => f.fecha);
-    const ejes = ejeDias.map(corta);
-    const ejesProy = proy.map(x => corta(x.fecha));
+    resumenes.forEach(r => {
+        if (r.vacio) return;
+        const cv = document.getElementById('pp_g_' + r.cfg.id);
+        if (!cv) return;
 
-    const enEje = (lado, campo) => ejeDias.map(f => {
-        const fila = porFecha[f], d = fila && fila[lado];
-        return (d && d.vale) ? d[campo] : null;
+        /* LA SEMANA EN CURSO NO SE DIBUJA. Acá el eje es un TOTAL de la semana,
+           no una velocidad: una semana con un día siempre va a valer la sexta
+           parte, así que dibujarla es un despeñadero al final del gráfico que no
+           dice nada —y en un cuadro que se mira de reojo, se lee como que la
+           producción se cayó.
+
+           En Almacenaje → Productividad sí se dibuja, y está bien: ahí el eje son
+           unidades POR HORA, y una semana a medias ya da un número comparable.
+           Acá no. La semana en curso se cuenta con palabras, debajo del gráfico.
+
+           El último punto SÍ lleva un paso más de recta, para que se vea hacia
+           dónde va la semana que todavía no cerró. */
+        const todas = r.cerradas;
+        const etiquetas = todas.map(p => 'S' + p.sem).concat(['S' + (r.ultima.sem + 1)]);
+        const cerradas = todas.map(p => p.valor).concat([null]);
+        const tend = etiquetas.map((v, i) => Math.max(0, Math.round(r.recta.b + r.recta.m * i)));
+
+        _graficos.push(new Chart(cv, resolverColoresChart({
+            type: 'line',
+            data: {
+                labels: etiquetas,
+                datasets: [
+                    { label: 'Tendencia', data: tend, borderColor: 'rgba(148,163,184,0.85)',
+                      borderWidth: 2, borderDash: [6, 5], pointRadius: 0, fill: false, order: 3 },
+                    { label: 'Cerrada', data: cerradas, borderColor: r.cfg.color,
+                      backgroundColor: r.cfg.color + '22', borderWidth: 3, tension: 0.3,
+                      pointRadius: 4, pointBackgroundColor: r.cfg.color, fill: true, order: 1 },
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: {
+                        title: (c) => {
+                            const p = todas[c[0].dataIndex];
+                            if (!p) return 'Semana ' + (r.ultima.sem + 1) + ' · todavía no empezó';
+                            return 'Semana ' + p.sem + ' · ' + p.dias
+                                + (p.dias === 1 ? ' día' : ' días')
+                                + ' · ' + nf(p.valor / p.dias) + ' por día';
+                        },
+                        label: (c) => (c.parsed.y === null || c.parsed.y === undefined) ? null
+                            : c.dataset.label + ': ' + nf(c.parsed.y) + ' ' + r.cfg.unidad,
+                    } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: (v) => nf(v) } },
+                    x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 20 } }
+                }
+            }
+        })));
     });
-
-    /* La recta se dibuja sobre el eje ENTERO. Como la tendencia se calculó sobre
-       los días de picking y el eje trae también los del embalaje, se avanza el
-       índice solo en los días que sí entraron en el cálculo. */
-    const rectaP = [];
-    if (tP) {
-        let i = 0;
-        ejeDias.forEach(f => {
-            const fila = porFecha[f];
-            rectaP.push(Math.max(0, tP.en(i)));
-            if (fila.p && fila.p.vale) i++;
-        });
-        for (let k = 0; k < proy.length; k++) rectaP.push(Math.max(0, tP.en(i + k)));
-    }
-    const colaProy = Array(ejes.length).fill(null).concat(proy.map(x => x.p));
-
-    const g1 = document.getElementById('pp_g_serie');
-    if (g1) _graficos.push(new Chart(g1, resolverColoresChart({
-        type: 'line',
-        data: {
-            labels: ejes.concat(ejesProy),
-            datasets: [
-                { label: 'Picking', data: enEje('p', 'lineas'), borderColor: '#6366f1',
-                  backgroundColor: 'rgba(99,102,241,0.12)', borderWidth: 2.5,
-                  tension: 0.25, fill: true, pointRadius: 2.5, spanGaps: true },
-                { label: 'Embalaje', data: enEje('e', 'lineas'), borderColor: '#22c55e',
-                  backgroundColor: 'rgba(34,197,94,0.10)', borderWidth: 2.5,
-                  tension: 0.25, fill: true, pointRadius: 2.5, spanGaps: true },
-                { label: 'Tendencia del picking', data: rectaP, borderColor: '#94a3b8',
-                  borderWidth: 2, borderDash: [6, 5], pointRadius: 0, fill: false },
-                { label: 'Proyección', data: colaProy, borderColor: '#6366f1',
-                  borderWidth: 2, borderDash: [3, 3], pointRadius: 3.5,
-                  pointStyle: 'rectRot', fill: false }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } },
-                tooltip: { callbacks: { label: (c) => c.dataset.label + ': '
-                    + (c.parsed.y === null ? '–' : nf(c.parsed.y) + ' líneas') } }
-            },
-            scales: {
-                y: { beginAtZero: true, ticks: { callback: (v) => nf(v) } },
-                x: { ticks: { maxRotation: 60, minRotation: 0, autoSkip: true, maxTicksLimit: 18 } }
-            }
-        }
-    })));
-
-    const g2 = document.getElementById('pp_g_cat');
-    if (g2) _graficos.push(new Chart(g2, resolverColoresChart({
-        type: 'bar',
-        data: {
-            labels: ejes,
-            datasets: catLista.map(c => ({
-                label: c.eti,
-                data: ejeDias.map(f => {
-                    const d = porFecha[f].p;
-                    if (!d || !d.vale) return 0;
-                    const hit = d.cat.filter(x => x.id === c.id)[0];
-                    return hit ? hit.valor : 0;
-                }),
-                backgroundColor: c.color, borderWidth: 0
-            }))
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } },
-                tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + nf(c.parsed.y) } }
-            },
-            scales: {
-                x: { stacked: true, ticks: { maxRotation: 60, autoSkip: true, maxTicksLimit: 14 } },
-                y: { stacked: true, beginAtZero: true, ticks: { callback: (v) => nf(v) } }
-            }
-        }
-    })));
-
-    const g3 = document.getElementById('pp_g_ritmo');
-    if (g3) _graficos.push(new Chart(g3, resolverColoresChart({
-        type: 'line',
-        data: {
-            labels: ejes,
-            datasets: [
-                { label: 'Picking (eje izquierdo)', borderColor: '#6366f1', borderWidth: 2.5,
-                  tension: 0.25, pointRadius: 2.5, fill: false, spanGaps: true, yAxisID: 'yp',
-                  data: ejeDias.map(f => {
-                      const d = porFecha[f].p;
-                      return (d && d.vale && d.ph) ? d.lineas / d.ph : null;
-                  }) },
-                { label: 'Embalaje (eje derecho)', borderColor: '#22c55e', borderWidth: 2.5,
-                  tension: 0.25, pointRadius: 2.5, fill: false, spanGaps: true, yAxisID: 'ye',
-                  data: ejeDias.map(f => {
-                      const d = porFecha[f].e;
-                      return (d && d.vale && d.ph) ? d.lineas / d.ph : null;
-                  }) }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } },
-                tooltip: { callbacks: { label: (c) => c.dataset.label.split(' (')[0] + ': '
-                    + nf(c.parsed.y) + ' líneas por persona y hora' } }
-            },
-            /* CADA UNO CON SU EJE. El embalaje va a unas 146 líneas por persona-hora
-               y el picking a 54: en un solo eje el picking queda aplastado contra el
-               suelo y no se le ve el movimiento, que es justo lo que hay que mirar.
-               Los dos arrancan en cero para que la altura siga significando algo. */
-            scales: {
-                yp: { position: 'left', beginAtZero: true, ticks: { callback: (v) => nf(v) },
-                      title: { display: true, text: 'Picking' } },
-                ye: { position: 'right', beginAtZero: true, ticks: { callback: (v) => nf(v) },
-                      grid: { drawOnChartArea: false },
-                      title: { display: true, text: 'Embalaje' } },
-                x: { ticks: { maxRotation: 60, autoSkip: true, maxTicksLimit: 14 } }
-            }
-        }
-    })));
 }
