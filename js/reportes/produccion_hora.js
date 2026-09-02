@@ -29,7 +29,7 @@
  * }
  */
 
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0529';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0530';
 
 const nf = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE') : '–';
 const esc = (t) => String(t == null ? '' : t)

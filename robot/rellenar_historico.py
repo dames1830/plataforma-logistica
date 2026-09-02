@@ -81,9 +81,23 @@ def bajar_de_la_nube(ruta, destino):
         return ruta                      # ya estaba en disco
     except OSError:
         pass
-    log('     esta solo en la nube; bajandolo...')
-    shutil.copyfile(ruta, destino)       # esto la fuerza a materializarse
-    return destino
+
+    # NI SIQUIERA COPIARLO LO BAJA: la tarea corre como SYSTEM y quien sabe
+    # traerse un archivo de OneDrive es el cliente que corre en la sesion de
+    # Administrator. Lo unico que funciona desde aca es MARCARLO como "tener
+    # siempre en este equipo" -attrib +P- y esperar a que ese cliente lo baje.
+    log('     esta solo en la nube; lo marco para que OneDrive lo baje...')
+    os.system('attrib +P -U "%s" >nul 2>&1' % ruta)
+    for _ in range(30):                  # hasta 2 minutos por archivo
+        time.sleep(4)
+        try:
+            with io.open(ruta, 'rb') as f:
+                f.read(1)
+            log('     ya bajo')
+            return ruta
+        except OSError:
+            continue
+    raise IOError('OneDrive no lo bajo en 2 minutos; sigue solo en la nube')
 
 
 def log(t):
@@ -143,7 +157,13 @@ def calcular(claves, rehacer):
                 log('     FALLO al bajarlo de la nube: %s' % e)
                 fallados += 1
                 continue
-            r = subprocess.run([PY, '-u', os.path.join(AQUI, cfg['script']), usar, '--historico'],
+            # EL DIA SALE DEL NOMBRE. Los archivos traen el ano solo en la carpeta,
+            # asi que se toma 2026 —es todo lo que hay bajado— y se comprueba
+            # contra la fecha del propio archivo mas abajo.
+            g = cfg['patron'].match(n)
+            dia_arch = '2026-%02d-%02d' % (int(g.group(2)), int(g.group(1)))
+            r = subprocess.run([PY, '-u', os.path.join(AQUI, cfg['script']), usar,
+                                '--historico', '--dia', dia_arch],
                                capture_output=True, text=True, encoding='utf-8',
                                errors='replace')
             if usar == local:

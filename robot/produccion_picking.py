@@ -97,6 +97,25 @@ def base_onedrive():
     raise SystemExit('no encuentro OneDrive')
 
 
+def dia_pedido():
+    """El dia que vino por `--dia AAAA-MM-DD`, o None.
+
+    EN EL RELLENO EL DIA LO MANDA QUIEN LLAMA. Los archivos viejos del OBLPN
+    mezclan hasta doce fechas —el WMS mete lineas empaquetadas antes— y la
+    mayoria no siempre es la del archivo: el `OBLPN 01-08.csv` daba 30 de julio.
+    El que rellena si sabe de que dia es cada archivo, porque lo dice el nombre.
+
+    En la corrida normal de cada 2 horas no se pasa nada y sigue mandando la
+    mayoria de las filas, que ahi es lo correcto.
+    """
+    a = sys.argv[1:]
+    if '--dia' in a:
+        i = a.index('--dia')
+        if len(a) > i + 1 and re.match(r'^\d{4}-\d{2}-\d{2}$', a[i + 1]):
+            return a[i + 1]
+    return None
+
+
 def dia_mayoritario(ruta, columna):
     """EL DIA DEL ARCHIVO ES EL DE LA MAYORIA DE SUS FILAS, no el de la primera.
 
@@ -356,7 +375,7 @@ totales = defaultdict(lambda: defaultdict(float))
 personas = defaultdict(set)
 tipos_vistos = defaultdict(lambda: defaultdict(float))
 destinos = defaultdict(lambda: defaultdict(float))
-dia = dia_mayoritario(ARCHIVO, 'Hora de selección')
+dia = dia_pedido() or dia_mayoritario(ARCHIVO, 'Hora de selección')
 leidas = descartadas = 0
 
 for row in r:
