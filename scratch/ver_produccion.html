@@ -82,10 +82,17 @@ async function pintar() {
 
   const area = AREA[cual];
   const fechas = await fechasDe(area);
-  const ultimo = fechas[fechas.length - 1];
-  const dias = ultimo
-      ? [{ fecha: ultimo, datos: await datosDe(area, ultimo) }].filter(x => x.datos && x.datos.vistas)
-      : [];
+  /* EL ULTIMO DIA CON DATOS, no el ultimo a secas: un dia guardado puede estar
+     vacio y abrir ahi parece que el modulo no anda. Misma regla que el tablero. */
+  const dias = [];
+  for (let i = fechas.length - 1; i >= 0 && i >= fechas.length - 3; i--) {
+    const d = await datosDe(area, fechas[i]);
+    if (d && d.vistas && ((d.vistas.TODOS || {}).totales || {}).lineas) {
+      dias.push({ fecha: fechas[i], datos: d });
+      break;
+    }
+  }
+  const ultimo = dias.length ? dias[0].fecha : fechas[fechas.length - 1];
   montarProduccionHora(caja, {
     dias, textos: TEXTOS[cual], desde: ultimo, hasta: ultimo, fechas,
     alCambiarRango: () => {},
