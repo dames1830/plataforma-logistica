@@ -566,8 +566,16 @@ def init_db(ruta: Optional[str] = None):
 # vez que se procese el pendiente se quede guardado en el servidor por un mes, y
 # cada mes lo vas chancando"*. Y no cuesta nada: un día pesa 12 KB, así que el mes
 # entero son 372 KB contra el disco de 1 GB del servidor —el 0,03%—.
+# Las tres de la produccion del dia guardan un mes por la misma razon: la pantalla
+# tiene filtro DE FECHA A FECHA y con dos dias no hay rango que elegir. Cuestan mas
+# que el pendiente -picking 369 KB al dia, embalaje 199 y el cruce 57-, asi que el
+# mes entero son unos 19 MB. Si el disco aprieta, el primero que hay que bajar es
+# picking_por_hora, que es el mas gordo de los tres.
 RETENCION_SNAPSHOTS = {
     'pendiente_despacho': 31,
+    'picking_por_hora': 31,
+    'embalaje_por_hora': 31,
+    'cruce_wms': 31,
 }
 RETENCION_POR_DEFECTO = 2
 
