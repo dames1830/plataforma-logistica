@@ -66,8 +66,8 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0551';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0551';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0552';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0552';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<title>Prueba de carga de los modulos sacados del tablero</title>
+<style>
+ body { font:13px/1.7 ui-monospace,Consolas,monospace; background:#0f172a; color:#e2e8f0;
+        margin:0; padding:26px; }
+ h1 { font-size:16px; color:#818cf8; margin:0 0 4px; }
+ p.n { color:#94a3b8; margin:0 0 20px; max-width:60em; }
+ .f { padding:10px 14px; border-radius:9px; margin-bottom:9px; border:1px solid #1e293b; }
+ .ok { background:#052e16; border-color:#166534; }
+ .mal { background:#450a0a; border-color:#991b1b; }
+ b { color:#fff; } .d { color:#94a3b8; }
+ pre { margin:6px 0 0; white-space:pre-wrap; color:#fca5a5; }
+</style></head><body>
+<h1>Carga de los modulos que se sacaron del tablero</h1>
+<p class="n">Comprueba que cada archivo se puede <b>importar de verdad</b> —con todas sus
+dependencias resueltas— y que exporta lo que dice exportar. <b>No ejecuta nada</b>: el barrido
+de slotting termina publicando tareas en el servidor, asi que correrlo aca crearia tareas de
+verdad. Esto solo carga.</p>
+<div id="salida"></div>
+<script type="module">
+const MODULOS = [
+  { ruta: '../js/reportes/slotting_barrido.js', esperado: ['barrerParaSlotting'] },
+];
+const salida = document.getElementById('salida');
+let malos = 0;
+for (const m of MODULOS) {
+  const caja = document.createElement('div');
+  caja.className = 'f';
+  try {
+    const mod = await import(m.ruta);
+    const tiene = Object.keys(mod);
+    const faltan = m.esperado.filter(e => typeof mod[e] === 'undefined');
+    if (faltan.length) throw new Error('no exporta: ' + faltan.join(', '));
+    caja.classList.add('ok');
+    caja.innerHTML = '<b>OK</b> &nbsp;' + m.ruta
+      + '<div class="d">exporta: ' + tiene.join(', ') + '</div>';
+  } catch (e) {
+    malos++;
+    caja.classList.add('mal');
+    caja.innerHTML = '<b>FALLA</b> &nbsp;' + m.ruta + '<pre>' + (e && (e.stack || e.message)) + '</pre>';
+  }
+  salida.appendChild(caja);
+}
+window.__resultado = { total: MODULOS.length, malos };
+</script>
+</body></html>
