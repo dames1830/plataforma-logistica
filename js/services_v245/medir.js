@@ -75,9 +75,8 @@ export const resumen = (titulo) => {
             + tramos.length + ' tramos';
         /* Con `warn` cuando es lento: queda resaltado y se puede filtrar por
            "LENTO" en la consola sin leer todo lo demas. */
-        (lento && !PEDIDO ? console.warn : console.log)(cabeza + '
-' + filas.join('
-'));
+        const salto = String.fromCharCode(10);
+        (lento && !PEDIDO ? console.warn : console.log)(cabeza + salto + filas.join(salto));
     }
     tramos.length = 0;
     abiertos.clear();
