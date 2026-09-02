@@ -29,7 +29,7 @@ en el servidor, asi que correrlo crearia tareas de verdad. De ese solo se compru
 <div id="corral"></div>
 <div id="resumen"></div>
 <script type="module">
-const V = '?v=29.0555';
+const V = '?v=29.0556';
 const MODULOS = [
   { ruta: '../js/reportes/slotting_barrido.js' + V,
     esperado: ['barrerParaSlotting'],
@@ -82,6 +82,50 @@ const MODULOS = [
       });
       await new Promise(r => setTimeout(r, 400));
     } },
+
+  { ruta: '../js/reportes/zona_buffer.js' + V,
+    esperado: ['montarZonaBuffer'],
+    dibuja: async (mod, caja) => {
+      // La pantalla escribe en `contentArea`, no en el destino que recibe.
+      const area = document.createElement('div');
+      caja.appendChild(area);
+      const nada = () => {};
+      // El estado va como VENTANA, igual que en el tablero: si fuera una copia,
+      // esta prueba no verificaria justamente lo que hace delicada a esta pantalla.
+      let kpi = null, resultado = null, config = null, urlBajado = null, sub = 'reportes';
+      const estado = {
+        get kpi() { return kpi; }, set kpi(v) { kpi = v; },
+        get resultado() { return resultado; }, set resultado(v) { resultado = v; },
+        get config() { return config; }, set config(v) { config = v; },
+        get urlBajado() { return urlBajado; }, set urlBajado(v) { urlBajado = v; },
+        get sub() { return sub; }, set sub(v) { sub = v; },
+      };
+      await mod.montarZonaBuffer({
+        estado, contentArea: area,
+        user: { name: 'prueba', role: 'admin' },
+        // El maniqui copia la forma REAL de TABS, iconos incluidos: sin el icono
+        // la pantalla dibujaba "undefined REPORTES" y parecia un defecto suyo.
+        TABS: [{ id: 'buffer', label: 'Zona Buffer', icon: '📦',
+                 subTabs: [{ id: 'reportes', label: 'Reportes', icon: '📊' },
+                           { id: 'archivo', label: 'Archivo', icon: '🗂️' }] }],
+        API_BASE: 'https://logistics-backend-wv0x.onrender.com',
+        DIAS_REPL_GUARDADOS: 7,
+        getLogicalDate: () => '2026-09-02', ponerSubtitulo: nada,
+        rescatarMaestro: async () => true,
+        selloLocalTarea: () => '', showPremiumAlert: nada,
+        renderUploadArea: () => '', pintarCuadrosAbajo: nada,
+        traerDatosBuffer: async () => ({}), _traerFactoresPublicados: async () => null,
+        renderBufferResults: nada, renderBufferHistory: nada, renderBufferConfig: nada,
+        renderBufferKPI: nada, renderMaestroNube: nada, renderReplenishmentNube: nada,
+        renderPendienteSection: nada,
+      });
+      await new Promise(r => setTimeout(r, 900));
+      // El dibujo va a parar a `contentArea`, asi que se mira ahi.
+      if (!(area.innerText || '').trim() && !area.querySelector('canvas, svg, table')) {
+        throw new Error('dibujo en vacio: no pinto nada en contentArea');
+      }
+      caja.dataset.texto = (area.innerText || '').trim().slice(0, 70);
+    } },
 ];
 
 const salida = document.getElementById('salida');
@@ -102,7 +146,7 @@ for (const m of MODULOS) {
       const destino = document.createElement('div');
       corral.appendChild(destino);
       await m.dibuja(mod, destino);
-      const texto = (destino.innerText || '').trim();
+      const texto = (destino.dataset.texto || destino.innerText || '').trim();
       if (!texto && !destino.querySelector('canvas, svg, table')) {
         throw new Error('dibujo en vacio: no pinto absolutamente nada');
       }
