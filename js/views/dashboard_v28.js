@@ -1,40 +1,40 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0548';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0549';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0548';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0548';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0548';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0548';
-import * as metasService from '../services_v245/metasService.js?v=29.0548';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0548';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0548';
+import * as adminService from '../services_v245/adminService.js?v=29.0549';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0549';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0549';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0549';
+import * as metasService from '../services_v245/metasService.js?v=29.0549';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0549';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0549';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0548';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0548';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0548';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0548';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0548';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0548';
-import { renderCapacidad } from './capacidad.js?v=29.0548';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0548';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0548';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0548';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0548';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0548';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0548';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0548';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0548';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0548';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0548';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0548';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0548';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0548';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0548';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0548';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0548';
-import { montarSlotting } from './slotting.js?v=29.0548';
-import { montarEventos } from './eventos.js?v=29.0548';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0548';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0549';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0549';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0549';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0549';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0549';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0549';
+import { renderCapacidad } from './capacidad.js?v=29.0549';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0549';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0549';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0549';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0549';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0549';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0549';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0549';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0549';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0549';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0549';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0549';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0549';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0549';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0549';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0549';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0549';
+import { montarSlotting } from './slotting.js?v=29.0549';
+import { montarEventos } from './eventos.js?v=29.0549';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0549';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -397,7 +397,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0548';
+const VERSION = '29.0549';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2393,7 +2393,7 @@ const TABS = [
   // quiere armar ahí: *"más bien, hay que armar reportes de picking"*.
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' },
-    { id: 'reporte_picking', label: 'Reporte Picking', icon: '📈' },
+    { id: 'reporte_picking', label: 'KPI Picking y Embalaje', icon: '📈' },
     /* LAS TRES DE LA PRODUCCION DEL DIA. Las pidio Daniel el 02-sep-2026:
        *"me vas a crear tres submodulos, uno llamado picking por dia, embalaje por
        dia, y el otro, por el momento, se va a llamar cruce"*.
@@ -2403,9 +2403,10 @@ const TABS = [
     { id: 'embalaje_dia', label: 'Embalaje por día', icon: '📮' },
     { id: 'cruce_wms', label: 'Cruce', icon: '🔍' },
   ]},
-  { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
-    { id: 'archivo_packing', label: 'Archivo Packing', icon: '🗂️' }
-  ]},
+  /* PACKING SE QUITO EL 02-sep-2026. Daniel: *"quitalo, que eso no vaya, ya no
+     existe, porque ese packing viene a ser el embalaje, que ya lo tengo aca
+     dentro"* -en Picking > Embalaje por dia-. Estaba vacio: sus tres areas del
+     servidor no tenian una sola fila. */
   { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '🗂️' },
     { id: 'monitoreo_despacho', label: 'Monitoreo de Rutas', icon: '🗺️' },
@@ -3165,7 +3166,6 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (currentTab === 'analisis_sku') await renderAnalisisSKUTab();
     else if (currentTab === 'inventario') await renderInventarioTab();
     else if (currentTab === 'picking') await renderGenericAreaTab('picking', 'Gestión de Picking');
-    else if (currentTab === 'packing') await renderGenericAreaTab('packing', 'Gestión de Packing');
     else if (currentTab === 'despacho') await renderGenericAreaTab('despacho', 'Gestión de Despacho');
     else if (currentTab === 'no_retail') await renderGenericAreaTab('no_retail', 'Gestión NO RETAIL');
     else if (currentTab === 'recepcion') await renderGenericAreaTab('recepcion', 'Gestión de Recepción');
@@ -5635,7 +5635,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0548');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0549');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5898,7 +5898,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0548');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0549');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -12579,7 +12579,6 @@ const renderRFSection = (container) => {
         const availableModules = [
             { id: 'inventario', label: 'Inventario' },
             { id: 'picking', label: 'Picking' },
-            { id: 'packing', label: 'Packing' },
             { id: 'despacho', label: 'Despacho' },
             { id: 'no_retail', label: 'NO RETAIL' },
             { id: 'recepcion', label: 'Recepción' },
@@ -12836,7 +12835,7 @@ const renderRFSection = (container) => {
                             id: 'grp_' + Date.now(),
                             nombre: cleanName,
                             token: generateSecureToken(),
-                            modulos: ['inventario', 'picking', 'packing', 'despacho', 'no_retail', 'recepcion'],
+                            modulos: ['inventario', 'picking', 'despacho', 'no_retail', 'recepcion'],
                             reportesAlmacenaje: [],
                             reportesBuffer: []
                         });
@@ -19176,7 +19175,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0548 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0549 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -33918,99 +33917,102 @@ window.__menuMapa = (btn) => {
   // La caja mide siempre lo mismo. Es el MISMO control que el de mes y marca de
   // KPI Picking —cerrada como cualquier desplegable, y adentro la lista con ✓—,
   // así que las dos pantallas se manejan igual.
-  const pickFiltro = { seg: 'calzado', fechas: [] };
+  /* EL FILTRO DE FECHAS ES UN RANGO. Daniel, 02-sep-2026: *"quise decir que el
+     filtro sea un rango de fecha, un rango de fecha tiene que ser"*.
 
-  // Vive acá y no en el DOM porque cada clic redibuja la vista entera: guardándolo
-  // en el DOM, el menú se cerraría al marcar la primera fecha y habría que abrirlo
-  // de nuevo para cada una.
-  let pickMenuAbierto = false;
+     Antes era una lista con casillas, de a varias sueltas. Se cambio a rango y se
+     usa el MISMO control que las otras diecinueve pantallas -`selectorRango`-,
+     asi que se maneja igual en toda la plataforma.
 
-  // Por donde iba la lista de fechas. Cada clic redibuja la vista entera, asi que
-  // el menu se vuelve a crear desde cero y aparece arriba del todo: al marcar una
-  // fecha del final, la lista se rebobinaba y habia que volver a bajar para marcar
-  // la siguiente. Guardando el desplazamiento se restituye despues de redibujar.
-  let pickMenuScroll = 0;
+     `desde`/`hasta` es lo que elige Daniel; `fechas` sigue siendo la lista de dias
+     que caen dentro, y se recalcula sola. Todo lo que viene despues -las tarjetas,
+     los cuadros, el balance- sigue leyendo `fechas` sin enterarse del cambio.
+
+     LO QUE SE PIERDE, dicho para que conste: con un rango ya no se pueden elegir
+     tres dias sueltos y salteados. Vacio sigue queriendo decir todas. */
+  /* ARRANCA EN LA SEMANA ACTUAL, de lunes a sabado. Daniel, 02-sep-2026:
+     *"deberia filtrarme siempre la semana actual... desde el treinta y uno de
+     agosto hasta el sabado cinco de septiembre"*.
+
+     LUNES A SABADO Y NO A DOMINGO porque el CD no trabaja el domingo: los
+     archivos de ese dia bajan vacios. Meterlo en el rango solo agrega una jornada
+     en cero que ensucia los promedios.
+
+     Y VA CON LA FECHA DEL CALENDARIO, no con la jornada logica: la jornada salta
+     al dia siguiente a las 19:00, asi que un lunes a las 20:00 la semana se
+     correria sola a la siguiente. */
+  const semanaActual = () => {
+    const h = new Date();
+    const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+                     + '-' + String(d.getDate()).padStart(2, '0');
+    const lunes = new Date(h.getFullYear(), h.getMonth(), h.getDate());
+    lunes.setDate(lunes.getDate() - ((h.getDay() + 6) % 7));   // 0=domingo -> 6
+    const sabado = new Date(lunes);
+    sabado.setDate(lunes.getDate() + 5);
+    return { desde: iso(lunes), hasta: iso(sabado) };
+  };
+
+  const _sem = semanaActual();
+  const pickFiltro = { seg: 'calzado', fechas: [], desde: _sem.desde, hasta: _sem.hasta };
+
+  /** Las fechas que caen dentro del rango. Vacio en los dos extremos = todas. */
+  const fechasDelRango = (todos) => {
+    const d = pickFiltro.desde, h = pickFiltro.hasta;
+    if (!d && !h) return [];
+    return todos.filter(x => (!d || x >= d) && (!h || x <= h));
+  };
 
   /**
    * El filtro de fechas. `conPicking` es opcional: cuando viene, las fechas que
    * no tienen archivo de picking se marcan como tales.
    */
   const comboFechas = (todos, conPicking) => {
-    const sel = pickFiltro.fechas;
-    const corta = (d) => nDia(d).slice(0, 5);
-    const rotulo = !sel.length ? 'Todas las fechas'
-                 : sel.length === 1 ? corta(sel[0])
-                 : `${sel.length} fechas`;
-    const CAJA = 'background:var(--panel-deeper); color:var(--text-main); border:1px solid var(--border);'
-               + ' border-radius:8px; padding:0.34rem 0.65rem; font-size:var(--t-sm);'
-               + ' font-weight:700; cursor:pointer; font-family:inherit;';
-    const filas = [['', sel.length ? 'Quitar todas' : 'Todas']]
-      .concat(todos.map(d => [d, corta(d)]));
+    const hay = todos.length ? todos : [''];
+    /* Manda lo elegido; si esta vacio -porque Daniel lo borro- se muestra todo
+       lo que hay guardado, que es lo que en ese caso se esta viendo. */
+    const desde = pickFiltro.desde || hay[0];
+    const hasta = pickFiltro.hasta || hay[hay.length - 1];
+    /* Cuantos dias caen dentro, y cuantos de esos tienen archivo de picking. Sin
+       este renglon un rango que no toca ningun dia con datos se ve igual que uno
+       lleno, y la pantalla sale vacia sin decir por que. */
+    const dentro = todos.filter(x => x >= desde && x <= hasta);
+    const conArchivo = conPicking ? dentro.filter(x => conPicking.has(x)).length : dentro.length;
+    const pie = !dentro.length ? 'ningun dia en ese rango'
+              : conPicking && conArchivo < dentro.length
+                ? `${dentro.length} dias, ${conArchivo} con picking`
+                : `${dentro.length} dia${dentro.length === 1 ? '' : 's'}`;
     return `
-      <div style="position:relative;">
-        <button data-pickmenu="1" style="${CAJA} display:flex; align-items:center; gap:0.45rem; min-width:9.5rem; justify-content:space-between;">
-          <span>${rotulo}</span>
-          <span style="font-size:var(--t-xs); opacity:0.75;">${pickMenuAbierto ? '▲' : '▼'}</span>
-        </button>
-        ${!pickMenuAbierto ? '' : `
-        <div data-pickcerrar="1" title="cerrar"
-             style="position:fixed; top:0; left:0; right:0; bottom:0; z-index:39;"></div>
-        <div data-pickscroll="1"
-             style="position:absolute; z-index:40; top:calc(100% + 4px); right:0; min-width:100%;
-                    background:var(--panel-deeper); border:1px solid var(--border); border-radius:8px;
-                    padding:0.25rem; max-height:16rem; overflow:auto; box-shadow:0 8px 22px rgba(var(--shadow-rgb), 0.5);">
-          ${filas.map(([v, t]) => {
-            const on = v ? sel.indexOf(v) >= 0 : !sel.length;
-            // Sin archivo de picking la fecha igual está, y ahora lo dice con
-            // todas las letras: antes era un punto amarillo que había que adivinar.
-            const soloAlm = v && conPicking && !conPicking.has(v);
-            return `<div data-fecha="${v}"
-                         style="display:flex; align-items:center; gap:0.45rem; padding:0.3rem 0.5rem;
-                                border-radius:6px; font-size:var(--t-sm); font-weight:700; white-space:nowrap;
-                                cursor:pointer; color:${on ? 'var(--text-main)' : (soloAlm ? 'var(--warning-soft)' : 'var(--text-muted)')};
-                                background:${on && v ? 'rgba(var(--primary-rgb), 0.18)' : 'transparent'};">
-                      <span style="width:0.85rem; color:var(--brand-light);">${on ? '✓' : ''}</span>${t}
-                      ${soloAlm ? '<span style="margin-left:auto; padding-left:0.9rem; font-size:var(--t-xs); color:var(--warning-soft);">solo almacenaje</span>' : ''}
-                    </div>`;
-          }).join('')}
-        </div>`}
+      <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+        ${selectorRango(desde, hasta, '', { idDesde: 'pick_desde', idHasta: 'pick_hasta' })}
+        <span style="font-size:var(--t-xs); color:var(--text-muted); font-weight:700;">${pie}</span>
       </div>`;
   };
 
   /**
-   * Engancha el menu de fechas. Lo usan las dos pantallas que lo muestran
-   * -Prepack y Reporte Picking- porque el codigo era el mismo copiado dos veces:
-   * arreglar el desplazamiento en una y no en la otra habria dejado el defecto
-   * a medias.
+   * Engancha el rango de fechas. Lo usan las DOS pantallas que lo muestran
+   * -Analisis Prepack y Reporte Picking-, que es la razon por la que el control
+   * vive en una sola funcion: cuando estaba copiado dos veces, arreglarlo en una
+   * dejaba el defecto en la otra.
    *
    * `redibujar` es la funcion que vuelve a pintar esa pantalla.
    */
   const engancharComboFechas = (container, redibujar) => {
-    const lista = container.querySelector('[data-pickscroll]');
-    if (lista) {
-      // Se devuelve a donde estaba ANTES de que el clic redibujara todo.
-      lista.scrollTop = pickMenuScroll;
-      lista.addEventListener('scroll', () => { pickMenuScroll = lista.scrollTop; });
-    }
-    container.querySelectorAll('[data-fecha]').forEach(b => {
-      b.onclick = () => {
-        const l = container.querySelector('[data-pickscroll]');
-        if (l) pickMenuScroll = l.scrollTop;
-        const f = b.dataset.fecha;
-        if (!f) pickFiltro.fechas = [];
-        else if (pickFiltro.fechas.indexOf(f) >= 0) pickFiltro.fechas = pickFiltro.fechas.filter(x => x !== f);
-        else pickFiltro.fechas = pickFiltro.fechas.concat([f]);
-        redibujar(container);
-      };
-    });
-    container.querySelectorAll('[data-pickmenu],[data-pickcerrar]').forEach(b => {
-      b.onclick = () => {
-        // Al abrirlo de nuevo se arranca desde arriba: es una consulta nueva.
-        if (!pickMenuAbierto) pickMenuScroll = 0;
-        pickMenuAbierto = b.hasAttribute('data-pickmenu') ? !pickMenuAbierto : false;
-        redibujar(container);
-      };
-    });
+    const d = container.querySelector('#pick_desde');
+    const h = container.querySelector('#pick_hasta');
+    const cambio = () => {
+      pickFiltro.desde = d ? d.value : '';
+      pickFiltro.hasta = h ? h.value : '';
+      /* AL REVES SE ARREGLA SOLO: si el desde queda despues del hasta, el rango
+         seria vacio y pareceria que no hay datos. Se dan vuelta y listo. */
+      if (pickFiltro.desde && pickFiltro.hasta && pickFiltro.desde > pickFiltro.hasta) {
+        const t = pickFiltro.desde;
+        pickFiltro.desde = pickFiltro.hasta;
+        pickFiltro.hasta = t;
+      }
+      redibujar(container);
+    };
+    if (d) d.addEventListener('change', cambio);
+    if (h) h.addEventListener('change', cambio);
   };
 
   const tarjetaPick = (rotulo, valor, pie, color) => `
@@ -34219,7 +34221,9 @@ window.__menuMapa = (btn) => {
     if (!container.isConnected || container.dataset.vista !== 'prepack-picking') return;
 
     const todos = Object.keys(pickingDiasCache).sort();
-    pickFiltro.fechas = (pickFiltro.fechas || []).filter(d => todos.includes(d));
+    /* Las fechas salen del RANGO elegido; vacio quiere decir todas. Todo lo que
+       viene despues sigue leyendo `pickFiltro.fechas` sin enterarse. */
+    pickFiltro.fechas = fechasDelRango(todos);
     const elegidos = pickFiltro.fechas.length
         ? todos.filter(d => pickFiltro.fechas.indexOf(d) >= 0)
         : todos;
@@ -34316,7 +34320,9 @@ window.__menuMapa = (btn) => {
       return;
     }
 
-    pickFiltro.fechas = (pickFiltro.fechas || []).filter(d => todos.includes(d));
+    /* Las fechas salen del RANGO elegido; vacio quiere decir todas. Todo lo que
+       viene despues sigue leyendo `pickFiltro.fechas` sin enterarse. */
+    pickFiltro.fechas = fechasDelRango(todos);
     const marcadas = pickFiltro.fechas.length
         ? todos.filter(d => pickFiltro.fechas.indexOf(d) >= 0)
         : todos;
