@@ -596,6 +596,18 @@ try:
     def _log(t, nivel='INFO'):
         print('[%s] %s' % (nivel, t))
 
+    # UN CUADRO VACIO NO SE PUBLICA NUNCA.
+    #
+    # El 02-sep-2026 una corrida leyo el archivo equivocado, saco cero lineas y
+    # sin fecha, y piso en el servidor el cuadro bueno del dia anterior. Que el
+    # calculo salga mal no puede borrar lo que ya estaba: si no hay dia o no hay
+    # ni una linea, se avisa y no se manda nada.
+    _T = salida['vistas'][TODOS]['totales']
+    if not dia or not _T.get('lineas'):
+        print('[AVISO] el cuadro salio vacio (dia=%s, lineas=%s): NO se publica, '
+              'se deja el que ya estaba' % (dia, _T.get('lineas')))
+        raise SystemExit(1)
+
     publicar('picking_por_hora', salida, dia, _log)
 except Exception as _e:
     print('[ERROR] no se pudo publicar: %s: %s' % (type(_e).__name__, _e))
