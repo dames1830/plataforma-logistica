@@ -201,7 +201,12 @@ MAESTROS = [os.path.join(os.path.dirname(BASE), 'Maestro_Articulos.xlsx'),
 RUTAS_CAND = [os.path.join(os.path.dirname(BASE), 'Proyecto web Logistico',
                            'RUTAS -  TURNOS.xlsx'),
               os.path.join('C:' + os.sep, 'wms_scraping', '_rutas.xlsx')]
-SALIDA = os.path.join('C:' + os.sep, 'wms_scraping', 'logs', 'picking_por_hora.json')
+# EL AREA Y EL ARCHIVO SON LO MISMO, escrito una sola vez. Estuvieron sueltos y
+# el robot de embalaje quedo escribiendo en el JSON del picking: el cruce comparo
+# el web report de picking contra los numeros del embalaje y dio 3.480 de
+# diferencia sin que nada pareciera roto.
+AREA = 'picking_por_hora'
+SALIDA = os.path.join('C:' + os.sep, 'wms_scraping', 'logs', AREA + '.json')
 
 
 def limpio(v):
@@ -608,6 +613,6 @@ try:
               'se deja el que ya estaba' % (dia, _T.get('lineas')))
         raise SystemExit(1)
 
-    publicar('picking_por_hora', salida, dia, _log)
+    publicar(AREA, salida, dia, _log)
 except Exception as _e:
     print('[ERROR] no se pudo publicar: %s: %s' % (type(_e).__name__, _e))
