@@ -23,7 +23,8 @@ las 21:30, que ademas es hueco: el stock por hora entra 22:00 y el respaldo 23:0
 
 QUE DIA COMPARA. Por defecto el de HOY, que es el que acaban de dejar los dos
 avances. Con `--dia DD-MM-AAAA` se puede rehacer uno viejo, siempre que sus dos
-JSON sigan en logs.
+JSON sigan en logs. Con `--sin-bajar` se rehace el cruce con los Excel que ya
+estan en disco, sin entrar al WMS.
 
 Publica en el area `cruce_wms`, en produccion y en beta.
 """
@@ -388,11 +389,15 @@ def main():
     log('=' * 62)
 
     # ── 1. los dos web reports ──────────────────────────────────────────
-    bajados = prodhora_web.bajar(dia)
+    # CON `--sin-bajar` NO SE ENTRA AL WMS: se usan los Excel que ya estan en
+    # disco. Sirve para rehacer un cruce sin ocupar el WMS otra vez, que es lo
+    # caro de esta corrida —y lo que se le quita a los demas robots—.
+    bajados = {} if '--sin-bajar' in args else prodhora_web.bajar(dia)
     for clave in LADOS:
         ruta = os.path.join(WEBDIR, '%s_%s.xlsx' % (clave, dia_corto))
         if clave not in bajados and os.path.isfile(ruta):
-            log('%s no se bajo ahora, pero hay uno de antes: se usa ese' % clave, 'AVISO')
+            log('%s: se usa el Excel que ya estaba en disco' % clave,
+                'INFO' if '--sin-bajar' in args else 'AVISO')
             bajados[clave] = ruta
     if not bajados:
         log('no hay ningun web report; no se publica nada', 'ERROR')
