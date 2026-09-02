@@ -1,0 +1,253 @@
+<title>Lanzamiento a producción</title>
+<style>
+:root{
+  --bg:#F3F2F1; --pan:#FFFFFF; --alt:#FAF9F8; --deep:#EDEBE9;
+  --ln:#E1DFDD; --ln2:#D2D0CE;
+  --tx:#201F1E; --tx2:#3B3A39; --mut:#605E5C; --dim:#8A8886;
+  --pri:#0E76D6; --ok:#148833; --ojo:#C19C00; --mal:#B03A2E;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#16181C; --pan:#1E2126; --alt:#23272E; --deep:#2A2F37;
+  --ln:#31363F; --ln2:#3D434D;
+  --tx:#EDEEF0; --tx2:#C9CCD1; --mut:#9AA0A8; --dim:#767D86;
+  --pri:#4DA3F5; --ok:#4CAF6A; --ojo:#D9BE4A; --mal:#E8776A;
+}}
+:root[data-theme="dark"]{
+  --bg:#16181C; --pan:#1E2126; --alt:#23272E; --deep:#2A2F37;
+  --ln:#31363F; --ln2:#3D434D;
+  --tx:#EDEEF0; --tx2:#C9CCD1; --mut:#9AA0A8; --dim:#767D86;
+  --pri:#4DA3F5; --ok:#4CAF6A; --ojo:#D9BE4A; --mal:#E8776A;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding:26px 20px 70px;
+  display:flex;flex-direction:column;gap:18px}
+h1{font-size:25px;font-weight:700;margin:0;letter-spacing:-.01em}
+h2{font-size:16px;font-weight:700;margin:0;letter-spacing:-.01em}
+h3{font-size:12px;font-weight:700;margin:20px 0 8px;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--tx2)}
+p{margin:0}
+code{font-family:Consolas,'SF Mono',monospace;font-size:12.5px;background:var(--deep);
+  padding:1px 5px;border-radius:3px}
+.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.top{border-bottom:2px solid var(--ln2);padding-bottom:16px}
+.eti{display:inline-block;background:var(--ojo);color:#201F1E;font-weight:700;
+  font-size:11px;letter-spacing:.09em;padding:2px 8px;border-radius:3px;margin-bottom:7px}
+.sub{color:var(--mut);font-size:13.5px;max-width:86ch;margin-top:6px}
+
+.pan{background:var(--pan);border:1px solid var(--ln);border-radius:6px;padding:18px 20px 22px}
+.cab{border-bottom:1px solid var(--ln);padding-bottom:12px;margin-bottom:14px}
+.cab p{color:var(--mut);font-size:12.5px;margin-top:5px}
+
+.marc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.mar{background:var(--alt);border:1px solid var(--ln);border-radius:5px;padding:12px 14px}
+.mar b{display:block;font-size:23px;font-variant-numeric:tabular-nums;line-height:1.15}
+.mar span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+
+table{border-collapse:collapse;width:100%;font-size:13px}
+.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:5px}
+th{background:var(--deep);text-align:left;font-size:11px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--tx2);
+  padding:8px 11px;border-bottom:1px solid var(--ln2);white-space:nowrap}
+th.n{text-align:right}
+td{padding:7px 11px;border-bottom:1px solid var(--ln);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:var(--alt)}
+td.q{color:var(--mut);font-size:12.5px}
+
+.pill{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  padding:2px 7px;border-radius:3px;white-space:nowrap}
+.pill.nuevo{background:rgba(20,136,51,.16);color:var(--ok)}
+.pill.toca{background:rgba(193,156,0,.20);color:var(--ojo)}
+.pill.ya{background:rgba(14,118,214,.14);color:var(--pri)}
+
+ol,ul{margin:6px 0 0;padding-left:22px}
+li{margin-bottom:8px}
+.nota{background:var(--alt);border:1px solid var(--ln);border-left:3px solid var(--ojo);
+  border-radius:0 5px 5px 0;padding:11px 14px;font-size:13px;color:var(--tx2)}
+.nota.ok{border-left-color:var(--ok)}
+.nota.mal{border-left-color:var(--mal)}
+.nota b{color:var(--tx)}
+.dos{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.chk{list-style:none;padding-left:0}
+.chk li{display:flex;gap:10px;align-items:flex-start}
+.chk li::before{content:'';flex:none;width:14px;height:14px;margin-top:4px;
+  border:1.5px solid var(--ln2);border-radius:3px}
+</style>
+
+<div class="wrap">
+
+<div class="top">
+  <span class="eti">DECISIÓN PENDIENTE · 2 DE SEPTIEMBRE DE 2026</span>
+  <h1>Lanzamiento a producción</h1>
+  <p class="sub">Todo lo que se iría de <b>beta</b> a <b>producción</b> si das la orden:
+    diecisiete versiones, de la <b>v29.0517</b> a la <b>v29.0533</b>. Están las tres
+    pantallas nuevas de Picking y sus robots, y también lo que ya estaba esperando
+    de antes.</p>
+</div>
+
+<div class="marc">
+  <div class="mar"><span>Versiones</span><b>17</b></div>
+  <div class="mar"><span>Archivos</span><b>41</b></div>
+  <div class="mar"><span>Líneas</span><b>4.820</b></div>
+  <div class="mar"><span>Archivos nuevos</span><b>14</b></div>
+  <div class="mar"><span>Que ya existían</span><b>4</b></div>
+</div>
+
+<div class="nota ok">
+  <b>Los robots ya están corriendo</b>, con o sin este lanzamiento: viven en el
+  servidor, no en la web. Ya publican en producción y en beta a la vez. Lo que
+  desbloquea el lanzamiento son dos cosas: que las <b>tres pantallas se vean en
+  producción</b>, y que el servidor pase a guardar <b>un mes</b> por área en vez de
+  dos días — que es lo único que impide subir los 60 días ya calculados.
+</div>
+
+<section class="pan">
+  <div class="cab"><h2>Lo que se ve en la plataforma</h2>
+    <p>Tres submódulos nuevos dentro de <b>Picking</b>. Nada más cambia de sitio.</p></div>
+  <div class="sc"><table>
+    <thead><tr><th>Pantalla</th><th>Qué muestra</th><th>De dónde sale</th></tr></thead>
+    <tbody>
+      <tr><td><b>Picking por día</b></td>
+        <td class="q">Quién picó qué, hora por hora, las 24 horas. Por persona, marca,
+          colección y de dónde salió. Volumen o efectividad, y filtro de canal con
+          selección múltiple. Rango de fecha a fecha.</td>
+        <td class="q">Archivo de picking del WMS</td></tr>
+      <tr><td><b>Embalaje por día</b></td>
+        <td class="q">La misma pantalla, sobre el OBLPN.</td>
+        <td class="q">OBLPN de embalaje</td></tr>
+      <tr><td><b>Cruce</b></td>
+        <td class="q">Los dos web reports del WMS contra lo que calcula la plataforma.
+          Se ve uno a la vez; cada celda que no cuadra se abre y muestra las líneas
+          exactas: artículo, tienda, ubicación y hora.</td>
+        <td class="q">Los dos web reports + lo calculado</td></tr>
+    </tbody></table></div>
+  <div class="nota" style="margin-top:14px">
+    Solo las ve quien tenga permiso. Para admin salen solas; para los demás roles
+    hay que marcarlas en <b>Configuración → Permisos</b>, igual que las otras.
+  </div>
+</section>
+
+<section class="pan">
+  <div class="cab"><h2>Lo que cambia por dentro</h2>
+    <p>Cuatro archivos que ya existían. El resto son nuevos y no le quitan nada a nadie.</p></div>
+  <div class="sc"><table>
+    <thead><tr><th>Archivo</th><th class="n">Líneas</th><th>Qué le pasa</th></tr></thead>
+    <tbody>
+      <tr><td><code>backend/main.py</code></td><td class="n">+8</td>
+        <td class="q"><span class="pill toca">toca lo que había</span> Las tres áreas
+          nuevas pasan a guardar <b>31 días</b> en vez de 2. <b>No cambia nada de las
+          otras 60 áreas.</b> Es el único motivo por el que hace falta desplegar.</td></tr>
+      <tr><td><code>js/views/dashboard_v28.js</code></td><td class="n">+166</td>
+        <td class="q"><span class="pill toca">toca lo que había</span> Tres sitios y
+          nada más: las tres pestañas en la lista, las funciones que traen los datos,
+          y tres renglones que dicen qué dibujar. Comprobado con el diff.</td></tr>
+      <tr><td><code>js/services_v245/robotsService.js</code></td><td class="n">+18</td>
+        <td class="q"><span class="pill toca">toca lo que había</span> Aparecen
+          <b>Cruce contra el WMS</b> y <b>Cierre del día anterior</b> en
+          Configuración → Robots, para poder moverles la hora.</td></tr>
+      <tr><td><code>robot/horario_robot.py</code></td><td class="n">+19</td>
+        <td class="q"><span class="pill toca">toca lo que había</span> Los valores de
+          respaldo de los horarios. <b>Ya está puesto en el servidor.</b></td></tr>
+      <tr><td><code>robot/ejecutar_picking_hora.bat</code><br>
+              <code>robot/ejecutar_oblpn_hora.bat</code></td><td class="n">+50</td>
+        <td class="q"><span class="pill ya">ya en el servidor</span> Se les agregó un
+          segundo paso detrás del que ya baja del WMS. Si la bajada falla, el cuadro se
+          rehace igual con el archivo del pase anterior, y el código de salida sigue
+          siendo el de la bajada.</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="pan">
+  <div class="cab"><h2>Los archivos nuevos</h2>
+    <p>Ninguno pisa nada. Los del robot ya están instalados y andando.</p></div>
+  <div class="dos">
+    <div>
+      <h3>La plataforma</h3>
+      <div class="sc"><table>
+        <thead><tr><th>Archivo</th><th class="n">Líneas</th></tr></thead>
+        <tbody>
+          <tr><td><code>js/reportes/produccion_hora.js</code></td><td class="n">814</td></tr>
+          <tr><td><code>js/reportes/cruce_wms.js</code></td><td class="n">381</td></tr>
+        </tbody></table></div>
+      <h3>Pruebas y maquetas</h3>
+      <div class="sc"><table>
+        <thead><tr><th>Archivo</th><th class="n">Líneas</th></tr></thead>
+        <tbody>
+          <tr><td><code>scratch/ver_produccion.html</code></td><td class="n">105</td></tr>
+          <tr><td><code>scratch/cruce_wms.html</code></td><td class="n">200</td></tr>
+          <tr><td><code>scratch/cruce_wms_embalaje.html</code></td><td class="n">195</td></tr>
+        </tbody></table></div>
+    </div>
+    <div>
+      <h3>Los robots del servidor</h3>
+      <div class="sc"><table>
+        <thead><tr><th>Archivo</th><th class="n">Líneas</th></tr></thead>
+        <tbody>
+          <tr><td><code>produccion_picking.py</code></td><td class="n">672</td></tr>
+          <tr><td><code>produccion_embalaje.py</code></td><td class="n">737</td></tr>
+          <tr><td><code>cruce_wms.py</code></td><td class="n">441</td></tr>
+          <tr><td><code>prodhora_web.py</code></td><td class="n">336</td></tr>
+          <tr><td><code>rellenar_historico.py</code></td><td class="n">226</td></tr>
+          <tr><td><code>cierre_dia.py</code></td><td class="n">130</td></tr>
+          <tr><td><code>ajustar_horarios.py</code></td><td class="n">106</td></tr>
+          <tr><td><code>publicar_area.py</code></td><td class="n">66</td></tr>
+          <tr><td class="q">tres <code>.bat</code> que los lanzan</td><td class="n">97</td></tr>
+        </tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<section class="pan">
+  <div class="cab"><h2>Lo que ya está hecho y no espera el lanzamiento</h2></div>
+  <ul>
+    <li><b>Los cuatro robots están instalados y corriendo</b> en el servidor. El
+      avance de picking a las 10:00, 12:00, 14:00, 16:00, 18:00 y 20:00; el de
+      embalaje veinte minutos después; el cierre del día a las 08:30 y el cruce a
+      las 21:30.</li>
+    <li><b>Los horarios ya están publicados</b> y comprobados leyendo el servidor.
+      Quedó copia de la configuración anterior.</li>
+    <li><b>60 días calculados y guardados</b> en el servidor: 32 de picking (del
+      20-jul al 31-ago, 7,9 MB) y 28 de embalaje (del 01-ago al 01-sep, 1,8 MB).
+      Se suben con un comando en cuanto el tope esté arriba.</li>
+    <li><b>El servidor quedó limpio</b>: 35 tareas de prueba borradas —con respaldo
+      de cada definición— y 141 scripts sueltos archivados, no borrados.</li>
+  </ul>
+</section>
+
+<section class="pan">
+  <div class="cab"><h2>Lo que hay que mirar</h2>
+    <p>Para decidir con los ojos abiertos</p></div>
+  <ol>
+    <li><b>Arrastra lo que beta ya tenía esperando de antes.</b> Las diecisiete
+      versiones son todas de estos dos días, pero producción venía de la v29.0516,
+      así que lo anterior a eso ya estaba lanzado. Aquí no hay nada viejo colado.</li>
+    <li><b>El disco del servidor.</b> Un mes de las tres áreas son unos 10 MB. La base
+      ya venía en 343 MB sin comprimir y eso sigue pendiente aparte.</li>
+    <li><b>Hay un archivo del robot que vive solo en el servidor.</b>
+      <code>picking_por_hora.py</code> —el que baja del WMS— no está en el repositorio,
+      y se le aplicó un parche para que guarde una copia del CSV que antes borraba.
+      El parche deja respaldo y se puede volver a aplicar, pero conviene meter ese
+      archivo al repositorio para no depender de una copia suelta.</li>
+    <li><b>El tope de 31 días es un número elegido, no una ley.</b> Si el disco
+      aprieta, el primero que hay que bajar es <code>picking_por_hora</code>, que es
+      el más gordo de los tres.</li>
+  </ol>
+</section>
+
+<section class="pan">
+  <div class="cab"><h2>Después de desplegar</h2>
+    <p>El orden importa</p></div>
+  <ul class="chk">
+    <li>Abrir producción y comprobar que las tres pestañas salen en Picking.</li>
+    <li>Subir los 60 días guardados: <code>rellenar_historico.py --publicar</code>.</li>
+    <li>Comprobar que el rango de fechas ya trae más de dos días.</li>
+    <li>Mirar el avance de las 10:00 y el de las 10:20 en el log del servidor.</li>
+    <li>Mañana a las 08:30, comprobar que el cierre bajó el OBLPN del día anterior
+      entero y volvió a publicar los dos cuadros.</li>
+  </ul>
+</section>
+
+</div>

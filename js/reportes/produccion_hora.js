@@ -29,7 +29,7 @@
  * }
  */
 
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0533';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0534';
 
 const nf = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE') : '–';
 const esc = (t) => String(t == null ? '' : t)
@@ -658,9 +658,18 @@ export function montarProduccionHora(cont, OPC) {
     function pintarMatriz(v) {
         const esEf = vista === 'ef';
         const suf = CAMPO[clase];
-        const dato = (c, dia) => esEf
-            ? ritmo(c[suf + '_l'] != null ? c[suf + '_l'] : c.lineas, c[suf + '_iv'], !!dia)
-            : c[suf];
+        /* LA HORA QUE NO VIENE ES UNA HORA VACIA, y eso se resuelve ACA ADENTRO.
+           El robot dejo de escribir las celdas en cero para no doblar el archivo, y
+           yo tape los sitios que las leian uno por uno... y me salte el del maximo.
+           En pantalla salia "Cannot read properties of undefined (reading 'total')".
+           Puesto en `dato`, cualquier sitio que lea una celda queda cubierto, hoy y
+           el dia que se agregue otro. */
+        const dato = (celda, dia) => {
+            const c = celda || {};
+            return esEf
+                ? ritmo(c[suf + '_l'] != null ? c[suf + '_l'] : c.lineas, c[suf + '_iv'], !!dia)
+                : c[suf];
+        };
 
         /* CADA VISTA FILTRA POR LO SUYO. En Volumen entra quien movió pares; en
            Efectividad, solo quien tiene ritmo medible. Antes el filtro miraba el
