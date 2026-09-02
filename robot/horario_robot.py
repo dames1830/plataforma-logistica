@@ -60,7 +60,7 @@ DE_FABRICA = {
     'ancla_manana': {'activa': True, 'hora': '07:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'stock_hora':   {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '22:00', 'hasta': '06:00'},
-    'picking_hora': {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00', 'saltar': ['18:20']},
+    'picking_hora': {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00'},
     # EL TRIO PASO DE CADA HORA A CADA 2 HORAS el 30-ago-2026, medido: entre stock (9,2
     # min) y picking (16,9) tenian el WMS ocupado 10,4 horas al dia, y el picking de las
     # 06:50 terminaba 07:07 pisando al ancla de las 07:00. Ahora son 5,2 horas y ningun
@@ -108,16 +108,22 @@ DE_FABRICA = {
     # dos entran al WMS y solo cabe uno; si arrancara antes, uno perderia la vuelta.
     # Baja el dia EN CURSO (--hoy) y pisa el archivo en cada pase: siempre queda el
     # ultimo estado. El ultimo pase del dia es a las 22:40.
-    'oblpn_hora':   {'activa': True, 'minuto': 40, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00', 'saltar': ['18:40']},
+    'oblpn_hora':   {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00'},
     # EL CRUCE CONTRA EL WMS, una vez al dia y al final. Baja los dos web reports
     # -PRODUCCION PICKING / EMBALAJE ALDEAS X HORA- y los compara contra lo que
     # calculo la plataforma. Va a las 21:30 porque el ultimo pase del avance de
     # picking es 20:20 y el de embalaje 20:40: antes compararia medio dia. Y es
     # hueco: el stock por hora entra 22:00 y el respaldo 23:00.
+    # EL CIERRE DEL DIA ANTERIOR, de 00:00 a 23:59. Baja el OBLPN de ayer entero
+    # y recalcula los dos cuadros; lo que queda en el historial es esto y no el
+    # ultimo avance. A las 08:30 porque el robot de las 07:20 tarda hasta 40
+    # minutos y el primer avance no entra hasta las 10:00.
+    'cierre_dia':   {'activa': True, 'hora': '08:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
+                                                               'jue': True, 'vie': True, 'sab': True, 'dom': True}},
     'cruce_wms':    {'activa': True, 'hora': '21:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
 }
-DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida', 'cruce_wms')
+DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida', 'cruce_wms', 'cierre_dia')
 
 
 def _leer_web(timeout=20):

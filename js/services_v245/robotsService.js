@@ -77,6 +77,12 @@ export const TAREAS = [
     /* VA DESPUÉS DE TODO EL TURNO. El último pase del avance de picking es 20:20 y el
        de embalaje 20:40; antes de esa hora el cruce compararía medio día. Las 21:30
        además es hueco: el stock por hora entra 22:00 y el respaldo 23:00. */
+    /* EL CIERRE DEL DIA ANTERIOR, de 00:00 a 23:59. El avance de cada 2 horas
+       termina a las 20:20 y el dia sigue: un reporte completo solo se puede bajar
+       despues de medianoche. Esto es lo que queda en el historial. */
+    { id: 'cierre_dia', tipo: 'diaria', etiqueta: 'Cierre del día anterior',
+      detalle: 'el día entero, de 00:00 a 23:59; es el que queda en el historial',
+      area: 'embalaje_por_hora' },
     { id: 'cruce_wms', tipo: 'diaria', etiqueta: 'Cruce contra el WMS',
       detalle: 'los dos web reports del WMS contra lo que calcula la plataforma',
       area: 'cruce_wms' }
@@ -113,6 +119,7 @@ export const robotsPorDefecto = () => ({
     archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } },
     sin_salida:   { activa: true, hora: '07:30', dias: { ...LUN_A_SAB } },
     asn_web:      { activa: true, hora: '04:30', dias: { ...TODOS } },
+    cierre_dia:   { activa: true, hora: '08:30', dias: { ...TODOS } },
     cruce_wms:    { activa: true, hora: '21:30', dias: { ...LUN_A_SAB } }
 });
 
