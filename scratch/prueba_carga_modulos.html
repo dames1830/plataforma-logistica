@@ -29,7 +29,7 @@ en el servidor, asi que correrlo crearia tareas de verdad. De ese solo se compru
 <div id="corral"></div>
 <div id="resumen"></div>
 <script type="module">
-const V = '?v=29.0553';
+const V = '?v=29.0554';
 const MODULOS = [
   { ruta: '../js/reportes/slotting_barrido.js' + V,
     esperado: ['barrerParaSlotting'],
@@ -49,6 +49,21 @@ const MODULOS = [
         TURNO_API: 'https://logistics-backend-wv0x.onrender.com/api/logistics',
         AREA_RESERVA_DE_LA_HORA: 'reserva_hora',
       });
+    } },
+
+  { ruta: '../js/reportes/inventarios.js' + V,
+    esperado: ['montarInventarios'],
+    dibuja: async (mod, caja) => {
+      // Sin sesion ni areas cargadas tiene que dibujar su cascara igual.
+      await mod.montarInventarios(caja, {
+        renderUploadArea: () => '',
+        showPremiumConfirm: () => Promise.resolve(false),
+        updateERIUI_Unified: () => {},
+        processERIAnalysis: () => {},
+        processReporteUCA: () => {},
+        displayReporteUCA: () => {},
+      });
+      await new Promise(r => setTimeout(r, 400));
     } },
 ];
 
