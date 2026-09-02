@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Producción por día — vista de prueba</title>
+<!--
+  LAS TRES PANTALLAS NUEVAS DE PICKING, REALES, SIN CONTRASENA.
+
+  Monta `js/reportes/produccion_hora.js` y `js/reportes/cruce_wms.js` tal cual los
+  dibuja la plataforma, con lo que hay publicado EN BETA. Sirve para verlas sin
+  entrar con usuario y sin levantar el tablero entero.
+
+  Se abre con el servidor local:  python -m http.server 5599 --bind 127.0.0.1
+  y despues  http://127.0.0.1:5599/scratch/ver_produccion.html
+-->
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;padding:18px;font-family:Inter,system-ui,sans-serif}
+  #aviso{padding:8px 14px;margin-bottom:14px;border-radius:8px;font-weight:700;
+         font-size:.82rem;letter-spacing:.04em;background:rgba(245,158,11,.14);
+         color:#B45309;border:1px solid rgba(245,158,11,.35)}
+  #barra{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  #barra button{font:inherit;font-size:.82rem;font-weight:800;cursor:pointer;
+    padding:8px 18px;border-radius:999px;border:1px solid var(--border);
+    background:rgba(var(--ink-rgb),.04);color:var(--text-muted)}
+  #barra button[aria-pressed="true"]{background:rgba(var(--brand-rgb),.14);
+    border-color:var(--primary);color:var(--primary)}
+</style>
+</head>
+<body>
+<div id="aviso">VISTA DE PRUEBA · pantallas reales con lo publicado en BETA</div>
+<div id="barra"></div>
+<div id="caja"></div>
+
+<script type="module">
+import { montarProduccionHora } from '../js/reportes/produccion_hora.js';
+import { montarCruce } from '../js/reportes/cruce_wms.js';
+
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+/* LEE DE BETA, no de produccion: es donde se publico para probar. */
+const beta = { headers: { 'X-Environment': 'beta' } };
+
+const TEXTOS = {
+  picking:  { titulo: 'Picking por día', cuadro: 'Picking por hora', verbo: 'picó',
+              accion: 'movieron', origen: 'De dónde la sacan',
+              fuente: 'archivo de picking' },
+  embalaje: { titulo: 'Embalaje por día', cuadro: 'Embalaje por hora', verbo: 'embaló',
+              accion: 'embalaron', origen: 'De dónde salió',
+              fuente: 'OBLPN de embalaje' },
+};
+const AREA = { picking: 'picking_por_hora', embalaje: 'embalaje_por_hora' };
+
+const caja = document.getElementById('caja');
+const barra = document.getElementById('barra');
+let cual = 'picking';
+
+const fechasDe = (area) => fetch(`${API}/${area}/dates`, beta).then(r => r.json())
+    .then(j => (j.dates || []).sort()).catch(() => []);
+const datosDe = (area, f) => fetch(`${API}/${area}?date=${f}`, beta).then(r => r.json())
+    .then(j => (j && j.data !== undefined) ? j.data : j).catch(() => null);
+
+async function pintar() {
+  barra.innerHTML = [['picking', 'Picking por día'], ['embalaje', 'Embalaje por día'],
+                     ['cruce', 'Cruce']]
+      .map(([k, l]) => `<button data-k="${k}" aria-pressed="${k === cual}">${l}</button>`).join('');
+  barra.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    cual = b.dataset.k; pintar();
+  }));
+  caja.innerHTML = '<p style="opacity:.6">Trayendo lo publicado en beta...</p>';
+
+  if (cual === 'cruce') {
+    const fechas = await fechasDe('cruce_wms');
+    const fecha = fechas[fechas.length - 1];
+    const datos = fecha ? await datosDe('cruce_wms', fecha) : null;
+    montarCruce(caja, { datos, fecha, fechas, alCambiarFecha: () => {} });
+    return;
+  }
+
+  const area = AREA[cual];
+  const fechas = await fechasDe(area);
+  const ultimo = fechas[fechas.length - 1];
+  const dias = ultimo
+      ? [{ fecha: ultimo, datos: await datosDe(area, ultimo) }].filter(x => x.datos && x.datos.vistas)
+      : [];
+  montarProduccionHora(caja, {
+    dias, textos: TEXTOS[cual], desde: ultimo, hasta: ultimo, fechas,
+    alCambiarRango: () => {},
+  });
+}
+
+pintar();
+</script>
+</body>
+</html>

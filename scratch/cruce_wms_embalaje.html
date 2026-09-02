@@ -1,0 +1,195 @@
+<title>Cruce del embalaje</title>
+<style>
+:root{
+  --bg:#F3F2F1; --pan:#FFFFFF; --alt:#FAF9F8; --deep:#EDEBE9;
+  --ln:#E1DFDD; --ln2:#D2D0CE;
+  --tx:#201F1E; --tx2:#3B3A39; --mut:#605E5C; --dim:#8A8886;
+  --pri:#0E76D6; --mas:#B03A2E; --menos:#8A4FBF; --ok:#148833; --ojo:#C19C00;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#16181C; --pan:#1E2126; --alt:#23272E; --deep:#2A2F37;
+  --ln:#31363F; --ln2:#3D434D;
+  --tx:#EDEEF0; --tx2:#C9CCD1; --mut:#9AA0A8; --dim:#767D86;
+  --pri:#4DA3F5; --mas:#E8776A; --menos:#B78BE6; --ok:#4CAF6A; --ojo:#D9BE4A;
+}}
+:root[data-theme="dark"]{
+  --bg:#16181C; --pan:#1E2126; --alt:#23272E; --deep:#2A2F37;
+  --ln:#31363F; --ln2:#3D434D;
+  --tx:#EDEEF0; --tx2:#C9CCD1; --mut:#9AA0A8; --dim:#767D86;
+  --pri:#4DA3F5; --mas:#E8776A; --menos:#B78BE6; --ok:#4CAF6A; --ojo:#D9BE4A;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5}
+.wrap{max-width:1320px;margin:0 auto;padding:26px 20px 70px;
+  display:flex;flex-direction:column;gap:20px}
+h1{font-size:24px;font-weight:700;margin:0;letter-spacing:-.01em}
+h2{font-size:17px;font-weight:700;margin:0;letter-spacing:-.01em}
+h3{font-size:12px;font-weight:700;margin:20px 0 8px;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--tx2)}
+h3 .sut{text-transform:none;letter-spacing:0;font-weight:400;color:var(--mut);
+  font-size:12px;margin-left:8px}
+p{margin:0}
+code{font-family:Consolas,'SF Mono',monospace;font-size:12.5px;background:var(--deep);
+  padding:1px 5px;border-radius:3px}
+.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.top{border-bottom:2px solid var(--ln2);padding-bottom:16px}
+.maq{display:inline-block;background:var(--ojo);color:#201F1E;font-weight:700;
+  font-size:11px;letter-spacing:.09em;padding:2px 8px;border-radius:3px;margin-bottom:7px}
+.sub{color:var(--mut);font-size:13.5px;max-width:88ch;margin-top:6px}
+
+.pan{background:var(--pan);border:1px solid var(--ln);border-radius:5px;padding:18px 20px 22px}
+.cab{border-bottom:1px solid var(--ln);padding-bottom:12px;margin-bottom:4px}
+.cab p{color:var(--mut);font-size:12.5px;margin-top:5px}
+
+.marc{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;
+  margin-top:16px}
+.mar{background:var(--alt);border:1px solid var(--ln);border-radius:4px;padding:12px 14px;
+  display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px}
+.mar.gr{border-color:var(--ln2);background:var(--deep)}
+.mar .rot{flex:0 0 100%;font-size:11px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--mut)}
+.par{display:flex;flex-direction:column}
+.par b{font-size:21px;font-variant-numeric:tabular-nums;line-height:1.1}
+.par span{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.dd{margin-left:auto;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.pct{flex:0 0 100%;font-size:11.5px;color:var(--mut)}
+.mas{color:var(--mas)} .menos{color:var(--menos)} .ok{color:var(--dim)}
+
+.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:4px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{background:var(--deep);text-align:left;font-size:11px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--tx2);
+  padding:8px 10px;border-bottom:1px solid var(--ln2);white-space:nowrap;position:sticky;top:0}
+th.n{text-align:right}
+td{padding:6px 10px;border-bottom:1px solid var(--ln)}
+tbody tr:nth-child(even){background:var(--alt)}
+tbody tr.ojo{box-shadow:inset 3px 0 0 var(--ojo)}
+td.h{font-variant-numeric:tabular-nums;color:var(--mut)}
+td.tot{font-weight:700}
+td.de{color:var(--mut);font-size:12px}
+
+.cel{border:1px solid var(--ln);border-radius:4px;margin-bottom:8px;background:var(--alt)}
+.cel.neg{border-left:3px solid var(--menos)}
+.cel.pos{border-left:3px solid var(--mas)}
+.cel summary{cursor:pointer;padding:10px 14px;display:flex;align-items:center;gap:12px;
+  flex-wrap:wrap;list-style:none}
+.cel summary::-webkit-details-marker{display:none}
+.cel summary::before{content:'';width:6px;height:6px;flex:none;
+  border-right:1.6px solid var(--mut);border-bottom:1.6px solid var(--mut);
+  transform:rotate(-45deg);transition:transform .15s}
+.cel[open] summary::before{transform:rotate(45deg)}
+.cel summary:focus-visible{outline:2px solid var(--pri);outline-offset:-2px}
+.qui{font-weight:700;min-width:120px}
+.cua{font-variant-numeric:tabular-nums;color:var(--mut);min-width:52px}
+.tag{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  padding:2px 7px;border-radius:3px;border:1px solid var(--ln2);color:var(--mut)}
+.vs{color:var(--mut);font-size:12.5px}
+.vs b{color:var(--tx);font-variant-numeric:tabular-nums}
+.cel .d{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums}
+.cuerpo{padding:0 14px 14px;border-top:1px solid var(--ln)}
+.pista{background:var(--pan);border:1px solid var(--ln);border-left:3px solid var(--ojo);
+  border-radius:3px;padding:9px 12px;margin:12px 0;font-size:12.5px;color:var(--tx2)}
+.mas.pista{color:var(--tx2)}
+.cuerpo .mas{font-size:12px;color:var(--mut);margin-top:7px}
+table.lin td{font-size:12.5px}
+
+.nota{background:var(--alt);border:1px solid var(--ln);border-radius:4px;
+  padding:12px 15px;font-size:13px;color:var(--tx2)}
+.nota b{color:var(--tx)}
+ol{margin:8px 0 0;padding-left:22px}
+li{margin-bottom:7px}
+@media print{body{background:#fff}.cel .cuerpo{display:block}}
+</style>
+<div class="wrap">
+
+<div class="top">
+  <span class="maq">31 DE AGOSTO DE 2026</span>
+  <h1>Cruce del embalaje</h1>
+  <p class="sub">El web report <i>PRODUCCION EMBALAJE ALDEAS X HORA acc calz</i> del WMS contra la maqueta de <b>Embalaje por día</b>, puestos uno al lado del otro. <b>La maqueta no se tocó para que diera igual</b>: donde no
+    cuadra, abajo están las líneas exactas que lo causan &mdash;artículo, tienda,
+    ubicación y hora&mdash; para ir a buscarlas al WMS.</p>
+</div>
+
+<div class="nota">
+  <b>Cómo leerlo.</b> El reporte del WMS se llama <b>ALDEAS</b>: mira solo las
+  tiendas, así que la maqueta se compara filtrada en <b>canal RETAIL</b>. Los dos
+  lados están en <b>pares</b>, con el prepack ya convertido &mdash;la columna
+  <i>Cantidad convertida</i> del WMS hace lo mismo que la maqueta&mdash;.
+  <b>Dif. = maqueta &minus; WMS</b>: en rojo lo que la maqueta cuenta de más, en
+  morado lo que cuenta de menos.
+</div>
+
+
+<section class="pan" id="embalaje">
+  <div class="cab">
+    <h2>El cuadro</h2>
+    <p>WMS: <i>Produccion por Embalador X Hora - ALDEAS</i> &nbsp;·&nbsp; maqueta: <code>OBLPN 31-08.csv</code>,
+       canal RETAIL &nbsp;·&nbsp; la persona es <b>Usuario de modificación de asignación</b></p>
+  </div>
+
+  <div class="marc">
+    <div class="mar"><span class="rot">Calzado</span>
+      <div class="par"><b>20.816</b><span>WMS</span></div>
+      <div class="par"><b>20.838</b><span>maqueta</span></div>
+      <div class="dd mas">+22</div></div>
+    <div class="mar"><span class="rot">No calzado</span>
+      <div class="par"><b>5.020</b><span>WMS</span></div>
+      <div class="par"><b>5.262</b><span>maqueta</span></div>
+      <div class="dd mas">+242</div></div>
+    <div class="mar gr"><span class="rot">Total</span>
+      <div class="par"><b>25.836</b><span>WMS</span></div>
+      <div class="par"><b>26.100</b><span>maqueta</span></div>
+      <div class="dd mas">+264</div>
+      <div class="pct">98,98% de coincidencia</div></div>
+  </div>
+
+  <h3>Hora por hora</h3>
+  <div class="sc"><table>
+    <thead><tr><th>Hora</th>
+      <th class="n">WMS calz.</th><th class="n">Maqueta calz.</th><th class="n">Dif.</th>
+      <th class="n">WMS no calz.</th><th class="n">Maqueta no calz.</th><th class="n">Dif.</th>
+    </tr></thead><tbody><tr><td class="h">08:00</td><td class="n">545</td><td class="n">545</td><td class="n ok">&mdash;</td><td class="n">641</td><td class="n">759</td><td class="n mas">+118</td></tr><tr><td class="h">09:00</td><td class="n">2.926</td><td class="n">2.926</td><td class="n ok">&mdash;</td><td class="n">324</td><td class="n">324</td><td class="n ok">&mdash;</td></tr><tr><td class="h">10:00</td><td class="n">3.422</td><td class="n">3.422</td><td class="n ok">&mdash;</td><td class="n">2.118</td><td class="n">2.242</td><td class="n mas">+124</td></tr><tr><td class="h">11:00</td><td class="n">2.850</td><td class="n">2.872</td><td class="n mas">+22</td><td class="n">1.110</td><td class="n">1.110</td><td class="n ok">&mdash;</td></tr><tr><td class="h">12:00</td><td class="n">2.396</td><td class="n">2.396</td><td class="n ok">&mdash;</td><td class="n">13</td><td class="n">13</td><td class="n ok">&mdash;</td></tr><tr><td class="h">13:00</td><td class="n">1.167</td><td class="n">1.167</td><td class="n ok">&mdash;</td><td class="n">0</td><td class="n">0</td><td class="n ok">&mdash;</td></tr><tr><td class="h">14:00</td><td class="n">268</td><td class="n">268</td><td class="n ok">&mdash;</td><td class="n">283</td><td class="n">283</td><td class="n ok">&mdash;</td></tr><tr><td class="h">15:00</td><td class="n">2.006</td><td class="n">2.006</td><td class="n ok">&mdash;</td><td class="n">10</td><td class="n">10</td><td class="n ok">&mdash;</td></tr><tr><td class="h">16:00</td><td class="n">2.792</td><td class="n">2.792</td><td class="n ok">&mdash;</td><td class="n">348</td><td class="n">348</td><td class="n ok">&mdash;</td></tr><tr><td class="h">17:00</td><td class="n">2.444</td><td class="n">2.444</td><td class="n ok">&mdash;</td><td class="n">173</td><td class="n">173</td><td class="n ok">&mdash;</td></tr></tbody></table></div>
+
+  <h3>Persona por persona <span class="sut">8 de 12 cuadran exacto</span></h3>
+  <div class="sc"><table>
+    <thead><tr><th>Persona</th>
+      <th class="n">WMS calz.</th><th class="n">Maqueta calz.</th><th class="n">Dif.</th>
+      <th class="n">WMS no calz.</th><th class="n">Maqueta no calz.</th><th class="n">Dif.</th>
+      <th class="n">Total maqueta</th>
+    </tr></thead><tbody><tr class="ojo"><td><b>ameneses2</b></td><td class="n">3.115</td><td class="n">3.091</td><td class="n menos">-24</td><td class="n">794</td><td class="n">918</td><td class="n mas">+124</td><td class="n tot">4.009</td></tr><tr class="ojo"><td><b>chuanca3</b></td><td class="n">2.452</td><td class="n">2.452</td><td class="n ok">&mdash;</td><td class="n">1.234</td><td class="n">1.352</td><td class="n mas">+118</td><td class="n tot">3.804</td></tr><tr class=""><td><b>jhuamani7</b></td><td class="n">2.938</td><td class="n">2.938</td><td class="n ok">&mdash;</td><td class="n">613</td><td class="n">613</td><td class="n ok">&mdash;</td><td class="n tot">3.551</td></tr><tr class=""><td><b>kcayo</b></td><td class="n">3.174</td><td class="n">3.174</td><td class="n ok">&mdash;</td><td class="n">195</td><td class="n">195</td><td class="n ok">&mdash;</td><td class="n tot">3.369</td></tr><tr class=""><td><b>mhuillca2</b></td><td class="n">2.665</td><td class="n">2.665</td><td class="n ok">&mdash;</td><td class="n">633</td><td class="n">633</td><td class="n ok">&mdash;</td><td class="n tot">3.298</td></tr><tr class=""><td><b>amurillo</b></td><td class="n">2.079</td><td class="n">2.079</td><td class="n ok">&mdash;</td><td class="n">149</td><td class="n">149</td><td class="n ok">&mdash;</td><td class="n tot">2.228</td></tr><tr class=""><td><b>jgaray</b></td><td class="n">2.000</td><td class="n">2.000</td><td class="n ok">&mdash;</td><td class="n">0</td><td class="n">0</td><td class="n ok">&mdash;</td><td class="n tot">2.000</td></tr><tr class=""><td><b>pquispe3</b></td><td class="n">597</td><td class="n">597</td><td class="n ok">&mdash;</td><td class="n">1.382</td><td class="n">1.382</td><td class="n ok">&mdash;</td><td class="n tot">1.979</td></tr><tr class=""><td><b>ddelgado</b></td><td class="n">1.711</td><td class="n">1.711</td><td class="n ok">&mdash;</td><td class="n">20</td><td class="n">20</td><td class="n ok">&mdash;</td><td class="n tot">1.731</td></tr><tr class=""><td><b>fsalazar3</b></td><td class="n">85</td><td class="n">85</td><td class="n ok">&mdash;</td><td class="n">0</td><td class="n">0</td><td class="n ok">&mdash;</td><td class="n tot">85</td></tr><tr class="ojo"><td><b>alajara2</b></td><td class="n">0</td><td class="n">24</td><td class="n mas">+24</td><td class="n">0</td><td class="n">0</td><td class="n ok">&mdash;</td><td class="n tot">24</td></tr><tr class="ojo"><td><b>VLLONTOP</b></td><td class="n">0</td><td class="n">22</td><td class="n mas">+22</td><td class="n">0</td><td class="n">0</td><td class="n ok">&mdash;</td><td class="n tot">22</td></tr></tbody></table></div>
+
+  <h3>Las 5 celdas que no cuadran <span class="sut">ábrelas para ver las líneas</span></h3>
+  <details class="cel neg"><summary><span class="qui">ameneses2</span><span class="cua">08:00</span><span class="tag calz">Calzado</span><span class="vs">WMS <b>233</b> &nbsp;·&nbsp; maqueta <b>209</b></span><span class="d menos">-24</span></summary><div class="cuerpo"><p class="pista">Le faltan <b>24</b>, que son las mismas que la maqueta le pone a <b>alajara2</b> a esa hora. Otro traslado de persona.</p><div class="sc"><table class="lin"><thead><tr><th>Artículo</th><th>Descripción</th><th>Tienda</th><th>Ubicación</th><th class="n">Cant.</th><th class="n">Pares</th><th>Hora</th></tr></thead><tbody><tr><td><code>8729981-1-08</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-08-17-A-03</td><td class="n">7</td><td class="n">7</td><td class="de">08:58:32</td></tr><tr><td><code>8729800-1-04</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-06-03-A-01</td><td class="n">7</td><td class="n">7</td><td class="de">08:55:24</td></tr><tr><td><code>8626975-1-05</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-09-08-D-01</td><td class="n">6</td><td class="n">6</td><td class="de">08:52:37</td></tr><tr><td><code>8729981-1-06</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-08-14-A-01</td><td class="n">6</td><td class="n">6</td><td class="de">08:58:37</td></tr><tr><td><code>5729949-1-07</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-07-01-C-03</td><td class="n">5</td><td class="n">5</td><td class="de">08:59:32</td></tr><tr><td><code>5729949-1-05</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-06-16-A-03</td><td class="n">5</td><td class="n">5</td><td class="de">08:55:26</td></tr><tr><td><code>8729800-1-08</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-10-19-B-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:52:39</td></tr><tr><td><code>8729800-1-06</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-09-13-D-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:52:38</td></tr><tr><td><code>8716915-1-05</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-19-03-A-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:50:34</td></tr><tr><td><code>8716915-1-04</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-19-02-A-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:50:33</td></tr><tr><td><code>8729981-1-04</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-08-12-A-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:59:33</td></tr><tr><td><code>5729949-1-06</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-05-17-D-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:58:36</td></tr><tr><td><code>8729981-1-04</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-08-12-A-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:58:33</td></tr><tr><td><code>5726368-1-08</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-05-15-A-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:58:33</td></tr><tr><td><code>8720800-1-08</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-06-15-A-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:58:32</td></tr><tr><td><code>5726368-1-07</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-06-12-A-03</td><td class="n">4</td><td class="n">4</td><td class="de">08:55:25</td></tr><tr><td><code>2627800-1-04</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-07-18-D-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:55:21</td></tr><tr><td><code>8629975-1-05</code></td><td class="de">&mdash;</td><td>50273</td><td class="de">MZN04-16-07-D-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:40:08</td></tr><tr><td><code>5621855-1-07</code></td><td class="de">&mdash;</td><td>50273</td><td class="de">MZN04-10-19-A-02</td><td class="n">4</td><td class="n">4</td><td class="de">08:38:27</td></tr><tr><td><code>8629975-1-04</code></td><td class="de">&mdash;</td><td>50273</td><td class="de">MZN04-16-02-A-02</td><td class="n">4</td><td class="n">4</td><td class="de">08:35:21</td></tr><tr><td><code>8629975-1-06</code></td><td class="de">&mdash;</td><td>50293</td><td class="de">MZN04-16-11-A-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:48:58</td></tr><tr><td><code>8629975-1-04</code></td><td class="de">&mdash;</td><td>50293</td><td class="de">MZN04-16-02-A-02</td><td class="n">4</td><td class="n">4</td><td class="de">08:43:44</td></tr><tr><td><code>8629975-1-05</code></td><td class="de">&mdash;</td><td>50293</td><td class="de">MZN04-16-07-D-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:43:44</td></tr><tr><td><code>8727800-1-08</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-06-08-A-02</td><td class="n">3</td><td class="n">3</td><td class="de">08:52:40</td></tr><tr><td><code>5621855-1-06</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-10-14-D-01</td><td class="n">3</td><td class="n">3</td><td class="de">08:52:38</td></tr><tr><td><code>5729949-1-09</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-07-01-C-01</td><td class="n">3</td><td class="n">3</td><td class="de">08:58:38</td></tr><tr><td><code>5726368-1-09</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-05-16-B-01</td><td class="n">3</td><td class="n">3</td><td class="de">08:58:35</td></tr><tr><td><code>5726368-1-07</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-06-12-A-03</td><td class="n">3</td><td class="n">3</td><td class="de">08:58:34</td></tr><tr><td><code>8727800-1-08</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-06-08-A-02</td><td class="n">3</td><td class="n">3</td><td class="de">08:55:28</td></tr><tr><td><code>5726368-1-06</code></td><td class="de">&mdash;</td><td>50196</td><td class="de">MZN04-06-12-B-05</td><td class="n">3</td><td class="n">3</td><td class="de">08:55:27</td></tr></tbody></table></div><p class="mas">…y 53 líneas más de esa misma celda.</p></div></details><details class="cel pos"><summary><span class="qui">ameneses2</span><span class="cua">10:00</span><span class="tag acc">No calzado</span><span class="vs">WMS <b>164</b> &nbsp;·&nbsp; maqueta <b>288</b></span><span class="d mas">+124</span></summary><div class="cuerpo"><div class="sc"><table class="lin"><thead><tr><th>Artículo</th><th>Descripción</th><th>Tienda</th><th>Ubicación</th><th class="n">Cant.</th><th class="n">Pares</th><th>Hora</th></tr></thead><tbody><tr><td><code>9995207-1-10211</code></td><td class="de">&mdash;</td><td>50237</td><td class="de">MZN04-19-08-D-01</td><td class="n">2</td><td class="n">20</td><td class="de">10:15:25</td></tr><tr><td><code>9991401-1-10211</code></td><td class="de">&mdash;</td><td>50237</td><td class="de">MZN04-23-01-A-03</td><td class="n">2</td><td class="n">20</td><td class="de">10:15:24</td></tr><tr><td><code>9891401-1-10210</code></td><td class="de">&mdash;</td><td>50244</td><td class="de">MZN04-09-05-A-01</td><td class="n">2</td><td class="n">20</td><td class="de">10:12:36</td></tr><tr><td><code>9391208-1-09098</code></td><td class="de">&mdash;</td><td>50244</td><td class="de">MZN04-01-13-D-01</td><td class="n">2</td><td class="n">18</td><td class="de">10:07:55</td></tr><tr><td><code>9391401-1-10251</code></td><td class="de">&mdash;</td><td>50244</td><td class="de">MZN04-09-18-B-01</td><td class="n">1</td><td class="n">10</td><td class="de">10:12:41</td></tr><tr><td><code>9996200-1-10211</code></td><td class="de">&mdash;</td><td>50244</td><td class="de">MZN04-02-16-D-01</td><td class="n">1</td><td class="n">10</td><td class="de">10:08:01</td></tr><tr><td><code>9891200-1-10210</code></td><td class="de">&mdash;</td><td>50244</td><td class="de">MZN04-03-06-C-01</td><td class="n">1</td><td class="n">10</td><td class="de">10:07:58</td></tr><tr><td><code>9996200-1-10211</code></td><td class="de">&mdash;</td><td>50398</td><td class="de">MZN04-02-16-D-01</td><td class="n">1</td><td class="n">10</td><td class="de">10:16:06</td></tr><tr><td><code>9915943-1-10163</code></td><td class="de">&mdash;</td><td>50398</td><td class="de">MZN04-13-14-D-01</td><td class="n">1</td><td class="n">10</td><td class="de">10:16:06</td></tr><tr><td><code>9891200-1-10210</code></td><td class="de">&mdash;</td><td>50398</td><td class="de">MZN04-03-10-B-03</td><td class="n">1</td><td class="n">10</td><td class="de">10:16:05</td></tr><tr><td><code>9391407-1-09098</code></td><td class="de">&mdash;</td><td>50244</td><td class="de">MZN04-22-06-D-01</td><td class="n">1</td><td class="n">9</td><td class="de">10:07:59</td></tr><tr><td><code>9391208-1-09098</code></td><td class="de">&mdash;</td><td>50398</td><td class="de">MZN04-01-13-D-01</td><td class="n">1</td><td class="n">9</td><td class="de">10:16:07</td></tr><tr><td><code>9811200-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-B-03</td><td class="n">8</td><td class="n">8</td><td class="de">10:23:21</td></tr><tr><td><code>9817205-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-C-02</td><td class="n">8</td><td class="n">8</td><td class="de">10:23:20</td></tr><tr><td><code>9817205-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-C-03</td><td class="n">8</td><td class="n">8</td><td class="de">10:23:19</td></tr><tr><td><code>9812230-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-A-01</td><td class="n">8</td><td class="n">8</td><td class="de">10:20:13</td></tr><tr><td><code>9817205-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-C-01</td><td class="n">7</td><td class="n">7</td><td class="de">10:23:20</td></tr><tr><td><code>9812230-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-A-01</td><td class="n">7</td><td class="n">7</td><td class="de">10:20:16</td></tr><tr><td><code>9911273-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-14-C-02</td><td class="n">7</td><td class="n">7</td><td class="de">10:20:15</td></tr><tr><td><code>9911273-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-14-C-01</td><td class="n">7</td><td class="n">7</td><td class="de">10:20:14</td></tr><tr><td><code>9817205-1-06</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-C-04</td><td class="n">6</td><td class="n">6</td><td class="de">10:23:23</td></tr><tr><td><code>9811200-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-B-02</td><td class="n">6</td><td class="n">6</td><td class="de">10:23:21</td></tr><tr><td><code>9811200-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-B-01</td><td class="n">6</td><td class="n">6</td><td class="de">10:20:18</td></tr><tr><td><code>9812230-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-A-01</td><td class="n">6</td><td class="n">6</td><td class="de">10:20:18</td></tr><tr><td><code>9911273-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-14-C-03</td><td class="n">5</td><td class="n">5</td><td class="de">10:20:16</td></tr><tr><td><code>9816247-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-14-B-02</td><td class="n">5</td><td class="n">5</td><td class="de">10:20:14</td></tr><tr><td><code>9976406-1-01</code></td><td class="de">&mdash;</td><td>50244</td><td class="de">MZN04-16-14-B-01</td><td class="n">4</td><td class="n">4</td><td class="de">10:14:28</td></tr><tr><td><code>9819230-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-16-A-01</td><td class="n">4</td><td class="n">4</td><td class="de">10:23:23</td></tr><tr><td><code>9811200-1-06</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-15-B-04</td><td class="n">4</td><td class="n">4</td><td class="de">10:23:22</td></tr><tr><td><code>9816247-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-14-B-03</td><td class="n">4</td><td class="n">4</td><td class="de">10:20:13</td></tr></tbody></table></div><p class="mas">…y 14 líneas más de esa misma celda.</p></div></details><details class="cel pos"><summary><span class="qui">chuanca3</span><span class="cua">08:00</span><span class="tag acc">No calzado</span><span class="vs">WMS <b>2</b> &nbsp;·&nbsp; maqueta <b>120</b></span><span class="d mas">+118</span></summary><div class="cuerpo"><div class="sc"><table class="lin"><thead><tr><th>Artículo</th><th>Descripción</th><th>Tienda</th><th>Ubicación</th><th class="n">Cant.</th><th class="n">Pares</th><th>Hora</th></tr></thead><tbody><tr><td><code>9926253-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-11-B-01</td><td class="n">10</td><td class="n">10</td><td class="de">08:55:40</td></tr><tr><td><code>9926253-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-11-B-04</td><td class="n">7</td><td class="n">7</td><td class="de">08:54:17</td></tr><tr><td><code>9926253-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-10-B-04</td><td class="n">6</td><td class="n">6</td><td class="de">08:54:18</td></tr><tr><td><code>9819230-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-16-A-01</td><td class="n">6</td><td class="n">6</td><td class="de">08:43:36</td></tr><tr><td><code>9819230-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-16-A-01</td><td class="n">6</td><td class="n">6</td><td class="de">08:43:35</td></tr><tr><td><code>9819258-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-12-19-A-02</td><td class="n">4</td><td class="n">4</td><td class="de">08:50:13</td></tr><tr><td><code>9817258-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-12-20-A-01</td><td class="n">4</td><td class="n">4</td><td class="de">08:37:24</td></tr><tr><td><code>9926253-1-06</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-12-B-01</td><td class="n">3</td><td class="n">3</td><td class="de">08:54:20</td></tr><tr><td><code>9926253-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-11-B-01</td><td class="n">3</td><td class="n">3</td><td class="de">08:54:19</td></tr><tr><td><code>9826253-1-06</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-10-B-02</td><td class="n">3</td><td class="n">3</td><td class="de">08:54:18</td></tr><tr><td><code>9915220-1-06</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-16-B-05</td><td class="n">3</td><td class="n">3</td><td class="de">08:50:12</td></tr><tr><td><code>9925200-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-13-B-01</td><td class="n">3</td><td class="n">3</td><td class="de">08:50:11</td></tr><tr><td><code>9925200-1-02</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-12-B-02</td><td class="n">3</td><td class="n">3</td><td class="de">08:50:10</td></tr><tr><td><code>9925200-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-12-B-04</td><td class="n">3</td><td class="n">3</td><td class="de">08:50:10</td></tr><tr><td><code>9915233-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-19-B-05</td><td class="n">3</td><td class="n">3</td><td class="de">08:46:15</td></tr><tr><td><code>9817226-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-17-B-03</td><td class="n">3</td><td class="n">3</td><td class="de">08:41:11</td></tr><tr><td><code>9817226-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-09-B-03</td><td class="n">3</td><td class="n">3</td><td class="de">08:41:11</td></tr><tr><td><code>9817226-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-09-B-04</td><td class="n">3</td><td class="n">3</td><td class="de">08:46:14</td></tr><tr><td><code>9819258-1-06</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-12-01-A-01</td><td class="n">3</td><td class="n">3</td><td class="de">08:43:35</td></tr><tr><td><code>9819258-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-12-15-A-02</td><td class="n">3</td><td class="n">3</td><td class="de">08:37:23</td></tr><tr><td><code>9915220-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-16-B-02</td><td class="n">2</td><td class="n">2</td><td class="de">08:50:11</td></tr><tr><td><code>9915220-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-16-B-02</td><td class="n">2</td><td class="n">2</td><td class="de">08:46:17</td></tr><tr><td><code>9915220-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-16-B-04</td><td class="n">2</td><td class="n">2</td><td class="de">08:46:14</td></tr><tr><td><code>9918205-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-09-B-01</td><td class="n">2</td><td class="n">2</td><td class="de">08:43:37</td></tr><tr><td><code>9918205-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-09-B-01</td><td class="n">2</td><td class="n">2</td><td class="de">08:41:10</td></tr><tr><td><code>9816200-1-06</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-11-C-01</td><td class="n">2</td><td class="n">2</td><td class="de">08:37:25</td></tr><tr><td><code>9819258-1-04</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-12-19-A-02</td><td class="n">2</td><td class="n">2</td><td class="de">08:54:21</td></tr><tr><td><code>9819230-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-09-16-A-01</td><td class="n">2</td><td class="n">2</td><td class="de">08:41:09</td></tr><tr><td><code>9829203-1-03</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-12-08-C-02</td><td class="n">2</td><td class="n">2</td><td class="de">08:37:25</td></tr><tr><td><code>9915220-1-05</code></td><td class="de">&mdash;</td><td>50757</td><td class="de">MZN04-16-16-B-04</td><td class="n">1</td><td class="n">1</td><td class="de">08:50:12</td></tr></tbody></table></div><p class="mas">…y 19 líneas más de esa misma celda.</p></div></details><details class="cel pos"><summary><span class="qui">alajara2</span><span class="cua">08:00</span><span class="tag calz">Calzado</span><span class="vs">WMS <b>0</b> &nbsp;·&nbsp; maqueta <b>24</b></span><span class="d mas">+24</span></summary><div class="cuerpo"><p class="pista">Las <b>24</b> de arriba: 18 líneas a las tiendas 50792 y 50832. El WMS no le reconoce nada a <code>alajara2</code> en todo el día.</p><div class="sc"><table class="lin"><thead><tr><th>Artículo</th><th>Descripción</th><th>Tienda</th><th>Ubicación</th><th class="n">Cant.</th><th class="n">Pares</th><th>Hora</th></tr></thead><tbody><tr><td><code>8891314-1-05</code></td><td class="de">&mdash;</td><td>50832</td><td class="de">CDBUFFER-B-00-010</td><td class="n">3</td><td class="n">3</td><td class="de">08:35:49</td></tr><tr><td><code>6616372-1-08</code></td><td class="de">&mdash;</td><td>50832</td><td class="de">SEL-08-08-B-01</td><td class="n">3</td><td class="n">3</td><td class="de">08:35:48</td></tr><tr><td><code>4891300-1-10</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">CDBUFFER-B-00-018</td><td class="n">2</td><td class="n">2</td><td class="de">08:40:52</td></tr><tr><td><code>0416802-1-06</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">MZN01-19-18-A</td><td class="n">2</td><td class="n">2</td><td class="de">08:40:57</td></tr><tr><td><code>5898406-1-06</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">CDBUFFER-B-00-002</td><td class="n">1</td><td class="n">1</td><td class="de">08:40:56</td></tr><tr><td><code>3819340-1-06</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">MZN01-13-16-C</td><td class="n">1</td><td class="n">1</td><td class="de">08:40:53</td></tr><tr><td><code>8896314-1-06</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">CDBUFFER-B-00-028</td><td class="n">1</td><td class="n">1</td><td class="de">08:40:52</td></tr><tr><td><code>4891300-1-10</code></td><td class="de">&mdash;</td><td>50832</td><td class="de">CDBUFFER-B-00-018</td><td class="n">1</td><td class="n">1</td><td class="de">08:35:50</td></tr><tr><td><code>8896314-1-06</code></td><td class="de">&mdash;</td><td>50832</td><td class="de">CDBUFFER-B-00-028</td><td class="n">1</td><td class="n">1</td><td class="de">08:35:50</td></tr><tr><td><code>8019987-1-03</code></td><td class="de">&mdash;</td><td>50832</td><td class="de">CDBUFFER-B-00-034</td><td class="n">1</td><td class="n">1</td><td class="de">08:35:49</td></tr><tr><td><code>6616372-1-09</code></td><td class="de">&mdash;</td><td>50832</td><td class="de">SEL-08-08-A-01</td><td class="n">1</td><td class="n">1</td><td class="de">08:35:48</td></tr><tr><td><code>8896314-1-02</code></td><td class="de">&mdash;</td><td>50832</td><td class="de">CDBUFFER-B-00-036</td><td class="n">1</td><td class="n">1</td><td class="de">08:35:47</td></tr><tr><td><code>3266809-1-08</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">SEL-14-05-A-01</td><td class="n">1</td><td class="n">1</td><td class="de">08:40:56</td></tr><tr><td><code>3266809-1-06</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">SEL-14-05-B-01</td><td class="n">1</td><td class="n">1</td><td class="de">08:40:55</td></tr><tr><td><code>4266809-1-10</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">SEL-14-04-C-01</td><td class="n">1</td><td class="n">1</td><td class="de">08:40:54</td></tr><tr><td><code>4266809-1-11</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">SEL-14-04-C-01</td><td class="n">1</td><td class="n">1</td><td class="de">08:40:54</td></tr><tr><td><code>4266809-1-12</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">SEL-14-04-A-01</td><td class="n">1</td><td class="n">1</td><td class="de">08:40:53</td></tr><tr><td><code>3266809-1-07</code></td><td class="de">&mdash;</td><td>50792</td><td class="de">SEL-14-05-A-01</td><td class="n">1</td><td class="n">1</td><td class="de">08:40:51</td></tr></tbody></table></div></div></details><details class="cel pos"><summary><span class="qui">VLLONTOP</span><span class="cua">11:00</span><span class="tag calz">Calzado</span><span class="vs">WMS <b>0</b> &nbsp;·&nbsp; maqueta <b>22</b></span><span class="d mas">+22</span></summary><div class="cuerpo"><p class="pista">6 líneas a la tienda <b>50336</b>, todas de MZN04. El WMS no le reconoce nada a <code>VLLONTOP</code> en todo el día.</p><div class="sc"><table class="lin"><thead><tr><th>Artículo</th><th>Descripción</th><th>Tienda</th><th>Ubicación</th><th class="n">Cant.</th><th class="n">Pares</th><th>Hora</th></tr></thead><tbody><tr><td><code>5728368-1-07</code></td><td class="de">&mdash;</td><td>50336</td><td class="de">MZN04-18-01-D-01</td><td class="n">6</td><td class="n">6</td><td class="de">11:47:57</td></tr><tr><td><code>5728368-1-06</code></td><td class="de">&mdash;</td><td>50336</td><td class="de">MZN04-11-12-A-01</td><td class="n">4</td><td class="n">4</td><td class="de">11:44:46</td></tr><tr><td><code>5728368-1-09</code></td><td class="de">&mdash;</td><td>50336</td><td class="de">MZN04-16-03-B-03</td><td class="n">4</td><td class="n">4</td><td class="de">11:47:29</td></tr><tr><td><code>8629975-1-06</code></td><td class="de">&mdash;</td><td>50336</td><td class="de">MZN04-16-11-A-03</td><td class="n">3</td><td class="n">3</td><td class="de">11:46:00</td></tr><tr><td><code>8629975-1-08</code></td><td class="de">&mdash;</td><td>50336</td><td class="de">MZN04-16-18-D-01</td><td class="n">3</td><td class="n">3</td><td class="de">11:45:33</td></tr><tr><td><code>8629975-1-05</code></td><td class="de">&mdash;</td><td>50336</td><td class="de">MZN04-16-06-A-01</td><td class="n">2</td><td class="n">2</td><td class="de">11:46:24</td></tr></tbody></table></div></div></details>
+</section>
+
+<section class="pan">
+  <div class="cab"><h2>Lo que ya se sabe de las diferencias</h2></div>
+  <ol>
+    <li><b>24 pares que cambian de dueño.</b> A las 08:00 el WMS se los acredita a
+      <code>ameneses2</code> y el archivo los firma <code>alajara2</code>. La
+      cantidad de la hora no cambia: cambia la persona.</li>
+    <li><b>Dos embaladores que el WMS no reconoce.</b> <code>alajara2</code> (24
+      pares, tiendas 50792 y 50832) y <code>VLLONTOP</code> (22 pares, tienda
+      50336) tienen movimientos en el archivo y cero en el reporte, todo el día.</li>
+    <li><b>242 pares de accesorios.</b> <code>ameneses2</code> +124 a las 10:00 y
+      <code>chuanca3</code> +118 a las 08:00. <b>Los dos casos salen de MZN04</b>,
+      igual que las diferencias de accesorios del picking.</li></ol>
+</section>
+
+<section class="pan">
+  <div class="cab"><h2>Cómo se arma la maqueta</h2>
+    <p>Para poder repetirlo en el WMS</p></div>
+  <ol>
+    <li>Archivo <code>OBLPN 31-08.csv</code>, y fuera los LPN <b>PRE</b> y
+      <b>WPRE</b>, que son pre-etiquetas y no cajas cerradas.</li>
+    <li>La persona es el <b>usuario de modificación de asignación</b> &mdash;se
+      probaron las siete columnas de usuario del OBLPN y es la que menos se
+      despega&mdash;, y la hora es el <b>registro de hora de empaquetado</b>.</li>
+    <li>El <b>prepack</b> se cuenta por sus pares, no por cajas.</li>
+    <li>El <b>canal</b> sale del maestro de rutas: si la tienda de destino figura
+      ahí, es RETAIL.</li></ol>
+</section>
+
+</div>

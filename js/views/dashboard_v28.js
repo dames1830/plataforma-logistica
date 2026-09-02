@@ -1,37 +1,39 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0516';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0517';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0516';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0516';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0516';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0516';
-import * as metasService from '../services_v245/metasService.js?v=29.0516';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0516';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0516';
+import * as adminService from '../services_v245/adminService.js?v=29.0517';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0517';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0517';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0517';
+import * as metasService from '../services_v245/metasService.js?v=29.0517';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0517';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0517';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0516';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0516';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0516';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0516';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0516';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0516';
-import { renderCapacidad } from './capacidad.js?v=29.0516';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0516';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0516';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0516';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0516';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0516';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0516';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0516';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0516';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0516';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0516';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0516';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0516';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0516';
-import { montarSlotting } from './slotting.js?v=29.0516';
-import { montarEventos } from './eventos.js?v=29.0516';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0516';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0517';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0517';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0517';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0517';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0517';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0517';
+import { renderCapacidad } from './capacidad.js?v=29.0517';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0517';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0517';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0517';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0517';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0517';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0517';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0517';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0517';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0517';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0517';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0517';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0517';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0517';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0517';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0517';
+import { montarSlotting } from './slotting.js?v=29.0517';
+import { montarEventos } from './eventos.js?v=29.0517';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0517';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -394,7 +396,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0516';
+const VERSION = '29.0517';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2391,6 +2393,14 @@ const TABS = [
   { id: 'picking', label: 'Picking', icon: '🛒', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_picking', label: 'Archivo Picking', icon: '🗂️' },
     { id: 'reporte_picking', label: 'Reporte Picking', icon: '📈' },
+    /* LAS TRES DE LA PRODUCCION DEL DIA. Las pidio Daniel el 02-sep-2026:
+       *"me vas a crear tres submodulos, uno llamado picking por dia, embalaje por
+       dia, y el otro, por el momento, se va a llamar cruce"*.
+       Los numeros NO se calculan en el navegador: los publica el robot del
+       servidor, que es el unico que alcanza los archivos del WMS. */
+    { id: 'picking_dia', label: 'Picking por día', icon: '⏱️' },
+    { id: 'embalaje_dia', label: 'Embalaje por día', icon: '📮' },
+    { id: 'cruce_wms', label: 'Cruce', icon: '🔍' },
   ]},
   { id: 'packing', label: 'Packing', icon: '📦', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_packing', label: 'Archivo Packing', icon: '🗂️' }
@@ -5486,7 +5496,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0516');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0517');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5749,7 +5759,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0516');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0517');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -8582,6 +8592,140 @@ let turnoGuardando = null;
    y el Detalle de Orden del WMS —13 MB—, que viven en OneDrive del servidor y el
    navegador no puede leer.
    ══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PICKING → PICKING POR DÍA · EMBALAJE POR DÍA · CRUCE
+
+   Las tres las pidió Daniel el 02-sep-2026, después de aprobar las maquetas.
+
+   ACÁ NO SE CALCULA NADA. Los números los publica el robot del servidor —
+   `robot/picking_por_hora.py`, `robot/embalaje_por_hora.py` y `robot/cruce_wms.py`—
+   en las áreas `picking_por_hora`, `embalaje_por_hora` y `cruce_wms`.
+
+   Por qué el cálculo va en el robot y no acá: necesita el archivo de picking y el
+   OBLPN del WMS —decenas de MB—, el Maestro de artículos, el maestro de rutas y
+   el Detalle de Orden, que viven en el OneDrive del servidor. El navegador no
+   puede leer nada de eso.
+   ══════════════════════════════════════════════════════════════════════════ */
+const PROD_HORA_AREA = { picking: 'picking_por_hora', embalaje: 'embalaje_por_hora' };
+const CRUCE_AREA = 'cruce_wms';
+
+const PROD_HORA_TEXTOS = {
+    picking: { titulo: 'Picking por día', cuadro: 'Picking por hora', verbo: 'picó',
+               accion: 'movieron', origen: 'De dónde la sacan',
+               fuente: 'archivo de picking' },
+    embalaje: { titulo: 'Embalaje por día', cuadro: 'Embalaje por hora', verbo: 'embaló',
+                accion: 'embalaron', origen: 'De dónde salió',
+                fuente: 'OBLPN de embalaje' },
+};
+
+/* El rango elegido se recuerda por pantalla: `renderGenericAreaTab` vuelve a
+   dibujar sin rango en cada clic del sub-menú, y sin esto volvería solo al día de
+   hoy cada vez. Misma razón que `_pendFecha` en el Pendiente. */
+const _prodRango = { picking: null, embalaje: null };
+let _cruceFecha = null;
+
+/* LOS DÍAS DE UN RANGO, TRAÍDOS DE UNA. Se piden en paralelo porque son
+   peticiones chicas e independientes; en serie, un rango de dos semanas tardaría
+   catorce veces más. Los días sin archivo vuelven null y se descartan. */
+const traerDiasArea = async (area, fechas) => {
+    const crudos = await Promise.all(fechas.map(f =>
+        leerArea(area, f).then(d => ({ fecha: f, datos: d })).catch(() => ({ fecha: f, datos: null }))));
+    return crudos.filter(x => x.datos && x.datos.vistas);
+};
+
+const renderProduccionDia = async (container, cual) => {
+    if (!container) return;
+    container.dataset.vista = 'prod-' + cual;
+    const AREA = PROD_HORA_AREA[cual];
+
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:3rem; color:var(--text-muted);">
+        <div style="width:26px; height:26px; border:3px solid rgba(var(--primary2-rgb), 0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:var(--t-md);">Trayendo la producción...</span>
+      </div>`;
+
+    /* QUÉ DÍAS HAY GUARDADOS, primero. El rango no puede pedir días que no
+       existen, y sin esta lista la pantalla arrancaría pidiendo hoy —que a las
+       tres de la mañana todavía no tiene archivo— y saldría vacía siempre. */
+    let fechas = [];
+    try {
+        const r = await fetch(`${TURNO_API}/${AREA}/dates?t=${Date.now()}`);
+        if (r.ok) {
+            const j = await r.json();
+            if (j && Array.isArray(j.dates)) {
+                fechas = j.dates.filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)).sort();
+            }
+        }
+    } catch (e) { console.warn(`[${cual.toUpperCase()} DÍA] no se pudo listar el área:`, e && e.message); }
+
+    const ultimo = fechas[fechas.length - 1] || getLogicalDate();
+    const rango = _prodRango[cual] || { desde: ultimo, hasta: ultimo };
+    _prodRango[cual] = rango;
+
+    const enRango = fechas.filter(f => f >= rango.desde && f <= rango.hasta);
+    const dias = enRango.length ? await traerDiasArea(AREA, enRango) : [];
+
+    // La pestaña pudo cambiar mientras se buscaban los datos.
+    if (!container.isConnected || container.dataset.vista !== 'prod-' + cual) return;
+
+    montarProduccionHora(container, {
+        dias: dias,
+        textos: PROD_HORA_TEXTOS[cual],
+        desde: rango.desde, hasta: rango.hasta,
+        fechas: fechas,
+        alCambiarRango: (desde, hasta) => {
+            if (desde) rango.desde = desde;
+            if (hasta) rango.hasta = hasta;
+            /* AL REVÉS SE ARREGLA SOLO. Si elige un "desde" posterior al "hasta"
+               el rango quedaría vacío y parecería que no hay datos; se dan vuelta
+               y listo, en vez de dejarlo mirando una pantalla en blanco. */
+            if (rango.desde > rango.hasta) {
+                const t = rango.desde; rango.desde = rango.hasta; rango.hasta = t;
+            }
+            renderProduccionDia(container, cual);
+        },
+    });
+};
+
+const renderCruceWms = async (container) => {
+    if (!container) return;
+    container.dataset.vista = 'cruce-wms';
+
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:3rem; color:var(--text-muted);">
+        <div style="width:26px; height:26px; border:3px solid rgba(var(--primary2-rgb), 0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:var(--t-md);">Trayendo el cruce...</span>
+      </div>`;
+
+    let fechas = [];
+    try {
+        const r = await fetch(`${TURNO_API}/${CRUCE_AREA}/dates?t=${Date.now()}`);
+        if (r.ok) {
+            const j = await r.json();
+            if (j && Array.isArray(j.dates)) {
+                fechas = j.dates.filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)).sort();
+            }
+        }
+    } catch (e) { console.warn('[CRUCE] no se pudo listar el área:', e && e.message); }
+
+    const fecha = _cruceFecha || fechas[fechas.length - 1] || getLogicalDate();
+    _cruceFecha = fecha;
+
+    let datos = null;
+    try { datos = await leerArea(CRUCE_AREA, fecha); }
+    catch (e) { console.warn('[CRUCE] no se pudo traer el área:', e && e.message); }
+
+    if (!container.isConnected || container.dataset.vista !== 'cruce-wms') return;
+
+    montarCruce(container, {
+        datos: datos,
+        fecha: fecha,
+        fechas: fechas,
+        alCambiarFecha: (nueva) => { _cruceFecha = nueva; renderCruceWms(container); },
+    });
+};
+
 const PENDIENTE_AREA = 'pendiente_despacho';
 
 /* La fecha elegida se recuerda, por lo mismo que en Actividades: `renderBufferTab`
@@ -16836,6 +16980,15 @@ const renderRFSection = (container) => {
     } else if (tabId === 'picking' && activeSub === 'reporte_picking') {
         await new Promise(r => setTimeout(r, 0));
         renderReportePicking(container);
+    } else if (tabId === 'picking' && activeSub === 'picking_dia') {
+        await new Promise(r => setTimeout(r, 0));
+        renderProduccionDia(container, 'picking');
+    } else if (tabId === 'picking' && activeSub === 'embalaje_dia') {
+        await new Promise(r => setTimeout(r, 0));
+        renderProduccionDia(container, 'embalaje');
+    } else if (tabId === 'picking' && activeSub === 'cruce_wms') {
+        await new Promise(r => setTimeout(r, 0));
+        renderCruceWms(container);
     } else if (tabId === 'picking' && activeSub === 'analisis_prepack') {
         await new Promise(r => setTimeout(r, 0));
         renderPrepackPicking(container);
@@ -18745,7 +18898,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0516 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0517 | MOBILE PORTAL
                             </div>
                     </div>
 
