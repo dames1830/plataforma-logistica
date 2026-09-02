@@ -654,6 +654,11 @@ async def registrar_eventos(request: Request):
 
     NUNCA DEVUELVE ERROR AL QUE ESCRIBE. Si anotar falla, falla callado: que el registro
     se caiga no puede tumbar una tarea del turno.
+
+    EL 02-sep-2026 SE LE PUSO EL CANDADO DE ESCRITURA Y SE LE VOLVIO A SACAR. Al cerrar
+    los ocho endpoints que estaban abiertos, este entro en el lote por descuido: es el
+    unico de los diecisiete que va sin candado A PROPOSITO, y esta escrito arriba. Lo
+    que se guarda aca no es sensible y el robot no tiene sesion.
     """
     try:
         cuerpo = await request.json()
@@ -1498,6 +1503,11 @@ def get_buffer_config():
 
 @app.post("/api/buffer/config")
 async def save_buffer_config(request: Request):
+    # CANDADO DE ESCRITURA. En modo aviso no frena: cuenta las anonimas para el
+    # /health. Con EXIGIR_TOKEN_ESCRITURA=true exige sesion o token del robot.
+    _bloqueo = _control_escritura(request, "buffer_config")
+    if _bloqueo is not None:
+        return _bloqueo
     try:
         data = await request.json()  # Expecting dictionary of key-value configurations
         conn = sqlite3.connect(db_path())
@@ -1771,6 +1781,11 @@ async def subir_archivo(modulo: str, request: Request, nombre: str = "",
     siempre. Existe porque no todos los archivos valen lo mismo: la Tabla de Tallas se
     publica solo cuando cambia, y Daniel la quiere con seis.
     """
+    # CANDADO DE ESCRITURA. En modo aviso no frena: cuenta las anonimas para el
+    # /health. Con EXIGIR_TOKEN_ESCRITURA=true exige sesion o token del robot.
+    _bloqueo = _control_escritura(request, "archivos")
+    if _bloqueo is not None:
+        return _bloqueo
     try:
         contenido = await request.body()
         if not contenido:
@@ -1870,7 +1885,13 @@ def descargar_archivo(modulo: str, archivo_id: int):
 
 
 @app.delete("/api/archivos/{modulo}/{archivo_id}")
-def borrar_archivo(modulo: str, archivo_id: int):
+def borrar_archivo(modulo: str, archivo_id: int, request: Request = None):
+    # CANDADO DE ESCRITURA, igual que los demas. `request` es opcional para no
+    # romper a quien la llame desde dentro; sin ella no se cuenta y no se frena.
+    if request is not None:
+        _bloqueo = _control_escritura(request, "archivos")
+        if _bloqueo is not None:
+            return _bloqueo
     try:
         conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
@@ -1920,6 +1941,11 @@ def get_buffer_history():
 @app.post("/api/buffer/history")
 async def add_buffer_history(request: Request):
     """Agrega un nuevo registro al historial de Buffer KPI."""
+    # CANDADO DE ESCRITURA. En modo aviso no frena: cuenta las anonimas para el
+    # /health. Con EXIGIR_TOKEN_ESCRITURA=true exige sesion o token del robot.
+    _bloqueo = _control_escritura(request, "buffer_history")
+    if _bloqueo is not None:
+        return _bloqueo
     try:
         body = await request.json()
         fecha               = body.get("fecha", ahora().strftime("%Y-%m-%d"))
@@ -1946,6 +1972,11 @@ async def add_buffer_history(request: Request):
 @app.put("/api/buffer/history/{record_id}")
 async def update_buffer_history(record_id: int, request: Request):
     """Actualiza un registro existente del historial de Buffer KPI por su id."""
+    # CANDADO DE ESCRITURA. En modo aviso no frena: cuenta las anonimas para el
+    # /health. Con EXIGIR_TOKEN_ESCRITURA=true exige sesion o token del robot.
+    _bloqueo = _control_escritura(request, "buffer_history")
+    if _bloqueo is not None:
+        return _bloqueo
     try:
         body = await request.json()
         fecha               = body.get("fecha")
@@ -1972,8 +2003,14 @@ async def update_buffer_history(record_id: int, request: Request):
 
 
 @app.delete("/api/buffer/history/{record_id}")
-def delete_buffer_history(record_id: int):
+def delete_buffer_history(record_id: int, request: Request = None):
     """Elimina un registro del historial de Buffer KPI por su id."""
+    # CANDADO DE ESCRITURA, igual que los demas. `request` es opcional para no
+    # romper a quien la llame desde dentro; sin ella no se cuenta y no se frena.
+    if request is not None:
+        _bloqueo = _control_escritura(request, "buffer_history")
+        if _bloqueo is not None:
+            return _bloqueo
     try:
         conn = sqlite3.connect(db_path())
         cursor = conn.cursor()
@@ -2000,6 +2037,11 @@ async def save_kpi_results(request: Request):
     Si ya existe un resultado para esa fecha, lo sobreescribe (UPSERT).
     Body: { "fecha": "YYYY-MM-DD", "results": [...] }
     """
+    # CANDADO DE ESCRITURA. En modo aviso no frena: cuenta las anonimas para el
+    # /health. Con EXIGIR_TOKEN_ESCRITURA=true exige sesion o token del robot.
+    _bloqueo = _control_escritura(request, "buffer_kpi")
+    if _bloqueo is not None:
+        return _bloqueo
     try:
         body = await request.json()
         fecha   = body.get("fecha", ahora().strftime("%Y-%m-%d"))
