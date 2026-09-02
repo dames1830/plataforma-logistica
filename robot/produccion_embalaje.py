@@ -380,13 +380,72 @@ def canal_de(destino, orden):
 # ── el archivo de OBLPN ─────────────────────────────────────────────────
 # POR INDICE, NO CON DictReader: "Usuario de seleccion" sale DOS VECES y el
 # diccionario se queda con la ultima, perdiendo la primera.
-f = io.open(ARCHIVO, encoding='utf-8-sig', newline='', errors='replace')
-cabeza = f.read(4000)
-f.seek(0)
-r = csv.reader(f, delimiter=';' if cabeza.count(';') > cabeza.count(',') else ',')
-cabo = [c.strip() for c in next(r)]
-crudas = [x for x in r if len(x) >= len(cabo) - 2]
-f.close()
+def _abrir(ruta):
+    f = io.open(ruta, encoding='utf-8-sig', newline='', errors='replace')
+    cabeza = f.read(4000)
+    f.seek(0)
+    r = csv.reader(f, delimiter=';' if cabeza.count(';') > cabeza.count(',') else ',')
+    cab = [c.strip() for c in next(r)]
+    filas = [x for x in r if len(x) >= len(cab) - 2]
+    f.close()
+    return cab, filas
+
+
+def juntar_todos(carpeta, dia):
+    """TODAS las filas de ese dia, de TODOS los archivos, sin repetir.
+
+    UN ARCHIVO DEL OBLPN NO ES UN DIA. Medido el 02-sep-2026 sobre los 28 que hay:
+    `OBLPN 31-08.csv` trae 12.497 lineas del 31 pero tambien 3.536 del 27, 1.525
+    del 28 y 1.458 del 26. Y al reves: las lineas de un dia quedan repartidas
+    entre los archivos de los dias que siguen.
+
+    Por eso tomar un archivo como si fuera un dia deja el dia corto. Comprobado
+    contra lo que se habia publicado: al 27-08 le faltaba el 60%, al 20-08 el 92%.
+
+    La huella de una linea es LPN + articulo + hora de empaquetado. La misma linea
+    aparece en varios archivos y hay que contarla una sola vez.
+
+    El picking NO tiene este problema -0 de 32 archivos mezclan dias-, por eso
+    esto vive solo aca.
+    """
+    cab = None
+    filas = []
+    vistas = set()
+    ddmmaaaa = '%s/%s/%s' % (dia[8:], dia[5:7], dia[:4])
+    nombres = sorted(n for n in os.listdir(carpeta)
+                     if re.match(r'^OBLPN \d{1,2}-\d{1,2}\.csv$', n, re.I))
+    for n in nombres:
+        c, fs = _abrir(os.path.join(carpeta, n))
+        if cab is None:
+            cab = c
+            iH = c.index('Registro de hora de empaquetado') if 'Registro de hora de empaquetado' in c else -1
+            iL = c.index('Número de LPN') if 'Número de LPN' in c else -1
+            iS = c.index('Código de artículo') if 'Código de artículo' in c else -1
+        if c != cab:
+            print('[AVISO] %s tiene otras columnas; se saltea' % n)
+            continue
+        for x in fs:
+            if iH < 0 or iH >= len(x):
+                continue
+            if not limpio(x[iH]).startswith(ddmmaaaa):
+                continue
+            huella = (limpio(x[iL]) if 0 <= iL < len(x) else '',
+                      limpio(x[iS]) if 0 <= iS < len(x) else '',
+                      limpio(x[iH]))
+            if huella in vistas:
+                continue
+            vistas.add(huella)
+            filas.append(x)
+    print('[JUNTANDO] %s: %s lineas unicas de %d archivos'
+          % (dia, '{:,}'.format(len(filas)), len(nombres)))
+    return cab, filas
+
+
+_dia_pedido = dia_pedido()
+if '--juntando' in sys.argv and _dia_pedido:
+    cabo, crudas = juntar_todos(os.path.dirname(ARCHIVO), _dia_pedido)
+else:
+    cabo, crudas = _abrir(ARCHIVO)
 
 pos = {}
 for i, c in enumerate(cabo):
