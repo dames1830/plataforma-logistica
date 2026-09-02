@@ -65,7 +65,19 @@ import openpyxl
 csv.field_size_limit(10 ** 7)
 
 FORMA_PREPACK = re.compile(r'^\d{7}-\d-\d{5}$')
-HORAS = list(range(8, 20))
+# LAS VEINTICUATRO HORAS, no solo el turno.
+#
+# Estaba en 8..19 y lo que se movia fuera de ahi se contaba en el total pero NO
+# tenia columna donde aparecer: el 28-ago quedaron 275 lineas de picking y 217 de
+# embalaje sin fila que las mostrara, y la suma de las horas no daba el total.
+#
+# Daniel, 02-sep-2026: *"el noventa y cinco por ciento se mueve entre ocho de la
+# manana y las siete de la noche, pero hay un minimo que se mueve en la madrugada.
+# Necesito las veinticuatro horas"*.
+#
+# La pantalla no dibuja las 24 siempre: muestra el turno completo y agrega solo
+# las horas de afuera que ese dia tuvieron movimiento.
+HORAS = list(range(0, 24))
 CL = ('cal_suelto', 'cal_prepack', 'no_cal')
 TODOS = 'TODOS'
 ORDEN_CANAL = ['RETAIL', 'MAYORISTA', 'CATALOGO', 'ECOMMERCE', 'INDUSTRIAL',

@@ -29,7 +29,7 @@
  * }
  */
 
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0530';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0531';
 
 const nf = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE') : '–';
 const esc = (t) => String(t == null ? '' : t)
@@ -405,7 +405,20 @@ export function montarProduccionHora(cont, OPC) {
         return;
     }
 
-    const HORAS = D.horas, C = D.cortes || {};
+    /* QUE HORAS SE DIBUJAN.
+       El dato trae las 24, porque el CD mueve algo de madrugada y despues de las
+       20:00 —poco, pero se movio, y si no tiene columna la fila de horas no suma
+       el total—. Dibujar las 24 siempre dejaria doce columnas de rayas.
+       Se muestra SIEMPRE el turno de 08:00 a 19:00, y ademas cualquier hora de
+       afuera que ese dia haya tenido movimiento. El conjunto sale de TODOS y no
+       del canal elegido, para que las columnas no bailen al cambiar el filtro. */
+    const TURNO = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+    const todasLasHoras = D.horas || TURNO;
+    const conMovimiento = new Set(todasLasHoras.filter(h =>
+        ((D.vistas.TODOS.por_hora[h] || {}).total || 0) > 0));
+    const HORAS = todasLasHoras.filter(h => TURNO.includes(h) || conMovimiento.has(h));
+    const FUERA = HORAS.filter(h => !TURNO.includes(h));
+    const C = D.cortes || {};
     const SOLOS = D.canales.filter(c => c !== 'TODOS');
     let vista = 'vol', clase = 't';
 
@@ -604,10 +617,15 @@ export function montarProduccionHora(cont, OPC) {
               <td class="n">${nf(x.lineas)}</td><td class="n">${n || '–'}</td>
               <td class="n">${n ? nf(Math.round(x.total / n)) : '–'}</td></tr>`;
         }).join('');
+        const avisoFuera = FUERA.length
+            ? ` Fuera del turno tambien se movio algo: por eso aparecen las
+               <b>${FUERA.map(h => String(h).padStart(2, '0') + ':00').join(', ')}</b>.`
+                .replace('tambien', 'también')
+            : '';
         el('nota_horas').innerHTML = act.length
             ? `El hundimiento de las <b>${String(valle[0]).padStart(2, '0')}:00</b> es el
                refrigerio: ${nf(valle[1])} pares contra ${nf(pico[1])} en el pico de las
-               <b>${String(pico[0]).padStart(2, '0')}:00</b>.`
+               <b>${String(pico[0]).padStart(2, '0')}:00</b>.` + avisoFuera
             : (sel.length ? 'Esta selección no movió nada en ese rango.'
                           : 'Elige al menos un canal arriba.');
 
