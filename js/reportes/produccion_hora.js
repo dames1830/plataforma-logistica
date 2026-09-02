@@ -29,7 +29,7 @@
  * }
  */
 
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0517';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0518';
 
 const nf = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE') : '–';
 const esc = (t) => String(t == null ? '' : t)
@@ -245,7 +245,7 @@ function estilos() {
       border-bottom:1.6px solid var(--text-muted);transform:translateY(-70%) rotate(45deg)}
     #ph #ph_combo:hover{border-color:var(--primary)}
     #ph #ph_desplegable{position:absolute;top:calc(100% - 2px);left:64px;z-index:30;
-      min-width:280px;background:var(--surface,rgba(20,22,30,.98));
+      min-width:280px;background:var(--panel-solid);
       border:1px solid var(--border);border-radius:10px;
       box-shadow:0 10px 30px rgba(0,0,0,.35);padding:6px;backdrop-filter:none}
     #ph #ph_desplegable[hidden]{display:none}
@@ -314,9 +314,21 @@ function estilos() {
     /* ── la matriz persona x hora ── */
     #ph .ph-mtz table{font-size:var(--t-xs)}
     #ph .ph-mtz th,#ph .ph-mtz td{padding:4px 9px}
+    /* LAS DOS COLUMNAS CONGELADAS VAN CON UN COLOR SOLIDO DEL TEMA.
+       Estaban en var(--surface, #161a22) y ese token NO EXISTE en la
+       plataforma: los cuatro temas caian al color de reserva, que es oscuro. En
+       tema claro quedaban dos columnas negras con la letra negra encima y no se
+       leia ningun nombre. Lo cazo Daniel el 02-sep-2026 apenas abrio la pantalla:
+       *"picking y embalaje tienen ese fondo negro"*.
+       Tiene que ser SOLIDO —no rgba— porque las filas pasan por debajo al
+       desplazar la tabla de costado; con transparencia se veria el numero de
+       atras cruzado con el nombre. */
     #ph .ph-mtz thead th:nth-child(1),#ph .ph-mtz thead th:nth-child(2),
     #ph .ph-mtz tbody td:nth-child(1),#ph .ph-mtz tbody td:nth-child(2){
-      position:sticky;background:var(--surface,#161a22);z-index:1}
+      position:sticky;background:var(--panel-deep);z-index:1}
+    #ph .ph-mtz thead th:nth-child(1),#ph .ph-mtz thead th:nth-child(2),
+    #ph .ph-mtz tr.total td:nth-child(1),#ph .ph-mtz tr.total td:nth-child(2){
+      background:var(--panel-deeper)}
     #ph .ph-mtz thead th:nth-child(1),#ph .ph-mtz thead th:nth-child(2){z-index:2}
     #ph .ph-mtz thead th:nth-child(1),#ph .ph-mtz tbody td:nth-child(1){
       left:0;width:34px;color:var(--text-muted)}
