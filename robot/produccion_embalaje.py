@@ -202,18 +202,11 @@ def elegir_archivo(carpetas, plantillas):
     return os.path.join(carpetas[0], plantillas[0] % (hoy.day, hoy.month))
 
 BASE = base_onedrive()
-# PRIMERO LA COPIA DEL ROBOT DE LA HORA, DESPUES LA DE ONEDRIVE.
-#
-# `picking_por_hora.py` baja el picking del dia cada 2 horas y deja una copia en
-# `logs\picking_hora`. Esa es la de HOY y la que hay que mirar.
-#
-# La carpeta de OneDrive la escribe otro robot -el de las 19:20- y trae el
-# picking de AYER: sirve de respaldo, para que la pantalla no quede vacia si el
-# pase de la hora no salio, pero no es la primera opcion.
-ARCHIVO = elegir_archivo(
-    [os.path.join('C:' + os.sep, 'wms_scraping', 'logs', 'picking_hora'),
-     os.path.join(BASE, 'Picking')],
-    ['Picking %d-%d.csv', 'Picking %02d-%02d.csv'])
+# EL OBLPN SI LO DEJA EL ROBOT DE LA HORA EN ONEDRIVE, y con el dia en el nombre:
+# `oblpn_embalaje.py --hoy` lo pisa en cada pase, asi que ahi esta siempre el
+# ultimo estado del dia. Una sola carpeta, sin respaldo que buscar.
+ARCHIVO = elegir_archivo(os.path.join(BASE, 'OBLPN Embalaje'),
+                         ['OBLPN %02d-%02d.csv', 'OBLPN %d-%d.csv'])
 CARPETA_ORD = os.path.join(BASE, 'Detalle Orden')
 MAESTROS = [os.path.join(os.path.dirname(BASE), 'Maestro_Articulos.xlsx'),
             os.path.join(BASE, 'Archivos', 'Maestro_Articulos.xlsx')]
