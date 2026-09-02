@@ -666,6 +666,21 @@ try:
     def _log(t, nivel='INFO'):
         print('[%s] %s' % (nivel, t))
 
+    # MODO HISTORICO: se calcula y se guarda aparte, SIN publicar.
+    #
+    # Sirve para rellenar agosto entero de una sola vez. No se publica en el
+    # momento porque el servidor hoy guarda solo 2 dias por area: subir treinta
+    # dias haria que se pisaran entre ellos y quedarian los dos ultimos. Se dejan
+    # calculados y se suben todos juntos cuando el tope este arriba.
+    if '--historico' in sys.argv:
+        _dir = os.path.join(os.path.dirname(SALIDA), 'historico')
+        os.makedirs(_dir, exist_ok=True)
+        _f = os.path.join(_dir, '%s_%s.json' % (AREA, dia))
+        io.open(_f, 'w', encoding='utf-8').write(json.dumps(salida, ensure_ascii=False))
+        print('[HISTORICO] guardado %s (%.0f KB), sin publicar'
+              % (os.path.basename(_f), os.path.getsize(_f) / 1024.0))
+        raise SystemExit(0)
+
     # UN CUADRO VACIO NO SE PUBLICA NUNCA.
     #
     # El 02-sep-2026 una corrida leyo el archivo equivocado, saco cero lineas y
