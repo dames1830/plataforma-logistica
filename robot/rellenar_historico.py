@@ -38,6 +38,8 @@ sys.path.insert(0, AQUI)
 
 LOGS = os.path.join('C:' + os.sep, 'wms_scraping', 'logs')
 HIST = os.path.join(LOGS, 'historico')
+# Donde se deja la copia local cuando OneDrive tiene el archivo en la nube.
+ESTACION = os.path.join(LOGS, 'fuente')
 PY = os.path.join(os.environ.get('ProgramFiles', r'C:\Program Files'),
                   'Python313', 'python.exe')
 
@@ -60,6 +62,28 @@ LADOS = {
 
 # LOS DOMINGOS BAJAN UN ARCHIVO CASI VACIO —100 bytes— y no hay nada que calcular.
 MINIMO_KB = 200
+
+
+def bajar_de_la_nube(ruta, destino):
+    """TRAE EL ARCHIVO SI ONEDRIVE LO TIENE SOLO EN LA NUBE.
+
+    Los archivos viejos quedan como marcador: se ven en la carpeta y pesan lo que
+    corresponde, pero abrirlos revienta con `OSError: [Errno 22] Invalid
+    argument`. Le paso a los tres primeros del relleno.
+
+    Copiarlo es lo que obliga a OneDrive a bajarlo de verdad. Es la misma trampa
+    del maestro de rutas, que como .xlsx se veia como un zip roto.
+    """
+    import shutil
+    try:
+        with io.open(ruta, 'rb') as f:
+            f.read(1)
+        return ruta                      # ya estaba en disco
+    except OSError:
+        pass
+    log('     esta solo en la nube; bajandolo...')
+    shutil.copyfile(ruta, destino)       # esto la fuerza a materializarse
+    return destino
 
 
 def log(t):
@@ -108,9 +132,25 @@ def calcular(claves, rehacer):
                 saltados += 1
                 continue
             log('%d/%d  %s' % (i, len(nombres), n))
-            r = subprocess.run([PY, '-u', os.path.join(AQUI, cfg['script']), n, '--historico'],
+            # SE LE PASA LA RUTA ENTERA, no el nombre: puede terminar siendo la
+            # copia local si OneDrive lo tenia en la nube.
+            os.makedirs(ESTACION, exist_ok=True)
+            fuente = os.path.join(cfg['carpeta'], n)
+            local = os.path.join(ESTACION, n)
+            try:
+                usar = bajar_de_la_nube(fuente, local)
+            except Exception as e:
+                log('     FALLO al bajarlo de la nube: %s' % e)
+                fallados += 1
+                continue
+            r = subprocess.run([PY, '-u', os.path.join(AQUI, cfg['script']), usar, '--historico'],
                                capture_output=True, text=True, encoding='utf-8',
                                errors='replace')
+            if usar == local:
+                try:
+                    os.remove(local)     # no se acumulan copias de 20 MB
+                except Exception:
+                    pass
             linea = [l for l in (r.stdout or '').splitlines()
                      if 'HISTORICO' in l or 'ERROR' in l or 'AVISO' in l]
             for l in linea[-2:]:
