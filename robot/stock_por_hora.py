@@ -103,6 +103,11 @@ DIAS_DE_LOG = 7
 
 # ─────────────────────────────── Registro ───────────────────────────────
 
+# CUANTO PUEDE DURAR UNA CORRIDA. Ver reloj_muerto.py: pasado esto se corta sola,
+# suelta el candado y lo deja escrito. Una corrida sana son unos 9 minutos.
+MINUTOS_MAXIMOS = 40
+
+
 def log(mensaje, nivel="INFO"):
     linea = "[%s] [%-5s] %s" % (datetime.now().strftime("%H:%M:%S"), nivel, mensaje)
     try:
@@ -347,6 +352,7 @@ def guardar_cierre(ruta_act, ruta_res):
 
 def run():
     import bloqueo_wms
+    import reloj_muerto
 
     os.makedirs(LOG_DIR, exist_ok=True)
     inicio = time.time()
@@ -368,6 +374,24 @@ def run():
         return 0
 
     bloqueo_wms.tomar("stock por hora")
+
+    # ── EL RELOJ, JUSTO DESPUES DE TOMAR EL CANDADO ──────────────────────
+    # El 02-sep-2026 a las 02:00 esta corrida se colgo exportando el Stock
+    # Reserva: se le murio el navegador y el proceso quedo 38 minutos vivo, sin
+    # escribir una linea, CON EL CANDADO PUESTO. Nadie aviso.
+    #
+    # Va DESPUES de tomar el candado y no antes, porque lo que hay que garantizar
+    # es que el candado se suelte pase lo que pase; y el `al_morir` es justamente
+    # soltarlo, ya que al cortar de raiz no se ejecutan los `finally`.
+    #
+    # 40 MINUTOS: una corrida sana son unos 9 y el propio WMS avisa que el
+    # reporte "puede tardar mas de 15". Cuarenta no aprieta a nadie y caza el
+    # colgado mucho antes de que el candado venza solo, que son 150.
+    apagar_reloj = reloj_muerto.arrancar(
+        MINUTOS_MAXIMOS, log,
+        al_morir=lambda: bloqueo_wms.soltar(),
+        quien="el stock de la hora")
+
     carpeta = tempfile.mkdtemp(prefix="stock_hora_")
     try:
         ruta_act, ruta_res = bajar_los_dos(carpeta)
@@ -406,6 +430,9 @@ def run():
         return 0
 
     finally:
+        # El reloj se apaga primero: si no, una corrida que termino bien pero
+        # tardo mas de la cuenta se mataria a si misma al salir.
+        apagar_reloj()
         # El candado se suelta SIEMPRE. Si quedara puesto, el robot de la hora se
         # saltearía las siguientes 45 corridas hasta que se venciera solo.
         bloqueo_wms.soltar()
