@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta - Produccion Picking Embalaje</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { margin:0; padding:22px; font-family:'Inter',system-ui,sans-serif; }
+  #caja { max-width:1500px; margin:0 auto; min-width:0; flex:1 1 auto; }
+  #errores { background:#7f1d1d; color:#fff; padding:12px 16px; border-radius:10px;
+             margin-bottom:16px; font:12px/1.6 monospace; white-space:pre-wrap; display:none; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head><body>
+<!-- LA MAQUETA DE LA PANTALLA REAL. Monta el mismo `produccion_proyeccion.js` que
+     corre en la plataforma, con los datos de verdad guardados al lado: sirve para
+     mirarla sin entrar a beta y sin contrasena. Los cuatro temas se prueban con
+     `?tema=pbi` (el claro), `pbi-classic`, `negro` o `indigo`. -->
+<div id="caja"><div id="errores"></div><div id="destino"></div></div>
+<script type="module">
+const caja = document.getElementById('errores');
+const gritar = (t) => { caja.style.display='block'; caja.textContent += t + '\n'; };
+window.addEventListener('error', e => gritar('ERROR: ' + e.message));
+window.addEventListener('unhandledrejection', e => gritar('PROMESA: ' + (e.reason && e.reason.message || e.reason)));
+try {
+  const tema = new URLSearchParams(location.search).get('tema');
+  if (tema) document.documentElement.setAttribute('data-tema', tema);
+  const mod = await import('../js/reportes/produccion_proyeccion.js');
+  const datos = await (await fetch('maqueta_produccion_proyeccion.json')).json();
+  datos.alCambiarRango = (d, h) => gritar('rango pedido: ' + d + ' .. ' + h);
+  mod.montarProduccionProyeccion(document.getElementById('destino'), datos);
+  window.__listo = true;
+} catch (e) { gritar('AL MONTAR: ' + (e && e.stack || e)); }
+</script>
+</body></html>

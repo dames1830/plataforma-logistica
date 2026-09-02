@@ -17,7 +17,7 @@
  * ══════════════════════════════════════════════════════════════════════════════ */
 
 import { calcularCapacidad, pideConPerilla, perillaQueEntra, traerConfig, publicarTopes, RANGOS }
-  from '../services_v245/capacidadService.js?v=29.0550';
+  from '../services_v245/capacidadService.js?v=29.0551';
 
 const mil = (n) => Math.round(Number(n) || 0).toLocaleString('es-PE');
 const esc = (s) => String(s == null ? '' : s)
