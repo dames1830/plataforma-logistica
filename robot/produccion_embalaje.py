@@ -596,7 +596,15 @@ def vista(can):
         'totales': vol(totales[can]),
         'por_hora': ph,
         'gente': sorted([{'usuario': u, 'total': celda(can, u, None),
-                          'horas': {str(h): celda(can, u, h) for h in HORAS}}
+                          # SOLO LAS HORAS EN QUE ESA PERSONA MOVIO ALGO.
+                          # Con las 24 completas el archivo del dia pasaba de 368
+                          # a 585 KB —un mes serian 35 MB y bajar un rango de
+                          # treinta dias, 17 MB al navegador— y veinte de esas
+                          # veinticuatro celdas venian en cero. La pantalla trata
+                          # la hora que falta como vacia.
+                          'horas': {str(h): c for h, c in
+                                    ((h, celda(can, u, h)) for h in HORAS)
+                                    if c.get('total')}}
                          for u in personas[can]],
                         key=lambda x: -x['total']['total']),
         'marcas': sorted([dict(nom=k[1], **vol(v)) for k, v in marcas.items()

@@ -29,7 +29,7 @@
  * }
  */
 
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0531';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0532';
 
 const nf = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE') : '–';
 const esc = (t) => String(t == null ? '' : t)
@@ -690,7 +690,9 @@ export function montarProduccionHora(cont, OPC) {
         } else {
             el('cuerpo').innerHTML = gente.map((g, i) => {
                 const celdas = HORAS.map(h => {
-                    const c = g.horas[h], d = dato(c);
+                    /* La hora que no viene es una hora sin movimiento: el robot
+                       no escribe las celdas vacias para no doblar el archivo. */
+                    const c = g.horas[h] || {}, d = dato(c);
                     const tit = CLASES.slice(1).filter(([k]) => c[k + '_l'])
                         .map(([k, lab]) => `${lab}: ${nf(c[k + '_l'])} líneas`).join(' — ');
                     return `<td class="n c${d ? '' : ' z'}" title="${esc(tit)}"
@@ -721,7 +723,7 @@ export function montarProduccionHora(cont, OPC) {
                             : vs.reduce((a, b) => a + b, 0);
             };
             const celdas = HORAS.map(h => {
-                const x = col(g => dato(g.horas[h]));
+                const x = col(g => dato(g.horas[h] || {}));
                 return `<td class="n${x ? '' : ' z'}">${x ? nf(x) : '–'}</td>`;
             }).join('');
             const ritmos = gente.map(g => ritmo(g.total.total_l, g.total.total_iv, 1)).filter(Boolean);
