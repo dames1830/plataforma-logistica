@@ -29,7 +29,7 @@ en el servidor, asi que correrlo crearia tareas de verdad. De ese solo se compru
 <div id="corral"></div>
 <div id="resumen"></div>
 <script type="module">
-const V = '?v=29.0554';
+const V = '?v=29.0555';
 const MODULOS = [
   { ruta: '../js/reportes/slotting_barrido.js' + V,
     esperado: ['barrerParaSlotting'],
@@ -62,6 +62,23 @@ const MODULOS = [
         processERIAnalysis: () => {},
         processReporteUCA: () => {},
         displayReporteUCA: () => {},
+      });
+      await new Promise(r => setTimeout(r, 400));
+    } },
+
+  { ruta: '../js/reportes/despacho_no_retail.js' + V,
+    esperado: ['renderDespachoNoRetailPortal'],
+    dibuja: async (mod, caja) => {
+      await mod.renderDespachoNoRetailPortal(caja, {
+        fetchAndParseNoRetailClients: async () => [],
+        showNRPhotoLoader: () => {},
+        renderTabContent: () => {},
+        updateMobileDriverClass: () => {},
+        rolePermissions: {},
+        showPremiumAlert: () => {},
+        showPremiumConfirm: () => Promise.resolve(false),
+        user: { name: 'prueba', role: 'admin' },
+        onLogout: () => {},
       });
       await new Promise(r => setTimeout(r, 400));
     } },
