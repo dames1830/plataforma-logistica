@@ -116,9 +116,40 @@ def base_onedrive():
     raise SystemExit('no encuentro OneDrive')
 
 
+def elegir_archivo(carpeta, plantillas):
+    """QUE ARCHIVO LE TOCA A ESTA CORRIDA.
+
+    Se puede pasar el nombre a mano -util para rehacer un dia viejo-. Sin eso,
+    se busca el de HOY, que es el que el robot de la hora acaba de dejar.
+
+    EL NOMBRE DEL DIA NO ES UNO SOLO: el picking lo escribe sin cero adelante
+    ("Picking 3-9.csv") y el OBLPN con cero ("OBLPN 03-09.csv"). Se prueban las
+    dos formas antes de rendirse.
+
+    Si el de hoy no esta -el WMS no contesto, o es de madrugada y todavia no
+    corrio ningun pase- se toma EL MAS NUEVO de la carpeta y se avisa. Es mejor
+    republicar el cuadro de ayer que dejar la pantalla sin nada.
+    """
+    if len(sys.argv) > 1 and not sys.argv[1].startswith('-'):
+        return os.path.join(carpeta, sys.argv[1])
+    hoy = __import__('datetime').datetime.now()
+    for pl in plantillas:
+        r = os.path.join(carpeta, pl % (hoy.day, hoy.month))
+        if os.path.isfile(r):
+            return r
+    try:
+        cand = [os.path.join(carpeta, n) for n in os.listdir(carpeta)
+                if n.lower().endswith('.csv')]
+        nuevo = max(cand, key=os.path.getmtime)
+        print('[AVISO] no hay archivo de hoy en %s; se usa el mas nuevo: %s'
+              % (carpeta, os.path.basename(nuevo)))
+        return nuevo
+    except Exception:
+        return os.path.join(carpeta, plantillas[0] % (hoy.day, hoy.month))
+
 BASE = base_onedrive()
-ARCHIVO = os.path.join(BASE, 'OBLPN Embalaje',
-                       sys.argv[1] if len(sys.argv) > 1 else 'OBLPN 31-08.csv')
+ARCHIVO = elegir_archivo(os.path.join(BASE, 'OBLPN Embalaje'),
+                          ['OBLPN %02d-%02d.csv', 'OBLPN %d-%d.csv'])
 CARPETA_ORD = os.path.join(BASE, 'Detalle Orden')
 MAESTROS = [os.path.join(os.path.dirname(BASE), 'Maestro_Articulos.xlsx'),
             os.path.join(BASE, 'Archivos', 'Maestro_Articulos.xlsx')]
