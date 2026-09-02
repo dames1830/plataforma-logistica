@@ -1,40 +1,40 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0540';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0541';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0540';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0540';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0540';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0540';
-import * as metasService from '../services_v245/metasService.js?v=29.0540';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0540';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0540';
+import * as adminService from '../services_v245/adminService.js?v=29.0541';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0541';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0541';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0541';
+import * as metasService from '../services_v245/metasService.js?v=29.0541';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0541';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0541';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0540';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0540';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0540';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0540';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0540';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0540';
-import { renderCapacidad } from './capacidad.js?v=29.0540';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0540';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0540';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0540';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0540';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0540';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0540';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0540';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0540';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0540';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0540';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0540';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0540';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0540';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0540';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0540';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0540';
-import { montarSlotting } from './slotting.js?v=29.0540';
-import { montarEventos } from './eventos.js?v=29.0540';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0540';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0541';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0541';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0541';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0541';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0541';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0541';
+import { renderCapacidad } from './capacidad.js?v=29.0541';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0541';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0541';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0541';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0541';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0541';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0541';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0541';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0541';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0541';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0541';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0541';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0541';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0541';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0541';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0541';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0541';
+import { montarSlotting } from './slotting.js?v=29.0541';
+import { montarEventos } from './eventos.js?v=29.0541';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0541';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -397,7 +397,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0540';
+const VERSION = '29.0541';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -4268,107 +4268,128 @@ export const renderDashboard = async (container, user, onLogout) => {
     
     if(!bufferConfigCached) bufferConfigCached = await fetchBufferConfig();
     
-    if (!lastBufferKPI) {
-        /* CUAL ANALISIS SE MUESTRA: EL MAS NUEVO, NO EL DE ESTA PC.
-           -------------------------------------------------------------------
-           Antes ganaba siempre la cache local, sin mirar la fecha. Una PC que
-           alguna vez corrio un analisis se quedaba mostrando el suyo para
-           siempre, aunque otra hubiera publicado uno mas nuevo: los numeros no
-           coincidian entre maquinas y no habia forma de saber cual valia.
-
-           Ahora se comparan las dos marcas y gana la mas nueva. La del servidor
-           se consulta por `/api/sync/versiones`, que pesa 3 KB; el analisis
-           entero pesa casi 3 MB y solo se baja si de verdad hay uno mas nuevo. */
-        const selloDelAnalisis = (txt) => {          // '25/08/2026, 20:26:08'
-            const m = /^(\d{2})\/(\d{2})\/(\d{4}),?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/
-                .exec(String(txt || ''));
-            return m ? new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5], +(m[6] || 0)).getTime() : 0;
-        };
-        const selloDelServidor = (txt) => {          // '2026-08-25 20:26:12' (hora de Lima)
-            const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/
-                .exec(String(txt || ''));
-            return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)).getTime() : 0;
-        };
-
-        let local = null;
-        marca('1 · leer el analisis guardado (IndexedDB)');
-        try {
-            const dbVal = await loadLastBufferKPI();
-            if (dbVal && (dbVal.detalle || dbVal.detalleZonas)) local = dbVal;
-        } catch (e) {
-            console.warn("[PULSE] Error leyendo caché IndexedDB:", e);
-        }
-        fin('1 · leer el analisis guardado (IndexedDB)');
-
-        /* Sin nada local, el del servidor va si o si. Con algo local, primero se
-           pregunta la marca -3 KB- y recien se baja si hay uno mas nuevo.
-           LOS 60 SEGUNDOS: entre que el analisis se sella y termina de subir
-           pasan unos segundos (medido: sellado 20:26:08, subido 20:26:12). Sin
-           esa gracia, la misma PC que lo corrio se bajaria 3 MB en cada recarga. */
-        let traerElDelServidor = !local;
-        if (local) {
-            marca('2 · preguntar si hay uno mas nuevo');
-            try {
-                const r = await fetch(`${API_BASE}/sync/versiones?t=${Date.now()}`);
-                if (r.ok) {
-                    const j = await r.json();
-                    const tServidor = selloDelServidor(
-                        j && j.versiones ? j.versiones.analisis_buffer : null);
-                    const tLocal = selloDelAnalisis(local.timestamp);
-                    if (tServidor && (!tLocal || tServidor > tLocal + 60000)) {
-                        traerElDelServidor = true;
-                        console.log('[AB] Hay un análisis más nuevo en el servidor; se baja.');
-                    }
-                }
-            } catch (e) {
-                console.warn('[AB] No se pudo consultar la marca del servidor:', e);
-            }
-            fin('2 · preguntar si hay uno mas nuevo');
-        }
-
-        if (traerElDelServidor) {
-            marca('3 · bajar el analisis del servidor');
-            try {
-                const delServidor = await traerAnalisisBuffer(getLogicalDate());
-                if (delServidor) {
-                    lastBufferKPI = delServidor;
-                    lastBufferResult = delServidor;
-                    console.log('[AB] Análisis traído del servidor: lo procesó otra PC.');
-                }
-            } catch (e) { console.warn('[AB] No se pudo traer el análisis:', e); }
-            fin('3 · bajar el analisis del servidor');
-        }
-        if (!lastBufferKPI && local) {              // el del servidor fallo o es mas viejo
-            lastBufferKPI = local;
-            lastBufferResult = local;
-        }
-
-        // 3. Fallback tradicional si no se cargó de IndexedDB ni del servidor
+  /* EL ANÁLISIS GUARDADO SE RESUELVE DESPUÉS DE DIBUJAR, NO ANTES.
+   *
+   * Daniel, 02-sep-2026, después del primer arreglo: *"ahora son 5 a 6 segundos"*.
+   * Lo que quedaba era esto: buscar cuál análisis mostrar —leerlo del navegador,
+   * preguntarle al servidor si hay uno más nuevo y, si lo hay, bajarlo— se hacía
+   * ANTES de pintar una sola línea, así que la pantalla se quedaba en el spinner
+   * todo ese rato.
+   *
+   * Nada de lo que se dibuja primero lo necesita: ni la barra de sub-pestañas ni
+   * el panel con PROCESAR. El análisis solo hace falta para las tablas del final,
+   * que ya se pintaban aparte con su propio "Restaurando último análisis...".
+   *
+   * Así que ahora la pantalla sale enseguida y las tablas se llenan cuando el
+   * análisis esté. Se pide UNA sola vez por vuelta.
+   */
+  let _analisisResuelto = null;
+  const resolverAnalisisGuardado = () => {
+    if (!_analisisResuelto) _analisisResuelto = (async () => {
         if (!lastBufferKPI) {
-            marca('4 · respaldo de localStorage (JSON.parse)');
-            const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI')
-                         || localStorage.getItem('lastBufferKPI')
-                         || sessionStorage.getItem('lastBufferKPI_session');
-            if (stored) {
+            /* CUAL ANALISIS SE MUESTRA: EL MAS NUEVO, NO EL DE ESTA PC.
+               -------------------------------------------------------------------
+               Antes ganaba siempre la cache local, sin mirar la fecha. Una PC que
+               alguna vez corrio un analisis se quedaba mostrando el suyo para
+               siempre, aunque otra hubiera publicado uno mas nuevo: los numeros no
+               coincidian entre maquinas y no habia forma de saber cual valia.
+
+               Ahora se comparan las dos marcas y gana la mas nueva. La del servidor
+               se consulta por `/api/sync/versiones`, que pesa 3 KB; el analisis
+               entero pesa casi 3 MB y solo se baja si de verdad hay uno mas nuevo. */
+            const selloDelAnalisis = (txt) => {          // '25/08/2026, 20:26:08'
+                const m = /^(\d{2})\/(\d{2})\/(\d{4}),?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/
+                    .exec(String(txt || ''));
+                return m ? new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5], +(m[6] || 0)).getTime() : 0;
+            };
+            const selloDelServidor = (txt) => {          // '2026-08-25 20:26:12' (hora de Lima)
+                const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/
+                    .exec(String(txt || ''));
+                return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)).getTime() : 0;
+            };
+
+            let local = null;
+            marca('1 · leer el analisis guardado (IndexedDB)');
+            try {
+                const dbVal = await loadLastBufferKPI();
+                if (dbVal && (dbVal.detalle || dbVal.detalleZonas)) local = dbVal;
+            } catch (e) {
+                console.warn("[PULSE] Error leyendo caché IndexedDB:", e);
+            }
+            fin('1 · leer el analisis guardado (IndexedDB)');
+
+            /* Sin nada local, el del servidor va si o si. Con algo local, primero se
+               pregunta la marca -3 KB- y recien se baja si hay uno mas nuevo.
+               LOS 60 SEGUNDOS: entre que el analisis se sella y termina de subir
+               pasan unos segundos (medido: sellado 20:26:08, subido 20:26:12). Sin
+               esa gracia, la misma PC que lo corrio se bajaria 3 MB en cada recarga. */
+            let traerElDelServidor = !local;
+            if (local) {
+                marca('2 · preguntar si hay uno mas nuevo');
                 try {
-                    const parsed = JSON.parse(stored);
-                    if (parsed && (parsed.detalle || parsed.detalleZonas)) {
-                        lastBufferKPI = parsed;
-                        lastBufferResult = parsed;
-                    } else {
+                    const r = await fetch(`${API_BASE}/sync/versiones?t=${Date.now()}`);
+                    if (r.ok) {
+                        const j = await r.json();
+                        const tServidor = selloDelServidor(
+                            j && j.versiones ? j.versiones.analisis_buffer : null);
+                        const tLocal = selloDelAnalisis(local.timestamp);
+                        if (tServidor && (!tLocal || tServidor > tLocal + 60000)) {
+                            traerElDelServidor = true;
+                            console.log('[AB] Hay un análisis más nuevo en el servidor; se baja.');
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[AB] No se pudo consultar la marca del servidor:', e);
+                }
+                fin('2 · preguntar si hay uno mas nuevo');
+            }
+
+            if (traerElDelServidor) {
+                marca('3 · bajar el analisis del servidor');
+                try {
+                    const delServidor = await traerAnalisisBuffer(getLogicalDate());
+                    if (delServidor) {
+                        lastBufferKPI = delServidor;
+                        lastBufferResult = delServidor;
+                        console.log('[AB] Análisis traído del servidor: lo procesó otra PC.');
+                    }
+                } catch (e) { console.warn('[AB] No se pudo traer el análisis:', e); }
+                fin('3 · bajar el analisis del servidor');
+            }
+            if (!lastBufferKPI && local) {              // el del servidor fallo o es mas viejo
+                lastBufferKPI = local;
+                lastBufferResult = local;
+            }
+
+            // 3. Fallback tradicional si no se cargó de IndexedDB ni del servidor
+            if (!lastBufferKPI) {
+                marca('4 · respaldo de localStorage (JSON.parse)');
+                const stored = localStorage.getItem('logistics_v24_prod_lastBufferKPI')
+                             || localStorage.getItem('lastBufferKPI')
+                             || sessionStorage.getItem('lastBufferKPI_session');
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        if (parsed && (parsed.detalle || parsed.detalleZonas)) {
+                            lastBufferKPI = parsed;
+                            lastBufferResult = parsed;
+                        } else {
+                            localStorage.removeItem('logistics_v24_prod_lastBufferKPI');
+                            localStorage.removeItem('lastBufferKPI');
+                            sessionStorage.removeItem('lastBufferKPI_session');
+                        }
+                    } catch(e) {
                         localStorage.removeItem('logistics_v24_prod_lastBufferKPI');
                         localStorage.removeItem('lastBufferKPI');
                         sessionStorage.removeItem('lastBufferKPI_session');
                     }
-                } catch(e) {
-                    localStorage.removeItem('logistics_v24_prod_lastBufferKPI');
-                    localStorage.removeItem('lastBufferKPI');
-                    sessionStorage.removeItem('lastBufferKPI_session');
                 }
+                fin('4 · respaldo de localStorage (JSON.parse)');
             }
-            fin('4 · respaldo de localStorage (JSON.parse)');
         }
-    }
+    })().finally(() => { _analisisResuelto = null; });
+    return _analisisResuelto;
+  };
 
     marca('5 · permisos y armado de la barra');
     const bufferTabDef = TABS.find(t => t.id === 'buffer');
@@ -5077,9 +5098,17 @@ export const renderDashboard = async (container, user, onLogout) => {
         }
 
 
-        // CARGAR RESULTADOS CACHEADOS AL FINAL
+        /* CARGAR RESULTADOS CACHEADOS AL FINAL.
+           ACÁ se busca cuál análisis mostrar, no arriba: la pantalla ya está
+           dibujada y el cartel de "Restaurando..." se ve mientras tanto, en vez
+           de dejar cinco segundos de spinner en blanco. */
+        results.innerHTML = `<div style="text-align:center;padding:1rem;color:rgba(var(--ink-rgb), 0.4);font-size:var(--t-sm);">⏳ Restaurando último análisis...</div>`;
+        marca('8 · buscar cual analisis mostrar');
+        await resolverAnalisisGuardado().catch(e =>
+            console.warn('[AB] No se pudo resolver el análisis guardado:', e));
+        fin('8 · buscar cual analisis mostrar');
+        if (!lastBufferKPI) results.innerHTML = '';
         if (lastBufferKPI) {
-            results.innerHTML = `<div style="text-align:center;padding:1rem;color:rgba(var(--ink-rgb), 0.4);font-size:var(--t-sm);">⏳ Restaurando último análisis...</div>`;
             setTimeout(() => {
                 try {
                     marca('7 · dibujar las tablas del analisis guardado');
@@ -5562,7 +5591,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0540');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0541');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5825,7 +5854,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0540');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0541');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18981,7 +19010,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0540 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0541 | MOBILE PORTAL
                             </div>
                     </div>
 
