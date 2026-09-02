@@ -97,7 +97,50 @@ def base_onedrive():
     raise SystemExit('no encuentro OneDrive')
 
 
-def elegir_archivo(carpeta, plantillas):
+def dia_mayoritario(ruta, columna):
+    """EL DIA DEL ARCHIVO ES EL DE LA MAYORIA DE SUS FILAS, no el de la primera.
+
+    Salia de la primera fila con hora valida, y eso es fragil: el OBLPN del
+    01-09 traia arriba una linea empaquetada el 31-08 y el cuadro entero quedo
+    fechado el 31, tirando las 39.000 filas del dia bueno a `sin hora`. Se vio el
+    02-sep-2026 en la primera corrida del robot.
+
+    Se cuenta con una pasada liviana -solo esa columna, sin armar diccionarios-
+    y gana la fecha que mas veces aparece. Devuelve AAAA-MM-DD, o None si el
+    archivo no tiene ni una fecha legible.
+    """
+    from collections import Counter
+    try:
+        f = io.open(ruta, encoding='utf-8-sig', newline='', errors='replace')
+        cabeza = f.read(4000)
+        f.seek(0)
+        r = csv.reader(f, delimiter=';' if cabeza.count(';') > cabeza.count(',') else ',')
+        cab = [c.strip() for c in next(r)]
+        try:
+            i = cab.index(columna)
+        except ValueError:
+            f.close()
+            return None
+        cuenta = Counter()
+        for x in r:
+            if i < len(x):
+                mm = re.match(r'^(\d{2})/(\d{2})/(\d{4})\s', str(x[i]).strip().strip('"'))
+                if mm:
+                    cuenta['%s-%s-%s' % (mm.group(3), mm.group(2), mm.group(1))] += 1
+        f.close()
+        if not cuenta:
+            return None
+        gana, veces = cuenta.most_common(1)[0]
+        if len(cuenta) > 1:
+            print('[AVISO] el archivo mezcla %d fechas; gana %s con %d filas de %d'
+                  % (len(cuenta), gana, veces, sum(cuenta.values())))
+        return gana
+    except Exception as e:
+        print('[AVISO] no se pudo mirar la fecha del archivo: %s' % e)
+        return None
+
+
+def elegir_archivo(carpetas, plantillas):
     """QUE ARCHIVO LE TOCA A ESTA CORRIDA.
 
     Se puede pasar el nombre a mano -util para rehacer un dia viejo-. Sin eso,
@@ -111,26 +154,47 @@ def elegir_archivo(carpeta, plantillas):
     corrio ningun pase- se toma EL MAS NUEVO de la carpeta y se avisa. Es mejor
     republicar el cuadro de ayer que dejar la pantalla sin nada.
     """
+    if isinstance(carpetas, str):
+        carpetas = [carpetas]
     if len(sys.argv) > 1 and not sys.argv[1].startswith('-'):
-        return os.path.join(carpeta, sys.argv[1])
+        for c in carpetas:
+            r = os.path.join(c, sys.argv[1])
+            if os.path.isfile(r):
+                return r
+        return os.path.join(carpetas[0], sys.argv[1])
     hoy = __import__('datetime').datetime.now()
-    for pl in plantillas:
-        r = os.path.join(carpeta, pl % (hoy.day, hoy.month))
-        if os.path.isfile(r):
-            return r
-    try:
-        cand = [os.path.join(carpeta, n) for n in os.listdir(carpeta)
-                if n.lower().endswith('.csv')]
+    for c in carpetas:
+        for pl in plantillas:
+            r = os.path.join(c, pl % (hoy.day, hoy.month))
+            if os.path.isfile(r):
+                return r
+    cand = []
+    for c in carpetas:
+        try:
+            cand += [os.path.join(c, n) for n in os.listdir(c)
+                     if n.lower().endswith('.csv')]
+        except Exception:
+            pass
+    if cand:
         nuevo = max(cand, key=os.path.getmtime)
-        print('[AVISO] no hay archivo de hoy en %s; se usa el mas nuevo: %s'
-              % (carpeta, os.path.basename(nuevo)))
+        print('[AVISO] no hay archivo de hoy; se usa el mas nuevo: %s'
+              % os.path.basename(nuevo))
         return nuevo
-    except Exception:
-        return os.path.join(carpeta, plantillas[0] % (hoy.day, hoy.month))
+    return os.path.join(carpetas[0], plantillas[0] % (hoy.day, hoy.month))
 
 BASE = base_onedrive()
-ARCHIVO = elegir_archivo(os.path.join(BASE, 'Picking'),
-                          ['Picking %d-%d.csv', 'Picking %02d-%02d.csv'])
+# PRIMERO LA COPIA DEL ROBOT DE LA HORA, DESPUES LA DE ONEDRIVE.
+#
+# `picking_por_hora.py` baja el picking del dia cada 2 horas y deja una copia en
+# `logs\picking_hora`. Esa es la de HOY y la que hay que mirar.
+#
+# La carpeta de OneDrive la escribe otro robot -el de las 19:20- y trae el
+# picking de AYER: sirve de respaldo, para que la pantalla no quede vacia si el
+# pase de la hora no salio, pero no es la primera opcion.
+ARCHIVO = elegir_archivo(
+    [os.path.join('C:' + os.sep, 'wms_scraping', 'logs', 'picking_hora'),
+     os.path.join(BASE, 'Picking')],
+    ['Picking %d-%d.csv', 'Picking %02d-%02d.csv'])
 CARPETA_ORD = os.path.join(BASE, 'Detalle Orden')
 MAESTROS = [os.path.join(os.path.dirname(BASE), 'Maestro_Articulos.xlsx'),
             os.path.join(BASE, 'Archivos', 'Maestro_Articulos.xlsx')]
@@ -287,7 +351,7 @@ totales = defaultdict(lambda: defaultdict(float))
 personas = defaultdict(set)
 tipos_vistos = defaultdict(lambda: defaultdict(float))
 destinos = defaultdict(lambda: defaultdict(float))
-dia = None
+dia = dia_mayoritario(ARCHIVO, 'Hora de selección')
 leidas = descartadas = 0
 
 for row in r:
@@ -306,6 +370,11 @@ for row in r:
         continue
     if dia is None:
         dia = '%s-%s-%s' % (m.group(3), m.group(2), m.group(1))
+    elif not hs.startswith('%s/%s/%s' % (dia[8:], dia[5:7], dia[:4])):
+        # UN CUADRO, UN SOLO DIA. Si el archivo mezcla dos fechas, las del otro
+        # dia se van: sumarlas daria un turno de 24 horas que nadie trabajo.
+        descartadas += 1
+        continue
     h = int(m.group(4))
     seg = h * 3600 + int(m.group(5)) * 60 + int(m.group(6))
 
