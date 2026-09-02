@@ -109,8 +109,15 @@ DE_FABRICA = {
     # Baja el dia EN CURSO (--hoy) y pisa el archivo en cada pase: siempre queda el
     # ultimo estado. El ultimo pase del dia es a las 22:40.
     'oblpn_hora':   {'activa': True, 'minuto': 40, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00', 'saltar': ['18:40']},
+    # EL CRUCE CONTRA EL WMS, una vez al dia y al final. Baja los dos web reports
+    # -PRODUCCION PICKING / EMBALAJE ALDEAS X HORA- y los compara contra lo que
+    # calculo la plataforma. Va a las 21:30 porque el ultimo pase del avance de
+    # picking es 20:20 y el de embalaje 20:40: antes compararia medio dia. Y es
+    # hueco: el stock por hora entra 22:00 y el respaldo 23:00.
+    'cruce_wms':    {'activa': True, 'hora': '21:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
+                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
 }
-DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida')
+DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida', 'cruce_wms')
 
 
 def _leer_web(timeout=20):

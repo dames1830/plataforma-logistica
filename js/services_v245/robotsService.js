@@ -73,7 +73,13 @@ export const TAREAS = [
     { id: 'sin_salida', tipo: 'diaria', etiqueta: 'SKUs sin salida',
       detalle: 'el cuadro de lo que llegó y no se movió', area: 'sku_sin_salida' },
     { id: 'asn_web', tipo: 'diaria', etiqueta: 'ASN · seis meses',
-      detalle: 'lo que viene en camino: un archivo por mes, seis meses atrás', area: null }
+      detalle: 'lo que viene en camino: un archivo por mes, seis meses atrás', area: null },
+    /* VA DESPUÉS DE TODO EL TURNO. El último pase del avance de picking es 20:20 y el
+       de embalaje 20:40; antes de esa hora el cruce compararía medio día. Las 21:30
+       además es hueco: el stock por hora entra 22:00 y el respaldo 23:00. */
+    { id: 'cruce_wms', tipo: 'diaria', etiqueta: 'Cruce contra el WMS',
+      detalle: 'los dos web reports del WMS contra lo que calcula la plataforma',
+      area: 'cruce_wms' }
 ];
 
 /** Cada cuánto puede correr una tarea de las que se repiten. */
@@ -106,7 +112,8 @@ export const robotsPorDefecto = () => ({
     respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } },
     archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } },
     sin_salida:   { activa: true, hora: '07:30', dias: { ...LUN_A_SAB } },
-    asn_web:      { activa: true, hora: '04:30', dias: { ...TODOS } }
+    asn_web:      { activa: true, hora: '04:30', dias: { ...TODOS } },
+    cruce_wms:    { activa: true, hora: '21:30', dias: { ...LUN_A_SAB } }
 });
 
 const _hhmm = (v, respaldo) => {

@@ -31,5 +31,14 @@ chcp 65001 >nul
 REM --hoy = el dia en curso. Sin esa bandera bajaria AYER, que es
 REM la salida de emergencia para recuperar un dia que no salio.
 python -u oblpn_embalaje.py --hoy
+set RC=%ERRORLEVEL%
 
-exit /b %ERRORLEVEL%
+REM  SEGUNDO PASO: el cuadro de Embalaje por dia. NO entra al WMS:
+REM  lee el OBLPN que la linea de arriba acaba de dejar y publica
+REM  persona x hora, canal y efectividad. Corre aunque la bajada
+REM  falle -queda el archivo del pase anterior y es mejor que
+REM  dejar la pantalla sin datos-; el codigo de salida sigue
+REM  siendo el de la bajada.
+python -u produccion_embalaje.py
+
+exit /b %RC%
