@@ -1,37 +1,37 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0514';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0515';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0514';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0514';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0514';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0514';
-import * as metasService from '../services_v245/metasService.js?v=29.0514';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0514';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0514';
+import * as adminService from '../services_v245/adminService.js?v=29.0515';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0515';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0515';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0515';
+import * as metasService from '../services_v245/metasService.js?v=29.0515';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0515';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0515';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0514';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0514';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0514';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0514';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0514';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0514';
-import { renderCapacidad } from './capacidad.js?v=29.0514';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0514';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0514';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0514';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0514';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0514';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0514';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0514';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0514';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0514';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0514';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0514';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0514';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0514';
-import { montarSlotting } from './slotting.js?v=29.0514';
-import { montarEventos } from './eventos.js?v=29.0514';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0514';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0515';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0515';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0515';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0515';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0515';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0515';
+import { renderCapacidad } from './capacidad.js?v=29.0515';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0515';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0515';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0515';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0515';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0515';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0515';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0515';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0515';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0515';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0515';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0515';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0515';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0515';
+import { montarSlotting } from './slotting.js?v=29.0515';
+import { montarEventos } from './eventos.js?v=29.0515';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0515';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -394,7 +394,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0514';
+const VERSION = '29.0515';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5486,7 +5486,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0514');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0515');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5749,7 +5749,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0514');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0515');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -18745,7 +18745,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0514 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0515 | MOBILE PORTAL
                             </div>
                     </div>
 
@@ -22821,6 +22821,37 @@ const renderRFSection = (container) => {
     });
 
     let cant = planificar(caso.regla);
+
+    /* EL MEZZANINE 4 NO PASA POR EL PLANIFICADOR DE TALLAS.
+     *
+     * `planificarPorTalla` devuelve null cuando el articulo no tiene tallas, y un accesorio
+     * no las tiene: su codigo es 9900087-1-12298 y el mapa de tallas sale vacio. Sin `cant`
+     * la linea del papel se guardaba con seis campos en vez de nueve —sin almacenar, sin
+     * paletizar y sin destino— y la hoja salia con la banda del total y ninguna fila. Es lo
+     * que vio Daniel en la Tarea1 del 01-sep-2026.
+     *
+     * Y no hace falta el planificador: al mezzanine 4 va TODO al piso y nada a reserva, que
+     * es regla de Daniel —*"todo accesorio al mezzanine cuatro, todo; prepack y suelto"*—.
+     * Asi que se arma el reparto con las tallas que traigan las lineas del buffer, sean las
+     * que sean, incluida 'S/T'.
+     *
+     * OJO: NO ES SOLO PARA LOS SIN TALLA. Cualquier articulo que caiga en el mezzanine 4 y
+     * no tenga plan de tallas entra por aca, que es justo lo que hay que cubrir. */
+    if (!cant && zonasService.esZonaSinUbicacion(zr.zona)) {
+      const suyas = ctx.lineasBufferDe.get(s7) || [];
+      const porT = new Map();
+      suyas.forEach(l => {
+        const k = String(l.talla || 'S/T');
+        porT.set(k, (porT.get(k) || 0) + (Number(l.qty) || 0));
+      });
+      if (porT.size) {
+        cant = {
+          alPiso: pares, aReserva: 0, pisoTotal: 0, objetivoArticulo: pares,
+          filas: [...porT.entries()].map(([talla, baja]) => ({ talla, baja, aReserva: 0 }))
+        };
+      }
+    }
+
     let alPiso = cant ? cant.alPiso : pares;
     let aReserva = cant ? cant.aReserva : 0;
 
