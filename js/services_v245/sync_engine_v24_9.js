@@ -71,6 +71,159 @@ async function consultarVersiones() {
 
 export const syncStore = window._pulseSyncState.syncStore;
 
+/* ══════════════════════════════════════════════════════════════════════════
+   LO DESCARGADO SE GUARDA EN EL NAVEGADOR
+
+   Este motor ya sabía bajar solo lo que cambió: una llamada de menos de 1 KB
+   —`/api/sync/versiones`— dice qué áreas se tocaron y solo esas se descargan.
+   Pero la lista de versiones vivía en memoria, así que AL RECARGAR LA PÁGINA
+   arrancaba vacía y las catorce áreas contaban como cambiadas: 1,3 MB y 7,3
+   segundos, otra vez, aunque no hubiera cambiado nada.
+
+   Medido el 02-sep-2026 en el arranque: 16 llamadas, la última terminaba a los
+   7,3 s, y `almacenaje_tasks_history` sola eran 903 KB y 5,6 s.
+
+   Ahora el bloque descargado y sus versiones quedan en IndexedDB, en la MISMA
+   base que ya usa csvHub_v6.js. Al volver a abrir se restauran, se pregunta por
+   las versiones y solo baja lo que de verdad cambió.
+
+   TRES COSAS QUE NO SE PUEDEN ROMPER
+   ----------------------------------
+   1. CADA ENTORNO GUARDA LO SUYO. Producción y pruebas leen bases distintas; con
+      una sola llave, abrir beta después de producción mostraría datos de
+      producción como si fueran de beta.
+   2. USUARIOS Y PERMISOS NO SE GUARDAN. Son 2 KB, no pesan, y así un cambio de
+      permisos entra en la siguiente carga en vez de quedar esperando a que el
+      servidor marque una versión nueva. Es lo que decide quién ve qué.
+   3. SI NO SE PUEDE PREGUNTAR POR LAS VERSIONES, SE DESCARGA TODO. Vale más
+      gastar datos de más que trabajar con datos viejos, que es la regla que ya
+      tenía el motor.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const CACHE_DB = 'LogisticsPulseDB';      // la misma que csvHub_v6.js
+const CACHE_STORE = 'DataCache';
+const CACHE_VIDA = 7 * 24 * 60 * 60 * 1000;   // una semana; el guardarraíl, no la regla
+
+/* Lo que NO se guarda. Son chicas y deciden quién ve qué: conviene que lleguen
+   frescas siempre. */
+const NO_PERSISTIR = ['users', 'permissions'];
+
+/* CADA ÁREA EN SU PROPIA LLAVE, y aparte una chiquita con las versiones.
+ *
+ * El primer intento guardaba las doce áreas juntas en un solo registro: 12,7 MB
+ * —las tareas viven descomprimidas en memoria— y había que reescribirlo entero
+ * cada vez que cambiaba una sola. Durante el turno noche `almacenaje_tasks`
+ * cambia cada pocos minutos, así que eso habría hecho la web MÁS lenta, no más
+ * rápida: justo lo contrario de lo que se buscaba.
+ *
+ * Separadas, solo se reescribe la que cambió. */
+const _pre = () => 'pulse_sync_' + (window.PULSE_ES_BETA ? 'beta' : 'prod');
+const _llaveArea = (a) => _pre() + '__' + a;
+const _llaveIndice = () => _pre() + '__indice';
+
+const _abrirCache = () => new Promise((resolve, reject) => {
+    const req = indexedDB.open(CACHE_DB, 1);
+    req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(CACHE_STORE)) db.createObjectStore(CACHE_STORE);
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+});
+
+const _leer = (db, llave) => new Promise((resolve) => {
+    const tx = db.transaction(CACHE_STORE, 'readonly');
+    const req = tx.objectStore(CACHE_STORE).get(llave);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+});
+
+/** Trae lo guardado de la vez pasada. Nunca levanta: si algo falla, se sigue sin cache. */
+async function restaurarCache() {
+    if (window._pulseSyncState.cacheLeido) return;
+    window._pulseSyncState.cacheLeido = true;
+    try {
+        const db = await _abrirCache();
+        const indice = await _leer(db, _llaveIndice());
+        if (!indice || !indice.data) return;
+        if (Date.now() - (indice.ts || 0) > CACHE_VIDA) {
+            console.log('[PULSE] Lo guardado tiene más de una semana: se descarga todo de nuevo.');
+            return;
+        }
+        const { versiones, cargadas, areas } = indice.data;
+        let n = 0;
+        for (const a of (areas || [])) {
+            if (NO_PERSISTIR.includes(a)) continue;
+            const reg = await _leer(db, _llaveArea(a));
+            /* SIN EL DATO NO SE MARCA COMO CARGADA. Si el registro de un área se
+               perdió pero su versión seguía en el índice, quedaría dada por al día
+               y no se bajaría nunca: la pantalla saldría vacía sin explicación. */
+            if (!reg || reg.data === undefined || reg.data === null) continue;
+            syncStore[a] = reg.data;
+            window._pulseSyncState.cargadas[a] = !!(cargadas || {})[a];
+            window._pulseSyncState.versiones[a] = (versiones || {})[a];
+            if (window._pulseSyncState.cargadas[a]) n++;
+        }
+        console.log(`💾 [PULSE] ${n} áreas restauradas del navegador; solo se bajará lo que cambió.`);
+    } catch (e) {
+        console.warn('[PULSE] No se pudo leer lo guardado, se descarga todo:', e && e.message);
+    }
+}
+
+/**
+ * Guarda SOLO las áreas que acaban de cambiar, más el índice de versiones.
+ *
+ * Se le pasa la lista de las que se aplicaron en esta vuelta; si no cambió
+ * ninguna no se escribe nada, que es lo normal la mayor parte del día.
+ */
+async function guardarCache(aplicadas) {
+    const cuales = (aplicadas || []).filter(a => !NO_PERSISTIR.includes(a));
+    if (!cuales.length) return;
+    try {
+        const db = await _abrirCache();
+        const tx = db.transaction(CACHE_STORE, 'readwrite');
+        const store = tx.objectStore(CACHE_STORE);
+        cuales.forEach(a => { store.put({ ts: Date.now(), data: syncStore[a] }, _llaveArea(a)); });
+        const guardadas = Object.keys(syncStore).filter(a => !NO_PERSISTIR.includes(a)
+            && window._pulseSyncState.cargadas[a]);
+        store.put({
+            ts: Date.now(),
+            data: {
+                areas: guardadas,
+                versiones: window._pulseSyncState.versiones,
+                cargadas: window._pulseSyncState.cargadas
+            }
+        }, _llaveIndice());
+        await new Promise((r) => { tx.oncomplete = () => r(); tx.onerror = () => r(); tx.onabort = () => r(); });
+    } catch (e) {
+        /* Sin espacio o en modo privado: se sigue sin cache, que es como antes. */
+        console.warn('[PULSE] No se pudo guardar en el navegador:', e && e.message);
+    }
+}
+
+/** Borra lo guardado de ESTE entorno. Se usa al cerrar sesión. */
+export async function olvidarCacheSync() {
+    try {
+        const db = await _abrirCache();
+        const llaves = await new Promise((r) => {
+            const tx = db.transaction(CACHE_STORE, 'readonly');
+            const q = tx.objectStore(CACHE_STORE).getAllKeys();
+            q.onsuccess = () => r(q.result || []);
+            q.onerror = () => r([]);
+        });
+        const mias = llaves.filter(k => String(k).startsWith(_pre() + '__'));
+        if (mias.length) {
+            const tx = db.transaction(CACHE_STORE, 'readwrite');
+            mias.forEach(k => tx.objectStore(CACHE_STORE).delete(k));
+            await new Promise((r) => { tx.oncomplete = () => r(); tx.onerror = () => r(); tx.onabort = () => r(); });
+        }
+        window._pulseSyncState.versiones = {};
+        window._pulseSyncState.cargadas = {};
+    } catch (e) { /* si no se pudo borrar, la consulta de versiones lo corrige igual */ }
+}
+
+
+
 // --- LOGICA DE SINCRONIZACION ---
 
 export let isFirstPullDone = window._pulseSyncState.isFirstPullDone;
@@ -92,6 +245,9 @@ export async function initSync(force = false) {
     
     initPromise = (async () => {
         console.log("🚀 [PULSE] Inicializando Motor v25.1.44...");
+        /* PRIMERO LO QUE YA ESTABA EN EL NAVEGADOR. Va antes del pull: es lo que
+           permite que la consulta de versiones descarte lo que no cambió. */
+        await restaurarCache();
         try {
             await pullGlobal(null, force);
         } catch (e) {
@@ -254,13 +410,22 @@ export async function pullGlobal(requestedAreas = null, force = false) {
         const conocidas = window._pulseSyncState.versiones;
         const cargadas = window._pulseSyncState.cargadas;
         const antes = areas.length;
-        areas = areas.filter(a => !cargadas[a] || conocidas[a] !== versionesNuevas[a]);
+        /* SIN VERSION EN EL SERVIDOR, SE BAJA. Antes bastaba con `conocidas[a] !==
+           versionesNuevas[a]`, y si el servidor no informa esa area las dos son
+           `undefined`: la comparacion daba "igual" y el area quedaba marcada como
+           al dia sin haberse bajado nunca. En memoria no se notaba porque
+           `cargadas[a]` arrancaba en falso; con el cache restaurado, si. */
+        areas = areas.filter(a => !cargadas[a]
+            || versionesNuevas[a] === undefined
+            || conocidas[a] !== versionesNuevas[a]);
         const omitidas = antes - areas.length;
         if (omitidas > 0) console.log(`⚡ [PULSE] ${omitidas} de ${antes} áreas sin cambios: no se descargan.`);
         if (areas.length === 0) {
             console.log('✅ [PULSE] Nada cambió en la nube.');
             window._pulseSyncState.isFirstPullDone = true;
             isFirstPullDone = true;
+            /* No se guarda nada: si no cambió ninguna área, lo del navegador ya
+               está al día y reescribirlo sería trabajo puro. */
             return syncStore;
         }
     }
@@ -283,6 +448,7 @@ export async function pullGlobal(requestedAreas = null, force = false) {
         }
     }));
 
+    const aplicadas = [];
     results.forEach(r => {
         if (r.data) {
             // [BETA] Evitar sobrescrituras por colisiones si se realizó un push local reciente
@@ -308,10 +474,15 @@ export async function pullGlobal(requestedAreas = null, force = false) {
             // Solo se marca como al día lo que de verdad se aplicó.
             window._pulseSyncState.cargadas[r.area] = true;
             if (versionesNuevas) window._pulseSyncState.versiones[r.area] = versionesNuevas[r.area];
+            aplicadas.push(r.area);
         }
     });
     window._pulseSyncState.isFirstPullDone = true;
     isFirstPullDone = true;
+    /* Se guarda lo que quedó APLICADO, no lo que se pidió: si un área no entró
+       —por un push local reciente— tampoco se guarda su versión. Y va sin await:
+       escribir en el navegador no tiene por qué hacer esperar a la pantalla. */
+    guardarCache(aplicadas);
     console.log("✅ [PULSE] Nube sincronizada.");
     return syncStore;
 }

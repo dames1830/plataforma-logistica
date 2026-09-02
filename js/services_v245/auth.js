@@ -1,4 +1,4 @@
-import { registrar } from './eventosService.js?v=29.0537';
+import { registrar } from './eventosService.js?v=29.0538';
 
 const getApiBase = (defaultUrl) => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -16,7 +16,7 @@ const getApiBase = (defaultUrl) => {
   return defaultUrl;
 };
 const AUTH_API = getApiBase("https://logistics-backend-wv0x.onrender.com/api");
-const VERSION = '29.0537';
+const VERSION = '29.0538';
 
 /**
  * [SEGURIDAD v26.5.572] La validación la hace EL SERVIDOR.
@@ -101,6 +101,14 @@ export const logout = () => {
   localStorage.removeItem('logistics_session');
   sessionStorage.removeItem('buffer_hist_date_from');
   sessionStorage.removeItem('buffer_hist_date_to');
+  /* AL SALIR SE BORRA LO GUARDADO DEL SERVIDOR.
+     Desde v29.0538 el motor deja en el navegador lo que baja, para no volver a
+     bajarlo en cada recarga. Quien cierra sesion en una PC compartida no tiene
+     por que dejar ahi las tareas ni el historico del almacen. Se hace sin
+     esperar: si falla, la consulta de versiones lo corrige igual. */
+  import('./sync_engine_v24_9.js')
+    .then(m => m.olvidarCacheSync && m.olvidarCacheSync())
+    .catch(() => { /* si el motor no esta cargado, no hay nada que borrar */ });
 };
 
 export const getSession = () => {

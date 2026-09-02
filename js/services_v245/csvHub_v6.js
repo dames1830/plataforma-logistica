@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0537';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0538';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0537';
+const VERSION = '29.0538';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -3176,8 +3176,38 @@ const PICKING_TOPE_DIAS = 120;
  */
 const PICKING_URL = `${API_URL}/${PICKING_AREA}?date=MASTER`;
 
+/* UNA SOLA BAJADA POR VUELTA, COMPARTIDA.
+ *
+ * El bloque son 0,9 MB comprimidos y tarda 2,2 s. Lo bajaba el Reporte de Picking
+ * y lo VOLVIA A BAJAR la Sugerencia de almacenaje por su cuenta, cada uno con su
+ * `?t=` que ademas anula el cache del navegador: 1,8 MB y cuatro segundos y medio
+ * para el mismo dato.
+ *
+ * Ahora la primera bajada queda guardada un minuto y las demas la reusan. Un
+ * minuto es corto a proposito: quien acaba de cargar un archivo tiene que ver su
+ * dia enseguida, y `guardarPickingDias` ademas la tira a la basura al escribir.
+ */
+let _pickingDiasEnMano = null;
+let _pickingDiasCuando = 0;
+let _pickingDiasEnVuelo = null;
+const PICKING_CACHE_MS = 60 * 1000;
+
+/** Se tira lo guardado: lo llama quien escribe, para que la proxima lectura sea fresca. */
+export const olvidarPickingDias = () => {
+    _pickingDiasEnMano = null;
+    _pickingDiasCuando = 0;
+    _pickingDiasEnVuelo = null;
+};
+
 /** Lee el objeto {dia: resumen} completo. Devuelve {} si no hay nada. */
-export const cargarPickingDias = async () => {
+export const cargarPickingDias = async (forzar = false) => {
+    if (!forzar && _pickingDiasEnMano && (Date.now() - _pickingDiasCuando) < PICKING_CACHE_MS) {
+        return _pickingDiasEnMano;
+    }
+    /* Si dos pantallas la piden a la vez, comparten la MISMA peticion en vez de
+       lanzar dos. Pasaba al abrir Picking con la Sugerencia ya cargando. */
+    if (!forzar && _pickingDiasEnVuelo) return _pickingDiasEnVuelo;
+    _pickingDiasEnVuelo = (async () => {
     try {
         const res = await fetchWithTimeout(`${PICKING_URL}&t=${Date.now()}`, {}, 15000);
         if (res.ok) {
@@ -3185,10 +3215,20 @@ export const cargarPickingDias = async () => {
             const obj = (json && json.data && typeof json.data === 'object' && !Array.isArray(json.data))
                 ? json.data
                 : ((typeof json === 'object' && json !== null && !Array.isArray(json)) ? json : null);
-            if (obj) return obj;
+            if (obj) {
+                _pickingDiasEnMano = obj;
+                _pickingDiasCuando = Date.now();
+                return obj;
+            }
         }
     } catch (e) { /* sin conexión: se devuelve vacío y la pantalla lo dice */ }
     return {};
+    })();
+    try {
+        return await _pickingDiasEnVuelo;
+    } finally {
+        _pickingDiasEnVuelo = null;
+    }
 };
 
 /**
@@ -3200,7 +3240,7 @@ export const cargarPickingDias = async () => {
  * tareas de almacenaje.
  */
 export const guardarPickingDias = async (nuevos) => {
-    const store = await cargarPickingDias();
+    const store = await cargarPickingDias(true);   // fresco: se va a reescribir el bloque
     Object.keys(nuevos || {}).forEach(d => { store[d] = nuevos[d]; });
 
     const dias = Object.keys(store).sort();
@@ -3215,8 +3255,10 @@ export const guardarPickingDias = async (nuevos) => {
         }, 30000);
         if (!res.ok) return false;
         const j = await res.json().catch(() => ({}));
+        /* Lo que quedo en mano ya no vale: acaba de cambiar en el servidor. */
+        olvidarPickingDias();
         return j.status !== 'error';
-    } catch (e) { return false; }
+    } catch (e) { olvidarPickingDias(); return false; }
 };
 
 /** Borra un día del histórico. */
