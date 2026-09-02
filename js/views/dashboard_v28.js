@@ -1,40 +1,40 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0541';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0542';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0541';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0541';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0541';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0541';
-import * as metasService from '../services_v245/metasService.js?v=29.0541';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0541';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0541';
+import * as adminService from '../services_v245/adminService.js?v=29.0542';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0542';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0542';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0542';
+import * as metasService from '../services_v245/metasService.js?v=29.0542';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0542';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0542';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0541';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0541';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0541';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0541';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0541';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0541';
-import { renderCapacidad } from './capacidad.js?v=29.0541';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0541';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0541';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0541';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0541';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0541';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0541';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0541';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0541';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0541';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0541';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0541';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0541';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0541';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0541';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0541';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0541';
-import { montarSlotting } from './slotting.js?v=29.0541';
-import { montarEventos } from './eventos.js?v=29.0541';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0541';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0542';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0542';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0542';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0542';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0542';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0542';
+import { renderCapacidad } from './capacidad.js?v=29.0542';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0542';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0542';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0542';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0542';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0542';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0542';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0542';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0542';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0542';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0542';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0542';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0542';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0542';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0542';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0542';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0542';
+import { montarSlotting } from './slotting.js?v=29.0542';
+import { montarEventos } from './eventos.js?v=29.0542';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0542';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -397,7 +397,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0541';
+const VERSION = '29.0542';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -5119,16 +5119,21 @@ export const renderDashboard = async (container, user, onLogout) => {
                        abajo y parecia que los cuadros no existieran.
                        Los otros cinco modelos solo se corren si los archivos estan en
                        esta PC; si no, salen en raya en vez de con numeros a medias. */
-                    Promise.all([fetchBufferConfig().catch(() => ({})),
-                                 traerDatosBuffer().catch(() => null)])
-                        .then(([cfg]) => {
-                            /* Se pregunta DESPUÉS de que llegaron: antes esto corría
-                               con el dataStore todavía vacío y los dos cuadros salían
-                               en raya aunque los archivos estuvieran. */
-                            const hayDatos = !!(dataStore && dataStore.buffer_reserva
-                                                && dataStore.articulos);
-                            return pintarCuadrosAbajo(cfg || {}, lastBufferKPI, hayDatos);
-                        })
+                    /* ABRIR LA PANTALLA NO CORRE EL MOTOR.
+                     *
+                     * Daniel, 02-sep-2026: *"el único módulo que demora en abrir es
+                     * Zona Buffer"*, y su consola lo mostró: cuatro veces seguidas
+                     * `Analisis Finalizado: 7742 items` solo por entrar. Era esto:
+                     * el cuadro de comparación corre los OTROS CINCO modelos, cada
+                     * uno sobre 7.742 artículos, y el motor es síncrono.
+                     *
+                     * Al abrir se dibuja el modelo elegido —que ya está calculado— y
+                     * los otros cinco quedan en raya con un botón para correrlos.
+                     * Después de PROCESAR sí se corren solos: ahí el usuario está
+                     * esperando un análisis y la comparación es parte de eso.
+                     */
+                    fetchBufferConfig().catch(() => ({}))
+                        .then(cfg => pintarCuadrosAbajo(cfg || {}, lastBufferKPI, false))
                         .catch(e => console.warn('[CUADROS] No se pudieron armar al abrir:', e));
                     /* Y SI ESE ANÁLISIS ES DE ESTA JORNADA, se publica al abrir la
                        pantalla. Si no, el análisis que se corrió antes de que esto
@@ -5350,6 +5355,15 @@ export const renderDashboard = async (container, user, onLogout) => {
                         border-bottom:1px solid rgba(var(--brand-rgb), 0.3); text-align:center;">
               <h3 style="margin:0; font-size:var(--t-sm); letter-spacing:1px; color:var(--brand-paler);
                          font-weight:800;">COMPARACI&Oacute;N DE MODELOS</h3>
+              ${correrOtros ? '' : `<button id="btn_otros_modelos" style="margin-top:0.55rem;
+                  background:rgba(var(--brand-rgb), 0.14); color:var(--brand-paler);
+                  border:1px solid rgba(var(--brand-rgb), 0.35); border-radius:7px;
+                  padding:0.35rem 0.9rem; font-size:var(--t-xs); font-weight:800;
+                  letter-spacing:0.4px; cursor:pointer; font-family:inherit;"
+                  title="Corre los otros cinco modelos con los archivos de esta PC">
+                  &#9889; CORRER LOS OTROS MODELOS</button>
+                <div style="margin-top:0.3rem; font-size:var(--t-xs); color:var(--text-muted);">
+                  Tarda unos segundos: son cinco pasadas del motor</div>`}
             </div>
             <table style="border-collapse:collapse; width:100%;">
               <thead><tr>
@@ -5438,6 +5452,36 @@ export const renderDashboard = async (container, user, onLogout) => {
           </div>
 
         </div>`;
+
+      /* EL BOTÓN QUE SÍ LOS CORRE. Se vuelve a llamar a esta misma función con
+         `correrOtros` en verdadero, y ella se encarga del cartel de avance. Antes
+         hay que traer los archivos: la pantalla se abre sin ellos a propósito. */
+      const btnOtros = document.getElementById('btn_otros_modelos');
+      if (btnOtros) {
+          btnOtros.addEventListener('click', async () => {
+              btnOtros.disabled = true;
+              btnOtros.innerHTML = '&#9203; TRAYENDO LOS ARCHIVOS...';
+              try {
+                  await traerDatosBuffer();
+              } catch (e) {
+                  btnOtros.disabled = false;
+                  btnOtros.innerHTML = '&#9889; CORRER LOS OTROS MODELOS';
+                  showPremiumAlert('No se pudieron traer los archivos',
+                      'Sin el stock y el Maestro no se pueden correr los otros modelos.', 'error');
+                  return;
+              }
+              if (!dataStore.buffer_reserva || !dataStore.articulos) {
+                  btnOtros.disabled = false;
+                  btnOtros.innerHTML = '&#9889; CORRER LOS OTROS MODELOS';
+                  showPremiumAlert('Faltan archivos',
+                      'Para comparar los modelos hacen falta el <b>Stock Reserva</b> y el '
+                      + '<b>Maestro de Artículos</b>.', 'error');
+                  return;
+              }
+              pintarCuadrosAbajo(config, resElegido, true).catch(e =>
+                  console.warn('[CUADROS] No se pudieron correr los otros modelos:', e));
+          });
+      }
   };
 
   const renderBufferResults = (container, data) => {
@@ -5591,7 +5635,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0541');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0542');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5854,7 +5898,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0541');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0542');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -19010,7 +19054,7 @@ const renderRFSection = (container) => {
                     <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                         ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                             <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                                SYSTEM BUILD: v29.0541 | MOBILE PORTAL
+                                SYSTEM BUILD: v29.0542 | MOBILE PORTAL
                             </div>
                     </div>
 
