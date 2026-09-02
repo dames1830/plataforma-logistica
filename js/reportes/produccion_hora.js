@@ -14,22 +14,25 @@
  * TODO EL CSS VA ENCERRADO BAJO `#ph` Y LOS IDS LLEVAN PREFIJO `ph_`. Los nombres
  * que usa —panel, card, bar, nota, tarj— chocarían con los del tablero.
  *
- * EL RANGO DE FECHAS SE ARMA JUNTANDO DÍAS, y eso es exactamente lo mismo que
- * juntar canales: las dos cosas pasan por `combinarVistas()`. Los pares y las
- * líneas se suman; las personas, las marcas y las ubicaciones SE UNEN, porque la
- * misma persona aparece en dos canales y en dos días, y sumarla la contaría doble.
+ * SE MIRA UN DÍA A LA VEZ. Empezó con rango de fecha a fecha y Daniel lo sacó el
+ * 02-sep-2026: *"no tienen que tener rango de fechas, tienen que tener solamente
+ * para elegir un día en el mes"*.
+ *
+ * LA MAQUINARIA DE JUNTAR DÍAS SE QUEDA IGUAL —`juntarDias()` y
+ * `combinarVistas()`— porque es LA MISMA que junta canales, y eso sí sigue
+ * siendo de varios a la vez: los pares y las líneas se suman, y las personas, las
+ * marcas y las ubicaciones SE UNEN, porque la misma persona aparece en dos
+ * canales y sumarla la contaría doble.
  *
  * OPC = {
- *   dias:        [{fecha, datos}] ya traídos del servidor, en orden
+ *   dias:        [{fecha, datos}] ya traídos del servidor. Hoy es siempre uno.
  *   textos:      {cuadro, verbo, accion, origen} — las cuatro palabras que
  *                cambian entre picking y embalaje
- *   desde/hasta: el rango elegido, 'AAAA-MM-DD'
+ *   fecha:       el día elegido, 'AAAA-MM-DD'
  *   fechas:      los días que el servidor tiene guardados
- *   alCambiarRango: (desde, hasta) => {}
+ *   alCambiarFecha: (nueva) => {}
  * }
  */
-
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0535';
 
 const nf = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE') : '–';
 const esc = (t) => String(t == null ? '' : t)
@@ -225,7 +228,10 @@ function estilos() {
 
     /* El calendario tiene que verse: sin color-scheme el iconito queda gris
        oscuro sobre fondo oscuro y no se encuentra. Misma regla que en Pendiente. */
-    #ph input[type=date]{color-scheme:var(--scheme);cursor:pointer}
+    #ph input[type=date]{background:rgba(var(--shadow-rgb),.3);border:1px solid var(--border);
+      border-radius:9px;color:var(--text-strong);padding:8px 12px;font-size:var(--t-sm);
+      font-weight:700;color-scheme:var(--scheme);cursor:pointer;letter-spacing:.3px}
+    #ph input[type=date]:hover{border-color:var(--primary)}
     #ph input[type=date]::-webkit-calendar-picker-indicator{
       cursor:pointer;opacity:1;transform:scale(1.2);margin-left:4px;
       filter:invert(64%) sepia(38%) saturate(1400%) hue-rotate(207deg) brightness(102%)}
@@ -374,34 +380,39 @@ export function montarProduccionHora(cont, OPC) {
                             O.textos || {});
     const D = juntarDias(O.dias);
 
-    const rango = selectorRango(O.desde, O.hasta, '', {
-        idDesde: 'ph_desde', idHasta: 'ph_hasta' });
-    const guardados = (O.fechas || []).length
-        ? `El servidor tiene ${O.fechas.length} día${O.fechas.length === 1 ? '' : 's'} guardado${O.fechas.length === 1 ? '' : 's'}: del ${O.fechas[0]} al ${O.fechas[O.fechas.length - 1]}.`
+    /* UN SOLO DIA. El calendario no deja elegir fuera de lo que el servidor tiene
+       guardado: min y max salen de la lista de dias, asi no se puede caer en un
+       dia vacio por escribir una fecha a mano. */
+    const F = O.fechas || [];
+    const calendario = `<input type="date" id="ph_fecha" value="${esc(O.fecha || '')}"
+        ${F.length ? `min="${esc(F[0])}" max="${esc(F[F.length - 1])}"` : ''}>`;
+    const guardados = F.length
+        ? `El servidor guarda ${F.length} día${F.length === 1 ? '' : 's'}: del ${F[0]} al ${F[F.length - 1]}.`
         : '';
 
     const cabecera = `
       <div class="ph-top">
         <div>
           <h2>${esc(T.titulo)}</h2>
-          <p class="ph-sub">Quién ${esc(T.verbo)} qué, hora por hora, del turno de
-            08:00 a 19:00. Sale del ${esc(T.fuente)} del WMS.</p>
+          <p class="ph-sub">Quién ${esc(T.verbo)} qué, hora por hora, de un día.
+            El turno va de <b>08:00 a 19:00</b> y también se cuenta lo que se mueve
+            fuera de él. Sale del ${esc(T.fuente)} del WMS.</p>
           ${guardados ? `<div class="ph-guardados">${esc(guardados)}</div>` : ''}
         </div>
-        <div>${rango}</div>
+        <div>${calendario}</div>
       </div>`;
 
     /* SIN DATOS NO SE DIBUJA NADA, pero se dice por qué y qué hacer. */
     if (!D || !D.canales || !D.canales.length) {
         cont.innerHTML = estilos() + `<div id="ph">${cabecera}
           <div class="ph-pan"><div class="ph-nada">
-            <div class="ph-nada-t">No hay nada guardado en ese rango</div>
+            <div class="ph-nada-t">No hay nada guardado de ese día</div>
             <p style="max-width:60ch;margin:0 auto;line-height:1.7;">
               Este cuadro lo publica el robot del servidor con el ${esc(T.fuente)} del
-              WMS. Si el rango que elegiste no tiene archivo, no hay nada que mostrar:
-              elegí uno de los días guardados.</p>
+              WMS. Si ese día no tiene archivo, no hay nada que mostrar: elegí otro
+              de los días guardados.</p>
           </div></div></div>`;
-        engancharRango(cont, O);
+        engancharFecha(cont, O);
         return;
     }
 
@@ -526,9 +537,15 @@ export function montarProduccionHora(cont, OPC) {
         return Math.round(lineas / (seg / 3600));
     }
 
-    /* ── el combo de canal ── */
+    /* ── el combo de canal ──
+       ARRANCA EN RETAIL, no en todos. Daniel, 02-sep-2026: *"que los dos modulos
+       se filtren en automatico con la fecha actual y en canal por RETAIL"*. Es lo
+       que mira todos los dias; el resto de los canales son la excepcion y estan a
+       un clic. Si ese dia no hubo retail se marcan todos, para no abrir en blanco. */
+    const PORDEF = SOLOS.includes('RETAIL') && D.vistas.RETAIL.totales.lineas
+        ? ['RETAIL'] : SOLOS;
     el('lista').innerHTML = SOLOS.map(c => `<label><input type="checkbox"
-        value="${esc(c)}" checked> <span>${esc(c)}</span>
+        value="${esc(c)}"${PORDEF.includes(c) ? ' checked' : ''}> <span>${esc(c)}</span>
         <span class="ph-chip">${nf(D.vistas[c].totales.lineas)}</span></label>`).join('');
 
     const marcados = () => [...el('lista').querySelectorAll('input:checked')].map(x => x.value);
@@ -626,7 +643,7 @@ export function montarProduccionHora(cont, OPC) {
             ? `El hundimiento de las <b>${String(valle[0]).padStart(2, '0')}:00</b> es el
                refrigerio: ${nf(valle[1])} pares contra ${nf(pico[1])} en el pico de las
                <b>${String(pico[0]).padStart(2, '0')}:00</b>.` + avisoFuera
-            : (sel.length ? 'Esta selección no movió nada en ese rango.'
+            : (sel.length ? 'Esta selección no movió nada ese día.'
                           : 'Elige al menos un canal arriba.');
 
         pintarMatriz(v);
@@ -805,20 +822,17 @@ export function montarProduccionHora(cont, OPC) {
         pintar();
     });
 
-    engancharRango(cont, O);
+    engancharFecha(cont, O);
     rotulo();
     pintar();
 }
 
-/** El rango se engancha por id: `selectorRango` deja los dos inputs y acá se les
- *  escucha. Va aparte porque la pantalla sin datos también lo necesita. */
-function engancharRango(cont, O) {
-    const d = cont.querySelector('#ph_desde'), h = cont.querySelector('#ph_hasta');
-    const avisar = () => {
-        if (typeof O.alCambiarRango === 'function') {
-            O.alCambiarRango(d ? d.value : null, h ? h.value : null);
-        }
-    };
-    if (d) d.addEventListener('change', avisar);
-    if (h) h.addEventListener('change', avisar);
+/** El calendario se engancha por id. Va aparte porque la pantalla sin datos
+ *  tambien lo necesita: es justo ahi donde hay que poder cambiar de dia. */
+function engancharFecha(cont, O) {
+    const f = cont.querySelector('#ph_fecha');
+    if (!f) return;
+    f.addEventListener('change', () => {
+        if (f.value && typeof O.alCambiarFecha === 'function') O.alCambiarFecha(f.value);
+    });
 }

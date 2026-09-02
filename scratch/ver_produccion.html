@@ -82,20 +82,30 @@ async function pintar() {
 
   const area = AREA[cual];
   const fechas = await fechasDe(area);
-  /* EL ULTIMO DIA CON DATOS, no el ultimo a secas: un dia guardado puede estar
-     vacio y abrir ahi parece que el modulo no anda. Misma regla que el tablero. */
+  /* UN SOLO DIA, y el ultimo CON DATOS: un dia guardado puede estar vacio y
+     abrir ahi parece que el modulo no anda. Misma regla que el tablero. */
   const dias = [];
-  for (let i = fechas.length - 1; i >= 0 && i >= fechas.length - 3; i--) {
+  let fecha = null;
+  // primero HOY, igual que el tablero
+  const h = new Date();
+  const hoy = h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0')
+            + '-' + String(h.getDate()).padStart(2,'0');
+  const dHoy = fechas.includes(hoy) ? await datosDe(area, hoy) : null;
+  if (dHoy && dHoy.vistas && ((dHoy.vistas.TODOS || {}).totales || {}).lineas) {
+    dias.push({ fecha: hoy, datos: dHoy });
+    fecha = hoy;
+  }
+  for (let i = fechas.length - 1; !fecha && i >= 0 && i >= fechas.length - 3; i--) {
     const d = await datosDe(area, fechas[i]);
     if (d && d.vistas && ((d.vistas.TODOS || {}).totales || {}).lineas) {
       dias.push({ fecha: fechas[i], datos: d });
+      fecha = fechas[i];
       break;
     }
   }
-  const ultimo = dias.length ? dias[0].fecha : fechas[fechas.length - 1];
   montarProduccionHora(caja, {
-    dias, textos: TEXTOS[cual], desde: ultimo, hasta: ultimo, fechas,
-    alCambiarRango: () => {},
+    dias, textos: TEXTOS[cual], fecha: fecha || fechas[fechas.length - 1], fechas,
+    alCambiarFecha: () => {},
   });
 }
 
