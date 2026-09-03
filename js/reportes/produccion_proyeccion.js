@@ -66,11 +66,19 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0562';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0562';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0563';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0563';
+/* LA EQUIVALENCIA SE IMPORTA, NO SE COPIA. Vive en `picking.js` desde que se
+   midio sobre nueve archivos reales, y escribirla otra vez aca seria tener dos
+   verdades que un dia se separan. */
+import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0563';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
+/* LOS FACTORES VAN CON DOS DECIMALES. Con uno, el 1,83 que Daniel tiene en la
+   cabeza salia escrito "1,8" y el 1,28 salia "1,3": el numero deja de ser
+   reconocible y parece otro. */
+const n2 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '–';
 const esc = (t) => String(t == null ? '' : t)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
@@ -112,6 +120,73 @@ const lunesDe = (anio, sem) => {
    LOS TRES TIPOS, Y LAS HORAS DE CADA UNO
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* ══════════════════════════════════════════════════════════════════════════
+   LAS TRES MANERAS DE MIRAR EL CALZADO
+   ══════════════════════════════════════════════════════════════════════════
+
+   Daniel, 02-sep-2026: *"estamos mezclando ahi mercaderia que no es lo mismo.
+   Un par es lo mismo que picar un solid, que es un par; no es lo mismo que picar
+   un prepack, que es una caja, pero dentro de la caja vienen diez pares, o
+   dependiendo de la curva ocho, seis... Ponme dos pildoras, solid y prepack, y en
+   base a eso el filtro que se recalcule. Y me pones un tercero con el calculo del
+   uno punto ochenta y tres"*.
+
+   SOLID        pares por hora. Aca un pick es un par, asi que el par SI mide el
+                trabajo. Es el numero que se compara contra el piso de 100.
+   PREPACK      CAJAS por hora, no pares. Un pick es una caja; contar sus pares
+                seria decir que sacar una caja de diez cuesta diez veces mas, y
+                esta medido que no: el trabajo es llegar al sitio, no levantarla.
+   EQUIVALENTE  los dos juntos, con el prepack pesando lo que de verdad cuesta.
+                Un pick suelto vale 1; una caja vale su factor medido. Es la unica
+                forma de tener UN numero sin mentir.
+
+   EL FACTOR SALE DE LA TABLA MEDIDA, no de un numero puesto a mano: un pick
+   suelto tarda 18 s (mediana de 79.770) y una caja de diez, 33 s -> 1,83. Pero
+   1,83 es LA CAJA DE DIEZ, y este CD promedia 6,95 pares por caja: sobre lo
+   publicado, la curva que manda es la de 7, con factor 1,28. Se usa el factor de
+   la curva promedio de esa semana y el cuadro dice cual aplico. */
+const MODOS = {
+    solid: {
+        eti: 'Solid', unidad: 'pares', que: 'pares por hora',
+        valor: (x) => (x.solid.horas > 0 ? x.solid.pares / x.solid.horas : 0),
+        arriba: (x) => x.solid.pares, horas: (x) => x.solid.horas,
+        piso: true,
+    },
+    prepack: {
+        eti: 'Prepack', unidad: 'cajas', que: 'cajas por hora',
+        valor: (x) => (x.prepack.horas > 0 ? x.prepack.picks / x.prepack.horas : 0),
+        arriba: (x) => x.prepack.picks, horas: (x) => x.prepack.horas,
+        piso: false,
+    },
+    equivalente: {
+        eti: 'Equivalente', unidad: 'picks equiv.', que: 'picks equivalentes por hora',
+        valor: (x) => {
+            const h = x.solid.horas + x.prepack.horas;
+            return h > 0 ? (x.solid.picks + x.prepack.picks * factorDe(x)) / h : 0;
+        },
+        arriba: (x) => x.solid.picks + x.prepack.picks * factorDe(x),
+        horas: (x) => x.solid.horas + x.prepack.horas,
+        piso: false,
+    },
+};
+
+/** El factor que le toca al prepack de ese periodo, segun su curva promedio. */
+const factorDe = (x) => {
+    if (!x.prepack.picks) return EQUIVALENCIA_PREPACK.factor_general;
+    const curva = Math.round(x.prepack.pares / x.prepack.picks);
+    const c = EQUIVALENCIA_PREPACK.curvas[curva];
+    return c ? c.usa : EQUIVALENCIA_PREPACK.factor_general;
+};
+
+/** La curva promedio, para poder decirla en pantalla. */
+const curvaDe = (x) => (x.prepack.picks ? x.prepack.pares / x.prepack.picks : 0);
+
+/* Que modo se esta mirando. Es de modulo para que sobreviva al redibujado que
+   hace la propia pildora. */
+let _modo = 'solid';
+let _cont = null;
+let _OPC = null;
+
 const TIPOS = {
     cal:   { clases: ['cal_suelto', 'cal_prepack'], unidad: 'pares' },
     nocal: { clases: ['no_cal'],                    unidad: 'unidades' },
@@ -137,6 +212,21 @@ const SERIES = [
     { id: 'emb_cal',    lado: 'e', tipo: 'cal',   titulo: 'EMBALAJE · CALZADO',   color: '#16a34a' },
     { id: 'emb_nocal',  lado: 'e', tipo: 'nocal', titulo: 'EMBALAJE · NO CALZADO', color: '#9333ea' },
 ];
+
+/* LAS LINEAS DE UNA CLASE: cuantos PICKS hizo la gente.
+ *
+ * En el suelto una linea es un par —el 70% saca uno solo—; en el prepack una
+ * linea es UNA CAJA, y adentro vienen entre 4 y 12 pares. Por eso los pares del
+ * prepack no se pueden comparar con los del suelto, que es justo lo que Daniel
+ * vino a decir: *"un par no es lo mismo que picar un prepack, que es una caja"*. */
+const lineasDe = (vista, clases) => {
+    let n = 0;
+    (vista.gente || []).forEach(p => {
+        const t = p.total || {};
+        clases.forEach(c => { n += Number(t[c + '_l']) || 0; });
+    });
+    return n;
+};
 
 /* HORAS REALMENTE TRABAJADAS EN UNAS CLASES.
  *
@@ -182,8 +272,15 @@ const resumirDia = (entrada) => {
         o[k] = { pares: cl.reduce((s, c) => s + (Number(t[c]) || 0), 0),
                  horas: horasDe(v, cl) };
     });
-    o.suelto = Number(t.cal_suelto) || 0;
-    o.prepack = Number(t.cal_prepack) || 0;
+    /* El calzado, abierto: suelto y prepack cada uno con sus pares, sus picks y
+       sus horas. Son dos trabajos distintos y se miden por separado. */
+    o.solid = { pares: Number(t.cal_suelto) || 0,
+                picks: lineasDe(v, ['cal_suelto']),
+                horas: horasDe(v, ['cal_suelto']) };
+    o.prepack = { pares: Number(t.cal_prepack) || 0,
+                  picks: lineasDe(v, ['cal_prepack']),
+                  horas: horasDe(v, ['cal_prepack']) };
+    o.suelto = o.solid.pares;
     o.sinTipo = Number(t.sin_tipo) || 0;
     return o;
 };
@@ -212,6 +309,10 @@ const CSS = [
 '#pp .pp-cab .pp-cuantos { font-size:var(--t-xs); color:var(--text-muted); }',
 '#pp .pp-cab .rango-fechas { flex:0 0 auto; }',
 '#pp .pp-titulo { font-size:var(--t-sm); font-weight:900; letter-spacing:0.06em; margin:0 0 3px; }',
+'#pp .pp-pastillas { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 12px; }',
+'#pp .pp-pastilla { border:1px solid var(--border); background:rgba(var(--ink-rgb), 0.03); color:var(--text-muted); border-radius:999px; padding:6px 15px; font-size:var(--t-xs); font-weight:800; cursor:pointer; font-family:inherit; letter-spacing:0.02em; }',
+'#pp .pp-pastilla:hover { border-color:rgba(var(--ink-rgb), 0.25); color:var(--text-main); }',
+'#pp .pp-pastilla.pp-viva { background:var(--text-strong); border-color:var(--text-strong); color:var(--panel-deep); }',
 '#pp .pp-sub { font-size:var(--t-xs); color:var(--text-muted); margin:0 0 14px; line-height:1.65; }',
 '#pp .pp-cajas { display:grid; grid-template-columns:repeat(auto-fit, minmax(152px, 1fr)); gap:12px; margin-bottom:16px; }',
 '#pp .pp-c { background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.08); border-radius:10px; padding:0.85rem 1rem; }',
@@ -245,7 +346,12 @@ export function montarProduccionProyeccion(cont, OPC) {
     if (!cont) return;
     soltarGraficos();
 
-    const O = OPC || {};
+    /* SE GUARDAN PARA PODER REDIBUJAR AL CAMBIAR DE PILDORA. La pildora no pide
+       nada al servidor: los dias ya estan en memoria y lo unico que cambia es que
+       se mira de ellos, asi que el cambio es instantaneo. */
+    _cont = cont;
+    if (OPC) _OPC = OPC;
+    const O = _OPC || {};
     const dias = { p: {}, e: {} };
     (O.picking || []).forEach(x => { const d = resumirDia(x); dias.p[d.fecha] = d; });
     (O.embalaje || []).forEach(x => { const d = resumirDia(x); dias.e[d.fecha] = d; });
@@ -267,8 +373,12 @@ export function montarProduccionProyeccion(cont, OPC) {
        de pares dividida por la suma de horas. */
     const semanas = {};
     const vacio = () => {
-        const o = { dias: 0, suelto: 0, prepack: 0, sinTipo: 0 };
+        const o = { dias: 0, sinTipo: 0 };
         Object.keys(TIPOS).forEach(k => { o[k] = { pares: 0, horas: 0 }; });
+        /* El calzado, ademas, abierto en sus dos formas y con los PICKS: sin los
+           picks no se puede saber cuantas cajas fueron ni pesar la equivalencia. */
+        o.solid = { pares: 0, picks: 0, horas: 0 };
+        o.prepack = { pares: 0, picks: 0, horas: 0 };
         return o;
     };
     fechas.forEach(f => {
@@ -287,8 +397,11 @@ export function montarProduccionProyeccion(cont, OPC) {
                 w[lado][k].pares += d[k].pares;
                 w[lado][k].horas += d[k].horas;
             });
-            w[lado].suelto += d.suelto;
-            w[lado].prepack += d.prepack;
+            ['solid', 'prepack'].forEach(k => {
+                w[lado][k].pares += d[k].pares;
+                w[lado][k].picks += d[k].picks;
+                w[lado][k].horas += d[k].horas;
+            });
             w[lado].sinTipo += d.sinTipo;
             w[lado].dias++;
         });
@@ -308,16 +421,27 @@ export function montarProduccionProyeccion(cont, OPC) {
        no una semana. */
     const HORAS_MINIMAS = 4;
 
+    /* EL CALZADO SE MIRA CON EL MODO ELEGIDO -solid, prepack o equivalente-; el
+       resto de las categorias no tiene modos y va como siempre. */
     const serieDe = (cfg) => {
-        const T = TIPOS[cfg.tipo];
+        const esCal = cfg.tipo === 'cal';
+        const M = esCal ? MODOS[_modo] : null;
+        const T = esCal
+            ? { unidad: M.unidad, que: M.que }
+            : TIPOS[cfg.tipo];
         const puntos = orden.map(w => {
-            const x = w[cfg.lado][cfg.tipo];
+            const lado = w[cfg.lado];
+            const x = lado[cfg.tipo];
+            const arriba = esCal ? M.arriba(lado) : x.pares;
+            const horas = esCal ? M.horas(lado) : x.horas;
             return {
                 clave: w.clave, sem: w.sem, lunes: w.lunes,
-                pares: x.pares, horas: x.horas,
-                ritmo: x.horas > 0 ? x.pares / x.horas : 0,
-                dias: w[cfg.lado].dias,
-                suelto: w[cfg.lado].suelto, prepack: w[cfg.lado].prepack,
+                pares: arriba, horas: horas,
+                ritmo: horas > 0 ? arriba / horas : 0,
+                dias: lado.dias,
+                solid: lado.solid, prepackCaja: lado.prepack,
+                curva: esCal ? curvaDe(lado) : 0,
+                factor: esCal ? factorDe(lado) : 0,
                 enCurso: w.clave === claveEnCurso,
             };
         });
@@ -389,6 +513,17 @@ export function montarProduccionProyeccion(cont, OPC) {
         const sube = r.pendiente >= 0;
         const dif = r.anterior ? r.ultima.ritmo - r.anterior.ritmo : null;
 
+        /* LAS PILDORAS SOLO EN CALZADO: son las dos formas de picar un zapato.
+           No calzado y materiales no se separan asi. */
+        if (c.tipo === 'cal') {
+            T.push('<div class="pp-pastillas">'
+                + Object.keys(MODOS).map(k =>
+                    '<button type="button" class="pp-pastilla' + (k === _modo ? ' pp-viva' : '')
+                    + '" onclick="window.__ppModo(&quot;' + k + '&quot;)">'
+                    + MODOS[k].eti + '</button>').join('')
+                + '</div>');
+        }
+
         T.push('<p class="pp-sub">'
             + uni.charAt(0).toUpperCase() + uni.slice(1) + ' por hora realmente trabajada en '
             + 'esta categoría. En ' + r.cerradas.length
@@ -399,13 +534,27 @@ export function montarProduccionProyeccion(cont, OPC) {
                 ? '. <b>Acá la unidad del WMS no es un par</b>: son bolsas, medias y cajas de '
                 + 'accesorio, y por eso el ritmo sale mucho más alto que en calzado. Se mira '
                 + 'contra sí mismo, no contra el calzado.'
-                : '. Van juntos el suelto y el prepack, que es como se reporta.')
+                : (_modo === 'solid'
+                    ? '. Solo el <b>solid</b>: acá un pick es un par, así que el par sí mide el '
+                    + 'trabajo. Es el número que se compara contra el piso.'
+                  : _modo === 'prepack'
+                    ? '. Solo el <b>prepack</b>, y en <b>cajas</b>, no en pares: un pick es una '
+                    + 'caja. Contar sus pares diría que sacar una caja de diez cuesta diez veces '
+                    + 'más, y está medido que no — el trabajo es llegar al sitio, no levantarla.'
+                    : '. Los dos juntos, con el prepack pesando lo que de verdad cuesta: un pick '
+                    + 'suelto vale 1 y una caja vale su factor medido.'))
             + '</p>');
 
         T.push('<div class="pp-cajas">'
         + caja('Cierre semana ' + r.ultima.sem, nf(r.ultima.ritmo), uni + '/h',
                nf(r.ultima.pares) + ' ' + uni + ' en ' + nf(r.ultima.horas) + ' h · '
-               + r.ultima.dias + (r.ultima.dias === 1 ? ' día' : ' días'))
+               + r.ultima.dias + (r.ultima.dias === 1 ? ' día' : ' días')
+               /* EN PREPACK Y EQUIVALENTE VA LA CURVA A LA VISTA: es lo que decide
+                  el factor, y sin ella el número no se puede auditar. */
+               + (c.tipo === 'cal' && _modo !== 'solid' && r.ultima.curva
+                   ? '<br>' + n1(r.ultima.curva) + ' pares por caja'
+                     + (_modo === 'equivalente' ? ' · factor ' + n2(r.ultima.factor) : '')
+                   : ''))
         + (r.anterior ? caja('Cierre semana ' + r.anterior.sem, nf(r.anterior.ritmo), uni + '/h',
                nf(r.anterior.pares) + ' ' + uni + ' en ' + nf(r.anterior.horas) + ' h') : '')
         + caja('Últimas 4 semanas', nf(r.prom4), uni + '/h', 'promedio')
@@ -417,7 +566,7 @@ export function montarProduccionProyeccion(cont, OPC) {
         /* CONTRA EL PISO, cuando la categoria tiene uno comprometido. Va con la
            ultima semana cerrada y no con el promedio: lo que importa es como se
            esta cerrando ahora. */
-        + (c.piso
+        + (c.piso && (c.tipo !== 'cal' || _modo === 'solid')
             ? caja('Sobre el piso de ' + nf(c.piso),
                    (r.ultima.ritmo >= c.piso ? '+' : '−')
                    + n1(Math.abs(r.ultima.ritmo - c.piso) * 100 / c.piso) + '%', '',
@@ -442,7 +591,7 @@ export function montarProduccionProyeccion(cont, OPC) {
                 + uni + '/h</b> con ' + nf(r.enCurso.horas) + ' horas hechas; todavía no cerró, '
                 + 'así que va punteada y no entra en los promedios.');
         }
-        if (c.piso) {
+        if (c.piso && (c.tipo !== 'cal' || _modo === 'solid')) {
             const bajo = r.cerradas.filter(p => p.ritmo < c.piso);
             linea.push('El gráfico arranca en <b>Origen</b>, que son los <b>' + nf(c.piso)
                 + ' ' + uni + '/h</b> que comprometió picking — el punto rojo —; de ahí en '
@@ -451,6 +600,16 @@ export function montarProduccionProyeccion(cont, OPC) {
                     ? ' <b>' + bajo.length + (bajo.length === 1 ? ' semana cerró' : ' semanas cerraron')
                       + ' por debajo</b>: ' + bajo.map(p => 'S' + p.sem + ' con ' + nf(p.ritmo)).join(', ') + '.'
                     : ' Ninguna semana cerrada cayó por debajo.'));
+        }
+        if (c.tipo === 'cal' && _modo === 'equivalente' && r.ultima.curva) {
+            const diez = EQUIVALENCIA_PREPACK.curvas[10];
+            linea.push('El factor sale de la tabla medida: un pick suelto tarda <b>'
+                + EQUIVALENCIA_PREPACK.segundos_suelto + ' s</b> (mediana de '
+                + nf(EQUIVALENCIA_PREPACK.muestra_suelto) + ' picks) y una caja de diez, <b>'
+                + diez.seg + ' s</b> — de ahí el <b>' + n2(diez.factor) + '</b>. '
+                + 'Pero <b>este CD promedia ' + n1(r.ultima.curva) + ' pares por caja</b>, así '
+                + 'que la semana ' + r.ultima.sem + ' se pesó con <b>' + n2(r.ultima.factor)
+                + '</b>, que es el factor medido para esa curva.');
         }
         if (r.flacas.length) {
             linea.push('Quedan fuera ' + r.flacas.length
@@ -537,6 +696,17 @@ export function montarProduccionProyeccion(cont, OPC) {
         if (typeof O.alCambiarRango === 'function') O.alCambiarRango(d, h);
     };
 
+    window.__ppModo = (m) => {
+        if (!MODOS[m] || m === _modo) return;
+        _modo = m;
+        /* Se redibuja con lo que ya hay: `montarProduccionProyeccion` sin OPC
+           reusa `_OPC`. Se conserva a donde estaba mirando la pagina para que no
+           salte al principio al apretar la pildora. */
+        const y = window.scrollY;
+        montarProduccionProyeccion(_cont, null);
+        window.scrollTo(0, y);
+    };
+
     // ─── LOS GRÁFICOS ────────────────────────────────────────────────────────
     if (typeof Chart === 'undefined') {
         console.warn('[PRODUCCIÓN] Chart.js no está cargado: los gráficos quedan vacíos.');
@@ -567,7 +737,10 @@ export function montarProduccionProyeccion(cont, OPC) {
          *
          * NO ENTRA EN LA RECTA NI EN LOS PROMEDIOS: es un compromiso, no algo que
          * se haya medido. La tendencia arranca en la primera semana de verdad. */
-        const conPiso = !!r.cfg.piso;
+        /* EL PISO SOLO EN SOLID. Los 100 que comprometio picking son PARES
+           PICADOS; ponerlos de referencia contra cajas por hora o contra picks
+           equivalentes seria comparar cosas distintas. */
+        const conPiso = !!r.cfg.piso && (r.cfg.tipo !== 'cal' || _modo === 'solid');
         const todas = conPiso ? [null].concat(reales) : reales;
         const etiquetas = (conPiso ? ['Origen'] : []).concat(reales.map(p => 'S' + p.sem));
         const desfase = conPiso ? 1 : 0;
