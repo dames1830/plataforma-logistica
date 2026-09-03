@@ -49,6 +49,8 @@ ROBOT_TOKEN = os.environ.get("ROBOT_TOKEN", "")
 
 CARPETA_ASN = None          # se resuelve con wms_automation_final
 MAESTRO = None
+# La marca por codigo, para la tabla. Se llena al leer el Maestro en construir().
+MARCA_DE = {}
 
 _LOG_EXTERNO = None
 
@@ -148,6 +150,19 @@ DEL_WMS = {
 }
 
 _PRE = re.compile(r'^([A-Za-z]+)')
+
+# EL NUMERO DE ASN ENCODEA LA ORDEN DE COMPRA Y LA SOCIEDAD:
+#     20260533602BA.8817454  ->  orden 2026-05336-02, sociedad BA
+# Se descubrio el 03-sep-2026 buscando el expediente que Daniel paso por correo.
+ORDEN_EN_EL_ASN = re.compile(r'^(\d{4})(\d{5})(\d{2})([A-Z]{2})')
+
+
+def _fecha10(v):
+    """AAAA-MM-DD, venga como fecha de Excel o como texto."""
+    if hasattr(v, 'strftime'):
+        return v.strftime('%Y-%m-%d')
+    t = str(v or '').strip()[:10]
+    return t if len(t) == 10 and t[4:5] == '-' else ''
 
 
 def tipo_por_el_numero(asn):
@@ -288,6 +303,9 @@ def leer_maestro():
 def construir():
     from openpyxl import load_workbook
     calzado, ficha = leer_maestro()
+    # La marca por codigo, para la tabla del ASN. Sale de la misma ficha.
+    global MARCA_DE
+    MARCA_DE = {c: v[1] for c, v in ficha.items()}
 
     clase = defaultdict(lambda: {"lineas": 0, "env": 0.0, "rec": 0.0})
     mes = defaultdict(lambda: {"env": 0.0, "rec": 0.0})
@@ -297,6 +315,12 @@ def construir():
     # decide una vez -la primera- y las cantidades se suman aparte.
     asn_tipo = {}
     asn_codigo = {}
+    # LA FILA DE LA TABLA: una por articulo dentro de cada ASN. Es el nivel al
+    # que se consulta -"que trae el expediente", "que paso con este ASN", "donde
+    # esta este articulo"-. Las lineas sueltas no se guardan: el LPN y la talla
+    # no se buscan desde la web y serian ~250 MB en vez de 22.
+    tabla = defaultdict(lambda: {"env": 0.0, "rec": 0.0, "n": 0, "desc": ""})
+    tabla_meta = {}
     tipo_acum = defaultdict(lambda: {"asn": set(), "env": 0.0, "rec": 0.0})
     # Lo RECIBIDO, por el mes en que entro de verdad al sistema. Es la unica
     # fecha que responde 'que se recibio entre tal y tal dia': ni la de envio
@@ -408,6 +432,27 @@ def construir():
             t["asn"].add(asn)
             t["env"] += env
             t["rec"] += rec
+
+            # la fila de la tabla
+            f = tabla[(asn, cod)]
+            f["env"] += env
+            f["rec"] += rec
+            f["n"] += 1
+            if not f["desc"] and iD is not None and iD < len(fila) and fila[iD]:
+                f["desc"] = limpio(str(fila[iD]).strip()[:70])
+            if asn not in tabla_meta:
+                m = ORDEN_EN_EL_ASN.match(asn)
+                tabla_meta[asn] = (
+                    str(fila[idx["Proveedor"]]).strip()
+                    if "Proveedor" in idx and idx["Proveedor"] < len(fila)
+                    and fila[idx["Proveedor"]] else "",
+                    "%s-%s-%s" % (m.group(1), m.group(2), m.group(3)) if m else "",
+                    m.group(4) if m else "",
+                    asn_tipo[asn],
+                    str(fila[iS]).strip() if iS is not None and iS < len(fila) and fila[iS] else "",
+                    _fecha10(fila[iF]) if iF is not None and iF < len(fila) else "",
+                    _fecha10(fila[iV]) if iV is not None and iV < len(fila) else "",
+                )
 
             # el detalle por articulo, por marca y por mes
             if cod:
@@ -603,7 +648,11 @@ def construir():
         "vencidoEdad": {k: round(v) for k, v in venc_edad.items()},
     }
 
+    # LA TABLA VIAJA APARTE, no dentro del paquete: son 76.658 filas y el paquete
+    # es lo que se baja el navegador entero. Se cuelga del objeto para que main()
+    # la mande al endpoint, y se quita antes de publicar.
     paquete = {
+        "_tabla": [tabla, tabla_meta],
         "generado": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "archivos": archivos,
         "totales": {
@@ -701,6 +750,46 @@ def construir():
     return paquete
 
 
+LOTE_TABLA = 4000        # 76.658 filas de un saque son 15 MB en una peticion
+
+
+def cargar_tabla(tabla, meta, marca_de):
+    """Manda la tabla al servidor en tres pasos.
+
+    NO ES CRITICO: si esto falla, el paquete ya se publico y la pantalla sigue
+    andando como hasta hoy. Por eso devuelve True/False en vez de reventar.
+    """
+    filas = []
+    for (asn, cod), f in tabla.items():
+        m = meta.get(asn, ("", "", "", "", "", "", ""))
+        filas.append([asn, cod, f["desc"], marca_de(cod), m[0], m[1], m[2], m[3],
+                      m[4], m[5], m[6], int(round(f["env"])), int(round(f["rec"])),
+                      f["n"]])
+    log("tabla del ASN: %s filas" % "{:,}".format(len(filas)))
+    # A LOS DOS ENTORNOS, igual que el paquete: produccion y beta tienen bases
+    # distintas y la tabla vive en la base.
+    ok_prod = False
+    for nombre, cabecera in (("produccion", None), ("beta", "beta")):
+        try:
+            publicar_area.pedir_json("/api/asn/carga", {"paso": "inicio"}, cabecera)
+            for i in range(0, len(filas), LOTE_TABLA):
+                publicar_area.pedir_json(
+                    "/api/asn/carga",
+                    {"paso": "lote", "filas": filas[i:i + LOTE_TABLA]}, cabecera)
+            r = publicar_area.pedir_json("/api/asn/carga", {"paso": "fin"}, cabecera)
+            if (r or {}).get("status") == "ok":
+                log("   tabla cargada en %s: %s filas"
+                    % (nombre, "{:,}".format(r.get("filas", 0))))
+                ok_prod = ok_prod or nombre == "produccion"
+                continue
+            log("   la carga en %s no termino: %s" % (nombre, str(r)[:110]), "WARN")
+        except Exception as e:
+            log("   no se pudo cargar la tabla en %s: %s" % (nombre, str(e)[:110]), "WARN")
+    if not ok_prod:
+        log("   el paquete SI se publico; la pantalla sigue andando", "WARN")
+    return ok_prod
+
+
 def subir(paquete, intentos=3):
     """Sube el paquete a PRODUCCION Y A BETA.
 
@@ -745,13 +834,24 @@ def main(log_externo=None):
         log("los archivos todavia no traen la fecha de recepcion", "WARN")
     log("parciales: %s ASN, faltan %s unidades"
         % ("{:,}".format(p["parciales_total"]), "{:,.0f}".format(p["parciales_falta"])))
+    # LA TABLA SALE DEL PAQUETE SIEMPRE, aunque no se suba: si se quedara
+    # adentro, `--solo-calcular` escribiria un JSON con las 76.658 filas.
+    tabla, tabla_meta = p.pop("_tabla", (None, None))
+
     if "--solo-calcular" in sys.argv:
         destino = os.path.join(os.path.dirname(os.path.abspath(__file__)), "asn_resumen.json")
         with open(destino, "w", encoding="utf-8") as f:
             json.dump(p, f, ensure_ascii=False, indent=1)
         log("guardado en %s (no se publico)" % destino)
         return 0
-    return 0 if subir(p) else 3
+    # ── LA TABLA, para poder consultar los seis meses desde la web ───────────
+    #
+    # Va DESPUES de publicar el paquete y no antes: si la tabla falla, el paquete
+    # ya esta arriba y la pantalla sigue andando como hasta hoy.
+    ok = subir(p)
+    if tabla and "--sin-tabla" not in sys.argv:
+        cargar_tabla(tabla, tabla_meta, lambda c: (MARCA_DE or {}).get(c[:7], ""))
+    return 0 if ok else 3
 
 
 if __name__ == "__main__":

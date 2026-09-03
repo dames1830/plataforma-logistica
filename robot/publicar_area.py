@@ -50,6 +50,32 @@ def _enviar(area, datos, fecha, entorno, intentos):
     return 'sin intentos', len(cuerpo)
 
 
+def pedir_json(ruta, datos=None, entorno=None, intentos=3):
+    """Un POST -o un GET si no hay datos- a cualquier ruta del servidor.
+
+    `publicar()` sirve para las areas, que son un bloque de JSON. Esto es para
+    los endpoints nuevos, como la carga de la tabla del ASN. Reusa el token y los
+    reintentos en vez de repetir esa logica en cada robot.
+    """
+    base = API.rsplit('/api/', 1)[0]
+    cuerpo = json.dumps(datos, ensure_ascii=False).encode('utf-8') if datos is not None else None
+    for i in range(1, intentos + 1):
+        try:
+            p = urllib.request.Request(base + ruta, data=cuerpo,
+                                       method='POST' if datos is not None else 'GET')
+            p.add_header('Content-Type', 'application/json')
+            if entorno:
+                p.add_header('X-Environment', entorno)
+            if TOKEN:
+                p.add_header('X-Robot-Token', TOKEN)
+            with urllib.request.urlopen(p, timeout=300) as r:
+                return json.loads(r.read().decode('utf-8'))
+        except Exception as e:
+            if i >= intentos:
+                raise
+    return None
+
+
 def publicar(area, datos, fecha, log=print, intentos=3):
     """Sube `datos` al area, en produccion y en beta. True si produccion entro."""
     ok_prod = False
