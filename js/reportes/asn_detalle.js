@@ -264,11 +264,11 @@ export function montarAsnDetalle(cont, OPC) {
 
         /* SIEMPRE A LO ANCHO: es el de siete columnas y 33 dias, el mas denso de todos,
    y ademas deja a los otros cuatro emparejados de a dos sin que sobre ninguno. */
-        T.push('<div class="a-caja a-ancho-fila"><div class="a-cab"><h3>Cuándo llega</h3>'
+        T.push('<div class="a-caja caja-pbi a-ancho-fila"><div class="a-cab tapa-pbi"><h3>Cuándo llega</h3>'
         + '<span class="nota">'
         + (hayEntra ? '<b>anunciado</b> y cuándo suele <b>entrar</b>' : 'la fecha la anuncia el ASN')
         + ' · <b>haz clic en un día</b> para ver los artículos</span></div>'
-        + '<div class="a-scroll"><table class="a-cal"><thead><tr>'
+        + '<div class="a-scroll"><table class="a-cal rep-pbi"><thead><tr>'
         + '<th>Anunciado</th>'
         + (hayEntra ? '<th>Suele entrar</th>' : '')
         + '<th>Falta</th><th>Unidades</th><th>Artículos</th>'
@@ -293,7 +293,7 @@ export function montarAsnDetalle(cont, OPC) {
               + '<td style="color:var(--text-muted);">' + (d.dia === _dia ? '▼ abierto' : 'ver ▸')
               + '</td></tr>';
           }).join('')
-        + '<tr style="border-top:2px solid var(--border); font-weight:800;">'
+        + '<tr class="gran-tot" style="border-top:2px solid var(--border); font-weight:800;">'
         + '<td>Total</td>' + (hayEntra ? '<td></td>' : '') + '<td></td>'
         + '<td style="color:var(--text-strong);">' + nf(CL.dias.reduce((a, d) => a + d.u, 0)) + '</td>'
         + '<td></td><td></td><td></td></tr>'
@@ -317,12 +317,12 @@ export function montarAsnDetalle(cont, OPC) {
 
         const D = _dia ? CL.dias.find(x => x.dia === _dia) : null;
         if (D) {
-            T.push('<div class="a-cab" style="border-top:1px solid var(--border);">'
+            T.push('<div class="a-cab tapa-pbi" style="border-top:1px solid var(--border);">'
             + '<h3>Qué llega el ' + esc(diaLargo(D.dia)) + '</h3>'
             + '<span class="nota">' + (D.completo ? 'los ' + nf(D.n) + ' artículos'
                 : nf(D.top.length) + ' de ' + nf(D.n) + ' artículos · los de mayor cantidad')
             + '</span></div>'
-            + '<div class="a-scroll"><table><thead><tr>'
+            + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
             + '<th>Artículo</th><th style="text-align:left;">Marca</th><th>Unidades</th>'
             + '</tr></thead><tbody>'
             + D.top.map(a => '<tr><td>' + esc(a.cod)
@@ -353,16 +353,16 @@ export function montarAsnDetalle(cont, OPC) {
                      ['mas90', 'Hace más de 90 días', 'ASN colgado: o se perdió o nadie lo cerró']];
         const filas = ORD.filter(x => ed[x[0]]);
         if (filas.length) {
-            T.push('<div class="a-caja"><div class="a-cab"><h3>Lo que debió llegar y no llegó</h3>'
+            T.push('<div class="a-caja caja-pbi"><div class="a-cab tapa-pbi"><h3>Lo que debió llegar y no llegó</h3>'
             + '<span class="nota">' + nf(ven) + ' unidades en ' + nf(CL.lineasVencido)
             + ' líneas con la fecha ya pasada</span></div>'
-            + '<div class="a-scroll"><table><thead><tr>'
+            + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
             + '<th>Se anunció</th><th>Unidades</th><th style="text-align:left;">Qué significa</th>'
             + '</tr></thead><tbody>'
             + filas.map(x => '<tr><td>' + x[1] + '</td>'
                 + '<td style="font-weight:800; color:var(--text-strong);">' + nf(ed[x[0]]) + '</td>'
                 + '<td style="text-align:left;" class="a-desc">' + x[2] + '</td></tr>').join('')
-            + '<tr style="border-top:2px solid var(--border); font-weight:800;">'
+            + '<tr class="gran-tot" style="border-top:2px solid var(--border); font-weight:800;">'
             + '<td>Total</td><td style="color:var(--text-strong);">'
             + nf(filas.reduce((a, x) => a + ed[x[0]], 0)) + '</td><td></td></tr>'
             + '</tbody></table></div>'
@@ -393,7 +393,7 @@ export function montarAsnDetalle(cont, OPC) {
        `faltaBruta`: sin esto salen dos columnas con el mismo numero. */
     const hayBruta = meses.some(m => p.porMes[m].faltaBruta != null);
 
-    T.push('<div class="a-caja' + (_mes ? ' a-ancho' : '') + '"><div class="a-cab"><h3>Mes a mes</h3>'
+    T.push('<div class="a-caja caja-pbi' + (_mes ? ' a-ancho' : '') + '"><div class="a-cab tapa-pbi"><h3>Mes a mes</h3>'
     /* POR FECHA DE CREACION, que es como agrupa el robot -un archivo por mes- y
        como ya lo decia el cuadro de arriba. El rotulo decia "por fecha de envio"
        porque asi lo habia agrupado la medicion de prueba, y dos cuadros pegados
@@ -402,7 +402,7 @@ export function montarAsnDetalle(cont, OPC) {
     /* LAS TRES COLUMNAS TIENEN QUE CERRAR ENTRE SI, y la fila de TOTAL esta para
        que se pueda comprobar sin sacar la calculadora:  falta = bruta - sobra.
        Daniel suma las filas; si una no cierra, cae el reporte entero. */
-    + '<div class="a-scroll"><table><thead><tr>'
+    + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
     + '<th>Mes</th><th>Artículos con falta</th>'
     + (hayBruta ? '<th>Falta</th>' : '')
     + (haySobra ? '<th>Recibido de más</th>' : '')
@@ -419,7 +419,7 @@ export function montarAsnDetalle(cont, OPC) {
             + '<td class="a-falta">' + nf(x.falta) + '</td>'
             + '<td style="color:var(--text-muted);">' + (m === _mes ? '▼ abierto' : 'ver ▸') + '</td></tr>';
     }).join('')
-    + '<tr style="border-top:2px solid var(--border); font-weight:800;">'
+    + '<tr class="gran-tot" style="border-top:2px solid var(--border); font-weight:800;">'
     + '<td>Total</td><td></td>'
     + (hayBruta ? '<td>' + nf(sumar('faltaBruta')) + '</td>' : '')
     + (haySobra ? '<td class="a-ok">−' + nf(sumar('sobra')) + '</td>' : '')
@@ -428,11 +428,11 @@ export function montarAsnDetalle(cont, OPC) {
 
     if (_mes && p.porMes[_mes]) {
         const x = p.porMes[_mes];
-        T.push('<div class="a-cab" style="border-top:1px solid var(--border);">'
+        T.push('<div class="a-cab tapa-pbi" style="border-top:1px solid var(--border);">'
         + '<h3>Qué falta en ' + esc(mesLargo(_mes)) + '</h3>'
         + '<span class="nota">' + nf(x.top.length) + ' de ' + nf(x.articulos)
         + ' artículos · los que más faltan primero</span></div>'
-        + '<div class="a-scroll"><table><thead><tr>'
+        + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
         + '<th>Artículo</th><th>Marca</th><th>Enviado</th><th>Recibido</th><th>Falta</th>'
         + '</tr></thead><tbody>'
         + x.top.map(a => '<tr><td>' + esc(a.cod)
@@ -491,12 +491,12 @@ export function montarAsnDetalle(cont, OPC) {
         };
         const f = p.tipoFuente || {};
         const totF = tipos.reduce((a, x) => a + x.falta, 0);
-        T.push('<div class="a-caja"><div class="a-cab"><h3>De dónde viene</h3>'
+        T.push('<div class="a-caja caja-pbi"><div class="a-cab tapa-pbi"><h3>De dónde viene</h3>'
         + '<span class="nota">'
         + (f.porCodigo ? nf(f.porCodigo) + ' clasificados por el WMS' : '')
         + (f.porNumero ? ' · ' + nf(f.porNumero) + ' por el número del ASN' : '')
         + '</span></div>'
-        + '<div class="a-scroll"><table><thead><tr>'
+        + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
         + '<th>De dónde</th><th>ASN</th><th>Enviado</th><th>Recibido</th>'
         + '<th>Falta</th><th>Cumple</th></tr></thead><tbody>'
         + tipos.map(x => '<tr><td>' + esc(NOMBRE[x.tipo] || x.tipo)
@@ -507,7 +507,7 @@ export function montarAsnDetalle(cont, OPC) {
             + '<td class="a-falta">' + nf(x.falta) + '</td>'
             + '<td class="' + (x.cumple >= 95 ? 'a-ok' : 'a-falta') + '">'
             + n1(x.cumple) + '%</td></tr>').join('')
-        + '<tr style="border-top:2px solid var(--border); font-weight:800;">'
+        + '<tr class="gran-tot" style="border-top:2px solid var(--border); font-weight:800;">'
         + '<td>Total</td>'
         + '<td>' + nf(tipos.reduce((a, x) => a + x.asn, 0)) + '</td>'
         + '<td>' + nf(tipos.reduce((a, x) => a + x.enviado, 0)) + '</td>'
@@ -522,9 +522,9 @@ export function montarAsnDetalle(cont, OPC) {
         + '</div></div>');
     }
 
-    T.push('<div class="a-caja"><div class="a-cab"><h3>Qué marca está llegando</h3>'
+    T.push('<div class="a-caja caja-pbi"><div class="a-cab tapa-pbi"><h3>Qué marca está llegando</h3>'
     + '<span class="nota">las ' + marcas.length + ' marcas · clic para filtrar los artículos de abajo</span></div>'
-    + '<div class="a-scroll"><table><thead><tr>'
+    + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
     + '<th>Marca</th><th>Enviado</th><th>Recibido</th><th>Falta</th><th>Cumple</th>'
     + '</tr></thead><tbody>'
     + marcas.map(m => {
@@ -551,7 +551,7 @@ export function montarAsnDetalle(cont, OPC) {
     });
     T.push('</div>');   // cierra el empaquetado: lo que sigue va a lo ancho
 
-    T.push('<div class="a-caja a-ancho-fila"><div class="a-cab"><h3>Qué artículo está llegando</h3>'
+    T.push('<div class="a-caja caja-pbi a-ancho-fila"><div class="a-cab tapa-pbi"><h3>Qué artículo está llegando</h3>'
     + '<span class="nota">los ' + nf((p.articulos || []).length) + ' con más pendiente, de '
     + nf(p.articulosConFalta) + '</span></div>'
     + '<div class="a-barra">'
@@ -561,7 +561,7 @@ export function montarAsnDetalle(cont, OPC) {
               + esc(_marca) + ' ✕</button>' : '')
     + '<span style="font-size:var(--t-xs); color:var(--text-muted);">' + nf(arts.length) + ' a la vista</span>'
     + '</div>'
-    + '<div class="a-scroll"><table><thead><tr>'
+    + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
     + '<th>Artículo</th><th>Marca</th><th>Tipo</th>'
     + (hayCuando ? '<th>Cuándo llega</th>' : '')
     + '<th>Enviado</th><th>Recibido</th><th>Falta</th>'
@@ -590,7 +590,7 @@ export function montarAsnDetalle(cont, OPC) {
             || (x.estado || '').toLowerCase().indexOf(q) >= 0
             || (x.envio || '').toLowerCase().indexOf(q) >= 0;
     });
-    T.push('<div class="a-caja a-ancho-fila"><div class="a-cab"><h3>Los ASN parciales</h3>'
+    T.push('<div class="a-caja caja-pbi a-ancho-fila"><div class="a-cab tapa-pbi"><h3>Los ASN parciales</h3>'
     + '<span class="nota">llegó algo pero no todo · son los que hay que perseguir</span></div>'
     + '<div class="a-barra">'
     + '<input class="a-buscar" placeholder="Buscar por ASN, estado o fecha..." '
@@ -598,7 +598,7 @@ export function montarAsnDetalle(cont, OPC) {
     + '<span style="font-size:var(--t-xs); color:var(--text-muted);">'
     + nf(par.length) + ' de ' + nf((p.parciales || []).length) + '</span>'
     + '</div>'
-    + '<div class="a-scroll"><table><thead><tr>'
+    + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
     + '<th>ASN</th><th>Envío</th><th>Estado</th><th>Enviado</th><th>Recibido</th><th>Falta</th><th>Cumple</th>'
     + '</tr></thead><tbody>'
     + (par.length ? par.map(x => '<tr><td>' + esc(x.asn) + '</td>'

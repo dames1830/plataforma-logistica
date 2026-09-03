@@ -140,7 +140,7 @@ const pintar = () => {
     if (_ultimo.agrupado) {
         const g = _ultimo.grupos || [];
         const eti = (AGRUPACIONES.find(x => x[0] === _ultimo.agrupado) || ['', ''])[1];
-        T.push('<div class="b-scroll"><table><thead><tr>'
+        T.push('<div class="b-scroll"><table class="rep-pbi"><thead><tr>'
         + '<th>' + esc(eti.replace('Por ', '')) + '</th><th>ASN</th><th>Filas</th>'
         + '<th>Enviado</th><th>Recibido</th><th>Falta</th><th>Desde</th><th>Hasta</th>'
         + '</tr></thead><tbody>'
@@ -158,7 +158,7 @@ const pintar = () => {
         }
     } else {
         const d = _ultimo.datos || [];
-        T.push('<div class="b-scroll"><table><thead><tr>'
+        T.push('<div class="b-scroll"><table class="rep-pbi"><thead><tr>'
         + '<th>Artículo</th><th style="text-align:left;">ASN</th>'
         + '<th style="text-align:left;">Expediente</th><th style="text-align:left;">Orden</th>'
         + '<th style="text-align:left;">Tipo</th><th style="text-align:left;">Estado</th>'
@@ -206,8 +206,8 @@ export function montarBuscadorAsn(cont, OPC) {
     _cont = cont;
     if (OPC) _OPC = OPC;
 
-    cont.innerHTML = '<style>' + CSS + '</style><div id="bus"><div class="b-caja">'
-    + '<div class="b-cab"><h3>Buscar en los seis meses</h3>'
+    cont.innerHTML = '<style>' + CSS + '</style><div id="bus"><div class="b-caja caja-pbi">'
+    + '<div class="b-cab tapa-pbi"><h3>Buscar en los seis meses</h3>'
     + '<span class="nota">le pregunta al servidor · no baja el historial</span></div>'
     + '<div class="b-barra">'
     + '<input class="b-buscar" id="bus_q" placeholder="Expediente, ASN, artículo u orden de compra…  (del correo sirve tal cual: 2026-178)">'
