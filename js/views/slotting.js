@@ -33,8 +33,8 @@
 /* El rango de fechas es el mismo de toda la plataforma: se dibuja una sola vez, en
    `reportesComunes.js`. Este archivo recibe todo lo demás por `OPC` y no lee del
    servidor — el selector no lee nada, solo dibuja. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0567';
-import { icono } from '../services_v245/iconos.js?v=29.0567';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0568';
+import { icono } from '../services_v245/iconos.js?v=29.0568';
 
 export const montarSlotting = (container, OPC = {}) => {
   const svc = OPC.svc;
@@ -124,7 +124,13 @@ export const montarSlotting = (container, OPC = {}) => {
               ${selectorRango(esc(desde), esc(hasta), null, { idDesde: 'slt_desde', idHasta: 'slt_hasta' })}
               ${lista.length ? `
                 <button id="slt_imprimir" class="btn-icono" title="Imprimir las hojas de las tareas CREADAS">${icono('imprimir', 22)}</button>
-                <button id="slt_excel" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 22)}</button>` : ''}
+                <button id="slt_excel" class="btn-icono btn-excel" title="Exportar a Excel">${icono('excel', 22)}</button>
+                <!-- BORRAR EN MASA. Daniel, 02-sep-2026: *"en slotting no veo por ningun lado
+                     el icono de borrar de forma masiva las tareas tal cual lo tiene el modulo
+                     de almacenaje; te dije que debe ser identica"*. Mismo icono, mismo sitio y
+                     mismas reglas que alla: solo las CREADAS del rango. -->
+                <button id="slt_borrar_todas" class="btn-icono btn-peligro"
+                        title="Borrar todas las tareas CREADAS del rango">${icono('borrar', 22)}</button>` : ''}
               ${selectorZonasCorrida()}
               <button id="slt_procesar" class="btn" style="background:var(--btn-fill); width:auto;
                       padding:0.5rem 1.1rem; border-radius:8px; font-size:var(--t-sm); font-weight:800;">
@@ -431,6 +437,142 @@ export const montarSlotting = (container, OPC = {}) => {
       }
       modal.remove();
       pintar();
+    };
+  }
+
+  /* ── BORRAR TODAS LAS CREADAS DEL RANGO ────────────────────────────────────
+   *
+   * Daniel, 02-sep-2026: *"en slotting no veo por ningún lado el ícono de borrar de forma
+   * masiva las tareas tal cual lo tiene el módulo de almacenaje; te dije que debe ser
+   * idéntica. Ahora quiero borrar todo masivamente y no puedo"*.
+   *
+   * LAS MISMAS TRES REGLAS QUE ALMACENAJE, y no son adorno:
+   *   · SOLO LAS CREADAS. Una asignada la tiene alguien en la mano con la hoja impresa, y
+   *     una finalizada es trabajo hecho que alimenta el KPI.
+   *   · SOLO EL RANGO QUE SE ESTÁ VIENDO. Lo que no está en pantalla no se toca.
+   *   · LAS JORNADAS CERRADAS NO SE TOCAN, aunque caigan dentro del rango.
+   *
+   * Y SE DICE CUÁNTAS QUEDARON SIN BORRAR, con el motivo. Un borrado que se lleva menos de
+   * lo que uno esperaba y no avisa es peor que no borrar: uno se queda creyendo que ya no
+   * están.
+   */
+  function borrarTodasLasCreadas() {
+    const lista = tareasDelRango();
+    const creadas = lista.filter(t => svc.migrarEstado(t) === 'Creada');
+    const borrables = creadas.filter(t => !(OPC.jornadaVencida && OPC.jornadaVencida(t.fecha)));
+    const protegidas = creadas.length - borrables.length;
+    const enUso = lista.length - creadas.length;
+
+    if (!borrables.length) {
+      if (OPC.alertar) {
+        OPC.alertar('NO HAY NADA QUE BORRAR',
+          !lista.length ? 'No hay tareas en el rango.'
+          : !creadas.length
+            ? 'Las ' + lista.length + ' tareas del rango están asignadas o finalizadas, y esas '
+              + 'no se borran: alguien las tiene en la mano o ya son trabajo hecho.'
+            : 'Las ' + creadas.length + ' tareas creadas del rango son de jornadas ya cerradas.',
+          'warning');
+      }
+      return;
+    }
+
+    const pares = borrables.reduce((a, t) => a + (Number(t.pares) || 0), 0);
+    const cuerpos = borrables.reduce((a, t) => a + cuerposDe(t), 0);
+    const viejo = document.getElementById('slt_modal');
+    if (viejo) viejo.remove();
+
+    const plural = (n, uno, varios) => (n === 1 ? uno : varios);
+    const filas = [];
+    filas.push('Son <b style="color:var(--text-pale);">' + num(pares) + ' pares</b> en '
+      + '<b style="color:var(--text-pale);">' + cuerpos + ' '
+      + plural(cuerpos, 'cuerpo', 'cuerpos') + '</b>, del ' + esc(desde) + ' al ' + esc(hasta) + '.');
+    if (enUso) {
+      filas.push('<b style="color:var(--text-pale);">' + enUso + '</b> '
+        + plural(enUso, 'tarea asignada o finalizada NO se toca',
+                 'tareas asignadas o finalizadas NO se tocan') + '.');
+    }
+    if (protegidas) {
+      filas.push('<b style="color:var(--warning);">' + protegidas + '</b> '
+        + plural(protegidas, 'es de una jornada ya cerrada y tampoco se borra',
+                 'son de jornadas ya cerradas y tampoco se borran') + '.');
+    }
+    filas.push('Los cuerpos no se pierden: al volver a procesar el Slotting vuelven a salir, '
+      + 'porque el barrido los encuentra de nuevo en el almacén.');
+
+    const modal = document.createElement('div');
+    modal.id = 'slt_modal';
+    modal.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--shadow-rgb), 0.8);'
+                + 'z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);';
+    modal.innerHTML =
+      '<div class="glass-panel" style="width:460px; padding:2rem; border:1px solid var(--danger); border-radius:16px;">'
+      + '<h3 style="margin:0 0 1rem 0; color:var(--text-strong); font-size:var(--t-lg); text-align:center;">'
+      + '¿Borrar <span style="color:var(--danger);">' + borrables.length + ' '
+      + plural(borrables.length, 'tarea creada', 'tareas creadas') + '</span>?</h3>'
+      + '<div style="font-size:var(--t-sm); color:var(--text-muted); line-height:1.65; margin-bottom:1.3rem;">'
+      + filas.join('<br><br>') + '</div>'
+      + '<div style="display:flex; gap:10px;">'
+      + '<button id="slt_okBorrarTodas" class="btn" style="flex:1; background:var(--danger); padding:0.8rem; font-size:var(--t-sm); font-weight:800;">BORRAR TODAS</button>'
+      + '<button id="slt_noBorrarTodas" class="btn" style="flex:1; background:rgba(var(--ink-rgb), 0.06); '
+      + 'border:1px solid var(--border); color:var(--text-pale); padding:0.8rem; font-size:var(--t-sm); font-weight:800;">CANCELAR</button>'
+      + '</div></div>';
+    document.body.appendChild(modal);
+    modal.querySelector('#slt_noBorrarTodas').onclick = () => modal.remove();
+
+    modal.querySelector('#slt_okBorrarTodas').onclick = async () => {
+      /* EL BOTÓN TIENE QUE DECIR QUE ESTÁ TRABAJANDO, igual que el borrado de una sola:
+         sube la corrida entera al servidor y hay una espera real en el medio. */
+      const btnOk = modal.querySelector('#slt_okBorrarTodas');
+      const btnNo = modal.querySelector('#slt_noBorrarTodas');
+      const rotulo = btnOk.textContent;
+      btnOk.disabled = true; btnNo.disabled = true;
+      btnOk.textContent = '⌛ BORRANDO...';
+
+      /* SE GUARDA COMO ESTABA TODO, no solo las listas: si el servidor no contesta hay que
+         dejar cada corrida igual, y con restaurar las tareas no alcanza — la cabecera se
+         quedaría contando los pares de lo que no se borró. */
+      const antes = {};
+      const fechas = svc.fechasEnRango(cajon, desde, hasta);
+      fechas.forEach(f => {
+        const c = cajon[f];
+        if (!c) return;
+        antes[f] = { tareas: c.tareas, pares: c.pares, cuerpos: c.cuerpos };
+      });
+
+      const aBorrar = new Set(borrables.map(t => t.fecha + '|' + t.n));
+      fechas.forEach(f => {
+        const c = cajon[f];
+        if (!c || !c.tareas) return;
+        const quedan = c.tareas.filter(t => !aBorrar.has(f + '|' + t.n));
+        c.tareas = quedan;
+        c.pares = quedan.reduce((a, x) => a + (Number(x.pares) || 0), 0);
+        c.cuerpos = new Set(quedan.flatMap(x => (x.lineas || []).map(l => l.ubi))).size;
+      });
+
+      const ok = OPC.alGuardar ? await OPC.alGuardar(cajon) : true;
+      if (ok === false) {
+        Object.keys(antes).forEach(f => {
+          cajon[f].tareas = antes[f].tareas;
+          cajon[f].pares = antes[f].pares;
+          cajon[f].cuerpos = antes[f].cuerpos;
+        });
+        btnOk.disabled = false; btnNo.disabled = false; btnOk.textContent = rotulo;
+        if (OPC.alertar) {
+          OPC.alertar('NO SE PUDO BORRAR',
+            'El servidor no confirmó el cambio. No se borró nada: las tareas quedaron como estaban.',
+            'error');
+        }
+        return;
+      }
+
+      modal.remove();
+      pintar();
+      if (protegidas && OPC.alertar) {
+        OPC.alertar('QUEDARON TAREAS SIN BORRAR',
+          protegidas + ' ' + plural(protegidas, 'tarea del rango no se borró',
+                                    'tareas del rango no se borraron')
+          + ': son de jornadas ya cerradas.',
+          'warning');
+      }
     };
   }
 
@@ -1184,6 +1326,9 @@ export const montarSlotting = (container, OPC = {}) => {
 
     container.querySelectorAll('.slt-borrar').forEach(b =>
       b.addEventListener('click', () => borrarTarea(b.dataset.f, b.dataset.n)));
+
+    const btnTodas = container.querySelector('#slt_borrar_todas');
+    if (btnTodas) btnTodas.addEventListener('click', borrarTodasLasCreadas);
 
     container.querySelectorAll('.slt-reiniciar').forEach(b =>
       b.addEventListener('click', async () => {
