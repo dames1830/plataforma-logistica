@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta - Buscador del ASN</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body { margin:0; padding:22px; font-family:'Inter',system-ui,sans-serif; display:block; }
+  #caja { max-width:1600px; margin:0 auto; min-width:0; }
+  #err { background:#7f1d1d; color:#fff; padding:12px 16px; border-radius:10px;
+         margin-bottom:16px; font:12px/1.6 monospace; white-space:pre-wrap; display:none; }
+</style>
+</head><body>
+<div id="caja"><div id="err"></div><div id="destino">Cargando...</div></div>
+<script type="module">
+const err = document.getElementById('err');
+const gritar = (t) => { err.style.display='block'; err.textContent += t + '\n'; };
+window.addEventListener('error', e => gritar('ERROR: ' + e.message));
+try {
+  const tema = new URLSearchParams(location.search).get('tema');
+  if (tema) document.documentElement.setAttribute('data-tema', tema);
+  const mod = await import('../js/reportes/asn_buscador.js');
+  // Contra el backend de PRUEBA, que ya tiene las 76.658 filas cargadas.
+  mod.montarBuscadorAsn(document.getElementById('destino'), { api: 'http://127.0.0.1:8011' });
+} catch (e) { gritar('AL MONTAR: ' + (e && e.stack || e)); }
+</script>
+</body></html>
