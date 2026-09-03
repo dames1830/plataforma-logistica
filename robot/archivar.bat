@@ -11,3 +11,8 @@ REM ---------------------------------------------------------------------------
 
 python C:\wms_scraping\horario_robot.py archivado || exit /b 0
 python C:\wms_scraping\archivar_tareas.py --ejecutar
+
+REM  Y las otras dos areas que crecen sin techo: el historial de performance y
+REM  la bitacora de RF. Van juntas porque es el mismo momento tranquilo de la
+REM  noche y las tres reescriben el area entera.
+python C:\wms_scraping\archivar_historicos.py --ejecutar

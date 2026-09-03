@@ -46,7 +46,11 @@ TIMEOUT = 180
 # las noches y las activas se mantienen solas en los ultimos 30 dias, en vez de
 # volver a crecer hasta que alguien se acuerde. El archivado anterior se dejo de
 # hacer en julio justamente por depender de que alguien se acordara.
-DIAS_QUE_SE_QUEDAN = 30
+# 7 dias desde el 03-sep-2026. Daniel: *"no miro tareas hacia atras. Lo unico que
+# necesito es guardarla para cualquier emergencia"*. Con 30 dias eran 1.060 tareas
+# y 1.706 KB que la web espera ANTES de mostrarse, de las cuales solo 62 estaban
+# vivas. Nada se pierde: todo va al historico, que es acumulativo.
+DIAS_QUE_SE_QUEDAN = 7
 
 # Una tarea sin cerrar no se archiva aunque sea vieja: alguien podria estar
 # trabajandola todavia.
@@ -154,7 +158,18 @@ def main():
         return 1
     print(f'[ARCHIVAR]     ok: el historico tiene {len(verificacion)} tareas')
 
-    # 3) Recien ahora se sacan de las activas
+    # 3) Recien ahora se sacan de las activas, PERO SOBRE UNA LECTURA FRESCA.
+    #
+    #    Entre el paso 1 y este pasan varios segundos. A las 03:00 el turno noche
+    #    ya casi no guarda, pero "casi" no es "nada": una tarea creada en el medio
+    #    desaparecia al escribir la lista vieja. Se relee y se quita SOLO lo que se
+    #    archivo, asi lo que haya entrado mientras tanto se conserva.
+    archivadas = {clave(t) for t in viejas}
+    frescas = leer('almacenaje_tasks')
+    quedan = [t for t in frescas if clave(t) not in archivadas]
+    entraron = len(frescas) - len(activas)
+    if entraron:
+        print(f'[ARCHIVAR] entraron {entraron} tareas mientras se archivaba; se conservan')
     print(f'[ARCHIVAR] 3/3 dejando {len(quedan)} tareas en activas...')
     _pedir('/api/logistics/almacenaje_tasks', quedan)
 
