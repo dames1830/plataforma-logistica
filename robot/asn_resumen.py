@@ -768,15 +768,20 @@ def cargar_tabla(tabla, meta, marca_de):
     log("tabla del ASN: %s filas" % "{:,}".format(len(filas)))
     # A LOS DOS ENTORNOS, igual que el paquete: produccion y beta tienen bases
     # distintas y la tabla vive en la base.
+    # SE IMPORTA ADENTRO, como hace `subir()`. El modulo vive junto a este
+    # archivo en el servidor y no esta importado arriba: darlo por presente hizo
+    # que la primera carga fallara con "name 'publicar_area' is not defined".
+    from publicar_area import pedir_json
+
     ok_prod = False
     for nombre, cabecera in (("produccion", None), ("beta", "beta")):
         try:
-            publicar_area.pedir_json("/api/asn/carga", {"paso": "inicio"}, cabecera)
+            pedir_json("/api/asn/carga", {"paso": "inicio"}, cabecera)
             for i in range(0, len(filas), LOTE_TABLA):
-                publicar_area.pedir_json(
+                pedir_json(
                     "/api/asn/carga",
                     {"paso": "lote", "filas": filas[i:i + LOTE_TABLA]}, cabecera)
-            r = publicar_area.pedir_json("/api/asn/carga", {"paso": "fin"}, cabecera)
+            r = pedir_json("/api/asn/carga", {"paso": "fin"}, cabecera)
             if (r or {}).get("status") == "ok":
                 log("   tabla cargada en %s: %s filas"
                     % (nombre, "{:,}".format(r.get("filas", 0))))
