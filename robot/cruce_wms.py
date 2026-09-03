@@ -52,6 +52,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 LOGS = os.path.join('C:' + os.sep, 'wms_scraping', 'logs')
 WEBDIR = os.path.join(LOGS, 'prodhora')
 AREA = 'cruce_wms'
+API_AREAS = 'https://logistics-backend-wv0x.onrender.com/api/logistics'
 TOPE_LINEAS = 30            # cuantas lineas se guardan de cada celda que no cuadra
 
 BASE = os.path.join('C:' + os.sep, 'Users', 'Administrator', 'OneDrive',
@@ -64,14 +65,14 @@ ES_PRE = re.compile(r'^W?PRE', re.I)
 LADOS = {
     'picking': {
         'nombre': 'PICKING',
-        'json': 'picking_por_hora.json',
+        'json': 'picking_por_hora.json', 'area': 'picking_por_hora',
         'carpeta': 'Picking', 'patron': 'Picking %s.csv',
         'usuario': 'Usuario de selección', 'hora': 'Hora de selección',
         'ubicacion': 'De ubicación', 'quitar_pre': False,
     },
     'embalaje': {
         'nombre': 'EMBALAJE',
-        'json': 'embalaje_por_hora.json',
+        'json': 'embalaje_por_hora.json', 'area': 'embalaje_por_hora',
         'carpeta': 'OBLPN Embalaje', 'patron': 'OBLPN %s.csv',
         'usuario': 'Usuario de modificación de asignación',
         'hora': 'Registro de hora de empaquetado',
@@ -144,37 +145,91 @@ def leer_web(ruta):
     return titulo, filas
 
 
-def leer_plataforma(nombre_json):
-    """Lo mismo, desde el JSON que publico el avance.
+def datos_de_la_plataforma(cfg, dia_iso):
+    """Los datos de la plataforma DEL DIA QUE SE PIDIO, no del ultimo.
+
+    ══════════════════════════════════════════════════════════════════════════
+    ESTO YA HIZO UN DESTROZO Y NO PUEDE VOLVER A PASAR.
+    ══════════════════════════════════════════════════════════════════════════
+
+    El JSON de `logs` lo pisa cada corrida del robot, asi que SIEMPRE tiene el
+    ultimo dia. Pidiendo el cruce del 01-09 se leia el web report del 1 contra los
+    datos de la plataforma del 2, y salia una diferencia de +16.259 pares con 0 de
+    23 personas coincidiendo. El numero no era un hallazgo: eran dos dias
+    distintos comparados entre si.
+
+    Habia un aviso en el log —"se usa el guardado"— y con eso no alcanza: un aviso
+    entre cien lineas no frena a nadie, y el cuadro se publica igual.
+
+    Ahora: si el JSON local es del dia pedido, se usa; si no, SE BAJA ESE DIA DEL
+    SERVIDOR, que es donde estan los 31 dias publicados. Y si no se puede bajar,
+    NO SE INVENTA: se corta con un error y no se publica nada.
+    """
+    ruta = os.path.join(LOGS, cfg['json'])
+    if os.path.exists(ruta):
+        d = json.load(io.open(ruta, encoding='utf-8'))
+        if d.get('dia') == dia_iso:
+            return d
+        log('%s guardado es del %s y se pidio el %s: se baja del servidor'
+            % (cfg['json'], d.get('dia'), dia_iso), 'INFO')
+
+    import urllib.request
+    url = '%s/%s?date=%s' % (API_AREAS, cfg['area'], dia_iso)
+    with urllib.request.urlopen(url, timeout=300) as r:
+        cuerpo = json.loads(r.read().decode('utf-8'))
+    d = cuerpo.get('data', cuerpo)
+    if not (d.get('vistas') or {}).get('TODOS'):
+        raise SystemExit('el servidor no tiene %s del %s: no se puede cruzar'
+                         % (cfg['area'], dia_iso))
+    if d.get('dia') and d.get('dia') != dia_iso:
+        raise SystemExit('el servidor devolvio %s del %s y se pidio el %s'
+                         % (cfg['area'], d.get('dia'), dia_iso))
+    return d
+
+
+def leer_plataforma(d):
+    """Lo mismo, desde los datos que publico el avance.
 
     EL WEB REPORT SE LLAMA ALDEAS: mira SOLO las tiendas, asi que se compara
     contra el canal RETAIL. Compararlo contra TODOS le sumaria mayorista,
     catalogo, ecommerce e industrial, y la diferencia seria del filtro, no de los
     datos.
     """
-    d = json.load(io.open(os.path.join(LOGS, nombre_json), encoding='utf-8'))
     v = d['vistas'].get('RETAIL') or d['vistas']['TODOS']
     out = defaultdict(float)
     for g in v['gente']:
         for hh in d['horas']:
-            c = g['horas'][str(hh)]
-            calz = (c['cal_suelto'] or 0) + (c['cal_prepack'] or 0)
+            # LA HORA QUE FALTA ES UN CERO, NO UN ERROR.
+            #
+            # El robot publica de cada persona SOLO las horas en que movio algo:
+            # con las 24 completas el archivo del dia pasaba de 368 a 585 KB. Asi
+            # que `d['horas']` trae las horas que tuvo EL DIA y una persona
+            # cualquiera puede no tener alguna.
+            #
+            # Con `[str(hh)]` eso reventaba con KeyError. Aguanto hasta el 31-ago
+            # porque esa noche nadie pico entre las 00:00 y la 01:00; el 1 y el 2
+            # de setiembre si -catalogo web trabaja de madrugada- y el cruce de los
+            # dos dias fallo entero, los dos lados.
+            c = g['horas'].get(str(hh)) or {}
+            calz = (c.get('cal_suelto') or 0) + (c.get('cal_prepack') or 0)
             if calz:
                 out[('CALZ', g['usuario'], hh)] += calz
-            if c['no_cal']:
-                out[('ACC', g['usuario'], hh)] += c['no_cal']
-    return d, out
+            # `no_cal` ahora convive con `materiales` y `sin_tipo`, que salieron el
+            # 02-sep. El web report de ALDEAS no los separa: los cuenta a todos
+            # como accesorio, asi que aca se suman igual o la comparacion mentiria.
+            acc = ((c.get('no_cal') or 0) + (c.get('materiales') or 0)
+                   + (c.get('sin_tipo') or 0))
+            if acc:
+                out[('ACC', g['usuario'], hh)] += acc
+    return out
 
 
 def cuadro(clave, ruta_web, dia_iso):
     """El cruce de un lado: totales, hora por hora y persona por persona."""
     cfg = LADOS[clave]
     titulo, web = leer_web(ruta_web)
-    d, maq = leer_plataforma(cfg['json'])
-
-    if d.get('dia') != dia_iso:
-        log('el %s guardado es del %s y se pidio el %s; se usa el guardado'
-            % (cfg['json'], d.get('dia'), dia_iso), 'AVISO')
+    d = datos_de_la_plataforma(cfg, dia_iso)
+    maq = leer_plataforma(d)
 
     gente = sorted({k[1] for k in web} | {k[1] for k in maq})
     horas = sorted({k[2] for k in web} | {k[2] for k in maq})
