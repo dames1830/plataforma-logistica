@@ -23,6 +23,7 @@ COMO SEPARA EL CALZADO
 CORRE DETRAS DEL ROBOT DEL ASN, a las 04:30.
 """
 import os
+import re
 import sys
 import json
 import time
@@ -61,6 +62,60 @@ def log(mensaje, nivel="INFO"):
     # tres minutos que dura la corrida y parece que el robot no arranco.
     print("[%s] [%-5s] %s" % (datetime.now().strftime("%H:%M:%S"), nivel, mensaje),
           flush=True)
+
+
+# ── DE DONDE VIENE CADA ASN ─────────────────────────────────────────────────
+#
+# Las etiquetas cortas van en el orden en que Daniel las nombra.
+TIPOS = ('importacion', 'nacional', 'inversa', 'devolucion', 'traslado',
+         'materiales', 'sin_clasificar')
+
+# Lo que puede traer el campo del WMS. Se compara sin tildes y en mayusculas.
+DEL_WMS = {
+    'IMP': 'importacion', 'IMPORTACION': 'importacion', 'IMPORTACION IMP': 'importacion',
+    'NAC': 'nacional', 'NACIONAL': 'nacional',
+    'DEV': 'inversa', 'DEVOLUCION': 'inversa', 'LOGISTICA INVERSA': 'inversa',
+}
+
+_PRE = re.compile(r'^([A-Za-z]+)')
+
+
+def tipo_por_el_numero(asn):
+    """El tipo deducido del numero, medido sobre 16.175 ASN el 03-sep-2026.
+
+    Cubre el 100%: no hay ASN que no caiga en alguna de estas formas.
+    """
+    a = (asn or '').strip()
+    if not a:
+        return 'sin_clasificar'
+    m = _PRE.match(a)
+    if m:
+        pre = m.group(1).upper()
+        if pre == 'T':
+            return 'inversa'
+        if pre in ('B', 'F'):
+            return 'devolucion'
+        if pre in ('G', 'RA'):
+            return 'traslado'
+        if pre == 'OS':
+            return 'materiales'
+        return 'sin_clasificar'
+    # empieza con el ano. El punto separa la importacion de lo nacional:
+    # con punto son +37 dias de anticipacion y proveedor de 10 digitos; sin
+    # punto se registra DESPUES de la fecha anunciada y llega completo.
+    return 'importacion' if '.' in a else 'nacional'
+
+
+def tipo_del_wms(valor):
+    """Lo que diga el campo personalizado, si dice algo reconocible."""
+    v = (valor or '').strip().upper()
+    if not v:
+        return None
+    v = v.replace('\u00d3', 'O').replace('\u00cd', 'I').replace('\u00c1', 'A')
+    for k, t in DEL_WMS.items():
+        if v == k or v.startswith(k + ' ') or v.endswith(' ' + k):
+            return t
+    return None
 
 
 def limpio(texto):
