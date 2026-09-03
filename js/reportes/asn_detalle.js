@@ -126,11 +126,18 @@ const CSS = [
    en una pantalla angosta vuelvan a apilarse solos, sin media queries.
    `align-items:start` es lo que evita que un cuadro corto se estire para igualar
    al de al lado y quede con un hueco abajo. */
-'#asn .a-rejilla { display:grid; grid-template-columns:repeat(auto-fit, minmax(560px, 1fr)); gap:18px; align-items:start; }',
-'#asn .a-rejilla > .a-caja { margin-bottom:0; }',
+/* `columns` Y NO UNA REJILLA. Con dos columnas de rejilla la fila mide lo que el
+   cuadro mas alto, y el corto deja un AGUJERO debajo — que es justo lo que Daniel
+   senalo: *"como vas a dejar espacios en blanco asi"*. Con `columns` los cuadros
+   se acomodan uno tras otro y no queda aire.
+   `break-inside:avoid` es lo que impide que un cuadro salga partido a la mitad. */
+'#asn .a-rejilla { columns:2; column-gap:18px; }',
+'#asn .a-rejilla > .a-caja { break-inside:avoid; -webkit-column-break-inside:avoid; margin-bottom:18px; }',
+'@media (max-width:1100px) { #asn .a-rejilla { columns:1; } }',
 /* El que necesita el ancho entero se lo lleva: la lista de articulos, los
    parciales, y CUALQUIERA que tenga su detalle abierto. */
-'#asn .a-caja.a-ancho { grid-column:1 / -1; }',
+/* Los anchos NO entran al empaquetado: se dibujan aparte, a todo lo ancho. */
+'#asn .a-ancho-fila { margin-bottom:18px; }',
 /* ── QUE LOS NUMEROS NO SE ESTIREN ───────────────────────────────────────────
    Con `width:100%` y seis columnas, el navegador reparte el sobrante entre todas
    y deja huecos enormes entre cifras que hay que comparar de un vistazo. Ahora
@@ -255,10 +262,9 @@ export function montarAsnDetalle(cont, OPC) {
           + '<div class="p">en ' + nf(cerca.length) + ' días con llegada</div></div>'
         + '</div>');
 
-    T.push('<div class="a-rejilla">');
         /* SIEMPRE A LO ANCHO: es el de siete columnas y 33 dias, el mas denso de todos,
    y ademas deja a los otros cuatro emparejados de a dos sin que sobre ninguno. */
-        T.push('<div class="a-caja a-ancho"><div class="a-cab"><h3>Cuándo llega</h3>'
+        T.push('<div class="a-caja a-ancho-fila"><div class="a-cab"><h3>Cuándo llega</h3>'
         + '<span class="nota">'
         + (hayEntra ? '<b>anunciado</b> y cuándo suele <b>entrar</b>' : 'la fecha la anuncia el ASN')
         + ' · <b>haz clic en un día</b> para ver los artículos</span></div>'
@@ -334,6 +340,10 @@ export function montarAsnDetalle(cont, OPC) {
             + '</div>');
         }
         T.push('</div>');
+
+        /* AQUI ARRANCA EL EMPAQUETADO: el calendario va a lo ancho -siete columnas
+           y 33 dias- y los cuatro cuadros chicos se acomodan de a dos. */
+        T.push('<div class="a-rejilla">');
 
         // -- lo vencido -------------------------------------------------------
         const ed = CL.vencidoEdad || {};
@@ -539,7 +549,9 @@ export function montarAsnDetalle(cont, OPC) {
             || dsc(a).toLowerCase().indexOf(q) >= 0
             || (a.marca || '').toLowerCase().indexOf(q) >= 0;
     });
-    T.push('<div class="a-caja a-ancho"><div class="a-cab"><h3>Qué artículo está llegando</h3>'
+    T.push('</div>');   // cierra el empaquetado: lo que sigue va a lo ancho
+
+    T.push('<div class="a-caja a-ancho-fila"><div class="a-cab"><h3>Qué artículo está llegando</h3>'
     + '<span class="nota">los ' + nf((p.articulos || []).length) + ' con más pendiente, de '
     + nf(p.articulosConFalta) + '</span></div>'
     + '<div class="a-barra">'
@@ -578,7 +590,7 @@ export function montarAsnDetalle(cont, OPC) {
             || (x.estado || '').toLowerCase().indexOf(q) >= 0
             || (x.envio || '').toLowerCase().indexOf(q) >= 0;
     });
-    T.push('<div class="a-caja a-ancho"><div class="a-cab"><h3>Los ASN parciales</h3>'
+    T.push('<div class="a-caja a-ancho-fila"><div class="a-cab"><h3>Los ASN parciales</h3>'
     + '<span class="nota">llegó algo pero no todo · son los que hay que perseguir</span></div>'
     + '<div class="a-barra">'
     + '<input class="a-buscar" placeholder="Buscar por ASN, estado o fecha..." '
@@ -599,7 +611,6 @@ export function montarAsnDetalle(cont, OPC) {
         + 'Nada con ese texto.</td></tr>')
     + '</tbody></table></div></div>');
 
-    T.push('</div>');   // cierra la rejilla
     T.push('</div>');
     cont.innerHTML = T.join('');
 
