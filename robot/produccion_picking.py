@@ -416,6 +416,35 @@ cel = defaultdict(lambda: defaultdict(float))
 # TAREA para poder armar los tramos; una lista suelta no distingue el
 # rato trabajado del rato parado.
 sellos = defaultdict(lambda: defaultdict(list))
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EL TIEMPO PARA MEDIR PRODUCTIVIDAD: LO QUE DICE EL WMS, SUMADO Y NADA MAS
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Daniel, 02-sep-2026: *"tu deberias sacar lo que dice el WMS, no te debieras de
+# inventar nada. La tarea uno se hizo de nueve a diez, ahi son sesenta minutos. La
+# segunda de diez y diez a las once, cincuenta. En total ciento diez"*. Y sobre
+# las que se pisan: *"si la otra tarea esta dentro de esa tarea, tu sigue
+# acumulando el dato nada mas. Seis minutos, sumale. No importa si esta dentro o
+# afuera"*.
+#
+# LA REGLA, entonces, es la mas simple que hay:
+#   cada tarea aporta (ultimo pick - primer pick), y se suman todas.
+#   Sin puente de 15 minutos -eso me lo habia inventado yo- y sin descontar los
+#   solapes.
+#
+# SOLO LAS LINEAS CON `Numero de tarea` DE VERDAD. El 34,4% de las lineas no lo
+# trae y hasta hoy se les ponia el numero de contenedor como apaño; eso partia una
+# tarea en varias y hacia que el 48,7% "se pisara" — un solape inventado por mi
+# manera de agrupar, no del almacen. Con los numeros de tarea reales solo se pisa
+# el 1,6%. Daniel: *"dejalas fuera"*.
+#
+# POR ESO VAN PARES APARTE (`_q`): si se descartan esas lineas del tiempo hay que
+# descartarlas TAMBIEN de los pares, o el ritmo sale inflado. Son el 20,4% de los
+# pares. Los totales del dia -los que ve Picking por dia- NO se tocan: siguen
+# contando todo.
+sellos_tarea = defaultdict(lambda: defaultdict(list))   # (k,usr,h,clase) -> tarea -> [seg]
+pares_tarea = defaultdict(float)                        # (k,usr,h,clase) -> pares
 lineas_ph = defaultdict(lambda: defaultdict(float))
 marcas = defaultdict(lambda: defaultdict(float))
 colec = defaultdict(lambda: defaultdict(float))
@@ -464,6 +493,8 @@ for row in r:
     # trae numero de tarea; el contenedor viene siempre.
     tarea = (limpio(row.get('Número de tarea'))
              or 'C:' + limpio(row.get('Número de contenedor')))
+    # el numero de tarea DE VERDAD, sin el apaño del contenedor
+    tarea_real = limpio(row.get('Número de tarea'))
 
     for k in (can, TODOS):
         personas[k].add(usr)
@@ -471,6 +502,11 @@ for row in r:
         cel[(k, usr, h, clase)]['lineas'] += 1
         sellos[(k, usr, h, clase)][tarea].append(seg)
         sellos[(k, usr, None, clase)][tarea].append(seg)
+        if tarea_real:
+            sellos_tarea[(k, usr, h, clase)][tarea_real].append(seg)
+            sellos_tarea[(k, usr, None, clase)][tarea_real].append(seg)
+            pares_tarea[(k, usr, h, clase)] += pares
+            pares_tarea[(k, usr, None, clase)] += pares
         sellos[(k, usr, h, 'total')][tarea].append(seg)
         sellos[(k, usr, None, 'total')][tarea].append(seg)
         lineas_ph[(k, h)][clase] += pares
@@ -513,6 +549,22 @@ def ritmo(marcas_t, lineas, minimo, span_min):
         return None, None, mins, False      # confirmacion en bloque, no una persona
     return (int(round(lineas / (span / 3600.0))), int(round(sl)), mins,
             span < SEG_MUESTRA_CORTA)
+
+
+def minutos_sumados(por_tarea):
+    """Los minutos de trabajo: (ultimo pick - primer pick) de CADA tarea, sumados.
+
+    LA REGLA QUE PIDIO DANIEL, y no tiene vuelta: cada tarea aporta lo suyo y se
+    suman todas. Si dos se pisan, se suman igual — *"no importa si esta dentro o
+    afuera de la tarea"*.
+
+    UNA TAREA DE UN SOLO PICK APORTA CERO, y eso es fiel al dato: el WMS no dice
+    cuanto duro, dice cuando se pico. Inventarle una duracion seria volver a lo
+    que se acaba de sacar.
+    """
+    if not por_tarea:
+        return 0
+    return sum(max(v) - min(v) for v in por_tarea.values() if len(v) > 1)
 
 
 def tramos(por_tarea):
@@ -566,6 +618,11 @@ def celda(can, usr, h):
             o[c] = int(round(d.get('pares', 0)))
             o[c + '_l'] = n
         o[c + '_iv'] = tramos(sellos.get((can, usr, h, c)))
+        # PARA LA PRODUCTIVIDAD: segundos sumados y pares, solo de las lineas con
+        # numero de tarea de verdad. Ver el comentario de `sellos_tarea`.
+        if c != 'total':
+            o[c + '_s'] = minutos_sumados(sellos_tarea.get((can, usr, h, c)))
+            o[c + '_q'] = int(round(pares_tarea.get((can, usr, h, c), 0)))
     return o
 
 

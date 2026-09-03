@@ -515,6 +515,13 @@ cel = defaultdict(lambda: defaultdict(float))
 # TAREA para poder armar los tramos; una lista suelta no distingue el
 # rato trabajado del rato parado.
 sellos = defaultdict(lambda: defaultdict(list))
+
+# EL TIEMPO PARA MEDIR PRODUCTIVIDAD. La misma regla que en picking, ver el
+# comentario largo en `produccion_picking.py`: cada tarea aporta (ultimo pick -
+# primer pick) y se SUMAN todas, sin puente y sin descontar solapes, y solo
+# cuentan las lineas con `Numero de tarea` de verdad -no el apaño del LPN-.
+sellos_tarea = defaultdict(lambda: defaultdict(list))
+pares_tarea = defaultdict(float)
 lineas_ph = defaultdict(lambda: defaultdict(float))
 marcas = defaultdict(lambda: defaultdict(float))
 colec = defaultdict(lambda: defaultdict(float))
@@ -581,12 +588,18 @@ for x in crudas:
 
     # LA TAREA: la del WMS, y si falta el LPN —la caja que se esta cerrando—.
     tarea = dt(x, iTarea) or ('L:' + dt(x, iLpn))
+    tarea_real = dt(x, iTarea)      # sin el apaño del LPN
     for k in (can, TODOS):
         personas[k].add(usr)
         cel[(k, usr, h, clase)]['pares'] += pares
         cel[(k, usr, h, clase)]['lineas'] += 1
         sellos[(k, usr, h, clase)][tarea].append(seg)
         sellos[(k, usr, None, clase)][tarea].append(seg)
+        if tarea_real:
+            sellos_tarea[(k, usr, h, clase)][tarea_real].append(seg)
+            sellos_tarea[(k, usr, None, clase)][tarea_real].append(seg)
+            pares_tarea[(k, usr, h, clase)] += pares
+            pares_tarea[(k, usr, None, clase)] += pares
         sellos[(k, usr, h, 'total')][tarea].append(seg)
         sellos[(k, usr, None, 'total')][tarea].append(seg)
         lineas_ph[(k, h)][clase] += pares
@@ -624,6 +637,13 @@ def ritmo(mt, lineas, minimo, span_min):
         return None, None, mins, False
     return (int(round(lineas / (span / 3600.0))), int(round(sl)), mins,
             span < SEG_MUESTRA_CORTA)
+
+
+def minutos_sumados(por_tarea):
+    """(ultimo pick - primer pick) de cada tarea, SUMADO. Ver produccion_picking."""
+    if not por_tarea:
+        return 0
+    return sum(max(v) - min(v) for v in por_tarea.values() if len(v) > 1)
 
 
 def tramos(por_tarea):
@@ -677,6 +697,9 @@ def celda(can, usr, h):
             o[c] = int(round(d.get('pares', 0)))
             o[c + '_l'] = n
         o[c + '_iv'] = tramos(sellos.get((can, usr, h, c)))
+        if c != 'total':
+            o[c + '_s'] = minutos_sumados(sellos_tarea.get((can, usr, h, c)))
+            o[c + '_q'] = int(round(pares_tarea.get((can, usr, h, c), 0)))
     return o
 
 

@@ -66,12 +66,12 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0565';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0565';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0566';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0566';
 /* LA EQUIVALENCIA SE IMPORTA, NO SE COPIA. Vive en `picking.js` desde que se
    midio sobre nueve archivos reales, y escribirla otra vez aca seria tener dos
    verdades que un dia se separan. */
-import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0565';
+import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0566';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
@@ -165,16 +165,11 @@ const MODOS = {
             return h > 0 ? (x.solid.picks + x.prepack.picks * factorDe(x)) / h : 0;
         },
         arriba: (x) => x.solid.picks + x.prepack.picks * factorDe(x),
-        /* LAS HORAS DEL CALZADO SON LA UNION DE LAS DOS FORMAS, NO LA SUMA.
-         *
-         * Sumarlas cuenta dos veces el rato en que alguien alterna suelto y
-         * prepack: ese minuto cae dentro del tramo de las dos clases. Medido
-         * sobre ocho dias, sumar las cuatro clases da 4,4% mas horas que las del
-         * dia entero — imposible—, y ese 4,4% es tiempo contado doble.
-         *
-         * `cal.horas` ya viene unido: el robot publica los tramos de cada clase y
-         * `horasDe` los fusiona antes de medir. */
-        horas: (x) => x.cal.horas,
+        /* AHORA SE SUMAN, y ya no hace falta unir nada: cada tarea aporta sus
+           minutos una sola vez y una tarea es de una clase o de otra. El problema
+           de contar doble era del metodo viejo, que unia TRAMOS y hacia que el
+           rato de alternar cayera dentro de las dos clases. */
+        horas: (x) => x.solid.horas + x.prepack.horas,
         piso: false,
     },
 };
@@ -237,37 +232,53 @@ const lineasDe = (vista, clases) => {
     return n;
 };
 
-/* HORAS REALMENTE TRABAJADAS EN UNAS CLASES.
- *
- * UNIÓN DENTRO DE CADA PERSONA, SUMA ENTRE PERSONAS. Una persona no puede estar
- * en dos sitios a la vez, así que sus tramos se unen —si no, alguien que alterna
- * entre calzado y no calzado contaría el doble de horas—. Pero diez pickers
- * trabajando a la misma hora son diez horas-persona, no una: entre personas se
- * suma. La primera medición unía todo junto y daba 85 minutos de trabajo por día
- * para todo el CD.
- *
- * Los tramos los publica el robot en `gente[].total.<clase>_iv`, en segundos
- * desde medianoche. Son los mismos con los que se calcula el ritmo del turno. */
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║ LAS HORAS: LO QUE DICE EL WMS, SUMADO. NADA MAS.                        ║
+   ╚══════════════════════════════════════════════════════════════════════════╝
+
+   Daniel, 02-sep-2026: *"tu deberias sacar lo que dice el WMS, no te debieras de
+   inventar nada. La tarea uno se hizo de nueve a diez, ahi son sesenta minutos.
+   La segunda de diez y diez a las once, cincuenta. En total ciento diez"*.
+
+   CADA TAREA APORTA (ULTIMO PICK - PRIMER PICK), Y SE SUMAN TODAS. Punto.
+
+   Lo que habia antes y ya no esta:
+     · UN PUENTE DE 15 MINUTOS que fusionaba tareas cercanas y regalaba al calculo
+       los huecos cortos. Me lo habia inventado yo.
+     · DESCONTAR LOS SOLAPES. Daniel: *"si la otra tarea esta dentro de esa tarea,
+       tu sigue acumulando el dato nada mas. Seis minutos, sumale. No importa si
+       esta dentro o afuera"*. Con numeros de tarea reales solo se pisa el 1,6%,
+       asi que tampoco cambia gran cosa.
+
+   SOLO LAS LINEAS CON NUMERO DE TAREA. El 34,4% no lo trae y antes se les ponia
+   el numero de contenedor como apaño; eso partia una tarea en varias y hacia que
+   el 48,7% pareciera pisarse — un solape que inventaba mi forma de agrupar, no el
+   almacen. Daniel: *"dejalas fuera"*.
+
+   Y POR ESO LOS PARES DE ESTA PANTALLA SON `_q`, NO LOS TOTALES DEL DIA: si se
+   descartan esas lineas del tiempo hay que descartarlas tambien de los pares, o
+   el ritmo sale inflado. Son el 20,4% de los pares. Los totales que muestra
+   Picking por dia NO cambian: ahi se sigue contando todo.
+
+   El robot ya publica los dos numeros por persona y por clase: `<clase>_s` son
+   los segundos sumados y `<clase>_q` los pares de esas mismas lineas. */
 const horasDe = (vista, clases) => {
-    let total = 0;
+    let seg = 0;
     (vista.gente || []).forEach(p => {
         const t = p.total || {};
-        let iv = [];
-        clases.forEach(c => { iv = iv.concat(t[c + '_iv'] || []); });
-        if (!iv.length) return;
-        iv = iv.map(x => [Number(x[0]) || 0, Number(x[1]) || 0])
-               .filter(x => x[1] > x[0])
-               .sort((a, b) => a[0] - b[0]);
-        if (!iv.length) return;
-        let ci = iv[0][0], cf = iv[0][1], s = 0;
-        for (let i = 1; i < iv.length; i++) {
-            if (iv[i][0] > cf) { s += cf - ci; ci = iv[i][0]; cf = iv[i][1]; }
-            else if (iv[i][1] > cf) { cf = iv[i][1]; }
-        }
-        s += cf - ci;
-        total += s;
+        clases.forEach(c => { seg += Number(t[c + '_s']) || 0; });
     });
-    return total / 3600;
+    return seg / 3600;
+};
+
+/** Los pares que van con esas horas: solo los de lineas con numero de tarea. */
+const paresDe = (vista, clases) => {
+    let q = 0;
+    (vista.gente || []).forEach(p => {
+        const t = p.total || {};
+        clases.forEach(c => { q += Number(t[c + '_q']) || 0; });
+    });
+    return q;
 };
 
 /** Un día de un lado: pares y horas de cada tipo. */
@@ -278,15 +289,18 @@ const resumirDia = (entrada) => {
     const o = { fecha: entrada.fecha };
     Object.keys(TIPOS).forEach(k => {
         const cl = TIPOS[k].clases;
-        o[k] = { pares: cl.reduce((s, c) => s + (Number(t[c]) || 0), 0),
-                 horas: horasDe(v, cl) };
+        /* LOS PARES VAN CON SUS HORAS. `paresDe` cuenta solo las lineas con
+           numero de tarea, que son las mismas que aportan tiempo; usar el total
+           del dia contra esas horas inflaria el ritmo un 25%. */
+        o[k] = { pares: paresDe(v, cl), horas: horasDe(v, cl),
+                 paresTodos: cl.reduce((s2, c) => s2 + (Number(t[c]) || 0), 0) };
     });
     /* El calzado, abierto: suelto y prepack cada uno con sus pares, sus picks y
        sus horas. Son dos trabajos distintos y se miden por separado. */
-    o.solid = { pares: Number(t.cal_suelto) || 0,
+    o.solid = { pares: paresDe(v, ['cal_suelto']),
                 picks: lineasDe(v, ['cal_suelto']),
                 horas: horasDe(v, ['cal_suelto']) };
-    o.prepack = { pares: Number(t.cal_prepack) || 0,
+    o.prepack = { pares: paresDe(v, ['cal_prepack']),
                   picks: lineasDe(v, ['cal_prepack']),
                   horas: horasDe(v, ['cal_prepack']) };
     o.suelto = o.solid.pares;

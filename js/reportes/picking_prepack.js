@@ -18,7 +18,7 @@
 import {
     EQUIVALENCIA_PREPACK, juntarCronometros, tiempoDe, tiempoSituacion,
     escaleraDe, embudoDe, TOPE_HUECO_SEG
-} from './picking.js?v=29.0565';
+} from './picking.js?v=29.0566';
 
 const F = (n) => Number(n || 0).toLocaleString('es-PE');
 const DMY = (d) => String(d || '').split('-').reverse().join('/');
