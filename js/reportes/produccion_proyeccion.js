@@ -66,8 +66,8 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0560';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0560';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0561';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0561';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
@@ -444,8 +444,9 @@ export function montarProduccionProyeccion(cont, OPC) {
         }
         if (c.piso) {
             const bajo = r.cerradas.filter(p => p.ritmo < c.piso);
-            linea.push('El piso son <b>' + nf(c.piso) + ' ' + uni + '/h</b> — '
-                + c.pisoQuien + ' —, y está dibujado en rojo.'
+            linea.push('El gráfico arranca en <b>Origen</b>, que son los <b>' + nf(c.piso)
+                + ' ' + uni + '/h</b> que comprometió picking — el punto rojo —; de ahí en '
+                + 'adelante va lo que se picó de verdad.'
                 + (bajo.length
                     ? ' <b>' + bajo.length + (bajo.length === 1 ? ' semana cerró' : ' semanas cerraron')
                       + ' por debajo</b>: ' + bajo.map(p => 'S' + p.sem + ' con ' + nf(p.ritmo)).join(', ') + '.'
@@ -551,37 +552,57 @@ export function montarProduccionProyeccion(cont, OPC) {
            Productividad. Al ser un RITMO, una semana a medias ya da un número
            comparable; cuando esto medía totales había que esconderla. Se engancha
            al último punto cerrado para que no quede suelta en el aire. */
-        const todas = r.enCurso ? r.cerradas.concat([r.enCurso]) : r.cerradas;
-        const etiquetas = todas.map(p => 'S' + p.sem);
-        const cerradas = r.cerradas.map(p => Math.round(p.ritmo))
+        const reales = r.enCurso ? r.cerradas.concat([r.enCurso]) : r.cerradas;
+
+        /* EL PISO ES EL PUNTO DE ARRANQUE, NO UNA RAYA A LO ANCHO.
+         *
+         * Daniel, 02-sep-2026: *"antes de la semana treinta y uno pon una semana
+         * antes, como de decir origen, y ahi pon cien pares por hora comprometidos
+         * por picking, y de ahi la semana treinta y uno ya pon lo que de verdad
+         * esta picando"*.
+         *
+         * Cruzando el grafico entero, el piso se leia como una medicion mas.
+         * Puesto al principio se lee como lo que es: de aca partimos, y esto es lo
+         * que paso despues. La linea sube de 100 a lo real y el salto se ve solo.
+         *
+         * NO ENTRA EN LA RECTA NI EN LOS PROMEDIOS: es un compromiso, no algo que
+         * se haya medido. La tendencia arranca en la primera semana de verdad. */
+        const conPiso = !!r.cfg.piso;
+        const todas = conPiso ? [null].concat(reales) : reales;
+        const etiquetas = (conPiso ? ['Origen'] : []).concat(reales.map(p => 'S' + p.sem));
+        const desfase = conPiso ? 1 : 0;
+
+        const cerradas = (conPiso ? [r.cfg.piso] : [])
+            .concat(r.cerradas.map(p => Math.round(p.ritmo)))
             .concat(r.enCurso ? [null] : []);
-        const enCurso = r.cerradas.map(() => null)
+        const enCurso = (conPiso ? [null] : []).concat(r.cerradas.map(() => null))
             .concat(r.enCurso ? [Math.round(r.enCurso.ritmo)] : []);
         if (r.enCurso && r.cerradas.length) {
-            enCurso[r.cerradas.length - 1] = Math.round(r.cerradas[r.cerradas.length - 1].ritmo);
+            enCurso[desfase + r.cerradas.length - 1] =
+                Math.round(r.cerradas[r.cerradas.length - 1].ritmo);
         }
-        const tend = todas.map((p, i) => Math.max(0, Math.round(r.recta.b + r.recta.m * i)));
+        /* La recta se dibuja sobre las semanas reales; en el origen va `null` para
+           que no parezca que la tendencia arranca en el compromiso. */
+        const tend = (conPiso ? [null] : [])
+            .concat(reales.map((p, i) => Math.max(0, Math.round(r.recta.b + r.recta.m * i))));
         /* El tamaño del punto dice cuántas horas hay detrás: un punto chico es una
            semana corta, y eso explica un número raro sin tener que ir a la tabla. */
-        const radio = todas.map(p => Math.min(8, 3 + Math.sqrt(Math.max(0, p.horas)) / 3.5));
+        const radio = todas.map(p => p
+            ? Math.min(8, 3 + Math.sqrt(Math.max(0, p.horas)) / 3.5)
+            : 6);                                   // el origen, siempre bien visible
+        const colorPunto = todas.map(p => p ? r.cfg.color : '#dc2626');
 
         _graficos.push(new Chart(cv, resolverColoresChart({
             type: 'line',
             data: {
                 labels: etiquetas,
                 datasets: [
-                    /* EL PISO, a lo ancho de todo el grafico. Va primero para que
-                       quede DEBAJO de la linea de la produccion: es una referencia,
-                       no un dato mas, y no tiene que competir por la mirada. */
-                    { label: 'Piso', hidden: !r.cfg.piso,
-                      data: todas.map(() => r.cfg.piso || 0),
-                      borderColor: '#dc2626', borderWidth: 2, borderDash: [3, 3],
-                      pointRadius: 0, fill: false, order: 4 },
                     { label: 'Tendencia', data: tend, borderColor: 'rgba(148,163,184,0.85)',
                       borderWidth: 2, borderDash: [6, 5], pointRadius: 0, fill: false, order: 3 },
                     { label: 'Cerrada', data: cerradas, borderColor: r.cfg.color,
                       backgroundColor: r.cfg.color + '22', borderWidth: 3, tension: 0.3,
-                      pointRadius: radio, pointBackgroundColor: r.cfg.color, fill: true, order: 1 },
+                      pointRadius: radio, pointBackgroundColor: colorPunto,
+                      pointBorderColor: colorPunto, fill: true, order: 1 },
                     { label: 'Semana en curso', data: enCurso, borderColor: r.cfg.color,
                       borderWidth: 2, borderDash: [4, 4], pointRadius: 5, pointStyle: 'rectRot',
                       fill: false, order: 2 },
@@ -595,7 +616,7 @@ export function montarProduccionProyeccion(cont, OPC) {
                     tooltip: { callbacks: {
                         title: (c) => {
                             const p = todas[c[0].dataIndex];
-                            if (!p) return '';
+                            if (!p) return 'Origen';
                             const l = p.lunes;
                             return 'Semana ' + p.sem + (p.enCurso ? ' (en curso)' : '')
                                 + ' · desde el ' + l.getDate() + '/' + (l.getMonth() + 1);
@@ -603,14 +624,17 @@ export function montarProduccionProyeccion(cont, OPC) {
                         label: (c) => {
                             if (c.parsed.y === null || c.parsed.y === undefined) return null;
                             const p = todas[c.dataIndex];
-                            if (c.dataset.label === 'Piso') {
-                                return 'Piso comprometido: ' + nf(c.parsed.y) + ' ' + r.T.unidad + '/h';
-                            }
                             if (c.dataset.label === 'Tendencia') {
                                 return 'Tendencia: ' + nf(c.parsed.y) + ' ' + r.T.unidad + '/h';
                             }
+                            /* En el origen no hay pares ni horas que mostrar: es lo
+                               comprometido, no algo que se midio. */
+                            if (!p) {
+                                return nf(c.parsed.y) + ' ' + r.T.unidad
+                                     + '/h comprometidos por picking';
+                            }
                             return nf(c.parsed.y) + ' ' + r.T.unidad + '/h'
-                                + (p ? '  ·  ' + nf(p.pares) + ' en ' + nf(p.horas) + ' h' : '');
+                                + '  ·  ' + nf(p.pares) + ' en ' + nf(p.horas) + ' h';
                         },
                     } }
                 },
