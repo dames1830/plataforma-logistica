@@ -66,12 +66,12 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0563';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0563';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0564';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0564';
 /* LA EQUIVALENCIA SE IMPORTA, NO SE COPIA. Vive en `picking.js` desde que se
    midio sobre nueve archivos reales, y escribirla otra vez aca seria tener dos
    verdades que un dia se separan. */
-import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0563';
+import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0564';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
@@ -161,11 +161,20 @@ const MODOS = {
     equivalente: {
         eti: 'Equivalente', unidad: 'picks equiv.', que: 'picks equivalentes por hora',
         valor: (x) => {
-            const h = x.solid.horas + x.prepack.horas;
+            const h = MODOS.equivalente.horas(x);
             return h > 0 ? (x.solid.picks + x.prepack.picks * factorDe(x)) / h : 0;
         },
         arriba: (x) => x.solid.picks + x.prepack.picks * factorDe(x),
-        horas: (x) => x.solid.horas + x.prepack.horas,
+        /* LAS HORAS DEL CALZADO SON LA UNION DE LAS DOS FORMAS, NO LA SUMA.
+         *
+         * Sumarlas cuenta dos veces el rato en que alguien alterna suelto y
+         * prepack: ese minuto cae dentro del tramo de las dos clases. Medido
+         * sobre ocho dias, sumar las cuatro clases da 4,4% mas horas que las del
+         * dia entero — imposible—, y ese 4,4% es tiempo contado doble.
+         *
+         * `cal.horas` ya viene unido: el robot publica los tramos de cada clase y
+         * `horasDe` los fusiona antes de medir. */
+        horas: (x) => x.cal.horas,
         piso: false,
     },
 };
