@@ -78,7 +78,7 @@ FORMA_PREPACK = re.compile(r'^\d{7}-\d-\d{5}$')
 # La pantalla no dibuja las 24 siempre: muestra el turno completo y agrega solo
 # las horas de afuera que ese dia tuvieron movimiento.
 HORAS = list(range(0, 24))
-CL = ('cal_suelto', 'cal_prepack', 'no_cal')
+CL = ('cal_suelto', 'cal_prepack', 'no_cal', 'materiales', 'sin_tipo')
 TODOS = 'TODOS'
 ORDEN_CANAL = ['RETAIL', 'MAYORISTA', 'CATALOGO', 'ECOMMERCE', 'INDUSTRIAL',
                'OTROS', 'SIN CANAL']
@@ -258,6 +258,44 @@ def es_prepack(sku):
     return bool(FORMA_PREPACK.match(str(sku or '').strip()))
 
 
+# ── LOS TIPOS QUE PIDIO DANIEL ───────────────────────────────────────────────
+#
+# Daniel, 02-sep-2026: *"solamente calzado y no calzado. En no calzado entra todo
+# lo que son bolsas, etiquetas, etcetera"*. Y aparte, para lo que el Maestro no
+# conoce: *"ponle materiales porque si son solamente cinco digitos, es material,
+# si no me equivoco. Revisa la descripcion que es"*.
+#
+# SE REVISO ANTES DE CREER LA CORAZONADA, leyendo la descripcion que trae el
+# propio archivo del WMS. Los 25 codigos que no estaban en el Maestro son TODOS
+# de cinco digitos y TODOS material:
+#
+#     70104   74.768 u   TISSUE PAPER BATA N 4
+#     69050   18.695 u   HANG TAG ORTHOLITE BATA ROJO
+#     70103   16.795 u   TISSUE PAPER BATA N 3
+#     88424    2.575 u   CAJA MICROC. KRAFT BATA N.24
+#     26036      540 u   PLANT LAURA C/GEL ROJO N. 36
+#
+# Papel de seda, etiquetas colgantes, cajas de carton y plantillas. Tenia razon.
+#
+# LA REGLA EXIGE LAS DOS COSAS -cinco digitos Y no estar en el Maestro- y no solo
+# la primera. Si manana falta en el Maestro un articulo de calzado de verdad, cae
+# en "sin tipo" y se ve; llamarlo "materiales" sin conocerlo seria inventar.
+# `sin_tipo` es la respuesta honesta de "no se que es esto", y ademas es la lista
+# de lo que hay que agregarle al Maestro.
+CINCO_DIGITOS = re.compile(r'^\d{5}$')
+
+
+def tipo_de(sku, gender, esta_en_el_maestro):
+    """calzado suelto / calzado prepack / no calzado / materiales / sin tipo."""
+    if not esta_en_el_maestro:
+        return 'materiales' if CINCO_DIGITOS.match((sku or '')[:7]) else 'sin_tipo'
+    if not gender or gender == 'Sin dato':
+        return 'sin_tipo'
+    if gender != 'Footwear':
+        return 'no_cal'
+    return 'cal_prepack' if es_prepack(sku) else 'cal_suelto'
+
+
 def pares_de_la_caja(sku):
     s = str(sku or '').strip()
     if not FORMA_PREPACK.match(s):
@@ -416,12 +454,7 @@ for row in r:
 
     pares = entero(row.get('Cantidad empaquetada')) * pares_de_la_caja(sku)
     g, mar, cl = maestro.get(sku[:7], ('Sin dato', 'Sin dato', 'Sin dato'))
-    if g != 'Footwear':
-        clase = 'no_cal'
-    elif es_prepack(sku):
-        clase = 'cal_prepack'
-    else:
-        clase = 'cal_suelto'
+    clase = tipo_de(sku, g, sku[:7] in maestro)
     can = canal_de(destino, orden)
     z = ubi.split('-')[0]
     tipos_vistos[can][tipo_orden.get(orden) or '(sin dato)'] += 1
@@ -457,7 +490,10 @@ f.close()
 def vol(d):
     o = {c: int(round(d.get(c, 0))) for c in CL}
     o['lineas'] = int(d.get('lineas', 0))
-    o['total'] = o['cal_suelto'] + o['cal_prepack'] + o['no_cal']
+    # EL TOTAL SE SUMA SOBRE `CL`, no sobre tres nombres escritos a mano. Al
+    # agregar `materiales` y `sin_tipo` la suma vieja los dejaba afuera y el
+    # cuadro no cuadraba, sin una sola queja.
+    o['total'] = sum(o[c] for c in CL)
     return o
 
 
@@ -514,7 +550,7 @@ def celda(can, usr, h):
     tot_l = 0
     for c in CL + ('total',):
         if c == 'total':
-            o['total'] = o['cal_suelto'] + o['cal_prepack'] + o['no_cal']
+            o['total'] = sum(o[c] for c in CL)
             o['lineas'] = tot_l
             o['total_l'] = tot_l
         else:

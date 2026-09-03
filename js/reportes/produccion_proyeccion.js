@@ -64,8 +64,8 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0557';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0557';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0558';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0558';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
@@ -142,6 +142,12 @@ const resumirDia = (entrada) => {
         suelto: suelto,
         prepack: prepack,
         nocal: Number(t.no_cal) || 0,
+        /* MATERIALES Y SIN TIPO llegan desde v29.0558. En los dias anteriores no
+           existen y valen cero: hasta que el robot rehaga el historico, esos dias
+           los traen sumados adentro de `no_cal`. Es lo que hay, y se ve. */
+        mat: (Number(t.materiales) || 0) + (Number(t.sin_tipo) || 0),
+        soloMat: Number(t.materiales) || 0,
+        sinTipo: Number(t.sin_tipo) || 0,
     };
 };
 
@@ -230,14 +236,16 @@ export function montarProduccionProyeccion(cont, OPC) {
         if (!s) return;
         const w = semanas[s.clave] || (semanas[s.clave] = {
             clave: s.clave, sem: s.sem, anio: s.anio, lunes: lunesDe(s.anio, s.sem),
-            p: { cal: 0, nocal: 0, suelto: 0, prepack: 0, dias: 0 },
-            e: { cal: 0, nocal: 0, suelto: 0, prepack: 0, dias: 0 },
+            p: { cal: 0, nocal: 0, mat: 0, sinTipo: 0, suelto: 0, prepack: 0, dias: 0 },
+            e: { cal: 0, nocal: 0, mat: 0, sinTipo: 0, suelto: 0, prepack: 0, dias: 0 },
         });
         ['p', 'e'].forEach(lado => {
             const d = dias[lado][f];
-            if (!d || (!d.cal && !d.nocal)) return;
+            if (!d || (!d.cal && !d.nocal && !d.mat)) return;
             w[lado].cal += d.cal;
             w[lado].nocal += d.nocal;
+            w[lado].mat += d.mat;
+            w[lado].sinTipo += d.sinTipo;
             w[lado].suelto += d.suelto;
             w[lado].prepack += d.prepack;
             w[lado].dias++;
@@ -396,6 +404,48 @@ export function montarProduccionProyeccion(cont, OPC) {
         T.push('</div>');
     });
 
+    /* ─── MATERIALES, EN CHICO ─────────────────────────────────────────────
+       Daniel no quiere llenarse de tipos: *"solamente calzado y no calzado"*. Pero
+       lo que el Maestro no conoce tampoco puede irse a "no calzado" como si fuera
+       mercaderia, porque son papel de seda, etiquetas y cajas —comprobado leyendo
+       la descripcion de los 25 codigos—. Asi que va, pero CHICO y al final: es
+       trabajo del CD y se ve, sin robarle sitio a lo que se vende.
+
+       Va con el mismo reparto que la barra lateral de Almacenaje > Productividad,
+       que es de donde salio el formato de esta pantalla. */
+    const totMat = (lado) => orden.reduce((s2, w) =>
+        s2 + (w.clave === claveEnCurso ? 0 : w[lado].mat), 0);
+    const totSin = (lado) => orden.reduce((s2, w) =>
+        s2 + (w.clave === claveEnCurso ? 0 : w[lado].sinTipo), 0);
+    if (totMat('p') || totMat('e')) {
+        const semMat = orden.filter(w => w.clave !== claveEnCurso);
+        const ultMat = semMat[semMat.length - 1];
+        T.push('<div class="pp-caja" style="border-color:#64748b55;">'
+        + '<p class="pp-titulo" style="color:#64748b;">MATERIALES</p>'
+        + '<p class="pp-sub">Papel de seda, etiquetas colgantes, cajas de cartón y plantillas: '
+        + 'todo lo que el picker mueve y <b>no se vende</b>. Se separó el 02-sep-2026 porque '
+        + 'antes entraba en «no calzado» y le movía la tendencia — la subida del 24 al 28 de '
+        + 'agosto era un solo código de papel de seda, no producción. Va acá para que se vea '
+        + 'sin ensuciar lo demás.</p>'
+        + '<div class="pp-cajas">'
+        + caja('Picking · total', nf(totMat('p')),
+               semMat.length + ' semanas cerradas', '#64748b')
+        + caja('Embalaje · total', nf(totMat('e')),
+               semMat.length + ' semanas cerradas', '#64748b')
+        + (ultMat ? caja('Semana ' + ultMat.sem, nf(ultMat.p.mat),
+               'picking · embalaje ' + nf(ultMat.e.mat), '#64748b') : '')
+        + ((totSin('p') || totSin('e'))
+            ? caja('Sin tipo', nf(totSin('p') + totSin('e')),
+                   'no están en el Maestro y no son de 5 dígitos', '#dc2626')
+            : caja('Sin tipo', '0', 'todo lo desconocido resultó ser material', '#16a34a'))
+        + '</div>'
+        + '<div class="pp-nota">«Sin tipo» es lo que el Maestro no conoce y <b>no</b> tiene la '
+        + 'forma de un material —cinco dígitos—. Si ese número crece, hay artículos que le '
+        + 'faltan al Maestro del WMS. Hoy los materiales conocidos son 25 códigos: papel de '
+        + 'seda, hang tags, cajas microcorrugadas y plantillas.</div>'
+        + '</div>');
+    }
+
     /* ─── LA PROYECCIÓN DE LAS PRÓXIMAS SEMANAS ──────────────────────────── */
     const PROX = 4;
     const conRecta = resumenes.filter(r => !r.vacio);
@@ -427,10 +477,11 @@ export function montarProduccionProyeccion(cont, OPC) {
     + 'sale en gris con un ✎ y no entra en los promedios ni en la recta. La marca va por lado y '
     + 'no por fila, porque una semana puede estar completa en picking y corta en embalaje.</p>'
     + '<div class="pp-scroll"><table class="pp-tabla"><thead>'
-    + '<tr><th></th><th class="pp-grupo" colspan="3">Picking</th>'
-    + '<th class="pp-grupo pp-sep" colspan="3">Embalaje</th></tr>'
-    + '<tr><th>Semana</th><th>Días</th><th>Calzado</th><th>No calzado</th>'
-    + '<th class="pp-sep">Días</th><th>Calzado</th><th>No calzado</th></tr></thead><tbody>'
+    + '<tr><th></th><th class="pp-grupo" colspan="4">Picking</th>'
+    + '<th class="pp-grupo pp-sep" colspan="4">Embalaje</th></tr>'
+    + '<tr><th>Semana</th><th>Días</th><th>Calzado</th><th>No calzado</th><th>Materiales</th>'
+    + '<th class="pp-sep">Días</th><th>Calzado</th><th>No calzado</th><th>Materiales</th>'
+    + '</tr></thead><tbody>'
     /* LA MARCA DE CORTA VA POR LADO, NO POR FILA. La S31 tiene 4 dias de picking
        -completa- y 3 de embalaje -corta-: marcar la fila entera decia que el
        picking de esa semana no servia, y si servia. Se pinta la mitad que
@@ -450,14 +501,18 @@ export function montarProduccionProyeccion(cont, OPC) {
             + '<td' + pd + '>' + (w.p.dias || '–') + (cortoP ? ' ✎' : '') + '</td>'
             + '<td' + pd + '>' + nf(w.p.cal || null) + '</td>'
             + '<td' + pd + '>' + nf(w.p.nocal || null) + '</td>'
-            + '<td class="pp-sep"' + ed.replace(' style=', ' style=') + '>' + (w.e.dias || '–')
+            + '<td' + pd + '>' + nf(w.p.mat || null) + '</td>'
+            + '<td class="pp-sep"' + ed + '>' + (w.e.dias || '–')
             + (cortoE ? ' ✎' : '') + '</td>'
             + '<td' + ed + '>' + nf(w.e.cal || null) + '</td>'
-            + '<td' + ed + '>' + nf(w.e.nocal || null) + '</td></tr>';
+            + '<td' + ed + '>' + nf(w.e.nocal || null) + '</td>'
+            + '<td' + ed + '>' + nf(w.e.mat || null) + '</td></tr>';
     }).join('')
     + '</tbody><tfoot><tr><td>Total de las semanas cerradas</td>'
     + '<td>–</td><td>' + nf(totalCerradas(0)) + '</td><td>' + nf(totalCerradas(1)) + '</td>'
+    + '<td>' + nf(totMat('p')) + '</td>'
     + '<td class="pp-sep">–</td><td>' + nf(totalCerradas(2)) + '</td><td>' + nf(totalCerradas(3)) + '</td>'
+    + '<td>' + nf(totMat('e')) + '</td>'
     + '</tr></tfoot></table></div>'
     + '<div class="pp-nota">Cada total suma solo las semanas cerradas DE ESA COLUMNA, que no son '
     + 'siempre las mismas: una semana puede estar completa en embalaje y corta en picking. Por eso '
