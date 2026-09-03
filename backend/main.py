@@ -864,7 +864,8 @@ async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = N
                         tipo: Optional[str] = None, estado: Optional[str] = None,
                         marca: Optional[str] = None,
                         desde: Optional[str] = None, hasta: Optional[str] = None,
-                        pendiente: int = 0, q: Optional[str] = None,
+                        rec_desde: Optional[str] = None, rec_hasta: Optional[str] = None,
+                        pendiente: int = 0, recibido: int = 0, q: Optional[str] = None,
                         agrupar: Optional[str] = None,
                         limite: int = 200, pagina: int = 0):
     """Busca en los seis meses y devuelve SOLO lo que coincide.
@@ -907,8 +908,22 @@ async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = N
             cond.append('fecha_envio >= ?'); args.append(desde.strip()[:10])
         if hasta:
             cond.append('fecha_envio <= ?'); args.append(hasta.strip()[:10])
+        # POR FECHA DE RECEPCION, que es otra pregunta: `desde`/`hasta` filtran por
+        # lo ANUNCIADO y esto por lo que ENTRO DE VERDAD. Daniel, 03-sep-2026:
+        # *"quiero un reporte donde me digas lo que entro el dia de hoy, lo que se
+        # recibio, tanto en importado como en nacional"*.
+        if rec_desde:
+            cond.append("fecha_recepcion <> '' AND fecha_recepcion >= ?")
+            args.append(rec_desde.strip()[:10])
+        if rec_hasta:
+            cond.append("fecha_recepcion <> '' AND fecha_recepcion <= ?")
+            args.append(rec_hasta.strip()[:10])
         if pendiente:
             cond.append('enviado > recibido')
+        # Solo lo que trajo algo: sirve para "que entro" sin arrastrar las filas
+        # que figuran en el mismo ASN pero no recibieron nada.
+        if recibido:
+            cond.append('recibido > 0')
         if q:
             t = q.strip()
             # el mismo truco del expediente, para que sirva escribir 2026-178

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<title>Maqueta - Lo que entro</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>body{margin:0;padding:22px;font-family:'Inter',system-ui,sans-serif;display:block;}
+#caja{max-width:1100px;margin:0 auto;}
+#err{background:#7f1d1d;color:#fff;padding:12px;border-radius:10px;margin-bottom:14px;font:12px/1.6 monospace;white-space:pre-wrap;display:none;}</style>
+</head><body>
+<div id="caja"><div id="err"></div><div id="destino">Cargando...</div></div>
+<script type="module">
+const err=document.getElementById('err');
+const gritar=(t)=>{err.style.display='block';err.textContent+=t+'\n';};
+window.addEventListener('error',e=>gritar('ERROR: '+e.message));
+try{
+  const t=new URLSearchParams(location.search).get('tema'); if(t) document.documentElement.setAttribute('data-tema',t);
+  const m=await import('../js/reportes/asn_entro.js');
+  // contra el backend de PRUEBA, que ya tiene las 76.658 filas
+  m.montarLoQueEntro(document.getElementById('destino'),{api:'http://127.0.0.1:8011',hoy:'2026-09-02'});
+}catch(e){gritar('AL MONTAR: '+(e&&e.stack||e));}
+</script></body></html>
