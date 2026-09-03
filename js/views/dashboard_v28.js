@@ -1,41 +1,41 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0574';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0575';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0574';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0574';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0574';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0574';
-import * as metasService from '../services_v245/metasService.js?v=29.0574';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0574';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0574';
+import * as adminService from '../services_v245/adminService.js?v=29.0575';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0575';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0575';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0575';
+import * as metasService from '../services_v245/metasService.js?v=29.0575';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0575';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0575';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0574';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0574';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0574';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0574';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0574';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0574';
-import { renderCapacidad } from './capacidad.js?v=29.0574';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0574';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0574';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0574';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0574';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0574';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0574';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0574';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0574';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0574';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0574';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0574';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0574';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0574';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0574';
-import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0574';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0574';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0574';
-import { montarSlotting } from './slotting.js?v=29.0574';
-import { montarEventos } from './eventos.js?v=29.0574';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0574';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0575';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0575';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0575';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0575';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0575';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0575';
+import { renderCapacidad } from './capacidad.js?v=29.0575';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0575';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0575';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0575';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0575';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0575';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0575';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0575';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0575';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0575';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0575';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0575';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0575';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0575';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0575';
+import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0575';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0575';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0575';
+import { montarSlotting } from './slotting.js?v=29.0575';
+import { montarEventos } from './eventos.js?v=29.0575';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0575';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -398,7 +398,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0574';
+const VERSION = '29.0575';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -1205,6 +1205,51 @@ const filaSubtotal = (fecha, tot) => {
  * Configuración > Jornada de Trabajo y vale igual para todas las PC.
  */
 const getLogicalDate = () => jornadaService.fechaLogicaDe();
+
+/* ── LA SEMANA, para las pantallas que arrancan en la semana en curso ────────
+ *
+ * Aca arriba y no dentro de `renderDashboard` porque las usan el Historial de
+ * Performance y la Bitacora de RF, y esta ultima esta escrita al margen: dejarlas
+ * adentro obligaba a adivinar si la alcanzaba. Un `ReferenceError` de esos no lo
+ * ve `node --check`; aparece recien al abrir la pantalla.
+ *
+ * LA SEMANA VA DE LUNES A DOMINGO aunque el almacen trabaje hasta el sabado: con
+ * el corte en sabado, un registro de domingo no se veria y nadie sabria que
+ * existe. Las pantallas muestran las fechas exactas del rango.
+ */
+
+/* Sin toISOString(), que devuelve UTC y adelanta el dia a las 19:00 —justo cuando
+   entra el turno noche—. La fecha se arma a mano con la hora local. */
+const _ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+                  + '-' + String(d.getDate()).padStart(2, '0');
+
+const _masDias = (iso, n) => {
+    const d = new Date(iso + 'T12:00:00');
+    d.setDate(d.getDate() + n);
+    return _ymd(d);
+};
+
+const _lunesDe = (iso) => {
+    const d = new Date(iso + 'T12:00:00');
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // lunes = 0
+    return _ymd(d);
+};
+
+/* Semana ISO: manda el JUEVES de esa semana. Es la numeracion que usa el resto de
+   la plataforma y la que Daniel nombra ("la semana treinta y seis"). */
+const _semanaISO = (iso) => {
+    const d = new Date(iso + 'T12:00:00');
+    const j = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    j.setDate(j.getDate() + 3 - ((j.getDay() + 6) % 7));
+    const primero = new Date(j.getFullYear(), 0, 4);
+    return 1 + Math.round(((j - primero) / 86400000 - 3 + ((primero.getDay() + 6) % 7)) / 7);
+};
+
+const _semanaActual = () => {
+    const lun = _lunesDe(getLogicalDate());
+    return { desde: lun, hasta: _masDias(lun, 6) };
+};
+
 
 /**
  * Los trabajadores indexados por DNI, para buscarlos dentro de un bucle sin pagar el precio
@@ -3084,7 +3129,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      todas. */
   const abrirPortalNoRetail = async (destino) => {
       const { renderDespachoNoRetailPortal } =
-          await import('../reportes/despacho_no_retail.js?v=29.0574');
+          await import('../reportes/despacho_no_retail.js?v=29.0575');
       return renderDespachoNoRetailPortal(destino, {
           fetchAndParseNoRetailClients,
           showNRPhotoLoader,
@@ -4276,7 +4321,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const abrirZonaBuffer = async () => {
-      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0574');
+      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0575');
       return montarZonaBuffer({
           estado: estadoBuffer,
           contentArea,
@@ -4762,6 +4807,10 @@ export const renderDashboard = async (container, user, onLogout) => {
 
   let activeAdminSub = 'trabajadores';
   let activeRFTab = 'inventario';
+  /* La bitacora arranca en la semana en curso. Son 1.159 asignaciones de 75 dias
+     y se dibujaban todas. Vive aca afuera para sobrevivir al redibujado. */
+  let _rfDesde = null;
+  let _rfHasta = null;
   let activeInventorySubTab = 'rfs';
   let rfSearchQuery = '';
   let rfStatusFilter = 'todos';
@@ -4837,7 +4886,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0574');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0575');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5100,7 +5149,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0574');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0575');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -6981,42 +7030,11 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
   };
 
   /* ── EL HISTORIAL ARRANCA EN LA SEMANA ACTUAL ────────────────────────────
-     La semana va de LUNES A DOMINGO aunque el almacen trabaje hasta el sabado:
-     si alguna vez se registra un domingo, con el corte en sabado ese dia no se
-     veria y nadie sabria que existe. El rotulo dice las fechas exactas, asi que
-     no hay ambiguedad sobre que entra.
      Vive FUERA de la funcion: se redibuja al sincronizar y al cambiar de
-     subpestana, y el rango elegido tiene que sobrevivir a eso. */
+     subpestana, y el rango elegido tiene que sobrevivir a eso. Las funciones de
+     semana estan a nivel de archivo, al lado de getLogicalDate. */
   let _perfDesde = null;
   let _perfHasta = null;
-
-  /* Sin toISOString(), que devuelve UTC y adelanta el dia a las 19:00 —justo
-     cuando entra el turno noche—. Se arma la fecha a mano. */
-  const _ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
-                    + '-' + String(d.getDate()).padStart(2, '0');
-  const _masDias = (iso, n) => {
-      const d = new Date(iso + 'T12:00:00');
-      d.setDate(d.getDate() + n);
-      return _ymd(d);
-  };
-  const _lunesDe = (iso) => {
-      const d = new Date(iso + 'T12:00:00');
-      d.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // lunes = 0
-      return _ymd(d);
-  };
-  /* Semana ISO: manda el JUEVES de esa semana. Es la misma numeracion que usa el
-     resto de la plataforma y la que Daniel nombra ("la semana treinta y seis"). */
-  const _semanaISO = (iso) => {
-      const d = new Date(iso + 'T12:00:00');
-      const j = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      j.setDate(j.getDate() + 3 - ((j.getDay() + 6) % 7));
-      const primero = new Date(j.getFullYear(), 0, 4);
-      return 1 + Math.round(((j - primero) / 86400000 - 3 + ((primero.getDay() + 6) % 7)) / 7);
-  };
-  const _semanaActual = () => {
-      const lun = _lunesDe(getLogicalDate());
-      return { desde: lun, hasta: _masDias(lun, 6) };
-  };
 
   const renderPerformanceHistory = (container) => {
     let log = adminService.getPerformanceLog();
@@ -8970,6 +8988,44 @@ const renderRFSection = (container) => {
 
     // Filtrar asignaciones
     let filteredAssignments = [...assignments].sort((a,b) => new Date(b.assigned_at) - new Date(a.assigned_at));
+
+    if (!_rfDesde || !_rfHasta) {
+        const sem = _semanaActual();
+        _rfDesde = sem.desde;
+        _rfHasta = sem.hasta;
+    }
+    /* LA FECHA SE SACA EN HORA DE LIMA, no del texto. `assigned_at` viene en UTC
+       -"2026-06-03T01:21:55.649Z"- y cortarle los 10 primeros caracteres daria el
+       dia UTC: una entrega de las 20:21 del 2 aparece como dia 3. Es la misma
+       trampa de siempre con el turno noche. Ademas la columna de al lado muestra
+       la hora local, y filtrar por una fecha distinta de la que se ve es un
+       cuadro que no cuadra. */
+    const _diaLocal = (iso) => {
+        const d = new Date(iso);
+        return isNaN(d) ? '' : _ymd(d);
+    };
+    const rfTotal = filteredAssignments.length;
+    const rfDiasTotal = new Set(filteredAssignments.map(a => _diaLocal(a.assigned_at))).size;
+    filteredAssignments = filteredAssignments.filter(a => {
+        const f = _diaLocal(a.assigned_at);
+        return f >= _rfDesde && f <= _rfHasta;
+    });
+    const _semRf = _semanaActual();
+    const rfEsSemanaActual = (_rfDesde === _semRf.desde && _rfHasta === _semRf.hasta);
+    window.__rfRango = (desde, hasta) => {
+        if (desde) _rfDesde = desde;
+        if (hasta) _rfHasta = hasta;
+        if (_rfDesde > _rfHasta) {
+            if (desde) _rfHasta = _rfDesde; else _rfDesde = _rfHasta;
+        }
+        renderRFSection(container);
+    };
+    window.__rfSemanaActual = () => {
+        const x = _semanaActual();
+        _rfDesde = x.desde;
+        _rfHasta = x.hasta;
+        renderRFSection(container);
+    };
     if (rfSearchQuery) {
       const q = rfSearchQuery.toLowerCase().trim();
       filteredAssignments = filteredAssignments.filter(a => 
@@ -9136,7 +9192,7 @@ const renderRFSection = (container) => {
                         </div>
                       </td>
                     </tr>`;
-                }) : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:var(--t-md);">No se encontraron equipos registrados.</td></tr>'}
+                }).join('') : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:var(--t-md);">No se encontraron equipos registrados.</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -9198,7 +9254,7 @@ const renderRFSection = (container) => {
                         </div>
                       </td>
                     </tr>`;
-                }) : '<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:var(--t-md);">No se encontraron baterías registradas.</td></tr>'}
+                }).join('') : '<tr><td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:var(--t-md);">No se encontraron baterías registradas.</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -9262,7 +9318,7 @@ const renderRFSection = (container) => {
                         </div>
                       </td>
                     </tr>`;
-                }) : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:var(--t-md);">No se encontraron cargadores registrados.</td></tr>'}
+                }).join('') : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:var(--t-md);">No se encontraron cargadores registrados.</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -9374,6 +9430,19 @@ const renderRFSection = (container) => {
         </div>
       ` : activeRFTab === 'asignaciones' ? `
         <!-- TABLE BITÁCORA ASIGNACIONES -->
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+          <div style="font-size:var(--t-xs); color:var(--text-muted);">
+            ${rfEsSemanaActual ? 'Semana ' + _semanaISO(_rfDesde) + ' · ' : ''}${_rfDesde} a ${_rfHasta} ·
+            <b style="color:var(--text-strong);">${filteredAssignments.length}</b>
+            ${filteredAssignments.length === 1 ? 'asignación' : 'asignaciones'},
+            de ${rfTotal} en ${rfDiasTotal} días
+          </div>
+          <div style="display:flex; gap:.6rem; align-items:center; flex-wrap:wrap;">
+            ${selectorRango(_rfDesde, _rfHasta, '__rfRango')}
+            <button onclick="window.__rfSemanaActual()" title="Volver a la semana actual"
+              style="border:1px solid var(--border); background:${rfEsSemanaActual ? 'var(--text-strong)' : 'rgba(var(--ink-rgb),.03)'}; color:${rfEsSemanaActual ? 'var(--panel-deep)' : 'var(--text-muted)'}; border-radius:999px; padding:.45rem 1rem; font-size:var(--t-xs); font-weight:800; cursor:pointer; font-family:inherit;">Semana actual</button>
+          </div>
+        </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
             <thead style="background:rgba(var(--ink-rgb), 0.05); border-bottom:1px solid var(--border);">
@@ -9478,7 +9547,12 @@ const renderRFSection = (container) => {
                       </div>
                     </td>
                   </tr>`;
-              }) : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:var(--t-md);">No se registran asignaciones en la bitácora.</td></tr>'}
+              /* EL join('') NO ES ADORNO. Sin el, la plantilla convierte el arreglo
+                 a texto uniendolo CON COMAS, y esas comas quedan dentro de <table>
+                 fuera de toda celda: el navegador las saca arriba de la tabla. Con
+                 1.159 asignaciones eran 1.158 comas sueltas, el bloque de "palitos"
+                 que Daniel veia sobre la cabecera. */
+              }).join('') : '<tr><td colspan="8" style="padding:3rem; text-align:center; color:var(--text-muted); font-weight:600; font-size:var(--t-md);">No hay asignaciones en el rango elegido.</td></tr>'}
             </tbody>
           </table>
         </div>
@@ -13793,7 +13867,7 @@ const renderRFSection = (container) => {
           se ata una sola vez al entrar y esas dieciséis quedaron intactas. El
           porqué completo está en la cabecera de ese archivo. */
        (async () => {
-           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0574');
+           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0575');
            montarInventarios(l2Container, {
                renderUploadArea,
                showPremiumConfirm,
@@ -18096,7 +18170,7 @@ const renderRFSection = (container) => {
              `renderDashboard` y que ahora, viviendo afuera, no alcanza sola.
              `tareasDeAlmacenaje` va como función y no como lista: la caché se
              reemplaza entera cuando entran tareas nuevas. */
-          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0574');
+          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0575');
           const corrida = await barrerParaSlotting(
             (Array.isArray(zonasDeLaCorrida) && zonasDeLaCorrida.length)
               ? zonasDeLaCorrida
@@ -26447,7 +26521,7 @@ window.__menuMapa = (btn) => {
              lado es un `let` que leen el plan del Excel y el prepack: si se
              pasara la lista, esos dos nunca se enterarían de la foto nueva. */
           (async () => {
-              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0574');
+              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0575');
               renderAnalisisReserva(skuBuf, {
                   htmlConsolidacionReserva,
                   engancharClicConsolidacion,
@@ -30256,7 +30330,7 @@ window.__menuMapa = (btn) => {
        dibuja nada: lo de arriba sigue funcionando igual. */
     if (p.articulos || p.marcas) {
       try {
-        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0574');
+        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0575');
         const caja = container.querySelector('#asn_detalle');
         /* El HOY va de aca, con getLogicalDate(): el paquete trae el suyo -el del
            robot- y si la corrida fallo, ese "hoy" es de ayer y todo el calendario
