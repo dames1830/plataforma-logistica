@@ -66,12 +66,12 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0566';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0566';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0567';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0567';
 /* LA EQUIVALENCIA SE IMPORTA, NO SE COPIA. Vive en `picking.js` desde que se
    midio sobre nueve archivos reales, y escribirla otra vez aca seria tener dos
    verdades que un dia se separan. */
-import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0566';
+import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0567';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
@@ -381,6 +381,30 @@ export function montarProduccionProyeccion(cont, OPC) {
 
     const fechas = Array.from(new Set(
         Object.keys(dias.p).concat(Object.keys(dias.e)))).sort();
+
+    /* ¿LOS DÍAS TRAEN EL TIEMPO? Desde v29.0566 el ritmo se saca de `<clase>_s`,
+       que publica el robot. Un día calculado antes de ese cambio no lo tiene, y
+       sin tiempo no hay ritmo: la pantalla salía entera en blanco diciendo "no
+       hay semanas cerradas", que se lee como que no hay datos.
+
+       Pasa mientras el robot rehace el histórico —son unos 35 minutos— y pasaría
+       otra vez el día que se cambie la regla del tiempo. Vale más decirlo. */
+    const conTiempo = (O.picking || []).concat(O.embalaje || []).some(x => {
+        const g = (((x.datos || {}).vistas || {}).TODOS || {}).gente || [];
+        return g.some(p => Object.keys(p.total || {}).some(k => k.endsWith('_s')));
+    });
+    if (fechas.length && !conTiempo) {
+        cont.innerHTML = '<style>' + CSS + '</style><div id="pp"><div class="pp-vacio">'
+            + '<b>Los días guardados todavía no traen el tiempo trabajado.</b><br><br>'
+            + 'Desde el 02-sep-2026 el ritmo se mide con los minutos que suma cada tarea, y '
+            + 'ese dato lo tiene que publicar el robot del servidor. Los ' + fechas.length
+            + ' días de este rango se calcularon antes del cambio.<br><br>'
+            + 'Cuando el robot termine de rehacer el histórico —unos 35 minutos— este cuadro '
+            + 'se llena solo. Los pares del día no se ven afectados: Picking por día y Embalaje '
+            + 'por día siguen mostrando todo.'
+            + '</div></div>';
+        return;
+    }
 
     if (!fechas.length) {
         cont.innerHTML = '<style>' + CSS + '</style><div id="pp"><div class="pp-vacio">'
