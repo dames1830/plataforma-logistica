@@ -197,6 +197,9 @@ export function montarAsnDetalle(cont, OPC) {
     // pendiente tiene la fecha YA PASADA. Un calendario solo, sin ese numero, se
     // lee como una promesa, y mas de un tercio de las veces no se cumple.
     const CL = p.cuandoLlega;
+    /* El paquete viejo no trae la fecha de entrada. Sin este guardian, la columna
+       saldria vacia y la tabla quedaria descuadrada hasta la proxima corrida. */
+    const hayEntra = !!(CL && CL.dias && CL.dias.length && CL.dias[0].entra);
     const hayCuando = !!(CL && CL.dias && CL.dias.length);
     const hoy = (O.hoy || (CL && CL.hoy) || '');
 
@@ -230,10 +233,13 @@ export function montarAsnDetalle(cont, OPC) {
         + '</div>');
 
         T.push('<div class="a-caja"><div class="a-cab"><h3>Cuándo llega</h3>'
-        + '<span class="nota">la fecha la anuncia el ASN · <b>haz clic en un día</b> '
-        + 'para ver los artículos</span></div>'
+        + '<span class="nota">'
+        + (hayEntra ? '<b>anunciado</b> y cuándo suele <b>entrar</b>' : 'la fecha la anuncia el ASN')
+        + ' · <b>haz clic en un día</b> para ver los artículos</span></div>'
         + '<div class="a-scroll"><table><thead><tr>'
-        + '<th>Día</th><th>Falta</th><th>Unidades</th><th>Artículos</th>'
+        + '<th>Anunciado</th>'
+        + (hayEntra ? '<th>Suele entrar</th>' : '')
+        + '<th>Falta</th><th>Unidades</th><th>Artículos</th>'
         + '<th style="text-align:left;">Marcas</th><th></th>'
         + '</tr></thead><tbody>'
         + CL.dias.map(d => {
@@ -243,6 +249,9 @@ export function montarAsnDetalle(cont, OPC) {
             return '<tr class="a-clic' + (d.dia === _dia ? ' a-viva' : '') + '" '
               + 'onclick="window.__asnDia(&quot;' + d.dia + '&quot;)">'
               + '<td>' + esc(diaLargo(d.dia)) + '</td>'
+              + (hayEntra ? '<td style="text-align:left; color:var(--text-strong); font-weight:700;">'
+                  + esc(diaLargo(d.entra))
+                  + '<br><span class="a-desc">+' + d.demora + ' días</span></td>' : '')
               + '<td class="' + cl + '">' + cu + '</td>'
               + '<td style="font-weight:800; color:var(--text-strong);">' + nf(d.u) + '</td>'
               + '<td>' + nf(d.n) + '</td>'
@@ -253,10 +262,26 @@ export function montarAsnDetalle(cont, OPC) {
               + '</td></tr>';
           }).join('')
         + '<tr style="border-top:2px solid var(--border); font-weight:800;">'
-        + '<td>Total</td><td></td>'
+        + '<td>Total</td>' + (hayEntra ? '<td></td>' : '') + '<td></td>'
         + '<td style="color:var(--text-strong);">' + nf(CL.dias.reduce((a, d) => a + d.u, 0)) + '</td>'
         + '<td></td><td></td><td></td></tr>'
-        + '</tbody></table></div>');
+        + '</tbody></table></div>'
+        /* LO ANUNCIADO NO ES LO QUE BAJA DEL CAMION ESE DIA, y decirlo importa:
+           Daniel, 03-sep-2026: *"si la orden dice 142 mil y solo hay 25 mil, esta
+           mandando un parcial. No es que de golpe te mande los 142.597, te va a
+           estar mandando parciales"*. Sin este pie, el cuadro se lee como una
+           promesa de descarga y con eso se arma la gente de un turno. */
+        + (hayEntra ? '<div class="a-pie">Las unidades son <b>la orden completa</b>, '
+            + 'no lo que baja del camión ese día: el proveedor manda <b>parciales</b>. '
+            + 'La columna «suele entrar» sale de medir '
+            + '<b>1,3 millones</b> de líneas ya recibidas — mediana de '
+            /* Los nombres se escriben acentuados: las claves del paquete van sin
+               tilde -son identificadores- pero lo que se lee no. */
+            + [['importacion', 'importación'], ['nacional', 'nacional']]
+                .filter(x => (CL.demoraDias || {})[x[0]])
+                .map(x => CL.demoraDias[x[0]] + ' días la ' + x[1]).join(' y ')
+            + '. Solo el 8% entra antes de la fecha anunciada.</div>' : '')
+        + '');
 
         const D = _dia ? CL.dias.find(x => x.dia === _dia) : null;
         if (D) {

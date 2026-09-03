@@ -29,7 +29,7 @@ import json
 import time
 import urllib.request
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -102,6 +102,31 @@ TIPOS = ('importacion', 'nacional', 'inversa', 'devolucion', 'reingreso',
 #     10       98    NO SE MAPEA: se contradice solo -61% nacional, 39%
 #                    importacion segun el numero-. Cae al patron, que acierta
 #                    el 97,4% de las veces.
+# CUANTO TARDA LO ANUNCIADO EN ENTRAR DE VERDAD, en dias.
+#
+# Daniel, 03-sep-2026: *"si la orden dice 142 mil y solo hay 25 mil, esta mandando
+# un parcial. No es que de golpe te mande los 142.597, te va a estar mandando
+# parciales"*. Asi que la fecha del ASN es la del ANUNCIO y la cantidad es el
+# techo de la orden, no lo que baja del camion ese dia.
+#
+# Medido el 03-sep-2026 sobre 1,3 millones de lineas YA RECIBIDAS, con la fecha
+# de recepcion que recien esa bajada trajo en los seis archivos. Es la MEDIANA:
+# el promedio lo arrastran los ASN colgados de 500 dias.
+#
+#     tipo          lineas   mediana   el 25%   el 75%
+#     inversa      521.238     15 d       8       29
+#     nacional     424.583      4 d       0       14
+#     importacion  226.073     10 d       6       16
+#     reingreso     45.106     19 d
+#     devolucion    12.248    155 d      66      155   <- otro mundo
+#
+# Solo el 8% entra ANTES de la fecha anunciada, asi que la fecha sirve de
+# referencia y lo que llega, llega despues.
+DEMORA_DIAS = {
+    'importacion': 10, 'nacional': 4, 'inversa': 15, 'reingreso': 19,
+    'devolucion': 155, 'traslado': 12, 'materiales': 12, 'sin_clasificar': 12,
+}
+
 POR_CODIGO = {
     '23': 'nacional',
     '24': 'importacion',
@@ -311,6 +336,7 @@ def construir():
     # a llegar algo que ya fallo una vez.
     por_dia = defaultdict(lambda: defaultdict(float))
     por_dia_marca = defaultdict(lambda: defaultdict(float))
+    por_dia_tipo = defaultdict(lambda: defaultdict(float))
     venc_edad = defaultdict(float)
     cuando = {"futuro": 0.0, "vencido": 0.0, "sin_fecha": 0.0,
               "lin_fut": 0, "lin_ven": 0, "lin_sin": 0}
@@ -368,11 +394,16 @@ def construir():
             # esta -o es uno de los que se contradice- entra el patron del numero,
             # que acierta el 97,4% comparado con el codigo.
             if asn not in asn_tipo:
-                cod = ""
+                # `cod_tipo`, NO `cod`. Aca decia `cod`, que es el codigo de
+                # ARTICULO de esta misma fila y se usa mas abajo: cada vez que
+                # aparecia un ASN nuevo, su articulo quedaba reemplazado por el
+                # codigo de tipo. Por eso el reporte mostraba articulos llamados
+                # "24", "23" o "56" con descripcion de calzado real.
+                cod_tipo = ""
                 if iT is not None and iT < len(fila) and fila[iT] is not None:
-                    cod = str(fila[iT]).strip()
-                asn_codigo[asn] = cod
-                asn_tipo[asn] = tipo_del_wms(cod) or tipo_por_el_numero(asn)
+                    cod_tipo = str(fila[iT]).strip()
+                asn_codigo[asn] = cod_tipo
+                asn_tipo[asn] = tipo_del_wms(cod_tipo) or tipo_por_el_numero(asn)
             t = tipo_acum[asn_tipo[asn]]
             t["asn"].add(asn)
             t["env"] += env
@@ -412,6 +443,7 @@ def construir():
                         d = fe.date().isoformat()
                         por_dia[d][cod] += pend
                         por_dia_marca[d][mk] += pend
+                        por_dia_tipo[d][asn_tipo[asn]] += pend
                     else:
                         cuando["vencido"] += pend
                         cuando["lin_ven"] += 1
@@ -526,8 +558,21 @@ def construir():
         arts = sorted(por_dia[d].items(), key=lambda x: -x[1])
         cerca = (datetime.strptime(d, "%Y-%m-%d").date() - HOY).days <= DIAS_CERCA
         top = arts if cerca else arts[:TOPE_DIA_LEJOS]
+        # LA FECHA PROBABLE DE ENTRADA. Un dia puede mezclar tipos, asi que la
+        # demora se pondera por unidades en vez de tomar la del tipo mayor: un
+        # dia con 90% de importacion y 10% de devolucion no entra en 155 dias.
+        mezcla = por_dia_tipo.get(d) or {}
+        totd = sum(mezcla.values())
+        demora = (sum(DEMORA_DIAS.get(t, 12) * q for t, q in mezcla.items()) / totd
+                  if totd else 12)
+        entra = (datetime.strptime(d, "%Y-%m-%d").date()
+                 + timedelta(days=int(round(demora)))).isoformat()
         dias_llegada.append({
             "dia": d,
+            "entra": entra,
+            "demora": int(round(demora)),
+            "tipos": [{"t": t, "u": round(q)} for t, q in
+                      sorted(mezcla.items(), key=lambda x: -x[1])],
             "u": round(sum(v for _, v in arts)),
             "n": len(arts),
             "marcas": [{"m": m, "u": round(q)} for m, q in
@@ -553,6 +598,8 @@ def construir():
         "lineasFuturo": cuando["lin_fut"],
         "lineasVencido": cuando["lin_ven"],
         "dias": dias_llegada,
+        # Para que la pantalla pueda decir de donde sale la fecha de entrada.
+        "demoraDias": DEMORA_DIAS,
         "vencidoEdad": {k: round(v) for k, v in venc_edad.items()},
     }
 

@@ -33,8 +33,8 @@
 /* El rango de fechas es el mismo de toda la plataforma: se dibuja una sola vez, en
    `reportesComunes.js`. Este archivo recibe todo lo demás por `OPC` y no lee del
    servidor — el selector no lee nada, solo dibuja. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0576';
-import { icono } from '../services_v245/iconos.js?v=29.0576';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0577';
+import { icono } from '../services_v245/iconos.js?v=29.0577';
 
 export const montarSlotting = (container, OPC = {}) => {
   const svc = OPC.svc;
