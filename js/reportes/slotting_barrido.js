@@ -30,10 +30,10 @@
  * adelanta el dia a las 19:00, justo cuando entra el turno noche-.
  */
 
-import * as slottingService from '../services_v245/slottingService.js?v=29.0570';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0570';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0570';
-import { dataStore, getAreaData, tallaDeSku } from '../services_v245/csvHub_v6.js?v=29.0570';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0571';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0571';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0571';
+import { dataStore, getAreaData, tallaDeSku } from '../services_v245/csvHub_v6.js?v=29.0571';
 
 /* La fecha de la jornada, no la del reloj. Misma linea que en el tablero. */
 const getLogicalDate = () => jornadaService.fechaLogicaDe();

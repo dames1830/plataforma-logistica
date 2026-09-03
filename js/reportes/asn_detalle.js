@@ -19,11 +19,15 @@
  * son 1.117 KB al navegador, y eso es exactamente lo que ya hizo lenta la web una
  * vez. Medido, cortando por los que más faltan:
  *
- *     los 200  ->  19 KB          los 500  ->  49 KB
- *     las 13 marcas -> 1 KB       50 artículos de un mes -> 2 KB
+ *     los 200  ->  19 KB          los 500  ->  89 KB
+ *     las 13 marcas -> 1 KB       los 50 de cada mes -> 74 KB entre los seis
  *
- * Con 500 artículos, las 13 marcas, 50 por mes y los 122 parciales enteros, todo
- * el paquete son unos 60 KB. Cabe de sobra.
+ * Con 500 artículos, las 13 marcas, 50 por mes y los 139 parciales enteros, el
+ * paquete pesa 183 KB. Se baja UNA vez al abrir Recepción; el tablero, para
+ * comparar, son 2.200 KB. Daniel lo aprobó mirando la maqueta con ese número.
+ *
+ * (La primera estimación decía 60 KB y estaba mal: no contaba la descripción ni
+ * la marca de cada fila, que es la mitad del peso.)
  *
  * LA PANTALLA DICE SIEMPRE CUÁNTOS QUEDARON FUERA. Una tabla recortada que no
  * avisa se lee como la lista completa, y con eso se toman decisiones.
@@ -144,7 +148,11 @@ export function montarAsnDetalle(cont, OPC) {
     // ─── MES A MES, y al hacer clic se abre el detalle ───────────────────────
     const meses = Object.keys(p.porMes || {}).sort().reverse();
     T.push('<div class="a-caja"><div class="a-cab"><h3>Mes a mes</h3>'
-    + '<span class="nota">por fecha de envío · <b>haz clic en un mes</b> para ver qué falta</span></div>'
+    /* POR FECHA DE CREACION, que es como agrupa el robot -un archivo por mes- y
+       como ya lo decia el cuadro de arriba. El rotulo decia "por fecha de envio"
+       porque asi lo habia agrupado la medicion de prueba, y dos cuadros pegados
+       diciendo cosas distintas del mismo dato es peor que no ponerle rotulo. */
+    + '<span class="nota">por fecha de creación · <b>haz clic en un mes</b> para ver qué falta</span></div>'
     + '<div class="a-scroll"><table><thead><tr>'
     + '<th>Mes</th><th>Artículos con falta</th><th>Pendiente</th><th></th>'
     + '</tr></thead><tbody>'
