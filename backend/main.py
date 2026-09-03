@@ -283,10 +283,37 @@ def _exigir_token_escritura() -> bool:
 # `quien` sale del User-Agent: distingue un navegador de un robot de Python sin
 # guardar nada de la persona -ni IP, ni usuario, ni sesion-.
 _escrituras_anonimas = {"total": 0, "ultima_area": None, "ultima_hora": None,
-                        "por_area": {}, "por_quien": {}}
+                        "por_area": {}, "por_quien": {}, "por_motivo": {}}
 # Tope de nombres distintos que se guardan. Las areas son ~77; el tope es un freno
 # por si alguna vez llega basura, para que el diccionario no crezca sin fin.
 _TOPE_DESGLOSE = 200
+
+
+def _motivo_anonima(request: Request) -> str:
+    """POR QUE esta escritura no tiene permiso. Es lo que decide si se puede
+    encender el candado o no, y no se puede adivinar.
+
+    Al 02-sep-2026 el contador llevaba 16 escrituras anonimas, todas del
+    NAVEGADOR, en tres areas: tabla_tallas 10, archivos 5, evolucion_articulo 1.
+    Con eso solo no se sabe si son:
+
+      · SESION VENCIDA O DESCONOCIDA -> encender el candado deja a gente de
+        verdad sin poder trabajar, y hay que arreglar antes la sesion
+      · SIN NINGUN TOKEN -> hay codigo que escribe saltandose el sellado de
+        `env.js`; se busca y se arregla, y el candado se puede encender
+
+    Son dos mundos distintos y el contador viejo no los distinguia. Esto no
+    cambia NADA del comportamiento: solo anota el motivo.
+    """
+    auth = request.headers.get('X-Auth-Token') or ''
+    robot = request.headers.get('X-Robot-Token') or ''
+    if auth and robot:
+        return 'los dos tokens, y ninguno vale'
+    if robot:
+        return 'token de robot que no coincide'
+    if auth:
+        return 'sesion vencida o desconocida'
+    return 'sin token'
 
 
 def _quien_escribe(request: Request) -> str:
@@ -319,7 +346,9 @@ def _control_escritura(request: Request, area: str):
     _escrituras_anonimas["total"] += 1
     _escrituras_anonimas["ultima_area"] = area
     _escrituras_anonimas["ultima_hora"] = ahora().isoformat()
-    for casilla, clave in (("por_area", str(area)), ("por_quien", _quien_escribe(request))):
+    for casilla, clave in (("por_area", str(area)),
+                           ("por_quien", _quien_escribe(request)),
+                           ("por_motivo", _motivo_anonima(request))):
         d = _escrituras_anonimas[casilla]
         if clave in d or len(d) < _TOPE_DESGLOSE:
             d[clave] = d.get(clave, 0) + 1
