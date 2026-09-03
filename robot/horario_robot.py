@@ -122,8 +122,24 @@ DE_FABRICA = {
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': True}},
     'cruce_wms':    {'activa': True, 'hora': '21:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # EL ASN FALTABA ACA, y por eso no bajaba desde el 01-sep-2026.
+    #
+    # La web ya lo tenia entero -en la lista de tareas y en `robotsPorDefecto()`-
+    # pero este lado nunca se actualizo. La tarea `Robot ASN` llamaba a
+    # `correr_si_toca.bat asn_web`, esto respondia "No conozco: asn_web" y salia
+    # con codigo 2; el .bat trata CUALQUIER codigo >= 1 como "no le toca" y
+    # devuelve 0. Windows marcaba exito todos los dias y no bajaba nada.
+    #
+    # 04:30: el stock de las 04:00 termina 04:10 y el mapa de las 04:15 termina
+    # 04:25; la bajada tarda ~48 min y cierra 05:18, antes del stock de las 06:00.
+    'asn_web':      {'activa': True, 'hora': '04:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
+                                                               'jue': True, 'vie': True, 'sab': True, 'dom': True}},
 }
-DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida', 'cruce_wms', 'cierre_dia')
+# `asn_web` va aca tambien: sin estar en DIARIAS, su 'hora' se ignora y se lo trata
+# como tarea que se repite, con `cadaMin` de 60 por defecto. Corre a cada hora
+# una bajada de 48 minutos, o no corre nunca. Las dos listas van juntas.
+DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida',
+           'cruce_wms', 'cierre_dia', 'asn_web')
 
 
 def _leer_web(timeout=20):
@@ -316,7 +332,12 @@ def main():
     tareas = [t.strip() for t in sys.argv[1].split(',') if t.strip()]
     desconocidas = [t for t in tareas if t not in DE_FABRICA]
     if desconocidas:
-        print(f'No conozco: {", ".join(desconocidas)}. Son: {", ".join(DE_FABRICA)}')
+        # Se devuelve 2, no 1: el envoltorio lo distingue de "no le toca" y deja
+        # la tarea de Windows en rojo. Una tarea que no existe en el horario no
+        # va a correr NUNCA, y eso no se puede reportar como exito.
+        print(f'ERROR DE INSTALACION: la tarea {", ".join(desconocidas)} no existe '
+              f'en el horario, asi que NUNCA va a correr. Las que hay: '
+              f'{", ".join(DE_FABRICA)}')
         return 2
 
     # VARIAS TAREAS EN UNA LLAMADA, y hace falta: el ancla es UNA sola tarea de Windows con
