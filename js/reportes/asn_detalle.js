@@ -40,6 +40,11 @@
  * }
  */
 
+/* EL ICONO DE EXCEL DE LA PLATAFORMA, el mismo de todos los demas reportes.
+   Daniel, 03-sep-2026: *"no me vayas a poner la letra exportar, pon el icono de
+   Excel y ya se que es un exportar"*. */
+import { icono } from '../services_v245/iconos.js?v=29.0587';
+
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
 const esc = (t) => String(t == null ? '' : t)
@@ -220,7 +225,8 @@ export function montarAsnDetalle(cont, OPC) {
     + '; color:' + (c.viejo ? 'var(--warning)' : 'var(--text-muted)') + ';">'
     + (c.viejo ? '⚠️' : '📅') + ' ' + esc(c.texto)
     + (c.viejo ? ' · el robot corre todas las madrugadas: revisa si corrió' : '') + '</span>'
-    + '<button class="a-pill" onclick="window.__asnExportar()">⬇ EXPORTAR A EXCEL</button>'
+    + '<button class="btn-icono btn-excel" title="Exportar todo el reporte a Excel" onclick="window.__asnExportar()" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">'
+    + icono('excel', 20) + '</button>'
     + '</div>'
     + '<div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:.5rem;">'
     /* El robot lo publica dentro de `totales`, no suelto. Leyendolo suelto la
@@ -333,9 +339,17 @@ export function montarAsnDetalle(cont, OPC) {
         if (D) {
             T.push('<div class="a-cab tapa-pbi" style="border-top:1px solid var(--border);">'
             + '<h3>Qué llega el ' + esc(diaLargo(D.dia)) + '</h3>'
+            + '<div style="display:flex; align-items:center; gap:.7rem;">'
             + '<span class="nota">' + (D.completo ? 'los ' + nf(D.n) + ' artículos'
                 : nf(D.top.length) + ' de ' + nf(D.n) + ' artículos · los de mayor cantidad')
-            + '</span></div>'
+            + '</span>'
+            /* EXPORTA EL DIA QUE ESTA ABIERTO, no el reporte entero: el cuadro
+               contesta "que llega el viernes" y eso es lo que se quiere bajar. */
+            + '<button class="btn-icono btn-excel" title="Exportar a Excel"'
+            + ' onclick="window.__asnExcelDia(&quot;' + D.dia + '&quot;)"'
+            + ' style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">'
+            + icono('excel', 18) + '</button>'
+            + '</div></div>'
             + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
             + '<th>Artículo</th><th style="text-align:left;">Marca</th><th>Unidades</th>'
             + '</tr></thead><tbody>'
@@ -657,4 +671,7 @@ export function montarAsnDetalle(cont, OPC) {
         if (caja) { caja.focus(); caja.setSelectionRange(v.length, v.length); }
     };
     window.__asnExportar = () => { if (typeof O.alExportar === 'function') O.alExportar(p); };
+    window.__asnExcelDia = (d) => {
+        if (typeof O.alExportarDia === 'function') O.alExportarDia(d, p);
+    };
 }
