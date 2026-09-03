@@ -165,10 +165,20 @@ const CSS = [
 '#asn .a-pronto { color:var(--warning); font-weight:800; }',
 '#asn .a-lejos { color:var(--text-muted); }',
 '#asn .a-marcas { color:var(--text-muted); text-align:left; font-size:10.5px; }',
+/* COLUMNAS CENTRADAS. Daniel, 03-sep-2026: *"el titulo esta por un lado y los
+   datos por otro; centra marca, enviado y recibido"*. Iba la cabecera a la
+   derecha y el dato a la izquierda, asi que ninguno de los dos caia debajo del
+   otro. La clase se pone en el <th> Y en el <td> de la misma columna: es lo unico
+   que garantiza que queden alineados aunque despues se toque uno solo. */
+'#asn th.a-cen, #asn td.a-cen { text-align:center; }',
+/* Lo mismo para las que van a la izquierda: antes se escribia el estilo suelto en
+   el <td> y la cabecera quedaba a la derecha. */
+'#asn th.a-izq, #asn td.a-izq { text-align:left; }',
 ].join('\n');
 
 /* Lo que se está mirando. Es de módulo para que sobreviva al redibujado. */
 let _mes = null;          // el mes abierto en "mes a mes"
+let _primerDibujo = true; // para abrir el mes mas reciente solo la primera vez
 let _buscaArt = '';
 let _buscaPar = '';
 let _marca = '';
@@ -274,7 +284,7 @@ export function montarAsnDetalle(cont, OPC) {
         + ' · <b>haz clic en un día</b> para ver los artículos</span></div>'
         + '<div class="a-scroll"><table class="a-cal rep-pbi"><thead><tr>'
         + '<th>Anunciado</th>'
-        + (hayEntra ? '<th>Suele entrar</th>' : '')
+        + (hayEntra ? '<th class="a-izq">Suele entrar</th>' : '')
         + '<th>Falta</th><th>Unidades</th><th>Artículos</th>'
         + '<th class="a-marcas" style="text-align:left;">Marcas</th><th></th>'
         + '</tr></thead><tbody>'
@@ -285,7 +295,7 @@ export function montarAsnDetalle(cont, OPC) {
             return '<tr class="a-clic' + (d.dia === _dia ? ' a-viva' : '') + '" '
               + 'onclick="window.__asnDia(&quot;' + d.dia + '&quot;)">'
               + '<td>' + esc(diaLargo(d.dia)) + '</td>'
-              + (hayEntra ? '<td style="text-align:left; color:var(--text-strong); font-weight:700;">'
+              + (hayEntra ? '<td class="a-izq" style="color:var(--text-strong); font-weight:700;">'
                   + esc(diaLargo(d.entra))
                   + '<br><span class="a-desc">+' + d.demora + ' días</span></td>' : '')
               + '<td class="' + cl + '">' + cu + '</td>'
@@ -388,6 +398,16 @@ export function montarAsnDetalle(cont, OPC) {
 
     // ─── MES A MES, y al hacer clic se abre el detalle ───────────────────────
     const meses = Object.keys(p.porMes || {}).sort().reverse();
+    /* EL MES MAS RECIENTE VIENE ABIERTO. Daniel, 03-sep-2026: *"mira ese hueco
+       que esta dejando ese reporte, parece mal disenado; cuando le das clic a un
+       mes te rellena ese espacio. Que por default este filtrado el mes de
+       septiembre para que ese hueco no se vea vacio"*.
+       El cuadro es corto y al lado tiene uno alto, asi que deja un agujero; el
+       detalle del mes lo llena y ademas es lo primero que se quiere ver.
+       `_primerDibujo` es lo que permite que despues se pueda CERRAR: sin el, cada
+       redibujado lo volveria a abrir y el clic para cerrarlo no serviria. */
+    if (_primerDibujo && meses.length) { _mes = meses[0]; }
+    _primerDibujo = false;
     /* `sobra` es lo que llego DE MAS. Sin mostrarlo, la suma de los meses no da
        el total de arriba y no hay manera de saber por que: en abril son 26.918
        que convierten 187.691 en los 160.773 que dice el cuadro de marcas. */
@@ -397,7 +417,10 @@ export function montarAsnDetalle(cont, OPC) {
        `faltaBruta`: sin esto salen dos columnas con el mismo numero. */
     const hayBruta = meses.some(m => p.porMes[m].faltaBruta != null);
 
-    T.push('<div class="a-caja caja-pbi' + (_mes ? ' a-ancho' : '') + '"><div class="a-cab tapa-pbi"><h3>Mes a mes</h3>'
+    /* `a-ancho` se quito: era de cuando esto iba en rejilla y el cuadro abierto se
+       llevaba las dos columnas. Con `columns` esa clase ya no tiene ninguna regla
+       detras, y una clase que no hace nada hace perder tiempo al que la lea. */
+    T.push('<div class="a-caja caja-pbi"><div class="a-cab tapa-pbi"><h3>Mes a mes</h3>'
     /* POR FECHA DE CREACION, que es como agrupa el robot -un archivo por mes- y
        como ya lo decia el cuadro de arriba. El rotulo decia "por fecha de envio"
        porque asi lo habia agrupado la medicion de prueba, y dos cuadros pegados
@@ -437,12 +460,13 @@ export function montarAsnDetalle(cont, OPC) {
         + '<span class="nota">' + nf(x.top.length) + ' de ' + nf(x.articulos)
         + ' artículos · los que más faltan primero</span></div>'
         + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
-        + '<th>Artículo</th><th>Marca</th><th>Enviado</th><th>Recibido</th><th>Falta</th>'
+        + '<th>Artículo</th><th class="a-cen">Marca</th><th class="a-cen">Enviado</th>'
+        + '<th class="a-cen">Recibido</th><th>Falta</th>'
         + '</tr></thead><tbody>'
         + x.top.map(a => '<tr><td>' + esc(a.cod)
             + '<br><span class="a-desc">' + esc(dsc(a)) + '</span></td>'
-            + '<td style="text-align:left;">' + esc(a.marca || '') + '</td>'
-            + '<td>' + nf(a.env) + '</td><td>' + nf(a.rec) + '</td>'
+            + '<td class="a-cen">' + esc(a.marca || '') + '</td>'
+            + '<td class="a-cen">' + nf(a.env) + '</td><td class="a-cen">' + nf(a.rec) + '</td>'
             + '<td class="a-falta">' + nf(a.falta) + '</td></tr>').join('')
         + '</tbody></table></div>'
         /* NO PROMETER LO QUE EL EXCEL NO LLEVA: exporta este mismo top, no los
@@ -566,15 +590,15 @@ export function montarAsnDetalle(cont, OPC) {
     + '<span style="font-size:var(--t-xs); color:var(--text-muted);">' + nf(arts.length) + ' a la vista</span>'
     + '</div>'
     + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
-    + '<th>Artículo</th><th>Marca</th><th>Tipo</th>'
-    + (hayCuando ? '<th>Cuándo llega</th>' : '')
+    + '<th>Artículo</th><th class="a-izq">Marca</th><th class="a-izq">Tipo</th>'
+    + (hayCuando ? '<th class="a-izq">Cuándo llega</th>' : '')
     + '<th>Enviado</th><th>Recibido</th><th>Falta</th>'
     + '</tr></thead><tbody>'
     + (arts.length ? arts.map(a => '<tr><td>' + esc(a.cod)
         + '<br><span class="a-desc">' + esc(dsc(a)) + '</span></td>'
-        + '<td style="text-align:left;">' + esc(a.marca || '') + '</td>'
-        + '<td style="text-align:left;" class="a-desc">' + esc(a.gender || '') + '</td>'
-        + (hayCuando ? '<td style="text-align:left;">' + cuandoLlegaEste(a.prox) + '</td>' : '')
+        + '<td class="a-izq">' + esc(a.marca || '') + '</td>'
+        + '<td class="a-izq a-desc">' + esc(a.gender || '') + '</td>'
+        + (hayCuando ? '<td class="a-izq">' + cuandoLlegaEste(a.prox) + '</td>' : '')
         + '<td>' + nf(a.env) + '</td><td>' + nf(a.rec) + '</td>'
         + '<td class="a-falta">' + nf(a.falta) + '</td></tr>').join('')
       : '<tr><td colspan="' + (hayCuando ? 7 : 6) + '" style="text-align:center; padding:1.5rem; color:var(--text-muted);">'
@@ -603,11 +627,12 @@ export function montarAsnDetalle(cont, OPC) {
     + nf(par.length) + ' de ' + nf((p.parciales || []).length) + '</span>'
     + '</div>'
     + '<div class="a-scroll"><table class="rep-pbi"><thead><tr>'
-    + '<th>ASN</th><th>Envío</th><th>Estado</th><th>Enviado</th><th>Recibido</th><th>Falta</th><th>Cumple</th>'
+    + '<th>ASN</th><th class="a-izq">Envío</th><th class="a-izq">Estado</th>'
+    + '<th>Enviado</th><th>Recibido</th><th>Falta</th><th>Cumple</th>'
     + '</tr></thead><tbody>'
     + (par.length ? par.map(x => '<tr><td>' + esc(x.asn) + '</td>'
-        + '<td style="text-align:left;">' + esc(x.envio || '') + '</td>'
-        + '<td style="text-align:left;">' + esc(x.estado || '') + '</td>'
+        + '<td class="a-izq">' + esc(x.envio || '') + '</td>'
+        + '<td class="a-izq">' + esc(x.estado || '') + '</td>'
         + '<td>' + nf(x.enviado) + '</td><td>' + nf(x.recibido) + '</td>'
         + '<td class="a-falta">' + nf(x.falta) + '</td>'
         + '<td>' + n1(x.cumple) + '%</td></tr>').join('')
