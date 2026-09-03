@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<title>Prueba - la asistencia no debe saltar arriba</title>
+<style>
+  body { font-family:system-ui,sans-serif; margin:0; padding:20px; background:#111; color:#eee; }
+  #salida { font:13px/1.7 monospace; white-space:pre-wrap; background:#000; padding:14px;
+            border-radius:10px; margin-bottom:16px; }
+  .ok { color:#4ade80; } .mal { color:#f87171; }
+  table { width:100%; border-collapse:collapse; }
+  td { padding:0.8rem; border-bottom:1px solid #333; }
+  button { padding:0.3rem 0.8rem; border-radius:4px; border:1px solid #555; }
+</style>
+</head><body>
+<h2>La asistencia no debe volver arriba al marcar</h2>
+<p style="color:#aaa; font-size:13px; max-width:760px;">
+Daniel, 03-sep-2026: <i>"cuando estoy abajo y le pongo falta o modifico algo, me
+redirecciona hacia el principio, como que está volviendo a dibujar el panel"</i>.
+Esta prueba <b>saca el código de verdad</b> de <code>dashboard_v28.js</code> —no una
+copia escrita a mano— arma 78 filas, baja hasta la última, la marca y mira si la
+pantalla se movió.
+</p>
+<div id="salida">Cargando...</div>
+<div id="destino"></div>
+
+<script type="module">
+const salida = document.getElementById('salida');
+const di = (t, clase) => { salida.innerHTML += '<span class="' + (clase||'') + '">' + t + '</span>\n'; };
+
+try {
+  const src = await (await fetch('../js/views/dashboard_v28.js')).text();
+
+  // Se extraen las TRES piezas reales, por su texto en el archivo.
+  const saca = (desde, hasta) => {
+    const i = src.indexOf(desde);
+    if (i < 0) throw new Error('no encuentro en el archivo: ' + desde);
+    const j = src.indexOf(hasta, i);
+    if (j < 0) throw new Error('no encuentro el final de: ' + desde);
+    return src.slice(i, j + hasta.length);
+  };
+
+  const fnEstado = saca('const celdaEstado = (dni, isPresent, bloq) =>', "'</div>';");
+  const fnPunt   = saca('const celdaPuntualidad = (dni, isOnTime, bloq) =>', "'</div>';");
+  const fnRepint = saca('const repintarFila = (dni) => {', '\n    };');
+  di('piezas sacadas del archivo: celdaEstado, celdaPuntualidad, repintarFila', 'ok');
+
+  // El decorado mínimo que esas piezas necesitan.
+  const container = document.getElementById('destino');
+  const finalizado = false;
+  const localState = [];
+  const filas = [];
+  for (let i = 1; i <= 78; i++) {
+    const dni = String(70000000 + i);
+    localState.push({ dni, present: true, onTime: true, justification: '' });
+    filas.push({ dni, nombre: 'PERSONA ' + i });
+  }
+
+  // Se evalúan las funciones reales en este contexto.
+  const armar = new Function('container', 'localState', 'finalizado',
+    fnEstado + '\n' + fnPunt + '\n' + fnRepint + '\n' +
+    'return { celdaEstado, celdaPuntualidad, repintarFila };');
+  const F = armar(container, localState, finalizado);
+
+  // La tabla, con el mismo marcado que pone el dashboard.
+  container.innerHTML = '<table><tbody>' + filas.map((f, idx) =>
+      '<tr data-fila="' + f.dni + '">'
+      + '<td>' + (idx + 1) + '</td><td>' + f.dni + '</td><td>' + f.nombre + '</td>'
+      + '<td data-celda="estado">' + F.celdaEstado(f.dni, true, false) + '</td>'
+      + '<td data-celda="punt">' + F.celdaPuntualidad(f.dni, true, false) + '</td>'
+      + '</tr>').join('') + '</tbody></table>';
+
+  // Los manejadores, como los define el dashboard (sin guardar en la nube).
+  window.updateAsist = (dni, val) => {
+    const n = localState.find(s => String(s.dni) === String(dni));
+    if (n) { n.present = val; if (!val) n.onTime = false; F.repintarFila(dni); }
+  };
+
+  // ── la prueba ────────────────────────────────────────────────────────────
+  const ultima = filas[filas.length - 1].dni;
+  const fila = container.querySelector('tr[data-fila="' + ultima + '"]');
+  fila.scrollIntoView({ block: 'center' });
+  await new Promise(r => setTimeout(r, 300));
+
+  const antes = Math.round(window.scrollY);
+  const botonF = fila.querySelectorAll('[data-celda="estado"] button')[1];
+  botonF.click();
+  await new Promise(r => setTimeout(r, 300));
+  const despues = Math.round(window.scrollY);
+
+  di('');
+  di('scroll antes de marcar : ' + antes);
+  di('scroll despues         : ' + despues);
+  const quieto = Math.abs(antes - despues) <= 2;
+  di(quieto ? 'LA PANTALLA NO SE MOVIO' : 'SE MOVIO ' + Math.abs(antes - despues) + ' px',
+     quieto ? 'ok' : 'mal');
+
+  const est = localState.find(s => s.dni === ultima);
+  const pintado = fila.querySelector('[data-celda="estado"]').innerHTML;
+  const puntual = fila.querySelector('[data-celda="punt"]').innerHTML;
+  di('');
+  di('el estado quedo en present=' + est.present + ' onTime=' + est.onTime,
+     (est.present === false && est.onTime === false) ? 'ok' : 'mal');
+  di('la celda ESTADO pinta la F en rojo: ' + (pintado.indexOf('var(--danger)') >= 0),
+     pintado.indexOf('var(--danger)') >= 0 ? 'ok' : 'mal');
+  di('la celda PUNTUALIDAD apago el SI  : ' + (puntual.indexOf('var(--cyan-deep)') < 0),
+     puntual.indexOf('var(--cyan-deep)') < 0 ? 'ok' : 'mal');
+
+  // que solo se haya tocado ESA fila
+  const otra = container.querySelector('tr[data-fila="' + filas[0].dni + '"]');
+  const intacta = otra.querySelector('[data-celda="estado"]').innerHTML.indexOf('var(--success)') >= 0;
+  di('la primera fila quedo intacta     : ' + intacta, intacta ? 'ok' : 'mal');
+
+} catch (e) {
+  di('FALLO: ' + (e && e.stack || e), 'mal');
+}
+</script>
+</body></html>

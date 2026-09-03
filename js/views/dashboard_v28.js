@@ -1,41 +1,41 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0572';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0573';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0572';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0572';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0572';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0572';
-import * as metasService from '../services_v245/metasService.js?v=29.0572';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0572';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0572';
+import * as adminService from '../services_v245/adminService.js?v=29.0573';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0573';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0573';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0573';
+import * as metasService from '../services_v245/metasService.js?v=29.0573';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0573';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0573';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0572';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0572';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0572';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0572';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0572';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0572';
-import { renderCapacidad } from './capacidad.js?v=29.0572';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0572';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0572';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0572';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0572';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0572';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0572';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0572';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0572';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0572';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0572';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0572';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0572';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0572';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0572';
-import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0572';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0572';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0572';
-import { montarSlotting } from './slotting.js?v=29.0572';
-import { montarEventos } from './eventos.js?v=29.0572';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0572';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0573';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0573';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0573';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0573';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0573';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0573';
+import { renderCapacidad } from './capacidad.js?v=29.0573';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0573';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0573';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0573';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0573';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0573';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0573';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0573';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0573';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0573';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0573';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0573';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0573';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0573';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0573';
+import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0573';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0573';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0573';
+import { montarSlotting } from './slotting.js?v=29.0573';
+import { montarEventos } from './eventos.js?v=29.0573';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0573';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -398,7 +398,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0572';
+const VERSION = '29.0573';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3084,7 +3084,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      todas. */
   const abrirPortalNoRetail = async (destino) => {
       const { renderDespachoNoRetailPortal } =
-          await import('../reportes/despacho_no_retail.js?v=29.0572');
+          await import('../reportes/despacho_no_retail.js?v=29.0573');
       return renderDespachoNoRetailPortal(destino, {
           fetchAndParseNoRetailClients,
           showNRPhotoLoader,
@@ -4276,7 +4276,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const abrirZonaBuffer = async () => {
-      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0572');
+      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0573');
       return montarZonaBuffer({
           estado: estadoBuffer,
           contentArea,
@@ -4837,7 +4837,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0572');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0573');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5100,7 +5100,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0572');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0573');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -5791,11 +5791,16 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
   // cargados en la matriz de trabajadores. Para sumar otro cargo, agregarlo aca.
   /* TODOS los cargos que existen, para los combos. Los de dia van al final: no entran
      a la toma de noche pero hay que poder registrar a esa gente igual. */
-  const CARGOS = ['ALMACENAJE', 'BUFFER', 'SLOTTING', 'MONTACARGUISTA',
+  const CARGOS = ['ALMACENAJE', 'BUFFER', 'SLOTTING', 'MONTACARGUISTA', 'ASISTENTE',
                   'RECEPCION', 'CATALOGO', 'DESPACHO'];
   /* Los que entran a la toma de asistencia del turno NOCHE. Daniel, 25-ago-2026: el
-     AYUDANTE DE ALMACEN se partio en tres y el OPERADOR paso a MONTACARGUISTA. */
-  const CARGOS_ASISTENCIA = ['ALMACENAJE', 'BUFFER', 'SLOTTING', 'MONTACARGUISTA'];
+     AYUDANTE DE ALMACEN se partio en tres y el OPERADOR paso a MONTACARGUISTA.
+     ASISTENTE se sumo el 03-sep-2026: *"Vicente Moron ha entrado como asistente y
+     quiero que tambien pueda tomar asistencia, porque ahorita lo he puesto como
+     slotting porque no habia un puesto llamado asistente"*. Va en las dos listas:
+     en CARGOS para que aparezca en el combo de Trabajadores, y aca para que esa
+     gente entre a la toma. */
+  const CARGOS_ASISTENCIA = ['ALMACENAJE', 'BUFFER', 'SLOTTING', 'MONTACARGUISTA', 'ASISTENTE'];
   /* UN CARGO QUE YA NO ESTA EN LA LISTA NO SE PISA NI SE ESCONDE.
      Sin esto el <select> se cae en la PRIMERA opcion y las 69 personas que todavia figuran
      como AYUDANTE DE ALMACEN se verian como ALMACENAJE sin serlo — y al tocar cualquier otra
@@ -5858,6 +5863,36 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
 
     const existing = loadAttendanceState(forcedDate);
     const dateFormatted = new Date(forcedDate + 'T12:00:00').toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
+    /* Se calculaba dentro del map, igual para las 78 filas. Ahora se necesita
+       tambien al repintar una sola, asi que sale afuera. */
+    const finalizado = (existing ? existing.finalized : undefined) || false;
+
+    /* LAS DOS CELDAS QUE CAMBIAN, en una funcion, porque ahora se dibujan en dos
+       momentos: al armar la tabla y al repintar una fila suelta. Si el HTML
+       viviera en dos sitios, el dia que se toque uno el otro queda distinto. */
+    const celdaEstado = (dni, isPresent, bloq) =>
+        '<div style="display:flex; gap:0.5rem; justify-content:center;">'
+        + '<button ' + (bloq ? 'disabled' : '') + ' onclick="window.updateAsist(\'' + dni + '\', true)"'
+        + ' style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:'
+        + (isPresent ? 'var(--success)' : 'none') + '; color:' + (isPresent ? 'var(--on-accent)' : 'var(--text-strong)')
+        + '; font-size:var(--t-xs); cursor:' + (bloq ? 'default' : 'pointer') + '; opacity:' + (bloq ? 0.5 : 1) + ';">P</button>'
+        + '<button ' + (bloq ? 'disabled' : '') + ' onclick="window.updateAsist(\'' + dni + '\', false)"'
+        + ' style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:'
+        + (!isPresent ? 'var(--danger)' : 'none') + '; color:' + (!isPresent ? 'var(--on-accent)' : 'var(--text-strong)')
+        + '; font-size:var(--t-xs); cursor:' + (bloq ? 'default' : 'pointer') + '; opacity:' + (bloq ? 0.5 : 1) + ';">F</button>'
+        + '</div>';
+
+    const celdaPuntualidad = (dni, isOnTime, bloq) =>
+        '<div style="display:flex; gap:0.5rem; justify-content:center;">'
+        + '<button ' + (bloq ? 'disabled' : '') + ' onclick="window.updateOnTime(\'' + dni + '\', true)"'
+        + ' style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:'
+        + (isOnTime ? 'var(--cyan-deep)' : 'none') + '; color:' + (isOnTime ? 'var(--on-accent)' : 'var(--text-strong)')
+        + '; font-size:var(--t-xs); cursor:' + (bloq ? 'default' : 'pointer') + '; opacity:' + (bloq ? 0.5 : 1) + ';">S\u00cd</button>'
+        + '<button ' + (bloq ? 'disabled' : '') + ' onclick="window.updateOnTime(\'' + dni + '\', false)"'
+        + ' style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:'
+        + (!isOnTime ? 'var(--orange)' : 'none') + '; color:var(--text-strong)'
+        + '; font-size:var(--t-xs); cursor:' + (bloq ? 'default' : 'pointer') + '; opacity:' + (bloq ? 0.5 : 1) + ';">NO</button>'
+        + '</div>';
 
     if (!workers.length) {
         container.innerHTML = `<div style="padding:3rem; text-align:center;"><p class="txt-suave">Debes importar o registrar <b>Trabajadores Activos</b> antes de tomar asistencia.</p></div>`;
@@ -5894,25 +5929,15 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
                         const isPresent = rec ? rec.present : true;
                         const isOnTime = rec ? rec.onTime : true;
                         const displayName = `${w.apellidos || w.Apellidos || ''}, ${w.nombre || w.Nombre || ''}`;
-                        const isFinalized = (existing ? existing.finalized : undefined) || false;
+                        const isFinalized = finalizado;
                         
                         return `
-                        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.02);">
+                        <tr data-fila="${dni}" style="border-bottom:1px solid rgba(var(--ink-rgb), 0.02);">
                             <td style="padding:0.8rem; text-align:center; color:var(--text-muted); font-weight:700; border-right:1px solid rgba(var(--ink-rgb), 0.05);">${idx + 1}</td>
                             <td style="padding:0.8rem; color:var(--text-strong); font-weight:800; font-size:var(--t-md); letter-spacing:0.5px;">${dni}</td>
                             <td style="padding:0.8rem; font-weight:600;">${displayName}</td>
-                            <td class="celda">
-                                <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isPresent?'var(--success)':'none'}; color:${isPresent?'var(--on-accent)':'var(--text-strong)'}; font-size:var(--t-xs); cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">P</button>
-                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateAsist('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isPresent?'var(--danger)':'none'}; color:${!isPresent?'var(--on-accent)':'var(--text-strong)'}; font-size:var(--t-xs); cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">F</button>
-                                </div>
-                            </td>
-                            <td class="celda">
-                                <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', true)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${isOnTime?'var(--cyan-deep)':'none'}; color:${isOnTime?'var(--on-accent)':'var(--text-strong)'}; font-size:var(--t-xs); cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">SÍ</button>
-                                    <button ${isFinalized ? 'disabled' : ''} onclick="window.updateOnTime('${dni}', false)" style="padding:0.3rem 0.8rem; border-radius:4px; border:1px solid var(--border); background:${!isOnTime?'var(--orange)':'none'}; color:var(--text-strong); font-size:var(--t-xs); cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">NO</button>
-                                </div>
-                            </td>
+                            <td class="celda" data-celda="estado">${celdaEstado(dni, isPresent, isFinalized)}</td>
+                            <td class="celda" data-celda="punt">${celdaPuntualidad(dni, isOnTime, isFinalized)}</td>
                             <td class="celda">
                                 <select ${isFinalized ? 'disabled' : ''} onchange="window.updateJust('${dni}', this.value)" style="background:rgba(var(--ink-rgb), 0.1); border:1px solid var(--border); color:var(--text-strong); padding:0.3rem 0.5rem; border-radius:6px; font-size:var(--t-xs); outline:none; cursor:${isFinalized?'default':'pointer'}; opacity:${isFinalized?0.5:1};">
                                     <option value="" style="background:var(--panel-solid);">- SELECCIONE -</option>
@@ -5930,13 +5955,38 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
     `;
 
     // --- ACCIONES DINÁMICAS (WINDOW SCOPE) ---
+    /* SE REPINTA LA FILA, NO EL PANEL ENTERO.
+       Daniel, 03-sep-2026: *"cuando estoy abajo y le pongo falta o modifico algo,
+       me redirecciona hacia el principio, como que esta volviendo a dibujar el
+       panel"*. Y eso hacia: cada clic rehacia el `innerHTML` con las 78 filas, el
+       navegador perdia el scroll y volvia arriba. Marcar a los ultimos de la
+       lista obligaba a bajar de nuevo despues de CADA clic.
+       Lo unico que cambia al marcar son esas dos celdas de esa persona. */
+    const repintarFila = (dni) => {
+        const rec = localState.find(s => String(s.dni) === String(dni));
+        if (!rec) return;
+        /* TODAS las filas con ese DNI, no la primera. En el maestro hay gente
+           cargada con DNI 00000000, y como el estado se guarda POR DNI esas
+           personas comparten un mismo registro: antes el redibujado completo las
+           dejaba iguales, y repintando solo una quedarian diciendo cosas
+           distintas del mismo dato. */
+        const filas = container.querySelectorAll('tr[data-fila="' + String(dni) + '"]');
+        filas.forEach(fila => {
+            const ce = fila.querySelector('[data-celda="estado"]');
+            const cp = fila.querySelector('[data-celda="punt"]');
+            if (ce) ce.innerHTML = celdaEstado(dni, rec.present, finalizado);
+            if (cp) cp.innerHTML = celdaPuntualidad(dni, rec.onTime, finalizado);
+        });
+    };
+
     window.updateAsist = (dni, val) => {
         const node = localState.find(s => String(s.dni) === String(dni));
         if (node) {
             node.present = val;
+            // Marcar falta apaga la puntualidad, asi que se repintan las dos celdas.
             if (!val) node.onTime = false;
             adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
-            renderAsistenciaSection(container);
+            repintarFila(dni);
         }
     };
 
@@ -5945,7 +5995,7 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
         if (node) {
             node.onTime = val;
             adminService.saveAttendance(forcedDate, { finalized: false, data: localState });
-            renderAsistenciaSection(container);
+            repintarFila(dni);
         }
     };
 
@@ -13652,7 +13702,7 @@ const renderRFSection = (container) => {
           se ata una sola vez al entrar y esas dieciséis quedaron intactas. El
           porqué completo está en la cabecera de ese archivo. */
        (async () => {
-           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0572');
+           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0573');
            montarInventarios(l2Container, {
                renderUploadArea,
                showPremiumConfirm,
@@ -17955,7 +18005,7 @@ const renderRFSection = (container) => {
              `renderDashboard` y que ahora, viviendo afuera, no alcanza sola.
              `tareasDeAlmacenaje` va como función y no como lista: la caché se
              reemplaza entera cuando entran tareas nuevas. */
-          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0572');
+          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0573');
           const corrida = await barrerParaSlotting(
             (Array.isArray(zonasDeLaCorrida) && zonasDeLaCorrida.length)
               ? zonasDeLaCorrida
@@ -26306,7 +26356,7 @@ window.__menuMapa = (btn) => {
              lado es un `let` que leen el plan del Excel y el prepack: si se
              pasara la lista, esos dos nunca se enterarían de la foto nueva. */
           (async () => {
-              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0572');
+              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0573');
               renderAnalisisReserva(skuBuf, {
                   htmlConsolidacionReserva,
                   engancharClicConsolidacion,
@@ -30115,7 +30165,7 @@ window.__menuMapa = (btn) => {
        dibuja nada: lo de arriba sigue funcionando igual. */
     if (p.articulos || p.marcas) {
       try {
-        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0572');
+        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0573');
         const caja = container.querySelector('#asn_detalle');
         /* El HOY va de aca, con getLogicalDate(): el paquete trae el suyo -el del
            robot- y si la corrida fallo, ese "hoy" es de ayer y todo el calendario
