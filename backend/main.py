@@ -512,6 +512,32 @@ def init_db(ruta: Optional[str] = None):
                    'detalle TEXT)')                # lo que haga falta para entenderlo
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_eventos_cuando ON eventos (cuando)')
 
+    # ── EL ASN, EN UNA TABLA DE VERDAD ────────────────────────────────────────
+    #
+    # Una fila por ARTICULO DENTRO DE CADA ASN: 76.658 filas de 1.579.884 lineas,
+    # 22 MB con indices. Es el nivel al que se consulta -"que trae el expediente
+    # 2026-178", "que paso con este ASN", "donde esta este articulo"-. El LPN y la
+    # talla no se guardan: nadie los busca desde la web y serian ~250 MB.
+    cursor.execute('CREATE TABLE IF NOT EXISTS asn ('
+                   'asn TEXT NOT NULL, '            # 20260720801BA.3811903
+                   'articulo TEXT NOT NULL, '       # 3811903-1-32
+                   'descripcion TEXT, '
+                   'marca TEXT, '
+                   'expediente TEXT, '              # 2026000178 <- por aca busca Daniel
+                   'orden TEXT, '                   # 2026-07208-01
+                   'sociedad TEXT, '                # BA, CA, CE, VM, BG
+                   'tipo TEXT, '                    # importacion, nacional, inversa...
+                   'estado TEXT, '                  # In Transit, Verified...
+                   'fecha_envio TEXT, '             # AAAA-MM-DD
+                   'fecha_recepcion TEXT, '
+                   'enviado INTEGER, '
+                   'recibido INTEGER, '
+                   'lineas INTEGER, '
+                   'PRIMARY KEY (asn, articulo))')
+    # SIN INDICE, buscar recorre las 76.658 filas. Con ellos, 1 a 24 ms.
+    for _col in ('expediente', 'articulo', 'orden', 'tipo', 'fecha_envio', 'estado'):
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_asn_%s ON asn (%s)' % (_col, _col))
+
     # 'tema' llego despues: el administrador le deja puesto un tema a cada usuario y ese
     # es con el que abre la primera vez, en la PC que sea. Antes el tema vivia solo en el
     # navegador, asi que cada maquina era un mundo y una persona nueva siempre arrancaba
@@ -750,6 +776,186 @@ async def leer_eventos(dias: int = 7, origen: Optional[str] = None,
              "accion": f[4], "detalle": f[5]} for f in filas]}
     except Exception as e:
         return {"status": "error", "message": str(e), "eventos": []}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  EL ASN: cargar y consultar
+# ══════════════════════════════════════════════════════════════════════════════
+
+ASN_COLS = ('asn', 'articulo', 'descripcion', 'marca', 'expediente', 'orden',
+            'sociedad', 'tipo', 'estado', 'fecha_envio', 'fecha_recepcion',
+            'enviado', 'recibido', 'lineas')
+
+
+@app.post("/api/asn/carga")
+async def cargar_asn(request: Request):
+    """La carga del robot, en tres pasos.
+
+    ESCRIBIR ACA EXIGE EL TOKEN DEL ROBOT SIEMPRE, sin importar como este el
+    interruptor general: esta tabla la escribe un robot y nadie mas, asi que no
+    hay motivo para dejarla abierta ni en modo aviso.
+
+        {"paso": "inicio"}                  vacia la tabla de trabajo
+        {"paso": "lote", "filas": [[...]]}  agrega un lote
+        {"paso": "fin"}                     recien aca reemplaza la tabla buena
+
+    Se escribe en `asn_cargando` y se cambia al final: si el robot se corta a la
+    mitad, la tabla vieja sigue entera y la web sigue contestando.
+    """
+    if not token_de_robot_valido(request):
+        return JSONResponse(status_code=403, content={
+            "status": "error",
+            "message": "Cargar el ASN necesita el token del robot."})
+    try:
+        cuerpo = await request.json()
+        paso = str(cuerpo.get("paso") or "").strip()
+        conn = sqlite3.connect(db_path())
+        cur = conn.cursor()
+
+        if paso == "inicio":
+            cur.execute('DROP TABLE IF EXISTS asn_cargando')
+            cur.execute('CREATE TABLE asn_cargando ('
+                        'asn TEXT NOT NULL, articulo TEXT NOT NULL, descripcion TEXT, '
+                        'marca TEXT, expediente TEXT, orden TEXT, sociedad TEXT, '
+                        'tipo TEXT, estado TEXT, fecha_envio TEXT, fecha_recepcion TEXT, '
+                        'enviado INTEGER, recibido INTEGER, lineas INTEGER, '
+                        'PRIMARY KEY (asn, articulo))')
+            conn.commit(); conn.close()
+            return {"status": "ok", "paso": "inicio"}
+
+        if paso == "lote":
+            filas = cuerpo.get("filas") or []
+            if not isinstance(filas, list):
+                conn.close()
+                return {"status": "error", "message": "filas tiene que ser una lista"}
+            cur.executemany(
+                'INSERT OR REPLACE INTO asn_cargando VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                [tuple(f)[:14] for f in filas if isinstance(f, (list, tuple)) and len(f) >= 14])
+            conn.commit()
+            n = cur.execute('SELECT COUNT(*) FROM asn_cargando').fetchone()[0]
+            conn.close()
+            return {"status": "ok", "paso": "lote", "recibidas": len(filas), "van": n}
+
+        if paso == "fin":
+            n = cur.execute('SELECT COUNT(*) FROM asn_cargando').fetchone()[0]
+            # NO SE CAMBIA POR UNA TABLA VACIA. Si la carga fallo, quedarse con la
+            # vieja es mucho mejor que quedarse sin nada.
+            if n < 1000:
+                conn.close()
+                return JSONResponse(status_code=400, content={
+                    "status": "error",
+                    "message": "la carga trajo %d filas: son muy pocas, no se reemplaza" % n})
+            cur.execute('DROP TABLE IF EXISTS asn')
+            cur.execute('ALTER TABLE asn_cargando RENAME TO asn')
+            for c in ('expediente', 'articulo', 'orden', 'tipo', 'fecha_envio', 'estado'):
+                cur.execute('CREATE INDEX IF NOT EXISTS idx_asn_%s ON asn (%s)' % (c, c))
+            conn.commit(); conn.close()
+            return {"status": "ok", "paso": "fin", "filas": n}
+
+        conn.close()
+        return {"status": "error", "message": "paso desconocido: %s" % paso}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/asn")
+async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = None,
+                        articulo: Optional[str] = None, orden: Optional[str] = None,
+                        tipo: Optional[str] = None, estado: Optional[str] = None,
+                        marca: Optional[str] = None,
+                        desde: Optional[str] = None, hasta: Optional[str] = None,
+                        pendiente: int = 0, q: Optional[str] = None,
+                        agrupar: Optional[str] = None,
+                        limite: int = 200, pagina: int = 0):
+    """Busca en los seis meses y devuelve SOLO lo que coincide.
+
+    `q` busca en el ASN, el expediente, el articulo y la descripcion a la vez: es
+    lo que se escribe en la caja cuando comercial avisa "va a entrar el 2026-178".
+    Se aceptan las dos formas -2026-178 y 2026000178- porque el correo usa una y
+    el WMS la otra.
+
+    `agrupar` devuelve el resumen en vez del detalle: por expediente, por asn,
+    por articulo, por tipo o por marca.
+    """
+    try:
+        cond, args = [], []
+
+        def like(campo, valor):
+            cond.append('%s LIKE ?' % campo)
+            args.append('%' + valor.strip() + '%')
+
+        if expediente:
+            # "2026-178" en el correo es "2026000178" en el WMS
+            e = expediente.strip().replace('.', '-')
+            m = re.match(r'^(\d{4})-0*(\d{1,6})$', e)
+            if m:
+                e = '%s%06d' % (m.group(1), int(m.group(2)))
+            like('expediente', e)
+        if asn:
+            like('asn', asn)
+        if articulo:
+            like('articulo', articulo.strip().replace('-', ''))
+        if orden:
+            like('orden', orden)
+        if tipo:
+            cond.append('tipo = ?'); args.append(tipo.strip())
+        if estado:
+            cond.append('estado = ?'); args.append(estado.strip())
+        if marca:
+            cond.append('marca = ?'); args.append(marca.strip())
+        if desde:
+            cond.append('fecha_envio >= ?'); args.append(desde.strip()[:10])
+        if hasta:
+            cond.append('fecha_envio <= ?'); args.append(hasta.strip()[:10])
+        if pendiente:
+            cond.append('enviado > recibido')
+        if q:
+            t = q.strip()
+            # el mismo truco del expediente, para que sirva escribir 2026-178
+            m = re.match(r'^(\d{4})[-.]0*(\d{1,6})$', t)
+            alt = '%s%06d' % (m.group(1), int(m.group(2))) if m else t
+            cond.append('(asn LIKE ? OR expediente LIKE ? OR articulo LIKE ? '
+                        'OR descripcion LIKE ? OR orden LIKE ?)')
+            args += ['%' + t + '%', '%' + alt + '%',
+                     '%' + t.replace('-', '') + '%', '%' + t + '%', '%' + t + '%']
+
+        donde = (' WHERE ' + ' AND '.join(cond)) if cond else ''
+        conn = sqlite3.connect(db_path())
+        cur = conn.cursor()
+
+        # el resumen SIEMPRE viaja: es barato y evita una segunda consulta
+        tot = cur.execute(
+            'SELECT COUNT(*), COALESCE(SUM(enviado),0), COALESCE(SUM(recibido),0), '
+            'COUNT(DISTINCT asn), COUNT(DISTINCT expediente) FROM asn' + donde, args).fetchone()
+
+        if agrupar in ('expediente', 'asn', 'articulo', 'tipo', 'marca', 'orden'):
+            lim = max(1, min(int(limite or 200), 2000))
+            filas = cur.execute(
+                'SELECT %s, COUNT(*), SUM(enviado), SUM(recibido), COUNT(DISTINCT asn), '
+                'MIN(fecha_envio), MAX(fecha_envio) FROM asn%s GROUP BY %s '
+                'ORDER BY SUM(enviado-recibido) DESC LIMIT ?'
+                % (agrupar, donde, agrupar), args + [lim]).fetchall()
+            conn.close()
+            return {"status": "ok", "agrupado": agrupar,
+                    "total": {"filas": tot[0], "enviado": tot[1], "recibido": tot[2],
+                              "asn": tot[3], "expedientes": tot[4]},
+                    "grupos": [{"clave": f[0], "filas": f[1], "enviado": f[2],
+                                "recibido": f[3], "falta": (f[2] or 0) - (f[3] or 0),
+                                "asn": f[4], "desde": f[5], "hasta": f[6]} for f in filas]}
+
+        lim = max(1, min(int(limite or 200), 1000))
+        off = max(0, int(pagina or 0)) * lim
+        filas = cur.execute(
+            'SELECT ' + ', '.join(ASN_COLS) + ' FROM asn' + donde +
+            ' ORDER BY fecha_envio DESC, asn LIMIT ? OFFSET ?', args + [lim, off]).fetchall()
+        conn.close()
+        return {"status": "ok",
+                "total": {"filas": tot[0], "enviado": tot[1], "recibido": tot[2],
+                          "asn": tot[3], "expedientes": tot[4]},
+                "pagina": off // lim, "limite": lim,
+                "datos": [dict(zip(ASN_COLS, f)) for f in filas]}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "datos": []}
 
 
 @app.get("/api/health")
