@@ -400,6 +400,67 @@ export function montarAsnDetalle(cont, OPC) {
 
     // ─── POR MARCA ───────────────────────────────────────────────────────────
     const marcas = p.marcas || [];
+    // ─── DE DONDE VIENE ──────────────────────────────────────────────────────
+    //
+    // Daniel, 03-sep-2026: *"falta anadir importacion, nacional, logistica
+    // inversa y otras cosas al reporte"*.
+    //
+    // SE DICE DE DONDE SALE LA CLASIFICACION. 16.179 de los 16.404 ASN los
+    // clasifica el propio WMS por su codigo; los 225 que no traen codigo salen
+    // del patron del numero, que coincide con el codigo el 97,4% de las veces.
+    // No es lo mismo un dato del sistema que una deduccion, y el que lee tiene
+    // derecho a saber cual esta mirando.
+    const tipos = p.tipos || [];
+    if (tipos.length) {
+        const NOMBRE = {
+            importacion: 'Importación', nacional: 'Nacional',
+            inversa: 'Logística inversa', devolucion: 'Devolución',
+            reingreso: 'Reingreso', traslado: 'Traslado',
+            materiales: 'Materiales', sin_clasificar: 'Sin clasificar',
+        };
+        const PIE = {
+            importacion: 'se anuncia con ~37 días de anticipación y se paga en dólares',
+            nacional: 'proveedor local, en soles; llega casi completo',
+            inversa: 'vuelve de tienda — el ASN empieza con T',
+            devolucion: 'devoluciones sueltas, de a pocas unidades',
+            reingreso: 'cambio de calidad, acuerdo comercial, Falabella',
+            traslado: 'movimiento entre almacenes',
+            materiales: 'cajas, bolsas y empaque — no es mercadería',
+            sin_clasificar: 'el WMS no le puso código y el número no lo dice',
+        };
+        const f = p.tipoFuente || {};
+        const totF = tipos.reduce((a, x) => a + x.falta, 0);
+        T.push('<div class="a-caja"><div class="a-cab"><h3>De dónde viene</h3>'
+        + '<span class="nota">'
+        + (f.porCodigo ? nf(f.porCodigo) + ' clasificados por el WMS' : '')
+        + (f.porNumero ? ' · ' + nf(f.porNumero) + ' por el número del ASN' : '')
+        + '</span></div>'
+        + '<div class="a-scroll"><table><thead><tr>'
+        + '<th>De dónde</th><th>ASN</th><th>Enviado</th><th>Recibido</th>'
+        + '<th>Falta</th><th>Cumple</th></tr></thead><tbody>'
+        + tipos.map(x => '<tr><td>' + esc(NOMBRE[x.tipo] || x.tipo)
+            + '<br><span class="a-desc">' + esc(PIE[x.tipo] || '') + '</span></td>'
+            + '<td>' + nf(x.asn) + '</td>'
+            + '<td>' + nf(x.enviado) + '</td>'
+            + '<td>' + nf(x.recibido) + '</td>'
+            + '<td class="a-falta">' + nf(x.falta) + '</td>'
+            + '<td class="' + (x.cumple >= 95 ? 'a-ok' : 'a-falta') + '">'
+            + n1(x.cumple) + '%</td></tr>').join('')
+        + '<tr style="border-top:2px solid var(--border); font-weight:800;">'
+        + '<td>Total</td>'
+        + '<td>' + nf(tipos.reduce((a, x) => a + x.asn, 0)) + '</td>'
+        + '<td>' + nf(tipos.reduce((a, x) => a + x.enviado, 0)) + '</td>'
+        + '<td>' + nf(tipos.reduce((a, x) => a + x.recibido, 0)) + '</td>'
+        + '<td class="a-falta">' + nf(totF) + '</td><td></td></tr>'
+        + '</tbody></table></div>'
+        + '<div class="a-pie">'
+        + (tipos[0] ? 'El <b>' + Math.round(100 * tipos[0].falta / (totF || 1))
+            + '%</b> de todo lo pendiente es <b>' + esc((NOMBRE[tipos[0].tipo] || '').toLowerCase())
+            + '</b>. ' : '')
+        + 'Lo nacional llega prácticamente completo; lo que se persigue es la importación.'
+        + '</div></div>');
+    }
+
     T.push('<div class="a-caja"><div class="a-cab"><h3>Qué marca está llegando</h3>'
     + '<span class="nota">las ' + marcas.length + ' marcas · clic para filtrar los artículos de abajo</span></div>'
     + '<div class="a-scroll"><table><thead><tr>'

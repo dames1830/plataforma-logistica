@@ -67,8 +67,8 @@ def log(mensaje, nivel="INFO"):
 # ── DE DONDE VIENE CADA ASN ─────────────────────────────────────────────────
 #
 # Las etiquetas cortas van en el orden en que Daniel las nombra.
-TIPOS = ('importacion', 'nacional', 'inversa', 'devolucion', 'traslado',
-         'materiales', 'sin_clasificar')
+TIPOS = ('importacion', 'nacional', 'inversa', 'devolucion', 'reingreso',
+         'traslado', 'materiales', 'sin_clasificar')
 
 # EL TIPO VIENE CODIFICADO EN `cust_field_1`, no como texto.
 #
@@ -85,12 +85,34 @@ TIPOS = ('importacion', 'nacional', 'inversa', 'devolucion', 'traslado',
 # 56 y 89 son los dos codigos de la inversa; los dos caen en ASN que empiezan
 # con T, que es lo que Daniel confirmo como logistica inversa. Que los separa
 # todavia no se sabe, asi que los dos van al mismo tipo y no se inventa nada.
+# La tabla completa, medida sobre los 16.404 ASN de los seis meses el 03-sep-2026.
+# Septiembre solo mostraba 5 de los 11 codigos.
+#
+#   codigo   ASN     que es                     como se comprobo
+#     24    6.000    importacion                100% del patron del numero
+#     56    3.917    inversa                    100%
+#     30    2.557    devolucion                  97%
+#     89    2.027    inversa                    100%
+#     23    1.584    nacional                   100%
+#     16       76    inversa                    100%
+#     36       12    reingreso  "cambio de calidad"
+#     63        3    reingreso  "cambio de calidad a 2da"
+#     79        2    reingreso  "devolucion por acuerdo comercial"
+#     A4        1    reingreso  "reingreso de ordenes Falabella"
+#     10       98    NO SE MAPEA: se contradice solo -61% nacional, 39%
+#                    importacion segun el numero-. Cae al patron, que acierta
+#                    el 97,4% de las veces.
 POR_CODIGO = {
     '23': 'nacional',
     '24': 'importacion',
     '30': 'devolucion',
     '56': 'inversa',
     '89': 'inversa',
+    '16': 'inversa',
+    '36': 'reingreso',
+    '63': 'reingreso',
+    '79': 'reingreso',
+    'A4': 'reingreso',
 }
 
 # Y por si algun dia el campo trae el texto en vez del codigo.
@@ -246,6 +268,11 @@ def construir():
     mes = defaultdict(lambda: {"env": 0.0, "rec": 0.0})
     estado = defaultdict(lambda: {"asn": set(), "env": 0.0, "rec": 0.0})
     asn_env, asn_rec, asn_info = defaultdict(float), defaultdict(float), {}
+    # DE DONDE VIENE CADA ASN. Un ASN aparece en muchas lineas, asi que el tipo se
+    # decide una vez -la primera- y las cantidades se suman aparte.
+    asn_tipo = {}
+    asn_codigo = {}
+    tipo_acum = defaultdict(lambda: {"asn": set(), "env": 0.0, "rec": 0.0})
     # Lo RECIBIDO, por el mes en que entro de verdad al sistema. Es la unica
     # fecha que responde 'que se recibio entre tal y tal dia': ni la de envio
     # ni la de creacion sirven para eso.
@@ -313,6 +340,9 @@ def construir():
         # La columna se agrego el 01-sep-2026. Los archivos bajados antes no la
         # traen: se acepta que falte y el bloque queda vacio hasta la proxima bajada.
         iV = idx.get("Fecha de recepción") or idx.get("verified_ts")
+        # El Tipo ASN, codificado. Se agrego al web report el 03-sep-2026; los
+        # archivos bajados antes no la traen y el tipo sale del numero.
+        iT = idx.get("cust_field_1")
 
         n = 0
         for fila in it:
@@ -333,6 +363,20 @@ def construir():
 
             mes[etiqueta]["env"] += env
             mes[etiqueta]["rec"] += rec
+
+            # EL TIPO SE DECIDE UNA VEZ POR ASN. Manda el codigo del WMS; si no
+            # esta -o es uno de los que se contradice- entra el patron del numero,
+            # que acierta el 97,4% comparado con el codigo.
+            if asn not in asn_tipo:
+                cod = ""
+                if iT is not None and iT < len(fila) and fila[iT] is not None:
+                    cod = str(fila[iT]).strip()
+                asn_codigo[asn] = cod
+                asn_tipo[asn] = tipo_del_wms(cod) or tipo_por_el_numero(asn)
+            t = tipo_acum[asn_tipo[asn]]
+            t["asn"].add(asn)
+            t["env"] += env
+            t["rec"] += rec
 
             # el detalle por articulo, por marca y por mes
             if cod:
@@ -537,6 +581,25 @@ def construir():
         # LOS PARCIALES, TODOS. Antes se publicaban 60 de 122 y Daniel pidio un
         # filtro sobre ellos: filtrar la mitad de la lista no sirve. Son chicos
         # -18 KB los 139- y son justo los que hay que perseguir.
+        # ── DE DONDE VIENE LO QUE LLEGA ──────────────────────────────────────
+        #
+        # Daniel, 03-sep-2026: *"falta anadir importacion, nacional, logistica
+        # inversa y otras cosas al reporte"*.
+        #
+        # Se publica tambien de donde salio cada clasificacion, porque no es lo
+        # mismo un dato del sistema que una deduccion: la pantalla lo dice.
+        "tipos": sorted([{
+            "tipo": k,
+            "asn": len(v["asn"]),
+            "enviado": round(v["env"]),
+            "recibido": round(v["rec"]),
+            "falta": round(v["env"] - v["rec"]),
+            "cumple": round(100.0 * v["rec"] / v["env"], 1) if v["env"] else 0,
+        } for k, v in tipo_acum.items()], key=lambda x: -x["falta"]),
+        "tipoFuente": {
+            "porCodigo": sum(1 for a in asn_tipo if tipo_del_wms(asn_codigo.get(a, ""))),
+            "porNumero": sum(1 for a in asn_tipo if not tipo_del_wms(asn_codigo.get(a, ""))),
+        },
         "parciales": parciales,
         "parciales_total": len(parciales),
         "parciales_falta": sum(p["falta"] for p in parciales),
