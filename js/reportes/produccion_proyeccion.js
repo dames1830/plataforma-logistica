@@ -66,8 +66,8 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0559';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0559';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0560';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0560';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
@@ -118,8 +118,21 @@ const TIPOS = {
     mat:   { clases: ['materiales', 'sin_tipo'],    unidad: 'unidades' },
 };
 
+/* EL PISO DE 100 PARES/HORA.
+ *
+ * Daniel, 02-sep-2026: *"el piso hay que ponerlo de cien, porque picking dijo que
+ * cien era su piso. Ahora paguen cien, y desde ahi hay que comenzar"*.
+ *
+ * No es un numero sacado de la data: es lo que el area de picking se comprometio
+ * a hacer. Por eso va SOLO en picking calzado —es donde se dio el compromiso— y
+ * no se le inventa un piso a las otras tres. El dia que embalaje comprometa el
+ * suyo, se agrega aca y aparece solo.
+ *
+ * Se dibuja como una raya roja a lo ancho del grafico, y las cajas dicen cuanto
+ * se esta por encima. Si una semana cae por debajo, se ve de una. */
 const SERIES = [
-    { id: 'pick_cal',   lado: 'p', tipo: 'cal',   titulo: 'PICKING · CALZADO',    color: '#2563eb' },
+    { id: 'pick_cal',   lado: 'p', tipo: 'cal',   titulo: 'PICKING · CALZADO',    color: '#2563eb',
+      piso: 100, pisoQuien: 'el piso que comprometió picking' },
     { id: 'pick_nocal', lado: 'p', tipo: 'nocal', titulo: 'PICKING · NO CALZADO', color: '#d97706' },
     { id: 'emb_cal',    lado: 'e', tipo: 'cal',   titulo: 'EMBALAJE · CALZADO',   color: '#16a34a' },
     { id: 'emb_nocal',  lado: 'e', tipo: 'nocal', titulo: 'EMBALAJE · NO CALZADO', color: '#9333ea' },
@@ -401,6 +414,16 @@ export function montarProduccionProyeccion(cont, OPC) {
         + caja((sube ? 'Sube cada semana' : 'Baja cada semana'),
                (sube ? '+' : '−') + n1(Math.abs(r.pendiente)), '',
                uni + '/h por semana', sube ? '#16a34a' : '#dc2626')
+        /* CONTRA EL PISO, cuando la categoria tiene uno comprometido. Va con la
+           ultima semana cerrada y no con el promedio: lo que importa es como se
+           esta cerrando ahora. */
+        + (c.piso
+            ? caja('Sobre el piso de ' + nf(c.piso),
+                   (r.ultima.ritmo >= c.piso ? '+' : '−')
+                   + n1(Math.abs(r.ultima.ritmo - c.piso) * 100 / c.piso) + '%', '',
+                   'la semana ' + r.ultima.sem + ' cerró en ' + nf(r.ultima.ritmo) + ' ' + uni + '/h',
+                   r.ultima.ritmo >= c.piso ? '#16a34a' : '#dc2626')
+            : '')
         + '</div>');
 
         T.push('<div class="pp-graf"><canvas id="pp_g_' + c.id + '"></canvas></div>');
@@ -418,6 +441,15 @@ export function montarProduccionProyeccion(cont, OPC) {
             linea.push('La semana ' + r.enCurso.sem + ' va por <b>' + nf(r.enCurso.ritmo) + ' '
                 + uni + '/h</b> con ' + nf(r.enCurso.horas) + ' horas hechas; todavía no cerró, '
                 + 'así que va punteada y no entra en los promedios.');
+        }
+        if (c.piso) {
+            const bajo = r.cerradas.filter(p => p.ritmo < c.piso);
+            linea.push('El piso son <b>' + nf(c.piso) + ' ' + uni + '/h</b> — '
+                + c.pisoQuien + ' —, y está dibujado en rojo.'
+                + (bajo.length
+                    ? ' <b>' + bajo.length + (bajo.length === 1 ? ' semana cerró' : ' semanas cerraron')
+                      + ' por debajo</b>: ' + bajo.map(p => 'S' + p.sem + ' con ' + nf(p.ritmo)).join(', ') + '.'
+                    : ' Ninguna semana cerrada cayó por debajo.'));
         }
         if (r.flacas.length) {
             linea.push('Quedan fuera ' + r.flacas.length
@@ -538,6 +570,13 @@ export function montarProduccionProyeccion(cont, OPC) {
             data: {
                 labels: etiquetas,
                 datasets: [
+                    /* EL PISO, a lo ancho de todo el grafico. Va primero para que
+                       quede DEBAJO de la linea de la produccion: es una referencia,
+                       no un dato mas, y no tiene que competir por la mirada. */
+                    { label: 'Piso', hidden: !r.cfg.piso,
+                      data: todas.map(() => r.cfg.piso || 0),
+                      borderColor: '#dc2626', borderWidth: 2, borderDash: [3, 3],
+                      pointRadius: 0, fill: false, order: 4 },
                     { label: 'Tendencia', data: tend, borderColor: 'rgba(148,163,184,0.85)',
                       borderWidth: 2, borderDash: [6, 5], pointRadius: 0, fill: false, order: 3 },
                     { label: 'Cerrada', data: cerradas, borderColor: r.cfg.color,
@@ -564,6 +603,9 @@ export function montarProduccionProyeccion(cont, OPC) {
                         label: (c) => {
                             if (c.parsed.y === null || c.parsed.y === undefined) return null;
                             const p = todas[c.dataIndex];
+                            if (c.dataset.label === 'Piso') {
+                                return 'Piso comprometido: ' + nf(c.parsed.y) + ' ' + r.T.unidad + '/h';
+                            }
                             if (c.dataset.label === 'Tendencia') {
                                 return 'Tendencia: ' + nf(c.parsed.y) + ' ' + r.T.unidad + '/h';
                             }
@@ -573,6 +615,8 @@ export function montarProduccionProyeccion(cont, OPC) {
                     } }
                 },
                 scales: {
+                    /* Arranca en cero a proposito: con un eje recortado, 149 y 181
+                       parecen el doble uno del otro, y el piso de 100 se pierde. */
                     y: { beginAtZero: true, ticks: { callback: (v) => nf(v) } },
                     x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 20 } }
                 }

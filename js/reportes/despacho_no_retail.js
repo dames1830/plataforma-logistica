@@ -37,7 +37,7 @@
  *   onLogout()                      cerrar sesion desde la vista movil
  */
 
-import { getUploadMeta } from '../services_v245/csvHub_v6.js?v=29.0559';
+import { getUploadMeta } from '../services_v245/csvHub_v6.js?v=29.0560';
 
 export const renderDespachoNoRetailPortal = async (container, ENT = {}) => {
   const isMobile = window.innerWidth <= 768;
@@ -171,7 +171,7 @@ export const renderDespachoNoRetailPortal = async (container, ENT = {}) => {
                   <div style="flex-grow:1; overflow-y:auto; padding-bottom: 4.5rem;" id="nr_content_wrapper">
                       ${renderActiveTabContent(activeTab, capitalizedToday, pendingCount, totalCount)}
                           <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem; font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.25); font-weight: 700; letter-spacing: 0.05em;">
-                              SYSTEM BUILD: v29.0559 | MOBILE PORTAL
+                              SYSTEM BUILD: v29.0560 | MOBILE PORTAL
                           </div>
                   </div>
 
