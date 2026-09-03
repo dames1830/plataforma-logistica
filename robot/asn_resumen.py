@@ -70,7 +70,30 @@ def log(mensaje, nivel="INFO"):
 TIPOS = ('importacion', 'nacional', 'inversa', 'devolucion', 'traslado',
          'materiales', 'sin_clasificar')
 
-# Lo que puede traer el campo del WMS. Se compara sin tildes y en mayusculas.
+# EL TIPO VIENE CODIFICADO EN `cust_field_1`, no como texto.
+#
+# Comprobado el 03-sep-2026 sobre los 384 ASN de septiembre: el codigo coincide
+# al 100% con el tipo que deduce el patron del numero, y la moneda de
+# `cust_field_2` lo refuerza sola.
+#
+#     codigo  moneda   tipo             ASN   coincidencia con el numero
+#       24     USD     importacion      161      161/161  = 100%
+#       23     PEN     nacional          18       18/18   = 100%
+#       56/89   -      inversa          191      191/191  = 100%
+#       30      -      devolucion        14       14/14   = 100%
+#
+# 56 y 89 son los dos codigos de la inversa; los dos caen en ASN que empiezan
+# con T, que es lo que Daniel confirmo como logistica inversa. Que los separa
+# todavia no se sabe, asi que los dos van al mismo tipo y no se inventa nada.
+POR_CODIGO = {
+    '23': 'nacional',
+    '24': 'importacion',
+    '30': 'devolucion',
+    '56': 'inversa',
+    '89': 'inversa',
+}
+
+# Y por si algun dia el campo trae el texto en vez del codigo.
 DEL_WMS = {
     'IMP': 'importacion', 'IMPORTACION': 'importacion', 'IMPORTACION IMP': 'importacion',
     'NAC': 'nacional', 'NACIONAL': 'nacional',
@@ -107,10 +130,12 @@ def tipo_por_el_numero(asn):
 
 
 def tipo_del_wms(valor):
-    """Lo que diga el campo personalizado, si dice algo reconocible."""
+    """Lo que diga el campo personalizado: primero el codigo, despues el texto."""
     v = (valor or '').strip().upper()
     if not v:
         return None
+    if v in POR_CODIGO:
+        return POR_CODIGO[v]
     v = v.replace('\u00d3', 'O').replace('\u00cd', 'I').replace('\u00c1', 'A')
     for k, t in DEL_WMS.items():
         if v == k or v.startswith(k + ' ') or v.endswith(' ' + k):
