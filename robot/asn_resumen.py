@@ -58,6 +58,21 @@ def log(mensaje, nivel="INFO"):
           flush=True)
 
 
+def limpio(texto):
+    """Saca los bytes rotos que trae el WMS en algunas descripciones.
+
+    `9906681-1-01` llega como "KIT DE AFILIACION CAT?LOGO": donde va la A con
+    tilde hay un byte 0x81 suelto, que Python arrastra como sustituto sin
+    pareja. En pantalla sale un rombo negro, y ademas ROMPE a cualquiera que
+    vuelva a codificar el JSON -paso al releer el paquete ya publicado-.
+    """
+    if not texto:
+        return ""
+    if any(0xD800 <= ord(c) <= 0xDFFF for c in texto):
+        return "".join("?" if 0xD800 <= ord(c) <= 0xDFFF else c for c in texto)
+    return texto
+
+
 def rutas():
     global CARPETA_ASN, MAESTRO
     import wms_automation_final as wms
@@ -224,8 +239,8 @@ def construir():
                 a["r"] += rec
                 a["n"] += 1
                 if not a["d"]:
-                    a["d"] = (str(fila[iD]).strip()[:70]
-                              if iD is not None and iD < len(fila) and fila[iD] else "")
+                    a["d"] = limpio(str(fila[iD]).strip()[:70]
+                                    if iD is not None and iD < len(fila) and fila[iD] else "")
                     a["m"] = mk
                     a["g"] = gen
                 k = marca[mk]
