@@ -66,12 +66,12 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0564';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0564';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0565';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0565';
 /* LA EQUIVALENCIA SE IMPORTA, NO SE COPIA. Vive en `picking.js` desde que se
    midio sobre nueve archivos reales, y escribirla otra vez aca seria tener dos
    verdades que un dia se separan. */
-import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0564';
+import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0565';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
@@ -565,13 +565,20 @@ export function montarProduccionProyeccion(cont, OPC) {
                      + (_modo === 'equivalente' ? ' · factor ' + n2(r.ultima.factor) : '')
                    : ''))
         + (r.anterior ? caja('Cierre semana ' + r.anterior.sem, nf(r.anterior.ritmo), uni + '/h',
-               nf(r.anterior.pares) + ' ' + uni + ' en ' + nf(r.anterior.horas) + ' h') : '')
+               nf(r.anterior.pares) + ' ' + uni + ' en ' + nf(r.anterior.horas) + ' h · '
+               + r.anterior.dias + (r.anterior.dias === 1 ? ' día' : ' días')) : '')
         + caja('Últimas 4 semanas', nf(r.prom4), uni + '/h', 'promedio')
         + caja('Promedio general', nf(r.promTodas), uni + '/h',
                r.cerradas.length + ' semanas cerradas')
+        /* ESTAS DOS CAJAS PARECEN CONTRADECIRSE Y NO LO HACEN. Daniel, 02-sep:
+           *"me dices que baja cada semana 1,4 y al final que sobre el piso esta
+           +18,7%. No me cuadra"*. Una dice HACIA DONDE VA y la otra DONDE ESTA:
+           se puede ir bajando y seguir muy por encima del piso. Ahora cada una
+           lo dice en su pie. */
         + caja((sube ? 'Sube cada semana' : 'Baja cada semana'),
                (sube ? '+' : '−') + n1(Math.abs(r.pendiente)), '',
-               uni + '/h por semana', sube ? '#16a34a' : '#dc2626')
+               uni + '/h por semana<br><b>hacia dónde va</b>',
+               sube ? '#16a34a' : '#dc2626')
         /* CONTRA EL PISO, cuando la categoria tiene uno comprometido. Va con la
            ultima semana cerrada y no con el promedio: lo que importa es como se
            esta cerrando ahora. */
@@ -579,7 +586,8 @@ export function montarProduccionProyeccion(cont, OPC) {
             ? caja('Sobre el piso de ' + nf(c.piso),
                    (r.ultima.ritmo >= c.piso ? '+' : '−')
                    + n1(Math.abs(r.ultima.ritmo - c.piso) * 100 / c.piso) + '%', '',
-                   'la semana ' + r.ultima.sem + ' cerró en ' + nf(r.ultima.ritmo) + ' ' + uni + '/h',
+                   'la semana ' + r.ultima.sem + ' cerró en ' + nf(r.ultima.ritmo) + ' ' + uni
+                   + '/h<br><b>dónde está hoy</b>',
                    r.ultima.ritmo >= c.piso ? '#16a34a' : '#dc2626')
             : '')
         + '</div>');
@@ -599,6 +607,11 @@ export function montarProduccionProyeccion(cont, OPC) {
             linea.push('La semana ' + r.enCurso.sem + ' va por <b>' + nf(r.enCurso.ritmo) + ' '
                 + uni + '/h</b> con ' + nf(r.enCurso.horas) + ' horas hechas; todavía no cerró, '
                 + 'así que va punteada y no entra en los promedios.');
+        }
+        if (c.piso && (c.tipo !== 'cal' || _modo === 'solid') && !sube) {
+            linea.push('<b>Que baje y que esté sobre el piso no se contradicen</b>: la '
+                + 'pendiente dice hacia dónde va y el piso dice dónde está. Se puede venir '
+                + 'aflojando de a poco y seguir muy por encima de lo comprometido.');
         }
         if (c.piso && (c.tipo !== 'cal' || _modo === 'solid')) {
             const bajo = r.cerradas.filter(p => p.ritmo < c.piso);
@@ -667,9 +680,15 @@ export function montarProduccionProyeccion(cont, OPC) {
         return x.horas > 0 ? nf(x.pares / x.horas) : '–';
     };
     T.push('<div class="pp-caja"><p class="pp-titulo" style="color:var(--text-strong);">SEMANA A SEMANA</p>'
-    + '<p class="pp-sub">El ritmo de cada semana en <b>' + 'unidades por hora' + '</b>, y al lado '
-    + 'las horas-persona con que se calculó. Los pares y las horas salen del archivo del WMS: el '
-    + 'ritmo es la división de los dos, no un promedio de días.</p>'
+    + '<p class="pp-sub">El ritmo de cada semana en <b>unidades por hora</b>, y al lado las '
+    + 'horas-persona con que se calculó. Los pares y las horas salen del archivo del WMS: el '
+    + 'ritmo es la división de los dos, no un promedio de días.<br>'
+    /* Daniel, 02-sep: *"en la S31 hacemos 219 horas y de ahi saltas a la S32 con 588
+       y a la S33 con 895. No me esta cuadrando"*. Las horas saltan porque saltan
+       los dias y la gente, y ESA es la razon de medir por hora y no por semana. */
+    + '<b>Las horas saltan mucho de una semana a otra, y está bien</b>: unas tienen seis días y '
+    + 'otras cinco o dos, y entra distinta cantidad de gente. Por eso el cuadro mide <b>por '
+    + 'hora</b> y no por semana — el ritmo se queda quieto aunque las horas se muevan.</p>'
     + '<div class="pp-scroll"><table class="pp-tabla"><thead>'
     + '<tr><th></th><th class="pp-grupo" colspan="4">Picking · por hora</th>'
     + '<th class="pp-grupo pp-sep" colspan="4">Embalaje · por hora</th></tr>'
