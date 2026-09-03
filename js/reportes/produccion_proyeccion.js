@@ -1,58 +1,60 @@
 /**
  * PICKING → PRODUCCIÓN PICKING EMBALAJE
  *
- * Cuánto se pica y cuánto se embala POR SEMANA, cuánto sube cada semana y cuánto
- * se proyecta. Abierto en calzado y no calzado, que se miran por separado.
- *
  * ╔══════════════════════════════════════════════════════════════════════════╗
- * ║ POR QUÉ VA EN PARES Y POR SEMANA. Esta pantalla se hizo mal dos veces    ║
- * ║ seguidas y las dos las corrigió Daniel.                                  ║
+ * ║ LA PREGUNTA QUE CONTESTA: ¿CUÁNTOS PARES POR HORA HACEMOS,               ║
+ * ║ Y ESTÁ SUBIENDO O BAJANDO?                                                ║
  * ╚══════════════════════════════════════════════════════════════════════════╝
  *
- * PRIMER INTENTO: pares por día, calzado y no calzado SUMADOS. Decía que del 24
- * al 28 de agosto el CD había triplicado la producción —de 40.000 pares diarios a
- * 124.000— y era mentira: el calzado no se movió y todo el salto estaba en no
- * calzado, donde la unidad del WMS no es un par sino una bolsa o una caja de
- * accesorio.
+ * Daniel, 02-sep-2026: *"yo no quiero saber cuántos pares se pican a la semana.
+ * Yo quiero saber la producción por hora. ¿En una hora cuánto hacemos? Y eso
+ * promédialo por semana, así como lo has hecho en almacenaje... la proyección
+ * comenzó con cien pares por hora. Ese es su base, ahora quiero saber si está
+ * subiendo o bajando: eso es lo que quiero identificar"*.
  *
- * SEGUNDO INTENTO: medirlo todo en LÍNEAS, que sí salen planas. Daniel,
- * 02-sep-2026: *"¿por qué me estás calculando líneas? Yo para qué quiero
- * calcular líneas... yo no veo nada en línea, yo veo pares"*. Y tiene razón: la
- * línea sirve para medir esfuerzo, pero él reporta VOLUMEN, y el volumen del CD
- * se cuenta en pares.
+ * ESTA PANTALLA SE HIZO MAL TRES VECES. Vale la pena dejarlo escrito, porque el
+ * error de fondo fue siempre el mismo: contestar otra pregunta.
  *
- * EL ARREGLO NO ERA CAMBIAR DE UNIDAD, ERA NO MEZCLARLAS. Cada categoría con su
- * cuadro y su unidad: el calzado en pares, el no calzado en unidades. Así el
- * número no miente y sigue siendo el que él usa para reportar.
+ *   1. PARES POR DÍA, calzado y no calzado SUMADOS. Decía que el CD había
+ *      triplicado la producción del 24 al 28 de agosto. Mentira: el calzado no se
+ *      movió y todo el salto era papel de seda contado como pares.
+ *   2. LÍNEAS. Salían planas y resolvían el síntoma, pero *"yo no veo nada en
+ *      línea, yo veo pares"*.
+ *   3. PARES POR SEMANA. Un total, no un ritmo. Decía *"sube 14.962 pares por
+ *      semana"*, que no se puede comparar contra nada ni dice si el equipo rinde
+ *      más. Daniel: *"¿qué es eso? Es una cifra que no se puede..."*.
  *
- * POR SEMANA Y NO POR DÍA porque es como Daniel mira el CD: *"me lo das por
- * semana... en la semana treinta, cuánto subió el picking o cuánto se estima
- * subir"*. De un día al siguiente manda el tamaño del pedido; la semana ya deja
- * ver el ritmo.
+ * LA BUENA ES UN RITMO: PARES POR HORA. Un ritmo no depende de cuántos días tuvo
+ * la semana ni de cuánta gente entró, así que se puede comparar la semana 32 con
+ * la 35 de frente. Es exactamente lo que hace Almacenaje → Productividad, que
+ * Daniel señaló como referencia: ahí dice *"474 u/h"* y *"sube cada semana
+ * +19,9"*, no *"tantas unidades esta semana"*.
  *
- * ESTE CUADRO COPIA A ALMACENAJE → PRODUCTIVIDAD, que él mismo señaló como
- * referencia: las mismas cinco cajas —cierre de la última semana, cierre de la
- * anterior, últimas cuatro, promedio general y cuánto sube por semana—, el mismo
- * gráfico semanal con su recta punteada, y la semana en curso aparte. La cuenta
- * de la semana ISO es la misma, así que la S35 de acá es la S35 de allá.
+ * DE DÓNDE SALEN LAS HORAS. No de la jornada ni de un horario teórico: de lo que
+ * cada persona trabajó DE VERDAD en esa categoría. El robot publica, por persona
+ * y por clase, los tramos en que estuvo moviendo esa cosa —`cal_suelto_iv`,
+ * `no_cal_iv`—, y acá se unen dentro de cada persona y se suman entre personas.
  *
- * LA SEMANA EN CURSO NO ENTRA EN NADA, Y TAMPOCO SE DIBUJA. Está a medio hacer,
- * y acá el eje es un TOTAL de la semana, no una velocidad: una semana con un día
- * siempre va a valer la sexta parte, así que dibujarla es un despeñadero al final
- * del gráfico que no dice nada —y en un cuadro que se mira de reojo, se lee como
- * que la producción se cayó—. Se cuenta con palabras debajo del gráfico.
+ *     UNIÓN DENTRO DE LA PERSONA, SUMA ENTRE PERSONAS. Nadie está en dos sitios a
+ *     la vez, así que a una persona sus tramos se le unen; pero diez pickers
+ *     trabajando a la misma hora son diez horas-persona, no una.
  *
- * (En Almacenaje → Productividad sí se dibuja, y está bien: ahí el eje son
- * unidades POR HORA, y una semana a medias ya da un número comparable.)
+ * EL RITMO DE LA SEMANA SE SACA SUMANDO Y DIVIDIENDO, NO PROMEDIANDO RITMOS.
+ * Pares de la semana entre horas de la semana. Promediar los ritmos diarios le
+ * daría el mismo peso a un sábado de tres horas que a un martes de doce.
  *
- * LAS SEMANAS CORTAS TAMPOCO. Una semana con dos días de datos —porque el robot
- * no corrió, o porque el histórico arranca ahí— no es una semana mala: es una
- * semana incompleta. Se muestran marcadas y con sus días a la vista, pero fuera
- * de la cuenta.
+ * LOS TIPOS SON TRES, y cada uno con su cuadro y su unidad:
+ *   · CALZADO      pares de verdad; suelto y prepack juntos, como se reporta
+ *   · NO CALZADO   bolsas, medias, accesorios. La unidad del WMS no es un par
+ *   · MATERIALES   papel de seda, etiquetas, cajas. No se vende
  *
- * ESTE ARCHIVO NO LEE DEL SERVIDOR. Recibe `OPC.picking` y `OPC.embalaje` —los
- * días ya bajados de las áreas `picking_por_hora` y `embalaje_por_hora`— y solo
- * calcula y dibuja.
+ * LA SEMANA EN CURSO SÍ SE DIBUJA, y acá sí corresponde: al ser un ritmo, una
+ * semana a medias ya da un número comparable. (Cuando esto medía totales había
+ * que esconderla, porque una semana de un día valía la sexta parte y parecía un
+ * desplome.) Va aparte y punteada, igual que en Almacenaje.
+ *
+ * ESTE ARCHIVO NO LEE DEL SERVIDOR. Recibe los días ya bajados de
+ * `picking_por_hora` y `embalaje_por_hora`, y solo calcula y dibuja.
  *
  * Los metros que camina el picker quedan para después, los dejó fuera él mismo.
  *
@@ -64,8 +66,8 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0558';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0558';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0559';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0559';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
@@ -76,8 +78,7 @@ const esc = (t) => String(t == null ? '' : t)
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
 
 /* LA FECHA SE PARTE A MANO, NO CON `new Date(iso)`. Un 'AAAA-MM-DD' suelto se
-   interpreta como UTC y en Lima retrocede al día anterior. Misma trampa que
-   `toISOString()`, al revés. */
+   interpreta como UTC y en Lima retrocede al día anterior. */
 const partir = (f) => {
     const p = String(f || '').split('-');
     return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1);
@@ -88,8 +89,7 @@ const corta = (f) => {
 };
 
 /* SEMANA ISO: el jueves decide a qué semana pertenece un día. Es la misma cuenta
-   que usa Almacenaje → Productividad, para que la semana 35 sea la misma en las
-   dos pantallas. */
+   que usa Almacenaje → Productividad, así que la S35 de acá es la S35 de allá. */
 const semanaDe = (f) => {
     const d = partir(f);
     if (isNaN(d)) return null;
@@ -109,50 +109,73 @@ const lunesDe = (anio, sem) => {
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
-   LAS CUATRO SERIES QUE SE MIRAN
+   LOS TRES TIPOS, Y LAS HORAS DE CADA UNO
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* El calzado son las dos formas juntas —suelto y prepack—: las dos son pares de
-   zapatos y Daniel las reporta juntas. El desglose se sigue viendo en el pie de
-   la primera caja, porque se trabajan distinto.
-
-   El no calzado va aparte Y CON SU PROPIA UNIDAD. Ahí el WMS no cuenta pares:
-   cuenta bolsas, medias y cajas de accesorio. Sumarlo con el calzado fue el error
-   de la primera versión de esta pantalla. */
-const SERIES = [
-    { id: 'pick_cal',   lado: 'p', cat: 'cal',   titulo: 'PICKING · CALZADO',
-      color: '#2563eb', unidad: 'pares' },
-    { id: 'pick_nocal', lado: 'p', cat: 'nocal', titulo: 'PICKING · NO CALZADO',
-      color: '#d97706', unidad: 'unidades' },
-    { id: 'emb_cal',    lado: 'e', cat: 'cal',   titulo: 'EMBALAJE · CALZADO',
-      color: '#16a34a', unidad: 'pares' },
-    { id: 'emb_nocal',  lado: 'e', cat: 'nocal', titulo: 'EMBALAJE · NO CALZADO',
-      color: '#9333ea', unidad: 'unidades' },
-];
-
-/** Un día de un lado, reducido a lo que hace falta. */
-const resumirDia = (entrada) => {
-    const d = (entrada && entrada.datos) || {};
-    const t = ((d.vistas && d.vistas.TODOS) || {}).totales || {};
-    const suelto = Number(t.cal_suelto) || 0;
-    const prepack = Number(t.cal_prepack) || 0;
-    return {
-        fecha: entrada.fecha,
-        cal: suelto + prepack,
-        suelto: suelto,
-        prepack: prepack,
-        nocal: Number(t.no_cal) || 0,
-        /* MATERIALES Y SIN TIPO llegan desde v29.0558. En los dias anteriores no
-           existen y valen cero: hasta que el robot rehaga el historico, esos dias
-           los traen sumados adentro de `no_cal`. Es lo que hay, y se ve. */
-        mat: (Number(t.materiales) || 0) + (Number(t.sin_tipo) || 0),
-        soloMat: Number(t.materiales) || 0,
-        sinTipo: Number(t.sin_tipo) || 0,
-    };
+const TIPOS = {
+    cal:   { clases: ['cal_suelto', 'cal_prepack'], unidad: 'pares' },
+    nocal: { clases: ['no_cal'],                    unidad: 'unidades' },
+    mat:   { clases: ['materiales', 'sin_tipo'],    unidad: 'unidades' },
 };
 
-/* MÍNIMOS CUADRADOS sobre los puntos que se le pasen. Devuelve cuánto sube por
-   paso —acá, por semana— y dónde arranca la recta. */
+const SERIES = [
+    { id: 'pick_cal',   lado: 'p', tipo: 'cal',   titulo: 'PICKING · CALZADO',    color: '#2563eb' },
+    { id: 'pick_nocal', lado: 'p', tipo: 'nocal', titulo: 'PICKING · NO CALZADO', color: '#d97706' },
+    { id: 'emb_cal',    lado: 'e', tipo: 'cal',   titulo: 'EMBALAJE · CALZADO',   color: '#16a34a' },
+    { id: 'emb_nocal',  lado: 'e', tipo: 'nocal', titulo: 'EMBALAJE · NO CALZADO', color: '#9333ea' },
+];
+
+/* HORAS REALMENTE TRABAJADAS EN UNAS CLASES.
+ *
+ * UNIÓN DENTRO DE CADA PERSONA, SUMA ENTRE PERSONAS. Una persona no puede estar
+ * en dos sitios a la vez, así que sus tramos se unen —si no, alguien que alterna
+ * entre calzado y no calzado contaría el doble de horas—. Pero diez pickers
+ * trabajando a la misma hora son diez horas-persona, no una: entre personas se
+ * suma. La primera medición unía todo junto y daba 85 minutos de trabajo por día
+ * para todo el CD.
+ *
+ * Los tramos los publica el robot en `gente[].total.<clase>_iv`, en segundos
+ * desde medianoche. Son los mismos con los que se calcula el ritmo del turno. */
+const horasDe = (vista, clases) => {
+    let total = 0;
+    (vista.gente || []).forEach(p => {
+        const t = p.total || {};
+        let iv = [];
+        clases.forEach(c => { iv = iv.concat(t[c + '_iv'] || []); });
+        if (!iv.length) return;
+        iv = iv.map(x => [Number(x[0]) || 0, Number(x[1]) || 0])
+               .filter(x => x[1] > x[0])
+               .sort((a, b) => a[0] - b[0]);
+        if (!iv.length) return;
+        let ci = iv[0][0], cf = iv[0][1], s = 0;
+        for (let i = 1; i < iv.length; i++) {
+            if (iv[i][0] > cf) { s += cf - ci; ci = iv[i][0]; cf = iv[i][1]; }
+            else if (iv[i][1] > cf) { cf = iv[i][1]; }
+        }
+        s += cf - ci;
+        total += s;
+    });
+    return total / 3600;
+};
+
+/** Un día de un lado: pares y horas de cada tipo. */
+const resumirDia = (entrada) => {
+    const d = (entrada && entrada.datos) || {};
+    const v = (d.vistas && d.vistas.TODOS) || {};
+    const t = v.totales || {};
+    const o = { fecha: entrada.fecha };
+    Object.keys(TIPOS).forEach(k => {
+        const cl = TIPOS[k].clases;
+        o[k] = { pares: cl.reduce((s, c) => s + (Number(t[c]) || 0), 0),
+                 horas: horasDe(v, cl) };
+    });
+    o.suelto = Number(t.cal_suelto) || 0;
+    o.prepack = Number(t.cal_prepack) || 0;
+    o.sinTipo = Number(t.sin_tipo) || 0;
+    return o;
+};
+
+/* MÍNIMOS CUADRADOS. Devuelve cuánto sube por semana y dónde arranca la recta. */
 const recta = (ys) => {
     const n = ys.length;
     if (n < 2) return { m: 0, b: n ? ys[0] : 0 };
@@ -163,8 +186,6 @@ const recta = (ys) => {
     const m = den ? num / den : 0;
     return { m: m, b: my - m * mx };
 };
-
-const promedio = (v) => v.length ? v.reduce((s, x) => s + x, 0) / v.length : 0;
 
 /* ══════════════════════════════════════════════════════════════════════════
    EL DIBUJO
@@ -179,10 +200,11 @@ const CSS = [
 '#pp .pp-cab .rango-fechas { flex:0 0 auto; }',
 '#pp .pp-titulo { font-size:var(--t-sm); font-weight:900; letter-spacing:0.06em; margin:0 0 3px; }',
 '#pp .pp-sub { font-size:var(--t-xs); color:var(--text-muted); margin:0 0 14px; line-height:1.65; }',
-'#pp .pp-cajas { display:grid; grid-template-columns:repeat(auto-fit, minmax(148px, 1fr)); gap:12px; margin-bottom:16px; }',
+'#pp .pp-cajas { display:grid; grid-template-columns:repeat(auto-fit, minmax(152px, 1fr)); gap:12px; margin-bottom:16px; }',
 '#pp .pp-c { background:rgba(var(--ink-rgb), 0.03); border:1px solid rgba(var(--ink-rgb), 0.08); border-radius:10px; padding:0.85rem 1rem; }',
 '#pp .pp-c .r { font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.45); }',
 '#pp .pp-c .v { font-size:var(--t-2xl); font-weight:900; color:var(--text-strong); line-height:1.15; font-variant-numeric:tabular-nums; }',
+'#pp .pp-c .u { font-size:12px; font-weight:700; opacity:0.6; margin-left:3px; }',
 '#pp .pp-c .p { font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.35); line-height:1.45; }',
 '#pp .pp-graf { position:relative; height:260px; width:0; min-width:100%; }',
 '#pp .pp-scroll { overflow-x:auto; width:0; min-width:100%; }',
@@ -192,6 +214,7 @@ const CSS = [
 '#pp table.pp-tabla th:first-child, #pp table.pp-tabla td:first-child { text-align:left; }',
 '#pp table.pp-tabla td { padding:8px 10px; text-align:right; color:var(--text-main); border-bottom:1px solid rgba(var(--ink-rgb), 0.06); white-space:nowrap; }',
 '#pp table.pp-tabla td.pp-sep, #pp table.pp-tabla th.pp-sep { border-left:1px solid var(--border); }',
+'#pp table.pp-tabla td.pp-ritmo { font-weight:800; color:var(--text-strong); }',
 '#pp table.pp-tabla tr.pp-parcial td { color:var(--text-muted); font-style:italic; }',
 '#pp table.pp-tabla tfoot td { font-weight:800; color:var(--text-strong); border-top:2px solid var(--border); border-bottom:none; padding-top:11px; }',
 '#pp .pp-nota { font-size:var(--t-xs); color:var(--text-muted); line-height:1.65; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }',
@@ -225,71 +248,86 @@ export function montarProduccionProyeccion(cont, OPC) {
         return;
     }
 
-    /* ─── SE AGRUPA POR SEMANA ─────────────────────────────────────────────
-       Un día cuenta para la semana solo si ESE LADO tuvo movimiento: si el robot
-       del picking no corrió un sábado, esa semana tiene cinco días de picking y
-       seis de embalaje. Hay que saberlo para no leer un bajón donde lo único que
-       falta es un archivo. */
+    /* ─── POR SEMANA: SE SUMAN PARES Y HORAS, Y RECIÉN DESPUÉS SE DIVIDE ────
+       El ritmo de la semana NO es el promedio de los ritmos diarios: eso le daría
+       el mismo peso a un sábado de tres horas que a un martes de doce. Es la suma
+       de pares dividida por la suma de horas. */
     const semanas = {};
+    const vacio = () => {
+        const o = { dias: 0, suelto: 0, prepack: 0, sinTipo: 0 };
+        Object.keys(TIPOS).forEach(k => { o[k] = { pares: 0, horas: 0 }; });
+        return o;
+    };
     fechas.forEach(f => {
         const s = semanaDe(f);
         if (!s) return;
         const w = semanas[s.clave] || (semanas[s.clave] = {
             clave: s.clave, sem: s.sem, anio: s.anio, lunes: lunesDe(s.anio, s.sem),
-            p: { cal: 0, nocal: 0, mat: 0, sinTipo: 0, suelto: 0, prepack: 0, dias: 0 },
-            e: { cal: 0, nocal: 0, mat: 0, sinTipo: 0, suelto: 0, prepack: 0, dias: 0 },
+            p: vacio(), e: vacio(),
         });
         ['p', 'e'].forEach(lado => {
             const d = dias[lado][f];
-            if (!d || (!d.cal && !d.nocal && !d.mat)) return;
-            w[lado].cal += d.cal;
-            w[lado].nocal += d.nocal;
-            w[lado].mat += d.mat;
-            w[lado].sinTipo += d.sinTipo;
+            if (!d) return;
+            const algo = Object.keys(TIPOS).some(k => d[k].pares > 0);
+            if (!algo) return;
+            Object.keys(TIPOS).forEach(k => {
+                w[lado][k].pares += d[k].pares;
+                w[lado][k].horas += d[k].horas;
+            });
             w[lado].suelto += d.suelto;
             w[lado].prepack += d.prepack;
+            w[lado].sinTipo += d.sinTipo;
             w[lado].dias++;
         });
     });
 
     const orden = Object.keys(semanas).sort().map(k => semanas[k]);
 
-    /* LA SEMANA EN CURSO es la de hoy, si está en la lista. No entra en promedios
-       ni en la recta: está a medio hacer, y tirar de ella hacia abajo haría
-       parecer que la producción cayó. */
     const hoy = new Date();
     const hoyISO = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0')
         + '-' + String(hoy.getDate()).padStart(2, '0');
     const claveEnCurso = (semanaDe(hoyISO) || {}).clave;
 
-    /* UNA SEMANA CORTA NO ES UNA SEMANA MALA. Con menos de cuatro días de datos de
-       ese lado, el total no se puede comparar con una semana entera: queda a la
-       vista pero fuera de la cuenta. */
-    const DIAS_MINIMOS = 4;
+    /* UN RITMO AGUANTA UNA SEMANA CORTA. Al ser pares POR HORA, una semana de dos
+       días ya da un número comparable —esto no pasaba cuando el cuadro medía
+       totales—. Lo único que se pide son horas suficientes para que el número no
+       sea ruido: menos de cuatro horas de trabajo en una categoría es una muestra,
+       no una semana. */
+    const HORAS_MINIMAS = 4;
 
     const serieDe = (cfg) => {
-        const puntos = orden.map(w => ({
-            clave: w.clave, sem: w.sem, lunes: w.lunes,
-            valor: w[cfg.lado][cfg.cat],
-            dias: w[cfg.lado].dias,
-            suelto: w[cfg.lado].suelto,
-            prepack: w[cfg.lado].prepack,
-            enCurso: w.clave === claveEnCurso,
-        }));
-        const cerradas = puntos.filter(p => !p.enCurso && p.dias >= DIAS_MINIMOS && p.valor > 0);
-        const enCurso = puntos.filter(p => p.enCurso && p.valor > 0)[0] || null;
-        const cortas = puntos.filter(p => !p.enCurso && p.valor > 0 && p.dias < DIAS_MINIMOS);
-        if (!cerradas.length) return { cfg: cfg, puntos: puntos, cerradas: cerradas,
-                                       enCurso: enCurso, cortas: cortas, vacio: true };
+        const T = TIPOS[cfg.tipo];
+        const puntos = orden.map(w => {
+            const x = w[cfg.lado][cfg.tipo];
+            return {
+                clave: w.clave, sem: w.sem, lunes: w.lunes,
+                pares: x.pares, horas: x.horas,
+                ritmo: x.horas > 0 ? x.pares / x.horas : 0,
+                dias: w[cfg.lado].dias,
+                suelto: w[cfg.lado].suelto, prepack: w[cfg.lado].prepack,
+                enCurso: w.clave === claveEnCurso,
+            };
+        });
+        const cerradas = puntos.filter(p => !p.enCurso && p.horas >= HORAS_MINIMAS && p.ritmo > 0);
+        const enCurso = puntos.filter(p => p.enCurso && p.horas >= HORAS_MINIMAS)[0] || null;
+        const flacas = puntos.filter(p => !p.enCurso && p.pares > 0 && p.horas < HORAS_MINIMAS);
+        if (!cerradas.length) return { cfg: cfg, T: T, puntos: puntos, cerradas: cerradas,
+                                       enCurso: enCurso, flacas: flacas, vacio: true };
         const ult4 = cerradas.slice(-4);
-        const r = recta(cerradas.map(p => p.valor));
+        const r = recta(cerradas.map(p => p.ritmo));
+        /* Los promedios también van pares/horas, no promedio de ritmos. */
+        const tasa = (ps) => {
+            const P = ps.reduce((s, p) => s + p.pares, 0);
+            const H = ps.reduce((s, p) => s + p.horas, 0);
+            return H > 0 ? P / H : 0;
+        };
         return {
-            cfg: cfg, puntos: puntos, cerradas: cerradas, enCurso: enCurso, cortas: cortas,
-            vacio: false,
+            cfg: cfg, T: T, puntos: puntos, cerradas: cerradas, enCurso: enCurso,
+            flacas: flacas, vacio: false,
             ultima: cerradas[cerradas.length - 1],
             anterior: cerradas.length > 1 ? cerradas[cerradas.length - 2] : null,
-            prom4: promedio(ult4.map(p => p.valor)),
-            promTodas: promedio(cerradas.map(p => p.valor)),
+            prom4: tasa(ult4),
+            promTodas: tasa(cerradas),
             pendiente: r.m,
             recta: r,
         };
@@ -307,217 +345,157 @@ export function montarProduccionProyeccion(cont, OPC) {
 
     T.push('<div class="pp-cab"><div class="pp-quien">'
     + '<h2>Producción Picking y Embalaje</h2>'
-    + '<div class="pp-cuantos">'
+    + '<div class="pp-cuantos">Pares por hora trabajada · '
     + nSem + (nSem === 1 ? ' semana cerrada' : ' semanas cerradas')
     + ', del ' + corta(fechas[0]) + ' al ' + corta(fechas[fechas.length - 1])
     + (claveEnCurso && semanas[claveEnCurso]
-        ? ' · la semana ' + semanas[claveEnCurso].sem + ' está en curso y no entra en la cuenta'
+        ? ' · la semana ' + semanas[claveEnCurso].sem + ' está en curso'
         : '')
     + '</div></div>'
     + selectorRango(desde, hasta, 'window.__ppRango')
     + '</div>');
 
-    /* ─── UNA TARJETA GRANDE POR SERIE ─────────────────────────────────────
-       Mismo formato que Almacenaje → Productividad, que es el que Daniel ya lee. */
-    const caja = (rot, val, pie, color) =>
+    const caja = (rot, val, uni, pie, color) =>
         '<div class="pp-c"' + (color ? ' style="background:' + color + '18; border-color:' + color + '44;"' : '')
         + '><div class="r"' + (color ? ' style="color:' + color + ';"' : '') + '>' + rot + '</div>'
-        + '<div class="v"' + (color ? ' style="color:' + color + ';"' : '') + '>' + val + '</div>'
+        + '<div class="v"' + (color ? ' style="color:' + color + ';"' : '') + '>' + val
+        + (uni ? '<span class="u">' + uni + '</span>' : '') + '</div>'
         + '<div class="p"' + (color ? ' style="color:' + color + 'bb;"' : '') + '>' + pie + '</div></div>';
 
     resumenes.forEach(r => {
         const c = r.cfg;
+        const uni = r.T.unidad;
         T.push('<div class="pp-caja" style="border-color:' + c.color + '55;">');
         T.push('<p class="pp-titulo" style="color:' + c.color + ';">' + c.titulo + '</p>');
 
         if (r.vacio) {
-            T.push('<p class="pp-sub">Todavía no hay ninguna semana cerrada con datos suficientes.</p></div>');
+            T.push('<p class="pp-sub">Todavía no hay ninguna semana cerrada con horas suficientes.</p></div>');
             return;
         }
 
         const sube = r.pendiente >= 0;
-        const dif = r.anterior ? r.ultima.valor - r.anterior.valor : null;
+        const dif = r.anterior ? r.ultima.ritmo - r.anterior.ritmo : null;
 
         T.push('<p class="pp-sub">'
-            + nf(r.cerradas.reduce((s, p) => s + p.valor, 0)) + ' ' + c.unidad + ' en '
-            + r.cerradas.length + (r.cerradas.length === 1 ? ' semana cerrada' : ' semanas cerradas')
-            + (c.cat === 'nocal'
+            + uni.charAt(0).toUpperCase() + uni.slice(1) + ' por hora realmente trabajada en '
+            + 'esta categoría. En ' + r.cerradas.length
+            + (r.cerradas.length === 1 ? ' semana cerrada' : ' semanas cerradas')
+            + ' se movieron ' + nf(r.cerradas.reduce((s, p) => s + p.pares, 0)) + ' ' + uni
+            + ' en ' + nf(r.cerradas.reduce((s, p) => s + p.horas, 0)) + ' horas-persona'
+            + (c.tipo === 'nocal'
                 ? '. <b>Acá la unidad del WMS no es un par</b>: son bolsas, medias y cajas de '
-                + 'accesorio. Por eso va en su propio cuadro y nunca sumado al calzado.'
-                : '. Van juntos el suelto y el prepack, que es como se reporta; el desglose está '
-                + 'en el pie de la primera caja.')
+                + 'accesorio, y por eso el ritmo sale mucho más alto que en calzado. Se mira '
+                + 'contra sí mismo, no contra el calzado.'
+                : '. Van juntos el suelto y el prepack, que es como se reporta.')
             + '</p>');
 
         T.push('<div class="pp-cajas">'
-        /* EL PROMEDIO POR DIA VA AL LADO DEL TOTAL, y no es adorno: una semana de
-           cinco dias contra una de seis no se pueden comparar de frente. La S34
-           parecia una caida contra la S33 y lo unico que le faltaba era un dia. */
-        + caja('Cierre semana ' + r.ultima.sem, nf(r.ultima.valor),
-               r.ultima.dias + (r.ultima.dias === 1 ? ' día' : ' días') + ' · '
-               + nf(r.ultima.valor / r.ultima.dias) + ' por día'
-               + (c.cat === 'cal' && r.ultima.suelto
-                   ? '<br>' + nf(r.ultima.suelto) + ' sueltos · ' + nf(r.ultima.prepack) + ' prepack'
-                   : ''))
-        + (r.anterior ? caja('Cierre semana ' + r.anterior.sem, nf(r.anterior.valor),
-               r.anterior.dias + (r.anterior.dias === 1 ? ' día' : ' días') + ' · '
-               + nf(r.anterior.valor / r.anterior.dias) + ' por día') : '')
-        + caja('Últimas 4 semanas', nf(r.prom4), 'promedio por semana')
-        + caja('Promedio general', nf(r.promTodas), r.cerradas.length + ' semanas cerradas')
+        + caja('Cierre semana ' + r.ultima.sem, nf(r.ultima.ritmo), uni + '/h',
+               nf(r.ultima.pares) + ' ' + uni + ' en ' + nf(r.ultima.horas) + ' h · '
+               + r.ultima.dias + (r.ultima.dias === 1 ? ' día' : ' días'))
+        + (r.anterior ? caja('Cierre semana ' + r.anterior.sem, nf(r.anterior.ritmo), uni + '/h',
+               nf(r.anterior.pares) + ' ' + uni + ' en ' + nf(r.anterior.horas) + ' h') : '')
+        + caja('Últimas 4 semanas', nf(r.prom4), uni + '/h', 'promedio')
+        + caja('Promedio general', nf(r.promTodas), uni + '/h',
+               r.cerradas.length + ' semanas cerradas')
         + caja((sube ? 'Sube cada semana' : 'Baja cada semana'),
-               (sube ? '+' : '−') + nf(Math.abs(r.pendiente)),
-               c.unidad + ' por semana', sube ? '#16a34a' : '#dc2626')
+               (sube ? '+' : '−') + n1(Math.abs(r.pendiente)), '',
+               uni + '/h por semana', sube ? '#16a34a' : '#dc2626')
         + '</div>');
 
         T.push('<div class="pp-graf"><canvas id="pp_g_' + c.id + '"></canvas></div>');
 
         const linea = [];
         if (dif !== null) {
-            linea.push('De la semana ' + r.anterior.sem + ' a la ' + r.ultima.sem + ' '
-                + (dif >= 0 ? 'subió' : 'bajó') + ' <b>' + nf(Math.abs(dif)) + ' ' + c.unidad + '</b>'
-                + (r.anterior.valor ? ' (' + n1(Math.abs(dif) * 100 / r.anterior.valor) + '%)' : '') + '.');
-            /* SI LAS DOS SEMANAS NO TIENEN LOS MISMOS DIAS, la comparacion de
-               frente engaña y hay que decirlo con el numero al lado. */
-            if (r.ultima.dias !== r.anterior.dias) {
-                const dd = (r.ultima.valor / r.ultima.dias) - (r.anterior.valor / r.anterior.dias);
-                linea.push('Ojo que no tienen los mismos días —' + r.ultima.dias + ' contra '
-                    + r.anterior.dias + '—: <b>por día</b> ' + (dd >= 0 ? 'subió' : 'bajó') + ' '
-                    + nf(Math.abs(dd)) + ' ' + c.unidad + '.');
-            }
+            linea.push('De la semana ' + r.anterior.sem + ' a la ' + r.ultima.sem + ' el ritmo '
+                + (dif >= 0 ? 'subió' : 'bajó') + ' <b>' + n1(Math.abs(dif)) + ' ' + uni + '/h</b>'
+                + (r.anterior.ritmo ? ' (' + n1(Math.abs(dif) * 100 / r.anterior.ritmo) + '%)' : '')
+                + ', de ' + nf(r.anterior.ritmo) + ' a ' + nf(r.ultima.ritmo) + '.');
         }
-        linea.push('Si sigue este ritmo, la semana ' + (r.ultima.sem + 1) + ' daría <b>'
-            + nf(Math.max(0, r.recta.b + r.recta.m * r.cerradas.length)) + ' ' + c.unidad + '</b>.');
+        linea.push('Si sigue así, la semana ' + (r.ultima.sem + 1) + ' daría <b>'
+            + nf(Math.max(0, r.recta.b + r.recta.m * r.cerradas.length)) + ' ' + uni + '/h</b>.');
         if (r.enCurso) {
-            linea.push('La semana ' + r.enCurso.sem + ' va por <b>' + nf(r.enCurso.valor) + ' '
-                + c.unidad + '</b> en ' + r.enCurso.dias
-                + (r.enCurso.dias === 1 ? ' día' : ' días') + ', o sea '
-                + nf(r.enCurso.valor / r.enCurso.dias) + ' por día; todavía no cerró y por eso '
-                + 'no está en el gráfico ni en los promedios.');
+            linea.push('La semana ' + r.enCurso.sem + ' va por <b>' + nf(r.enCurso.ritmo) + ' '
+                + uni + '/h</b> con ' + nf(r.enCurso.horas) + ' horas hechas; todavía no cerró, '
+                + 'así que va punteada y no entra en los promedios.');
         }
-        if (r.cortas.length) {
-            linea.push('Quedan fuera de la cuenta ' + r.cortas.length
-                + (r.cortas.length === 1 ? ' semana corta' : ' semanas cortas')
-                + ' —' + r.cortas.map(p => 'S' + p.sem + ' con ' + p.dias
-                    + (p.dias === 1 ? ' día' : ' días')).join(', ')
-                + '—: con menos de ' + DIAS_MINIMOS + ' días no se comparan con una semana entera.');
+        if (r.flacas.length) {
+            linea.push('Quedan fuera ' + r.flacas.length
+                + (r.flacas.length === 1 ? ' semana con muy pocas horas' : ' semanas con muy pocas horas')
+                + ' —' + r.flacas.map(p => 'S' + p.sem + ' con ' + n1(p.horas) + ' h').join(', ')
+                + '—: con menos de ' + HORAS_MINIMAS + ' horas el ritmo es ruido.');
         }
         T.push('<div class="pp-nota">' + linea.join(' ') + '</div>');
         T.push('</div>');
     });
 
     /* ─── MATERIALES, EN CHICO ─────────────────────────────────────────────
-       Daniel no quiere llenarse de tipos: *"solamente calzado y no calzado"*. Pero
-       lo que el Maestro no conoce tampoco puede irse a "no calzado" como si fuera
-       mercaderia, porque son papel de seda, etiquetas y cajas —comprobado leyendo
-       la descripcion de los 25 codigos—. Asi que va, pero CHICO y al final: es
-       trabajo del CD y se ve, sin robarle sitio a lo que se vende.
-
-       Va con el mismo reparto que la barra lateral de Almacenaje > Productividad,
-       que es de donde salio el formato de esta pantalla. */
-    const totMat = (lado) => orden.reduce((s2, w) =>
-        s2 + (w.clave === claveEnCurso ? 0 : w[lado].mat), 0);
-    const totSin = (lado) => orden.reduce((s2, w) =>
-        s2 + (w.clave === claveEnCurso ? 0 : w[lado].sinTipo), 0);
-    if (totMat('p') || totMat('e')) {
-        const semMat = orden.filter(w => w.clave !== claveEnCurso);
-        const ultMat = semMat[semMat.length - 1];
+       Daniel no quiere llenarse de tipos, pero lo que el Maestro no conoce —papel
+       de seda, etiquetas, cajas— tampoco puede ir en "no calzado" como si fuera
+       mercadería: era lo que le movía la tendencia. Va al final y en chico. */
+    const totMat = (lado, campo) => orden.reduce((s, w) =>
+        s + (w.clave === claveEnCurso ? 0 : w[lado].mat[campo]), 0);
+    const totSin = (lado) => orden.reduce((s, w) =>
+        s + (w.clave === claveEnCurso ? 0 : w[lado].sinTipo), 0);
+    if (totMat('p', 'pares') || totMat('e', 'pares')) {
+        const hp = totMat('p', 'horas'), he = totMat('e', 'horas');
         T.push('<div class="pp-caja" style="border-color:#64748b55;">'
         + '<p class="pp-titulo" style="color:#64748b;">MATERIALES</p>'
         + '<p class="pp-sub">Papel de seda, etiquetas colgantes, cajas de cartón y plantillas: '
-        + 'todo lo que el picker mueve y <b>no se vende</b>. Se separó el 02-sep-2026 porque '
-        + 'antes entraba en «no calzado» y le movía la tendencia — la subida del 24 al 28 de '
-        + 'agosto era un solo código de papel de seda, no producción. Va acá para que se vea '
-        + 'sin ensuciar lo demás.</p>'
+        + 'todo lo que el picker mueve y <b>no se vende</b>. Se separó el 02-sep-2026 porque antes '
+        + 'entraba en «no calzado» y le movía la tendencia — la subida del 24 al 28 de agosto era '
+        + 'un solo código de papel de seda, no producción.</p>'
         + '<div class="pp-cajas">'
-        + caja('Picking · total', nf(totMat('p')),
-               semMat.length + ' semanas cerradas', '#64748b')
-        + caja('Embalaje · total', nf(totMat('e')),
-               semMat.length + ' semanas cerradas', '#64748b')
-        + (ultMat ? caja('Semana ' + ultMat.sem, nf(ultMat.p.mat),
-               'picking · embalaje ' + nf(ultMat.e.mat), '#64748b') : '')
+        + caja('Picking', nf(hp > 0 ? totMat('p', 'pares') / hp : 0), 'u/h',
+               nf(totMat('p', 'pares')) + ' unidades en ' + nf(hp) + ' h', '#64748b')
+        + caja('Embalaje', nf(he > 0 ? totMat('e', 'pares') / he : 0), 'u/h',
+               nf(totMat('e', 'pares')) + ' unidades en ' + nf(he) + ' h', '#64748b')
         + ((totSin('p') || totSin('e'))
-            ? caja('Sin tipo', nf(totSin('p') + totSin('e')),
-                   'no están en el Maestro y no son de 5 dígitos', '#dc2626')
-            : caja('Sin tipo', '0', 'todo lo desconocido resultó ser material', '#16a34a'))
+            ? caja('Sin tipo', nf(totSin('p') + totSin('e')), '',
+                   'no están en el Maestro y no tienen forma de material', '#dc2626')
+            : caja('Sin tipo', '0', '', 'todo lo desconocido resultó ser material', '#16a34a'))
         + '</div>'
         + '<div class="pp-nota">«Sin tipo» es lo que el Maestro no conoce y <b>no</b> tiene la '
-        + 'forma de un material —cinco dígitos—. Si ese número crece, hay artículos que le '
-        + 'faltan al Maestro del WMS. Hoy los materiales conocidos son 25 códigos: papel de '
-        + 'seda, hang tags, cajas microcorrugadas y plantillas.</div>'
-        + '</div>');
-    }
-
-    /* ─── LA PROYECCIÓN DE LAS PRÓXIMAS SEMANAS ──────────────────────────── */
-    const PROX = 4;
-    const conRecta = resumenes.filter(r => !r.vacio);
-    if (conRecta.length) {
-        const ultimaSem = Math.max.apply(null, conRecta.map(r => r.ultima.sem));
-        T.push('<div class="pp-caja"><p class="pp-titulo" style="color:var(--text-strong);">'
-            + 'LO QUE VIENE, SI SIGUE ESTE RITMO</p>'
-            + '<p class="pp-sub">Las próximas ' + PROX + ' semanas, sacadas de la recta de cada '
-            + 'cuadro de arriba. <b>No es una promesa</b>: es lo que daría si los pedidos, el '
-            + 'equipo y la gente siguen como en estas ' + nSem + ' semanas. Un pico de campaña o '
-            + 'una semana con menos personal lo cambia entero.</p>'
-            + '<div class="pp-scroll"><table class="pp-tabla"><thead><tr><th>Semana</th>'
-            + conRecta.map(r => '<th>' + esc(r.cfg.titulo.replace(' · ', ' ')) + '<br>'
-                + '<span style="opacity:0.6; font-weight:600;">' + r.cfg.unidad + '</span></th>').join('')
-            + '</tr></thead><tbody>'
-            + Array.from({ length: PROX }, (v, k) =>
-                '<tr><td>Semana ' + (ultimaSem + 1 + k) + '</td>'
-                + conRecta.map(r => '<td>'
-                    + nf(Math.max(0, r.recta.b + r.recta.m * (r.cerradas.length + k)))
-                    + '</td>').join('') + '</tr>').join('')
-            + '</tbody></table></div></div>');
+        + 'forma de un material —cinco dígitos—. Si ese número crece, hay artículos que le faltan '
+        + 'al Maestro del WMS.</div></div>');
     }
 
     /* ─── LA TABLA SEMANA A SEMANA ───────────────────────────────────────── */
-    const totalCerradas = (i) => resumenes[i].cerradas.reduce((s, p) => s + p.valor, 0);
+    const cel = (w, lado, tipo) => {
+        const x = w[lado][tipo];
+        return x.horas > 0 ? nf(x.pares / x.horas) : '–';
+    };
     T.push('<div class="pp-caja"><p class="pp-titulo" style="color:var(--text-strong);">SEMANA A SEMANA</p>'
-    + '<p class="pp-sub">Los números son los del archivo del WMS. «Días» es cuántos días de esa '
-    + 'semana tienen datos <b>de ese lado</b>: si son menos de ' + DIAS_MINIMOS + ', esa mitad '
-    + 'sale en gris con un ✎ y no entra en los promedios ni en la recta. La marca va por lado y '
-    + 'no por fila, porque una semana puede estar completa en picking y corta en embalaje.</p>'
+    + '<p class="pp-sub">El ritmo de cada semana en <b>' + 'unidades por hora' + '</b>, y al lado '
+    + 'las horas-persona con que se calculó. Los pares y las horas salen del archivo del WMS: el '
+    + 'ritmo es la división de los dos, no un promedio de días.</p>'
     + '<div class="pp-scroll"><table class="pp-tabla"><thead>'
-    + '<tr><th></th><th class="pp-grupo" colspan="4">Picking</th>'
-    + '<th class="pp-grupo pp-sep" colspan="4">Embalaje</th></tr>'
-    + '<tr><th>Semana</th><th>Días</th><th>Calzado</th><th>No calzado</th><th>Materiales</th>'
-    + '<th class="pp-sep">Días</th><th>Calzado</th><th>No calzado</th><th>Materiales</th>'
+    + '<tr><th></th><th class="pp-grupo" colspan="4">Picking · por hora</th>'
+    + '<th class="pp-grupo pp-sep" colspan="4">Embalaje · por hora</th></tr>'
+    + '<tr><th>Semana</th><th>Horas</th><th>Calzado</th><th>No calzado</th><th>Materiales</th>'
+    + '<th class="pp-sep">Horas</th><th>Calzado</th><th>No calzado</th><th>Materiales</th>'
     + '</tr></thead><tbody>'
-    /* LA MARCA DE CORTA VA POR LADO, NO POR FILA. La S31 tiene 4 dias de picking
-       -completa- y 3 de embalaje -corta-: marcar la fila entera decia que el
-       picking de esa semana no servia, y si servia. Se pinta la mitad que
-       corresponde y el resto de la fila queda normal. */
     + orden.slice().reverse().map(w => {
         const enCurso = w.clave === claveEnCurso;
-        const cortoP = !enCurso && w.p.dias > 0 && w.p.dias < DIAS_MINIMOS;
-        const cortoE = !enCurso && w.e.dias > 0 && w.e.dias < DIAS_MINIMOS;
-        const nota = enCurso ? ' <span style="font-size:10px;">(en curso)</span>' : '';
-        const flojo = ' style="color:var(--text-muted); font-style:italic;"';
-        const pd = cortoP ? flojo : '';
-        const ed = cortoE ? flojo : '';
+        const hp = w.p.cal.horas + w.p.nocal.horas + w.p.mat.horas;
+        const he = w.e.cal.horas + w.e.nocal.horas + w.e.mat.horas;
         const l = w.lunes;
         return '<tr class="' + (enCurso ? 'pp-parcial' : '') + '">'
-            + '<td>Semana ' + w.sem + nota + '<br><span style="font-size:10px; opacity:0.6;">desde el '
-            + l.getDate() + ' ' + MESES[l.getMonth()] + '</span></td>'
-            + '<td' + pd + '>' + (w.p.dias || '–') + (cortoP ? ' ✎' : '') + '</td>'
-            + '<td' + pd + '>' + nf(w.p.cal || null) + '</td>'
-            + '<td' + pd + '>' + nf(w.p.nocal || null) + '</td>'
-            + '<td' + pd + '>' + nf(w.p.mat || null) + '</td>'
-            + '<td class="pp-sep"' + ed + '>' + (w.e.dias || '–')
-            + (cortoE ? ' ✎' : '') + '</td>'
-            + '<td' + ed + '>' + nf(w.e.cal || null) + '</td>'
-            + '<td' + ed + '>' + nf(w.e.nocal || null) + '</td>'
-            + '<td' + ed + '>' + nf(w.e.mat || null) + '</td></tr>';
+            + '<td>Semana ' + w.sem
+            + (enCurso ? ' <span style="font-size:10px;">(en curso)</span>' : '')
+            + '<br><span style="font-size:10px; opacity:0.6;">desde el '
+            + l.getDate() + ' ' + MESES[l.getMonth()] + ' · ' + (w.p.dias || w.e.dias) + ' días</span></td>'
+            + '<td>' + (hp ? nf(hp) : '–') + '</td>'
+            + '<td class="pp-ritmo">' + cel(w, 'p', 'cal') + '</td>'
+            + '<td>' + cel(w, 'p', 'nocal') + '</td><td>' + cel(w, 'p', 'mat') + '</td>'
+            + '<td class="pp-sep">' + (he ? nf(he) : '–') + '</td>'
+            + '<td class="pp-ritmo">' + cel(w, 'e', 'cal') + '</td>'
+            + '<td>' + cel(w, 'e', 'nocal') + '</td><td>' + cel(w, 'e', 'mat') + '</td></tr>';
     }).join('')
-    + '</tbody><tfoot><tr><td>Total de las semanas cerradas</td>'
-    + '<td>–</td><td>' + nf(totalCerradas(0)) + '</td><td>' + nf(totalCerradas(1)) + '</td>'
-    + '<td>' + nf(totMat('p')) + '</td>'
-    + '<td class="pp-sep">–</td><td>' + nf(totalCerradas(2)) + '</td><td>' + nf(totalCerradas(3)) + '</td>'
-    + '<td>' + nf(totMat('e')) + '</td>'
-    + '</tr></tfoot></table></div>'
-    + '<div class="pp-nota">Cada total suma solo las semanas cerradas DE ESA COLUMNA, que no son '
-    + 'siempre las mismas: una semana puede estar completa en embalaje y corta en picking. Por eso '
-    + 'las cuatro columnas no tienen por qué sumar los mismos días.</div>'
-    + '</div>');
+    + '</tbody></table></div>'
+    + '<div class="pp-nota">La tabla no lleva fila de total: <b>los ritmos no se suman</b>. El '
+    + 'promedio general de cada categoría está en su cuadro de arriba, y sale de dividir todos los '
+    + 'pares entre todas las horas.</div></div>');
 
     T.push('</div>');
     cont.innerHTML = T.join('');
@@ -537,22 +515,23 @@ export function montarProduccionProyeccion(cont, OPC) {
         const cv = document.getElementById('pp_g_' + r.cfg.id);
         if (!cv) return;
 
-        /* LA SEMANA EN CURSO NO SE DIBUJA. Acá el eje es un TOTAL de la semana,
-           no una velocidad: una semana con un día siempre va a valer la sexta
-           parte, así que dibujarla es un despeñadero al final del gráfico que no
-           dice nada —y en un cuadro que se mira de reojo, se lee como que la
-           producción se cayó.
-
-           En Almacenaje → Productividad sí se dibuja, y está bien: ahí el eje son
-           unidades POR HORA, y una semana a medias ya da un número comparable.
-           Acá no. La semana en curso se cuenta con palabras, debajo del gráfico.
-
-           El último punto SÍ lleva un paso más de recta, para que se vea hacia
-           dónde va la semana que todavía no cerró. */
-        const todas = r.cerradas;
-        const etiquetas = todas.map(p => 'S' + p.sem).concat(['S' + (r.ultima.sem + 1)]);
-        const cerradas = todas.map(p => p.valor).concat([null]);
-        const tend = etiquetas.map((v, i) => Math.max(0, Math.round(r.recta.b + r.recta.m * i)));
+        /* LA SEMANA EN CURSO SÍ VA, punteada y aparte, igual que en Almacenaje →
+           Productividad. Al ser un RITMO, una semana a medias ya da un número
+           comparable; cuando esto medía totales había que esconderla. Se engancha
+           al último punto cerrado para que no quede suelta en el aire. */
+        const todas = r.enCurso ? r.cerradas.concat([r.enCurso]) : r.cerradas;
+        const etiquetas = todas.map(p => 'S' + p.sem);
+        const cerradas = r.cerradas.map(p => Math.round(p.ritmo))
+            .concat(r.enCurso ? [null] : []);
+        const enCurso = r.cerradas.map(() => null)
+            .concat(r.enCurso ? [Math.round(r.enCurso.ritmo)] : []);
+        if (r.enCurso && r.cerradas.length) {
+            enCurso[r.cerradas.length - 1] = Math.round(r.cerradas[r.cerradas.length - 1].ritmo);
+        }
+        const tend = todas.map((p, i) => Math.max(0, Math.round(r.recta.b + r.recta.m * i)));
+        /* El tamaño del punto dice cuántas horas hay detrás: un punto chico es una
+           semana corta, y eso explica un número raro sin tener que ir a la tabla. */
+        const radio = todas.map(p => Math.min(8, 3 + Math.sqrt(Math.max(0, p.horas)) / 3.5));
 
         _graficos.push(new Chart(cv, resolverColoresChart({
             type: 'line',
@@ -563,7 +542,10 @@ export function montarProduccionProyeccion(cont, OPC) {
                       borderWidth: 2, borderDash: [6, 5], pointRadius: 0, fill: false, order: 3 },
                     { label: 'Cerrada', data: cerradas, borderColor: r.cfg.color,
                       backgroundColor: r.cfg.color + '22', borderWidth: 3, tension: 0.3,
-                      pointRadius: 4, pointBackgroundColor: r.cfg.color, fill: true, order: 1 },
+                      pointRadius: radio, pointBackgroundColor: r.cfg.color, fill: true, order: 1 },
+                    { label: 'Semana en curso', data: enCurso, borderColor: r.cfg.color,
+                      borderWidth: 2, borderDash: [4, 4], pointRadius: 5, pointStyle: 'rectRot',
+                      fill: false, order: 2 },
                 ]
             },
             options: {
@@ -574,13 +556,20 @@ export function montarProduccionProyeccion(cont, OPC) {
                     tooltip: { callbacks: {
                         title: (c) => {
                             const p = todas[c[0].dataIndex];
-                            if (!p) return 'Semana ' + (r.ultima.sem + 1) + ' · todavía no empezó';
-                            return 'Semana ' + p.sem + ' · ' + p.dias
-                                + (p.dias === 1 ? ' día' : ' días')
-                                + ' · ' + nf(p.valor / p.dias) + ' por día';
+                            if (!p) return '';
+                            const l = p.lunes;
+                            return 'Semana ' + p.sem + (p.enCurso ? ' (en curso)' : '')
+                                + ' · desde el ' + l.getDate() + '/' + (l.getMonth() + 1);
                         },
-                        label: (c) => (c.parsed.y === null || c.parsed.y === undefined) ? null
-                            : c.dataset.label + ': ' + nf(c.parsed.y) + ' ' + r.cfg.unidad,
+                        label: (c) => {
+                            if (c.parsed.y === null || c.parsed.y === undefined) return null;
+                            const p = todas[c.dataIndex];
+                            if (c.dataset.label === 'Tendencia') {
+                                return 'Tendencia: ' + nf(c.parsed.y) + ' ' + r.T.unidad + '/h';
+                            }
+                            return nf(c.parsed.y) + ' ' + r.T.unidad + '/h'
+                                + (p ? '  ·  ' + nf(p.pares) + ' en ' + nf(p.horas) + ' h' : '');
+                        },
                     } }
                 },
                 scales: {
