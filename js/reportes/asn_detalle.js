@@ -142,29 +142,54 @@ export function montarAsnDetalle(cont, OPC) {
     + '<button class="a-pill" onclick="window.__asnExportar()">⬇ EXPORTAR A EXCEL</button>'
     + '</div>'
     + '<div style="font-size:var(--t-xs); color:var(--text-muted); margin-top:.5rem;">'
-    + nf(p.lineas) + ' líneas · ' + nf(p.articulosDistintos) + ' artículos distintos · '
+    /* El robot lo publica dentro de `totales`, no suelto. Leyendolo suelto la
+       pantalla decia "– lineas", que es justo el hueco que Daniel reclamo en el
+       resto del modulo: un numero que falta se lee como un dato que no existe. */
+    + nf((p.totales && p.totales.lineas) || p.lineas) + ' líneas · ' + nf(p.articulosDistintos) + ' artículos distintos · '
     + nf(p.articulosConFalta) + ' con algo pendiente</div></div>');
 
     // ─── MES A MES, y al hacer clic se abre el detalle ───────────────────────
     const meses = Object.keys(p.porMes || {}).sort().reverse();
+    /* `sobra` es lo que llego DE MAS. Sin mostrarlo, la suma de los meses no da
+       el total de arriba y no hay manera de saber por que: en abril son 26.918
+       que convierten 187.691 en los 160.773 que dice el cuadro de marcas. */
+    const sumar = (k) => meses.reduce((a, m) => a + (Number(p.porMes[m][k]) || 0), 0);
+    const haySobra = meses.some(m => (Number(p.porMes[m].sobra) || 0) > 0);
+    /* Mientras el robot no haya vuelto a correr, el paquete viejo no trae
+       `faltaBruta`: sin esto salen dos columnas con el mismo numero. */
+    const hayBruta = meses.some(m => p.porMes[m].faltaBruta != null);
+
     T.push('<div class="a-caja"><div class="a-cab"><h3>Mes a mes</h3>'
     /* POR FECHA DE CREACION, que es como agrupa el robot -un archivo por mes- y
        como ya lo decia el cuadro de arriba. El rotulo decia "por fecha de envio"
        porque asi lo habia agrupado la medicion de prueba, y dos cuadros pegados
        diciendo cosas distintas del mismo dato es peor que no ponerle rotulo. */
     + '<span class="nota">por fecha de creación · <b>haz clic en un mes</b> para ver qué falta</span></div>'
+    /* LAS TRES COLUMNAS TIENEN QUE CERRAR ENTRE SI, y la fila de TOTAL esta para
+       que se pueda comprobar sin sacar la calculadora:  falta = bruta - sobra.
+       Daniel suma las filas; si una no cierra, cae el reporte entero. */
     + '<div class="a-scroll"><table><thead><tr>'
-    + '<th>Mes</th><th>Artículos con falta</th><th>Pendiente</th><th></th>'
-    + '</tr></thead><tbody>'
+    + '<th>Mes</th><th>Artículos con falta</th>'
+    + (hayBruta ? '<th>Falta</th>' : '')
+    + (haySobra ? '<th>Recibido de más</th>' : '')
+    + '<th>Pendiente</th><th></th></tr></thead><tbody>'
     + meses.map(m => {
         const x = p.porMes[m];
+        const bruta = (x.faltaBruta == null) ? x.falta : x.faltaBruta;
         return '<tr class="a-clic' + (m === _mes ? ' a-viva' : '') + '" '
             + 'onclick="window.__asnMes(&quot;' + m + '&quot;)">'
             + '<td>' + esc(mesLargo(m)) + '</td>'
             + '<td>' + nf(x.articulos) + '</td>'
+            + (hayBruta ? '<td>' + nf(bruta) + '</td>' : '')
+            + (haySobra ? '<td class="a-ok">' + (x.sobra ? '−' + nf(x.sobra) : '–') + '</td>' : '')
             + '<td class="a-falta">' + nf(x.falta) + '</td>'
             + '<td style="color:var(--text-muted);">' + (m === _mes ? '▼ abierto' : 'ver ▸') + '</td></tr>';
     }).join('')
+    + '<tr style="border-top:2px solid var(--border); font-weight:800;">'
+    + '<td>Total</td><td></td>'
+    + (hayBruta ? '<td>' + nf(sumar('faltaBruta')) + '</td>' : '')
+    + (haySobra ? '<td class="a-ok">−' + nf(sumar('sobra')) + '</td>' : '')
+    + '<td class="a-falta">' + nf(sumar('falta')) + '</td><td></td></tr>'
     + '</tbody></table></div>');
 
     if (_mes && p.porMes[_mes]) {
@@ -182,9 +207,21 @@ export function montarAsnDetalle(cont, OPC) {
             + '<td>' + nf(a.env) + '</td><td>' + nf(a.rec) + '</td>'
             + '<td class="a-falta">' + nf(a.falta) + '</td></tr>').join('')
         + '</tbody></table></div>'
+        /* NO PROMETER LO QUE EL EXCEL NO LLEVA: exporta este mismo top, no los
+           11.307. Decia "el Excel los trae todos" y era falso. */
+        + '<div class="a-pie">'
         + (x.articulos > x.top.length
-            ? '<div class="a-pie">Quedan <b>' + nf(x.articulos - x.top.length) + '</b> artículos '
-              + 'más con falta en este mes que no se muestran. El Excel los trae todos.</div>' : ''));
+            ? 'Se muestran los <b>' + nf(x.top.length) + '</b> que más faltan; quedan <b>'
+              + nf(x.articulos - x.top.length) + '</b> artículos más con falta en este mes. '
+              + 'El Excel exporta estos mismos, no la lista completa. '
+            : '')
+        + 'Estos ' + nf(x.top.length) + ' suman <b>' + nf(x.top.reduce((a, r) => a + r.falta, 0))
+        + '</b> de los ' + nf((x.faltaBruta == null) ? x.falta : x.faltaBruta) + ' que faltan en el mes'
+        + ((Number(x.sobra) || 0) > 0
+            ? ', y hay <b>' + nf(x.sobra) + '</b> recibidos de más en '
+              + nf(x.sobraArticulos) + ' artículos, que es lo que baja el pendiente a '
+              + nf(x.falta) + '.' : '.')
+        + '</div>');
     }
     T.push('</div>');
 

@@ -30187,6 +30187,11 @@ window.__menuMapa = (btn) => {
            + ' de ' + (p.parciales_total || 0) },
       { c: 'Articulos con falta en la hoja: ' + ((p.articulos || []).length)
            + ' de ' + (p.articulosConFalta || 0) + ' — se publican los que mas faltan' },
+      // LA HOJA "Que falta cada mes" TAMBIEN VA RECORTADA, y hay que decirlo:
+      // se lee como la lista entera del mes y son los 50 que mas faltan.
+      { c: 'Por mes: los ' + Object.values(p.porMes || {})
+             .reduce((a, m) => Math.max(a, (m.top || []).length), 0)
+           + ' que mas faltan de cada mes, no todos los del mes' },
     ]);
 
     // 2. MES A MES

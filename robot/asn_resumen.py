@@ -291,15 +291,39 @@ def construir():
     # ── el detalle, ya recortado ─────────────────────────────────────────────
     con_falta = sorted(((c, v) for c, v in art.items() if v["e"] - v["r"] > 0.5),
                        key=lambda x: -(x[1]["e"] - x[1]["r"]))
+    # ── EL MES TIENE QUE DECIR LO MISMO QUE EL CUADRO DE ARRIBA ──────────────
+    #
+    # Daniel, 03-sep-2026: *"en el mes a mes, el 26 del cuatro dice que falta 160
+    # mil: necesito darle clic y ver que es lo que esta faltando"*. Ese 160.773 es
+    # el NETO de abril -enviado menos recibido- del cuadro "meses", que es el que
+    # el esta mirando cuando lo dice.
+    #
+    # Sumando solo los faltantes se obtiene 187.691, porque deja fuera los 26.918
+    # que llegaron DE MAS. Dos filas pegadas diciendo 160 mil y 187 mil del mismo
+    # abril es exactamente lo que el detecta con la calculadora, y con razon: no
+    # hay forma de saber cual de las dos es la buena.
+    #
+    # Asi que el mes publica las tres, y las tres cierran entre si:
+    #
+    #     falta (neto)  =  faltaBruta  -  sobra
+    #     160.773       =  187.691     -  26.918
+    #
+    # `falta` es la que cuadra con el cuadro de arriba y con el de marcas.
     por_mes = {}
     for m in sorted(por_mes_art):
-        arts = [(c, v) for c, v in por_mes_art[m].items() if v[0] - v[1] > 0.5]
+        todos = list(por_mes_art[m].items())
+        arts = [(c, v) for c, v in todos if v[0] - v[1] > 0.5]
         if not arts:
             continue
         arts.sort(key=lambda x: -(x[1][0] - x[1][1]))
+        bruta = sum(v[0] - v[1] for _, v in arts)
+        sobra = sum(v[1] - v[0] for _, v in todos if v[1] - v[0] > 0.5)
         por_mes[m] = {
             "articulos": len(arts),
-            "falta": round(sum(v[0] - v[1] for _, v in arts)),
+            "falta": round(bruta - sobra),
+            "faltaBruta": round(bruta),
+            "sobra": round(sobra),
+            "sobraArticulos": sum(1 for _, v in todos if v[1] - v[0] > 0.5),
             "top": [{"cod": c, "desc": art[c]["d"], "marca": art[c]["m"],
                      "env": round(v[0]), "rec": round(v[1]), "falta": round(v[0] - v[1])}
                     for c, v in arts[:TOPE_POR_MES]],
