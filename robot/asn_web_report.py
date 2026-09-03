@@ -146,6 +146,34 @@ def a_la_derecha(fr, texto, x_min=360):
     return None, None
 
 
+def esperar_el_arbol(fr, segundos=120):
+    """Espera a que el marco de informes tenga contenido.
+
+    Antes se contaban 12 segundos fijos y alcanzaba. El 03-sep-2026 el modulo
+    tardo mas y el marco llego VACIO: el robot no encontro la carpeta y aborto.
+    Un numero fijo funciona hasta el dia que Oracle esta lento, y ese dia no
+    baja el ASN sin que nadie sepa por que.
+
+    Devuelve el texto del marco, o cadena vacia si nunca aparecio.
+    """
+    esperado = 0
+    while esperado < segundos:
+        try:
+            t = fr.locator("body").inner_text(timeout=8000) or ""
+        except Exception:
+            t = ""
+        if "Unexpected error" in t:
+            po.log("   el modulo devolvio 'Unexpected error' de Oracle", "WARN")
+            return t
+        if t.strip():
+            po.log("   arbol listo en %d s" % esperado)
+            return t
+        time.sleep(5)
+        esperado += 5
+    po.log("   el marco de informes sigue vacio tras %d s" % segundos, "WARN")
+    return ""
+
+
 def cerrar_pestanas_de_informe(fr):
     """Una pestana de edicion abierta de una corrida anterior hace que el WMS la
     restaure al entrar, y despues cualquier clic cae dentro de ese editor viejo
@@ -167,18 +195,30 @@ def cerrar_pestanas_de_informe(fr):
 
 def abrir_editor(fr, page):
     """Carpeta Dames -> informe ASN -> menu de tres rayas -> Editar."""
-    el, _ = en_arbol(fr, CARPETA)
-    if el is not None:
+    # EL ICONO ALTERNA, asi que un clic a ciegas PLIEGA si la carpeta ya estaba
+    # abierta. Y puede estarlo: la deja abierta cualquier corrida que se corte a
+    # la mitad. Cuando eso paso, esta funcion fallaba con "no encuentro el
+    # informe" -y el 01-sep esa misma escena tumbo el ancla de las 07:00-.
+    #
+    # Ahora se mira el RESULTADO en vez de confiar en el estado: se alterna hasta
+    # que el informe se ve, con un tope para no quedarse dando vueltas.
+    el, c = en_arbol(fr, INFORME)
+    for intento in range(3):
+        if el is not None:
+            break
+        carp, _ = en_arbol(fr, CARPETA)
+        if carp is None:
+            raise RuntimeError("no encuentro la carpeta %s en el arbol" % CARPETA)
         try:
-            # El icono .wrTrEi ALTERNA: se llama UNA sola vez o vuelve a plegarse.
-            cont = el.locator(
+            cont = carp.locator(
                 "xpath=ancestor::*[contains(@class,'wrTrNodeTextHighlightContainer')][1]")
             cont.locator(".wrTrEi").first.click(timeout=8000)
         except Exception as e:
-            po.log("   no pude desplegar la carpeta: %s" % str(e)[:70], "WARN")
-    time.sleep(7)
-
-    el, c = en_arbol(fr, INFORME)
+            po.log("   no pude alternar la carpeta: %s" % str(e)[:70], "WARN")
+        time.sleep(7)
+        el, c = en_arbol(fr, INFORME)
+        if el is None:
+            po.log("   la carpeta estaba al reves; vuelvo a intentar", "WARN")
     if el is None:
         raise RuntimeError("no encuentro el informe %s en el arbol" % INFORME)
     el.click(force=True)
@@ -547,6 +587,7 @@ def bajar_mes(anio, mes):
                 fr = (page.locator("#reports_frame").content_frame
                       .locator("#reports_frame").content_frame)
 
+                esperar_el_arbol(fr)
                 cerrar_pestanas_de_informe(fr)
                 abrir_editor(fr, page)
                 poner_fechas(fr, page, desde, hasta)
