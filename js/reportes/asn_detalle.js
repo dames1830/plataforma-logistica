@@ -131,7 +131,11 @@ const CSS = [
    senalo: *"como vas a dejar espacios en blanco asi"*. Con `columns` los cuadros
    se acomodan uno tras otro y no queda aire.
    `break-inside:avoid` es lo que impide que un cuadro salga partido a la mitad. */
-'#asn .a-rejilla { columns:2; column-gap:18px; }',
+/* EL MARGEN DE LA ULTIMA TARJETA DE UNA COLUMNA NO CUENTA al cerrar el bloque:
+   medido, "Que marca" terminaba en 1871 y "Que articulo" arrancaba en 1870, o sea
+   pegados. Daniel: *"este reporte esta muy pegado al otro"*. El aire tiene que
+   ponerlo el contenedor. */
+'#asn .a-rejilla { columns:2; column-gap:18px; margin-bottom:18px; }',
 '#asn .a-rejilla > .a-caja { break-inside:avoid; -webkit-column-break-inside:avoid; margin-bottom:18px; }',
 '@media (max-width:1100px) { #asn .a-rejilla { columns:1; } }',
 /* El que necesita el ancho entero se lo lleva: la lista de articulos, los

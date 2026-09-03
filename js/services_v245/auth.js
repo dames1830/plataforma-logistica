@@ -1,4 +1,4 @@
-import { registrar } from './eventosService.js?v=29.0584';
+import { registrar } from './eventosService.js?v=29.0585';
 
 const getApiBase = (defaultUrl) => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -16,7 +16,7 @@ const getApiBase = (defaultUrl) => {
   return defaultUrl;
 };
 const AUTH_API = getApiBase("https://logistics-backend-wv0x.onrender.com/api");
-const VERSION = '29.0584';
+const VERSION = '29.0585';
 
 /**
  * [SEGURIDAD v26.5.572] La validación la hace EL SERVIDOR.
