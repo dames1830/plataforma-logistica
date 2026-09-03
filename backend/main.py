@@ -530,12 +530,19 @@ def init_db(ruta: Optional[str] = None):
                    'estado TEXT, '                  # In Transit, Verified...
                    'fecha_envio TEXT, '             # AAAA-MM-DD
                    'fecha_recepcion TEXT, '
+                   # LA HORA VA APARTE Y NO PEGADA A LA FECHA: si se guardara
+                   # "2026-09-02 19:53" en fecha_recepcion, el filtro rec_hasta
+                   # <= "2026-09-02" dejaria fuera todo lo de ese dia despues de
+                   # medianoche. Separadas, los dos filtros siguen siendo simples.
+                   'hora_recepcion TEXT, '         # HH:MM:SS
+                   'usuario TEXT, '                # quien recibio (verified_user)
                    'enviado INTEGER, '
                    'recibido INTEGER, '
                    'lineas INTEGER, '
                    'PRIMARY KEY (asn, articulo))')
     # SIN INDICE, buscar recorre las 76.658 filas. Con ellos, 1 a 24 ms.
-    for _col in ('expediente', 'articulo', 'orden', 'tipo', 'fecha_envio', 'estado'):
+    for _col in ('expediente', 'articulo', 'orden', 'tipo', 'fecha_envio', 'estado',
+                 'fecha_recepcion', 'usuario'):
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_asn_%s ON asn (%s)' % (_col, _col))
 
     # 'tema' llego despues: el administrador le deja puesto un tema a cada usuario y ese
@@ -784,7 +791,7 @@ async def leer_eventos(dias: int = 7, origen: Optional[str] = None,
 
 ASN_COLS = ('asn', 'articulo', 'descripcion', 'marca', 'expediente', 'orden',
             'sociedad', 'tipo', 'estado', 'fecha_envio', 'fecha_recepcion',
-            'enviado', 'recibido', 'lineas')
+            'hora_recepcion', 'usuario', 'enviado', 'recibido', 'lineas')
 
 
 @app.post("/api/asn/carga")
@@ -818,6 +825,7 @@ async def cargar_asn(request: Request):
                         'asn TEXT NOT NULL, articulo TEXT NOT NULL, descripcion TEXT, '
                         'marca TEXT, expediente TEXT, orden TEXT, sociedad TEXT, '
                         'tipo TEXT, estado TEXT, fecha_envio TEXT, fecha_recepcion TEXT, '
+                        'hora_recepcion TEXT, usuario TEXT, '
                         'enviado INTEGER, recibido INTEGER, lineas INTEGER, '
                         'PRIMARY KEY (asn, articulo))')
             conn.commit(); conn.close()
@@ -829,8 +837,8 @@ async def cargar_asn(request: Request):
                 conn.close()
                 return {"status": "error", "message": "filas tiene que ser una lista"}
             cur.executemany(
-                'INSERT OR REPLACE INTO asn_cargando VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                [tuple(f)[:14] for f in filas if isinstance(f, (list, tuple)) and len(f) >= 14])
+                'INSERT OR REPLACE INTO asn_cargando VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                [tuple(f)[:16] for f in filas if isinstance(f, (list, tuple)) and len(f) >= 16])
             conn.commit()
             n = cur.execute('SELECT COUNT(*) FROM asn_cargando').fetchone()[0]
             conn.close()
@@ -847,7 +855,8 @@ async def cargar_asn(request: Request):
                     "message": "la carga trajo %d filas: son muy pocas, no se reemplaza" % n})
             cur.execute('DROP TABLE IF EXISTS asn')
             cur.execute('ALTER TABLE asn_cargando RENAME TO asn')
-            for c in ('expediente', 'articulo', 'orden', 'tipo', 'fecha_envio', 'estado'):
+            for c in ('expediente', 'articulo', 'orden', 'tipo', 'fecha_envio', 'estado',
+                      'fecha_recepcion', 'usuario'):
                 cur.execute('CREATE INDEX IF NOT EXISTS idx_asn_%s ON asn (%s)' % (c, c))
             conn.commit(); conn.close()
             return {"status": "ok", "paso": "fin", "filas": n}
@@ -862,7 +871,7 @@ async def cargar_asn(request: Request):
 async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = None,
                         articulo: Optional[str] = None, orden: Optional[str] = None,
                         tipo: Optional[str] = None, estado: Optional[str] = None,
-                        marca: Optional[str] = None,
+                        marca: Optional[str] = None, usuario: Optional[str] = None,
                         desde: Optional[str] = None, hasta: Optional[str] = None,
                         rec_desde: Optional[str] = None, rec_hasta: Optional[str] = None,
                         pendiente: int = 0, recibido: int = 0, q: Optional[str] = None,
@@ -904,6 +913,8 @@ async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = N
             cond.append('estado = ?'); args.append(estado.strip())
         if marca:
             cond.append('marca = ?'); args.append(marca.strip())
+        if usuario:
+            cond.append('usuario = ?'); args.append(usuario.strip())
         if desde:
             cond.append('fecha_envio >= ?'); args.append(desde.strip()[:10])
         if hasta:
@@ -943,7 +954,8 @@ async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = N
             'SELECT COUNT(*), COALESCE(SUM(enviado),0), COALESCE(SUM(recibido),0), '
             'COUNT(DISTINCT asn), COUNT(DISTINCT expediente) FROM asn' + donde, args).fetchone()
 
-        if agrupar in ('expediente', 'asn', 'articulo', 'tipo', 'marca', 'orden'):
+        if agrupar in ('expediente', 'asn', 'articulo', 'tipo', 'marca', 'orden',
+                       'usuario', 'hora_recepcion', 'fecha_recepcion'):
             lim = max(1, min(int(limite or 200), 2000))
             filas = cur.execute(
                 'SELECT %s, COUNT(*), SUM(enviado), SUM(recibido), COUNT(DISTINCT asn), '

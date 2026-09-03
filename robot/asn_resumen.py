@@ -157,6 +157,14 @@ _PRE = re.compile(r'^([A-Za-z]+)')
 ORDEN_EN_EL_ASN = re.compile(r'^(\d{4})(\d{5})(\d{2})([A-Z]{2})')
 
 
+def _hora(v):
+    """HH:MM:SS de la fecha de recepcion, venga como fecha de Excel o como texto."""
+    if hasattr(v, "strftime"):
+        return v.strftime("%H:%M:%S")
+    t = str(v or "").strip()
+    return t[11:19] if len(t) >= 19 and t[10:11] == " " else ""
+
+
 def _fecha10(v):
     """AAAA-MM-DD, venga como fecha de Excel o como texto."""
     if hasattr(v, 'strftime'):
@@ -393,6 +401,11 @@ def construir():
         # El Tipo ASN, codificado. Se agrego al web report el 03-sep-2026; los
         # archivos bajados antes no la traen y el tipo sale del numero.
         iT = idx.get("cust_field_1")
+        # QUIEN RECIBIO y A QUE HORA. La columna del usuario se agrego al informe
+        # el 03-sep-2026 para poder medir la productividad de recepcion por
+        # persona, como ya se mide la de picking. Los archivos bajados antes no la
+        # traen: se acepta que falte y esas filas quedan sin usuario.
+        iU = idx.get("verified_user")
 
         n = 0
         for fila in it:
@@ -452,6 +465,12 @@ def construir():
                     str(fila[iS]).strip() if iS is not None and iS < len(fila) and fila[iS] else "",
                     _fecha10(fila[iF]) if iF is not None and iF < len(fila) else "",
                     _fecha10(fila[iV]) if iV is not None and iV < len(fila) else "",
+                    # LA HORA VA APARTE de la fecha, no pegada: si fuera
+                    # "2026-09-02 19:53", el filtro por dia <= "2026-09-02"
+                    # dejaria fuera todo lo de ese dia. Separadas, los dos
+                    # filtros siguen siendo una comparacion simple.
+                    _hora(fila[iV]) if iV is not None and iV < len(fila) else "",
+                    str(fila[iU]).strip() if iU is not None and iU < len(fila) and fila[iU] else "",
                 )
 
             # el detalle por articulo, por marca y por mes
@@ -761,10 +780,10 @@ def cargar_tabla(tabla, meta, marca_de):
     """
     filas = []
     for (asn, cod), f in tabla.items():
-        m = meta.get(asn, ("", "", "", "", "", "", ""))
+        m = meta.get(asn, ("", "", "", "", "", "", "", "", ""))
         filas.append([asn, cod, f["desc"], marca_de(cod), m[0], m[1], m[2], m[3],
-                      m[4], m[5], m[6], int(round(f["env"])), int(round(f["rec"])),
-                      f["n"]])
+                      m[4], m[5], m[6], m[7], m[8],
+                      int(round(f["env"])), int(round(f["rec"])), f["n"]])
     log("tabla del ASN: %s filas" % "{:,}".format(len(filas)))
     # A LOS DOS ENTORNOS, igual que el paquete: produccion y beta tienen bases
     # distintas y la tabla vive en la base.
