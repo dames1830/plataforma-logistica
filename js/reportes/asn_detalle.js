@@ -121,6 +121,29 @@ const CSS = [
 '#asn .a-pie { padding:.7rem 1.2rem; font-size:var(--t-xs); color:var(--text-muted); border-top:1px solid var(--border); line-height:1.6; }',
 '#asn .a-vacio { padding:2rem; text-align:center; color:var(--text-muted); font-size:var(--t-sm); }',
 '#asn, #asn .a-caja { max-width:100%; min-width:0; }',
+/* ── LA REJILLA ──────────────────────────────────────────────────────────────
+   Dos cuadros por fila cuando entran. `auto-fit` con un minimo de 560px hace que
+   en una pantalla angosta vuelvan a apilarse solos, sin media queries.
+   `align-items:start` es lo que evita que un cuadro corto se estire para igualar
+   al de al lado y quede con un hueco abajo. */
+'#asn .a-rejilla { display:grid; grid-template-columns:repeat(auto-fit, minmax(560px, 1fr)); gap:18px; align-items:start; }',
+'#asn .a-rejilla > .a-caja { margin-bottom:0; }',
+/* El que necesita el ancho entero se lo lleva: la lista de articulos, los
+   parciales, y CUALQUIERA que tenga su detalle abierto. */
+'#asn .a-caja.a-ancho { grid-column:1 / -1; }',
+/* ── QUE LOS NUMEROS NO SE ESTIREN ───────────────────────────────────────────
+   Con `width:100%` y seis columnas, el navegador reparte el sobrante entre todas
+   y deja huecos enormes entre cifras que hay que comparar de un vistazo. Ahora
+   las columnas de numeros se ajustan a su contenido y el sobrante se lo lleva la
+   primera, que es la que lleva texto largo. */
+'#asn td, #asn th { width:1%; white-space:nowrap; }',
+'#asn td:first-child, #asn th:first-child { width:auto; white-space:normal; }',
+/* EN EL CALENDARIO EL SOBRANTE NO VA A LA PRIMERA COLUMNA. Ahi la primera es una
+   fecha corta: dejarle el sobrante abria un hueco entre "viernes 4" y la fecha de
+   entrada, que son justo las dos que hay que leer juntas. Se lo lleva la columna
+   de marcas, que es la unica de texto largo. */
+'#asn table.a-cal td:first-child, #asn table.a-cal th:first-child { width:1%; white-space:nowrap; }',
+'#asn table.a-cal td.a-marcas, #asn table.a-cal th.a-marcas { width:auto; white-space:normal; }',
 '#asn .a-tarjetas { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:18px; }',
 '#asn .a-t { background:var(--panel-deep); border:1px solid var(--border); border-radius:14px; padding:1rem 1.1rem; }',
 '#asn .a-t .et { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:800; }',
@@ -232,15 +255,18 @@ export function montarAsnDetalle(cont, OPC) {
           + '<div class="p">en ' + nf(cerca.length) + ' días con llegada</div></div>'
         + '</div>');
 
-        T.push('<div class="a-caja"><div class="a-cab"><h3>Cuándo llega</h3>'
+    T.push('<div class="a-rejilla">');
+        /* SIEMPRE A LO ANCHO: es el de siete columnas y 33 dias, el mas denso de todos,
+   y ademas deja a los otros cuatro emparejados de a dos sin que sobre ninguno. */
+        T.push('<div class="a-caja a-ancho"><div class="a-cab"><h3>Cuándo llega</h3>'
         + '<span class="nota">'
         + (hayEntra ? '<b>anunciado</b> y cuándo suele <b>entrar</b>' : 'la fecha la anuncia el ASN')
         + ' · <b>haz clic en un día</b> para ver los artículos</span></div>'
-        + '<div class="a-scroll"><table><thead><tr>'
+        + '<div class="a-scroll"><table class="a-cal"><thead><tr>'
         + '<th>Anunciado</th>'
         + (hayEntra ? '<th>Suele entrar</th>' : '')
         + '<th>Falta</th><th>Unidades</th><th>Artículos</th>'
-        + '<th style="text-align:left;">Marcas</th><th></th>'
+        + '<th class="a-marcas" style="text-align:left;">Marcas</th><th></th>'
         + '</tr></thead><tbody>'
         + CL.dias.map(d => {
             const f = hoy ? diasEntre(hoy, d.dia) : null;
@@ -357,7 +383,7 @@ export function montarAsnDetalle(cont, OPC) {
        `faltaBruta`: sin esto salen dos columnas con el mismo numero. */
     const hayBruta = meses.some(m => p.porMes[m].faltaBruta != null);
 
-    T.push('<div class="a-caja"><div class="a-cab"><h3>Mes a mes</h3>'
+    T.push('<div class="a-caja' + (_mes ? ' a-ancho' : '') + '"><div class="a-cab"><h3>Mes a mes</h3>'
     /* POR FECHA DE CREACION, que es como agrupa el robot -un archivo por mes- y
        como ya lo decia el cuadro de arriba. El rotulo decia "por fecha de envio"
        porque asi lo habia agrupado la medicion de prueba, y dos cuadros pegados
@@ -513,7 +539,7 @@ export function montarAsnDetalle(cont, OPC) {
             || dsc(a).toLowerCase().indexOf(q) >= 0
             || (a.marca || '').toLowerCase().indexOf(q) >= 0;
     });
-    T.push('<div class="a-caja"><div class="a-cab"><h3>Qué artículo está llegando</h3>'
+    T.push('<div class="a-caja a-ancho"><div class="a-cab"><h3>Qué artículo está llegando</h3>'
     + '<span class="nota">los ' + nf((p.articulos || []).length) + ' con más pendiente, de '
     + nf(p.articulosConFalta) + '</span></div>'
     + '<div class="a-barra">'
@@ -552,7 +578,7 @@ export function montarAsnDetalle(cont, OPC) {
             || (x.estado || '').toLowerCase().indexOf(q) >= 0
             || (x.envio || '').toLowerCase().indexOf(q) >= 0;
     });
-    T.push('<div class="a-caja"><div class="a-cab"><h3>Los ASN parciales</h3>'
+    T.push('<div class="a-caja a-ancho"><div class="a-cab"><h3>Los ASN parciales</h3>'
     + '<span class="nota">llegó algo pero no todo · son los que hay que perseguir</span></div>'
     + '<div class="a-barra">'
     + '<input class="a-buscar" placeholder="Buscar por ASN, estado o fecha..." '
@@ -573,6 +599,7 @@ export function montarAsnDetalle(cont, OPC) {
         + 'Nada con ese texto.</td></tr>')
     + '</tbody></table></div></div>');
 
+    T.push('</div>');   // cierra la rejilla
     T.push('</div>');
     cont.innerHTML = T.join('');
 
