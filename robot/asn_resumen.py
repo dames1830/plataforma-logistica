@@ -38,6 +38,11 @@ AREA = "asn_recepcion"
 # los 11.307 serian 1.117 KB. Ver el comentario del paquete.
 TOPE_ARTICULOS = 500
 TOPE_POR_MES = 50
+
+# CUANDO LLEGA. Daniel eligio el 03-sep-2026: los dias cercanos COMPLETOS -que son
+# sobre los que se prepara el almacen- y solo los mas grandes de los lejanos.
+DIAS_CERCA = 14
+TOPE_DIA_LEJOS = 25
 # La credencial del robot vive en el entorno del Contabo y en Render, NUNCA en el repo.
 ROBOT_TOKEN = os.environ.get("ROBOT_TOKEN", "")
 
@@ -186,6 +191,24 @@ def construir():
     marca = defaultdict(lambda: {"e": 0.0, "r": 0.0, "n": 0})
     por_mes_art = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0]))
 
+    # ── CUANDO LLEGA CADA COSA ────────────────────────────────────────────────
+    #
+    # Daniel, 03-sep-2026: *"necesito saber la fecha aproximada en que va a llegar
+    # y los SKU y marcas, porque si no, no puedo preparar el almacen"*.
+    #
+    # Se mide LINEA POR LINEA, no por articulo: cada linea trae su propia fecha y
+    # un mismo codigo llega en varias tandas distintas.
+    #
+    # SE SEPARA LO VENCIDO. Medido el 03-sep: de 6.852.012 pendientes, el 37,6%
+    # tiene la fecha YA PASADA. Pintar eso junto a lo futuro seria decirle que va
+    # a llegar algo que ya fallo una vez.
+    por_dia = defaultdict(lambda: defaultdict(float))
+    por_dia_marca = defaultdict(lambda: defaultdict(float))
+    venc_edad = defaultdict(float)
+    cuando = {"futuro": 0.0, "vencido": 0.0, "sin_fecha": 0.0,
+              "lin_fut": 0, "lin_ven": 0, "lin_sin": 0}
+    HOY = datetime.now().date()
+
     for nombre in sorted(f for f in os.listdir(CARPETA_ASN) if f.lower().endswith(".xlsx")):
         etiqueta = nombre.replace("ASN ", "").replace(".xlsx", "")
         ruta = os.path.join(CARPETA_ASN, nombre)
@@ -250,6 +273,27 @@ def construir():
                 x = por_mes_art[etiqueta][cod]
                 x[0] += env
                 x[1] += rec
+
+                # lo que todavia no llego, con la fecha que anuncia el ASN
+                pend = env - rec
+                if pend > 0.5:
+                    fe = (fecha_de(fila[iF])
+                          if iF is not None and iF < len(fila) else None)
+                    if fe is None:
+                        cuando["sin_fecha"] += pend
+                        cuando["lin_sin"] += 1
+                    elif fe.date() >= HOY:
+                        cuando["futuro"] += pend
+                        cuando["lin_fut"] += 1
+                        d = fe.date().isoformat()
+                        por_dia[d][cod] += pend
+                        por_dia_marca[d][mk] += pend
+                    else:
+                        cuando["vencido"] += pend
+                        cuando["lin_ven"] += 1
+                        dd = (HOY - fe.date()).days
+                        venc_edad["1a7" if dd <= 7 else "8a30" if dd <= 30
+                                  else "31a90" if dd <= 90 else "mas90"] += pend
 
             est = str(fila[iS]).strip() if iS is not None and iS < len(fila) and fila[iS] else "(sin estado)"
             e = estado[est]
@@ -343,10 +387,50 @@ def construir():
             "faltaBruta": round(bruta),
             "sobra": round(sobra),
             "sobraArticulos": sum(1 for _, v in todos if v[1] - v[0] > 0.5),
-            "top": [{"cod": c, "desc": art[c]["d"], "marca": art[c]["m"],
+            "top": [{"cod": c, "marca": art[c]["m"],
                      "env": round(v[0]), "rec": round(v[1]), "falta": round(v[0] - v[1])}
                     for c, v in arts[:TOPE_POR_MES]],
         }
+
+    # ── EL CALENDARIO DE LO QUE VIENE ────────────────────────────────────────
+    #
+    # Los dias de aca a DIAS_CERCA van COMPLETOS -son sobre los que se prepara el
+    # almacen- y los lejanos recortados. Cada dia dice si esta completo o no: una
+    # lista recortada que no avisa se lee como la lista entera.
+    dias_llegada = []
+    for d in sorted(por_dia):
+        arts = sorted(por_dia[d].items(), key=lambda x: -x[1])
+        cerca = (datetime.strptime(d, "%Y-%m-%d").date() - HOY).days <= DIAS_CERCA
+        top = arts if cerca else arts[:TOPE_DIA_LEJOS]
+        dias_llegada.append({
+            "dia": d,
+            "u": round(sum(v for _, v in arts)),
+            "n": len(arts),
+            "marcas": [{"m": m, "u": round(q)} for m, q in
+                       sorted(por_dia_marca[d].items(), key=lambda x: -x[1])],
+            "top": [{"cod": c, "marca": art[c]["m"], "u": round(q)} for c, q in top],
+            "completo": len(top) == len(arts),
+        })
+
+    # La proxima fecha de cada codigo, para la columna CUANDO del cuadro de
+    # articulos: *"puedes anadir ahi, en esos reportes que ya tienes, la fecha"*.
+    proxima = {}
+    for d in sorted(por_dia):
+        for c in por_dia[d]:
+            if c not in proxima:
+                proxima[c] = d
+
+    cuando_llega = {
+        "hoy": HOY.isoformat(),
+        "diasCerca": DIAS_CERCA,
+        "futuro": round(cuando["futuro"]),
+        "vencido": round(cuando["vencido"]),
+        "sinFecha": round(cuando["sin_fecha"]),
+        "lineasFuturo": cuando["lin_fut"],
+        "lineasVencido": cuando["lin_ven"],
+        "dias": dias_llegada,
+        "vencidoEdad": {k: round(v) for k, v in venc_edad.items()},
+    }
 
     paquete = {
         "generado": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -389,10 +473,13 @@ def construir():
         # no avisa se lee como la lista completa.
         "articulosDistintos": len(art),
         "articulosConFalta": len(con_falta),
+        # `desc` ya no viaja en cada fila: se repetia en articulos, en cada mes y
+        # en cada dia del calendario. Ahora va UNA vez en `desc`, mas abajo.
         "articulos": [{
-            "cod": c, "desc": v["d"], "marca": v["m"], "gender": v["g"],
+            "cod": c, "marca": v["m"], "gender": v["g"],
             "env": round(v["e"]), "rec": round(v["r"]),
             "falta": round(v["e"] - v["r"]), "lineas": v["n"],
+            "prox": proxima.get(c, ""),
         } for c, v in con_falta[:TOPE_ARTICULOS]],
         "marcas": sorted([{
             "marca": m, "env": round(v["e"]), "rec": round(v["r"]),
@@ -400,7 +487,27 @@ def construir():
             "cumple": round(100.0 * v["r"] / v["e"], 1) if v["e"] else 0,
         } for m, v in marca.items()], key=lambda x: -x["env"]),
         "porMes": por_mes,
+        "cuandoLlega": cuando_llega,
     }
+
+    # ── LAS DESCRIPCIONES, UNA SOLA VEZ ──────────────────────────────────────
+    #
+    # Repetirlas en cada fila era la mitad del peso del paquete, y un mismo
+    # codigo aparece en el cuadro de articulos, en varios meses y en varios dias.
+    codigos = set(a["cod"] for a in paquete["articulos"])
+    for m in por_mes.values():
+        codigos.update(a["cod"] for a in m["top"])
+    for d in dias_llegada:
+        codigos.update(a["cod"] for a in d["top"])
+    paquete["desc"] = {c: art[c]["d"] for c in sorted(codigos) if art[c]["d"]}
+
+    for k in ("articulos", "marcas", "parciales", "desc"):
+        log("   %-11s %6.0f KB"
+            % (k, len(json.dumps(paquete[k], ensure_ascii=False).encode("utf-8")) / 1024.0))
+    log("   %-11s %6.0f KB (%d dias, %d completos)"
+        % ("cuandoLlega",
+           len(json.dumps(cuando_llega, ensure_ascii=False).encode("utf-8")) / 1024.0,
+           len(dias_llegada), sum(1 for d in dias_llegada if d["completo"])))
     return paquete
 
 

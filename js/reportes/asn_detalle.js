@@ -55,6 +55,26 @@ const mesLargo = (m) => {
     return (MESES[(+p[1] || 1) - 1] || m) + ' ' + (p[0] || '');
 };
 
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+/* NADA DE toISOString(): devuelve UTC y adelanta el día a las 19:00, justo cuando
+   entra el turno noche. Acá se compara texto 'AAAA-MM-DD' contra texto, que para
+   fechas ISO ordena igual que el calendario, y el 'hoy' lo manda el tablero con
+   getLogicalDate(). */
+const comoFecha = (iso) => {
+    const q = String(iso || '').split('-').map(Number);
+    return new Date(q[0], (q[1] || 1) - 1, q[2] || 1);
+};
+const diasEntre = (a, b) => Math.round((comoFecha(b) - comoFecha(a)) / 86400000);
+const diaLargo = (iso) => {
+    const d = comoFecha(iso);
+    return DIAS[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
+};
+const diaCorto = (iso) => {
+    const d = comoFecha(iso);
+    return d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3);
+};
+
 /* DE CUÁNDO ES EL DATO, y si está viejo.
  *
  * El robot corre todas las madrugadas. Si el dato tiene más de 30 horas es que no
@@ -101,6 +121,16 @@ const CSS = [
 '#asn .a-pie { padding:.7rem 1.2rem; font-size:var(--t-xs); color:var(--text-muted); border-top:1px solid var(--border); line-height:1.6; }',
 '#asn .a-vacio { padding:2rem; text-align:center; color:var(--text-muted); font-size:var(--t-sm); }',
 '#asn, #asn .a-caja { max-width:100%; min-width:0; }',
+'#asn .a-tarjetas { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:18px; }',
+'#asn .a-t { background:var(--panel-deep); border:1px solid var(--border); border-radius:14px; padding:1rem 1.1rem; }',
+'#asn .a-t .et { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:800; }',
+'#asn .a-t .n { font-size:1.7rem; font-weight:800; margin:.25rem 0 .1rem; font-variant-numeric:tabular-nums; }',
+'#asn .a-t .p { font-size:var(--t-xs); color:var(--text-muted); }',
+'#asn .a-barrita { height:8px; border-radius:99px; overflow:hidden; display:flex; background:rgba(var(--ink-rgb),.08); margin-top:.5rem; }',
+'#asn .a-ya { color:var(--danger); font-weight:800; }',
+'#asn .a-pronto { color:var(--warning); font-weight:800; }',
+'#asn .a-lejos { color:var(--text-muted); }',
+'#asn .a-marcas { color:var(--text-muted); text-align:left; font-size:10.5px; }',
 ].join('\n');
 
 /* Lo que se está mirando. Es de módulo para que sobreviva al redibujado. */
@@ -108,6 +138,7 @@ let _mes = null;          // el mes abierto en "mes a mes"
 let _buscaArt = '';
 let _buscaPar = '';
 let _marca = '';
+let _dia = null;
 let _cont = null;
 let _OPC = null;
 
@@ -124,6 +155,12 @@ export function montarAsnDetalle(cont, OPC) {
             + 'Lo arma el robot del ASN en la madrugada.</div></div>';
         return;
     }
+
+    /* Las descripciones dejaron de repetirse en cada fila -eran la mitad del
+       peso- y viven en `p.desc`. El respaldo `a.desc` es para el paquete viejo,
+       que sigue publicado hasta que el robot vuelva a correr. */
+    const DSC = p.desc || {};
+    const dsc = (a) => (a && a.desc) || DSC[a && a.cod] || '';
 
     const c = cuandoSeSaco(p.generado);
     const T = [];
@@ -147,6 +184,142 @@ export function montarAsnDetalle(cont, OPC) {
        resto del modulo: un numero que falta se lee como un dato que no existe. */
     + nf((p.totales && p.totales.lineas) || p.lineas) + ' líneas · ' + nf(p.articulosDistintos) + ' artículos distintos · '
     + nf(p.articulosConFalta) + ' con algo pendiente</div></div>');
+
+    // =========================================================================
+    // CUANDO LLEGA - lo primero, porque es sobre lo que se prepara el almacen
+    // =========================================================================
+    //
+    // Daniel, 03-sep-2026: *"necesito saber la fecha aproximada en que va a llegar
+    // y los SKU y marcas, porque si no, no puedo preparar el almacen. El SKU X va
+    // a llegar el quince de septiembre, entonces yo ya se"*.
+    //
+    // SE MUESTRA LO VENCIDO AL LADO, SIEMPRE. Medido el 03-sep: el 37,6% del
+    // pendiente tiene la fecha YA PASADA. Un calendario solo, sin ese numero, se
+    // lee como una promesa, y mas de un tercio de las veces no se cumple.
+    const CL = p.cuandoLlega;
+    const hayCuando = !!(CL && CL.dias && CL.dias.length);
+    const hoy = (O.hoy || (CL && CL.hoy) || '');
+
+    /* La celda CUANDO del cuadro de articulos. Sin fecha NO se pone un guion
+       suelto: se dice que no la anuncia, que es distinto de que no llegue. */
+    const cuandoLlegaEste = (iso) => {
+        if (!iso) return '<span class="a-desc">no la anuncia</span>';
+        const f = hoy ? diasEntre(hoy, iso) : null;
+        const cl = f === null ? '' : f <= 2 ? 'a-ya' : f <= 7 ? 'a-pronto' : 'a-lejos';
+        return '<span class="' + cl + '">' + esc(diaCorto(iso)) + '</span>';
+    };
+
+    if (hayCuando) {
+        const fut = CL.futuro || 0, ven = CL.vencido || 0;
+        const tot = fut + ven;
+        const pF = tot ? (100 * fut / tot) : 0;
+        const cerca = CL.dias.filter(d => hoy && diasEntre(hoy, d.dia) <= 7);
+
+        T.push('<div class="a-tarjetas">'
+        + '<div class="a-t"><div class="et">Con fecha por delante</div>'
+          + '<div class="n" style="color:var(--success);">' + nf(fut) + '</div>'
+          + '<div class="p">' + n1(pF) + '% del pendiente · ' + CL.dias.length + ' días con llegadas</div>'
+          + '<div class="a-barrita"><div style="width:' + pF + '%; background:var(--success);"></div>'
+          + '<div style="width:' + (100 - pF) + '%; background:var(--danger);"></div></div></div>'
+        + '<div class="a-t"><div class="et">Fecha ya vencida</div>'
+          + '<div class="n" style="color:var(--danger);">' + nf(ven) + '</div>'
+          + '<div class="p">' + n1(100 - pF) + '% · debió llegar y no llegó</div></div>'
+        + '<div class="a-t"><div class="et">Llega en los próximos 7 días</div>'
+          + '<div class="n">' + nf(cerca.reduce((a, d) => a + d.u, 0)) + '</div>'
+          + '<div class="p">en ' + nf(cerca.length) + ' días con llegada</div></div>'
+        + '</div>');
+
+        T.push('<div class="a-caja"><div class="a-cab"><h3>Cuándo llega</h3>'
+        + '<span class="nota">la fecha la anuncia el ASN · <b>haz clic en un día</b> '
+        + 'para ver los artículos</span></div>'
+        + '<div class="a-scroll"><table><thead><tr>'
+        + '<th>Día</th><th>Falta</th><th>Unidades</th><th>Artículos</th>'
+        + '<th style="text-align:left;">Marcas</th><th></th>'
+        + '</tr></thead><tbody>'
+        + CL.dias.map(d => {
+            const f = hoy ? diasEntre(hoy, d.dia) : null;
+            const cl = f === null ? '' : f <= 2 ? 'a-ya' : f <= 7 ? 'a-pronto' : 'a-lejos';
+            const cu = f === null ? '' : f <= 0 ? 'hoy' : f === 1 ? 'mañana' : 'en ' + f + ' días';
+            return '<tr class="a-clic' + (d.dia === _dia ? ' a-viva' : '') + '" '
+              + 'onclick="window.__asnDia(&quot;' + d.dia + '&quot;)">'
+              + '<td>' + esc(diaLargo(d.dia)) + '</td>'
+              + '<td class="' + cl + '">' + cu + '</td>'
+              + '<td style="font-weight:800; color:var(--text-strong);">' + nf(d.u) + '</td>'
+              + '<td>' + nf(d.n) + '</td>'
+              + '<td class="a-marcas">' + (d.marcas || []).slice(0, 3)
+                  .map(m => esc(m.m) + ' ' + nf(m.u)).join(' · ')
+              + ((d.marcas || []).length > 3 ? ' +' + (d.marcas.length - 3) : '') + '</td>'
+              + '<td style="color:var(--text-muted);">' + (d.dia === _dia ? '▼ abierto' : 'ver ▸')
+              + '</td></tr>';
+          }).join('')
+        + '<tr style="border-top:2px solid var(--border); font-weight:800;">'
+        + '<td>Total</td><td></td>'
+        + '<td style="color:var(--text-strong);">' + nf(CL.dias.reduce((a, d) => a + d.u, 0)) + '</td>'
+        + '<td></td><td></td><td></td></tr>'
+        + '</tbody></table></div>');
+
+        const D = _dia ? CL.dias.find(x => x.dia === _dia) : null;
+        if (D) {
+            T.push('<div class="a-cab" style="border-top:1px solid var(--border);">'
+            + '<h3>Qué llega el ' + esc(diaLargo(D.dia)) + '</h3>'
+            + '<span class="nota">' + (D.completo ? 'los ' + nf(D.n) + ' artículos'
+                : nf(D.top.length) + ' de ' + nf(D.n) + ' artículos · los de mayor cantidad')
+            + '</span></div>'
+            + '<div class="a-scroll"><table><thead><tr>'
+            + '<th>Artículo</th><th style="text-align:left;">Marca</th><th>Unidades</th>'
+            + '</tr></thead><tbody>'
+            + D.top.map(a => '<tr><td>' + esc(a.cod)
+                + (dsc(a) ? '<br><span class="a-desc">' + esc(dsc(a)) + '</span>' : '')
+                + '</td><td style="text-align:left;">' + esc(a.marca || '') + '</td>'
+                + '<td style="font-weight:800; color:var(--text-strong);">' + nf(a.u) + '</td></tr>').join('')
+            + '</tbody></table></div>'
+            + '<div class="a-pie">'
+            + (D.completo
+                ? 'Están los <b>' + nf(D.n) + '</b> artículos del día y suman <b>' + nf(D.u) + '</b> unidades.'
+                : 'Estos <b>' + nf(D.top.length) + '</b> suman <b>'
+                  + nf(D.top.reduce((a, x) => a + x.u, 0)) + '</b> de las ' + nf(D.u)
+                  + ' del día; quedan <b>' + nf(D.n - D.top.length) + '</b> artículos más. '
+                  + 'Los días de aquí a ' + (CL.diasCerca || 14) + ' vienen completos.')
+            + '</div>');
+        }
+        T.push('</div>');
+
+        // -- lo vencido -------------------------------------------------------
+        const ed = CL.vencidoEdad || {};
+        const ORD = [['1a7', 'Hace 1 a 7 días', 'puede caer cualquier día — hay que preverlo'],
+                     ['8a30', 'Hace 8 a 30 días', 'atrasado, conviene preguntar'],
+                     ['31a90', 'Hace 31 a 90 días', 'muy atrasado'],
+                     ['mas90', 'Hace más de 90 días', 'ASN colgado: o se perdió o nadie lo cerró']];
+        const filas = ORD.filter(x => ed[x[0]]);
+        if (filas.length) {
+            T.push('<div class="a-caja"><div class="a-cab"><h3>Lo que debió llegar y no llegó</h3>'
+            + '<span class="nota">' + nf(ven) + ' unidades en ' + nf(CL.lineasVencido)
+            + ' líneas con la fecha ya pasada</span></div>'
+            + '<div class="a-scroll"><table><thead><tr>'
+            + '<th>Se anunció</th><th>Unidades</th><th style="text-align:left;">Qué significa</th>'
+            + '</tr></thead><tbody>'
+            + filas.map(x => '<tr><td>' + x[1] + '</td>'
+                + '<td style="font-weight:800; color:var(--text-strong);">' + nf(ed[x[0]]) + '</td>'
+                + '<td style="text-align:left;" class="a-desc">' + x[2] + '</td></tr>').join('')
+            + '<tr style="border-top:2px solid var(--border); font-weight:800;">'
+            + '<td>Total</td><td style="color:var(--text-strong);">'
+            + nf(filas.reduce((a, x) => a + ed[x[0]], 0)) + '</td><td></td></tr>'
+            + '</tbody></table></div>'
+            /* EL DESCUADRE CONTRA "MES A MES" SE DICE ACA, no se esconde: Daniel
+               suma las filas y lo iba a encontrar. Aca cada LINEA cuenta con su
+               propia fecha; alla cada ARTICULO se suma entero, y los recibidos de
+               mas dentro de un mismo articulo se cancelan. */
+            + '<div class="a-pie"><b>' + nf(fut) + '</b> por llegar + <b>' + nf(ven)
+            + '</b> vencido = <b>' + nf(tot) + '</b>. El cuadro «Mes a mes» dice <b>'
+            /* No se puede usar `sumar`: se declara mas abajo, en el bloque de MES A
+               MES, y en la zona muerta del const revienta. Lo caza EJECUTAR la
+               pantalla, no el chequeo de sintaxis. */
+            + nf(Object.values(p.porMes || {}).reduce(
+                  (a, m) => a + (Number(m.faltaBruta != null ? m.faltaBruta : m.falta) || 0), 0))
+            + '</b> porque allá cada artículo se '
+            + 'suma entero y acá cada línea cuenta con su propia fecha.</div></div>');
+        }
+    }
 
     // ─── MES A MES, y al hacer clic se abre el detalle ───────────────────────
     const meses = Object.keys(p.porMes || {}).sort().reverse();
@@ -202,7 +375,7 @@ export function montarAsnDetalle(cont, OPC) {
         + '<th>Artículo</th><th>Marca</th><th>Enviado</th><th>Recibido</th><th>Falta</th>'
         + '</tr></thead><tbody>'
         + x.top.map(a => '<tr><td>' + esc(a.cod)
-            + '<br><span class="a-desc">' + esc(a.desc || '') + '</span></td>'
+            + '<br><span class="a-desc">' + esc(dsc(a)) + '</span></td>'
             + '<td style="text-align:left;">' + esc(a.marca || '') + '</td>'
             + '<td>' + nf(a.env) + '</td><td>' + nf(a.rec) + '</td>'
             + '<td class="a-falta">' + nf(a.falta) + '</td></tr>').join('')
@@ -251,7 +424,7 @@ export function montarAsnDetalle(cont, OPC) {
         if (!_buscaArt) return true;
         const q = _buscaArt.toLowerCase();
         return (a.cod || '').toLowerCase().indexOf(q) >= 0
-            || (a.desc || '').toLowerCase().indexOf(q) >= 0
+            || dsc(a).toLowerCase().indexOf(q) >= 0
             || (a.marca || '').toLowerCase().indexOf(q) >= 0;
     });
     T.push('<div class="a-caja"><div class="a-cab"><h3>Qué artículo está llegando</h3>'
@@ -265,21 +438,25 @@ export function montarAsnDetalle(cont, OPC) {
     + '<span style="font-size:var(--t-xs); color:var(--text-muted);">' + nf(arts.length) + ' a la vista</span>'
     + '</div>'
     + '<div class="a-scroll"><table><thead><tr>'
-    + '<th>Artículo</th><th>Marca</th><th>Tipo</th><th>Enviado</th><th>Recibido</th><th>Falta</th>'
+    + '<th>Artículo</th><th>Marca</th><th>Tipo</th>'
+    + (hayCuando ? '<th>Cuándo llega</th>' : '')
+    + '<th>Enviado</th><th>Recibido</th><th>Falta</th>'
     + '</tr></thead><tbody>'
     + (arts.length ? arts.map(a => '<tr><td>' + esc(a.cod)
-        + '<br><span class="a-desc">' + esc(a.desc || '') + '</span></td>'
+        + '<br><span class="a-desc">' + esc(dsc(a)) + '</span></td>'
         + '<td style="text-align:left;">' + esc(a.marca || '') + '</td>'
         + '<td style="text-align:left;" class="a-desc">' + esc(a.gender || '') + '</td>'
+        + (hayCuando ? '<td style="text-align:left;">' + cuandoLlegaEste(a.prox) + '</td>' : '')
         + '<td>' + nf(a.env) + '</td><td>' + nf(a.rec) + '</td>'
         + '<td class="a-falta">' + nf(a.falta) + '</td></tr>').join('')
-      : '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-muted);">'
+      : '<tr><td colspan="' + (hayCuando ? 7 : 6) + '" style="text-align:center; padding:1.5rem; color:var(--text-muted);">'
         + 'Nada con ese texto.</td></tr>')
     + '</tbody></table></div>'
     + '<div class="a-pie">Se publican los <b>' + nf((p.articulos || []).length) + '</b> que más '
     + 'faltan, de <b>' + nf(p.articulosConFalta) + '</b> con algo pendiente. Mandarlos todos al '
-    + 'navegador serían 1.117 KB y eso es lo que ya hizo lenta la web una vez; el Excel los trae '
-    + 'completos.</div></div>');
+    + 'navegador serían 1.117 KB y eso es lo que ya hizo lenta la web una vez. '
+    /* DECIA "el Excel los trae completos" Y ERA FALSO: exporta estos mismos 500. */
+    + 'El Excel exporta estos mismos.</div></div>');
 
     // ─── LOS PARCIALES, con buscador ─────────────────────────────────────────
     const par = (p.parciales || []).filter(x => {
@@ -316,6 +493,7 @@ export function montarAsnDetalle(cont, OPC) {
     const redibujar = () => { const y = window.scrollY; montarAsnDetalle(_cont, null); window.scrollTo(0, y); };
     window.__asnMes = (m) => { _mes = (_mes === m) ? null : m; redibujar(); };
     window.__asnMarca = (m) => { _marca = (_marca === m) ? '' : m; redibujar(); };
+    window.__asnDia = (d) => { _dia = (_dia === d) ? null : d; redibujar(); };
     window.__asnBuscar = (cual, v) => {
         if (cual === 'art') _buscaArt = v; else _buscaPar = v;
         redibujar();

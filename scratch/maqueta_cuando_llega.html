@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta - Cuando llega</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body { margin:0; padding:22px; font-family:'Inter',system-ui,sans-serif; display:block; }
+  #caja { max-width:1600px; margin:0 auto; min-width:0; }
+  #err { background:#7f1d1d; color:#fff; padding:12px 16px; border-radius:10px;
+         margin-bottom:16px; font:12px/1.6 monospace; white-space:pre-wrap; display:none; }
+</style>
+</head><body>
+<div id="caja"><div id="err"></div><div id="destino">Cargando...</div></div>
+<script type="module">
+const err = document.getElementById('err');
+const gritar = (t) => { err.style.display='block'; err.textContent += t + '\n'; };
+window.addEventListener('error', e => gritar('ERROR: ' + e.message));
+
+const tema = new URLSearchParams(location.search).get('tema');
+if (tema) document.documentElement.setAttribute('data-tema', tema);
+
+const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
+const esc = (t) => String(t == null ? '' : t)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
+               'setiembre','octubre','noviembre','diciembre'];
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+/* HOY se fija con el mismo valor con que se midio, para que la maqueta y la
+   medicion digan lo mismo. En la pantalla real sale de getLogicalDate(). */
+const HOY = '2026-09-03';
+
+const comoFecha = (iso) => {
+  const p = iso.split('-').map(Number);
+  return new Date(p[0], p[1]-1, p[2]);
+};
+const cuantoFalta = (iso) => Math.round((comoFecha(iso) - comoFecha(HOY)) / 86400000);
+const diaLargo = (iso) => {
+  const d = comoFecha(iso);
+  return DIAS[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
+};
+
+const CSS = `
+#cl .c-caja { background:var(--panel-deep); border:1px solid var(--border); border-radius:14px; margin-bottom:18px; overflow:hidden; }
+#cl .c-cab { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap; padding:.9rem 1.2rem; border-bottom:1px solid var(--border); }
+#cl .c-cab h3 { margin:0; font-size:var(--t-md); font-weight:800; color:var(--text-strong); }
+#cl .c-cab .nota { font-size:var(--t-xs); color:var(--text-muted); }
+#cl .c-scroll { overflow-x:auto; overflow-y:auto; max-height:520px; width:0; min-width:100%; }
+#cl table { width:100%; border-collapse:collapse; font-size:var(--t-xs); font-variant-numeric:tabular-nums; }
+#cl th { position:sticky; top:0; z-index:1; background:var(--panel-deep); text-align:right; padding:.55rem .8rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; font-size:10.5px; border-bottom:2px solid var(--border); white-space:nowrap; }
+#cl th:first-child, #cl td:first-child { text-align:left; }
+#cl td { padding:.5rem .8rem; text-align:right; color:var(--text-main); border-bottom:1px solid rgba(var(--ink-rgb),.06); white-space:nowrap; }
+#cl tr.c-clic { cursor:pointer; }
+#cl tr.c-clic:hover td { background:rgba(var(--ink-rgb),.05); }
+#cl tr.c-viva td { background:rgba(var(--brand-rgb,99,102,241),.10); font-weight:800; }
+#cl .c-desc { color:var(--text-muted); font-size:10.5px; }
+#cl .c-marcas { color:var(--text-muted); text-align:left; font-size:10.5px; }
+#cl .c-ya { color:var(--danger); font-weight:800; }
+#cl .c-pronto { color:var(--warning); font-weight:800; }
+#cl .c-lejos { color:var(--text-muted); }
+#cl .c-u { font-weight:800; color:var(--text-strong); }
+#cl .c-pie { padding:.7rem 1.2rem; font-size:var(--t-xs); color:var(--text-muted); border-top:1px solid var(--border); line-height:1.6; }
+#cl .c-tarjetas { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:18px; }
+#cl .c-t { background:var(--panel-deep); border:1px solid var(--border); border-radius:14px; padding:1rem 1.1rem; }
+#cl .c-t .et { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:800; }
+#cl .c-t .n { font-size:1.7rem; font-weight:800; margin:.25rem 0 .1rem; font-variant-numeric:tabular-nums; }
+#cl .c-t .p { font-size:var(--t-xs); color:var(--text-muted); }
+#cl .c-barra { height:8px; border-radius:99px; overflow:hidden; display:flex; background:rgba(var(--ink-rgb),.08); margin:.5rem 0 0; }
+`;
+
+let _dia = null;
+const med = await (await fetch('medicion_cuando_llega.json')).json();
+
+// Las descripciones salen del paquete ya publicado; la medicion no las trajo.
+let DESC = {};
+try {
+  const r = await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/asn_recepcion?date=MASTER');
+  let p = (await r.json()).data; if (Array.isArray(p)) p = p[0];
+  (p.articulos || []).forEach(a => { DESC[a.cod] = a.desc; });
+  Object.values(p.porMes || {}).forEach(m => (m.top||[]).forEach(a => { DESC[a.cod] = DESC[a.cod] || a.desc; }));
+} catch (e) { gritar('no pude traer descripciones: ' + e.message); }
+
+const dibujar = () => {
+  const dias = med.dias;
+  const fut = med.cubos.futura, ven = med.cubos.vencida;
+  const tot = fut + ven;
+  const T = [];
+  T.push('<style>' + CSS + '</style><div id="cl">');
+
+  T.push('<h2 style="margin:0 0 .3rem;font-size:var(--t-xl);font-weight:800;color:var(--text-strong);">Cuándo llega</h2>'
+    + '<div style="font-size:var(--t-xs);color:var(--text-muted);margin-bottom:1rem;">'
+    + 'La fecha la anuncia el ASN. Es una orientación, no una promesa: mira cuánto hay vencido.</div>');
+
+  // ── las tres tarjetas ────────────────────────────────────────────────────
+  const pctF = (100*fut/tot).toFixed(1), pctV = (100*ven/tot).toFixed(1);
+  T.push('<div class="c-tarjetas">'
+    + '<div class="c-t"><div class="et">Con fecha por delante</div>'
+      + '<div class="n" style="color:var(--success);">' + nf(fut) + '</div>'
+      + '<div class="p">' + pctF + '% del pendiente · ' + dias.length + ' días con llegadas</div>'
+      + '<div class="c-barra"><div style="width:' + pctF + '%;background:var(--success);"></div>'
+      + '<div style="width:' + pctV + '%;background:var(--danger);"></div></div></div>'
+    + '<div class="c-t"><div class="et">Fecha ya vencida</div>'
+      + '<div class="n" style="color:var(--danger);">' + nf(ven) + '</div>'
+      + '<div class="p">' + pctV + '% · debió llegar y no llegó</div></div>'
+    + '<div class="c-t"><div class="et">Lo que viene esta semana</div>'
+      + '<div class="n">' + nf(dias.filter(d => cuantoFalta(d.dia) <= 7).reduce((a,d)=>a+d.unidades,0)) + '</div>'
+      + '<div class="p">en los próximos 7 días</div></div>'
+    + '</div>');
+
+  // ── el calendario ────────────────────────────────────────────────────────
+  T.push('<div class="c-caja"><div class="c-cab"><h3>El calendario de lo que viene</h3>'
+    + '<span class="nota"><b>haz clic en un día</b> para ver los artículos</span></div>'
+    + '<div class="c-scroll"><table><thead><tr>'
+    + '<th>Día</th><th>Falta</th><th>Unidades</th><th>Artículos</th>'
+    + '<th style="text-align:left;">Marcas</th><th></th>'
+    + '</tr></thead><tbody>'
+    + dias.map(d => {
+        const f = cuantoFalta(d.dia);
+        const cl = f <= 2 ? 'c-ya' : f <= 7 ? 'c-pronto' : 'c-lejos';
+        const cuando = f === 0 ? 'hoy' : f === 1 ? 'mañana' : 'en ' + f + ' días';
+        return '<tr class="c-clic' + (d.dia === _dia ? ' c-viva' : '') + '" '
+          + 'onclick="window.__dia(&quot;' + d.dia + '&quot;)">'
+          + '<td>' + esc(diaLargo(d.dia)) + '</td>'
+          + '<td class="' + cl + '">' + cuando + '</td>'
+          + '<td class="c-u">' + nf(d.unidades) + '</td>'
+          + '<td>' + nf(d.articulos) + '</td>'
+          + '<td class="c-marcas">' + d.marcas.slice(0,3).map(m => esc(m.m) + ' ' + nf(m.u)).join(' · ')
+          + (d.marcas.length > 3 ? ' +' + (d.marcas.length-3) : '') + '</td>'
+          + '<td style="color:var(--text-muted);">' + (d.dia === _dia ? '▼ abierto' : 'ver ▸') + '</td></tr>';
+      }).join('')
+    + '<tr style="border-top:2px solid var(--border);font-weight:800;">'
+    + '<td>Total</td><td></td><td class="c-u">' + nf(dias.reduce((a,d)=>a+d.unidades,0)) + '</td>'
+    + '<td></td><td></td><td></td></tr>'
+    + '</tbody></table></div>');
+
+  if (_dia) {
+    const d = dias.find(x => x.dia === _dia);
+    T.push('<div class="c-cab" style="border-top:1px solid var(--border);">'
+      + '<h3>Qué llega el ' + esc(diaLargo(_dia)) + '</h3>'
+      + '<span class="nota">' + nf(d.top.length) + ' de ' + nf(d.articulos) + ' artículos · los de mayor cantidad</span></div>'
+      + '<div class="c-scroll"><table><thead><tr>'
+      + '<th>Artículo</th><th style="text-align:left;">Marca</th><th>Unidades</th>'
+      + '</tr></thead><tbody>'
+      + d.top.map(a => '<tr><td>' + esc(a.cod)
+          + (DESC[a.cod] ? '<br><span class="c-desc">' + esc(DESC[a.cod]) + '</span>' : '')
+          + '</td><td style="text-align:left;">' + esc(a.marca) + '</td>'
+          + '<td class="c-u">' + nf(a.u) + '</td></tr>').join('')
+      + '</tbody></table></div>'
+      + '<div class="c-pie">Estos ' + nf(d.top.length) + ' suman <b>'
+      + nf(d.top.reduce((a,x)=>a+x.u,0)) + '</b> de las ' + nf(d.unidades)
+      + ' unidades del día'
+      + (d.articulos > d.top.length ? '; quedan <b>' + nf(d.articulos - d.top.length)
+         + '</b> artículos más, que trae el Excel.' : '.') + '</div>');
+  }
+  T.push('</div>');
+
+  // ── lo vencido ───────────────────────────────────────────────────────────
+  const ed = med.vencidas_edad;
+  const orden = ['1 a 7 dias','8 a 30 dias','31 a 90 dias','mas de 90 dias'];
+  const eti = {'1 a 7 dias':'Hace 1 a 7 días','8 a 30 dias':'Hace 8 a 30 días',
+               '31 a 90 dias':'Hace 31 a 90 días','mas de 90 dias':'Hace más de 90 días'};
+  T.push('<div class="c-caja"><div class="c-cab"><h3>Lo que debió llegar y no llegó</h3>'
+    + '<span class="nota">' + nf(ven) + ' unidades con la fecha ya pasada</span></div>'
+    + '<div class="c-scroll"><table><thead><tr>'
+    + '<th>Se anunció</th><th>Unidades</th><th>Qué significa</th>'
+    + '</tr></thead><tbody>'
+    + orden.filter(k => ed[k]).map(k => '<tr><td>' + eti[k] + '</td>'
+        + '<td class="c-u">' + nf(ed[k]) + '</td>'
+        + '<td style="color:var(--text-muted);">'
+        + (k === '1 a 7 dias' ? 'puede caer cualquier día — prepararlo'
+          : k === '8 a 30 dias' ? 'atrasado, conviene preguntar'
+          : 'ASN colgado: o se perdió o nadie lo cerró') + '</td></tr>').join('')
+    + '<tr style="border-top:2px solid var(--border);font-weight:800;">'
+    + '<td>Total</td><td class="c-u">' + nf(ven) + '</td><td></td></tr>'
+    + '</tbody></table></div>'
+    + '<div class="c-pie">Sumando las dos cajas: <b>' + nf(fut) + '</b> por llegar + <b>'
+    + nf(ven) + '</b> vencido = <b>' + nf(tot) + '</b>. '
+    + 'El cuadro «Mes a mes» dice 6.842.077 porque ahí cada artículo se suma entero; '
+    + 'acá cada línea cuenta con su propia fecha, y por eso hay 9.935 de diferencia.</div>'
+    + '</div>');
+
+  T.push('</div>');
+  document.getElementById('destino').innerHTML = T.join('');
+};
+
+window.__dia = (d) => { _dia = (_dia === d) ? null : d; dibujar(); };
+dibujar();
+</script>
+</body></html>
