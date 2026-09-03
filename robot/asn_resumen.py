@@ -51,7 +51,11 @@ def log(mensaje, nivel="INFO"):
     if _LOG_EXTERNO:
         _LOG_EXTERNO(mensaje, nivel)
         return
-    print("[%s] [%-5s] %s" % (datetime.now().strftime("%H:%M:%S"), nivel, mensaje))
+    # flush=True: corriendo como tarea programada la salida va a un archivo, y
+    # sin esto Python la guarda en memoria hasta el final. El log se ve vacio los
+    # tres minutos que dura la corrida y parece que el robot no arranco.
+    print("[%s] [%-5s] %s" % (datetime.now().strftime("%H:%M:%S"), nivel, mensaje),
+          flush=True)
 
 
 def rutas():
