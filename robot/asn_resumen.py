@@ -34,6 +34,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 API = "https://logistics-backend-wv0x.onrender.com/api/logistics"
 AREA = "asn_recepcion"
+# Cuantas filas de detalle se publican. Medido: 500 articulos son 89 KB y todos
+# los 11.307 serian 1.117 KB. Ver el comentario del paquete.
+TOPE_ARTICULOS = 500
+TOPE_POR_MES = 50
 # La credencial del robot vive en el entorno del Contabo y en Render, NUNCA en el repo.
 ROBOT_TOKEN = os.environ.get("ROBOT_TOKEN", "")
 
@@ -89,29 +93,50 @@ def fecha_de(v):
 
 
 def leer_maestro():
-    """Los codigos que son calzado, por la columna `G. Gender`."""
+    """Los codigos que son calzado, y ademas la MARCA y el gender de cada uno.
+
+    LA COLUMNA DE LA MARCA SE LLAMA `Marcas`, EN PLURAL. Buscarla como "Marca" no
+    la encuentra y la pantalla sale con todo en "(sin marca)": paso en la primera
+    medicion. Es la misma que usa el robot de picking.
+    """
     from openpyxl import load_workbook
     wb = load_workbook(MAESTRO, read_only=True, data_only=True)
     h = wb[wb.sheetnames[0]]
     it = h.iter_rows(values_only=True)
     enc = [str(c).strip() if c is not None else "" for c in next(it)]
+
+    def col(*nombres):
+        for n in nombres:
+            for i, c in enumerate(enc):
+                if c.lower().replace(".", "").replace(" ", "") == n.lower().replace(".", "").replace(" ", ""):
+                    return i
+        return None
+
     iC, iG = enc.index("CodArticulo"), enc.index("G. Gender")
+    iM = col("Marcas", "MarcaStd")
     calzado = set()
+    ficha = {}
     total = 0
     for f in it:
         if iC >= len(f) or f[iC] is None:
             continue
         total += 1
-        if iG < len(f) and f[iG] and str(f[iG]).strip() == "Footwear":
-            calzado.add(str(f[iC]).strip().lstrip("0"))
+        cod = str(f[iC]).strip()
+        gen = str(f[iG]).strip() if iG < len(f) and f[iG] else ""
+        if gen == "Footwear":
+            calzado.add(cod.lstrip("0"))
+        ficha[cod[:7]] = (gen or "(sin gender)",
+                          (str(f[iM]).strip() if iM is not None and iM < len(f) and f[iM] else "")
+                          or "(sin marca)")
     wb.close()
-    log("Maestro: %s articulos, %s de calzado" % ("{:,}".format(total), "{:,}".format(len(calzado))))
-    return calzado
+    log("Maestro: %s articulos, %s de calzado, marca en la columna %s"
+        % ("{:,}".format(total), "{:,}".format(len(calzado)), enc[iM] if iM is not None else "?"))
+    return calzado, ficha
 
 
 def construir():
     from openpyxl import load_workbook
-    calzado = leer_maestro()
+    calzado, ficha = leer_maestro()
 
     clase = defaultdict(lambda: {"lineas": 0, "env": 0.0, "rec": 0.0})
     mes = defaultdict(lambda: {"env": 0.0, "rec": 0.0})
@@ -123,6 +148,24 @@ def construir():
     recep = defaultdict(lambda: {'unid': 0.0, 'asn': set(), 'lineas': 0})
     sin_fecha_rec = {'unid': 0.0, 'lineas': 0}
     archivos = []
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # EL DETALLE QUE PIDIO DANIEL EL 03-sep-2026
+    # ══════════════════════════════════════════════════════════════════════════
+    #
+    # *"necesito un reporte que me diga que articulo esta llegando, que marca esta
+    # llegando... en el mes a mes, darle clic y ver que es lo que esta faltando.
+    # Esa es la idea de tener el ASN"*.
+    #
+    # Todo esto ya estaba en los archivos —traen `Articulo` y `Descripcion`— y se
+    # tiraba: hasta hoy solo se publicaban totales.
+    #
+    # SE ACUMULA TODO Y SE RECORTA AL FINAL, no al vuelo: recortar mientras se lee
+    # obligaria a decidir con la mitad de los datos y el que mas falta puede
+    # aparecer en el ultimo archivo.
+    art = defaultdict(lambda: {"e": 0.0, "r": 0.0, "n": 0, "d": "", "m": "", "g": ""})
+    marca = defaultdict(lambda: {"e": 0.0, "r": 0.0, "n": 0})
+    por_mes_art = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0]))
 
     for nombre in sorted(f for f in os.listdir(CARPETA_ASN) if f.lower().endswith(".xlsx")):
         etiqueta = nombre.replace("ASN ", "").replace(".xlsx", "")
@@ -168,6 +211,26 @@ def construir():
 
             mes[etiqueta]["env"] += env
             mes[etiqueta]["rec"] += rec
+
+            # el detalle por articulo, por marca y por mes
+            if cod:
+                gen, mk = ficha.get(cod[:7], ("(no esta en el Maestro)", "(sin marca)"))
+                a = art[cod]
+                a["e"] += env
+                a["r"] += rec
+                a["n"] += 1
+                if not a["d"]:
+                    a["d"] = (str(fila[iD]).strip()[:70]
+                              if iD is not None and iD < len(fila) and fila[iD] else "")
+                    a["m"] = mk
+                    a["g"] = gen
+                k = marca[mk]
+                k["e"] += env
+                k["r"] += rec
+                k["n"] += 1
+                x = por_mes_art[etiqueta][cod]
+                x[0] += env
+                x[1] += rec
 
             est = str(fila[iS]).strip() if iS is not None and iS < len(fila) and fila[iS] else "(sin estado)"
             e = estado[est]
@@ -225,6 +288,23 @@ def construir():
             })
     parciales.sort(key=lambda p: -p["falta"])
 
+    # ── el detalle, ya recortado ─────────────────────────────────────────────
+    con_falta = sorted(((c, v) for c, v in art.items() if v["e"] - v["r"] > 0.5),
+                       key=lambda x: -(x[1]["e"] - x[1]["r"]))
+    por_mes = {}
+    for m in sorted(por_mes_art):
+        arts = [(c, v) for c, v in por_mes_art[m].items() if v[0] - v[1] > 0.5]
+        if not arts:
+            continue
+        arts.sort(key=lambda x: -(x[1][0] - x[1][1]))
+        por_mes[m] = {
+            "articulos": len(arts),
+            "falta": round(sum(v[0] - v[1] for _, v in arts)),
+            "top": [{"cod": c, "desc": art[c]["d"], "marca": art[c]["m"],
+                     "env": round(v[0]), "rec": round(v[1]), "falta": round(v[0] - v[1])}
+                    for c, v in arts[:TOPE_POR_MES]],
+        }
+
     paquete = {
         "generado": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "archivos": archivos,
@@ -247,33 +327,59 @@ def construir():
              for k, v in estado.items()],
             key=lambda x: -x["enviado"]),
         "cumplimiento": cumpl,
-        "parciales": parciales[:60],
+        # LOS PARCIALES, TODOS. Antes se publicaban 60 de 122 y Daniel pidio un
+        # filtro sobre ellos: filtrar la mitad de la lista no sirve. Son chicos
+        # -18 KB los 139- y son justo los que hay que perseguir.
+        "parciales": parciales,
         "parciales_total": len(parciales),
         "parciales_falta": sum(p["falta"] for p in parciales),
+
+        # ── EL DETALLE ────────────────────────────────────────────────────────
+        #
+        # LOS TOPES SALEN DE UNA MEDICION. Son 23.533 articulos distintos y 11.307
+        # con algo pendiente: publicarlos todos son 1.117 KB al navegador, y eso
+        # es lo que ya hizo lenta la web una vez. Cortando por los que mas faltan,
+        # 500 articulos + 50 por mes + las 13 marcas dan 183 KB, que Daniel aprobo
+        # mirando la maqueta.
+        #
+        # LA PANTALLA DICE SIEMPRE CUANTOS QUEDARON FUERA. Una tabla recortada que
+        # no avisa se lee como la lista completa.
+        "articulosDistintos": len(art),
+        "articulosConFalta": len(con_falta),
+        "articulos": [{
+            "cod": c, "desc": v["d"], "marca": v["m"], "gender": v["g"],
+            "env": round(v["e"]), "rec": round(v["r"]),
+            "falta": round(v["e"] - v["r"]), "lineas": v["n"],
+        } for c, v in con_falta[:TOPE_ARTICULOS]],
+        "marcas": sorted([{
+            "marca": m, "env": round(v["e"]), "rec": round(v["r"]),
+            "falta": round(v["e"] - v["r"]), "lineas": v["n"],
+            "cumple": round(100.0 * v["r"] / v["e"], 1) if v["e"] else 0,
+        } for m, v in marca.items()], key=lambda x: -x["env"]),
+        "porMes": por_mes,
     }
     return paquete
 
 
 def subir(paquete, intentos=3):
-    """VA CON `?date=MASTER`, y no es opcional: el area guarda un OBJETO, no filas
+    """Sube el paquete a PRODUCCION Y A BETA.
+
+    ANTES SOLO IBA A PRODUCCION, y por eso beta decia "todavia no hay ASN
+    publicado" — Daniel, 03-sep-2026: *"no veo nada"*. No era que el robot
+    fallara: es que nunca le habia mandado nada a beta, asi que no habia forma de
+    probar ningun cambio de esta pantalla antes de soltarlo a produccion.
+
+    Se usa `publicar_area.publicar`, que es el que ya sabe mandar a los dos y que
+    usan los demas robots. Escribirlo otra vez aca es como se separan las dos
+    verdades.
+
+    VA CON `date=MASTER`, y no es opcional: el area guarda un OBJETO y no filas
     sueltas. Sin ese parametro el servidor responde 200 igual y lo guarda como
-    lista vacia -la pantalla queda en blanco y nada avisa-."""
-    cuerpo = json.dumps(paquete, ensure_ascii=False).encode("utf-8")
-    url = "%s/%s?date=MASTER" % (API, AREA)
-    for i in range(1, intentos + 1):
-        try:
-            cab = {"Content-Type": "application/json"}
-            if ROBOT_TOKEN:
-                cab["X-Robot-Token"] = ROBOT_TOKEN
-            req = urllib.request.Request(url, data=cuerpo, headers=cab, method="POST")
-            with urllib.request.urlopen(req, timeout=300) as r:
-                if r.status < 300:
-                    log("publicado en '%s' (%d KB)" % (AREA, len(cuerpo) // 1024))
-                    return True
-        except Exception as e:
-            log("intento %d/%d fallo: %s" % (i, intentos, str(e)[:140]), "WARN")
-            time.sleep(5 * i)
-    return False
+    lista vacia — la pantalla queda en blanco y nada avisa.
+    """
+    from publicar_area import publicar
+    return publicar(AREA, paquete, "MASTER",
+                    log=lambda t, n="INFO": log(t, n), intentos=intentos)
 
 
 def main(log_externo=None):
