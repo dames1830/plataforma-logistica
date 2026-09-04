@@ -820,6 +820,22 @@ def cuadrar(filas, total):
             avisos.append("%d citas quedaron sin cantidad y el TOTAL solo permite "
                           "despejar una" % len(sinUnd))
 
+    # ── 3. lo que quedo sin cantidad, se diga o no se pueda despejar ───────
+    #
+    # ESTE ES EL AVISO QUE FALTABA. En el servidor el motor no leyo el TOTAL de la
+    # tabla, la comprobacion de arriba no corrio, y el robot publico 3.171 pares
+    # -le faltaba el 840- sin decir nada. Un numero incompleto que se ve completo
+    # es peor que un fallo.
+    sinCantidad = [f for f in filas
+                   if "CALZ" in (f.get("tipo") or "").upper() and not f.get("cantidad")]
+    for f in sinCantidad:
+        avisos.append("la cita de %s (%s) quedo SIN CANTIDAD: hay que mirarla en la imagen"
+                      % (f.get("proveedor") or "?", f.get("oc") or "sin orden"))
+
+    if not total:
+        avisos.append("no se pudo leer el TOTAL de la tabla, asi que no hay contra "
+                      "que comprobar las cantidades")
+
     for f in filas:
         if f.get("dudoso"):
             avisos.append("la orden %s se leyo distinto de las dos formas" % f.get("oc"))
@@ -1039,13 +1055,14 @@ def main():
         # EL CUADRO TIENE QUE CUADRAR, y si no, se dice. Daniel suma las filas con
         # la calculadora: publicar un numero que no cierra lo manda a perseguir un
         # descuadre que no existe.
-        if meta.get('total'):
-            if meta.get('cuadra'):
-                log('   CUADRA: las citas suman %s y la tabla dice %s'
-                    % (format(total, ','), format(meta['total'], ',')))
-            else:
-                for av in meta.get('avisos') or []:
-                    log('   NO CUADRA: %s' % av, 'ERROR')
+        if meta.get('cuadra'):
+            log('   CUADRA: las citas suman %s y la tabla dice %s'
+                % (format(total, ','), format(meta.get('total') or 0, ',')))
+        else:
+            for av in meta.get('avisos') or []:
+                log('   REVISAR: %s' % av, 'ERROR')
+            log('   Se publica igual, marcado como "no comprobado": la imagen queda '
+                'en Citas %s.png para mirarla.' % fecha, 'WARN')
 
         if probar:
             log('   --probar: no se publica nada')
