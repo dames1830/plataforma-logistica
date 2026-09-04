@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0635';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0636';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0635';
+const VERSION = '29.0636';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -497,7 +497,13 @@ export const guardarFotoReserva = async (foto) => {
     if (!foto || !foto.fecha) return null;
     try {
         const actuales = syncEngine.syncStore.reserva_fotos || [];
-        const lista = actuales.filter(f => f && f.fecha !== foto.fecha);
+        /* SE REEMPLAZA LA DEL MISMO MOMENTO, NO TODO EL DIA. Desde el 04-sep-2026 hay
+           DOS fotos por día —la del cierre del turno día, 19:00, y la del cierre del
+           turno noche, 07:00—. Filtrar solo por fecha borraba la otra: la de la mañana
+           desaparecía apenas alguien abría la pantalla de tarde. Las viejas no traen
+           `momento` y se tratan como de la noche, que es lo que eran. */
+        const _m = (f) => (f && f.momento) || 'noche';
+        const lista = actuales.filter(f => f && !(f.fecha === foto.fecha && _m(f) === _m(foto)));
         lista.unshift({ ...foto, guardado: new Date().toISOString() });
         // Tres meses de colchon y no mas: a 25 KB por dia son unos 2 MB.
         lista.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
