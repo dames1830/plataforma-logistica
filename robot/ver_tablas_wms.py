@@ -58,14 +58,76 @@ def log(t):
     print("[%s] %s" % (time.strftime("%H:%M:%S"), t), flush=True)
 
 
+def contar(fr, page, momento):
+    """Deja una foto y una lista de lo que se puede apretar. Es lo unico que
+    evita adivinar el nombre de un boton en una pantalla que no se ve."""
+    try:
+        page.screenshot(path=os.path.join(os.environ.get("TEMP", "."),
+                                          "wms_%s.png" % momento))
+    except Exception:
+        pass
+    log("--- lo que hay en pantalla (%s) ---" % momento)
+    try:
+        texto = fr.locator("body").inner_text()
+        for l in [x.strip() for x in texto.splitlines() if x.strip()][:45]:
+            log("    | %s" % l[:95])
+    except Exception as e:
+        log("    no se pudo leer el texto: %s" % type(e).__name__)
+    for sel, como in (("button", "boton"), ("a", "enlace"),
+                      ("[role=button]", "role=button")):
+        try:
+            loc = fr.locator(sel)
+            n = min(loc.count(), 25)
+            vistos = []
+            for i in range(n):
+                try:
+                    t = (loc.nth(i).inner_text() or "").strip()
+                    ti = loc.nth(i).get_attribute("title") or ""
+                except Exception:
+                    continue
+                e = (t or ti).strip()
+                if e and e not in vistos:
+                    vistos.append(e[:34])
+            log("    %s (%d): %s" % (como, loc.count(), " · ".join(vistos[:16])))
+        except Exception:
+            pass
+
+
 def mirar(fr, page):
-    # ── el asistente ────────────────────────────────────────────────────────
-    log("abriendo Create New Report")
-    fr.get_by_text("Create New Report", exact=False).first.click()
-    time.sleep(3)
-    log("eligiendo Informe express")
-    fr.get_by_text("Informe express", exact=False).first.click()
+    contar(fr, page, "arbol")
+
+    # El boton de crear puede estar en castellano o ser un icono. Se prueban los
+    # nombres conocidos y, si ninguno esta, la foto y la lista de arriba dicen que
+    # hay de verdad.
+    abierto = False
+    for etiqueta in ("Create New Report", "Crear informe nuevo", "Nuevo informe",
+                     "Crear nuevo informe", "Nuevo", "Crear"):
+        try:
+            loc = fr.get_by_text(etiqueta, exact=False).first
+            loc.wait_for(state="visible", timeout=4000)
+            loc.click()
+            log("abri con la etiqueta %r" % etiqueta)
+            abierto = True
+            break
+        except Exception:
+            continue
+    if not abierto:
+        log("NO ENCONTRE el boton de crear. Queda la foto wms_arbol.png")
+        return
     time.sleep(4)
+    contar(fr, page, "tipos")
+
+    for etiqueta in ("Informe express", "Express Report", "Express"):
+        try:
+            loc = fr.get_by_text(etiqueta, exact=False).first
+            loc.wait_for(state="visible", timeout=4000)
+            loc.click()
+            log("elegi %r" % etiqueta)
+            break
+        except Exception:
+            continue
+    time.sleep(4)
+    contar(fr, page, "asistente")
 
     # ── paso Categorias ─────────────────────────────────────────────────────
     # El asistente arranca en Nombre; se pasa a Categorias con el paso de arriba.
@@ -78,7 +140,7 @@ def mirar(fr, page):
         except Exception:
             continue
 
-    page.screenshot(path=os.path.join(os.environ.get("TEMP", "."), "wms_categorias.png"))
+    contar(fr, page, "categorias")
 
     caja = None
     for nombre in ("Buscar...", "Buscar", "Search..."):
