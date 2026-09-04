@@ -68,6 +68,7 @@ USO
     python corte_turno.py --sin-recepcion  solo picking y embalaje
     python corte_turno.py --solo-recepcion para probar ese lado sin tocar el resto
 """
+import io
 import json
 import os
 import sys
@@ -87,6 +88,21 @@ ROBOT_TOKEN = os.environ.get("ROBOT_TOKEN", "")
 
 _t0 = datetime.now()
 
+# EL LOG EN ARCHIVO, ademas de la pantalla. Lo que la tarea de Windows imprime se
+# pierde: queda solo el codigo de salida. Y un corte que fallo sin dejar rastro es
+# el caso que motivo el modulo Log -el Stock Reserva estuvo seis dias sin bajar y
+# nadie se entero-.
+CARPETA_LOGS = os.path.join(AQUI, "logs")
+_ARCHIVO = None
+try:
+    if not os.path.isdir(CARPETA_LOGS):
+        os.makedirs(CARPETA_LOGS)
+    _ARCHIVO = io.open(os.path.join(
+        CARPETA_LOGS, "corteturno_%s.log" % _t0.strftime("%Y-%m-%d_%H%M%S")),
+        "w", encoding="utf-8")
+except Exception:
+    _ARCHIVO = None      # sin log se sigue igual: no puede tumbar el corte
+
 # EL CORTE NO PUEDE MORDER LO QUE VIENE DESPUES. Arranca 20:00 y detras tiene el
 # cruce contra el WMS (21:30) y el stock por hora (22:00). Si un paso se cuelga
 # -el WMS no entrega un archivo y el robot reintenta- los topes de cada paso suman
@@ -98,8 +114,28 @@ PRESUPUESTO_MIN = 75
 
 
 def log(t, nivel="INFO"):
-    print("[%s] %-5s %s" % (datetime.now().strftime("%H:%M:%S"), nivel, t))
+    linea = "[%s] %-5s %s" % (datetime.now().strftime("%H:%M:%S"), nivel, t)
+    print(linea)
     sys.stdout.flush()
+    if _ARCHIVO:
+        try:
+            _ARCHIVO.write(linea + chr(10))
+            _ARCHIVO.flush()      # en vivo: si se cuelga, el archivo ya tiene hasta donde llego
+        except Exception:
+            pass
+
+
+def limpiar_logs(dias=14):
+    """Los de mas de dos semanas se borran solos, como los de los otros robots."""
+    try:
+        corte = datetime.now().timestamp() - dias * 86400
+        for n in os.listdir(CARPETA_LOGS):
+            if n.startswith("corteturno_") and n.endswith(".log"):
+                ruta = os.path.join(CARPETA_LOGS, n)
+                if os.path.getmtime(ruta) < corte:
+                    os.remove(ruta)
+    except Exception:
+        pass
 
 
 def gastado():
@@ -224,6 +260,12 @@ def main():
     log("-" * 64)
 
     avisar(pasos, dia)
+    limpiar_logs()
+    if _ARCHIVO:
+        try:
+            _ARCHIVO.close()
+        except Exception:
+            pass
     return 0 if buenos == len(pasos) else 1
 
 

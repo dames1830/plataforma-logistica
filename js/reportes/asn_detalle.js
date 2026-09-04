@@ -43,7 +43,7 @@
 /* EL ICONO DE EXCEL DE LA PLATAFORMA, el mismo de todos los demas reportes.
    Daniel, 03-sep-2026: *"no me vayas a poner la letra exportar, pon el icono de
    Excel y ya se que es un exportar"*. */
-import { icono } from '../services_v245/iconos.js?v=29.0593';
+import { icono } from '../services_v245/iconos.js?v=29.0594';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
