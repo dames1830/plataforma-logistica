@@ -81,10 +81,32 @@ ROBOT_TOKEN = os.environ.get("ROBOT_TOKEN", "")
 
 _t0 = datetime.now()
 
+# EL CORTE NO PUEDE MORDER LO QUE VIENE DESPUES. Arranca 20:00 y detras tiene el
+# cruce contra el WMS (21:30) y el stock por hora (22:00). Si un paso se cuelga
+# -el WMS no entrega un archivo y el robot reintenta- los topes de cada paso suman
+# 190 minutos y a las 23:10 seguiria adentro.
+#
+# Con este presupuesto, pasados los 75 minutos NO SE EMPIEZA un paso nuevo. El que
+# ya arranco termina; lo que se pierde es lo de mas atras, que por eso va ultimo.
+PRESUPUESTO_MIN = 75
+
 
 def log(t, nivel="INFO"):
     print("[%s] %-5s %s" % (datetime.now().strftime("%H:%M:%S"), nivel, t))
     sys.stdout.flush()
+
+
+def gastado():
+    return (datetime.now() - _t0).total_seconds() / 60.0
+
+
+def hay_tiempo(paso):
+    """Si queda presupuesto para empezar `paso`. Se avisa fuerte cuando no."""
+    if gastado() < PRESUPUESTO_MIN:
+        return True
+    log("%s NO ARRANCA: van %.0f minutos y el tope es %d. Detras entra el cruce "
+        "de las 21:30 y el stock de las 22:00." % (paso, gastado(), PRESUPUESTO_MIN), "ERROR")
+    return False
 
 
 def correr(nombre, args, minutos=45):
@@ -123,7 +145,7 @@ def avisar(pasos, dia):
     cuerpo = json.dumps({"data": {
         "dia": dia,
         "cuando": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "minutos": round((datetime.now() - _t0).total_seconds() / 60.0, 1),
+        "minutos": round(gastado(), 1),
         "pasos": pasos,
         "completo": bool(pasos) and all(p["ok"] for p in pasos),
     }}, ensure_ascii=False).encode("utf-8")
@@ -163,29 +185,36 @@ def main():
         # ── 2. EMBALAJE final del dia ───────────────────────────────────────
         # `--hoy` = el dia en curso. Sin esa bandera bajaria AYER, que es la salida
         # de emergencia para recuperar un dia que no salio.
-        ok, m = correr("EMBALAJE · bajando el OBLPN del dia",
-                       [os.path.join(AQUI, "oblpn_embalaje.py"), "--hoy"], minutos=40)
-        ok2, m2 = correr("EMBALAJE · publicando el cuadro",
-                         [os.path.join(AQUI, "produccion_embalaje.py")], minutos=20)
-        pasos.append({"paso": "embalaje", "ok": ok and ok2, "min": round(m + m2, 1)})
+        if hay_tiempo("EMBALAJE"):
+            ok, m = correr("EMBALAJE · bajando el OBLPN del dia",
+                           [os.path.join(AQUI, "oblpn_embalaje.py"), "--hoy"], minutos=40)
+            ok2, m2 = correr("EMBALAJE · publicando el cuadro",
+                             [os.path.join(AQUI, "produccion_embalaje.py")], minutos=20)
+            pasos.append({"paso": "embalaje", "ok": ok and ok2, "min": round(m + m2, 1)})
+        else:
+            pasos.append({"paso": "embalaje", "ok": False, "min": 0, "motivo": "sin tiempo"})
 
     # ── 3. RECEPCION del dia ────────────────────────────────────────────────
     if "--sin-recepcion" not in args:
-        ok, m = correr("RECEPCION · bajando el ASN del mes en curso",
-                       [os.path.join(AQUI, "asn_web_report.py"), "--actual"], minutos=40)
-        # El resumen relee los SEIS archivos que ya estan en disco -no entra al
-        # WMS- y republica el paquete y la tabla de consulta de los seis meses.
-        ok2, m2 = correr("RECEPCION · rehaciendo el resumen y la tabla",
-                         [os.path.join(AQUI, "asn_resumen.py")], minutos=30)
-        pasos.append({"paso": "recepcion", "ok": ok and ok2, "min": round(m + m2, 1)})
+        if hay_tiempo("RECEPCION"):
+            ok, m = correr("RECEPCION · bajando el ASN del mes en curso",
+                           [os.path.join(AQUI, "asn_web_report.py"), "--actual"], minutos=40)
+            # El resumen relee los SEIS archivos que ya estan en disco -no entra al
+            # WMS- y republica el paquete y la tabla de consulta de los seis meses.
+            ok2, m2 = correr("RECEPCION · rehaciendo el resumen y la tabla",
+                             [os.path.join(AQUI, "asn_resumen.py")], minutos=30)
+            pasos.append({"paso": "recepcion", "ok": ok and ok2, "min": round(m + m2, 1)})
+        else:
+            pasos.append({"paso": "recepcion", "ok": False, "min": 0, "motivo": "sin tiempo"})
 
     log("")
     log("-" * 64)
     buenos = sum(1 for p in pasos if p["ok"])
     for p in pasos:
-        log("   %-10s %-6s %5.1f min" % (p["paso"], "OK" if p["ok"] else "FALLO", p["min"]))
+        log("   %-10s %-6s %5.1f min  %s" % (p["paso"], "OK" if p["ok"] else "FALLO",
+                                              p["min"], p.get("motivo", "")))
     log("   %d de %d en %.1f minutos"
-        % (buenos, len(pasos), (datetime.now() - _t0).total_seconds() / 60.0))
+        % (buenos, len(pasos), gastado()))
     log("-" * 64)
 
     avisar(pasos, dia)
