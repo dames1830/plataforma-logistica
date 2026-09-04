@@ -63,6 +63,7 @@ import io
 import json
 import os
 import re
+import subprocess
 import sys
 import unicodedata
 import urllib.request
@@ -447,6 +448,300 @@ def leer_citas(html):
     return filas
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  DE LA IMAGEN A LAS CITAS
+# ══════════════════════════════════════════════════════════════════════════════
+PS51 = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32",
+                    "WindowsPowerShell", "v1.0", "powershell.exe")
+
+RE_OC = re.compile(r"(\d{4})\s*[-]\s*(\d{4,6})")
+# La forma COMPLETA: cuatro digitos, guion y CINCO. Sirve para descartar una
+# lectura a la que el motor le comio un digito -"2026-0905"- sin tener que
+# saber cual de las tres formas de leer anda mejor ese dia.
+RE_OC_COMPLETA = re.compile(r"\d{4}\s*[-]\s*\d{5}(?!\d)")
+RE_HORA = re.compile(r"(\d{1,2})\s*[:.\"]\s*(\d{2})\s*([AP])\.?\s*M", re.I)
+
+
+def leer_la_imagen(ruta):
+    """Llama al lector y devuelve lo que vio, o None.
+
+    VA CON WINDOWS POWERSHELL 5.1, no con pwsh 7: el puente a WinRT que necesita
+    el OCR no existe en .NET Core y falla con "Operation is not supported on this
+    platform". Con la ruta completa no depende de cual este primero en el PATH.
+    """
+    if not os.path.isfile(LECTOR):
+        log("no encuentro el lector de imagenes: %s" % LECTOR, "ERROR")
+        return None
+    try:
+        r = subprocess.run([PS51, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                            "-File", LECTOR, "-Ruta", ruta, "-PorCeldas"],
+                           capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=600)
+    except subprocess.TimeoutExpired:
+        log("el lector de imagenes se paso de 10 minutos", "ERROR")
+        return None
+    salida = (r.stdout or "").strip()
+    if not salida:
+        log("el lector no devolvio nada: %s" % (r.stderr or "")[:200], "ERROR")
+        return None
+    try:
+        # strict=False aguanta un caracter de control suelto adentro de un texto.
+        # El lector ya los aplana, pero si uno se escapa es peor perder la
+        # captura entera que aceptarlo.
+        d = json.loads(salida.splitlines()[-1], strict=False)
+    except Exception as e:
+        log("no se entendio lo que devolvio el lector (%s): %s" % (e, salida[:200]), "ERROR")
+        return None
+    if d.get("error"):
+        log("el lector fallo: %s" % d["error"], "ERROR")
+        return None
+    return d
+
+
+def _dos_lecturas(celda_x0, celda_x1, ya, yb, columnas, sueltas):
+    """Lo que dijo CADA forma de leer esa celda: (por celda, por tabla entera).
+
+    Las dos hacen falta y ninguna manda siempre. El motor descarta un numero de
+    tres cifras cuando esta solo en su recuadro -134, 560, 762, 840- y lo lee sin
+    dudar cuando viene pegado a su orden de compra; al reves, el total de la
+    ultima fila solo sale leyendo esa celda sola.
+
+    Devolver las dos deja comparar: si dicen lo mismo, es seguro; si difieren, hay
+    que elegir con una regla y dejar constancia.
+    """
+    porCelda = ""
+    for c in columnas:
+        if c["x0"] != celda_x0:
+            continue
+        for t in c.get("trozos") or []:
+            if t["y0"] <= ya and t["y1"] >= yb - 1 and (t.get("t") or "").strip():
+                porCelda = t["t"].strip()
+    dentro = []
+    for p in sueltas:
+        cx = p["x"] + p["w"] / 2.0
+        cy = p["y"] + p["h"] / 2.0
+        if celda_x0 <= cx < celda_x1 and ya <= cy < yb:
+            dentro.append((p["x"], p["t"]))
+    return porCelda, " ".join(t for _, t in sorted(dentro)).strip()
+
+
+def _de_la_tira(columnas, x0, ya, yb):
+    """Lo que dijo la tira de esa columna para esa franja de altura."""
+    for c in columnas:
+        if c["x0"] != x0:
+            continue
+        partes = []
+        for w in c.get("tira") or []:
+            centro = w["y"] + w.get("h", 0) / 2.0
+            if ya <= centro < yb:
+                partes.append(w["t"])
+        return " ".join(partes).strip()
+    return ""
+
+
+def _valor(celda_x0, celda_x1, ya, yb, columnas, sueltas):
+    a, b = _dos_lecturas(celda_x0, celda_x1, ya, yb, columnas, sueltas)
+    return a or b
+
+
+def _num(t):
+    """'1,138' -> 1138. Vacio o ilegible -> None, que NO es cero."""
+    s = re.sub(r"[^\d]", "", str(t or ""))
+    return int(s) if s else None
+
+
+def citas_de_la_imagen(ruta):
+    """Las filas de cita que trae la captura.
+
+    LAS COLUMNAS SE RECONOCEN POR LO QUE TIENEN, no por su posicion: el encabezado
+    es azul con letra blanca y al pasar a blanco y negro se pierde entero. La
+    columna de las ordenes es la que trae AAAA-NNNNN, la de la hora la que trae
+    HH:MM AM, y las cantidades son las dos columnas numericas que siguen a la de
+    las ordenes.
+    """
+    d = leer_la_imagen(ruta)
+    if not d:
+        return [], {}
+    ver = d.get("ver") or []
+    sueltas = d.get("sueltas") or []
+    columnas = []
+    for t in d.get("tablas") or []:
+        columnas.extend(t.get("columnas") or [])
+    if len(ver) < 4 or not columnas:
+        log("la imagen no parece una tabla (%d rayas verticales)" % len(ver), "ERROR")
+        return [], {}
+
+    # Todas las alturas donde alguna columna corta, ordenadas: son las filas
+    # posibles. La columna de las ordenes es la que mas cortes tiene, porque es la
+    # unica que se subdivide.
+    alturas = set()
+    for c in columnas:
+        for y in c.get("limites") or []:
+            alturas.add(int(y))
+    alturas = sorted(alturas)
+
+    # Que columna es cada una
+    idx_oc = idx_hora = None
+    puntajes = {}
+    for k, c in enumerate(columnas):
+        texto = " ".join((t.get("t") or "") for t in (c.get("trozos") or []))
+        for p in sueltas:
+            if c["x0"] <= p["x"] + p["w"] / 2.0 < c["x1"]:
+                texto += " " + p["t"]
+        puntajes[k] = (len(RE_OC.findall(texto)), len(RE_HORA.findall(texto)))
+    if puntajes:
+        idx_oc = max(puntajes, key=lambda k: puntajes[k][0])
+        if puntajes[idx_oc][0] == 0:
+            idx_oc = None
+        idx_hora = max(puntajes, key=lambda k: puntajes[k][1])
+        if puntajes[idx_hora][1] == 0:
+            idx_hora = None
+    if idx_oc is None:
+        log("no se encontro la columna de las ordenes de compra", "ERROR")
+        return [], {}
+
+    col_tipo  = columnas[0] if columnas else None
+    col_hora  = columnas[idx_hora] if idx_hora is not None else None
+    col_prov  = columnas[idx_oc - 1] if idx_oc >= 1 else None
+    col_oc    = columnas[idx_oc]
+    col_cant  = columnas[idx_oc + 1] if idx_oc + 1 < len(columnas) else None
+    col_und   = columnas[idx_oc + 2] if idx_oc + 2 < len(columnas) else None
+    col_obs   = columnas[idx_oc + 3] if idx_oc + 3 < len(columnas) else None
+
+    def leer(col, ya, yb):
+        if not col:
+            return ""
+        return (_valor(col["x0"], col["x1"], ya, yb, columnas, sueltas)
+                or _de_la_tira(columnas, col["x0"], ya, yb))
+
+    filas = []
+    for i in range(1, len(alturas)):
+        ya, yb = alturas[i - 1], alturas[i]
+        if yb - ya < 7:
+            continue
+        # LA ORDEN DE COMPRA SE ELIGE POR SU FORMA, no por que lectura llego
+        # primero. Son cuatro digitos, guion y CINCO digitos. Leyendo la celda
+        # sola salio "2026-0905" -se comio el ultimo- y leyendo la tabla entera
+        # salio completa: con la forma se descarta la mala sin tener que saber
+        # cual de las dos anda mejor ese dia.
+        a, b = _dos_lecturas(col_oc["x0"], col_oc["x1"], ya, yb, columnas, sueltas)
+        c3 = _de_la_tira(columnas, col_oc["x0"], ya, yb)
+        # LA TIRA PRIMERO: medido sobre la captura real saca 7 de 7 ordenes, contra
+        # 5 de 7 leyendo celda por celda y 6 de 7 leyendo la tabla entera.
+        buenos = [x for x in (c3, b, a) if RE_OC_COMPLETA.search(x or "")]
+        dudoso = len(buenos) == 2 and RE_OC.search(buenos[0]).group(0).replace(" ", "") != RE_OC.search(buenos[1]).group(0).replace(" ", "")
+        bruto = buenos[0] if buenos else (a or b)
+        m = RE_OC.search(bruto)
+        tipo = leer(col_tipo, ya, yb)
+        if not m:
+            # Una fila sin orden de compra igual puede ser una cita: las de CAJAS y
+            # ETIQUETAS no la traen, y su codigo va en Observacion.
+            if not tipo or tipo.upper().startswith("TOTAL"):
+                continue
+            oc, pegada = "", ""
+        else:
+            oc, pegada = "%s-%s" % (m.group(1), m.group(2)), m.group(1) + m.group(2)
+        hm = RE_HORA.search(leer(col_hora, ya, yb) or "")
+        filas.append({
+            "y0": ya, "y1": yb,
+            "tipo": tipo,
+            "hora": ("%02d:%s %sM" % (int(hm.group(1)), hm.group(2), hm.group(3).upper())) if hm else "",
+            "proveedor": leer(col_prov, ya, yb),
+            "oc": oc, "ocPegada": pegada,
+            "cantidad": _num(leer(col_cant, ya, yb)),
+            "und": _num(leer(col_und, ya, yb)),
+            "nota": leer(col_obs, ya, yb),
+            "dudoso": bool(dudoso),
+        })
+
+    # El TOTAL, para poder comprobar
+    total = None
+    for i in range(1, len(alturas)):
+        ya, yb = alturas[i - 1], alturas[i]
+        if (leer(col_tipo, ya, yb) or "").upper().startswith("TOTAL"):
+            total = _num(leer(col_und, ya, yb))
+    avisos = cuadrar(filas, total)
+    return filas, {"total": total, "celdas": d.get("celdasLeidas"),
+                   "palabras": len(sueltas), "avisos": avisos,
+                   "cuadra": not avisos}
+
+
+def cuadrar(filas, total):
+    """Comprueba la tabla contra sus totales y rellena lo que se pueda.
+
+    DOS CUENTAS, las mismas que hace Daniel:
+      1. Las filas que comparten el mismo UND son una sola cita con varias
+         ordenes: sus cantidades tienen que sumar ese UND.
+      2. Los UND distintos tienen que sumar el TOTAL de la ultima fila.
+
+    Si a una cuenta le falta UN solo valor, se despeja y se marca como deducido
+    -no leido-. Si faltan dos o mas, no se inventa: se avisa.
+    """
+    avisos = []
+
+    # ── 1. cada grupo contra su UND ────────────────────────────────────────
+    grupos = {}
+    for f in filas:
+        if f.get("und"):
+            grupos.setdefault(f["und"], []).append(f)
+    for und, gs in grupos.items():
+        faltan = [f for f in gs if f.get("cantidad") is None]
+        suma = sum(f["cantidad"] for f in gs if f.get("cantidad") is not None)
+        if len(gs) == 1 and faltan:
+            # Una sola orden en la cita: su cantidad ES el UND.
+            faltan[0]["cantidad"] = und
+            faltan[0]["deducido"] = True
+        elif len(faltan) == 1 and suma < und:
+            faltan[0]["cantidad"] = und - suma
+            faltan[0]["deducido"] = True
+        elif not faltan and suma != und:
+            avisos.append("las %d ordenes de %s suman %s y la fila dice %s"
+                          % (len(gs), gs[0].get("proveedor") or "?",
+                             format(suma, ","), format(und, ",")))
+        elif len(faltan) > 1:
+            avisos.append("a la cita de %s le faltan %d cantidades y no se pueden "
+                          "despejar de una sola cuenta"
+                          % (gs[0].get("proveedor") or "?", len(faltan)))
+
+    # ── 2. los UND contra el TOTAL ─────────────────────────────────────────
+    if total:
+        # SOLO EL CALZADO. En la captura real el TOTAL dice 4.011 y es
+        # 2.799 + 840 + 372: las filas de CAJAS y de ETIQUETAS no traen cantidad
+        # -su codigo va en Observacion- y meterlas en la cuenta haria que nunca
+        # cuadre.
+        vistos = {}
+        for f in filas:
+            if "CALZ" not in (f.get("tipo") or "").upper():
+                continue
+            clave = (f.get("proveedor") or "") + "|" + (f.get("hora") or "")
+            if f.get("und"):
+                vistos[clave] = f["und"]
+            elif clave not in vistos:
+                vistos[clave] = None
+        sinUnd = [k for k, v in vistos.items() if v is None]
+        suma = sum(v for v in vistos.values() if v)
+        if len(sinUnd) == 1 and suma < total:
+            falta = total - suma
+            for f in filas:
+                clave = (f.get("proveedor") or "") + "|" + (f.get("hora") or "")
+                if "CALZ" in (f.get("tipo") or "").upper() and clave == sinUnd[0]:
+                    f["und"] = falta
+                    if f.get("cantidad") is None:
+                        f["cantidad"] = falta
+                    f["deducido"] = True
+        elif not sinUnd and suma != total:
+            avisos.append("las citas suman %s y el TOTAL de la tabla dice %s"
+                          % (format(suma, ","), format(total, ",")))
+        elif len(sinUnd) > 1:
+            avisos.append("%d citas quedaron sin cantidad y el TOTAL solo permite "
+                          "despejar una" % len(sinUnd))
+
+    for f in filas:
+        if f.get("dudoso"):
+            avisos.append("la orden %s se leyo distinto de las dos formas" % f.get("oc"))
+    return avisos
+
+
 def fecha_del_asunto(asunto, llegada):
     """El dia que programa el correo.
 
@@ -608,26 +903,53 @@ def main():
             guardar_imagen(it, fecha)
             continue
 
-        filas = leer_citas(html)
-
         log('')
         log('CORREO: %s' % asunto[:80])
-        log('   llego el %s · programa el dia %s · %d citas'
-            % (llegada.strftime('%d/%m %H:%M'), fecha, len(filas)))
-        if not filas:
-            log('   NO SE ENCONTRO NINGUNA TABLA DE CITAS en el cuerpo. El correo se '
-                'deja SIN MARCAR para volver a intentarlo.', 'ERROR')
-            continue
+        log('   llego el %s · programa el dia %s'
+            % (llegada.strftime('%d/%m %H:%M'), fecha))
 
-        total = sum(f['cantidad'] or 0 for f in filas)
-        for f in filas[:20]:
-            log('     %-6s %-10s %-28s %8s %s'
-                % (f.get('hora', ''), f.get('oc', ''), (f.get('proveedor') or '')[:28],
-                   format(f['cantidad'], ',') if f['cantidad'] is not None else '-',
-                   f.get('observacion', '')[:22]))
-        if len(filas) > 20:
-            log('     ... y %d citas mas' % (len(filas) - 20))
-        log('   TOTAL PROGRAMADO: %s unidades en %d citas' % (format(total, ','), len(filas)))
+        # LA TABLA VIENE COMO IMAGEN. Comprobado sobre los cuatro correos del
+        # buzon el 03-sep-2026: cero tablas en el HTML del cuerpo, que solo trae
+        # el saludo. Se intenta igual por si algun dia la mandan como tabla de
+        # verdad -seria mejor- y si no, se lee la captura.
+        filas = leer_citas(html)
+        meta = {}
+        if filas:
+            log('   la tabla vino en el cuerpo del correo: %d citas' % len(filas))
+        else:
+            ruta = guardar_imagen(it, fecha)
+            if not ruta:
+                log('   NO HAY NI TABLA NI IMAGEN en este correo. Se deja SIN MARCAR '
+                    'para volver a intentarlo.', 'ERROR')
+                continue
+            filas, meta = citas_de_la_imagen(ruta)
+            if not filas:
+                log('   NO SE PUDO LEER LA IMAGEN. Queda guardada en %s para mirarla '
+                    'a mano; el correo se deja SIN MARCAR.' % os.path.basename(ruta), 'ERROR')
+                continue
+
+        total = sum(f['cantidad'] or 0 for f in filas
+                    if 'CALZ' in (f.get('tipo') or '').upper()) or                 sum(f['cantidad'] or 0 for f in filas)
+        for f in filas[:25]:
+            log('     %-10s %-9s %-13s %-26s %8s %s'
+                % ((f.get('tipo') or '')[:10], f.get('hora', ''), f.get('oc', ''),
+                   (f.get('proveedor') or '')[:26],
+                   format(f['cantidad'], ',') if f.get('cantidad') is not None else '-',
+                   '(deducido)' if f.get('deducido') else ''))
+        if len(filas) > 25:
+            log('     ... y %d citas mas' % (len(filas) - 25))
+        log('   TOTAL PROGRAMADO: %s pares en %d citas' % (format(total, ','), len(filas)))
+
+        # EL CUADRO TIENE QUE CUADRAR, y si no, se dice. Daniel suma las filas con
+        # la calculadora: publicar un numero que no cierra lo manda a perseguir un
+        # descuadre que no existe.
+        if meta.get('total'):
+            if meta.get('cuadra'):
+                log('   CUADRA: las citas suman %s y la tabla dice %s'
+                    % (format(total, ','), format(meta['total'], ',')))
+            else:
+                for av in meta.get('avisos') or []:
+                    log('   NO CUADRA: %s' % av, 'ERROR')
 
         if probar:
             log('   --probar: no se publica nada')
@@ -640,6 +962,10 @@ def main():
             'capturadoEl': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'citas': filas,
             'totalProgramado': total,
+            'totalDeLaTabla': meta.get('total'),
+            'cuadra': meta.get('cuadra'),
+            'avisos': meta.get('avisos') or [],
+            'imagen': 'Citas %s.png' % fecha,
         }
         try:
             estado = publicar(fecha, datos)
