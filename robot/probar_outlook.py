@@ -70,7 +70,9 @@ for i in range(1, 6):
         paso("no hay mas correos")
         break
     paso("--- correo %d ---" % i)
-    for prop in ("Class", "ReceivedTime", "Subject", "SenderName"):
+    # SenderName va AL FINAL: resuelve el remitente contra la libreta de
+    # direcciones de Exchange, o sea que sale a la red, y ahi se cuelga.
+    for prop in ("Class", "ReceivedTime", "Subject", "EntryID", "UnRead", "Size"):
         t = time.time()
         try:
             v = getattr(it, prop)
