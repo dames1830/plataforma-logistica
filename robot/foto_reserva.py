@@ -150,7 +150,12 @@ async ([urlModulo, filasReserva, maestro, anclaNoche, fotos]) => {
         /* EL CIERRE DEL TURNO. Si ya hay una foto de ese dia -la de las 19:20- y todavia
            no tiene cierre, esta corrida es la de la mañana: se miden LOS MISMOS padres que
            se guardaron anoche contra el stock de ahora. Ver cierreDeFragmentados. */
-        const guardada = (fotos || []).find(f => f && f.fecha === sello.fecha);
+        /* LA DEL ARRANQUE ES LA DE LA NOCHE. Desde el 04-sep-2026 hay DOS fotos por
+           dia -19:00 y 07:00- y el cierre se mide siempre contra la de la noche, que es
+           con la que arrancó el turno. Las fotos viejas no traen `momento`: se las trata
+           como de la noche, que es lo que eran. */
+        const guardada = (fotos || []).find(
+            f => f && f.fecha === sello.fecha && (f.momento || 'noche') === 'noche');
         let cierre = null;
         if (guardada && !guardada.cierre && (guardada.fragmentados || []).length) {
             cierre = mod.cierreDeFragmentados(guardada.fragmentados, datos.padresTodos);
@@ -253,15 +258,45 @@ def main():
         if probar:
             log('MODO PROBAR: aca se habria guardado el cierre del %s.' % sello['fecha'])
             return 0
+        # LA CABECERA VA EN LA FOTO DE LA NOCHE, que es contra la que se mide.
         lista = []
         for f in fotos:
-            if f and f.get('fecha') == sello['fecha']:
+            if f and f.get('fecha') == sello['fecha'] and (f.get('momento') or 'noche') == 'noche':
                 f = dict(f)
                 f['cierre'] = cierre
             lista.append(f)
+
+        # Y ADEMAS SE GUARDA LA FOTO DE LA MAÑANA. Daniel, 04-sep-2026: *"ese reporte me
+        # dice con cuántas paletas estoy comenzando en reserva, y a las siete de la mañana
+        # me dice con cuántas ubicaciones estoy dejando para el turno mañana. Dos fotos
+        # por día"*.
+        #
+        # NO SE PISA LA DE LA NOCHE, y no es un detalle: el cierre se mide comparando los
+        # padres de la foto de las 19:00 contra el stock de ahora. Si la de la mañana la
+        # reemplazara, esa cuenta quedaría midiéndose contra sí misma y daría cero, que es
+        # el mismo defecto que tuvo la bajada de paletas.
+        manana = dict(r['foto'])
+        manana['momento'] = 'manana'
+        manana['guardado'] = datetime.now().isoformat(timespec='seconds')
+        manana['origen'] = 'robot'
+        lista = [f for f in lista
+                 if not (f and f.get('fecha') == sello['fecha']
+                         and f.get('momento') == 'manana')]
+        lista.insert(0, manana)
+        # LA DE LA NOCHE VA PRIMERA DENTRO DE SU DIA. La pantalla busca por fecha con
+        # `find`, asi que se queda con la PRIMERA que encuentre: si quedara delante la de
+        # la mañana, el reporte que Daniel le da a su jefe cambiaria solo. Con `reverse`
+        # la clave del momento va invertida a proposito -1 para la noche- para que baje
+        # primero ella.
+        lista.sort(key=lambda f: (str(f.get('fecha') or ''),
+                                  1 if (f.get('momento') or 'noche') == 'noche' else 0),
+                   reverse=True)
+        lista = lista[:DIAS_GUARDADOS * 2]
+
         if not publicar(AREA_FOTOS, lista):
             return 1
-        log('Cierre guardado en la foto del %s' % sello['fecha'])
+        log('Cierre guardado en la foto del %s, y guardada la foto de la mañana '
+            '(%s fotos en el calendario)' % (sello['fecha'], format(len(lista), ',d')))
         log('LISTO')
         return 0
 
@@ -270,13 +305,19 @@ def main():
         return 0
 
     foto = dict(r['foto'])
+    foto['momento'] = 'noche'      # la del arranque del turno
     foto['guardado'] = datetime.now().isoformat(timespec='seconds')
     foto['origen'] = 'robot'
     # Igual que la pantalla: la nueva adelante, ordenadas por fecha y con el tope de dias.
-    lista = [f for f in fotos if f and f.get('fecha') != sello['fecha']]
+    # Se saca solo la de la NOCHE de ese dia: si ya hubiera una de la mañana, se respeta.
+    lista = [f for f in fotos
+             if not (f and f.get('fecha') == sello['fecha']
+                     and (f.get('momento') or 'noche') == 'noche')]
     lista.insert(0, foto)
-    lista.sort(key=lambda f: str(f.get('fecha') or ''), reverse=True)
-    lista = lista[:DIAS_GUARDADOS]
+    lista.sort(key=lambda f: (str(f.get('fecha') or ''),
+                              1 if (f.get('momento') or 'noche') == 'noche' else 0),
+               reverse=True)
+    lista = lista[:DIAS_GUARDADOS * 2]      # dos fotos por dia
 
     if not publicar(AREA_FOTOS, lista):
         return 1
