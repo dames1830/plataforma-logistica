@@ -59,9 +59,9 @@ export const TAREAS = [
     { id: 'stock_hora', tipo: 'cada', etiqueta: 'Actividades del turno noche',
       detalle: 'el buffer, las paletas y el activo, para el Cumplimiento del turno', area: 'layout_stock_hora' },
     { id: 'picking_hora', tipo: 'cada', etiqueta: 'Avance de picking',
-      detalle: 'lo que va picado en el dia', area: 'picking_dias' },
+      detalle: 'lo que va picado en el dia; el pase de las 20:00 lo hace el Corte del turno día', area: 'picking_dias' },
     { id: 'oblpn_hora', tipo: 'cada', etiqueta: 'Avance de embalaje',
-      detalle: 'lo que va embalado en el dia', area: null },
+      detalle: 'lo que va embalado en el dia; el pase de las 20:20 lo hace el Corte del turno día', area: null },
     { id: 'mapa_hora', tipo: 'cada', etiqueta: 'Mapa de calor',
       detalle: 'las cuatro zonas; se dibuja con la foto del turno noche', area: 'layout_activo_SEL' },
     { id: 'reportes', tipo: 'cada', etiqueta: 'Detalle de Orden',
@@ -85,7 +85,21 @@ export const TAREAS = [
       area: 'embalaje_por_hora' },
     { id: 'cruce_wms', tipo: 'diaria', etiqueta: 'Cruce contra el WMS',
       detalle: 'los dos web reports del WMS contra lo que calcula la plataforma',
-      area: 'cruce_wms' }
+      area: 'cruce_wms' },
+    /* EL CORTE DEL TURNO DÍA. Daniel, 03-sep-2026: *"al finalizar el turno día deberíamos
+       ya tener los reportes y KPIs de lo que hizo el turno día [...] busca un espacio para
+       tener el reporte final de picking y embalaje"*, y *"el corte debería ser a partir de
+       las 7 pm"*.
+
+       VA A LAS 20:00, que es el primer hueco de verdad después de las 19:00: el ancla entra
+       19:00 y sale 19:16, y el Detalle de Orden entra 19:20 y tarda hasta 40 minutos.
+
+       SI SE LE CAMBIA LA HORA, hay que mirar dos cosas: que no pise el ancla de las 19:00
+       —el bloque dura unos 50 minutos— y que los pases de picking de las 20:00 y de
+       embalaje de las 20:20 siguen apagados en el servidor, porque este los reemplaza. */
+    { id: 'corte_turno', tipo: 'diaria', etiqueta: 'Corte del turno día',
+      detalle: 'el número final de picking, embalaje y recepción del día',
+      area: 'corte_turno' }
 ];
 
 /** Cada cuánto puede correr una tarea de las que se repiten. */
@@ -111,16 +125,29 @@ const TODOS = { lun: true, mar: true, mie: true, jue: true, vie: true, sab: true
 export const robotsPorDefecto = () => ({
     ancla_noche:  { activa: true, hora: '19:00', dias: { ...LUN_A_SAB } },
     ancla_manana: { activa: true, hora: '07:00', dias: { ...LUN_A_SAB } },
-    stock_hora:   { activa: true, minuto: 30, cadaMin: 60, dias: { ...TODOS } },
-    picking_hora: { activa: true, minuto: 50, cadaMin: 60, dias: { ...TODOS } },
-    mapa_hora:    { activa: true, minuto: 45, cadaMin: 60, dias: { ...TODOS } },
-    reportes:     { activa: true, hora: '06:45', dias: { ...LUN_A_SAB } },
+    stock_hora:   { activa: true, minuto: 0, cadaMin: 120, dias: { ...TODOS },
+                    desde: '22:00', hasta: '06:00' },
+    picking_hora: { activa: true, minuto: 0, cadaMin: 120, dias: { ...TODOS },
+                    desde: '10:00', hasta: '21:00', saltar: ['20:00'] },
+    /* FALTABA. Se agregó a TAREAS el 31-ago-2026 y se olvidó acá, así que la pantalla
+       venía avisando por consola y cayendo a "apagada, todos los días". Funcionaba de
+       casualidad, porque el servidor sí la publica; el día que no contestara, Daniel
+       habría visto el avance de embalaje apagado sin estarlo. */
+    oblpn_hora:   { activa: true, minuto: 20, cadaMin: 120, dias: { ...TODOS },
+                    desde: '10:00', hasta: '21:00', saltar: ['20:20'] },
+    mapa_hora:    { activa: true, minuto: 15, cadaMin: 120, dias: { ...TODOS },
+                    desde: '22:00', hasta: '06:15' },
+    /* `minuto: 440` son las 07:20 contadas desde medianoche, no el minuto 440 de una
+       hora. Es la única tarea que usa el campo así, y es cómo consigue correr dos veces
+       al día —440 y 440+720 = 19:20—. Por eso el rango del validador llega a 1439. */
+    reportes:     { activa: true, minuto: 440, cadaMin: 720, dias: { ...TODOS } },
     respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } },
     archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } },
     sin_salida:   { activa: true, hora: '07:30', dias: { ...LUN_A_SAB } },
     asn_web:      { activa: true, hora: '04:30', dias: { ...TODOS } },
     cierre_dia:   { activa: true, hora: '08:30', dias: { ...TODOS } },
-    cruce_wms:    { activa: true, hora: '21:30', dias: { ...LUN_A_SAB } }
+    cruce_wms:    { activa: true, hora: '21:30', dias: { ...LUN_A_SAB } },
+    corte_turno:  { activa: true, hora: '20:00', dias: { ...LUN_A_SAB } }
 });
 
 const _hhmm = (v, respaldo) => {
@@ -170,10 +197,26 @@ export const normalizar = (cfg) => {
         if (t.tipo === 'diaria') {
             base.hora = _hhmm(v.hora, d.hora);
         } else {
-            base.minuto = _entre(v.minuto, d.minuto, 0, 59);
+            /* HASTA 1439, NO HASTA 59. `reportes` guarda 440 —las 07:20 contadas desde
+               medianoche— y con el tope en 59 el valor se descartaba y quedaba en
+               `undefined`: la pantalla mostraba "al minuto undefined" y calculaba las
+               corridas como si fuera el minuto 0. */
+            base.minuto = _entre(v.minuto, d.minuto, 0, 1439);
             // Solo los valores que la pantalla ofrece: un "cada 7 minutos" escrito a mano
             // dejaría al robot corriendo todo el día.
             base.cadaMin = CADA.some(x => x.min === Number(v.cadaMin)) ? Number(v.cadaMin) : d.cadaMin;
+            /* LA VENTANA Y LOS PASES SALTEADOS VIAJAN. `normalizar` reconstruía cada
+               tarea con cinco campos y tiraba el resto, así que la pantalla creía que el
+               avance de picking corre las 24 horas cuando el servidor lo tiene de 10:00
+               a 21:00, y que corre a las 20:00 cuando ahí va el Corte del turno día.
+               El servidor no se enteraba —completa lo que falta con sus valores de
+               fábrica— pero lo que Daniel leía en pantalla no era lo que pasaba. */
+            if (v.desde || d.desde) base.desde = _hhmm(v.desde, d.desde);
+            if (v.hasta || d.hasta) base.hasta = _hhmm(v.hasta, d.hasta);
+            const salt = Array.isArray(v.saltar) ? v.saltar : d.saltar;
+            if (Array.isArray(salt) && salt.length) {
+                base.saltar = salt.map(x => _hhmm(x, null)).filter(Boolean);
+            }
         }
         out[t.id] = base;
     });
@@ -349,6 +392,30 @@ export const guardarCorreoGuias = async (nueva) => {
 };
 
 
+/** '10:00' -> 600. null si no viene, que significa "sin límite". */
+const _min = (hhmm) => {
+    const m = String(hhmm == null ? '' : hhmm).trim().match(/^(\d{1,2}):(\d{2})$/);
+    return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+
+/**
+ * ¿ESE MINUTO DEL DÍA CAE DENTRO DE LA VENTANA? Sin ventana, siempre.
+ *
+ * LA VENTANA PUEDE CRUZAR LA MEDIANOCHE, y hace falta: el avance del turno noche va de
+ * 22:00 a 06:00, o sea que `hasta` es MENOR que `desde`. Cuando pasa eso, dentro es
+ * "de las 22:00 en adelante O hasta las 06:00", no el tramo entre las dos.
+ *
+ * Copia exacta de `_en_ventana` en horario_robot.py: si las dos se separan, la pantalla
+ * dice una cosa y el servidor hace otra.
+ */
+const _enVentana = (base, desde, hasta) => {
+    if (desde === null && hasta === null) return true;
+    if (desde !== null && hasta !== null) {
+        return desde <= hasta ? (base >= desde && base <= hasta) : (base >= desde || base <= hasta);
+    }
+    return desde !== null ? base >= desde : base <= hasta;
+};
+
 /**
  * ¿LE TOCA CORRER A ESTA TAREA EN ESTE MOMENTO? La misma cuenta que hace el robot en el
  * servidor, escrita una sola vez para que las dos puntas no se separen.
@@ -373,9 +440,14 @@ export const leToca = (tarea, cfg, momento, ventanaMin = 10) => {
     }
     // Las que se repiten: cada `cadaMin` a partir de medianoche, al minuto que diga
     const cada = Math.max(1, Number(c.cadaMin) || 60);
-    const desde = Number(c.minuto) || 0;
-    for (let base = desde; base < 24 * 60; base += cada) {
-        if (minutosDelDia >= base && minutosDelDia < base + ventanaMin) return true;
+    const arranque = Number(c.minuto) || 0;
+    const salteados = (c.saltar || []).map(_min).filter(x => x !== null);
+    for (let base = arranque; base < 24 * 60; base += cada) {
+        if (minutosDelDia >= base && minutosDelDia < base + ventanaMin) {
+            if (!_enVentana(base, _min(c.desde), _min(c.hasta))) return false;
+            if (salteados.includes(base)) return false;
+            return true;
+        }
     }
     return false;
 };
@@ -388,5 +460,13 @@ export const comoCorre = (tarea, cfg) => {
     if (!c.activa) return 'apagada';
     if (t.tipo === 'diaria') return `todos los días a las ${c.hora}`;
     const cada = CADA.find(x => x.min === c.cadaMin);
-    return `${cada ? cada.texto : 'cada ' + c.cadaMin + ' min'}, al minuto ${c.minuto}`;
+    /* Cuando el paso es de 12 horas el `minuto` son minutos desde medianoche, no el
+       minuto de la hora: decir "al minuto 440" no significa nada para nadie. */
+    const paso = cada ? cada.texto : 'cada ' + c.cadaMin + ' min';
+    let txt = c.cadaMin >= 720
+        ? `${paso}, a las ${String(Math.floor(c.minuto / 60)).padStart(2, '0')}:${String(c.minuto % 60).padStart(2, '0')}`
+        : `${paso}, al minuto ${c.minuto}`;
+    if (c.desde && c.hasta) txt += `, de ${c.desde} a ${c.hasta}`;
+    if (c.saltar && c.saltar.length) txt += ` (salvo ${c.saltar.join(' y ')})`;
+    return txt;
 };

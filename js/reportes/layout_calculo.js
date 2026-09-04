@@ -27,7 +27,7 @@
    Quien lo use desde afuera tiene que llamar antes a `zonasService.cargarZonas()`.
    ============================================================================ */
 
-import * as zonasService from '../services_v245/zonasService.js?v=29.0588';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0589';
 
 /**
  * TRAER LAS ZONAS, DESDE ESTE MISMO ARCHIVO.

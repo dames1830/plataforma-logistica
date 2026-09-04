@@ -63,11 +63,11 @@ import { dataStore, getUploadMeta, calculateBufferPallets, fetchBufferConfig,
          saveBufferConfig, fetchBufferHistory, saveBufferHistoryRecord,
          updateBufferHistoryRecord, loadLastBufferKPI, saveLastBufferKPI,
          traerAnalisisBuffer, publicarAnalisisBuffer, bajarFactores,
-         traerFactoresCalculados } from '../services_v245/csvHub_v6.js?v=29.0588';
-import * as adminService from '../services_v245/adminService.js?v=29.0588';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0588';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0588';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0588';
+         traerFactoresCalculados } from '../services_v245/csvHub_v6.js?v=29.0589';
+import * as adminService from '../services_v245/adminService.js?v=29.0589';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0589';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0589';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0589';
 
 /* EL ENTORNO, ATADO UNA SOLA VEZ. La pantalla se llama a si misma al cambiar de
    sub-pestana; atandolo aca esa llamada no hubo que tocarla. */

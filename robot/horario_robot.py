@@ -60,7 +60,10 @@ DE_FABRICA = {
     'ancla_manana': {'activa': True, 'hora': '07:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'stock_hora':   {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '22:00', 'hasta': '06:00'},
-    'picking_hora': {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00'},
+    # EL PASE DE LAS 20:00 NO CORRE: lo hace `corte_turno`, que baja lo mismo y
+    # ademas cierra el dia. Si los dos entraran, uno se quedaria afuera del WMS.
+    'picking_hora': {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00',
+                     'saltar': ['20:00']},
     # EL TRIO PASO DE CADA HORA A CADA 2 HORAS el 30-ago-2026, medido: entre stock (9,2
     # min) y picking (16,9) tenian el WMS ocupado 10,4 horas al dia, y el picking de las
     # 06:50 terminaba 07:07 pisando al ancla de las 07:00. Ahora son 5,2 horas y ningun
@@ -108,7 +111,9 @@ DE_FABRICA = {
     # dos entran al WMS y solo cabe uno; si arrancara antes, uno perderia la vuelta.
     # Baja el dia EN CURSO (--hoy) y pisa el archivo en cada pase: siempre queda el
     # ultimo estado. El ultimo pase del dia es a las 22:40.
-    'oblpn_hora':   {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00'},
+    # Y el de las 20:20 tampoco, por lo mismo: va adentro del corte de turno.
+    'oblpn_hora':   {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00',
+                     'saltar': ['20:20']},
     # EL CRUCE CONTRA EL WMS, una vez al dia y al final. Baja los dos web reports
     # -PRODUCCION PICKING / EMBALAJE ALDEAS X HORA- y los compara contra lo que
     # calculo la plataforma. Va a las 21:30 porque el ultimo pase del avance de
@@ -121,6 +126,21 @@ DE_FABRICA = {
     'cierre_dia':   {'activa': True, 'hora': '08:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': True}},
     'cruce_wms':    {'activa': True, 'hora': '21:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
+                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # EL CORTE DEL TURNO DIA. Daniel, 03-sep-2026: *"al finalizar el turno dia
+    # deberiamos ya tener los reportes y KPIs de lo que hizo el turno dia [...] busca
+    # un espacio para tener el reporte final de picking y embalaje"*, y *"el corte
+    # deberia ser a partir de las 7 pm"*.
+    #
+    # LAS 20:00 SON EL PRIMER HUECO DE VERDAD DESPUES DE LAS 19:00. El ancla entra
+    # 19:00 y sale 19:16; el Detalle de Orden entra 19:20 y tarda hasta 40 minutos.
+    # Entre las 18:33 y las 19:00 quedan 27 minutos libres y este bloque necesita 50.
+    #
+    # Y NO CUESTA TIEMPO DE WMS: reemplaza los pases sueltos de picking (20:00) y
+    # embalaje (20:20), que ya bajaban lo mismo sin decir que era el numero final.
+    # Por eso esos dos van con `saltar` mas arriba. Termina cerca de las 20:50, con
+    # 40 minutos de margen antes del cruce contra el WMS de las 21:30.
+    'corte_turno':  {'activa': True, 'hora': '20:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     # EL ASN FALTABA ACA, y por eso no bajaba desde el 01-sep-2026.
     #
@@ -139,7 +159,7 @@ DE_FABRICA = {
 # como tarea que se repite, con `cadaMin` de 60 por defecto. Corre a cada hora
 # una bajada de 48 minutos, o no corre nunca. Las dos listas van juntas.
 DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida',
-           'cruce_wms', 'cierre_dia', 'asn_web')
+           'cruce_wms', 'cierre_dia', 'asn_web', 'corte_turno')
 
 
 def _leer_web(timeout=20):
