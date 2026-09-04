@@ -50,8 +50,10 @@ import bloqueo_wms
 from playwright.sync_api import sync_playwright
 
 QUIEN = "ver_tablas"
-PALABRAS = ["invent", "hist", "trans", "lpn", "locn", "activity", "move",
-            "task", "putaway", "receiv"]
+# Lo que puede llamarse un informe de movimientos de inventario, en los dos
+# idiomas: el arbol mezcla nombres en castellano y en ingles.
+PALABRAS = ["invent", "hist", "movim", "lpn", "ubicac", "almacen", "buffer",
+            "recep", "putaway", "transac", "kardex", "traza"]
 
 
 def log(t):
@@ -119,53 +121,48 @@ def apretar(fr, nombres, que, espera=4):
 
 
 def mirar(fr, page):
+    """Lista los informes que ya existen. NO abre ningun asistente."""
     contar(fr, page, "arbol")
 
-    # El boton de crear puede estar en castellano o ser un icono. Se prueban los
-    # nombres conocidos y, si ninguno esta, la foto y la lista de arriba dicen que
-    # hay de verdad.
-    if not apretar(fr, ("Create New Report", "Crear informe nuevo", "Nuevo informe"),
-                   "crear informe"):
-        return
-    contar(fr, page, "tipos")
-
-    apretar(fr, ("Informe express", "Express Report", "Express"), "tipo de informe")
-    contar(fr, page, "asistente")
-
-    # ── paso Categorias ─────────────────────────────────────────────────────
-    # El asistente arranca en Nombre; se pasa a Categorias con el paso de arriba.
-    apretar(fr, ("Categorías", "Categorias", "Categories"), "paso Categorias", espera=3)
-    contar(fr, page, "categorias")
-
     caja = None
-    for nombre in ("Buscar...", "Buscar", "Search..."):
+    for nombre in ("Buscar...", "Buscar", "Search...", "Search"):
         try:
             caja = fr.get_by_placeholder(nombre).first
-            caja.wait_for(state="visible", timeout=5000)
+            caja.wait_for(state="visible", timeout=4000)
+            log("caja de busqueda: %r" % nombre)
             break
         except Exception:
             caja = None
     if caja is None:
-        log("NO ENCONTRE la caja de buscar tablas; queda la foto para mirarla")
+        log("NO ENCONTRE la caja de buscar; queda la foto wms_arbol.png")
         return
 
+    log("")
+    log("=== INFORMES QUE YA EXISTEN, por palabra ===")
     for palabra in PALABRAS:
         try:
             caja.fill("")
-            caja.type(palabra, delay=60)
-            time.sleep(2.5)
+            time.sleep(0.6)
+            caja.type(palabra, delay=50)
+            time.sleep(2.2)
             filas = fr.locator(".wrTrNodeTextHighlightContainer, .wrListItem, li, tr")
-            vistos, n = [], min(filas.count(), 200)
-            for i in range(n):
+            vistos, n = [], min(filas.count(), 250)
+            for k in range(n):
                 try:
-                    t = (filas.nth(i).inner_text() or "").strip()
+                    t = (filas.nth(k).inner_text() or "").strip()
                 except Exception:
                     continue
-                if t and len(t) < 60 and palabra.lower() in t.lower() and t not in vistos:
+                if t and len(t) < 70 and palabra.lower() in t.lower() and t not in vistos:
                     vistos.append(t)
-            log("  %-10s -> %s" % (palabra, ", ".join(vistos[:14]) if vistos else "(nada)"))
+            log("  %-12s %s" % (palabra, " · ".join(vistos[:16]) if vistos else "(nada)"))
         except Exception as e:
-            log("  %-10s -> fallo: %s" % (palabra, type(e).__name__))
+            log("  %-12s fallo: %s" % (palabra, type(e).__name__))
+    try:
+        caja.fill("")
+        log("")
+        log("caja de busqueda limpiada: el arbol queda como estaba")
+    except Exception:
+        pass
 
 
 def main():

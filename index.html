@@ -84,7 +84,7 @@
   </script>
 
   <!-- ENTORNO: decide produccion vs pruebas. DEBE ir antes que cualquier otro script. -->
-  <script src="js/env.js?v=29.0617"></script>
+  <script src="js/env.js?v=29.0618"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logística Deam1830</title>
@@ -98,14 +98,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   
-  <link rel="stylesheet" href="css/main.css?v=29.0617" id="main_css">
+  <link rel="stylesheet" href="css/main.css?v=29.0618" id="main_css">
   <!-- Los temas van DESPUES de main.css a proposito: redefinen las mismas
        variables (--primary, --bg-dark, --text-muted...) y con la misma
        especificidad gana la ultima hoja que se carga. -->
-  <link rel="stylesheet" href="css/temas.css?v=29.0617" id="temas_css">
+  <link rel="stylesheet" href="css/temas.css?v=29.0618" id="temas_css">
   <!-- Los componentes van DESPUES de los temas: usan sus tokens y sus clases
        tienen que poder ganarle a lo generico de main.css. -->
-  <link rel="stylesheet" href="css/componentes.css?v=29.0617" id="componentes_css">
+  <link rel="stylesheet" href="css/componentes.css?v=29.0618" id="componentes_css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
   <style>
     #sync-indicator {
@@ -185,11 +185,11 @@
   <div id="sync-indicator" class="sync-online">
     <span id="sync-icon" style="font-size:var(--t-lg); user-select: none;">…</span>
     <div class="sync-tooltip">
-      <div id="sync-text" style="font-weight: 800; font-size:var(--t-sm); color: var(--text-strong); white-space: nowrap;">SISTEMA v29.0617 ONLINE</div>
+      <div id="sync-text" style="font-weight: 800; font-size:var(--t-sm); color: var(--text-strong); white-space: nowrap;">SISTEMA v29.0618 ONLINE</div>
       <div style="font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.4); margin-top: 4px; white-space: nowrap;">System is currently up to date and syncing.</div>
     </div>
   </div>
-  <script src="js/app.js?v=29.0617" type="module">
+  <script src="js/app.js?v=29.0618" type="module">
     document.addEventListener('DOMContentLoaded', () => {
       const syncIndicator = document.getElementById('sync-indicator');
       syncIndicator.addEventListener('click', (e) => {
