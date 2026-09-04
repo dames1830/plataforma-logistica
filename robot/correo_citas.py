@@ -242,6 +242,12 @@ def _por_asunto(items, diag):
         return None
     if diag:
         log("      buscando por asunto: %d correo(s)" % n)
+    # DEL MAS NUEVO AL MAS VIEJO. Buscar por asunto no filtra por fecha y devuelve
+    # todo el historial; sin ordenar, el primero que sale es de hace meses.
+    try:
+        sel.Sort("[ReceivedTime]", True)
+    except Exception:
+        pass
     return sel
 
 
@@ -309,14 +315,17 @@ def correos(dias, diag=False):
                     continue
             except Exception:
                 continue
-            if sel is None:
-                # En el recorrido a mano se corta al pasarse de fecha: vienen
-                # ordenados de mas nuevo a mas viejo.
-                try:
-                    if it.ReceivedTime.replace(tzinfo=None) < desde:
-                        break
-                except Exception:
-                    continue
+            # SE CORTA AL PASARSE DE FECHA, venga de donde venga la lista. Vienen
+            # del mas nuevo al mas viejo, asi que el primero viejo termina el
+            # recorrido. Sin esto, buscar por asunto trae el historial entero y
+            # serian dieciseis lecturas de imagen en cada pase.
+            try:
+                if it.ReceivedTime.replace(tzinfo=None) < desde:
+                    if diag:
+                        log("      el resto ya es de antes del corte; se para aca")
+                    break
+            except Exception:
+                continue
             yield nombre, it
 
 
@@ -939,10 +948,24 @@ def main():
             continue
 
         fecha = fecha_del_asunto(asunto, llegada)
-        try:
-            html = str(it.HTMLBody or '')
-        except Exception:
-            html = ''
+        log('')
+        log('CORREO: %s' % asunto[:80])
+        log('   llego el %s · programa el dia %s'
+            % (llegada.strftime('%d/%m %H:%M'), fecha))
+
+        # EL CUERPO SE PIDE SOLO SI HACE FALTA, y casi nunca hace falta.
+        #
+        # `it.HTMLBody` de un correo que no esta en el cache local hace que Outlook
+        # se lo vaya a buscar al servidor, y esa llamada puede quedarse esperando
+        # para siempre: es lo que colgo al robot en el primer correo de la lista.
+        # La tabla viene como imagen adjunta y los adjuntos SI estan cacheados.
+        html = ''
+        if '--ver' in sys.argv or '--cuerpo' in sys.argv:
+            try:
+                html = str(it.HTMLBody or '')
+            except Exception as e:
+                log('   no se pudo leer el cuerpo (%s); se sigue con la imagen'
+                    % type(e).__name__, 'WARN')
 
         if '--ver' in sys.argv:
             log('')
@@ -976,16 +999,11 @@ def main():
             guardar_imagen(it, fecha)
             continue
 
-        log('')
-        log('CORREO: %s' % asunto[:80])
-        log('   llego el %s · programa el dia %s'
-            % (llegada.strftime('%d/%m %H:%M'), fecha))
-
         # LA TABLA VIENE COMO IMAGEN. Comprobado sobre los cuatro correos del
         # buzon el 03-sep-2026: cero tablas en el HTML del cuerpo, que solo trae
         # el saludo. Se intenta igual por si algun dia la mandan como tabla de
         # verdad -seria mejor- y si no, se lee la captura.
-        filas = leer_citas(html)
+        filas = leer_citas(html) if html else []
         meta = {}
         if filas:
             log('   la tabla vino en el cuerpo del correo: %d citas' % len(filas))
