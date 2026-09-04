@@ -60,10 +60,27 @@ DE_FABRICA = {
     'ancla_manana': {'activa': True, 'hora': '07:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'stock_hora':   {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '22:00', 'hasta': '06:00'},
-    # EL PASE DE LAS 20:00 NO CORRE: lo hace `corte_turno`, que baja lo mismo y
-    # ademas cierra el dia. Si los dos entraran, uno se quedaria afuera del WMS.
-    'picking_hora': {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00',
-                     'saltar': ['20:00']},
+    # EL ULTIMO AVANCE DEL DIA ES EL DE LAS 16:00. Daniel, 03-sep-2026: *"el avance de
+    # picking y embalaje de las seis y tantos ya no lo des, si a las siete y media,
+    # ocho vas a tener el reporte completo. Para que vas a dar ese avance?"*.
+    #
+    # La ventana cierra a las 17:00 y no a las 21:00, asi que quedan cuatro pases
+    # -10, 12, 14 y 16- y despues el WMS queda libre dos horas y media hasta el ancla.
+    # El numero de las 18:00 no le servia a nadie: el corte de las 20:00 trae el dia
+    # entero cincuenta minutos despues.
+    #
+    # LO QUE DE VERDAD LOS APAGA ES `saltar`, NO LA VENTANA, y esto casi se me pasa.
+    #
+    # `_de()` completa con los valores de fabrica lo que falte, pero lo que el
+    # servidor YA TIENE GUARDADO manda. Ahi esta guardado `hasta: '21:00'`, asi que
+    # bajarlo aca a 17:00 no apagaba ni un pase: la configuracion publicada le ganaba.
+    # `saltar` si funciona porque la pantalla nunca lo publico, y una clave que no
+    # existe en lo guardado deja pasar la de fabrica.
+    #
+    # La ventana en 17:00 se deja igual, como la intencion escrita: si algun dia la
+    # configuracion publicada se rehace, queda dicho hasta cuando corre.
+    'picking_hora': {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '17:00',
+                     'saltar': ['18:00', '20:00']},
     # EL TRIO PASO DE CADA HORA A CADA 2 HORAS el 30-ago-2026, medido: entre stock (9,2
     # min) y picking (16,9) tenian el WMS ocupado 10,4 horas al dia, y el picking de las
     # 06:50 terminaba 07:07 pisando al ancla de las 07:00. Ahora son 5,2 horas y ningun
@@ -111,9 +128,9 @@ DE_FABRICA = {
     # dos entran al WMS y solo cabe uno; si arrancara antes, uno perderia la vuelta.
     # Baja el dia EN CURSO (--hoy) y pisa el archivo en cada pase: siempre queda el
     # ultimo estado. El ultimo pase del dia es a las 22:40.
-    # Y el de las 20:20 tampoco, por lo mismo: va adentro del corte de turno.
-    'oblpn_hora':   {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '21:00',
-                     'saltar': ['20:20']},
+    # Embalaje va igual: cuatro pases y el ultimo a las 16:20.
+    'oblpn_hora':   {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '17:00',
+                     'saltar': ['18:20', '20:20']},
     # EL CRUCE CONTRA EL WMS, una vez al dia y al final. Baja los dos web reports
     # -PRODUCCION PICKING / EMBALAJE ALDEAS X HORA- y los compara contra lo que
     # calculo la plataforma. Va a las 21:30 porque el ultimo pase del avance de

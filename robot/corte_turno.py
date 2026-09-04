@@ -23,23 +23,29 @@ trece horas en que nadie sabe si lo que ve esta cerrado o a medias.
 
 POR QUE A LAS 20:00 Y NO ANTES
 ------------------------------
-Se midio la tarde entera antes de elegir:
+Se midio la tarde entera antes de elegir. Asi queda:
 
-    19:00  ancla de la noche  -> 19:16   INTOCABLE: arranca el turno noche
-    19:20  Detalle de Orden   -> 20:00   tarda hasta 40 minutos
-    20:00  avance de picking  -> 20:17   <- este espacio
-    20:20  avance de embalaje -> 20:33   <- y este
+    16:00  avance de picking   -> 16:17   el ultimo del dia
+    16:20  avance de embalaje  -> 16:33   el ultimo del dia
+           (el WMS queda libre dos horas y media)
+    19:00  ancla de la noche   -> 19:16   INTOCABLE: arranca el turno noche
+    19:20  Detalle de Orden    -> 20:00   tarda hasta 40 minutos
+    20:00  CORTE DEL TURNO DIA -> 20:50
     21:30  cruce contra el WMS
 
-Entre las 18:33 y las 19:00 solo hay 27 minutos libres y el bloque necesita 50:
-empezar a las 18:30 seguiria adentro del WMS cuando entra el ancla, que es el
-error que ya tumbo el arranque del turno dos veces.
+NO PUEDE IR ANTES DE LAS 19:00 porque el turno sigue trabajando y el corte se
+perderia la ultima hora. Y entre las 19:16 y las 20:00 esta el Detalle de Orden,
+que Daniel puso ahi el 31-ago para que el turno noche entre con el pendiente a la
+vista. Las 20:00 son el primer hueco de verdad.
 
-Las 20:00 son el primer hueco de verdad, y ademas NO CUESTAN TIEMPO DE WMS: los
-pases sueltos de las 20:00 y 20:20 ya bajaban picking y embalaje. Este robot los
-reemplaza -por eso van con `saltar` en horario_robot.py-, les agrega la recepcion
-y publica los tres juntos como un cierre. Termina cerca de las 20:50, con 40
-minutos de margen antes del cruce de las 21:30.
+LOS AVANCES DE LAS 18:00 Y 18:20 SE SACARON. Daniel, 03-sep-2026: *"el avance de
+picking y embalaje de las seis y tantos ya no lo des, si a las siete y media,
+ocho vas a tener el reporte completo"*. Un numero de las 18:00 que queda viejo
+cincuenta minutos despues no le sirve a nadie.
+
+CUIDADO AL APAGAR PASES: lo que los apaga es `saltar`, NO la ventana `hasta`. La
+configuracion publicada le gana a los valores de fabrica, y ahi esta guardado
+`hasta: '21:00'`. Bajarlo en fabrica no apaga nada.
 
 QUE CORRE, EN ORDEN
 -------------------

@@ -128,13 +128,13 @@ export const robotsPorDefecto = () => ({
     stock_hora:   { activa: true, minuto: 0, cadaMin: 120, dias: { ...TODOS },
                     desde: '22:00', hasta: '06:00' },
     picking_hora: { activa: true, minuto: 0, cadaMin: 120, dias: { ...TODOS },
-                    desde: '10:00', hasta: '21:00', saltar: ['20:00'] },
+                    desde: '10:00', hasta: '17:00', saltar: ['18:00', '20:00'] },
     /* FALTABA. Se agregó a TAREAS el 31-ago-2026 y se olvidó acá, así que la pantalla
        venía avisando por consola y cayendo a "apagada, todos los días". Funcionaba de
        casualidad, porque el servidor sí la publica; el día que no contestara, Daniel
        habría visto el avance de embalaje apagado sin estarlo. */
     oblpn_hora:   { activa: true, minuto: 20, cadaMin: 120, dias: { ...TODOS },
-                    desde: '10:00', hasta: '21:00', saltar: ['20:20'] },
+                    desde: '10:00', hasta: '17:00', saltar: ['18:20', '20:20'] },
     mapa_hora:    { activa: true, minuto: 15, cadaMin: 120, dias: { ...TODOS },
                     desde: '22:00', hasta: '06:15' },
     /* `minuto: 440` son las 07:20 contadas desde medianoche, no el minuto 440 de una

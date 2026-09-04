@@ -13,16 +13,14 @@ REM    1. picking final del dia
 REM    2. embalaje final del dia
 REM    3. recepcion del dia (el ASN del mes en curso)
 REM
-REM  VA A LAS 20:00 y no antes. El ancla entra 19:00 y sale 19:16;
-REM  el Detalle de Orden entra 19:20 y tarda hasta 40 minutos.
-REM  Entre las 18:33 y las 19:00 hay 27 minutos libres y este
-REM  bloque necesita 50: arrancar a las 18:30 seguiria adentro del
-REM  WMS cuando entra el ancla, que es lo que ya tumbo el arranque
-REM  del turno dos veces.
+REM  VA A LAS 20:00. No puede ir antes de las 19:00 porque el
+REM  turno sigue trabajando, y entre las 19:16 y las 20:00 esta el
+REM  Detalle de Orden. Las 20:00 son el primer hueco de verdad.
 REM
-REM  NO CUESTA TIEMPO DE WMS DE MAS: reemplaza los pases sueltos de
-REM  picking (20:00) y embalaje (20:20), que ya bajaban lo mismo.
-REM  Esos dos van apagados con `saltar` en horario_robot.py.
+REM  EL ULTIMO AVANCE DEL DIA ES EL DE LAS 16:00. Los pases de
+REM  picking (18:00 y 20:00) y de embalaje (18:20 y 20:20) quedan
+REM  apagados con `saltar` en horario_robot.py: un numero de las
+REM  18:00 que queda viejo cincuenta minutos despues no sirve.
 REM
 REM  CADA PASO ES INDEPENDIENTE: si la recepcion falla, picking y
 REM  embalaje ya quedaron publicados.
