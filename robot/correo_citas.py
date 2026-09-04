@@ -242,12 +242,14 @@ def _por_asunto(items, diag):
         return None
     if diag:
         log("      buscando por asunto: %d correo(s)" % n)
-    # DEL MAS NUEVO AL MAS VIEJO. Buscar por asunto no filtra por fecha y devuelve
-    # todo el historial; sin ordenar, el primero que sale es de hace meses.
-    try:
-        sel.Sort("[ReceivedTime]", True)
-    except Exception:
-        pass
+    # NO SE ORDENA ESTE RESULTADO. Ordenar una coleccion YA FILTRADA obliga a
+    # Outlook a rearmarla sin indice y SE CUELGA -no da error, se queda-. Medido:
+    # una sonda que leia cinco correos enteros tardaba 0,4 segundos, y el robot,
+    # que solo se diferenciaba en este Sort, no pasaba del primero en ocho minutos.
+    #
+    # Tampoco hace falta: la bandeja se ordena ANTES de filtrar y el Restrict
+    # conserva ese orden. Comprobado, los devuelve del mas nuevo al mas viejo:
+    # 03/09, 01/09, 31/08, 28/08.
     return sel
 
 
@@ -927,7 +929,10 @@ def main():
             continue
 
         if listar:
-            # Sin filtro: se muestran todos para poder ver como llega el asunto.
+            # SenderName SALE A LA RED: resuelve el remitente contra la libreta de
+            # direcciones de Exchange y se cuelga si no la alcanza. Medido en el
+            # servidor: todo lo demas del correo vuelve en 0,0 segundos y este se
+            # queda esperando. Solo se pide con --listar, que es a mano.
             try:
                 de = str(it.SenderName or '')
             except Exception:
