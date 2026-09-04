@@ -314,12 +314,24 @@ este orden:
 
 ### El origen: qué significa cada sub-zona del buffer
 
-| Origen | Qué es |
-|---|---|
-| `CDBUFFER-A` | Recepción: importado o nacional. Va al camino normal |
-| `CDBUFFER-B` | Bajó de reserva por pedido o replenishment — **si de verdad bajó de arriba** |
-| `CDBUFFER-C` | Prepack. **No entra al circuito.** Se pica por caja, no por par |
-| `CDBUFFER-D` | Catálogo. Columna 8 del MZN03, sin mirar marca ni temporada |
+> **RECEPCIÓN MATRICULA EN CUALQUIER BUFFER MENOS EL C.** Daniel, 03-sep-2026:
+> *"el buffer A no es recepción solamente. Recepción puede almacenar en el A, en el B y en
+> el D, y en cualquier buffer, excepto el C. Que quede bien claro."*
+>
+> Esta tabla decía "A = recepción, B = bajó de reserva" y con eso se puede terminar contando
+> la recepción del día mirando solo el A. **La letra dice para qué se usa normalmente esa
+> sub-zona, NO de dónde vino lo que está adentro.**
+
+| Sub-zona | Para qué se usa | ¿Recepción puede matricular ahí? |
+|---|---|---|
+| `CDBUFFER-A` | Recepción: importado o nacional. Va al camino normal | **sí** |
+| `CDBUFFER-B` | Bajó de reserva por pedido o replenishment | **sí** — pasó el 05-ago-2026 cuando el A se llenó |
+| `CDBUFFER-C` | Prepack. **No entra al circuito.** Se pica por caja, no por par | **NO, nunca** |
+| `CDBUFFER-D` | Catálogo. Columna 8 del MZN03, sin mirar marca ni temporada | **sí** |
+
+**Para saber de dónde vino algo del buffer no sirve la letra: hay que cruzarlo.** Lo que bajó
+de reserva tiene que haber DESAPARECIDO de reserva; lo que entró de recepción figura recibido
+en el ASN ese día. Ver [[bajado-de-reserva-no-es-todo-el-buffer]].
 
 ### EL PREPACK SE RECONOCE POR EL CÓDIGO, NO POR LA UBICACIÓN
 

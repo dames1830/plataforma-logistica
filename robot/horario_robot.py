@@ -144,6 +144,22 @@ DE_FABRICA = {
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': True}},
     'cruce_wms':    {'activa': True, 'hora': '21:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # EL CORREO DE CITAS DE RECEPCION. Daniel, 03-sep-2026: *"el correo lo mandan a
+    # partir de las cuatro de la tarde, mas o menos, o sea que entre cuatro y seis
+    # tienes que capturar ese correo"*.
+    #
+    # SE INTENTA CADA 30 MINUTOS ENTRE LAS 16:00 Y LAS 18:30 y no una sola vez: "a
+    # partir de las cuatro, mas o menos" no es una hora, es una franja. Un unico
+    # intento a las 16:00 pierde el dia si ese dia lo mandaron a las 17:10.
+    #
+    # NO CUESTA NADA REPETIR: el robot lleva su propia lista de correos vistos, asi
+    # que el segundo pase encuentra el mismo correo y no hace nada. Y no entra al
+    # WMS -habla con Outlook- por lo que no le pelea el turno a ningun otro.
+    #
+    # TODOS LOS DIAS, domingo incluido: el correo del domingo programaria el lunes,
+    # y un pase que no encuentra nada cuesta dos segundos.
+    'correo_citas': {'activa': True, 'minuto': 0, 'cadaMin': 30, 'dias': {d: True for d in DIAS},
+                     'desde': '16:00', 'hasta': '18:30'},
     # EL CORTE DEL TURNO DIA. Daniel, 03-sep-2026: *"al finalizar el turno dia
     # deberiamos ya tener los reportes y KPIs de lo que hizo el turno dia [...] busca
     # un espacio para tener el reporte final de picking y embalaje"*, y *"el corte
