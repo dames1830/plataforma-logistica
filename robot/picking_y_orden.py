@@ -1101,8 +1101,21 @@ def run():
     # despues de 20 minutos sigue ocupado, esta sale SIN bajar nada y con codigo 3:
     # `armar_pendiente.py` entonces no publica y queda el pendiente de ayer, que es
     # la regla que puso Daniel. El correo se vuelve a despertar en media hora.
+    # LA CORRIDA DIARIA ESPERA 45 MINUTOS, NO 15. Entra a las 07:20, quince minutos
+    # despues del ancla, y el ancla normalmente tarda 16: el margen era de un minuto.
+    # Cuando el Stock Reserva se pone lento el ancla sigue adentro, y esta entraba
+    # igual con la MISMA cuenta `dames`.
+    #
+    # El 04-sep-2026 se vio entero: el ancla pidio el Excel a las 07:07, esta entro a
+    # las 07:35 -"se entra igual"- y el ancla fallo sus tres intentos y perdio la
+    # manana. Ya habia pasado el 31-ago con esta corrida a las 06:45; moverla a las
+    # 07:20 solo corrio el choque de lugar.
+    #
+    # NO SE PIERDE LA CORRIDA, que es la regla de Daniel: a los 45 minutos entra
+    # igual. Solo deja de pisar al ancla en los casos en que el ancla se demora, que
+    # son justo los que la rompian.
     quien = "pendientes de la tarde" if solo_pend else "reportes diarios"
-    libre = bloqueo_wms.esperar_turno(log, minutos_max=20 if solo_pend else 15, quien=quien)
+    libre = bloqueo_wms.esperar_turno(log, minutos_max=20 if solo_pend else 45, quien=quien)
     if solo_pend and not libre:
         log("El WMS sigue ocupado. NO se baja la foto: vale mas quedarse con el "
             "pendiente de ayer que pisarlo con uno a medias.", "ERROR")
