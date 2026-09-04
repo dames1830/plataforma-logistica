@@ -52,9 +52,9 @@ export const DIAS = [
  * la mañana.
  */
 export const TAREAS = [
-    { id: 'ancla_noche', tipo: 'diaria', etiqueta: 'Stock ancla · noche',
+    { id: 'ancla_noche', tipo: 'diaria', etiqueta: 'Cierre del turno día',
       detalle: 'la foto sobre la que se calcula todo el turno', area: 'almacenaje_activo' },
-    { id: 'ancla_manana', tipo: 'diaria', etiqueta: 'Stock ancla · mañana',
+    { id: 'ancla_manana', tipo: 'diaria', etiqueta: 'Cierre del turno noche',
       detalle: 'la foto del día que empieza', area: 'almacenaje_activo' },
     { id: 'stock_hora', tipo: 'cada', etiqueta: 'Actividades del turno noche',
       detalle: 'el buffer, las paletas y el activo, para el Cumplimiento del turno', area: 'layout_stock_hora' },
