@@ -170,6 +170,43 @@
   </section>
 
   <section class="bloque">
+    <div class="banda"><h2>El cierre, minuto a minuto</h2>
+      <span class="nota">tomando el de las 07:00 como ejemplo</span></div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th style="width:78px">Hora</th><th>Qué pasa</th><th>Qué queda publicado</th></tr></thead>
+        <tbody>
+          <tr><td class="h">07:00</td><td>arranca</td><td class="nada">—</td></tr>
+          <tr><td class="h">07:05</td><td>Stock Activo bajado</td><td class="nada">—</td></tr>
+          <tr><td class="h">07:07</td><td>Stock Reserva bajado</td><td class="nada">—</td></tr>
+          <tr class="cierre"><td class="h">07:09</td>
+            <td><strong>el Slotting publica</strong>
+              <span class="sub">acá ya puedes procesar tareas de almacenaje</span></td>
+            <td><span class="arch">almacenaje_activo</span><span class="arch">analisis_sku_reserva</span><span class="arch">layout_stock_hora</span><span class="arch">reserva_hora</span></td></tr>
+          <tr class="cierre"><td class="h">07:10</td>
+            <td><strong>cierre del turno guardado</strong>
+              <span class="sub">el reporte de actividades de esa noche queda cerrado</span></td>
+            <td><span class="arch">buffer_c_cierre</span><span class="arch">reserva_cierre</span><span class="arch">tabla_tallas</span></td></tr>
+          <tr><td class="h">07:16</td><td>Slotting completo, rotación y evolución</td>
+            <td><span class="arch">rotacion_permanencia</span><span class="arch">evolucion_articulo</span></td></tr>
+          <tr><td class="h">07:16 – 07:36</td><td>Picking del día y su cuadro</td>
+            <td><span class="arch">picking_por_hora</span><span class="arch">picking_dias</span></td></tr>
+          <tr><td class="h">07:36 – 07:49</td><td>OBLPN Embalaje y su cuadro</td>
+            <td><span class="arch">embalaje_por_hora</span></td></tr>
+          <tr><td class="h">07:49 – 07:57</td><td>Detalle Orden del día</td>
+            <td class="nada">queda el archivo, lo leen los reportes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>A las 07:10 ya tienes lo que necesitas para procesar tareas</strong>
+      &mdash;no a las 07:57&mdash;. El stock y el análisis de reserva se publican primero <em>a
+      propósito</em>: lo demás puede llegar veinte minutos después sin estorbarte.</p>
+    <p class="nota-azul">Las horas salen de la corrida real de las 09:00 del 4 de setiembre,
+      trasladadas a las 07:00: arrancó 09:00:08, activo 09:04:46, reserva 09:06:55, áreas
+      publicadas 09:09, cierre guardado 09:10, Slotting completo 09:15:45.</p>
+  </section>
+
+  <section class="bloque">
     <div class="banda"><h2>De dónde salen los 55 minutos</h2></div>
     <div class="scroll">
       <table>
@@ -189,6 +226,71 @@
       una corrida real.</strong> La primera vez que corra completa hay que mirar el log: si se
       pasa de la hora, lo que sobra es el OBLPN, que se puede dejar en su propia interfaz cinco
       minutos después.</p>
+  </section>
+
+
+  <section class="bloque">
+    <div class="banda"><h2>Qué reportes se actualizan en cada cierre</h2>
+      <span class="nota">los dos cierres actualizan exactamente lo mismo</span></div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th style="width:96px">Del archivo</th><th style="width:180px">Se publica</th>
+          <th>Qué pantalla queda al día</th></tr></thead>
+        <tbody>
+          <tr class="cierre"><td class="h" colspan="3">1 · STOCK ACTIVO + STOCK RESERVA &nbsp;—&nbsp; minuto 9 al 16</td></tr>
+
+          <tr><td>Stock</td><td><code>almacenaje_activo</code></td>
+            <td><strong>Almacenaje</strong> (generar tareas) · <strong>Zona Buffer</strong> · <strong>Slotting</strong> (barrido) · <strong>Análisis SKU</strong></td></tr>
+          <tr><td>Reserva</td><td><code>analisis_sku_reserva</code></td>
+            <td><strong>Zona Buffer</strong> · <strong>Análisis SKU</strong></td></tr>
+          <tr><td>Stock</td><td><code>layout_stock_hora</code></td>
+            <td><strong>Inventario → Layout del activo</strong> · <strong>Mapa de calor</strong> · <strong>Cumplimiento del turno</strong></td></tr>
+          <tr><td>Reserva</td><td><code>reserva_hora</code></td>
+            <td><strong>Layout de Reserva</strong> · <strong>Cumplimiento del turno</strong></td></tr>
+          <tr><td>Stock</td><td><code>tabla_tallas</code></td>
+            <td><strong>Administración → Tallas</strong></td></tr>
+          <tr><td>Reserva</td><td><code>reserva_arranque</code><br><code>reserva_cierre</code></td>
+            <td><strong>Cumplimiento del turno</strong>: Bajada de paletas y Separación de mercadería</td></tr>
+          <tr><td>Stock</td><td><code>buffer_c_arranque</code><br><code>buffer_c_cierre</code></td>
+            <td><strong>Cumplimiento del turno</strong>: Limpieza de Buffer C</td></tr>
+          <tr><td>Stock</td><td><code>evolucion_articulo</code></td>
+            <td><strong>Análisis SKU → evolución del artículo</strong></td></tr>
+          <tr><td>Stock</td><td><code>rotacion_permanencia</code></td>
+            <td><strong>Rotación y Permanencia</strong></td></tr>
+          <tr><td>Reserva</td><td><code>reserva_fotos</code></td>
+            <td>el histórico de la reserva, para comparar días</td></tr>
+
+          <tr class="cierre"><td class="h" colspan="3">2 · PICKING &nbsp;—&nbsp; minuto 16 al 36</td></tr>
+          <tr><td>Picking</td><td><code>picking_por_hora</code></td>
+            <td><strong>Picking por día</strong> · <strong>KPI Picking y Embalaje</strong> · <strong>Producción Picking Embalaje</strong> · <strong>Cruce contra el WMS</strong> · <strong>Producción por día</strong></td></tr>
+          <tr><td>Picking</td><td><code>picking_dias</code></td>
+            <td><strong>Archivo Picking</strong></td></tr>
+
+          <tr class="cierre"><td class="h" colspan="3">3 · OBLPN EMBALAJE &nbsp;—&nbsp; minuto 36 al 49</td></tr>
+          <tr><td>OBLPN</td><td><code>embalaje_por_hora</code></td>
+            <td><strong>Embalaje por día</strong> · <strong>KPI Picking y Embalaje</strong> · <strong>Producción Picking Embalaje</strong> · <strong>Cruce contra el WMS</strong></td></tr>
+
+          <tr class="cierre"><td class="h" colspan="3">4 · DETALLE ORDEN DEL DÍA &nbsp;—&nbsp; minuto 49 al 57</td></tr>
+          <tr><td>Detalle</td><td class="nada">queda el archivo</td>
+            <td><strong>Pendiente de despacho</strong> · el canal de cada pedido · el cruce de órdenes con picking y embalaje</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="nota-bien"><strong>Son 12 áreas y 15 pantallas.</strong> El cierre de las 07:00 y
+      el de las 19:00 actualizan exactamente las mismas: la única diferencia es qué turno
+      retratan.</p>
+
+    <p class="nota-ojo"><strong>Una salvedad honesta con el Pendiente de despacho.</strong> El
+      cierre deja el archivo de Detalle Orden del día fresco, pero el cuadro del pendiente lo
+      rearma <em>el correo de comercial</em> cuando llega, no el cierre. Si quieres que también
+      se rehaga acá, es un paso más &mdash;dímelo y lo agrego&mdash;.</p>
+
+    <p class="nota-azul"><strong>Lo que NO se actualiza en el cierre</strong>, porque corre una
+      vez al día de madrugada: la <strong>Recepción / ASN</strong> (02:30) y el
+      <strong>pendiente de pedidos acumulado</strong> —Pendientes y Despachados— (04:30). Y
+      <strong>SKUs sin salida</strong> va colgado de esa corrida de las 04:30.</p>
   </section>
 
   <section class="bloque">
