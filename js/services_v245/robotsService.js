@@ -156,7 +156,7 @@ export const robotsPorDefecto = () => ({
     cruce_wms:    { activa: true, hora: '21:30', dias: { ...LUN_A_SAB } },
     corte_turno:  { activa: true, hora: '20:00', dias: { ...LUN_A_SAB } },
     correo_citas: { activa: true, minuto: 0, cadaMin: 30, dias: { ...TODOS },
-                    desde: '16:00', hasta: '18:30' }
+                    desde: '15:00', hasta: '18:30' }
 });
 
 const _hhmm = (v, respaldo) => {

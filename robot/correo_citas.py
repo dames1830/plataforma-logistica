@@ -51,6 +51,9 @@ usara la fecha de llegada, toda la programacion quedaria corrida un dia.
 USO
     python correo_citas.py --listar    muestra los correos que encajan y NO guarda
                                        nada. ES EL PRIMER PASO.
+    python correo_citas.py --ver       abre los correos que encajan y dice QUE
+                                       TRAEN: adjuntos, tablas, y el arranque del
+                                       texto. Para cuando salen cero citas.
     python correo_citas.py --probar    dice que guardaria, sin publicar
     python correo_citas.py             captura y publica
     python correo_citas.py --dias 7    mira 7 dias atras (por defecto 3)
@@ -466,6 +469,38 @@ def main():
             html = str(it.HTMLBody or '')
         except Exception:
             html = ''
+
+        if '--ver' in sys.argv:
+            log('')
+            log('CORREO: %s' % asunto[:80])
+            log('   llego el %s · programa el %s' % (llegada.strftime('%d/%m %H:%M'), fecha))
+            try:
+                n_adj = it.Attachments.Count
+            except Exception:
+                n_adj = 0
+            log('   adjuntos: %d' % n_adj)
+            for i in range(1, n_adj + 1):
+                try:
+                    a = it.Attachments.Item(i)
+                    log('      %-46s %s bytes' % (str(a.FileName)[:46], format(int(a.Size or 0), ',')))
+                except Exception as e:
+                    log('      (no se pudo leer el adjunto %d: %s)' % (i, e))
+            pp = Tablas()
+            try:
+                pp.feed(html)
+            except Exception:
+                pass
+            log('   cuerpo HTML: %s caracteres · %d tabla(s)' % (format(len(html), ','), len(pp.tablas)))
+            for k, t in enumerate(pp.tablas[:6]):
+                cab = ' | '.join(limpio(c)[:16] for c in (t[0] if t else []))[:150]
+                log('      tabla %d: %d filas · primera fila: %s' % (k, len(t), cab))
+            try:
+                cuerpo = str(it.Body or '')
+            except Exception:
+                cuerpo = ''
+            log('   texto plano, primeros 400: %s' % re.sub(r'\s+', ' ', cuerpo)[:400])
+            continue
+
         filas = leer_citas(html)
 
         log('')
