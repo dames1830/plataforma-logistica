@@ -1,0 +1,221 @@
+<title>Las interfaces del día</title>
+<style>
+  :root{
+    --marino:#12365c; --marino2:#1b4a7a; --clara:#dbe4f0;
+    --tinta:#1c2430; --apagado:#66727f; --raya:#d5dde6; --papel:#f2f5f9;
+    --panel:#ffffff; --bien:#1d7a4c; --bienf:#eef7f1; --mal:#b3261e;
+    --ojo:#8a5a00; --ojof:#fff6e2; --sombra:0 1px 2px rgba(18,54,92,.06);
+    --noche:#e8eef6; --dia:#fdf6e3;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --marino:#0d2742; --marino2:#17406b; --clara:#9fb6d0; --papel:#0f1620;
+      --panel:#161f2b; --tinta:#e6ebf2; --apagado:#93a1b3; --raya:#2a3745;
+      --bien:#4cbf87; --bienf:#12241a; --mal:#f08a84;
+      --ojo:#e0b464; --ojof:#2a2110; --sombra:none;
+      --noche:#141d2a; --dia:#241f14;
+    }
+  }
+  :root[data-theme="dark"]{
+    --marino:#0d2742; --marino2:#17406b; --clara:#9fb6d0; --papel:#0f1620;
+    --panel:#161f2b; --tinta:#e6ebf2; --apagado:#93a1b3; --raya:#2a3745;
+    --bien:#4cbf87; --bienf:#12241a; --mal:#f08a84;
+    --ojo:#e0b464; --ojof:#2a2110; --sombra:none;
+    --noche:#141d2a; --dia:#241f14;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--papel);color:var(--tinta);
+       font:14px/1.55 "Segoe UI",-apple-system,system-ui,sans-serif}
+  .hoja{max-width:1080px;margin:0 auto;padding:20px 18px 56px;
+        display:flex;flex-direction:column;gap:20px}
+  .bloque{background:var(--panel);border:1px solid var(--raya);border-radius:10px;
+          overflow:hidden;box-shadow:var(--sombra)}
+  .banda{background:var(--marino);color:#fff;padding:12px 16px;
+         display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .banda h1{margin:0;font-size:17px;font-weight:700}
+  .banda h2{margin:0;font-size:14px;font-weight:700}
+  .banda .nota{color:var(--clara);font-size:12.5px}
+
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;
+        font-variant-numeric:tabular-nums;min-width:700px}
+  th{background:var(--marino2);color:#fff;text-align:left;padding:7px 10px;
+     font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;
+     white-space:nowrap;border:1px solid rgba(255,255,255,.14)}
+  th.n,td.n{text-align:right}
+  td{padding:7px 10px;border:1px solid var(--raya);color:var(--tinta);vertical-align:top}
+  td.h{font-weight:700;white-space:nowrap;color:var(--marino2)}
+  tr.noche td{background:var(--noche)}
+  tr.dia td{background:var(--dia)}
+  tr.cierre td{background:var(--marino);color:#fff;font-weight:700;
+               border-color:rgba(255,255,255,.18)}
+  tr.cierre td.h{color:#fff}
+  tr.cierre .sub{display:block;font-weight:400;font-size:11.5px;color:var(--clara);
+                 margin-top:3px;white-space:normal}
+  tr.libre td{background:var(--bienf);color:var(--bien);font-weight:700;text-align:center;
+              letter-spacing:.06em;font-size:11px;text-transform:uppercase}
+  .arch{display:inline-block;background:rgba(255,255,255,.16);border-radius:4px;
+        padding:1px 7px;margin:2px 4px 2px 0;font-size:11.5px;white-space:nowrap}
+  tr:not(.cierre) .arch{background:rgba(var(--ink-rgb,18,54,92),.07);
+        background:rgba(18,54,92,.07);color:var(--tinta)}
+  .nada{color:var(--apagado);font-size:12px}
+  .nota-bien,.nota-ojo,.nota-azul{padding:11px 15px;font-size:12.8px;line-height:1.65;margin:0}
+  .nota-bien{border-left:3px solid var(--bien);background:var(--bienf);color:var(--tinta)}
+  .nota-ojo{border-left:3px solid var(--ojo);background:var(--ojof);color:var(--tinta)}
+  .nota-azul{border-left:3px solid var(--marino2);background:var(--papel);color:var(--tinta)}
+</style>
+
+<div class="hoja">
+
+  <section class="bloque">
+    <div class="banda">
+      <div>
+        <h1>Las interfaces del día</h1>
+        <div class="nota">dos cierres de turno con los mismos cinco archivos, y lo pesado una sola vez de madrugada</div>
+      </div>
+    </div>
+    <p class="nota-bien"><strong>Los dos cierres bajan exactamente lo mismo</strong>, así que
+      cuando digas «muéstrame el cierre del turno noche» ya sabemos que son estos cinco:
+      <strong>Stock Activo · Stock Reserva · Picking · OBLPN Embalaje · Detalle Orden del
+      día</strong>. Todo cortado a la misma hora, sin desfases entre archivos.</p>
+    <p class="nota-azul"><strong>Y lo pesado sale del medio.</strong> El ASN de seis meses
+      (63 minutos, 106 MB) y los dos acumulados de órdenes —Pendientes 21 MB y Despachados
+      52 MB— pasan a correr <strong>una sola vez, de madrugada</strong>. Son acumulados: lo que
+      cambia en doce horas no justifica bajarlos dos veces.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Cronológico, desde que entra el turno noche</h2></div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th style="width:78px">Hora</th><th>Interfaz</th><th>Qué baja del WMS</th>
+          <th class="n" style="width:74px">Dura</th>
+        </tr></thead>
+        <tbody>
+
+          <tr class="cierre"><td class="h">19:00</td>
+            <td><strong>CIERRE DEL TURNO DÍA</strong>
+              <span class="sub">cierra lo que hizo el turno día, 07:00 → 19:00. Entra el turno noche.</span></td>
+            <td><span class="arch">Stock Activo</span><span class="arch">Stock Reserva</span><span class="arch">Picking</span><span class="arch">OBLPN Embalaje</span><span class="arch">Detalle Orden del día</span></td>
+            <td class="n">55 min</td></tr>
+
+          <tr class="noche"><td class="h">21:30</td><td>Cruce contra el WMS</td>
+            <td><span class="arch">Producción Picking ALDEAS</span><span class="arch">Producción Embalaje ALDEAS</span></td>
+            <td class="n">11 min</td></tr>
+
+          <tr class="noche"><td class="h">22:00</td><td>Stock por hora</td>
+            <td><span class="arch">Stock Activo</span><span class="arch">Stock Reserva</span></td><td class="n">7 min</td></tr>
+          <tr class="noche"><td class="h">22:15</td><td>Mapa de calor</td>
+            <td class="nada">no baja nada: dibuja con el stock que se acaba de publicar</td><td class="n">2 min</td></tr>
+
+          <tr class="noche"><td class="h">00:00</td><td>Stock por hora</td>
+            <td><span class="arch">Stock Activo</span><span class="arch">Stock Reserva</span></td><td class="n">7 min</td></tr>
+          <tr class="noche"><td class="h">00:15</td><td>Mapa de calor</td><td class="nada">—</td><td class="n">2 min</td></tr>
+
+          <tr class="noche"><td class="h">02:00</td><td>Stock por hora</td>
+            <td><span class="arch">Stock Activo</span><span class="arch">Stock Reserva</span></td><td class="n">7 min</td></tr>
+          <tr class="noche"><td class="h">02:15</td><td>Mapa de calor</td><td class="nada">—</td><td class="n">2 min</td></tr>
+
+          <tr class="noche"><td class="h">02:30</td><td><strong>ASN · seis meses</strong>
+              <span class="nada"> — una vez al día</span></td>
+            <td><span class="arch">ASN (6 meses, 106 MB)</span></td><td class="n">63 min</td></tr>
+
+          <tr class="noche"><td class="h">03:00</td><td>Archivado</td>
+            <td class="nada">no toca el WMS</td><td class="n">3 min</td></tr>
+
+          <tr class="noche"><td class="h">04:00</td><td>Stock por hora
+              <span class="nada"> — el último de la noche</span></td>
+            <td><span class="arch">Stock Activo</span><span class="arch">Stock Reserva</span></td><td class="n">7 min</td></tr>
+          <tr class="noche"><td class="h">04:15</td><td>Mapa de calor
+              <span class="nada"> — el último</span></td><td class="nada">—</td><td class="n">2 min</td></tr>
+
+          <tr class="noche"><td class="h">04:30</td><td><strong>Pendientes y despachados</strong>
+              <span class="nada"> — una vez al día</span></td>
+            <td><span class="arch">Detalle Orden Pendientes</span><span class="arch">Detalle Orden Despachados</span></td>
+            <td class="n">45 min</td></tr>
+
+          <tr class="libre"><td colspan="4">05:30 – 08:30 &nbsp;·&nbsp; el WMS queda libre para el cierre</td></tr>
+
+          <tr class="noche"><td class="h">06:45</td><td>Respaldo</td>
+            <td class="nada">no toca el WMS</td><td class="n">5 min</td></tr>
+
+          <tr class="cierre"><td class="h">07:00</td>
+            <td><strong>CIERRE DEL TURNO NOCHE</strong>
+              <span class="sub">cierra lo que hizo el turno noche, 19:00 → 07:00. Es el que completa el reporte de actividades.</span></td>
+            <td><span class="arch">Stock Activo</span><span class="arch">Stock Reserva</span><span class="arch">Picking</span><span class="arch">OBLPN Embalaje</span><span class="arch">Detalle Orden del día</span></td>
+            <td class="n">55 min</td></tr>
+
+          <tr class="dia"><td class="h">08:30</td><td>Respaldo total del día</td>
+            <td class="nada">no toca el WMS</td><td class="n">25 min</td></tr>
+
+          <tr class="dia"><td class="h">12:00</td><td>Avance de picking</td>
+            <td><span class="arch">Picking</span></td><td class="n">17 min</td></tr>
+          <tr class="dia"><td class="h">12:20</td><td>Avance de embalaje</td>
+            <td><span class="arch">OBLPN Embalaje</span></td><td class="n">13 min</td></tr>
+          <tr class="dia"><td class="h">15:00</td><td>Avance de picking</td>
+            <td><span class="arch">Picking</span></td><td class="n">17 min</td></tr>
+          <tr class="dia"><td class="h">15:20</td><td>Avance de embalaje</td>
+            <td><span class="arch">OBLPN Embalaje</span></td><td class="n">13 min</td></tr>
+
+          <tr class="dia"><td class="h">12:00–19:00</td><td>Correo de citas de recepción</td>
+            <td class="nada">no es del WMS: lee el correo cada 10 min hasta encontrarlo</td><td class="n">1 min</td></tr>
+
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-azul"><strong>Los dos cierres son lo único que baja los cinco archivos.</strong>
+      El resto de la noche solo se refresca el stock cada dos horas, para el mapa de calor y para
+      el reporte de actividades del turno.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>De dónde salen los 55 minutos</h2></div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Paso</th><th>Archivo</th><th class="n">Medido</th><th>Dónde se midió</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Stock Activo</td><td class="n">4 min</td><td>04-sep 07:00:52 → 07:04:33</td></tr>
+          <tr><td>2</td><td>Stock Reserva</td><td class="n">1 min</td><td>04-sep 09:05:54 → 09:06:55</td></tr>
+          <tr><td>3</td><td>Slotting: procesa y publica</td><td class="n">9 min</td><td>04-sep 09:06:55 → 09:15:45</td></tr>
+          <tr><td>4</td><td>Picking + Detalle Orden del día</td><td class="n">20 min</td><td>de los 37 min de la corrida entera, sin los acumulados</td></tr>
+          <tr><td>5</td><td>OBLPN Embalaje</td><td class="n">13 min</td><td>lo que tarda la descarga, medida aparte</td></tr>
+          <tr><td>6</td><td>Producción de picking y embalaje</td><td class="n">8 min</td><td>parte de los 36 min del corte de las 20:00</td></tr>
+          <tr class="cierre"><td colspan="2">TOTAL DEL CIERRE</td><td class="n">55 min</td><td>07:00 → 07:55</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-ojo"><strong>Los 55 minutos son una suma de piezas medidas por separado, no
+      una corrida real.</strong> La primera vez que corra completa hay que mirar el log: si se
+      pasa de la hora, lo que sobra es el OBLPN, que se puede dejar en su propia interfaz cinco
+      minutos después.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Qué cambia respecto de hoy</h2></div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Hoy</th><th>Queda</th><th>Por qué</th></tr></thead>
+        <tbody>
+          <tr><td>Ancla de la mañana · 07:00<br>Ancla de la noche · 19:00</td>
+            <td><strong>Cierre del turno noche · 07:00<br>Cierre del turno día · 19:00</strong></td>
+            <td>el nombre dice qué turno cierra, no cómo se llama el robot</td></tr>
+          <tr><td>Bajaban solo Activo y Reserva</td>
+            <td>bajan los cinco archivos</td>
+            <td>todo cortado a la misma hora: se acaban los descuadres por desfase</td></tr>
+          <tr><td>Corte de turno · 20:00</td>
+            <td><strong>desaparece</strong></td>
+            <td>hacía lo mismo una hora después; ahora va adentro del cierre de las 19:00</td></tr>
+          <tr><td>Reportes diarios · 07:20 y 19:20</td>
+            <td><strong>Pendientes y despachados · 04:30</strong>, una vez</td>
+            <td>Picking y Detalle Orden del día pasan al cierre; quedan solo los dos acumulados</td></tr>
+          <tr><td>ASN · 02:30</td><td>igual</td><td>ya se movió hoy; seis meses, como pediste</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>El WMS queda libre desde las 05:15 hasta las 07:00</strong> —una
+      hora y tres cuartos— y desde que termina el cierre (07:55) hasta el mediodía. Que es lo que
+      pediste: hora y media limpia antes y después.</p>
+  </section>
+
+</div>

@@ -1062,6 +1062,14 @@ def descargar_despachados(page, destino, hasta_dia, dias=DIAS_DESPACHADOS,
     return exportar_csv(page, destino, MINIMO_KB_DESPACHADOS)
 
 
+class _SinAcumulados(Exception):
+    """Corta la bajada de Pendientes y Despachados cuando va `--solo-dia`.
+
+    Se usa una excepcion y no un `if` porque los dos acumulados estan dentro del
+    mismo `try` y lo que sigue ya sabe tratarlos como no bajados.
+    """
+
+
 def run():
     import bloqueo_wms
     import wms_automation_final as wms
@@ -1074,6 +1082,14 @@ def run():
     a_la_vista = "--ver" in sys.argv
     sin_exportar = "--sin-exportar" in sys.argv
     solo_pend = "--solo-pendientes" in sys.argv
+    # `--solo-dia` es el reves de `--solo-pendientes`: baja Picking y Detalle Orden
+    # DEL DIA y deja fuera los dos acumulados -Pendientes 21 MB y Despachados 52 MB-.
+    #
+    # Lo pidio Daniel el 04-sep-2026 al partir el dia en dos cierres de turno: los
+    # archivos del dia van en el cierre de las 07:00 y de las 19:00, y los acumulados
+    # una sola vez de madrugada, porque lo que cambia en doce horas no justifica bajar
+    # 73 MB dos veces.
+    solo_dia = "--solo-dia" in sys.argv
 
     dia = dia_pedido()
     log("=" * 58)
@@ -1141,7 +1157,8 @@ def run():
     if not solo_pend:
         log("Picking      -> %s" % ruta_pick)
         log("Detalle Orden-> %s" % ruta_ord)
-    log("Pendientes   -> %s" % ruta_pend)
+    if not solo_dia:
+        log("Pendientes   -> %s" % ruta_pend)
 
     if not wms.WMS_PASSWORD or wms.WMS_PASSWORD == "TU_PASSWORD_AQUI":
         log("Falta WMS_PASSWORD en el .env", "ERROR")
@@ -1196,13 +1213,20 @@ def run():
             # es el más largo —90 días— y el único que todavía no tiene meses de
             # espalda. Si falla, los otros dos ya están bajados y el cuadro se
             # queda con el pendiente de ayer, que es lo que tenía igual.
+            if solo_dia:
+                log("--solo-dia: Pendientes y Despachados NO se bajan; van en la "
+                    "corrida de las 04:30")
             try:
+                if solo_dia:
+                    raise _SinAcumulados("no toca")
                 ok_pend = wms.con_reintentos(
                     "Pendientes",
                     lambda: descargar_pendientes(page, ruta_pend, dia, dias=dias_pend,
                                                  sin_exportar=sin_exportar,
                                                  con_fotos=sin_exportar),
                     page)
+            except _SinAcumulados:
+                pass
             except Exception as e:
                 log("Los pendientes no se pudieron bajar: %s: %s"
                     % (type(e).__name__, str(e)[:200]), "WARN")
@@ -1211,12 +1235,16 @@ def run():
             # corrida. Es el mas nuevo de los cuatro: si falla, el picking y el
             # detalle ya estan bajados y lo unico que se pierde es saber que salio.
             try:
+                if solo_dia:
+                    raise _SinAcumulados("no toca")
                 ok_desp = wms.con_reintentos(
                     "Despachados",
                     lambda: descargar_despachados(page, ruta_desp, dia,
                                                   sin_exportar=sin_exportar,
                                                   con_fotos=sin_exportar),
                     page)
+            except _SinAcumulados:
+                pass
             except Exception as e:
                 log("Los despachados no se pudieron bajar: %s: %s"
                     % (type(e).__name__, str(e)[:200]), "WARN")
@@ -1227,8 +1255,9 @@ def run():
 
     hechos = int(bool(ok_pick)) + int(bool(ok_ord))
     log("=" * 58)
-    log("Pendientes:  %s" % ("bajados" if ok_pend else "NO se bajaron"))
-    log("Despachados: %s" % ("bajados" if ok_desp else "NO se bajaron"))
+    _ac = lambda ok: "no tocaba (--solo-dia)" if solo_dia else ("bajados" if ok else "NO se bajaron")
+    log("Pendientes:  %s" % _ac(ok_pend))
+    log("Despachados: %s" % _ac(ok_desp))
     if solo_pend:
         log("LISTO en %.1f minutos" % ((time.time() - t0) / 60.0))
         log("=" * 58)

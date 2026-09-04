@@ -35,7 +35,11 @@ REM ============================================================
 cd /d "%~dp0"
 chcp 65001 >nul
 
-python -u picking_y_orden.py
+REM SOLO LOS ACUMULADOS. Picking y Detalle Orden del dia pasaron a los dos
+REM cierres de turno (07:00 y 19:00); aca quedan Pendientes (21 MB) y Despachados
+REM (52 MB), que son acumulados y con una vez al dia alcanza.
+REM Daniel, 04-sep-2026, al partir el dia en dos cierres.
+python -u picking_y_orden.py --solo-pendientes
 set RC=%ERRORLEVEL%
 
 REM LA HORA LA DECIDE PYTHON, no el %TIME% de cmd: ese depende del
