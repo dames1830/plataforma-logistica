@@ -93,53 +93,48 @@ def contar(fr, page, momento):
             pass
 
 
+def apretar(fr, nombres, que, espera=4):
+    """Aprieta el primero de esos nombres que exista, probando tres formas.
+
+    POR ROL PRIMERO: en esta pantalla los botones llevan el texto adentro de un
+    <span> anidado y `get_by_text` no los ve, aunque la lista de botones los
+    muestre. Costo dos corridas descubrirlo.
+    """
+    for nombre in nombres:
+        for como, hacer in (
+                ("rol", lambda n=nombre: fr.get_by_role("button", name=n, exact=False).first),
+                ("boton con texto", lambda n=nombre: fr.locator("button").filter(has_text=n).first),
+                ("texto", lambda n=nombre: fr.get_by_text(n, exact=False).first)):
+            try:
+                loc = hacer()
+                loc.wait_for(state="visible", timeout=3500)
+                loc.click()
+                log("%s: apretado %r (por %s)" % (que, nombre, como))
+                time.sleep(espera)
+                return True
+            except Exception:
+                continue
+    log("%s: NO ENCONTRE ninguno de %s" % (que, nombres))
+    return False
+
+
 def mirar(fr, page):
     contar(fr, page, "arbol")
 
     # El boton de crear puede estar en castellano o ser un icono. Se prueban los
     # nombres conocidos y, si ninguno esta, la foto y la lista de arriba dicen que
     # hay de verdad.
-    abierto = False
-    for etiqueta in ("Create New Report", "Crear informe nuevo", "Nuevo informe",
-                     "Crear nuevo informe", "Nuevo", "Crear"):
-        try:
-            loc = fr.get_by_text(etiqueta, exact=False).first
-            loc.wait_for(state="visible", timeout=4000)
-            loc.click()
-            log("abri con la etiqueta %r" % etiqueta)
-            abierto = True
-            break
-        except Exception:
-            continue
-    if not abierto:
-        log("NO ENCONTRE el boton de crear. Queda la foto wms_arbol.png")
+    if not apretar(fr, ("Create New Report", "Crear informe nuevo", "Nuevo informe"),
+                   "crear informe"):
         return
-    time.sleep(4)
     contar(fr, page, "tipos")
 
-    for etiqueta in ("Informe express", "Express Report", "Express"):
-        try:
-            loc = fr.get_by_text(etiqueta, exact=False).first
-            loc.wait_for(state="visible", timeout=4000)
-            loc.click()
-            log("elegi %r" % etiqueta)
-            break
-        except Exception:
-            continue
-    time.sleep(4)
+    apretar(fr, ("Informe express", "Express Report", "Express"), "tipo de informe")
     contar(fr, page, "asistente")
 
     # ── paso Categorias ─────────────────────────────────────────────────────
     # El asistente arranca en Nombre; se pasa a Categorias con el paso de arriba.
-    for etiqueta in ("Categorías", "Categorias", "Categories"):
-        try:
-            fr.get_by_text(etiqueta, exact=True).first.click()
-            log("en el paso %s" % etiqueta)
-            time.sleep(3)
-            break
-        except Exception:
-            continue
-
+    apretar(fr, ("Categorías", "Categorias", "Categories"), "paso Categorias", espera=3)
     contar(fr, page, "categorias")
 
     caja = None
