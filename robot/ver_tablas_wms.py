@@ -157,12 +157,71 @@ def mirar(fr, page):
             log("  %-12s %s" % (palabra, " · ".join(vistos[:16]) if vistos else "(nada)"))
         except Exception as e:
             log("  %-12s fallo: %s" % (palabra, type(e).__name__))
+    for nombre in CANDIDATOS:
+        try:
+            espiar_informe(fr, page, nombre)
+        except Exception as e:
+            log("   %s fallo: %s" % (nombre, type(e).__name__))
     try:
         caja.fill("")
         log("")
         log("caja de busqueda limpiada: el arbol queda como estaba")
     except Exception:
         pass
+
+
+CANDIDATOS = ["ALMACENAMIENTO DETALLE X ARTICULO", "Movimiento X Usuario",
+              "History Rf_alm"]
+
+
+def espiar_informe(fr, page, nombre):
+    """Ejecuta un informe y lee sus encabezados. NO lo edita."""
+    log("")
+    log("=== %s ===" % nombre)
+    caja = None
+    for n in ("Buscar", "Buscar...", "Search"):
+        try:
+            caja = fr.get_by_placeholder(n).first
+            caja.wait_for(state="visible", timeout=4000)
+            break
+        except Exception:
+            caja = None
+    if caja is None:
+        log("   no encuentro la caja de busqueda")
+        return
+    caja.fill("")
+    time.sleep(0.5)
+    caja.type(nombre[:26], delay=40)
+    time.sleep(2.5)
+    try:
+        fila = fr.get_by_text(nombre, exact=False).first
+        fila.wait_for(state="visible", timeout=6000)
+        fila.click()
+        time.sleep(1.5)
+    except Exception:
+        log("   no aparecio en el arbol")
+        return
+
+    # EL TRIANGULO ES EJECUTAR. De los tres iconos de la derecha -permisos,
+    # ejecutar, menu- solo se toca el del medio: los otros dos abren cosas que
+    # pueden cambiar el informe de otro equipo.
+    if not apretar(fr, ("Ejecutar informe", "Ejecutar", "Run report", "Run"),
+                   "ejecutar", espera=14):
+        return
+    try:
+        page.screenshot(path=os.path.join(os.environ.get("TEMP", "."),
+                                          "wms_%s.png" % nombre[:14].replace(" ", "_")))
+    except Exception:
+        pass
+    try:
+        filas = fr.locator("table tr")
+        for k in range(min(filas.count(), 4)):
+            t = (filas.nth(k).inner_text() or "").strip().replace(chr(10), " | ")
+            if t:
+                log("   fila %d: %s" % (k, t[:250]))
+    except Exception as e:
+        log("   no se pudo leer la tabla: %s" % type(e).__name__)
+    apretar(fr, ("Cerrar", "Close", "Cancelar"), "cerrar el visor", espera=3)
 
 
 def main():
