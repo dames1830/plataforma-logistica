@@ -196,19 +196,50 @@ def bandejas(mapi):
     return out
 
 
-def correos(dias, diag=False):
-    """Los correos de los ultimos N dias, de todas las bandejas.
+def _por_asunto(items, diag):
+    """Los correos cuyo asunto contiene lo que se busca, PREGUNTANDOSELO A OUTLOOK.
 
-    EL FILTRO DE FECHA DE OUTLOOK ES QUISQUILLOSO: con un formato que no le gusta
-    devuelve CERO correos EN SILENCIO, sin quejarse. Por eso va solo la fecha, sin
-    hora; y si aun asi no devuelve nada, se recorren los ultimos a mano y se
-    compara en Python. Le costo dos dias a correo_guias.py."""
+    Es una consulta @SQL sobre el buzon: devuelve cuatro correos en vez de ciento
+    nueve y el robot no toca los demas. Mirar el asunto de cada correo desde
+    Python es una llamada COM por correo, y con ciento nueve se cuelga.
+    """
+    consulta = ("@SQL=\"urn:schemas:httpmail:subject\" LIKE '%" +
+                ASUNTO.upper().replace("'", "") + "%'")
+    try:
+        sel = items.Restrict(consulta)
+        n = sel.Count
+    except Exception as e:
+        if diag:
+            log("      la busqueda por asunto no anduvo (%s); se busca por fecha"
+                % type(e).__name__, "WARN")
+        return None
+    if not n:
+        if diag:
+            log("      la busqueda por asunto devolvio cero; se busca por fecha", "WARN")
+        return None
+    if diag:
+        log("      buscando por asunto: %d correo(s)" % n)
+    return sel
+
+
+def correos(dias, diag=False):
+    """Los correos que interesan, de todas las bandejas.
+
+    TRES CAMINOS, EN ORDEN, y el primero que devuelva algo gana:
+      1. que Outlook busque por ASUNTO -cuatro correos en vez de ciento nueve-
+      2. que Outlook filtre por FECHA
+      3. recorrerlos a mano de mas nuevo a mas viejo
+
+    EL FILTRO DE OUTLOOK ES QUISQUILLOSO: con un formato que no le gusta devuelve
+    CERO EN SILENCIO, sin quejarse. Por eso hay tres caminos y ninguno es de fiar
+    por si solo. Le costo dos dias a correo_guias.py.
+    """
     mapi = outlook()
     desde = datetime.now() - timedelta(days=dias)
     for nombre, bandeja in bandejas(mapi):
         items = bandeja.Items
         try:
-            items.Sort('[ReceivedTime]', True)
+            items.Sort("[ReceivedTime]", True)
         except Exception:
             pass
         try:
@@ -216,35 +247,52 @@ def correos(dias, diag=False):
         except Exception:
             total = 0
         if diag:
-            log('   bandeja "%s": %s correos' % (nombre, format(total, ',d')))
+            log("   bandeja \"%s\": %s correos" % (nombre, format(total, ",d")))
         if not total:
             continue
-        sel = None
-        try:
-            sel = items.Restrict("[ReceivedTime] >= '%s'" % desde.strftime('%m/%d/%Y'))
-            if not sel.Count:
-                sel = None
-            elif diag:
-                log('      de los ultimos %d dias: %s' % (dias, format(sel.Count, ',d')))
-        except Exception:
-            sel = None
+
+        sel = _por_asunto(items, diag)
         if sel is None:
-            if diag:
-                log('      el filtro de fecha no sirvio; se recorren a mano', 'WARN')
-            leidos = 0
-            for it in items:
-                leidos += 1
-                if leidos > 400:
-                    break
+            try:
+                sel = items.Restrict("[ReceivedTime] >= '%s'" % desde.strftime("%m/%d/%Y"))
+                if not sel.Count:
+                    sel = None
+                elif diag:
+                    log("      por fecha, ultimos %d dias: %s" % (dias, format(sel.Count, ",d")))
+            except Exception:
+                sel = None
+
+        # EL TOPE NO ES ADORNO. Si los dos filtros fallan se recorre a mano, y sin
+        # tope eso es tocar el buzon entero por COM: es lo que colgo al robot ocho
+        # minutos el 03-sep-2026.
+        fuente = sel if sel is not None else items
+        if sel is None and diag:
+            log("      ningun filtro sirvio; se recorren los mas nuevos a mano", "WARN")
+        mirados = 0
+        for it in fuente:
+            mirados += 1
+            if mirados > 300:
+                log("      se llego al tope de 300 correos mirados", "WARN")
+                break
+            if diag and mirados % 50 == 0:
+                log("      ...%d correos mirados" % mirados)
+            try:
+                # 43 = correo. Una convocatoria de reunion o un aviso de entrega no
+                # tienen las propiedades que se leen despues y pueden trabar la
+                # llamada COM.
+                if int(it.Class) != 43:
+                    continue
+            except Exception:
+                continue
+            if sel is None:
+                # En el recorrido a mano se corta al pasarse de fecha: vienen
+                # ordenados de mas nuevo a mas viejo.
                 try:
                     if it.ReceivedTime.replace(tzinfo=None) < desde:
                         break
                 except Exception:
                     continue
-                yield nombre, it
-        else:
-            for it in sel:
-                yield nombre, it
+            yield nombre, it
 
 
 # ══════════════════════════════════════════════════════════════════════════════
