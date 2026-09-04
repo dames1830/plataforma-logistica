@@ -3,34 +3,47 @@
 # =============================================================================
 #
 #  Daniel, 03-sep-2026: *"no envie Excel, solo envie una imagen nada mas.
-#  Entonces, con eso tenemos que lidiar"*. El correo de citas de recepcion trae
-#  la tabla pegada como captura de pantalla: no hay una sola letra que leer.
+#  Entonces, con eso tenemos que lidiar"*. El correo de citas de recepcion trae la
+#  tabla pegada como captura de pantalla: no hay una sola letra que leer.
 #
 #  POR QUE EL OCR DE WINDOWS Y NO TESSERACT
-#      Windows Server 2025 trae `Windows.Media.Ocr` de fabrica -comprobado en el
-#      servidor: build 26100, idioma en-US-. Tesseract habria que instalarlo, y
-#      instalar software nuevo en el servidor de produccion por una tabla de ocho
-#      filas no se justifica.
+#      Windows Server 2025 lo trae de fabrica -comprobado en el servidor: build
+#      26100, `Windows.Media.Ocr`, idioma en-US-. Instalar Tesseract en el
+#      servidor de produccion por una tabla de ocho filas no se justifica.
 #
-#  DEVUELVE CADA PALABRA CON SU POSICION, no un texto corrido. Sin las
-#  coordenadas no se puede rearmar una tabla: "08:00 CALZADOS PERU 2026-09057
-#  1,138" es una sola linea de texto y no se sabe donde termina una columna y
-#  empieza la otra. Con x, y, ancho y alto, las filas se agrupan por altura y las
-#  columnas por posicion horizontal.
+#  DEVUELVE CADA PALABRA CON SU POSICION, no un texto corrido. Sin coordenadas no
+#  se puede rearmar una tabla: "08:20 D FASTER 2026-09057 134" es una sola linea y
+#  no se sabe donde termina una columna. Con x e y, las filas se agrupan por
+#  altura y las columnas por posicion horizontal.
 #
-#  SE AGRANDA LA IMAGEN ANTES DE LEERLA. El texto de una captura de Outlook es
-#  chico y el OCR se equivoca mas en los digitos, que es justo lo que importa.
-#  Con la imagen al triple, los numeros salen limpios.
+#  LA IMAGEN SE AGRANDA Y SE PASA A BLANCO Y NEGRO ANTES DE LEERLA
+#      Medido sobre la captura real del 04-sep-2026 (884x274) leida al 3x y en
+#      color, el motor devolvio "2026-20570" donde dice 2026-10570 -un 1 leido
+#      como 2- y se comio cuatro cantidades, el total entre ellas. Con esos
+#      numeros el cruce con el ASN apunta a una orden que no existe.
+#
+#      La tabla llega con fondos de color -encabezado azul, filas naranja,
+#      amarilla y verde- y letra chica. Agrandarla y dejarla negro sobre blanco es
+#      lo que le falta al motor para no dudar en los digitos.
+#
+#  SE USA GDI+ Y NO EL BUFFER DE WinRT. `SoftwareBitmap.CopyFromBuffer` no acepta
+#  el buffer que PowerShell le arma -llega como System.__ComObject y no lo sabe
+#  convertir-. Con System.Drawing ademas queda una copia limpia en disco, que es
+#  lo que se puede mirar cuando un numero no cuadra.
 #
 #  USO
 #      powershell -ExecutionPolicy Bypass -File leer_imagen.ps1 -Ruta foto.png
-#      powershell ... -Ruta foto.png -Escala 4
+#      powershell ... -Ruta foto.png -Escala 6 -Guardar limpia.png
+#      powershell ... -Ruta foto.png -SinLimpiar        (como vino, para comparar)
 #
 #  Escribe JSON por la salida estandar: { ancho, alto, escala, palabras: [...] }
 # =============================================================================
 param(
     [Parameter(Mandatory = $true)][string] $Ruta,
-    [int] $Escala = 3
+    [int] $Escala = 5,
+    [int] $Umbral = 150,
+    [string] $Guardar = '',
+    [switch] $SinLimpiar
 )
 
 $ErrorActionPreference = 'Stop'
@@ -40,9 +53,11 @@ if (-not (Test-Path -LiteralPath $Ruta)) {
     exit 1
 }
 
+Add-Type -AssemblyName System.Drawing | Out-Null
+Add-Type -AssemblyName System.Runtime.WindowsRuntime | Out-Null
+
 # WinRT devuelve IAsyncOperation y PowerShell no sabe esperarlo solo. Este es el
 # puente estandar: se convierte a Task de .NET y se espera ahi.
-Add-Type -AssemblyName System.Runtime.WindowsRuntime | Out-Null
 $asTaskGenerico = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object {
     $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and
     $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1'
@@ -60,35 +75,61 @@ $null = [Windows.Graphics.Imaging.BitmapDecoder, Windows.Graphics, ContentType =
 $null = [Windows.Media.Ocr.OcrEngine, Windows.Foundation, ContentType = WindowsRuntime]
 $null = [Windows.Globalization.Language, Windows.Globalization, ContentType = WindowsRuntime]
 
+$temporal = ''
 try {
     $completa = (Resolve-Path -LiteralPath $Ruta).Path
-    $archivo = Esperar ([Windows.Storage.StorageFile]::GetFileFromPathAsync($completa)) ([Windows.Storage.StorageFile])
+    $orig = [System.Drawing.Bitmap]::FromFile($completa)
+    $ancho = $orig.Width
+    $alto  = $orig.Height
+
+    # El motor acepta imagenes grandes; una captura de correo ronda los 900 de
+    # ancho, asi que al quintuple sigue holgada. El tope es por prudencia.
+    $esc = $Escala
+    while ($esc -gt 1 -and ((($ancho * $esc) -gt 9000) -or (($alto * $esc) -gt 9000))) { $esc = $esc - 1 }
+
+    $grande = New-Object System.Drawing.Bitmap ([int]($ancho * $esc)), ([int]($alto * $esc))
+    $g = [System.Drawing.Graphics]::FromImage($grande)
+    $g.InterpolationMode  = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $g.PixelOffsetMode    = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+    $g.SmoothingMode      = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+    $g.DrawImage($orig, 0, 0, $grande.Width, $grande.Height)
+    $g.Dispose()
+    $orig.Dispose()
+
+    if (-not $SinLimpiar) {
+        # LockBits y un solo recorrido del arreglo. GetPixel pixel a pixel sobre
+        # seis millones de puntos tarda minutos; asi tarda menos de un segundo.
+        $rect = New-Object System.Drawing.Rectangle 0, 0, $grande.Width, $grande.Height
+        $datos = $grande.LockBits($rect, [System.Drawing.Imaging.ImageLockMode]::ReadWrite,
+                                  [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+        $n = [Math]::Abs($datos.Stride) * $grande.Height
+        $bytes = New-Object byte[] $n
+        [System.Runtime.InteropServices.Marshal]::Copy($datos.Scan0, $bytes, 0, $n)
+        for ($i = 0; $i -lt $n; $i += 4) {
+            # Gris por luminancia. El encabezado es azul oscuro con letra BLANCA:
+            # ahi el umbral lo deja en blanco sobre blanco y esa fila se pierde,
+            # pero el encabezado no aporta datos -las columnas se reconocen por
+            # posicion- y las filas de datos son letra oscura sobre color claro.
+            $gr = (0.114 * $bytes[$i]) + (0.587 * $bytes[$i + 1]) + (0.299 * $bytes[$i + 2])
+            $v = [byte]255
+            if ($gr -lt $Umbral) { $v = [byte]0 }
+            $bytes[$i] = $v; $bytes[$i + 1] = $v; $bytes[$i + 2] = $v; $bytes[$i + 3] = [byte]255
+        }
+        [System.Runtime.InteropServices.Marshal]::Copy($bytes, 0, $datos.Scan0, $n)
+        $grande.UnlockBits($datos)
+    }
+
+    $temporal = if ($Guardar) { $Guardar } else { [System.IO.Path]::Combine($env:TEMP, 'ocr_' + [guid]::NewGuid().ToString('N') + '.png') }
+    $grande.Save($temporal, [System.Drawing.Imaging.ImageFormat]::Png)
+    $grande.Dispose()
+
+    $archivo = Esperar ([Windows.Storage.StorageFile]::GetFileFromPathAsync($temporal)) ([Windows.Storage.StorageFile])
     $flujo   = Esperar ($archivo.OpenAsync([Windows.Storage.FileAccessMode]::Read)) ([Windows.Storage.Streams.IRandomAccessStream])
     $dec     = Esperar ([Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($flujo)) ([Windows.Graphics.Imaging.BitmapDecoder])
+    $bmp     = Esperar ($dec.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
 
-    $ancho = [int]$dec.PixelWidth
-    $alto  = [int]$dec.PixelHeight
-
-    # AL TRIPLE, pero sin pasarse del tope del motor (el OCR rechaza imagenes
-    # enormes). 4000 px de lado es de sobra para una tabla de correo.
-    $esc = $Escala
-    while ($esc -gt 1 -and (($ancho * $esc) -gt 4000 -or ($alto * $esc) -gt 4000)) { $esc = $esc - 1 }
-
-    $tr = New-Object Windows.Graphics.Imaging.BitmapTransform
-    $tr.ScaledWidth  = [uint32]($ancho * $esc)
-    $tr.ScaledHeight = [uint32]($alto * $esc)
-    $tr.InterpolationMode = [Windows.Graphics.Imaging.BitmapInterpolationMode]::Fant
-
-    $bmp = Esperar ($dec.GetSoftwareBitmapAsync(
-                        [Windows.Graphics.Imaging.BitmapPixelFormat]::Bgra8,
-                        [Windows.Graphics.Imaging.BitmapAlphaMode]::Premultiplied,
-                        $tr,
-                        [Windows.Graphics.Imaging.ExifOrientationMode]::IgnoreExifOrientation,
-                        [Windows.Graphics.Imaging.ColorManagementMode]::DoNotColorManage)
-                   ) ([Windows.Graphics.Imaging.SoftwareBitmap])
-
-    # En el servidor solo esta en-US. Se pide explicito y, si no, lo que haya en el
-    # perfil: pedir un idioma que no esta instalado devuelve $null sin avisar.
+    # En el servidor solo esta en-US. Se pide explicito y, si no, lo del perfil:
+    # pedir un idioma que no esta instalado devuelve $null sin avisar.
     $motor = $null
     try { $motor = [Windows.Media.Ocr.OcrEngine]::TryCreateFromLanguage((New-Object Windows.Globalization.Language 'en-US')) } catch { }
     if (-not $motor) { $motor = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages() }
@@ -110,15 +151,20 @@ try {
         }
     }
 
-    $salida = [ordered]@{
+    $flujo.Dispose()
+    Write-Output ([ordered]@{
         ancho    = $ancho
         alto     = $alto
         escala   = $esc
-        lineas   = $res.Lines.Count
+        limpiada = (-not $SinLimpiar.IsPresent)
+        lineas   = @($res.Lines).Count
         palabras = $palabras
-    }
-    Write-Output ($salida | ConvertTo-Json -Depth 4 -Compress)
+    } | ConvertTo-Json -Depth 4 -Compress)
 } catch {
     Write-Output (@{ error = $_.Exception.Message } | ConvertTo-Json -Compress)
     exit 1
+} finally {
+    if ($temporal -and (-not $Guardar) -and (Test-Path -LiteralPath $temporal)) {
+        try { [System.IO.File]::Delete($temporal) } catch { }
+    }
 }
