@@ -70,8 +70,13 @@ export const TAREAS = [
       detalle: 'la copia de seguridad de las 63 áreas', area: null },
     { id: 'archivado', tipo: 'diaria', etiqueta: 'Archivar tareas viejas',
       detalle: 'manda al histórico lo que pasó de 30 días', area: null },
-    { id: 'sin_salida', tipo: 'diaria', etiqueta: 'SKUs sin salida',
-      detalle: 'el cuadro de lo que llegó y no se movió', area: 'sku_sin_salida' },
+    /* SKUs SIN SALIDA YA NO ESTÁ ACÁ. Daniel, 04-sep-2026: *"no quiero llenarme de
+       interfaces, si otro reporte lo puede hacer quita esa interfaz"*.
+
+       Tenía razón: ese cálculo NO BAJA NADA —lee las fotos que el ancla ya trae, el
+       Maestro y el Detalle de Orden— y ocupaba una línea de la lista para un minuto
+       de cuenta. Ahora va colgado del robot de las 07:20, en el pase de la mañana,
+       que es donde llega su último ingrediente. El cuadro sigue igual. */
     { id: 'asn_web', tipo: 'diaria', etiqueta: 'ASN · seis meses',
       detalle: 'lo que viene en camino: un archivo por mes, seis meses atrás', area: null },
     /* VA DESPUÉS DE TODO EL TURNO. El último pase del avance de picking es 20:20 y el
@@ -168,7 +173,6 @@ export const robotsPorDefecto = () => ({
     reportes:     { activa: true, minuto: 440, cadaMin: 720, dias: { ...TODOS } },
     respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } },
     archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } },
-    sin_salida:   { activa: true, hora: '07:30', dias: { ...LUN_A_SAB } },
     asn_web:      { activa: true, hora: '04:30', dias: { ...TODOS } },
     cierre_dia:   { activa: true, hora: '08:30', dias: { ...TODOS } },
     cruce_wms:    { activa: true, hora: '21:30', dias: { ...LUN_A_SAB } },

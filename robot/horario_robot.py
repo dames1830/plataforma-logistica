@@ -112,14 +112,12 @@ DE_FABRICA = {
     # minutos, por eso va a las 03:00 y todos los dias, domingo incluido.
     'archivado':    {'activa': True, 'hora': '03:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': True}},
-    # SKUs sin salida va DESPUES de los reportes diarios y DESPUES del ancla de la
-    # manana: necesita el Detalle de Orden del dia que cerro y la foto de stock de
-    # hoy. Con los reportes a las 06:45 y el ancla a las 07:00, a las 07:30 ya estan
-    # los dos. Antes de esa hora el cuadro saldria con la demanda de anteayer.
-    # A LAS 09:00, no a las 07:30: necesita el Detalle de Orden del dia que cerro, y
-    # ahora ese archivo llega recien a las 08:00. A las 07:30 leeria el de anteayer.
-    'sin_salida':   {'activa': True, 'hora': '09:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
-                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # SKUs SIN SALIDA YA NO ES UNA TAREA CON HORA PROPIA. Daniel, 04-sep-2026: *"no
+    # quiero llenarme de interfaces, si otro reporte lo puede hacer quita esa
+    # interfaz"*. Tenia razon: ese calculo NO BAJA NADA -lee las fotos que el ancla
+    # ya trae, el Maestro y el Detalle de Orden- y era una linea mas en la lista
+    # para un minuto de cuenta. Ahora va colgado del robot de las 07:20, que es
+    # donde llega su ultimo ingrediente. Ver ejecutar_picking_y_orden.bat.
     # EL AVANCE DE EMBALAJE, cada 2 horas como el de picking. Daniel, 31-ago-2026:
     # *"el avance de picking, el avance de embalaje tiene que ser cada dos horas.
     # Necesitamos un estatus cada dos horas"*.
@@ -213,7 +211,7 @@ DE_FABRICA = {
 # `asn_web` va aca tambien: sin estar en DIARIAS, su 'hora' se ignora y se lo trata
 # como tarea que se repite, con `cadaMin` de 60 por defecto. Corre a cada hora
 # una bajada de 48 minutos, o no corre nunca. Las dos listas van juntas.
-DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida',
+DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado',
            'cruce_wms', 'cierre_dia', 'asn_web', 'corte_turno')
 
 
