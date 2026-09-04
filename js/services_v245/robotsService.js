@@ -162,7 +162,7 @@ export const robotsPorDefecto = () => ({
        `robot/horario_robot.py`. */
     ancla_manana: { activa: true, hora: '07:00', dias: { ...LUN_A_SAB } },
     stock_hora:   { activa: true, minuto: 0, cadaMin: 120, dias: { ...TODOS },
-                    desde: '22:00', hasta: '06:00' },
+                    desde: '22:00', hasta: '04:00' },
     picking_hora: { activa: true, minuto: 0, cadaMin: 180, dias: { ...TODOS },
                     desde: '12:00', hasta: '15:30', saltar: ['18:00', '20:00'] },
     /* FALTABA. Se agregó a TAREAS el 31-ago-2026 y se olvidó acá, así que la pantalla
@@ -172,14 +172,14 @@ export const robotsPorDefecto = () => ({
     oblpn_hora:   { activa: true, minuto: 20, cadaMin: 180, dias: { ...TODOS },
                     desde: '12:00', hasta: '15:30', saltar: ['18:20', '20:20'] },
     mapa_hora:    { activa: true, minuto: 15, cadaMin: 120, dias: { ...TODOS },
-                    desde: '22:00', hasta: '06:15' },
+                    desde: '22:00', hasta: '04:15' },
     /* `minuto: 440` son las 07:20 contadas desde medianoche, no el minuto 440 de una
        hora. Es la única tarea que usa el campo así, y es cómo consigue correr dos veces
        al día —440 y 440+720 = 19:20—. Por eso el rango del validador llega a 1439. */
     reportes:     { activa: true, minuto: 440, cadaMin: 720, dias: { ...TODOS } },
     respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } },
     archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } },
-    asn_web:      { activa: true, hora: '04:30', dias: { ...TODOS } },
+    asn_web:      { activa: true, hora: '02:30', dias: { ...TODOS } },
     cierre_dia:   { activa: true, hora: '08:30', dias: { ...TODOS } },
     cruce_wms:    { activa: true, hora: '21:30', dias: { ...LUN_A_SAB } },
     corte_turno:  { activa: true, hora: '20:00', dias: { ...LUN_A_SAB } },

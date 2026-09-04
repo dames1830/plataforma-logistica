@@ -77,7 +77,30 @@ DE_FABRICA = {
     # IGUAL con la misma cuenta. Ahora espera 45. Ver picking_y_orden.py.
     'ancla_manana': {'activa': True, 'hora': '07:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
-    'stock_hora':   {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '22:00', 'hasta': '06:00'},
+    # ── LA FRANJA DE 05:30 A 08:30 QUEDA DESPEJADA PARA EL ANCLA ──────────────
+    #
+    # Daniel, 04-sep-2026: *"despeja una hora y media antes y una hora y media
+    # despues del ancla de las siete... que sea el de las siete el que cierre el
+    # turno de noche en tema de los stocks"*.
+    #
+    # POR QUE. El Stock Reserva no baja por una pantalla del WMS sino por **Web
+    # Reports**, que es un servidor de informes aparte. Cuando contesta, contesta en
+    # UN MINUTO -medido cuatro veces: 62 s, 62 s, 61 s, 58 s-. Cuando no, no contesta
+    # nunca. El ancla de la noche lo pide con el WMS libre desde las 15:30 y sale
+    # siempre; la de la manana era el TERCER pedido en dos horas y media:
+    #
+    #     04:30 - 05:33   asn_web      Web Reports, 63 minutos, 64 MB
+    #     06:00 - 06:07   stock_hora   Web Reports, EL MISMO informe de reserva
+    #     07:00           ancla        fallaba 6 de cada 8 mananas
+    #
+    # Ahora `asn_web` va a las 02:30 y la ventana de `stock_hora` cierra a las 04:00,
+    # asi que el ancla entra con el WMS libre desde las 03:33. `mapa_hora` la acompana
+    # porque se dibuja con lo que `stock_hora` acaba de publicar.
+    #
+    # EL CIERRE DEL TURNO LO GUARDA EL ANCLA, no `stock_hora`. `generar_slotting.py`
+    # ya escribe `buffer_c_cierre` y `reserva_cierre` en su corrida de la manana, que
+    # es lo que Daniel pidio: el turno sale 06:45 y la foto de las 07:00 es la suya.
+    'stock_hora':   {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '22:00', 'hasta': '04:00'},
     # EL ULTIMO AVANCE DEL DIA ES EL DE LAS 16:00. Daniel, 03-sep-2026: *"el avance de
     # picking y embalaje de las seis y tantos ya no lo des, si a las siete y media,
     # ocho vas a tener el reporte completo. Para que vas a dar ese avance?"*.
@@ -105,7 +128,7 @@ DE_FABRICA = {
     # choque. Van como bloque y en punto, que se recuerda de memoria a las 3 de la manana.
     # El mapa se dibuja con el stock que `stock_hora` acaba de publicar y esa corrida
     # tarda hasta 9,2 minutos: por eso va 15 despues, no antes. El picking, 20.
-    'mapa_hora':    {'activa': True, 'minuto': 15, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '22:00', 'hasta': '06:15'},
+    'mapa_hora':    {'activa': True, 'minuto': 15, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '22:00', 'hasta': '04:15'},
     # A las 06:45: el turno noche cierra 06:30 y el de la manana entra 08:00, asi que
     # el almacen esta quieto y el dia de ayer ya cerro. Estaba a las 08:00 y eso
     # empujaba a SKUs sin salida fuera de la manana.
@@ -223,7 +246,9 @@ DE_FABRICA = {
     #
     # 04:30: el stock de las 04:00 termina 04:10 y el mapa de las 04:15 termina
     # 04:25; la bajada tarda ~48 min y cierra 05:18, antes del stock de las 06:00.
-    'asn_web':      {'activa': True, 'hora': '04:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
+    # A LAS 02:30, no 04:30: usa Web Reports 63 minutos y terminaba 05:33, justo
+    # dentro de la franja despejada del ancla. Ahora cierra 03:33.
+    'asn_web':      {'activa': True, 'hora': '02:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': True}},
 }
 # `asn_web` va aca tambien: sin estar en DIARIAS, su 'hora' se ignora y se lo trata
