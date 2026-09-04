@@ -882,6 +882,25 @@ async def cargar_asn(request: Request):
         return {"status": "error", "message": str(e)}
 
 
+def _tiene_columna(nombre, cur=None):
+    """Si la tabla `asn` tiene esa columna AHORA MISMO.
+
+    La tabla se rehace entera cada madrugada, asi que entre un despliegue y esa
+    carga puede faltarle una columna que el codigo ya conoce. Preguntar es barato
+    -SQLite lo tiene en memoria- y evita que una consulta se caiga.
+    """
+    try:
+        if cur is None:
+            c = sqlite3.connect(_db())
+            filas = c.execute('PRAGMA table_info(asn)').fetchall()
+            c.close()
+        else:
+            filas = cur.execute('PRAGMA table_info(asn)').fetchall()
+        return nombre in {r[1] for r in filas}
+    except Exception:
+        return False
+
+
 @app.get("/api/asn")
 async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = None,
                         articulo: Optional[str] = None, orden: Optional[str] = None,
@@ -928,7 +947,7 @@ async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = N
             cond.append('estado = ?'); args.append(estado.strip())
         if marca:
             cond.append('marca = ?'); args.append(marca.strip())
-        if usuario:
+        if usuario and _tiene_columna('usuario'):
             cond.append('usuario = ?'); args.append(usuario.strip())
         if desde:
             cond.append('fecha_envio >= ?'); args.append(desde.strip()[:10])
@@ -970,7 +989,7 @@ async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = N
             'COUNT(DISTINCT asn), COUNT(DISTINCT expediente) FROM asn' + donde, args).fetchone()
 
         if agrupar in ('expediente', 'asn', 'articulo', 'tipo', 'marca', 'orden',
-                       'usuario', 'hora_recepcion', 'fecha_recepcion'):
+                       'usuario', 'hora_recepcion', 'fecha_recepcion')                 and (agrupar not in ('usuario', 'hora_recepcion') or _tiene_columna(agrupar, cur)):
             lim = max(1, min(int(limite or 200), 2000))
             filas = cur.execute(
                 'SELECT %s, COUNT(*), SUM(enviado), SUM(recibido), COUNT(DISTINCT asn), '
@@ -987,15 +1006,22 @@ async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = N
 
         lim = max(1, min(int(limite or 200), 1000))
         off = max(0, int(pagina or 0)) * lim
+        # SOLO LAS COLUMNAS QUE LA TABLA TIENE DE VERDAD. Se le pregunta a SQLite
+        # en vez de darlo por hecho: si una columna todavia no llego -porque el
+        # robot no rehizo la tabla desde el ultimo despliegue- sale vacia y la
+        # pantalla sigue andando, en vez de caerse entera.
+        hay = {r[1] for r in cur.execute('PRAGMA table_info(asn)').fetchall()}
+        pedir = [c for c in ASN_COLS if c in hay]
         filas = cur.execute(
-            'SELECT ' + ', '.join(ASN_COLS) + ' FROM asn' + donde +
+            'SELECT ' + ', '.join(pedir) + ' FROM asn' + donde +
             ' ORDER BY fecha_envio DESC, asn LIMIT ? OFFSET ?', args + [lim, off]).fetchall()
         conn.close()
+        vacias = {c: None for c in ASN_COLS if c not in hay}
         return {"status": "ok",
                 "total": {"filas": tot[0], "enviado": tot[1], "recibido": tot[2],
                           "asn": tot[3], "expedientes": tot[4]},
                 "pagina": off // lim, "limite": lim,
-                "datos": [dict(zip(ASN_COLS, f)) for f in filas]}
+                "datos": [dict(vacias, **dict(zip(pedir, f))) for f in filas]}
     except Exception as e:
         return {"status": "error", "message": str(e), "datos": []}
 
