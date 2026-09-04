@@ -101,10 +101,15 @@ def captura(page, nombre):
         log("No se pudo tomar la captura: %s" % str(e)[:120], "WARN")
 
 
-def con_reintentos(nombre, funcion, page):
-    """Ejecuta la extracción y la reintenta si falla. Antes se rendía al primer error."""
-    for intento in range(1, INTENTOS + 1):
-        log("%s - intento %d de %d" % (nombre, intento, INTENTOS))
+def con_reintentos(nombre, funcion, page, intentos=None):
+    """Ejecuta la extracción y la reintenta si falla. Antes se rendía al primer error.
+
+    `intentos` deja pedir más vueltas para una extracción concreta. El Stock Reserva
+    pide ocho: ver el comentario de `descargar_stock_reserva`.
+    """
+    intentos = intentos or INTENTOS
+    for intento in range(1, intentos + 1):
+        log("%s - intento %d de %d" % (nombre, intento, intentos))
         try:
             if funcion():
                 return True
@@ -113,7 +118,7 @@ def con_reintentos(nombre, funcion, page):
             log("%s - error en el intento %d: %s: %s" % (nombre, intento, type(e).__name__, str(e)[:200]), "ERROR")
             captura(page, "%s_intento%d" % (nombre.replace(" ", "_"), intento))
 
-        if intento < INTENTOS:
+        if intento < intentos:
             log("%s - reintentando en %d segundos..." % (nombre, ESPERA_ENTRE_INTENTOS))
             time.sleep(ESPERA_ENTRE_INTENTOS)
             cerrar_pestanas(page)
@@ -380,15 +385,26 @@ def descargar_stock_reserva(page, dest_path):
     report_iframe.get_by_role("button").nth(5).click()
     time.sleep(30)
 
+    # CUATRO MINUTOS, NO TREINTA. Cuando el informe sale, sale en UN MINUTO: medido
+    # cuatro veces el 03 y el 04-sep -62 s, 61 s, 62 s y 58 s desde "Ejecutando" hasta
+    # el archivo guardado-. Esperar treinta o cuarenta no lo hace aparecer: solo quema
+    # el tiempo que servia para volver a intentar.
+    #
+    # El 04-sep el ancla gasto 1h25m en TRES intentos y se rindio sin el archivo. El
+    # 03-sep el intento 1 tambien fallo -treinta minutos- y el 2 lo bajo en 81 segundos:
+    # la unica diferencia entre las dos mananas fue que a una le alcanzo el turno.
+    #
+    # Con 4 minutos y ocho vueltas, en el mismo rato hay OCHO oportunidades en vez de
+    # tres. Ver `con_reintentos(..., intentos=8)` mas abajo.
     log("Desplegando el menú de exportación...")
     flecha = report_iframe.locator(".wrHvButtonandArrowContainer.wrHvExportButton > .wrPopoverMenuButtonOpenArrow").first
-    flecha.wait_for(state="visible", timeout=1800000)
+    flecha.wait_for(state="visible", timeout=240000)
     flecha.click(force=True)
     time.sleep(2)
 
     # Hay varios elementos 'Excel' ocultos; solo sirve el visible del menú desplegable
     log("Exportando a Excel...")
-    with page.expect_download(timeout=2400000) as download_info:
+    with page.expect_download(timeout=240000) as download_info:
         report_iframe.locator("[id^='wrExecuteExportTypeMenu']").get_by_text("Excel").filter(visible=True).first.click(force=True)
 
     download = download_info.value
@@ -480,7 +496,12 @@ def _correr():
 
         ok_activo = con_reintentos("Stock Activo", lambda: descargar_stock_activo(page, archivo_activo), page)
         cerrar_pestanas(page)
-        ok_reserva = con_reintentos("Stock Reserva", lambda: descargar_stock_reserva(page, archivo_reserva), page)
+        # OCHO VUELTAS PARA LA RESERVA, tres para el activo. El activo baja siempre
+        # -es una pantalla del WMS y no depende del servidor de informes-; la reserva
+        # va por Web Reports, que en la ventana de las 07:00 contesta o no contesta.
+        ok_reserva = con_reintentos("Stock Reserva",
+                                    lambda: descargar_stock_reserva(page, archivo_reserva),
+                                    page, intentos=8)
 
         browser.close()
 
