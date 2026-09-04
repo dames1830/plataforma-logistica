@@ -38,10 +38,11 @@ chcp 65001 >nul
 python -u picking_y_orden.py
 set RC=%ERRORLEVEL%
 
-REM Solo antes del mediodia: %TIME% arranca con la hora, y con un
-REM espacio delante cuando es de una cifra.
-set HH=%TIME:~0,2%
-if "%HH:~0,1%"==" " set HH=0%HH:~1,1%
-if %HH% LSS 12 python -u sku_sin_salida.py
+REM LA HORA LA DECIDE PYTHON, no el %TIME% de cmd: ese depende del
+REM idioma de Windows y trae un espacio delante cuando la hora es de
+REM una cifra. Es de las cosas que fallan una vez cada tanto, de
+REM madrugada, sin que nadie lo note. Sale con 0 si es de manana.
+python -c "import datetime,sys; sys.exit(0 if datetime.datetime.now().hour < 12 else 1)"
+if not errorlevel 1 python -u sku_sin_salida.py
 
 exit /b %RC%
