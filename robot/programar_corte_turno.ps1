@@ -1,0 +1,71 @@
+# =============================================================================
+#  REGISTRA LA TAREA "Robot corte de turno" EN WINDOWS
+# =============================================================================
+#
+#  Lo llama PROGRAMAR_CORTE_TURNO.bat. Va aparte y no adentro del .bat porque
+#  el comando lleva un argumento que a su vez es una ruta entre comillas
+#  -correr_si_toca.bat corte_turno "...ejecutar_corte_turno.bat"- y las comillas
+#  anidadas se rompen distinto en cmd, en un .bat y en la consola. En un .ps1 no
+#  hay nada que escapar y ademas se puede probar con -Simular.
+#
+#  EL DISPARADOR ES UNO SOLO: todos los dias a las 00:00, repitiendo cada 10
+#  minutos durante 24 horas. La hora de verdad -las 20:00- y los dias los decide
+#  la web; Windows solo despierta al robot y `correr_si_toca.bat` pregunta si le
+#  toca. Es como quedaron las otras nueve tareas.
+#
+#  USO
+#      powershell -ExecutionPolicy Bypass -File programar_corte_turno.ps1
+#      powershell -ExecutionPolicy Bypass -File programar_corte_turno.ps1 -Simular
+# =============================================================================
+param(
+    [string] $Raiz = $PSScriptRoot,
+    [switch] $Simular
+)
+
+$ErrorActionPreference = 'Stop'
+$NOMBRE = 'Robot corte de turno'
+
+$Raiz = $Raiz.TrimEnd('\')
+$envoltorio = Join-Path $Raiz 'correr_si_toca.bat'
+$comando    = Join-Path $Raiz 'ejecutar_corte_turno.bat'
+
+foreach ($f in @($envoltorio, $comando, (Join-Path $Raiz 'corte_turno.py'))) {
+    if (-not (Test-Path $f)) {
+        Write-Host "ERROR: falta $f" -ForegroundColor Red
+        exit 1
+    }
+}
+
+$accion = New-ScheduledTaskAction -Execute $envoltorio `
+                                  -Argument ('corte_turno "' + $comando + '"') `
+                                  -WorkingDirectory $Raiz
+
+$disparador = New-ScheduledTaskTrigger -Daily -At '00:00'
+$disparador.Repetition = (New-ScheduledTaskTrigger -Once -At '00:00' `
+    -RepetitionInterval (New-TimeSpan -Minutes 10) `
+    -RepetitionDuration (New-TimeSpan -Hours 24)).Repetition
+
+# 90 minutos de tope: el corte se presupuesta en 75 y el ultimo paso puede
+# estirarse. IgnoreNew para que un despertar no arranque una segunda copia
+# encima de la que ya esta trabajando.
+$ajustes = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 90) `
+                                        -StartWhenAvailable `
+                                        -MultipleInstances IgnoreNew
+
+Write-Host ''
+Write-Host "  tarea      : $NOMBRE"
+Write-Host "  ejecuta    : $($accion.Execute)"
+Write-Host "  argumentos : $($accion.Arguments)"
+Write-Host "  dispara    : cada 10 minutos, todos los dias"
+Write-Host "  tope        : 90 minutos"
+Write-Host ''
+
+if ($Simular) {
+    Write-Host '  -Simular: no se registro nada.' -ForegroundColor Yellow
+    exit 0
+}
+
+Register-ScheduledTask -TaskName $NOMBRE -Action $accion -Trigger $disparador `
+                       -Settings $ajustes -RunLevel Highest -Force | Out-Null
+
+Write-Host '  Tarea registrada.' -ForegroundColor Green
