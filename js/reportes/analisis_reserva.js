@@ -37,11 +37,11 @@
  */
 
 import { dataStore, fetchBaseReserva, fetchFotosReserva, fetchReservaHistory,
-         guardarFotoReserva, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0635';
-import { colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0635';
-import { icono } from '../services_v245/iconos.js?v=29.0635';
+         guardarFotoReserva, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0636';
+import { colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0636';
+import { icono } from '../services_v245/iconos.js?v=29.0636';
 import { consolidacionDeReserva, cierreDeFragmentados,
-         fotoChicaDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0635';
+         fotoChicaDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0636';
 
 /* LOS DOS ESTADOS DE LAS TABLAS: que pagina y que filtro se esta mirando.
    Vinieron de `renderDashboard`, donde se usaban solo aca. Al ser de modulo se
@@ -599,8 +599,14 @@ export const renderAnalisisReserva = async (container, ENT = {}) => {
                      inventan dias -si un dia no tiene foto, no aparece-, y se corta en el
                      dia que se esta mirando: mirando el 20 la curva termina el 20, no
                      adelanta lo que paso despues. */
+                  /* UN PUNTO POR DIA, EL DE LA NOCHE. Con dos fotos por día la curva
+                     tendría dos puntos por fecha, y la frase de arriba —que compara
+                     contra el día anterior— terminaría comparando la mañana contra la
+                     noche del MISMO día. La serie es la del arranque de cada turno, que
+                     es la que se viene dibujando desde siempre. */
                   const _serie = _fotos
                       .filter(f => f && f.fecha && Array.isArray(f.matriz)
+                                   && (f.momento || 'noche') === 'noche'
                                    && (!_elegida || f.fecha <= _elegida))
                       .map(f => [f.fecha, f.matriz.reduce((s, c) => s + (c.ocupadas || 0), 0)])
                       .sort((a, b) => a[0] < b[0] ? -1 : 1)
