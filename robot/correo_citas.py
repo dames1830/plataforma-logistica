@@ -196,6 +196,29 @@ def bandejas(mapi):
     return out
 
 
+def _uno_por_uno(coleccion):
+    """Recorre una coleccion de Outlook con GetFirst/GetNext.
+
+    Es como Outlook quiere que se recorra. El `for` de Python le pide un
+    enumerador, y sobre una coleccion ORDENADA Y FILTRADA a la vez ese enumerador
+    es donde se traba: el 03-sep-2026 el robot quedo ocho minutos sin avanzar del
+    primer correo. Si el metodo no existe -no todas las colecciones lo tienen- se
+    cae al recorrido normal.
+    """
+    try:
+        it = coleccion.GetFirst()
+    except Exception:
+        for x in coleccion:
+            yield x
+        return
+    while it is not None:
+        yield it
+        try:
+            it = coleccion.GetNext()
+        except Exception:
+            return
+
+
 def _por_asunto(items, diag):
     """Los correos cuyo asunto contiene lo que se busca, PREGUNTANDOSELO A OUTLOOK.
 
@@ -269,13 +292,15 @@ def correos(dias, diag=False):
         if sel is None and diag:
             log("      ningun filtro sirvio; se recorren los mas nuevos a mano", "WARN")
         mirados = 0
-        for it in fuente:
+        for it in _uno_por_uno(fuente):
             mirados += 1
             if mirados > 300:
                 log("      se llego al tope de 300 correos mirados", "WARN")
                 break
-            if diag and mirados % 50 == 0:
-                log("      ...%d correos mirados" % mirados)
+            # SE ANOTA ANTES DE TOCARLE NADA. Con pocos correos un aviso cada
+            # cincuenta no salta nunca, y un cuelgue en el primero parece silencio.
+            if diag:
+                log("      correo %d de la lista" % mirados)
             try:
                 # 43 = correo. Una convocatoria de reunion o un aviso de entrega no
                 # tienen las propiedades que se leen despues y pueden trabar la
