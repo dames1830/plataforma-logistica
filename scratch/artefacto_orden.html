@@ -1,0 +1,471 @@
+<title>Pedido, picado y embalado</title>
+<style>
+  :root{
+    --marino:#12365c; --marino2:#1b4a7a; --clara:#dbe4f0;
+    --tinta:#1c2430; --apagado:#66727f; --raya:#d5dde6; --papel:#f2f5f9;
+    --panel:#ffffff; --bien:#1d7a4c; --bienf:#eef7f1; --mal:#b3261e; --malf:#fdeeed;
+    --ojo:#8a5a00; --ojof:#fff6e2; --sombra:0 1px 2px rgba(18,54,92,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --marino:#0d2742; --marino2:#17406b; --clara:#9fb6d0; --papel:#0f1620;
+      --panel:#161f2b; --tinta:#e6ebf2; --apagado:#93a1b3; --raya:#2a3745;
+      --bien:#4cbf87; --bienf:#12241a; --mal:#f08a84; --malf:#2a1614;
+      --ojo:#e0b464; --ojof:#2a2110; --sombra:none;
+    }
+  }
+  :root[data-theme="dark"]{
+    --marino:#0d2742; --marino2:#17406b; --clara:#9fb6d0; --papel:#0f1620;
+    --panel:#161f2b; --tinta:#e6ebf2; --apagado:#93a1b3; --raya:#2a3745;
+    --bien:#4cbf87; --bienf:#12241a; --mal:#f08a84; --malf:#2a1614;
+    --ojo:#e0b464; --ojof:#2a2110; --sombra:none;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--papel);color:var(--tinta);
+       font:14px/1.55 "Segoe UI",-apple-system,system-ui,sans-serif}
+  .hoja{max-width:1080px;margin:0 auto;padding:20px 18px 56px;
+        display:flex;flex-direction:column;gap:20px}
+  .bloque{background:var(--panel);border:1px solid var(--raya);border-radius:10px;
+          overflow:hidden;box-shadow:var(--sombra)}
+  .banda{background:var(--marino);color:#fff;padding:12px 16px;
+         display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .banda h1{margin:0;font-size:17px;font-weight:700}
+  .banda h2{margin:0;font-size:14px;font-weight:700}
+  .banda .nota{color:var(--clara);font-size:12.5px}
+  .banda .dia{margin-left:auto}
+  .banda .caja{background:#fff;color:#12365c;border-radius:6px;padding:5px 11px;
+               font-weight:700;font-size:13px}
+
+  .cadena{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--raya)}
+  .paso{background:var(--panel);padding:15px 16px}
+  .paso .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+           color:var(--apagado);font-weight:700}
+  .paso .v{font-size:28px;font-weight:700;margin-top:1px;font-variant-numeric:tabular-nums}
+  .paso .p{font-size:12.5px;margin-top:3px;color:var(--apagado)}
+  .paso .p b{font-weight:700}
+  .flojo .v{color:var(--mal)}
+  .flojo .p b{color:var(--mal)}
+  .fuerte .p b{color:var(--bien)}
+
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;
+        font-variant-numeric:tabular-nums;min-width:760px}
+  th{background:var(--marino2);color:#fff;text-align:right;padding:7px 10px;
+     font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;
+     white-space:nowrap;border:1px solid rgba(255,255,255,.14)}
+  th.i{text-align:left}
+  td{padding:6px 10px;text-align:right;border:1px solid var(--raya);white-space:nowrap;
+     color:var(--tinta)}
+  td.i{text-align:left}
+  th.sep,td.sep{border-left:2px solid var(--marino2)}
+  .doble{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--raya)}
+  .lado{background:var(--panel);padding:2px 0}
+  .lado>.rot{background:var(--marino2);color:#fff;padding:5px 16px;font-size:11px;
+             font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .lado .cadena{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:860px){.doble{grid-template-columns:1fr}}
+  tr.tot td{background:var(--clara);font-weight:700;color:var(--marino)}
+  .falta{color:var(--mal);font-weight:700}
+  td.flojo{color:var(--mal);font-weight:700}
+  .nota-bien,.nota-ojo,.nota-azul{padding:11px 15px;font-size:12.8px;line-height:1.65;margin:0}
+  .nota-bien{border-left:3px solid var(--bien);background:var(--bienf);color:var(--tinta)}
+  .nota-ojo{border-left:3px solid var(--ojo);background:var(--ojof);color:var(--tinta)}
+  .nota-azul{border-left:3px solid var(--marino2);background:var(--papel);color:var(--tinta)}
+  .vacio{padding:24px 16px;text-align:center;color:var(--apagado);font-size:13px}
+  @media(max-width:760px){.cadena{grid-template-columns:1fr}}
+</style>
+
+<div class="hoja">
+
+  <section class="bloque">
+    <div class="banda">
+      <div>
+        <h1>Pedido, picado y embalado</h1>
+        <div class="nota">calzado y no calzado por separado, siempre &mdash; 02/09/2026</div>
+      </div>
+      <div class="dia"><span class="caja">02/09/2026</span></div>
+    </div>
+
+    <div class="doble">
+      <div class="lado">
+        <div class="rot">Calzado &middot; 46.542 pares, el 37,6&#37; de lo pedido</div>
+        <div class="cadena">
+          <div class="paso"><div class="k">Pedido</div><div class="v">46.542</div>
+            <div class="p">de 1.065 órdenes</div></div>
+          <div class="paso"><div class="k">Picado</div><div class="v">20.665</div>
+            <div class="p">fill rate <b>44,4%</b></div></div>
+          <div class="paso fuerte"><div class="k">Embalado</div><div class="v">20.659</div>
+            <div class="p"><b>100,0%</b> de lo picado</div></div>
+        </div>
+      </div>
+      <div class="lado">
+        <div class="rot">No calzado &middot; 77.368, el 62,4&#37;</div>
+        <div class="cadena">
+          <div class="paso"><div class="k">Pedido</div><div class="v">77.368</div>
+            <div class="p">74.000 son bolsas</div></div>
+          <div class="paso flojo"><div class="k">Picado</div><div class="v">14.085</div>
+            <div class="p">fill rate <b>18,2%</b></div></div>
+          <div class="paso fuerte"><div class="k">Embalado</div><div class="v">14.085</div>
+            <div class="p"><b>100,0%</b> de lo picado</div></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="nota-ojo"><strong>74.000 de los 123.910 son un solo artículo: 9945990 BOLSAS BATA
+      GRANDE</strong> &mdash;bolsas plásticas de empaque, no calzado&mdash;. Solas son el 59,7&#37;
+      del día y el 96&#37; de todo lo que no es calzado. Mezcladas con el calzado hunden el fill
+      rate a 28,0&#37; y hacen ver mal a las tiendas que más bolsas reciben.</p>
+
+    <p class="nota-bien"><strong>El calzado se atiende al 44,4&#37;, y parejo:</strong> las 20
+      rutas con 300 pares o más están todas entre 40,0&#37; y 48,1&#37;, y Lima (44,5&#37;) y
+      provincia (42,8&#37;) van iguales. <strong>La variación que se veía antes era de las bolsas,
+      no del piso.</strong></p>
+
+    <p class="nota-bien"><strong>Entre picar y embalar no hay embudo.</strong> De 1.065 órdenes,
+      <strong>1.059 se embalaron enteras</strong>. Las seis abiertas suman <strong>6 pares</strong>
+      &mdash;una cada una, y las seis son de calzado&mdash;.</p>
+
+    <p class="nota-ojo"><strong>El embudo está antes de picar: se pidieron 46.542 pares de calzado
+      y se picaron 20.665.</strong> Quedaron 25.877 sin tocar, el 55,6&#37;. Eso no es del piso: es
+      lo que comercial no liberó. Encaja con lo que ya sabemos del pendiente &mdash;de 271.306
+      unidades abiertas en el WMS, solo 71.458 vienen mandadas por correo&mdash;.</p>
+  </section>
+
+
+  <section class="bloque">
+    <div class="banda"><h2>Por canal</h2><span class="nota">Retail, Catálogo, Ecommerce, Mayorista, Industrial y los demás</span></div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th class="i" rowspan="2">Canal</th>
+              <th colspan="3">Calzado</th>
+              <th colspan="3" class="sep">No calzado</th></tr>
+          <tr><th>Pedido</th><th>Picado</th><th>Fill rate</th>
+              <th class="sep">Pedido</th><th>Picado</th><th>Fill rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="i">Retail</td><td>45.135</td><td>19.765</td><td>43,8&#37;</td><td class="sep">74.551</td><td>11.275</td><td>15,1&#37;</td></tr>
+          <tr><td class="i">Catálogo</td><td>334</td><td>333</td><td>99,7&#37;</td><td class="sep">195</td><td>193</td><td>99,0&#37;</td></tr>
+          <tr><td class="i">Ecommerce</td><td>271</td><td>271</td><td>100,0&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">Industrial</td><td>580</td><td>185</td><td class="flojo">31,9&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">Materiales</td><td>0</td><td>0</td><td>0,0&#37;</td><td class="sep">2.612</td><td>2.612</td><td>100,0&#37;</td></tr>
+          <tr><td class="i">Otros</td><td>222</td><td>111</td><td>50,0&#37;</td><td class="sep">10</td><td>5</td><td>50,0&#37;</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>46.542</td><td>20.665</td><td>44,4&#37;</td><td class="sep">77.368</td><td>14.085</td><td>18,2&#37;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-ojo"><strong>Catálogo y Ecommerce salieron completos: 99,7&#37; y
+      100,0&#37;.</strong> Retail, que es el 97&#37; del calzado del día, salió en 43,8&#37;.
+      Los canales chicos se atienden enteros; el grande no.</p>
+    <p class="nota-bien"><strong>Retail pide 45.135 de los 46.542 pares de calzado.</strong> Por
+      eso el fill rate de Retail y el del día son casi el mismo número: cuando un canal pesa
+      tanto, su fill rate ES el del almacén.</p>
+    <p class="nota-bien"><strong>El canal se trae del Detalle de Orden, cruzando por número de
+      orden.</strong> El archivo de picking no lo trae &mdash;revisadas sus 31 columnas&mdash;
+      pero el detalle sí, en «Tipo de orden». <strong>El cruce resolvió las 22.813 líneas del
+      2 de setiembre: el 100&#37;.</strong></p>
+    <p class="nota-azul"><strong>Hacen falta las tres fuentes</strong>, porque el detalle diario
+      trae las órdenes <em>nacidas</em> ese día y el picking trabaja órdenes de días antes:<br><br>
+      &middot; <strong>Pendientes</strong> puso 18.816 líneas (82,5&#37;)<br>
+      &middot; <strong>Despachados</strong> 2.586 (11,3&#37;)<br>
+      &middot; los <strong>125 detalles diarios</strong> 1.411 (6,2&#37;) &mdash;pocas líneas pero
+      79.000 pares, porque ahí cae la orden de las bolsas&mdash;<br><br>
+      Queda además un respaldo por si alguna orden no pegara por ninguna: si el destino está en
+      el maestro de rutas, es Retail. El 2 de setiembre no hizo falta ni una vez.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Por tienda</h2><span class="nota">ordenadas por calzado pedido &mdash; 128 tiendas del maestro de rutas</span></div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th class="i" rowspan="2">Tienda</th>
+              <th colspan="3">Calzado</th>
+              <th colspan="3" class="sep">No calzado</th></tr>
+          <tr><th>Pedido</th><th>Picado</th><th>Fill rate</th>
+              <th class="sep">Pedido</th><th>Picado</th><th>Fill rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="i">50208 &middot; B PLAZA NORTE</td><td>2.660</td><td>996</td><td class="flojo">37,4&#37;</td><td class="sep">50.026</td><td>5.013</td><td>10,0&#37;</td></tr>
+          <tr><td class="i">50210 &middot; B MEGAPLAZA</td><td>2.431</td><td>928</td><td>38,2&#37;</td><td class="sep">18.012</td><td>3.006</td><td>16,7&#37;</td></tr>
+          <tr><td class="i">50539 &middot; B7 PIURA</td><td>1.765</td><td>713</td><td>40,4&#37;</td><td class="sep">500</td><td>500</td><td>100,0&#37;</td></tr>
+          <tr><td class="i">50152 &middot; B2 CHORRILLOS</td><td>1.189</td><td>534</td><td>44,9&#37;</td><td class="sep">6</td><td>3</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">50511 &middot; B6 CHICLAYO</td><td>1.170</td><td>409</td><td class="flojo">35,0&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">50204 &middot; B2 MEGA PLAZA</td><td>1.118</td><td>478</td><td>42,8&#37;</td><td class="sep">4.514</td><td>1.507</td><td>33,4&#37;</td></tr>
+          <tr><td class="i">50540 &middot; B SULLANA</td><td>1.032</td><td>428</td><td>41,5&#37;</td><td class="sep">2</td><td>1</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">50149 &middot; B CHORRILLOS</td><td>1.010</td><td>440</td><td>43,6&#37;</td><td class="sep">10</td><td>5</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">50340 &middot; B JOCKEY PLAZA</td><td>1.002</td><td>449</td><td>44,8&#37;</td><td class="sep">4</td><td>2</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">50119 &middot; B BELLAVISTA</td><td>957</td><td>432</td><td>45,1&#37;</td><td class="sep">10</td><td>5</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">50502 &middot; B2 CHICLAYO</td><td>948</td><td>368</td><td>38,8&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">50538 &middot; B3 PIURA</td><td>921</td><td>386</td><td>41,9&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">50230 &middot; B MINKA</td><td>850</td><td>378</td><td>44,5&#37;</td><td class="sep">518</td><td>509</td><td>98,3&#37;</td></tr>
+          <tr><td class="i">50530 &middot; B1 PIURA</td><td>831</td><td>377</td><td>45,4&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">50533 &middot; B5 PIURA</td><td>785</td><td>303</td><td>38,6&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">Otras 113 tiendas</td><td>26.466</td><td>12.146</td><td>45,9&#37;</td><td class="sep">949</td><td>724</td><td>76,3&#37;</td></tr>
+          <tr><td class="i">Otros destinos &middot; no son tienda</td><td>1.407</td><td>900</td><td>64,0&#37;</td><td class="sep">2.817</td><td>2.810</td><td>99,8&#37;</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>46.542</td><td>20.665</td><td>44,4&#37;</td><td class="sep">77.368</td><td>14.085</td><td>18,2&#37;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>Plaza Norte y Megaplaza siguen primeras, pero ya no son un
+      caso aparte:</strong> piden 2.660 y 2.431 pares de calzado, y se les atendi&oacute;
+      37,4&#37; y 38,2&#37;. La mejor atendida de las quince est&aacute; en 45,4&#37; y la peor
+      en 35,0&#37;: <strong>todo el rango cabe en diez puntos.</strong></p>
+    <p class="nota-ojo">Mirado con las bolsas adentro, Plaza Norte ped&iacute;a 52.686 y
+      sal&iacute;a en 11,4&#37;: parec&iacute;a la peor tienda del almac&eacute;n.
+      <strong>El 95&#37; de ese pedido eran bolsas de empaque.</strong></p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Por ruta</h2><span class="nota">la ruta de despacho de cada tienda</span></div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th class="i" rowspan="2">Ruta</th>
+              <th colspan="3">Calzado</th>
+              <th colspan="3" class="sep">No calzado</th></tr>
+          <tr><th>Pedido</th><th>Picado</th><th>Fill rate</th>
+              <th class="sep">Pedido</th><th>Picado</th><th>Fill rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="i">R054</td><td>18.248</td><td>7.825</td><td>42,9&#37;</td><td class="sep">573</td><td>542</td><td>94,6&#37;</td></tr>
+          <tr><td class="i">R030</td><td>3.949</td><td>1.581</td><td>40,0&#37;</td><td class="sep">22.582</td><td>4.536</td><td>20,1&#37;</td></tr>
+          <tr><td class="i">R028</td><td>3.585</td><td>1.438</td><td>40,1&#37;</td><td class="sep">50.034</td><td>5.017</td><td>10,0&#37;</td></tr>
+          <tr><td class="i">R015</td><td>3.037</td><td>1.375</td><td>45,3&#37;</td><td class="sep">20</td><td>10</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">R013</td><td>2.059</td><td>975</td><td>47,4&#37;</td><td class="sep">48</td><td>24</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">R017</td><td>1.873</td><td>811</td><td>43,3&#37;</td><td class="sep">560</td><td>530</td><td>94,6&#37;</td></tr>
+          <tr><td class="i">R009</td><td>1.857</td><td>876</td><td>47,2&#37;</td><td class="sep">26</td><td>12</td><td>46,2&#37;</td></tr>
+          <tr><td class="i">R016</td><td>1.735</td><td>834</td><td>48,1&#37;</td><td class="sep">68</td><td>31</td><td>45,6&#37;</td></tr>
+          <tr><td class="i">R020</td><td>1.414</td><td>658</td><td>46,5&#37;</td><td class="sep">30</td><td>18</td><td>60,0&#37;</td></tr>
+          <tr><td class="i">R033</td><td>1.301</td><td>609</td><td>46,8&#37;</td><td class="sep">22</td><td>11</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">R010</td><td>1.002</td><td>449</td><td>44,8&#37;</td><td class="sep">4</td><td>2</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">R001</td><td>791</td><td>373</td><td>47,2&#37;</td><td class="sep">22</td><td>11</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">Otras 18 rutas</td><td>4.284</td><td>1.961</td><td>45,8&#37;</td><td class="sep">562</td><td>531</td><td>94,5&#37;</td></tr>
+          <tr><td class="i">Otros destinos &middot; no son tienda</td><td>1.407</td><td>900</td><td>64,0&#37;</td><td class="sep">2.817</td><td>2.810</td><td>99,8&#37;</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>46.542</td><td>20.665</td><td>44,4&#37;</td><td class="sep">77.368</td><td>14.085</td><td>18,2&#37;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>R054 es la ruta del d&iacute;a: 18.248 pares de
+      calzado</strong> &mdash;el 39&#37; de todo el calzado pedido&mdash; y cierra en 42,9&#37;.
+      Es la de provincia: Piura y el norte.</p>
+    <p class="nota-bien">De las 30 rutas, <strong>las 20 que mueven 300 pares o m&aacute;s de
+      calzado est&aacute;n todas entre 40,0&#37; y 48,1&#37;</strong>. Ninguna se sale. R028 y
+      R030, que con las bolsas adentro ca&iacute;an a 12,0&#37; y 23,1&#37;, est&aacute;n en
+      40,1&#37; y 40,0&#37;.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Por zona</h2><span class="nota">Lima contra provincia</span></div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th class="i" rowspan="2">Zona</th>
+              <th colspan="3">Calzado</th>
+              <th colspan="3" class="sep">No calzado</th></tr>
+          <tr><th>Pedido</th><th>Picado</th><th>Fill rate</th>
+              <th class="sep">Pedido</th><th>Picado</th><th>Fill rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="i">LIMA</td><td>26.178</td><td>11.647</td><td>44,5&#37;</td><td class="sep">73.966</td><td>10.721</td><td>14,5&#37;</td></tr>
+          <tr><td class="i">PROVINCIA</td><td>18.957</td><td>8.118</td><td>42,8&#37;</td><td class="sep">585</td><td>554</td><td>94,7&#37;</td></tr>
+          <tr><td class="i">Otros destinos &middot; no son tienda</td><td>1.407</td><td>900</td><td>64,0&#37;</td><td class="sep">2.817</td><td>2.810</td><td>99,8&#37;</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>46.542</td><td>20.665</td><td>44,4&#37;</td><td class="sep">77.368</td><td>14.085</td><td>18,2&#37;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>Lima 44,5&#37; y provincia 42,8&#37;: se atienden
+      igual.</strong> Antes este cuadro dec&iacute;a 22,3&#37; contra 44,4&#37; y parec&iacute;a
+      que Lima estaba abandonada. La diferencia entera eran las 73.966 bolsas que van a las
+      tiendas grandes de Lima.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Por d&iacute;a de despacho</h2><span class="nota">el d&iacute;a en que sale el cami&oacute;n, seg&uacute;n el maestro de rutas</span></div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th class="i" rowspan="2">D&iacute;a de despacho</th>
+              <th colspan="3">Calzado</th>
+              <th colspan="3" class="sep">No calzado</th></tr>
+          <tr><th>Pedido</th><th>Picado</th><th>Fill rate</th>
+              <th class="sep">Pedido</th><th>Picado</th><th>Fill rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="i">MIÉRCOLES - VIERNES</td><td>25.895</td><td>11.294</td><td>43,6&#37;</td><td class="sep">1.225</td><td>1.115</td><td>91,0&#37;</td></tr>
+          <tr><td class="i">LUNES - MIÉRCOLES - VIERNES</td><td>7.534</td><td>3.019</td><td>40,1&#37;</td><td class="sep">72.616</td><td>9.553</td><td>13,2&#37;</td></tr>
+          <tr><td class="i">VIERNES</td><td>7.422</td><td>3.491</td><td>47,0&#37;</td><td class="sep">148</td><td>76</td><td>51,4&#37;</td></tr>
+          <tr><td class="i">JUEVES</td><td>2.068</td><td>945</td><td>45,7&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">MARTES - JUEVES</td><td>2.050</td><td>938</td><td>45,8&#37;</td><td class="sep">561</td><td>530</td><td>94,5&#37;</td></tr>
+          <tr><td class="i">LUNES - JUEVES</td><td>134</td><td>62</td><td>46,3&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">MARTES</td><td>22</td><td>11</td><td>50,0&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">LUNES</td><td>6</td><td>3</td><td>50,0&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">MARTES - SÁBADO</td><td>2</td><td>1</td><td>50,0&#37;</td><td class="sep">1</td><td>1</td><td>100,0&#37;</td></tr>
+          <tr><td class="i">LUNES - MIÉRCOLES</td><td>2</td><td>1</td><td>50,0&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">Otros destinos &middot; no son tienda</td><td>1.407</td><td>900</td><td>64,0&#37;</td><td class="sep">2.817</td><td>2.810</td><td>99,8&#37;</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>46.542</td><td>20.665</td><td>44,4&#37;</td><td class="sep">77.368</td><td>14.085</td><td>18,2&#37;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>El calzado sale sobre todo mi&eacute;rcoles y viernes:
+      25.895 pares, el 56&#37;</strong>, atendidos al 43,6&#37;. El bloque
+      &laquo;lunes &middot; mi&eacute;rcoles &middot; viernes&raquo;, que con las bolsas adentro
+      era el 64,7&#37; del d&iacute;a, en calzado son 7.534 pares &mdash;el 16&#37;&mdash;.</p>
+    <p class="nota-azul"><strong>El d&iacute;a de despacho es la etiqueta del maestro, no una
+      fecha.</strong> Una tienda que recibe &laquo;martes - jueves&raquo; aparece con esa
+      etiqueta entera; no se parte en dos ni se le adivina cu&aacute;l de los dos le
+      tocaba.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Por marca</h2><span class="nota">la marca del Maestro de art&iacute;culos</span></div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th class="i" rowspan="2">Marca</th>
+              <th colspan="3">Calzado</th>
+              <th colspan="3" class="sep">No calzado</th></tr>
+          <tr><th>Pedido</th><th>Picado</th><th>Fill rate</th>
+              <th class="sep">Pedido</th><th>Picado</th><th>Fill rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="i">Bata</td><td>29.594</td><td>12.954</td><td>43,8&#37;</td><td class="sep">74.402</td><td>11.256</td><td>15,1&#37;</td></tr>
+          <tr><td class="i">North Star</td><td>8.402</td><td>3.764</td><td>44,8&#37;</td><td class="sep">166</td><td>119</td><td>71,7&#37;</td></tr>
+          <tr><td class="i">Bubblegummers</td><td>5.024</td><td>2.392</td><td>47,6&#37;</td><td class="sep">92</td><td>45</td><td>48,9&#37;</td></tr>
+          <tr><td class="i">Power</td><td>1.337</td><td>584</td><td>43,7&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">Bata Industrials</td><td>607</td><td>201</td><td class="flojo">33,1&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">Adidas</td><td>590</td><td>245</td><td>41,5&#37;</td><td class="sep">1</td><td>1</td><td>100,0&#37;</td></tr>
+          <tr><td class="i">Weinbrenner</td><td>400</td><td>203</td><td>50,8&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">B.G Licenses</td><td>348</td><td>184</td><td>52,9&#37;</td><td class="sep">76</td><td>35</td><td>46,1&#37;</td></tr>
+          <tr><td class="i">Puma</td><td>208</td><td>111</td><td>53,4&#37;</td><td class="sep">2</td><td>2</td><td>100,0&#37;</td></tr>
+          <tr><td class="i">Marie Claire</td><td>16</td><td>15</td><td>93,8&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">Skechers</td><td>16</td><td>12</td><td>75,0&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">(sin marca)</td><td>0</td><td>0</td><td>0,0&#37;</td><td class="sep">2.612</td><td>2.612</td><td>100,0&#37;</td></tr>
+          <tr><td class="i">Otras 1 marcas</td><td>0</td><td>0</td><td>0,0&#37;</td><td class="sep">17</td><td>15</td><td>88,2&#37;</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>46.542</td><td>20.665</td><td>44,4&#37;</td><td class="sep">77.368</td><td>14.085</td><td>18,2&#37;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>Bata pide 29.594 pares de calzado &mdash;el 64&#37;&mdash;
+      y cierra en 43,8&#37;, igual que el promedio.</strong> Con las bolsas adentro Bata
+      sal&iacute;a en 23,3&#37; y parec&iacute;a la marca peor atendida: las 74.000 bolsas
+      est&aacute;n matriculadas a su nombre.</p>
+    <p class="nota-ojo">La &uacute;nica que se sale por abajo es <strong>Bata Industrials: 607
+      pares y 33,1&#37;</strong>. Es poco volumen, pero es la &uacute;nica bajo 40 con
+      m&aacute;s de 300 pares.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Por Gender RIMS</h2><span class="nota">la clasificaci&oacute;n RIMS del Maestro</span></div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th class="i" rowspan="2">Gender RIMS</th>
+              <th colspan="3">Calzado</th>
+              <th colspan="3" class="sep">No calzado</th></tr>
+          <tr><th>Pedido</th><th>Picado</th><th>Fill rate</th>
+              <th class="sep">Pedido</th><th>Picado</th><th>Fill rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="i">02 WOMEN</td><td>19.934</td><td>9.361</td><td>47,0&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">06 OTHERS</td><td>14.564</td><td>5.589</td><td>38,4&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">03 KIDS</td><td>4.337</td><td>2.132</td><td>49,2&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">01 MEN</td><td>4.110</td><td>1.955</td><td>47,6&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">04 SPORT</td><td>2.385</td><td>1.118</td><td>46,9&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">07 INDUSTRIAL</td><td>607</td><td>201</td><td class="flojo">33,1&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">05 SCHOOL</td><td>605</td><td>309</td><td>51,1&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">(sin Gender RIMS)</td><td>0</td><td>0</td><td>0,0&#37;</td><td class="sep">2.612</td><td>2.612</td><td>100,0&#37;</td></tr>
+          <tr><td class="i">11 NON COMMERCIAL COMPLEMENTS</td><td>0</td><td>0</td><td>0,0&#37;</td><td class="sep">74.175</td><td>11.140</td><td>15,0&#37;</td></tr>
+          <tr><td class="i">08 ACCESORIES</td><td>0</td><td>0</td><td>0,0&#37;</td><td class="sep">576</td><td>328</td><td>56,9&#37;</td></tr>
+          <tr><td class="i">Otros 1</td><td>0</td><td>0</td><td>0,0&#37;</td><td class="sep">5</td><td>5</td><td>100,0&#37;</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>46.542</td><td>20.665</td><td>44,4&#37;</td><td class="sep">77.368</td><td>14.085</td><td>18,2&#37;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>02 WOMEN es el 43&#37; del calzado: 19.934 pares, al
+      47,0&#37;.</strong> Le siguen 06 OTHERS con 14.564 (38,4&#37;) y 03 KIDS con 4.337
+      (49,2&#37;).</p>
+    <p class="nota-ojo"><strong>&laquo;11 NON COMMERCIAL COMPLEMENTS&raquo; desaparece del lado
+      de calzado: era 74.175 pares, o sea las bolsas enteras.</strong> Por eso antes se
+      llevaba el 60&#37; del cuadro.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Por Colecci&oacute;n PO</h2><span class="nota">la temporada del Maestro (columna &laquo;Coleccion PO&raquo;)</span></div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th class="i" rowspan="2">Colecci&oacute;n PO</th>
+              <th colspan="3">Calzado</th>
+              <th colspan="3" class="sep">No calzado</th></tr>
+          <tr><th>Pedido</th><th>Picado</th><th>Fill rate</th>
+              <th class="sep">Pedido</th><th>Picado</th><th>Fill rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="i">2026-Q4</td><td>22.510</td><td>10.291</td><td>45,7&#37;</td><td class="sep">333</td><td>197</td><td>59,2&#37;</td></tr>
+          <tr><td class="i">2027-Q1</td><td>19.143</td><td>8.203</td><td>42,9&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">2026-Q3</td><td>3.247</td><td>1.492</td><td>46,0&#37;</td><td class="sep">117</td><td>60</td><td>51,3&#37;</td></tr>
+          <tr><td class="i">2025-Q4</td><td>475</td><td>151</td><td class="flojo">31,8&#37;</td><td class="sep">6</td><td>3</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">2026-Q2</td><td>364</td><td>210</td><td>57,7&#37;</td><td class="sep">73</td><td>35</td><td>47,9&#37;</td></tr>
+          <tr><td class="i">2025-Q2</td><td>354</td><td>104</td><td class="flojo">29,4&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">ND</td><td>159</td><td>69</td><td>43,4&#37;</td><td class="sep">74.149</td><td>11.124</td><td>15,0&#37;</td></tr>
+          <tr><td class="i">2026-Q1</td><td>91</td><td>53</td><td>58,2&#37;</td><td class="sep">4</td><td>4</td><td>100,0&#37;</td></tr>
+          <tr><td class="i">2025-Q3</td><td>90</td><td>26</td><td>28,9&#37;</td><td class="sep">24</td><td>12</td><td>50,0&#37;</td></tr>
+          <tr><td class="i">(en blanco)</td><td>64</td><td>44</td><td>68,8&#37;</td><td class="sep">30</td><td>28</td><td>93,3&#37;</td></tr>
+          <tr><td class="i">2024-Q4</td><td>33</td><td>16</td><td>48,5&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">2025-Q1</td><td>6</td><td>3</td><td>50,0&#37;</td><td class="sep">&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="i">Otras 5 colecciones</td><td>6</td><td>3</td><td>50,0&#37;</td><td class="sep">2.632</td><td>2.622</td><td>99,6&#37;</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>46.542</td><td>20.665</td><td>44,4&#37;</td><td class="sep">77.368</td><td>14.085</td><td>18,2&#37;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-ojo">Del lado de no calzado la colecci&oacute;n sale casi toda en
+      blanco: las bolsas no tienen temporada. Por eso este corte solo tiene sentido
+      le&iacute;do en la columna de calzado.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Órdenes que no cerraron</h2>
+      <span class="nota">se picó y quedó algo sin embalar</span></div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="i">Orden</th><th class="i">Tienda</th>
+          <th>Pedido</th><th>Picado</th><th>Embalado</th><th>Falta</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="i">8005937</td><td class="i">50149 &middot; B CHORRILLOS</td><td>520</td><td>219</td><td>218</td><td class="falta">1</td></tr>
+          <tr><td class="i">8005044</td><td class="i">50196 &middot; B2 COMAS</td><td>31</td><td>13</td><td>12</td><td class="falta">1</td></tr>
+          <tr><td class="i">8004462</td><td class="i">50224 &middot; B PUENTE PIEDRA</td><td>146</td><td>53</td><td>52</td><td class="falta">1</td></tr>
+          <tr><td class="i">8003919</td><td class="i">50411 &middot; B1 CHIMBOTE</td><td>10</td><td>4</td><td>3</td><td class="falta">1</td></tr>
+          <tr><td class="i">8003894</td><td class="i">50272 &middot; B CHOSICA</td><td>206</td><td>97</td><td>96</td><td class="falta">1</td></tr>
+          <tr><td class="i">0232489</td><td class="i">90377 &middot; no es tienda</td><td>152</td><td>43</td><td>42</td><td class="falta">1</td></tr>
+          <tr class="tot"><td class="i" colspan="2">6 órdenes de 1.065</td><td>1.065</td><td>429</td><td>423</td><td>6</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>Las seis son de calzado</strong> y a las seis les falta
+      exactamente un par. No hay ninguna orden de bolsas sin cerrar.</p>
+    <div class="vacio">Un día bueno, esta tabla sale vacía. El día que salgan treinta líneas,
+      ahí pasó algo.</div>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Cómo se arma</h2></div>
+    <p class="nota-bien" style="border-left-color:var(--marino2);background:var(--papel)">
+      <strong>Sin robot nuevo y sin bajar nada.</strong> Las tres cantidades vienen en el mismo
+      archivo de picking que el corte de las 20:00 ya baja: <em>Cantidad de orden original</em>,
+      <em>Cantidad asignada</em> y <em>Cantidad empaquetada</em>, en la misma fila.<br><br>
+      <strong>El calzado se separa con la columna «G. Gender» del Maestro:</strong> vale
+      <em>Footwear</em>, y todo lo demás &mdash;Non Commercial, Non Footwear, Promotions y lo que
+      no está en el Maestro&mdash; es no calzado. Los cortes por marca, Gender RIMS y Colección PO
+      salen del mismo Maestro, cruzando el código de artículo. Los de tienda, ruta, zona y día de despacho salen
+      de cruzar <em>Instalación de destino</em> con el maestro <strong>RUTAS - TURNOS</strong>,
+      que es el mismo que ya usa el reporte de pendiente. Los dos maestros ya están en el
+      servidor: tampoco hay que bajar nada nuevo.<br><br>
+      Por eso no hace falta cruzar dos archivos: no puede desalinearse por fechas, que es lo que
+      hacía que los totales del día no cuadraran —el embalaje de un día incluye órdenes picadas
+      el día anterior—.</p>
+  </section>
+
+</div>

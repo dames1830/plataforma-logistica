@@ -1,0 +1,273 @@
+<title>Picking por zona</title>
+<style>
+  :root{
+    --marino:#12365c; --marino2:#1b4a7a; --clara:#dbe4f0;
+    --tinta:#1c2430; --apagado:#66727f; --raya:#d5dde6; --papel:#f2f5f9;
+    --panel:#ffffff; --bien:#1d7a4c; --bienf:#eef7f1; --mal:#b3261e; --malf:#fdeeed;
+    --ojo:#8a5a00; --ojof:#fff6e2; --sombra:0 1px 2px rgba(18,54,92,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --marino:#0d2742; --marino2:#17406b; --clara:#9fb6d0; --papel:#0f1620;
+      --panel:#161f2b; --tinta:#e6ebf2; --apagado:#93a1b3; --raya:#2a3745;
+      --bien:#4cbf87; --bienf:#12241a; --mal:#f08a84; --malf:#2a1614;
+      --ojo:#e0b464; --ojof:#2a2110; --sombra:none;
+    }
+  }
+  :root[data-theme="dark"]{
+    --marino:#0d2742; --marino2:#17406b; --clara:#9fb6d0; --papel:#0f1620;
+    --panel:#161f2b; --tinta:#e6ebf2; --apagado:#93a1b3; --raya:#2a3745;
+    --bien:#4cbf87; --bienf:#12241a; --mal:#f08a84; --malf:#2a1614;
+    --ojo:#e0b464; --ojof:#2a2110; --sombra:none;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--papel);color:var(--tinta);
+       font:14px/1.55 "Segoe UI",-apple-system,system-ui,sans-serif}
+  .hoja{max-width:1080px;margin:0 auto;padding:20px 18px 56px;
+        display:flex;flex-direction:column;gap:20px}
+  .bloque{background:var(--panel);border:1px solid var(--raya);border-radius:10px;
+          overflow:hidden;box-shadow:var(--sombra)}
+  .banda{background:var(--marino);color:#fff;padding:12px 16px;
+         display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .banda h1{margin:0;font-size:17px;font-weight:700}
+  .banda h2{margin:0;font-size:14px;font-weight:700}
+  .banda .nota{color:var(--clara);font-size:12.5px}
+  .banda .dia{margin-left:auto}
+  .banda .caja{background:#fff;color:#12365c;border-radius:6px;padding:5px 11px;
+               font-weight:700;font-size:13px}
+
+  .cadena{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--raya)}
+  .paso{background:var(--panel);padding:15px 16px}
+  .paso .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+           color:var(--apagado);font-weight:700}
+  .paso .v{font-size:28px;font-weight:700;margin-top:1px;font-variant-numeric:tabular-nums}
+  .paso .p{font-size:12.5px;margin-top:3px;color:var(--apagado)}
+  .paso .p b{font-weight:700}
+  .fuerte .v{color:var(--bien)}
+  .flojo .v{color:var(--mal)}
+
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;
+        font-variant-numeric:tabular-nums;min-width:720px}
+  th{background:var(--marino2);color:#fff;text-align:right;padding:7px 10px;
+     font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;
+     white-space:nowrap;border:1px solid rgba(255,255,255,.14)}
+  th span{display:block;font-weight:400;font-size:9.5px;color:var(--clara);
+          letter-spacing:0;text-transform:none}
+  th.i{text-align:left}
+  td{padding:6px 10px;text-align:right;border:1px solid var(--raya);white-space:nowrap;
+     color:var(--tinta)}
+  td.i{text-align:left}
+  th.sep,td.sep{border-left:2px solid var(--marino2)}
+  tr.tot td{background:var(--clara);font-weight:700;color:var(--marino)}
+  td.rojo{color:var(--mal);font-weight:700}
+  td.verde{color:var(--bien);font-weight:700}
+  .barra{display:inline-block;height:9px;background:var(--marino2);border-radius:2px;
+         vertical-align:middle}
+  .nota-bien,.nota-ojo,.nota-azul{padding:11px 15px;font-size:12.8px;line-height:1.65;margin:0}
+  .nota-bien{border-left:3px solid var(--bien);background:var(--bienf);color:var(--tinta)}
+  .nota-ojo{border-left:3px solid var(--ojo);background:var(--ojof);color:var(--tinta)}
+  .nota-azul{border-left:3px solid var(--marino2);background:var(--papel);color:var(--tinta)}
+  @media(max-width:760px){.cadena{grid-template-columns:1fr}}
+</style>
+
+<div class="hoja">
+
+  <section class="bloque">
+    <div class="banda">
+      <div>
+        <h1>Picking por zona</h1>
+        <div class="nota">cuánto se pica por hora y cuánto se demora cada línea, zona por zona</div>
+      </div>
+      <div class="dia"><span class="caja">1 ago – 30 ago · 5 semanas cerradas</span></div>
+    </div>
+
+    <div class="cadena">
+      <div class="paso fuerte">
+        <div class="k">La zona más rápida</div>
+        <div class="v">Selectivo</div>
+        <div class="p"><b>99 picks/h</b> · 36,2 segundos por línea</div>
+      </div>
+      <div class="paso flojo">
+        <div class="k">La más lenta con volumen</div>
+        <div class="v">Mezzanine 4</div>
+        <div class="p"><b>51 picks/h</b> · 70,7 segundos por línea</div>
+      </div>
+      <div class="paso">
+        <div class="k">El promedio del calzado</div>
+        <div class="v">79</div>
+        <div class="p">picks/h · <b>119 pares/h</b> en solid</div>
+      </div>
+    </div>
+
+    <p class="nota-bien"><strong>«Cuánto se demora» son los segundos por pick.</strong> En
+      Selectivo una línea toma 36,2 segundos; en Mezzanine 1, 48,9; en Mezzanine 4, 70,7. Un
+      picker en selectivo toca <strong>dos líneas en el tiempo que en Mezzanine 4 toca una</strong>.</p>
+
+    <p class="nota-ojo"><strong>Calzado y no calzado se miden en PICKS, no en pares.</strong> En
+      no calzado una línea son 2.500 bolsas: puesto en pares da 32.286 «pares/h», que no significa
+      nada. El pick es lo único comparable entre los dos lados. El cuadro de pares/h va aparte y
+      solo para el <em>solid</em>, que es donde un pick es un par de verdad.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Calzado &middot; picks por hora</h2><span class="nota">un pick es una línea tocada &mdash; es lo que de verdad se demora el picker</span></div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="i">Zona</th><th>Picks</th><th>Horas</th><th>Picks por hora</th>
+          <th class="sep">Segundos<span>por pick</span></th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="i">Selectivo</td><td>15.292</td><td>153,8</td><td class="verde">99</td><td class="sep">36,2</td></tr>
+          <tr><td class="i">Buffer</td><td>25.257</td><td>266,1</td><td>95</td><td class="sep">37,9</td></tr>
+          <tr><td class="i">Mezzanine 3</td><td>18.050</td><td>208,8</td><td>86</td><td class="sep">41,6</td></tr>
+          <tr><td class="i">Piso</td><td>4.012</td><td>48,2</td><td>83</td><td class="sep">43,3</td></tr>
+          <tr><td class="i">Mezzanine 2</td><td>18.609</td><td>242,2</td><td>77</td><td class="sep">46,9</td></tr>
+          <tr><td class="i">Mezzanine 1</td><td>17.869</td><td>243,0</td><td>74</td><td class="sep">48,9</td></tr>
+          <tr><td class="i">Andamio</td><td>7.723</td><td>149,3</td><td class="rojo">52</td><td class="sep">69,6</td></tr>
+          <tr><td class="i">Mezzanine 4</td><td>5.311</td><td>104,3</td><td class="rojo">51</td><td class="sep">70,7</td></tr>
+          <tr><td class="i">Pared</td><td>2</td><td>&mdash;</td><td>&mdash;</td><td class="sep">&mdash;</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>112.125</td><td>1.415,7</td><td>79</td><td class="sep">45,5</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>Selectivo es la zona más rápida: 99 picks por hora, 36,2
+      segundos cada uno.</strong> Mezzanine 1 tarda 48,9 segundos y Mezzanine 4 setenta. Un
+      picker en selectivo toca <strong>dos líneas en el tiempo que en Mezzanine 4 toca una</strong>.</p>
+    <p class="nota-ojo"><strong>Los mezzanines no van parejos: Mezzanine 3 hace 86 picks/h y
+      Mezzanine 1 hace 74.</strong> Son 12 picks/h de diferencia con casi el mismo volumen
+      &mdash;18.050 contra 17.869 líneas&mdash;. Ahí hay algo que mirar: cómo está ordenado, qué
+      marcas caen en cada uno, cuánto se camina.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>No calzado &middot; picks por hora</h2><span class="nota">bolsas, etiquetas, accesorios &mdash; la misma unidad, para poder compararlo</span></div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="i">Zona</th><th>Picks</th><th>Horas</th><th>Picks por hora</th>
+          <th class="sep">Segundos<span>por pick</span></th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="i">Mezzanine 3</td><td>32</td><td>0,0</td><td class="verde">729</td><td class="sep">4,9</td></tr>
+          <tr><td class="i">Buffer</td><td>496</td><td>1,6</td><td class="verde">318</td><td class="sep">11,3</td></tr>
+          <tr><td class="i">Selectivo</td><td>19</td><td>0,3</td><td class="verde">66</td><td class="sep">54,7</td></tr>
+          <tr><td class="i">Andamio</td><td>734</td><td>13,9</td><td>53</td><td class="sep">68,3</td></tr>
+          <tr><td class="i">Pared</td><td>162</td><td>3,3</td><td>50</td><td class="sep">72,3</td></tr>
+          <tr><td class="i">Mezzanine 4</td><td>3.648</td><td>85,7</td><td>43</td><td class="sep">84,5</td></tr>
+          <tr><td class="i">Materiales</td><td>51</td><td>4,8</td><td class="rojo">11</td><td class="sep">341,2</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>5.142</td><td>109,6</td><td>47</td><td class="sep">76,7</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-azul"><strong>El no calzado casi no se pica: 5.142 picks contra 112.125 de
+      calzado.</strong> Son el 4,4&#37; del trabajo. Y se concentra en Mezzanine 4, que es su
+      zona: 3.648 de los 5.142.</p>
+    <p class="nota-ojo"><strong>Las filas de arriba son ruido, no records.</strong> Mezzanine 3
+      dice 729 picks/h con 32 líneas y Buffer 318 con 496. Con tan pocas líneas un solo pico
+      manda; solo <strong>Mezzanine 4 (3.648 picks) tiene volumen para creerle</strong>, y da 43
+      picks/h &mdash;84,5 segundos por línea, el doble de lo que tarda el calzado&mdash;.</p>
+    <p class="nota-azul"><strong>Materiales son 51 picks en 4,8 horas: 341 segundos cada uno.</strong>
+      Es la orden de las bolsas: pocas líneas, enormes, y cada una toma casi seis minutos.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Calzado solid &middot; pares por hora</h2><span class="nota">calzado suelto, sin prepack &mdash; el número que se compara contra el piso de 100</span></div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="i">Zona</th><th>Pares</th><th>Horas</th><th>Pares por hora</th>
+          <th class="sep">Segundos<span>por pick</span></th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="i">Piso</td><td>10.854</td><td>48,2</td><td class="verde">225</td><td class="sep">43,3</td></tr>
+          <tr><td class="i">Selectivo</td><td>22.581</td><td>153,8</td><td class="verde">147</td><td class="sep">36,2</td></tr>
+          <tr><td class="i">Mezzanine 3</td><td>29.108</td><td>208,8</td><td>139</td><td class="sep">41,6</td></tr>
+          <tr><td class="i">Mezzanine 4</td><td>14.330</td><td>104,3</td><td>137</td><td class="sep">70,7</td></tr>
+          <tr><td class="i">Mezzanine 2</td><td>27.800</td><td>242,2</td><td>115</td><td class="sep">46,9</td></tr>
+          <tr><td class="i">Mezzanine 1</td><td>23.710</td><td>243,0</td><td>98</td><td class="sep">48,9</td></tr>
+          <tr><td class="i">Buffer</td><td>8.234</td><td>110,6</td><td class="rojo">74</td><td class="sep">74,9</td></tr>
+          <tr><td class="i">Andamio</td><td>1.741</td><td>51,7</td><td class="rojo">34</td><td class="sep">120,3</td></tr>
+          <tr><td class="i">Pared</td><td>2</td><td>&mdash;</td><td>&mdash;</td><td class="sep">&mdash;</td></tr>
+          <tr class="tot"><td class="i">TOTAL</td><td>138.360</td><td>1.162,6</td><td>119</td><td class="sep">48,7</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>Acá el par sí mide el trabajo</strong> &mdash;en solid un pick
+      es un par&mdash;, así que este es el número que se compara contra el piso de 100. El total
+      da <strong>119 pares/h</strong>.</p>
+    <p class="nota-ojo"><strong>Y acá está lo de zona Piso, que no te cuadraba.</strong> Sale
+      primera con 225 pares/h, pero <strong>no es la más rápida: es la que saca más pares de cada
+      pick</strong>. En Piso cada línea entrega 2,7 pares; en Selectivo, 1,5. Medida en picks por
+      hora, Piso está en 83 &mdash;en el medio de la tabla, detrás de Selectivo, Buffer y
+      Mezzanine 3&mdash;.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Qué es «zona Piso»</h2>
+      <span class="nota">lo revisé porque a mí tampoco me cuadraba</span></div>
+    <p class="nota-ojo"><strong>Zona Piso es UNA sola ubicación: <code>PISO-600-00-400</code>.</strong>
+      No es una zona del almacén con pasillos y niveles &mdash;es una posición en el suelo que se
+      usa como punto de picking&mdash;. De ahí salieron 10.854 pares en 4.012 líneas, en 21 de los
+      25 días y con 10 personas distintas.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="i">Artículo</th><th class="i">Descripción</th>
+          <th class="i sep">Marca</th><th>Pares</th></tr></thead>
+        <tbody>
+          <tr><td class="i">8811479</td><td class="i">LACES &mdash; ABANO &mdash; WHITE</td><td class="i sep">North Star</td><td>732</td></tr>
+          <tr><td class="i">8816479</td><td class="i">LACES &mdash; ABANO &mdash; BLACK</td><td class="i sep">North Star</td><td>564</td></tr>
+          <tr><td class="i">6811607</td><td class="i">SPORT &mdash; SHIMME &mdash; OFF WHITE</td><td class="i sep">North Star</td><td>372</td></tr>
+          <tr><td class="i">8056905</td><td class="i">COMET BROWN</td><td class="i sep">Bata Industrials</td><td>344</td></tr>
+          <tr><td class="i">8056936</td><td class="i">WARRIOR PPA &mdash; BLACK</td><td class="i sep">Bata Industrials</td><td>328</td></tr>
+          <tr><td class="i">8054970</td><td class="i">CUERO PU COLADA &mdash; HAMMER BROWN</td><td class="i sep">Bata Industrials</td><td>290</td></tr>
+          <tr><td class="i">8056021</td><td class="i">STEEL PPA-1-42</td><td class="i sep">Bata Industrials</td><td>270</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota-bien"><strong>Se pican dos cosas: pasadores y calzado de seguridad
+      Bata Industrials.</strong> Los pasadores (LACES) explican por qué cada pick saca 2,7 pares:
+      se piden de a varios pares y salen de un tirón.</p>
+    <p class="nota-ojo"><strong>Ojo con esto: los pasadores están marcados como «Footwear» en el
+      Maestro</strong> &mdash;por eso caen del lado de calzado y no del de accesorios&mdash;. No
+      es un error del reporte: es cómo están clasificados. Si quieres que dejen de contar como
+      calzado, hay que corregirlos en el Maestro.</p>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Cómo se mide, y qué tiene de nuevo</h2></div>
+    <p class="nota-bien"><strong>Ata con la pantalla que ya tienes.</strong> En la misma ventana
+      &mdash;1 al 30 de agosto, las 5 semanas cerradas&mdash; este cálculo da
+      <strong>138.360 pares</strong> y la pantalla de Producción dice <strong>138.113</strong>:
+      247 pares de diferencia, el <strong>0,18&#37;</strong>. Se copiaron las reglas del robot una
+      por una.</p>
+
+    <p class="nota-azul"><strong>De dónde salen las horas.</strong> No de la jornada ni de un
+      horario teórico. El WMS no dice cuánto duró una tarea, dice cuándo se picó cada línea, así
+      que <strong>el tiempo de una tarea es su último pick menos el primero</strong>. Una tarea de
+      un solo pick aporta cero: inventarle duración sería falsear.<br><br>
+      Solo cuentan las líneas <em>Finalizadas</em> y con número de tarea de verdad, y los pares
+      que se dividen son los de esas mismas líneas &mdash;usar el total del día contra esas horas
+      inflaría el ritmo&mdash;. La zona sale de <em>De ubicación</em>, cortada en el primer guion:
+      <code>SEL</code>, <code>MZN01</code>, <code>AND</code>, <code>CDBUFFER</code>.</p>
+
+    <p class="nota-ojo"><strong>Lo nuevo, y lo único discutible: la tarea se parte por zona.</strong>
+      El tiempo de Selectivo dentro de una tarea es su último pick en selectivo menos el primero.
+      <strong>El 21,6&#37; de las tareas toca más de una zona</strong>, y en esas el viaje entre
+      zonas no cae en ninguna.<br><br>
+      Por eso las horas de este cuadro suman <strong>1.162,6</strong> y la pantalla dice
+      <strong>1.224</strong>: faltan <strong>61,4 horas, el 5,0&#37;</strong>. Esas horas
+      <em>son</em> el traslado entre zonas. Los ritmos por zona salen entonces un 5&#37; altos
+      respecto del promedio mezclado &mdash;119 contra 113&mdash;, y eso está bien: es el ritmo
+      <em>dentro</em> de la zona, sin el camino.</p>
+
+    <p class="nota-azul"><strong>Para llevarlo a la web falta un cambio en el robot.</strong>
+      <code>produccion_picking.py</code> ya guarda el volumen por zona pero no el tiempo: publica
+      los segundos por persona y clase (<code>cal_suelto_s</code>), no por zona. Hay que agregarle
+      <code>&lt;zona&gt;_s</code> y <code>&lt;zona&gt;_q</code> con la misma cuenta que ya hace.
+      No hace falta bajar nada nuevo del WMS: el archivo de picking ya trae la ubicación, la hora
+      y la tarea.</p>
+  </section>
+
+</div>

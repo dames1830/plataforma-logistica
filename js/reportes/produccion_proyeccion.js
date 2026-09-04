@@ -66,12 +66,12 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0626';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0626';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0627';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0627';
 /* LA EQUIVALENCIA SE IMPORTA, NO SE COPIA. Vive en `picking.js` desde que se
    midio sobre nueve archivos reales, y escribirla otra vez aca seria tener dos
    verdades que un dia se separan. */
-import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0626';
+import { EQUIVALENCIA_PREPACK } from './picking.js?v=29.0627';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
