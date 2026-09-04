@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Maqueta · Recepción del día</title>
+<style>
+  :root{
+    --navy:#12365c; --navy2:#1b4a7a; --soft:#dbe4f0;
+    --ink:#20262e; --muted:#6b7885; --linea:#d7dee7; --papel:#f4f6f9;
+    --ok:#1d7a4c; --okfondo:#eef7f1; --mal:#b3261e; --malfondo:#fdeeed;
+    --ojo:#8a5a00; --ojofondo:#fff6e2;
+    --crema:#fdf6e3; --verde:#dff0d8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--papel);color:var(--ink);
+       font:14px/1.55 "Segoe UI",system-ui,sans-serif}
+  .hoja{max-width:1240px;margin:0 auto;padding:22px 20px 60px}
+
+  .tapa{background:var(--navy);color:#fff;border-radius:12px 12px 0 0;
+        padding:13px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .tapa h1{margin:0;font-size:18px;font-weight:700}
+  .tapa h2{margin:0;font-size:15px;font-weight:700}
+  .tapa .sub{color:var(--soft);font-size:12.5px}
+  .tapa .dia{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .tapa input{border:none;border-radius:7px;padding:6px 10px;font:inherit;
+              font-weight:600;color:var(--navy)}
+
+  .caja{background:#fff;border:1px solid var(--linea);border-top:none;
+        border-radius:0 0 12px 12px;margin-bottom:22px;overflow:hidden}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+  th{background:var(--navy2);color:#fff;text-align:center;padding:8px 10px;
+     font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;
+     border:1px solid #14406b;white-space:nowrap;line-height:1.3}
+  th .u{display:block;font-weight:400;font-size:10px;color:var(--soft);letter-spacing:0}
+  td{padding:6px 10px;text-align:right;border:1px solid #e6ebf1;white-space:nowrap}
+  td.izq,td.cen{text-align:left}
+  td.cen{text-align:center}
+  tr.calzado td{background:var(--crema)}
+  tr.etiquetas td{background:var(--verde)}
+  tr.tot td{background:#fff8c9;font-weight:700}
+  .rev{background:#fff;border:1px solid var(--ojo);color:var(--ojo);font-weight:700;
+       border-radius:4px;padding:0 6px;font-size:11px}
+  .falta{color:var(--muted)}
+  .dif-ok{color:var(--ok);font-weight:700}
+  .dif-mal{color:var(--mal);font-weight:700}
+  .pie{padding:11px 18px;font-size:12.5px;color:var(--muted);
+       border-top:1px solid var(--linea);line-height:1.65}
+
+  .aviso{border-left:4px solid var(--ojo);background:var(--ojofondo);color:#5a3d00;
+         padding:12px 16px;font-size:13px;line-height:1.6}
+  .azul{border-left:4px solid var(--navy2);background:#f4f8fd;color:#123;
+        padding:12px 16px;font-size:13px;line-height:1.6}
+  .bien{border-left:4px solid var(--ok);background:var(--okfondo);color:#14532d;
+        padding:12px 16px;font-size:13px;line-height:1.6}
+
+  .ejemplo{padding:14px 18px;background:#fbfcfe;border-top:1px solid var(--linea)}
+  .ejemplo .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+              color:var(--muted);font-weight:700;margin-bottom:8px}
+  .ejemplo table{max-width:640px}
+  .ejemplo td{background:#fff}
+</style>
+</head>
+<body>
+<div class="hoja">
+
+  <div class="tapa">
+    <div>
+      <h1>Recepción del día</h1>
+      <div class="sub">programado · verificado · matriculado, en la forma del correo de citas</div>
+    </div>
+    <div class="dia"><span class="sub">Día</span><input type="date" value="2026-09-03"></div>
+  </div>
+
+  <div class="caja">
+    <table>
+      <thead><tr>
+        <th>Observación</th><th>Hora de cita</th><th>Proveedor</th><th>O/C</th>
+        <th>Programadas<span class="u">del correo de citas</span></th>
+        <th>Verificadas<span class="u">unidades, del ASN</span></th>
+        <th>Matriculadas<span class="u">unidades, en el buffer</span></th>
+        <th>Diferencia<span class="u">verificadas − matriculadas</span></th>
+      </tr></thead>
+      <tbody>
+        <tr class="calzado"><td class="cen">CALZADO</td><td class="cen">08:20 AM</td><td class="izq">ADIDAS</td><td class="cen">2026-10341</td><td>845</td><td>4.207</td><td class="falta">—</td><td class="falta">—</td></tr>
+        <tr class="calzado"><td class="cen"></td><td class="cen"></td><td class="izq"></td><td class="cen">2026-09563</td><td><span class="rev">revisar</span></td><td>377</td><td class="falta">—</td><td class="falta">—</td></tr>
+        <tr class="calzado"><td class="cen"></td><td class="cen"></td><td class="izq"></td><td class="cen">2026-09801</td><td><span class="rev">revisar</span></td><td>476</td><td class="falta">—</td><td class="falta">—</td></tr>
+        <tr class="calzado"><td class="cen"></td><td class="cen"></td><td class="izq"></td><td class="cen">2026-10333</td><td>3.270</td><td>100.146</td><td class="falta">—</td><td class="falta">—</td></tr>
+        <tr class="calzado"><td class="cen">CALZADO</td><td class="cen">10:40 AM</td><td class="izq">TEXTIL GROUP C&amp;B SAC</td><td class="cen">2026-09501</td><td>126</td><td>630</td><td class="falta">—</td><td class="falta">—</td></tr>
+        <tr class="calzado"><td class="cen"></td><td class="cen"></td><td class="izq"></td><td class="cen">2026-09872</td><td>280</td><td>840</td><td class="falta">—</td><td class="falta">—</td></tr>
+        <tr class="calzado"><td class="cen">CALZADO</td><td class="cen">11:20 AM</td><td class="izq">HUAMANI</td><td class="cen">2026-05036</td><td>298</td><td>1.840</td><td class="falta">—</td><td class="falta">—</td></tr>
+        <tr class="calzado"><td class="cen"></td><td class="cen"></td><td class="izq"></td><td class="cen">2026-09659</td><td>138</td><td>508</td><td class="falta">—</td><td class="falta">—</td></tr>
+        <tr class="etiquetas"><td class="cen">ETIQUETAS</td><td class="cen">02:00 PM</td><td class="izq">SKECHERS</td><td class="cen">2026-10666</td><td>1.008</td><td class="falta">—</td><td class="falta">—</td><td class="falta">—</td></tr>
+        <tr class="etiquetas"><td class="cen">ETIQUETAS</td><td class="cen">02:30 PM</td><td class="izq">D' BRIGITTE SAC</td><td class="cen">2026-10208 …</td><td class="falta">—</td><td class="falta">—</td><td class="falta">—</td><td class="falta">—</td></tr>
+        <tr class="tot"><td class="cen" colspan="4">TOTAL</td><td>5.128</td><td>109.024</td><td class="falta">—</td><td class="falta">—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="bien">
+      <b>El cruce cierra:</b> esas 8 órdenes explican los <b>109.024 pares</b> que entró nacional
+      ese día. El 100%: nada llegó fuera de una cita y ninguna cita quedó sin llegar.
+    </div>
+
+    <div class="aviso">
+      <b>La columna «Programadas» NO está en unidades, y por eso el cuadro no se entiende.</b>
+      La cita dice 845 y por esa orden entraron 4.207 pares. Los cocientes de las ocho órdenes
+      son <b>4,98 · 4,33 · 5,67 · 30,63 · 5,00 · 3,00 · 6,17 · 3,68</b> — no es el mismo número,
+      así que el correo está contando <b>bultos</b> y no pares. Ponerla al lado de las verificadas
+      como si fueran lo mismo fue mi error.<br><br>
+      <b>Necesito que me confirmes qué cuenta ese número.</b> Si son bultos, esa columna se
+      muestra aparte y no se resta; si hay forma de que el correo mande unidades, las tres
+      columnas se comparan derecho.
+    </div>
+
+    <div class="ejemplo">
+      <div class="k">Así se vería el error que quieres detectar</div>
+      <table>
+        <thead><tr><th>Proveedor</th><th>O/C</th><th>Verificadas</th><th>Matriculadas</th><th>Diferencia</th></tr></thead>
+        <tbody>
+          <tr><td class="izq">EJEMPLO S.A.</td><td class="cen">2026-00001</td><td>1.000</td><td>1.000</td><td class="dif-ok">0</td></tr>
+          <tr><td class="izq">EJEMPLO S.A.</td><td class="cen">2026-00002</td><td>1.000</td><td>995</td><td class="dif-mal">−5</td></tr>
+        </tbody>
+      </table>
+      <div class="pie" style="border:none;padding:8px 0 0">
+        Verificó mil y matriculó novecientos noventa y cinco: faltan cinco en el buffer.
+        <b>Esas dos columnas sí van en la misma unidad y sí tienen que cuadrar.</b>
+        Los números de este recuadro son inventados a propósito, para mostrar la forma.
+      </div>
+    </div>
+  </div>
+
+  <div class="tapa">
+    <h2>Lo que falta para que el cuadro haga lo que quieres</h2>
+  </div>
+  <div class="caja">
+    <div class="azul">
+      <b>La columna «Matriculadas».</b> Es la que detecta el error, y hoy no la puedo medir.
+      El buffer rota más rápido que las dos fotos de stock del día: medido sobre 59 fotos desde
+      el 6 de agosto, <b>el 70% de las matriculaciones las vio una sola foto</b>, y contra lo
+      verificado el buffer capta entre el <b>2% y el 76% según el día</b>. Puesta así marcaría
+      descuadres que no existen.<br><br>
+      Necesita un <b>Web Report de movimientos de inventario</b> en el WMS: la tabla que registra
+      cada matriculación con su LPN, ubicación, usuario y hora. Con eso la columna sale exacta,
+      cuenta cualquier buffer <b>menos el C</b> —donde recepción no matricula—, y el cuadro
+      empieza a detectar el error de verdad.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

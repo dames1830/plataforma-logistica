@@ -1,43 +1,48 @@
 @echo off
 REM ============================================================
-REM  Picking y Detalle Orden de ayer - Bata
-REM  Lo ejecuta la tarea programada "Picking y Detalle Orden de ayer",
-REM  todos los dias a las 08:00.
+REM  DETALLE DE ORDEN  -  Bata
+REM  Lo ejecuta la tarea "Picking y Detalle Orden de ayer", dos
+REM  veces al dia: 07:20 y 19:20.
 REM
-REM  Baja de Oracle los dos reportes del DIA ANTERIOR COMPLETO y
-REM  los deja en OneDrive:
-REM      scraping Stock\Picking\Picking D-M.csv
-REM      scraping Stock\Detalle Orden\Detalle Orden DD-MM.csv
+REM  Baja el picking del dia que cerro y el Detalle de Orden.
 REM
-REM  Va a las 08:00 porque a las 07:00 se toma la foto ancla del
-REM  turno y Oracle no admite dos sesiones a la vez. Estos
-REM  reportes bajan AYER, que ya cerro. Y baja AYER ENTERO,
-REM  de 00:00 a 23:59, para no perder lo que pica catalogo web
-REM  entre las 20:00 y las 23:59.
+REM  Y DETRAS, SIN ENTRAR AL WMS, CALCULA LOS SKUs SIN SALIDA.
+REM  Daniel, 04-sep-2026: "no quiero llenarme de interfaces, si
+REM  otro reporte lo puede hacer quita esa interfaz".
+REM
+REM  Tiene razon: ese calculo NO BAJA NADA. Solo lee las fotos de
+REM  stock que el ancla ya trae, el Maestro y el Detalle de Orden
+REM  que esta misma corrida acaba de dejar. Era una linea mas en
+REM  la lista para un minuto de cuenta.
+REM
+REM  VA ACA Y NO EN OTRO LADO porque su ultimo ingrediente es el
+REM  Detalle de Orden del dia que cerro, y llega justo arriba.
+REM
+REM  SOLO EN EL PASE DE LA MANANA. El de las 19:20 puede estirarse
+REM  hasta las 20:00 y ahi entra el corte del turno: sumarle otro
+REM  minuto seria empujarlo encima.
+REM
+REM  Y SI EL DETALLE DE ORDEN FALLA, SE CALCULA IGUAL: las fotos
+REM  de stock alcanzan para saber que no se movio; lo que se
+REM  pierde es la columna de pedidos pendientes. Un cuadro sin esa
+REM  columna sirve; ninguno, no.
 REM
 REM  SIN ACENTOS NI ENES A PROPOSITO: cmd.exe se come la primera
 REM  letra de la orden siguiente y los IF ejecutan las dos ramas
-REM  a la vez. Paso el 08-ago-2026 y el resultado en pantalla no
-REM  vale.
+REM  a la vez.
 REM ============================================================
 
-REM La carpeta es la de ESTE archivo (C:\wms_scraping en el servidor)
 cd /d "%~dp0"
-
-REM Codigo de pagina UTF-8 para que los acentos del log no salgan rotos
 chcp 65001 >nul
 
-REM -u = salida sin buffer, para que el log se escriba en vivo
 python -u picking_y_orden.py
+set RC=%ERRORLEVEL%
 
-REM Codigos de salida:
-REM    0 = bajaron los dos
-REM    1 = falto alguno, o falla de configuracion
-REM
-REM SI UN DIA FALLA, ESE DIA NO SE PIERDE. El WMS guarda la
-REM historia. Se recupera a mano abriendo una ventana de comandos
-REM en C:\wms_scraping y escribiendo, por ejemplo:
-REM
-REM    python picking_y_orden.py --dia 12-08-2026
-REM
-exit /b %ERRORLEVEL%
+REM LA HORA LA DECIDE PYTHON, no el %TIME% de cmd: ese depende del
+REM idioma de Windows y trae un espacio delante cuando la hora es de
+REM una cifra. Es de las cosas que fallan una vez cada tanto, de
+REM madrugada, sin que nadie lo note. Sale con 0 si es de manana.
+python -c "import datetime,sys; sys.exit(0 if datetime.datetime.now().hour < 12 else 1)"
+if not errorlevel 1 python -u sku_sin_salida.py
+
+exit /b %RC%

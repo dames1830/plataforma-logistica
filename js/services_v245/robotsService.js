@@ -70,8 +70,13 @@ export const TAREAS = [
       detalle: 'la copia de seguridad de las 63 áreas', area: null },
     { id: 'archivado', tipo: 'diaria', etiqueta: 'Archivar tareas viejas',
       detalle: 'manda al histórico lo que pasó de 30 días', area: null },
-    { id: 'sin_salida', tipo: 'diaria', etiqueta: 'SKUs sin salida',
-      detalle: 'el cuadro de lo que llegó y no se movió', area: 'sku_sin_salida' },
+    /* SKUs SIN SALIDA YA NO ESTÁ ACÁ. Daniel, 04-sep-2026: *"no quiero llenarme de
+       interfaces, si otro reporte lo puede hacer quita esa interfaz"*.
+
+       Tenía razón: ese cálculo NO BAJA NADA —lee las fotos que el ancla ya trae, el
+       Maestro y el Detalle de Orden— y ocupaba una línea de la lista para un minuto
+       de cuenta. Ahora va colgado del robot de las 07:20, en el pase de la mañana,
+       que es donde llega su último ingrediente. El cuadro sigue igual. */
     { id: 'asn_web', tipo: 'diaria', etiqueta: 'ASN · seis meses',
       detalle: 'lo que viene en camino: un archivo por mes, seis meses atrás', area: null },
     /* VA DESPUÉS DE TODO EL TURNO. El último pase del avance de picking es 20:20 y el
@@ -80,8 +85,18 @@ export const TAREAS = [
     /* EL CIERRE DEL DIA ANTERIOR, de 00:00 a 23:59. El avance de cada 2 horas
        termina a las 20:20 y el dia sigue: un reporte completo solo se puede bajar
        despues de medianoche. Esto es lo que queda en el historial. */
-    { id: 'cierre_dia', tipo: 'diaria', etiqueta: 'Cierre del día anterior',
-      detalle: 'el día entero, de 00:00 a 23:59; es el que queda en el historial',
+    /* ERA 'Cierre del día anterior' HASTA EL 04-sep-2026. El corte de las 20:00 le
+       sacó el trabajo: medido, el embalaje termina a las 18:00 y el picking a las
+       17:00, así que el corte ya trae el día entero y esto bajaba lo mismo para
+       publicar encima.
+
+       Ahora mira la marca del corte y solo entra al WMS si ese día falló.
+
+       EL NOMBRE LO PUSO DANIEL: *"que se llame Respaldo Total del día, que lo está
+       haciendo"*. Convive con el `Respaldo de datos` de las 06:45 sin confundirse:
+       ese es la copia de la base, este rehace los números del día. */
+    { id: 'cierre_dia', tipo: 'diaria', etiqueta: 'Respaldo Total del día',
+      detalle: 'rehace el día entero de ayer, pero solo si el Corte del turno día falló',
       area: 'embalaje_por_hora' },
     { id: 'cruce_wms', tipo: 'diaria', etiqueta: 'Cruce contra el WMS',
       detalle: 'los dos web reports del WMS contra lo que calcula la plataforma',
@@ -142,14 +157,14 @@ export const robotsPorDefecto = () => ({
     ancla_manana: { activa: true, hora: '07:00', dias: { ...LUN_A_SAB } },
     stock_hora:   { activa: true, minuto: 0, cadaMin: 120, dias: { ...TODOS },
                     desde: '22:00', hasta: '06:00' },
-    picking_hora: { activa: true, minuto: 0, cadaMin: 120, dias: { ...TODOS },
-                    desde: '10:00', hasta: '17:00', saltar: ['18:00', '20:00'] },
+    picking_hora: { activa: true, minuto: 0, cadaMin: 180, dias: { ...TODOS },
+                    desde: '12:00', hasta: '15:30', saltar: ['18:00', '20:00'] },
     /* FALTABA. Se agregó a TAREAS el 31-ago-2026 y se olvidó acá, así que la pantalla
        venía avisando por consola y cayendo a "apagada, todos los días". Funcionaba de
        casualidad, porque el servidor sí la publica; el día que no contestara, Daniel
        habría visto el avance de embalaje apagado sin estarlo. */
-    oblpn_hora:   { activa: true, minuto: 20, cadaMin: 120, dias: { ...TODOS },
-                    desde: '10:00', hasta: '17:00', saltar: ['18:20', '20:20'] },
+    oblpn_hora:   { activa: true, minuto: 20, cadaMin: 180, dias: { ...TODOS },
+                    desde: '12:00', hasta: '15:30', saltar: ['18:20', '20:20'] },
     mapa_hora:    { activa: true, minuto: 15, cadaMin: 120, dias: { ...TODOS },
                     desde: '22:00', hasta: '06:15' },
     /* `minuto: 440` son las 07:20 contadas desde medianoche, no el minuto 440 de una
@@ -158,7 +173,6 @@ export const robotsPorDefecto = () => ({
     reportes:     { activa: true, minuto: 440, cadaMin: 720, dias: { ...TODOS } },
     respaldo:     { activa: true, hora: '23:00', dias: { ...LUN_A_SAB } },
     archivado:    { activa: true, hora: '03:00', dias: { ...TODOS } },
-    sin_salida:   { activa: true, hora: '07:30', dias: { ...LUN_A_SAB } },
     asn_web:      { activa: true, hora: '04:30', dias: { ...TODOS } },
     cierre_dia:   { activa: true, hora: '08:30', dias: { ...TODOS } },
     cruce_wms:    { activa: true, hora: '21:30', dias: { ...LUN_A_SAB } },

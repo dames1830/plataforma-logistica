@@ -271,19 +271,33 @@ def publicar(ruta_act, ruta_res):
 #
 # Unos 45 KB por noche, 16 MB al año. Guardar el activo entero serían 135 MB.
 HORA_CIERRE = 6
-MINUTO_CIERRE = 30
 
 
 def es_la_corrida_del_cierre():
     """
     ¿Esta corrida es la que cierra la jornada?
 
-    La tarea dispara al minuto 30 de cada hora, así que la del cierre es la de las
-    06:30. Se compara con >= para que un arranque tardío —06:34, 06:41— siga contando
-    como el cierre, pero sin pasarse de la hora: la de las 07:30 ya no.
+    BASTA CON QUE SEA LA HORA 6. La ventana de `stock_hora` va de 22:00 a 06:00 cada
+    dos horas, así que dentro de la hora 6 hay UNA sola corrida: la última de la noche.
+
+    ANTES SE EXIGÍA ADEMÁS `minuto >= 30`, y eso rompió el cierre sin avisar.
+    Cuando la tarea disparaba cada hora al minuto 30, la del cierre era la de las
+    06:30 y la condición era correcta. **El 30-ago-2026 los robots pasaron a correr
+    cada dos horas al minuto 0**, así que la corrida de la mañana empezó a caer a las
+    06:00 —06:06 con el despertar de Windows, que revisa cada diez minutos—, el
+    `minuto >= 30` dejó de cumplirse y `guardar_cierre()` no volvió a ejecutarse.
+
+    La huella: `activo_cierre` —el área que SOLO escribe esta función— se quedó en la
+    jornada del 29-ago, guardada el 30-ago a las 06:36. Desde entonces, ninguna.
+
+    Y no es inocuo: sin las fotos del cierre, las tres actividades que se calculan
+    restando dos fotos —Limpieza de Buffer C, Bajada de paletas y Separación de
+    mercadería— salen en CERO en el reporte del turno de esa noche.
+
+    NO SE MIRA EL MINUTO. Si mañana cambia otra vez la hora del robot, esto sigue
+    funcionando mientras `HORA_CIERRE` sea la hora de la última corrida.
     """
-    ahora = datetime.now()
-    return ahora.hour == HORA_CIERRE and ahora.minute >= MINUTO_CIERRE
+    return datetime.now().hour == HORA_CIERRE
 
 
 def guardar_cierre(ruta_act, ruta_res):

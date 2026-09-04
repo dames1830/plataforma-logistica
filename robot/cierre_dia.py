@@ -1,5 +1,27 @@
 # -*- coding: utf-8 -*-
 """
+ROBOT: RESPALDO TOTAL DEL DIA  (antes: el cierre del dia anterior).
+
+DESDE EL 04-sep-2026 SOLO CORRE SI EL CORTE DE LAS 20:00 FALLO.
+
+Daniel: *"que se llame Respaldo Total del dia, que lo esta haciendo"*. Tiene
+razon: el corte le saco el trabajo y el nombre viejo ya no decia lo que hace.
+
+MEDIDO sobre los archivos completos que baja este mismo robot:
+
+    02-sep   26.025 lineas   ultima actividad 18:00   despues de las 20:00: CERO
+    01-sep   27.951 lineas   ultima actividad 19:00   despues de las 20:00: CERO
+
+El embalaje termina a las 18:00 y el picking a las 17:00. El corte de las 20:00 ya
+trae el dia entero, asi que esto bajaba lo mismo, calculaba lo mismo y publicaba
+ENCIMA: 25 minutos de WMS para el mismo resultado, y a la hora en que el ancla de
+la manana puede estar estirandose.
+
+NO SE BORRA. Un dia el corte va a fallar -el WMS ocupado, un archivo que no baja- y
+ese dia esto es lo unico que queda. Con `--igual` se fuerza a correr.
+
+--- lo que decia antes, y sigue valiendo cuando SI corre ---
+
 ROBOT: EL CIERRE DEL DIA ANTERIOR, DE 00:00 A 23:59.
 
 Daniel, 02-sep-2026: *"tambien hay otro reporte que me tienes que bajar, que
@@ -26,6 +48,7 @@ esa hora el picking de ayer ya esta en OneDrive y el WMS esta libre hasta el
 primer avance de las 10:00.
 """
 import io
+import json
 import os
 import re
 import subprocess
@@ -80,6 +103,30 @@ def buscar(carpeta, plantillas, d):
     return None
 
 
+API_CORTE = 'https://logistics-backend-wv0x.onrender.com/api/logistics/corte_turno'
+
+
+def el_corte_ya_cerro(iso):
+    """Si el corte de las 20:00 cerro COMPLETO ese dia.
+
+    El corte publica su marca al terminar: la fecha, cuanto tardo y si los tres
+    pasos salieron bien. Si dice que si, este robot no tiene nada que hacer.
+
+    ANTE LA DUDA, SE CORRE. Si no se puede leer la marca -sin internet, el
+    servidor dormido- se devuelve False y el rescate entra igual: perder 25
+    minutos de WMS es barato, perder el dia no.
+    """
+    try:
+        import urllib.request
+        with urllib.request.urlopen(API_CORTE + '?t=cierre', timeout=45) as r:
+            d = json.load(r)
+        m = d.get('data') or {}
+        return bool(m.get('completo')) and m.get('dia') == iso, m
+    except Exception as e:
+        log('no se pudo leer la marca del corte (%s); se corre igual' % type(e).__name__, 'WARN')
+        return False, {}
+
+
 def main():
     args = sys.argv[1:]
     if '--dia' in args and len(args) > args.index('--dia') + 1:
@@ -94,8 +141,24 @@ def main():
     iso = ayer.strftime('%Y-%m-%d')
 
     log('=' * 64)
-    log('CIERRE DEL %s  (de 00:00 a 23:59)' % ayer.strftime('%d-%m-%Y'))
+    log('RESPALDO TOTAL DEL %s  (el dia entero, de 00:00 a 23:59)' % ayer.strftime('%d-%m-%Y'))
     log('=' * 64)
+
+    # ── ¿HACE FALTA? ────────────────────────────────────────────────────────
+    # Desde el 04-sep-2026 esto es un rescate, no el cierre. El corte de las 20:00
+    # ya trae el dia entero -medido: el embalaje termina a las 18:00 y el picking a
+    # las 17:00, y despues de las 20:00 no pasa nada-. Correr igual seria bajar lo
+    # mismo, calcular lo mismo y publicar encima, gastando 25 minutos de WMS a la
+    # hora en que el ancla de la manana puede estar estirandose.
+    if '--igual' not in args:
+        cerro, marca = el_corte_ya_cerro(iso)
+        if cerro:
+            log('el corte de turno ya cerro el %s a las %s en %s minutos, con sus %d '
+                'pasos en orden. NO SE ENTRA AL WMS.'
+                % (iso, str(marca.get('cuando', ''))[11:19], marca.get('minutos', '?'),
+                   len(marca.get('pasos') or [])))
+            return 0
+        log('el corte no cerro ese dia: se hace el respaldo.')
 
     # ── 1. el OBLPN de ayer, entero ─────────────────────────────────────
     # Sin `--hoy` baja el dia anterior. Es la unica descarga que hace este
@@ -122,7 +185,7 @@ def main():
         hechos += 1 if ok else 0
 
     log('')
-    log('cierre del %s: %d de 2 cuadros publicados' % (iso, hechos))
+    log('respaldo total del %s: %d de 2 cuadros publicados' % (iso, hechos))
     return 0 if hechos == 2 else 1
 
 

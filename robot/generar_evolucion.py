@@ -112,10 +112,41 @@ def _base_onedrive():
     perfil = os.environ.get("USERPROFILE", "")
     if perfil:
         candidatas.append(os.path.join(perfil, "OneDrive", "danielames.bata"))
-    candidatas += [r"C:\Users\dames\OneDrive\danielames.bata",
-                   r"C:\Users\Administrator\OneDrive\danielames.bata"]
+    # Administrator PRIMERO: en el servidor varias tareas corren como SYSTEM, que no
+    # ve el OneDrive de nadie y se cae a esta lista.
+    candidatas += [r"C:\Users\Administrator\OneDrive\danielames.bata",
+                   r"C:\Users\dames\OneDrive\danielames.bata"]
+
+    # SE ELIGE POR LO QUE TIENE, NO POR EXISTIR.
+    #
+    # En el servidor hay una carpeta 'dames' sobrante que existe y solo trae dos
+    # fotos de stock: ni Maestro ni Detalle de Orden. `os.path.isdir()` decía que
+    # sí, y SKUs sin salida publicó CERO durante al menos una semana sin que nada
+    # fallara — sin Maestro no hay Colección PO, sin Colección PO no hay temporada,
+    # y sin temporada no hay ningún SKU que medir.
+    #
+    # Existir no es servir. La carpeta buena es la que trae el Maestro o el Detalle
+    # de Orden.
+    def sirve(c):
+        st = os.path.join(c, "scraping Stock")
+        if not os.path.isdir(st):
+            return False
+        return (os.path.isfile(os.path.join(c, "Maestro_Articulos.xlsx"))
+                or os.path.isfile(os.path.join(st, "Archivos", "Maestro_Articulos.xlsx"))
+                or os.path.isdir(os.path.join(st, "Detalle Orden")))
+
+    for c in candidatas:
+        if sirve(c):
+            return c
+    # Ninguna califica: se vuelve a la regla vieja para no romper una máquina donde
+    # el reparto de carpetas sea distinto, pero se avisa.
     for c in candidatas:
         if os.path.isdir(c):
+            try:
+                log("OJO: %s existe pero no trae ni Maestro ni Detalle de Orden; "
+                    "se usa igual porque no hay otra" % c)
+            except Exception:
+                pass
             return c
     raise RuntimeError("No se encontró la carpeta de OneDrive. Se probó: %s" % candidatas)
 

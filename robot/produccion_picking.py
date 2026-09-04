@@ -450,6 +450,16 @@ marcas = defaultdict(lambda: defaultdict(float))
 colec = defaultdict(lambda: defaultdict(float))
 zonas = defaultdict(lambda: defaultdict(float))
 zonas_ubi = defaultdict(set)
+# PRODUCTIVIDAD POR ZONA. Mismo criterio que `sellos_tarea`, pero la tarea se
+# parte POR ZONA: el tiempo de la zona Z dentro de la tarea T es su ultimo pick
+# en Z menos el primero.
+#
+# EL VIAJE ENTRE ZONAS NO CAE EN NINGUNA, y eso es a proposito: lo que se quiere
+# saber es el ritmo DENTRO de la zona, sin el camino. El 21,6% de las tareas toca
+# mas de una zona, asi que la suma de las zonas da ~5% menos horas que la tarea
+# entera; esa diferencia ES el traslado.
+sellos_zona = defaultdict(lambda: defaultdict(list))    # (k,z,clase) -> tarea -> [seg]
+pares_zona = defaultdict(float)                         # (k,z,clase) -> pares
 totales = defaultdict(lambda: defaultdict(float))
 personas = defaultdict(set)
 tipos_vistos = defaultdict(lambda: defaultdict(float))
@@ -518,6 +528,9 @@ for row in r:
         zonas[(k, z)][clase] += pares
         zonas[(k, z)]['lineas'] += 1
         zonas_ubi[(k, z)].add(ubi)
+        if tarea_real:
+            sellos_zona[(k, z, clase)][tarea_real].append(seg)
+            pares_zona[(k, z, clase)] += pares
         totales[k][clase] += pares
         totales[k]['lineas'] += 1
 f.close()
@@ -590,6 +603,21 @@ def tramos(por_tarea):
     return fus
 
 
+def ritmo_zona(clave):
+    """Segundos y pares de cada clase en esa zona, para el ritmo.
+
+    Se devuelve crudo -`<clase>_s` y `<clase>_q`-, sin dividir. La pantalla deja
+    juntar canales y los ritmos NO se suman: hay que rehacerlos sobre el
+    conjunto, igual que en `celda`.
+    """
+    k, z = clave
+    o = {}
+    for c in CL:
+        o[c + '_s'] = minutos_sumados(sellos_zona.get((k, z, c)))
+        o[c + '_q'] = int(round(pares_zona.get((k, z, c), 0)))
+    return o
+
+
 def celda(can, usr, h):
     """Una celda: el volumen de las tres clases y EL PRIMER Y ULTIMO PICK.
 
@@ -656,7 +684,8 @@ def vista(can):
         # en la pantalla hay que UNIRLAS, y sumar los conteos las cuenta doble
         # -la misma ubicacion la visitan los dos-.
         'zonas': sorted([dict(nom=k[1], ubicaciones=len(zonas_ubi[k]),
-                              ubis=sorted(zonas_ubi[k]), **vol(v))
+                              ubis=sorted(zonas_ubi[k]),
+                              **dict(vol(v), **ritmo_zona(k)))
                          for k, v in zonas.items() if k[0] == can],
                         key=lambda x: -x['total']),
     }

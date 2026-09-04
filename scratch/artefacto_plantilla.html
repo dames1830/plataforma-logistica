@@ -1,0 +1,172 @@
+<title>Recepción del día</title>
+<style>
+  :root{
+    --marino:#12365c; --marino2:#1b4a7a; --clara:#dbe4f0;
+    --crema:#fdf6e3; --verde:#dff0d8; --amarillo:#fff8c9;
+    --tinta:#1c2430; --apagado:#66727f; --raya:#d5dde6; --papel:#f2f5f9;
+    --panel:#ffffff; --bien:#1d7a4c; --bienf:#eef7f1;
+    --ojo:#8a5a00; --ojof:#fff6e2; --mal:#b3261e;
+    --sombra:0 1px 2px rgba(18,54,92,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --marino:#0d2742; --marino2:#17406b; --clara:#9fb6d0;
+      --papel:#0f1620; --panel:#161f2b; --tinta:#e6ebf2; --apagado:#93a1b3;
+      --raya:#2a3745; --crema:#262214; --verde:#1a2a1c; --amarillo:#302d18;
+      --bien:#4cbf87; --bienf:#12241a; --ojo:#e0b464; --ojof:#2a2110;
+      --mal:#f08a84; --sombra:none;
+    }
+  }
+  :root[data-theme="dark"]{
+    --marino:#0d2742; --marino2:#17406b; --clara:#9fb6d0;
+    --papel:#0f1620; --panel:#161f2b; --tinta:#e6ebf2; --apagado:#93a1b3;
+    --raya:#2a3745; --crema:#262214; --verde:#1a2a1c; --amarillo:#302d18;
+    --bien:#4cbf87; --bienf:#12241a; --ojo:#e0b464; --ojof:#2a2110;
+    --mal:#f08a84; --sombra:none;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--papel);color:var(--tinta);
+       font:14px/1.55 "Segoe UI",-apple-system,system-ui,sans-serif;
+       -webkit-font-smoothing:antialiased}
+  .hoja{max-width:1200px;margin:0 auto;padding:20px 18px 56px;
+        display:flex;flex-direction:column;gap:20px}
+
+  .bloque{background:var(--panel);border:1px solid var(--raya);border-radius:10px;
+          overflow:hidden;box-shadow:var(--sombra)}
+  .banda{background:var(--marino);color:#fff;padding:12px 16px;
+         display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .banda h1{margin:0;font-size:17px;font-weight:700;letter-spacing:.2px}
+  .banda h2{margin:0;font-size:14px;font-weight:700;letter-spacing:.2px}
+  .banda .nota{color:var(--clara);font-size:12.5px}
+  .banda .dia{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .banda .caja{background:#fff;color:#12365c;border-radius:6px;
+               padding:5px 11px;font-weight:700;font-size:13px}
+
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;
+        font-variant-numeric:tabular-nums;min-width:840px}
+  th{background:var(--marino2);color:#fff;text-align:center;padding:7px 9px;
+     font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;
+     border:1px solid rgba(255,255,255,.14);line-height:1.35;white-space:nowrap}
+  th span{display:block;font-weight:400;font-size:9.5px;color:var(--clara);
+          letter-spacing:0;text-transform:none}
+  td{padding:6px 9px;text-align:right;border:1px solid var(--raya);white-space:nowrap;
+     color:var(--tinta)}
+  td.i{text-align:left} td.c{text-align:center}
+  tr.calzado td{background:var(--crema)}
+  tr.etiq td{background:var(--verde)}
+  tr.tot td{background:var(--amarillo);font-weight:700}
+  .nd{color:var(--apagado)}
+  .rev{border:1px solid var(--ojo);color:var(--ojo);background:transparent;
+       border-radius:4px;padding:0 6px;font-size:10.5px;font-weight:700}
+
+  .nota-bien,.nota-ojo,.nota-azul{padding:11px 15px;font-size:12.8px;line-height:1.65;margin:0}
+  .nota-bien{border-left:3px solid var(--bien);background:var(--bienf);color:var(--tinta)}
+  .nota-ojo{border-left:3px solid var(--ojo);background:var(--ojof);color:var(--tinta)}
+  .nota-azul{border-left:3px solid var(--marino2);background:var(--papel);color:var(--tinta)}
+
+  .ej{padding:13px 15px;background:var(--papel);border-top:1px solid var(--raya)}
+  .ej .k,.foto .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+         color:var(--apagado);font-weight:700;margin-bottom:8px}
+  .ej table{min-width:0;max-width:580px}
+  .ej td{background:var(--panel)}
+  .ok{color:var(--bien);font-weight:700}
+  .no{color:var(--mal);font-weight:700}
+  .ej p{margin:9px 0 0;font-size:12px;color:var(--apagado);line-height:1.6}
+
+  .foto{padding:13px 15px;background:var(--papel);border-top:1px solid var(--raya)}
+  .foto img{max-width:100%;border:1px solid var(--raya);border-radius:5px;display:block}
+  .vacio{padding:22px 16px;text-align:center;color:var(--apagado);font-size:13px}
+</style>
+
+<div class="hoja">
+
+  <section class="bloque">
+    <div class="banda">
+      <div>
+        <h1>Recepción del día</h1>
+        <div class="nota">programado · verificado · matriculado, en la forma del correo de citas</div>
+      </div>
+      <div class="dia"><span class="nota">Día</span><span class="caja">03/09/2026</span></div>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th>Observación</th><th>Hora de cita</th><th>Proveedor</th><th>O/C</th>
+          <th>Programadas<span>del correo de citas</span></th>
+          <th>Verificadas<span>unidades, del ASN</span></th>
+          <th>Matriculadas<span>unidades, en el buffer</span></th>
+          <th>Diferencia<span>verificadas menos matriculadas</span></th>
+        </tr></thead>
+        <tbody>FILAS_AQUI</tbody>
+      </table>
+    </div>
+
+    <p class="nota-bien"><strong>El cruce cierra:</strong> esas 8 órdenes explican los
+      <strong>109.024 pares</strong> que entró nacional ese día. El 100%: nada llegó fuera de
+      una cita y ninguna cita quedó sin llegar.</p>
+
+    <p class="nota-ojo"><strong>La columna «Programadas» no está en la misma unidad que las
+      otras.</strong> La cita dice 845 y por esa orden entraron 4.207 pares. Los cocientes de
+      las ocho órdenes son 4,98 · 4,33 · 5,67 · 30,63 · 5,00 · 3,00 · 6,17 · 3,68 — ninguno
+      igual al otro. Me dijiste que la cita cuenta unidades programadas: entonces esa
+      desproporción es un hallazgo y no un error de lectura, y hay que mirarla con el reporte
+      armado.</p>
+
+    <p class="nota-ojo"><strong>Y el total del correo no cuadra:</strong> las ocho citas suman
+      <strong>5.128</strong> y su fila TOTAL dice <strong>4.722</strong>. La diferencia son
+      exactamente los <strong>406</strong> de TEXTIL GROUP, que quedaron fuera de su suma.</p>
+
+    <div class="foto">
+      <div class="k">El correo, tal como llegó</div>
+      <img src="data:image/png;base64,B64_AQUI" alt="Captura de la programación de recepción del 3 de setiembre">
+    </div>
+
+    <div class="ej">
+      <div class="k">Así se vería el error que quieres detectar</div>
+      <table>
+        <thead><tr><th>Proveedor</th><th>O/C</th><th>Verificadas</th><th>Matriculadas</th><th>Diferencia</th></tr></thead>
+        <tbody>
+          <tr><td class="i">EJEMPLO S.A.</td><td class="c">2026-00001</td><td>1.000</td><td>1.000</td><td class="ok">0</td></tr>
+          <tr><td class="i">EJEMPLO S.A.</td><td class="c">2026-00002</td><td>1.000</td><td>995</td><td class="no">-5</td></tr>
+        </tbody>
+      </table>
+      <p>Verificó mil y matriculó novecientos noventa y cinco: faltan cinco en el buffer.
+        Esas dos columnas van en la misma unidad y sí tienen que cuadrar. Los números de este
+        recuadro son inventados, para mostrar la forma.</p>
+    </div>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Importación · ASN por ASN</h2>
+      <span class="nota">acá no hay cita: se mide contra lo que anuncia el ASN</span></div>
+    <div class="vacio">El 3 de setiembre no entró importación. Un día con contenedor se ve así:</div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>ASN</th><th>Sociedad</th><th>Anunciado</th><th>Verificado</th><th>Falta</th><th>Matriculadas</th></tr></thead>
+        <tbody>
+          <tr><td class="i">20260905901BA.7616423</td><td class="c">BA</td><td>6.820</td><td>6.820</td><td>0</td><td class="nd">—</td></tr>
+          <tr><td class="i">20260905901BA.7618323</td><td class="c">BA</td><td>3.395</td><td>3.395</td><td>0</td><td class="nd">—</td></tr>
+          <tr><td class="i">20260832101VM.5616448</td><td class="c">VM</td><td>294</td><td>294</td><td>0</td><td class="nd">—</td></tr>
+          <tr><td class="i">20260905901CE.7618323</td><td class="c">CE</td><td>288</td><td>288</td><td>0</td><td class="nd">—</td></tr>
+          <tr class="tot"><td class="c" colspan="2">TOTAL · 55 ASN</td><td>192.918</td><td>192.918</td><td>0</td><td class="nd">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="bloque">
+    <div class="banda"><h2>Lo que falta para que el cuadro detecte el error</h2></div>
+    <p class="nota-azul"><strong>La columna «Matriculadas».</strong> Hoy no se puede medir con
+      lo que hay: el buffer rota más rápido que las dos fotos de stock del día. Medido sobre
+      59 fotos desde el 6 de agosto, <strong>el 70% de las matriculaciones las vio una sola
+      foto</strong>, y contra lo verificado el buffer capta entre el <strong>2% y el 76% según
+      el día</strong>. Puesta así marcaría descuadres que no existen.<br><br>
+      En el árbol del WMS hay tres informes que pueden servir ya hechos:
+      <strong>ALMACENAMIENTO DETALLE X ARTICULO</strong>, <strong>Movimiento X Usuario</strong>
+      e <strong>History Rf_alm</strong>. Falta ver cuál trae LPN, ubicación, usuario y hora.
+      La columna cuenta cualquier buffer <strong>menos el C</strong>, donde recepción no
+      matricula.</p>
+  </section>
+
+</div>

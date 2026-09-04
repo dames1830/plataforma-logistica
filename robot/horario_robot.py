@@ -79,7 +79,7 @@ DE_FABRICA = {
     #
     # La ventana en 17:00 se deja igual, como la intencion escrita: si algun dia la
     # configuracion publicada se rehace, queda dicho hasta cuando corre.
-    'picking_hora': {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '17:00',
+    'picking_hora': {'activa': True, 'minuto': 0, 'cadaMin': 180, 'dias': {d: True for d in DIAS}, 'desde': '12:00', 'hasta': '15:30',
                      'saltar': ['18:00', '20:00']},
     # EL TRIO PASO DE CADA HORA A CADA 2 HORAS el 30-ago-2026, medido: entre stock (9,2
     # min) y picking (16,9) tenian el WMS ocupado 10,4 horas al dia, y el picking de las
@@ -112,14 +112,12 @@ DE_FABRICA = {
     # minutos, por eso va a las 03:00 y todos los dias, domingo incluido.
     'archivado':    {'activa': True, 'hora': '03:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': True}},
-    # SKUs sin salida va DESPUES de los reportes diarios y DESPUES del ancla de la
-    # manana: necesita el Detalle de Orden del dia que cerro y la foto de stock de
-    # hoy. Con los reportes a las 06:45 y el ancla a las 07:00, a las 07:30 ya estan
-    # los dos. Antes de esa hora el cuadro saldria con la demanda de anteayer.
-    # A LAS 09:00, no a las 07:30: necesita el Detalle de Orden del dia que cerro, y
-    # ahora ese archivo llega recien a las 08:00. A las 07:30 leeria el de anteayer.
-    'sin_salida':   {'activa': True, 'hora': '09:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
-                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # SKUs SIN SALIDA YA NO ES UNA TAREA CON HORA PROPIA. Daniel, 04-sep-2026: *"no
+    # quiero llenarme de interfaces, si otro reporte lo puede hacer quita esa
+    # interfaz"*. Tenia razon: ese calculo NO BAJA NADA -lee las fotos que el ancla
+    # ya trae, el Maestro y el Detalle de Orden- y era una linea mas en la lista
+    # para un minuto de cuenta. Ahora va colgado del robot de las 07:20, que es
+    # donde llega su ultimo ingrediente. Ver ejecutar_picking_y_orden.bat.
     # EL AVANCE DE EMBALAJE, cada 2 horas como el de picking. Daniel, 31-ago-2026:
     # *"el avance de picking, el avance de embalaje tiene que ser cada dos horas.
     # Necesitamos un estatus cada dos horas"*.
@@ -129,7 +127,7 @@ DE_FABRICA = {
     # Baja el dia EN CURSO (--hoy) y pisa el archivo en cada pase: siempre queda el
     # ultimo estado. El ultimo pase del dia es a las 22:40.
     # Embalaje va igual: cuatro pases y el ultimo a las 16:20.
-    'oblpn_hora':   {'activa': True, 'minuto': 20, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '10:00', 'hasta': '17:00',
+    'oblpn_hora':   {'activa': True, 'minuto': 20, 'cadaMin': 180, 'dias': {d: True for d in DIAS}, 'desde': '12:00', 'hasta': '15:30',
                      'saltar': ['18:20', '20:20']},
     # EL CRUCE CONTRA EL WMS, una vez al dia y al final. Baja los dos web reports
     # -PRODUCCION PICKING / EMBALAJE ALDEAS X HORA- y los compara contra lo que
@@ -147,6 +145,18 @@ DE_FABRICA = {
     # EL CORREO DE CITAS DE RECEPCION. Daniel, 03-sep-2026: *"el correo lo mandan a
     # partir de las cuatro de la tarde, mas o menos, o sea que entre cuatro y seis
     # tienes que capturar ese correo"*.
+    #
+    # DOS AVANCES AL DIA: MEDIODIA Y MEDIA TARDE. Daniel, 04-sep-2026: *"el avance de
+    # embalaje y de picking, a las doce y a las tres. Vamos a mandar un avance de
+    # mediodia y uno de media tarde, y al final del turno me va a dar el reporte
+    # total"*.
+    #
+    # Con `cadaMin: 180` los pases caen a las 00, 03, 06, 09, 12, 15, 18 y 21, y la
+    # ventana 12:00-15:30 deja SOLO las 12:00 y las 15:00. Eran seis pases; ahora son
+    # dos, y el numero final lo trae el corte de las 20:00.
+    #
+    # OJO: ESTO SOLO MANDA SI LA CONFIGURACION PUBLICADA SE PIERDE. Lo que el servidor
+    # tiene guardado le gana a la fabrica, asi que el cambio de verdad se hizo alla.
     #
     # DEL MEDIODIA A LAS 19:00, CADA 10 MINUTOS. Daniel, 03-sep-2026: *"hay que
     # capturar a partir del mediodia hasta las siete de la noche [...] cada diez
@@ -201,7 +211,7 @@ DE_FABRICA = {
 # `asn_web` va aca tambien: sin estar en DIARIAS, su 'hora' se ignora y se lo trata
 # como tarea que se repite, con `cadaMin` de 60 por defecto. Corre a cada hora
 # una bajada de 48 minutos, o no corre nunca. Las dos listas van juntas.
-DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado', 'sin_salida',
+DIARIAS = ('ancla_noche', 'ancla_manana', 'respaldo', 'archivado',
            'cruce_wms', 'cierre_dia', 'asn_web', 'corte_turno')
 
 
