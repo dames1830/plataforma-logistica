@@ -36,6 +36,26 @@ const esc = (t) => String(t == null ? '' : t)
 
 const LADOS = [['picking', 'Picking'], ['embalaje', 'Embalaje']];
 
+/**
+ * La fila TOTAL GENERAL de las tablas del cruce.
+ *
+ * SUMA LAS FILAS QUE SE VEN, no los totales que trae el robot. Daniel suma las
+ * columnas con la calculadora: si el pie no da exactamente la suma de lo dibujado,
+ * el cuadro entero queda en duda —aunque el pie sea el número «bueno»—. Los dos
+ * coinciden hoy, pero el día que la tabla filtre una fila esto sigue cuadrando.
+ */
+function filaTotal(filas, rot, conTotalPlataforma) {
+    const s = (f) => filas.reduce((a, x) => a + (Number(x[f]) || 0), 0);
+    const wc = s('webCalz'), mc = s('maqCalz'), wa = s('webAcc'), ma = s('maqAcc');
+    return `<tr class="gran">
+      <td>${rot}</td>
+      <td class="n">${nf(wc)}</td><td class="n">${nf(mc)}</td>
+      ${celdaDif(wc, mc)}
+      <td class="n">${nf(wa)}</td><td class="n">${nf(ma)}</td>
+      ${celdaDif(wa, ma)}
+      ${conTotalPlataforma ? `<td class="n">${nf(mc + ma)}</td>` : ''}</tr>`;
+}
+
 /** La celda de diferencia: `b` es la plataforma, `a` el WMS. */
 function celdaDif(a, b) {
     const v = Math.round(b) - Math.round(a);
@@ -153,6 +173,8 @@ function estilos() {
     #crz tbody tr.ojo{box-shadow:inset 3px 0 0 var(--warning)}
     #crz td.h{font-variant-numeric:tabular-nums;color:var(--text-muted)}
     #crz td.tot{font-weight:800;color:var(--text-strong)}
+    #crz tbody tr.gran td{background:rgba(var(--ink-rgb),.07);font-weight:800;
+      color:var(--text-strong);border-top:2px solid var(--border)}
     #crz td.de{color:var(--text-muted);font-size:var(--t-xs)}
     #crz code{font-family:ui-monospace,Consolas,monospace;font-size:var(--t-xs);
       background:rgba(var(--ink-rgb),.09);padding:1px 5px;border-radius:4px}
@@ -235,6 +257,7 @@ function cuadro(C) {
           ${celdaDif(h.webCalz, h.maqCalz)}
           <td class="n">${nf(h.webAcc)}</td><td class="n">${nf(h.maqAcc)}</td>
           ${celdaDif(h.webAcc, h.maqAcc)}</tr>`).join('')}
+        ${filaTotal(C.porHora || [], 'TOTAL GENERAL', false)}
         </tbody></table></div>
 
       <h4>Persona por persona
@@ -252,6 +275,7 @@ function cuadro(C) {
           <td class="n">${nf(p.webAcc)}</td><td class="n">${nf(p.maqAcc)}</td>
           ${celdaDif(p.webAcc, p.maqAcc)}
           <td class="n tot">${nf(p.maqCalz + p.maqAcc)}</td></tr>`).join('')}
+        ${filaTotal(vivos, 'TOTAL GENERAL', true)}
         </tbody></table></div>`;
 }
 
