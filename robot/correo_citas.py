@@ -507,7 +507,8 @@ def guardar_vistos(v):
 
 
 def publicar(fecha, datos):
-    cuerpo = json.dumps({'data': datos}, ensure_ascii=False).encode('utf-8')
+    # PELADO: el servidor lo envuelve solo. Envolverlo aca deja `data.data`.
+    cuerpo = json.dumps(datos, ensure_ascii=False).encode('utf-8')
     pet = urllib.request.Request(API + AREA + '?date=' + fecha, data=cuerpo,
                                  method='POST',
                                  headers={'Content-Type': 'application/json'})

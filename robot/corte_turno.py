@@ -184,13 +184,16 @@ def avisar(pasos, dia):
     Si no se puede avisar NO se cae el robot: el cierre ya esta hecho y publicado,
     esto solo lo rotula.
     """
-    cuerpo = json.dumps({"data": {
+    # PELADO, sin envolver en "data": el servidor lo envuelve al guardarlo y si
+    # ademas se manda envuelto queda `data.data`. Asi lo manda publicar_area.py,
+    # que es el que usan los otros nueve robots.
+    cuerpo = json.dumps({
         "dia": dia,
         "cuando": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "minutos": round(gastado(), 1),
         "pasos": pasos,
         "completo": bool(pasos) and all(p["ok"] for p in pasos),
-    }}, ensure_ascii=False).encode("utf-8")
+    }, ensure_ascii=False).encode("utf-8")
     pet = urllib.request.Request(API, data=cuerpo, method="POST",
                                  headers={"Content-Type": "application/json"})
     if ROBOT_TOKEN:
