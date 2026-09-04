@@ -540,10 +540,33 @@ def init_db(ruta: Optional[str] = None):
                    'recibido INTEGER, '
                    'lineas INTEGER, '
                    'PRIMARY KEY (asn, articulo))')
+
+    # LAS COLUMNAS NUEVAS, ANTES QUE SUS INDICES. `hora_recepcion` y `usuario`
+    # llegaron el 03-sep-2026 -quien recibio y a que hora-, y el CREATE de arriba no
+    # las agrega a una tabla que YA EXISTE.
+    #
+    # Y VAN ACA Y NO MAS ABAJO por lo que paso el 04-sep: estaban despues de los
+    # indices, el `CREATE INDEX ... ON asn (usuario)` reventaba con "no such column",
+    # la excepcion mataba `init_db()` ENTERO y con el la migracion que veinte lineas
+    # mas abajo habria creado la columna. El arreglo se cortaba a si mismo el paso, y
+    # el unico rastro era una linea en el log de Render.
+    for _c in ('hora_recepcion', 'usuario'):
+        try:
+            cursor.execute('ALTER TABLE asn ADD COLUMN %s TEXT' % _c)
+        except sqlite3.OperationalError:
+            pass      # ya existia: no es un error, es que la base ya estaba al dia
+
     # SIN INDICE, buscar recorre las 76.658 filas. Con ellos, 1 a 24 ms.
+    #
+    # CADA UNO EN SU PROPIO TRY. Un indice es una mejora de VELOCIDAD: que falte
+    # hace una consulta lenta, no una plataforma rota. Nunca puede tumbar el
+    # arranque, y menos llevarse puesto todo lo que venia despues.
     for _col in ('expediente', 'articulo', 'orden', 'tipo', 'fecha_envio', 'estado',
                  'fecha_recepcion', 'usuario'):
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_asn_%s ON asn (%s)' % (_col, _col))
+        try:
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_asn_%s ON asn (%s)' % (_col, _col))
+        except sqlite3.OperationalError as e:
+            print('[PULSE] sin indice en asn.%s (%s); la consulta va a ser mas lenta' % (_col, e))
 
     # 'tema' llego despues: el administrador le deja puesto un tema a cada usuario y ese
     # es con el que abre la primera vez, en la PC que sea. Antes el tema vivia solo en el
@@ -568,34 +591,6 @@ def init_db(ruta: Optional[str] = None):
         pass          # ya existía: no es un error, es que la base ya estaba al día
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_archivos_nube_tipo ON archivos_nube (modulo, tipo, fecha DESC)')
 
-    # 'hora_recepcion' y 'usuario' llegaron el 03-sep-2026, para poder decir QUIEN
-    # recibio y A QUE HORA -la productividad de recepcion por hora-.
-    #
-    # HACEN FALTA ACA aunque la tabla se rehaga cada madrugada. El endpoint arma su
-    # consulta nombrando las columnas una por una, asi que en cuanto se despliega y
-    # antes de que el robot de las 04:30 rehaga la tabla, CUALQUIER consulta al ASN
-    # se cae con "no such column". Con esto, las filas viejas quedan con la columna
-    # vacia -que es la verdad: esos archivos se bajaron antes de que existiera- y
-    # la pantalla sigue andando.
-    for _c in ('hora_recepcion', 'usuario'):
-        try:
-            cursor.execute('ALTER TABLE asn ADD COLUMN %s TEXT' % _c)
-        except sqlite3.OperationalError:
-            pass      # ya existia, o la tabla todavia no se creo: las dos estan bien
-
-    # ── EL ESQUEMA SE GUARDA ACA, ANTES DE LAS MIGRACIONES DE DATOS ─────────────
-    #
-    # Todo lo de arriba -crear tablas, agregar columnas, indices- es esquema. Lo de
-    # abajo son migraciones de DATOS: mover snapshots a MASTER, cambiar de modulo
-    # unos archivos. Con un solo commit al final, si una de esas falla la excepcion
-    # sube, el commit nunca ocurre y SE DESHACE TODO, columnas incluidas.
-    #
-    # Paso el 04-sep-2026: `hora_recepcion` y `usuario` no quedaron en produccion, y
-    # el unico rastro fue una linea en el log de Render que nadie mira. La pantalla
-    # del ASN se cayo con "no such column".
-    #
-    # Crear una tabla no puede depender de que una limpieza de datos salga bien.
-    conn.commit()
 
     # El Slotting vivía en el módulo 'inventario'. Ahora todo lo descargable está junto en
     # 'descargas', así que los que quedaron se mudan y no se pierde el historial.
