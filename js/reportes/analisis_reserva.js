@@ -37,11 +37,11 @@
  */
 
 import { dataStore, fetchBaseReserva, fetchFotosReserva, fetchReservaHistory,
-         guardarFotoReserva, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0599';
-import { colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0599';
-import { icono } from '../services_v245/iconos.js?v=29.0599';
+         guardarFotoReserva, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0600';
+import { colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0600';
+import { icono } from '../services_v245/iconos.js?v=29.0600';
 import { consolidacionDeReserva, cierreDeFragmentados,
-         fotoChicaDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0599';
+         fotoChicaDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0600';
 
 /* LOS DOS ESTADOS DE LAS TABLAS: que pagina y que filtro se esta mirando.
    Vinieron de `renderDashboard`, donde se usaban solo aca. Al ser de modulo se
