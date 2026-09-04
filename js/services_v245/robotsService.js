@@ -154,7 +154,12 @@ const TODOS = { lun: true, mar: true, mie: true, jue: true, vie: true, sab: true
  */
 export const robotsPorDefecto = () => ({
     ancla_noche:  { activa: true, hora: '19:00', dias: { ...LUN_A_SAB } },
-    ancla_manana: { activa: true, hora: '07:00', dias: { ...LUN_A_SAB } },
+    /* 06:20 DESDE EL 04-sep-2026, no 07:00: a las 07:00 el WMS no entrega el Stock
+       Reserva. Medido el mismo día con el mismo código: `stock_hora` lo bajó en 2 min
+       9 s a las 06:04, y el ancla esperó 40 minutos a las 07:04 sin recibirlo. Sin ese
+       archivo no se genera el Slotting y la mañana se queda sin foto —falló 6 de las
+       últimas 8—. Ver el comentario largo en `robot/horario_robot.py`. */
+    ancla_manana: { activa: true, hora: '06:20', dias: { ...LUN_A_SAB } },
     stock_hora:   { activa: true, minuto: 0, cadaMin: 120, dias: { ...TODOS },
                     desde: '22:00', hasta: '06:00' },
     picking_hora: { activa: true, minuto: 0, cadaMin: 180, dias: { ...TODOS },

@@ -57,7 +57,27 @@ DIAS = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom']
 DE_FABRICA = {
     'ancla_noche':  {'activa': True, 'hora': '19:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
-    'ancla_manana': {'activa': True, 'hora': '07:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
+    # EL ANCLA DE LA MANANA PASO DE 07:00 A 06:20 el 04-sep-2026, y no es una
+    # preferencia: **a las 07:00 el WMS no entrega el Stock Reserva**.
+    #
+    # Medido el 04-sep con el MISMO codigo y la MISMA cuenta:
+    #     06:04:30 -> 06:06:39   la baja `stock_hora` en 2 min 9 s, 1,19 MB
+    #     07:04:34 -> 07:47:05   el ancla espera 40 min y el archivo no llega
+    # y de noche, cinco de cinco: 19:04 -> 19:06, siempre dos minutos.
+    #
+    # Sin ese archivo NO SE GENERA EL SLOTTING -"faltan archivos de entrada"- y el
+    # Stock Activo que si bajo se tira: la manana se queda sin foto. Fallo 6 de las
+    # ultimas 8 mananas.
+    #
+    # Y a las 07:20 entra `reportes`, que tras esperar 15 minutos ENTRA IGUAL
+    # -"la corrida del turno no se puede perder"-: dos robots en la cuenta `dames`
+    # a la vez. Ya habia pasado el 31-ago con `reportes` a las 06:45; moverlo a las
+    # 07:20 solo corrio el choque de lugar.
+    #
+    # A las 06:20 la ventana esta limpia: `stock_hora` termina 06:07, `mapa_hora`
+    # (06:15) no entra al WMS y `respaldo` es 06:45. El turno noche sale 05:30, asi
+    # que el almacen esta igual de quieto que a las 07:00.
+    'ancla_manana': {'activa': True, 'hora': '06:20', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'stock_hora':   {'activa': True, 'minuto': 0, 'cadaMin': 120, 'dias': {d: True for d in DIAS}, 'desde': '22:00', 'hasta': '06:00'},
     # EL ULTIMO AVANCE DEL DIA ES EL DE LAS 16:00. Daniel, 03-sep-2026: *"el avance de
