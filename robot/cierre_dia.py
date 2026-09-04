@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-ROBOT: EL RESCATE DEL DIA ANTERIOR  (antes: el cierre).
+ROBOT: RESPALDO TOTAL DEL DIA  (antes: el cierre del dia anterior).
 
 DESDE EL 04-sep-2026 SOLO CORRE SI EL CORTE DE LAS 20:00 FALLO.
 
-Daniel: *"entonces cambia de nombre, que se llame algo como Backup del dia
-anterior"*. Tiene razon: el corte le saco el trabajo.
+Daniel: *"que se llame Respaldo Total del dia, que lo esta haciendo"*. Tiene
+razon: el corte le saco el trabajo y el nombre viejo ya no decia lo que hace.
 
 MEDIDO sobre los archivos completos que baja este mismo robot:
 
@@ -141,7 +141,7 @@ def main():
     iso = ayer.strftime('%Y-%m-%d')
 
     log('=' * 64)
-    log('RESCATE DEL %s  (el dia entero, de 00:00 a 23:59)' % ayer.strftime('%d-%m-%Y'))
+    log('RESPALDO TOTAL DEL %s  (el dia entero, de 00:00 a 23:59)' % ayer.strftime('%d-%m-%Y'))
     log('=' * 64)
 
     # ── ¿HACE FALTA? ────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ def main():
                 % (iso, str(marca.get('cuando', ''))[11:19], marca.get('minutos', '?'),
                    len(marca.get('pasos') or [])))
             return 0
-        log('el corte no cerro ese dia: se rescata.')
+        log('el corte no cerro ese dia: se hace el respaldo.')
 
     # ── 1. el OBLPN de ayer, entero ─────────────────────────────────────
     # Sin `--hoy` baja el dia anterior. Es la unica descarga que hace este
@@ -185,7 +185,7 @@ def main():
         hechos += 1 if ok else 0
 
     log('')
-    log('rescate del %s: %d de 2 cuadros publicados' % (iso, hechos))
+    log('respaldo total del %s: %d de 2 cuadros publicados' % (iso, hechos))
     return 0 if hechos == 2 else 1
 
 

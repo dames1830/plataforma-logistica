@@ -85,11 +85,13 @@ export const TAREAS = [
        17:00, así que el corte ya trae el día entero y esto bajaba lo mismo para
        publicar encima.
 
-       Ahora mira la marca del corte y solo entra al WMS si ese día falló. No se
-       llama 'Respaldo' porque ya hay uno a las 06:45 —la copia de la base— y dos
-       respaldos en la misma lista se confunden. */
-    { id: 'cierre_dia', tipo: 'diaria', etiqueta: 'Rescate del día anterior',
-      detalle: 'rehace el día entero, pero solo si el Corte del turno día falló',
+       Ahora mira la marca del corte y solo entra al WMS si ese día falló.
+
+       EL NOMBRE LO PUSO DANIEL: *"que se llame Respaldo Total del día, que lo está
+       haciendo"*. Convive con el `Respaldo de datos` de las 06:45 sin confundirse:
+       ese es la copia de la base, este rehace los números del día. */
+    { id: 'cierre_dia', tipo: 'diaria', etiqueta: 'Respaldo Total del día',
+      detalle: 'rehace el día entero de ayer, pero solo si el Corte del turno día falló',
       area: 'embalaje_por_hora' },
     { id: 'cruce_wms', tipo: 'diaria', etiqueta: 'Cruce contra el WMS',
       detalle: 'los dos web reports del WMS contra lo que calcula la plataforma',
