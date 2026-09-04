@@ -202,12 +202,31 @@ def espiar_informe(fr, page, nombre):
         log("   no aparecio en el arbol")
         return
 
-    # EL TRIANGULO ES EJECUTAR. De los tres iconos de la derecha -permisos,
-    # ejecutar, menu- solo se toca el del medio: los otros dos abren cosas que
-    # pueden cambiar el informe de otro equipo.
-    if not apretar(fr, ("Ejecutar informe", "Ejecutar", "Run report", "Run"),
-                   "ejecutar", espera=14):
-        return
+    # LOS TRES ICONOS DE LA DERECHA NO TIENEN TEXTO, asi que buscarlos por nombre
+    # no sirve -tres corridas lo confirmaron-. Se listan con su clase, su title y
+    # su posicion; con eso se los aprieta despues sin adivinar.
+    log("   --- lo que tiene la fila seleccionada ---")
+    try:
+        iconos = fr.locator("i, svg, span[class*=icon], span[class*=Icon], "
+                            "[class*=wrTrNodeIcon], [class*=wrIcon]")
+        n = min(iconos.count(), 40)
+        for k in range(n):
+            e = iconos.nth(k)
+            try:
+                if not e.is_visible():
+                    continue
+                caja = e.bounding_box() or {}
+                if caja.get("x", 0) < 150:
+                    continue          # los de la izquierda son del arbol
+                log("      clase=%-34s title=%-18s x=%.0f y=%.0f"
+                    % ((e.get_attribute("class") or "")[:34],
+                       (e.get_attribute("title") or e.get_attribute("aria-label") or "")[:18],
+                       caja.get("x", 0), caja.get("y", 0)))
+            except Exception:
+                continue
+    except Exception as e:
+        log("      no se pudieron listar: %s" % type(e).__name__)
+    return
     try:
         page.screenshot(path=os.path.join(os.environ.get("TEMP", "."),
                                           "wms_%s.png" % nombre[:14].replace(" ", "_")))
