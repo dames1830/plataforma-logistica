@@ -568,6 +568,21 @@ def init_db(ruta: Optional[str] = None):
         pass          # ya existía: no es un error, es que la base ya estaba al día
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_archivos_nube_tipo ON archivos_nube (modulo, tipo, fecha DESC)')
 
+    # 'hora_recepcion' y 'usuario' llegaron el 03-sep-2026, para poder decir QUIEN
+    # recibio y A QUE HORA -la productividad de recepcion por hora-.
+    #
+    # HACEN FALTA ACA aunque la tabla se rehaga cada madrugada. El endpoint arma su
+    # consulta nombrando las columnas una por una, asi que en cuanto se despliega y
+    # antes de que el robot de las 04:30 rehaga la tabla, CUALQUIER consulta al ASN
+    # se cae con "no such column". Con esto, las filas viejas quedan con la columna
+    # vacia -que es la verdad: esos archivos se bajaron antes de que existiera- y
+    # la pantalla sigue andando.
+    for _c in ('hora_recepcion', 'usuario'):
+        try:
+            cursor.execute('ALTER TABLE asn ADD COLUMN %s TEXT' % _c)
+        except sqlite3.OperationalError:
+            pass      # ya existia, o la tabla todavia no se creo: las dos estan bien
+
     # El Slotting vivía en el módulo 'inventario'. Ahora todo lo descargable está junto en
     # 'descargas', así que los que quedaron se mudan y no se pierde el historial.
     cursor.execute("UPDATE archivos_nube SET modulo = 'descargas' WHERE modulo = 'inventario'")
