@@ -80,8 +80,16 @@ export const TAREAS = [
     /* EL CIERRE DEL DIA ANTERIOR, de 00:00 a 23:59. El avance de cada 2 horas
        termina a las 20:20 y el dia sigue: un reporte completo solo se puede bajar
        despues de medianoche. Esto es lo que queda en el historial. */
-    { id: 'cierre_dia', tipo: 'diaria', etiqueta: 'Cierre del día anterior',
-      detalle: 'el día entero, de 00:00 a 23:59; es el que queda en el historial',
+    /* ERA 'Cierre del día anterior' HASTA EL 04-sep-2026. El corte de las 20:00 le
+       sacó el trabajo: medido, el embalaje termina a las 18:00 y el picking a las
+       17:00, así que el corte ya trae el día entero y esto bajaba lo mismo para
+       publicar encima.
+
+       Ahora mira la marca del corte y solo entra al WMS si ese día falló. No se
+       llama 'Respaldo' porque ya hay uno a las 06:45 —la copia de la base— y dos
+       respaldos en la misma lista se confunden. */
+    { id: 'cierre_dia', tipo: 'diaria', etiqueta: 'Rescate del día anterior',
+      detalle: 'rehace el día entero, pero solo si el Corte del turno día falló',
       area: 'embalaje_por_hora' },
     { id: 'cruce_wms', tipo: 'diaria', etiqueta: 'Cruce contra el WMS',
       detalle: 'los dos web reports del WMS contra lo que calcula la plataforma',
