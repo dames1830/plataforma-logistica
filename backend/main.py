@@ -583,6 +583,20 @@ def init_db(ruta: Optional[str] = None):
         except sqlite3.OperationalError:
             pass      # ya existia, o la tabla todavia no se creo: las dos estan bien
 
+    # ── EL ESQUEMA SE GUARDA ACA, ANTES DE LAS MIGRACIONES DE DATOS ─────────────
+    #
+    # Todo lo de arriba -crear tablas, agregar columnas, indices- es esquema. Lo de
+    # abajo son migraciones de DATOS: mover snapshots a MASTER, cambiar de modulo
+    # unos archivos. Con un solo commit al final, si una de esas falla la excepcion
+    # sube, el commit nunca ocurre y SE DESHACE TODO, columnas incluidas.
+    #
+    # Paso el 04-sep-2026: `hora_recepcion` y `usuario` no quedaron en produccion, y
+    # el unico rastro fue una linea en el log de Render que nadie mira. La pantalla
+    # del ASN se cayo con "no such column".
+    #
+    # Crear una tabla no puede depender de que una limpieza de datos salga bien.
+    conn.commit()
+
     # El Slotting vivía en el módulo 'inventario'. Ahora todo lo descargable está junto en
     # 'descargas', así que los que quedaron se mudan y no se pierde el historial.
     cursor.execute("UPDATE archivos_nube SET modulo = 'descargas' WHERE modulo = 'inventario'")
@@ -696,15 +710,30 @@ def prune_old_snapshots(ruta: Optional[str] = None):
     except Exception as e:
         print(f"[PULSE] Error al podar snapshots antiguos: {e}")
 
+# COMO LE FUE AL ARRANQUE, para poder preguntarlo desde afuera.
+#
+# `init_db()` va envuelto en un try que imprime y sigue. Si se corta a la mitad, la
+# base queda con el esquema VIEJO y la plataforma arranca igual, como si nada: el
+# unico rastro es una linea en el log de Render que nadie mira.
+#
+# Paso el 04-sep-2026 y costo la pantalla del ASN. Y el problema no era esa
+# columna: es que CUALQUIER cambio de esquema puede no llegar sin que nadie se
+# entere hasta que algo se cae.
+ARRANQUE = {"produccion": None, "pruebas": None}
+
 try:
     init_db()                       # producción
+    ARRANQUE["produccion"] = "ok"
 except Exception as startup_db_err:
+    ARRANQUE["produccion"] = "%s: %s" % (type(startup_db_err).__name__, startup_db_err)
     print(f"🚨 CRITICAL STARTUP ERROR INITIALIZING DB: {startup_db_err}")
 
 try:
     init_db(DB_PATH_BETA)           # pruebas (vacía si es la primera vez)
+    ARRANQUE["pruebas"] = "ok"
     print(f"[PULSE] Entorno de PRUEBAS listo en: {DB_PATH_BETA}")
 except Exception as beta_db_err:
+    ARRANQUE["pruebas"] = "%s: %s" % (type(beta_db_err).__name__, beta_db_err)
     print(f"[PULSE] Aviso: no se pudo preparar la base de pruebas: {beta_db_err}")
 
 # Seguridad: ninguna contraseña puede quedar en texto plano, en ninguna de las
@@ -1063,6 +1092,21 @@ def health():
 # ENTORNOS: consulta y copia de datos producción -> pruebas
 # -----------------------------------------------------------------------------
 
+def _columnas_de(tabla: str):
+    """Las columnas que esa tabla tiene AHORA en produccion.
+
+    Sirve para contestar de una mirada "¿llego el cambio de esquema?" sin entrar al
+    servidor. El 04-sep-2026 hubo que deducirlo probando consultas.
+    """
+    try:
+        c = sqlite3.connect(DB_PATH)
+        filas = c.execute('PRAGMA table_info(%s)' % tabla).fetchall()
+        c.close()
+        return [f[1] for f in filas]
+    except Exception as e:
+        return ["(no se pudo leer: %s)" % type(e).__name__]
+
+
 def _mb(ruta: str) -> float:
     try:
         return round(os.path.getsize(ruta) / (1024*1024), 2) if os.path.exists(ruta) else 0.0
@@ -1089,6 +1133,11 @@ def estado_entornos(detalle: bool = False, top: int = 25):
         respuesta = {
             "status": "ok",
             "atendiendo_como": entorno_actual(),
+            # COMO LE FUE AL ARRANQUE. Si dice algo distinto de "ok", la base quedo
+            # con el esquema VIEJO y hay migraciones que no corrieron: es lo unico
+            # que avisa, porque la plataforma arranca igual.
+            "arranque": ARRANQUE,
+            "columnas_asn": _columnas_de('asn'),
             "produccion": {"archivo": DB_PATH, "existe": os.path.exists(DB_PATH), "tamano_mb": _mb(DB_PATH)},
             "pruebas": {"archivo": DB_PATH_BETA, "existe": os.path.exists(DB_PATH_BETA), "tamano_mb": _mb(DB_PATH_BETA)},
             "disco_libre_mb": round(libre / (1024*1024), 2),
