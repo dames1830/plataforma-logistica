@@ -39,12 +39,14 @@ const esc = (t) => String(t == null ? '' : t)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-const CLASES = [['total', 'Todo'], ['cal_suelto', 'Calzado suelto'],
+const CLASES = [['total', 'Todo'], ['calzado', 'Calzado'], ['cal_suelto', 'Calzado suelto'],
                 ['cal_prepack', 'Calzado prepack'], ['no_cal', 'No calzado']];
-const CORTO = { total: 't', cal_suelto: 's', cal_prepack: 'p', no_cal: 'x' };
-const CAMPO = { t: 'total', s: 'cal_suelto', p: 'cal_prepack', x: 'no_cal' };
-const NOMBRE = { t: 'algo', s: 'calzado suelto', p: 'calzado prepack', x: 'no calzado' };
-const SUMABLES = ['cal_suelto', 'cal_prepack', 'no_cal', 'lineas', 'total'];
+const CORTO = { total: 't', calzado: 'c', cal_suelto: 's', cal_prepack: 'p', no_cal: 'x' };
+const CAMPO = { t: 'total', c: 'calzado', s: 'cal_suelto', p: 'cal_prepack', x: 'no_cal' };
+const NOMBRE = { t: 'algo', c: 'calzado', s: 'calzado suelto', p: 'calzado prepack',
+                 x: 'no calzado' };
+const SUMABLES = ['cal_suelto', 'cal_prepack', 'no_cal', 'calzado',
+                  'materiales', 'sin_tipo', 'lineas', 'total'];
 
 const ZONAS = { MZN01: 'Mezzanine 1', MZN02: 'Mezzanine 2', MZN03: 'Mezzanine 3',
                 MZN04: 'Mezzanine 4', SEL: 'Selectivo', AND: 'Andamio',
@@ -84,7 +86,43 @@ function unirTramos(tramos, puenteSeg) {
     return fus;
 }
 
-const cero = () => ({ cal_suelto: 0, cal_prepack: 0, no_cal: 0, lineas: 0, total: 0 });
+const cero = () => ({ cal_suelto: 0, cal_prepack: 0, no_cal: 0, calzado: 0,
+                      materiales: 0, sin_tipo: 0, lineas: 0, total: 0 });
+
+/**
+ * CALZADO = SUELTO + PREPACK. Daniel, 04-sep-2026: *"necesito una cápsula que diga
+ * calzado, este debe incluir solid y prepack sin no calzado"*.
+ *
+ * NO ES UN CAMPO DEL ROBOT: se deriva acá, celda por celda, apenas llegan los datos y
+ * ANTES de juntar días o canales. Tiene que ser antes porque `combinarVistas()` devuelve
+ * la vista tal cual cuando hay una sola, y esa nunca pasaría por la fusión.
+ *
+ * LOS TRAMOS SE UNEN, NO SE SUMAN. Nadie pica suelto y prepack en el mismo segundo, así
+ * que las dos listas se concatenan y `unirTramos()` las funde: sumar sus duraciones
+ * contaría dos veces los minutos en que las dos clases se pisan, y el ritmo saldría bajo.
+ * Es la misma regla con la que el robot arma los tramos de cada persona.
+ */
+const derivarCalzado = (celda) => {
+    if (!celda || typeof celda !== 'object') return celda;
+    celda.calzado = (celda.cal_suelto || 0) + (celda.cal_prepack || 0);
+    celda.calzado_l = (celda.cal_suelto_l || 0) + (celda.cal_prepack_l || 0);
+    const iv = (celda.cal_suelto_iv || []).concat(celda.cal_prepack_iv || []);
+    if (iv.length) celda.calzado_iv = iv;
+    return celda;
+};
+
+/** Recorre TODAS las celdas de una vista y les deriva el calzado. */
+const derivarVista = (v) => {
+    if (!v) return v;
+    derivarCalzado(v.totales);
+    Object.keys(v.por_hora || {}).forEach(h => derivarCalzado(v.por_hora[h]));
+    (v.gente || []).forEach(g => {
+        derivarCalzado(g.total);
+        Object.keys(g.horas || {}).forEach(h => derivarCalzado(g.horas[h]));
+    });
+    ['marcas', 'coleccion', 'zonas'].forEach(k => (v[k] || []).forEach(derivarCalzado));
+    return v;
+};
 const sumar = (a, b) => { SUMABLES.forEach(k => { a[k] += (b && b[k]) || 0; }); return a; };
 
 /**
@@ -136,7 +174,7 @@ function combinarVistas(lista, horas, puente) {
     /* LA GENTE SE FUNDE CELDA POR CELDA: los pares y las líneas se suman, y los
        tramos de trabajo se unen. Con eso el ritmo sale igual que si el servidor
        hubiera juntado los canales y los días de una. */
-    const CLAVES = ['cal_suelto', 'cal_prepack', 'no_cal', 'total'];
+    const CLAVES = ['cal_suelto', 'cal_prepack', 'no_cal', 'calzado', 'total'];
     const fundir = (dest, src) => {
         CLAVES.forEach(k => {
             if (k !== 'total') dest[k] = (dest[k] || 0) + ((src && src[k]) || 0);
@@ -145,7 +183,14 @@ function combinarVistas(lista, horas, puente) {
             dest[k + '_iv'] = unirTramos(
                 (dest[k + '_iv'] || []).concat((src && src[k + '_iv']) || []), puente);
         });
-        dest.total = (dest.cal_suelto || 0) + (dest.cal_prepack || 0) + (dest.no_cal || 0);
+        /* EL TOTAL SUMA LAS CINCO CLASES DEL ROBOT, no tres. `materiales` y
+           `sin_tipo` existen en la celda y se estaban perdiendo al juntar canales o
+           días: el 03-sep eran 8 pares y no se notaba, pero un día con picking de
+           material la fila de la persona no cuadraría con la del total. */
+        dest.materiales = (dest.materiales || 0) + ((src && src.materiales) || 0);
+        dest.sin_tipo = (dest.sin_tipo || 0) + ((src && src.sin_tipo) || 0);
+        dest.total = (dest.cal_suelto || 0) + (dest.cal_prepack || 0) + (dest.no_cal || 0)
+                   + (dest.materiales || 0) + (dest.sin_tipo || 0);
         dest.lineas = dest.total_l || 0;
     };
 
@@ -174,6 +219,10 @@ function combinarVistas(lista, horas, puente) {
 function juntarDias(dias) {
     const buenos = (dias || []).map(d => d && d.datos).filter(Boolean);
     if (!buenos.length) return null;
+    /* EL CALZADO SE DERIVA ACA, sobre cada día y cada canal, antes de juntar nada.
+       Después ya es tarde: con un solo día `juntarDias` devuelve el objeto tal cual, y
+       con una sola vista `combinarVistas` también. */
+    buenos.forEach(d => Object.keys(d.vistas || {}).forEach(c => derivarVista(d.vistas[c])));
     if (buenos.length === 1) return Object.assign({}, buenos[0], { nDias: 1 });
 
     const horas = [...new Set(buenos.flatMap(d => d.horas || []))].sort((a, b) => a - b);
@@ -719,7 +768,10 @@ export function montarProduccionHora(cont, OPC) {
                     /* La hora que no viene es una hora sin movimiento: el robot
                        no escribe las celdas vacias para no doblar el archivo. */
                     const c = g.horas[h] || {}, d = dato(c);
-                    const tit = CLASES.slice(1).filter(([k]) => c[k + '_l'])
+                    /* El globito lista las TRES clases del robot. `Calzado` no entra:
+                       es la suma de las dos de al lado y saldría repetido. */
+                    const tit = CLASES.filter(([k]) => k !== 'total' && k !== 'calzado')
+                        .filter(([k]) => c[k + '_l'])
                         .map(([k, lab]) => `${lab}: ${nf(c[k + '_l'])} líneas`).join(' — ');
                     return `<td class="n c${d ? '' : ' z'}" title="${esc(tit)}"
                       ${d ? `style="background:rgba(var(--brand-rgb), ${
