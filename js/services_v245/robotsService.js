@@ -99,8 +99,12 @@ export const TAREAS = [
        embalaje de las 20:20 siguen apagados en el servidor, porque este los reemplaza. */
     /* EL CORREO DE CITAS. Va como tarea que se repite y no como diaria porque *"lo
        mandan a partir de las cuatro, mas o menos"* no es una hora sino una franja:
-       se intenta cada 30 minutos entre las 16:00 y las 18:30. El robot lleva su
-       lista de correos vistos, así que repetir no duplica nada. */
+       se mira el buzón cada 10 minutos entre las 12:00 y las 19:00. Medido sobre
+       cuatro correos reales: llegaron 15:22, 16:40, 16:45 y 17:34.
+
+       APENAS LO ENCUENTRA, SE CORTA POR ESE DÍA. El robot deja una marca y los pases
+       siguientes salen enseguida: recorrer el buzón por COM tarda dos minutos, y sin
+       cortar serían 43 pases al día. */
     { id: 'correo_citas', tipo: 'cada', etiqueta: 'Correo de citas de recepción',
       detalle: 'la programación de recepción de nacional que llega por correo',
       area: 'citas_recepcion' },
@@ -111,6 +115,10 @@ export const TAREAS = [
 
 /** Cada cuánto puede correr una tarea de las que se repiten. */
 export const CADA = [
+    /* Diez minutos es lo mas seguido que se puede pedir: Windows despierta al robot
+       cada 10, asi que un paso mas corto no existiria. Lo usa el correo de citas,
+       que tiene que estar mirando el buzon toda la tarde. */
+    { min: 10, texto: 'cada 10 minutos' },
     { min: 30, texto: 'cada 30 minutos' },
     { min: 60, texto: 'cada 1 hora' },
     { min: 120, texto: 'cada 2 horas' },
@@ -155,8 +163,8 @@ export const robotsPorDefecto = () => ({
     cierre_dia:   { activa: true, hora: '08:30', dias: { ...TODOS } },
     cruce_wms:    { activa: true, hora: '21:30', dias: { ...LUN_A_SAB } },
     corte_turno:  { activa: true, hora: '20:00', dias: { ...LUN_A_SAB } },
-    correo_citas: { activa: true, minuto: 0, cadaMin: 30, dias: { ...TODOS },
-                    desde: '15:00', hasta: '18:30' }
+    correo_citas: { activa: true, minuto: 0, cadaMin: 10, dias: { ...TODOS },
+                    desde: '12:00', hasta: '19:00' }
 });
 
 const _hhmm = (v, respaldo) => {

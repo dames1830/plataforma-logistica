@@ -148,14 +148,19 @@ DE_FABRICA = {
     # partir de las cuatro de la tarde, mas o menos, o sea que entre cuatro y seis
     # tienes que capturar ese correo"*.
     #
-    # SE INTENTA CADA 30 MINUTOS ENTRE LAS 15:00 Y LAS 18:30 y no una sola vez: "a
-    # partir de las cuatro, mas o menos" no es una hora, es una franja.
+    # DEL MEDIODIA A LAS 19:00, CADA 10 MINUTOS. Daniel, 03-sep-2026: *"hay que
+    # capturar a partir del mediodia hasta las siete de la noche [...] cada diez
+    # minutos que vaya verificando"*.
     #
-    # ARRANCA A LAS 15:00 Y NO A LAS 16:00. Medido sobre los cuatro correos reales
-    # que habia en el buzon el 03-sep-2026:
+    # LA HORA NO ES FIJA Y POR ESO LA VENTANA ES ANCHA. Medido sobre los cuatro
+    # correos reales que habia en el buzon el 03-sep-2026:
     #     04/09 llego 16:45    02/09 llego 17:34
-    #     03/09 llego 16:40    01/09 llego 15:22   <- antes de las 16:00
-    # Con la ventana empezando a las 16:00, ese dia se perdia entero.
+    #     03/09 llego 16:40    01/09 llego 15:22
+    # Dos horas y doce minutos de diferencia entre el mas temprano y el mas tarde.
+    #
+    # Y SE CORTA APENAS LO ENCUENTRA: el propio robot deja una marca del dia y el
+    # pase siguiente sale enseguida. Recorrer el buzon por COM tarda DOS MINUTOS
+    # medidos; sin cortar serian 43 pases y hora y media de Outlook para nada.
     #
     # NO CUESTA NADA REPETIR: el robot lleva su propia lista de correos vistos, asi
     # que el segundo pase encuentra el mismo correo y no hace nada. Y no entra al
@@ -163,8 +168,8 @@ DE_FABRICA = {
     #
     # TODOS LOS DIAS, domingo incluido: el correo del domingo programaria el lunes,
     # y un pase que no encuentra nada cuesta dos segundos.
-    'correo_citas': {'activa': True, 'minuto': 0, 'cadaMin': 30, 'dias': {d: True for d in DIAS},
-                     'desde': '15:00', 'hasta': '18:30'},
+    'correo_citas': {'activa': True, 'minuto': 0, 'cadaMin': 10, 'dias': {d: True for d in DIAS},
+                     'desde': '12:00', 'hasta': '19:00'},
     # EL CORTE DEL TURNO DIA. Daniel, 03-sep-2026: *"al finalizar el turno dia
     # deberiamos ya tener los reportes y KPIs de lo que hizo el turno dia [...] busca
     # un espacio para tener el reporte final de picking y embalaje"*, y *"el corte

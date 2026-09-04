@@ -57,6 +57,7 @@ USO
     python correo_citas.py --probar    dice que guardaria, sin publicar
     python correo_citas.py             captura y publica
     python correo_citas.py --dias 7    mira 7 dias atras (por defecto 3)
+    python correo_citas.py --igual     lo corre aunque hoy ya se haya capturado
 """
 import io
 import json
@@ -80,7 +81,39 @@ ROBOT_TOKEN = os.environ.get('ROBOT_TOKEN', '')
 ASUNTO = 'programacion de recepcion'
 REMITENTE = ''          # VACIO A PROPOSITO. Ver arriba.
 
+def _base_onedrive():
+    """La carpeta de OneDrive. SE BUSCA, NO SE ESCRIBE A MANO: en la laptop el
+    usuario de Windows es 'dames' y en el servidor 'Administrator'. Una ruta fija
+    sirve en una maquina y revienta en la otra -le paso a correo_guias.py el
+    20-ago-2026: bajo el correo bien y murio al guardarlo-."""
+    for c in (os.environ.get('OneDrive'), os.environ.get('OneDriveCommercial'),
+              os.path.join(os.path.expanduser('~'), 'OneDrive'),
+              os.path.join('C:' + os.sep, 'Users', 'Administrator', 'OneDrive'),
+              os.path.join('C:' + os.sep, 'Users', 'dames', 'OneDrive')):
+        if not c:
+            continue
+        ruta = os.path.join(c, 'danielames.bata', 'scraping Stock')
+        if os.path.isdir(ruta):
+            return ruta
+    return os.path.join(os.path.expanduser('~'), 'OneDrive', 'danielames.bata',
+                        'scraping Stock')
+
+
+# LA IMAGEN SE GUARDA SIEMPRE, lea bien el OCR o no. Es el original contra el que
+# Daniel puede comprobar cualquier numero, y sin ella un error de lectura seria
+# imposible de descubrir.
+CARPETA_IMG = os.path.join(_base_onedrive(), 'Citas Recepcion')
+LECTOR = os.path.join(AQUI, 'leer_imagen.ps1')
+
 VISTOS = os.path.join(AQUI, 'correo_citas_vistos.json')
+# LA MARCA DEL DIA. Daniel, 03-sep-2026: *"una vez que encuentre la tarea, las tres
+# de la tarde, ya que ese dia aborte: que no vaya consultando a las tres y diez,
+# tres y veinte. Si ya lo encontro, ya"*.
+#
+# No alcanza con la lista de vistos: esa evita PROCESAR dos veces, pero el robot
+# igual abre Outlook y recorre el buzon, y eso tarda DOS MINUTOS medidos. De 12:00
+# a 19:00 son 43 pases: hora y media de Outlook trabajando para nada.
+ESTADO = os.path.join(AQUI, 'correo_citas_estado.json')
 LOG = os.path.join(AQUI, 'logs', 'correo_citas.log')
 
 # La fecha del asunto: "DEL DIA 04/09/2026" y tambien "DEL 04-09-2026".
@@ -272,6 +305,46 @@ class Tablas(HTMLParser):
             self._pila[-1]['celda'].append(d)
 
 
+def guardar_imagen(it, fecha):
+    """Guarda la captura de la tabla y devuelve su ruta.
+
+    CUAL DE LOS ADJUNTOS ES LA TABLA. Los correos traen dos: la captura y el logo
+    de la firma. Medido sobre los cuatro del buzon el 03-sep-2026, el logo pesa
+    6.994 bytes EXACTOS en los cuatro, y la tabla cambia -26.386, 25.438, 13.759,
+    15.400-. Se toma el mas grande, y el orden no sirve: en el correo del 02/09 la
+    tabla era `image002` y no `image001`.
+    """
+    try:
+        n = it.Attachments.Count
+    except Exception:
+        return None
+    mejor, mejor_tam = None, 0
+    for i in range(1, n + 1):
+        try:
+            a = it.Attachments.Item(i)
+            nombre = str(a.FileName or '').lower()
+            if not nombre.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
+                continue
+            tam = int(a.Size or 0)
+            if tam > mejor_tam:
+                mejor, mejor_tam = a, tam
+        except Exception:
+            continue
+    if mejor is None or mejor_tam < 8000:
+        return None
+    try:
+        if not os.path.isdir(CARPETA_IMG):
+            os.makedirs(CARPETA_IMG)
+        destino = os.path.join(CARPETA_IMG, 'Citas %s.png' % fecha)
+        mejor.SaveAsFile(destino)
+        log('   imagen guardada: %s (%s bytes)' % (os.path.basename(destino),
+                                                   format(mejor_tam, ',')))
+        return destino
+    except Exception as e:
+        log('   no se pudo guardar la imagen: %s' % e, 'ERROR')
+        return None
+
+
 def limpio(t):
     """El texto de una celda, sin el espacio duro que mete Outlook."""
     return re.sub(r'\s+', ' ', str(t or '').replace('\xa0', ' ')).strip()
@@ -394,6 +467,29 @@ def fecha_del_asunto(asunto, llegada):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+def ya_se_capturo_hoy():
+    """Si el correo de hoy ya se capturo. Se guarda la FECHA DE CALENDARIO en que
+    se capturo, no el dia que programa: la regla es "uno por dia y listo"."""
+    try:
+        with io.open(ESTADO, encoding='utf-8') as f:
+            d = json.load(f)
+        return d.get('capturadoEnLaFecha') == datetime.now().strftime('%Y-%m-%d'), d
+    except Exception:
+        return False, {}
+
+
+def marcar_capturado(fecha_programada, total, citas):
+    try:
+        with io.open(ESTADO, 'w', encoding='utf-8') as f:
+            json.dump({'capturadoEnLaFecha': datetime.now().strftime('%Y-%m-%d'),
+                       'capturadoALas': datetime.now().strftime('%H:%M:%S'),
+                       'programaElDia': fecha_programada,
+                       'citas': citas,
+                       'totalProgramado': total}, f, ensure_ascii=False, indent=1)
+    except Exception as e:
+        log('no se pudo dejar la marca del dia: %s' % e, 'WARN')
+
+
 def leer_vistos():
     try:
         with io.open(VISTOS, encoding='utf-8') as f:
@@ -425,6 +521,15 @@ def main():
     dias = int(arg('--dias', '3'))
     listar = '--listar' in sys.argv
     probar = '--probar' in sys.argv
+
+    # SE SALE ANTES DE ABRIR OUTLOOK, que es lo que tarda. Si se comprobara despues,
+    # el ahorro seria cero.
+    hecho, marca = ya_se_capturo_hoy()
+    if hecho and not (listar or probar or '--ver' in sys.argv or '--igual' in sys.argv):
+        log('hoy ya se capturo a las %s (programa el %s, %s citas). No se abre Outlook.'
+            % (marca.get('capturadoALas', '?'), marca.get('programaElDia', '?'),
+               marca.get('citas', '?')))
+        return 0
 
     log('=' * 62)
     log('CORREO DE PROGRAMACION DE RECEPCION  ·  %s'
@@ -499,6 +604,7 @@ def main():
             except Exception:
                 cuerpo = ''
             log('   texto plano, primeros 400: %s' % re.sub(r'\s+', ' ', cuerpo)[:400])
+            guardar_imagen(it, fecha)
             continue
 
         filas = leer_citas(html)
@@ -539,6 +645,12 @@ def main():
             log('   publicado en %s del %s (%s)' % (AREA, fecha, estado))
             publicados += 1
             vistos.add(id_correo)
+            # SOLO SE MARCA EL DIA CUANDO ALGO SE PUBLICO DE VERDAD. Marcar al
+            # encontrar el correo dejaria el dia cerrado con las manos vacias.
+            marcar_capturado(fecha, total, len(filas))
+            guardar_vistos(vistos)
+            log('   marcado: hoy ya no se vuelve a abrir Outlook')
+            return 0
         except Exception as e:
             log('   NO SE PUDO PUBLICAR: %s' % e, 'ERROR')
 
