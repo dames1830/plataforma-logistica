@@ -1,42 +1,42 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0639';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0640';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0639';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0639';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0639';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0639';
-import * as metasService from '../services_v245/metasService.js?v=29.0639';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0639';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0639';
+import * as adminService from '../services_v245/adminService.js?v=29.0640';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0640';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0640';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0640';
+import * as metasService from '../services_v245/metasService.js?v=29.0640';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0640';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0640';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, ubicacionDeReservaCuenta,
          _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0639';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0639';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0639';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0639';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0639';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0639';
-import { renderCapacidad } from './capacidad.js?v=29.0639';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0639';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0639';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0639';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0639';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0639';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0639';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0639';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0639';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0639';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0639';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0639';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0639';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0639';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0639';
-import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0639';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0639';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0639';
-import { montarSlotting } from './slotting.js?v=29.0639';
-import { montarEventos } from './eventos.js?v=29.0639';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0639';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0640';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0640';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0640';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0640';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0640';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0640';
+import { renderCapacidad } from './capacidad.js?v=29.0640';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0640';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0640';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0640';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0640';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0640';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0640';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0640';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0640';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0640';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0640';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0640';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0640';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0640';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0640';
+import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0640';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0640';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0640';
+import { montarSlotting } from './slotting.js?v=29.0640';
+import { montarEventos } from './eventos.js?v=29.0640';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0640';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -399,7 +399,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0639';
+const VERSION = '29.0640';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2463,8 +2463,18 @@ const TABS = [
      servidor no tenian una sola fila. */
   { id: 'despacho', label: 'Despacho', icon: '🚚', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_despacho', label: 'Archivo Despacho', icon: '🗂️' },
-    { id: 'monitoreo_despacho', label: 'Monitoreo de Rutas', icon: '🗺️' },
-    { id: 'chofer_despacho', label: 'Portal Chofer', icon: '📱' }
+    /* DISTRIBUCIÓN y DESPACHO POTENCIAL, pedidas por Daniel el 05-sep-2026.
+       Distribución es el estado del día por gender —pedido, picado, patio,
+       staging— más los varados; Despacho Potencial suma patio + staging + lo
+       que mandó comercial, por tienda, para decidir qué se puede sacar hoy. */
+    { id: 'distribucion', label: 'Distribución', icon: '📦' },
+    { id: 'despacho_potencial', label: 'Despacho Potencial', icon: '🚚' },
+    /* DESACTIVADAS el 05-sep-2026, NO borradas. Daniel: *"desactívalas, no las
+       elimines, porque de repente mañana te digo vuélvelas a activar"*. Con
+       `oculta` no se listan en la barra pero el código sigue entero: para
+       devolverlas basta con quitar esa marca. */
+    { id: 'monitoreo_despacho', label: 'Monitoreo de Rutas', icon: '🗺️', oculta: true },
+    { id: 'chofer_despacho', label: 'Portal Chofer', icon: '📱', oculta: true }
   ]},
   { id: 'no_retail', label: 'NO RETAIL', icon: '🏬', roles: ['admin', 'jefe', 'supervisor', 'encargado'], subTabs: [
     { id: 'archivo_no_retail', label: 'Archivo NO RETAIL', icon: '🗂️' },
@@ -3130,7 +3140,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      todas. */
   const abrirPortalNoRetail = async (destino) => {
       const { renderDespachoNoRetailPortal } =
-          await import('../reportes/despacho_no_retail.js?v=29.0639');
+          await import('../reportes/despacho_no_retail.js?v=29.0640');
       return renderDespachoNoRetailPortal(destino, {
           fetchAndParseNoRetailClients,
           showNRPhotoLoader,
@@ -4322,7 +4332,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const abrirZonaBuffer = async () => {
-      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0639');
+      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0640');
       return montarZonaBuffer({
           estado: estadoBuffer,
           contentArea,
@@ -4887,7 +4897,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0639');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0640');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5150,7 +5160,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0639');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0640');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -13945,7 +13955,7 @@ const renderRFSection = (container) => {
           se ata una sola vez al entrar y esas dieciséis quedaron intactas. El
           porqué completo está en la cabecera de ese archivo. */
        (async () => {
-           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0639');
+           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0640');
            montarInventarios(l2Container, {
                renderUploadArea,
                showPremiumConfirm,
@@ -15646,6 +15656,12 @@ const renderRFSection = (container) => {
     } else if (tabId === 'recepcion' && activeSub === 'asn_recepcion') {
         await new Promise(r => setTimeout(r, 0));
         renderASNRecepcion(container);
+    } else if (tabId === 'despacho' && activeSub === 'distribucion') {
+        await new Promise(r => setTimeout(r, 0));
+        renderDistribucion(container);
+    } else if (tabId === 'despacho' && activeSub === 'despacho_potencial') {
+        await new Promise(r => setTimeout(r, 0));
+        renderDespachoPotencial(container);
     } else if (tabId === 'despacho' && activeSub === 'monitoreo_despacho') {
         await new Promise(r => setTimeout(r, 0));
         renderDespachoMonitoreo(container);
@@ -15759,6 +15775,43 @@ const renderRFSection = (container) => {
 
   const saveDispatchRoutes = (routes) => {
     localStorage.setItem('logistics_dispatch_routes_v1', JSON.stringify(routes));
+  };
+
+  /* DISTRIBUCIÓN Y DESPACHO POTENCIAL.
+   *
+   * Los dos leen un área que publica el robot, igual que Picking por día: el
+   * navegador NO puede armarlos. Distribución necesita cruzar el archivo de
+   * picking del día con los 33 del OBLPN —y lo varado sale justamente de
+   * juntarlos todos, porque un archivo solo trae lo que se movió ese día—;
+   * Despacho Potencial suma además el correo de comercial. Son cientos de MB
+   * que solo alcanza el servidor.
+   *
+   * Mientras el robot no publique, la pantalla DICE POR QUÉ ESTÁ VACÍA en vez
+   * de quedarse muda. */
+  const pantallaSinPublicar = (container, titulo, detalle, area) => {
+    container.innerHTML = `
+      <div class="glass-panel" style="padding:1.6rem; max-width:760px;">
+        <h3 style="margin:0 0 .6rem 0;">${titulo}</h3>
+        <p style="color:var(--text-muted); margin:0 0 1rem 0;">${detalle}</p>
+        <p style="color:var(--text-muted); margin:0; font-size:.85rem;">
+          El robot todavía no publica el área <b>${area}</b>. En cuanto corra por
+          primera vez, esta pantalla se llena sola.
+        </p>
+      </div>`;
+  };
+
+  const renderDistribucion = (container) => {
+    pantallaSinPublicar(container, 'Distribución',
+      'El estado del día por gender —lo pedido, lo picado, lo que espera en patio y lo ' +
+      'que está en staging— más los bultos que nadie mueve.',
+      'distribucion_dia');
+  };
+
+  const renderDespachoPotencial = (container) => {
+    pantallaSinPublicar(container, 'Despacho Potencial',
+      'Por tienda: lo que ya está embalado, lo que falta embalar y lo que mandó ' +
+      'comercial. Sumados, es lo que se podría sacar hoy.',
+      'despacho_potencial_dia');
   };
 
   const renderDespachoMonitoreo = (container) => {
@@ -18261,7 +18314,7 @@ const renderRFSection = (container) => {
              `renderDashboard` y que ahora, viviendo afuera, no alcanza sola.
              `tareasDeAlmacenaje` va como función y no como lista: la caché se
              reemplaza entera cuando entran tareas nuevas. */
-          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0639');
+          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0640');
           const corrida = await barrerParaSlotting(
             (Array.isArray(zonasDeLaCorrida) && zonasDeLaCorrida.length)
               ? zonasDeLaCorrida
@@ -26621,7 +26674,7 @@ window.__menuMapa = (btn) => {
              lado es un `let` que leen el plan del Excel y el prepack: si se
              pasara la lista, esos dos nunca se enterarían de la foto nueva. */
           (async () => {
-              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0639');
+              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0640');
               renderAnalisisReserva(skuBuf, {
                   htmlConsolidacionReserva,
                   engancharClicConsolidacion,
@@ -30443,12 +30496,12 @@ window.__menuMapa = (btn) => {
         /* El buscador se carga aparte y NO frena al resto: si el servidor viejo
            todavia no tiene /api/asn, el cuadro dice que no se pudo consultar y
            los demas siguen dibujandose igual. */
-        import('../reportes/asn_buscador.js?v=29.0639').then(m => {
+        import('../reportes/asn_buscador.js?v=29.0640').then(m => {
           const cb = container.querySelector('#asn_buscador');
           if (cb) m.montarBuscadorAsn(cb, { api: 'https://logistics-backend-wv0x.onrender.com' });
         }).catch(e => console.warn('[ASN] no se pudo cargar el buscador:', e));
 
-        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0639');
+        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0640');
         const caja = container.querySelector('#asn_detalle');
         /* El HOY va de aca, con getLogicalDate(): el paquete trae el suyo -el del
            robot- y si la corrida fallo, ese "hoy" es de ayer y todo el calendario
