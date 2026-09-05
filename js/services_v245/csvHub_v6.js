@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0640';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0641';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0640';
+const VERSION = '29.0641';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -690,6 +690,26 @@ export const traerFactoresCalculados = async (force = false) => {
     } catch (e) { console.warn('[FACTORES] No se pudieron traer los calculados:', e); return null; }
 };
 export const factoresCalculadosEnMemoria = () => _factoresCalc;
+
+/* TRAER UN AREA QUE PUBLICA EL ROBOT, tal cual la dejo.
+ *
+ * La usan Distribucion y Despacho Potencial: los dos son cuentas que el
+ * navegador no puede hacer -cruzan el picking del dia con los 33 archivos del
+ * OBLPN y el correo de comercial-, asi que el servidor las deja calculadas y
+ * la pantalla solo las dibuja. Devuelve null si todavia no hay nada, y la
+ * pantalla dice por que esta vacia en vez de quedarse muda. */
+export const traerAreaPublicada = async (area) => {
+    try {
+        const r = await fetch(`${API_BASE}/logistics/${area}?date=MASTER&z=${Date.now()}`);
+        if (!r.ok) return null;
+        const j = await r.json();
+        const d = (j && j.data !== undefined) ? j.data : j;
+        return (d && typeof d === 'object' && Object.keys(d).length) ? d : null;
+    } catch (e) {
+        console.warn(`[${area}] No se pudo traer del servidor:`, e);
+        return null;
+    }
+};
 
 export const traerAnalisisBuffer = async (fecha) => {
     if (!fecha) return null;

@@ -1,42 +1,42 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia } from '../services_v245/csvHub_v6.js?v=29.0640';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada} from '../services_v245/csvHub_v6.js?v=29.0641';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0640';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0640';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0640';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0640';
-import * as metasService from '../services_v245/metasService.js?v=29.0640';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0640';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0640';
+import * as adminService from '../services_v245/adminService.js?v=29.0641';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0641';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0641';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0641';
+import * as metasService from '../services_v245/metasService.js?v=29.0641';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0641';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0641';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, ubicacionDeReservaCuenta,
          _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0640';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0640';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0640';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0640';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0640';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0640';
-import { renderCapacidad } from './capacidad.js?v=29.0640';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0640';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0640';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0640';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0640';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0640';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0640';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0640';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0640';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0640';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0640';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0640';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0640';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0640';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0640';
-import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0640';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0640';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0640';
-import { montarSlotting } from './slotting.js?v=29.0640';
-import { montarEventos } from './eventos.js?v=29.0640';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0640';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0641';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0641';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0641';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0641';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0641';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0641';
+import { renderCapacidad } from './capacidad.js?v=29.0641';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0641';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0641';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0641';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0641';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0641';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0641';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0641';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0641';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0641';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0641';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0641';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0641';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0641';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0641';
+import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0641';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0641';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0641';
+import { montarSlotting } from './slotting.js?v=29.0641';
+import { montarEventos } from './eventos.js?v=29.0641';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0641';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -399,7 +399,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0640';
+const VERSION = '29.0641';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3140,7 +3140,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      todas. */
   const abrirPortalNoRetail = async (destino) => {
       const { renderDespachoNoRetailPortal } =
-          await import('../reportes/despacho_no_retail.js?v=29.0640');
+          await import('../reportes/despacho_no_retail.js?v=29.0641');
       return renderDespachoNoRetailPortal(destino, {
           fetchAndParseNoRetailClients,
           showNRPhotoLoader,
@@ -4332,7 +4332,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const abrirZonaBuffer = async () => {
-      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0640');
+      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0641');
       return montarZonaBuffer({
           estado: estadoBuffer,
           contentArea,
@@ -4897,7 +4897,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0640');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0641');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5160,7 +5160,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0640');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0641');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -13955,7 +13955,7 @@ const renderRFSection = (container) => {
           se ata una sola vez al entrar y esas dieciséis quedaron intactas. El
           porqué completo está en la cabecera de ese archivo. */
        (async () => {
-           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0640');
+           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0641');
            montarInventarios(l2Container, {
                renderUploadArea,
                showPremiumConfirm,
@@ -15800,18 +15800,431 @@ const renderRFSection = (container) => {
       </div>`;
   };
 
-  const renderDistribucion = (container) => {
-    pantallaSinPublicar(container, 'Distribución',
-      'El estado del día por gender —lo pedido, lo picado, lo que espera en patio y lo ' +
-      'que está en staging— más los bultos que nadie mueve.',
-      'distribucion_dia');
+  /* ══════════════════════════════════════════════════════════════════════
+   * DISTRIBUCIÓN Y DESPACHO POTENCIAL
+   *
+   * Los dos leen un área que publica el robot. El navegador NO puede armarlos:
+   * Distribución cruza el picking del día con los 33 archivos del OBLPN —y lo
+   * varado sale justamente de juntarlos todos, porque un archivo trae solo lo
+   * que se movió ese día—; Despacho Potencial suma además el correo de
+   * comercial. Son cientos de MB que solo alcanza el servidor.
+   * ══════════════════════════════════════════════════════════════════════ */
+
+  const milDist = (n) => Number(n || 0).toLocaleString('es-PE');
+
+  /* El estilo va una sola vez y usa las variables del tema, para que siga a
+     los cuatro. */
+  const estiloDistribucion = () => {
+    if (document.getElementById('css_distribucion')) return;
+    const st = document.createElement('style');
+    st.id = 'css_distribucion';
+    st.textContent = `
+      .dst-grid{display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:start}
+      @media (max-width:1100px){.dst-grid{grid-template-columns:1fr}}
+      .dst-caja{background:var(--bg-panel,var(--surface,#fff)); border:1px solid var(--border);
+        border-radius:8px; overflow:hidden; display:flex; flex-direction:column}
+      .dst-caja.alto{height:520px}
+      .dst-cab{display:flex; justify-content:space-between; align-items:flex-start; gap:.8rem;
+        padding:.7rem .9rem; border-bottom:1px solid var(--border); flex-wrap:wrap; flex:0 0 auto}
+      .dst-cab .t{font-weight:700; font-size:.9rem}
+      .dst-cab .s{font-size:.75rem; color:var(--text-muted); margin-top:.15rem}
+      .dst-acc{display:flex; flex-direction:column; gap:.4rem; flex:0 0 auto}
+      .dst-buscar{font-size:.78rem; padding:.35rem .6rem; border-radius:5px;
+        border:1px solid var(--border); background:var(--bg-input,transparent); color:var(--text-strong); width:180px}
+      .dst-caps{display:grid; grid-template-columns:1fr 1fr; gap:.4rem; width:180px}
+      .dst-cap{font-size:.7rem; font-weight:700; cursor:pointer; padding:.32rem .2rem;
+        border-radius:999px; white-space:nowrap; background:transparent; color:var(--text-muted);
+        border:1px solid var(--border)}
+      .dst-cap.on{color:#FFFFFF; border-color:transparent}
+      .dst-cap.on[data-g="F"]{background:#0B5C63}
+      .dst-cap.on[data-g="N"]{background:#9C5A3C}
+      .dst-scroll{overflow:auto; flex:1 1 auto; min-height:0}
+      table.dst{width:100%; border-collapse:collapse; font-size:.8rem}
+      table.dst th,table.dst td{padding:.4rem .6rem; text-align:right; white-space:nowrap}
+      table.dst th:first-child,table.dst td:first-child{text-align:left}
+      table.dst thead th{font-size:.68rem; letter-spacing:.04em; text-transform:uppercase;
+        color:var(--text-muted); background:var(--bg-soft,rgba(128,128,128,.08));
+        border-bottom:1px solid var(--border); position:sticky; top:0; z-index:1;
+        white-space:normal; line-height:1.25}
+      table.dst tbody td{border-bottom:1px solid var(--border)}
+      table.dst tfoot td{border-top:2px solid var(--text-strong); font-weight:700;
+        background:var(--bg-soft,rgba(128,128,128,.08))}
+      table.dst .n{font-variant-numeric:tabular-nums}
+      table.dst tr.banda th{text-align:center; background:transparent;
+        border-bottom:1px solid var(--border); position:static}
+      .dst-pill{display:inline-block; font-size:.65rem; font-weight:700; letter-spacing:.04em;
+        text-transform:uppercase; padding:.12rem .45rem; border-radius:3px}
+      .dst-pill.f{background:rgba(11,92,99,.14); color:#0B8C96}
+      .dst-pill.n{background:rgba(156,90,60,.16); color:#C07A50}
+      .dst-alarma{background:var(--bg-panel,var(--surface,#fff)); border:1px solid var(--border);
+        border-radius:8px; overflow:hidden}
+      .dst-alarma .tt{font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+        color:var(--text-muted); background:var(--bg-soft,rgba(128,128,128,.08));
+        border-bottom:1px solid var(--border); padding:.5rem .9rem}
+      .dst-cifras{display:flex; gap:1.8rem; padding:.9rem .9rem .2rem; flex-wrap:wrap}
+      .dst-cifra .v{font-size:2rem; font-weight:700; line-height:1}
+      .dst-cifra.rojo .v{color:#D9534F}
+      .dst-cifra .e{font-size:.68rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+        color:var(--text-muted); margin-top:.3rem}
+      .dst-cifra .p{font-size:.75rem; color:var(--text-muted)}
+      .dst-barra{display:flex; height:8px; margin:.6rem .9rem 0; border-radius:5px; overflow:hidden;
+        background:var(--bg-soft,rgba(128,128,128,.12))}
+      .dst-tramos{list-style:none; margin:.5rem 0 .9rem; padding:0 .9rem; display:flex;
+        flex-wrap:wrap; gap:.3rem 1.1rem; font-size:.72rem; color:var(--text-muted)}
+      .dst-tramos li{display:flex; align-items:baseline; gap:.35rem}
+      .dst-tramos li::before{content:""; width:8px; height:8px; border-radius:2px; background:var(--x)}
+      .dst-tramos b{font-weight:700; color:var(--text-strong)}
+      .dst-dias{font-weight:700; font-variant-numeric:tabular-nums}
+      .dst-dias.r{color:#D9534F} .dst-dias.a{color:#C08A2E}
+      .dst-lpn{font-size:.72rem; color:var(--text-muted)}
+      .dst-pie{font-size:.72rem; color:var(--text-muted); padding:.5rem .9rem;
+        border-top:1px solid var(--border); flex:0 0 auto}
+      tr.dst-zona{cursor:pointer}
+      tr.dst-zona td{background:var(--bg-soft,rgba(128,128,128,.08)); font-weight:700;
+        border-top:1px solid var(--border)}
+      tr.dst-oculta{display:none}
+      .dst-flecha{display:inline-block; width:0; height:0; margin-right:.5rem;
+        border-left:5px solid currentColor; border-top:4px solid transparent;
+        border-bottom:4px solid transparent; transform:rotate(90deg); vertical-align:middle}
+      tr.dst-zona.cerrada .dst-flecha{transform:rotate(0)}
+      .dst-mez{display:flex; height:7px; border-radius:4px; overflow:hidden;
+        background:var(--bg-soft,rgba(128,128,128,.12)); min-width:90px}
+      .dst-titulo{font-weight:700; font-size:.95rem; margin:.4rem 0 .2rem}
+    `;
+    document.head.appendChild(st);
   };
 
-  const renderDespachoPotencial = (container) => {
-    pantallaSinPublicar(container, 'Despacho Potencial',
-      'Por tienda: lo que ya está embalado, lo que falta embalar y lo que mandó ' +
-      'comercial. Sumados, es lo que se podría sacar hoy.',
-      'despacho_potencial_dia');
+  const TONOS_VAR = {
+    '1 día': '#0B8C96', '2 a 3 días': '#C08A2E', '4 a 7 días': '#D97A2B',
+    '8 a 14 días': '#D9534F', 'más de 14 días': '#8E2F28'
+  };
+
+  /* Una lista de bultos, con buscador y cápsulas de gender. */
+  const listaBultos = (caja, filas, arts, cols) => {
+    const cuerpo = caja.querySelector('tbody');
+    const pie = caja.querySelector('.dst-pie');
+    const buscar = caja.querySelector('.dst-buscar');
+    let genero = '';
+    const paresDe = (r) => {
+      if (!genero || !r.i || !arts) return r.q;
+      return r.i.reduce((a, it) => a + ((arts[it[0]] || [])[1] === genero ? it[1] : 0), 0);
+    };
+    const pinta = () => {
+      const f = (buscar.value || '').trim().toUpperCase();
+      const vistas = filas.filter(r => {
+        if (genero && r.i && paresDe(r) <= 0) return false;
+        return !f || String(r.o || '').indexOf(f) >= 0 || r.l.indexOf(f) >= 0 ||
+               r.d.indexOf(f) >= 0 || (r.t || '').toUpperCase().indexOf(f) >= 0;
+      });
+      cuerpo.innerHTML = vistas.map(r => cols(r, paresDe(r))).join('');
+      const u = vistas.reduce((a, r) => a + paresDe(r), 0);
+      pie.textContent = `${milDist(vistas.length)} bultos · ${milDist(u)} pares`;
+    };
+    caja.querySelectorAll('.dst-cap').forEach(b => b.addEventListener('click', () => {
+      genero = genero === b.dataset.g ? '' : b.dataset.g;
+      caja.querySelectorAll('.dst-cap').forEach(o => o.classList.toggle('on', o.dataset.g === genero));
+      pinta();
+    }));
+    buscar.addEventListener('input', pinta);
+    pinta();
+  };
+
+  const cabLista = (titulo, sub) => `
+    <div class="dst-cab">
+      <div><p class="t">${titulo}</p><p class="s">${sub}</p></div>
+      <div class="dst-acc">
+        <input type="search" class="dst-buscar" placeholder="Pedido, LPN o tienda">
+        <div class="dst-caps">
+          <button type="button" class="dst-cap" data-g="F">Footwear</button>
+          <button type="button" class="dst-cap" data-g="N">No&nbsp;Footwear</button>
+        </div>
+      </div>
+    </div>`;
+
+  const renderDistribucion = async (container) => {
+    estiloDistribucion();
+    container.innerHTML = `<p style="color:var(--text-muted);">Trayendo el reporte…</p>`;
+    const D = await traerAreaPublicada('distribucion_dia');
+    if (!D || !D.tabla) {
+      pantallaSinPublicar(container, 'Distribución',
+        'El estado del día por gender —lo pedido, lo picado, lo que espera en patio y lo ' +
+        'que está en staging— más los bultos que nadie mueve.', 'distribucion_dia');
+      return;
+    }
+    const T = D.tabla;
+    const su = (k) => T.reduce((a, f) => a + (f[k] || 0), 0);
+    const pct = (a, b) => b ? (100 * a / b).toFixed(1).replace('.', ',') + '%' : '—';
+    const fila = (f) => `<tr>
+        <td><span class="dst-pill ${f.g === 'Footwear' ? 'f' : 'n'}">${f.g}</span></td>
+        <td class="n">${milDist(f.ped)}</td><td class="n">${milDist(f.qPed)}</td>
+        <td class="n">${milDist(f.qPic)}</td><td class="n">${pct(f.qPic, f.qPed)}</td>
+        <td class="n">${milDist(f.pend)}</td><td class="n">${milDist(f.emb)}</td>
+        <td class="n">${milDist(f.patio)}</td>
+        <td class="n">${milDist(f.stg)}</td><td class="n">${milDist(f.car)}</td>
+        <td class="n">${milDist(f.env)}</td></tr>`;
+
+    const pivot = (titulo, d) => `
+      <div class="dst-caja">
+        <div class="dst-cab"><div><p class="t">${titulo}</p></div></div>
+        <table class="dst">
+          <thead><tr><th>Turno</th><th>Zona</th><th style="text-align:center">Footwear</th>
+            <th style="text-align:center">No Footwear</th></tr></thead>
+          <tbody>${d.filas.map(f => `<tr><td>${f.turno}</td>
+            <td style="text-align:left; color:var(--text-muted)">${f.zona}</td>
+            <td class="n" style="text-align:center">${milDist(f.cal)}</td>
+            <td class="n" style="text-align:center">${milDist(f.noc)}</td></tr>`).join('')}</tbody>
+          <tfoot><tr><td>Total general</td><td></td>
+            <td class="n" style="text-align:center">${milDist(d.total.cal)}</td>
+            <td class="n" style="text-align:center">${milDist(d.total.noc)}</td></tr></tfoot>
+        </table>
+      </div>`;
+
+    const alarma = (nombre, etapa, dd) => {
+      const v = dd.filas.filter(x => x.dias >= 4);
+      const np = v.reduce((a, x) => a + x.q, 0);
+      const mas = dd.filas[0];
+      const cola = (D.varados.resumen[etapa] || []).filter(x => x.t !== 'se movió ayer');
+      const tot = cola.reduce((a, x) => a + x.n, 0) || 1;
+      return `<div class="dst-alarma">
+        <p class="tt">${nombre}</p>
+        <div class="dst-cifras">
+          <div class="dst-cifra"><div class="v">${milDist(v.length)}</div>
+            <div class="e">bultos varados</div><div class="p">${milDist(np)} pares · 4 días o más</div></div>
+          <div class="dst-cifra rojo"><div class="v">${mas ? mas.dias : 0}</div>
+            <div class="e">días el más viejo</div>
+            <div class="p">${mas ? 'desde el ' + mas.desde : '—'}</div></div>
+        </div>
+        <div class="dst-barra">${cola.map(x =>
+          `<span style="width:${Math.max(4, 100 * x.n / tot).toFixed(1)}%;background:${TONOS_VAR[x.t] || 'var(--border)'}"></span>`).join('')}</div>
+        <ul class="dst-tramos">${cola.map(x =>
+          `<li style="--x:${TONOS_VAR[x.t] || 'var(--border)'}"><b>${milDist(x.n)}</b>${x.t}</li>`).join('')}</ul>
+      </div>`;
+    };
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+        <div class="dst-caja">
+          <div class="dst-cab"><div><p class="t">Reporte de Retail</p>
+            <p class="s">${D.generado || ''}</p></div></div>
+          <div class="dst-scroll">
+          <table class="dst">
+            <thead>
+              <tr class="banda"><th colspan="3"></th>
+                <th colspan="5" style="color:#0B8C96">Picking y embalaje</th>
+                <th colspan="3" style="color:#C07A50">Despacho</th></tr>
+              <tr><th>Gender</th><th>N° pedidos</th><th>Qty pedida</th>
+                <th>Qty picada</th><th>% picado</th><th>Qty pendiente</th>
+                <th>Qty embalada</th><th>Qty patio</th>
+                <th>Staging</th><th>Cargado</th><th>Enviado</th></tr>
+            </thead>
+            <tbody>${T.map(fila).join('')}</tbody>
+            <tfoot><tr><td>Total Retail</td>
+              <td class="n">${milDist(su('ped'))}</td><td class="n">${milDist(su('qPed'))}</td>
+              <td class="n">${milDist(su('qPic'))}</td><td class="n">${pct(su('qPic'), su('qPed'))}</td>
+              <td class="n">${milDist(su('pend'))}</td><td class="n">${milDist(su('emb'))}</td>
+              <td class="n">${milDist(su('patio'))}</td>
+              <td class="n">${milDist(su('stg'))}</td><td class="n">${milDist(su('car'))}</td>
+              <td class="n">${milDist(su('env'))}</td></tr></tfoot>
+          </table></div>
+        </div>
+
+        <div class="dst-grid">
+          ${pivot('Embalaje turno y zona', D.turnoZona.patio)}
+          ${pivot('Staging turno y zona', D.turnoZona.staging)}
+        </div>
+
+        <div class="dst-grid">
+          <div class="dst-caja alto" id="dst_patio">
+            ${cabLista('Qué hay en el patio',
+              `${milDist(D.listas.patio.length)} bultos · el LPN es el <b>PRE</b> del coche de picking`)}
+            <div class="dst-scroll"><table class="dst">
+              <thead><tr><th>N° pedido</th><th>LPN</th><th>Tienda</th><th>Día</th><th>Pares</th></tr></thead>
+              <tbody></tbody></table></div>
+            <p class="dst-pie"></p>
+          </div>
+          <div class="dst-caja alto" id="dst_staging">
+            ${cabLista('Qué hay en staging',
+              `${milDist(D.listas.staging.length)} bultos · embalados, esperando el pistoleo`)}
+            <div class="dst-scroll"><table class="dst">
+              <thead><tr><th>N° pedido</th><th>LPN</th><th>Tienda</th><th>Día</th><th>Pares</th></tr></thead>
+              <tbody></tbody></table></div>
+            <p class="dst-pie"></p>
+          </div>
+        </div>
+
+        <div class="dst-grid">
+          ${alarma('Patio · picado y sin embalar', 'patio', D.varados.patio)}
+          ${alarma('Staging · embalado y sin salir', 'staging', D.varados.staging)}
+        </div>
+
+        <div class="dst-grid">
+          <div class="dst-caja alto" id="dst_vpatio">
+            ${cabLista('Varados en patio', 'Del más viejo al más nuevo')}
+            <div class="dst-scroll"><table class="dst">
+              <thead><tr><th>Días</th><th>LPN</th><th>Tienda</th><th>Desde</th><th>Pares</th></tr></thead>
+              <tbody></tbody></table></div>
+            <p class="dst-pie"></p>
+          </div>
+          <div class="dst-caja alto" id="dst_vstaging">
+            ${cabLista('Varados en staging', 'Del más viejo al más nuevo')}
+            <div class="dst-scroll"><table class="dst">
+              <thead><tr><th>Días</th><th>LPN</th><th>Tienda</th><th>Desde</th><th>Pares</th></tr></thead>
+              <tbody></tbody></table></div>
+            <p class="dst-pie"></p>
+          </div>
+        </div>
+
+        <div class="dst-caja">
+          <div class="dst-cab"><div><p class="t">Control: PRE despachados sin pasar por embalaje</p></div></div>
+          <table class="dst">
+            <thead><tr><th>LPN</th><th>Pedido</th><th>Tienda</th><th>Pares</th></tr></thead>
+            <tbody>${(D.controlPRE || []).map(x => `<tr><td>${x.l}</td>
+              <td class="n">${x.p}</td><td style="text-align:left">${x.d} · ${x.t}</td>
+              <td class="n">${milDist(x.q)}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>`;
+
+    const colBulto = (r, q) => `<tr><td class="n">${r.o}</td>
+      <td class="dst-lpn">${r.l}</td>
+      <td style="text-align:left"><b>${r.d}</b> ${r.t}</td>
+      <td class="dst-lpn n">${r.f || ''}</td>
+      <td class="n" style="font-weight:700">${milDist(q)}</td></tr>`;
+    const colVarado = (r, q) => `<tr>
+      <td class="dst-dias ${r.dias >= 8 ? 'r' : (r.dias >= 4 ? 'a' : '')}">${r.dias}</td>
+      <td class="dst-lpn">${r.l}</td>
+      <td style="text-align:left"><b>${r.d}</b> ${r.t}</td>
+      <td class="dst-lpn n">${r.desde}</td>
+      <td class="n" style="font-weight:700">${milDist(q)}</td></tr>`;
+    listaBultos(container.querySelector('#dst_patio'), D.listas.patio, null, colBulto);
+    listaBultos(container.querySelector('#dst_staging'), D.listas.staging, null, colBulto);
+    listaBultos(container.querySelector('#dst_vpatio'), D.varados.patio.filas,
+                D.varados.patio.arts, colVarado);
+    listaBultos(container.querySelector('#dst_vstaging'), D.varados.staging.filas,
+                D.varados.staging.arts, colVarado);
+  };
+
+  const renderDespachoPotencial = async (container) => {
+    estiloDistribucion();
+    container.innerHTML = `<p style="color:var(--text-muted);">Trayendo el reporte…</p>`;
+    const D = await traerAreaPublicada('despacho_potencial_dia');
+    if (!D || !D.filas) {
+      pantallaSinPublicar(container, 'Despacho Potencial',
+        'Por tienda: lo que ya está embalado, lo que falta embalar y lo que mandó ' +
+        'comercial. Sumados, es lo que se podría sacar hoy.', 'despacho_potencial_dia');
+      return;
+    }
+    let genero = '';
+    const cerradas = {};
+    const v = (f, k) => genero ? f[k + genero] : (f[k + 'F'] + f[k + 'N']);
+    const TOT = { p: 0, s: 0, c: 0, t: 0 };
+    D.filas.forEach(f => { TOT.p += v(f, 'p'); TOT.s += v(f, 's'); TOT.c += v(f, 'c'); TOT.t += v(f, 't'); });
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+        <div class="dst-grid" style="grid-template-columns:repeat(4,1fr);" id="dst_suma"></div>
+        <div class="dst-caja alto" id="dst_pot" style="height:620px">
+          <div class="dst-cab">
+            <div><p class="t">Por tienda</p>
+              <p class="s">De la que más podría salir a la que menos.</p></div>
+            <div class="dst-acc">
+              <input type="search" class="dst-buscar" placeholder="Tienda, código o ruta">
+              <div class="dst-caps">
+                <button type="button" class="dst-cap" data-g="F">Footwear</button>
+                <button type="button" class="dst-cap" data-g="N">No&nbsp;Footwear</button>
+              </div>
+            </div>
+          </div>
+          <div class="dst-scroll"><table class="dst">
+            <thead><tr><th>Tienda</th><th style="text-align:center">Ruta</th>
+              <th>Patio</th><th>Staging</th><th>Correo</th><th>Potencial</th>
+              <th style="text-align:center">Mezcla</th></tr></thead>
+            <tbody></tbody>
+            <tfoot><tr><td>Total</td><td></td>
+              <td class="n" data-t="p">—</td><td class="n" data-t="s">—</td>
+              <td class="n" data-t="c">—</td><td class="n" data-t="t">—</td><td></td></tr></tfoot>
+          </table></div>
+          <p class="dst-pie"></p>
+        </div>
+      </div>`;
+
+    const caja = container.querySelector('#dst_pot');
+    const cuerpo = caja.querySelector('tbody');
+    const buscar = caja.querySelector('.dst-buscar');
+    const suma = container.querySelector('#dst_suma');
+    const COL = { p: '#C08A2E', s: '#2E9E6B', c: '#7A8A96' };
+
+    const mez = (p, s, c, t) => {
+      const an = (x) => t ? (100 * x / t).toFixed(1) + '%' : '0%';
+      return `<td><div class="dst-mez">
+        <span style="width:${an(p)};background:${COL.p}"></span>
+        <span style="width:${an(s)};background:${COL.s}"></span>
+        <span style="width:${an(c)};background:${COL.c}"></span></div></td>`;
+    };
+
+    const pinta = () => {
+      const q = (buscar.value || '').trim().toUpperCase();
+      const vistas = D.filas.filter(f => v(f, 't') > 0 && (!q ||
+        f.d.indexOf(q) >= 0 || (f.t || '').toUpperCase().indexOf(q) >= 0 ||
+        (f.r || '').toUpperCase().indexOf(q) >= 0 || (f.z || '').toUpperCase().indexOf(q) >= 0));
+      const zonas = {};
+      vistas.forEach(f => { (zonas[f.z || 'Sin zona'] = zonas[f.z || 'Sin zona'] || []).push(f); });
+      const orden = Object.keys(zonas).sort((a, b) =>
+        zonas[b].reduce((x, f) => x + v(f, 't'), 0) - zonas[a].reduce((x, f) => x + v(f, 't'), 0));
+      let html = '';
+      orden.forEach(z => {
+        const g = zonas[z].slice().sort((a, b) => v(b, 't') - v(a, 't'));
+        let zp = 0, zs = 0, zc = 0, zt = 0;
+        g.forEach(f => { zp += v(f, 'p'); zs += v(f, 's'); zc += v(f, 'c'); zt += v(f, 't'); });
+        const cer = !!cerradas[z];
+        html += `<tr class="dst-zona${cer ? ' cerrada' : ''}" data-z="${z}">
+          <td colspan="2"><span class="dst-flecha"></span>${z}
+            <span style="font-weight:400;color:var(--text-muted);margin-left:.5rem">${g.length} tiendas</span></td>
+          <td class="n">${milDist(zp)}</td><td class="n">${milDist(zs)}</td>
+          <td class="n">${milDist(zc)}</td><td class="n">${milDist(zt)}</td>${mez(zp, zs, zc, zt)}</tr>`;
+        g.forEach(f => {
+          const p = v(f, 'p'), s = v(f, 's'), c = v(f, 'c'), t = v(f, 't');
+          html += `<tr class="dst-de${cer ? ' dst-oculta' : ''}" data-de="${z}">
+            <td style="padding-left:1.6rem"><b>${f.d}</b> ${f.t}</td>
+            <td style="text-align:center;color:var(--text-muted)">${f.r || ''}</td>
+            <td class="n">${milDist(p)}</td><td class="n">${milDist(s)}</td>
+            <td class="n">${milDist(c)}</td>
+            <td class="n" style="font-weight:700">${milDist(t)}</td>${mez(p, s, c, t)}</tr>`;
+        });
+      });
+      cuerpo.innerHTML = html;
+      const T = { p: 0, s: 0, c: 0, t: 0 };
+      vistas.forEach(f => { T.p += v(f, 'p'); T.s += v(f, 's'); T.c += v(f, 'c'); T.t += v(f, 't'); });
+      Object.keys(T).forEach(k => { caja.querySelector(`[data-t="${k}"]`).textContent = milDist(T[k]); });
+      caja.querySelector('.dst-pie').textContent =
+        `${milDist(vistas.length)} tiendas · ${milDist(T.t)} pares en ${orden.length} zonas`;
+      suma.innerHTML = [
+        ['Patio', T.p, 'picado, falta embalar', COL.p],
+        ['+ Staging', T.s, 'embalado, listo para cargar', COL.s],
+        ['+ Correo de comercial', T.c, 'mandado a picar', COL.c],
+        ['= Potencial de despacho', T.t, `en ${milDist(vistas.length)} tiendas`, 'var(--text-strong)']
+      ].map(([q2, val, d, col]) => `<div class="dst-caja" style="border-left:4px solid ${col}; padding:.9rem 1rem">
+          <div style="font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">${q2}</div>
+          <div style="font-size:1.7rem;font-weight:700;line-height:1.15">${milDist(val)}</div>
+          <div style="font-size:.75rem;color:var(--text-muted)">${d}</div></div>`).join('');
+    };
+
+    cuerpo.addEventListener('click', (e) => {
+      const tr = e.target.closest('tr.dst-zona');
+      if (!tr) return;
+      const z = tr.dataset.z;
+      cerradas[z] = !cerradas[z];
+      tr.classList.toggle('cerrada', cerradas[z]);
+      cuerpo.querySelectorAll(`tr.dst-de[data-de="${z}"]`).forEach(f =>
+        f.classList.toggle('dst-oculta', cerradas[z]));
+    });
+    caja.querySelectorAll('.dst-cap').forEach(b => b.addEventListener('click', () => {
+      genero = genero === b.dataset.g ? '' : b.dataset.g;
+      caja.querySelectorAll('.dst-cap').forEach(o => o.classList.toggle('on', o.dataset.g === genero));
+      pinta();
+    }));
+    buscar.addEventListener('input', pinta);
+    pinta();
   };
 
   const renderDespachoMonitoreo = (container) => {
@@ -18314,7 +18727,7 @@ const renderRFSection = (container) => {
              `renderDashboard` y que ahora, viviendo afuera, no alcanza sola.
              `tareasDeAlmacenaje` va como función y no como lista: la caché se
              reemplaza entera cuando entran tareas nuevas. */
-          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0640');
+          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0641');
           const corrida = await barrerParaSlotting(
             (Array.isArray(zonasDeLaCorrida) && zonasDeLaCorrida.length)
               ? zonasDeLaCorrida
@@ -26674,7 +27087,7 @@ window.__menuMapa = (btn) => {
              lado es un `let` que leen el plan del Excel y el prepack: si se
              pasara la lista, esos dos nunca se enterarían de la foto nueva. */
           (async () => {
-              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0640');
+              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0641');
               renderAnalisisReserva(skuBuf, {
                   htmlConsolidacionReserva,
                   engancharClicConsolidacion,
@@ -30496,12 +30909,12 @@ window.__menuMapa = (btn) => {
         /* El buscador se carga aparte y NO frena al resto: si el servidor viejo
            todavia no tiene /api/asn, el cuadro dice que no se pudo consultar y
            los demas siguen dibujandose igual. */
-        import('../reportes/asn_buscador.js?v=29.0640').then(m => {
+        import('../reportes/asn_buscador.js?v=29.0641').then(m => {
           const cb = container.querySelector('#asn_buscador');
           if (cb) m.montarBuscadorAsn(cb, { api: 'https://logistics-backend-wv0x.onrender.com' });
         }).catch(e => console.warn('[ASN] no se pudo cargar el buscador:', e));
 
-        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0640');
+        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0641');
         const caja = container.querySelector('#asn_detalle');
         /* El HOY va de aca, con getLogicalDate(): el paquete trae el suyo -el del
            robot- y si la corrida fallo, ese "hoy" es de ayer y todo el calendario
