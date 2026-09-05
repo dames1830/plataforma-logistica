@@ -125,7 +125,18 @@ export const TAREAS = [
       area: 'citas_recepcion' },
     { id: 'corte_turno', tipo: 'diaria', etiqueta: 'Corte del turno día',
       detalle: 'el número final de picking, embalaje y recepción del día',
-      area: 'corte_turno' }
+      area: 'corte_turno' },
+    /* DISTRIBUCIÓN Y DESPACHO POTENCIAL. Daniel, 05-sep-2026, sobre los bultos
+       parados: *"eso es lo que quiero detectar. Ahorita lo hacen manualmente.
+       Yo lo que quiero es automatizarlo"*.
+
+       VA A LAS 22:00 porque necesita el picking del día, que lo deja el Corte
+       del turno cerca de las 21:00, y el OBLPN de la noche. No toca el WMS —solo
+       lee archivos ya bajados y publica—, así que no le quita la sesión a nadie
+       y tarda 45 segundos. */
+    { id: 'distribucion', tipo: 'diaria', etiqueta: 'Distribución y despacho potencial',
+      detalle: 'el cuadro de Retail, lo que hay en patio y staging, y los bultos varados',
+      area: 'distribucion_dia' }
 ];
 
 /** Cada cuánto puede correr una tarea de las que se repiten. */
@@ -184,7 +195,8 @@ export const robotsPorDefecto = () => ({
     cruce_wms:    { activa: true, hora: '21:30', dias: { ...LUN_A_SAB } },
     corte_turno:  { activa: true, hora: '20:00', dias: { ...LUN_A_SAB } },
     correo_citas: { activa: true, minuto: 0, cadaMin: 10, dias: { ...TODOS },
-                    desde: '12:00', hasta: '19:00' }
+                    desde: '12:00', hasta: '19:00' },
+    distribucion: { activa: true, hora: '22:00', dias: { ...LUN_A_SAB } }
 });
 
 const _hhmm = (v, respaldo) => {
