@@ -231,12 +231,30 @@ def dia_del_oblpn(nombre):
 
 
 def elegir_dia(ss):
-    """El dia lo manda el OBLPN mas nuevo. Devuelve (archivos, ultimo, fecha)."""
+    """El dia es el ultimo OBLPN QUE YA TIENE SU ARCHIVO DE PICKING.
+
+       No alcanza con el mas nuevo: el del dia en curso existe desde la
+       madrugada con cuatro lineas, y tomarlo deja la pantalla en cero. El
+       picking lo baja el Corte del turno cuando la jornada termino, asi que su
+       existencia es la senal de que el dia esta cerrado.
+
+       Devuelve (todos los archivos, el del dia, la fecha)."""
     arch = sorted(glob.glob(os.path.join(ss, 'OBLPN Embalaje', 'OBLPN *.csv')),
                   key=dia_del_oblpn)
     if not arch:
         raise SystemExit('No hay ningun archivo de OBLPN.')
-    return arch, arch[-1], dia_del_oblpn(arch[-1])
+    for f in reversed(arch):
+        d = dia_del_oblpn(f)
+        pick = os.path.join(ss, 'Picking', 'Picking %d-%d.csv' % (d.day, d.month))
+        if os.path.exists(pick):
+            if f is not arch[-1]:
+                log('el OBLPN del %s todavia no tiene su picking: se rehace el %s'
+                    % (dia_del_oblpn(arch[-1]).strftime('%d-%m'), d.strftime('%d-%m')))
+            # LOS ARCHIVOS POSTERIORES NO ENTRAN. Si se colara el del dia en
+            # curso, los bultos de ayer figurarian "vistos hoy" y ninguno saldria
+            # varado.
+            return [a for a in arch if dia_del_oblpn(a) <= d], f, d
+    raise SystemExit('Ningun dia del OBLPN tiene su archivo de picking.')
 
 
 # ══ 1. EL CUADRO DE RETAIL ════════════════════════════════════════════════════
@@ -578,8 +596,8 @@ def potencial(ss, fecha, gen, TIENDAS, porTienda, detTienda, en_bulto):
                         'Guías %s.xlsx' % fecha.strftime('%d.%m'))
     pisa = collections.Counter()
     if not os.path.exists(arch):
-        log('OJO: no hay %s; el potencial sale sin la parte de comercial.'
-            % os.path.basename(arch))
+        log('OJO: no esta el correo de comercial del dia (%s); el potencial '
+            'sale solo con patio y staging.' % fecha.strftime('%d.%m'))
     else:
         dst = os.path.join(TEMP, '_correo.xlsx')
         shutil.copy2(arch, dst)
@@ -688,6 +706,15 @@ def main():
         'staging': {f['l']: f['i'] for f in listas['staging'] if f.get('i')},
     }
     despacho = {'fecha': f_txt, 'filas': pot}
+
+    # SI LA FOTO SALE VACIA NO SE PUBLICA. Este almacen nunca tiene patio y
+    # staging los dos en cero: si pasa, el archivo esta a medias y publicarlo
+    # borraria la pantalla. Vale mas dejar el dia anterior a la vista.
+    hay = sum(f['patio'] + f['stg'] for f in tabla)
+    if hay <= 0:
+        log('la foto del %s sale sin un solo bulto en patio ni en staging: '
+            'NO SE PUBLICA nada y queda el dia anterior.' % f_txt, 'ERROR')
+        return 1
 
     # `--probar` calcula y deja los tres JSON al lado, sin publicar. Sirve para
     # revisar los numeros antes de que los vea nadie.
