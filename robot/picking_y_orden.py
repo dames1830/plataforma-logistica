@@ -291,7 +291,13 @@ def dia_pedido():
     # -`--solo-pendientes`, la que dispara el correo de comercial- tiene que
     # llegar hasta HOY: lo que busca son justamente las ordenes nacidas durante
     # el dia, que a las 06:57 todavia no existian.
-    if "--solo-pendientes" in sys.argv:
+    #
+    # `--solo-dia` TAMBIEN ES HOY, y esto fallo la primera noche: el cierre de las
+    # 19:00 del 04-sep bajo el Detalle Orden del **03-09**, porque sin bandera el
+    # defecto es ayer -este robot nacio como "Picking y Detalle Orden de ayer"-.
+    # Un cierre de turno tiene que retratar SU turno: el de las 19:00 baja el dia que
+    # termina y el de las 07:00 el que arranca. Entre los dos queda el dia completo.
+    if "--solo-pendientes" in sys.argv or "--solo-dia" in sys.argv:
         return datetime.now()
     return datetime.now() - timedelta(days=1)
 
