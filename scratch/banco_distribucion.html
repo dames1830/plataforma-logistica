@@ -25,6 +25,7 @@
   <button data-t="pbi-classic">pbi-classic</button>
   <button data-t="negro">negro</button>
   <button id="medir" style="margin-left:1.2rem">Medir contraste</button>
+  <button id="real" style="margin-left:.4rem">Dato de hoy (beta)</button>
   <span class="eco" id="eco"></span>
 </div>
 <h2>Despacho &rsaquo; Distribucion</h2><div id="d1"></div>
@@ -44,6 +45,14 @@ document.querySelectorAll('.barra button').forEach(function (b) {
   });
 });
 document.documentElement.setAttribute('data-tema', 'indigo');
+document.getElementById('real').addEventListener('click', function () {
+  var u = new URL(location.href);
+  u.searchParams.set('real', u.searchParams.get('real') === '1' ? '0' : '1');
+  location.href = u.toString();
+});
+if (new URLSearchParams(location.search).get('real') === '1') {
+  document.getElementById('real').classList.add('on');
+}
 </script>
 <script type="module">
 const fallos = [];
@@ -51,7 +60,20 @@ window.addEventListener('error', e => fallos.push(e.message));
 const leer = (id) => JSON.parse(document.getElementById(id).textContent);
 const AREAS = { distribucion_dia: leer('j1'), despacho_potencial_dia: leer('j2'),
                 distribucion_detalle: leer('j3') };
-const traerLocal = async (a) => AREAS[a] || null;
+/* CON `?real=1` DIBUJA LO QUE PUBLICO EL ROBOT EN BETA, no la muestra de
+   adentro. Sirve para mirar la pantalla de hoy sin entrar con usuario. */
+const REAL = new URLSearchParams(location.search).get('real') === '1';
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+const traerLocal = async (a) => {
+  if (!REAL) return AREAS[a] || null;
+  try {
+    const r = await fetch(`${API}/${a}?date=MASTER&z=` + Date.now(),
+                          { headers: { 'X-Environment': 'beta' } });
+    if (!r.ok) return AREAS[a] || null;
+    const j = await r.json();
+    return (j && j.data !== undefined) ? j.data : j;
+  } catch (e) { return AREAS[a] || null; }
+};
 /* Los mismos ayudantes que usa el dashboard: el icono sale del archivo real
    de la plataforma, no de una copia. */
 const { icono } = await import('../js/services_v245/iconos.js');
@@ -728,8 +750,13 @@ const getLogicalDate = () => '2026-09-04';
       XLSX.utils.book_append_sheet(wb, ws, 'Resumen');
       Object.keys(porZona).forEach(z => {
         const det = [['Zona', 'Ruta', 'Código', 'Tienda', 'Origen', 'LPN', 'Pares']];
-        porZona[z].forEach(f => (f.det || []).forEach(x =>
-          det.push([f.z || '', f.r || '', f.d, f.t, x[0], x[1], x[2]])));
+        /* El detalle viaja como [origen, LPN o guia, pares]. Se acepta
+           tambien la forma vieja en objeto, por si quedo un dato publicado
+           antes del robot: un Excel con columnas vacias no avisa de nada. */
+        porZona[z].forEach(f => (f.det || []).forEach(x => det.push(
+          Array.isArray(x) ? [f.z || '', f.r || '', f.d, f.t, x[0], x[1], x[2]]
+                           : [f.z || '', f.r || '', f.d, f.t, x.o, x.l || x.p,
+                              (x.F || 0) + (x.N || 0)])));
         if (det.length === 1) return;
         const w = XLSX.utils.aoa_to_sheet(det);
         w['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 9 }, { wch: 30 },
