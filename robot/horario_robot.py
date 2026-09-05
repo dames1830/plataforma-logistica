@@ -248,6 +248,13 @@ DE_FABRICA = {
     # 04:25; la bajada tarda ~48 min y cierra 05:18, antes del stock de las 06:00.
     # A LAS 02:30, no 04:30: usa Web Reports 63 minutos y terminaba 05:33, justo
     # dentro de la franja despejada del ancla. Ahora cierra 03:33.
+    # DISTRIBUCION Y DESPACHO POTENCIAL. Va a las 22:00 porque necesita dos cosas
+    # que llegan tarde: el picking del dia, que lo baja `corte_turno` a partir de
+    # las 20:00 y queda cerca de las 21:00, y el OBLPN de la noche. No toca el
+    # WMS -solo lee archivos ya bajados y publica-, asi que puede convivir con
+    # `stock_hora`, que arranca a esa misma hora. Tarda 45 segundos.
+    'distribucion': {'activa': True, 'hora': '22:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
+                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'asn_web':      {'activa': True, 'hora': '02:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': True}},
 }

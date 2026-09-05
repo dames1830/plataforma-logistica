@@ -70,7 +70,8 @@ Object.values(fuentes).forEach(s =>
 
 const rotas = [];
 Object.entries(fuentes).forEach(([a, s]) => {
-  /* Con respaldo —var(--x, algo)— no hay problema: si falta, usa el respaldo. */
+  /* Sin respaldo la línea entera se cae. El caso de CON respaldo se revisa
+     más abajo: si el respaldo es un color, tampoco sirve. */
   [...s.matchAll(/var\(\s*(--[a-z0-9-]+)\s*\)/g)].forEach(m => {
     if (!oficiales.has(m[1])) rotas.push(a.split('/').pop() + ' → ' + m[1]);
   });
@@ -89,6 +90,33 @@ ok('en la plataforma, ninguna variable usada sin existir ni respaldo'
 ok('y en las páginas públicas no crecen — hay ' + enPublicas.length
    + (enPublicas.length ? ': ' + enPublicas.join(' · ') : ''),
    enPublicas.length <= 3);
+
+eco('\n<span class="t">── UN COLOR DE RESPALDO TAMPOCO SIGUE AL TEMA ──</span>');
+/* EL HUECO QUE TENIA ESTA PRUEBA. Daba por buena `var(--loquesea, algo)` porque, si la
+   variable falta, el navegador usa el respaldo y la línea no se cae. Cierto — pero si
+   ese respaldo es un COLOR, queda un color fijo: el mismo en los cuatro temas, y la
+   prueba pasando mientras la pantalla se ve mal.
+   Paso el 5-sep-2026 en Distribución: `var(--bg-panel, var(--surface, #fff))`. Ninguna
+   de las dos variables existía, así que el fondo se quedó en #fff mientras la letra
+   seguía al tema oscuro. Blanco sobre blanco: la pantalla salió en blanco. */
+const respaldoDeColor = [];
+Object.entries(fuentes).forEach(([a, s]) => {
+  [...s.matchAll(/var\(\s*(--[a-z0-9-]+)\s*,([^()]*(?:\([^()]*\)[^()]*)*)\)/g)].forEach(m => {
+    const v = m[1], resp = m[2].trim();
+    if (oficiales.has(v)) return;                       /* existe: el respaldo nunca corre */
+    if (!/#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/.test(resp)) return;   /* no es un color */
+    respaldoDeColor.push(a.split('/').pop() + ' → var(' + v + ', ' + resp + ')');
+  });
+});
+const conColor = [...new Set(respaldoDeColor)];
+const colorPlataforma = conColor.filter(t => !esPublica(t));
+const colorPublicas = conColor.filter(esPublica);
+ok('en la plataforma, ningún color de respaldo tapa una variable que no existe'
+   + (colorPlataforma.length ? ' — ' + colorPlataforma.join(' · ') : ''),
+   colorPlataforma.length === 0);
+ok('y en las públicas no crecen — hay ' + colorPublicas.length
+   + (colorPublicas.length ? ': ' + colorPublicas.join(' · ') : ''),
+   colorPublicas.length <= 0);
 
 eco('\n<span class="t">── LOS BOTONES NO SE PINTAN CON COLORES FIJOS ──</span>');
 /* Un color escrito a mano no puede seguir al tema: se ve igual en los cuatro. */
