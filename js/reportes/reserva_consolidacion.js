@@ -23,15 +23,42 @@
  * 43. El ultimo tramo del SKU es un indice, y la talla de verdad viene al final de la
  * descripcion -`...BATA INDUSTRIALS-1-43`-. Se usa `extractTalla`, que es la que ya
  * resuelve esto en toda la plataforma; escribir otra aca seria tener dos verdades. */
-import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0636';
+import { extractTalla } from '../services_v245/csvHub_v6.js?v=29.0637';
 
 export const NIVELES_RESERVA = ['H', 'G', 'F', 'E', 'D'];
 export const COLS_RESERVA = 12;
+/**
+ * EL SELECTIVO 12 ARRANCA EN EL CUERPO 10. Daniel, 04-sep-2026: *"las ubicaciones
+ * disponibles para reserva van a ser del selectivo uno al once, mas el selectivo doce
+ * pero a partir de la columna diez. Del uno al nueve van a estar ocupadas por otra cosa:
+ * omitelas, que sean iguales que el selectivo 13 y 14"*.
+ *
+ * SE OMITEN DE LAS DOS PUNTAS: no cuentan como existentes y lo que haya guardado ahi
+ * tampoco cuenta como ocupado —igual que los selectivos 13 y 14, que no se analizan—.
+ * Contarlas solo de un lado dejaria a SEL-12 con mas ocupadas que existentes.
+ *
+ * TODAVIA ESTA ESCRITO ACA, no leido de un archivo. Daniel va a pasar un Excel con el
+ * mapa de ubicaciones y entonces esto pasa a ser variable; hasta ese dia este es el unico
+ * sitio donde se toca, y de aca lo leen las tres pantallas: la matriz, el Layout de
+ * Reserva y el mapa por nivel.
+ */
+export const CUERPO_INICIAL_RESERVA = { 12: 10 };
+
 export const paletaDeReservaExiste = (col, cuerpo, nivel) => {
     if (col < 1 || col > COLS_RESERVA || cuerpo < 1 || cuerpo > 22) return false;
+    if (cuerpo < (CUERPO_INICIAL_RESERVA[col] || 1)) return false;
     if (cuerpo === 22 && col !== 1) return false;
     if (cuerpo === 11 && col !== 1 && (nivel === 'D' || nivel === 'E')) return false;
     return true;
+};
+
+/** ¿Esta ubicación entra en el análisis de reserva? `SEL-12-09-H-01` -> no. */
+export const ubicacionDeReservaCuenta = (u) => {
+    const p = String(u || '').split('-');
+    if (p[0] !== 'SEL') return false;
+    const col = parseInt(p[1], 10), cuerpo = parseInt(p[2], 10);
+    if (!col || !cuerpo || col > COLS_RESERVA) return false;
+    return cuerpo >= (CUERPO_INICIAL_RESERVA[col] || 1);
 };
 /**
  * CUÁNTO CABE EN UNA PALETA DE RESERVA. Regla de Daniel, 19-ago-2026: *"si tiene más de
@@ -101,6 +128,9 @@ export const consolidacionDeReserva = (filas, idx) => {
         if (!row.ES_ALTO && !String(row.NIVEL).toUpperCase().includes('AL')) return;
         const u = String(row.UBICACION || '').trim();
         if (!u.startsWith('SEL-')) return;
+        // Fuera del mapa de reserva no se cuenta: SEL-12 cuerpos 1 al 9 estan
+        // tomados por otra cosa y se omiten igual que el selectivo 13 y el 14.
+        if (!ubicacionDeReservaCuenta(u)) return;
         const q = parseFloat(row.CANTIDAD) || 0;
         if (q <= 0) return;
         const p = _padreDeProducto(row.PRODUCTO);
@@ -394,6 +424,9 @@ export const planDeConsolidacion = (filas, idx, opciones) => {
         if (!row.ES_ALTO && !String(row.NIVEL).toUpperCase().includes('AL')) return;
         const u = String(row.UBICACION || '').trim();
         if (!u.startsWith('SEL-')) return;
+        // Fuera del mapa de reserva no se cuenta: SEL-12 cuerpos 1 al 9 estan
+        // tomados por otra cosa y se omiten igual que el selectivo 13 y el 14.
+        if (!ubicacionDeReservaCuenta(u)) return;
         const q = parseFloat(row.CANTIDAD) || 0;
         if (q <= 0) return;
         const sku = String(row.PRODUCTO || '').trim();
@@ -567,6 +600,9 @@ export const prepackChicoDeReserva = (filas, tope) => {
         if (!row.ES_ALTO && !String(row.NIVEL).toUpperCase().includes('AL')) return;
         const u = String(row.UBICACION || '').trim();
         if (!u.startsWith('SEL-')) return;
+        // Fuera del mapa de reserva no se cuenta: SEL-12 cuerpos 1 al 9 estan
+        // tomados por otra cosa y se omiten igual que el selectivo 13 y el 14.
+        if (!ubicacionDeReservaCuenta(u)) return;
         const q = parseFloat(row.CANTIDAD) || 0;
         if (q <= 0) return;
         const sku = String(row.PRODUCTO || '').trim();

@@ -37,11 +37,11 @@
  */
 
 import { dataStore, fetchBaseReserva, fetchFotosReserva, fetchReservaHistory,
-         guardarFotoReserva, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0636';
-import { colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0636';
-import { icono } from '../services_v245/iconos.js?v=29.0636';
+         guardarFotoReserva, textoFechaServidor } from '../services_v245/csvHub_v6.js?v=29.0637';
+import { colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0637';
+import { icono } from '../services_v245/iconos.js?v=29.0637';
 import { consolidacionDeReserva, cierreDeFragmentados,
-         fotoChicaDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0636';
+         fotoChicaDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0637';
 
 /* LOS DOS ESTADOS DE LAS TABLAS: que pagina y que filtro se esta mirando.
    Vinieron de `renderDashboard`, donde se usaban solo aca. Al ser de modulo se
@@ -518,7 +518,24 @@ export const renderAnalisisReserva = async (container, ENT = {}) => {
                       _consol = _frescoAncla;
                       if (_consol && _sello) {
                           const _f = fotoChicaDeReserva(_consol, _sello);
-                          if (_f) { guardarFotoReserva(_f).catch(() => {}); _fotos = [_f, ..._fotos]; }
+                          if (_f) {
+                              /* EL MOMENTO, para no mezclarla con la otra foto del dia.
+                                 Desde el 04-sep-2026 hay dos: la del cierre del turno dia
+                                 (19:00) y la del turno noche (07:00). Sin esta marca las
+                                 dos quedaban como "de la noche". */
+                              _f.momento = (parseInt(String(_sello.hora || '0'), 10) >= 12)
+                                  ? 'noche' : 'manana';
+                              guardarFotoReserva(_f).catch(() => {});
+                              /* SE REEMPLAZA, NO SE APILA. Al anteponerla sin sacar la que
+                                 ya estaba quedaban DOS entradas del mismo dia en la lista
+                                 local, y la curva dibujaba dos puntos sobre la misma fecha:
+                                 el 04-sep el pie decia "Del 04-09 al 04-09". En el servidor
+                                 nunca hubo duplicado —`guardarFotoReserva` ya reemplazaba—;
+                                 era solo esta copia en memoria. */
+                              const _m = (f) => (f && f.momento) || 'noche';
+                              _fotos = [_f, ..._fotos.filter(
+                                  f => !(f && f.fecha === _f.fecha && _m(f) === _m(_f)))];
+                          }
                       }
                   }
               } else {
