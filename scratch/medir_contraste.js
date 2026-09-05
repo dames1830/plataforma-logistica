@@ -72,8 +72,22 @@ const conTexto = (sel) => {
   return out;
 };
 
+/* LAS TRANSICIONES MIENTEN. Un elemento con `transition:color` sigue
+   devolviendo el color VIEJO en getComputedStyle mientras dura la animación —y
+   con el panel del navegador oculto no termina nunca—. Midiendo así, una
+   cápsula del tema claro salía con la tinta del oscuro: 2,56:1 de un defecto
+   que no existe. Se apagan en línea y con `!important`, porque una regla
+   `*{transition:none!important}` pierde por especificidad. */
+const sinTransicion = (sel) => {
+  const tocados = [];
+  document.querySelectorAll(sel.split(',').map(s => s.trim() + ', ' + s.trim() + ' *').join(', '))
+    .forEach(el => { tocados.push([el, el.style.transition]); el.style.setProperty('transition', 'none', 'important'); });
+  return () => tocados.forEach(([el, v]) => { el.style.transition = v || ''; });
+};
+
 export const medir = (sel = 'body') => {
   const antes = document.documentElement.getAttribute('data-tema');
+  const devolver = sinTransicion(sel);
   const informe = {};
   for (const t of TEMAS) {
     document.documentElement.setAttribute('data-tema', t);
@@ -88,6 +102,7 @@ export const medir = (sel = 'body') => {
     informe[t] = { revisados: n, fallos: [...new Set(malos)] };
   }
   if (antes) document.documentElement.setAttribute('data-tema', antes);
+  devolver();
   return informe;
 };
 
