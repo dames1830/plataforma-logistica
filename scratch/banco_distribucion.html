@@ -24,6 +24,7 @@
   <button data-t="pbi">pbi</button>
   <button data-t="pbi-classic">pbi-classic</button>
   <button data-t="negro">negro</button>
+  <button id="medir" style="margin-left:1.2rem">Medir contraste</button>
   <span class="eco" id="eco"></span>
 </div>
 <h2>Despacho &rsaquo; Distribucion</h2><div id="d1"></div>
@@ -86,7 +87,7 @@ const traerLocal = async (a) => AREAS[a] || null;
             --dst-a1:#22A7B0; --dst-a2:#D6A03A; --dst-a3:#E08A3C;
             --dst-a4:#E8635E; --dst-a5:#C4483D}
       html[data-tema="pbi"],html[data-tema="pbi-classic"]{
-            --dst-f:#0A757E; --dst-n:#96522C;
+            --dst-f:#0A6E77; --dst-n:#96522C;
             --dst-a1:#0A757E; --dst-a2:#8A6A12; --dst-a3:#B35A16;
             --dst-a4:#C4413C; --dst-a5:#8E2F28}
       .dst-grid{display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:start}
@@ -113,12 +114,12 @@ const traerLocal = async (a) => AREAS[a] || null;
       table.dst th,table.dst td{padding:.4rem .6rem; text-align:right; white-space:nowrap}
       table.dst th:first-child,table.dst td:first-child{text-align:left}
       table.dst thead th{font-size:.68rem; letter-spacing:.04em; text-transform:uppercase;
-        color:var(--text-muted); background:var(--panel-alt);
+        color:var(--text-muted); background:var(--panel-solid);
         border-bottom:1px solid var(--border); position:sticky; top:0; z-index:1;
         white-space:normal; line-height:1.25}
       table.dst tbody td{border-bottom:1px solid var(--border)}
       table.dst tfoot td{border-top:2px solid var(--text-strong); font-weight:700;
-        background:var(--panel-alt)}
+        background:rgba(var(--ink-rgb),.06)}
       table.dst .n{font-variant-numeric:tabular-nums}
       table.dst tr.banda th{text-align:center; background:transparent;
         border-bottom:1px solid var(--border); position:static}
@@ -129,7 +130,7 @@ const traerLocal = async (a) => AREAS[a] || null;
       .dst-alarma{background:var(--panel-solid); border:1px solid var(--border);
         border-radius:8px; overflow:hidden}
       .dst-alarma .tt{font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
-        color:var(--text-muted); background:var(--panel-alt);
+        color:var(--text-soft); background:rgba(var(--ink-rgb),.06);
         border-bottom:1px solid var(--border); padding:.5rem .9rem}
       .dst-cifras{display:flex; gap:1.8rem; padding:.9rem .9rem .2rem; flex-wrap:wrap}
       .dst-cifra .v{font-size:2rem; font-weight:700; line-height:1}
@@ -138,7 +139,7 @@ const traerLocal = async (a) => AREAS[a] || null;
         color:var(--text-muted); margin-top:.3rem}
       .dst-cifra .p{font-size:.75rem; color:var(--text-muted)}
       .dst-barra{display:flex; height:8px; margin:.6rem .9rem 0; border-radius:5px; overflow:hidden;
-        background:var(--panel-deep)}
+        background:rgba(var(--ink-rgb),.14)}
       .dst-tramos{list-style:none; margin:.5rem 0 .9rem; padding:0 .9rem; display:flex;
         flex-wrap:wrap; gap:.3rem 1.1rem; font-size:.72rem; color:var(--text-muted)}
       .dst-tramos li{display:flex; align-items:baseline; gap:.35rem}
@@ -150,7 +151,7 @@ const traerLocal = async (a) => AREAS[a] || null;
       .dst-pie{font-size:.72rem; color:var(--text-muted); padding:.5rem .9rem;
         border-top:1px solid var(--border); flex:0 0 auto}
       tr.dst-zona{cursor:pointer}
-      tr.dst-zona td{background:var(--panel-alt); font-weight:700;
+      tr.dst-zona td{background:rgba(var(--ink-rgb),.06); font-weight:700;
         border-top:1px solid var(--border)}
       tr.dst-oculta{display:none}
       .dst-flecha{display:inline-block; width:0; height:0; margin-right:.5rem;
@@ -158,7 +159,7 @@ const traerLocal = async (a) => AREAS[a] || null;
         border-bottom:4px solid transparent; transform:rotate(90deg); vertical-align:middle}
       tr.dst-zona.cerrada .dst-flecha{transform:rotate(0)}
       .dst-mez{display:flex; height:7px; border-radius:4px; overflow:hidden;
-        background:var(--panel-deep); min-width:90px}
+        background:rgba(var(--ink-rgb),.14); min-width:90px}
       .dst-titulo{font-weight:700; font-size:.95rem; margin:.4rem 0 .2rem}
     `;
     document.head.appendChild(st);
@@ -450,7 +451,7 @@ const traerLocal = async (a) => AREAS[a] || null;
         const cer = !!cerradas[z];
         html += `<tr class="dst-zona${cer ? ' cerrada' : ''}" data-z="${z}">
           <td colspan="2"><span class="dst-flecha"></span>${z}
-            <span style="font-weight:400;color:var(--text-muted);margin-left:.5rem">${g.length} tiendas</span></td>
+            <span style="font-weight:400;color:var(--text-soft);margin-left:.5rem">${g.length} tiendas</span></td>
           <td class="n">${milDist(zp)}</td><td class="n">${milDist(zs)}</td>
           <td class="n">${milDist(zc)}</td><td class="n">${milDist(zt)}</td>${mez(zp, zs, zc, zt)}</tr>`;
         g.forEach(f => {
@@ -504,4 +505,18 @@ await renderDespachoPotencial(document.getElementById('d2'));
 document.getElementById('eco').textContent = fallos.length
   ? fallos.length + ' ERRORES: ' + fallos.join(' | ')
   : 'dibujado sin errores';
+
+/* Recorre los dos reportes en los 4 temas y avisa de cualquier texto que no
+   llegue al minimo de lectura. Mide lo que pinta el navegador, no un modelo. */
+document.getElementById('medir').addEventListener('click', async () => {
+  const eco = document.getElementById('eco');
+  eco.textContent = 'midiendo...';
+  const { medir, resumen } = await import('./medir_contraste.js?z=' + Date.now());
+  const inf = medir('#d1, #d2');
+  const malos = Object.values(inf).reduce((a, r) => a + r.fallos.length, 0);
+  eco.innerHTML = malos
+    ? '<b style="color:var(--danger)">' + malos + ' textos no se leen</b> — ver la consola'
+    : Object.values(inf)[0].revisados + ' textos x 4 temas: todos se leen';
+  console.log(resumen(inf));
+});
 </script>
