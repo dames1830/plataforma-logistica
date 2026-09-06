@@ -98,12 +98,46 @@ TRAMOS = ['se movió ayer', '1 día', '2 a 3 días', '4 a 7 días',
           '8 a 14 días', 'más de 14 días']
 
 
+# ══ EL REGISTRO ═══════════════════════════════════════════════════════════════
+#
+# Sin esto no hay forma de contestar "corrio o no corrio". El 05-sep-2026 la
+# primera corrida sola salio a las 23:00 en vez de las 22:00 y no se pudo saber
+# por que: ni el robot ni el registro de tareas de Windows dejaron nada.
+CARPETA_LOGS = os.path.join(AQUI, 'logs')
+_ARCHIVO_LOG = os.path.join(
+    CARPETA_LOGS,
+    'distribucion_%s.log' % datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+
+
 def log(msg, nivel=''):
     # `publicar_area.publicar` llama al log con un segundo argumento (ERROR o
     # AVISO). Si no se acepta, el robot muere justo al publicar.
-    print('[%s] %s%s' % (datetime.datetime.now().strftime('%H:%M:%S'),
-                         (nivel + ' ') if nivel else '', msg))
+    linea = '[%s] %s%s' % (datetime.datetime.now().strftime('%H:%M:%S'),
+                           (nivel + ' ') if nivel else '', msg)
+    print(linea)
     sys.stdout.flush()
+    # QUE EL LOG NO PUEDA TUMBAR LA CORRIDA: si el disco falla se sigue igual.
+    try:
+        if not os.path.isdir(CARPETA_LOGS):
+            os.makedirs(CARPETA_LOGS)
+        with io.open(_ARCHIVO_LOG, 'a', encoding='utf-8') as fh:
+            fh.write(linea + '\n')
+    except Exception:
+        pass
+
+
+def limpiar_logs(dias=30):
+    """Los suyos de mas de un mes, fuera. Son 2 KB cada uno, pero uno por dia
+       durante un año es basura que despues nadie mira."""
+    try:
+        corte = time.time() - dias * 86400
+        for n in os.listdir(CARPETA_LOGS):
+            if n.startswith('distribucion_') and n.endswith('.log'):
+                p = os.path.join(CARPETA_LOGS, n)
+                if os.path.getmtime(p) < corte:
+                    os.remove(p)
+    except Exception:
+        pass
 
 
 # ══ LAS CARPETAS ══════════════════════════════════════════════════════════════
@@ -657,6 +691,11 @@ def potencial(ss, fecha, gen, TIENDAS, porTienda, detTienda, en_bulto):
 # ══ EL ROBOT ══════════════════════════════════════════════════════════════════
 def main():
     t0 = time.time()
+    log('=' * 62)
+    log('DISTRIBUCION Y DESPACHO POTENCIAL  ·  arranca %s'
+        % datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S'))
+    log('=' * 62)
+    limpiar_logs()
     base = base_onedrive()
     if not base:
         raise SystemExit('No encuentro la carpeta de OneDrive.')
@@ -741,7 +780,9 @@ def main():
         shutil.rmtree(TEMP)
     except OSError:
         pass
-    log('listo en %.1f minutos' % ((time.time() - t0) / 60.0))
+    log('listo en %.1f minutos · termina %s'
+        % ((time.time() - t0) / 60.0,
+           datetime.datetime.now().strftime('%H:%M:%S')))
     return 0 if ok else 1
 
 
