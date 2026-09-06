@@ -108,7 +108,10 @@ TOPE_DIAS = 120
 # a propósito: a las 08:00 este robot pide cuatro horas de catálogo web, que son
 # unos pocos cientos de líneas y unas decenas de KB. Igual no puede venir vacío,
 # porque la descarga solo arranca cuando Oracle contestó con al menos una página.
-MINIMO_KB = 20
+# EN FILAS, NO EN KB, desde el 06-sep-2026. Es un tramo de UNA hora, asi que a
+# las seis de la manana puede traer muy poco y estar bien: el piso solo tiene que
+# separar "no vino nada" de "vino poco".
+MINIMO_FILAS = 10
 
 # El Maestro completo tiene 29.783 filas. Si viene mucho menos, está cortado, y un
 # Maestro cortado no rompe nada de forma visible: simplemente deja artículos sin
@@ -459,7 +462,7 @@ def run():
                                 "Avance de Picking",
                                 lambda: rd.descargar_picking(page, ruta_csv, dia,
                                                              desde, hasta,
-                                                             minimo_kb=MINIMO_KB),
+                                                             minimo_filas=MINIMO_FILAS),
                                 page):
                             raise RuntimeError("no se pudo bajar el picking")
 

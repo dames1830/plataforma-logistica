@@ -133,7 +133,11 @@ def base_onedrive():
 CARPETA = "OBLPN Embalaje"       # la misma donde Daniel viene guardando los suyos
 # El archivo del 27-ago pesó 16,7 MB con 29.827 filas. El piso va bien abajo: lo que tiene
 # que delatar es una búsqueda mal filtrada de unos KB, no un domingo flojo.
-MINIMO_KB = 400
+# EN FILAS, NO EN KB, desde el 06-sep-2026: la comprobacion de `exportar_csv`
+# cambio de unidad porque el peso rechazaba dias flojos que estaban completos.
+# El archivo del 04-09 trae 43.256 filas; el piso va muy abajo para que lo unico
+# que delate sea una busqueda que no trajo nada.
+MINIMO_FILAS = 500
 # El WMS tarda 10 a 12 minutos en esta pantalla. Se le dan 20 de margen.
 ESPERA_SEG = 1200
 
@@ -286,7 +290,7 @@ def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
     # Se exigen las DOS cosas —una sola pagina Y sin boton— para no confundir un dia
     # flojo con uno vacio: un dia con pocas filas igual exporta sin problema.
     try:
-        return po.exportar_csv(page, destino, MINIMO_KB, minutos_armado=MINUTOS_ARMADO)
+        return po.exportar_csv(page, destino, MINIMO_FILAS, minutos_armado=MINUTOS_ARMADO)
     except Exception as e:
         if paginas <= 1 and "Exportar" in str(e):
             po.log("El %s no tiene movimiento: una sola pagina y sin boton de exportar. "

@@ -109,6 +109,7 @@ espera 20 minutos y, si sigue ocupado, sale con código 3 sin bajar nada. Vale m
 quedarse con el pendiente de ayer que pisarlo con uno a medias.
 """
 
+import io
 import os
 import re
 import sys
@@ -209,18 +210,30 @@ ARCHIVO_DESPACHADOS = "Detalle Orden Despachados.csv"
 # creada, así que 30 cubre de sobra y deja el archivo chico. Lo que hace falta es poder
 # preguntar "esta orden que se picó, ¿salió?", y lo que se mira es el picking del mes.
 DIAS_DESPACHADOS = 30
-MINIMO_KB_DESPACHADOS = 200
+MINIMO_FILAS_DESPACHADOS = 2000
 
-# Cuánto tiene que pesar cada archivo para darlo por bueno. Los que ya están
-# cargados van de 3,7 a 8,8 MB el picking y 3,4 MB el detalle de un día; el piso
-# está bien abajo para que un domingo flojo no dispare la alarma, pero deja afuera
-# los 30 KB que baja una búsqueda mal filtrada.
-MINIMO_KB_PICKING = 500
-MINIMO_KB_ORDEN = 300
-# Los pendientes de 90 días eran 64.000 líneas el 19-ago-2026, unos 15 MB. El piso
-# va bajo a propósito: lo que tiene que delatar es una búsqueda mal filtrada de
-# 30 KB, no un mes flojo.
-MINIMO_KB_PENDIENTES = 300
+# ── CUÁNTAS FILAS TIENE QUE TRAER CADA ARCHIVO PARA DARLO POR BUENO ──────────
+#
+# ANTES ESTO SE MEDÍA EN KILOBYTES Y ESTABA MAL. El 05-sep-2026 el Detalle de
+# Orden del sábado bajó completo —567 filas, 327 órdenes, todas del día— y el
+# robot lo rechazó tres veces porque pesaba 136 KB y el piso pedía 300. El
+# domingo 30-ago había pasado igual con 301 filas. Un día flojo pesa poco y está
+# completo: **el peso no dice si la descarga sirvió; las filas sí**.
+#
+# Y el archivo se guarda ANTES de comprobar, así que un piso mal puesto no
+# protege de nada: solo canta un error que no existe y gasta tres reintentos,
+# nueve minutos de sesión del WMS, para volver a bajar el mismo archivo bueno.
+#
+# Medido sobre lo que hay en disco al 06-sep-2026:
+#     Picking          5.621 filas el sábado, 18.000 a 28.000 entre semana
+#     Detalle del día    301 filas el domingo, 8.000 a 24.000 entre semana
+#     Pendientes     104.916 filas   ·   Despachados   180.237 filas
+#
+# Los pisos van MUY por debajo del día más flojo real: lo que tienen que delatar
+# es una búsqueda que no trajo nada, no una jornada tranquila.
+MINIMO_FILAS_PICKING = 200
+MINIMO_FILAS_ORDEN = 40
+MINIMO_FILAS_PENDIENTES = 2000
 
 # CUANTO SE LE DA A ORACLE PARA ARMAR EL CSV, en minutos. Los reportes de siempre lo
 # arman en dos o tres; el OBLPN es mucho mas pesado y le pasa su propio valor.
@@ -655,7 +668,7 @@ def sello_exportacion(page):
         return ""
 
 
-def exportar_csv(page, destino, minimo_kb, minutos_armado=MINUTOS_ARMADO):
+def exportar_csv(page, destino, minimo_filas, minutos_armado=MINUTOS_ARMADO):
     """Exportar -> Exportar a CSV -> Aceptar -> esperar el sello nuevo -> Descargar.
 
     Es el mismo camino que baja el Stock Activo todos los días desde el 30-jul-2026,
@@ -705,19 +718,31 @@ def exportar_csv(page, destino, minimo_kb, minutos_armado=MINUTOS_ARMADO):
     descarga.save_as(destino)
 
     kb = os.path.getsize(destino) / 1024.0
-    if kb < minimo_kb:
-        log("El archivo bajó con solo %.0f KB, se esperaban más de %d KB"
-            % (kb, minimo_kb), "ERROR")
+    # SE CUENTAN LAS FILAS, NO LOS BYTES. Ver el comentario de los MINIMO_FILAS_*.
+    # Se lee de a poco: los acumulados son de 25 y 44 MB.
+    filas = 0
+    try:
+        with io.open(destino, encoding="utf-8-sig", errors="replace") as fh:
+            for _ in fh:
+                filas += 1
+        filas = max(0, filas - 1)          # fuera la cabecera
+    except OSError as e:
+        log("No se pudo leer el archivo recién bajado: %s" % e, "ERROR")
+        return False
+    if filas < minimo_filas:
+        log("El archivo bajó con solo %s filas (%.0f KB), se esperaban más de %s"
+            % (format(filas, ",d"), kb, format(minimo_filas, ",d")), "ERROR")
         wms.captura(page, "archivo_chico")
         return False
-    log("Guardado: %.2f MB en %s" % (kb / 1024.0, destino))
+    log("Guardado: %s filas · %.2f MB en %s"
+        % (format(filas, ",d"), kb / 1024.0, destino))
     return True
 
 
 # ──────────────────────────── Los dos reportes ────────────────────────────
 
 def descargar_picking(page, destino, dia, desde="0:00:00", hasta="23:59:59",
-                      sin_exportar=False, con_fotos=False, minimo_kb=None):
+                      sin_exportar=False, con_fotos=False, minimo_filas=None):
     """Avance de Picking de un día, entre dos horas.
 
     LA FRANJA COMPLETA ES EL PUNTO cuando se baja el día cerrado. Los archivos que
@@ -783,8 +808,8 @@ def descargar_picking(page, destino, dia, desde="0:00:00", hasta="23:59:59",
     # mal filtrada. Pero el robot de la hora pide "hoy hasta ahora": a las 08:00
     # son cuatro horas de catálogo web y unos pocos cientos de líneas, y con el
     # piso del día entero daría por fallada una corrida que estuvo perfecta.
-    return exportar_csv(page, destino, minimo_kb if minimo_kb is not None
-                        else MINIMO_KB_PICKING)
+    return exportar_csv(page, destino, minimo_filas if minimo_filas is not None
+                        else MINIMO_FILAS_PICKING)
 
 
 def elegir_busqueda_guardada(page, nombre):
@@ -864,7 +889,7 @@ def descargar_detalle_orden(page, destino, dia, sin_exportar=False, con_fotos=Fa
     if sin_exportar:
         log("MODO PRUEBA: no se exporta")
         return True
-    return exportar_csv(page, destino, MINIMO_KB_ORDEN)
+    return exportar_csv(page, destino, MINIMO_FILAS_ORDEN)
 
 
 
@@ -1000,7 +1025,7 @@ def descargar_pendientes(page, destino, hasta_dia, dias=DIAS_PENDIENTES,
     if sin_exportar:
         log("MODO PRUEBA: no se exporta")
         return True
-    return exportar_csv(page, destino, MINIMO_KB_PENDIENTES)
+    return exportar_csv(page, destino, MINIMO_FILAS_PENDIENTES)
 
 
 # ──────────────────────────────── La corrida ────────────────────────────────
@@ -1065,7 +1090,7 @@ def descargar_despachados(page, destino, hasta_dia, dias=DIAS_DESPACHADOS,
     if sin_exportar:
         log("MODO PRUEBA: no se exporta")
         return True
-    return exportar_csv(page, destino, MINIMO_KB_DESPACHADOS)
+    return exportar_csv(page, destino, MINIMO_FILAS_DESPACHADOS)
 
 
 class _SinAcumulados(Exception):
