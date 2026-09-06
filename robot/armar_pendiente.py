@@ -65,6 +65,18 @@ vale mas el pendiente de ayer que uno corto encima del bueno.
     python armar_pendiente.py --probar     calcula y muestra, sin bajar ni publicar
     python armar_pendiente.py --sin-bajar  usa la foto que ya esta en disco
     python armar_pendiente.py --fecha 2026-08-20
+
+DEJAR UN CORREO FUERA. Para correr el analisis del buffer contra el pendiente de
+antes del ultimo correo -Daniel, 05-sep-2026: *"solo quiero correr el analisis
+con lo pendiente, o sea desde el correo que llego el jueves en la noche hacia
+atras"*-:
+
+    python armar_pendiente.py --probar --sin-correo 04.09 --csv
+
+`--csv` deja `Pendiente SKU AAAA-MM-DD.csv` con las TRES columnas que come la
+tarjeta PEDIDOS de Zona Buffer. Con `--probar` no se publica nada: el archivo se
+sube a mano con el boton de la tarjeta, y ojo que **esa tarjeta es compartida**,
+asi que lo que se suba lo ven todas las PC hasta que se vuelva a cambiar.
 """
 
 import collections
@@ -936,6 +948,25 @@ def main():
         % (format(o['noLiberado']['ordenes'], ',d'), format(o['noLiberado']['unidades'], ',d')))
 
     if probar:
+        if '--csv' in sys.argv:
+            # LAS MISMAS TRES COLUMNAS QUE PUBLICA `publicar_pedidos`, y los mismos
+            # SKU: solo los que tienen pendiente. Si se escribieran todos, la
+            # tarjeta diria un numero que no coincide con ningun otro lado.
+            ruta = os.path.join(AQUI, 'Pendiente SKU %s.csv' % hoy)
+            with io.open(ruta, 'w', encoding='utf-8-sig', newline='') as fh:
+                w = csv.writer(fh, delimiter=';')
+                w.writerow(['Código de artículo', 'Cantidad solicitada',
+                            'Cantidad asignada'])
+                n = 0
+                for sku in sorted(por_sku):
+                    sol, asig = por_sku[sku]
+                    if sol - asig <= 0:
+                        continue
+                    w.writerow([sku, int(round(sol)), int(round(asig))])
+                    n += 1
+            log('')
+            log('CSV para la tarjeta PEDIDOS: %s' % ruta)
+            log('   %s SKU con pendiente' % format(n, ',d'))
         if '--excel' in sys.argv:
             # El Excel se escribe pero NO se sube: sirve para mirar una corrida sin
             # tocar el pendiente bueno que ya esta publicado.
