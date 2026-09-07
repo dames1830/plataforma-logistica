@@ -62,3 +62,6 @@ robot/horario_corridas.json
 
 # archivos sueltos de pruebas manuales (curl -o), no son del proyecto
 v.json
+
+# Los JSON que deja `distribucion.py --probar`: son de una corrida en seco.
+robot/_prueba_*.json
