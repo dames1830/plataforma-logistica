@@ -252,14 +252,24 @@ SIN_MOVIMIENTO = os.path.join(LOGS, "sin_movimiento.json")
 
 
 def marcar_sin_movimiento(que, dia):
-    """Anota que ese día no hubo nada que bajar. Guarda los últimos 60 por área."""
+    """Anota que ese día no hubo nada que bajar, CON LA HORA EN QUE SE COMPROBO.
+
+       LA HORA NO ES ADORNO. Sin ella la marca vale para todo el día, y el parte
+       de las 19:00 daría por bueno el turno día con lo que el robot vio a las
+       07:00. Un verde tapando una falla real es peor que la X que se está
+       quitando. Ver `sin_movimiento` en resumen_turno.py.
+
+       Se guardan los últimos 60 días por área para que el archivo no crezca."""
     try:
         datos = {}
         if os.path.exists(SIN_MOVIMIENTO):
             with io.open(SIN_MOVIMIENTO, encoding="utf-8") as fh:
                 datos = json.load(fh)
-        dias = [d for d in datos.get(que, []) if d != dia] + [dia]
-        datos[que] = dias[-60:]
+        area = datos.get(que)
+        if not isinstance(area, dict):          # formato viejo: era una lista
+            area = {}
+        area[dia] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        datos[que] = dict(sorted(area.items(), key=lambda x: x[1])[-60:])
         os.makedirs(LOGS, exist_ok=True)
         with io.open(SIN_MOVIMIENTO, "w", encoding="utf-8") as fh:
             fh.write(json.dumps(datos, ensure_ascii=False, indent=1))

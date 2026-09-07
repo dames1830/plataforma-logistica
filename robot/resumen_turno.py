@@ -135,16 +135,25 @@ def dia_del_oblpn(limite):
     return limite - timedelta(days=1 if limite.hour >= 12 else 2)
 
 
-def sin_movimiento(que, dia):
-    """True si el robot comprobo que ese dia el CD no trabajo.
+def sin_movimiento(que, dia, no_antes_de):
+    """True si el robot comprobo, DENTRO DE ESTE TURNO, que no habia nada que bajar.
 
        NO ES LO MISMO QUE "no esta el archivo". Un archivo que falta puede ser un
        robot caido; esta marca solo la deja el robot despues de entrar al WMS y
-       ver la grilla vacia."""
+       ver la grilla vacia.
+
+       Y NO BASTA CON QUE SEA DEL MISMO DIA. La marca de las 07:00 no dice nada
+       del turno dia: si a las 19:00 se trabajo y la descarga fallo de verdad,
+       darla por buena seria pintar de verde una falla. Por eso se exige que la
+       marca sea de despues del corte que se esta cerrando."""
     try:
         with io.open(SIN_MOVIMIENTO, encoding="utf-8") as fh:
-            return dia in json.load(fh).get(que, [])
-    except (OSError, ValueError):
+            area = json.load(fh).get(que) or {}
+        cuando = area.get(dia) if isinstance(area, dict) else None
+        if not cuando:
+            return False
+        return datetime.strptime(str(cuando)[:19], "%Y-%m-%d %H:%M:%S") >= no_antes_de
+    except (OSError, ValueError, TypeError):
         return False
 
 
@@ -195,12 +204,14 @@ def revisar(turno, cuando=None):
                       "no contesta la plataforma" if ok is None
                       else ("publicado" if ok else "no se publicó desde el corte")))
 
-    def archivo(nombre, ruta, area_clave=None, marca=None, dia_marca=None):
+    def archivo(nombre, ruta, area_clave=None, marca=None, dia_marca=None,
+                marca_desde=None):
         """El archivo Y su area: uno de los dos puede fallar solo."""
         if not ruta or not os.path.exists(ruta):
             # EL DIA QUE NO SE TRABAJO VA CON VISTO BUENO. Tampoco se le exige el
             # cuadro publicado: sin filas no hay nada que publicar.
-            if marca and sin_movimiento(marca, dia_marca or limite.strftime("%d-%m-%Y")):
+            if marca and sin_movimiento(marca, dia_marca or limite.strftime("%d-%m-%Y"),
+                                        marca_desde or limite):
                 pasos.append((nombre, True, "sin movimiento"))
             else:
                 pasos.append((nombre, False, "no bajó el archivo"))
@@ -228,7 +239,11 @@ def revisar(turno, cuando=None):
                 os.path.join(ss, "OBLPN Embalaje",
                              "OBLPN %02d-%02d.csv" % (ob.day, ob.month)),
                 "embalaje_por_hora", marca="oblpn",
-                dia_marca=ob.strftime("%d-%m-%Y"))
+                dia_marca=ob.strftime("%d-%m-%Y"),
+                # EL OBLPN VA CON OTRA VARA: su robot corre a las 08:30, entre los
+                # dos cortes, asi que su marca es siempre de medio dia antes. Es
+                # la unica corrida que hay para ese dia, no hay con que confundirla.
+                marca_desde=limite - timedelta(hours=12))
         archivo("Detalle Orden",
                 os.path.join(ss, "Detalle Orden", "Detalle Orden %02d-%02d.csv" % (d, m)))
     else:
