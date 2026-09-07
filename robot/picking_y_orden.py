@@ -110,6 +110,7 @@ quedarse con el pendiente de ayer que pisarlo con uno a medias.
 """
 
 import io
+import json
 import os
 import re
 import sys
@@ -241,6 +242,46 @@ MINUTOS_ARMADO = 15
 
 _LOG = None
 _PASO = 0
+
+# ── LOS DIAS QUE EL CD NO TRABAJO ─────────────────────────────────────────────
+# No son fallas y no se reintentan. Quedan anotados acá para que `resumen_turno.py`
+# ponga ✅ (sin movimiento) en vez de ❌: una X que en realidad quiere decir "no
+# hubo turno" entrena a no mirar las X, que es justo lo contrario de para lo que
+# está el parte.
+SIN_MOVIMIENTO = os.path.join(LOGS, "sin_movimiento.json")
+
+
+def marcar_sin_movimiento(que, dia):
+    """Anota que ese día no hubo nada que bajar. Guarda los últimos 60 por área."""
+    try:
+        datos = {}
+        if os.path.exists(SIN_MOVIMIENTO):
+            with io.open(SIN_MOVIMIENTO, encoding="utf-8") as fh:
+                datos = json.load(fh)
+        dias = [d for d in datos.get(que, []) if d != dia] + [dia]
+        datos[que] = dias[-60:]
+        os.makedirs(LOGS, exist_ok=True)
+        with io.open(SIN_MOVIMIENTO, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(datos, ensure_ascii=False, indent=1))
+    except Exception as e:
+        log("no pude anotar el dia sin movimiento (%s)" % type(e).__name__, "WARN")
+
+
+def dia_vacio(e, paginas, que, dia):
+    """¿Este error es en realidad un día sin trabajo?
+
+       LA SEÑAL SON LAS DOS COSAS JUNTAS: una sola página Y que el botón
+       "Exportar a CSV" no llegue a aparecer, porque sin filas no hay nada que
+       exportar. Es la misma regla que usa `oblpn_embalaje.py` desde el
+       30-ago-2026. Un día flojo pero con filas cabe también en una página y
+       exporta sin problema, así que con la página sola no alcanza.
+    """
+    if not (paginas is not None and paginas <= 1 and "Exportar" in str(e)):
+        return False
+    log("El %s no tiene movimiento: una sola pagina y sin boton de exportar. "
+        "No se reintenta." % dia, "WARN")
+    marcar_sin_movimiento(que, dia)
+    return True
 
 
 def log(mensaje, nivel="INFO"):
@@ -793,7 +834,8 @@ def descargar_picking(page, destino, dia, desde="0:00:00", hasta="23:59:59",
 
     ejecutar_busqueda(page)
     log("Esperando a que Oracle traiga las filas...")
-    if not esperar_resultado(page):
+    paginas = esperar_resultado(page)
+    if not paginas:
         wms.captura(page, "picking_sin_datos")
         raise TimeoutError("El picking del %s no trajo ninguna fila"
                            % dia.strftime("%d-%m-%Y"))
@@ -808,8 +850,16 @@ def descargar_picking(page, destino, dia, desde="0:00:00", hasta="23:59:59",
     # mal filtrada. Pero el robot de la hora pide "hoy hasta ahora": a las 08:00
     # son cuatro horas de catálogo web y unos pocos cientos de líneas, y con el
     # piso del día entero daría por fallada una corrida que estuvo perfecta.
-    return exportar_csv(page, destino, minimo_filas if minimo_filas is not None
-                        else MINIMO_FILAS_PICKING)
+    # UN DIA SIN TRABAJO NO ES UNA FALLA. El 6 y el 7 de setiembre de 2026 el CD
+    # no picó nada y esto reintentaba tres veces, volvía a entrar al WMS y repetía
+    # el día: 17,6 minutos por corrida para llegar a la misma grilla vacía.
+    try:
+        return exportar_csv(page, destino, minimo_filas if minimo_filas is not None
+                            else MINIMO_FILAS_PICKING)
+    except Exception as e:
+        if dia_vacio(e, paginas, "picking", dia.strftime("%d-%m-%Y")):
+            return True
+        raise
 
 
 def elegir_busqueda_guardada(page, nombre):

@@ -81,6 +81,9 @@ WA_TEL = os.environ.get("CALLMEBOT_TEL", "")
 TOPE_WA = 350                      # lo que admite CallMeBot de una
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
+# Lo escriben picking_y_orden.py y oblpn_embalaje.py cuando el WMS contesta la
+# grilla vacia. Ver `marcar_sin_movimiento` alla.
+SIN_MOVIMIENTO = os.path.join(AQUI, "logs", "sin_movimiento.json")
 
 CIERRES = {
     "noche":  {"hora": 19, "titulo": "CIERRE TURNO DIA"},
@@ -116,6 +119,19 @@ def filas(ruta):
         return max(0, n - 1)
     except OSError:
         return None
+
+
+def sin_movimiento(que, dia):
+    """True si el robot comprobo que ese dia el CD no trabajo.
+
+       NO ES LO MISMO QUE "no esta el archivo". Un archivo que falta puede ser un
+       robot caido; esta marca solo la deja el robot despues de entrar al WMS y
+       ver la grilla vacia."""
+    try:
+        with io.open(SIN_MOVIMIENTO, encoding="utf-8") as fh:
+            return dia in json.load(fh).get(que, [])
+    except (OSError, ValueError):
+        return False
 
 
 def leer_versiones():
@@ -165,10 +181,15 @@ def revisar(turno, cuando=None):
                       "no contesta la plataforma" if ok is None
                       else ("publicado" if ok else "no se publicó desde el corte")))
 
-    def archivo(nombre, ruta, area_clave=None):
+    def archivo(nombre, ruta, area_clave=None, marca=None):
         """El archivo Y su area: uno de los dos puede fallar solo."""
         if not ruta or not os.path.exists(ruta):
-            pasos.append((nombre, False, "no bajó el archivo"))
+            # EL DIA QUE NO SE TRABAJO VA CON VISTO BUENO. Tampoco se le exige el
+            # cuadro publicado: sin filas no hay nada que publicar.
+            if marca and sin_movimiento(marca, limite.strftime("%d-%m-%Y")):
+                pasos.append((nombre, True, "sin movimiento"))
+            else:
+                pasos.append((nombre, False, "no bajó el archivo"))
             return
         n = filas(ruta)
         pub = publicada_despues(ver, area_clave, limite) if area_clave else True
@@ -186,10 +207,10 @@ def revisar(turno, cuando=None):
         pasos.append(("Slotting", os.path.exists(slot),
                       "armado" if os.path.exists(slot) else "no se armó"))
         archivo("Picking", os.path.join(ss, "Picking", "Picking %d-%d.csv" % (d, m)),
-                "picking_por_hora")
+                "picking_por_hora", marca="picking")
         archivo("OBLPN embalaje",
                 os.path.join(ss, "OBLPN Embalaje", "OBLPN %02d-%02d.csv" % (d, m)),
-                "embalaje_por_hora")
+                "embalaje_por_hora", marca="oblpn")
         archivo("Detalle Orden",
                 os.path.join(ss, "Detalle Orden", "Detalle Orden %02d-%02d.csv" % (d, m)))
     else:
@@ -209,9 +230,15 @@ def parte(turno, pasos, ahora=None):
     lineas = ["%s · %s" % (CIERRES[turno]["titulo"], ahora.strftime("%d-%m %H:%M"))]
     for nombre, ok, detalle in pasos:
         # El numero solo cuando aporta: "Picking 5.621" dice mas que "Picking OK".
-        n = detalle.replace(" filas", "") if ok and detalle.endswith("filas") else ""
-        lineas.append("%s %s%s" % ("✅" if ok else "❌", nombre,
-                                   (" " + n) if n else ""))
+        if ok and detalle.endswith("filas"):
+            cola = " " + detalle.replace(" filas", "")
+        elif ok and detalle == "sin movimiento":
+            # SE DICE POR QUE ESTA EN VERDE. Un visto bueno sin numero al lado de
+            # picking se lee como "bajo bien" y son cosas distintas.
+            cola = " (sin movimiento)"
+        else:
+            cola = ""
+        lineas.append("%s %s%s" % ("✅" if ok else "❌", nombre, cola))
     lineas.append("%d de %d" % (buenos, len(pasos)))
     # LO QUE FALLO SE EXPLICA. Un ❌ sin motivo obliga a entrar al servidor.
     malos = [f"{n}: {d}" for n, ok, d in pasos if not ok]

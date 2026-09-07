@@ -296,6 +296,10 @@ def descargar_oblpn(page, destino, dia, sin_exportar=False, con_fotos=False):
             po.log("El %s no tiene movimiento: una sola pagina y sin boton de exportar. "
                    "No se reintenta." % dia.strftime("%d-%m-%Y"), "WARN")
             SIN_MOVIMIENTO.add(dia.strftime("%d-%m-%Y"))
+            # QUEDA ANOTADO EN DISCO para que el parte de turno ponga
+            # "✅ OBLPN embalaje (sin movimiento)" en vez de una X. Antes el dato
+            # moria en este log y el celular recibia una falla que no era tal.
+            po.marcar_sin_movimiento("oblpn", dia.strftime("%d-%m-%Y"))
             return True
         raise
 
