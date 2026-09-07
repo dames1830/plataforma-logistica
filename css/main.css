@@ -511,6 +511,45 @@ table tr:hover {
 .status-completed { background: rgba(var(--success-rgb), 0.2); color: var(--success-soft); }
 .status-issue { background: rgba(var(--danger-rgb), 0.2); color: var(--danger-pale); }
 
+/* ── EL SELLO DE CADA REPORTE ────────────────────────────────────────────────
+   Cuándo se procesó lo que se está mirando. Va al final de la barra de
+   submódulos, empujado a la derecha, y el COLOR es el aviso:
+
+       hoy      gris        está al día
+       ayer     ámbar       mírelo antes de usarlo
+       2+ días  rojo        no lo use sin revisar
+
+   Daniel, 07-sep-2026: *"no vaya a ser que yo esté mirando un reporte pensando
+   que es del día y sea de hace dos días. Voy a dar una mala información"*. */
+.sello-caja { margin-left: auto; display: flex; align-items: center; }
+.sello {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.25rem 0.7rem; border-radius: 999px; white-space: nowrap;
+  font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.2px;
+  cursor: help;
+  color: var(--text-muted);
+  background: rgba(var(--ink-rgb), 0.06);
+  border: 1px solid transparent;
+}
+/* EL COLOR DEL AVISO SALE DE `temas.css`, no de aquí: es vivo sobre fondo
+   oscuro y oscurecido sobre fondo claro. Con `--danger` a secas el rojo se leía
+   a 4,06 en pbi y 4,28 en pbi-classic, por debajo del 4,5 que hace falta. */
+.sello.viejo {
+  color: var(--sello-aviso);
+  background: rgba(var(--yellow-rgb), 0.14);
+  border-color: rgba(var(--yellow-rgb), 0.45);
+}
+.sello.muy-viejo, .sello.nunca {
+  color: var(--sello-alarma);
+  background: rgba(var(--danger-rgb), 0.14);
+  border-color: rgba(var(--danger-rgb), 0.5);
+  font-weight: 700;
+}
+@media (max-width: 760px) {
+  /* En el celular la barra ya va apretada: el sello pasa a su propio renglón. */
+  .sello-caja { margin-left: 0; width: 100%; padding: 0.35rem 0 0.1rem; }
+}
+
 /* Sub-Navigation Tabs */
 .sub-nav-item {
   display: inline-flex; align-items: center; padding: 0.6rem 1.2rem;

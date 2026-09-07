@@ -109,6 +109,10 @@ html[data-tema="indigo"] {
   --danger-pale:    #fca5a5;
   --danger-deep:    #b91c1c;
   --danger-deeper:  #991b1b;
+  /* EL SELLO DE LOS REPORTES (indigo, fondo oscuro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #FBBF24;
+  --sello-alarma:   #FCA5A5;
   --success:        #22c55e;
   --success-alt:    #10b981;
   --success-soft:   #4ade80;
@@ -252,6 +256,10 @@ html[data-tema="pbi"] {
   --danger-pale:    #A83A44;
   --danger-deep:    #A32A34;
   --danger-deeper:  #8C242C;
+  /* EL SELLO DE LOS REPORTES (pbi, fondo claro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #6E5B00;
+  --sello-alarma:   #8C242C;
   --success:        #148833;
   --success-alt:    #197278;
   --success-soft:   #148833;
@@ -375,6 +383,10 @@ html[data-tema="pbi-classic"] {
   --danger-pale:    #A63A36;
   --danger-deep:    #9C332F;
   --danger-deeper:  #872C29;
+  /* EL SELLO DE LOS REPORTES (pbi-classic, fondo claro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #6B5606;
+  --sello-alarma:   #872C29;
   --success:        #00847A;
   --success-alt:    #00847A;
   --success-soft:   #00776E;
@@ -500,6 +512,10 @@ html[data-tema="negro"] {
   --danger-pale:    #E08A84;
   --danger-deep:    #A6423B;
   --danger-deeper:  #8C3831;
+  /* EL SELLO DE LOS REPORTES (negro, fondo oscuro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #D9A441;
+  --sello-alarma:   #E8837A;
   --success:        #3FA968;
   --success-alt:    #3FA968;
   --success-soft:   #55BC7C;
