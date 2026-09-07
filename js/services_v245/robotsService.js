@@ -134,9 +134,16 @@ export const TAREAS = [
        del turno cerca de las 21:00, y el OBLPN de la noche. No toca el WMS —solo
        lee archivos ya bajados y publica—, así que no le quita la sesión a nadie
        y tarda 45 segundos. */
-    { id: 'distribucion', tipo: 'diaria', etiqueta: 'Distribución y despacho potencial',
+    { id: 'distribucion', tipo: 'repetida', etiqueta: 'Distribución',
       detalle: 'el cuadro de Retail, lo que hay en patio y staging, y los bultos varados',
-      area: 'distribucion_dia' }
+      area: 'distribucion_dia' },
+    /* EL POTENCIAL VA APARTE PORQUE DEPENDE DE OTRA COSA. Daniel, 07-sep-2026:
+       *"para el despacho potencial tú necesitas sí o sí el correo comercial, y
+       llega entre las seis de la tarde y puede llegar hasta las diez de la
+       noche. Una vez que tengas el correo, ahí recién procesas ese reporte"*. */
+    { id: 'despacho_potencial', tipo: 'repetida', etiqueta: 'Despacho potencial',
+      detalle: 'espera el correo de comercial y arma lo que se puede despachar por tienda',
+      area: 'despacho_potencial_dia' }
 ];
 
 /** Cada cuánto puede correr una tarea de las que se repiten. */
@@ -196,7 +203,18 @@ export const robotsPorDefecto = () => ({
     corte_turno:  { activa: true, hora: '20:00', dias: { ...LUN_A_SAB } },
     correo_citas: { activa: true, minuto: 0, cadaMin: 10, dias: { ...TODOS },
                     desde: '12:00', hasta: '19:00' },
-    distribucion: { activa: true, hora: '22:00', dias: { ...LUN_A_SAB } }
+    /* DOS CORRIDAS, atadas a los cortes de turno. `minuto: 480` es 08:00 y
+       `cadaMin: 720` pone la segunda en 20:00 —el mismo truco de `reportes`—.
+       No se puede poner `hora`: esta tarea no es de las diarias y esa clave se
+       ignora, que fue justo lo que la dejó corriendo a cada hora. */
+    distribucion: { activa: true, minuto: 480, cadaMin: 720, dias: { ...LUN_A_SAB } },
+    /* El potencial espera al correo de comercial, que llega de 18:00 a 22:30 de
+       lunes a viernes. Se asoma cada media hora; si el correo no está, no
+       publica nada y vuelve a intentar. */
+    despacho_potencial: { activa: true, minuto: 1110, cadaMin: 30,
+                          desde: '18:30', hasta: '23:30',
+                          dias: { lun: true, mar: true, mie: true, jue: true,
+                                  vie: true, sab: false, dom: false } }
 });
 
 const _hhmm = (v, respaldo) => {

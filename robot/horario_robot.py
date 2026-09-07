@@ -253,8 +253,28 @@ DE_FABRICA = {
     # las 20:00 y queda cerca de las 21:00, y el OBLPN de la noche. No toca el
     # WMS -solo lee archivos ya bajados y publica-, asi que puede convivir con
     # `stock_hora`, que arranca a esa misma hora. Tarda 45 segundos.
-    'distribucion': {'activa': True, 'hora': '22:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
-                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # DOS CORRIDAS AL DIA, atadas a los cortes de turno. `minuto: 480` es 08:00 y
+    # `cadaMin: 720` pone la segunda en 20:00. NO SE PUEDE USAR 'hora': esta tarea
+    # no esta en DIARIAS, asi que 'hora' se ignora y caia en el reparto por
+    # defecto -cada 60 minutos-. Corrio a cada hora del 06 al 07 de setiembre.
+    #
+    # 08:00 y 20:00, no 07:00 y 19:00: el cierre de turno todavia esta bajando el
+    # picking del dia a esa hora -termina 07:50 y 19:44- y este robot lo lee.
+    'distribucion': {'activa': True, 'minuto': 480, 'cadaMin': 720,
+                     'dias': {'lun': True, 'mar': True, 'mie': True,
+                              'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # EL POTENCIAL ESPERA AL CORREO DE COMERCIAL. Daniel, 07-sep-2026: *"para el
+    # despacho potencial tu necesitas si o si el correo comercial, y llega entre
+    # las seis de la tarde y puede llegar hasta las diez de la noche"*. Medido:
+    # de 18:02 a 22:32, de lunes a viernes.
+    #
+    # Se despierta cada media hora y mira si ya llego. Si no esta, no publica nada
+    # y se vuelve a intentar; cuando lo procesa deja una marca y no se repite.
+    'despacho_potencial': {'activa': True, 'minuto': 1110, 'cadaMin': 30,
+                           'desde': '18:30', 'hasta': '23:30',
+                           'dias': {'lun': True, 'mar': True, 'mie': True,
+                                    'jue': True, 'vie': True, 'sab': False,
+                                    'dom': False}},
     'asn_web':      {'activa': True, 'hora': '02:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': True}},
 }
