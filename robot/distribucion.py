@@ -98,12 +98,46 @@ TRAMOS = ['se movió ayer', '1 día', '2 a 3 días', '4 a 7 días',
           '8 a 14 días', 'más de 14 días']
 
 
+# ══ EL REGISTRO ═══════════════════════════════════════════════════════════════
+#
+# Sin esto no hay forma de contestar "corrio o no corrio". El 05-sep-2026 la
+# primera corrida sola salio a las 23:00 en vez de las 22:00 y no se pudo saber
+# por que: ni el robot ni el registro de tareas de Windows dejaron nada.
+CARPETA_LOGS = os.path.join(AQUI, 'logs')
+_ARCHIVO_LOG = os.path.join(
+    CARPETA_LOGS,
+    'distribucion_%s.log' % datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+
+
 def log(msg, nivel=''):
     # `publicar_area.publicar` llama al log con un segundo argumento (ERROR o
     # AVISO). Si no se acepta, el robot muere justo al publicar.
-    print('[%s] %s%s' % (datetime.datetime.now().strftime('%H:%M:%S'),
-                         (nivel + ' ') if nivel else '', msg))
+    linea = '[%s] %s%s' % (datetime.datetime.now().strftime('%H:%M:%S'),
+                           (nivel + ' ') if nivel else '', msg)
+    print(linea)
     sys.stdout.flush()
+    # QUE EL LOG NO PUEDA TUMBAR LA CORRIDA: si el disco falla se sigue igual.
+    try:
+        if not os.path.isdir(CARPETA_LOGS):
+            os.makedirs(CARPETA_LOGS)
+        with io.open(_ARCHIVO_LOG, 'a', encoding='utf-8') as fh:
+            fh.write(linea + '\n')
+    except Exception:
+        pass
+
+
+def limpiar_logs(dias=30):
+    """Los suyos de mas de un mes, fuera. Son 2 KB cada uno, pero uno por dia
+       durante un año es basura que despues nadie mira."""
+    try:
+        corte = time.time() - dias * 86400
+        for n in os.listdir(CARPETA_LOGS):
+            if n.startswith('distribucion_') and n.endswith('.log'):
+                p = os.path.join(CARPETA_LOGS, n)
+                if os.path.getmtime(p) < corte:
+                    os.remove(p)
+    except Exception:
+        pass
 
 
 # ══ LAS CARPETAS ══════════════════════════════════════════════════════════════
@@ -586,19 +620,43 @@ def varados(archivos, gen, TIENDAS, hoy):
 
 
 # ══ 4. EL POTENCIAL DE DESPACHO ═══════════════════════════════════════════════
-def potencial(ss, fecha, gen, TIENDAS, porTienda, detTienda, en_bulto):
+def ultimo_correo(ss):
+    """El correo de comercial mas reciente que haya en disco.
+
+       ANTES SE PEDIA EL DEL DIA DEL OBLPN y por eso nunca se encontraba: el
+       OBLPN va uno o dos dias atras -se baja a las 08:30 del dia siguiente- y
+       ademas los correos son de lunes a viernes, asi que un OBLPN de sabado
+       buscaba un correo que no existe. Resultado: desde que nacio el robot, el
+       potencial salio siempre sin la parte del correo.
+
+       Se toma el ultimo, que es lo que el reporte quiere decir: lo que comercial
+       ACABA DE MANDAR a picar."""
+    carp = os.path.join(ss, 'Correos Picking')
+    if not os.path.isdir(carp):
+        return None
+    hay = [os.path.join(carp, n) for n in os.listdir(carp)
+           if n.lower().startswith('gu') and n.lower().endswith('.xlsx')
+           and not n.startswith('~$')]
+    if not hay:
+        return None
+    return max(hay, key=os.path.getmtime)
+
+
+def potencial(ss, arch, gen, TIENDAS, porTienda, detTienda, en_bulto):
     """patio + staging + lo que comercial acaba de mandar a picar.
 
        OJO CON SUMARLOS A CIEGAS: parte del correo YA se pico, y eso ya esta
        contado en patio o en staging. La guia que aparece en un bulto no se
        vuelve a sumar."""
-    arch = os.path.join(ss, 'Correos Picking',
-                        'Guías %s.xlsx' % fecha.strftime('%d.%m'))
     pisa = collections.Counter()
-    if not os.path.exists(arch):
-        log('OJO: no esta el correo de comercial del dia (%s); el potencial '
-            'sale solo con patio y staging.' % fecha.strftime('%d.%m'))
+    if not arch or not os.path.exists(arch):
+        log('OJO: no hay correo de comercial; el potencial sale solo con patio '
+            'y staging.', 'AVISO')
     else:
+        log('correo de comercial: %s (%s)'
+            % (os.path.basename(arch),
+               datetime.datetime.fromtimestamp(
+                   os.path.getmtime(arch)).strftime('%d-%m %H:%M')))
         dst = os.path.join(TEMP, '_correo.xlsx')
         shutil.copy2(arch, dst)
         wb = openpyxl.load_workbook(dst, read_only=True, data_only=True)
@@ -655,14 +713,76 @@ def potencial(ss, fecha, gen, TIENDAS, porTienda, detTienda, en_bulto):
 
 
 # ══ EL ROBOT ══════════════════════════════════════════════════════════════════
+# LOS DOS BLOQUES VAN POR SEPARADO PORQUE NO DEPENDEN DE LO MISMO.
+#   distribucion  -> solo archivos ya bajados; corre con los cortes de turno
+#   potencial     -> necesita el correo de comercial, que llega de 18:00 a 22:30
+# Daniel, 07-sep-2026. Sin bandera se hacen los dos, que es lo que sirve para
+# una corrida a mano.
+SELLO_POTENCIAL = os.path.join(CARPETA_LOGS, 'potencial_ultimo_correo.txt')
+
+
+def ya_se_hizo(arch):
+    """¿Ya se publico el potencial con ESTE correo?
+
+       La ventana de la tarde despierta cada media hora; sin esta marca
+       republicaria lo mismo cinco veces. Se guarda el nombre y la hora del
+       archivo: si comercial manda una correccion, el archivo cambia y se
+       vuelve a procesar."""
+    if not arch:
+        return False
+    huella = '%s|%d' % (os.path.basename(arch), int(os.path.getmtime(arch)))
+    try:
+        with io.open(SELLO_POTENCIAL, encoding='utf-8') as fh:
+            return fh.read().strip() == huella
+    except OSError:
+        return False
+
+
+def anotar_hecho(arch):
+    if not arch:
+        return
+    try:
+        os.makedirs(CARPETA_LOGS, exist_ok=True)
+        with io.open(SELLO_POTENCIAL, 'w', encoding='utf-8') as fh:
+            fh.write('%s|%d' % (os.path.basename(arch),
+                                int(os.path.getmtime(arch))))
+    except OSError:
+        pass
+
+
 def main():
     t0 = time.time()
+    solo_dist = '--solo-distribucion' in sys.argv
+    solo_pot = '--solo-potencial' in sys.argv
+    if solo_dist and solo_pot:
+        raise SystemExit('--solo-distribucion y --solo-potencial se excluyen.')
+    que = ('DISTRIBUCION' if solo_dist else
+           'DESPACHO POTENCIAL' if solo_pot else
+           'DISTRIBUCION Y DESPACHO POTENCIAL')
+    log('=' * 62)
+    log('%s  ·  arranca %s'
+        % (que, datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')))
+    log('=' * 62)
+    limpiar_logs()
     base = base_onedrive()
     if not base:
         raise SystemExit('No encuentro la carpeta de OneDrive.')
     ss = os.path.join(base, 'scraping Stock')
     if not os.path.isdir(TEMP):
         os.makedirs(TEMP)
+
+    # EL POTENCIAL SE PLANTA SI TODAVIA NO LLEGO EL CORREO. No publica nada y
+    # sale con 0: la ventana de la tarde lo vuelve a intentar en media hora.
+    correo = ultimo_correo(ss)
+    if solo_pot:
+        if not correo:
+            log('todavia no hay correo de comercial. No se publica nada; '
+                'se vuelve a intentar en el proximo pase.', 'AVISO')
+            return 0
+        if ya_se_hizo(correo) and '--forzar' not in sys.argv:
+            log('el potencial ya se publico con %s. No se repite.'
+                % os.path.basename(correo))
+            return 0
 
     archivos, ultimo, fecha = elegir_dia(ss)
     log('dia %s - %d archivos de OBLPN' % (fecha.strftime('%d-%m-%Y'), len(archivos)))
@@ -676,7 +796,10 @@ def main():
     tabla = cuadro_retail(ss, gen, TIENDAS, fecha, estados)
     var = varados(archivos, gen, TIENDAS, fecha)
     control = var.pop('controlPRE')
-    pot = potencial(ss, fecha, gen, TIENDAS, porTienda, detTienda, en_bulto)
+    # EN MODO DISTRIBUCION NO SE CALCULA: abrir el correo y recorrer las tiendas
+    # es trabajo para un bloque que no se va a publicar.
+    pot = ([] if solo_dist
+           else potencial(ss, correo, gen, TIENDAS, porTienda, detTienda, en_bulto))
 
     f_txt = fecha.strftime('%d-%m-%Y')
 
@@ -705,7 +828,8 @@ def main():
         'patio': {f['l']: f['i'] for f in listas['patio'] if f.get('i')},
         'staging': {f['l']: f['i'] for f in listas['staging'] if f.get('i')},
     }
-    despacho = {'fecha': f_txt, 'filas': pot}
+    despacho = {'fecha': f_txt, 'filas': pot,
+                'correo': os.path.basename(correo) if correo else None}
 
     # SI LA FOTO SALE VACIA NO SE PUBLICA. Este almacen nunca tiene patio y
     # staging los dos en cero: si pasa, el archivo esta a medias y publicarlo
@@ -720,9 +844,13 @@ def main():
     # revisar los numeros antes de que los vea nadie.
     probar = '--probar' in sys.argv
     ok = True
-    for area, datos in (('distribucion_dia', distribucion),
-                        ('distribucion_detalle', detalle),
-                        ('despacho_potencial_dia', despacho)):
+    areas = []
+    if not solo_pot:
+        areas += [('distribucion_dia', distribucion),
+                  ('distribucion_detalle', detalle)]
+    if not solo_dist:
+        areas += [('despacho_potencial_dia', despacho)]
+    for area, datos in areas:
         crudo = json.dumps(datos, ensure_ascii=False, separators=(',', ':'))
         n = len(crudo.encode('utf-8'))
         if probar:
@@ -737,11 +865,16 @@ def main():
             log('%-24s *** NO SE PUDO PUBLICAR ***' % area)
             ok = False
 
+    if ok and not probar and not solo_dist:
+        anotar_hecho(correo)
+
     try:
         shutil.rmtree(TEMP)
     except OSError:
         pass
-    log('listo en %.1f minutos' % ((time.time() - t0) / 60.0))
+    log('listo en %.1f minutos · termina %s'
+        % ((time.time() - t0) / 60.0,
+           datetime.datetime.now().strftime('%H:%M:%S')))
     return 0 if ok else 1
 
 

@@ -1,0 +1,83 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prueba de la matriz de permisos</title>
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  body { padding: 24px; font-family: system-ui, sans-serif; }
+  h3 { margin: 22px 0 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+  pre { font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+  .ok { color: var(--success); font-weight: 700; }
+  .mal { color: var(--danger); font-weight: 800; }
+</style>
+
+<h3>El catálogo, tal como lo va a ver la matriz</h3>
+<pre id="cat">cargando…</pre>
+
+<h3>Compatibilidad con los grupos ya creados</h3>
+<pre id="compat"></pre>
+
+<h3>¿Carga la página pública sin romperse?</h3>
+<pre id="pub"></pre>
+
+<script type="module">
+const out = (id, t) => document.getElementById(id).innerHTML = t;
+const linea = (ok, t) => `<span class="${ok ? 'ok' : 'mal'}">${ok ? 'OK  ' : 'MAL '}</span>${t}`;
+
+const cat = await import('../js/services_v245/catalogoReportesPublicos.js');
+
+/* ── 1. QUE ESTA EN EL CATALOGO ─────────────────────────────────────────── */
+let txt = `módulos: ${cat.MODULOS.length}\n`;
+let nSubs = 0, nListos = 0;
+for (const m of cat.CATALOGO) {
+    txt += `\n${m.icon} ${m.label}\n`;
+    for (const s of m.subs || []) {
+        nSubs++; if (s.listo) nListos++;
+        txt += `     ${s.listo ? '✓' : '·'}  ${s.id.padEnd(22)} ${s.label}\n`;
+    }
+}
+txt += `\nreportes: ${nSubs}   ya se ven en el enlace: ${nListos}   faltan portar: ${nSubs - nListos}\n`;
+/* LO QUE DANIEL PIDIO: que los dos de Despacho esten Y funcionen. */
+const dist = cat.buscarSub('distribucion');
+const pot  = cat.buscarSub('despacho_potencial');
+txt += '\n' + linea(!!dist && dist.listo, 'Distribución está en la matriz y el enlace la dibuja');
+txt += '\n' + linea(!!pot && pot.listo, 'Despacho Potencial está en la matriz y el enlace lo dibuja');
+out('cat', txt);
+
+/* ── 2. UN GRUPO VIEJO TIENE QUE SEGUIR ANDANDO ─────────────────────────── */
+const grupoViejo = {
+    nombre: 'COORDINADORES',
+    modulos: ['inventario', 'picking', 'despacho', 'no_retail', 'recepcion'],
+    reportesAlmacenaje: ['reporte_marcas'],
+    reportesBuffer: [],
+    reportesInventario: ['kpi_inventarios'],
+    reportesAnalisis: ['replenishment'],
+};
+const p = cat.permisosDe(grupoViejo);
+let c = '';
+c += linea(p.modulos.size === 5, `lee los 5 módulos del grupo viejo (dio ${p.modulos.size})`) + '\n';
+c += linea(p.subs.has('reporte_marcas') && p.subs.has('kpi_inventarios') && p.subs.has('replenishment'),
+           'junta los reportes de los campos viejos en una sola lista') + '\n';
+
+/* Ahora se marca Distribución, como haría Daniel, y se guarda. */
+const guardado = cat.paraGuardar(p.modulos, new Set([...p.subs, 'distribucion', 'despacho_potencial']));
+c += linea(guardado.submodulos.includes('distribucion'), 'guarda Distribución en la lista nueva') + '\n';
+c += linea(guardado.reportesAlmacenaje.includes('reporte_marcas'),
+           'sigue escribiendo los campos viejos (un navegador sin actualizar no se rompe)') + '\n';
+c += linea(!guardado.reportesAlmacenaje.includes('distribucion'),
+           'y no mete Distribución en el campo de Almacenaje') + '\n';
+const revuelta = cat.permisosDe(guardado);
+c += linea(revuelta.subs.has('distribucion') && revuelta.subs.has('reporte_marcas'),
+           'lo guardado se vuelve a leer completo') + '\n';
+c += '\nguardado:\n' + JSON.stringify(guardado, null, 1);
+out('compat', c);
+
+/* ── 3. LA PAGINA PUBLICA CARGA ─────────────────────────────────────────── */
+try {
+    const rp = await import('../js/views/reportes_publicos.js');
+    out('pub', linea(true, 'reportes_publicos.js carga sin errores de sintaxis')
+        + '\nexporta: ' + Object.keys(rp).join(', '));
+} catch (e) {
+    out('pub', linea(false, 'reportes_publicos.js NO carga: ' + e.message));
+}
+</script>

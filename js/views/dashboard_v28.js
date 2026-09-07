@@ -1,42 +1,51 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada} from '../services_v245/csvHub_v6.js?v=29.0647';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada} from '../services_v245/csvHub_v6.js?v=29.0658';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0647';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0647';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0647';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0647';
-import * as metasService from '../services_v245/metasService.js?v=29.0647';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0647';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0647';
+import * as adminService from '../services_v245/adminService.js?v=29.0658';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0658';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0658';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0658';
+import * as metasService from '../services_v245/metasService.js?v=29.0658';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0658';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0658';
+/* EL SELLO DE CADA REPORTE: cuando se proceso lo que se esta mirando.
+   Se pinta solo; ver la tabla AREAS_POR_PANTALLA en el propio servicio. */
+import { vigilarSellos } from '../services_v245/selloService.js?v=29.0658';
+/* EL CATALOGO DE LOS REPORTES PUBLICOS. Lo comparten esta matriz de permisos
+   y la pagina publica: antes la lista estaba escrita a mano en los dos lados
+   y cada submodulo nuevo se quedaba fuera de los dos. */
+import { CATALOGO as CAT_PUB, MODULOS as MOD_PUB, permisosDe as permisosPub,
+         paraGuardar as permisosParaGuardar, cuentaModulos as cuentaModPub }
+    from '../services_v245/catalogoReportesPublicos.js?v=29.0658';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, ubicacionDeReservaCuenta,
          _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0647';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0647';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0647';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0647';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0647';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0647';
-import { renderCapacidad } from './capacidad.js?v=29.0647';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0647';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0647';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0647';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0647';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0647';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0647';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0647';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0647';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0647';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0647';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0647';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0647';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0647';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0647';
-import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0647';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0647';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0647';
-import { montarSlotting } from './slotting.js?v=29.0647';
-import { montarEventos } from './eventos.js?v=29.0647';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0647';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0658';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0658';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0658';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0658';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0658';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0658';
+import { renderCapacidad } from './capacidad.js?v=29.0658';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0658';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0658';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0658';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0658';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0658';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0658';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0658';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0658';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0658';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0658';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0658';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0658';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0658';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0658';
+import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0658';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0658';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0658';
+import { montarSlotting } from './slotting.js?v=29.0658';
+import { montarEventos } from './eventos.js?v=29.0658';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0658';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -399,7 +408,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0647';
+const VERSION = '29.0658';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3060,6 +3069,9 @@ const formatDateTime = (isoStr) => {
 
 export const renderDashboard = async (container, user, onLogout) => {
   pingServer();
+  /* EL SELLO DE CADA REPORTE. Va antes de cualquier dibujo y no se espera: si
+     el servidor tarda, la pantalla sale igual y el sello aparece cuando llegue. */
+  vigilarSellos();
   await initPersistentData();
   await adminService.initializeAdminData();
   
@@ -3140,7 +3152,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      todas. */
   const abrirPortalNoRetail = async (destino) => {
       const { renderDespachoNoRetailPortal } =
-          await import('../reportes/despacho_no_retail.js?v=29.0647');
+          await import('../reportes/despacho_no_retail.js?v=29.0658');
       return renderDespachoNoRetailPortal(destino, {
           fetchAndParseNoRetailClients,
           showNRPhotoLoader,
@@ -4332,7 +4344,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const abrirZonaBuffer = async () => {
-      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0647');
+      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0658');
       return montarZonaBuffer({
           estado: estadoBuffer,
           contentArea,
@@ -4388,6 +4400,8 @@ export const renderDashboard = async (container, user, onLogout) => {
               getAreaData('buffer_activo'),
               getAreaData('buffer_reserva'),
               getAreaData('buffer'),
+              /* PENDIENTE, la segunda tarjeta de comercial (07-sep-2026). */
+              getAreaData('buffer_pendiente'),
               getAreaData('solicitud'),
               getAreaData('articulos'),
               getAreaData('tallas'),
@@ -4897,7 +4911,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0647');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0658');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5160,7 +5174,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0647');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0658');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -5800,8 +5814,11 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
                             ${allRoles.map(r => {
                                 const dbVal = (adminService.getPermissions(r) ? adminService.getPermissions(r)[t.id] : undefined);
                                 let hasAccess = r === 'admin' ? true : (dbVal !== undefined ? (dbVal === 1 || dbVal === true) : t.roles.includes(r));
-                                if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id)) hasAccess = true;
-                                const isFixed = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(t.id));
+                                /* SOLO EL ADMINISTRADOR QUEDA FIJO, y no es un descuido: si se le
+                                   pudiera quitar el acceso a Administracion, el que lo hiciera se
+                                   quedaria sin forma de volver a entrar a arreglarlo. El asistente
+                                   se maneja como cualquier otro rol desde el 07-sep-2026. */
+                                const isFixed = r === 'admin';
                                 return `<td class="celda"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer;"'}></td>`;
                             }).join('')}
                         </tr>`);
@@ -5820,8 +5837,7 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
                                     ${allRoles.map(r => {
                                         const dbSubVal = (adminService.getPermissions(r) ? adminService.getPermissions(r)[subKey] : undefined);
                                         let hasSubAccess = r === 'admin' ? true : (dbSubVal !== undefined ? (dbSubVal === 1 || dbSubVal === true) : t.roles.includes(r));
-                                        if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey)) hasSubAccess = true;
-                                        const isFixedSub = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(subKey));
+                                        const isFixedSub = r === 'admin';
                                         return `<td style="padding:0.6rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${subKey}" ${hasSubAccess ? 'checked' : ''} ${isFixedSub ? 'disabled' : 'style="cursor:pointer; opacity:0.7;"'}></td>`;
                                     }).join('')}
                                 </tr>`);
@@ -5836,8 +5852,7 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
                                             ${allRoles.map(r => {
                                                 const dbSSVal = (adminService.getPermissions(r) ? adminService.getPermissions(r)[ssKey] : undefined);
                                                 let hasSSAccess = r === 'admin' ? true : (dbSSVal !== undefined ? (dbSSVal === 1 || dbSSVal === true) : t.roles.includes(r));
-                                                if (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey)) hasSSAccess = true;
-                                                const isFixedSS = r === 'admin' || (r === 'asistente' && adminService.FORCED_ASISTENTE.includes(ssKey));
+                                                const isFixedSS = r === 'admin';
                                                 return `<td style="padding:0.5rem; text-align:center;"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${ssKey}" ${hasSSAccess ? 'checked' : ''} ${isFixedSS ? 'disabled' : 'style="cursor:pointer; opacity:0.6;"'}></td>`;
                                             }).join('')}
                                         </tr>`);
@@ -5853,6 +5868,7 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
         <div style="margin-top:1rem; padding:1rem; background:rgba(var(--primary-rgb), 0.05); border-radius:8px; border:1px solid rgba(var(--primary-rgb), 0.2);">
             <p style="font-size:var(--t-sm); color:var(--text-muted); margin:0;">
                 <b>Tip:</b> Haz clic en los módulos con el icono ▶ para expandir sus secciones. El anidamiento permite un control quirúrgico de lo que cada rol puede ver.
+                <br><b>La columna ADMIN va fija a propósito:</b> si se le pudiera quitar el acceso, quien lo hiciera se quedaría sin forma de volver a entrar a corregirlo. Todos los demás roles se pueden marcar y desmarcar.
             </p>
         </div>
     `;
@@ -12205,49 +12221,11 @@ const renderRFSection = (container) => {
     
     if (activeConfigSub === 'reportes') {
         const configData = adminService.getPublicReportsConfig();
-        const availableModules = [
-            { id: 'inventario', label: 'Inventario' },
-            { id: 'picking', label: 'Picking' },
-            { id: 'despacho', label: 'Despacho' },
-            { id: 'no_retail', label: 'NO RETAIL' },
-            { id: 'recepcion', label: 'Recepción' },
-            { id: 'almacenaje', label: 'Almacenaje (Todos)' },
-            { id: 'buffer', label: 'Zona Buffer (Todos)' },
-            { id: 'analisis_sku', label: 'Análisis SKU' }
-        ];
-
-        const availableSubAlmacenaje = [
-            { id: 'reporte_marcas', label: 'Marcas (Día/Noche)' },
-            { id: 'rendimiento_ops', label: 'Rendimiento Operarios' },
-            { id: 'produccion_hora', label: 'Producción por Hora' },
-            { id: 'almacenado_semana', label: 'Almacenado Semana/Marca' },
-            { id: 'grafico_rendimiento', label: 'Gráfico Rendimiento' }
-        ];
-
-        const availableSubBuffer = [
-            { id: 'pendiente', label: 'Pendiente' },
-            { id: 'historial_buffer', label: 'Historial Buffer' },
-            { id: 'analisis_buffer', label: 'Análisis Buffer' }
-        ];
-
-        const availableSubInventario = [
-            { id: 'archivo_inventario', label: 'Archivo Inventario' },
-            { id: 'kpi_inventarios', label: 'KPI Inventarios' },
-            { id: 'analisis_inventarios', label: 'Análisis Inventarios' },
-            { id: 'modulo_inventarios', label: 'Módulo Inventarios' },
-            { id: 'descargas_inventario', label: 'Descargas' }
-        ];
-
-        const availableSubAnalisis = [
-            { id: 'archivo_analisis', label: 'Archivo Análisis' },
-            { id: 'replenishment', label: 'Replenishment' },
-            /* CONFIGURACION ANALISIS se fue a Almacenaje > Capacidad el 28-ago-2026.
-               Se saca de la matriz para no ofrecer un permiso sobre una pantalla que ya
-               no esta en el menu. */
-            { id: 'analisis_reserva', label: 'Análisis Reserva' },
-            { id: 'layout_activo', label: 'Layout Activo' },
-            { id: 'articulo_temp', label: 'Artículo Temp' }
-        ];
+        /* LAS CINCO LISTAS ESCRITAS A MANO SE FUERON al catalogo compartido.
+           Estaban duplicadas con las de `reportes_publicos.js`, y por eso
+           Distribucion, Despacho Potencial, Picking por dia, Embalaje por dia,
+           Cruce y Produccion nunca aparecieron aca. Ver
+           `services_v245/catalogoReportesPublicos.js`. */
 
         const generateSecureToken = () => {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -12272,7 +12250,7 @@ const renderRFSection = (container) => {
                             </div>
                         </td>
                         <td style="padding:0.8rem;">
-                            <button class="btn btn-edit-perm" data-idx="${idx}" style="font-size:var(--t-sm); padding:4px 10px; background:rgba(var(--cyan-neon-rgb), 0.15); color:var(--cyan-neon); border:1px solid var(--cyan-neon);">✏️ Configurar Permisos (${(g.modulos||[]).length} Módulos)</button>
+                            <button class="btn btn-edit-perm" data-idx="${idx}" style="font-size:var(--t-sm); padding:4px 10px; background:rgba(var(--cyan-neon-rgb), 0.15); color:var(--cyan-neon); border:1px solid var(--cyan-neon);">✏️ Configurar Permisos (${cuentaModPub(g)} Módulos)</button>
                         </td>
                         <td style="padding:0.8rem;">
                             <div style="display:flex; gap:6px;">
@@ -12322,65 +12300,47 @@ const renderRFSection = (container) => {
             modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
             modal.style.zIndex = '99999';
 
-            const modulosChecked = new Set(g.modulos || []);
-            const almChecked = new Set(g.reportesAlmacenaje || []);
-            const bufChecked = new Set(g.reportesBuffer || []);
-            const invChecked = new Set(g.reportesInventario || []);
-            const anaChecked = new Set(g.reportesAnalisis || []);
+            const { modulos: modulosChecked, subs: subsChecked } = permisosPub(g);
+
+            /* UNA SECCION POR MODULO, con TODOS sus reportes. Los que la pagina
+               publica todavia no sabe dibujar salen igual, marcados con un aviso:
+               tienen que verse, no faltar. */
+            const casilla = (clase, id, label, marcado, aviso) => `
+                <label style="font-size:var(--t-sm); color:var(--text-soft); display:flex;
+                              align-items:center; gap:8px; cursor:pointer;">
+                    <input type="checkbox" class="${clase}" value="${id}" ${marcado ? 'checked' : ''}>
+                    <span>${label}${aviso ? ' <span title="Todavia no esta portado al enlace publico: si lo autoriza, el enlace lo dice con todas sus letras." style="font-size:var(--t-xs); color:var(--warning); font-weight:700;">&middot; aun no</span>' : ''}</span>
+                </label>`;
+
+            const seccion = (titulo, cuerpo) => `
+                <h4 style="color:var(--text-strong); font-size:var(--t-md);
+                           border-bottom:1px solid var(--border); padding-bottom:4px;
+                           margin-top:1rem;">${titulo}</h4>
+                <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px;
+                            margin-bottom:1rem;">${cuerpo}</div>`;
+
+            const cuerpoModal =
+                seccion('MODULOS PRINCIPALES',
+                        MOD_PUB.map(m => casilla('chk-mod', m.id,
+                                                 m.icon + ' ' + m.label,
+                                                 modulosChecked.has(m.id), false)).join(''))
+              + CAT_PUB.filter(m => (m.subs || []).length)
+                       .map(m => seccion('REPORTES DE ' + m.label.toUpperCase(),
+                                m.subs.map(sb => casilla('chk-sub', sb.id, sb.label,
+                                                         subsChecked.has(sb.id),
+                                                         !sb.listo)).join(''))).join('');
 
             modal.innerHTML = `
                 <div class="glass-panel" style="width:90%; max-width:650px; max-height:85vh; overflow-y:auto; padding:1.8rem; border:1px solid var(--cyan-neon); box-shadow:0 0 30px rgba(var(--cyan-neon-rgb), 0.2);">
-                    <h3 style="color:var(--cyan-neon); margin-top:0; font-family:'Outfit', sans-serif; font-weight:900;">⚙️ PERMISOS DE VISUALIZACIÓN: ${g.nombre}</h3>
-                    <p style="font-size:var(--t-sm); color:var(--text-muted); margin-bottom:1rem;">Selecciona los módulos y sub-reportes autorizados para este link público.</p>
-
-                    <h4 style="color:var(--text-strong); font-size:var(--t-md); border-bottom:1px solid var(--border); padding-bottom:4px; margin-top:1rem;">MÓDULOS PRINCIPALES</h4>
-                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:1rem;">
-                        ${availableModules.map(m => `
-                            <label style="font-size:var(--t-sm); color:var(--text-soft); display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="checkbox" class="chk-mod" value="${m.id}" ${modulosChecked.has(m.id)?'checked':''}> ${m.label}
-                            </label>
-                        `).join('')}
-                    </div>
-
-                    <h4 style="color:var(--text-strong); font-size:var(--t-md); border-bottom:1px solid var(--border); padding-bottom:4px; margin-top:1rem;">SUB-REPORTES DE ALMACENAJE</h4>
-                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:1rem;">
-                        ${availableSubAlmacenaje.map(s => `
-                            <label style="font-size:var(--t-sm); color:var(--text-soft); display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="checkbox" class="chk-alm" value="${s.id}" ${almChecked.has(s.id)?'checked':''}> ${s.label}
-                            </label>
-                        `).join('')}
-                    </div>
-
-                    <h4 style="color:var(--text-strong); font-size:var(--t-md); border-bottom:1px solid var(--border); padding-bottom:4px; margin-top:1rem;">SUB-REPORTES DE ZONA BUFFER</h4>
-                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:1.5rem;">
-                        ${availableSubBuffer.map(b => `
-                            <label style="font-size:var(--t-sm); color:var(--text-soft); display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="checkbox" class="chk-buf" value="${b.id}" ${bufChecked.has(b.id)?'checked':''}> ${b.label}
-                            </label>
-                        `).join('')}
-                    </div>
-
-                    <h4 style="color:var(--text-strong); font-size:var(--t-md); border-bottom:1px solid var(--border); padding-bottom:4px; margin-top:1rem;">SUB-REPORTES DE INVENTARIO</h4>
-                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:1rem;">
-                        ${availableSubInventario.map(s => `
-                            <label style="font-size:var(--t-sm); color:var(--text-soft); display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="checkbox" class="chk-inv" value="${s.id}" ${invChecked.has(s.id)?'checked':''}> ${s.label}
-                            </label>
-                        `).join('')}
-                    </div>
-
-                    <h4 style="color:var(--text-strong); font-size:var(--t-md); border-bottom:1px solid var(--border); padding-bottom:4px; margin-top:1rem;">SUB-REPORTES DE ANÁLISIS SKU</h4>
-                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:1.5rem;">
-                        ${availableSubAnalisis.map(s => `
-                            <label style="font-size:var(--t-sm); color:var(--text-soft); display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="checkbox" class="chk-ana" value="${s.id}" ${anaChecked.has(s.id)?'checked':''}> ${s.label}
-                            </label>
-                        `).join('')}
-                    </div>
-
-                    <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <h3 style="color:var(--cyan-neon); margin-top:0; font-family:'Outfit', sans-serif; font-weight:900;">&#9881;&#65039; PERMISOS DE VISUALIZACION: ${g.nombre}</h3>
+                    <p style="font-size:var(--t-sm); color:var(--text-muted); margin-bottom:1rem;">
+                        Selecciona los modulos y reportes autorizados para este link publico.
+                        El modulo tiene que estar marcado para que se vean sus reportes.
+                    </p>
+                    ${cuerpoModal}
+                    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:1.5rem;">
                         <button id="btnCloseModal" class="btn" style="background:none; border:1px solid var(--border); color:var(--text-muted); padding:0.6rem 1.2rem;">Cancelar</button>
-                        <button id="btnSavePerms" class="btn" style="background:var(--cyan-neon); color:var(--on-accent); font-weight:900; padding:0.6rem 1.4rem;">💾 GUARDAR PERMISOS</button>
+                        <button id="btnSavePerms" class="btn" style="background:var(--cyan-neon); color:var(--on-accent); font-weight:900; padding:0.6rem 1.4rem;">&#128190; GUARDAR PERMISOS</button>
                     </div>
                 </div>
             `;
@@ -12388,17 +12348,11 @@ const renderRFSection = (container) => {
 
             modal.querySelector('#btnCloseModal').onclick = () => { if (modal && modal.parentNode) modal.parentNode.removeChild(modal); };
             modal.querySelector('#btnSavePerms').onclick = async function() {
-                const newModulos = Array.from(modal.querySelectorAll('.chk-mod:checked')).map(c => c.value);
-                const newAlm = Array.from(modal.querySelectorAll('.chk-alm:checked')).map(c => c.value);
-                const newBuf = Array.from(modal.querySelectorAll('.chk-buf:checked')).map(c => c.value);
-                const newInv = Array.from(modal.querySelectorAll('.chk-inv:checked')).map(c => c.value);
-                const newAna = Array.from(modal.querySelectorAll('.chk-ana:checked')).map(c => c.value);
-
-                g.modulos = newModulos;
-                g.reportesAlmacenaje = newAlm;
-                g.reportesBuffer = newBuf;
-                g.reportesInventario = newInv;
-                g.reportesAnalisis = newAna;
+                const marcados = (clase) => Array.from(
+                    modal.querySelectorAll('.' + clase + ':checked')).map(c => c.value);
+                /* Se guarda la lista nueva Y los campos viejos: un navegador con la
+                   version anterior de la pagina publica sigue leyendo bien. */
+                Object.assign(g, permisosParaGuardar(marcados('chk-mod'), marcados('chk-sub')));
 
                 await withLoading(this, '⏳ GUARDANDO...', async () => {
                     await adminService.savePublicReportsConfig(configData);
@@ -13123,13 +13077,14 @@ const renderRFSection = (container) => {
         btn.innerHTML = `<span>⏳ PROCESANDO...</span>`;
 
         try {
-            const [validarActivo, validarReserva, validarLPN, originalReserva, bufferActivo, bufferPedidos, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
+            const [validarActivo, validarReserva, validarLPN, originalReserva, bufferActivo, bufferPedidos, bufferPendiente, bufferArticulos, bufferSolicitud, bufferTallas] = await Promise.all([
                 getAreaData('validar_activo'),
                 getAreaData('validar_reserva'),
                 getAreaData('validar_lpn'),
                 getAreaData('buffer_reserva'),
                 getAreaData('buffer_activo'),
                 getAreaData('buffer'),
+                getAreaData('buffer_pendiente'),
                 getAreaData('articulos'),
                 getAreaData('solicitud'),
                 getAreaData('tallas')
@@ -13955,7 +13910,7 @@ const renderRFSection = (container) => {
           se ata una sola vez al entrar y esas dieciséis quedaron intactas. El
           porqué completo está en la cabecera de ese archivo. */
        (async () => {
-           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0647');
+           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0658');
            montarInventarios(l2Container, {
                renderUploadArea,
                showPremiumConfirm,
@@ -18994,7 +18949,7 @@ const renderRFSection = (container) => {
              `renderDashboard` y que ahora, viviendo afuera, no alcanza sola.
              `tareasDeAlmacenaje` va como función y no como lista: la caché se
              reemplaza entera cuando entran tareas nuevas. */
-          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0647');
+          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0658');
           const corrida = await barrerParaSlotting(
             (Array.isArray(zonasDeLaCorrida) && zonasDeLaCorrida.length)
               ? zonasDeLaCorrida
@@ -27354,7 +27309,7 @@ window.__menuMapa = (btn) => {
              lado es un `let` que leen el plan del Excel y el prepack: si se
              pasara la lista, esos dos nunca se enterarían de la foto nueva. */
           (async () => {
-              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0647');
+              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0658');
               renderAnalisisReserva(skuBuf, {
                   htmlConsolidacionReserva,
                   engancharClicConsolidacion,
@@ -31176,12 +31131,12 @@ window.__menuMapa = (btn) => {
         /* El buscador se carga aparte y NO frena al resto: si el servidor viejo
            todavia no tiene /api/asn, el cuadro dice que no se pudo consultar y
            los demas siguen dibujandose igual. */
-        import('../reportes/asn_buscador.js?v=29.0647').then(m => {
+        import('../reportes/asn_buscador.js?v=29.0658').then(m => {
           const cb = container.querySelector('#asn_buscador');
           if (cb) m.montarBuscadorAsn(cb, { api: 'https://logistics-backend-wv0x.onrender.com' });
         }).catch(e => console.warn('[ASN] no se pudo cargar el buscador:', e));
 
-        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0647');
+        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0658');
         const caja = container.querySelector('#asn_detalle');
         /* El HOY va de aca, con getLogicalDate(): el paquete trae el suyo -el del
            robot- y si la corrida fallo, ese "hoy" es de ayer y todo el calendario

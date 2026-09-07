@@ -1,0 +1,71 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prueba de la tarjeta PENDIENTE</title>
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  body { padding: 24px; font-family: system-ui, sans-serif; }
+  h3 { margin: 22px 0 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+  pre { font-size: 12.5px; line-height: 1.7; white-space: pre-wrap; }
+  .ok { color: var(--success); font-weight: 700; }
+  .mal { color: var(--danger); font-weight: 800; }
+  .nota { color: var(--text-muted); }
+</style>
+
+<h3>La tarjeta PENDIENTE: ¿está enganchada de punta a punta?</h3>
+<pre id="r">probando…</pre>
+
+<script type="module">
+const R = [];
+const linea = (ok, t) => R.push(`<span class="${ok ? 'ok' : 'mal'}">${ok ? 'OK  ' : 'MAL '}</span>${t}`);
+const hub = await import('../js/services_v245/csvHub_v6.js');
+
+/* ── 1. RECONOCIDA COMO AREA DE DEMANDA ──────────────────────────────────────
+   Sin esto la web publicaria el archivo crudo -30 columnas, 58 MB- y la guarda
+   del servidor lo rechazaria: seria como no publicar nada. */
+linea(hub.esAreaDeDemanda('buffer_pendiente'),
+      'buffer_pendiente está registrada como área de demanda (se reduce a 3 columnas)');
+linea(hub.esAreaDeDemanda('buffer'), 'buffer sigue registrada, no se rompió');
+
+/* ── 2. EL MOTOR LA LEE ──────────────────────────────────────────────────────
+   Se le pone un espía al dato: si el motor nunca la consulta, el permiso y la
+   tarjeta no servirían de nada. Es el enganche, que es lo que cambié; la cuenta
+   de paletas no se tocó. */
+const ds = hub.dataStore;
+const leidas = new Set();
+const espiar = (clave, valor) => {
+    delete ds[clave];
+    Object.defineProperty(ds, clave, {
+        configurable: true,
+        get() { leidas.add(clave); return valor; },
+    });
+};
+const demanda = (sol) => ([{ 'Código de artículo': '9990001-1-01',
+                             'Cantidad solicitada': sol, 'Cantidad asignada': 0 }]);
+espiar('buffer', demanda(40));
+espiar('buffer_pendiente', demanda(60));
+
+hub.calculateBufferPallets();   // no importa el resultado: importa qué consultó
+
+R.push('');
+linea(leidas.has('buffer'), 'el motor lee PEDIDOS');
+linea(leidas.has('buffer_pendiente'), 'el motor lee PENDIENTE');
+
+/* ── 3. LA FUENTE EXISTE COMO TAL ────────────────────────────────────────────
+   El análisis guarda por cuál fuente bajó cada artículo. Si 'PENDIENTE' no
+   estuviera en la lista, esas líneas se perderían sin avisar. */
+const fuente = await fetch('../js/services_v245/csvHub_v6.js').then(r => r.text());
+linea(/'PEDIDOS':\s*\[\],\s*'PENDIENTE':\s*\[\]/.test(fuente),
+      "'PENDIENTE' es una fuente propia, al lado de 'PEDIDOS'");
+linea(fuente.includes("['PEDIDOS', 'PENDIENTE', 'OTRAS SOLICITUDES'].forEach"),
+      'y entra en la consolidación junto con PEDIDOS y OTRAS SOLICITUDES');
+linea(fuente.includes("leerDemanda(pedidos, 'PEDIDOS');")
+   && fuente.includes("leerDemanda(pendiente, 'PENDIENTE');"),
+      'las dos tarjetas se leen con la misma función: mismas columnas, misma regla');
+
+R.push('');
+R.push('<span class="nota">La cuenta de paletas no se tocó: PENDIENTE entra por el mismo '
+     + 'camino que PEDIDOS, solo con otro nombre de fuente.</span>');
+
+document.getElementById('r').innerHTML = R.join('\n');
+</script>

@@ -1,0 +1,73 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prueba de los permisos por rol</title>
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  body { padding: 24px; font-family: system-ui, sans-serif; }
+  h3 { margin: 22px 0 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+  pre { font-size: 12.5px; line-height: 1.7; white-space: pre-wrap; }
+  .ok { color: var(--success); font-weight: 700; }
+  .mal { color: var(--danger); font-weight: 800; }
+</style>
+
+<h3>El asistente: ¿se puede destildar y se queda destildado?</h3>
+<pre id="r">probando…</pre>
+
+<script type="module">
+const linea = (ok, t) => `<span class="${ok ? 'ok' : 'mal'}">${ok ? 'OK  ' : 'MAL '}</span>${t}`;
+const svc = await import('../js/services_v245/adminService.js');
+
+/* Se trabaja sobre la copia en memoria; nada de esto se guarda en el servidor
+   porque `save()` sale por la red y acá solo interesa la lógica local. */
+const TABS = [
+    { id: 'inicio', label: 'Inicio', roles: ['admin', 'jefe'] },
+    { id: 'almacenaje', label: 'Almacenaje', roles: ['admin', 'jefe'], subTabs: [
+        { id: 'tareas_dia', label: 'Tareas Día' },
+        { id: 'config_tareas', label: 'Config' },
+    ]},
+    { id: 'despacho', label: 'Despacho', roles: ['admin', 'jefe'] },
+];
+
+const R = [];
+const P = () => svc.getPermissions('asistente') || {};
+
+/* 1. De fábrica el asistente trae Inicio marcado, como antes. */
+svc.adminStore.permissions = {};
+svc.initPermissions(TABS);
+R.push(linea(P().inicio === 1, 'de fábrica el asistente trae Inicio marcado (' + P().inicio + ')'));
+R.push(linea(P().almacenaje_tareas_dia === 1,
+             'y también Almacenaje > Tareas Día (' + P().almacenaje_tareas_dia + ')'));
+R.push(linea(P().despacho === 0, 'y Despacho apagado, que no estaba en la lista (' + P().despacho + ')'));
+
+/* 2. AHORA SE DESTILDA. Antes esto se iba sin hacer nada. */
+const antes = P().inicio;
+svc.togglePermission('asistente', 'inicio');
+const despues = P().inicio;
+R.push('');
+R.push(linea(antes === 1 && despues === 0,
+             'destildar Inicio ahora cambia el valor (' + antes + ' → ' + despues + ')'));
+
+/* 3. Y LO QUE IMPORTA: que no vuelva solo en la siguiente carga.
+      Antes `initPermissions` ponía 1 en cada arranque y se perdía el cambio. */
+svc.initPermissions(TABS);
+R.push(linea(P().inicio === 0,
+             'después de recargar sigue destildado (' + P().inicio + ') — antes volvía a 1'));
+
+svc.togglePermission('asistente', 'almacenaje_tareas_dia');
+svc.initPermissions(TABS);
+R.push(linea(P().almacenaje_tareas_dia === 0,
+             'lo mismo con un sub-módulo (' + P().almacenaje_tareas_dia + ')'));
+
+/* 4. Y se puede volver a marcar. */
+svc.togglePermission('asistente', 'inicio');
+R.push(linea(P().inicio === 1, 'y se puede volver a marcar (' + P().inicio + ')'));
+
+/* 5. El administrador no se toca: sigue con todo en 1. */
+R.push('');
+const adm = svc.getPermissions('admin') || {};
+R.push(linea(adm.inicio === 1 && adm.despacho === 1,
+             'el administrador conserva todo en 1'));
+
+document.getElementById('r').innerHTML = R.join('\n');
+</script>

@@ -1,0 +1,63 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prueba del sello</title>
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  body { padding: 24px; font-family: system-ui, sans-serif; }
+  h3 { margin: 26px 0 8px; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+  nav.sub-nav { display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border);
+                margin-bottom: 1rem; align-items: center; }
+  pre { font-size: 12px; line-height: 1.6; }
+</style>
+
+<h3>Barra tal como la dibuja el módulo</h3>
+<nav class="sub-nav">
+  <a class="sub-nav-item" data-id="archivo_despacho">🗂️ ARCHIVO DESPACHO</a>
+  <a class="sub-nav-item active" data-id="distribucion">📦 DISTRIBUCIÓN</a>
+  <a class="sub-nav-item" data-id="despacho_potencial">🚚 DESPACHO POTENCIAL</a>
+</nav>
+
+<h3>Los tres niveles, uno al lado del otro</h3>
+<div id="muestra" style="display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)"></div>
+
+<h3>Qué dice cada área que la plataforma publica</h3>
+<pre id="salida">cargando…</pre>
+
+<script type="module">
+import { traerSellos, leerSello, chipSello, vigilarSellos, AREAS_POR_PANTALLA }
+    from '../js/services_v245/selloService.js';
+
+const sellos = await traerSellos();
+vigilarSellos();
+
+/* LOS TRES NIVELES CON FECHAS ARMADAS, para ver el color sin esperar dos días. */
+const falsas = {
+    '__hoy__':   new Date(Date.now() - 8 * 60000),
+    '__ayer__':  new Date(Date.now() - 26 * 3600000),
+    '__viejo__': new Date(Date.now() - 3 * 86400000),
+};
+const dos = n => String(n).padStart(2, '0');
+for (const [k, d] of Object.entries(falsas)) {
+    sellos[k] = `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())} `
+              + `${dos(d.getHours())}:${dos(d.getMinutes())}:00`;
+}
+document.getElementById('muestra').innerHTML =
+    Object.keys(falsas).map(k => chipSello(k)).join(' ') + chipSello('__no_existe__');
+
+/* Y el repaso: cada pantalla de la tabla contra lo que hay publicado. */
+const filas = [];
+for (const [pantalla, areas] of Object.entries(AREAS_POR_PANTALLA)) {
+    for (const a of areas) {
+        const s = leerSello(a);
+        filas.push(`${pantalla.padEnd(20)} ${a.padEnd(24)} ${String(s.nivel).padEnd(10)} ${s.texto}`);
+    }
+}
+const sin = filas.filter(f => f.includes('nunca')).length;
+document.getElementById('salida').textContent =
+    `areas publicadas en el servidor: ${Object.keys(sellos).length}\n`
+  + `pantallas en la tabla: ${Object.keys(AREAS_POR_PANTALLA).length}\n`
+  + `areas de la tabla que NUNCA se publicaron: ${sin}\n\n`
+  + 'PANTALLA             AREA                     NIVEL      CUANDO\n'
+  + filas.join('\n');
+</script>

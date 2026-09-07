@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0647';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0658';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -294,6 +294,23 @@ export const savePerformance = (data) => save('performance', data);
 export const savePerformanceLog = (data) => save('performance_log', data);
 
 // --- GESTIÓN DE PERMISOS (RESTAURADO v24.3) ---
+/**
+ * Lo que el rol *asistente* trae marcado DE FÁBRICA.
+ *
+ * ANTES ERA UN CANDADO Y AHORA ES UN VALOR POR DEFECTO. Daniel, 07-sep-2026:
+ * *"en asistente veo check que están bloqueados. Por ejemplo, inicio, no lo
+ * puedo desbloquear. ¿Por qué?"*.
+ *
+ * Se forzaba en tres sitios a la vez —acá al arrancar, en `togglePermission` y
+ * en el dibujo de la matriz—, así que el clic no hacía nada y tampoco decía por
+ * qué. Y no bastaba con soltar el dibujo: `initPermissions` volvía a poner 1 en
+ * la siguiente carga y se perdía lo que se acababa de guardar.
+ *
+ * Ahora solo se aplica cuando el permiso todavía no existe. De ahí en adelante
+ * manda la matriz, que es para lo que está.
+ *
+ * El nombre viejo se mantiene exportado porque lo lee la matriz.
+ */
 export const FORCED_ASISTENTE = [
     'inicio',
     'almacenaje', 'almacenaje_archivo_almacenaje', 'almacenaje_tareas_dia', 'almacenaje_kpi_tareas',
@@ -319,12 +336,16 @@ export const initPermissions = (tabs) => {
         if (!adminStore.permissions[role]) adminStore.permissions[role] = {};
         const p = adminStore.permissions[role];
         tabs.forEach(t => {
-            if (role === 'asistente' && FORCED_ASISTENTE.includes(t.id)) p[t.id] = 1;
+            /* DE FABRICA, NO A LA FUERZA: solo si el permiso todavia no existe.
+               Antes esto pisaba en cada arranque lo que se hubiera guardado. */
+            if (role === 'asistente' && p[t.id] === undefined
+                && FORCED_ASISTENTE.includes(t.id)) p[t.id] = 1;
             if (p[t.id] === undefined) p[t.id] = (role === 'admin' || role === 'jefe' || (t.roles && t.roles.includes(role))) ? 1 : 0;
             if (t.subTabs) {
                 t.subTabs.forEach(s => {
                     const subKey = `${t.id}_${s.id}`;
-                    if (role === 'asistente' && FORCED_ASISTENTE.includes(subKey)) p[subKey] = 1;
+                    if (role === 'asistente' && p[subKey] === undefined
+                        && FORCED_ASISTENTE.includes(subKey)) p[subKey] = 1;
                     if (SOLO_ADMIN_POR_DEFECTO.includes(subKey)) {
                         if (p[subKey] === undefined) p[subKey] = (role === 'admin') ? 1 : 0;
                         return;   // no se le aplica el valor por defecto general
@@ -333,7 +354,8 @@ export const initPermissions = (tabs) => {
                     if (s.subTabs) {
                         s.subTabs.forEach(ss => {
                             const ssKey = `${s.id}_${ss.id}`;
-                            if (role === 'asistente' && FORCED_ASISTENTE.includes(ssKey)) p[ssKey] = 1;
+                            if (role === 'asistente' && p[ssKey] === undefined
+                                && FORCED_ASISTENTE.includes(ssKey)) p[ssKey] = 1;
                             if (p[ssKey] === undefined) p[ssKey] = (role === 'admin' || role === 'jefe' || (t.roles && t.roles.includes(role))) ? 1 : 0;
                         });
                     }
@@ -344,7 +366,10 @@ export const initPermissions = (tabs) => {
 };
 
 export const togglePermission = (role, tabId) => {
-    if (role === 'asistente' && FORCED_ASISTENTE.includes(tabId)) return;
+    /* SE FUE EL PORTAZO AL ASISTENTE. Antes esta linea se iba sin hacer nada si
+       el permiso estaba en FORCED_ASISTENTE: el clic no cambiaba nada y tampoco
+       avisaba. Los permisos del asistente se manejan desde la matriz como los de
+       cualquier otro rol. */
     if (!adminStore.permissions[role]) adminStore.permissions[role] = {};
     const p = adminStore.permissions[role];
     p[tabId] = p[tabId] === 1 ? 0 : 1;

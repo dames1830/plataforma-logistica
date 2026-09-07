@@ -56,5 +56,18 @@ python -u picking_y_orden.py --solo-dia
 REM Le cuenta a la web como le fue la corrida. No cambia el codigo de salida.
 python -u avisar_log.py
 
+REM EL PARTE DEL CIERRE, al Log y por WhatsApp. Daniel, 06-sep-2026: "los
+REM archivos que se descargaron visto bueno, y el que no se descargo, pues que
+REM le ponga una x".
+REM
+REM VA AL FINAL, DESPUES DE TODO. Mira lo que quedo -los archivos en disco y las
+REM areas publicadas- en vez de confiar en lo que cada robot dijo de si mismo:
+REM cuando un paso falla, el robot que lo ejecuta se rinde y su aviso se calla
+REM justo el dia que hace falta.
+REM
+REM El turno lo saca del reloj: antes de mediodia informa del cierre de la
+REM noche, despues del cierre del dia. No cambia el codigo de salida.
+python -u resumen_turno.py
+
 exit /b %CODIGO%
 
