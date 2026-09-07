@@ -1,12 +1,12 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0655';
-import * as adminService from './services_v245/adminService.js?v=29.0655';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0655';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0655';
-import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0655';
-import { registrar } from './services_v245/eventosService.js?v=29.0655';
+import { getSession, logout } from './services_v245/auth.js?v=29.0656';
+import * as adminService from './services_v245/adminService.js?v=29.0656';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0656';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0656';
+import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0656';
+import { registrar } from './services_v245/eventosService.js?v=29.0656';
 
 
 /* ── LO QUE SE ROMPE, SE ANOTA ──────────────────────────────────────────────────
@@ -470,7 +470,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0655';
+      this.APP_VERSION = 'v29.0656';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
