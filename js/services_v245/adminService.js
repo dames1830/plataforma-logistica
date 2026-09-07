@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0658';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0659';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -463,6 +463,39 @@ export const saveBufferHistory = async (data) => {
     return await save('buffer_history', data);
 };
 // --- GESTIÓN DINÁMICA DE REPORTES PÚBLICOS & PERMISOS ---
+/**
+ * Trae del servidor la lista de grupos con enlace público.
+ *
+ * HACE FALTA PARA QUE EL ENLACE LE ABRA A OTRA PERSONA. `getPublicReportsConfig`
+ * es síncrona y, si no encuentra nada en memoria ni en el localStorage de esa
+ * PC, cae en una lista escrita en el código con solo cuatro grupos. Un navegador
+ * que entra por primera vez no tiene ninguna de las dos, así que cualquier grupo
+ * creado después salía como ACCESO RESTRINGIDO. Daniel, 07-sep-2026: *"estoy
+ * pasando el enlace a otra persona y le sale bloqueado"*.
+ *
+ * Se lee sin credenciales, igual que el resto de las áreas públicas. Si el
+ * servidor no contesta se sigue con lo que hubiera: un enlace que ya funcionaba
+ * no se rompe por un corte de red.
+ */
+export const cargarPublicReportsConfig = async () => {
+    const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+    try {
+        const r = await fetch(`${API_URL}/public_reports_config?date=MASTER&z=${Date.now()}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const j = await r.json();
+        const d = (j && j.data !== undefined) ? j.data : j;
+        if (Array.isArray(d) && d.length) {
+            adminStore.public_reports_config = d;
+            try { localStorage.setItem('deam_public_reports_config', JSON.stringify(d)); }
+            catch (e) { /* modo incognito: da igual, ya está en memoria */ }
+        }
+    } catch (e) {
+        console.warn('[Reportes] no se pudo traer la lista de grupos del servidor:',
+                     e && e.message);
+    }
+    return getPublicReportsConfig();
+};
+
 export const getPublicReportsConfig = () => {
     if (!adminStore.public_reports_config) {
         try {
