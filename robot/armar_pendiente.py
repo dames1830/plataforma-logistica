@@ -113,7 +113,10 @@ AREA = "pendiente_despacho"
 # existia: hasta hoy la llenaba Daniel subiendo un CSV a mano y todas las PC lo
 # leian de ahi. El robot escribe en el mismo lugar y con el mismo formato, asi que
 # los botones de cambiar archivo y quitarlo siguen funcionando igual.
-AREA_PEDIDOS = "buffer"
+AREA_PEDIDOS = "buffer"              # tarjeta PEDIDOS: el correo de HOY
+# LA SEGUNDA TARJETA, desde el 07-sep-2026. Daniel queria poder correr el
+# analisis un dia con el correo y otro solo con lo de antes.
+AREA_PENDIENTE = "buffer_pendiente"  # tarjeta PENDIENTE: los correos de antes
 
 csv.field_size_limit(10 ** 7)
 
@@ -552,6 +555,11 @@ def armar(hoy):
     vistas = set()
     por_guia = collections.defaultdict(float)
     por_sku = collections.defaultdict(lambda: [0.0, 0.0])
+    # LAS DOS TARJETAS. `por_sku` sigue siendo el total -lo usa el Excel y el
+    # reporte- y estos dos lo parten segun de que correo salio la orden.
+    sku_hoy = collections.defaultdict(lambda: [0.0, 0.0])      # el correo de hoy
+    sku_antes = collections.defaultdict(lambda: [0.0, 0.0])    # los de antes
+    ord_hoy, ord_antes = set(), set()
     tiendas = collections.defaultdict(lambda: [set(), 0.0])
     r_rims = collections.defaultdict(lambda: [set(), 0.0])
     r_col = collections.defaultdict(lambda: [set(), 0.0])
@@ -602,6 +610,17 @@ def armar(hoy):
         und_dentro += max(0.0, pend)
         por_sku[sku][0] += num(row[6])
         por_sku[sku][1] += num(row[9])
+
+        # ── A QUE TARJETA VA ESTA LINEA ──────────────────────────────────────
+        # Manda la fecha del correo que libero la orden. `leer_correos` ya guarda
+        # la PRIMERA vez que aparecio la guia, asi que una orden que comercial
+        # vuelve a mandar hoy se queda donde estaba: en el pendiente.
+        _, _mes, _dia = guias[orden]
+        es_de_hoy = (_mes == hoy_d.month and _dia == hoy_d.day)
+        caja = sku_hoy if es_de_hoy else sku_antes
+        caja[sku][0] += num(row[6])
+        caja[sku][1] += num(row[9])
+        (ord_hoy if es_de_hoy else ord_antes).add(orden)
         if pend <= 0:
             continue
         lineas += 1
@@ -712,7 +731,11 @@ def armar(hoy):
         'rutasSinCruce': {'und': int(round(rut_sin[0])),
                           'tiendas': len(rut_sin[1])},
     }
-    return datos, guias, cabecera, IQ, por_guia, por_sku
+    log('Reparto de las dos tarjetas: PEDIDOS %s ordenes / %s SKU  ·  '
+        'PENDIENTE %s ordenes / %s SKU'
+        % (format(len(ord_hoy), ',d'), format(len(sku_hoy), ',d'),
+           format(len(ord_antes), ',d'), format(len(sku_antes), ',d')))
+    return datos, guias, cabecera, IQ, por_guia, por_sku, sku_hoy, sku_antes
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -794,8 +817,20 @@ def publicar_datos(datos, intentos=3):
     return False
 
 
-def publicar_pedidos(por_sku, intentos=3):
-    """DEJA EL PENDIENTE EN LA TARJETA *PEDIDOS* DE ZONA BUFFER -> ARCHIVO.
+def publicar_pedidos(por_sku, intentos=3, area='buffer', nombre='PEDIDOS'):
+    """DEJA EL PENDIENTE EN LAS TARJETAS DE ZONA BUFFER -> ARCHIVO.
+
+    DESDE EL 07-sep-2026 SON DOS, no una. Daniel: *"si yo analizo el correo de
+    comercial mas el pendiente, me van a salir demasiadas paletas por bajar. Un
+    dia correr el pendiente con el correo y otro dia correr solamente el
+    pendiente"*.
+
+        area 'buffer'            -> tarjeta PEDIDOS    el correo de HOY
+        area 'buffer_pendiente'  -> tarjeta PENDIENTE  lo de los correos de antes
+
+    Las dos suman lo mismo que la tarjeta unica de antes. El motor del buffer las
+    suma si estan las dos, y si se borra una corre con la otra, igual que OTRAS
+    SOLICITUDES.
 
     Lo pidio Daniel el 21-ago-2026: *"una vez que el robot termine de hacer el
     pendiente, lo tiene que publicar en la zona de buffer, en archivos de buffer"*.
@@ -833,12 +868,15 @@ def publicar_pedidos(por_sku, intentos=3):
                       'Cantidad solicitada': int(round(sol)),
                       'Cantidad asignada': int(round(asig))})
     if not filas:
-        log('El pendiente no tiene ni un articulo: NO se toca la tarjeta PEDIDOS.',
+        # NO SE BORRA LA TARJETA. Un dia sin correo deja PEDIDOS sin nada que
+        # mandar; publicar una lista vacia borraria lo que hubiera. Se avisa y se
+        # deja como esta, que es lo que se hacia con la tarjeta unica.
+        log('%s no tiene ni un articulo: la tarjeta se deja como esta.' % nombre,
             'AVISO')
-        return False
+        return True
 
     cuerpo = json.dumps(filas, ensure_ascii=False).encode('utf-8')
-    url = '%s/%s' % (WEB_DATOS_API, AREA_PEDIDOS)
+    url = '%s/%s' % (WEB_DATOS_API, area)
     und = sum(f['Cantidad solicitada'] - f['Cantidad asignada'] for f in filas)
     for i in range(1, intentos + 1):
         try:
@@ -847,8 +885,9 @@ def publicar_pedidos(por_sku, intentos=3):
             p.add_header('X-Robot-Token', ROBOT_TOKEN)
             with urllib.request.urlopen(p, timeout=300) as resp:
                 json.loads(resp.read().decode('utf-8'))
-            log('Zona Buffer > Archivo > PEDIDOS: %s articulos, %s unidades (%.1f KB)'
-                % (format(len(filas), ',d'), format(int(und), ',d'), len(cuerpo) / 1024.0))
+            log('Zona Buffer > Archivo > %s: %s articulos, %s unidades (%.1f KB)'
+                % (nombre, format(len(filas), ',d'), format(int(und), ',d'),
+                   len(cuerpo) / 1024.0))
             return True
         except Exception as e:
             if i < intentos:
@@ -931,7 +970,7 @@ def main():
             return 2
         log('')
 
-    datos, guias, cabecera, IQ, por_guia, por_sku = armar(hoy)
+    datos, guias, cabecera, IQ, por_guia, por_sku, sku_hoy, sku_antes = armar(hoy)
     t = datos['totales']
     o = datos['origen']
     log('')
@@ -984,7 +1023,9 @@ def main():
     excel(ruta, cabecera, IQ, guias, por_guia, por_sku)
     ok1 = publicar_datos(datos)
     ok2 = subir_excel(ruta, hoy)
-    ok3 = publicar_pedidos(por_sku)
+    # LAS DOS TARJETAS, POR SEPARADO. Sumadas dan lo mismo que la unica de antes.
+    ok3 = (publicar_pedidos(sku_hoy, area=AREA_PEDIDOS, nombre='PEDIDOS')
+           and publicar_pedidos(sku_antes, area=AREA_PENDIENTE, nombre='PENDIENTE'))
     try:
         os.remove(ruta)
     except Exception:

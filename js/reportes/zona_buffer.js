@@ -63,11 +63,11 @@ import { dataStore, getUploadMeta, calculateBufferPallets, fetchBufferConfig,
          saveBufferConfig, fetchBufferHistory, saveBufferHistoryRecord,
          updateBufferHistoryRecord, loadLastBufferKPI, saveLastBufferKPI,
          traerAnalisisBuffer, publicarAnalisisBuffer, bajarFactores,
-         traerFactoresCalculados } from '../services_v245/csvHub_v6.js?v=29.0656';
-import * as adminService from '../services_v245/adminService.js?v=29.0656';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0656';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0656';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0656';
+         traerFactoresCalculados } from '../services_v245/csvHub_v6.js?v=29.0658';
+import * as adminService from '../services_v245/adminService.js?v=29.0658';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0658';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0658';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0658';
 
 /* EL ENTORNO, ATADO UNA SOLA VEZ. La pantalla se llama a si misma al cambiar de
    sub-pestana; atandolo aca esa llamada no hubo que tocarla. */
@@ -263,6 +263,11 @@ const resolverAnalisisGuardado = () => {
       ENT.renderUploadArea(wrap, 'buffer_activo', dataStore.buffer_activo, '.csv', 'STOCK ACTIVO');
       ENT.renderUploadArea(wrap, 'buffer_reserva', dataStore.buffer_reserva, '.xlsx', 'STOCK RESERVA');
       ENT.renderUploadArea(wrap, 'buffer', dataStore.buffer, '.csv', 'PEDIDOS');
+      /* PENDIENTE, desde el 07-sep-2026. Se separó de PEDIDOS para poder correr
+         el análisis un día con el correo de comercial y otro solo con lo que
+         viene de atrás: juntos daban demasiadas paletas por bajar. Las publica
+         el mismo robot y se suman si están las dos, igual que OTRAS SOLICITUDES. */
+      ENT.renderUploadArea(wrap, 'buffer_pendiente', dataStore.buffer_pendiente, '.csv', 'PENDIENTE');
       ENT.renderUploadArea(wrap, 'solicitud', dataStore.solicitud, '.xlsx', 'OTRAS SOLICITUDES');
       ENT.renderMaestroNube(wrap);
       // El Replenishment ya no se sube: se trae del servidor. Ver renderReplenishmentNube.

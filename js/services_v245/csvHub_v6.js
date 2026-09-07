@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0656';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0658';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0656';
+const VERSION = '29.0658';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1206,9 +1206,27 @@ export const parseBufferFiles = async (files) => {
    local del archivo de hoy. Se rechaza lo que no tenga el formato reducido y se sigue
    con lo que tenga la PC, que es el bueno.
    ══════════════════════════════════════════════════════════════════════════════ */
+/* LAS DOS TARJETAS DE LA DEMANDA DE COMERCIAL, partidas el 07-sep-2026.
+   Daniel: *"si yo analizo el correo de comercial más el pendiente, me van a
+   salir demasiadas paletas por bajar. Un día correr el pendiente con el correo y
+   otro día correr solamente el pendiente"*.
+
+       buffer            PEDIDOS    el correo de comercial de HOY
+       buffer_pendiente  PENDIENTE  lo que sigue abierto de los correos de antes
+
+   Las dos se reducen igual: el motor lee las mismas tres columnas. */
+const REDUCIR_DEMANDA = (filas) => (filas || []).map(f => ({
+    'Código de artículo':  String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo', 'Cod. Articulo', 'CodArticulo', 'Producto']) || '').trim(),
+    'Cantidad solicitada': getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cantidad', 'Cant']) || 0,
+    'Cantidad asignada':   getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado']) || 0
+})).filter(f => f['Código de artículo']);
+/* Tres columnas, no treinta. Se deja margen por si alguna vez se agrega una. */
+const VALIDA_DEMANDA = (fila) => !!fila && !Array.isArray(fila) && Object.keys(fila).length <= 5;
+
 const DEMANDA_EN_LA_NUBE = {
     /* PEDIDOS. Los nombres de salida son los canónicos, y están dentro de la lista
        que busca el motor, así que el cálculo no cambia ni una línea. */
+    buffer_pendiente: { reducir: REDUCIR_DEMANDA, valida: VALIDA_DEMANDA },
     buffer: {
         reducir: (filas) => (filas || []).map(f => ({
             'Código de artículo':  String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo', 'Cod. Articulo', 'CodArticulo', 'Producto']) || '').trim(),
@@ -1887,6 +1905,12 @@ export const calculateBufferPallets = (configOverride = null) => {
     const activo = dataStore.buffer_activo;
     const reserva = dataStore.buffer_reserva;
     const pedidos = dataStore.buffer; 
+    /* LA CUARTA FUENTE. Va aparte de PEDIDOS y no mezclada: saber por cuál
+       bajó un artículo es lo que permite explicar la decisión, y desde el
+       07-sep-2026 es además lo que Daniel quiere poder separar. Si la tarjeta
+       está vacía —porque la borró para correr solo con el correo— esto queda
+       en nada. */
+    const pendiente = dataStore.buffer_pendiente;
     const solicitud = dataStore.solicitud; 
     const tallas = dataStore.tallas;     
     const articulos = dataStore.articulos;
@@ -1981,19 +2005,26 @@ export const calculateBufferPallets = (configOverride = null) => {
     // 1. Recolectar datos crudos de todas las fuentes
     const rawDemand = {
         'PEDIDOS': [],
+        'PENDIENTE': [],
         'OTRAS SOLICITUDES': [],
         'REPLENISHMENT': []
     };
 
-    if (pedidos && pedidos.length) {
-        pedidos.forEach(f => {
-            let sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo', 'Cod. Articulo', 'CodArticulo', 'Producto']) || '').trim();
-            let cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cantidad', 'Cant'])) || 0;
-            let asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado'])) || 0;
-            let diff = cant - asig;
-            if (diff > 0 && sku) rawDemand['PEDIDOS'].push({ sku, qty: diff });
+    /* Las dos tarjetas de comercial se leen igual; solo cambia el nombre de la
+       fuente, que es lo que después explica de dónde salió cada paleta. */
+    const leerDemanda = (filas, fuente) => {
+        if (!filas || !filas.length) return;
+        filas.forEach(f => {
+            const sku = String(getCol(f, ['Articulo', 'SKU', 'Codigo de articulo', 'Artículo', 'Cod. Articulo', 'CodArticulo', 'Producto']) || '').trim();
+            const cant = parseFloat(getCol(f, ['Cantidad solicitada', 'Solicitada', 'Cant. Solicitada', 'Cantidad', 'Cant'])) || 0;
+            const asig = parseFloat(getCol(f, ['Cantidad asignada', 'Asignada', 'Cant. Asignada', 'Asignado'])) || 0;
+            const diff = cant - asig;
+            if (diff > 0 && sku) rawDemand[fuente].push({ sku, qty: diff });
         });
-    }
+    };
+
+    leerDemanda(pedidos, 'PEDIDOS');
+    leerDemanda(pendiente, 'PENDIENTE');
 
     if (solicitud && solicitud.length) {
         solicitud.forEach(row => {
@@ -2017,7 +2048,7 @@ export const calculateBufferPallets = (configOverride = null) => {
     let tempMap = {}; // sku -> { total: 0, bestSrc: null, isReplenishmentOnly: false }
     
     // Primero procesamos PEDIDOS y OTRAS SOLICITUDES
-    ['PEDIDOS', 'OTRAS SOLICITUDES'].forEach(src => {
+    ['PEDIDOS', 'PENDIENTE', 'OTRAS SOLICITUDES'].forEach(src => {
         rawDemand[src].forEach(item => {
             if (!tempMap[item.sku]) {
                 tempMap[item.sku] = { total: 0, bestSrc: src, isReplenishmentOnly: false };
