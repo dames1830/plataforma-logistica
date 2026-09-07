@@ -11,13 +11,22 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0654';
+} from '../services_v245/csvHub_v6.js?v=29.0655';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0654';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0654';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0654';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0654';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0654';
+import * as adminService from '../services_v245/adminService.js?v=29.0655';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0655';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0655';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0655';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0655';
+/* EL CATALOGO COMPARTIDO con la matriz de permisos del tablero. Antes esta lista
+   estaba escrita a mano acá Y allá, y cada reporte nuevo se quedaba fuera de las
+   dos. */
+import { CATALOGO as CAT_PUB, buscarSub, permisosDe as permisosPub }
+    from '../services_v245/catalogoReportesPublicos.js?v=29.0655';
+/* Distribucion y Despacho Potencial los publica `robot/distribucion.py`: el
+   enlace publico los lee del servidor igual que la plataforma. */
+import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0655';
+import { traerSellos, chipSello } from '../services_v245/selloService.js?v=29.0655';
 
 /**
  * El día operativo, no el del calendario.
@@ -55,38 +64,14 @@ const RANGO_CLARO = {
 const diaOperativoDeTarea = (t) => diaOperativoCompartido(t, (m) => jornadaService.fechaLogicaDe(m));
 
 // Catálogo Maestro de Módulos
-const ALL_MODULES = [
-  { id: 'inventario',  label: 'Inventario',   icon: '📦', subTabs: [
-    { id: 'archivo_inventario', label: '📄 Archivo Inventario' },
-    { id: 'kpi_inventarios', label: '📊 KPI Inventarios' },
-    { id: 'analisis_inventarios', label: '🔍 Análisis Inventarios' },
-    { id: 'modulo_inventarios', label: '📦 Módulo Inventarios' }
-  ]},
-  { id: 'picking',     label: 'Picking',       icon: '🛒' },
-  { id: 'packing',     label: 'Packing',       icon: '📦' },
-  { id: 'despacho',    label: 'Despacho',      icon: '🚚' },
-  { id: 'no_retail',   label: 'NO RETAIL',     icon: '🚫' },
-  { id: 'recepcion',   label: 'Recepción',     icon: '📥' },
-  { id: 'almacenaje',  label: 'Almacenaje',    icon: '🏗️', subTabs: [
-    { id: 'reporte_marcas',    label: '🏷️ Reporte Marcas' },
-    { id: 'rendimiento_ops',   label: '👷 Rendimiento Operarios' },
-    { id: 'produccion_hora',   label: '⏱️ Producción por Hora' },
-    { id: 'almacenado_semana', label: '📅 Almacenado por Semana' },
-    { id: 'grafico_rendimiento',label: '📈 Gráfico Rendimiento' },
-  ]},
-  { id: 'buffer',      label: 'Zona Buffer',   icon: '🔄', subTabs: [
-    { id: 'historial_buffer', label: '📑 Historial Buffer' },
-    { id: 'analisis_buffer',  label: '🔍 Análisis Buffer' },
-  ]},
-  { id: 'analisis_sku', label: 'Análisis SKU', icon: '🔍', subTabs: [
-    { id: 'archivo_analisis', label: '📄 Archivo Análisis' },
-    { id: 'replenishment', label: '🔄 Replenishment' },
-    { id: 'configuracion_analisis', label: '⚙️ Configuración Análisis' },
-    { id: 'analisis_reserva', label: '🔍 Análisis Reserva' },
-    { id: 'layout_activo', label: '🗺️ Layout Activo' },
-    { id: 'articulo_temp', label: '👕 Artículo Temp' }
-  ]},
-];
+/* LOS MODULOS SALEN DEL CATALOGO COMPARTIDO. Estaban escritos a mano acá y en
+   la matriz de permisos del tablero, y por eso ni Distribucion ni Despacho
+   Potencial ni Picking por dia aparecian en ninguno de los dos lados.
+   Ver `services_v245/catalogoReportesPublicos.js`. */
+const ALL_MODULES = CAT_PUB.map(m => ({
+  id: m.id, label: m.label, icon: m.icon,
+  subTabs: (m.subs || []).map(sb => ({ id: sb.id, label: sb.label, listo: sb.listo })),
+}));
 
 // ============================================================
 // ESTADO GLOBAL
@@ -212,33 +197,27 @@ async function init() {
     return;
   }
 
-  // 3. Filtrar módulos según los permisos dinámicos del grupo
-  const allowedModIds = new Set(groupInfo.modulos || []);
-  const allowedAlmIds = new Set(groupInfo.reportesAlmacenaje || []);
-  const allowedBufIds = new Set(groupInfo.reportesBuffer || []);
-  const allowedInvIds = new Set(groupInfo.reportesInventario || []);
-  const allowedAnaIds = new Set(groupInfo.reportesAnalisis || []);
+  /* 3. Los permisos del grupo, en un formato solo.
+   *
+   *    `permisosPub` junta el formato nuevo -una lista `submodulos`- con el
+   *    viejo -un campo por modulo-, asi que los grupos creados antes siguen
+   *    andando sin tocarlos.
+   *
+   *    UN MODULO SIN NINGUN REPORTE MARCADO NO SE MUESTRA. Antes esa regla
+   *    valia solo para cuatro modulos y los demas entraban vacios; ahora vale
+   *    para todos los que tienen reportes.
+   */
+  const { modulos: modsOk, subs: subsOk } = permisosPub(groupInfo);
 
-  modulos = ALL_MODULES.filter(m => allowedModIds.has(m.id)).map(m => {
+  modulos = ALL_MODULES.filter(m => modsOk.has(m.id)).map(m => {
     const clone = { ...m };
-    if (clone.id === 'almacenaje' && clone.subTabs) {
-      clone.subTabs = clone.subTabs.filter(s => allowedAlmIds.has(s.id));
-    }
-    if (clone.id === 'buffer' && clone.subTabs) {
-      clone.subTabs = clone.subTabs.filter(s => allowedBufIds.has(s.id));
-    }
-    if (clone.id === 'inventario' && clone.subTabs) {
-      clone.subTabs = clone.subTabs.filter(s => allowedInvIds.has(s.id));
-    }
-    if (clone.id === 'analisis_sku' && clone.subTabs) {
-      clone.subTabs = clone.subTabs.filter(s => allowedAnaIds.has(s.id));
+    if (clone.subTabs && clone.subTabs.length) {
+      clone.subTabs = clone.subTabs.filter(sb => subsOk.has(sb.id));
     }
     return clone;
   }).filter(m => {
-    if ((m.id === 'almacenaje' || m.id === 'buffer' || m.id === 'inventario' || m.id === 'analisis_sku') && (!m.subTabs || m.subTabs.length === 0)) {
-      return false;
-    }
-    return true;
+    const tieneReportes = (ALL_MODULES.find(x => x.id === m.id).subTabs || []).length > 0;
+    return !tieneReportes || (m.subTabs && m.subTabs.length > 0);
   });
 
   if (modulos.length === 0) {
@@ -306,7 +285,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0654</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0655</span>
     </div>`;
 
   buildTabNav();
@@ -369,11 +348,26 @@ async function renderContent() {
   </div>`;
 
   try {
+    /* UN REPORTE AUTORIZADO QUE TODAVIA NO SE PORTO LO DICE. Antes dejaba la
+       pantalla en blanco y parecia que el enlace estaba roto. */
+    const fichaSub = currentSubTab ? buscarSub(currentSubTab) : null;
+    if (fichaSub && fichaSub.listo === false) {
+      area.innerHTML = `<div class="report-card" style="text-align:center; padding:2.5rem;">
+        <div style="font-size:2rem; margin-bottom:0.6rem;">&#128679;</div>
+        <div style="font-weight:800; margin-bottom:0.4rem;">${fichaSub.label}</div>
+        <div style="color:var(--text-muted); font-size:var(--t-sm); max-width:46ch; margin:0 auto;">
+          Este reporte existe en la plataforma pero todav&iacute;a no est&aacute; disponible
+          en el enlace p&uacute;blico. Los dem&aacute;s que ten&eacute;s autorizados s&iacute; se ven.
+        </div>
+      </div>`;
+      return;
+    }
+
     switch(currentTab) {
       case 'inventario':  await renderInventarioModule();   break;
       case 'picking':     await renderAreaModule('picking', 'Picking');           break;
       case 'packing':     await renderAreaModule('packing', 'Packing');           break;
-      case 'despacho':    await renderAreaModule('despacho', 'Despacho');         break;
+      case 'despacho':    await renderDespachoModule();     break;
       case 'no_retail':   await renderAreaModule('noRetail', 'NO RETAIL');        break;
       case 'recepcion':   await renderAreaModule('recepcion', 'Recepción');       break;
       case 'almacenaje':  await renderAlmacenajeModule(); break;
@@ -489,6 +483,139 @@ window.setRepGenderRange = function(desde, hasta) {
   if (hasta !== null) window.__repGenderEnd = hasta;
   renderContent();
 };
+
+// ============================================================
+// MODULO DESPACHO: archivo, Distribucion y Despacho Potencial
+// ============================================================
+
+/* EL MISMO DATO QUE VE LA PLATAFORMA. Las dos pantallas salen de las areas que
+   publica `robot/distribucion.py`; no se recalcula nada acá, para que el de
+   afuera vea exactamente el mismo numero y no una segunda cuenta. */
+
+const milesPub = (n) => (Number(n) || 0).toLocaleString('es-PE');
+
+/** El sello de cuando se proceso, arriba del reporte. */
+async function selloPublico(area) {
+  try {
+    await traerSellos();
+    return '<div style="display:flex; justify-content:flex-end; margin-bottom:0.6rem;">'
+         + chipSello(area) + '</div>';
+  } catch (e) { return ''; }
+}
+
+async function renderDespachoModule() {
+  if (currentSubTab === 'distribucion')       return renderDistribucionPub();
+  if (currentSubTab === 'despacho_potencial') return renderPotencialPub();
+  return renderAreaModule('despacho', 'Despacho');
+}
+
+function sinDatosPub(titulo) {
+  return '<div class="report-card" style="text-align:center; padding:2.5rem;">'
+       + '<div style="font-weight:800; margin-bottom:0.4rem;">' + titulo + '</div>'
+       + '<div style="color:var(--text-muted); font-size:var(--t-sm);">'
+       + 'Todav&iacute;a no hay datos publicados. El robot los deja al cerrar el turno.'
+       + '</div></div>';
+}
+
+async function renderDistribucionPub() {
+  const area = document.getElementById('contentArea');
+  const d = await traerAreaPublicada('distribucion_dia');
+  if (!d || !Array.isArray(d.tabla) || !d.tabla.length) {
+    area.innerHTML = sinDatosPub('Distribuci&oacute;n');
+    return;
+  }
+  const sello = await selloPublico('distribucion_dia');
+
+  /* EL TOTAL SE SUMA DE LAS FILAS, no se pide aparte: asi la ultima fila cuadra
+     siempre con las de arriba. Daniel suma las filas con la calculadora. */
+  const suma = (k) => d.tabla.reduce((a, f) => a + (Number(f[k]) || 0), 0);
+  const pct = (a, b) => b > 0 ? (100 * a / b).toFixed(1).replace('.', ',') + '%' : '-';
+
+  const fila = (f, esTotal) => {
+    const est = esTotal
+      ? 'font-weight:800; border-top:2px solid var(--text-strong); background:rgba(var(--ink-rgb),0.05);'
+      : '';
+    return '<tr style="' + est + '">'
+      + '<td style="text-align:left; padding:7px 12px;">' + f.g + '</td>'
+      + [['ped', 0], ['qPed', 0], ['qPic', 0]].map(([k]) =>
+          '<td style="text-align:center; padding:7px 12px;">' + milesPub(f[k]) + '</td>').join('')
+      + '<td style="text-align:center; padding:7px 12px;">' + pct(f.qPic, f.qPed) + '</td>'
+      + [['pend'], ['emb'], ['patio'], ['stg'], ['car'], ['env']].map(([k]) =>
+          '<td style="text-align:center; padding:7px 12px;">' + milesPub(f[k]) + '</td>').join('')
+      + '</tr>';
+  };
+
+  const total = { g: 'Total', ped: suma('ped'), qPed: suma('qPed'), qPic: suma('qPic'),
+                  pend: suma('pend'), emb: suma('emb'), patio: suma('patio'),
+                  stg: suma('stg'), car: suma('car'), env: suma('env') };
+
+  const cab = ['Gender', 'N&deg; pedidos', 'Qty pedida', 'Qty picada', '% picado',
+               'Qty pendiente', 'Qty embalada', 'Qty patio', 'Staging', 'Cargado', 'Enviado'];
+
+  area.innerHTML = sello
+    + '<div class="report-card">'
+    + '<h3 style="margin-top:0;">&#128230; Distribuci&oacute;n &middot; ' + (d.fecha || '') + '</h3>'
+    + (d.generado ? '<p style="color:var(--text-muted); font-size:var(--t-sm); margin-top:-0.4rem;">'
+                    + d.generado + '</p>' : '')
+    + '<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">'
+    + '<thead><tr>' + cab.map((c, i) =>
+        '<th style="text-align:' + (i === 0 ? 'left' : 'center') + '; padding:7px 12px; '
+        + 'border-bottom:1px solid var(--border); color:var(--text-muted); white-space:nowrap;">'
+        + c + '</th>').join('') + '</tr></thead>'
+    + '<tbody>' + d.tabla.map(f => fila(f, false)).join('') + fila(total, true) + '</tbody>'
+    + '</table></div>'
+    + (d.aviso ? '<p style="color:var(--text-muted); font-size:var(--t-xs); margin-top:0.8rem;">'
+                 + d.aviso + '</p>' : '')
+    + '</div>';
+}
+
+async function renderPotencialPub() {
+  const area = document.getElementById('contentArea');
+  const d = await traerAreaPublicada('despacho_potencial_dia');
+  if (!d || !Array.isArray(d.filas) || !d.filas.length) {
+    area.innerHTML = sinDatosPub('Despacho Potencial');
+    return;
+  }
+  const sello = await selloPublico('despacho_potencial_dia');
+  const filas = d.filas.slice().sort((a, b) => (b.tF + b.tN) - (a.tF + a.tN));
+  const t = (k) => filas.reduce((a, f) => a + (Number(f[k]) || 0), 0);
+
+  const cuerpo = filas.map(f =>
+      '<tr>'
+    + '<td style="text-align:left; padding:6px 10px; white-space:nowrap;">' + (f.t || f.d) + '</td>'
+    + '<td style="text-align:left; padding:6px 10px;">' + (f.z || '') + '</td>'
+    + '<td style="text-align:center; padding:6px 10px;">' + milesPub(f.sF + f.sN) + '</td>'
+    + '<td style="text-align:center; padding:6px 10px;">' + milesPub(f.pF + f.pN) + '</td>'
+    + '<td style="text-align:center; padding:6px 10px;">' + milesPub(f.cF + f.cN) + '</td>'
+    + '<td style="text-align:center; padding:6px 10px; font-weight:700;">'
+    + milesPub(f.tF + f.tN) + '</td></tr>').join('');
+
+  const total = '<tr style="font-weight:800; border-top:2px solid var(--text-strong);'
+    + ' background:rgba(var(--ink-rgb),0.05);">'
+    + '<td style="text-align:left; padding:7px 10px;">Total &middot; ' + filas.length + ' tiendas</td>'
+    + '<td></td>'
+    + '<td style="text-align:center; padding:7px 10px;">' + milesPub(t('sF') + t('sN')) + '</td>'
+    + '<td style="text-align:center; padding:7px 10px;">' + milesPub(t('pF') + t('pN')) + '</td>'
+    + '<td style="text-align:center; padding:7px 10px;">' + milesPub(t('cF') + t('cN')) + '</td>'
+    + '<td style="text-align:center; padding:7px 10px;">' + milesPub(t('tF') + t('tN')) + '</td></tr>';
+
+  area.innerHTML = sello
+    + '<div class="report-card">'
+    + '<h3 style="margin-top:0;">&#128666; Despacho Potencial &middot; ' + (d.fecha || '') + '</h3>'
+    + '<p style="color:var(--text-muted); font-size:var(--t-sm); margin-top:-0.4rem;">'
+    + 'Lo que se puede sacar por tienda: lo que est&aacute; en staging, lo que est&aacute; en patio y lo que '
+    + 'comercial acaba de mandar a picar.'
+    + (d.correo ? ' Correo usado: <b>' + d.correo + '</b>.' : '')
+    + '</p>'
+    + '<div style="overflow-x:auto; max-height:70vh;"><table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">'
+    + '<thead><tr>'
+    + ['Tienda', 'Zona', 'Staging', 'Patio', 'Correo', 'Total'].map((c, i) =>
+        '<th style="position:sticky; top:0; background:var(--panel-solid); text-align:'
+        + (i < 2 ? 'left' : 'center') + '; padding:7px 10px; border-bottom:1px solid var(--border);'
+        + ' color:var(--text-muted); white-space:nowrap;">' + c + '</th>').join('')
+    + '</tr></thead><tbody>' + cuerpo + total + '</tbody></table></div>'
+    + '</div>';
+}
 
 async function renderAlmacenajeModule() {
   const area = document.getElementById('contentArea');
