@@ -195,6 +195,17 @@ def corto(fecha):
     return p[0] + '-' + p[1] if len(p) == 3 else fecha
 
 
+def orden_fecha(fecha):
+    """`04/09/2026` -> `20260904`, para poder COMPARAR dos fechas.
+
+       EL WMS LAS DA COMO dd/mm/aaaa y compararlas con `<` a secas ordena por el
+       DIA: `04/09/2026 < 29/08/2026` da True porque el 0 va antes que el 2. Un
+       bulto que cruza fin de mes se quedaba con la fecha equivocada.
+    """
+    p = (fecha or '').split('/')
+    return (p[2] + p[1] + p[0]) if len(p) == 3 else (fecha or '')
+
+
 # ══ EL MAESTRO Y LAS RUTAS ════════════════════════════════════════════════════
 #
 # EL MAESTRO TIENE TRES COPIAS Y NO SIEMPRE MANDA LA MISMA. Al 05-sep-2026 la
@@ -442,14 +453,23 @@ def foto_del_dia(ultimo_oblpn, gen, TIENDAS):
             b = caja[etapa].setdefault(lpn, {
                 'l': lpn, 'd': d, 't': TIENDAS[d]['t'], 'q': 0.0,
                 'dia': L(r.get('Detail Picked Time'))[:10],
+                # LA FECHA DE EMBALAJE, solo util en staging: alli el bulto ya
+                # esta cerrado. En patio viene vacia -el PRE todavia no se
+                # embalo- y por eso la columna se queda con la del pick.
+                'emp': L(r.get('Registro de hora de empaquetado'))[:10],
                 'ped': collections.Counter(), 'it': collections.Counter(), 'ds': {}})
             b['q'] += p
             b['ped'][o] += p
             b['it'][c] += p
             b['ds'][c] = L(r.get('Descripción de artículo'))[:46]
+            # LA MAS TEMPRANA DE LAS LINEAS DEL BULTO, en las dos fechas. Se
+            # comparan con `orden_fecha` y no con `<` a secas: ver alla arriba.
             dd = L(r.get('Detail Picked Time'))[:10]
-            if dd and dd < b['dia']:
+            if dd and (not b['dia'] or orden_fecha(dd) < orden_fecha(b['dia'])):
                 b['dia'] = dd
+            ee = L(r.get('Registro de hora de empaquetado'))[:10]
+            if ee and (not b['emp'] or orden_fecha(ee) < orden_fecha(b['emp'])):
+                b['emp'] = ee
 
             k = (etapa.lower(), TIENDAS[d]['u'], TIENDAS[d]['z'])
             pivot[k]['cal' if g == 'F' else 'noc'] += p
@@ -477,7 +497,12 @@ def foto_del_dia(ultimo_oblpn, gen, TIENDAS):
             filas.append({'o': ped[0] if len(ped) == 1
                           else ped[0] + ' +' + str(len(ped) - 1),
                           'l': b['l'], 'd': b['d'], 't': b['t'],
-                          'f': corto(b['dia']), 'q': int(b['q']), 'i': it})
+                          # EN STAGING MANDA LA DE EMBALAJE. Si esa linea no la
+                          # trae, se cae a la del pick: la columna nunca va
+                          # vacia, que se leeria como un error del reporte.
+                          'f': corto(b['emp'] if (etapa == 'STAGING' and b['emp'])
+                                     else b['dia']),
+                          'q': int(b['q']), 'i': it})
         listas[nombre] = filas
         log('%-8s %6d pares en %5d bultos'
             % (nombre, sum(f['q'] for f in filas), len(filas)))
