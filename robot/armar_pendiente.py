@@ -817,7 +817,8 @@ def publicar_datos(datos, intentos=3):
     return False
 
 
-def publicar_pedidos(por_sku, intentos=3, area='buffer', nombre='PEDIDOS'):
+def publicar_pedidos(por_sku, intentos=3, area='buffer', nombre='PEDIDOS',
+                     puede_ir_vacia=False):
     """DEJA EL PENDIENTE EN LAS TARJETAS DE ZONA BUFFER -> ARCHIVO.
 
     DESDE EL 07-sep-2026 SON DOS, no una. Daniel: *"si yo analizo el correo de
@@ -867,13 +868,19 @@ def publicar_pedidos(por_sku, intentos=3, area='buffer', nombre='PEDIDOS'):
         filas.append({'Código de artículo': s,
                       'Cantidad solicitada': int(round(sol)),
                       'Cantidad asignada': int(round(asig))})
-    if not filas:
-        # NO SE BORRA LA TARJETA. Un dia sin correo deja PEDIDOS sin nada que
-        # mandar; publicar una lista vacia borraria lo que hubiera. Se avisa y se
-        # deja como esta, que es lo que se hacia con la tarjeta unica.
+    if not filas and not puede_ir_vacia:
+        # NO SE BORRA A CIEGAS. Con una sola tarjeta, una lista vacia solo podia
+        # ser una falla del cruce, y publicarla habria tirado el pendiente.
         log('%s no tiene ni un articulo: la tarjeta se deja como esta.' % nombre,
             'AVISO')
         return True
+    if not filas:
+        # PERO VACIA TAMBIEN ES UNA RESPUESTA. Partidas en dos, que PEDIDOS no
+        # tenga nada quiere decir "hoy todavia no llego el correo", y hay que
+        # decirlo: dejarle lo de antes duplicaria contra PENDIENTE. Solo se llega
+        # aca cuando el cruce SI funciono; ver la llamada.
+        log('%s va VACIA: no hay nada de hoy. Se limpia para que no se cuente '
+            'dos veces contra la otra tarjeta.' % nombre)
 
     cuerpo = json.dumps(filas, ensure_ascii=False).encode('utf-8')
     url = '%s/%s' % (WEB_DATOS_API, area)
@@ -1024,8 +1031,19 @@ def main():
     ok1 = publicar_datos(datos)
     ok2 = subir_excel(ruta, hoy)
     # LAS DOS TARJETAS, POR SEPARADO. Sumadas dan lo mismo que la unica de antes.
-    ok3 = (publicar_pedidos(sku_hoy, area=AREA_PEDIDOS, nombre='PEDIDOS')
-           and publicar_pedidos(sku_antes, area=AREA_PENDIENTE, nombre='PENDIENTE'))
+    #
+    # SE PERMITE VACIAR SOLO SI EL CRUCE FUNCIONO. `por_sku` trae todo lo que
+    # cruzo contra los correos: si tiene algo, el reparto es de fiar y una mitad
+    # vacia es un dato -"hoy no llego el correo"-. Si no trajo nada, es una falla
+    # y no se toca ninguna de las dos.
+    cruce_ok = bool(por_sku)
+    if not cruce_ok:
+        log('el cruce no trajo un solo articulo: no se toca ninguna de las dos '
+            'tarjetas.', 'AVISO')
+    ok3 = (publicar_pedidos(sku_hoy, area=AREA_PEDIDOS, nombre='PEDIDOS',
+                            puede_ir_vacia=cruce_ok)
+           and publicar_pedidos(sku_antes, area=AREA_PENDIENTE, nombre='PENDIENTE',
+                                puede_ir_vacia=cruce_ok))
     try:
         os.remove(ruta)
     except Exception:
