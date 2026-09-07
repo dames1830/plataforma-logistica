@@ -1,0 +1,73 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Distribución con los colores del enlace público</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* LA MISMA PALETA QUE reportes.html, copiada tal cual, para ver el reporte
+     como lo va a ver el de afuera. */
+  :root {
+    --t-xs: 0.75rem;   --t-sm: 0.875rem;  --t-md: 0.9375rem;
+    --t-lg: 1.125rem;  --t-xl: 1.5rem;    --t-2xl: 2.125rem;
+
+    --panel-solid: #FFFFFF;
+    --input-bg: #F4F1EC;
+    --text-strong: #1C2B3A;
+    --text-main: #4A4540;
+    --text-soft: #6B655F;
+    --danger-soft: #FBE9E7;
+    --ink-rgb: 28, 43, 58;
+    --warning-rgb: 180, 83, 9;
+
+    --bg: #FAFAF8;      --surface: #FFFFFF;  --surface2: #F4F1EC;
+    --border: #DDD8CF;  --primary: #1C2B3A;  --accent: #B45309;
+    --text: #1C2B3A;    --text-muted: #9C9590; --text-body: #4A4540;
+    --success: #1A6336; --warning: #B45309;  --danger: #991B1B;
+  }
+  body { background: var(--bg); color: var(--text); font-family: Inter, sans-serif;
+         margin: 0; padding: 20px; }
+  h3.t { font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+         color: var(--text-muted); margin: 18px 0 8px; }
+  .glass-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+  #estado { font-size: 12.5px; line-height: 1.7; white-space: pre-wrap; }
+  .ok { color: var(--success); font-weight: 700; }
+  .mal { color: var(--danger); font-weight: 800; }
+</style>
+
+<pre id="estado">cargando…</pre>
+
+<h3 class="t">Distribución</h3>
+<div id="dist"></div>
+
+<h3 class="t">Despacho Potencial</h3>
+<div id="pot"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+const R = [];
+const linea = (ok, t) => R.push(`<span class="${ok ? 'ok' : 'mal'}">${ok ? 'OK  ' : 'MAL '}</span>${t}`);
+const rep = await import('../js/reportes/distribucion.js');
+
+linea(typeof rep.renderDistribucion === 'function' && typeof rep.renderDespachoPotencial === 'function',
+      'el módulo exporta los dos reportes');
+linea(typeof rep.configurar === 'function', 'y deja inyectar la fecha y la pantalla sin datos');
+
+rep.configurar({ sinPublicar: (c, t) => { c.innerHTML = `<div class="glass-panel" style="padding:1.4rem">${t}: todavía no hay datos publicados.</div>`; } });
+
+await rep.renderDistribucion(document.getElementById('dist'));
+await rep.renderDespachoPotencial(document.getElementById('pot'));
+
+/* Lo que tenía la versión reducida y le faltaba: las tarjetas de arriba, los dos
+   pivots por turno y zona, y los varados. */
+const d = document.getElementById('dist');
+const p = document.getElementById('pot');
+const texto = d.innerText;
+linea(d.querySelectorAll('table').length > 0, 'Distribución dibuja su cuadro');
+linea(/Qty patio|QTY PATIO/i.test(texto), 'trae la columna Qty patio');
+linea(/turno y zona|TURNO Y ZONA/i.test(texto), 'trae los cuadros de turno y zona (faltaban)');
+linea(/varado/i.test(texto), 'trae los bultos varados (faltaban)');
+linea(!!document.getElementById('css_distribucion'), 'inyectó su propio estilo');
+linea(p.querySelectorAll('table').length > 0 || /potencial/i.test(p.innerText),
+      'Despacho Potencial dibuja');
+
+document.getElementById('estado').innerHTML = R.join('\n');
+</script>
