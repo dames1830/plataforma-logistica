@@ -121,6 +121,20 @@ def filas(ruta):
         return None
 
 
+def dia_del_oblpn(limite):
+    """Que OBLPN puede exigir este parte.
+
+       EL OBLPN VA UN DIA ATRAS Y NO ES UN DEFECTO: la tarea de las 08:30 baja el
+       dia anterior, porque el archivo pesa 15 a 23 MB y Oracle tarda en armarlo.
+       Pedirle al parte el del dia que cierra es pedirle algo que todavia no
+       existe, y era una X todos los dias.
+
+           parte de las 19:00 del dia D  ->  el de D-1, bajado hoy a las 08:30
+           parte de las 07:00 del dia D  ->  el de D-2, bajado ayer a las 08:30
+    """
+    return limite - timedelta(days=1 if limite.hour >= 12 else 2)
+
+
 def sin_movimiento(que, dia):
     """True si el robot comprobo que ese dia el CD no trabajo.
 
@@ -181,12 +195,12 @@ def revisar(turno, cuando=None):
                       "no contesta la plataforma" if ok is None
                       else ("publicado" if ok else "no se publicó desde el corte")))
 
-    def archivo(nombre, ruta, area_clave=None, marca=None):
+    def archivo(nombre, ruta, area_clave=None, marca=None, dia_marca=None):
         """El archivo Y su area: uno de los dos puede fallar solo."""
         if not ruta or not os.path.exists(ruta):
             # EL DIA QUE NO SE TRABAJO VA CON VISTO BUENO. Tampoco se le exige el
             # cuadro publicado: sin filas no hay nada que publicar.
-            if marca and sin_movimiento(marca, limite.strftime("%d-%m-%Y")):
+            if marca and sin_movimiento(marca, dia_marca or limite.strftime("%d-%m-%Y")):
                 pasos.append((nombre, True, "sin movimiento"))
             else:
                 pasos.append((nombre, False, "no bajó el archivo"))
@@ -208,9 +222,13 @@ def revisar(turno, cuando=None):
                       "armado" if os.path.exists(slot) else "no se armó"))
         archivo("Picking", os.path.join(ss, "Picking", "Picking %d-%d.csv" % (d, m)),
                 "picking_por_hora", marca="picking")
+        # EL OBLPN VA UN DIA ATRAS. Ver dia_del_oblpn().
+        ob = dia_del_oblpn(limite)
         archivo("OBLPN embalaje",
-                os.path.join(ss, "OBLPN Embalaje", "OBLPN %02d-%02d.csv" % (d, m)),
-                "embalaje_por_hora", marca="oblpn")
+                os.path.join(ss, "OBLPN Embalaje",
+                             "OBLPN %02d-%02d.csv" % (ob.day, ob.month)),
+                "embalaje_por_hora", marca="oblpn",
+                dia_marca=ob.strftime("%d-%m-%Y"))
         archivo("Detalle Orden",
                 os.path.join(ss, "Detalle Orden", "Detalle Orden %02d-%02d.csv" % (d, m)))
     else:
