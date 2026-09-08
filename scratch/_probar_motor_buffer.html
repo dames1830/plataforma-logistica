@@ -1,0 +1,78 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Correr el motor del buffer con las dos tarjetas</title>
+<style>
+  body { background:#0D141A; color:#E8EFF3; font-family: system-ui, sans-serif; padding:24px; }
+  pre { font-size: 12.5px; line-height: 1.7; white-space: pre-wrap; }
+  .ok { color:#5FBF90; font-weight:700; }
+  .mal { color:#E0776B; font-weight:800; }
+  h3 { font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:#8899A5; margin:18px 0 6px; }
+</style>
+
+<h3>El motor del buffer, con datos reales de producción</h3>
+<pre id="r">cargando las áreas… (puede tardar, son varios MB)</pre>
+
+<script type="module">
+const R = [];
+const linea = (ok, t) => R.push(`<span class="${ok ? 'ok' : 'mal'}">${ok ? 'OK  ' : 'MAL '}</span>${t}`);
+const pinta = () => document.getElementById('r').innerHTML = R.join('\n');
+
+const hub = await import('../js/services_v245/csvHub_v6.js?v=29.0665');
+
+/* Las mismas areas que carga Zona Buffer. Se traen del servidor de PRODUCCION:
+   esta pagina se abre en localhost, asi que env.js la sella como beta... por eso
+   se piden a mano, sin el sello. */
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/';
+const traer = async (area) => {
+    /* SIN ?date=: estas areas se guardan por dia y MASTER sale vacio. */
+    const r = await fetch(API + area + '?z=' + Date.now());
+    if (!r.ok) return null;
+    const j = await r.json();
+    const d = (j && j.data !== undefined) ? j.data : j;
+    return Array.isArray(d) ? d : (d && Object.keys(d).length ? d : null);
+};
+
+const areas = ['buffer_activo', 'buffer_reserva', 'articulos', 'tallas',
+               'buffer', 'buffer_pendiente', 'solicitud'];
+const traidas = {};
+for (const a of areas) {
+    try { traidas[a] = await traer(a); } catch (e) { traidas[a] = null; }
+    hub.dataStore[a] = traidas[a];
+    R.push(`${a.padEnd(18)} ${traidas[a] ? (traidas[a].length || Object.keys(traidas[a]).length) + ' filas' : '(vacía)'}`);
+}
+pinta();
+
+R.push('');
+const faltan = ['buffer_activo', 'buffer_reserva', 'articulos'].filter(a => !traidas[a]);
+if (faltan.length) {
+    linea(false, 'no se pueden traer las áreas de stock: ' + faltan.join(', ')
+               + ' — el motor no puede correr desde acá');
+    pinta();
+} else {
+    /* LA CORRIDA. Antes de esto reventaba con
+       "Cannot read properties of undefined (reading 'SolidPack')" en cuanto una
+       paleta bajaba por la fuente PENDIENTE. */
+    let res = null, error = null;
+    try { res = hub.calculateBufferPallets(); } catch (e) { error = e; }
+
+    linea(!error, error ? 'el motor REVIENTA: ' + error.message
+                        : 'el motor corre sin reventar');
+    if (res) {
+        const det = res.detalle || res.detallePallets || [];
+        const porFuente = {};
+        det.forEach(p => { const f = p.FUENTE || p.fuente || '?';
+                           porFuente[f] = (porFuente[f] || 0) + 1; });
+        R.push('');
+        R.push('paletas por fuente: ' + JSON.stringify(porFuente));
+        linea(det.length > 0, `el análisis devuelve ${det.length} líneas de detalle`);
+        linea(!!porFuente['PENDIENTE'],
+              'hay paletas que bajan por PENDIENTE — que es lo que hacía reventar');
+        const emp = res.empaques || res.resumenEmpaque || res.resEmp;
+        if (Array.isArray(emp)) {
+            const f = [...new Set(emp.map(x => x.fuente))];
+            linea(f.includes('PENDIENTE'), 'el resumen por empaque incluye PENDIENTE: ' + f.join(', '));
+        }
+    }
+    pinta();
+}
+</script>

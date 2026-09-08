@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0664';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0665';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0664';
+const VERSION = '29.0665';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -2574,7 +2574,12 @@ export const calculateBufferPallets = (configOverride = null) => {
     waterfall.push({ nivel: 'Total', rq: globalRQ, atd: globalRQ, pct: '100.0%' });
     // (Para saber cuántos palets y SKUs corresponden a cada fuente)
     const empaqueAggr = {}; // { source: { type: { pal: Set, sku: Set, units: 0 } } }
-    const sources = ['PEDIDOS', 'OTRAS SOLICITUDES', 'REPLENISHMENT'];
+    /* LAS FUENTES SALEN DE `rawDemand`, que es donde se declaran. Acá estaban
+       escritas otra vez a mano y el 07-sep-2026 se desincronizaron: se agregó
+       PENDIENTE como cuarta fuente, esta lista se quedó con tres, y en cuanto
+       una paleta bajó por PENDIENTE el análisis entero reventó con
+       "Cannot read properties of undefined (reading 'SolidPack')". */
+    const sources = Object.keys(rawDemand);
     sources.forEach(s => {
         empaqueAggr[s] = {
             'SolidPack': { pal: new Set(), sku: new Set(), units: 0 },
