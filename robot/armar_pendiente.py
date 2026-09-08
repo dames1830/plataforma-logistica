@@ -570,6 +570,11 @@ def armar(hoy):
     r_rut = collections.defaultdict(lambda: [0.0, 0.0])
     rut_sin = [0.0, set()]
     r_ant = collections.defaultdict(lambda: [set(), 0.0])
+    # LAS TIENDAS QUE LLEVAN MAS DE UNA SEMANA, en un conjunto aparte. No se
+    # puede sumar el conteo de los dos tramos: una tienda con un pedido de 8
+    # dias y otro de 20 se contaria dos veces. Antes la pantalla repetia el
+    # numero de PEDIDOS como si fueran tiendas -decia 447 de 268-.
+    tiendas_viejas = set()
     ord_dentro, ord_fuera = set(), set()
     und_dentro = und_fuera = 0.0
     lineas = repetidas = 0
@@ -661,6 +666,8 @@ def armar(hoy):
 
         t = tramo(mes, dia)
         r_ant[t][0].add(orden); r_ant[t][1] += pend
+        if t in ('8 a 15 dias', 'mas de 15 dias'):
+            tiendas_viejas.add(tienda)
 
     f.close()
 
@@ -703,6 +710,8 @@ def armar(hoy):
         'totales': {
             'pedidos': len(por_guia),
             'tiendas': len(tiendas),
+            # Cuantas tiendas llevan mas de una semana sin recibir.
+            'tiendasViejas': len(tiendas_viejas),
             'articulos': len([s for s, v in por_sku.items() if v[0] - v[1] > 0]),
             'unidades': int(round(sum(por_guia.values()))),
             'lineas': lineas,

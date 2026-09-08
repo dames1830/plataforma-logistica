@@ -24,7 +24,7 @@
  * }
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0663';
+import { icono } from '../services_v245/iconos.js?v=29.0664';
 
 const nf = (n) => Number(n || 0).toLocaleString('es-PE');
 
@@ -249,6 +249,10 @@ function cuerpo(d, fecha, dias) {
     const viejos = (d.antiguedad || []).filter(x => /8 a 15|mas de 15/.test(x.k));
     const pedViejos = viejos.reduce((s, x) => s + (x.ped || 0), 0);
     const undViejos = viejos.reduce((s, x) => s + (x.und || 0), 0);
+    /* LAS TIENDAS NO SE SUMAN DE LOS TRAMOS: una con un pedido de 8 días y otro
+       de 20 se contaría dos veces. El robot publica el número del grupo entero.
+       Si el paquete es viejo y no lo trae, la frase no lo inventa. */
+    const tieViejos = t.tiendasViejas || 0;
 
     const tarjetas = `
       <div class="pend-cards">
@@ -289,10 +293,13 @@ function cuerpo(d, fecha, dias) {
                d.antiguedad, {
                  etiqueta: 'ANTIGÜEDAD', tope: 8,
                  destacar: f => /8 a 15|mas de 15/.test(f.k),
+                 /* ACÁ DECÍA "${pedViejos} tiendas", repitiendo el número de
+                    PEDIDOS: salían 447 tiendas cuando en total hay 268. */
                  nota: pedViejos
                    ? `<b>${nf(pedViejos)} pedidos llevan más de una semana esperando.</b>
-                      Son ${nf(undViejos)} unidades, pero son ${nf(pedViejos)} tiendas
-                      que no recibieron.`
+                      Son ${nf(undViejos)} unidades`
+                     + (tieViejos ? `, repartidas en <b>${nf(tieViejos)} tiendas</b>
+                        que no recibieron.` : '.')
                    : ''
                }),
         cuadro('A QUÉ TIENDA LE FALTA DESPACHAR',
