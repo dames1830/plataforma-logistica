@@ -121,21 +121,7 @@ def filas(ruta):
         return None
 
 
-def dia_del_oblpn(limite):
-    """Que OBLPN puede exigir este parte.
-
-       EL OBLPN VA UN DIA ATRAS Y NO ES UN DEFECTO: la tarea de las 08:30 baja el
-       dia anterior, porque el archivo pesa 15 a 23 MB y Oracle tarda en armarlo.
-       Pedirle al parte el del dia que cierra es pedirle algo que todavia no
-       existe, y era una X todos los dias.
-
-           parte de las 19:00 del dia D  ->  el de D-1, bajado hoy a las 08:30
-           parte de las 07:00 del dia D  ->  el de D-2, bajado ayer a las 08:30
-    """
-    return limite - timedelta(days=1 if limite.hour >= 12 else 2)
-
-
-def sin_movimiento(que, dia, no_antes_de):
+def sin_movimiento(que, dia, no_antes_de=None):
     """True si el robot comprobo, DENTRO DE ESTE TURNO, que no habia nada que bajar.
 
        NO ES LO MISMO QUE "no esta el archivo". Un archivo que falta puede ser un
@@ -152,6 +138,13 @@ def sin_movimiento(que, dia, no_antes_de):
         cuando = area.get(dia) if isinstance(area, dict) else None
         if not cuando:
             return False
+        # SIN `no_antes_de` LA MARCA NO CADUCA. Es el caso del OBLPN: cada dia se
+        # determina una sola vez, a las 08:30 de la mañana siguiente, y esa
+        # respuesta vale para siempre. La caducidad es solo para el picking, donde
+        # un dia tiene dos turnos y la marca de la mañana no puede dar por bueno
+        # el cierre de la noche.
+        if no_antes_de is None:
+            return True
         return datetime.strptime(str(cuando)[:19], "%Y-%m-%d %H:%M:%S") >= no_antes_de
     except (OSError, ValueError, TypeError):
         return False
@@ -233,17 +226,20 @@ def revisar(turno, cuando=None):
                       "armado" if os.path.exists(slot) else "no se armó"))
         archivo("Picking", os.path.join(ss, "Picking", "Picking %d-%d.csv" % (d, m)),
                 "picking_por_hora", marca="picking")
-        # EL OBLPN VA UN DIA ATRAS. Ver dia_del_oblpn().
-        ob = dia_del_oblpn(limite)
+        # EL OBLPN ES EL DEL DIA DEL CORTE. `corte_turno.py` corre
+        # `oblpn_embalaje.py --hoy` y el parte va despues, en el mismo lote:
+        #
+        #     19:14  corte_turno  ->  el OBLPN del dia
+        #     20:06  el parte
+        #
+        # El 07-sep lo puse un dia atras creyendo que solo lo bajaba la corrida
+        # de las 08:30. Esa existe, pero es la que COMPLETA el dia anterior si el
+        # corte no alcanzo; el corte baja el suyo. Con el dia equivocado, el
+        # parte del lunes 19:00 informaba del domingo y decia "sin movimiento"
+        # cuando el lunes se habian embalado 43.963 lineas.
         archivo("OBLPN embalaje",
-                os.path.join(ss, "OBLPN Embalaje",
-                             "OBLPN %02d-%02d.csv" % (ob.day, ob.month)),
-                "embalaje_por_hora", marca="oblpn",
-                dia_marca=ob.strftime("%d-%m-%Y"),
-                # EL OBLPN VA CON OTRA VARA: su robot corre a las 08:30, entre los
-                # dos cortes, asi que su marca es siempre de medio dia antes. Es
-                # la unica corrida que hay para ese dia, no hay con que confundirla.
-                marca_desde=limite - timedelta(hours=12))
+                os.path.join(ss, "OBLPN Embalaje", "OBLPN %02d-%02d.csv" % (d, m)),
+                "embalaje_por_hora", marca="oblpn")
         archivo("Detalle Orden",
                 os.path.join(ss, "Detalle Orden", "Detalle Orden %02d-%02d.csv" % (d, m)))
     else:
