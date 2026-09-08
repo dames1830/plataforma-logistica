@@ -20,9 +20,9 @@
  *  las dos, así que el módulo funciona solo.
  * ════════════════════════════════════════════════════════════════════════════ */
 
-import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0661';
+import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0663';
 /* El icono del Excel, el mismo que usa toda la plataforma. */
-import { icono } from '../services_v245/iconos.js?v=29.0661';
+import { icono } from '../services_v245/iconos.js?v=29.0663';
 
 /* LA FECHA NUNCA SALE DE toISOString(): devuelve UTC y a las 19:00 hora de Lima
    ya adelantó el día. Se arma a mano con la hora local. */
@@ -484,7 +484,7 @@ export const renderDistribucion = async (container) => {
              todos los días. El LPN es el <b>PRE</b> del coche de picking.`,
             'Exportar el detalle a Excel')}
           <div class="dst-scroll"><table class="dst">
-            <thead><tr><th>N° pedido</th><th>LPN</th><th>Tienda</th><th>Día</th><th>Pares</th></tr></thead>
+            <thead><tr><th>N° pedido</th><th>LPN</th><th>Tienda</th><th>Día del pick</th><th>Pares</th></tr></thead>
             <tbody></tbody></table></div>
           <p class="dst-pie"></p>
         </div>
@@ -494,7 +494,7 @@ export const renderDistribucion = async (container) => {
              todos los días. Ya embalados, con su carga asignada, esperando el pistoleo.`,
             'Exportar el detalle a Excel')}
           <div class="dst-scroll"><table class="dst">
-            <thead><tr><th>N° pedido</th><th>LPN</th><th>Tienda</th><th>Día</th><th>Pares</th></tr></thead>
+            <thead><tr><th>N° pedido</th><th>LPN</th><th>Tienda</th><th>Día de embalaje</th><th>Pares</th></tr></thead>
             <tbody></tbody></table></div>
           <p class="dst-pie"></p>
         </div>
@@ -510,7 +510,7 @@ export const renderDistribucion = async (container) => {
           ${cabLista('Patio · picado y sin embalar',
             'El bulto sigue siendo un <b>PRE</b>: embalaje no lo agarró.')}
           <div class="dst-scroll"><table class="dst">
-            <thead><tr><th>Días</th><th>LPN</th><th>Tienda</th><th>Desde</th><th>Pares</th></tr></thead>
+            <thead><tr><th>Días</th><th>LPN</th><th>Tienda</th><th>Desde el pick</th><th>Pares</th></tr></thead>
             <tbody></tbody></table></div>
           <p class="dst-pie"></p>
         </div>
@@ -518,7 +518,7 @@ export const renderDistribucion = async (container) => {
           ${cabLista('Staging · embalado y sin salir',
             'Bulto armado, con carga asignada, que nadie pistoleó.')}
           <div class="dst-scroll"><table class="dst">
-            <thead><tr><th>Días</th><th>LPN</th><th>Tienda</th><th>Desde</th><th>Pares</th></tr></thead>
+            <thead><tr><th>Días</th><th>LPN</th><th>Tienda</th><th>Embalado el</th><th>Pares</th></tr></thead>
             <tbody></tbody></table></div>
           <p class="dst-pie"></p>
         </div>
@@ -552,15 +552,15 @@ export const renderDistribucion = async (container) => {
       cols: ['Pedido', 'LPN', 'Tienda', 'Día del pick'] });
   listaBultos(container.querySelector('#dst_staging'), D.listas.staging, null, colBulto,
     { clave: 'staging', archivo: `Staging_${F}.xlsx`, hoja: 'Staging',
-      cols: ['Pedido', 'LPN', 'Tienda', 'Día del pick'] });
+      cols: ['Pedido', 'LPN', 'Tienda', 'Día de embalaje'] });
   listaBultos(container.querySelector('#dst_vpatio'), D.varados.patio.filas,
     D.varados.patio.arts, colVarado,
     { clave: 'nada', archivo: `Varados_patio_${F}.xlsx`, hoja: 'Varados patio',
-      cols: ['Días', 'LPN', 'Tienda', 'Desde'] });
+      cols: ['Días', 'LPN', 'Tienda', 'Desde el pick'] });
   listaBultos(container.querySelector('#dst_vstaging'), D.varados.staging.filas,
     D.varados.staging.arts, colVarado,
     { clave: 'nada', archivo: `Varados_staging_${F}.xlsx`, hoja: 'Varados staging',
-      cols: ['Días', 'LPN', 'Tienda', 'Desde'] });
+      cols: ['Días', 'LPN', 'Tienda', 'Embalado el'] });
 };
 
 export const renderDespachoPotencial = async (container) => {
