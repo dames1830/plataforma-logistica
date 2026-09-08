@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Maqueta · Discrepancias del operario (DISCREP)</title>
+<style>
+  :root{
+    --navy:#12365c; --navy2:#1b4a7a; --soft:#dbe4f0;
+    --ink:#20262e; --muted:#6b7885; --linea:#d7dee7; --papel:#f4f6f9;
+    --ok:#1d7a4c; --okfondo:#eef7f1; --mal:#b3261e;
+    --ojo:#8a5a00; --ojofondo:#fff6e2;
+    --sol:#eef3fa; --presol:#fff3df; --pre:#a35c00;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--papel);color:var(--ink);
+       font:14px/1.55 "Segoe UI",system-ui,sans-serif}
+  .hoja{max-width:1240px;margin:0 auto;padding:22px 20px 60px}
+
+  .tapa{background:var(--navy);color:#fff;border-radius:12px 12px 0 0;
+        padding:13px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .tapa h1{margin:0;font-size:18px;font-weight:700}
+  .tapa .sub{color:var(--soft);font-size:12.5px}
+  .tapa .dia{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--soft)}
+  .tapa input{border:none;border-radius:7px;padding:6px 10px;font:inherit;
+              font-weight:600;color:var(--navy)}
+
+  .caja{background:#fff;border:1px solid var(--linea);border-top:none;
+        border-radius:0 0 12px 12px;margin-bottom:22px;overflow:hidden}
+  .barra{background:var(--navy2);color:#fff;padding:9px 18px;font-size:13.5px;
+         font-weight:700;border-radius:12px 12px 0 0;margin-top:22px;
+         display:flex;align-items:baseline;gap:10px}
+  .barra span{font-weight:400;font-size:12px;color:var(--soft)}
+  .barra + .caja{border-top:none;border-radius:0 0 12px 12px;margin-top:0}
+
+  .tw{overflow-x:auto}
+  table{width:100%;min-width:720px;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+  th{background:var(--navy2);color:#fff;text-align:center;padding:8px 10px;
+     font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;
+     border:1px solid #14406b;white-space:nowrap;line-height:1.3}
+  th .u{display:block;font-weight:400;font-size:10px;color:var(--soft);
+        letter-spacing:0;text-transform:none}
+  td{padding:6px 10px;text-align:right;border:1px solid #e6ebf1;white-space:nowrap}
+  td.izq{text-align:left} td.cen{text-align:center}
+  td.gris{color:var(--muted)}
+  td.pre{background:var(--presol);color:var(--pre);font-weight:700}
+  td.tot-c{font-weight:700}
+  td.ok{color:var(--ok);font-weight:700}
+  tr.tot td{background:#fff8c9;font-weight:700;border-top:2px solid var(--navy2)}
+  tr.solid td:first-child{background:var(--sol)}
+  tbody tr:hover td{background:#fbfcfe}
+  tbody tr:hover td.pre{background:#ffeccd}
+
+  .tarjetas{display:flex;gap:0;flex-wrap:wrap}
+  .tj{flex:1;min-width:200px;padding:15px 18px;border-right:1px solid var(--linea)}
+  .tj:last-child{border-right:none}
+  .tj .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+         color:var(--muted);font-weight:700}
+  .tj .n{font-size:27px;font-weight:700;line-height:1.25;margin-top:3px}
+  .tj .p{font-size:12px;color:var(--muted);line-height:1.5}
+  .tj.a .n{color:var(--navy2)} .tj.b .n{color:var(--pre)} .tj.c .n{color:var(--ok)}
+
+  .et{border-radius:4px;padding:1px 7px;font-size:10.5px;font-weight:700;
+      letter-spacing:.03em}
+  .et-sol{background:var(--sol);color:var(--navy2)}
+  .et-pre{background:var(--presol);color:var(--pre)}
+  .et-mix{background:#f0e9f7;color:#5b3b86}
+
+  .pie{padding:11px 18px;font-size:12.5px;color:var(--muted);
+       border-top:1px solid var(--linea);line-height:1.65}
+  .aviso{border-left:4px solid var(--ojo);background:var(--ojofondo);color:#5a3d00;
+         padding:12px 16px;font-size:13px;line-height:1.65}
+  .bien{border-left:4px solid var(--ok);background:var(--okfondo);color:#14532d;
+        padding:12px 16px;font-size:13px;line-height:1.65}
+  .azul{border-left:4px solid var(--navy2);background:#f4f8fd;
+        padding:12px 16px;font-size:13px;line-height:1.65}
+  b.n{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="hoja">
+
+  <div class="tapa">
+    <div>
+      <h1>Discrepancias del operario</h1>
+      <div class="sub">LPN que empiezan por DISCREP · lo que el operario encontró y el sistema no tenía</div>
+    </div>
+    <div class="dia">
+      Día <input type="date" value="2026-09-07">
+      &nbsp;Desde <input type="time" value="08:00" style="width:92px">
+      &nbsp;Hasta <input type="time" value="20:00" style="width:92px">
+    </div>
+  </div>
+
+  <div class="caja">
+    <div class="tarjetas">
+      <div class="tj a"><div class="k">Discrepancias</div>
+        <div class="n">2.220</div>
+        <div class="p">LPN abiertos entre las 11:03 y las 19:20<br>uno por hallazgo, ninguno repetido</div></div>
+      <div class="tj"><div class="k">Solid</div>
+        <div class="n">5.445</div>
+        <div class="p">pares en 1.668 discrepancias<br>51,9% de los pares</div></div>
+      <div class="tj b"><div class="k">Prepack (explotado)</div>
+        <div class="n">5.055</div>
+        <div class="p">pares en 638 cajas, 552 discrepancias<br>48,1% de los pares</div></div>
+      <div class="tj c"><div class="k">Total del día</div>
+        <div class="n">10.500</div>
+        <div class="p">pares de verdad<br>el WMS solo muestra 6.083</div></div>
+    </div>
+    <div class="pie">
+      <b>El archivo:</b> IBLPN070926.csv, 2.267 filas. De ellas <b>2.220</b> tienen
+      LPN <b>DISCREP</b>; 0 quedaron fuera de la ventana 08:00–20:00 y 0 sin hora legible.
+      La ventana se mide sobre <b>Registro de hora de modificación</b>.
+    </div>
+  </div>
+
+  <div class="barra">1 · El cuadro <span>solid contra prepack, y lo que el prepack esconde</span></div>
+  <div class="caja">
+    <div class="tw"><table>
+      <thead><tr>
+        <th style="text-align:left">Tipo</th>
+        <th>Discrepancias<span class="u">un LPN cada una</span></th>
+        <th>SKU distintos</th>
+        <th>Cantidad WMS<span class="u">lo que dice el archivo</span></th>
+        <th>Pares de verdad<span class="u">prepack explotado</span></th>
+        <th>Diferencia<span class="u">lo que no se veía</span></th>
+        <th>% de los pares</th>
+      </tr></thead>
+      <tbody>
+        <tr class="solid"><td class="izq"><span class="et et-sol">SOLID</span> &nbsp;un par por unidad</td>
+          <td>1.668</td><td>733</td><td>5.445</td>
+          <td class="tot-c">5.445</td><td class="gris">—</td><td class="gris">51,9%</td></tr>
+        <tr><td class="izq"><span class="et et-pre">PREPACK</span> &nbsp;cajas con curva de tallas</td>
+          <td>552</td><td>90</td><td>638 cajas</td>
+          <td class="pre">5.055</td><td class="ok">+4.417</td><td class="gris">48,1%</td></tr>
+        <tr class="tot"><td class="izq">TOTAL</td>
+          <td>2.220</td><td>823</td><td>6.083</td>
+          <td>10.500</td><td>+4.417</td><td>100,0%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="aviso">
+      <b>Sin explotar el prepack, el día se lee 6.083 pares.</b> De verdad son <b>10.500</b>:
+      hay <b>4.417 pares</b> escondidos dentro de 638 cajas — un
+      <b>72,6% más</b> de lo que muestra el archivo. Casi la mitad de las
+      discrepancias del día (48,1% de los pares) sale de 24,9% de las líneas.
+    </div>
+  </div>
+
+  <div class="barra">2 · Por qué se explota, y la prueba <span>el propio WMS lo confirma</span></div>
+  <div class="caja">
+    <div class="azul">
+      <b>La regla:</b> si el código tiene la forma <b>#######-#-#####</b> (cinco dígitos al final),
+      es una <b>caja</b>, y los <b>dos primeros dígitos</b> del sufijo son los pares que trae.
+      <code>5816393-1-<b>10</b>085</code> → caja de 10. Vale igual en calzado y en accesorio.
+      Es la misma regla que ya usa el módulo de Picking.
+    </div>
+    <div class="tw"><table>
+      <thead><tr>
+        <th>Código</th><th style="text-align:left">Artículo</th>
+        <th>Cantidad<span class="u">cajas</span></th><th>Curva</th>
+        <th>Pares<span class="u">cantidad × curva</span></th>
+        <th>Unid. secundarias<span class="u">lo que trae el WMS</span></th>
+        <th>—</th>
+      </tr></thead>
+      <tbody><tr><td class="cen">9900084-1-12298</td><td class="izq">SHOES POLISH - SMOOTH LEATHER CLEANER - </td>
+      <td>6</td><td>12</td><td class="pre">72</td>
+      <td class="ok">72</td>
+      <td class="cen">coincide</td></tr><tr><td class="cen">9900084-1-12298</td><td class="izq">SHOES POLISH - SMOOTH LEATHER CLEANER - </td>
+      <td>2</td><td>12</td><td class="pre">24</td>
+      <td class="ok">24</td>
+      <td class="cen">coincide</td></tr><tr><td class="cen">9900083-1-12298</td><td class="izq">SHOES POLISH - FOAMING CLEANER - BATA - </td>
+      <td>1</td><td>12</td><td class="pre">12</td>
+      <td class="ok">12</td>
+      <td class="cen">coincide</td></tr><tr><td class="cen">5610437-1-06044</td><td class="izq">WEDGE/PLATFORM HEIGHT 3 - ENJOY - BEIGE/</td>
+      <td>1</td><td>6</td><td class="pre">6</td>
+      <td class="gris">1</td>
+      <td class="cen">el WMS no lo abre</td></tr><tr><td class="cen">9900092-1-12298</td><td class="izq">SHOES POLISH - BETUN LIQUIDO- BATA - NEG</td>
+      <td>1</td><td>12</td><td class="pre">12</td>
+      <td class="gris">1</td>
+      <td class="cen">el WMS no lo abre</td></tr><tr><td class="cen">9896406-1-10210</td><td class="izq">MEN - BIPACK PRINT MID MN - BLACK/NAVY -</td>
+      <td>3</td><td>10</td><td class="pre">30</td>
+      <td class="gris">3</td>
+      <td class="cen">el WMS no lo abre</td></tr></tbody>
+    </table></div>
+    <div class="bien">
+      <b>La comprobación:</b> el archivo trae una columna <b>Unidades secundarias actuales</b>.
+      El WMS solo la tiene cargada para <b>6 de los 90</b> códigos de prepack
+      (35 líneas); en esas <b>35 líneas coincide exactamente con la curva del sufijo,
+      sin una sola excepción</b>. En las otras 517 el WMS repite la cantidad sin abrir la caja
+      —le falta la conversión en el maestro—, y por eso la columna no sirve para contar: da
+      1.174 pares en vez de 5.055. La curva del código sí sirve.
+    </div>
+    <div class="pie">
+      En los solid, las 1.668 líneas tienen <b>Unidades secundarias actuales</b> igual a
+      <b>Cantidad actual</b>: ahí no hay caja que abrir y las dos columnas dicen lo mismo.
+    </div>
+  </div>
+
+  <div class="barra">3 · Hora por hora <span>cuándo se levantaron las discrepancias</span></div>
+  <div class="caja">
+    <div class="tw"><table>
+      <thead><tr>
+        <th>Hora</th>
+        <th>Solid<span class="u">discrepancias</span></th>
+        <th>Solid<span class="u">pares</span></th>
+        <th>Prepack<span class="u">discrepancias</span></th>
+        <th>Prepack<span class="u">cajas</span></th>
+        <th>Prepack<span class="u">pares</span></th>
+        <th>Total<span class="u">pares</span></th>
+        <th>% del día</th>
+      </tr></thead>
+      <tbody><tr><td class="cen">11:00 – 11:59</td>
+      <td>16</td><td>18</td>
+      <td>0</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">18</td><td class="gris">0,2%</td></tr><tr><td class="cen">12:00 – 12:59</td>
+      <td>247</td><td>298</td>
+      <td>0</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">298</td><td class="gris">2,8%</td></tr><tr><td class="cen">13:00 – 13:59</td>
+      <td>1</td><td>1</td>
+      <td>0</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">1</td><td class="gris">0,0%</td></tr><tr><td class="cen">14:00 – 14:59</td>
+      <td>1</td><td>1</td>
+      <td>0</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">1</td><td class="gris">0,0%</td></tr><tr><td class="cen">15:00 – 15:59</td>
+      <td>21</td><td>21</td>
+      <td>0</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">21</td><td class="gris">0,2%</td></tr><tr><td class="cen">16:00 – 16:59</td>
+      <td>74</td><td>112</td>
+      <td>0</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">112</td><td class="gris">1,1%</td></tr><tr><td class="cen">18:00 – 18:59</td>
+      <td>1.305</td><td>4.991</td>
+      <td>113</td><td>157</td><td class="pre">1.427</td>
+      <td class="tot-c">6.418</td><td class="gris">61,1%</td></tr><tr><td class="cen">19:00 – 19:59</td>
+      <td>3</td><td>3</td>
+      <td>439</td><td>481</td><td class="pre">3.628</td>
+      <td class="tot-c">3.631</td><td class="gris">34,6%</td></tr>
+        <tr class="tot"><td class="cen">TOTAL 08:00 – 20:00</td>
+          <td>1.668</td><td>5.445</td><td>552</td>
+          <td>638</td><td>5.055</td><td>10.500</td><td>100,0%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="aviso">
+      Las horas que no aparecen no tuvieron ni una discrepancia. El día no está repartido:
+      <b>95,7% de los pares
+      (10.049)</b> se registró entre las
+      18:00 y las 19:20, al cierre del turno — no es cuándo aparecieron, es cuándo alguien las cargó.
+      Y el prepack aparece <b>solo desde las 18:00</b>.
+    </div>
+  </div>
+
+  <div class="barra">4 · El prepack, abierto por curva <span>de dónde salen los 5.055 pares</span></div>
+  <div class="caja">
+    <div class="tw"><table>
+      <thead><tr>
+        <th style="text-align:left">Curva</th><th>Discrepancias</th><th>SKU distintos</th>
+        <th>Cajas</th><th>Pares</th><th>% del prepack</th>
+      </tr></thead>
+      <tbody><tr><td class="cen"><b>4</b> pares por caja</td><td>1</td>
+      <td>1</td><td>2</td>
+      <td class="pre">8</td><td class="gris">0,2%</td></tr><tr><td class="cen"><b>5</b> pares por caja</td><td>1</td>
+      <td>1</td><td>1</td>
+      <td class="pre">5</td><td class="gris">0,1%</td></tr><tr><td class="cen"><b>6</b> pares por caja</td><td>312</td>
+      <td>37</td><td>333</td>
+      <td class="pre">1.998</td><td class="gris">39,5%</td></tr><tr><td class="cen"><b>8</b> pares por caja</td><td>45</td>
+      <td>20</td><td>57</td>
+      <td class="pre">456</td><td class="gris">9,0%</td></tr><tr><td class="cen"><b>10</b> pares por caja</td><td>161</td>
+      <td>23</td><td>176</td>
+      <td class="pre">1.760</td><td class="gris">34,8%</td></tr><tr><td class="cen"><b>12</b> pares por caja</td><td>32</td>
+      <td>8</td><td>69</td>
+      <td class="pre">828</td><td class="gris">16,4%</td></tr>
+        <tr class="tot"><td class="cen">TOTAL</td><td>552</td>
+          <td>90</td><td>638</td><td>5.055</td><td>100,0%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="pie">
+      La caja de <b>6</b> y la de <b>10</b> son el 74,3% de los pares
+      de prepack (3.758 de 5.055).
+    </div>
+  </div>
+
+  <div class="barra">5 · Dónde se encontraron <span>zona del hallazgo, del campo personalizado 2</span></div>
+  <div class="caja">
+    <div class="tw"><table>
+      <thead><tr>
+        <th style="text-align:left">Zona</th><th>Código</th><th>Discrepancias</th>
+        <th>Solid<span class="u">pares</span></th>
+        <th>Prepack<span class="u">cajas</span></th>
+        <th>Prepack<span class="u">pares</span></th>
+        <th>Total<span class="u">pares</span></th><th>% del día</th>
+      </tr></thead>
+      <tbody><tr><td class="izq">Mezzanine 4</td><td class="cen gris">MZN04</td>
+      <td>1.257</td><td>4.791</td>
+      <td>73</td><td class="pre">863</td>
+      <td class="tot-c">5.654</td><td class="gris">53,8%</td></tr><tr><td class="izq">Zona Buffer</td><td class="cen gris">CDBUF</td>
+      <td>518</td><td>0</td>
+      <td>565</td><td class="pre">4.192</td>
+      <td class="tot-c">4.192</td><td class="gris">39,9%</td></tr><tr><td class="izq">Mezzanine 2</td><td class="cen gris">MZN02</td>
+      <td>240</td><td>362</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">362</td><td class="gris">3,4%</td></tr><tr><td class="izq">Pared</td><td class="cen gris">PARED</td>
+      <td>13</td><td>95</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">95</td><td class="gris">0,9%</td></tr><tr><td class="izq">Mezzanine 1</td><td class="cen gris">MZN01</td>
+      <td>92</td><td>94</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">94</td><td class="gris">0,9%</td></tr><tr><td class="izq">Mezzanine 3</td><td class="cen gris">MZN03</td>
+      <td>58</td><td>61</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">61</td><td class="gris">0,6%</td></tr><tr><td class="izq">Selectivo 1</td><td class="cen gris">SEL01</td>
+      <td>11</td><td>11</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">11</td><td class="gris">0,1%</td></tr><tr><td class="izq">Selectivo 3</td><td class="cen gris">SEL03</td>
+      <td>9</td><td>9</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">9</td><td class="gris">0,1%</td></tr><tr><td class="izq">Selectivo 4</td><td class="cen gris">SEL04</td>
+      <td>9</td><td>9</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">9</td><td class="gris">0,1%</td></tr><tr><td class="izq">Selectivo 2</td><td class="cen gris">SEL02</td>
+      <td>7</td><td>7</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">7</td><td class="gris">0,1%</td></tr><tr><td class="izq">Selectivo 6</td><td class="cen gris">SEL06</td>
+      <td>3</td><td>3</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">3</td><td class="gris">0,0%</td></tr><tr><td class="izq">Selectivo 11</td><td class="cen gris">SEL11</td>
+      <td>2</td><td>2</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">2</td><td class="gris">0,0%</td></tr><tr><td class="izq">Andamio 6</td><td class="cen gris">AND06</td>
+      <td>1</td><td>1</td>
+      <td>0</td><td class="pre">0</td>
+      <td class="tot-c">1</td><td class="gris">0,0%</td></tr>
+        <tr class="tot"><td class="izq">TOTAL</td><td></td><td>2.220</td>
+          <td>5.445</td><td>638</td><td>5.055</td>
+          <td>10.500</td><td>100,0%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="aviso">
+      El <b>Mezzanine 4</b> y la <b>Zona Buffer</b> concentran
+      93,8%
+      de los pares (9.846 de 10.500).
+      Todo el prepack cae ahí: en los mezzanines 1, 2 y 3 y en el selectivo no hay ni una caja.
+    </div>
+  </div>
+
+  <div class="barra">6 · Por marca <span>marca deducida de la descripción del artículo</span></div>
+  <div class="caja">
+    <div class="tw"><table>
+      <thead><tr>
+        <th style="text-align:left">Marca</th><th>Discrepancias</th>
+        <th>Solid<span class="u">pares</span></th>
+        <th>Prepack<span class="u">cajas</span></th>
+        <th>Prepack<span class="u">pares</span></th>
+        <th>Total<span class="u">pares</span></th><th>% del día</th>
+      </tr></thead>
+      <tbody><tr><td class="izq">Bata</td><td>676</td>
+      <td>1.980</td><td>170</td><td class="pre">1.547</td>
+      <td class="tot-c">3.527</td><td class="gris">33,6%</td></tr><tr><td class="izq">North Star</td><td>688</td>
+      <td>971</td><td>267</td><td class="pre">2.140</td>
+      <td class="tot-c">3.111</td><td class="gris">29,6%</td></tr><tr><td class="izq">Weinbrenner</td><td>389</td>
+      <td>1.933</td><td>18</td><td class="pre">128</td>
+      <td class="tot-c">2.061</td><td class="gris">19,6%</td></tr><tr><td class="izq">Bubblegummers</td><td>172</td>
+      <td>213</td><td>78</td><td class="pre">504</td>
+      <td class="tot-c">717</td><td class="gris">6,8%</td></tr><tr><td class="izq">Power</td><td>101</td>
+      <td>33</td><td>82</td><td class="pre">558</td>
+      <td class="tot-c">591</td><td class="gris">5,6%</td></tr><tr><td class="izq">Sin marca</td><td>72</td>
+      <td>214</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">214</td><td class="gris">2,0%</td></tr><tr><td class="izq">Bata Comfit</td><td>27</td>
+      <td>7</td><td>20</td><td class="pre">142</td>
+      <td class="tot-c">149</td><td class="gris">1,4%</td></tr><tr><td class="izq">Puma</td><td>8</td>
+      <td>7</td><td>3</td><td class="pre">36</td>
+      <td class="tot-c">43</td><td class="gris">0,4%</td></tr><tr><td class="izq">Licenses</td><td>25</td>
+      <td>25</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">25</td><td class="gris">0,2%</td></tr><tr><td class="izq">Rider</td><td>19</td>
+      <td>19</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">19</td><td class="gris">0,2%</td></tr><tr><td class="izq">Ipanema</td><td>12</td>
+      <td>12</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">12</td><td class="gris">0,1%</td></tr><tr><td class="izq">Grendha</td><td>11</td>
+      <td>11</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">11</td><td class="gris">0,1%</td></tr><tr><td class="izq">Adidas</td><td>8</td>
+      <td>8</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">8</td><td class="gris">0,1%</td></tr><tr><td class="izq">Skechers</td><td>5</td>
+      <td>5</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">5</td><td class="gris">0,0%</td></tr><tr><td class="izq">Cartago</td><td>4</td>
+      <td>4</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">4</td><td class="gris">0,0%</td></tr><tr><td class="izq">Marie Claire</td><td>3</td>
+      <td>3</td><td>0</td><td class="pre">0</td>
+      <td class="tot-c">3</td><td class="gris">0,0%</td></tr>
+        <tr class="tot"><td class="izq">TOTAL</td><td>2.220</td>
+          <td>5.445</td><td>638</td><td>5.055</td>
+          <td>10.500</td><td>100,0%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="pie">
+      <b>Para revisar:</b> acá la marca sale de leer la descripción, no del Maestro. En el producto
+      conviene cruzarla con el Maestro, como hacen los demás reportes.
+    </div>
+  </div>
+
+  <div class="barra">7 · Los 20 artículos con más pares <span>solid y prepack, separados</span></div>
+  <div class="caja">
+    <div class="tw"><table>
+      <thead><tr>
+        <th>Artículo</th><th style="text-align:left">Descripción</th><th>Tipo</th>
+        <th>Discrepancias</th><th>Solid<span class="u">pares</span></th>
+        <th>Prepack<span class="u">pares</span></th><th>Total<span class="u">pares</span></th>
+      </tr></thead>
+      <tbody><tr><td class="cen">5721423</td><td class="izq">WOMEN - VERA - OFF WHITE/BLANCO INVIERNO - BATA-1-35</td>
+      <td class="cen"><span class="et et-sol">SOLID</span></td>
+      <td>92</td><td>321</td><td class="pre">0</td>
+      <td class="tot-c">321</td></tr><tr><td class="cen">5816393</td><td class="izq">SPORT - LUINO - BLACK/NEGRO - NORTH STAR-1-36</td>
+      <td class="cen"><span class="et et-mix">AMBOS</span></td>
+      <td>45</td><td>17</td><td class="pre">268</td>
+      <td class="tot-c">285</td></tr><tr><td class="cen">6811413</td><td class="izq">SPORT - BEX - BEIGE/BEIGE - NORTH STAR-1-36</td>
+      <td class="cen"><span class="et et-mix">AMBOS</span></td>
+      <td>45</td><td>17</td><td class="pre">268</td>
+      <td class="tot-c">285</td></tr><tr><td class="cen">6816909</td><td class="izq">SPORT - GINA - BLACK/NEGRO - NORTH STAR-1-36</td>
+      <td class="cen"><span class="et et-mix">AMBOS</span></td>
+      <td>37</td><td>12</td><td class="pre">236</td>
+      <td class="tot-c">248</td></tr><tr><td class="cen">6816413</td><td class="izq">SPORT - BEX - BLACK/NEGRO - NORTH STAR-1-36</td>
+      <td class="cen"><span class="et et-mix">AMBOS</span></td>
+      <td>37</td><td>15</td><td class="pre">226</td>
+      <td class="tot-c">241</td></tr><tr><td class="cen">8714983</td><td class="izq">MEN - SEBAS - BROWN/MARRON - NORTH STAR-1-39</td>
+      <td class="cen"><span class="et et-sol">SOLID</span></td>
+      <td>51</td><td>240</td><td class="pre">0</td>
+      <td class="tot-c">240</td></tr><tr><td class="cen">5816332</td><td class="izq">SPORT - PLANETA 26 - BLACK/NEGRO - NORTH STAR-1-36</td>
+      <td class="cen"><span class="et et-mix">AMBOS</span></td>
+      <td>36</td><td>15</td><td class="pre">218</td>
+      <td class="tot-c">233</td></tr><tr><td class="cen">8817405</td><td class="izq">LACES - FRAN - DARK GREEN/VERDE OSCURO - NORTH STAR-</td>
+      <td class="cen"><span class="et et-pre">PREPACK</span></td>
+      <td>15</td><td>0</td><td class="pre">230</td>
+      <td class="tot-c">230</td></tr><tr><td class="cen">5727422</td><td class="izq">SANDALIA VERA BLACK BATA-1-36</td>
+      <td class="cen"><span class="et et-sol">SOLID</span></td>
+      <td>52</td><td>226</td><td class="pre">0</td>
+      <td class="tot-c">226</td></tr><tr><td class="cen">5818393</td><td class="izq">SPORT - LUINO - BEIGE/BEIGE - NORTH STAR-1-36</td>
+      <td class="cen"><span class="et et-mix">AMBOS</span></td>
+      <td>35</td><td>14</td><td class="pre">210</td>
+      <td class="tot-c">224</td></tr><tr><td class="cen">8629446</td><td class="izq">MEN - KLINT - NAVY/AZUL MARINO - BATA-1-41</td>
+      <td class="cen"><span class="et et-sol">SOLID</span></td>
+      <td>49</td><td>186</td><td class="pre">0</td>
+      <td class="tot-c">186</td></tr><tr><td class="cen">8810905</td><td class="izq">LACES - FRAN - NAVY/AZUL MARINO - NORTH STAR-08076</td>
+      <td class="cen"><span class="et et-pre">PREPACK</span></td>
+      <td>16</td><td>0</td><td class="pre">182</td>
+      <td class="tot-c">182</td></tr><tr><td class="cen">9900084</td><td class="izq">SHOES POLISH - SMOOTH LEATHER CLEANER - TRANSPARENTE</td>
+      <td class="cen"><span class="et et-pre">PREPACK</span></td>
+      <td>6</td><td>0</td><td class="pre">180</td>
+      <td class="tot-c">180</td></tr><tr><td class="cen">9900003</td><td class="izq">ESPONJA AUTOBRILLO  Bata-12298</td>
+      <td class="cen"><span class="et et-pre">PREPACK</span></td>
+      <td>4</td><td>0</td><td class="pre">180</td>
+      <td class="tot-c">180</td></tr><tr><td class="cen">8717915</td><td class="izq">&#x27;- NAPLO - GREEN/VERDE - BATA-1-42</td>
+      <td class="cen"><span class="et et-sol">SOLID</span></td>
+      <td>56</td><td>178</td><td class="pre">0</td>
+      <td class="tot-c">178</td></tr><tr><td class="cen">8626959</td><td class="izq">Slap Melvin negro con lineas blancas, gris y verde-1</td>
+      <td class="cen"><span class="et et-sol">SOLID</span></td>
+      <td>54</td><td>177</td><td class="pre">0</td>
+      <td class="tot-c">177</td></tr><tr><td class="cen">5818351</td><td class="izq">SPORT - MAISY - BEIGE/BEIGE - NORTH STAR-1-36</td>
+      <td class="cen"><span class="et et-mix">AMBOS</span></td>
+      <td>29</td><td>18</td><td class="pre">150</td>
+      <td class="tot-c">168</td></tr><tr><td class="cen">9900083</td><td class="izq">SHOES POLISH - FOAMING CLEANER - BATA - TRANSPARENTE</td>
+      <td class="cen"><span class="et et-pre">PREPACK</span></td>
+      <td>8</td><td>0</td><td class="pre">168</td>
+      <td class="tot-c">168</td></tr><tr><td class="cen">8892310</td><td class="izq">FITNESS - ENERGY RIPPLE - LIGHT GREY/GRIS CLARO - PO</td>
+      <td class="cen"><span class="et et-pre">PREPACK</span></td>
+      <td>28</td><td>0</td><td class="pre">168</td>
+      <td class="tot-c">168</td></tr><tr><td class="cen">1699411</td><td class="izq">SANDALS BOYS - LIGHT - NAVY/AZUL MARINO - BUBBLEGUMM</td>
+      <td class="cen"><span class="et et-pre">PREPACK</span></td>
+      <td>20</td><td>0</td><td class="pre">156</td>
+      <td class="tot-c">156</td></tr></tbody>
+    </table></div>
+    <div class="pie">
+      Estos 20 artículos son <b>4.276 pares</b>, el
+      40,7% del día, sobre 436 artículos distintos.
+      «AMBOS» quiere decir que el mismo artículo apareció suelto y en caja.
+    </div>
+  </div>
+
+  <div class="barra">Lo que falta decidir</div>
+  <div class="caja">
+    <div class="pie" style="border-top:none">
+      <b>1.</b> ¿La ventana 08:00–20:00 queda fija, o se elige como en los demás reportes con el
+      rango de fechas y horas?<br>
+      <b>2.</b> ¿La marca sale del Maestro o de la descripción?<br>
+      <b>3.</b> ¿Hace falta el detalle línea por línea descargable, o alcanza con los cuadros?<br>
+      <b>4.</b> ¿Se compara contra el día anterior, o el reporte es de un día solo?
+    </div>
+  </div>
+
+  <div class="pie" style="text-align:center;background:#fff;border:1px solid var(--linea);border-radius:12px">
+    Maqueta armada con los datos reales de <b>IBLPN070926.csv</b> · día 07/09/2026 ·
+    ventana 08:00–20:00 · 2.220 discrepancias · 10.500 pares
+  </div>
+
+</div>
+</body>
+</html>
