@@ -25,48 +25,78 @@ días de OBLPN: se cayó después del tercero y volvió quince minutos más tard
 Peor todavía: **no avisa**. El archivo simplemente no está, y eso se descubre al día
 siguiente.
 
-## LO PRIMERO: ¿la tarea abre el WMS?
+## SI LA TAREA ABRE UN NAVEGADOR
 
-**Esta es la pregunta que hay que hacerse antes de escribir el comando**, y equivocarse acá
-es el error que ya se cometió tres veces.
-
-| La tarea… | Va como | Por qué |
-|---|---|---|
-| **abre el WMS** (`picking_y_orden.py`, `oblpn_embalaje.py`, el ancla, el catálogo, las citas) | **`Administrator`, sesión interactiva** | el navegador del robot está instalado en el perfil de Administrator |
-| solo calcula, lee archivos o publica (`produccion_picking.py`, `armar_pendiente.py`, un respaldo) | `SYSTEM` está bien | no necesita navegador |
-
-**SYSTEM NO VE EL NAVEGADOR.** Playwright vive en
-`C:\Users\Administrator\AppData\Local\ms-playwright`, y SYSTEM tiene otro perfil: no existe
-para él. La tarea arranca, entra a Python, imprime las rutas… y **muere en la línea
-siguiente**, siempre la misma:
+**El sintoma**: la tarea arranca, entra a Python, escribe las rutas en el log… y muere en la
+linea siguiente, siempre la misma:
 
 ```
 [23:59:01] [INFO ] Abriendo navegador en segundo plano...
-(y ahí termina el log)
+(y ahi termina el log)
 ```
 
-**Y Windows la marca como ejecutada.** Por eso pasa desapercibida: el Programador dice que
-corrió, el archivo nunca llegó, y el hueco se descubre semanas después. Pasó con la
-recuperación del picking de los sábados 22 y 29 de agosto: la tarea era del 05-sep, murió en
-el segundo 1, y los datos siguieron faltando hasta el 08-sep —cuando Daniel ya los había
-llevado a un comité—.
+**Y Windows la marca como ejecutada**, asi que pasa desapercibida.
 
-**Las tareas que ya funcionan dicen cuál es la forma buena.** Antes de inventar una, mirar
-cómo está puesta una que sí corre:
+**La causa**: Playwright busca el navegador en el perfil del usuario que corre. Bajo SYSTEM
+el perfil es `C:\windows\system32\config\systemprofile`, que no tiene navegadores — los
+navegadores estan en el de Administrator. Comprobado el 08-sep-2026 corriendo la misma
+prueba con los dos usuarios.
+
+**LA CAUSA YA ESTA ARREGLADA (08-sep-2026)**, y no cambiando el usuario de las tareas sino
+donde dice el sistema que estan los navegadores:
 
 ```
-Get-ScheduledTask | Where-Object { $_.TaskName -match 'WMS|Picking|OBLPN' } | ForEach-Object { $_.TaskName + ' | ' + $_.Principal.LogonType + ' | ' + $_.Principal.UserId }
+PLAYWRIGHT_BROWSERS_PATH = C:\Users\Administrator\AppData\Local\ms-playwright   (a nivel MAQUINA)
 ```
 
-Las cuatro del WMS salen todas igual: `Interactive | Administrator`.
+Con eso **cualquier usuario abre el navegador**, y no hay que acordarse de nada al crear una
+tarea. Es la salida que ya usaba `oblpn_embalaje.py` desde el 29-ago —parcheando la variable
+por codigo— y por eso ese robot y el del ASN funcionaban como SYSTEM mientras otros no. Lo
+que faltaba era subirla de "dos scripts" a "toda la maquina".
+
+**Si el sintoma vuelve**, lo primero no es tocar el usuario de la tarea: es mirar la
+variable, porque reinstalar Playwright o rehacer el servidor la deja vacia.
+
+```
+[Environment]::GetEnvironmentVariable('PLAYWRIGHT_BROWSERS_PATH','Machine')
+```
+
+Si sale vacia, se vuelve a poner apuntando a la carpeta `ms-playwright` que exista de
+verdad. Cambiar la tarea a Administrator tambien lo tapa, pero ata la tarea a que haya una
+sesion abierta y no arregla la siguiente.
+
+## COMPROBAR QUE ARRANCO, NO QUE "SE EJECUTO"
+
+`LastTaskResult` miente: dice 0 aunque el proceso haya muerto a los dos segundos. **La
+prueba es el log del robot**, y en una tarea del WMS la linea que hay que ver es esta:
+
+```
+[09:09:28] [INFO ] Sesion iniciada como dames
+```
+
+Si el log termina en `Abriendo navegador en segundo plano...`, es la variable.
+
+Costo real de no comprobarlo: el picking de los sabados 22 y 29 de agosto. La tarea que iba
+a recuperarlo era del 05-sep, murio en el segundo 1, Windows dijo que habia corrido, y los
+datos siguieron faltando hasta el 08-sep — cuando Daniel ya los habia llevado a un comite.
+
+## AL CREAR UNA TAREA, COPIAR UNA QUE YA ANDE
+
+No inventar el usuario ni el arranque: mirar como esta puesta una que haga un trabajo
+parecido.
+
+```
+Get-ScheduledTask | Where-Object { $_.TaskPath -eq '\' } | ForEach-Object { $_.TaskName + ' | ' + $_.Principal.LogonType + ' | ' + $_.Principal.UserId }
+```
 
 ## La forma correcta
 
-Dos comandos, siempre en este orden. El `/IT` es lo que la hace correr como sesión de
-Administrator y no como servicio.
+Dos comandos, siempre en este orden. Va con `/RU SYSTEM`, que corre como el servidor y no
+necesita que nadie esté conectado —y desde que la variable de los navegadores es de máquina,
+también abre el WMS sin problema—.
 
 ```
-schtasks --% /Create /TN "<nombre>" /TR "\"C:\Program Files\Python313\python.exe\" C:\wms_scraping\<script>.py <argumentos>" /SC ONCE /ST 23:59 /RU Administrator /IT /F
+schtasks --% /Create /TN "<nombre>" /TR "\"C:\Program Files\Python313\python.exe\" C:\wms_scraping\<script>.py <argumentos>" /SC ONCE /ST 23:59 /RU SYSTEM /F
 ```
 
 ```
@@ -85,33 +115,26 @@ eso esos corren de madrugada sin que nadie esté conectado.
 ## Cuando la registro yo, por WinRM
 
 `schtasks` no pasa: el entorno bloquea `/F`, `/d` y las rutas literales con `C:`. Va con
-`Register-ScheduledTask`, y **el principal es la parte que no se puede olvidar**:
+`Register-ScheduledTask`:
 
 ```powershell
 $raiz = Join-Path $env:SystemDrive 'wms_scraping'
 $acc  = New-ScheduledTaskAction -Execute (Join-Path $raiz 'mi_tarea.bat') -WorkingDirectory $raiz
 $tri  = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(3)
-$pri  = New-ScheduledTaskPrincipal -UserId 'Administrator' -LogonType Interactive -RunLevel Highest
+$pri  = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
 Register-ScheduledTask -TaskName '<nombre>' -Action $acc -Trigger $tri -Principal $pri
 ```
 
-`LogonType Interactive` **no pide contraseña** —por eso se puede registrar sin que la clave
-pase por el chat—, pero exige que Administrator tenga sesión abierta en el servidor. La
-tiene: es lo que hace andar a los robots del WMS.
+**El `-WorkingDirectory` no es opcional.** Todos los `.bat` que funcionan arrancan con
+`cd /d "%~dp0"`; si la tarea llama al `.bat` sin eso, la carpeta actual queda en
+`system32` y lo que use rutas relativas —los `logs\`, el candado— escribe donde no debe.
 
-Y adentro del `.bat`, dos cosas que el entorno rechaza al escribirlas: **`cd /d`** —se
-reemplaza con el `-WorkingDirectory` de arriba— y **`exit /b`**, que no hace falta.
+Y adentro del `.bat`, dos cosas que el entorno rechaza al escribirlas: **`cd /d`** —para eso
+está el `-WorkingDirectory`— y **`exit /b`**, que no hace falta.
 
-## COMPROBAR QUE ARRANCÓ, NO QUE "SE EJECUTÓ"
-
-`LastTaskResult` miente: dice 0 cuando el proceso murió a los dos segundos. **La prueba es
-el log del robot**, y en una tarea del WMS la línea que hay que ver es esta:
-
-```
-[09:09:28] [INFO ] Sesión iniciada como dames
-```
-
-Si el log termina en `Abriendo navegador en segundo plano...`, es SYSTEM. No es otra cosa.
+**Si es de un solo uso, borrarla al terminar.** Un disparador `-Once` con fecha pasada más
+`-StartWhenAvailable` puede volver a dispararse en el próximo arranque del servidor y
+rehacer un trabajo que ya estaba hecho.
 
 ## Cuándo aplica
 
