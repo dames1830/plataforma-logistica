@@ -27,6 +27,7 @@ LAS TRAMPAS, todas medidas esta noche:
   6. El formato es EXCEL. Con CSV el menu se abre y no baja nada.
 """
 import os
+import shutil
 import sys
 import time
 
@@ -48,6 +49,38 @@ from playwright.sync_api import sync_playwright
 QUIEN = "Bajar produccion por hora"
 CARPETA = "ALDEAS"
 DESTINO = os.path.join("C:", os.sep, "wms_scraping", "logs", "prodhora")
+
+# UNA COPIA PARA DANIEL, GUARDADA POR DIA.
+#
+# Daniel, 08-sep-2026: *"necesito que lo que baje de web report lo almacenes ahi
+# por dias en una carpeta... en mi proyecto web logistico, y ahi una carpeta
+# llamada web report, y dentro una carpeta picking y otra embalaje"*.
+#
+# La de `logs\prodhora` NO se toca: de ahi lee el cruce y ahi rota. Esta es la
+# que el abre, va en OneDrive y por eso la ve desde su laptop.
+PROYECTO = ("OneDrive", "danielames.bata", "Proyecto web Logistico", "Web Report")
+SUBCARPETA = {"picking": "Picking", "embalaje": "Embalaje"}
+
+
+def guardar_en_el_proyecto(ruta, clave):
+    r"""Deja una copia del archivo en la carpeta que le toca.
+
+    QUE FALLE LA COPIA NO PUEDE TUMBAR LA BAJADA. Lo que importa es el archivo
+    que ya quedo en `logs\prodhora`, que es el que lee el cruce; esto es una
+    comodidad para mirarlo.
+    """
+    try:
+        sub = SUBCARPETA.get(clave)
+        if not sub:
+            po.log("no se en que carpeta va '%s'; no se copia" % clave, "WARN")
+            return
+        destino = os.path.join(os.environ.get("USERPROFILE", ""), *(PROYECTO + (sub,)))
+        os.makedirs(destino, exist_ok=True)
+        shutil.copyfile(ruta, os.path.join(destino, os.path.basename(ruta)))
+        po.log("   copia guardada en Web Report -> %s" % sub)
+    except Exception as e:
+        po.log("no se pudo dejar la copia en el proyecto (%s: %s)"
+               % (type(e).__name__, str(e)[:120]), "WARN")
 MINUTOS_VISOR = 25          # cuanto se espera a que Oracle arme el informe
 # ESTOS DOS INFORMES SON RESUMENES Y PESAN POCO: el de picking bajo con 10 KB y
 # el de embalaje con 7,6 KB, los dos completos y correctos. Con el corte en 15 KB
@@ -224,7 +257,9 @@ def correr_uno(page, fr, clave, nombre, dia):
     if ej is not None:
         ej.click(force=True, timeout=10000)
     corto = '-'.join(dia.split('-')[:2])      # DD-MM, como los demas archivos
-    return exportar(fr, page, os.path.join(DESTINO, "%s_%s.xlsx" % (clave, corto)))
+    ruta = exportar(fr, page, os.path.join(DESTINO, "%s_%s.xlsx" % (clave, corto)))
+    guardar_en_el_proyecto(ruta, clave)
+    return ruta
 
 
 def bajar(dia, abrir_log=True):
