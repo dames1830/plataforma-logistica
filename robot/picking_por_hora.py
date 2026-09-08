@@ -438,6 +438,10 @@ def run():
     carpeta = tempfile.mkdtemp(prefix="picking_hora_")
     ruta_csv = os.path.join(carpeta, "picking.csv")
     hechos, fallados = [], []
+    # LAS FRANJAS QUE NO TUVIERON MOVIMIENTO VAN APARTE. No son un fallo -no hay
+    # nada que recuperar- pero tampoco son un dia hecho, y mezclarlas con
+    # cualquiera de los dos miente.
+    sin_datos = []
 
     try:
         with sync_playwright() as p:
@@ -454,8 +458,18 @@ def run():
                 bloqueo_wms.tomar("picking de la hora")
 
                 resumen = None
+                vacio = False
                 for intento in (1, 2):
                     try:
+                        # SE BORRA ANTES DE BAJAR. `ruta_csv` es la misma para
+                        # todos los días de una recarga: si la franja no trae
+                        # nada, el archivo del día ANTERIOR seguiría ahí y se
+                        # publicaría dos veces con fecha distinta.
+                        try:
+                            os.remove(ruta_csv)
+                        except OSError:
+                            pass
+
                         # LA MISMA NAVEGACIÓN QUE EL ROBOT DE LAS 08:00. Las horas
                         # son parámetro justamente para esto: una sola copia.
                         if not wms.con_reintentos(
@@ -465,6 +479,22 @@ def run():
                                                              minimo_filas=MINIMO_FILAS),
                                 page):
                             raise RuntimeError("no se pudo bajar el picking")
+
+                        # UNA FRANJA SIN MOVIMIENTO NO ES UNA FALLA.
+                        #
+                        # `descargar_picking()` da por buena una franja vacía
+                        # —así deja de reintentar tres veces contra una grilla
+                        # sin filas— pero en ese caso NO escribe el archivo.
+                        # Leerlo igual reventaba con FileNotFoundError, y el
+                        # corte del turno informaba "picking FALLO" una mañana en
+                        # la que simplemente no se picó nada: pasó el 08-sep-2026
+                        # a las 07:18. El OBLPN ya lo resolvía así.
+                        if not os.path.isfile(ruta_csv):
+                            log("El %s de %s a %s no tiene movimiento: no se picó "
+                                "nada en esa franja."
+                                % (dia.strftime("%d-%m-%Y"), desde, hasta))
+                            vacio = True
+                            break
 
                         # El cálculo va en OTRA pestaña: la del WMS queda como está.
                         hoja = contexto.new_page()
@@ -511,6 +541,10 @@ def run():
                             pass
                         navegador, contexto, page = abrir_sesion(p, a_la_vista)
 
+                if vacio:
+                    sin_datos.append(dia.strftime("%d-%m-%Y"))
+                    continue
+
                 if not resumen:
                     fallados.append(dia.strftime("%d-%m-%Y"))
                     continue
@@ -550,12 +584,17 @@ def run():
         for d, f, l, pa in hechos:
             log("   %s   filas=%-8s líneas=%-8s pares=%s"
                 % (d, format(f, ",d"), format(l, ",d"), format(pa, ",d")))
+        if sin_datos:
+            log("SIN MOVIMIENTO (no hay nada que recuperar): %s"
+                % ", ".join(sin_datos))
         if fallados:
             log("NO SALIERON: %s" % ", ".join(fallados), "ERROR")
             log("Se recuperan con:  python picking_por_hora.py --dias %s"
                 % ",".join(fallados), "ERROR")
     else:
-        log("LISTO en %.1f minutos" % ((time.time() - t0) / 60.0))
+        log("LISTO en %.1f minutos%s"
+            % ((time.time() - t0) / 60.0,
+               "  ·  sin movimiento en esa franja" if sin_datos else ""))
     log("=" * 58)
     return 0 if not fallados else 1
 
