@@ -102,7 +102,7 @@ MINIMO_KB = 4
 # para quedarse con el dia pedido.
 REPORTES = [
     ("picking", "semana PRODUCCION PICKING ALDEAS X HORA acc calz"),
-    ("embalaje", "semana PRODUCCION EMBALAJE  ALDEAS X HORA acc calz"),
+    ("embalaje", "semana PRODUCCION EMBALAJE ALDEAS X HORA acc calz"),
 ]
 
 
