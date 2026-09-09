@@ -59,7 +59,26 @@ DESTINO = os.path.join("C:", os.sep, "wms_scraping", "logs", "prodhora")
 #
 # La de `logs\prodhora` NO se toca: de ahi lee el cruce y ahi rota. Esta es la
 # que el abre, va en OneDrive y por eso la ve desde su laptop.
-PROYECTO = ("OneDrive", "danielames.bata", "Proyecto web Logistico", "Web Report")
+PROYECTO = ("danielames.bata", "Proyecto web Logistico", "Web Report")
+
+
+def _carpeta_web_report():
+    r"""Donde va la copia. SE BUSCA, NO SE ARMA CON %USERPROFILE%.
+
+    El robot corre como SYSTEM y ahi `%USERPROFILE%` es
+    `system32\config\systemprofile`: la copia terminaba en una carpeta que no
+    existe para nadie. Misma busqueda que `armar_pendiente.py`.
+    """
+    for c in (os.environ.get("OneDrive"), os.environ.get("OneDriveCommercial"),
+              os.path.join(os.path.expanduser("~"), "OneDrive"),
+              os.path.join("C:", os.sep, "Users", "Administrator", "OneDrive"),
+              os.path.join("C:", os.sep, "Users", "dames", "OneDrive")):
+        if not c:
+            continue
+        ruta = os.path.join(c, *PROYECTO)
+        if os.path.isdir(os.path.dirname(ruta)):
+            return ruta
+    return None
 SUBCARPETA = {"picking": "Picking", "embalaje": "Embalaje"}
 
 
@@ -75,7 +94,11 @@ def guardar_en_el_proyecto(ruta, clave):
         if not sub:
             po.log("no se en que carpeta va '%s'; no se copia" % clave, "WARN")
             return
-        destino = os.path.join(os.environ.get("USERPROFILE", ""), *(PROYECTO + (sub,)))
+        raiz = _carpeta_web_report()
+        if not raiz:
+            po.log("no encuentro la carpeta del proyecto; no se copia", "WARN")
+            return
+        destino = os.path.join(raiz, sub)
         os.makedirs(destino, exist_ok=True)
         shutil.copyfile(ruta, os.path.join(destino, os.path.basename(ruta)))
         po.log("   copia guardada en Web Report -> %s" % sub)
