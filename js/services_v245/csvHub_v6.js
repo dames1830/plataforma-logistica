@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0666';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0667';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0666';
+const VERSION = '29.0667';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1394,6 +1394,27 @@ const persistToDatabase = async (area, payload, username = 'sistema') => {
  * Es un dato compartido: quitarlo lo quita para TODAS las PC. Mismo trato que al
  * cargarlo, que también pisa el de todas.
  */
+/** LO QUE SE GUARDÓ AL QUITAR ESA ÁREA. `null` si no hay nada.
+ *
+ * Devuelve `{ ts, filas }` — la hora en que se quitó y lo que había. Lo usa la
+ * tarjeta de PEDIDOS y PENDIENTE para ofrecer el botón de traerlo de vuelta,
+ * igual que hace el Replenishment con sus corridas.
+ */
+export const traerDemandaGuardada = async (area) => {
+    try {
+        const r = await fetch(`${API_URL}/${area}_guardado?t=${Date.now()}`);
+        if (!r.ok) return null;
+        const cuerpo = await r.json();
+        const d = (cuerpo && cuerpo.data !== undefined) ? cuerpo.data : cuerpo;
+        if (!d || !Array.isArray(d.filas) || !d.filas.length) return null;
+        return d;
+    } catch (e) {
+        console.warn('[DEMANDA] no se pudo leer el guardado de', area, e && e.message);
+        return null;
+    }
+};
+
+
 export const clearAreaData = async (area, username = 'sistema') => {
     // `username` ya no se usa: lo pedia logSystemAction, que se borro por no guardar nada.
     // Se deja en la firma porque media docena de sitios lo pasan; sacarlo obliga a tocarlos todos.
@@ -1403,6 +1424,36 @@ export const clearAreaData = async (area, username = 'sistema') => {
     let ok = true;
 
     if (DEMANDA_EN_LA_NUBE[area]) {
+        /* ANTES DE VACIAR, SE GUARDA LO QUE HABIA.
+         *
+         * Quitar PEDIDOS o PENDIENTE es una acción de trabajo —sacarlos del
+         * análisis para correr solo con otra fuente—, no un borrado. Pero el
+         * vacío se publica ENCIMA del día, así que el dato del día se perdía y
+         * no había forma de traerlo: había que esperar a que el robot volviera
+         * a correr. Le pasó a Daniel el 08-sep-2026.
+         *
+         * El Replenishment nunca tuvo ese problema porque sus corridas viven en
+         * un cajón aparte. Esto le da el mismo cajón a estas dos.
+         *
+         * SI EL GUARDADO FALLA, NO SE VACÍA. Vaciar sin haber guardado es
+         * exactamente lo que se está arreglando. */
+        try {
+            const previo = await getAreaData(area);
+            if (Array.isArray(previo) && previo.length) {
+                const g = await fetch(`${API_URL}/${area}_guardado`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ts: Date.now(), filas: previo })
+                });
+                if (!g.ok) {
+                    console.warn(`[DEMANDA] no se pudo guardar '${area}' antes de vaciar (${g.status}): NO se vacía.`);
+                    return false;
+                }
+            }
+        } catch (e) {
+            console.warn('[DEMANDA] no se pudo guardar antes de vaciar:', e && e.message);
+            return false;
+        }
         try {
             const r = await fetch(`${API_URL}/${area}`, {
                 method: 'POST',

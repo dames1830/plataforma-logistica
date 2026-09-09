@@ -241,7 +241,8 @@ def correr_uno(page, fr, clave, nombre, dia):
         raise RuntimeError("no veo las dos cajas de fecha")
     # La fecha va en formato del WMS: DD/MM/AAAA con hora. `dia` llega DD-MM-AAAA.
     d = dia.replace('-', '/')
-    for c, val in ((vis[0], d + ' 00:00:00'), (vis[1], d + ' 23:59:59')):
+    desde, hasta = ventana(d)
+    for c, val in ((vis[0], desde), (vis[1], hasta)):
         c.fill(val, timeout=10000)      # SIN Escape: cierra el dialogo
         po.log("   <- %s" % val)
         time.sleep(1)
@@ -257,9 +258,40 @@ def correr_uno(page, fr, clave, nombre, dia):
     if ej is not None:
         ej.click(force=True, timeout=10000)
     corto = '-'.join(dia.split('-')[:2])      # DD-MM, como los demas archivos
+    # UNA PRUEBA NO PISA EL ARCHIVO BUENO. Con ventana a medida el nombre lleva
+    # un sufijo, para poder comparar los dos lado a lado.
+    if '--desde' in sys.argv or '--hasta' in sys.argv:
+        corto += '_ventana'
     ruta = exportar(fr, page, os.path.join(DESTINO, "%s_%s.xlsx" % (clave, corto)))
     guardar_en_el_proyecto(ruta, clave)
     return ruta
+
+
+def ventana(d):
+    """Que se escribe en las dos cajas de fecha.
+
+    POR DEFECTO, EL DIA CALENDARIO ENTERO — que es lo que se viene haciendo.
+
+    CON `--desde` Y `--hasta` SE PIDE OTRA VENTANA, y para eso existen: el
+    operador del WMS dice que el informe corre con la hora de Oracle y que el dia
+    va de mediodia a mediodia. Sin poder pedir las dos ventanas y comparar, eso
+    no se puede ni confirmar ni descartar.
+
+    Se escriben tal cual van al filtro:
+        --desde "07/09/2026 12:00:00" --hasta "08/09/2026 12:00:00"
+    """
+    a = b = None
+    for i, x in enumerate(sys.argv):
+        if x == '--desde' and i + 1 < len(sys.argv):
+            a = sys.argv[i + 1]
+        elif x == '--hasta' and i + 1 < len(sys.argv):
+            b = sys.argv[i + 1]
+    if a or b:
+        a = a or (d + ' 00:00:00')
+        b = b or (d + ' 23:59:59')
+        po.log('   VENTANA A MEDIDA: %s  ->  %s' % (a, b), 'WARN')
+        return a, b
+    return d + ' 00:00:00', d + ' 23:59:59'
 
 
 def bajar(dia, abrir_log=True):
