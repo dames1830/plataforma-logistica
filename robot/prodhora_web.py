@@ -30,6 +30,7 @@ import os
 import shutil
 import sys
 import time
+from datetime import datetime, timedelta
 
 sys.path.insert(0, r"C:\wms_scraping")
 
@@ -304,7 +305,11 @@ def ventana(d):
         b = b or (d + ' 23:59:59')
         po.log('   VENTANA A MEDIDA: %s  ->  %s' % (a, b), 'WARN')
         return a, b
-    return d + ' 00:00:00', d + ' 23:59:59'
+    # DE MEDIODIA A MEDIODIA. En hora de Oracle -5 adelante de Lima- eso es de
+    # las 07:00 a las 07:00 del dia siguiente, o sea la jornada entera. Con
+    # 00:00 a 23:59 se perdia la hora 19.
+    sig = (datetime.strptime(d, '%d/%m/%Y') + timedelta(days=1)).strftime('%d/%m/%Y')
+    return d + ' 12:00:00', sig + ' 12:00:00'
 
 
 def bajar(dia, abrir_log=True):
