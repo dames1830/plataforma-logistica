@@ -1,0 +1,161 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Maqueta · Comparativo de picking</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D141A; --panel:#131C25; --panel2:#18222D; --border:#22303D;
+    --text:#E8EFF3; --muted:#8899A5; --soft:#B4C2CE;
+    --violet:#7C6CF6; --ok:#5FBF90; --bad:#E0776B; --warn:#E0A44A;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;
+       margin:0;padding:22px 26px 60px}
+  .tabs{display:flex;gap:26px;border-bottom:1px solid var(--border);margin-bottom:22px}
+  .tab{padding:10px 2px 12px;font-size:13px;font-weight:600;color:var(--muted);
+       border-bottom:2px solid transparent;cursor:pointer;letter-spacing:.01em}
+  .tab.on{color:var(--violet);border-bottom-color:var(--violet)}
+  .cab{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;
+       flex-wrap:wrap;margin-bottom:18px}
+  h2{font-size:16px;margin:0 0 4px;font-weight:800;letter-spacing:.01em}
+  .sub{font-size:12.5px;color:var(--muted);margin:0;max-width:62ch;line-height:1.55}
+  .rango{display:inline-flex;align-items:center;gap:9px;background:var(--panel2);
+         border:1px solid var(--border);border-radius:9px;padding:6px 12px;font-size:12.5px}
+  .rango input{background:transparent;border:0;color:var(--text);font:inherit;
+               font-variant-numeric:tabular-nums}
+  .rango span{color:var(--muted)}
+  .tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:14px;margin:0 0 20px}
+  .t{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .t .et{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .t .n{font-size:26px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}
+  .t .p{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .caja{background:var(--panel);border:1px solid var(--border);border-radius:14px;
+        padding:18px 20px;margin-bottom:18px}
+  .caja h3{font-size:13px;margin:0 0 2px;font-weight:700}
+  .caja p.n{font-size:11.5px;color:var(--muted);margin:0 0 16px}
+  .graf{display:flex;align-items:flex-end;gap:14px;height:240px;padding:0 4px;
+        border-bottom:1px solid var(--border);position:relative}
+  .meta{position:absolute;left:0;right:0;border-top:1.5px dashed var(--warn);z-index:2}
+  .meta b{position:absolute;right:0;top:-19px;font-size:11px;color:var(--warn);
+          background:var(--panel);padding:0 6px;font-weight:700}
+  .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
+       align-items:center;gap:5px;height:100%;position:relative}
+  .barra{width:100%;max-width:46px;border-radius:5px 5px 0 0;position:relative}
+  .barra.b{background:linear-gradient(180deg,#E0776B,#9c4a41)}
+  .barra.g{background:linear-gradient(180deg,#5FBF90,#35785a)}
+  .val{position:absolute;top:-19px;width:100%;text-align:center;font-size:11px;
+       font-weight:700;font-variant-numeric:tabular-nums}
+  .pie{display:flex;gap:14px;padding:9px 4px 0}
+  .pie div{flex:1;text-align:center;font-size:11px;color:var(--muted);line-height:1.35}
+  .pie div b{display:block;color:var(--soft);font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  th{text-align:right;padding:9px 10px;font-size:10.5px;letter-spacing:.07em;
+     text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600}
+  th:first-child,td:first-child{text-align:left}
+  td{padding:9px 10px;border-bottom:1px solid rgba(34,48,61,.55);text-align:right}
+  tr:last-child td{border-bottom:0}
+  .rojo{color:var(--bad);font-weight:700}
+  .verde{color:var(--ok);font-weight:700}
+  .aviso{background:rgba(224,164,74,.09);border-left:3px solid var(--warn);
+         border-radius:0 9px 9px 0;padding:13px 16px;font-size:12.5px;line-height:1.6;
+         margin-bottom:20px}
+  .aviso b{color:var(--warn)}
+  .dos{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:820px){.dos{grid-template-columns:1fr}}
+</style>
+
+<div class="tabs">
+  <div class="tab">📈 Pares por hora</div>
+  <div class="tab on">⚖️ Comparativo</div>
+</div>
+
+<div class="cab">
+  <div>
+    <h2>Lo que se debe picar contra lo que se pica</h2>
+    <p class="sub">Calzado suelto, día por día. La caja de prepack queda fuera:
+      un pick de 12 pares no se compara contra un pick de 1.</p>
+  </div>
+  <label class="rango">
+    <span>📅</span>
+    <input type="date" value="2026-08-24"> <span>a</span>
+    <input type="date" value="2026-09-07">
+  </label>
+</div>
+
+<div class="tarjetas">
+  <div class="t"><div class="et">Meta</div><div class="n" style="color:var(--warn)">190</div>
+    <div class="p">pares por hora · la fija el supervisor</div></div>
+  <div class="t"><div class="et">Real del periodo</div><div class="n" style="color:var(--bad)">86</div>
+    <div class="p">103.940 pares en 1.200 horas</div></div>
+  <div class="t"><div class="et">Brecha</div><div class="n" style="color:var(--bad)">−104</div>
+    <div class="p">se llega al 45% de la meta</div></div>
+  <div class="t"><div class="et">Días que llegaron</div><div class="n">0<span style="font-size:15px;color:var(--muted)"> de 12</span></div>
+    <div class="p">el mejor fue el sábado 05-09 con 168</div></div>
+</div>
+
+<div class="caja">
+  <h3>Pares por hora, día por día</h3>
+  <p class="n">La raya es la meta de 190. La barra es lo que se picó de verdad.</p>
+  <div class="graf" id="g"></div>
+  <div class="pie" id="p"></div>
+</div>
+
+<div class="aviso">
+  <b>ANTES DE CERRAR ESTO HAY QUE DECIDIR UNA COSA.</b><br>
+  Las horas se pueden contar de dos formas y dan números muy distintos:<br><br>
+  <b>A · Como se cuenta hoy</b> — de cada tarea, del primer al último pick, y se suman
+  todas. Es la regla que usted fijó el 02-sep. Da <b>146 pares/hora</b> en el periodo.
+  <b>Pero el tiempo ENTRE tareas no se cuenta</b>: 709 horas contra 1.200 de reloj.<br><br>
+  <b>B · Con el reloj real</b> — desde que empieza hasta que termina, uniendo lo que se
+  pisa. Da <b>86 pares/hora</b>. Es contra lo que el supervisor compara sus 190.<br><br>
+  El cuadro de arriba está con <b>B</b>. Si prefiere A, cambia solo el número, no el diseño.
+</div>
+
+<div class="dos">
+  <div class="caja">
+    <h3>El detalle</h3>
+    <p class="n">Pares, horas de reloj y ritmo de cada día.</p>
+    <table><thead><tr><th>Día</th><th>Pares</th><th>Horas</th><th>P/hora</th><th>vs meta</th></tr></thead>
+    <tbody id="tb"></tbody></table>
+  </div>
+  <div class="caja">
+    <h3>Las dos medidas, lado a lado</h3>
+    <p class="n">La misma jornada contada de las dos formas.</p>
+    <table><thead><tr><th>Día</th><th>Horas hoy</th><th>Horas reloj</th><th>P/h hoy</th><th>P/h reloj</th></tr></thead>
+    <tbody id="tb2"></tbody></table>
+  </div>
+</div>
+
+<script>
+const D = [
+ {dia:"24-08",dds:"lun",pares:4660,hSum:47.1,hReal:100.3,phSum:99,phReal:46},
+ {dia:"25-08",dds:"mar",pares:2268,hSum:20.3,hReal:60.1,phSum:112,phReal:38},
+ {dia:"26-08",dds:"mié",pares:4975,hSum:39.7,hReal:103.8,phSum:125,phReal:48},
+ {dia:"27-08",dds:"jue",pares:11942,hSum:80.1,hReal:157.5,phSum:149,phReal:76},
+ {dia:"28-08",dds:"vie",pares:12470,hSum:104.4,hReal:151.6,phSum:119,phReal:82},
+ {dia:"31-08",dds:"lun",pares:2636,hSum:22.3,hReal:26.0,phSum:118,phReal:101},
+ {dia:"01-09",dds:"mar",pares:988,hSum:10.3,hReal:11.5,phSum:96,phReal:86},
+ {dia:"02-09",dds:"mié",pares:11688,hSum:76.6,hReal:142.2,phSum:153,phReal:82},
+ {dia:"03-09",dds:"jue",pares:14266,hSum:88.3,hReal:129.8,phSum:162,phReal:110},
+ {dia:"04-09",dds:"vie",pares:15303,hSum:92.1,hReal:150.1,phSum:166,phReal:102},
+ {dia:"05-09",dds:"sáb",pares:8680,hSum:44.2,hReal:51.6,phSum:196,phReal:168},
+ {dia:"07-09",dds:"lun",pares:14064,hSum:83.6,hReal:115.3,phSum:168,phReal:122}
+];
+const META = 190, TOPE = 210, nf = n => n.toLocaleString('es-PE');
+
+document.getElementById('g').insertAdjacentHTML('beforeend',
+  `<div class="meta" style="bottom:${META / TOPE * 100}%"><b>meta 190</b></div>`);
+document.getElementById('g').insertAdjacentHTML('beforeend', D.map(d =>
+  `<div class="col"><div class="barra ${d.phReal >= META ? 'g' : 'b'}"
+     style="height:${d.phReal / TOPE * 100}%"><span class="val">${d.phReal}</span></div></div>`).join(''));
+document.getElementById('p').innerHTML = D.map(d =>
+  `<div><b>${d.dds}</b>${d.dia}</div>`).join('');
+document.getElementById('tb').innerHTML = D.map(d =>
+  `<tr><td>${d.dds} ${d.dia}</td><td>${nf(d.pares)}</td><td>${d.hReal.toFixed(1)}</td>
+   <td>${d.phReal}</td><td class="${d.phReal >= META ? 'verde' : 'rojo'}">
+   ${d.phReal - META > 0 ? '+' : ''}${d.phReal - META}</td></tr>`).join('');
+document.getElementById('tb2').innerHTML = D.map(d =>
+  `<tr><td>${d.dds} ${d.dia}</td><td>${d.hSum.toFixed(1)}</td><td>${d.hReal.toFixed(1)}</td>
+   <td>${d.phSum}</td><td>${d.phReal}</td></tr>`).join('');
+</script>
