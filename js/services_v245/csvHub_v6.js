@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0667';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0668';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0667';
+const VERSION = '29.0668';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -2888,6 +2888,15 @@ export const calculateBufferPallets = (configOverride = null) => {
     });
 
     const resEmp = [];
+    /* EL TOTAL GENERAL NO SE SUMA: SE UNE.
+     *
+     * `paletas` y `skus` son conjuntos, no cantidades. Una ubicación con demanda
+     * de PEDIDOS y de PENDIENTE está en los dos subtotales, así que sumarlos la
+     * cuenta dos veces —843 en pantalla contra 822 en el Excel, que era lo
+     * correcto—. Las unidades sí se suman: un par bajado para PEDIDOS y otro
+     * para PENDIENTE son dos pares distintos. */
+    const todasPal = new Set();
+    const todasSku = new Set();
     sources.forEach(s => {
         let sourcePallets = new Set();
         let sourceSkus = new Set();
@@ -2904,8 +2913,8 @@ export const calculateBufferPallets = (configOverride = null) => {
                 parcaja: Math.round(data.units) || 0
             });
             
-            data.pal.forEach(p => sourcePallets.add(p));
-            data.sku.forEach(sk => sourceSkus.add(sk));
+            data.pal.forEach(p => { sourcePallets.add(p); todasPal.add(p); });
+            data.sku.forEach(sk => { sourceSkus.add(sk); todasSku.add(sk); });
             sourceUnits += data.units;
         });
 
@@ -2923,8 +2932,8 @@ export const calculateBufferPallets = (configOverride = null) => {
         resEmp.push({ 
             fuente: 'TOTAL GENERAL', 
             tipo: '', 
-            paletas: resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.paletas, 0), 
-            skus: resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.skus, 0), 
+            paletas: todasPal.size, 
+            skus: todasSku.size, 
             parcaja: Math.round(resEmp.filter(r=>r.isSubTotal).reduce((a,b)=>a+b.parcaja, 0)) 
         });
     }
