@@ -87,9 +87,22 @@ MINUTOS_VISOR = 25          # cuanto se espera a que Oracle arme el informe
 # que traia de los informes grandes se rechazaban descargas buenas.
 MINIMO_KB = 4
 
+# LOS INFORMES QUE HAY QUE ABRIR, Y POR QUE ESTOS Y NO LOS OTROS.
+#
+# Daniel, 08-sep-2026, con el Excel en la mano: el informe SIN "semana" al que
+# apuntaba el robot **viene incompleto**. Para jcruzc el 07-09 daba ACC 244; el
+# de "semana" da 447, que es exactamente lo que calcula la plataforma. Al viejo
+# le faltaban filas enteras -la hora 15, con 191 pares- y otra venia corta.
+#
+# Eso explica las diferencias del cruce que se persiguieron todo el dia: no era
+# la hora de Oracle, ni la tienda de destino, ni el LPN. Era otro informe.
+#
+# El de "semana" trae ademas Soli Pack / Pre Pack, Turno y Fecha. La columna que
+# se lee sigue siendo "Cantidad preparada Convertida"; la Fecha la usa el cruce
+# para quedarse con el dia pedido.
 REPORTES = [
-    ("picking", "PRODUCCION PICKING ALDEAS X HORA acc calz"),
-    ("embalaje", "PRODUCCION EMBALAJE  ALDEAS X HORA acc calz"),
+    ("picking", "semana PRODUCCION PICKING ALDEAS X HORA acc calz"),
+    ("embalaje", "semana PRODUCCION EMBALAJE  ALDEAS X HORA acc calz"),
 ]
 
 

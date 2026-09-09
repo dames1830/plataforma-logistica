@@ -119,26 +119,63 @@ def m(x):
 #  LOS DOS LADOS
 # ══════════════════════════════════════════════════════════════════════════
 
-def leer_web(ruta):
-    """{(tipo, usuario, hora): [cantidad, convertida]} + el titulo del informe."""
+def _columna(cab, *nombres):
+    """El indice de la primera columna cuyo titulo coincida. -1 si no esta."""
+    bajos = [n.strip().lower() for n in nombres]
+    for i, c in enumerate(cab):
+        if str(c or '').strip().lower() in bajos:
+            return i
+    return -1
+
+
+def leer_web(ruta, dia_iso=None):
+    """{(tipo, usuario, hora): [cantidad, convertida]} + el titulo del informe.
+
+    SE LEE POR NOMBRE DE COLUMNA. Antes se tiraban las celdas vacias y se leia
+    por posicion: con el informe de 5 columnas funcionaba de casualidad, y con el
+    de 10 se rompe al primer hueco. El nombre no se mueve.
+
+    Y SI EL INFORME TRAE VARIOS DIAS -el de la semana tiene columna `Fecha`- se
+    filtra el que se pidio. Sin eso, el cruce de un dia compararia contra la
+    semana entera.
+    """
     wb = load_workbook(ruta, read_only=True, data_only=True)
     h = wb[wb.sheetnames[0]]
     filas = defaultdict(lambda: [0.0, 0.0])
     titulo = ''
+    iT = iU = iH = iC = iV = iF = -1
     for i, r in enumerate(h.iter_rows(values_only=True)):
         vals = [c for c in r if c is not None and str(c).strip()]
         if i == 0 and vals:
             titulo = str(vals[0]).strip()
-        if len(vals) < 5:
+        if iT < 0:
+            # LA CABECERA ES LA FILA QUE TRAE 'Tipo' Y 'Usuario'.
+            if _columna(r, 'Tipo') >= 0 and _columna(r, 'Usuario') >= 0:
+                iT = _columna(r, 'Tipo')
+                iU = _columna(r, 'Usuario')
+                iH = _columna(r, 'Hora picking', 'Hora embalaje', 'Hora')
+                iC = _columna(r, 'Cantidad preparada', 'Cant preparada')
+                iV = _columna(r, 'Cantidad preparada Convertida',
+                              'TOTAL Cantidad preparada Convertida')
+                iF = _columna(r, 'Fecha')
             continue
-        tipo = str(vals[0]).strip().upper()
+        def val(idx):
+            return r[idx] if 0 <= idx < len(r) else None
+        tipo = str(val(iT) or '').strip().upper()
         if tipo not in ('ACC', 'CALZ'):
-            continue
+            continue          # se salta la fila 'Total' y cualquier renglon suelto
+        if iF >= 0 and dia_iso:
+            f = val(iF)
+            txt = f.strftime('%Y-%m-%d') if hasattr(f, 'strftime') else str(f or '')[:10]
+            if txt and txt != dia_iso:
+                continue
         try:
-            hora, cant, conv = int(float(vals[2])), float(vals[3]), float(vals[4])
+            hora = int(float(val(iH)))
+            conv = float(val(iV))
+            cant = float(val(iC)) if iC >= 0 and val(iC) is not None else conv
         except (TypeError, ValueError):
             continue
-        k = (tipo, str(vals[1]).strip(), hora)
+        k = (tipo, str(val(iU) or '').strip(), hora)
         filas[k][0] += cant
         filas[k][1] += conv
     wb.close()
@@ -227,7 +264,9 @@ def leer_plataforma(d):
 def cuadro(clave, ruta_web, dia_iso):
     """El cruce de un lado: totales, hora por hora y persona por persona."""
     cfg = LADOS[clave]
-    titulo, web = leer_web(ruta_web)
+    # EL DIA VA COMO FILTRO: el informe de la semana trae varios y sin esto
+    # el cruce de un dia compararia contra toda la semana.
+    titulo, web = leer_web(ruta_web, dia_iso)
     d = datos_de_la_plataforma(cfg, dia_iso)
     maq = leer_plataforma(d)
 
