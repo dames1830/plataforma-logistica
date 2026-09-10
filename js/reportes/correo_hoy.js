@@ -25,8 +25,8 @@
  */
 
 import { nf, esc, cuadro, cuadroRutas, estilos, engancharBuscador }
-    from './pendiente.js?v=29.0693';
-import { icono } from '../services_v245/iconos.js?v=29.0693';
+    from './pendiente.js?v=29.0694';
+import { icono } from '../services_v245/iconos.js?v=29.0694';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -208,14 +208,12 @@ function cuadroRepetidas(filas) {
     const undCerradas = cerradas.reduce((s, f) => s + (Number(f.pidio) || 0), 0);
 
     return `<div class="pend-panel">
-        <h3>LO QUE COMERCIAL YA HABÍA MANDADO ANTES</h3>
-        <div class="pend-cap">Guías que vienen en el correo de hoy pero que comercial
-          ya había pedido otro día</div>
+        <h3>PEDIDOS QUE YA ESTÁN EN EL PENDIENTE</h3>
         <table>
           <thead><tr>
             <th>GUÍA</th><th>TIENDA</th><th>PRIORIDAD</th>
-            <th class="n">LA MANDÓ EL</th><th class="n">PIDIÓ HOY</th>
-            <th class="n">ABIERTO EN EL WMS</th>
+            <th class="n">FECHA</th><th class="n">PIDIÓ HOY</th>
+            <th class="n">ESTADO DEL WMS</th>
           </tr></thead>
           <tbody>
             ${bloque('Calzado')}${bloque('No calzado')}
@@ -228,9 +226,6 @@ function cuadroRepetidas(filas) {
           <b>${nf(cerradas.length)} de estas ${nf(lista.length)} guías el WMS ya las tiene
           cerradas</b> —son ${nf(undCerradas)} pares—: ya se despacharon, o esas órdenes se
           cerraron sin atenderse. Comercial las está volviendo a pedir.</div>` : ''}
-        <div class="pend-nota">Calzado y no calzado salen de la <b>etiqueta del correo</b>,
-          no del Maestro: estas guías no tienen líneas abiertas en el WMS, así que no hay
-          artículo al que preguntarle.</div>
       </div>`;
 }
 
