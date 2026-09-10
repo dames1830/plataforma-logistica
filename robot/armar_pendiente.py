@@ -1039,7 +1039,9 @@ def armar_no_liberados(hoy, guias, rutas, gen):
     info = {}
     # CALZADO O NO, del G. Gender del Maestro. Aca SI se puede preguntar: estas
     # ordenes tienen lineas abiertas en el WMS, o sea articulo.
-    por_gen = collections.defaultdict(float)
+    # SE GUARDA EL CONJUNTO DE ORDENES, no un contador: una orden con calzado Y
+    # accesorio contaria dos veces y la columna no cuadraria contra el total.
+    por_gen = collections.defaultdict(lambda: [set(), 0.0])
     # Lo que empieza con 50 pero el maestro no conoce: se avisa, no se borra.
     fuera_maestro = collections.defaultdict(float)
     f = io.open(PENDIENTES, encoding='utf-8-sig', newline='', errors='replace')
@@ -1068,7 +1070,9 @@ def armar_no_liberados(hoy, guias, rutas, gen):
             continue
         pares[o] += p
         base = sku.split('-')[0]
-        por_gen[gen.get(sku) or gen.get(base) or '(sin Maestro)'] += p
+        _g = gen.get(sku) or gen.get(base) or '(sin Maestro)'
+        por_gen[_g][0].add(o)
+        por_gen[_g][1] += p
         if o not in info:
             info[o] = {
                 'destino': dest or '(sin destino)',
@@ -1135,8 +1139,9 @@ def armar_no_liberados(hoy, guias, rutas, gen):
         'masVieja': vieja.isoformat() if vieja else '',
         'diasMasVieja': (hoy_d - vieja).days if vieja else 0,
         'pareto': pareto,
-        'gender': [{'k': k, 'und': int(round(v))}
-                   for k, v in sorted(por_gen.items(), key=lambda x: -x[1]) if v > 0],
+        'gender': [{'k': k, 'ped': len(v[0]), 'und': int(round(v[1]))}
+                   for k, v in sorted(por_gen.items(), key=lambda x: -x[1][1])
+                   if v[1] > 0],
         'detalle': detalle,
         'fueraMaestro': {
             'destinos': sorted(
@@ -1145,6 +1150,14 @@ def armar_no_liberados(hoy, guias, rutas, gen):
             'und': int(round(sum(fuera_maestro.values()))),
         },
     }
+    # SI UNA ORDEN CAE EN DOS GENDER, la columna de pedidos suma mas que el total y
+    # el cuadro deja de cuadrar. Hoy no pasa -275 contra 275-, pero si algun dia
+    # pasa tiene que verse en el log y no en la pantalla de Daniel.
+    _sum_ped = sum(len(v[0]) for v in por_gen.values())
+    if _sum_ped != len(pares):
+        log('OJO: la columna de pedidos por gender suma %d y hay %d ordenes: alguna '
+            'trae mas de un gender y el cuadro no va a cuadrar.'
+            % (_sum_ped, len(pares)), 'AVISO')
     log('No liberados de RETAIL: %s ordenes / %s pares; el mas viejo es del %s '
         '(%s dias)'
         % (format(datos['ordenes'], ',d'), format(datos['unidades'], ',d'),

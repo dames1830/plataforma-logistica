@@ -15,8 +15,8 @@
  * numero calculado en dos sitios se desincroniza, y ya paso en este proyecto.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0697';
-import { icono } from '../services_v245/iconos.js?v=29.0697';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0698';
+import { icono } from '../services_v245/iconos.js?v=29.0698';
 
 /**
  * LO QUE EL WMS ABRE Y COMERCIAL NUNCA LIBERO.
@@ -130,15 +130,18 @@ function cuadroGender(n) {
     if (!filas.length) return '';
     const tot = filas.reduce((a, f) => a + (Number(f.und) || 0), 0);
     return `<div class="pend-panel">
-        <h3>CALZADO Y LO QUE NO LO ES</h3>
+        <h3>GENDER</h3>
         <table>
-          <thead><tr><th>TIPO</th><th class="c">PARES</th><th class="c">%</th></tr></thead>
+          <thead><tr><th>TIPO</th><th class="c">PEDIDOS</th>
+            <th class="c">PARES</th><th class="c">%</th></tr></thead>
           <tbody>
             ${filas.map(f => `<tr>
               <td>${esc(f.k)}</td>
+              <td class="c">${nf(f.ped)}</td>
               <td class="c">${nf(f.und)}</td>
               <td class="c">${tot ? Math.round(100 * f.und / tot) : 0}%</td></tr>`).join('')}
             <tr class="pend-total"><td>TOTAL</td>
+              <td class="c">${nf(n.ordenes)}</td>
               <td class="c">${nf(tot)}</td><td class="c">100%</td></tr>
           </tbody>
         </table>
