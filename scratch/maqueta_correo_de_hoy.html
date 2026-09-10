@@ -9,9 +9,1948 @@
   Datos REALES del correo de esa noche. Los cuadros salen recortados de
   `js/reportes/pendiente.js`, no reescritos.
 -->
-<link rel="stylesheet" href="../css/main.css">
-<link rel="stylesheet" href="../css/temas.css">
-<link rel="stylesheet" href="../css/componentes.css">
+<style>:root {
+  --primary: var(--primary);
+  --primary-hover: var(--primary-hover);
+  --bg-dark: var(--bg-dark);
+  --bg-card: rgba(var(--card-rgb), 0.7);
+  --text-main: var(--text-main);
+  --text-muted: var(--text-muted);
+  --border: rgba(var(--ink-rgb), 0.1);
+  --glass-bg: rgba(var(--bg-rgb), 0.6);
+  --glass-border: rgba(var(--ink-rgb), 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(var(--shadow-rgb), 0.37);
+  --danger: var(--danger);
+  --success: var(--success);
+  --warning: var(--warning);
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(var(--shadow-rgb), 0.2);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--primary-rgb), 0.4);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--primary-rgb), 0.6);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-ui); }
+
+body {
+  background: var(--bg-dark);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(var(--primary-rgb), 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(var(--sky-rgb), 0.1) 0px, transparent 50%);
+  color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column;
+  overflow-x: hidden;
+}
+
+#app { width: 100%; flex-grow: 1; display: flex; flex-direction: column; }
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); border-radius: 16px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+
+/* Form Elements */
+.input-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.input-group label { font-size:var(--t-md); color: var(--text-muted); font-weight: 500; }
+.input-group input, .input-group select {
+  width: 100%; background: var(--panel-solid); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-main); font-size:var(--t-lg);
+  transition: all 0.3s ease; outline: none;
+  color-scheme: var(--scheme); 
+}
+.input-group input:focus, .input-group select:focus {
+  border-color: var(--primary); box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+}
+
+/* Custom Elite Select */
+.custom-select-container { position: relative; width: 100%; }
+.custom-select-trigger {
+  width: 100%; background: var(--panel-solid); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-main); font-size:var(--t-lg);
+  cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  transition: all 0.2s ease;
+}
+.custom-select-trigger:hover { border-color: var(--primary); }
+.custom-select-trigger::after {
+  content: '▼'; font-size:var(--t-xs); color: var(--text-muted); transition: transform 0.2s;
+}
+.custom-select-container.open .custom-select-trigger::after { transform: rotate(180deg); }
+
+.custom-select-options {
+  position: absolute; top: calc(100% + 5px); left: 0; right: 0;
+  background: var(--panel-solid); border: 1px solid var(--primary); border-radius: 12px;
+  z-index: 1000; display: none; overflow: hidden;
+  box-shadow: 0 10px 25px rgba(var(--shadow-rgb), 0.5); backdrop-filter: blur(10px);
+}
+.custom-select-container.open .custom-select-options { display: block; animation: selectFade 0.2s ease; }
+
+@keyframes selectFade { from { opacity:0; transform: translateY(-5px); } to { opacity:1; transform: translateY(0); } }
+
+.custom-option {
+  padding: 0.8rem 1.2rem; cursor: pointer; color: var(--text-main); font-size:var(--t-md);
+  transition: background 0.2s; border-bottom: 1px solid rgba(var(--ink-rgb), 0.03);
+}
+.custom-option:last-child { border-bottom: none; }
+.custom-option:hover { background: var(--btn-fill); }
+.custom-option.selected { background: rgba(var(--primary-rgb), 0.2); color: var(--primary); font-weight: 600; }
+
+/* Lista desplegable de los <select> nativos. Sin esto el sistema operativo la pinta
+   con fondo blanco y el texto blanco que hereda del control queda invisible. */
+select option {
+  background-color: var(--bg-dark);
+  color: var(--text-pale);
+}
+select optgroup {
+  background-color: var(--panel-deep);
+  color: var(--brand-light);
+  font-weight: 800;
+  font-style: normal;
+}
+select option:checked,
+select option:hover {
+  background-color: var(--btn-fill);
+  color: var(--text-strong);
+}
+
+.btn {
+  background: var(--btn-fill); color: var(--on-primary); border: none; padding: 0.75rem 1.5rem;
+  border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; width: 100%;
+}
+.btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+/* Login View Premium (Estilo Referencial) */
+.login-view-wrapper {
+  background: var(--bg-dark);
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(var(--primary-rgb), 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(var(--sky-rgb), 0.2) 0%, transparent 45%);
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  font-family: var(--font-ui);
+}
+
+.login-box-premium {
+  background: rgba(var(--bg-rgb), 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
+  box-shadow: 
+    0 20px 50px -10px rgba(var(--shadow-rgb), 0.5),
+    inset 0 1px 0 rgba(var(--ink-rgb), 0.1);
+  padding: 3.5rem 2.75rem;
+  border-radius: 32px;
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 10;
+  --avatar-stroke: var(--panel-alt);
+}
+
+.login-box-premium.fade-out-up {
+  opacity: 0 !important;
+  transform: translateY(-40px) scale(0.96) !important;
+  pointer-events: none !important;
+}
+
+.login-view-wrapper.fade-out {
+  opacity: 0 !important;
+  transition: opacity 0.4s ease-out !important;
+  pointer-events: none !important;
+}
+
+/* Inputs tipo Píldora */
+.pill-input-group {
+  position: relative;
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.pill-input-group label {
+  font-size:var(--t-sm);
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  margin-left: 1.2rem;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pill-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.pill-input-icon {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size:var(--t-lg);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pill-input-separator {
+  position: absolute;
+  left: 2.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 18px;
+  background-color: rgba(var(--ink-rgb), 0.15);
+  pointer-events: none;
+}
+
+.pill-input-wrapper input {
+  width: 100% !important;
+  background: rgba(var(--card-rgb), 0.4) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.1) !important;
+  border-radius: 50px !important;
+  padding: 0.9rem 1.25rem 0.9rem 3.4rem !important;
+  color: var(--text-main) !important;
+  font-size:var(--t-lg) !important;
+  font-weight: 600 !important;
+  outline: none !important;
+  box-shadow: inset 0 2px 4px rgba(var(--shadow-rgb), 0.2), 0 4px 10px rgba(var(--shadow-rgb), 0.1) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color-scheme: var(--scheme) !important;
+}
+
+.pill-input-wrapper input::placeholder {
+  color: var(--text-dim) !important;
+  font-weight: 500 !important;
+  font-size:var(--t-md) !important;
+}
+
+.pill-input-wrapper input:focus {
+  border-color: var(--sky) !important;
+  box-shadow: 
+    0 0 0 4px rgba(var(--sky-rgb), 0.15),
+    0 4px 12px rgba(var(--sky-rgb), 0.05) !important;
+  background: rgba(var(--card-rgb), 0.6) !important;
+}
+
+/* Botón Píldora Premium */
+.btn-pill {
+  background: linear-gradient(135deg, var(--sky-deep) 0%, var(--blue) 100%) !important;
+  /* --on-primary y no --text-strong: el boton es un degradado de color, asi que
+     el texto tiene que ser el que va ENCIMA de un acento. Con --text-strong
+     quedaba casi negro sobre azul en los temas claros. */
+  color: var(--on-primary) !important;
+  border: none !important;
+  padding: 0.95rem !important;
+  border-radius: 50px !important;
+  font-weight: 800 !important;
+  font-size:var(--t-lg) !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 15px rgba(var(--sky-rgb), 0.3) !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.btn-pill:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(var(--sky-rgb), 0.45) !important;
+  filter: brightness(1.05) !important;
+}
+
+.btn-pill:active:not(:disabled) {
+  transform: translateY(0) !important;
+}
+
+.btn-pill:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+}
+
+/* Acciones Extras de Login */
+.login-extra-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size:var(--t-md);
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding: 0 0.5rem;
+}
+
+.remember-me-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-me-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(var(--ink-rgb), 0.15) !important;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: rgba(var(--card-rgb), 0.4) !important;
+}
+
+.remember-me-checkbox:checked {
+  background-color: var(--sky-deep) !important;
+  border-color: var(--sky-deep) !important;
+}
+
+.remember-me-checkbox:checked::after {
+  content: '✓';
+  color: var(--text-strong);
+  font-size:var(--t-xs);
+  font-weight: 800;
+}
+
+.forgot-password-link {
+  color: var(--sky-deep) !important;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgot-password-link:hover {
+  color: var(--sky-deep) !important;
+  text-decoration: underline;
+}
+
+/* Pantalla de Carga de Pantalla Completa */
+.app-loading-layout {
+  background: var(--bg-dark);
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 99999;
+}
+
+.premium-progress-bar {
+  width: 240px;
+  height: 4px;
+  background: rgba(var(--ink-rgb), 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  margin-top: 1.75rem;
+}
+
+.premium-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--sky-deep), var(--primary-2));
+  box-shadow: 0 0 10px rgba(var(--sky-rgb), 0.8);
+  border-radius: 10px;
+  /* Sin animacion en bucle: el ancho lo pone el arranque segun lo que de verdad
+     lleva cargado, y esta transicion solo suaviza el salto entre un paso y otro.
+     Antes daba una vuelta infinita que crecia hasta la mitad y se devolvia, y
+     desde afuera parecia que la carga se trababa siempre en el mismo sitio. */
+  transition: width 0.35s ease-out;
+}
+
+/* El iconito de la pestaña, en grande, mientras carga. */
+.boot-icono {
+  width: 68px;
+  height: 68px;
+  border-radius: 16px;
+  margin-bottom: 1.6rem;
+  box-shadow: 0 10px 30px -8px rgba(var(--shadow-rgb), 0.45);
+}
+
+/* La capa de carga NO se desvanece: se quita entera. Al desvanecerse se veia
+   por debajo el login que ya estaba dibujado, y con los dos logos centrados en
+   el mismo punto el titulo salia duplicado y en fantasma. */
+
+.error-message {
+  color: var(--danger);
+  font-size:var(--t-md);
+  margin-top: 0.5rem;
+  text-align: center;
+  min-height: 1.2rem;
+  font-weight: 600;
+}
+
+/* Dashboard Layout (Top Navigation) */
+.dashboard-layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* Topbar Header */
+.topbar {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  padding: 1rem 2rem; background: var(--bg-card); border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.topbar-brand h2 { font-size:var(--t-xl); color: var(--text-strong); margin: 0; }
+.user-profile { display: flex; align-items: center; gap: 1rem; }
+.user-details { display: flex; flex-direction: column; text-align: right; }
+.user-name { font-weight: 600; color: var(--text-main); font-size:var(--t-md); }
+.user-role { color: var(--text-muted); font-size:var(--t-sm); text-transform: capitalize; margin-top: 2px;}
+
+/* Custom Logout btn matching top menu */
+.btn-logout {
+  background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+  border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;
+}
+.btn-logout:hover { background: rgba(var(--danger-rgb), 0.1); color: var(--danger); border-color: var(--danger); }
+
+/* Top Navigation Tabs */
+/* EL RIBBON LLEVA UN VELO ENCIMA DE --bg-card, no un gris escrito a mano.
+   En los temas claros --bg-card es blanco puro y la banda no se distinguia del
+   area de trabajo; un gris fijo la arreglaria ahi y la rompería en el tema negro.
+   El velo se define por tema en temas.css -ver --ribbon-veil-. Se pinta como
+   imagen sobre el color de fondo: asi se componen los dos sin tocar el token. */
+.top-nav-links {
+  display: flex; overflow-x: auto;
+  background-color: var(--bg-card);
+  background-image: linear-gradient(var(--ribbon-veil, transparent), var(--ribbon-veil, transparent));
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.5rem; gap: 0.5rem;
+  flex-shrink: 0;
+  /* hide scrollbar for elegance */
+  -ms-overflow-style: none; scrollbar-width: none;
+}
+.top-nav-links::-webkit-scrollbar { display: none; }
+.nav-item {
+  display: flex; align-items: center; padding: 1rem 1.2rem; color: var(--text-muted);
+  text-decoration: none; cursor: pointer; transition: all 0.2s ease;
+  border-bottom: 3px solid transparent; font-weight: 500; font-size:var(--t-md); white-space: nowrap;
+}
+.nav-item:hover, .nav-item.active {
+  color: var(--text-main); border-bottom: 3px solid var(--primary);
+  background: rgba(var(--ink-rgb), 0.03); border-top-left-radius: 8px; border-top-right-radius: 8px;
+}
+
+/* Main Content Area */
+.main-wrapper { flex-grow: 1; padding: 1.5rem 2rem; overflow-y: auto; }
+
+.tab-header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end;}
+.tab-header h1 { font-size:var(--t-2xl); font-weight: 700; margin-bottom: 0.2rem;}
+
+/* CSV Upload Area */
+.upload-area {
+  border: 2px dashed var(--border); border-radius: 12px; padding: 3rem; text-align: center;
+  background: rgba(var(--bg-rgb), 0.3); transition: all 0.3s ease; margin-bottom: 2rem;
+}
+.upload-area:hover, .upload-area.dragover {
+  border-color: var(--primary); background: rgba(var(--primary-rgb), 0.1);
+}
+.upload-area p { color: var(--text-muted); margin-bottom: 1rem; }
+.upload-btn { background: var(--bg-card); color: var(--text-main); display: inline-block; padding: 0.5rem 1.5rem; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
+.upload-btn:hover { background: var(--btn-fill); border-color: var(--primary); }
+
+/* KPI Cards */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.kpi-card { padding: 1.5rem; border-radius: 12px; background: rgba(var(--card-rgb), 0.5); border: 1px solid var(--border); display: flex; flex-direction: column; }
+.kpi-title { font-size:var(--t-md); color: var(--text-muted); font-weight: 500; text-transform: uppercase; margin-bottom: 0.5rem; }
+.kpi-value { font-size:var(--t-2xl); font-weight: 700; color: var(--text-main); }
+.kpi-subtitle { font-size:var(--t-sm); color: var(--success); margin-top: 0.5rem; }
+
+/* Charts & Dashboard Body */
+.dashboard-body { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 2rem; }
+@media(min-width: 1024px) {
+  .dashboard-body { grid-template-columns: 350px 1fr; }
+}
+.chart-container { background: rgba(var(--card-rgb), 0.5); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: flex; justify-content: center; align-items: center; min-height: 300px; }
+.chart-container canvas { max-width: 100%; max-height: 300px;}
+
+/* Data Table & Global Row Hover Highlight */
+.data-table-container { width: 100%; overflow-x: auto; background: rgba(var(--card-rgb), 0.5); border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 0; border-bottom-right-radius: 0;}
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+.data-table th { font-weight: 700; color: var(--text-main); font-size:var(--t-sm); text-transform: uppercase; letter-spacing: 0.05em; background: var(--panel-solid); position: sticky; top: -1px; z-index: 10; backdrop-filter: blur(10px); }
+
+/* Highlight para CUALQUIER fila de tabla en el sistema */
+table tr { transition: background 0.2s ease, transform 0.1s ease; }
+table tr:hover td { 
+  background: rgba(var(--primary-rgb), 0.12) !important; 
+  color: var(--text-strong) !important;
+}
+/* Efecto sutil de elevación */
+table tr:hover {
+  box-shadow: inset 4px 0 0 var(--primary);
+}
+
+.status-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size:var(--t-sm); font-weight: 600; }
+.status-pending { background: rgba(var(--yellow-rgb), 0.2); color: var(--warning-soft); }
+.status-completed { background: rgba(var(--success-rgb), 0.2); color: var(--success-soft); }
+.status-issue { background: rgba(var(--danger-rgb), 0.2); color: var(--danger-pale); }
+
+/* ── EL SELLO DE CADA REPORTE ────────────────────────────────────────────────
+   Cuándo se procesó lo que se está mirando. Va al final de la barra de
+   submódulos, empujado a la derecha, y el COLOR es el aviso:
+
+       hoy      gris        está al día
+       ayer     ámbar       mírelo antes de usarlo
+       2+ días  rojo        no lo use sin revisar
+
+   Daniel, 07-sep-2026: *"no vaya a ser que yo esté mirando un reporte pensando
+   que es del día y sea de hace dos días. Voy a dar una mala información"*. */
+.sello-caja { margin-left: auto; display: flex; align-items: center; }
+.sello {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.25rem 0.7rem; border-radius: 999px; white-space: nowrap;
+  font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.2px;
+  cursor: help;
+  color: var(--text-muted);
+  background: rgba(var(--ink-rgb), 0.06);
+  border: 1px solid transparent;
+}
+/* EL COLOR DEL AVISO SALE DE `temas.css`, no de aquí: es vivo sobre fondo
+   oscuro y oscurecido sobre fondo claro. Con `--danger` a secas el rojo se leía
+   a 4,06 en pbi y 4,28 en pbi-classic, por debajo del 4,5 que hace falta. */
+.sello.viejo {
+  color: var(--sello-aviso);
+  background: rgba(var(--yellow-rgb), 0.14);
+  border-color: rgba(var(--yellow-rgb), 0.45);
+}
+.sello.muy-viejo, .sello.nunca {
+  color: var(--sello-alarma);
+  background: rgba(var(--danger-rgb), 0.14);
+  border-color: rgba(var(--danger-rgb), 0.5);
+  font-weight: 700;
+}
+@media (max-width: 760px) {
+  /* En el celular la barra ya va apretada: el sello pasa a su propio renglón. */
+  .sello-caja { margin-left: 0; width: 100%; padding: 0.35rem 0 0.1rem; }
+}
+
+/* Sub-Navigation Tabs */
+.sub-nav-item {
+  display: inline-flex; align-items: center; padding: 0.6rem 1.2rem;
+  cursor: pointer; font-size:var(--t-md); font-weight: 500;
+  color: var(--text-muted); text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  border-radius: 8px 8px 0 0;
+}
+.sub-nav-item:hover {
+  color: var(--primary) !important;
+  border-bottom-color: var(--primary) !important;
+  background: rgba(var(--primary-rgb), 0.08);
+}
+.sub-nav-item.active, .sub-nav-item[style*="var(--primary)"] {
+  color: var(--primary) !important;
+  border-bottom: 2px solid var(--primary) !important;
+}
+
+/* Tercer nivel: Analisis SKU > Articulo > (Coleccion PO | Evolucion SKU).
+   VA COMO PASTILLA, NO COMO OTRA BARRA SUBRAYADA: dos barras iguales una debajo
+   de la otra no dejan ver cual manda. */
+.art-nav-item {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  padding:0.45rem 1rem; cursor:pointer; font-size:var(--t-sm); font-weight:700;
+  letter-spacing:0.03em; text-transform:uppercase;
+  color:var(--text-muted); border:1px solid var(--border);
+  border-radius:999px; background:transparent; text-decoration:none;
+  transition:color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.art-nav-item:hover { color:var(--primary); border-color:var(--primary); }
+.art-nav-item.active {
+  color:var(--primary); border-color:var(--primary);
+  background:rgba(var(--primary-rgb), 0.10);
+}
+
+/* Config sub-buttons (Usuarios / Permisos / LOG) */
+.config-sub-btn:hover {
+  background: rgba(var(--primary-rgb), 0.15) !important;
+  color: var(--text-main) !important;
+}
+.stock-sub-btn:hover {
+  background: rgba(var(--primary-rgb), 0.15) !important;
+  color: var(--text-main) !important;
+}
+
+/* Performance sub-tabs & RF sub-tabs (Level 3 & 4) */
+.perf-sub-item {
+  padding: 0.5rem 0.2rem;
+  font-size:var(--t-sm);
+  font-weight: 500;
+  color: var(--text-muted) !important;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.perf-sub-item:hover {
+  color: var(--primary) !important;
+}
+.perf-sub-item.active {
+  color: var(--primary) !important;
+  font-weight: 800 !important;
+}
+
+/* --- RESPONSIVE & MOBILE-FIRST OPTIMIZATIONS (v26.5.58) --- */
+
+@media (max-width: 768px) {
+  /* Navigation & Layout */
+  .topbar {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .topbar-brand {
+    text-align: center;
+  }
+  .user-profile {
+    justify-content: space-between;
+    width: 100%;
+    background: rgba(var(--ink-rgb), 0.02);
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+  }
+  .user-details {
+    text-align: left;
+  }
+  
+  .top-nav-links {
+    padding: 0 0.5rem;
+    gap: 0.25rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav-item {
+    padding: 0.75rem 0.6rem;
+    font-size:var(--t-sm);
+  }
+  
+  .main-wrapper {
+    padding: 1rem;
+  }
+  
+  .tab-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .tab-header h1 {
+    font-size:var(--t-xl);
+  }
+  
+  /* Upload Area Mobile */
+  .upload-area {
+    padding: 1.5rem 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Grid layouts */
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .kpi-card {
+    padding: 1rem;
+  }
+  .kpi-value {
+    font-size:var(--t-xl);
+  }
+  
+  .dashboard-body {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem;
+  }
+  
+  /* Tables on Mobile */
+  .data-table-container {
+    border-radius: 8px;
+  }
+  .data-table th, .data-table td {
+    padding: 0.75rem 0.5rem;
+    font-size:var(--t-sm);
+  }
+  
+  /* Mobile Chofer Portal / Liquidacion Card Elements */
+  .chofer-card {
+    background: linear-gradient(135deg, rgba(var(--card-rgb), 0.9) 0%, rgba(var(--bg-rgb), 0.95) 100%);
+    border: 1px solid rgba(var(--ink-rgb), 0.08);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 10px 20px rgba(var(--shadow-rgb), 0.3);
+  }
+  
+  .chofer-btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  
+  .chofer-btn {
+    padding: 0.85rem !important;
+    font-size:var(--t-md) !important;
+    border-radius: 12px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .login-box-premium {
+    padding: 2.25rem 1.5rem;
+    border-radius: 24px;
+    margin: 1rem;
+  }
+  
+  /* Hide text labels on sub-tabs on ultra-small screens */
+  .sub-nav-item {
+    padding: 0.5rem;
+    font-size:var(--t-sm);
+  }
+}
+
+/* --- MOBILE DRIVER FORCE FULLSCREEN (v26.5.60) --- */
+body.mobile-driver-active {
+  background: var(--bg-dark) !important;
+}
+
+body.mobile-driver-active .topbar { 
+  display: none !important; 
+}
+body.mobile-driver-active .top-nav-links { 
+  display: none !important; 
+}
+body.mobile-driver-active .main-wrapper { 
+  padding: 0 !important; 
+  margin: 0 !important; 
+  background: var(--bg-dark) !important;
+}
+body.mobile-driver-active .main-wrapper .glass-panel {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+body.mobile-driver-active .tab-header { 
+  display: none !important; 
+}
+body.mobile-driver-active .sub-nav-item { 
+  display: none !important; 
+}
+body.mobile-driver-active nav { 
+  display: none !important; 
+}
+
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TEMAS DE LA PLATAFORMA
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Un tema no es una hoja de estilos aparte: es UN JUEGO DE VALORES para las
+   mismas variables. Toda la plataforma pinta con `var(--loquesea)`, y acá se
+   decide cuánto vale cada una segun el tema elegido.
+
+   El tema se pone en el <html> como data-tema="...". Se aplica antes de
+   dibujar nada (ver el <script> de arranque en index.html) para que la pantalla
+   no parpadee del tema viejo al nuevo.
+
+   LOS CUATRO TEMAS
+     indigo       El de siempre. Azul noche con paneles translucidos.
+     pbi          Gerencial: paleta oficial de Power BI (Default) + Segoe UI.
+     pbi-classic  Gerencial: paleta oficial de Power BI (Classic, el teal).
+     negro        Negro puro, sin colores. Solo el semaforo pinta.
+
+   ── POR QUE HAY TRIOS "-rgb" ──────────────────────────────────────────────
+   El codigo tiene 2.685 transparencias tipo rgba(255,255,255,0.05). Eso son
+   435 valores distintos, pero solo 51 trios RGB: lo unico que cambia es la
+   transparencia. Entonces se tokeniza el TRIO y se deja la transparencia como
+   estaba:
+
+       rgba(255,255,255,0.05)  ->  rgba(var(--ink-rgb), 0.05)
+
+   Y sale bien en los dos mundos, porque el blanco sobre fondo oscuro significa
+   siempre "la tinta que contrasta con el fondo":
+
+       tema oscuro:  rgba(255,255,255,0.05)  velo claro sobre negro   OK
+       tema claro:   rgba( 32, 31, 30,0.05)  velo oscuro sobre blanco OK
+       tema oscuro:  rgba(255,255,255,0.90)  texto casi blanco        OK
+       tema claro:   rgba( 32, 31, 30,0.90)  texto casi negro         OK
+
+   La transparencia lleva el enfasis y el trio lleva el tema. Un solo token
+   resuelve los 1.392 usos del blanco.
+
+   El trio --shadow-rgb en los temas CLAROS no es negro sino un gris muy
+   claro. Suena raro para algo que se llama "sombra", pero rgba(0,0,0,a)
+   en este codigo se usa para dos cosas: sombras Y fondos oscuros. Si el
+   trio fuera oscuro, una cabecera de tabla con fondo rgba(0,0,0,0.55)
+   quedaria gris oscuro y el texto claro de encima no se leeria -paso en
+   KPI TAREAS-. Se elige que ganen los FONDOS: las sombras quedan muy
+   suaves, que es justo como se ve Power BI.
+
+   ── LO QUE NO SE TOCA ─────────────────────────────────────────────────────
+   Los colores de Chart.js, los de ExcelJS (argb) y los de canvas siguen fijos
+   a proposito: ahi `var(--x)` no vale nada porque no es CSS. Y un Excel
+   descargado no tiene tema. Ver Documentacion/TEMAS.md.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TEMA 1 · INDIGO  ·  el de siempre
+   Los valores salen tal cual de css/main.css y del codigo. No cambia nada de
+   como se ve la plataforma hoy: este tema es la linea de base.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root,
+html[data-tema="indigo"] {
+  --tema-nombre: "indigo";
+
+  /* Tipografia ---------------------------------------------------------- */
+  --font-ui:        'Inter', sans-serif;
+  --font-num:       'Inter', sans-serif;
+
+  /* Superficies --------------------------------------------------------- */
+  --bg-dark:        #0f172a;
+  --bg-image:       radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
+                    radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
+  --bg-card:        rgba(30, 41, 59, 0.7);
+  --panel:          rgba(30, 41, 59, 0.5);
+  --panel-solid:    #1e293b;
+  --panel-alt:      #1c2b3a;
+  --panel-deep:     #0b1120;
+  --panel-deeper:   #101a2c;
+  --surface-max:    #000000;
+  --glass-bg:       rgba(15, 23, 42, 0.6);
+  --glass-border:   rgba(255, 255, 255, 0.08);
+  --glass-shadow:   0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --glass-blur:     blur(16px);
+  --border:         rgba(255, 255, 255, 0.1);
+  --input-bg:       #1e293b;
+  --scheme:         dark;             /* color-scheme de los <input> */
+
+  /* Tinta — de mas fuerte a mas apagada ---------------------------------- */
+  --text-strong:    #ffffff;
+  --text-main:      #f8fafc;
+  --text-pale:      #e2e8f0;
+  --text-soft:      #cbd5e1;
+  --text-muted:     #94a3b8;
+  --text-dim:       #64748b;
+  --text-faint:     #475569;
+  --text-grey:      #d1d5db;
+  --text-grey2:     #9ca3af;
+
+  /* Marca ---------------------------------------------------------------- */
+  --primary:        #4f46e5;
+  --primary-hover:  #4338ca;
+  --primary-2:      #6366f1;
+  --brand-light:    #818cf8;
+  --brand-pale:     #a5b4fc;
+  --brand-paler:    #c4b5fd;
+  --on-primary:     #ffffff;
+  --btn-fill:      var(--primary);
+
+  /* Semaforo — el color aca SI significa algo ----------------------------- */
+  --danger:         #ef4444;
+  --danger-soft:    #f87171;
+  --danger-pale:    #fca5a5;
+  --danger-deep:    #b91c1c;
+  --danger-deeper:  #991b1b;
+  /* EL SELLO DE LOS REPORTES (indigo, fondo oscuro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #FBBF24;
+  --sello-alarma:   #FCA5A5;
+  --success:        #22c55e;
+  --success-alt:    #10b981;
+  --success-soft:   #4ade80;
+  --success-pale:   #6ee7b7;
+  --success-mid:    #34d399;
+  --success-deep:   #059669;
+  --success-dark:   #1a6336;
+  --warning:        #f59e0b;
+  --warning-soft:   #fbbf24;
+  --warning-pale:   #fde68a;
+  --yellow:         #facc15;
+  --yellow-deep:    #eab308;
+  --bronze:         #b45309;
+  --orange:         #f97316;
+
+  /* El punto del semaforo: version viva, para rellenos chicos ------------- */
+  --sem-ok:         #22c55e;
+  --sem-warn:       #fbbf24;
+  --sem-bad:        #ef4444;
+
+  /* Acentos de apoyo ------------------------------------------------------ */
+  --cyan-neon:      #00e5ff;
+  --cyan:           #22d3ee;
+  --cyan-deep:      #06b6d4;
+  --sky:            #38bdf8;
+  --sky-deep:       #0ea5e9;
+  --blue:           #3b82f6;
+  --blue-soft:      #93c5fd;
+  --blue-mid:       #60a5fa;
+  --blue-deep:      #024dbd;
+  --blue-pale:      #e6edf7;
+  --violet:         #8b5cf6;
+  --violet-soft:    #a78bfa;
+  --pink:           #ec4899;
+  --pink-soft:      #f472b6;
+
+  /* Trios RGB para las transparencias ------------------------------------- */
+  --ink-rgb:            255, 255, 255;   /* la tinta que contrasta con el fondo */
+
+  /* EL VELO DEL RIBBON DE NAVEGACION. Daniel, 26-ago-2026: "le pueden poner un
+     fondo oscuro, ojo oscuro leve, solo leve para que no se vea muy blanco".
+     El ribbon usaba --bg-card, que en los temas claros es BLANCO PURO -mas claro
+     todavia que el area de trabajo de abajo-, asi que la banda no se distinguia
+     de nada.
+
+     Va GRADUADO POR TEMA y no con un solo numero: en los claros la tinta es negra
+     y el velo oscurece, pero en el negro la tinta es BLANCA y el mismo 10% subiria
+     la barra a un gris medio. Ese tema Daniel lo quiere negro, asi que ahi el velo
+     es minimo: lo justo para que la banda se despegue del fondo. */
+  --ribbon-veil:        rgba(255, 255, 255, 0.045);
+  --shadow-rgb:           0,   0,   0;
+  --bg-rgb:              15,  23,  42;
+  --card-rgb:            30,  41,  59;
+  --primary-rgb:         79,  70, 229;
+  --primary2-rgb:        99, 102, 241;
+  --brand-rgb:          129, 140, 248;
+  --brand-pale-rgb:     165, 180, 252;
+  --success-rgb:         34, 197,  94;
+  --success-alt-rgb:     16, 185, 129;
+  --danger-rgb:         239,  68,  68;
+  --warning-rgb:        245, 158,  11;
+  --warning-soft-rgb:   251, 191,  36;
+  --yellow-rgb:         250, 204,  21;
+  --cyan-neon-rgb:        0, 229, 255;
+  --cyan-rgb:            34, 211, 238;
+  --cyan-deep-rgb:        6, 182, 212;
+  --sky-rgb:             56, 189, 248;
+  --blue-rgb:            59, 130, 246;
+  --violet-rgb:         139,  92, 246;
+  --on-accent:           #000000;
+  --text-muted-rgb:      148, 163, 184;
+  --pink-rgb:            236,  72, 153;
+  --orange-rgb:          249, 115,  22;
+
+  /* Formas ---------------------------------------------------------------- */
+  --r-lg:           16px;
+  --r-md:           12px;
+  --r-sm:           8px;
+
+  /* Los emoji del menu van a color ---------------------------------------- */
+  --icon-filter:    none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TEMA 2 · POWER BI (Default)  ·  gerencial
+   dataColors oficiales de Power BI Desktop:
+     #118DFF #12239E #E66C37 #6B007B #E044A7 #744EC2 #D9B300 #D64550
+   Los grises y el texto son los de la interfaz de Power BI (Fluent).
+
+   Regla de oro copiada de Power BI: EL COLOR VIVE EN LOS RELLENOS, NO EN EL
+   TEXTO. Las cifras van en tinta. Por eso cada color del catalogo tiene dos
+   versiones: la viva (para puntos y fondos) y una oscurecida que si se lee
+   como texto chico. El amarillo #D9B300 da 2,0:1 sobre blanco y el minimo
+   legible es 4,5:1 — de ahi el #8A7200.
+   ═══════════════════════════════════════════════════════════════════════════ */
+html[data-tema="pbi"] {
+  --tema-nombre: "pbi";
+
+  --font-ui:        'Segoe UI', 'Inter', sans-serif;
+  --font-num:       'Segoe UI', 'Inter', sans-serif;
+
+  --bg-dark:        #F3F2F1;
+  --bg-image:       none;
+  --bg-card:        #FFFFFF;
+  --panel:          #FFFFFF;
+  --panel-solid:    #FFFFFF;
+  --panel-alt:      #FAF9F8;
+  --panel-deep:     #F3F2F1;
+  --panel-deeper:   #EDEBE9;
+  --surface-max:    #FFFFFF;
+  --glass-bg:       #FFFFFF;
+  --glass-border:   #E1DFDD;
+  --glass-shadow:   0 1px 3px rgba(0, 0, 0, 0.08);
+  --glass-blur:     none;
+  --border:         #E1DFDD;
+  --input-bg:       #FFFFFF;
+  --scheme:         light;
+
+  --text-strong:    #201F1E;
+  --text-main:      #252423;
+  --text-pale:      #323130;
+  --text-soft:      #3B3A39;
+  --text-muted:     #605E5C;
+  --text-dim:       #8A8886;
+  --text-faint:     #A19F9D;
+  --text-grey:      #484644;
+  --text-grey2:     #6E6C6A;
+
+  --primary:        #0E76D6;
+  --primary-hover:  #0B5EAC;
+  --primary-2:      #118DFF;
+  --brand-light:    #12239E;
+  --brand-pale:     #12239E;
+  --brand-paler:    #744EC2;
+  --on-primary:     #FFFFFF;
+  --btn-fill:      var(--primary);
+
+  --danger:         #D1434E;
+  --danger-soft:    #C0454F;
+  --danger-pale:    #A83A44;
+  --danger-deep:    #A32A34;
+  --danger-deeper:  #8C242C;
+  /* EL SELLO DE LOS REPORTES (pbi, fondo claro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #6E5B00;
+  --sello-alarma:   #8C242C;
+  --success:        #148833;
+  --success-alt:    #197278;
+  --success-soft:   #148833;
+  --success-pale:   #12742C;
+  --success-mid:    #197278;
+  --success-deep:   #0F6B26;
+  --success-dark:   #0C5620;
+  --warning:        #7D6700;
+  --warning-soft:   #6E5B00;
+  --warning-pale:   #6E5B00;
+  --yellow:         #7D6700;
+  --yellow-deep:    #6E5B00;
+  --bronze:         #8A5A12;
+  --orange:         #B8541F;
+
+  --sem-ok:         #1AAB40;
+  --sem-warn:       #D9B300;
+  --sem-bad:        #D64550;
+
+  --cyan-neon:      #0E76D6;
+  --cyan:           #197278;
+  --cyan-deep:      #0F5C60;
+  --sky:            #0E76D6;
+  --sky-deep:       #0B5EAC;
+  --blue:           #0E76D6;
+  --blue-soft:      #12239E;
+  --blue-mid:       #0E76D6;
+  --blue-deep:      #12239E;
+  --blue-pale:      #12239E;
+  --violet:         #744EC2;
+  --violet-soft:    #6B007B;
+  --pink:           #C13A8E;
+  --pink-soft:      #A83079;
+
+  --ink-rgb:               0,   0,   0;   /* tinta oscura: el reves del blanco */
+
+  --ribbon-veil:        rgba(  0,   0,   0, 0.10);
+  --shadow-rgb:          232, 231, 229;
+  --bg-rgb:             243, 242, 241;
+  --card-rgb:           255, 255, 255;
+  --primary-rgb:          14, 118, 214;
+  --primary2-rgb:        18,  35, 158;
+  --brand-rgb:           18,  35, 158;
+  --brand-pale-rgb:        18,  35, 158;
+  --success-rgb:          20, 136,  51;
+  --success-alt-rgb:     25, 114, 120;
+  --danger-rgb:         214,  69,  80;
+  --warning-rgb:        138, 114,   0;
+  --warning-soft-rgb:   138, 114,   0;
+  --yellow-rgb:         138, 114,   0;
+  --cyan-neon-rgb:        14, 118, 214;
+  --cyan-rgb:            25, 114, 120;
+  --cyan-deep-rgb:       15,  92,  96;
+  --sky-rgb:              14, 118, 214;
+  --blue-rgb:             14, 118, 214;
+  --violet-rgb:         116,  78, 194;
+  --on-accent:           #FFFFFF;
+  --text-muted-rgb:       96,  94,  92;
+  --pink-rgb:            193,  58, 142;
+  --orange-rgb:          184,  84,  31;
+
+  --r-lg:           4px;
+  --r-md:           2px;
+  --r-sm:           2px;
+
+  --icon-filter:    none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TEMA 2 · POWER BI (Classic)  ·  gerencial
+   dataColors oficiales:
+     #01B8AA #374649 #FD625E #F2C80F #5F6B6D #8AD4EB #FE9666 #A66999
+   Es el teal que todo el mundo reconoce de Power BI, con la pizarra #374649
+   de texto. Misma regla: el catalogo pinta rellenos, el texto va en pizarra.
+   ═══════════════════════════════════════════════════════════════════════════ */
+html[data-tema="pbi-classic"] {
+  --tema-nombre: "pbi-classic";
+
+  --font-ui:        'Segoe UI', 'Inter', sans-serif;
+  --font-num:       'Segoe UI', 'Inter', sans-serif;
+
+  --bg-dark:        #F5F5F5;
+  --bg-image:       none;
+  --bg-card:        #FFFFFF;
+  --panel:          #FFFFFF;
+  --panel-solid:    #FFFFFF;
+  --panel-alt:      #FAFAFA;
+  --panel-deep:     #F5F5F5;
+  --panel-deeper:   #EEEEEE;
+  --surface-max:    #FFFFFF;
+  --glass-bg:       #FFFFFF;
+  --glass-border:   #E0E0E0;
+  --glass-shadow:   0 1px 3px rgba(0, 0, 0, 0.08);
+  --glass-blur:     none;
+  --border:         #E0E0E0;
+  --input-bg:       #FFFFFF;
+  --scheme:         light;
+
+  --text-strong:    #263133;
+  --text-main:      #374649;
+  --text-pale:      #415255;
+  --text-soft:      #4B5E61;
+  --text-muted:     #5F6B6D;
+  --text-dim:       #849093;
+  --text-faint:     #9AA5A7;
+  --text-grey:      #46585B;
+  --text-grey2:     #6D797B;
+
+  --primary:        #00847A;
+  --primary-hover:  #006B63;
+  --primary-2:      #01B8AA;
+  --brand-light:    #374649;
+  --brand-pale:     #374649;
+  --brand-paler:    #8A5580;
+  --on-primary:     #FFFFFF;
+  --btn-fill:      var(--primary);
+
+  --danger:         #C54C49;
+  --danger-soft:    #B8433F;
+  --danger-pale:    #A63A36;
+  --danger-deep:    #9C332F;
+  --danger-deeper:  #872C29;
+  /* EL SELLO DE LOS REPORTES (pbi-classic, fondo claro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #6B5606;
+  --sello-alarma:   #872C29;
+  --success:        #00847A;
+  --success-alt:    #00847A;
+  --success-soft:   #00776E;
+  --success-pale:   #006B63;
+  --success-mid:    #00847A;
+  --success-deep:   #006158;
+  --success-dark:   #00534C;
+  --warning:        #7F6907;
+  --warning-soft:   #6E5A06;
+  --warning-pale:   #705C06;
+  --yellow:         #7F6907;
+  --yellow-deep:    #705C06;
+  --bronze:         #8A5A12;
+  --orange:         #B85A2E;
+
+  --sem-ok:         #01B8AA;
+  --sem-warn:       #F2C80F;
+  --sem-bad:        #FD625E;
+
+  --cyan-neon:      #00847A;
+  --cyan:           #00847A;
+  --cyan-deep:      #006B63;
+  --sky:            #2C7A96;
+  --sky-deep:       #23657D;
+  --blue:           #2C7A96;
+  --blue-soft:      #23657D;
+  --blue-mid:       #2C7A96;
+  --blue-deep:      #1D5468;
+  --blue-pale:      #23657D;
+  --violet:         #8A5580;
+  --violet-soft:    #7A4A71;
+  --pink:           #A66999;
+  --pink-soft:      #94587F;
+
+  --ink-rgb:               0,   0,   0;
+
+  --ribbon-veil:        rgba(  0,   0,   0, 0.10);
+  --shadow-rgb:          230, 232, 232;
+  --bg-rgb:             245, 245, 245;
+  --card-rgb:           255, 255, 255;
+  --primary-rgb:            0, 132, 122;
+  --primary2-rgb:           0, 132, 122;
+  --brand-rgb:           55,  70,  73;
+  --brand-pale-rgb:          55,  70,  73;
+  --success-rgb:            0, 132, 122;
+  --success-alt-rgb:        0, 132, 122;
+  --danger-rgb:         197,  76,  73;
+  --warning-rgb:        140, 115,   8;
+  --warning-soft-rgb:   140, 115,   8;
+  --yellow-rgb:         140, 115,   8;
+  --cyan-neon-rgb:       44, 122, 150;
+  --cyan-rgb:             0, 132, 122;
+  --cyan-deep-rgb:          0, 132, 122;
+  --sky-rgb:             44, 122, 150;
+  --blue-rgb:            44, 122, 150;
+  --violet-rgb:         138,  85, 128;
+  --on-accent:           #FFFFFF;
+  --text-muted-rgb:       95, 107, 109;
+  --pink-rgb:            148,  88, 127;
+  --orange-rgb:          184,  90,  46;
+
+  --r-lg:           4px;
+  --r-md:           2px;
+  --r-sm:           2px;
+
+  --icon-filter:    none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TEMA 3 · NEGRO  ·  "como un informatico"
+   Negro puro. Todo el sistema es blanco y gris; el unico color que queda es
+   el del semaforo, que es donde el color de verdad significa algo.
+
+   Los acentos (cian, azul, violeta) NO se aplastan todos al mismo gris: se
+   reparten en grises distinguibles, porque en varias pantallas separan
+   categorias y si quedaran iguales se perderia el dato.
+   ═══════════════════════════════════════════════════════════════════════════ */
+html[data-tema="negro"] {
+  --tema-nombre: "negro";
+
+  --font-ui:        'Inter', sans-serif;
+  --font-num:       'Inter', sans-serif;
+
+  --bg-dark:        #000000;
+  --bg-image:       none;
+  --bg-card:        #0C0C0C;
+  --panel:          #0C0C0C;
+  --panel-solid:    #121212;
+  --panel-alt:      #0F0F0F;
+  --panel-deep:     #060606;
+  --panel-deeper:   #030303;
+  --surface-max:    #000000;
+  --glass-bg:       #0A0A0A;
+  --glass-border:   #1C1C1C;
+  --glass-shadow:   none;
+  --glass-blur:     none;
+  --border:         #1F1F1F;
+  --input-bg:       #101010;
+  --scheme:         dark;
+
+  --text-strong:    #FFFFFF;
+  --text-main:      #D6D6D6;
+  --text-pale:      #C8C8C8;
+  --text-soft:      #B4B4B4;
+  --text-muted:     #828282;
+  --text-dim:       #606060;
+  --text-faint:     #4A4A4A;
+  --text-grey:      #BDBDBD;
+  --text-grey2:     #8E8E8E;
+
+  --primary:        #FFFFFF;
+  --primary-hover:  #D6D6D6;
+  --primary-2:      #E0E0E0;
+  --brand-light:    #C8C8C8;
+  --brand-pale:     #A8A8A8;
+  --brand-paler:    #909090;
+  --on-primary:     #FFFFFF;
+  --btn-fill:      #2A2A2A;
+
+  --danger:         #C7554D;
+  --danger-soft:    #D4675F;
+  --danger-pale:    #E08A84;
+  --danger-deep:    #A6423B;
+  --danger-deeper:  #8C3831;
+  /* EL SELLO DE LOS REPORTES (negro, fondo oscuro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #D9A441;
+  --sello-alarma:   #E8837A;
+  --success:        #3FA968;
+  --success-alt:    #3FA968;
+  --success-soft:   #55BC7C;
+  --success-pale:   #7FD09F;
+  --success-mid:    #4AB271;
+  --success-deep:   #338C56;
+  --success-dark:   #2A7347;
+  --warning:        #B08A38;
+  --warning-soft:   #C39B45;
+  --warning-pale:   #D6B472;
+  --yellow:         #B08A38;
+  --yellow-deep:    #97762E;
+  --bronze:         #8E6E2C;
+  --orange:         #B07440;
+
+  --sem-ok:         #3FA968;
+  --sem-warn:       #B08A38;
+  --sem-bad:        #C7554D;
+
+  /* Grises escalonados: sin color, pero todavia distinguibles entre si */
+  --cyan-neon:      #FFFFFF;
+  --cyan:           #D6D6D6;
+  --cyan-deep:      #A8A8A8;
+  --sky:            #C0C0C0;
+  --sky-deep:       #9A9A9A;
+  --blue:           #B4B4B4;
+  --blue-soft:      #DADADA;
+  --blue-mid:       #C4C4C4;
+  --blue-deep:      #8A8A8A;
+  --blue-pale:      #C8C8C8;
+  --violet:         #9E9E9E;
+  --violet-soft:    #BABABA;
+  --pink:           #AEAEAE;
+  --pink-soft:      #CACACA;
+
+  --ink-rgb:            255, 255, 255;
+
+  --ribbon-veil:        rgba(255, 255, 255, 0.035);
+  --shadow-rgb:           0,   0,   0;
+  --bg-rgb:               0,   0,   0;
+  --card-rgb:            12,  12,  12;
+  --primary-rgb:        255, 255, 255;
+  --primary2-rgb:       224, 224, 224;
+  --brand-rgb:          200, 200, 200;
+  --brand-pale-rgb:     168, 168, 168;
+  --success-rgb:         63, 169, 104;
+  --success-alt-rgb:     63, 169, 104;
+  --danger-rgb:         199,  85,  77;
+  --warning-rgb:        176, 138,  56;
+  --warning-soft-rgb:   176, 138,  56;
+  --yellow-rgb:         176, 138,  56;
+  --cyan-neon-rgb:      255, 255, 255;
+  --cyan-rgb:           214, 214, 214;
+  --cyan-deep-rgb:      168, 168, 168;
+  --sky-rgb:            192, 192, 192;
+  --blue-rgb:           180, 180, 180;
+  --violet-rgb:         158, 158, 158;
+  --on-accent:           #000000;
+  --text-muted-rgb:      130, 130, 130;
+  --pink-rgb:            174, 174, 174;
+  --orange-rgb:          176, 116,  64;
+
+  --r-lg:           6px;
+  --r-md:           4px;
+  --r-sm:           3px;
+
+  /* Los emoji del menu se apagan: es lo que mas "colorido" dejaba al tema */
+  --icon-filter:    grayscale(1) opacity(.68);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REGLAS QUE DEPENDEN DEL TEMA
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* El fondo de la pagina y su degradado salen del tema. */
+body {
+  background: var(--bg-dark);
+  background-image: var(--bg-image);
+  color: var(--text-main);
+  font-family: var(--font-ui);
+}
+
+/* El desenfoque solo lo lleva el tema indigo. En los otros es `none`, y con
+   `none` el navegador ni siquiera crea la capa: los paneles dejan de recortar
+   los menus que se salen del borde. */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--r-lg);
+}
+
+/* Los <input> y <select> nativos: sin esto el sistema operativo dibuja la
+   flechita y el calendario en oscuro sobre un tema claro. */
+.input-group input,
+.input-group select,
+input[type="date"],
+input[type="text"],
+input[type="number"],
+input[type="password"],
+select,
+textarea {
+  color-scheme: var(--scheme);
+}
+
+/* La lista desplegable de los <select> nativos. */
+select option {
+  background-color: var(--panel-solid);
+  color: var(--text-pale);
+}
+select optgroup {
+  background-color: var(--panel-deep);
+  color: var(--brand-light);
+}
+select option:checked,
+select option:hover {
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+/* Los emoji que quedan (sub-pestañas y botones sueltos). En el tema negro van
+   en gris; en los demas, a color. El <span class="ic"> lo pone renderNav(). */
+.nav-item .ic,
+.sub-nav-item .ic {
+  filter: var(--icon-filter);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Los dibujos propios NO llevan filtro: toman el color del texto que los rodea
+   (stroke: currentColor), asi que siguen el tema solos. Con el filtro encima se
+   apagarian dos veces en el tema negro. */
+.nav-item .ic:has(.ic-svg),
+.sub-nav-item .ic:has(.ic-svg) { filter: none; }
+.ic-svg { display: block; }
+
+/* Barra de desplazamiento. */
+::-webkit-scrollbar-track { background: rgba(var(--shadow-rgb), 0.2); }
+::-webkit-scrollbar-thumb { background: rgba(var(--primary-rgb), 0.4); }
+::-webkit-scrollbar-thumb:hover { background: rgba(var(--primary-rgb), 0.6); }
+
+/* En los temas claros una fila resaltada no puede ponerse el texto en blanco:
+   quedaria invisible. main.css lo forzaba con !important, asi que hay que
+   ganarle con la misma arma. */
+html[data-tema="pbi"] table tr:hover td,
+html[data-tema="pbi-classic"] table tr:hover td {
+  background: rgba(var(--primary-rgb), 0.10) !important;
+  color: var(--text-strong) !important;
+}
+html[data-tema="negro"] table tr:hover td {
+  background: rgba(var(--ink-rgb), 0.06) !important;
+  color: var(--text-strong) !important;
+}
+
+/* El encabezado pegajoso de las tablas. */
+.data-table th { background: var(--panel-solid); }
+
+/* La pantalla de carga y el login tienen fondos propios en main.css. */
+html[data-tema="pbi"] .app-loading-layout,
+html[data-tema="pbi-classic"] .app-loading-layout,
+html[data-tema="negro"] .app-loading-layout { background: var(--bg-dark); }
+
+/* El indicador de sincronizacion de index.html. */
+html[data-tema="pbi"] #sync-indicator .sync-tooltip,
+html[data-tema="pbi-classic"] #sync-indicator .sync-tooltip,
+html[data-tema="negro"] #sync-indicator .sync-tooltip {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFIGURACION > TEMA  ·  las tarjetas para elegir
+   Se pintan con los tokens del tema puesto, menos los cuadraditos de color:
+   esos llevan su valor fijo a proposito, porque las cuatro tarjetas se ven a
+   la vez y cada una tiene que mostrar SU paleta, no la del tema activo.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tema-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
+.tema-opt {
+  /* Un velo y no var(--bg-card): en los temas claros la tarjeta seria blanca
+     sobre un panel blanco y las cuatro opciones no se distinguirian del fondo
+     (medido: 1,0:1). El velo se despega SIEMPRE de lo que tenga detras porque
+     se calcula contra la tinta del tema, no contra un color fijo. */
+  border: 1px solid rgba(var(--ink-rgb), 0.22);
+  border-radius: var(--r-md);
+  background: rgba(var(--ink-rgb), 0.05);
+  padding: 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  text-align: left;
+  font-family: inherit;
+  color: var(--text-main);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.tema-opt:hover { border-color: var(--primary); }
+.tema-opt:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tema-opt.elegido {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.tema-cab { display: flex; align-items: center; gap: 9px; }
+
+.tema-tick {
+  width: 19px; height: 19px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.68rem; font-weight: 900;
+  color: transparent;                 /* el ✓ existe siempre: reserva su sitio
+                                         para que la tarjeta no salte al elegir */
+}
+.tema-opt.elegido .tema-tick {
+  /* --btn-fill y no --primary: en el tema negro --primary es blanco y el tilde
+     blanco encima quedaba invisible. Este par funciona en los cuatro temas. */
+  background: var(--btn-fill);
+  border-color: var(--btn-fill);
+  color: var(--on-primary);
+}
+
+.tema-nombre { font-weight: 800; font-size: 0.88rem; color: var(--text-strong); }
+
+.tema-muestras { display: flex; gap: 5px; }
+.tema-muestras i {
+  width: 100%; height: 26px;
+  border-radius: 4px;
+  display: block;
+  border: 1px solid rgba(var(--ink-rgb), 0.15);
+}
+
+.tema-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* El boton LOGIN es un degradado de dos azules. En el tema negro esos dos
+   colores se vuelven grises claros y el texto blanco encima no se leia
+   (2,1:1). Ahi va relleno solido, el mismo de todos los botones. */
+html[data-tema="negro"] .btn-pill {
+  background: var(--btn-fill) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LA ESCALA DE LETRA
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Habia 74 tamaños distintos y el 37% del texto estaba por debajo de 11,6 px.
+   Con tantos y tan parecidos nada destacaba: habia que BUSCAR el dato en vez
+   de que saltara, y a las ocho horas cansa.
+
+   Seis escalones, bien separados. El de las celdas de tabla (--t-sm) sube de
+   ~11 a 14 px, que es lo que usan Excel y Power BI para cuadriculas densas:
+   un 30% mas grande y sigue entrando todo, porque lo que crece es la letra y
+   no el numero de columnas.
+
+   No van por tema: un tema cambia el COLOR, no cuanto se ve. Por eso viven en
+   :root y valen para los cuatro.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --t-xs:   0.75rem;    /* 12px · etiquetas de columna, notas al pie   */
+  --t-sm:   0.875rem;   /* 14px · celdas de tabla                      */
+  --t-md:   0.9375rem;  /* 15px · texto de la interfaz                 */
+  --t-lg:   1.125rem;   /* 18px · subtitulos y cifras destacadas       */
+  --t-xl:   1.5rem;     /* 24px · titulos de seccion                   */
+  --t-2xl:  2.125rem;   /* 34px · cifras grandes de KPI                */
+
+  /* Espaciado: 333 combinaciones de padding distintas se reducen a estas. */
+  --e-1:    0.25rem;
+  --e-2:    0.45rem;
+  --e-3:    0.7rem;
+  --e-4:    1rem;
+  --e-5:    1.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EL TECLADO
+   Habia 4 reglas de foco en toda la plataforma: quien carga la asistencia o
+   las actividades del turno no veia donde estaba parado, soltaba el teclado y
+   buscaba con el mouse en cada casilla. Ahora todo lo que se puede enfocar
+   se ve, y solo cuando se llega POR TECLADO (:focus-visible), asi que el que
+   usa el mouse no ve aros por todos lados.
+   ═══════════════════════════════════════════════════════════════════════════ */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+[contenteditable]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* En los campos de texto el aro va pegado al borde, que se lee mejor que un
+   recuadro flotando alrededor. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.28);
+}
+
+/* Las celdas que se editan escribiendo encima. */
+[contenteditable="true"]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  background: rgba(var(--primary-rgb), 0.07);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAS TABLAS
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Son 112 y es donde se pasa el dia. Solo 27 tenian la cabecera fija: en las
+   otras 85, al bajar se perdian los nombres de las columnas y ya no se sabia
+   que numero era cual.
+
+   Se resuelve de una vez para todas, sin tocar las 112: cualquier <thead th>
+   que este dentro de algo que se pueda desplazar se queda pegado arriba.
+   `position: sticky` no hace nada si no hay un contenedor con scroll, asi que
+   en las tablas que no lo tienen simplemente no cambia nada: no rompe ninguna.
+   ═══════════════════════════════════════════════════════════════════════════ */
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* El fondo es obligatorio: sin el, las filas se ven POR DEBAJO de la cabecera
+   al desplazarse y queda un amasijo ilegible. */
+thead th {
+  background-color: var(--panel-solid);
+  background-clip: padding-box;
+}
+
+/* Cabecera de dos pisos (grupo de columnas arriba, columnas abajo): la segunda
+   fila se pega debajo de la primera y no encima. */
+thead tr:nth-child(2) th { top: 2.1rem; z-index: 4; }
+
+/* ── LA TRAMPA DEL overflow-x ─────────────────────────────────────────────
+   Casi todas las tablas anchas van dentro de un <div style="overflow-x:auto">
+   para que no rompan el ancho de la pagina. Pero en CSS, poner overflow-x:auto
+   convierte el overflow-y en auto TAMBIEN: ese div pasa a ser el contenedor
+   que manda para el scroll.
+
+   Y ahi esta el problema: como no tiene alto, crece con la tabla -medido: 2.320
+   px- asi que NUNCA se desplaza por dentro. El que se desplaza es la pagina. Y
+   una cabecera `sticky` se pega a SU contenedor, no a la pagina: como ese
+   contenedor no se mueve, la cabecera se va con las filas y desaparece.
+
+   Poniendole un alto maximo, el que se desplaza vuelve a ser el div y la
+   cabecera se queda quieta arriba, que es lo que se espera al bajar por una
+   lista de 600 articulos.
+
+   Las tablas cortas no se enteran: el maximo solo actua cuando sobra contenido.
+   ───────────────────────────────────────────────────────────────────────── */
+/* Vale para las tres formas de escribirlo: overflow-x:auto, overflow:auto y la
+   clase .tabla-scroll. Son 52 + 10 envoltorios; otros 11 ya traen su propio
+   alto maximo y 4 no tienen envoltorio -ahi se desplaza la pagina y la cabecera
+   se pega igual-. */
+.tabla-scroll,
+[style*="overflow-x:auto"]:has(> table),
+[style*="overflow-x: auto"]:has(> table),
+[style*="overflow:auto"]:has(> table),
+[style*="overflow: auto"]:has(> table) {
+  max-height: 68vh;
+}
+
+/* Un ancestro con overflow:hidden ROMPE el sticky: el navegador recorta en vez
+   de desplazar, asi que la cabecera no tiene contra que pegarse. Si el que
+   recorta es el envoltorio directo de una tabla, se le deja desplazar. */
+[style*="overflow:hidden"]:has(> table),
+[style*="overflow: hidden"]:has(> table) {
+  /* SOLO EL VERTICAL. Poniendo `overflow: auto` a secas se destapaba tambien el
+     horizontal, y un recuadro que antes recortaba en silencio paso a mostrar barra:
+     Daniel lo vio en el ANALISIS BUFFER SKU, que se pasa por 6px de su columna de 580.
+     Con `overflow-x: hidden` vuelve a recortar como antes, y `overflow-y: auto` sigue
+     dando el contenedor que la cabecera pegajosa necesita. */
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  max-height: 68vh;
+}
+
+/* Con poca altura de pantalla, un maximo en vh deja la tabla muy corta. */
+@media (max-height: 700px) {
+  .tabla-scroll,
+  [style*="overflow-x:auto"]:has(> table),
+  [style*="overflow-x: auto"]:has(> table),
+  [style*="overflow:auto"]:has(> table),
+  [style*="overflow: auto"]:has(> table) { max-height: 60vh; }
+}
+
+/* Las que ya traian su propio sticky con un tope distinto lo conservan. */
+.data-table th { top: -1px; }
+
+/* Una cabecera que se declara `relative` en linea se pisa su propio sticky. El
+   estilo en linea le gana a la hoja, asi que hay que ganarle con !important. */
+thead th[style*="position:relative"],
+thead th[style*="position: relative"] { position: sticky !important; }
+
+/* Filas mas altas: seguir una fila de 13 columnas con el renglon apretado hace
+   saltar de linea. Se toca el padding vertical y NO el horizontal, para no
+   ensanchar la tabla. */
+table td { padding-top: var(--e-2); padding-bottom: var(--e-2); }
+
+/* Las cifras, siempre alineadas por columna: comparar de un vistazo y sumar
+   sin equivocarse. */
+table { font-variant-numeric: tabular-nums; }
+
+/* ── LOS REPORTES CON CARA DE POWER BI ────────────────────────────────────────
+   Daniel, 27-ago-2026, comparando la pantalla con la foto que manda por WhatsApp:
+   *"seria bueno que estos reportes de la web sean igualitos a ese de ahi, siempre y
+   cuando este en el tema de Power BI. No me vayas a poner en todos los temas"*.
+
+   Las tablas de estos reportes estan escritas a mano, cada una distinta y con estilos
+   pegados en cada celda. Tocarlas una por una seria enorme y se romperia al primer
+   cambio; en vez de eso llevan una clase y esta regla las cubre a todas.
+
+     .rep-pbi           en la <table>
+     tr.f               una fila normal: alterna blanco y celeste muy suave
+     tr.sub-tot         un subtotal: tono suave, para que se lea como un escalon
+     tr.gran-tot        el total de verdad: azul fuerte con letras blancas
+
+   VA CON !important A PROPOSITO. Los estilos de estas tablas estan escritos en el
+   atributo `style` de cada fila, y eso le gana a cualquier hoja de estilos. Es la unica
+   forma de vestirlas sin reescribirlas.
+
+   SOLO EN ESTE TEMA. En Indigo y en Negro el fondo ya es oscuro y este azul se veria
+   como un parche: fuera de [data-tema="pbi"] no aplica ninguna de estas reglas.
+   ──────────────────────────────────────────────────────────────────────────── */
+[data-tema="pbi"] .rep-pbi thead th {
+  background: #12365c !important;
+  color: #fff !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  border-bottom: none !important;
+  letter-spacing: .04em;
+}
+[data-tema="pbi"] .rep-pbi tbody tr.f          { background: #ffffff !important; }
+[data-tema="pbi"] .rep-pbi tbody tr.f:nth-of-type(even) { background: #f4f6f9 !important; }
+[data-tema="pbi"] .rep-pbi tbody tr.f > td     { border-bottom: 1px solid #eef1f5 !important; }
+
+[data-tema="pbi"] .rep-pbi tbody tr.sub-tot,
+[data-tema="pbi"] .rep-pbi tbody tr.sub-tot > td {
+  background: #dbe4f0 !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  border-top: none !important; border-bottom: none !important;
+}
+/* Sobre el azul fuerte manda el blanco: los colores de semaforo que traiga cada celda
+   —verde, ambar, rojo— no se leen ahi, asi que se apagan todos. En la foto el TOTAL
+   tambien va entero en blanco. */
+[data-tema="pbi"] .rep-pbi tbody tr.gran-tot,
+[data-tema="pbi"] .rep-pbi tbody tr.gran-tot > td,
+[data-tema="pbi"] .rep-pbi tbody tr.gran-tot * {
+  background: #12365c !important;
+  color: #fff !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  border-top: none !important; border-bottom: none !important;
+  text-shadow: none !important;
+}
+
+/* LA CABECERA ENTERA DEL RECUADRO, no solo la fila de titulos.
+   Daniel: *"se supone que toda la cabecera debe ser con el mismo fondo; de todos los
+   reportes deben tener el mismo formato"*. El titulo, el subtitulo, las fechas del rango
+   y los nombres de las columnas quedan en un solo bloque azul, sin corte.
+   Y: *"la fecha del rango esta de azul y no se nota; ponle blanco"*. */
+[data-tema="pbi"] .caja-pbi {
+  background: #fff !important;
+  border-color: #12365c !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow: none !important;
+}
+[data-tema="pbi"] .caja-pbi > .tapa-pbi {
+  background: #12365c !important;
+  padding: .7rem 1.1rem .75rem !important;
+  margin: 0 !important;
+  align-items: center !important;
+}
+/* Todo lo que va sobre el azul se lee en blanco: el titulo, el subtitulo y los rotulos
+   del rango, que antes eran celestes sobre blanco y casi no se veian. */
+[data-tema="pbi"] .caja-pbi > .tapa-pbi,
+[data-tema="pbi"] .caja-pbi > .tapa-pbi h3,
+[data-tema="pbi"] .caja-pbi > .tapa-pbi span,
+[data-tema="pbi"] .caja-pbi > .tapa-pbi div { color: #fff !important; }
+[data-tema="pbi"] .caja-pbi > .tapa-pbi h3 {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 15px !important; font-weight: 700 !important; letter-spacing: 1.2px !important;
+}
+/* La rayita de la izquierda del titulo, en dorado. Segun el reporte, esta en la franja
+   misma o en el bloque de adentro: se cubren las dos formas. */
+[data-tema="pbi"] .caja-pbi > .tapa-pbi,
+[data-tema="pbi"] .caja-pbi > .tapa-pbi > div:first-child { border-left-color: #F5C97A !important; }
+/* El subtitulo, mas apagado que el titulo. Se lo reconoce por su tamano de letra, que es
+   lo unico comun a los cuatro reportes: unos lo tienen colgando del bloque del titulo y
+   otros directo en la franja. */
+[data-tema="pbi"] .caja-pbi .tapa-pbi div[style*="--t-xs"] { color: #9fb3cc !important; font-weight: 400 !important; }
+/* El rango de fechas, como una pastilla de vidrio sobre el azul: el mismo aspecto en los
+   cinco reportes. Desde v29.0486 la pastilla es el recuadro `.rango-fechas` entero y los
+   dos <input> van transparentes adentro; apuntar al input suelto —como estaba— pintaba
+   dos cajitas blancas DENTRO de la pastilla.
+   `color-scheme: dark` hace que el iconito del calendario del navegador salga claro. */
+[data-tema="pbi"] .caja-pbi > .tapa-pbi .rango-fechas {
+  background: rgba(255,255,255,.14) !important;
+  border-color: rgba(255,255,255,.45) !important;
+}
+[data-tema="pbi"] .caja-pbi > .tapa-pbi .rango-fechas input[type="date"] {
+  background: transparent !important;
+  color: #fff !important;
+  border: none !important;
+  color-scheme: dark;
+}
+[data-tema="pbi"] .caja-pbi > .tapa-pbi button { color: #fff !important; }
+/* La tabla lleva su propio aire, porque el recuadro ya no tiene. */
+[data-tema="pbi"] .caja-pbi > div:not(.tapa-pbi) { padding: 0 .2rem .2rem !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENTES
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Las piezas que se repiten en toda la plataforma, escritas UNA vez.
+
+   POR QUE
+     Habia 4.497 estilos escritos a mano contra 62 clases, y de esos, 210
+     patrones repetidos 4 veces o mas: 1.684 copias del mismo estilo. Por eso
+     cada cambio visual era un barrido de miles de lineas, y por eso dos
+     pantallas que deberian verse igual no se veian igual: nadie se acuerda de
+     cual era el padding correcto.
+
+     Con una clase, mover el alto de las filas es UNA edicion en vez de 1.684.
+
+   COMO SE ADOPTA
+     Sin apagar nada. Estas clases conviven con los estilos en linea que ya
+     hay -el estilo en linea siempre gana- asi que se van reemplazando pantalla
+     por pantalla, sin un dia de corte y sin riesgo de dejar algo a medias.
+
+   Los valores salen de los tokens de temas.css, asi que siguen el tema y la
+   escala de letra solos.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Celdas de tabla ─────────────────────────────────────────────────────── */
+.celda        { padding: var(--e-3); text-align: center; }
+.celda-izq    { padding: var(--e-3); text-align: left; }
+
+/* ── Texto ───────────────────────────────────────────────────────────────── */
+.txt-fuerte   { color: var(--text-strong); }
+.txt-suave    { color: var(--text-muted); }
+.txt-chico    { font-size: var(--t-xs); color: var(--text-muted); }
+.txt-dato     { font-size: var(--t-sm); color: var(--text-muted); }
+
+/* ── Disposicion ─────────────────────────────────────────────────────────── */
+.fila-entre   { display: flex; justify-content: space-between; align-items: center; }
+.centrado     { text-align: center; }
+
+/* ── Botones que son solo un icono ───────────────────────────────────────── */
+/*
+   Sin fondo. Un boton de exportar no compite con el boton principal de la
+   pantalla: se reconoce por el dibujo, no por el bloque de color. Antes eran
+   tres rectangulos de colores distintos al lado de PROCESAR TAREAS y los
+   cuatro pesaban igual, asi que ninguno destacaba.
+
+   El aro al pasar el mouse y el fondo tenue al pulsar dan la respuesta que
+   antes daba el color. Y como no hay texto, el `title` es obligatorio: con
+   solo un dibujo, sin el nadie sabe que hace.
+*/
+.btn-icono {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px;
+  min-width: 32px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.btn-icono:hover {
+  color: var(--text-strong);
+  border-color: var(--border);
+  background: rgba(var(--ink-rgb), 0.06);
+}
+.btn-icono:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Borrar se queda en rojo. Sin fondo el dibujo es lo unico que avisa, asi que
+   el color tiene que seguir diciendo que esta accion no se deshace. */
+.btn-peligro { color: var(--danger); }
+.btn-peligro:hover { color: var(--danger); background: rgba(var(--danger-rgb), 0.12); border-color: rgba(var(--danger-rgb), 0.35); }
+
+/* El de Excel va en verde: es como se reconoce, y ahi el color SI significa
+   algo. El tono sale del tema, asi que se lee en los cuatro. */
+.btn-excel { color: var(--success); }
+.btn-excel:hover { color: var(--success); background: rgba(var(--success-rgb), 0.12); border-color: rgba(var(--success-rgb), 0.35); }
+
+/* ── El aire alrededor de un reporte ─────────────────────────────────────── */
+/*
+   Los reportes que se dibujan enteros dentro de un contenedor -Rotacion,
+   Pendiente, Prepack, SKU sin salida- no traian margen propio: la tabla
+   arrancaba pegada al borde izquierdo de la pantalla y el titulo tambien.
+   Se lee peor y parece que el reporte estuviera cortado.
+
+   Se les da el aire aca y no en cada uno, para que todos respiren igual.
+*/
+#rot, #pend, #pp_detalle, #sss {
+  /* Marco propio, no solo aire: sin el, la tabla arranca pegada al borde y no
+     se ve donde empieza ni donde termina el reporte.
+
+     VELO Y NO COLOR FIJO. Con var(--bg-card) el marco estaba puesto pero NO SE
+     VEIA: estos reportes se dibujan DENTRO de un panel, y en los temas claros
+     el panel tambien es blanco, asi que quedaba una tarjeta blanca sobre fondo
+     blanco -medido: 1,0:1- y en el negro una casi negra sobre casi negro
+     -1,01:1-. Un velo se calcula contra la tinta del tema, asi que se despega
+     siempre, este encima de lo que este. Es el mismo arreglo que necesitaron
+     las tarjetas del selector de temas. */
+  background: rgba(var(--ink-rgb), 0.05);
+  border: 1px solid rgba(var(--ink-rgb), 0.22);
+  border-radius: var(--r-md);
+  padding: var(--e-4) var(--e-5) var(--e-5);
+}
+
+@media (max-width: 900px) {
+  #rot, #pend, #pp_detalle, #sss { padding: var(--e-3); }
+}
+</style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>body{margin:0;padding:18px;font-family:Inter,system-ui,sans-serif}
  #aviso{padding:8px 14px;margin-bottom:14px;border-radius:8px;font-weight:700;
@@ -106,7 +2045,7 @@
 <body>
 <div id="aviso">MAQUETA &middot; Despacho &rsaquo; Correo de Hoy &middot; datos reales del correo del 09-09</div>
 <div id="pend"></div>
-<script type="module">
+<script>
 const nf = (n) => Number(n || 0).toLocaleString('es-PE');
 
 /** El % que le toca a la barra, siempre contra el mayor de su propio cuadro. */
