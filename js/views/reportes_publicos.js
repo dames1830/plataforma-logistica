@@ -11,26 +11,26 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0698';
+} from '../services_v245/csvHub_v6.js?v=29.0699';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0698';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0698';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0698';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0698';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0698';
+import * as adminService from '../services_v245/adminService.js?v=29.0699';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0699';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0699';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0699';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0699';
 /* EL CATALOGO COMPARTIDO con la matriz de permisos del tablero. Antes esta lista
    estaba escrita a mano acá Y allá, y cada reporte nuevo se quedaba fuera de las
    dos. */
 import { CATALOGO as CAT_PUB, buscarSub, permisosDe as permisosPub }
-    from '../services_v245/catalogoReportesPublicos.js?v=29.0698';
+    from '../services_v245/catalogoReportesPublicos.js?v=29.0699';
 /* Distribucion y Despacho Potencial los publica `robot/distribucion.py`: el
    enlace publico los lee del servidor igual que la plataforma. */
-import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0698';
-import { traerSellos, chipSello } from '../services_v245/selloService.js?v=29.0698';
+import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0699';
+import { traerSellos, chipSello } from '../services_v245/selloService.js?v=29.0699';
 /* EL REPORTE DE VERDAD, el mismo que dibuja la plataforma. Antes acá había una
    versión reducida y salía distinto; Daniel, 07-sep-2026: *"los reportes
    públicos deberían salir igual que los originales"*. */
-import * as distribucionReporte from '../reportes/distribucion.js?v=29.0698';
+import * as distribucionReporte from '../reportes/distribucion.js?v=29.0699';
 
 /**
  * El día operativo, no el del calendario.
@@ -296,7 +296,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0698</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0699</span>
     </div>`;
 
   buildTabNav();

@@ -1,4 +1,4 @@
-import { icono } from '../services_v245/iconos.js?v=29.0698';
+import { icono } from '../services_v245/iconos.js?v=29.0699';
 /**
  * SKUs SIN SALIDA — los que llegaron y no se están moviendo
  *
@@ -46,10 +46,17 @@ const CSS = `
        --sss-azul:var(--blue-mid); --sss-lila:var(--violet-soft); --sss-verde:var(--success-mid);
        --sss-gris:var(--text-muted); --sss-apagado:var(--text-faint); }
 #sss * { box-sizing:border-box; }
-/* 1.500 y no los 1.180 de siempre: el cuadro de arriba necesita 1.219 px por sus
+/* 1.600 y no los 1.180 de siempre: el cuadro de arriba necesita 1.529 px por sus
    catorce columnas, y a 1.180 la última —Pedido más antiguo, que es por la que se
-   ordena— quedaba cortada contra el borde. */
-#sss .wrap { max-width:1500px; margin:0 auto; }
+   ordena— quedaba cortada contra el borde.
+   EL TOPE SUBIO DE 1.500 A 1.600 el 10-sep-2026: el cuadro pedia 1.219 cuando se
+   escribio esto y hoy pide 1.529, asi que 29 px SE SALIAN DEL MARCO. */
+#sss .wrap { max-width:1600px; margin:0 auto; }
+/* Y LA CAUSA DE VERDAD, para que no vuelva a pasar: la tabla no puede encogerse
+   -catorce columnas, todas sin partir-, asi que si algun dia vuelve a pedir mas
+   que hay, se desliza DENTRO de su recuadro en vez de salirse. Cuando entra, no
+   aparece ninguna barra. */
+#sss .tabla { overflow-x:auto; }
 #sss .cab { display:flex; align-items:center; gap:14px; flex-wrap:wrap;
             padding-bottom:0.9rem; margin-bottom:1.2rem;
             border-bottom:1px solid rgba(var(--ink-rgb), 0.05); }
@@ -222,11 +229,11 @@ export const montarSinSalida = function (RAIZ, OPC) {
   <h4 class="sec" style="color:var(--sss-rojo);">Se pidieron y no se asignaron
     <span>&mdash; hay demanda y mercader&iacute;a; la orden nunca se asign&oacute;
     &middot; clic en cualquier t&iacute;tulo para ordenar por esa columna</span></h4>
-  <div><table><thead><tr id="sss_th_cp"></tr></thead><tbody id="sss_cp"></tbody></table></div>
+  <div class="tabla"><table><thead><tr id="sss_th_cp"></tr></thead><tbody id="sss_cp"></tbody></table></div>
 
   <h4 class="sec" style="color:var(--sss-azul);">Sin ning&uacute;n pedido
     <span>&mdash; nadie los pidi&oacute;: no es un problema del almac&eacute;n</span></h4>
-  <div><table><thead><tr id="sss_th_sp"></tr></thead><tbody id="sss_sp"></tbody></table></div>
+  <div class="tabla"><table><thead><tr id="sss_th_sp"></tr></thead><tbody id="sss_sp"></tbody></table></div>
 
   <div class="pie">
     Temporadas ${esc((P.temporadas || []).join(', '))}, con dos semanas cumplidas.
