@@ -858,8 +858,9 @@ def guias_repetidas(hoy_d, guias, abierto_de):
     en el WMS, asi que no hay SKU con que preguntarle al Maestro. La etiqueta del
     correo -CALZADO contra el resto- es la unica fuente, y el cuadro lo dice.
     """
-    vacia = {k: {'guias': 0, 'und': 0}
-             for k in ('trae', 'dobleTramo', 'repetidas', 'nuevo')}
+    vacia = dict([(k, {'guias': 0, 'und': 0})
+                  for k in ('trae', 'dobleTramo', 'repetidas', 'nuevo')]
+                 + [('etiquetas', [])])
     if openpyxl is None:
         return [], vacia
     archivo = None
@@ -889,6 +890,11 @@ def guias_repetidas(hoy_d, guias, abierto_de):
     # inicio, y de ahi ya le vas haciendo el descuento"*.
     casc = {'trae': [0, 0.0], 'dobleTramo': [0, 0.0],
             'repetidas': [0, 0.0], 'nuevo': [0, 0.0]}
+    # QUE ES ESO NUEVO DE HOY, segun la ETIQUETA DEL CORREO -calzado, accesorios,
+    # insumos, uniformes-. Daniel la pidio el 10-sep-2026 como segundo cuadro,
+    # justo debajo de la cascada. Sale de la etiqueta y no del Maestro porque es
+    # el reparto que hace comercial, y tiene que sumar los mismos 38.142.
+    etiq = collections.defaultdict(lambda: [0, 0.0])
     for ws in wb.worksheets:
         it = ws.iter_rows(values_only=True)
         try:
@@ -925,13 +931,16 @@ def guias_repetidas(hoy_d, guias, abierto_de):
                 # pasa no se la come el silencio.
                 continue
             _f, mes, dia = guias[g]
+            et = str(r[ie] or '').strip().upper() if ie is not None and ie < len(r) else ''
             if (mes, dia) == (hoy_d.month, hoy_d.day):
                 casc['nuevo'][0] += 1
                 casc['nuevo'][1] += q
+                e = et or '(sin etiqueta)'
+                etiq[e][0] += 1
+                etiq[e][1] += q
                 continue          # nacio hoy: no es repetida
             casc['repetidas'][0] += 1
             casc['repetidas'][1] += q
-            et = str(r[ie] or '').strip().upper() if ie is not None and ie < len(r) else ''
             tienda = ''
             if it_ is not None and inm is not None:
                 tienda = ('%s %s' % (str(r[it_] or '').strip(),
@@ -953,6 +962,10 @@ def guias_repetidas(hoy_d, guias, abierto_de):
     filas.sort(key=lambda x: -x['pidio'])
     cascada = dict((k, {'guias': v[0], 'und': int(round(v[1]))})
                    for k, v in casc.items())
+    cascada['etiquetas'] = sorted(
+        [{'k': k, 'guias': v[0], 'und': int(round(v[1]))}
+         for k, v in etiq.items() if v[1] > 0],
+        key=lambda x: -x['und'])
     log('El correo trae %s guias / %s -> doble tramo %s, ya mandadas antes %s, '
         'nuevo de hoy %s'
         % (format(cascada['trae']['guias'], ',d'),

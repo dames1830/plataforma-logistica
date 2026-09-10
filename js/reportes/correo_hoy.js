@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0678';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0679';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -126,6 +126,40 @@ function cuadroCascada(k) {
             <tr class="pend-total"><td>= NUEVO DE HOY → esto es el correo de hoy</td>
               <td class="n">${nf(k.nuevo.guias)}</td>
               <td class="n">${nf(k.nuevo.und)}</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+}
+
+/**
+ * QUE ES ESO NUEVO DE HOY, por la ETIQUETA DEL CORREO.
+ *
+ * Va justo debajo de la cascada y con la misma forma: arranca en los 38.142 y
+ * los reparte. Lo pidio Daniel el 10-sep-2026: *"de ahi partes, ahi me pones el
+ * gender segun la etiqueta que hizo el correo, de esos treinta y ocho mil, que
+ * es"*.
+ *
+ * SALE DE LA ETIQUETA Y NO DEL MAESTRO a proposito: es el reparto que hace
+ * comercial, y tiene que sumar exactamente el mismo total de arriba. El corte
+ * por el gender del Maestro esta mas abajo, sobre lo que el WMS tiene abierto.
+ */
+function cuadroEtiquetas(k) {
+    const filas = (k && k.etiquetas) || [];
+    if (!filas.length) return '';
+    const tot = filas.reduce((a, f) => ({ guias: a.guias + (f.guias || 0),
+                                          und: a.und + (f.und || 0) }),
+                             { guias: 0, und: 0 });
+    return `<div class="pend-panel">
+        <table>
+          <thead><tr><th></th><th class="n">GUÍAS</th><th class="n">UNIDADES</th></tr></thead>
+          <tbody>
+            ${filas.map(f => `<tr>
+              <td>${esc(f.k)}</td>
+              <td class="n">${nf(f.guias)}</td>
+              <td class="n">${nf(f.und)}</td></tr>`).join('')}
+            <tr class="pend-total"><td>= NUEVO DE HOY</td>
+              <td class="n">${nf(tot.guias)}</td>
+              <td class="n">${nf(tot.und)}</td></tr>
           </tbody>
         </table>
       </div>`;
@@ -244,6 +278,7 @@ function cuerpo(d, fecha, dias) {
 
     const cuadros = [
         cuadroCascada(d.cascada),
+        cuadroEtiquetas(d.cascada),
         cuadroLlegada(d),
         cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
                `Las 10 más cargadas de ${nf(c.tiendas)}`,
