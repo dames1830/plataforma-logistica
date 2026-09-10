@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0684';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0685';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -325,6 +325,12 @@ function cuerpo(d, fecha, dias) {
            parado en el WMS— y apilados obligaban a bajar la pantalla. */
         `<div class="pend-tres">${cuadroCascada(d.cascada)}`
           + `${cuadroEtiquetas(d.cascada)}${cuadroNoLiberados(d.noLiberados)}</div>`,
+        /* LOS DOS DETALLES VAN PEGADOS A ESA FILA, no al final de la pagina.
+           Daniel, 10-sep-2026: son el respaldo de los dos cuadros de arriba -uno
+           por uno los no liberados, y las guias que comercial repitio-, y al
+           fondo obligaban a recorrer el modulo entero para llegar. */
+        cuadroNoLiberadosDetalle(d.noLiberados),
+        cuadroRepetidas(d.repetidas),
         cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
                `Las 10 más cargadas de ${nf(c.tiendas)}`,
                d.tiendas, { etiqueta: 'TIENDA', tope: 10, etiquetaPed: 'GUÍAS' }),
@@ -344,8 +350,6 @@ function cuerpo(d, fecha, dias) {
                d.gender, { etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
                            nota: 'Un total que mezcla zapatos con cajas no dice nada.' }),
         cuadroRutas(d.rutas, d.rutasSinCruce),
-        cuadroNoLiberadosDetalle(d.noLiberados),
-        cuadroRepetidas(d.repetidas),
     ].join('');
 
     return cab + tarjetas + `<div class="pend-grid">${cuadros}</div>` + estiloBloque();
