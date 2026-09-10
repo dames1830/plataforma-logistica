@@ -14,6 +14,29 @@ dos veces:
 > que no están liberados: esos no tienen que estar ni en pedidos ni en pendiente de
 > despacho, porque no lo liberó todavía comercial."*
 
+## 0. La cantidad SIEMPRE es en pares
+
+> *"Todo se tiene que… la cantidad siempre es pares, no es caja."* — Daniel, 09-sep-2026
+
+**El WMS cuenta la caja de prepack como UNA unidad. El correo de comercial ya viene en
+pares.** Comparar los dos sin explotar es comparar peras con manzanas, y ya mostró un hueco
+que no existía: de las 461 guías del correo del 09-09 calzaban **313 en cajas** y **461 de
+461 en pares**, con el total al par —38.142 contra 38.142—.
+
+La conversión es `pares_de_la_caja()` en `armar_pendiente.py`, la misma regla que
+`paresDeLaCaja` en `js/reportes/picking.js`: **los dos primeros dígitos del sufijo de cinco
+son los pares de la caja, con tope 24**, y el SKU de prepack tiene la forma
+`0000000-0-00000`.
+
+**Lo único que sigue en cajas es lo que come el Análisis Buffer** —las tarjetas PEDIDOS y
+PENDIENTE—, y solo hasta que se explote también el stock. **El prepack se explota en las
+dos puntas o en ninguna:** si se explota la demanda y el stock del piso sigue contando
+cajas, cada caja tapa un par y el análisis manda a bajar paletas de más. Daniel ya pidió
+explotarlo también ahí; falta hacer el lado del stock.
+
+**PENDIENTE, anotado por Daniel el 09-sep:** *"el prepack no solo viene en pares, también
+viene en accesorios, ojo con eso"*. Falta revisar cómo se explota el accesorio.
+
 ## 1. La unidad es la GUÍA, nunca el SKU
 
 > *"No te tienes que guiar del detalle del SKU, nada de eso. Te tienes que guiar del

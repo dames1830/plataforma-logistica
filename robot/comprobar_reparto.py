@@ -40,7 +40,10 @@ for row in r:
         continue
     vistas.add((o, sku, dest))
     todas.add(o)
-    pend = max(0.0, A.num(row[6]) - A.num(row[9]))
+    # EN PARES, con la funcion del propio armador: comparar cajas contra el
+    # correo -que viene en pares- es comparar peras con manzanas.
+    caja = A.pares_de_la_caja(sku)
+    pend = max(0.0, (A.num(row[6]) - A.num(row[9])) * caja)
     if o not in guias:
         g_nunca[o] += pend
     elif (guias[o][1], guias[o][2]) == (HOY.month, HOY.day):

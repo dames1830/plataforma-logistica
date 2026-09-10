@@ -175,6 +175,31 @@ LOG = os.path.join(AQUI, 'logs', 'armar_pendiente.log')
 SELLO = os.path.join(AQUI, 'logs', 'pendiente_armado.txt')
 
 ESTADOS = ('Creada', 'Parcialmente asignado')
+
+# ══ EL PREPACK SE EXPLOTA: LA CANTIDAD SIEMPRE ES EN PARES ══════════════════
+# Daniel, 09-sep-2026: *"todo se tiene que... la cantidad siempre es pares, no es
+# caja"*. El WMS cuenta la caja de prepack como UNA unidad; el correo de comercial
+# ya viene en pares. Comparando sin explotar se comparan peras con manzanas: de
+# las 461 guias del correo de ese dia calzaban 313 en cajas y **461 de 461 en
+# pares**, con el total al par -38.142 contra 38.142-.
+#
+# La regla es la misma que usa la web en `paresDeLaCaja` (js/reportes/picking.js):
+# los dos primeros digitos del sufijo de cinco son los pares de la caja, tope 24.
+# OJO: el prepack tambien viene en accesorios, no solo en calzado. Daniel lo dejo
+# anotado el 09-sep para revisarlo aparte.
+FORMA_PREPACK = re.compile(r'^\d{7}-\d-\d{5}$')
+
+
+def pares_de_la_caja(sku):
+    """Cuantos pares trae una unidad de ese SKU. 1 si no es prepack."""
+    t = str(sku or '').strip()
+    if not FORMA_PREPACK.match(t):
+        return 1
+    try:
+        n = int(t[-5:][:2])
+    except ValueError:
+        return 1
+    return n if 0 < n <= 24 else 1
 MINIMO_CRUCE = 0.30      # si cruza menos que esto, algo se rompio: no se publica
 # Cuanto se le da a la bajada del WMS. Son 365 dias -unas 65.000 lineas- y tarda
 # unos 8 minutos, pero puede pasarse 20 esperando al robot del stock y reintentar.
@@ -619,7 +644,10 @@ def armar(hoy):
             repetidas += 1
             continue
         vistas.add(clave)
-        pend = num(row[6]) - num(row[9])
+        # EN PARES. Una caja de prepack son sus pares, no una unidad.
+        caja = pares_de_la_caja(sku)
+        sol, asig = num(row[6]) * caja, num(row[9]) * caja
+        pend = sol - asig
 
         if orden not in guias:
             ord_fuera.add(orden)
@@ -636,9 +664,14 @@ def armar(hoy):
         # vuelve a mandar hoy se queda donde estaba: en el pendiente.
         _, _mes, _dia = guias[orden]
         es_de_hoy = (_mes == hoy_d.month and _dia == hoy_d.day)
-        caja = sku_hoy if es_de_hoy else sku_antes
-        caja[sku][0] += num(row[6])
-        caja[sku][1] += num(row[9])
+        # LAS DOS TARJETAS SIGUEN EN CAJAS, A PROPOSITO. Las come el Analisis
+        # Buffer, y ahi el prepack hay que explotarlo EN LAS DOS PUNTAS o en
+        # ninguna: si se explota la demanda y el stock del piso sigue contando
+        # cajas, cada caja tapa un par y manda a bajar paletas de mas. Se
+        # explotaran las dos juntas; hasta entonces, cajas.
+        donde = sku_hoy if es_de_hoy else sku_antes
+        donde[sku][0] += num(row[6])
+        donde[sku][1] += num(row[9])
         (ord_hoy if es_de_hoy else ord_antes).add(orden)
 
         # EL CORREO DE HOY NO ES PENDIENTE Y SE VA ACA MISMO. Con este `continue`
@@ -653,8 +686,8 @@ def armar(hoy):
 
         ord_dentro.add(orden)
         und_dentro += max(0.0, pend)
-        por_sku[sku][0] += num(row[6])
-        por_sku[sku][1] += num(row[9])
+        por_sku[sku][0] += sol
+        por_sku[sku][1] += asig
         if pend <= 0:
             continue
         lineas += 1
@@ -862,7 +895,9 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
         if (o, sku, dest) in vistas:
             continue
         vistas.add((o, sku, dest))
-        pend = num(row[6]) - num(row[9])
+        # EN PARES, para poder compararlo contra el correo, que ya viene en pares.
+        caja = pares_de_la_caja(sku)
+        pend = (num(row[6]) - num(row[9])) * caja
         if pend <= 0:
             continue
         w_guia[o] += pend
