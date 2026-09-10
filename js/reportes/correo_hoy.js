@@ -24,8 +24,9 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0690';
-import { icono } from '../services_v245/iconos.js?v=29.0690';
+import { nf, esc, cuadro, cuadroRutas, estilos, engancharBuscador }
+    from './pendiente.js?v=29.0692';
+import { icono } from '../services_v245/iconos.js?v=29.0692';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -53,106 +54,6 @@ function cabecera(d, fecha, dias) {
 }
 
 /* ── EL CUADRO PROPIO DE ESTE MÓDULO ────────────────────────────────────────── */
-
-/**
- * LO QUE EL WMS ABRE Y COMERCIAL NUNCA LIBERO.
- *
- * Daniel, 10-sep-2026: *"para yo decirle a mi jefe que tenemos pedidos en el WMS
- * que todavia no estan liberados de hace, un ejemplo, de hace un mes"*. Hasta hoy
- * este grupo solo se veia como una fila gris en el Pendiente: un total sin
- * nombres y sin fechas, con el que no se puede reclamar nada.
- *
- * Reemplaza al cuadro "¿el WMS ya tiene lo que mando comercial?", que quedo en
- * cero para siempre al sacar el doble tramo: las guias que faltaban abrir eran
- * exactamente esas.
- *
- * LA ANTIGUEDAD SALE DE CUANDO EL WMS CREO LA ORDEN. Medido el 09-09-2026: 739
- * ordenes / 251.742 pares, la mas vieja del 01-nov-2025 -312 dias-.
- */
-function cuadroNoLiberados(n) {
-    if (!n || !n.ordenes) return '';
-    const filas = n.pareto || [];
-    /* LO QUE EMPIEZA CON 50 Y EL MAESTRO NO CONOCE NO SE BORRA EN SILENCIO: es el
-       caso que Daniel anticipo, una tienda nueva que todavia no esta cargada. */
-    const fm = n.fueraMaestro;
-    /* EL PARETO VA DE LO MAS VIEJO A LO MAS NUEVO, no de mayor a menor: lo que se
-       reclama es la antiguedad, y el acumulado dice cuanto pesa lo viejo. */
-    return `<div class="pend-panel">
-        <h3>PEDIDOS WMS NO LIBERADOS</h3>
-        <table>
-          <thead><tr>
-            <th>DESDE CUÁNDO ESPERA</th><th class="n">PEDIDOS</th>
-            <th class="n">PARES</th><th class="n">%</th><th class="n">ACUM.</th>
-          </tr></thead>
-          <tbody>
-            ${filas.map(f => {
-                const viejo = /mas de 60|31 a 60|16 a 30/.test(f.k);
-                return `<tr${viejo ? ' class="pend-ojo"' : ''}>
-                  <td>${esc(f.k)}</td>
-                  <td class="n">${nf(f.ped)}</td>
-                  <td class="n">${nf(f.und)}</td>
-                  <td class="n">${f.pct}%</td>
-                  <td class="n">${f.acum}%</td></tr>`;
-            }).join('')}
-            <tr class="pend-total"><td>TOTAL</td>
-              <td class="n">${nf(n.ordenes)}</td>
-              <td class="n">${nf(n.unidades)}</td>
-              <td class="n"></td><td class="n"></td></tr>
-          </tbody>
-        </table>
-        ${fm && fm.und > 0 ? `<div class="pend-suave">${fm.destinos.map(x =>
-            esc(x.k) + ' (' + nf(x.und) + ')').join(' &middot; ')}</div>` : ''}
-      </div>`;
-}
-
-/**
- * EL DETALLE, CON NOMBRE Y FECHA DE CADA UNO.
- *
- * VAN LOS 275, NO UNA MUESTRA. Daniel, 10-sep-2026: *"me dices que hay
- * doscientos setenta y cinco pedidos, pero necesito hacer scroll y mirarlos"*.
- * Antes se mostraban las 15 mas viejas y el resto solo existia en el archivo
- * bajado: para reclamar hace falta poder buscar una orden ahi mismo.
- *
- * La lista se desliza dentro de su propio recuadro -la cabecera queda fija- y el
- * buscador filtra por lo que sea: orden, destino o tipo.
- */
-function cuadroNoLiberadosDetalle(n) {
-    const filas = (n && n.detalle) || [];
-    if (!filas.length) return '';
-    return `<div class="pend-panel">
-        <div class="pend-cab2">
-          <div>
-            <h3>UNO POR UNO, DEL MÁS VIEJO AL MÁS NUEVO</h3>
-            <div class="pend-cap">Solo retail &middot; ${nf(filas.length)} pedidos</div>
-          </div>
-          <div class="pend-acc2">
-            <input type="search" id="nolib_buscar" class="pend-buscar"
-                   placeholder="Orden, destino o tipo">
-            <button type="button" id="nolib_xls" class="btn-icono btn-excel"
-                    title="Exportar a Excel" aria-label="Exportar a Excel">${icono('excel', 18)}</button>
-          </div>
-        </div>
-        <div class="pend-scroll">
-          <table>
-            <thead><tr>
-              <th>ORDEN</th><th>DESTINO</th><th>TIPO</th>
-              <th class="n">CREADA</th><th class="n">DÍAS</th><th class="n">PARES</th>
-            </tr></thead>
-            <tbody id="nolib_filas">
-              ${filas.map(f => `<tr${Number(f.dias) > 30 ? ' class="pend-ojo"' : ''}
-                data-b="${esc((f.orden + ' ' + f.destino + ' ' + f.tipo).toLowerCase())}">
-                <td>${esc(f.orden)}</td>
-                <td>${esc(f.destino)}</td>
-                <td>${esc(f.tipo)}</td>
-                <td class="n">${esc(f.fecha)}</td>
-                <td class="n">${nf(f.dias)}</td>
-                <td class="n">${nf(f.pares)}</td></tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-        <div class="pend-suave" id="nolib_cuenta"></div>
-      </div>`;
-}
 
 /** El rótulo que separa los dos bloques y dice sobre qué total va cada uno. */
 const rotulo = (titulo, cuenta) =>
@@ -390,13 +291,22 @@ function cuerpo(d, fecha, dias) {
            10-sep-2026: se leen juntos —qué trajo el correo, qué es, y qué hay
            parado en el WMS— y apilados obligaban a bajar la pantalla. */
         `<div class="pend-tres">${cuadroCascada(d.cascada)}`
-          + `${cuadroEtiquetas(d.cascada)}${cuadroNoLiberados(d.noLiberados)}</div>`,
-        /* LOS DOS DETALLES VAN PEGADOS A ESA FILA, no al final de la pagina.
-           Daniel, 10-sep-2026: son el respaldo de los dos cuadros de arriba -uno
-           por uno los no liberados, y las guias que comercial repitio-, y al
-           fondo obligaban a recorrer el modulo entero para llegar. */
-        `<div class="pend-dos">${cuadroNoLiberadosDetalle(d.noLiberados)}`
-          + `${cuadroRepetidas(d.repetidas)}</div>`,
+          + `${cuadroEtiquetas(d.cascada)}`
+          + cuadro('CALZADO Y LO QUE NO LO ES',
+                   'Lo separa el G. Gender del Maestro, no la etiqueta del correo',
+                   d.gender, { etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
+                               centrado: true, sinBarra: true })
+          + `</div>`,
+        /* LOS NO LIBERADOS SE MUDARON A Picking > Pedidos WMS -10-sep-2026-. Los
+           huecos que dejaron los ocupan los dos cortes por articulo que estaban
+           al final: asi el modulo abre con el correo entero y cierra con el
+           detalle, sin bajar tres pantallas. */
+        `<div class="pend-dos">`
+          + cuadro('POR GENDER RIMS', 'Sale del Maestro de artículos',
+                   d.rims, { etiqueta: 'GENDER RIMS', tope: 999, etiquetaPed: 'GUÍAS',
+                             centrado: true, sinBarra: true })
+          + cuadroRepetidas(d.repetidas)
+          + `</div>`,
         /* TIENDA Y RUTA JUNTAS: las dos dicen a donde va lo de hoy, una por
            destino y la otra por como sale. Prioridad baja, que es otra pregunta. */
         /* TIENDA, RUTA Y COLECCION en una fila de tres. La coleccion va ENTERA,
@@ -412,15 +322,6 @@ function cuerpo(d, fecha, dias) {
         cuadro('POR QUÉ LO PIDIÓ COMERCIAL', 'La columna Prioridad del correo',
                d.prioridad, { etiqueta: 'PRIORIDAD', tope: 8, conPct: true,
                               etiquetaPed: 'GUÍAS' }),
-        rotulo('DE ESO, LO QUE EL WMS TIENE ABIERTO',
-               `${nf(w.guias)} guías &middot; ${nf(w.unidades)} unidades &middot; el correo no trae el `
-               + `artículo, así que estos cortes solo se pueden hacer sobre lo abierto`),
-        cuadro('POR GENDER RIMS', 'Sale del Maestro de artículos',
-               d.rims, { etiqueta: 'GENDER RIMS', tope: 10, etiquetaPed: 'GUÍAS' }),
-        cuadro('CALZADO Y LO QUE NO LO ES',
-               'Lo separa el G. Gender del Maestro, no la etiqueta del correo',
-               d.gender, { etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
-                           nota: 'Un total que mezcla zapatos con cajas no dice nada.' }),
     ].join('');
 
     return cab + tarjetas + `<div class="pend-grid">${cuadros}</div>` + estiloBloque();
@@ -522,47 +423,12 @@ export function montarCorreoHoy(raiz, OPC) {
         XLSX.writeFile(wb, 'Pedidos WMS no liberados ' + (fecha || '') + '.xlsx');
     });
 
-    /* MISMO ENGANCHE QUE EL DETALLE: buscador sobre las filas dibujadas y Excel
-       con la lista completa. Se escribe una vez y sirve para los dos cuadros. */
-    const engancharTabla = (pref, sacarFilas, cabecera, aFila, archivo, unidad) => {
-        const bus = raiz.querySelector('#' + pref + '_buscar');
-        const cuenta = raiz.querySelector('#' + pref + '_cuenta');
-        const xls = raiz.querySelector('#' + pref + '_xls');
-        const todas = Array.prototype.slice.call(
-            raiz.querySelectorAll('#' + pref + '_filas tr'));
-        const contar = (n) => {
-            if (!cuenta) return;
-            cuenta.textContent = n === todas.length
-                ? nf(todas.length) + ' ' + unidad
-                : nf(n) + ' de ' + nf(todas.length) + ' ' + unidad;
-        };
-        if (todas.length) contar(todas.length);
-        if (bus) bus.addEventListener('input', () => {
-            const q = bus.value.trim().toLowerCase();
-            let n = 0;
-            todas.forEach(tr => {
-                const ok = !q || (tr.dataset.b || '').indexOf(q) !== -1;
-                tr.hidden = !ok;
-                if (ok) n++;
-            });
-            contar(n);
-        });
-        if (xls) xls.addEventListener('click', () => {
-            const filas = sacarFilas() || [];
-            if (!filas.length || typeof XLSX === 'undefined') return;
-            const aoa = [cabecera].concat(filas.map(aFila));
-            const ws = XLSX.utils.aoa_to_sheet(aoa);
-            ws['!cols'] = cabecera.map(() => ({ wch: 16 }));
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, archivo.substring(0, 28));
-            XLSX.writeFile(wb, archivo + ' ' + (fecha || '') + '.xlsx');
-        });
-    };
-
-    engancharTabla('tie', () => (O.datos || {}).tiendas,
-                   ['Tienda', 'Guias', 'Unidades'],
-                   (f) => [f.k, Number(f.ped) || 0, Number(f.und) || 0],
-                   'Tienda a despachar', 'tiendas');
+    engancharBuscador(raiz, 'tie', {
+        sacarFilas: () => (O.datos || {}).tiendas,
+        cabecera: ['Tienda', 'Guias', 'Unidades'],
+        aFila: (f) => [f.k, Number(f.ped) || 0, Number(f.und) || 0],
+        archivo: 'Tienda a despachar', unidad: 'tiendas', fecha: fecha,
+    });
 
     const cal = raiz.querySelector('#correo_fecha');
     if (cal) {

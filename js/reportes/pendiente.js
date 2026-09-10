@@ -24,7 +24,7 @@
  * }
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0690';
+import { icono } from '../services_v245/iconos.js?v=29.0692';
 
 const nf = (n) => Number(n || 0).toLocaleString('es-PE');
 
@@ -419,6 +419,53 @@ function estilos() {
     #pend .pend-nada{text-align:center;padding:40px 20px}
     #pend .pend-nada-t{font-size:var(--t-lg);font-weight:700;color:var(--text-strong);margin-bottom:6px}
     </style>`;
+}
+
+/**
+ * BUSCADOR + EXCEL PARA UNA TABLA YA DIBUJADA.
+ *
+ * El buscador esconde filas en vez de repintar: son cientos, no miles. Y el Excel
+ * baja SIEMPRE la lista completa, no lo que dejo ver el buscador: el archivo es
+ * para llevarselo al jefe, y uno filtrado sin avisar engana.
+ *
+ * Espera tres ids: `<pref>_buscar`, `<pref>_xls` y `<pref>_cuenta`, y filas con
+ * `data-b` en minusculas para comparar.
+ */
+export function engancharBuscador(raiz, pref, O) {
+    const o = O || {};
+    const bus = raiz.querySelector('#' + pref + '_buscar');
+    const cuenta = raiz.querySelector('#' + pref + '_cuenta');
+    const xls = raiz.querySelector('#' + pref + '_xls');
+    const todas = Array.prototype.slice.call(
+        raiz.querySelectorAll('#' + pref + '_filas tr'));
+    const unidad = o.unidad || 'filas';
+    const contar = (n) => {
+        if (!cuenta) return;
+        cuenta.textContent = n === todas.length
+            ? nf(todas.length) + ' ' + unidad
+            : nf(n) + ' de ' + nf(todas.length) + ' ' + unidad;
+    };
+    if (todas.length) contar(todas.length);
+    if (bus) bus.addEventListener('input', () => {
+        const q = bus.value.trim().toLowerCase();
+        let n = 0;
+        todas.forEach(tr => {
+            const ok = !q || (tr.dataset.b || '').indexOf(q) !== -1;
+            tr.hidden = !ok;
+            if (ok) n++;
+        });
+        contar(n);
+    });
+    if (xls) xls.addEventListener('click', () => {
+        const filas = (typeof o.sacarFilas === 'function' ? o.sacarFilas() : []) || [];
+        if (!filas.length || typeof XLSX === 'undefined') return;
+        const aoa = [o.cabecera].concat(filas.map(o.aFila));
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!cols'] = o.cabecera.map(() => ({ wch: 16 }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, String(o.archivo).substring(0, 28));
+        XLSX.writeFile(wb, o.archivo + ' ' + (o.fecha || '') + '.xlsx');
+    });
 }
 
 /* LOS CUADROS SE COMPARTEN, NO SE COPIAN.

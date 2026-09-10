@@ -1,54 +1,55 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada, traerDemandaGuardada} from '../services_v245/csvHub_v6.js?v=29.0690';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada, traerDemandaGuardada} from '../services_v245/csvHub_v6.js?v=29.0692';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0690';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0690';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0690';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0690';
-import * as metasService from '../services_v245/metasService.js?v=29.0690';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0690';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0690';
+import * as adminService from '../services_v245/adminService.js?v=29.0692';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0692';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0692';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0692';
+import * as metasService from '../services_v245/metasService.js?v=29.0692';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0692';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0692';
 /* EL SELLO DE CADA REPORTE: cuando se proceso lo que se esta mirando.
    Se pinta solo; ver la tabla AREAS_POR_PANTALLA en el propio servicio. */
-import { vigilarSellos } from '../services_v245/selloService.js?v=29.0690';
+import { vigilarSellos } from '../services_v245/selloService.js?v=29.0692';
 /* EL REPORTE DE DISTRIBUCION, compartido con el enlace publico. */
-import * as distribucionReporte from '../reportes/distribucion.js?v=29.0690';
+import * as distribucionReporte from '../reportes/distribucion.js?v=29.0692';
 /* EL CATALOGO DE LOS REPORTES PUBLICOS. Lo comparten esta matriz de permisos
    y la pagina publica: antes la lista estaba escrita a mano en los dos lados
    y cada submodulo nuevo se quedaba fuera de los dos. */
 import { CATALOGO as CAT_PUB, MODULOS as MOD_PUB, permisosDe as permisosPub,
          paraGuardar as permisosParaGuardar, cuentaModulos as cuentaModPub }
-    from '../services_v245/catalogoReportesPublicos.js?v=29.0690';
+    from '../services_v245/catalogoReportesPublicos.js?v=29.0692';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, ubicacionDeReservaCuenta,
          _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0690';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0690';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0690';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0690';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0690';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0690';
-import { renderCapacidad } from './capacidad.js?v=29.0690';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0690';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0690';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0690';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0690';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0690';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0690';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0690';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0690';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0690';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0690';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0690';
-import { montarCorreoHoy } from '../reportes/correo_hoy.js?v=29.0690';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0690';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0690';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0690';
-import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0690';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0690';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0690';
-import { montarSlotting } from './slotting.js?v=29.0690';
-import { montarEventos } from './eventos.js?v=29.0690';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0690';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0692';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0692';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0692';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0692';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0692';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0692';
+import { renderCapacidad } from './capacidad.js?v=29.0692';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0692';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0692';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0692';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0692';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0692';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0692';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0692';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0692';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0692';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0692';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0692';
+import { montarCorreoHoy } from '../reportes/correo_hoy.js?v=29.0692';
+import { montarPedidosWms } from '../reportes/pedidos_wms.js?v=29.0692';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0692';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0692';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0692';
+import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0692';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0692';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0692';
+import { montarSlotting } from './slotting.js?v=29.0692';
+import { montarEventos } from './eventos.js?v=29.0692';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0692';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -411,7 +412,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0690';
+const VERSION = '29.0692';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2461,6 +2462,11 @@ const TABS = [
     { id: 'picking_dia', label: 'Picking por día', icon: '⏱️' },
     { id: 'embalaje_dia', label: 'Embalaje por día', icon: '📮' },
     { id: 'cruce_wms', label: 'Cruce', icon: '🔍' },
+    /* PEDIDOS WMS, 10-sep-2026. Lo que el WMS tiene abierto y comercial nunca
+       libero, solo retail. Vivia dentro de Correo de Hoy y Daniel lo mudo aca:
+       no habla del correo del dia, habla de lo que el CD tiene parado. Lee la
+       misma area `correo_hoy` que publica el robot: el numero se calcula UNA vez. */
+    { id: 'pedidos_wms', label: 'Pedidos WMS', icon: '📋' },
     /* LA PROYECCION. Daniel, 02-sep-2026: *"crees una subpestana al costado de
        cruce que se llame produccion picking embalaje, y que me hagas un calculo
        de cuanto va creciendo el picking por dia, desde el historial que
@@ -3165,7 +3171,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      todas. */
   const abrirPortalNoRetail = async (destino) => {
       const { renderDespachoNoRetailPortal } =
-          await import('../reportes/despacho_no_retail.js?v=29.0690');
+          await import('../reportes/despacho_no_retail.js?v=29.0692');
       return renderDespachoNoRetailPortal(destino, {
           fetchAndParseNoRetailClients,
           showNRPhotoLoader,
@@ -4392,7 +4398,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const abrirZonaBuffer = async () => {
-      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0690');
+      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0692');
       return montarZonaBuffer({
           estado: estadoBuffer,
           contentArea,
@@ -4958,7 +4964,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0690');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0692');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5221,7 +5227,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0690');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0692');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -8679,6 +8685,43 @@ const renderCorreoHoySection = async (container, dia) => {
         fecha: fecha,
         fechas: fechas,
         alCambiarFecha: (nueva) => renderCorreoHoySection(container, nueva),
+    });
+};
+
+/* Misma fecha recordada que el resto: el modulo se vuelve a dibujar sin ella al
+   volver a la pestana. */
+let _pwmsFecha = null;
+
+/**
+ * PICKING > PEDIDOS WMS.
+ *
+ * Lee el area `correo_hoy` —ahi publica el robot el bloque `noLiberados`— y no
+ * una propia: el mismo numero calculado en dos sitios se desincroniza.
+ */
+const renderPedidosWmsSection = async (container, dia) => {
+    if (!container) return;
+    const fecha = dia || _pwmsFecha || getLogicalDate();
+    _pwmsFecha = fecha;
+
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:3rem; color:var(--text-muted);">
+        <div style="width:26px; height:26px; border:3px solid rgba(var(--primary2-rgb), 0.15); border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <span style="font-size:var(--t-md);">Trayendo los pedidos del WMS...</span>
+      </div>`;
+
+    let datos = null;
+    try {
+        datos = await leerArea(CORREO_AREA, fecha);
+    } catch (e) {
+        console.warn('[PEDIDOS WMS] no se pudo traer el área:', e && e.message);
+    }
+    if (!container.isConnected
+        || localStorage.getItem('activeSub_picking') !== 'pedidos_wms') return;
+
+    montarPedidosWms(container, {
+        datos: datos,
+        fecha: fecha,
+        alCambiarFecha: (nueva) => renderPedidosWmsSection(container, nueva),
     });
 };
 
@@ -14007,7 +14050,7 @@ const renderRFSection = (container) => {
           se ata una sola vez al entrar y esas dieciséis quedaron intactas. El
           porqué completo está en la cabecera de ese archivo. */
        (async () => {
-           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0690');
+           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0692');
            montarInventarios(l2Container, {
                renderUploadArea,
                showPremiumConfirm,
@@ -15725,6 +15768,9 @@ const renderRFSection = (container) => {
     } else if (tabId === 'despacho' && activeSub === 'pendiente') {
         await new Promise(r => setTimeout(r, 0));
         await renderPendienteSection(container);
+    } else if (tabId === 'picking' && activeSub === 'pedidos_wms') {
+        await new Promise(r => setTimeout(r, 0));
+        await renderPedidosWmsSection(container);
     } else if (tabId === 'despacho' && activeSub === 'correo_hoy') {
         await new Promise(r => setTimeout(r, 0));
         await renderCorreoHoySection(container);
@@ -18401,7 +18447,7 @@ const renderRFSection = (container) => {
              `renderDashboard` y que ahora, viviendo afuera, no alcanza sola.
              `tareasDeAlmacenaje` va como función y no como lista: la caché se
              reemplaza entera cuando entran tareas nuevas. */
-          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0690');
+          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0692');
           const corrida = await barrerParaSlotting(
             (Array.isArray(zonasDeLaCorrida) && zonasDeLaCorrida.length)
               ? zonasDeLaCorrida
@@ -26761,7 +26807,7 @@ window.__menuMapa = (btn) => {
              lado es un `let` que leen el plan del Excel y el prepack: si se
              pasara la lista, esos dos nunca se enterarían de la foto nueva. */
           (async () => {
-              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0690');
+              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0692');
               renderAnalisisReserva(skuBuf, {
                   htmlConsolidacionReserva,
                   engancharClicConsolidacion,
@@ -30583,12 +30629,12 @@ window.__menuMapa = (btn) => {
         /* El buscador se carga aparte y NO frena al resto: si el servidor viejo
            todavia no tiene /api/asn, el cuadro dice que no se pudo consultar y
            los demas siguen dibujandose igual. */
-        import('../reportes/asn_buscador.js?v=29.0690').then(m => {
+        import('../reportes/asn_buscador.js?v=29.0692').then(m => {
           const cb = container.querySelector('#asn_buscador');
           if (cb) m.montarBuscadorAsn(cb, { api: 'https://logistics-backend-wv0x.onrender.com' });
         }).catch(e => console.warn('[ASN] no se pudo cargar el buscador:', e));
 
-        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0690');
+        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0692');
         const caja = container.querySelector('#asn_detalle');
         /* El HOY va de aca, con getLogicalDate(): el paquete trae el suyo -el del
            robot- y si la corrida fallo, ese "hoy" es de ayer y todo el calendario

@@ -170,6 +170,8 @@ export const AREAS_POR_PANTALLA = {
     // de la sub-pestana, que no cambio al mudarse de modulo.
     pendiente:         ['pendiente_despacho'],
     correo_hoy:        ['correo_hoy'],
+    // Picking > Pedidos WMS lee la misma area que el Correo de Hoy.
+    pedidos_wms:       ['correo_hoy'],
     // ── Zona Buffer ──────────────────────────────────────────────────────────
     reportes:          ['analisis_buffer', 'buffer_bajado_dia'],
     historial_buffer:  ['buffer_history'],
