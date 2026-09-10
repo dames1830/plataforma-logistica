@@ -255,8 +255,11 @@ datos = {
                            key=lambda x: -x[1])[:8],
     # LOS DOS GRUPOS POR SEPARADO. Guardando solo las 400 primeras por antiguedad
     # salian casi todas de cero picados y el segundo cuadro quedaba vacio.
-    'filas': [f for f in filas if f['picados'] == 0][:250]
-             + [f for f in filas if f['picados'] > 0][:250],
+    # VAN TODAS. Publicando 250 de cada grupo, los cuadros decian "250 SKU" y las
+    # tarjetas 1.707 y 296: no cuadraban, y ademas el Excel bajaba una lista
+    # recortada sin avisar. Daniel: *"entonces deberia cuadrar con estos
+    # reportes"*. Son unos 740 KB, y el area se trae solo al abrir la pestana.
+    'filas': filas,
     'total': len(filas),
 }
 # ── PUBLICAR ────────────────────────────────────────────────────────────────
