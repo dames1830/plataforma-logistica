@@ -329,6 +329,79 @@ def solo_mirar(pk, wms, sync, base, fechas):
     return 0
 
 
+JS_PANEL = """() => {
+  const filas = [];
+  document.querySelectorAll('input').forEach(i => {
+    const caja = i.getBoundingClientRect();
+    if (caja.width === 0 || caja.height === 0) return;
+    let et = '';
+    let n = i.closest('tr') || i.parentElement;
+    for (let k = 0; k < 4 && n && !et; k++) {
+      et = (n.innerText || '').trim().split('\\n')[0] || '';
+      n = n.parentElement;
+    }
+    filas.push({etiqueta: et.slice(0, 60), valor: (i.value || '').slice(0, 40),
+                y: Math.round(caja.y)});
+  });
+  filas.sort((a, b) => a.y - b.y);
+  return filas;
+}"""
+
+
+def ver_panel(pk, wms, sync, dia):
+    """QUE TIENE PUESTO EL PANEL DE VERDAD, campo por campo.
+
+       Hizo falta el 10-sep-2026. Le dije a Daniel que el WMS no guardaba abril
+       ni mayo porque la grilla volvia vacia, y el contesto: *"yo estoy viendo
+       manualmente que tiene datos en abril y en mayo"*. Tenia razon.
+
+       El robot escribe las fechas de SELECCION, pero la pantalla exige ademas
+       una FECHA DE CREACION y esa la trae la busqueda guardada. Suponer que
+       venia abierta era justamente el error: hay que mirarla."""
+    with sync() as p:
+        nav = p.chromium.launch(headless=True)
+        ctx = nav.new_context(viewport={"width": 1920, "height": 1080})
+        page = ctx.new_page()
+        page.on("dialog", lambda d: d.accept())
+        try:
+            page.goto("https://a10.wms.ocs.oraclecloud.com/bata/index/")
+            page.wait_for_selector("input[name='username']", timeout=20000)
+            page.fill("input[name='username']", wms.WMS_USER)
+            page.fill("input[name='password']", wms.WMS_PASSWORD)
+            page.locator("button[type='submit'], input[type='submit'], "
+                         "input[value='Sign In']").first.click()
+            log("Sesion iniciada como %s" % wms.WMS_USER)
+            time.sleep(15)
+            pk.abrir_pantalla(page, pk.PANTALLA_PICKING)
+            pk.abrir_panel(page)
+            log("")
+            log("--- panel RECIEN ABIERTO, sin busqueda guardada ---")
+            for c in page.evaluate(JS_PANEL):
+                if c["etiqueta"]:
+                    log("   %-58s = %s" % (c["etiqueta"], c["valor"] or "(vacio)"))
+            pk.elegir_busqueda_guardada(page, pk.BUSQUEDA_PICKING)
+            log("")
+            log("--- panel DESPUES de aplicar '%s' ---" % pk.BUSQUEDA_PICKING)
+            for c in page.evaluate(JS_PANEL):
+                if c["etiqueta"]:
+                    log("   %-58s = %s" % (c["etiqueta"], c["valor"] or "(vacio)"))
+            f = dia.strftime("%d/%m/%Y")
+            pk.poner_fecha_y_hora(page, pk.ETQ_PICK_DESDE, f, "0:00:00")
+            pk.poner_fecha_y_hora(page, pk.ETQ_PICK_HASTA, f, "23:59:59")
+            log("")
+            log("--- panel con las fechas de seleccion del %s ---"
+                % dia.strftime("%d-%m-%Y"))
+            for c in page.evaluate(JS_PANEL):
+                if c["etiqueta"]:
+                    log("   %-58s = %s" % (c["etiqueta"], c["valor"] or "(vacio)"))
+        finally:
+            try:
+                nav.close()
+            except Exception:
+                pass
+    return 0
+
+
 def run():
     abrir_log()
     import bloqueo_wms
@@ -351,6 +424,15 @@ def run():
     if not base or not os.path.isdir(base):
         log("No encuentro la carpeta de OneDrive (%s)" % base, "ERROR")
         return 1
+
+    panel = arg("--ver-panel")
+    if panel:
+        bloqueo_wms.esperar_turno(log, minutos_max=60, quien="ver panel picking")
+        bloqueo_wms.tomar("ver panel picking")
+        try:
+            return ver_panel(pk, wms, sync_playwright, fecha(panel, None))
+        finally:
+            bloqueo_wms.soltar()
 
     mirar = arg("--mirar")
     if mirar:
