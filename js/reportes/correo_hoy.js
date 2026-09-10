@@ -24,8 +24,8 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0687';
-import { icono } from '../services_v245/iconos.js?v=29.0687';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0688';
+import { icono } from '../services_v245/iconos.js?v=29.0688';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -347,9 +347,14 @@ function cuerpo(d, fecha, dias) {
            fondo obligaban a recorrer el modulo entero para llegar. */
         `<div class="pend-dos">${cuadroNoLiberadosDetalle(d.noLiberados)}`
           + `${cuadroRepetidas(d.repetidas)}</div>`,
-        cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
-               `Las 10 más cargadas de ${nf(c.tiendas)}`,
-               d.tiendas, { etiqueta: 'TIENDA', tope: 10, etiquetaPed: 'GUÍAS' }),
+        /* TIENDA Y RUTA JUNTAS: las dos dicen a donde va lo de hoy, una por
+           destino y la otra por como sale. Prioridad baja, que es otra pregunta. */
+        `<div class="pend-dos">`
+          + cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
+                   `Las 10 más cargadas de ${nf(c.tiendas)}`,
+                   d.tiendas, { etiqueta: 'TIENDA', tope: 10, etiquetaPed: 'GUÍAS' })
+          + cuadroRutas(d.rutas, d.rutasSinCruce)
+          + `</div>`,
         cuadro('POR QUÉ LO PIDIÓ COMERCIAL', 'La columna Prioridad del correo',
                d.prioridad, { etiqueta: 'PRIORIDAD', tope: 8, conPct: true,
                               etiquetaPed: 'GUÍAS' }),
@@ -365,7 +370,6 @@ function cuerpo(d, fecha, dias) {
                'Lo separa el G. Gender del Maestro, no la etiqueta del correo',
                d.gender, { etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
                            nota: 'Un total que mezcla zapatos con cajas no dice nada.' }),
-        cuadroRutas(d.rutas, d.rutasSinCruce),
     ].join('');
 
     return cab + tarjetas + `<div class="pend-grid">${cuadros}</div>` + estiloBloque();
@@ -374,18 +378,18 @@ function cuerpo(d, fecha, dias) {
 /** Lo único de estilo que no está en `estilos()`: el rótulo que parte los bloques. */
 function estiloBloque() {
     return `<style>
-    /* Los dos cuadros del correo, apilados dentro de una sola celda: el segundo
-       tiene que quedar DEBAJO del primero, no al costado. El hueco es el mismo
-       que separa los paneles de la grilla. */
     /* Una fila entera partida en tres. En pantalla angosta se apilan, y una tabla
        que no entre se desliza sola en vez de romper el ancho. */
     #pend .pend-tres{grid-column:1/-1;display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+      grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
     #pend .pend-tres .pend-panel{overflow-x:auto}
-    /* Los dos detalles, mitad y mitad. Mismo resguardo: si una tabla no entra se
-       desliza dentro de su recuadro, y en pantalla angosta se apilan. */
+    /* LOS DOS DE LA FILA TERMINAN A LA MISMA ALTURA. Sin esto cada uno tomaba
+       la suya y quedaban desparejos -Daniel, 10-sep-2026-. La clase pend-ancho se
+       neutraliza: adentro de esta fila un panel ocupa su mitad, no todo.
+       OJO: nada de comillas invertidas aca dentro, esto vive en una plantilla. */
     #pend .pend-dos{grid-column:1/-1;display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+      grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}
+    #pend .pend-dos > .pend-ancho{grid-column:auto}
     #pend .pend-dos .pend-panel{overflow-x:auto}
     /* Encabezado con acciones a la derecha, buscador y lista que se desliza con
        la cabecera fija. El alto sale de que entren unas doce filas sin empujar
