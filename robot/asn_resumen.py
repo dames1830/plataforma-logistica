@@ -22,6 +22,7 @@ COMO SEPARA EL CALZADO
 
 CORRE DETRAS DEL ROBOT DEL ASN, a las 04:30.
 """
+import hashlib
 import os
 import re
 import subprocess
@@ -409,12 +410,36 @@ def construir():
         iU = idx.get("verified_user")
 
         n = 0
+        # EL ARCHIVO REPITE LA FILA ENTERA, y sumarlas inflaba TODO el modulo.
+        #
+        # Lo caza Daniel el 10-sep-2026 revisando un LPN: la web decia 900 pares y
+        # el WMS 15. La exportacion cruza y devuelve cada linea tantas veces como
+        # SKU tiene el ASN: en el 20261052701CA son 3.600 filas y solo 60 distintas.
+        #
+        # Medido sobre los seis archivos: **48.520.009 unidades recibidas cuando
+        # son 4.335.704**. Once veces. Por archivo va de 6,8x a 16,9x.
+        #
+        # LA LLAVE ES LA FILA ENTERA. Se guarda su huella y no la fila, que serian
+        # cientos de MB; y el conjunto se vacia en cada archivo, porque las
+        # repetidas viven dentro del mismo.
+        #
+        # Es la MISMA trampa que ya tenia documentada `armar_pendiente.py` con el
+        # Detalle de Orden. Aparecio en otro archivo y nadie la vio hasta hoy.
+        vistas = set()
+        repetidas = 0
         for fila in it:
             if not fila or iN is None or iN >= len(fila) or fila[iN] is None:
                 continue
             asn = str(fila[iN]).strip()
             if not asn:
                 continue
+            huella = hashlib.md5(
+                "".join("" if c is None else str(c) for c in fila)
+                .encode("utf-8", "replace")).digest()
+            if huella in vistas:
+                repetidas += 1
+                continue
+            vistas.add(huella)
             n += 1
             env, rec = af(fila[iE]), af(fila[iR])
             cod = str(fila[iA]).strip() if iA is not None and iA < len(fila) and fila[iA] else ""
@@ -542,6 +567,9 @@ def construir():
                     "envio": fe.strftime("%d/%m/%Y") if fe else "",
                 }
         wb.close()
+        if repetidas:
+            log("%s: %s filas repetidas descartadas, quedan %s"
+                % (nombre, "{:,}".format(repetidas), "{:,}".format(n)))
         archivos.append({"mes": etiqueta, "lineas": n,
                          "mb": round(os.path.getsize(ruta) / 1048576.0, 1)})
         log("%s: %s lineas" % (nombre, "{:,}".format(n)))
