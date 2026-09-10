@@ -172,12 +172,25 @@ def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista):
                     bajados.append(dia)
                     pendientes.pop(0)
                 except Exception as e:
-                    # UN DIA QUE FALLA NO PUEDE PARAR LOS OTROS 117. Se anota,
-                    # se saca de la cola y se sigue; al final se listan todos
-                    # juntos para una segunda pasada.
-                    log("El %s no se pudo bajar (%s: %s)"
-                        % (dia.strftime("%d-%m-%Y"), type(e).__name__, str(e)[:140]),
+                    # SE INTENTA UNA VEZ MAS ANTES DE DARLO POR PERDIDO. La lista
+                    # de busquedas guardadas a veces no se despliega a tiempo -el
+                    # robot diario tambien lo sufre y lo resuelve reabriendola-, y
+                    # eso no es motivo para perder el dia.
+                    log("El %s fallo (%s: %s). Un intento mas..."
+                        % (dia.strftime("%d-%m-%Y"), type(e).__name__, str(e)[:110]),
                         "WARN")
+                    try:
+                        pk.descargar_picking(page, destino, dia)
+                        bajados.append(dia)
+                        pendientes.pop(0)
+                        continue
+                    except Exception as e2:
+                        # UN DIA QUE FALLA NO PUEDE PARAR LOS OTROS 117. Se anota,
+                        # se saca de la cola y se sigue; al final se listan todos
+                        # juntos para una segunda pasada.
+                        log("El %s no se pudo bajar (%s: %s)"
+                            % (dia.strftime("%d-%m-%Y"), type(e2).__name__,
+                               str(e2)[:140]), "WARN")
                     fallaron.append(dia)
                     pendientes.pop(0)
                     # La pagina puede haber quedado a medias. Se corta el bloque
@@ -189,6 +202,51 @@ def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista):
             except Exception:
                 pass
     return bajados, fallaron
+
+
+def solo_mirar(pk, wms, sync, base, fechas):
+    """HASTA DONDE LLEGA LA MEMORIA DEL WMS.
+
+       No exporta nada: pone las fechas, ejecuta la busqueda y mira si la grilla
+       trae filas. Unos 30 segundos por dia contra los 2 o 3 minutos de una
+       bajada, asi que preguntarle al WMS por seis fechas sueltas cuesta menos
+       que descubrir a los tropezones que abril esta vacio.
+
+       Hizo falta el 10-sep-2026: el 01-04 y el 03-04 volvieron sin una sola
+       fila, y bajar 118 dias para enterarse de eso habria costado horas."""
+    hay = []
+    with sync() as p:
+        nav = p.chromium.launch(headless=True)
+        ctx = nav.new_context(viewport={"width": 1920, "height": 1080})
+        page = ctx.new_page()
+        page.on("dialog", lambda d: d.accept())
+        try:
+            page.goto("https://a10.wms.ocs.oraclecloud.com/bata/index/")
+            page.wait_for_selector("input[name='username']", timeout=20000)
+            page.fill("input[name='username']", wms.WMS_USER)
+            page.fill("input[name='password']", wms.WMS_PASSWORD)
+            page.locator("button[type='submit'], input[type='submit'], "
+                         "input[value='Sign In']").first.click()
+            log("Sesion iniciada como %s" % wms.WMS_USER)
+            time.sleep(15)
+            for d in fechas:
+                try:
+                    pk.descargar_picking(page, None, d, sin_exportar=True)
+                    log(">>> %s  TIENE DATOS" % d.strftime("%d-%m-%Y"))
+                    hay.append(d)
+                except Exception as e:
+                    log(">>> %s  vacio  (%s)"
+                        % (d.strftime("%d-%m-%Y"), str(e)[:70]), "WARN")
+        finally:
+            try:
+                nav.close()
+            except Exception:
+                pass
+    log("")
+    log("=" * 62)
+    log("CON DATOS: %s" % (", ".join(d.strftime("%d-%m") for d in hay) or "ninguna"))
+    log("=" * 62)
+    return 0
 
 
 def run():
@@ -213,6 +271,19 @@ def run():
     if not base or not os.path.isdir(base):
         log("No encuentro la carpeta de OneDrive (%s)" % base, "ERROR")
         return 1
+
+    mirar = arg("--mirar")
+    if mirar:
+        fechas = [fecha(x.strip(), None) for x in mirar.split(",") if x.strip()]
+        log("=" * 62)
+        log("SOLO MIRAR  ·  %d fechas, sin exportar nada" % len(fechas))
+        log("=" * 62)
+        bloqueo_wms.esperar_turno(log, minutos_max=60, quien="mirar picking")
+        bloqueo_wms.tomar("mirar picking")
+        try:
+            return solo_mirar(pk, wms, sync_playwright, base, fechas)
+        finally:
+            bloqueo_wms.soltar()
 
     faltan = dias_que_faltan(base, d0, d1)
     log("=" * 62)
