@@ -316,6 +316,7 @@ def leer_correos():
 
     guias, cabecera, iq_out, ig_out = {}, None, None, None
     leidos = 0
+    fuera_dt = [0]
     for (mes, dia), nombre in archivos:
         ruta = os.path.join(CORREOS, nombre)
         try:
@@ -339,8 +340,18 @@ def leer_correos():
             if cabecera is None:
                 cabecera, iq_out, ig_out = list(cab), iq, ig
                 cabecera[iq] = 'CANTIDAD PENDIENTE'
+            # EL DOBLE TRAMO NO ES DESPACHO DEL CD Y NO ENTRA A NADA.
+            # Daniel, 09-sep-2026: *"no estoy considerando doble tramo"*. Es un valor
+            # de la columna Prioridad -etiqueta VARIOS-, y el WMS NUNCA lo abre como
+            # orden: comprobado ese dia, las 418 guias de doble tramo del correo son
+            # EXACTAMENTE las 418 que el WMS no tenia abiertas, mismo conjunto y cero
+            # diferencias. Contandolas, el modulo decia 46.575 y comercial 38.142.
+            ip = cab.index('Prioridad') if 'Prioridad' in cab else None
             for r in it:
                 g = limpio(r[ig])
+                if ip is not None and str(r[ip] or '').strip().upper() == 'DOBLE TRAMO':
+                    fuera_dt[0] += 1
+                    continue
                 if g and g not in guias:
                     guias[g] = (list(r), mes, dia)
             hallado = True
@@ -358,7 +369,8 @@ def leer_correos():
     if leidos < len(archivos):
         log('Se reconocieron %d de %d archivos de correo. Revisar los nombres.'
             % (leidos, len(archivos)), 'AVISO')
-    log('Correos leidos: %d archivos, %s guias' % (leidos, format(len(guias), ',d')))
+    log('Correos leidos: %d archivos, %s guias  (%s filas de DOBLE TRAMO fuera)'
+        % (leidos, format(len(guias), ',d'), format(fuera_dt[0], ',d')))
     return guias, cabecera, iq_out, ig_out
 
 

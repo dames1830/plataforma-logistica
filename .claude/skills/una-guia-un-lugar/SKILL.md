@@ -37,6 +37,37 @@ explotarlo también ahí; falta hacer el lado del stock.
 **PENDIENTE, anotado por Daniel el 09-sep:** *"el prepack no solo viene en pares, también
 viene en accesorios, ojo con eso"*. Falta revisar cómo se explota el accesorio.
 
+## 0-bis. EL DOBLE TRAMO NO ES UN PEDIDO Y NO SE MIDE
+
+> *"El doble tramo no es medible, no es un pedido, es una reasignación nada más."*
+> — Daniel, 09-sep-2026
+
+Es un valor de la columna **Prioridad** del correo —con etiqueta `VARIOS`—. **No entra a
+ningún grupo**: ni al Correo de Hoy, ni al Pendiente, ni a las tarjetas del buffer. Se
+descarta al leer el correo, en `leer_correos()`.
+
+**La prueba de que no es trabajo del CD:** el WMS **nunca** lo abre como orden. Medido el
+09-09, y no de casualidad — **las 418 guías de doble tramo del correo son EXACTAMENTE las
+418 que el WMS no tenía abiertas. Mismo conjunto, cero diferencias.**
+
+Contándolo, el módulo decía que comercial pidió **46.575** y el WMS solo tenía **38.142**,
+un hueco de 8.433 que no existía. Sin doble tramo: **38.142 contra 38.142, al par, y cero
+guías sin abrir.**
+
+**Cómo cuadrar el correo contra la pantalla**, con el archivo del 09-09:
+
+```
+    el archivo Guias 09.09.xlsx ............... 50.914   (948 guias)
+  - DOBLE TRAMO ............................... -9.715
+  = lo que Daniel cuenta a mano ............... 41.199
+  - guias que ya venian en un correo anterior . -3.057   (van al Pendiente)
+  = lo que dice el Correo de Hoy .............. 38.142
+```
+
+**Si alguna vez una guía de doble tramo apareciera abierta en el WMS**, hoy caería en
+"nunca liberado". El día que pase, hay que mirarlo: significaría que dejó de ser una
+reasignación.
+
 ## 1. La unidad es la GUÍA, nunca el SKU
 
 > *"No te tienes que guiar del detalle del SKU, nada de eso. Te tienes que guiar del

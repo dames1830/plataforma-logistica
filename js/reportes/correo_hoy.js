@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0673';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0674';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
