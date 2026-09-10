@@ -198,7 +198,8 @@ export function enBloques(lista, tam) {
  * hubo que volver sobre las dos cuando cambio una regla.
  *
  * @param titulo   en mayusculas, arriba a la izquierda
- * @param tarjetas [{ rotulo, valor, color }] — las cifras que se suman, en fila
+ * @param tarjetas [{ rotulo, valor, color, sufijo }] — las cifras que se suman, en
+ *                 fila. `sufijo` dibuja la unidad debajo de la cifra, en chico.
  * @param grande   { rotulo, valor, color } — el numero que se reporta
  * @param pie      texto chico abajo a la derecha (opcional)
  */
@@ -304,7 +305,14 @@ export function laminaResumen({ titulo, tarjetas, grande, pie }) {
       tam -= 1;
       g.font = '800 ' + tam + 'px ' + FUENTE;
     }
-    texto(v, x + anchoT / 2, Y_TARJETAS + altoT * 0.68, tam, tinta(t.color), 800, 'center');
+    /* CON SUFIJO, la cifra sube y la unidad va debajo en chico. Daniel lo pidio el
+       10-sep-2026 para "EL MAS ANTIGUO TIENE / 37 / dias": leido de corrido, "DIAS EL
+       MAS VIEJO 37" no se entendia. Sin sufijo no cambia nada. */
+    const yCifra = Y_TARJETAS + altoT * (t.sufijo ? 0.62 : 0.68);
+    texto(v, x + anchoT / 2, yCifra, tam, tinta(t.color), 800, 'center');
+    if (t.sufijo) {
+      texto(t.sufijo, x + anchoT / 2, yCifra + tam * 0.62, 10, SUAVE, 700, 'center');
+    }
   });
 
   if (grande) {

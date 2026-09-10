@@ -18,9 +18,9 @@
  * nombre, con fecha MASTER: es una foto, no una serie por día.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0702';
-import { icono } from '../services_v245/iconos.js?v=29.0702';
-import { laminaResumen } from '../services_v245/laminas.js?v=29.0702';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0703';
+import { icono } from '../services_v245/iconos.js?v=29.0703';
+import { laminaResumen } from '../services_v245/laminas.js?v=29.0703';
 
 /* Las columnas que valen para los dos, y las que solo tienen sentido cuando
    hubo pick. Separarlas es lo que evita el mar de guiones. */
@@ -104,15 +104,16 @@ export function montarRecibidoSinPicar(raiz, OPC) {
                 title="Armar la lámina del resumen para mandarla por WhatsApp"
                 aria-label="Tomar la lámina">${icono('camara', 18)}</button>
         ${tarjeta(t.skus, 'SKU RECIBIDOS SIN MOVER')}
-        ${tarjeta(t.sinPicar, 'NUNCA SE PICARON', ' hot')}
+        ${tarjeta(t.sinPicar, 'NO SALIERON A TIENDA', ' hot')}
         ${tarjeta(t.conPocos, 'SE PICARON 5 O MENOS')}
         ${tarjeta(t.paresParados, 'PARES PARADOS')}
         ${tarjeta(t.masViejo, 'DÍAS EL MÁS VIEJO')}
       </div>
 
       <div class="rsp-dos">
-        ${tabla('rsp1', 'NUNCA SE PICARON',
-                'Entraron y no salió ni un par a tienda', nunca, COMUNES, true)}
+        ${tabla('rsp1', 'NO SALIERON A TIENDA',
+                'Entraron y no salió ni un par a tienda &middot; puede haber salido a otro canal',
+                nunca, COMUNES, true)}
         ${tabla('rsp2', 'SE PICARON 5 PARES O MENOS',
                 'Salió algo, pero casi nada', pocos, COMUNES.concat(DEL_PICK), false)}
       </div>
@@ -132,10 +133,12 @@ export function montarRecibidoSinPicar(raiz, OPC) {
             tarjetas: [
                 { rotulo: 'SKUs CON 1 A 5 PARES', valor: t.conPocos,
                   color: 'var(--warning)' },
-                { rotulo: 'DÍAS EL MÁS VIEJO', valor: t.masViejo,
-                  color: 'var(--warning)' },
+                /* "DIAS EL MAS VIEJO 37" no se entendia leido de corrido. Ahora
+                   la unidad va debajo, en chico. */
+                { rotulo: 'EL MÁS ANTIGUO TIENE', valor: t.masViejo,
+                  sufijo: 'días', color: 'var(--warning)' },
             ],
-            grande: { rotulo: 'SKUs SIN NINGÚN PICK', valor: t.sinPicar,
+            grande: { rotulo: 'SKUs QUE NO SALIERON A TIENDA', valor: t.sinPicar,
                       color: 'var(--danger)' },
             pie: 'Solo canal retail · al ' + (d.fecha || ''),
         });
