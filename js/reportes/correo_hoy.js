@@ -24,7 +24,8 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0686';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0687';
+import { icono } from '../services_v245/iconos.js?v=29.0687';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -107,34 +108,49 @@ function cuadroNoLiberados(n) {
 /**
  * EL DETALLE, CON NOMBRE Y FECHA DE CADA UNO.
  *
- * En pantalla van las 15 mas viejas —la lista entera son cientos— y el boton baja
- * el CSV completo. Daniel lo pidio para llevarselo a su jefe, y para eso hace
- * falta el papel, no un total.
+ * VAN LOS 275, NO UNA MUESTRA. Daniel, 10-sep-2026: *"me dices que hay
+ * doscientos setenta y cinco pedidos, pero necesito hacer scroll y mirarlos"*.
+ * Antes se mostraban las 15 mas viejas y el resto solo existia en el archivo
+ * bajado: para reclamar hace falta poder buscar una orden ahi mismo.
+ *
+ * La lista se desliza dentro de su propio recuadro -la cabecera queda fija- y el
+ * buscador filtra por lo que sea: orden, destino o tipo.
  */
 function cuadroNoLiberadosDetalle(n) {
     const filas = (n && n.detalle) || [];
     if (!filas.length) return '';
-    const top = filas.slice(0, 15);
     return `<div class="pend-panel">
-        <h3>UNO POR UNO, DEL MÁS VIEJO AL MÁS NUEVO</h3>
-        <div class="pend-cap">Solo retail &middot; las 15 más viejas de ${nf(filas.length)} &middot; el botón baja la lista completa</div>
-        <table>
-          <thead><tr>
-            <th>ORDEN</th><th>DESTINO</th><th>TIPO</th>
-            <th class="n">CREADA</th><th class="n">DÍAS</th><th class="n">PARES</th>
-          </tr></thead>
-          <tbody>
-            ${top.map(f => `<tr${Number(f.dias) > 30 ? ' class="pend-ojo"' : ''}>
-              <td>${esc(f.orden)}</td>
-              <td>${esc(f.destino)}</td>
-              <td>${esc(f.tipo)}</td>
-              <td class="n">${esc(f.fecha)}</td>
-              <td class="n">${nf(f.dias)}</td>
-              <td class="n">${nf(f.pares)}</td></tr>`).join('')}
-          </tbody>
-        </table>
-        <button id="nolib_csv" class="btn-icono btn-excel pend-btn"
-                style="margin-top:11px">BAJAR LOS ${nf(filas.length)} EN CSV</button>
+        <div class="pend-cab2">
+          <div>
+            <h3>UNO POR UNO, DEL MÁS VIEJO AL MÁS NUEVO</h3>
+            <div class="pend-cap">Solo retail &middot; ${nf(filas.length)} pedidos</div>
+          </div>
+          <div class="pend-acc2">
+            <input type="search" id="nolib_buscar" class="pend-buscar"
+                   placeholder="Orden, destino o tipo">
+            <button type="button" id="nolib_xls" class="btn-icono btn-excel"
+                    title="Exportar a Excel" aria-label="Exportar a Excel">${icono('excel', 18)}</button>
+          </div>
+        </div>
+        <div class="pend-scroll">
+          <table>
+            <thead><tr>
+              <th>ORDEN</th><th>DESTINO</th><th>TIPO</th>
+              <th class="n">CREADA</th><th class="n">DÍAS</th><th class="n">PARES</th>
+            </tr></thead>
+            <tbody id="nolib_filas">
+              ${filas.map(f => `<tr${Number(f.dias) > 30 ? ' class="pend-ojo"' : ''}
+                data-b="${esc((f.orden + ' ' + f.destino + ' ' + f.tipo).toLowerCase())}">
+                <td>${esc(f.orden)}</td>
+                <td>${esc(f.destino)}</td>
+                <td>${esc(f.tipo)}</td>
+                <td class="n">${esc(f.fecha)}</td>
+                <td class="n">${nf(f.dias)}</td>
+                <td class="n">${nf(f.pares)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="pend-suave" id="nolib_cuenta"></div>
       </div>`;
 }
 
@@ -165,7 +181,7 @@ function cuadroCascada(k) {
           <tbody>
             ${fila('Correo comercial', k.trae)}
             ${fila('− Doble tramo', k.dobleTramo, 'pend-gris')}
-            ${fila('− Ya lo había mandado otro día', k.repetidas, 'pend-ojo')}
+            ${fila('− Ya está en el pendiente de despacho', k.repetidas, 'pend-ojo')}
             <tr class="pend-total"><td>= NUEVO DE HOY → esto es el correo de hoy</td>
               <td class="n">${nf(k.nuevo.guias)}</td>
               <td class="n">${nf(k.nuevo.und)}</td></tr>
@@ -371,6 +387,17 @@ function estiloBloque() {
     #pend .pend-dos{grid-column:1/-1;display:grid;
       grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
     #pend .pend-dos .pend-panel{overflow-x:auto}
+    /* Encabezado con acciones a la derecha, buscador y lista que se desliza con
+       la cabecera fija. El alto sale de que entren unas doce filas sin empujar
+       el resto del modulo. */
+    #pend .pend-cab2{display:flex;align-items:flex-start;justify-content:space-between;
+      gap:12px;flex-wrap:wrap}
+    #pend .pend-acc2{display:flex;align-items:center;gap:8px}
+    #pend .pend-buscar{font-size:.78rem;padding:6px 10px;border-radius:4px;
+      border:1px solid var(--border);background:var(--input-bg);
+      color:var(--text-strong);width:170px}
+    #pend .pend-scroll{max-height:430px;overflow-y:auto;margin-top:9px}
+    #pend .pend-scroll thead th{position:sticky;top:0;z-index:1}
     @media(max-width:1200px){#pend .pend-dos{grid-template-columns:1fr}}
     @media(max-width:1200px){#pend .pend-tres{grid-template-columns:1fr}}
     /* La referencia de lo que quedo fuera del maestro: se deja a la vista pero
@@ -395,29 +422,48 @@ export function montarCorreoHoy(raiz, OPC) {
        Pendiente cuelgan todos de ese id. */
     raiz.innerHTML = `<div id="pend">${estilos()}${cuerpo(d, fecha, O.fechas)}</div>`;
 
-    /* EL CSV SE ARMA ACA, con lo que ya vino publicado: no hay que pedirle nada
-       al servidor ni esperar a que el robot suba un Excel. */
-    const btn = raiz.querySelector('#nolib_csv');
-    if (btn) btn.addEventListener('click', () => {
+    /* EL BUSCADOR filtra las filas que ya estan dibujadas: son cientos, no
+       miles, asi que no hace falta volver a pintar la tabla. */
+    const bus = raiz.querySelector('#nolib_buscar');
+    const cuenta = raiz.querySelector('#nolib_cuenta');
+    const filasTabla = () => Array.prototype.slice.call(
+        raiz.querySelectorAll('#nolib_filas tr'));
+    const contar = (visibles, total) => {
+        if (!cuenta) return;
+        cuenta.textContent = visibles === total
+            ? nf(total) + ' pedidos'
+            : nf(visibles) + ' de ' + nf(total) + ' pedidos';
+    };
+    if (bus) {
+        const todas = filasTabla();
+        contar(todas.length, todas.length);
+        bus.addEventListener('input', () => {
+            const q = bus.value.trim().toLowerCase();
+            let n = 0;
+            todas.forEach(tr => {
+                const ok = !q || (tr.dataset.b || '').indexOf(q) !== -1;
+                tr.hidden = !ok;
+                if (ok) n++;
+            });
+            contar(n, todas.length);
+        });
+    }
+
+    /* EL EXCEL BAJA LA LISTA COMPLETA, no lo que dejo ver el buscador: el archivo
+       es para llevarselo al jefe, y una lista filtrada sin decirlo engana. */
+    const xls = raiz.querySelector('#nolib_xls');
+    if (xls) xls.addEventListener('click', () => {
         const filas = ((O.datos || {}).noLiberados || {}).detalle || [];
-        if (!filas.length) return;
-        const cab = ['Orden', 'Destino', 'Tipo de orden', 'Creada', 'Dias', 'Pares'];
-        const esc2 = (v) => {
-            const t = String(v == null ? '' : v);
-            return /[";\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
-        };
-        const cuerpo = filas.map(f => [f.orden, f.destino, f.tipo, f.fecha, f.dias, f.pares]
-            .map(esc2).join(';')).join('\n');
-        /* El BOM va adelante para que Excel abra los acentos bien. */
-        const blob = new Blob(['\ufeff' + cab.join(';') + '\n' + cuerpo],
-                              { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'No liberados ' + (fecha || '') + '.csv';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        if (!filas.length || typeof XLSX === 'undefined') return;
+        const aoa = [['Orden', 'Destino', 'Tipo de orden', 'Creada', 'Dias', 'Pares']];
+        filas.forEach(f => aoa.push([f.orden, f.destino, f.tipo, f.fecha,
+                                     Number(f.dias) || 0, Number(f.pares) || 0]));
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!cols'] = [{ wch: 12 }, { wch: 10 }, { wch: 24 }, { wch: 12 },
+                       { wch: 7 }, { wch: 9 }];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'No liberados');
+        XLSX.writeFile(wb, 'Pedidos WMS no liberados ' + (fecha || '') + '.xlsx');
     });
 
     const cal = raiz.querySelector('#correo_fecha');
