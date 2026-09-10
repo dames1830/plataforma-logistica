@@ -24,7 +24,7 @@
  * }
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0694';
+import { icono } from '../services_v245/iconos.js?v=29.0695';
 
 const nf = (n) => Number(n || 0).toLocaleString('es-PE');
 
@@ -57,6 +57,9 @@ const cuadro = (titulo, pie, filas, opciones) => {
        progreso. Los dos van apagados: el Pendiente los quiere como estaban. */
     const cn = o.centrado ? 'c' : 'n';
     const conBarra = !o.sinBarra;
+    /* `conTotal` cierra la tabla con la suma. Apagado por defecto: en el Pendiente
+       varios cuadros muestran solo los primeros y un total ahi mentiria. */
+    const conTotal = !!o.conTotal;
     const lista = (filas || []).slice(0, tope);
     const max = lista.reduce((m, f) => Math.max(m, Number(f.und) || 0), 0);
     const total = (filas || []).reduce((s, f) => s + (Number(f.und) || 0), 0);
@@ -91,6 +94,13 @@ const cuadro = (titulo, pie, filas, opciones) => {
                   ${conPct ? `<td class="${cn}">${total ? Math.round(100 * und / total) : 0}%</td>` : ''}
                 </tr>`;
             }).join('')}
+            ${conTotal ? `<tr class="pend-total">
+              <td>TOTAL</td>
+              ${conPed ? `<td class="${cn}">${nf((filas || []).reduce(
+                  (a, f) => a + (Number(f.ped) || 0), 0))}</td>` : ''}
+              <td class="${cn}">${nf(total)}</td>
+              ${conPct ? `<td class="${cn}">100%</td>` : ''}
+            </tr>` : ''}
           </tbody>
         </table>
         ${resto > 0 ? `<span class="pend-mas">▸ y ${nf(resto)} más</span>` : ''}

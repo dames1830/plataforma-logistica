@@ -25,8 +25,8 @@
  */
 
 import { nf, esc, cuadro, cuadroRutas, estilos, engancharBuscador }
-    from './pendiente.js?v=29.0694';
-import { icono } from '../services_v245/iconos.js?v=29.0694';
+    from './pendiente.js?v=29.0695';
+import { icono } from '../services_v245/iconos.js?v=29.0695';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -70,22 +70,22 @@ function cuadroCascada(k) {
     if (!k || !k.trae) return '';
     const fila = (etiqueta, v, clase) => `<tr${clase ? ' class="' + clase + '"' : ''}>
         <td>${etiqueta}</td>
-        <td class="n">${nf(v.guias)}</td>
-        <td class="n">${nf(v.und)}</td></tr>`;
+        <td class="c">${nf(v.guias)}</td>
+        <td class="c">${nf(v.und)}</td></tr>`;
     /* VA PELADO. Daniel lo repaso renglon por renglon el 10-sep-2026 y saco el
        titulo, el pie, la palabra PASO, la explicacion del doble tramo y la nota
        de los pares: lo unico que queria ver es la resta. Los signos menos se
        quedan porque son la resta misma, no una explicacion. */
     return `<div class="pend-panel">
         <table>
-          <thead><tr><th></th><th class="n">GUÍAS</th><th class="n">UNIDADES</th></tr></thead>
+          <thead><tr><th></th><th class="c">GUÍAS</th><th class="c">UNIDADES</th></tr></thead>
           <tbody>
             ${fila('Correo comercial', k.trae)}
             ${fila('− Doble tramo', k.dobleTramo, 'pend-gris')}
             ${fila('− Ya está en el pendiente de despacho', k.repetidas, 'pend-ojo')}
             <tr class="pend-total"><td>= NUEVO DE HOY → esto es el correo de hoy</td>
-              <td class="n">${nf(k.nuevo.guias)}</td>
-              <td class="n">${nf(k.nuevo.und)}</td></tr>
+              <td class="c">${nf(k.nuevo.guias)}</td>
+              <td class="c">${nf(k.nuevo.und)}</td></tr>
           </tbody>
         </table>
       </div>`;
@@ -152,15 +152,15 @@ function cuadroEtiquetas(k) {
                              { guias: 0, und: 0 });
     return `<div class="pend-panel">
         <table>
-          <thead><tr><th></th><th class="n">GUÍAS</th><th class="n">UNIDADES</th></tr></thead>
+          <thead><tr><th></th><th class="c">GUÍAS</th><th class="c">UNIDADES</th></tr></thead>
           <tbody>
             ${filas.map(f => `<tr>
               <td>${esc(f.k)}</td>
-              <td class="n">${nf(f.guias)}</td>
-              <td class="n">${nf(f.und)}</td></tr>`).join('')}
+              <td class="c">${nf(f.guias)}</td>
+              <td class="c">${nf(f.und)}</td></tr>`).join('')}
             <tr class="pend-total"><td>= NUEVO DE HOY</td>
-              <td class="n">${nf(tot.guias)}</td>
-              <td class="n">${nf(tot.und)}</td></tr>
+              <td class="c">${nf(tot.guias)}</td>
+              <td class="c">${nf(tot.und)}</td></tr>
           </tbody>
         </table>
       </div>`;
@@ -290,7 +290,7 @@ function cuerpo(d, fecha, dias) {
           + cuadro('CALZADO Y LO QUE NO LO ES',
                    'Lo separa el G. Gender del Maestro, no la etiqueta del correo',
                    d.gender, { etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
-                               centrado: true, sinBarra: true })
+                               centrado: true, sinBarra: true, conTotal: true })
           + `</div>`,
         /* LOS NO LIBERADOS SE MUDARON A Picking > Pedidos WMS -10-sep-2026-. Los
            huecos que dejaron los ocupan los dos cortes por articulo que estaban
