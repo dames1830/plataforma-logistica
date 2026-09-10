@@ -127,17 +127,46 @@ def ya_sin_movimiento():
         return set()
 
 
-def dias_que_faltan(base, d0, d1):
-    vacios = ya_sin_movimiento()
+def dias_que_faltan(base, d0, d1, rehacer=False):
+    """Los dias a pedir. Con `rehacer` van TODOS, esten o no.
+
+       Hizo falta el 10-sep-2026: los primeros 41 dias se bajaron con la fecha
+       de creacion que traia la busqueda guardada -01/05/2026- y les falta todo
+       lo que se creo antes de esa fecha. Un archivo incompleto es peor que uno
+       que no esta: nadie lo va a mirar dos veces."""
+    vacios = set() if rehacer else ya_sin_movimiento()
     faltan = []
     d = d0
     while d <= d1:
         ruta = os.path.join(base, "Picking", "Picking %d-%d.csv" % (d.day, d.month))
         hay = os.path.exists(ruta) and os.path.getsize(ruta) > MINIMO_BUENO
-        if not hay and d.strftime("%d-%m-%Y") not in vacios:
+        if rehacer or (not hay and d.strftime("%d-%m-%Y") not in vacios):
             faltan.append(d)
         d += timedelta(days=1)
     return faltan
+
+
+# LA FECHA DE CREACION QUE TAPABA MEDIO AÑO.
+#
+# La busqueda guardada "Avance Picking" trae "De registro de hora de creacion"
+# —campo OBLIGATORIO, con asterisco— clavado en **01/05/2026**. Todo lo creado
+# antes de esa fecha queda fuera por mas que se pidan las fechas de seleccion de
+# abril, y la grilla vuelve vacia sin decir por que.
+#
+# Yo lo lei como que el WMS no guardaba tan atras y se lo dije a Daniel asi.
+# El contesto: *"yo estoy viendo manualmente que tiene datos en abril y en
+# mayo"*. Tenia razon. El panel RECIEN ABIERTO, sin busqueda guardada, trae
+# 01/01/2025: la historia esta, la tapaba el filtro.
+#
+# Se escribe siempre, en todos los dias, y no se toca la busqueda guardada de
+# Daniel: es suya y la usa a mano.
+# AGOSTO DE 2025, que es lo que pidio Daniel: *"voy a poner la fecha de creacion
+# de agosto del dos mil veinticinco, asi mas o menos"*. El panel en blanco trae
+# 01/01/2025 y el a mano usa 01/01/2026; con agosto de 2025 sobra margen para
+# cualquier pedido viejo sin agrandar de mas la ventana que Oracle tiene que
+# recorrer. Se cambia con `--creacion`.
+ETQ_CREA_DESDE = "De registro de hora de creación"
+CREACION_DESDE = "01/08/2025"
 
 
 def bajar_dia_rapido(pk, page, destino, dia):
@@ -166,6 +195,8 @@ def bajar_dia_rapido(pk, page, destino, dia):
     log("AVANCE DE PICKING · %s  (mismo panel)" % dia.strftime("%d-%m-%Y"))
     log("=" * 58)
     pk.abrir_panel(page)
+    pk.poner_fecha_y_hora(page, ETQ_CREA_DESDE, CREACION_DESDE, "0:00:00")
+
     pk.poner_fecha_y_hora(page, pk.ETQ_PICK_DESDE, f, "0:00:00")
     pk.poner_fecha_y_hora(page, pk.ETQ_PICK_HASTA, f, "23:59:59")
     _, pie = pk.total_paginas(page)
@@ -187,6 +218,19 @@ def bajar_dia_rapido(pk, page, destino, dia):
         if pk.dia_vacio(e, paginas, "picking", dia.strftime("%d-%m-%Y")):
             return False
         raise
+
+
+def bajar_dia_armando(pk, page, destino, dia):
+    """El primer dia del bloque: abre la pantalla y arma el panel desde cero.
+
+       NO se usa `picking_y_orden.descargar_picking` porque ese acepta la fecha
+       de creacion que trae la busqueda guardada, y esa es justamente la que
+       tapaba abril. Todo lo demas es igual."""
+    pk.abrir_pantalla(page, pk.PANTALLA_PICKING)
+    pk.abrir_panel(page)
+    log("Eligiendo la búsqueda guardada '%s'..." % pk.BUSQUEDA_PICKING)
+    pk.elegir_busqueda_guardada(page, pk.BUSQUEDA_PICKING)
+    return bajar_dia_rapido(pk, page, destino, dia)
 
 
 def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista):
@@ -221,7 +265,7 @@ def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista):
                     # El primer dia del bloque abre la pantalla y elige la
                     # busqueda guardada; los demas reusan ese mismo panel.
                     if primero:
-                        pk.descargar_picking(page, destino, dia)
+                        bajar_dia_armando(pk, page, destino, dia)
                         primero = False
                     else:
                         bajar_dia_rapido(pk, page, destino, dia)
@@ -414,8 +458,11 @@ def run():
     pk.log = log
     wms.log = log
 
+    global CREACION_DESDE
+    CREACION_DESDE = arg("--creacion", CREACION_DESDE)
     probar = "--probar" in sys.argv
     a_la_vista = "--ver" in sys.argv
+    rehacer = "--rehacer" in sys.argv
     bloque = int(arg("--bloque", BLOQUE_MIN))
     d0 = fecha(arg("--desde"), datetime(datetime.now().year, 4, 1))
     d1 = fecha(arg("--hasta"), datetime.now() - timedelta(days=1))
@@ -447,13 +494,15 @@ def run():
         finally:
             bloqueo_wms.soltar()
 
-    faltan = dias_que_faltan(base, d0, d1)
+    faltan = dias_que_faltan(base, d0, d1, rehacer)
     log("=" * 62)
     log("RECUPERAR PICKING  ·  %s a %s"
         % (d0.strftime("%d-%m-%Y"), d1.strftime("%d-%m-%Y")))
     log("=" * 62)
     log("dias en el rango .......... %d" % ((d1 - d0).days + 1))
-    log("faltan por bajar .......... %d" % len(faltan))
+    log("%s %d" % ("SE REHACEN TODOS .........." if rehacer
+                   else "faltan por bajar ..........", len(faltan)))
+    log("creado desde .............. %s" % CREACION_DESDE)
     log("bloques de ................ %d minutos" % bloque)
     if not faltan:
         log("No falta ninguno. Nada que hacer.")
