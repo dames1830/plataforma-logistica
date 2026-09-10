@@ -18,9 +18,9 @@
  * nombre, con fecha MASTER: es una foto, no una serie por día.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0703';
-import { icono } from '../services_v245/iconos.js?v=29.0703';
-import { laminaResumen } from '../services_v245/laminas.js?v=29.0703';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0704';
+import { icono } from '../services_v245/iconos.js?v=29.0704';
+import { laminaResumen } from '../services_v245/laminas.js?v=29.0704';
 
 /* Las columnas que valen para los dos, y las que solo tienen sentido cuando
    hubo pick. Separarlas es lo que evita el mar de guiones. */
@@ -28,13 +28,15 @@ const COMUNES = [
     ['sku', 'SKU', ''], ['marca', 'GENDER', ''], ['colec', 'COLECCIÓN', ''],
     ['asn', 'ASN', ''], ['lpnEntrada', 'LPN DE ENTRADA', ''],
     ['recibido', 'RECIBIDO', 'c'], ['dias', 'DÍAS', 'c'], ['pares', 'PARES', 'c'],
+    /* Lo que si se pico, pero fuera de tienda. Cero aca = nadie lo toco. */
+    ['otroCanal', 'PICADO A OTRO CANAL', 'c'],
 ];
 const DEL_PICK = [
     ['picados', 'PICADOS', 'c'], ['picadoEl', 'PICADO EL', 'c'],
     ['lpnPick', 'LPN DEL PICK', ''], ['carton', 'CARTÓN OBLPN', ''],
     ['uPick', 'USUARIO PICKING', ''], ['uEmb', 'USUARIO EMBALAJE', ''],
 ];
-const NUMERICAS = ['dias', 'pares', 'picados'];
+const NUMERICAS = ['dias', 'pares', 'picados', 'otroCanal'];
 
 function tabla(pref, titulo, pie, filas, cols, ambar) {
     return `<div class="pend-panel">
@@ -104,7 +106,8 @@ export function montarRecibidoSinPicar(raiz, OPC) {
                 title="Armar la lámina del resumen para mandarla por WhatsApp"
                 aria-label="Tomar la lámina">${icono('camara', 18)}</button>
         ${tarjeta(t.skus, 'SKU RECIBIDOS SIN MOVER')}
-        ${tarjeta(t.sinPicar, 'NO SALIERON A TIENDA', ' hot')}
+        ${tarjeta(t.nadieLoToco, 'NADIE LOS PICÓ', ' hot')}
+        ${tarjeta(t.sinPicar, 'NO SALIERON A TIENDA')}
         ${tarjeta(t.conPocos, 'SE PICARON 5 O MENOS')}
         ${tarjeta(t.paresParados, 'PARES PARADOS')}
         ${tarjeta(t.masViejo, 'DÍAS EL MÁS VIEJO')}
@@ -131,14 +134,17 @@ export function montarRecibidoSinPicar(raiz, OPC) {
             /* EL ROTULO DICE LA UNIDAD. SKUs y DIAS no son la misma clase de cosa
                y sin decirlo la lamina invita a sumarlos. */
             tarjetas: [
-                { rotulo: 'SKUs CON 1 A 5 PARES', valor: t.conPocos,
+                { rotulo: 'NO SALIERON A TIENDA', valor: t.sinPicar,
                   color: 'var(--warning)' },
                 /* "DIAS EL MAS VIEJO 37" no se entendia leido de corrido. Ahora
                    la unidad va debajo, en chico. */
                 { rotulo: 'EL MÁS ANTIGUO TIENE', valor: t.masViejo,
                   sufijo: 'días', color: 'var(--warning)' },
             ],
-            grande: { rotulo: 'SKUs QUE NO SALIERON A TIENDA', valor: t.sinPicar,
+            /* EL NUMERO DURO manda: ni a tienda ni a ningun otro canal. Daniel
+               pregunto TRES VECES si los 1.707 no los habia tocado nadie, y no
+               era cierto: 633 de ellos si se picaron, a otro canal. */
+            grande: { rotulo: 'SKUs QUE NADIE PICÓ', valor: t.nadieLoToco,
                       color: 'var(--danger)' },
             pie: 'Solo canal retail · al ' + (d.fecha || ''),
         });

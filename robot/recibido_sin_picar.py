@@ -110,6 +110,10 @@ for ruta in sorted(glob.glob(os.path.join(B, 'ASN', 'ASN 2026-0[89].xlsx'))):
 # ── LO PICADO ───────────────────────────────────────────────────────────────
 pic = collections.defaultdict(lambda: {'pares': 0.0, 'ultima': None, 'usuario': '',
                                        'lpn': '', 'cont': '', 'orden': ''})
+# LOS PICKS A OTRO CANAL, aparte. Sin esto no se puede distinguir "no salio a
+# tienda" de "nadie lo toco", y son dos numeros muy distintos: medido el 09-09
+# sobre 250 SKU, 191 SI se habian picado, solo que a otro canal.
+pic_otro = collections.defaultdict(float)
 for ruta in glob.glob(os.path.join(B, 'Picking', '*.csv')):
     f = io.open(ruta, encoding='utf-8-sig', newline='', errors='replace')
     rd = csv.reader(f, delimiter=';')
@@ -139,6 +143,7 @@ for ruta in glob.glob(os.path.join(B, 'Picking', '*.csv')):
         if q <= 0:
             continue
         if not es_retail(limpio(dame(r, iD))):
+            pic_otro[sku] += q
             continue
         v = pic[sku]
         v['pares'] += q
@@ -212,6 +217,9 @@ def arma(dias, tope_pares):
             'dias': (HOY - v['fecha'].date()).days,
             'pares': int(round(v['pares'])),
             'picados': int(round(picados)),
+            # Lo que SI se pico, pero a otro canal. Es la diferencia entre "no
+            # salio a tienda" y "nadie lo toco".
+            'otroCanal': int(round(pic_otro.get(sku, 0.0))),
             'picadoEl': p['ultima'].strftime('%Y-%m-%d %H:%M') if p.get('ultima') else '',
             'lpnPick': p.get('lpn', ''),
             # SIN RESPALDO: si no hay OBLPN, el carton va VACIO. Cayendo al
@@ -232,6 +240,9 @@ datos = {
     'tarjetas': {
         'skus': len(filas),
         'sinPicar': len(sin_picar),
+        # EL NUMERO DURO: ni a tienda ni a ningun otro canal. Nadie lo toco.
+        'nadieLoToco': len([f for f in filas
+                            if not f['picados'] and not f['otroCanal']]),
         'conPocos': len(filas) - len(sin_picar),
         'paresParados': sum(f['pares'] - f['picados'] for f in filas),
         'masViejo': max(f['dias'] for f in filas) if filas else 0,
@@ -254,11 +265,11 @@ sys.argv = _ARGV
 
 cuerpo = json.dumps(datos, ensure_ascii=False).encode('utf-8')
 t = datos['tarjetas']
-A.log('Recibido y sin picar: %s SKU  ·  nunca picados %s  ·  con 5 o menos %s  ·  '
-      '%s pares parados  ·  el mas viejo %s dias'
+A.log('Recibido y sin picar: %s SKU  ·  no salieron a tienda %s  ·  de esos, NADIE '
+      'los toco %s  ·  con 5 o menos %s  ·  %s pares parados  ·  el mas viejo %s dias'
       % (format(t['skus'], ',d'), format(t['sinPicar'], ',d'),
-         format(t['conPocos'], ',d'), format(int(t['paresParados']), ',d'),
-         t['masViejo']))
+         format(t['nadieLoToco'], ',d'), format(t['conPocos'], ',d'),
+         format(int(t['paresParados']), ',d'), t['masViejo']))
 
 if '--probar' in sys.argv:
     A.log('MODO PROBAR: no se publica nada. Serian %.0f KB.' % (len(cuerpo) / 1024.0))
