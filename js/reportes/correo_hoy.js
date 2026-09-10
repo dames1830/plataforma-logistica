@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0674';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0675';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -99,6 +99,74 @@ function cuadroLlegada(d) {
 const rotulo = (titulo, cuenta) =>
     `<div class="pend-bloque"><h4>${esc(titulo)}</h4><div class="c">${cuenta}</div></div>`;
 
+/**
+ * LO QUE COMERCIAL YA HABIA MANDADO ANTES.
+ *
+ * Va al pie del modulo, y lo pidio Daniel el 09-sep-2026 al ver la lista:
+ * *"ahi se esta equivocando comercial, me esta mandando y esta inflando su
+ * capacidad, porque ya me esta enviando ese pedido, ya fueron enviados. Es mas,
+ * en el WMS ya esta hasta cerrado"*.
+ *
+ * Del correo de esa noche eran 7 guias por 3.057 pares, y de esas **6 el WMS ya
+ * las tenia cerradas** —dos de 2.000 y 1.000 pares, del 26-ago—. Pasaba sin que
+ * nadie se enterara.
+ *
+ * CALZADO O NO SALE DE LA ETIQUETA DEL CORREO, no del Maestro: estas guias no
+ * tienen lineas abiertas en el WMS, asi que no hay SKU con que preguntarle. El
+ * pie del cuadro lo dice, para que nadie lo lea como el gender de siempre.
+ */
+function cuadroRepetidas(filas) {
+    const lista = (filas || []).filter(f => f && Number(f.pidio) > 0);
+    if (!lista.length) return '';
+
+    const bloque = (tipo) => {
+        const suyas = lista.filter(f => (f.tipo || '') === tipo);
+        if (!suyas.length) return '';
+        const sub = suyas.reduce((s, f) => s + (Number(f.pidio) || 0), 0);
+        return `<tr class="pend-zona">
+            <td colspan="4">${esc(tipo.toUpperCase())}</td>
+            <td class="n">${nf(sub)}</td><td class="n"></td></tr>` +
+          suyas.map(f => `<tr${Number(f.wms) > 0 ? '' : ' class="pend-ojo"'}>
+            <td class="pend-sangria">${esc(f.guia)}</td>
+            <td>${esc(f.tienda)}</td>
+            <td>${esc(f.prioridad)}</td>
+            <td class="n">${esc(f.desde)}</td>
+            <td class="n">${nf(f.pidio)}</td>
+            <td class="n">${Number(f.wms) > 0 ? nf(f.wms) : 'cerrada'}</td>
+          </tr>`).join('');
+    };
+
+    const total = lista.reduce((s, f) => s + (Number(f.pidio) || 0), 0);
+    const cerradas = lista.filter(f => !(Number(f.wms) > 0));
+    const undCerradas = cerradas.reduce((s, f) => s + (Number(f.pidio) || 0), 0);
+
+    return `<div class="pend-panel pend-ancho">
+        <h3>LO QUE COMERCIAL YA HABÍA MANDADO ANTES</h3>
+        <div class="pend-cap">Guías que vienen en el correo de hoy pero que comercial
+          ya había pedido otro día</div>
+        <table>
+          <thead><tr>
+            <th>GUÍA</th><th>TIENDA</th><th>PRIORIDAD</th>
+            <th class="n">LA MANDÓ EL</th><th class="n">PIDIÓ HOY</th>
+            <th class="n">ABIERTO EN EL WMS</th>
+          </tr></thead>
+          <tbody>
+            ${bloque('Calzado')}${bloque('No calzado')}
+            <tr class="pend-total">
+              <td colspan="4">TOTAL</td>
+              <td class="n">${nf(total)}</td><td class="n"></td></tr>
+          </tbody>
+        </table>
+        ${cerradas.length ? `<div class="pend-nota">
+          <b>${nf(cerradas.length)} de estas ${nf(lista.length)} guías el WMS ya las tiene
+          cerradas</b> —son ${nf(undCerradas)} pares—: ya se despacharon, o esas órdenes se
+          cerraron sin atenderse. Comercial las está volviendo a pedir.</div>` : ''}
+        <div class="pend-nota">Calzado y no calzado salen de la <b>etiqueta del correo</b>,
+          no del Maestro: estas guías no tienen líneas abiertas en el WMS, así que no hay
+          artículo al que preguntarle.</div>
+      </div>`;
+}
+
 /* ── EL CUERPO ──────────────────────────────────────────────────────────────── */
 
 function cuerpo(d, fecha, dias) {
@@ -153,6 +221,7 @@ function cuerpo(d, fecha, dias) {
                d.gender, { etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
                            nota: 'Un total que mezcla zapatos con cajas no dice nada.' }),
         cuadroRutas(d.rutas, d.rutasSinCruce),
+        cuadroRepetidas(d.repetidas),
     ].join('');
 
     return cab + tarjetas + `<div class="pend-grid">${cuadros}</div>` + estiloBloque();

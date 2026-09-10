@@ -840,6 +840,108 @@ def armar(hoy):
 #  3-bis. EL CORREO DE HOY  ->  Despacho > Correo de Hoy
 # ==============================================================================
 
+def guias_repetidas(hoy_d, guias, abierto_de):
+    """Las guias del correo de HOY que comercial ya habia mandado otro dia.
+
+    POR QUE IMPORTA. Daniel, 09-sep-2026, al ver la lista: *"ahi se esta
+    equivocando comercial, me esta mandando y esta inflando su capacidad, porque
+    ya me esta enviando ese pedido, ya fueron enviados. Es mas, en el WMS ya esta
+    hasta cerrado"*. Del correo del 09-09 eran 7 guias por 3.057 pares, y de esas
+    **6 el WMS ya las tenia cerradas** -dos de 2.000 y 1.000 pares, del 26-ago-.
+    Eso pasaba sin que nadie se enterara.
+
+    SE VUELVE A LEER EL CORREO DE HOY, y no se usa `guias`: ahi esta guardada la
+    PRIMERA vez que aparecio la guia, o sea la fila VIEJA. Lo que hace falta es la
+    cantidad que comercial esta pidiendo HOY.
+
+    CALZADO O NO, DE LA ETIQUETA DEL CORREO. Estas guias no tienen lineas abiertas
+    en el WMS, asi que no hay SKU con que preguntarle al Maestro. La etiqueta del
+    correo -CALZADO contra el resto- es la unica fuente, y el cuadro lo dice.
+    """
+    if openpyxl is None:
+        return []
+    archivo = None
+    try:
+        for n in os.listdir(CORREOS):
+            if not n.lower().endswith(('.xlsx', '.xls')):
+                continue
+            f = fecha_del_nombre(n)
+            if f == (hoy_d.month, hoy_d.day):
+                archivo = os.path.join(CORREOS, n)
+                break
+    except Exception:
+        return []
+    if not archivo:
+        return []
+
+    try:
+        wb = openpyxl.load_workbook(archivo, read_only=True, data_only=True)
+    except Exception as e:
+        log('No se pudo releer el correo de hoy (%s)' % type(e).__name__, 'AVISO')
+        return []
+
+    filas = []
+    for ws in wb.worksheets:
+        it = ws.iter_rows(values_only=True)
+        try:
+            cab = [str(c).strip() if c is not None else '' for c in next(it)]
+        except StopIteration:
+            continue
+        if 'GUIA' not in cab:
+            continue
+        ig = cab.index('GUIA')
+        iq = next((i for i, c in enumerate(cab) if 'CANTI' in c.upper()), None)
+        if iq is None:
+            continue
+        ip = cab.index('Prioridad') if 'Prioridad' in cab else None
+        ie = cab.index('Etiqueta') if 'Etiqueta' in cab else None
+        it_ = cab.index('TIEND') if 'TIEND' in cab else None
+        inm = cab.index('NOMBR') if 'NOMBR' in cab else None
+        for r in it:
+            g = limpio(r[ig] if ig < len(r) else None)
+            if not g or g not in guias:
+                continue
+            pr = str(r[ip] or '').strip() if ip is not None and ip < len(r) else ''
+            if pr.upper() == 'DOBLE TRAMO':
+                continue
+            _f, mes, dia = guias[g]
+            if (mes, dia) == (hoy_d.month, hoy_d.day):
+                continue          # nacio hoy: no es repetida
+            try:
+                q = float(str(r[iq]).replace(',', '') or 0)
+            except Exception:
+                q = 0.0
+            et = str(r[ie] or '').strip().upper() if ie is not None and ie < len(r) else ''
+            tienda = ''
+            if it_ is not None and inm is not None:
+                tienda = ('%s %s' % (str(r[it_] or '').strip(),
+                                     str(r[inm] or '').strip())).strip()
+            filas.append({
+                'guia': g,
+                'tienda': tienda or '(sin tienda)',
+                'prioridad': pr or '(sin prioridad)',
+                'tipo': 'Calzado' if et == 'CALZADO' else 'No calzado',
+                'pidio': int(round(q)),
+                'desde': '%02d-%02d' % (dia, mes),
+                'wms': int(round(abierto_de.get(g, 0.0))),
+            })
+        break
+    try:
+        wb.close()
+    except Exception:
+        pass
+    filas.sort(key=lambda x: -x['pidio'])
+    if filas:
+        cerradas = [x for x in filas if x['wms'] <= 0]
+        log('Repetidas del correo de hoy: %s guias / %s pares; el WMS ya cerro %s '
+            'de ellas (%s pares)'
+            % (format(len(filas), ',d'),
+               format(sum(x['pidio'] for x in filas), ',d'),
+               format(len(cerradas), ',d'),
+               format(sum(x['pidio'] for x in cerradas), ',d')))
+    return filas
+
+
 def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
     """Lo que comercial mando HOY, que es justo lo que el pendiente deja fuera.
 
@@ -882,6 +984,9 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
         c_prior[p][0].add(g); c_prior[p][1] += q
 
     # ---- LO QUE EL WMS TIENE ABIERTO DE ESAS MISMAS GUIAS ----
+    # `abierto_repetidas` lleva TODAS las guias que cruzan, no solo las de hoy: lo
+    # necesita el cuadro de repetidas para decir si el WMS ya cerro esa guia.
+    abierto_repetidas = collections.defaultdict(float)
     vistas = set()
     w_guia = collections.defaultdict(float)
     w_rims = collections.defaultdict(lambda: [set(), 0.0])
@@ -901,9 +1006,18 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
         if len(row) < 14 or row[4].strip() not in ESTADOS:
             continue
         o = limpio(row[1])
+        sku, dest = limpio(row[5]), limpio(row[13])
+        if o in guias and o not in mios:
+            # No es del correo de hoy, pero puede ser una repetida: se anota
+            # cuanto tiene abierto y se sigue.
+            if (o, sku, dest) not in vistas:
+                vistas.add((o, sku, dest))
+                p = (num(row[6]) - num(row[9])) * pares_de_la_caja(sku)
+                if p > 0:
+                    abierto_repetidas[o] += p
+            continue
         if o not in mios:
             continue
-        sku, dest = limpio(row[5]), limpio(row[13])
         if (o, sku, dest) in vistas:
             continue
         vistas.add((o, sku, dest))
@@ -913,6 +1027,7 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
         if pend <= 0:
             continue
         w_guia[o] += pend
+        abierto_repetidas[o] += pend
         w_sku.add(sku)
         base = sku.split('-')[0]
         rr = rims.get(sku) or rims.get(base) or '(sin Maestro)'
@@ -978,6 +1093,8 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
                    'cal': int(round(v[1])), 'und': int(round(v[0] + v[1]))}
                   for k, v in sorted(w_rut.items(), key=lambda x: -(x[1][0] + x[1][1]))],
         'rutasSinCruce': {'und': int(round(rut_sin[0])), 'tiendas': len(rut_sin[1])},
+        # LO QUE COMERCIAL YA HABIA MANDADO ANTES. Va al pie del modulo.
+        'repetidas': guias_repetidas(hoy_d, guias, abierto_repetidas),
     }
     log('Correo de hoy: %s guias / %s unidades pedidas  ->  el WMS tiene abiertas '
         '%s guias / %s unidades  (sin abrir %s)'
