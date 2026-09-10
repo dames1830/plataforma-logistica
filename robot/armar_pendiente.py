@@ -996,7 +996,7 @@ def fecha_wms(t):
     return None
 
 
-def armar_no_liberados(hoy, guias, rutas):
+def armar_no_liberados(hoy, guias, rutas, gen):
     """Lo que el WMS tiene abierto y comercial NUNCA mando por correo.
 
     POR QUE EXISTE. Daniel, 10-sep-2026: *"para yo decirle a mi jefe que tenemos
@@ -1037,6 +1037,9 @@ def armar_no_liberados(hoy, guias, rutas):
     vistas = set()
     pares = collections.defaultdict(float)
     info = {}
+    # CALZADO O NO, del G. Gender del Maestro. Aca SI se puede preguntar: estas
+    # ordenes tienen lineas abiertas en el WMS, o sea articulo.
+    por_gen = collections.defaultdict(float)
     # Lo que empieza con 50 pero el maestro no conoce: se avisa, no se borra.
     fuera_maestro = collections.defaultdict(float)
     f = io.open(PENDIENTES, encoding='utf-8-sig', newline='', errors='replace')
@@ -1064,6 +1067,8 @@ def armar_no_liberados(hoy, guias, rutas):
                 fuera_maestro[dest] += p
             continue
         pares[o] += p
+        base = sku.split('-')[0]
+        por_gen[gen.get(sku) or gen.get(base) or '(sin Maestro)'] += p
         if o not in info:
             info[o] = {
                 'destino': dest or '(sin destino)',
@@ -1130,6 +1135,8 @@ def armar_no_liberados(hoy, guias, rutas):
         'masVieja': vieja.isoformat() if vieja else '',
         'diasMasVieja': (hoy_d - vieja).days if vieja else 0,
         'pareto': pareto,
+        'gender': [{'k': k, 'und': int(round(v))}
+                   for k, v in sorted(por_gen.items(), key=lambda x: -x[1]) if v > 0],
         'detalle': detalle,
         'fueraMaestro': {
             'destinos': sorted(
@@ -1308,7 +1315,7 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
     # EL TERCER GRUPO: lo que el WMS abre y comercial nunca mando. Va en este
     # modulo porque el cuadro que ocupaba ese lugar quedo en cero al sacar el
     # doble tramo, y esto si hay que mirarlo todos los dias.
-    datos['noLiberados'] = armar_no_liberados(hoy, guias, rutas)
+    datos['noLiberados'] = armar_no_liberados(hoy, guias, rutas, gen)
     log('Correo de hoy: %s guias / %s unidades pedidas  ->  el WMS tiene abiertas '
         '%s guias / %s unidades  (sin abrir %s)'
         % (format(datos['correo']['guias'], ',d'),

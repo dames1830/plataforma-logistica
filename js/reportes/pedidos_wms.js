@@ -15,8 +15,8 @@
  * numero calculado en dos sitios se desincroniza, y ya paso en este proyecto.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0696';
-import { icono } from '../services_v245/iconos.js?v=29.0696';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0697';
+import { icono } from '../services_v245/iconos.js?v=29.0697';
 
 /**
  * LO QUE EL WMS ABRE Y COMERCIAL NUNCA LIBERO.
@@ -118,6 +118,33 @@ function cuadroDetalle(n) {
       </div>`;
 }
 
+/**
+ * CALZADO Y LO QUE NO LO ES, de lo no liberado.
+ *
+ * Va debajo del pareto y con su mismo ancho. Aca el gender SI sale del Maestro
+ * -no de una etiqueta-: estas ordenes tienen lineas abiertas en el WMS, o sea
+ * articulo al que preguntarle.
+ */
+function cuadroGender(n) {
+    const filas = (n && n.gender) || [];
+    if (!filas.length) return '';
+    const tot = filas.reduce((a, f) => a + (Number(f.und) || 0), 0);
+    return `<div class="pend-panel">
+        <h3>CALZADO Y LO QUE NO LO ES</h3>
+        <table>
+          <thead><tr><th>TIPO</th><th class="c">PARES</th><th class="c">%</th></tr></thead>
+          <tbody>
+            ${filas.map(f => `<tr>
+              <td>${esc(f.k)}</td>
+              <td class="c">${nf(f.und)}</td>
+              <td class="c">${tot ? Math.round(100 * f.und / tot) : 0}%</td></tr>`).join('')}
+            <tr class="pend-total"><td>TOTAL</td>
+              <td class="c">${nf(tot)}</td><td class="c">100%</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+}
+
 /* ── EL MONTAJE ─────────────────────────────────────────────────────────────── */
 
 export function montarPedidosWms(raiz, OPC) {
@@ -156,7 +183,10 @@ export function montarPedidosWms(raiz, OPC) {
        como lo pidio Daniel. Mismo diseno y mismo tamano que tenian en el correo. */
     raiz.innerHTML = `<div id="pend">${estilos()}${cab}
         <div class="pend-grid">
-          <div class="pend-dos">${cuadroPareto(n)}${cuadroDetalle(n)}</div>
+          <div class="pend-dos">
+            <div class="pend-col">${cuadroPareto(n)}${cuadroGender(n)}</div>
+            ${cuadroDetalle(n)}
+          </div>
         </div>${estiloPropio()}</div>`;
 
     engancharBuscador(raiz, 'nolib', {
@@ -187,6 +217,9 @@ function estiloPropio() {
     #pend .pend-dos{grid-column:1/-1;display:grid;
       grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
     #pend .pend-dos .pend-panel{overflow-x:auto}
+    /* La columna izquierda lleva dos cuadros apilados: el pareto y el
+       gender, con el mismo ancho y el hueco de la grilla. */
+    #pend .pend-col{display:flex;flex-direction:column;gap:16px}
     @media(max-width:1200px){#pend .pend-dos{grid-template-columns:1fr}}
     #pend .pend-cab2{display:flex;align-items:flex-start;justify-content:space-between;
       gap:12px;flex-wrap:wrap}
