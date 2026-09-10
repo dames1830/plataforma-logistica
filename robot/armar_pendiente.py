@@ -858,8 +858,10 @@ def guias_repetidas(hoy_d, guias, abierto_de):
     en el WMS, asi que no hay SKU con que preguntarle al Maestro. La etiqueta del
     correo -CALZADO contra el resto- es la unica fuente, y el cuadro lo dice.
     """
+    vacia = {k: {'guias': 0, 'und': 0}
+             for k in ('trae', 'dobleTramo', 'repetidas', 'nuevo')}
     if openpyxl is None:
-        return []
+        return [], vacia
     archivo = None
     try:
         for n in os.listdir(CORREOS):
@@ -870,17 +872,23 @@ def guias_repetidas(hoy_d, guias, abierto_de):
                 archivo = os.path.join(CORREOS, n)
                 break
     except Exception:
-        return []
+        return [], vacia
     if not archivo:
-        return []
+        return [], vacia
 
     try:
         wb = openpyxl.load_workbook(archivo, read_only=True, data_only=True)
     except Exception as e:
         log('No se pudo releer el correo de hoy (%s)' % type(e).__name__, 'AVISO')
-        return []
+        return [], vacia
 
     filas = []
+    # LA CASCADA: como se llega del archivo del correo a lo que muestra el modulo.
+    # Daniel, 10-sep-2026: *"lo que siempre voy a hacer por default va a ser
+    # mirar cuanto tiene el correo, cincuenta mil. Entonces eso debe estar como
+    # inicio, y de ahi ya le vas haciendo el descuento"*.
+    casc = {'trae': [0, 0.0], 'dobleTramo': [0, 0.0],
+            'repetidas': [0, 0.0], 'nuevo': [0, 0.0]}
     for ws in wb.worksheets:
         it = ws.iter_rows(values_only=True)
         try:
@@ -899,18 +907,30 @@ def guias_repetidas(hoy_d, guias, abierto_de):
         inm = cab.index('NOMBR') if 'NOMBR' in cab else None
         for r in it:
             g = limpio(r[ig] if ig < len(r) else None)
-            if not g or g not in guias:
+            if not g:
                 continue
-            pr = str(r[ip] or '').strip() if ip is not None and ip < len(r) else ''
-            if pr.upper() == 'DOBLE TRAMO':
-                continue
-            _f, mes, dia = guias[g]
-            if (mes, dia) == (hoy_d.month, hoy_d.day):
-                continue          # nacio hoy: no es repetida
             try:
                 q = float(str(r[iq]).replace(',', '') or 0)
             except Exception:
                 q = 0.0
+            casc['trae'][0] += 1
+            casc['trae'][1] += q
+            pr = str(r[ip] or '').strip() if ip is not None and ip < len(r) else ''
+            if pr.upper() == 'DOBLE TRAMO':
+                casc['dobleTramo'][0] += 1
+                casc['dobleTramo'][1] += q
+                continue
+            if g not in guias:
+                # No cruzo contra ningun correo leido: no deberia pasar, pero si
+                # pasa no se la come el silencio.
+                continue
+            _f, mes, dia = guias[g]
+            if (mes, dia) == (hoy_d.month, hoy_d.day):
+                casc['nuevo'][0] += 1
+                casc['nuevo'][1] += q
+                continue          # nacio hoy: no es repetida
+            casc['repetidas'][0] += 1
+            casc['repetidas'][1] += q
             et = str(r[ie] or '').strip().upper() if ie is not None and ie < len(r) else ''
             tienda = ''
             if it_ is not None and inm is not None:
@@ -931,6 +951,15 @@ def guias_repetidas(hoy_d, guias, abierto_de):
     except Exception:
         pass
     filas.sort(key=lambda x: -x['pidio'])
+    cascada = dict((k, {'guias': v[0], 'und': int(round(v[1]))})
+                   for k, v in casc.items())
+    log('El correo trae %s guias / %s -> doble tramo %s, ya mandadas antes %s, '
+        'nuevo de hoy %s'
+        % (format(cascada['trae']['guias'], ',d'),
+           format(cascada['trae']['und'], ',d'),
+           format(cascada['dobleTramo']['und'], ',d'),
+           format(cascada['repetidas']['und'], ',d'),
+           format(cascada['nuevo']['und'], ',d')))
     if filas:
         cerradas = [x for x in filas if x['wms'] <= 0]
         log('Repetidas del correo de hoy: %s guias / %s pares; el WMS ya cerro %s '
@@ -939,7 +968,7 @@ def guias_repetidas(hoy_d, guias, abierto_de):
                format(sum(x['pidio'] for x in filas), ',d'),
                format(len(cerradas), ',d'),
                format(sum(x['pidio'] for x in cerradas), ',d')))
-    return filas
+    return filas, cascada
 
 
 def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
@@ -1093,9 +1122,10 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
                    'cal': int(round(v[1])), 'und': int(round(v[0] + v[1]))}
                   for k, v in sorted(w_rut.items(), key=lambda x: -(x[1][0] + x[1][1]))],
         'rutasSinCruce': {'und': int(round(rut_sin[0])), 'tiendas': len(rut_sin[1])},
-        # LO QUE COMERCIAL YA HABIA MANDADO ANTES. Va al pie del modulo.
-        'repetidas': guias_repetidas(hoy_d, guias, abierto_repetidas),
     }
+    # LA CASCADA Y LAS REPETIDAS SALEN DE LA MISMA LECTURA del correo de hoy.
+    datos['repetidas'], datos['cascada'] = guias_repetidas(
+        hoy_d, guias, abierto_repetidas)
     log('Correo de hoy: %s guias / %s unidades pedidas  ->  el WMS tiene abiertas '
         '%s guias / %s unidades  (sin abrir %s)'
         % (format(datos['correo']['guias'], ',d'),
@@ -1172,6 +1202,10 @@ def publicar_datos(datos, intentos=3, area=None, nombre='pendiente'):
             p = urllib.request.Request(url, data=cuerpo, method='POST')
             p.add_header('Content-Type', 'application/json')
             p.add_header('X-Robot-Token', ROBOT_TOKEN)
+            # `--beta` publica en la base de pruebas, para poder ensenarle una
+            # pantalla nueva sin tocar lo que el almacen esta usando.
+            if '--beta' in sys.argv:
+                p.add_header('X-Environment', 'beta')
             with urllib.request.urlopen(p, timeout=300) as resp:
                 json.loads(resp.read().decode('utf-8'))
             log('Publicado en la plataforma: %s, %.1f KB'

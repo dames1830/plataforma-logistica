@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0675';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0676';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -98,6 +98,40 @@ function cuadroLlegada(d) {
 /** El rótulo que separa los dos bloques y dice sobre qué total va cada uno. */
 const rotulo = (titulo, cuenta) =>
     `<div class="pend-bloque"><h4>${esc(titulo)}</h4><div class="c">${cuenta}</div></div>`;
+
+/**
+ * DE LO QUE TRAE EL CORREO A LO QUE MUESTRA EL MODULO.
+ *
+ * Es la resta que Daniel hace a mano cada noche sobre el Excel de comercial, y
+ * hasta el 10-sep-2026 la pantalla no la mostraba: abria con el resultado y el
+ * numero no le cuadraba con su archivo.
+ */
+function cuadroCascada(k, tiendas) {
+    if (!k || !k.trae) return '';
+    const fila = (etiqueta, v, clase) => `<tr${clase ? ' class="' + clase + '"' : ''}>
+        <td>${etiqueta}</td>
+        <td class="n">${nf(v.guias)}</td>
+        <td class="n">${nf(v.und)}</td></tr>`;
+    return `<div class="pend-panel">
+        <h3>DE DÓNDE SALE ESTE NÚMERO</h3>
+        <div class="pend-cap">La misma resta que se hace sobre el Excel de comercial</div>
+        <table>
+          <thead><tr><th>PASO</th><th class="n">GUÍAS</th><th class="n">UNIDADES</th></tr></thead>
+          <tbody>
+            ${fila('El correo trae', k.trae)}
+            ${fila('− Doble tramo → no es un pedido, es una reasignación',
+                   k.dobleTramo, 'pend-gris')}
+            ${fila('− Ya lo había mandado otro día', k.repetidas, 'pend-ojo')}
+            <tr class="pend-total"><td>= NUEVO DE HOY → esto es el correo de hoy</td>
+              <td class="n">${nf(k.nuevo.guias)}</td>
+              <td class="n">${nf(k.nuevo.und)}</td></tr>
+          </tbody>
+        </table>
+        <div class="pend-nota">Todo en <b>pares</b>: la caja de prepack cuenta por sus
+          pares, igual que en el correo de comercial. Las ${nf(k.nuevo.guias)} guías
+          nuevas se reparten en ${nf(tiendas)} tiendas.</div>
+      </div>`;
+}
 
 /**
  * LO QUE COMERCIAL YA HABIA MANDADO ANTES.
@@ -184,23 +218,37 @@ function cuerpo(d, fecha, dias) {
     }
 
     const c = d.correo, w = d.wms || {};
-    const tarjetas = `
+    const k = d.cascada || {};
+    /* ARRANCA POR LO QUE TRAE EL CORREO. Daniel, 10-sep-2026: *"lo que siempre
+       voy a hacer por default va a ser mirar cuánto tiene el correo, cincuenta
+       mil. Entonces eso debe estar como inicio, y de ahí ya le vas haciendo el
+       descuento"*. Antes la primera tarjeta decía "unidades que pidió comercial"
+       y mostraba 38.142 cuando el correo traía 50.914: el número estaba bien
+       calculado y mal rotulado, y no cuadraba con su archivo. */
+    const tarjeta = (valor, etiqueta, clase) =>
+        `<div class="pend-card"><div class="v${clase || ''}">${nf(valor)}</div>
+           <div class="l">${etiqueta}</div></div>`;
+    const tarjetas = k.trae ? `
       <div class="pend-cards">
-        <div class="pend-card"><div class="v">${nf(c.guias)}</div>
-          <div class="l">GUÍAS</div></div>
-        <div class="pend-card"><div class="v">${nf(c.tiendas)}</div>
-          <div class="l">TIENDAS</div></div>
-        <div class="pend-card"><div class="v hot">${nf(c.unidades)}</div>
-          <div class="l">UNIDADES QUE PIDIÓ COMERCIAL</div></div>
-        <div class="pend-card"><div class="v">${nf(w.unidades)}</div>
-          <div class="l">ABIERTO EN EL WMS</div></div>
-        <div class="pend-card"><div class="v">${nf((d.sinAbrir || {}).guias)}</div>
-          <div class="l">GUÍAS SIN ABRIR</div></div>
+        ${tarjeta(k.trae.und, 'LO QUE TRAE EL CORREO')}
+        ${tarjeta(k.dobleTramo.und, 'DOBLE TRAMO, FUERA')}
+        ${tarjeta(k.repetidas.und, 'YA LO HABÍA MANDADO')}
+        ${tarjeta(c.unidades, 'NUEVO DE HOY', ' hot')}
+        ${tarjeta(w.unidades, 'ABIERTO EN EL WMS')}
+      </div>` : `
+      <div class="pend-cards">
+        ${tarjeta(c.guias, 'GUÍAS')}
+        ${tarjeta(c.tiendas, 'TIENDAS')}
+        ${tarjeta(c.unidades, 'NUEVO DE HOY', ' hot')}
+        ${tarjeta(w.unidades, 'ABIERTO EN EL WMS')}
+        ${tarjeta((d.sinAbrir || {}).guias, 'GUÍAS SIN ABRIR')}
       </div>`;
 
     const cuadros = [
         rotulo('LO QUE MANDÓ COMERCIAL HOY',
-               `${nf(c.guias)} guías &middot; ${nf(c.unidades)} unidades &middot; la cantidad es la del correo`),
+               `${nf(c.guias)} guías &middot; ${nf(c.unidades)} pares nuevos de hoy &middot; `
+               + `la cantidad es la del correo`),
+        cuadroCascada(d.cascada, c.tiendas),
         cuadroLlegada(d),
         cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
                `Las 10 más cargadas de ${nf(c.tiendas)}`,

@@ -54,15 +54,22 @@ Contándolo, el módulo decía que comercial pidió **46.575** y el WMS solo ten
 un hueco de 8.433 que no existía. Sin doble tramo: **38.142 contra 38.142, al par, y cero
 guías sin abrir.**
 
-**Cómo cuadrar el correo contra la pantalla**, con el archivo del 09-09:
+**LA CASCADA, Y VA EN LA PANTALLA.** Daniel, 10-sep-2026: *"lo que siempre voy a hacer
+por default va a ser mirar cuánto tiene el correo, cincuenta mil. Entonces eso debe estar
+como inicio, y de ahí ya le vas haciendo el descuento"*. El módulo **abre con lo que trae
+el correo** y va restando a la vista; abrir con el resultado le daba un número que no
+cuadraba con su archivo. Con el correo del 09-09:
 
 ```
-    el archivo Guias 09.09.xlsx ............... 50.914   (948 guias)
-  - DOBLE TRAMO ............................... -9.715
-  = lo que Daniel cuenta a mano ............... 41.199
-  - guias que ya venian en un correo anterior . -3.057   (van al Pendiente)
-  = lo que dice el Correo de Hoy .............. 38.142
+    el correo trae ......................... 50.914   948 guias
+  - doble tramo .......................... -  9.715   480 guias
+  - ya lo habia mandado otro dia ......... -  3.057     7 guias
+  = NUEVO DE HOY ......................... = 38.142   461 guias
 ```
+
+Las cinco tarjetas de arriba son esos mismos pasos, en ese orden, y la última es lo que el
+WMS tiene abierto. **Nunca abrir con el resultado**: el que mira el módulo tiene el Excel
+de comercial al lado.
 
 **Si alguna vez una guía de doble tramo apareciera abierta en el WMS**, hoy caería en
 "nunca liberado". El día que pase, hay que mirarlo: significaría que dejó de ser una
