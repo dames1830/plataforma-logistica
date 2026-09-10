@@ -24,8 +24,8 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0688';
-import { icono } from '../services_v245/iconos.js?v=29.0688';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0689';
+import { icono } from '../services_v245/iconos.js?v=29.0689';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -349,11 +349,17 @@ function cuerpo(d, fecha, dias) {
           + `${cuadroRepetidas(d.repetidas)}</div>`,
         /* TIENDA Y RUTA JUNTAS: las dos dicen a donde va lo de hoy, una por
            destino y la otra por como sale. Prioridad baja, que es otra pregunta. */
-        `<div class="pend-dos">`
+        /* TIENDA, RUTA Y COLECCION en una fila de tres. La coleccion va ENTERA,
+           sin el "y 4 mas": son doce filas y caben. */
+        `<div class="pend-tres">`
           + cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
                    `Las 10 más cargadas de ${nf(c.tiendas)}`,
                    d.tiendas, { etiqueta: 'TIENDA', tope: 10, etiquetaPed: 'GUÍAS' })
           + cuadroRutas(d.rutas, d.rutasSinCruce)
+          + cuadro('POR COLECCIÓN',
+                   'La Coleccion PO del Maestro — no la Temporada del mezzanine',
+                   d.coleccion, { etiqueta: 'COLECCIÓN', tope: 999, conPct: true,
+                                  etiquetaPed: 'GUÍAS' })
           + `</div>`,
         cuadro('POR QUÉ LO PIDIÓ COMERCIAL', 'La columna Prioridad del correo',
                d.prioridad, { etiqueta: 'PRIORIDAD', tope: 8, conPct: true,
@@ -363,9 +369,6 @@ function cuerpo(d, fecha, dias) {
                + `artículo, así que estos cortes solo se pueden hacer sobre lo abierto`),
         cuadro('POR GENDER RIMS', 'Sale del Maestro de artículos',
                d.rims, { etiqueta: 'GENDER RIMS', tope: 10, etiquetaPed: 'GUÍAS' }),
-        cuadro('POR COLECCIÓN', 'La Coleccion PO del Maestro — no la Temporada del mezzanine',
-               d.coleccion, { etiqueta: 'COLECCIÓN', tope: 8, conPct: true,
-                              etiquetaPed: 'GUÍAS' }),
         cuadro('CALZADO Y LO QUE NO LO ES',
                'Lo separa el G. Gender del Maestro, no la etiqueta del correo',
                d.gender, { etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
@@ -382,6 +385,7 @@ function estiloBloque() {
        que no entre se desliza sola en vez de romper el ancho. */
     #pend .pend-tres{grid-column:1/-1;display:grid;
       grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+    #pend .pend-tres > .pend-ancho{grid-column:auto}
     #pend .pend-tres .pend-panel{overflow-x:auto}
     /* LOS DOS DE LA FILA TERMINAN A LA MISMA ALTURA. Sin esto cada uno tomaba
        la suya y quedaban desparejos -Daniel, 10-sep-2026-. La clase pend-ancho se
