@@ -75,6 +75,34 @@ de comercial al lado.
 "nunca liberado". El día que pase, hay que mirarlo: significaría que dejó de ser una
 reasignación.
 
+## 0-ter. QUÉ ES EL CANAL RETAIL
+
+> *"Ya sabes cuándo me refiero al canal retail: los que comienzan con cincuenta y los que
+> están en la matriz de ruta."* — Daniel, 10-sep-2026
+
+**Retail es lo que va a una TIENDA, y una tienda cumple LAS DOS condiciones:**
+
+```
+    el destino empieza con 50   Y   el destino está en el maestro de rutas
+```
+
+**Las dos, no una.** Solo el 50 deja entrar almacenes internos; solo el maestro dejaría
+fuera una tienda recién abierta. Medido el 09-09 sobre los pedidos no liberados: con el 50
+solo entraban 124 destinos (18.950 pares) y con las dos, 122 (5.957). Sin ningún filtro
+eran 251.742 pares, **y el 84% era tipo "Materiales" a destinos que no son tiendas**.
+
+**LO QUE EMPIEZA CON 50 Y EL MAESTRO NO CONOCE NO SE BORRA:** se cuenta aparte y se muestra,
+por si es una tienda nueva sin cargar. El 09-09 eran `50008` (12.945 pares) y `50009` (48),
+los dos por debajo del `50102` con que arranca el maestro.
+
+**El destino sale de donde lo tenga cada archivo**: `Instalación de destino` en el pendiente
+del WMS, en el picking y en el OBLPN; en el correo de comercial es el código de tienda **con
+50 delante** (`'50' + cod.lstrip('0').zfill(3)`).
+
+**Si un cuadro filtra los picks a retail, tiene que filtrar también el embalaje.** Si el pick
+a otro canal no cuenta, el usuario que lo embaló tampoco puede salir. Ese cabo suelto ya
+apareció una vez.
+
 ## 1. La unidad es la GUÍA, nunca el SKU
 
 > *"No te tienes que guiar del detalle del SKU, nada de eso. Te tienes que guiar del
