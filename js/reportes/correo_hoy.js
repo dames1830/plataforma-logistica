@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0679';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0680';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -277,8 +277,7 @@ function cuerpo(d, fecha, dias) {
       </div>`;
 
     const cuadros = [
-        cuadroCascada(d.cascada),
-        cuadroEtiquetas(d.cascada),
+        `<div class="pend-col">${cuadroCascada(d.cascada)}${cuadroEtiquetas(d.cascada)}</div>`,
         cuadroLlegada(d),
         cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
                `Las 10 más cargadas de ${nf(c.tiendas)}`,
@@ -308,6 +307,10 @@ function cuerpo(d, fecha, dias) {
 /** Lo único de estilo que no está en `estilos()`: el rótulo que parte los bloques. */
 function estiloBloque() {
     return `<style>
+    /* Los dos cuadros del correo, apilados dentro de una sola celda: el segundo
+       tiene que quedar DEBAJO del primero, no al costado. El hueco es el mismo
+       que separa los paneles de la grilla. */
+    #pend .pend-col{display:flex;flex-direction:column;gap:16px}
     #pend .pend-bloque{grid-column:1/-1;margin:6px 0 -4px;padding:0 2px}
     #pend .pend-bloque h4{margin:0;font-size:var(--t-sm);font-weight:900;
       letter-spacing:.06em;color:var(--text-strong)}
