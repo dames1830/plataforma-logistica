@@ -18,8 +18,8 @@
  * nombre, con fecha MASTER: es una foto, no una serie por día.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0700';
-import { icono } from '../services_v245/iconos.js?v=29.0700';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0701';
+import { icono } from '../services_v245/iconos.js?v=29.0701';
 
 /* Las columnas que valen para los dos, y las que solo tienen sentido cuando
    hubo pick. Separarlas es lo que evita el mar de guiones. */
@@ -72,7 +72,7 @@ export function montarRecibidoSinPicar(raiz, OPC) {
     if (!raiz) return;
 
     if (!d || !d.tarjetas) {
-        raiz.innerHTML = `<div id="rsp">${estilos()}${estiloPropio()}
+        raiz.innerHTML = `<div id="pend" class="rsp">${estilos()}${estiloPropio()}
           <div class="pend-panel pend-nada">
             <div class="pend-nada-t">Todavía no hay estudio de recibido sin picar</div>
             <div class="pend-cap">Lo arma el robot cruzando el ASN con el picking y el
@@ -89,7 +89,7 @@ export function montarRecibidoSinPicar(raiz, OPC) {
         `<div class="pend-card"><div class="v${clase || ''}">${nf(v)}</div>
            <div class="l">${l}</div></div>`;
 
-    raiz.innerHTML = `<div id="rsp">${estilos()}${estiloPropio()}
+    raiz.innerHTML = `<div id="pend" class="rsp">${estilos()}${estiloPropio()}
       <div class="pend-head">
         <div>
           <h2>Recibido y sin picar</h2>
@@ -136,20 +136,24 @@ export function montarRecibidoSinPicar(raiz, OPC) {
  *  esto vive en una plantilla y una comilla la corta —pantalla en blanco—. */
 function estiloPropio() {
     return `<style>
-    #rsp .rsp-dos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    #pend.rsp .rsp-dos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
       gap:16px;align-items:start}
-    @media(max-width:1200px){#rsp .rsp-dos{grid-template-columns:1fr}}
-    #rsp .rsp-cab{display:flex;align-items:flex-start;justify-content:space-between;
+    @media(max-width:1200px){#pend.rsp .rsp-dos{grid-template-columns:1fr}}
+    #pend.rsp .rsp-cab{display:flex;align-items:flex-start;justify-content:space-between;
       gap:12px;flex-wrap:wrap}
-    #rsp .rsp-acc{display:flex;align-items:center;gap:8px}
-    #rsp .rsp-buscar{font-size:.78rem;padding:6px 10px;border-radius:4px;
+    #pend.rsp .rsp-acc{display:flex;align-items:center;gap:8px}
+    #pend.rsp .rsp-buscar{font-size:.78rem;padding:6px 10px;border-radius:4px;
       border:1px solid var(--border);background:var(--input-bg);
       color:var(--text-strong);width:170px}
-    #rsp .rsp-scroll{overflow:auto;max-height:430px;margin-top:10px}
-    #rsp .rsp-scroll thead th{position:sticky;top:0;z-index:1;
+    #pend.rsp .rsp-scroll{overflow:auto;max-height:430px;margin-top:10px}
+    #pend.rsp .rsp-scroll thead th{position:sticky;top:0;z-index:1;
       background:var(--panel-solid)}
-    #rsp .rsp-vacio{color:var(--text-faint)}
-    #rsp .pend-suave{margin-top:9px;font-size:var(--t-xs);color:var(--text-muted);
+    /* NADA SE PARTE EN DOS RENGLONES. El SKU salia como 9920781- / 1-01 y el
+       gender estiraba la fila a tres lineas: la tabla se leia como parrafos. Lo
+       que no entra se desliza, que para eso esta el scroll. */
+    #pend.rsp .rsp-scroll th,#pend.rsp .rsp-scroll td{white-space:nowrap}
+    #pend.rsp .rsp-vacio{color:var(--text-faint)}
+    #pend.rsp .pend-suave{margin-top:9px;font-size:var(--t-xs);color:var(--text-muted);
       opacity:.75;font-variant-numeric:tabular-nums}
     </style>`;
 }
