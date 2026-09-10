@@ -24,7 +24,7 @@
  * }
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0668';
+import { icono } from '../services_v245/iconos.js?v=29.0669';
 
 const nf = (n) => Number(n || 0).toLocaleString('es-PE');
 
@@ -278,13 +278,14 @@ function cuerpo(d, fecha, dias) {
             <tr><td><b>Comercial SÍ lo mandó</b> → esto se trabaja</td>
                 <td class="n"><b>${nf(o.mandado && o.mandado.ordenes)}</b></td>
                 <td class="n"><b>${nf(o.mandado && o.mandado.unidades)}</b></td></tr>
-            <tr class="pend-gris"><td>Comercial nunca lo liberó → no es deuda del CD</td>
+            <tr class="pend-gris"><td>Comercial no lo ha liberado → no es deuda del CD</td>
                 <td class="n">${nf(o.noLiberado && o.noLiberado.ordenes)}</td>
                 <td class="n">${nf(o.noLiberado && o.noLiberado.unidades)}</td></tr>
           </tbody>
         </table>
         <div class="pend-nota">Sin el cruce contra el correo entrarían al buffer
-          <b>${nf(o.noLiberado && o.noLiberado.unidades)} unidades que nadie pidió</b>.</div>
+          <b>${nf(o.noLiberado && o.noLiberado.unidades)} unidades que comercial
+          no ha liberado</b>.</div>
       </div>`;
 
     const cuadros = [

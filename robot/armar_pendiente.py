@@ -12,8 +12,18 @@ LA REGLA, DICHA POR EL:
      mil."
 
     pendiente = lineas del "Detalle Orden Pendientes.csv" del WMS
-                cuyo NUMERO DE ORDEN aparezca en algun correo de comercial
+                cuyo NUMERO DE ORDEN aparezca en un correo ANTERIOR A HOY
     lo que falta de cada linea = Cantidad solicitada - Cantidad asignada
+
+EL CORREO DE HOY NO ENTRA. Daniel, 09-sep-2026: *"el pendiente es todo lo que ha
+sido hasta el dia anterior; lo de hoy viene a entrar a PEDIDOS. Lo de hoy no es
+un pendiente porque recien esta llegando"*. Antes el reporte cruzaba contra
+TODOS los correos, asi que el correo de la noche se contaba dos veces: en la
+tarjeta PEDIDOS y otra vez adentro del pendiente. El 09-sep eran 461 ordenes y
+28.914 unidades, el 41% de lo que decia la pantalla.
+
+Ese corte manda en TODO el modulo -tarjetas, los siete cortes y el Excel-. Lo
+unico que sigue viendo el correo de hoy es la tarjeta PEDIDOS, que para eso es.
 
 NO SE ACUMULA NADA, SE RECALCULA ENTERO. Daniel lo hacia a mano juntando su
 pendiente de ayer con el correo del dia, mandando la lista de ordenes al WMS
@@ -575,7 +585,7 @@ def armar(hoy):
     # dias y otro de 20 se contaria dos veces. Antes la pantalla repetia el
     # numero de PEDIDOS como si fueran tiendas -decia 447 de 268-.
     tiendas_viejas = set()
-    ord_dentro, ord_fuera = set(), set()
+    ord_dentro, ord_fuera, ord_cruzadas = set(), set(), set()
     und_dentro = und_fuera = 0.0
     lineas = repetidas = 0
     sin_maestro = set()
@@ -611,10 +621,10 @@ def armar(hoy):
             ord_fuera.add(orden)
             und_fuera += max(0.0, pend)
             continue
-        ord_dentro.add(orden)
-        und_dentro += max(0.0, pend)
-        por_sku[sku][0] += num(row[6])
-        por_sku[sku][1] += num(row[9])
+        # QUE LA ORDEN CRUCE CONTRA UN CORREO ES UNA COSA, y que sea pendiente
+        # es otra. Esta primera lista es solo para la guarda de mas abajo: mide
+        # si el cruce funciono, y para eso tiene que mirar TODOS los correos.
+        ord_cruzadas.add(orden)
 
         # ── A QUE TARJETA VA ESTA LINEA ──────────────────────────────────────
         # Manda la fecha del correo que libero la orden. `leer_correos` ya guarda
@@ -626,6 +636,22 @@ def armar(hoy):
         caja[sku][0] += num(row[6])
         caja[sku][1] += num(row[9])
         (ord_hoy if es_de_hoy else ord_antes).add(orden)
+
+        # EL CORREO DE HOY NO ES PENDIENTE Y SE VA ACA MISMO. Con este `continue`
+        # no entra a `por_sku` ni a `por_guia` ni a ninguno de los siete cortes ni
+        # al Excel: el modulo entero queda como si el correo todavia no hubiera
+        # llegado. Va con las de afuera porque al cierre de ayer -que es la fecha
+        # de este reporte- comercial NO las habia liberado; ahi cuadran contra lo
+        # que el WMS tiene abierto. Manana, ya con un dia encima, entran solas.
+        if es_de_hoy:
+            ord_fuera.add(orden)
+            und_fuera += max(0.0, pend)
+            continue
+
+        ord_dentro.add(orden)
+        und_dentro += max(0.0, pend)
+        por_sku[sku][0] += num(row[6])
+        por_sku[sku][1] += num(row[9])
         if pend <= 0:
             continue
         lineas += 1
@@ -676,12 +702,16 @@ def armar(hoy):
     # formato para que no calce ninguno. Antes que publicar un pendiente vacio,
     # no se publica nada.
     total_ord = len(ord_dentro) + len(ord_fuera)
-    cruce = (len(ord_dentro) / float(total_ord)) if total_ord else 0.0
+    # SE MIDE CON `ord_cruzadas`, NO CON `ord_dentro`. Lo que esta guarda vigila es
+    # que el cruce contra los correos siga funcionando; si mirara `ord_dentro` -que
+    # ya deja fuera el correo de hoy- una noche con un correo grande se leeria como
+    # un cruce roto y el pendiente no se publicaria por nada.
+    cruce = (len(ord_cruzadas) / float(total_ord)) if total_ord else 0.0
     if total_ord and cruce < MINIMO_CRUCE:
         raise SystemExit(
             'EL CRUCE NO CUADRA: solo %d de %d ordenes del WMS figuran en algun correo '
             '(%.0f%%). No se publica nada; queda el pendiente anterior.'
-            % (len(ord_dentro), total_ord, 100 * cruce))
+            % (len(ord_cruzadas), total_ord, 100 * cruce))
     if sin_maestro:
         log('%d articulos no estan en el Maestro: sus cortes van a "(sin Maestro)"'
             % len(sin_maestro), 'AVISO')
@@ -999,7 +1029,7 @@ def main():
         % (format(o['abiertoWms']['ordenes'], ',d'), format(o['abiertoWms']['unidades'], ',d')))
     log('   comercial mando  %s ordenes / %s unidades'
         % (format(o['mandado']['ordenes'], ',d'), format(o['mandado']['unidades'], ',d')))
-    log('   nunca libero     %s ordenes / %s unidades  <- queda fuera'
+    log('   sin liberar      %s ordenes / %s unidades  <- queda fuera'
         % (format(o['noLiberado']['ordenes'], ',d'), format(o['noLiberado']['unidades'], ',d')))
 
     if probar:
