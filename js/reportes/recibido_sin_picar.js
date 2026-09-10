@@ -18,14 +18,15 @@
  * nombre, con fecha MASTER: es una foto, no una serie por día.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0706';
-import { icono } from '../services_v245/iconos.js?v=29.0706';
-import { laminaResumen } from '../services_v245/laminas.js?v=29.0706';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0707';
+import { icono } from '../services_v245/iconos.js?v=29.0707';
+import { laminaResumen } from '../services_v245/laminas.js?v=29.0707';
 
 /* Las columnas que valen para los dos, y las que solo tienen sentido cuando
    hubo pick. Separarlas es lo que evita el mar de guiones. */
 const COMUNES = [
-    ['sku', 'SKU', ''], ['marca', 'GENDER', ''], ['colec', 'COLECCIÓN', ''],
+    ['sku', 'SKU', ''], ['origen', 'ORIGEN', ''],
+    ['marca', 'GENDER', ''], ['colec', 'COLECCIÓN', ''],
     ['asn', 'ASN', ''], ['lpnEntrada', 'LPN DE ENTRADA', ''],
     ['recibido', 'RECIBIDO', 'c'], ['dias', 'DÍAS', 'c'], ['pares', 'PARES', 'c'],
     /* Lo que si se pico, pero fuera de tienda. Cero aca = nadie lo toco. */
@@ -44,7 +45,7 @@ function tabla(pref, titulo, pie, filas, cols, ambar) {
           <div><h3>${esc(titulo)}</h3><div class="pend-cap">${pie}</div></div>
           <div class="rsp-acc">
             <input type="search" id="${pref}_buscar" class="rsp-buscar"
-                   placeholder="SKU, ASN, gender o usuario">
+                   placeholder="SKU, ASN, origen o usuario">
             <button type="button" id="${pref}_xls" class="btn-icono btn-excel"
                     title="Exportar a Excel" aria-label="Exportar a Excel">${icono('excel', 18)}</button>
           </div>
@@ -55,7 +56,7 @@ function tabla(pref, titulo, pie, filas, cols, ambar) {
                 `<th${c ? ' class="c"' : ''}>${t}</th>`).join('')}</tr></thead>
             <tbody id="${pref}_filas">
               ${filas.map(f => `<tr${ambar ? ' class="pend-ojo"' : ''}
-                data-b="${esc([f.sku, f.asn, f.marca, f.colec, f.uPick, f.uEmb]
+                data-b="${esc([f.sku, f.asn, f.origen, f.marca, f.colec, f.uPick, f.uEmb]
                     .filter(Boolean).join(' ').toLowerCase())}">
                 ${cols.map(([k, , c]) => `<td${c ? ' class="c"' : ''}>${
                     NUMERICAS.indexOf(k) >= 0 ? nf(f[k])
@@ -97,7 +98,8 @@ export function montarRecibidoSinPicar(raiz, OPC) {
         <div>
           <h2>Recibido y sin picar</h2>
           <div class="pend-sub">Entró por recepción, ya está en el sistema y no sale a
-            tienda &middot; solo canal retail &middot; al ${esc(d.fecha || '')}</div>
+            tienda &middot; solo importación y nacional, canal retail &middot;
+            al ${esc(d.fecha || '')}</div>
         </div>
       </div>
 

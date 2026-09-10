@@ -70,8 +70,11 @@ def es_retail(dest):
     return d.startswith('50') and d in rutas
 
 # ── LO RECIBIDO ─────────────────────────────────────────────────────────────
+# De donde viene la mercaderia, por el codigo de `cust_field_1` del ASN.
+ORIGEN = {'23': 'Nacional', '24': 'Importación'}
+
 rec = collections.defaultdict(lambda: {'pares': 0.0, 'fecha': None, 'asn': '',
-                                       'lpn': '', 'desc': ''})
+                                       'lpn': '', 'desc': '', 'origen': ''})
 for ruta in sorted(glob.glob(os.path.join(B, 'ASN', 'ASN 2026-0[89].xlsx'))):
     wb = openpyxl.load_workbook(ruta, read_only=True, data_only=True)
     it = wb.worksheets[0].iter_rows(values_only=True)
@@ -87,6 +90,10 @@ for ruta in sorted(glob.glob(os.path.join(B, 'ASN', 'ASN 2026-0[89].xlsx'))):
                 iart = next(i for i, v in enumerate(cab) if v.lower().startswith('art'))
                 ifec = next(i for i, v in enumerate(cab) if 'recepci' in v.lower())
                 ides = next(i for i, v in enumerate(cab) if 'escrip' in v)
+                # EL TIPO DE ASN. `cust_field_1` dice de donde viene la mercaderia,
+                # y calza exacto con la moneda de `cust_field_2`.
+                ityp = next((i for i, v in enumerate(cab)
+                             if v.strip().lower() == 'cust_field_1'), None)
             continue
         sku = str(r[iart] or '').strip()
         if not sku:
@@ -97,8 +104,24 @@ for ruta in sorted(glob.glob(os.path.join(B, 'ASN', 'ASN 2026-0[89].xlsx'))):
             q = 0.0
         if q <= 0:
             continue
+        # ── SOLO IMPORTACION Y NACIONAL ────────────────────────────────────
+        #
+        # Daniel, 10-sep-2026: *"esta trayendo del canal de devolucion, de nota de
+        # credito... yo lo que quiero que figuren solamente son los que vienen de
+        # importacion o nacional"*. Y tiene razon: si algo llega de logistica
+        # inversa, que no salga NO es una noticia, es lo esperado.
+        #
+        # Medido sobre el ASN de setiembre -118.005 filas-:
+        #   23  PEN  nacional ....... 338.339 recibidos
+        #   24  USD  importacion .... 227.811
+        #   56, 89, 16, 30 ..........   2.452  <- inversa, notas, traslados
+        # Los dos primeros son el 99,6% de lo que de verdad entro al CD.
+        tipo = str(r[ityp] or '').strip() if ityp is not None else ''
+        if tipo not in ORIGEN:
+            continue
         f = fecha_de(r[ifec])
         v = rec[sku]
+        v['origen'] = ORIGEN[tipo]
         v['pares'] += q
         v['desc'] = str(r[ides] or '').strip()
         if f and (v['fecha'] is None or f > v['fecha']):
@@ -211,6 +234,7 @@ def arma(dias, tope_pares):
             'marca': rims.get(sku) or rims.get(base) or '',
             'colec': colec.get(sku) or colec.get(base) or '',
             'gen': gen.get(sku) or gen.get(base) or '',
+            'origen': v['origen'],
             'asn': v['asn'],
             'lpnEntrada': limpio(v['lpn']),
             'recibido': v['fecha'].strftime('%Y-%m-%d'),
@@ -247,6 +271,8 @@ datos = {
         'paresParados': sum(f['pares'] - f['picados'] for f in filas),
         'masViejo': max(f['dias'] for f in filas) if filas else 0,
     },
+    'porOrigen': sorted(collections.Counter(f['origen'] for f in filas).items(),
+                        key=lambda x: -x[1]),
     'porMarca': sorted(collections.Counter(f['marca'] or '(sin Maestro)'
                                            for f in filas).items(),
                        key=lambda x: -x[1])[:8],
