@@ -1293,6 +1293,11 @@ def publicar_pedidos(por_sku, intentos=3, area='buffer', nombre='PEDIDOS',
             p = urllib.request.Request(url, data=cuerpo, method='POST')
             p.add_header('Content-Type', 'application/json')
             p.add_header('X-Robot-Token', ROBOT_TOKEN)
+            # EL SELLO VA EN LAS TRES PUBLICACIONES, no en una. La primera
+            # version solo lo puso en `publicar_datos` y las tarjetas se
+            # fueron a produccion igual.
+            if '--beta' in sys.argv:
+                p.add_header('X-Environment', 'beta')
             with urllib.request.urlopen(p, timeout=300) as resp:
                 json.loads(resp.read().decode('utf-8'))
             log('Zona Buffer > Archivo > %s: %s articulos, %s unidades (%.1f KB)'
@@ -1342,6 +1347,8 @@ def subir_excel(ruta, fecha, intentos=3):
         try:
             p = urllib.request.Request(url, data=datos, method='POST')
             p.add_header('Content-Type', 'application/octet-stream')
+            if '--beta' in sys.argv:
+                p.add_header('X-Environment', 'beta')
             with urllib.request.urlopen(p, timeout=300) as resp:
                 r = json.loads(resp.read().decode('utf-8'))
             if r.get('status') == 'success':
