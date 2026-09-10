@@ -15,8 +15,8 @@
  * numero calculado en dos sitios se desincroniza, y ya paso en este proyecto.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0692';
-import { icono } from '../services_v245/iconos.js?v=29.0692';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0693';
+import { icono } from '../services_v245/iconos.js?v=29.0693';
 
 /**
  * LO QUE EL WMS ABRE Y COMERCIAL NUNCA LIBERO.
@@ -45,23 +45,23 @@ function cuadroPareto(n) {
         <h3>PEDIDOS WMS NO LIBERADOS</h3>
         <table>
           <thead><tr>
-            <th>DESDE CUÁNDO ESPERA</th><th class="n">PEDIDOS</th>
-            <th class="n">PARES</th><th class="n">%</th><th class="n">ACUM.</th>
+            <th>DESDE CUÁNDO ESPERA</th><th class="c">PEDIDOS</th>
+            <th class="c">PARES</th><th class="c">%</th><th class="c">ACUM.</th>
           </tr></thead>
           <tbody>
             ${filas.map(f => {
                 const viejo = /mas de 60|31 a 60|16 a 30/.test(f.k);
                 return `<tr${viejo ? ' class="pend-ojo"' : ''}>
                   <td>${esc(f.k)}</td>
-                  <td class="n">${nf(f.ped)}</td>
-                  <td class="n">${nf(f.und)}</td>
-                  <td class="n">${f.pct}%</td>
-                  <td class="n">${f.acum}%</td></tr>`;
+                  <td class="c">${nf(f.ped)}</td>
+                  <td class="c">${nf(f.und)}</td>
+                  <td class="c">${f.pct}%</td>
+                  <td class="c">${f.acum}%</td></tr>`;
             }).join('')}
             <tr class="pend-total"><td>TOTAL</td>
-              <td class="n">${nf(n.ordenes)}</td>
-              <td class="n">${nf(n.unidades)}</td>
-              <td class="n"></td><td class="n"></td></tr>
+              <td class="c">${nf(n.ordenes)}</td>
+              <td class="c">${nf(n.unidades)}</td>
+              <td class="c"></td><td class="c"></td></tr>
           </tbody>
         </table>
         ${fm && fm.und > 0 ? `<div class="pend-suave">${fm.destinos.map(x =>
@@ -185,7 +185,7 @@ function engancharFecha(raiz, O) {
 function estiloPropio() {
     return `<style>
     #pend .pend-dos{grid-column:1/-1;display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}
+      grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
     #pend .pend-dos .pend-panel{overflow-x:auto}
     @media(max-width:1200px){#pend .pend-dos{grid-template-columns:1fr}}
     #pend .pend-cab2{display:flex;align-items:flex-start;justify-content:space-between;
