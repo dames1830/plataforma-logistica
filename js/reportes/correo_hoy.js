@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0677';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0678';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -106,30 +106,28 @@ const rotulo = (titulo, cuenta) =>
  * hasta el 10-sep-2026 la pantalla no la mostraba: abria con el resultado y el
  * numero no le cuadraba con su archivo.
  */
-function cuadroCascada(k, tiendas) {
+function cuadroCascada(k) {
     if (!k || !k.trae) return '';
     const fila = (etiqueta, v, clase) => `<tr${clase ? ' class="' + clase + '"' : ''}>
         <td>${etiqueta}</td>
         <td class="n">${nf(v.guias)}</td>
         <td class="n">${nf(v.und)}</td></tr>`;
+    /* VA PELADO. Daniel lo repaso renglon por renglon el 10-sep-2026 y saco el
+       titulo, el pie, la palabra PASO, la explicacion del doble tramo y la nota
+       de los pares: lo unico que queria ver es la resta. Los signos menos se
+       quedan porque son la resta misma, no una explicacion. */
     return `<div class="pend-panel">
-        <h3>DE DÓNDE SALE ESTE NÚMERO</h3>
-        <div class="pend-cap">La misma resta que se hace sobre el Excel de comercial</div>
         <table>
-          <thead><tr><th>PASO</th><th class="n">GUÍAS</th><th class="n">UNIDADES</th></tr></thead>
+          <thead><tr><th></th><th class="n">GUÍAS</th><th class="n">UNIDADES</th></tr></thead>
           <tbody>
-            ${fila('El correo trae', k.trae)}
-            ${fila('− Doble tramo → no es un pedido, es una reasignación',
-                   k.dobleTramo, 'pend-gris')}
+            ${fila('Correo comercial', k.trae)}
+            ${fila('− Doble tramo', k.dobleTramo, 'pend-gris')}
             ${fila('− Ya lo había mandado otro día', k.repetidas, 'pend-ojo')}
             <tr class="pend-total"><td>= NUEVO DE HOY → esto es el correo de hoy</td>
               <td class="n">${nf(k.nuevo.guias)}</td>
               <td class="n">${nf(k.nuevo.und)}</td></tr>
           </tbody>
         </table>
-        <div class="pend-nota">Todo en <b>pares</b>: la caja de prepack cuenta por sus
-          pares, igual que en el correo de comercial. Las ${nf(k.nuevo.guias)} guías
-          nuevas se reparten en ${nf(tiendas)} tiendas.</div>
       </div>`;
 }
 
@@ -245,10 +243,7 @@ function cuerpo(d, fecha, dias) {
       </div>`;
 
     const cuadros = [
-        rotulo('LO QUE MANDÓ COMERCIAL HOY',
-               `${nf(c.guias)} guías &middot; ${nf(c.unidades)} pares nuevos de hoy &middot; `
-               + `la cantidad es la del correo`),
-        cuadroCascada(d.cascada, c.tiendas),
+        cuadroCascada(d.cascada),
         cuadroLlegada(d),
         cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
                `Las 10 más cargadas de ${nf(c.tiendas)}`,
