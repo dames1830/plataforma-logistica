@@ -984,6 +984,138 @@ def guias_repetidas(hoy_d, guias, abierto_de):
     return filas, cascada
 
 
+def fecha_wms(t):
+    """La fecha de una columna del WMS, probando los formatos que usa."""
+    t = str(t or '').strip()
+    for f in ('%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M', '%d/%m/%Y',
+              '%Y-%m-%d %H:%M:%S', '%Y-%m-%d'):
+        try:
+            return datetime.strptime(t[:19], f).date()
+        except Exception:
+            pass
+    return None
+
+
+def armar_no_liberados(hoy, guias):
+    """Lo que el WMS tiene abierto y comercial NUNCA mando por correo.
+
+    POR QUE EXISTE. Daniel, 10-sep-2026: *"para yo decirle a mi jefe que tenemos
+    pedidos en el WMS que todavia no estan liberados de hace, un ejemplo, de hace
+    un mes"*. Es el tercer grupo del reparto -ver el skill `una-guia-un-lugar`- y
+    hasta hoy solo se veia como una fila gris en el Pendiente: un total sin
+    nombres y sin fechas, que no sirve para reclamar.
+
+    LA ANTIGUEDAD SALE DE LA CREACION DE LA CABECERA EN EL WMS -columna 15-, que
+    es cuando nacio la orden. La "Fecha de orden" da practicamente lo mismo
+    -comprobado el 09-09: los dos reparten igual salvo una docena de ordenes- y
+    la de creacion es la que el WMS pone solo.
+
+    Medido el 09-09-2026: 739 ordenes / 251.742 pares, la mas antigua del
+    01-nov-2025 -312 dias-, y 65 ordenes de mas de 60 dias que solas son 59.827
+    pares, el 24% de todo lo no liberado.
+    """
+    hoy_d = datetime.strptime(hoy, '%Y-%m-%d').date()
+    if not os.path.isfile(PENDIENTES):
+        return None
+
+    vistas = set()
+    pares = collections.defaultdict(float)
+    info = {}
+    f = io.open(PENDIENTES, encoding='utf-8-sig', newline='', errors='replace')
+    r = csv.reader(f, delimiter=';')
+    try:
+        next(r)
+    except StopIteration:
+        f.close()
+        return None
+    for row in r:
+        if len(row) < 20 or row[4].strip() not in ESTADOS:
+            continue
+        o = limpio(row[1])
+        if o in guias:
+            continue                     # ese si lo libero comercial
+        sku, dest = limpio(row[5]), limpio(row[13])
+        if (o, sku, dest) in vistas:
+            continue
+        vistas.add((o, sku, dest))
+        p = (num(row[6]) - num(row[9])) * pares_de_la_caja(sku)
+        if p <= 0:
+            continue
+        pares[o] += p
+        if o not in info:
+            info[o] = {
+                'destino': dest or '(sin destino)',
+                'tipo': str(row[19] or '').strip() or '(sin tipo)',
+                'fecha': fecha_wms(row[14]),
+            }
+    f.close()
+    if not pares:
+        return None
+
+    # EL PARETO. Los tramos van de mas viejo a mas nuevo -al reves que en el
+    # Pendiente-: lo que se quiere mirar primero es lo viejo, que es lo que hay
+    # que reclamar.
+    TRAMOS = [(9999, 'mas de 60 dias'), (60, '31 a 60 dias'), (30, '16 a 30 dias'),
+              (15, '8 a 15 dias'), (7, '4 a 7 dias'), (3, '1 a 3 dias'), (0, 'hoy')]
+
+    def tramo(d):
+        if d is None:
+            return 'sin fecha'
+        x = (hoy_d - d).days
+        for tope, nombre in TRAMOS[::-1]:
+            if x <= tope:
+                return nombre
+        return 'mas de 60 dias'
+
+    por_tramo = collections.defaultdict(lambda: [0, 0.0])
+    detalle = []
+    for o, p in pares.items():
+        v = info[o]
+        d = v['fecha']
+        dias = (hoy_d - d).days if d else None
+        por_tramo[tramo(d)][0] += 1
+        por_tramo[tramo(d)][1] += p
+        detalle.append({
+            'orden': o,
+            'destino': v['destino'],
+            'tipo': v['tipo'],
+            'fecha': d.isoformat() if d else '',
+            'dias': dias if dias is not None else '',
+            'pares': int(round(p)),
+        })
+    detalle.sort(key=lambda x: (-(x['dias'] if x['dias'] != '' else -1), -x['pares']))
+
+    total = sum(pares.values())
+    orden_tr = [n for _t, n in TRAMOS] + ['sin fecha']
+    acum = 0.0
+    pareto = []
+    for n in orden_tr:
+        if n not in por_tramo:
+            continue
+        v = por_tramo[n]
+        acum += v[1]
+        pareto.append({
+            'k': n, 'ped': v[0], 'und': int(round(v[1])),
+            'pct': int(round(100.0 * v[1] / total)) if total else 0,
+            'acum': int(round(100.0 * acum / total)) if total else 0,
+        })
+
+    fechas = [v['fecha'] for v in info.values() if v['fecha']]
+    vieja = min(fechas) if fechas else None
+    datos = {
+        'ordenes': len(pares),
+        'unidades': int(round(total)),
+        'masVieja': vieja.isoformat() if vieja else '',
+        'diasMasVieja': (hoy_d - vieja).days if vieja else 0,
+        'pareto': pareto,
+        'detalle': detalle,
+    }
+    log('No liberados: %s ordenes / %s pares; el mas viejo es del %s (%s dias)'
+        % (format(datos['ordenes'], ',d'), format(datos['unidades'], ',d'),
+           datos['masVieja'] or '?', format(datos['diasMasVieja'], ',d')))
+    return datos
+
+
 def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
     """Lo que comercial mando HOY, que es justo lo que el pendiente deja fuera.
 
@@ -1139,6 +1271,10 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
     # LA CASCADA Y LAS REPETIDAS SALEN DE LA MISMA LECTURA del correo de hoy.
     datos['repetidas'], datos['cascada'] = guias_repetidas(
         hoy_d, guias, abierto_repetidas)
+    # EL TERCER GRUPO: lo que el WMS abre y comercial nunca mando. Va en este
+    # modulo porque el cuadro que ocupaba ese lugar quedo en cero al sacar el
+    # doble tramo, y esto si hay que mirarlo todos los dias.
+    datos['noLiberados'] = armar_no_liberados(hoy, guias)
     log('Correo de hoy: %s guias / %s unidades pedidas  ->  el WMS tiene abiertas '
         '%s guias / %s unidades  (sin abrir %s)'
         % (format(datos['correo']['guias'], ',d'),

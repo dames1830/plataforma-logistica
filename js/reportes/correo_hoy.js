@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0680';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0681';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -54,44 +54,89 @@ function cabecera(d, fecha, dias) {
 /* ── EL CUADRO PROPIO DE ESTE MÓDULO ────────────────────────────────────────── */
 
 /**
- * ¿EL WMS YA TIENE LO QUE MANDÓ COMERCIAL?
+ * LO QUE EL WMS ABRE Y COMERCIAL NUNCA LIBERO.
  *
- * No existía en ninguna pantalla. Una guía que comercial mandó y que el WMS no
- * tiene abierta NO SE PUEDE PICAR HOY, y hasta ahora eso no se veía en ningún
- * lado: se notaba recién al final del día, cuando faltaba despachar.
+ * Daniel, 10-sep-2026: *"para yo decirle a mi jefe que tenemos pedidos en el WMS
+ * que todavia no estan liberados de hace, un ejemplo, de hace un mes"*. Hasta hoy
+ * este grupo solo se veia como una fila gris en el Pendiente: un total sin
+ * nombres y sin fechas, con el que no se puede reclamar nada.
  *
- * Medido la primera noche, 09-sep-2026: de 879 guías del correo, el WMS tenía
- * abiertas 461 y le faltaban 418 —8.433 unidades de 30 tiendas—.
+ * Reemplaza al cuadro "¿el WMS ya tiene lo que mando comercial?", que quedo en
+ * cero para siempre al sacar el doble tramo: las guias que faltaban abrir eran
+ * exactamente esas.
+ *
+ * LA ANTIGUEDAD SALE DE CUANDO EL WMS CREO LA ORDEN. Medido el 09-09-2026: 739
+ * ordenes / 251.742 pares, la mas vieja del 01-nov-2025 -312 dias-.
  */
-function cuadroLlegada(d) {
-    const c = d.correo || {}, w = d.wms || {}, s = d.sinAbrir || {};
-    return `
-      <div class="pend-panel">
-        <h3>¿EL WMS YA TIENE LO QUE MANDÓ COMERCIAL?</h3>
-        <div class="pend-cap">Una guía que el WMS no tiene abierta no se puede trabajar todavía</div>
+function cuadroNoLiberados(n) {
+    if (!n || !n.ordenes) return '';
+    const filas = n.pareto || [];
+    const max = filas.reduce((m, f) => Math.max(m, Number(f.und) || 0), 0);
+    /* EL PARETO VA DE LO MAS VIEJO A LO MAS NUEVO, no de mayor a menor: lo que se
+       reclama es la antiguedad, y el acumulado dice cuanto pesa lo viejo. */
+    return `<div class="pend-panel">
+        <h3>PEDIDOS QUE COMERCIAL NO HA LIBERADO</h3>
+        <div class="pend-cap">El WMS los tiene abiertos y nunca llegaron por
+          correo${n.masVieja ? ' &middot; el más viejo es del ' + esc(n.masVieja)
+            + ', hace ' + nf(n.diasMasVieja) + ' días' : ''}</div>
         <table>
           <thead><tr>
-            <th>ESTADO DE LA GUÍA</th><th class="n">GUÍAS</th>
-            <th class="n">PIDIÓ COMERCIAL</th><th class="n">ABIERTO EN EL WMS</th>
+            <th>DESDE CUÁNDO ESPERA</th><th class="n">PEDIDOS</th>
+            <th class="n">PARES</th><th class="n">%</th><th class="n">ACUM.</th>
           </tr></thead>
           <tbody>
-            <tr><td><b>Abierta en el WMS</b> → se puede trabajar</td>
-                <td class="n"><b>${nf(w.guias)}</b></td>
-                <td class="n">${nf(d.pedidoAbiertas)}</td>
-                <td class="n"><b>${nf(w.unidades)}</b></td></tr>
-            <tr class="pend-ojo"><td>Todavía no abierta en el WMS</td>
-                <td class="n">${nf(s.guias)}</td>
-                <td class="n">${nf(s.unidades)}</td>
-                <td class="n">—</td></tr>
-            <tr class="pend-total"><td>TOTAL DEL CORREO</td>
-                <td class="n">${nf(c.guias)}</td>
-                <td class="n">${nf(c.unidades)}</td>
-                <td class="n">${nf(w.unidades)}</td></tr>
+            ${filas.map(f => {
+                const viejo = /mas de 60|31 a 60|16 a 30/.test(f.k);
+                return `<tr${viejo ? ' class="pend-ojo"' : ''}>
+                  <td>${esc(f.k)}</td>
+                  <td class="n">${nf(f.ped)}</td>
+                  <td class="n">${nf(f.und)}
+                    <span class="pend-bar${viejo ? ' ambar' : ''}"
+                          style="width:${max > 0 ? Math.max(2, Math.round(100 * f.und / max)) : 0}%"></span></td>
+                  <td class="n">${f.pct}%</td>
+                  <td class="n">${f.acum}%</td></tr>`;
+            }).join('')}
+            <tr class="pend-total"><td>TOTAL</td>
+              <td class="n">${nf(n.ordenes)}</td>
+              <td class="n">${nf(n.unidades)}</td>
+              <td class="n"></td><td class="n"></td></tr>
           </tbody>
         </table>
-        ${s.guias ? `<div class="pend-nota"><b>${nf(s.guias)} guías</b> de
-          ${nf(s.tiendas)} tiendas llegaron por correo y el WMS todavía no las tiene
-          abiertas. Son ${nf(s.unidades)} unidades que hoy no se pueden picar.</div>` : ''}
+      </div>`;
+}
+
+/**
+ * EL DETALLE, CON NOMBRE Y FECHA DE CADA UNO.
+ *
+ * En pantalla van las 15 mas viejas —la lista entera son cientos— y el boton baja
+ * el CSV completo. Daniel lo pidio para llevarselo a su jefe, y para eso hace
+ * falta el papel, no un total.
+ */
+function cuadroNoLiberadosDetalle(n) {
+    const filas = (n && n.detalle) || [];
+    if (!filas.length) return '';
+    const top = filas.slice(0, 15);
+    return `<div class="pend-panel pend-ancho">
+        <h3>UNO POR UNO, DEL MÁS VIEJO AL MÁS NUEVO</h3>
+        <div class="pend-cap">Las 15 más viejas de ${nf(filas.length)} &middot;
+          el botón baja la lista completa</div>
+        <table>
+          <thead><tr>
+            <th>ORDEN</th><th>DESTINO</th><th>TIPO</th>
+            <th class="n">CREADA</th><th class="n">DÍAS</th><th class="n">PARES</th>
+          </tr></thead>
+          <tbody>
+            ${top.map(f => `<tr${Number(f.dias) > 30 ? ' class="pend-ojo"' : ''}>
+              <td>${esc(f.orden)}</td>
+              <td>${esc(f.destino)}</td>
+              <td>${esc(f.tipo)}</td>
+              <td class="n">${esc(f.fecha)}</td>
+              <td class="n">${nf(f.dias)}</td>
+              <td class="n">${nf(f.pares)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+        <button id="nolib_csv" class="btn-icono btn-excel pend-btn"
+                style="margin-top:11px">BAJAR LOS ${nf(filas.length)} EN CSV</button>
       </div>`;
 }
 
@@ -278,7 +323,6 @@ function cuerpo(d, fecha, dias) {
 
     const cuadros = [
         `<div class="pend-col">${cuadroCascada(d.cascada)}${cuadroEtiquetas(d.cascada)}</div>`,
-        cuadroLlegada(d),
         cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
                `Las 10 más cargadas de ${nf(c.tiendas)}`,
                d.tiendas, { etiqueta: 'TIENDA', tope: 10, etiquetaPed: 'GUÍAS' }),
@@ -298,6 +342,8 @@ function cuerpo(d, fecha, dias) {
                d.gender, { etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
                            nota: 'Un total que mezcla zapatos con cajas no dice nada.' }),
         cuadroRutas(d.rutas, d.rutasSinCruce),
+        cuadroNoLiberados(d.noLiberados),
+        cuadroNoLiberadosDetalle(d.noLiberados),
         cuadroRepetidas(d.repetidas),
     ].join('');
 
@@ -328,6 +374,31 @@ export function montarCorreoHoy(raiz, OPC) {
     /* EL ENVOLTORIO TIENE QUE SER `#pend`: los estilos que se comparten con el
        Pendiente cuelgan todos de ese id. */
     raiz.innerHTML = `<div id="pend">${estilos()}${cuerpo(d, fecha, O.fechas)}</div>`;
+
+    /* EL CSV SE ARMA ACA, con lo que ya vino publicado: no hay que pedirle nada
+       al servidor ni esperar a que el robot suba un Excel. */
+    const btn = raiz.querySelector('#nolib_csv');
+    if (btn) btn.addEventListener('click', () => {
+        const filas = ((O.datos || {}).noLiberados || {}).detalle || [];
+        if (!filas.length) return;
+        const cab = ['Orden', 'Destino', 'Tipo de orden', 'Creada', 'Dias', 'Pares'];
+        const esc2 = (v) => {
+            const t = String(v == null ? '' : v);
+            return /[";\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+        };
+        const cuerpo = filas.map(f => [f.orden, f.destino, f.tipo, f.fecha, f.dias, f.pares]
+            .map(esc2).join(';')).join('\n');
+        /* El BOM va adelante para que Excel abra los acentos bien. */
+        const blob = new Blob(['\ufeff' + cab.join(';') + '\n' + cuerpo],
+                              { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'No liberados ' + (fecha || '') + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    });
 
     const cal = raiz.querySelector('#correo_fecha');
     if (cal) {
