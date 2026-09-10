@@ -30,7 +30,7 @@
  * }
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0701';
+import { icono } from '../services_v245/iconos.js?v=29.0702';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';

@@ -18,8 +18,9 @@
  * nombre, con fecha MASTER: es una foto, no una serie por día.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0701';
-import { icono } from '../services_v245/iconos.js?v=29.0701';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0702';
+import { icono } from '../services_v245/iconos.js?v=29.0702';
+import { laminaResumen } from '../services_v245/laminas.js?v=29.0702';
 
 /* Las columnas que valen para los dos, y las que solo tienen sentido cuando
    hubo pick. Separarlas es lo que evita el mar de guiones. */
@@ -98,7 +99,10 @@ export function montarRecibidoSinPicar(raiz, OPC) {
         </div>
       </div>
 
-      <div class="pend-cards">
+      <div class="pend-cards rsp-cards">
+        <button type="button" id="rsp_foto" class="btn-icono rsp-cam"
+                title="Armar la lámina del resumen para mandarla por WhatsApp"
+                aria-label="Tomar la lámina">${icono('camara', 18)}</button>
         ${tarjeta(t.skus, 'SKU RECIBIDOS SIN MOVER')}
         ${tarjeta(t.sinPicar, 'NUNCA SE PICARON', ' hot')}
         ${tarjeta(t.conPocos, 'SE PICARON 5 O MENOS')}
@@ -113,6 +117,29 @@ export function montarRecibidoSinPicar(raiz, OPC) {
                 'Salió algo, pero casi nada', pocos, COMUNES.concat(DEL_PICK), false)}
       </div>
     </div>`;
+
+    /* LA LAMINA QUE SE MANDA AL GRUPO DE LOS JEFES. Formato cerrado, el mismo
+       del UCA y el Replenishment: un numero manda y dos lo acompanan. Acá manda
+       el que duele —los SKU que entraron y NUNCA salieron— y lo acompañan los
+       que salieron casi nada y la antigüedad del peor. Ver el skill
+       `laminas-camara`: el borde limpio lo da `paraFoto`, no subir el tamaño. */
+    const cam = raiz.querySelector('#rsp_foto');
+    if (cam) cam.addEventListener('click', () => {
+        laminaResumen({
+            titulo: 'RECIBIDO Y SIN PICAR',
+            /* EL ROTULO DICE LA UNIDAD. SKUs y DIAS no son la misma clase de cosa
+               y sin decirlo la lamina invita a sumarlos. */
+            tarjetas: [
+                { rotulo: 'SKUs CON 1 A 5 PARES', valor: t.conPocos,
+                  color: 'var(--warning)' },
+                { rotulo: 'DÍAS EL MÁS VIEJO', valor: t.masViejo,
+                  color: 'var(--warning)' },
+            ],
+            grande: { rotulo: 'SKUs SIN NINGÚN PICK', valor: t.sinPicar,
+                      color: 'var(--danger)' },
+            pie: 'Solo canal retail · al ' + (d.fecha || ''),
+        });
+    });
 
     /* El Excel baja la lista completa del cuadro, no lo que dejó ver el buscador:
        el archivo es para llevárselo, y uno filtrado sin avisar engaña. */
@@ -152,6 +179,9 @@ function estiloPropio() {
        gender estiraba la fila a tres lineas: la tabla se leia como parrafos. Lo
        que no entra se desliza, que para eso esta el scroll. */
     #pend.rsp .rsp-scroll th,#pend.rsp .rsp-scroll td{white-space:nowrap}
+    /* La camara va en la esquina de las tarjetas, sin robarles sitio. */
+    #pend.rsp .rsp-cards{position:relative;padding-right:34px}
+    #pend.rsp .rsp-cam{position:absolute;top:-2px;right:0;z-index:2}
     #pend.rsp .rsp-vacio{color:var(--text-faint)}
     #pend.rsp .pend-suave{margin-top:9px;font-size:var(--t-xs);color:var(--text-muted);
       opacity:.75;font-variant-numeric:tabular-nums}
