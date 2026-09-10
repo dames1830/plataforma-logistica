@@ -996,7 +996,7 @@ def fecha_wms(t):
     return None
 
 
-def armar_no_liberados(hoy, guias):
+def armar_no_liberados(hoy, guias, rutas):
     """Lo que el WMS tiene abierto y comercial NUNCA mando por correo.
 
     POR QUE EXISTE. Daniel, 10-sep-2026: *"para yo decirle a mi jefe que tenemos
@@ -1010,17 +1010,35 @@ def armar_no_liberados(hoy, guias):
     -comprobado el 09-09: los dos reparten igual salvo una docena de ordenes- y
     la de creacion es la que el WMS pone solo.
 
-    Medido el 09-09-2026: 739 ordenes / 251.742 pares, la mas antigua del
-    01-nov-2025 -312 dias-, y 65 ordenes de mas de 60 dias que solas son 59.827
-    pares, el 24% de todo lo no liberado.
+    SOLO RETAIL. Daniel, 10-sep-2026: *"ese reporte tiene que abarcar solamente
+    pedidos no liberados de retail nada mas"*. Retail es lo que va a una TIENDA, y
+    una tienda **empieza con 50 Y esta en el maestro de rutas**. Las dos
+    condiciones, no una: el 50 solo deja entrar almacenes internos, y el maestro
+    solo dejaria fuera a una tienda recien abierta.
+
+    LO QUE EMPIEZA CON 50 Y NO ESTA EN EL MAESTRO NO SE TIRA EN SILENCIO: se
+    cuenta aparte y la pantalla lo avisa. Es justo el caso que Daniel anticipo
+    -*"de repente es una tienda nueva y todavia no esta en el maestro de rutas y
+    tu lo vas a omitir"*-. El 09-09 eran dos, 50008 con 12.945 pares y 50009 con
+    48, los dos por debajo del 50102 con que arranca el maestro: huelen a almacen
+    interno y no a tienda, pero eso lo decide Daniel mirandolos, no yo
+    borrandolos.
+
+    Sin el filtro eran 739 ordenes / 251.742 pares, pero el 84% de eso son
+    ordenes de tipo "Materiales" a destinos que no son tiendas.
     """
     hoy_d = datetime.strptime(hoy, '%Y-%m-%d').date()
     if not os.path.isfile(PENDIENTES):
         return None
 
+    def es_tienda(dest):
+        return dest.startswith('50') and dest in rutas
+
     vistas = set()
     pares = collections.defaultdict(float)
     info = {}
+    # Lo que empieza con 50 pero el maestro no conoce: se avisa, no se borra.
+    fuera_maestro = collections.defaultdict(float)
     f = io.open(PENDIENTES, encoding='utf-8-sig', newline='', errors='replace')
     r = csv.reader(f, delimiter=';')
     try:
@@ -1040,6 +1058,10 @@ def armar_no_liberados(hoy, guias):
         vistas.add((o, sku, dest))
         p = (num(row[6]) - num(row[9])) * pares_de_la_caja(sku)
         if p <= 0:
+            continue
+        if not es_tienda(dest):
+            if dest.startswith('50'):
+                fuera_maestro[dest] += p
             continue
         pares[o] += p
         if o not in info:
@@ -1109,10 +1131,22 @@ def armar_no_liberados(hoy, guias):
         'diasMasVieja': (hoy_d - vieja).days if vieja else 0,
         'pareto': pareto,
         'detalle': detalle,
+        'fueraMaestro': {
+            'destinos': sorted(
+                [{'k': d, 'und': int(round(v))} for d, v in fuera_maestro.items()],
+                key=lambda x: -x['und']),
+            'und': int(round(sum(fuera_maestro.values()))),
+        },
     }
-    log('No liberados: %s ordenes / %s pares; el mas viejo es del %s (%s dias)'
+    log('No liberados de RETAIL: %s ordenes / %s pares; el mas viejo es del %s '
+        '(%s dias)'
         % (format(datos['ordenes'], ',d'), format(datos['unidades'], ',d'),
            datos['masVieja'] or '?', format(datos['diasMasVieja'], ',d')))
+    if fuera_maestro:
+        log('   OJO: %d destino(s) empiezan con 50 y NO estan en el maestro de '
+            'rutas (%s pares): %s'
+            % (len(fuera_maestro), format(int(sum(fuera_maestro.values())), ',d'),
+               ', '.join(sorted(fuera_maestro))), 'AVISO')
     return datos
 
 
@@ -1274,7 +1308,7 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
     # EL TERCER GRUPO: lo que el WMS abre y comercial nunca mando. Va en este
     # modulo porque el cuadro que ocupaba ese lugar quedo en cero al sacar el
     # doble tramo, y esto si hay que mirarlo todos los dias.
-    datos['noLiberados'] = armar_no_liberados(hoy, guias)
+    datos['noLiberados'] = armar_no_liberados(hoy, guias, rutas)
     log('Correo de hoy: %s guias / %s unidades pedidas  ->  el WMS tiene abiertas '
         '%s guias / %s unidades  (sin abrir %s)'
         % (format(datos['correo']['guias'], ',d'),

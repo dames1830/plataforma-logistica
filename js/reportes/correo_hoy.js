@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0681';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0682';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -71,14 +71,17 @@ function cabecera(d, fecha, dias) {
 function cuadroNoLiberados(n) {
     if (!n || !n.ordenes) return '';
     const filas = n.pareto || [];
+    /* LO QUE EMPIEZA CON 50 Y EL MAESTRO NO CONOCE NO SE BORRA EN SILENCIO: es el
+       caso que Daniel anticipo, una tienda nueva que todavia no esta cargada. */
+    const fm = n.fueraMaestro;
     const max = filas.reduce((m, f) => Math.max(m, Number(f.und) || 0), 0);
     /* EL PARETO VA DE LO MAS VIEJO A LO MAS NUEVO, no de mayor a menor: lo que se
        reclama es la antiguedad, y el acumulado dice cuanto pesa lo viejo. */
     return `<div class="pend-panel">
-        <h3>PEDIDOS QUE COMERCIAL NO HA LIBERADO</h3>
-        <div class="pend-cap">El WMS los tiene abiertos y nunca llegaron por
-          correo${n.masVieja ? ' &middot; el más viejo es del ' + esc(n.masVieja)
-            + ', hace ' + nf(n.diasMasVieja) + ' días' : ''}</div>
+        <h3>PEDIDOS DE TIENDA QUE COMERCIAL NO HA LIBERADO</h3>
+        <div class="pend-cap">Solo retail: destino que empieza con 50 y está en el
+          maestro de rutas${n.masVieja ? ' &middot; el más viejo es del '
+            + esc(n.masVieja) + ', hace ' + nf(n.diasMasVieja) + ' días' : ''}</div>
         <table>
           <thead><tr>
             <th>DESDE CUÁNDO ESPERA</th><th class="n">PEDIDOS</th>
@@ -102,6 +105,11 @@ function cuadroNoLiberados(n) {
               <td class="n"></td><td class="n"></td></tr>
           </tbody>
         </table>
+        ${fm && fm.und > 0 ? `<div class="pend-nota">
+          <b>${nf(fm.destinos.length)} destino(s) empiezan con 50 pero no están en el
+          maestro de rutas</b> —${nf(fm.und)} pares: ${fm.destinos.map(x =>
+            esc(x.k) + ' (' + nf(x.und) + ')').join(', ')}—. Quedan fuera de este
+          cuadro. Si alguno es una tienda nueva, hay que meterlo al maestro.</div>` : ''}
       </div>`;
 }
 
@@ -118,8 +126,7 @@ function cuadroNoLiberadosDetalle(n) {
     const top = filas.slice(0, 15);
     return `<div class="pend-panel pend-ancho">
         <h3>UNO POR UNO, DEL MÁS VIEJO AL MÁS NUEVO</h3>
-        <div class="pend-cap">Las 15 más viejas de ${nf(filas.length)} &middot;
-          el botón baja la lista completa</div>
+        <div class="pend-cap">Solo retail &middot; las 15 más viejas de ${nf(filas.length)} &middot; el botón baja la lista completa</div>
         <table>
           <thead><tr>
             <th>ORDEN</th><th>DESTINO</th><th>TIPO</th>
