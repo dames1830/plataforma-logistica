@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0683';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0684';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -320,7 +320,11 @@ function cuerpo(d, fecha, dias) {
       </div>`;
 
     const cuadros = [
-        `<div class="pend-col">${cuadroCascada(d.cascada)}${cuadroEtiquetas(d.cascada)}</div>`,
+        /* LOS TRES DE ARRIBA EN UNA FILA, un tercio cada uno. Lo pidio Daniel el
+           10-sep-2026: se leen juntos —qué trajo el correo, qué es, y qué hay
+           parado en el WMS— y apilados obligaban a bajar la pantalla. */
+        `<div class="pend-tres">${cuadroCascada(d.cascada)}`
+          + `${cuadroEtiquetas(d.cascada)}${cuadroNoLiberados(d.noLiberados)}</div>`,
         cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
                `Las 10 más cargadas de ${nf(c.tiendas)}`,
                d.tiendas, { etiqueta: 'TIENDA', tope: 10, etiquetaPed: 'GUÍAS' }),
@@ -340,7 +344,6 @@ function cuerpo(d, fecha, dias) {
                d.gender, { etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
                            nota: 'Un total que mezcla zapatos con cajas no dice nada.' }),
         cuadroRutas(d.rutas, d.rutasSinCruce),
-        cuadroNoLiberados(d.noLiberados),
         cuadroNoLiberadosDetalle(d.noLiberados),
         cuadroRepetidas(d.repetidas),
     ].join('');
@@ -354,7 +357,12 @@ function estiloBloque() {
     /* Los dos cuadros del correo, apilados dentro de una sola celda: el segundo
        tiene que quedar DEBAJO del primero, no al costado. El hueco es el mismo
        que separa los paneles de la grilla. */
-    #pend .pend-col{display:flex;flex-direction:column;gap:16px}
+    /* Una fila entera partida en tres. En pantalla angosta se apilan, y una tabla
+       que no entre se desliza sola en vez de romper el ancho. */
+    #pend .pend-tres{grid-column:1/-1;display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+    #pend .pend-tres .pend-panel{overflow-x:auto}
+    @media(max-width:1200px){#pend .pend-tres{grid-template-columns:1fr}}
     /* La referencia de lo que quedo fuera del maestro: se deja a la vista pero
        sin pesar. Daniel: *"que no se note mucho, con una letra pluma"*. */
     #pend .pend-suave{margin-top:9px;font-size:var(--t-xs);color:var(--text-muted);
