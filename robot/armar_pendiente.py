@@ -590,7 +590,7 @@ def armar(hoy):
     # numero de PEDIDOS como si fueran tiendas -decia 447 de 268-.
     tiendas_viejas = set()
     ord_dentro, ord_fuera, ord_cruzadas = set(), set(), set()
-    und_dentro = und_fuera = 0.0
+    und_dentro = und_fuera = und_hoy = 0.0
     lineas = repetidas = 0
     sin_maestro = set()
 
@@ -644,12 +644,11 @@ def armar(hoy):
         # EL CORREO DE HOY NO ES PENDIENTE Y SE VA ACA MISMO. Con este `continue`
         # no entra a `por_sku` ni a `por_guia` ni a ninguno de los siete cortes ni
         # al Excel: el modulo entero queda como si el correo todavia no hubiera
-        # llegado. Va con las de afuera porque al cierre de ayer -que es la fecha
-        # de este reporte- comercial NO las habia liberado; ahi cuadran contra lo
-        # que el WMS tiene abierto. Manana, ya con un dia encima, entran solas.
+        # llegado. Se va a SU PROPIO BALDE, no con las de afuera: comercial SI las
+        # libero -esta noche-, y meterlas en "nunca lo libero" era llamar mentira a
+        # un cuadro. Los tres grupos son excluyentes; ver el skill `una-guia-un-lugar`.
         if es_de_hoy:
-            ord_fuera.add(orden)
-            und_fuera += max(0.0, pend)
+            und_hoy += max(0.0, pend)
             continue
 
         ord_dentro.add(orden)
@@ -705,17 +704,23 @@ def armar(hoy):
     # como formula y el correo los escribe pelados, asi que basta un cambio de
     # formato para que no calce ninguno. Antes que publicar un pendiente vacio,
     # no se publica nada.
+    # LOS TRES GRUPOS, QUE NO SE PISAN: lo que se trabaja (`ord_dentro`), el correo
+    # de hoy (`ord_hoy`) y lo que comercial nunca mando (`ord_fuera`). Sumados dan
+    # todo lo que el WMS tiene abierto.
+    abierto_wms = len(ord_dentro) + len(ord_hoy) + len(ord_fuera)
+    # LO QUE ESTE REPORTE MUESTRA es su propio universo: sin el correo de hoy, que
+    # tiene su modulo. Asi las dos filas de abajo cuadran contra esta.
     total_ord = len(ord_dentro) + len(ord_fuera)
-    # SE MIDE CON `ord_cruzadas`, NO CON `ord_dentro`. Lo que esta guarda vigila es
-    # que el cruce contra los correos siga funcionando; si mirara `ord_dentro` -que
-    # ya deja fuera el correo de hoy- una noche con un correo grande se leeria como
-    # un cruce roto y el pendiente no se publicaria por nada.
-    cruce = (len(ord_cruzadas) / float(total_ord)) if total_ord else 0.0
+    # SE MIDE CON `ord_cruzadas` CONTRA TODO LO ABIERTO. Lo que esta guarda vigila
+    # es que el cruce contra los correos siga funcionando; midiendola contra el
+    # universo ya recortado, una noche de correo grande se leeria como cruce roto y
+    # el pendiente no se publicaria por nada.
+    cruce = (len(ord_cruzadas) / float(abierto_wms)) if abierto_wms else 0.0
     if total_ord and cruce < MINIMO_CRUCE:
         raise SystemExit(
             'EL CRUCE NO CUADRA: solo %d de %d ordenes del WMS figuran en algun correo '
             '(%.0f%%). No se publica nada; queda el pendiente anterior.'
-            % (len(ord_cruzadas), total_ord, 100 * cruce))
+            % (len(ord_cruzadas), abierto_wms, 100 * cruce))
     if sin_maestro:
         log('%d articulos no estan en el Maestro: sus cortes van a "(sin Maestro)"'
             % len(sin_maestro), 'AVISO')
@@ -752,6 +757,8 @@ def armar(hoy):
             'diasMasVieja': dias_vieja,
         },
         'origen': {
+            # SIN EL CORREO DE HOY: es el universo de este reporte y las dos filas
+            # de abajo tienen que sumarlo exacto.
             'abiertoWms': {'ordenes': total_ord,
                            'unidades': int(round(und_dentro + und_fuera))},
             'mandado': {'ordenes': len(ord_dentro), 'unidades': int(round(und_dentro))},
@@ -1187,11 +1194,11 @@ def main():
     log('   articulos        %s' % format(t['articulos'], ',d'))
     log('   POR ATENDER      %s unidades' % format(t['unidades'], ',d'))
     log('')
-    log('   el WMS abre      %s ordenes / %s unidades'
+    log('   el WMS abre      %s ordenes / %s unidades  (sin el correo de hoy)'
         % (format(o['abiertoWms']['ordenes'], ',d'), format(o['abiertoWms']['unidades'], ',d')))
     log('   comercial mando  %s ordenes / %s unidades'
         % (format(o['mandado']['ordenes'], ',d'), format(o['mandado']['unidades'], ',d')))
-    log('   sin liberar      %s ordenes / %s unidades  <- queda fuera'
+    log('   nunca libero     %s ordenes / %s unidades  <- queda fuera'
         % (format(o['noLiberado']['ordenes'], ',d'), format(o['noLiberado']['unidades'], ',d')))
 
     if probar:
