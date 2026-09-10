@@ -24,7 +24,7 @@
  * }
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0689';
+import { icono } from '../services_v245/iconos.js?v=29.0690';
 
 const nf = (n) => Number(n || 0).toLocaleString('es-PE');
 
@@ -53,6 +53,10 @@ const cuadro = (titulo, pie, filas, opciones) => {
     const tope = o.tope || 8;
     const conPed = o.conPed !== false;
     const conPct = !!o.conPct;
+    /* `centrado` centra las columnas de numeros y `sinBarra` saca la barrita de
+       progreso. Los dos van apagados: el Pendiente los quiere como estaban. */
+    const cn = o.centrado ? 'c' : 'n';
+    const conBarra = !o.sinBarra;
     const lista = (filas || []).slice(0, tope);
     const max = lista.reduce((m, f) => Math.max(m, Number(f.und) || 0), 0);
     const total = (filas || []).reduce((s, f) => s + (Number(f.und) || 0), 0);
@@ -66,13 +70,13 @@ const cuadro = (titulo, pie, filas, opciones) => {
 
     return `<div class="pend-panel">
         <h3>${esc(titulo)}</h3>
-        <div class="pend-cap">${esc(pie)}</div>
+        ${pie ? `<div class="pend-cap">${esc(pie)}</div>` : ''}
         <table>
           <thead><tr>
             <th>${esc(o.etiqueta || 'DETALLE')}</th>
-            ${conPed ? `<th class="n">${esc(o.etiquetaPed || 'PEDIDOS')}</th>` : ''}
-            <th class="n">UNIDADES</th>
-            ${conPct ? '<th class="n">%</th>' : ''}
+            ${conPed ? `<th class="${cn}">${esc(o.etiquetaPed || 'PEDIDOS')}</th>` : ''}
+            <th class="${cn}">UNIDADES</th>
+            ${conPct ? `<th class="${cn}">%</th>` : ''}
           </tr></thead>
           <tbody>
             ${lista.map(f => {
@@ -80,11 +84,11 @@ const cuadro = (titulo, pie, filas, opciones) => {
                 const destacar = o.destacar && o.destacar(f);
                 return `<tr${destacar ? ' class="pend-ojo"' : ''}>
                   <td>${esc(f.k)}</td>
-                  ${conPed ? `<td class="n">${nf(f.ped)}</td>` : ''}
-                  <td class="n">${nf(und)}
+                  ${conPed ? `<td class="${cn}">${nf(f.ped)}</td>` : ''}
+                  <td class="${cn}">${nf(und)}${conBarra ? `
                     <span class="pend-bar${destacar ? ' ambar' : ''}"
-                          style="width:${anchoBarra(und, max)}%"></span></td>
-                  ${conPct ? `<td class="n">${total ? Math.round(100 * und / total) : 0}%</td>` : ''}
+                          style="width:${anchoBarra(und, max)}%"></span>` : ''}</td>
+                  ${conPct ? `<td class="${cn}">${total ? Math.round(100 * und / total) : 0}%</td>` : ''}
                 </tr>`;
             }).join('')}
           </tbody>
@@ -105,7 +109,9 @@ const cuadro = (titulo, pie, filas, opciones) => {
  * transportista. Sale del maestro RUTAS - TURNOS, cruzado por codigo de tienda
  * con 50 delante.
  */
-const cuadroRutas = (filas, sinCruce) => {
+const cuadroRutas = (filas, sinCruce, opciones) => {
+    const o = opciones || {};
+    const cn = o.centrado ? 'c' : 'n';
     const lista = filas || [];
     if (!lista.length) {
         return `<div class="pend-panel pend-ancho"><h3>POR RUTA DE DESPACHO</h3>
@@ -123,12 +129,12 @@ const cuadroRutas = (filas, sinCruce) => {
         const sc = suyas.reduce((s, f) => s + (Number(f.cal) || 0), 0);
         return `<tr class="pend-zona">
             <td>${esc(zona)}</td>
-            <td class="n">${nf(sa)}</td><td class="n">${nf(sc)}</td>
-            <td class="n">${nf(sa + sc)}</td></tr>` +
+            <td class="${cn}">${nf(sa)}</td><td class="${cn}">${nf(sc)}</td>
+            <td class="${cn}">${nf(sa + sc)}</td></tr>` +
           suyas.map(f => `<tr>
             <td class="pend-sangria">${esc(f.k)}</td>
-            <td class="n">${nf(f.acc)}</td><td class="n">${nf(f.cal)}</td>
-            <td class="n">${nf(f.und)}</td></tr>`).join('');
+            <td class="${cn}">${nf(f.acc)}</td><td class="${cn}">${nf(f.cal)}</td>
+            <td class="${cn}">${nf(f.und)}</td></tr>`).join('');
     };
 
     const perdidas = sinCruce && Number(sinCruce.und) > 0
@@ -139,26 +145,26 @@ const cuadroRutas = (filas, sinCruce) => {
 
     return `<div class="pend-panel pend-ancho">
         <h3>POR RUTA DE DESPACHO</h3>
-        <div class="pend-cap">El mismo corte que arma comercial: zona y ruta, partido
-          en calzado y accesorios</div>
+        ${o.sinCap ? '' : `<div class="pend-cap">El mismo corte que arma comercial: zona
+          y ruta, partido en calzado y accesorios</div>`}
         <table>
           <thead><tr>
             <th>ZONA / RUTA</th>
-            <th class="n">ACCESORIOS</th><th class="n">CALZADO</th>
-            <th class="n">TOTAL</th>
+            <th class="${cn}">ACCESORIOS</th><th class="${cn}">CALZADO</th>
+            <th class="${cn}">TOTAL</th>
           </tr></thead>
           <tbody>
             ${bloque('LIMA')}${bloque('PROVINCIA')}
             <tr class="pend-total">
               <td>TOTAL GENERAL</td>
-              <td class="n">${nf(tot.acc)}</td><td class="n">${nf(tot.cal)}</td>
-              <td class="n">${nf(tot.acc + tot.cal)}</td></tr>
+              <td class="${cn}">${nf(tot.acc)}</td><td class="${cn}">${nf(tot.cal)}</td>
+              <td class="${cn}">${nf(tot.acc + tot.cal)}</td></tr>
           </tbody>
         </table>
         ${perdidas}
-        <div class="pend-nota">En Lima la fila es el <b>día de despacho + turno</b>;
-          en provincia, el <b>transportista</b>. Accesorios junta todo lo que el
-          Maestro no marca como Footwear.</div>
+        ${o.sinPie ? '' : `<div class="pend-nota">En Lima la fila es el <b>día de
+          despacho + turno</b>; en provincia, el <b>transportista</b>. Accesorios junta
+          todo lo que el Maestro no marca como Footwear.</div>`}
       </div>`;
 };
 
@@ -397,6 +403,7 @@ function estilos() {
     #pend th{text-align:left;color:var(--text-muted);font-size:var(--t-xs);letter-spacing:.6px;
       font-weight:700;padding:6px 8px;border-bottom:1px solid var(--border)}
     #pend th.n,#pend td.n{text-align:right;font-variant-numeric:tabular-nums}
+    #pend th.c,#pend td.c{text-align:center;font-variant-numeric:tabular-nums}
     #pend td{padding:6px 8px;border-bottom:1px solid rgba(var(--ink-rgb), .05)}
     #pend tbody tr:last-child td{border-bottom:0}
     #pend .pend-bar{height:5px;border-radius:4px;background:rgba(var(--brand-rgb), .75);

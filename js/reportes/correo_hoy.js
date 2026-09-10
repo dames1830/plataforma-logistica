@@ -24,8 +24,8 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0689';
-import { icono } from '../services_v245/iconos.js?v=29.0689';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0690';
+import { icono } from '../services_v245/iconos.js?v=29.0690';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -191,6 +191,47 @@ function cuadroCascada(k) {
 }
 
 /**
+ * TIENDA A DESPACHAR.
+ *
+ * Daniel, 10-sep-2026: *"me dices que hay ochenta y dos tiendas pero solo veo
+ * las diez primeras; quiero hacer scroll y verlas todas"*. Y sin la barrita de
+ * progreso, con los numeros centrados, y con buscador y Excel arriba a la
+ * derecha, igual que el detalle de no liberados.
+ *
+ * No usa `cuadro()` porque ese lo comparte el Pendiente, donde las diez primeras
+ * y la barra sirven. Aca hace falta otra cosa.
+ */
+function cuadroTiendas(filas) {
+    const lista = filas || [];
+    if (!lista.length) return '';
+    return `<div class="pend-panel">
+        <div class="pend-cab2">
+          <div><h3>TIENDA A DESPACHAR</h3></div>
+          <div class="pend-acc2">
+            <input type="search" id="tie_buscar" class="pend-buscar"
+                   placeholder="Tienda o código">
+            <button type="button" id="tie_xls" class="btn-icono btn-excel"
+                    title="Exportar a Excel" aria-label="Exportar a Excel">${icono('excel', 18)}</button>
+          </div>
+        </div>
+        <div class="pend-scroll">
+          <table>
+            <thead><tr>
+              <th>TIENDA</th><th class="c">GUÍAS</th><th class="c">UNIDADES</th>
+            </tr></thead>
+            <tbody id="tie_filas">
+              ${lista.map(f => `<tr data-b="${esc(String(f.k).toLowerCase())}">
+                <td>${esc(f.k)}</td>
+                <td class="c">${nf(f.ped)}</td>
+                <td class="c">${nf(f.und)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="pend-suave" id="tie_cuenta"></div>
+      </div>`;
+}
+
+/**
  * QUE ES ESO NUEVO DE HOY, por la ETIQUETA DEL CORREO.
  *
  * Va justo debajo de la cascada y con la misma forma: arranca en los 38.142 y
@@ -335,6 +376,15 @@ function cuerpo(d, fecha, dias) {
         ${tarjeta((d.sinAbrir || {}).guias, 'GUÍAS SIN ABRIR')}
       </div>`;
 
+    /* "(en blanco)" y "ND" NO SON COLECCIONES: son articulos a los que el Maestro
+       no les puso una. Se mandan al final para que no se lean como una temporada
+       mas —Daniel, 10-sep-2026—. Lo demas sigue de mayor a menor. */
+    const sinColeccion = (k) => /^\(|^nd$|^n\/?d$/i.test(String(k || '').trim());
+    const colOrdenada = (d.coleccion || []).slice().sort((a, b) => {
+        const sa = sinColeccion(a.k), sb = sinColeccion(b.k);
+        return sa !== sb ? (sa ? 1 : -1) : (Number(b.und) || 0) - (Number(a.und) || 0);
+    });
+
     const cuadros = [
         /* LOS TRES DE ARRIBA EN UNA FILA, un tercio cada uno. Lo pidio Daniel el
            10-sep-2026: se leen juntos —qué trajo el correo, qué es, y qué hay
@@ -352,14 +402,12 @@ function cuerpo(d, fecha, dias) {
         /* TIENDA, RUTA Y COLECCION en una fila de tres. La coleccion va ENTERA,
            sin el "y 4 mas": son doce filas y caben. */
         `<div class="pend-tres">`
-          + cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
-                   `Las 10 más cargadas de ${nf(c.tiendas)}`,
-                   d.tiendas, { etiqueta: 'TIENDA', tope: 10, etiquetaPed: 'GUÍAS' })
-          + cuadroRutas(d.rutas, d.rutasSinCruce)
-          + cuadro('POR COLECCIÓN',
-                   'La Coleccion PO del Maestro — no la Temporada del mezzanine',
-                   d.coleccion, { etiqueta: 'COLECCIÓN', tope: 999, conPct: true,
-                                  etiquetaPed: 'GUÍAS' })
+          + cuadroTiendas(d.tiendas)
+          + cuadroRutas(d.rutas, d.rutasSinCruce,
+                        { centrado: true, sinCap: true, sinPie: true })
+          + cuadro('POR COLECCIÓN', '', colOrdenada,
+                   { etiqueta: 'COLECCIÓN', tope: 999, conPct: true,
+                     etiquetaPed: 'GUÍAS', centrado: true, sinBarra: true })
           + `</div>`,
         cuadro('POR QUÉ LO PIDIÓ COMERCIAL', 'La columna Prioridad del correo',
                d.prioridad, { etiqueta: 'PRIORIDAD', tope: 8, conPct: true,
@@ -473,6 +521,48 @@ export function montarCorreoHoy(raiz, OPC) {
         XLSX.utils.book_append_sheet(wb, ws, 'No liberados');
         XLSX.writeFile(wb, 'Pedidos WMS no liberados ' + (fecha || '') + '.xlsx');
     });
+
+    /* MISMO ENGANCHE QUE EL DETALLE: buscador sobre las filas dibujadas y Excel
+       con la lista completa. Se escribe una vez y sirve para los dos cuadros. */
+    const engancharTabla = (pref, sacarFilas, cabecera, aFila, archivo, unidad) => {
+        const bus = raiz.querySelector('#' + pref + '_buscar');
+        const cuenta = raiz.querySelector('#' + pref + '_cuenta');
+        const xls = raiz.querySelector('#' + pref + '_xls');
+        const todas = Array.prototype.slice.call(
+            raiz.querySelectorAll('#' + pref + '_filas tr'));
+        const contar = (n) => {
+            if (!cuenta) return;
+            cuenta.textContent = n === todas.length
+                ? nf(todas.length) + ' ' + unidad
+                : nf(n) + ' de ' + nf(todas.length) + ' ' + unidad;
+        };
+        if (todas.length) contar(todas.length);
+        if (bus) bus.addEventListener('input', () => {
+            const q = bus.value.trim().toLowerCase();
+            let n = 0;
+            todas.forEach(tr => {
+                const ok = !q || (tr.dataset.b || '').indexOf(q) !== -1;
+                tr.hidden = !ok;
+                if (ok) n++;
+            });
+            contar(n);
+        });
+        if (xls) xls.addEventListener('click', () => {
+            const filas = sacarFilas() || [];
+            if (!filas.length || typeof XLSX === 'undefined') return;
+            const aoa = [cabecera].concat(filas.map(aFila));
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            ws['!cols'] = cabecera.map(() => ({ wch: 16 }));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, archivo.substring(0, 28));
+            XLSX.writeFile(wb, archivo + ' ' + (fecha || '') + '.xlsx');
+        });
+    };
+
+    engancharTabla('tie', () => (O.datos || {}).tiendas,
+                   ['Tienda', 'Guias', 'Unidades'],
+                   (f) => [f.k, Number(f.ped) || 0, Number(f.und) || 0],
+                   'Tienda a despachar', 'tiendas');
 
     const cal = raiz.querySelector('#correo_fecha');
     if (cal) {
