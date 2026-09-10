@@ -177,7 +177,7 @@ export const AREAS_POR_PANTALLA = {
     historial_buffer:  ['buffer_history'],
     kpi_buffer:        ['kpi_results_v2'],
     // ── Análisis SKU ─────────────────────────────────────────────────────────
-    articulo_temp:     ['evolucion_articulo'],
+    articulo_temp:     ['evolucion_articulo', 'recibido_sin_picar'],
     replenishment:     ['replenishment_dia'],
     analisis_reserva:  ['analisis_sku_reserva'],
     layout_activo:     ['layout_stock_hora'],
