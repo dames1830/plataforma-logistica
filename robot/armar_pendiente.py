@@ -119,6 +119,10 @@ ROBOT_TOKEN = os.environ.get('ROBOT_TOKEN', '')
 
 WEB_ARCHIVOS_API = "https://logistics-backend-wv0x.onrender.com/api/archivos"
 AREA = "pendiente_despacho"
+# EL CORREO DE HOY, submodulo de Despacho pedido el 09-sep-2026. Sale de la
+# misma corrida: cuando el pendiente deja fuera el correo del dia, ese correo
+# tiene que verse en algun lado, y ese lado es este.
+AREA_CORREO = "correo_hoy"
 # La tarjeta PEDIDOS de Zona Buffer -> Archivo. Es un area COMPARTIDA que ya
 # existia: hasta hoy la llenaba Daniel subiendo un CSV a mano y todas las PC lo
 # leian de ahi. El robot escribe en el mismo lugar y con el mismo formato, asi que
@@ -774,7 +778,161 @@ def armar(hoy):
         'PENDIENTE %s ordenes / %s SKU'
         % (format(len(ord_hoy), ',d'), format(len(sku_hoy), ',d'),
            format(len(ord_antes), ',d'), format(len(sku_antes), ',d')))
-    return datos, guias, cabecera, IQ, por_guia, por_sku, sku_hoy, sku_antes
+    # LOS MAESTROS VIAJAN DE VUELTA. `armar_correo_hoy` necesita los mismos, y
+    # volver a leerlos serian dos Excel mas por corrida para nada.
+    return (datos, guias, cabecera, IQ, por_guia, por_sku, sku_hoy, sku_antes,
+            (gen, rims, colec, rutas))
+
+
+# ==============================================================================
+#  3-bis. EL CORREO DE HOY  ->  Despacho > Correo de Hoy
+# ==============================================================================
+
+def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
+    """Lo que comercial mando HOY, que es justo lo que el pendiente deja fuera.
+
+    VA PARTIDO EN DOS PORQUE EL CORREO NO TRAE EL ARTICULO. Sus columnas son
+    Cadena, TIEND, NOMBR, Prioridad, Etiqueta, FECHA, GUIA, ALMAC, Despachar,
+    Cantidad y CD: comercial libera la GUIA entera, no articulo por articulo.
+    Entonces los cortes por tienda y prioridad salen del correo -y su total es lo
+    que comercial pidio-, y los que necesitan el Maestro -gender rims, coleccion,
+    calzado y el corte por ruta- solo se pueden hacer sobre lo que el WMS tiene
+    abierto. Son dos totales distintos y la pantalla lo dice con un rotulo.
+
+    SE VUELVE A LEER EL PENDIENTE DEL WMS, a proposito. Meter esto en el bucle de
+    `armar` habria mezclado dos cuentas que no tienen nada que ver, y ese bucle ya
+    lleva siete cortes. La segunda pasada cuesta unos dos segundos sobre un
+    archivo de 24 MB, contra los varios minutos de la corrida entera.
+    """
+    hoy_d = datetime.strptime(hoy, '%Y-%m-%d').date()
+    mios = {g: v for g, v in guias.items()
+            if (v[1], v[2]) == (hoy_d.month, hoy_d.day)}
+    if not mios:
+        log('El correo de hoy no trajo guias nuevas.', 'AVISO')
+
+    def campo(fila, i):
+        return str(fila[i]).strip() if i < len(fila) and fila[i] is not None else ''
+
+    # ---- LO QUE MANDO COMERCIAL, con la cantidad de su propio correo ----
+    pedido, tienda_de = {}, {}
+    c_tiendas = collections.defaultdict(lambda: [set(), 0.0])
+    c_prior = collections.defaultdict(lambda: [set(), 0.0])
+    for g, (fila, _m, _d) in mios.items():
+        try:
+            q = float(str(fila[IQ]).replace(',', '') or 0)
+        except Exception:
+            q = 0.0
+        pedido[g] = q
+        t = ('%s %s' % (campo(fila, 1), campo(fila, 2))).strip() or '(sin tienda)'
+        tienda_de[g] = t
+        p = campo(fila, 3) or '(sin prioridad)'
+        c_tiendas[t][0].add(g); c_tiendas[t][1] += q
+        c_prior[p][0].add(g); c_prior[p][1] += q
+
+    # ---- LO QUE EL WMS TIENE ABIERTO DE ESAS MISMAS GUIAS ----
+    vistas = set()
+    w_guia = collections.defaultdict(float)
+    w_rims = collections.defaultdict(lambda: [set(), 0.0])
+    w_col = collections.defaultdict(lambda: [set(), 0.0])
+    w_gen = collections.defaultdict(float)
+    w_rut = collections.defaultdict(lambda: [0.0, 0.0])
+    rut_sin = [0.0, set()]
+    w_sku = set()
+    f = io.open(PENDIENTES, encoding='utf-8-sig', newline='', errors='replace')
+    r = csv.reader(f, delimiter=';')
+    try:
+        next(r)
+    except StopIteration:
+        f.close()
+        return None
+    for row in r:
+        if len(row) < 14 or row[4].strip() not in ESTADOS:
+            continue
+        o = limpio(row[1])
+        if o not in mios:
+            continue
+        sku, dest = limpio(row[5]), limpio(row[13])
+        if (o, sku, dest) in vistas:
+            continue
+        vistas.add((o, sku, dest))
+        pend = num(row[6]) - num(row[9])
+        if pend <= 0:
+            continue
+        w_guia[o] += pend
+        w_sku.add(sku)
+        base = sku.split('-')[0]
+        rr = rims.get(sku) or rims.get(base) or '(sin Maestro)'
+        cc = colec.get(sku) or colec.get(base) or '(sin coleccion)'
+        gg = gen.get(sku) or gen.get(base) or '(sin Maestro)'
+        w_rims[rr][0].add(o); w_rims[rr][1] += pend
+        w_col[cc][0].add(o); w_col[cc][1] += pend
+        w_gen[gg] += pend
+        # Al codigo de tienda del correo se le pone 50 delante para encontrarlo en
+        # el maestro de rutas. La misma regla que usa `armar`.
+        cod = campo(mios[o][0], 1)
+        info = rutas.get('50' + cod.lstrip('0').zfill(3)) if cod else None
+        if info:
+            zona, prov, turno, dsp = info
+            if zona.startswith('LIMA'):
+                k = ('LIMA', ('%s %s' % (dsp, turno)).strip() or '(sin ruta)')
+            else:
+                k = ('PROVINCIA', prov or '(sin transportista)')
+            w_rut[k][0 if gg != 'Footwear' else 1] += pend
+        elif rutas:
+            rut_sin[0] += pend; rut_sin[1].add(cod)
+    f.close()
+
+    # LAS QUE EL WMS TODAVIA NO TIENE ABIERTAS. Este cuadro no existia en ninguna
+    # pantalla, y es el que avisa que una guia que comercial ya libero NO se puede
+    # picar hoy. La primera noche, 09-sep-2026: 418 de 879.
+    abiertas = set(w_guia)
+    sin_abrir = set(mios) - abiertas
+
+    def lista(d):
+        fs = [{'k': k, 'ped': len(v[0]), 'und': int(round(v[1]))}
+              for k, v in d.items() if v[1] > 0]
+        fs.sort(key=lambda x: -x['und'])
+        return fs
+
+    datos = {
+        'fecha': hoy,
+        'generado': datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'correo': {
+            'guias': len(mios),
+            'tiendas': len(c_tiendas),
+            'unidades': int(round(sum(pedido.values()))),
+        },
+        'wms': {
+            'guias': len(abiertas),
+            'unidades': int(round(sum(w_guia.values()))),
+            'articulos': len(w_sku),
+            'tiendas': len(set(tienda_de[g] for g in abiertas)),
+        },
+        'sinAbrir': {
+            'guias': len(sin_abrir),
+            'unidades': int(round(sum(pedido[g] for g in sin_abrir))),
+            'tiendas': len(set(tienda_de[g] for g in sin_abrir)),
+        },
+        'pedidoAbiertas': int(round(sum(pedido[g] for g in abiertas))),
+        'tiendas': lista(c_tiendas),
+        'prioridad': lista(c_prior),
+        'rims': lista(w_rims),
+        'coleccion': lista(w_col),
+        'gender': [{'k': k, 'und': int(round(v))}
+                   for k, v in sorted(w_gen.items(), key=lambda x: -x[1]) if v > 0],
+        'rutas': [{'z': k[0], 'k': k[1], 'acc': int(round(v[0])),
+                   'cal': int(round(v[1])), 'und': int(round(v[0] + v[1]))}
+                  for k, v in sorted(w_rut.items(), key=lambda x: -(x[1][0] + x[1][1]))],
+        'rutasSinCruce': {'und': int(round(rut_sin[0])), 'tiendas': len(rut_sin[1])},
+    }
+    log('Correo de hoy: %s guias / %s unidades pedidas  ->  el WMS tiene abiertas '
+        '%s guias / %s unidades  (sin abrir %s)'
+        % (format(datos['correo']['guias'], ',d'),
+           format(datos['correo']['unidades'], ',d'),
+           format(datos['wms']['guias'], ',d'),
+           format(datos['wms']['unidades'], ',d'),
+           format(datos['sinAbrir']['guias'], ',d')))
+    return datos
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -835,9 +993,9 @@ def excel(ruta, cabecera, IQ, guias, por_guia, por_sku):
 #  5. PUBLICAR
 # ══════════════════════════════════════════════════════════════════════════════
 
-def publicar_datos(datos, intentos=3):
+def publicar_datos(datos, intentos=3, area=None, nombre='pendiente'):
     cuerpo = json.dumps(datos, ensure_ascii=False).encode('utf-8')
-    url = '%s/%s?date=%s' % (WEB_DATOS_API, AREA, datos['fecha'])
+    url = '%s/%s?date=%s' % (WEB_DATOS_API, area or AREA, datos['fecha'])
     for i in range(1, intentos + 1):
         try:
             p = urllib.request.Request(url, data=cuerpo, method='POST')
@@ -845,7 +1003,8 @@ def publicar_datos(datos, intentos=3):
             p.add_header('X-Robot-Token', ROBOT_TOKEN)
             with urllib.request.urlopen(p, timeout=300) as resp:
                 json.loads(resp.read().decode('utf-8'))
-            log('Publicado en la plataforma: %.1f KB' % (len(cuerpo) / 1024.0))
+            log('Publicado en la plataforma: %s, %.1f KB'
+                % (nombre, len(cuerpo) / 1024.0))
             return True
         except Exception as e:
             if i < intentos:
@@ -1016,7 +1175,10 @@ def main():
             return 2
         log('')
 
-    datos, guias, cabecera, IQ, por_guia, por_sku, sku_hoy, sku_antes = armar(hoy)
+    (datos, guias, cabecera, IQ, por_guia, por_sku, sku_hoy, sku_antes,
+     maestros) = armar(hoy)
+    gen, rims, colec, rutas = maestros
+    correo = armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas)
     t = datos['totales']
     o = datos['origen']
     log('')
@@ -1068,6 +1230,13 @@ def main():
     ruta = os.path.join(AQUI, nombre)
     excel(ruta, cabecera, IQ, guias, por_guia, por_sku)
     ok1 = publicar_datos(datos)
+    # EL CORREO DE HOY NO PUEDE TUMBAR AL PENDIENTE. Si esta parte falla se
+    # avisa y la corrida sigue: el pendiente es lo que el CD usa para trabajar,
+    # y quedarse sin el por un cuadro de apoyo seria peor.
+    ok4 = publicar_datos(correo, area=AREA_CORREO,
+                         nombre='correo de hoy') if correo else False
+    if not ok4:
+        log('El Correo de Hoy no se publico. El pendiente SI.', 'AVISO')
     ok2 = subir_excel(ruta, hoy)
     # LAS DOS TARJETAS, POR SEPARADO. Sumadas dan lo mismo que la unica de antes.
     #
@@ -1101,8 +1270,11 @@ def main():
                 'unico que pasa es que el correo va a volver a armarlo.'
                 % type(e).__name__, 'AVISO')
     log('')
-    log('LISTO · datos %s · excel %s · pedidos %s'
-        % ('OK' if ok1 else 'FALLO', 'OK' if ok2 else 'FALLO', 'OK' if ok3 else 'FALLO'))
+    log('LISTO · datos %s · excel %s · pedidos %s · correo de hoy %s'
+        % ('OK' if ok1 else 'FALLO', 'OK' if ok2 else 'FALLO',
+           'OK' if ok3 else 'FALLO', 'OK' if ok4 else 'FALLO'))
+    # El correo de hoy NO entra en el codigo de salida: es un cuadro de apoyo y no
+    # tiene que hacer que la tarea del servidor se marque como fallida.
     return 0 if (ok1 and ok2 and ok3) else 1
 
 

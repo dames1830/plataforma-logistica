@@ -24,7 +24,7 @@
  * }
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0669';
+import { icono } from '../services_v245/iconos.js?v=29.0671';
 
 const nf = (n) => Number(n || 0).toLocaleString('es-PE');
 
@@ -38,7 +38,10 @@ const esc = (t) => String(t == null ? '' : t)
 /**
  * UN CUADRO DE LOS SIETE.
  *
- * `filas` son {k, ped, und}. La columna de pedidos se puede apagar —el corte por
+ * `filas` son {k, ped, und}. La columna de pedidos se llama PEDIDOS salvo que se
+ * pase `etiquetaPed` —en `Correo de Hoy` la unidad es la GUIA del correo y las
+ * tarjetas de arriba dicen GUIAS: la columna tenia que decir lo mismo—. Se puede
+ * apagar —el corte por
  * calzado no la tiene, porque un pedido trae calzado Y no calzado a la vez y
  * contarlo en las dos filas daria un total que no cierra—.
  *
@@ -67,7 +70,7 @@ const cuadro = (titulo, pie, filas, opciones) => {
         <table>
           <thead><tr>
             <th>${esc(o.etiqueta || 'DETALLE')}</th>
-            ${conPed ? '<th class="n">PEDIDOS</th>' : ''}
+            ${conPed ? `<th class="n">${esc(o.etiquetaPed || 'PEDIDOS')}</th>` : ''}
             <th class="n">UNIDADES</th>
             ${conPct ? '<th class="n">%</th>' : ''}
           </tr></thead>
@@ -411,3 +414,14 @@ function estilos() {
     #pend .pend-nada-t{font-size:var(--t-lg);font-weight:700;color:var(--text-strong);margin-bottom:6px}
     </style>`;
 }
+
+/* LOS CUADROS SE COMPARTEN, NO SE COPIAN.
+ *
+ * `Despacho > Correo de Hoy` dibuja los mismos cuadros con los mismos estilos.
+ * Copiarlos habria dejado el mismo codigo en dos archivos, y una lista escrita
+ * dos veces se desincroniza: ya paso con las fuentes del analisis y con el
+ * catalogo de reportes publicos. `estilos()` va en el paquete porque todo esta
+ * colgado de `#pend`, asi que el que use estos cuadros tiene que montar ese
+ * mismo envoltorio.
+ */
+export { nf, esc, cuadro, cuadroRutas, estilos };

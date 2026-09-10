@@ -659,6 +659,9 @@ def init_db(ruta: Optional[str] = None):
 # picking_por_hora, que es el mas gordo de los tres.
 RETENCION_SNAPSHOTS = {
     'pendiente_despacho': 31,
+    # El correo de hoy va con el mismo mes: es la otra mitad del pendiente y
+    # la pantalla tiene el mismo calendario. Pesa parecido, unos 10 KB al dia.
+    'correo_hoy': 31,
     'picking_por_hora': 31,
     'embalaje_por_hora': 31,
     'cruce_wms': 31,

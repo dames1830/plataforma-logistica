@@ -63,11 +63,11 @@ import { dataStore, getUploadMeta, calculateBufferPallets, fetchBufferConfig,
          saveBufferConfig, fetchBufferHistory, saveBufferHistoryRecord,
          updateBufferHistoryRecord, loadLastBufferKPI, saveLastBufferKPI,
          traerAnalisisBuffer, publicarAnalisisBuffer, bajarFactores,
-         traerFactoresCalculados } from '../services_v245/csvHub_v6.js?v=29.0669';
-import * as adminService from '../services_v245/adminService.js?v=29.0669';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0669';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0669';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0669';
+         traerFactoresCalculados } from '../services_v245/csvHub_v6.js?v=29.0671';
+import * as adminService from '../services_v245/adminService.js?v=29.0671';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0671';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0671';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0671';
 
 /* EL ENTORNO, ATADO UNA SOLA VEZ. La pantalla se llama a si misma al cambiar de
    sub-pestana; atandolo aca esa llamada no hubo que tocarla. */
@@ -275,8 +275,8 @@ const resolverAnalisisGuardado = () => {
       ENT.renderUploadArea(wrap, 'validar_reserva', dataStore.validar_reserva, '.xlsx', 'VALIDAR RESERVA');
       ENT.renderUploadArea(wrap, 'validar_activo', dataStore.validar_activo, '.csv', 'VALIDAR ACTIVO');
       ENT.renderUploadArea(wrap, 'validar_lpn', dataStore.validar_lpn, '.csv', 'VALIDAR LPN');
-  } else if (ENT.estado.sub === 'pendiente') {
-      await ENT.renderPendienteSection(buf);
+  /* El Pendiente se mudó a Despacho el 09-sep-2026 y ya no se dibuja acá.
+     Las dos TARJETAS de comercial —PEDIDOS y PENDIENTE— siguen en Archivo. */
   } else if (ENT.estado.sub === 'historial_buffer') {
       ENT.renderBufferHistory(buf);
   } else if (ENT.estado.sub === 'kpi_buffer') {

@@ -165,8 +165,12 @@ export const AREAS_POR_PANTALLA = {
     // ── Slotting ─────────────────────────────────────────────────────────────
     slot_tareas:       ['slotting_tareas'],
     slot_kpi:          ['slotting_tareas'],
-    // ── Zona Buffer ──────────────────────────────────────────────────────────
+    // ── Despacho ─────────────────────────────────────────────────────────────
+    // El Pendiente vivia en Zona Buffer hasta el 09-sep-2026. La clave es el id
+    // de la sub-pestana, que no cambio al mudarse de modulo.
     pendiente:         ['pendiente_despacho'],
+    correo_hoy:        ['correo_hoy'],
+    // ── Zona Buffer ──────────────────────────────────────────────────────────
     reportes:          ['analisis_buffer', 'buffer_bajado_dia'],
     historial_buffer:  ['buffer_history'],
     kpi_buffer:        ['kpi_results_v2'],
