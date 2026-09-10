@@ -140,6 +140,51 @@ def dias_que_faltan(base, d0, d1):
     return faltan
 
 
+def bajar_dia_rapido(pk, page, destino, dia):
+    """El MISMO panel, otras dos fechas.
+
+    NO SE VUELVE A ELEGIR LA BUSQUEDA GUARDADA, y esa es la diferencia entera
+    entre que esto funcione o no. El boton "Busquedas guardadas" es un
+    INTERRUPTOR: el primer clic despliega el bloque y el segundo lo PLIEGA, asi
+    que dentro de una misma sesion sale bien uno de cada dos.
+
+    Medido el 10-sep-2026 con la sonda `--mirar`: 15-04 bien, 29-04 falla,
+    15-05 bien, 29-05 falla, 12-06 bien, 26-06 falla. Alternancia perfecta.
+
+    Y no hace falta repetirla: la busqueda guardada solo sirve para ARMAR el
+    panel -la pantalla exige una fecha de creacion-, y ya quedo armado con el
+    primer dia del bloque. De paso cada dia cuesta la mitad, porque tampoco hay
+    que cerrar y reabrir la pantalla.
+
+    EL PIE DE LA BUSQUEDA ANTERIOR ES LA OTRA TRAMPA. Reusando la pagina, la
+    grilla del dia anterior sigue en pantalla con su pie de "Recuperados": sin
+    `distinto_de` el robot lo lee como si fuera el resultado nuevo y exporta el
+    dia equivocado dentro del archivo de hoy.
+    """
+    f = dia.strftime("%d/%m/%Y")
+    log("=" * 58)
+    log("AVANCE DE PICKING · %s  (mismo panel)" % dia.strftime("%d-%m-%Y"))
+    log("=" * 58)
+    pk.abrir_panel(page)
+    pk.poner_fecha_y_hora(page, pk.ETQ_PICK_DESDE, f, "0:00:00")
+    pk.poner_fecha_y_hora(page, pk.ETQ_PICK_HASTA, f, "23:59:59")
+    _, pie = pk.total_paginas(page)
+    pk.ejecutar_busqueda(page)
+    log("Esperando a que Oracle traiga las filas...")
+    paginas = pk.esperar_resultado(page, distinto_de=pie)
+    if not paginas:
+        log("El %s no trajo ninguna fila." % dia.strftime("%d-%m-%Y"), "WARN")
+        pk.marcar_sin_movimiento("picking", dia.strftime("%d-%m-%Y"))
+        return False
+    try:
+        pk.exportar_csv(page, destino, pk.MINIMO_FILAS_PICKING)
+        return True
+    except Exception as e:
+        if pk.dia_vacio(e, paginas, "picking", dia.strftime("%d-%m-%Y")):
+            return False
+        raise
+
+
 def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista):
     """Entra al WMS y baja dias hasta que se acabe el bloque.
 
@@ -163,12 +208,19 @@ def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista):
             log("Sesion iniciada como %s" % wms.WMS_USER)
             time.sleep(15)
 
+            primero = True
             while pendientes and (time.time() - t0) < minutos * 60:
                 dia = pendientes[0]
                 destino = os.path.join(base, "Picking",
                                        "Picking %d-%d.csv" % (dia.day, dia.month))
                 try:
-                    pk.descargar_picking(page, destino, dia)
+                    # El primer dia del bloque abre la pantalla y elige la
+                    # busqueda guardada; los demas reusan ese mismo panel.
+                    if primero:
+                        pk.descargar_picking(page, destino, dia)
+                        primero = False
+                    else:
+                        bajar_dia_rapido(pk, page, destino, dia)
                     bajados.append(dia)
                     pendientes.pop(0)
                 except Exception as e:
@@ -176,10 +228,15 @@ def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista):
                     # de busquedas guardadas a veces no se despliega a tiempo -el
                     # robot diario tambien lo sufre y lo resuelve reabriendola-, y
                     # eso no es motivo para perder el dia.
-                    log("El %s fallo (%s: %s). Un intento mas..."
+                    log("El %s fallo (%s: %s). Un intento mas, reabriendo la "
+                        "pantalla..."
                         % (dia.strftime("%d-%m-%Y"), type(e).__name__, str(e)[:110]),
                         "WARN")
                     try:
+                        # A PROPOSITO POR EL CAMINO LARGO: `descargar_picking`
+                        # cierra y reabre la pantalla, y eso deja el bloque de
+                        # busquedas guardadas plegado otra vez, que es el estado
+                        # desde el que el interruptor funciona.
                         pk.descargar_picking(page, destino, dia)
                         bajados.append(dia)
                         pendientes.pop(0)
@@ -229,13 +286,32 @@ def solo_mirar(pk, wms, sync, base, fechas):
                          "input[value='Sign In']").first.click()
             log("Sesion iniciada como %s" % wms.WMS_USER)
             time.sleep(15)
+            # OJO AL LEER ESTO: "1 Pagina" ES LA GRILLA VACIA, no un dia flojo.
+            # La primera version cantaba "TIENE DATOS" con una sola pagina y me
+            # hizo creer que abril y mayo estaban, cuando estaban vacios. Manda
+            # el numero de paginas, no que la navegacion no se haya caido.
+            primero = True
             for d in fechas:
                 try:
-                    pk.descargar_picking(page, None, d, sin_exportar=True)
-                    log(">>> %s  TIENE DATOS" % d.strftime("%d-%m-%Y"))
-                    hay.append(d)
+                    if primero:
+                        pk.descargar_picking(page, None, d, sin_exportar=True)
+                        primero = False
+                    else:
+                        f = d.strftime("%d/%m/%Y")
+                        pk.abrir_panel(page)
+                        pk.poner_fecha_y_hora(page, pk.ETQ_PICK_DESDE, f, "0:00:00")
+                        pk.poner_fecha_y_hora(page, pk.ETQ_PICK_HASTA, f, "23:59:59")
+                        _, pie = pk.total_paginas(page)
+                        pk.ejecutar_busqueda(page)
+                        pk.esperar_resultado(page, distinto_de=pie)
+                    n, txt = pk.total_paginas(page)
+                    if n and n > 1:
+                        log(">>> %s  TIENE DATOS  (%s)" % (d.strftime("%d-%m-%Y"), txt))
+                        hay.append(d)
+                    else:
+                        log(">>> %s  VACIO  (%s)" % (d.strftime("%d-%m-%Y"), txt), "WARN")
                 except Exception as e:
-                    log(">>> %s  vacio  (%s)"
+                    log(">>> %s  no se pudo mirar  (%s)"
                         % (d.strftime("%d-%m-%Y"), str(e)[:70]), "WARN")
         finally:
             try:
