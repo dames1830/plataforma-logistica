@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0682';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0683';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -74,14 +74,10 @@ function cuadroNoLiberados(n) {
     /* LO QUE EMPIEZA CON 50 Y EL MAESTRO NO CONOCE NO SE BORRA EN SILENCIO: es el
        caso que Daniel anticipo, una tienda nueva que todavia no esta cargada. */
     const fm = n.fueraMaestro;
-    const max = filas.reduce((m, f) => Math.max(m, Number(f.und) || 0), 0);
     /* EL PARETO VA DE LO MAS VIEJO A LO MAS NUEVO, no de mayor a menor: lo que se
        reclama es la antiguedad, y el acumulado dice cuanto pesa lo viejo. */
     return `<div class="pend-panel">
-        <h3>PEDIDOS DE TIENDA QUE COMERCIAL NO HA LIBERADO</h3>
-        <div class="pend-cap">Solo retail: destino que empieza con 50 y está en el
-          maestro de rutas${n.masVieja ? ' &middot; el más viejo es del '
-            + esc(n.masVieja) + ', hace ' + nf(n.diasMasVieja) + ' días' : ''}</div>
+        <h3>PEDIDOS WMS NO LIBERADOS</h3>
         <table>
           <thead><tr>
             <th>DESDE CUÁNDO ESPERA</th><th class="n">PEDIDOS</th>
@@ -93,9 +89,7 @@ function cuadroNoLiberados(n) {
                 return `<tr${viejo ? ' class="pend-ojo"' : ''}>
                   <td>${esc(f.k)}</td>
                   <td class="n">${nf(f.ped)}</td>
-                  <td class="n">${nf(f.und)}
-                    <span class="pend-bar${viejo ? ' ambar' : ''}"
-                          style="width:${max > 0 ? Math.max(2, Math.round(100 * f.und / max)) : 0}%"></span></td>
+                  <td class="n">${nf(f.und)}</td>
                   <td class="n">${f.pct}%</td>
                   <td class="n">${f.acum}%</td></tr>`;
             }).join('')}
@@ -105,11 +99,8 @@ function cuadroNoLiberados(n) {
               <td class="n"></td><td class="n"></td></tr>
           </tbody>
         </table>
-        ${fm && fm.und > 0 ? `<div class="pend-nota">
-          <b>${nf(fm.destinos.length)} destino(s) empiezan con 50 pero no están en el
-          maestro de rutas</b> —${nf(fm.und)} pares: ${fm.destinos.map(x =>
-            esc(x.k) + ' (' + nf(x.und) + ')').join(', ')}—. Quedan fuera de este
-          cuadro. Si alguno es una tienda nueva, hay que meterlo al maestro.</div>` : ''}
+        ${fm && fm.und > 0 ? `<div class="pend-suave">${fm.destinos.map(x =>
+            esc(x.k) + ' (' + nf(x.und) + ')').join(' &middot; ')}</div>` : ''}
       </div>`;
 }
 
@@ -364,6 +355,10 @@ function estiloBloque() {
        tiene que quedar DEBAJO del primero, no al costado. El hueco es el mismo
        que separa los paneles de la grilla. */
     #pend .pend-col{display:flex;flex-direction:column;gap:16px}
+    /* La referencia de lo que quedo fuera del maestro: se deja a la vista pero
+       sin pesar. Daniel: *"que no se note mucho, con una letra pluma"*. */
+    #pend .pend-suave{margin-top:9px;font-size:var(--t-xs);color:var(--text-muted);
+      opacity:.75;font-variant-numeric:tabular-nums}
     #pend .pend-bloque{grid-column:1/-1;margin:6px 0 -4px;padding:0 2px}
     #pend .pend-bloque h4{margin:0;font-size:var(--t-sm);font-weight:900;
       letter-spacing:.06em;color:var(--text-strong)}
