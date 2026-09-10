@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="pbi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta - Correo de Hoy</title>
+<!--
+  MAQUETA del submodulo `Despacho > Correo de Hoy`, pedido el 09-sep-2026.
+  Datos REALES del correo de esa noche. Los cuadros salen recortados de
+  `js/reportes/pendiente.js`, no reescritos.
+-->
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>body{margin:0;padding:18px;font-family:Inter,system-ui,sans-serif}
+ #aviso{padding:8px 14px;margin-bottom:14px;border-radius:8px;font-weight:700;
+  font-size:.82rem;letter-spacing:.04em;background:rgba(245,158,11,.14);
+  color:#B45309;border:1px solid rgba(245,158,11,.35)}
+ #pend .pend-bloque{grid-column:1/-1;margin:6px 0 -4px;padding:0 2px}
+ #pend .pend-bloque h4{margin:0;font-size:var(--t-sm);font-weight:900;
+  letter-spacing:.06em;color:var(--text-strong)}
+ #pend .pend-bloque .c{font-size:var(--t-sm);color:var(--text-muted);margin-top:2px}
+</style>
+<style>
+    #pend{--pend-amber:var(--warning)}
+    /* El cuadro de rutas ocupa la fila entera: son 22 filas y en una columna
+       angosta los numeros se parten. */
+    #pend .pend-ancho{grid-column:1/-1}
+    #pend .pend-zona td{font-weight:800;color:var(--text-strong);
+      background:rgba(var(--ink-rgb),.05)}
+    #pend .pend-total td{font-weight:900;color:var(--text-strong);
+      border-top:2px solid rgba(var(--ink-rgb),.15)}
+    #pend .pend-sangria{padding-left:22px;color:var(--text-muted)}
+    #pend .pend-head{display:flex;justify-content:space-between;align-items:center;
+      flex-wrap:wrap;gap:12px;margin-bottom:16px}
+    #pend h2{font-size:var(--t-lg);font-weight:800;margin:0;color:var(--text-strong)}
+    #pend .pend-sub{color:var(--text-muted);font-size:var(--t-sm)}
+    #pend .pend-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    #pend .pend-cal{display:flex;flex-direction:column;gap:2px}
+    #pend .pend-guardados{font-size:var(--t-xs);color:var(--text-muted);padding-left:2px}
+    /* EL CALENDARIO TIENE QUE VERSE Y TIENE QUE INVITAR A APRETARLO.
+       La propiedad color-scheme: var(--scheme) es lo que pinta de blanco el iconito que trae
+       el navegador: sin eso queda gris oscuro sobre fondo oscuro y no se ve. Daniel,
+       21-ago-2026: "por que no le has puesto el icono de calendario? Como voy a
+       cambiar de fecha?". Y se agranda, porque el de fabrica es diminuto.
+       OJO: nada de comillas invertidas aca adentro, que esto vive dentro de una
+       plantilla de texto y la cortan. */
+    #pend input[type=date]{background:rgba(var(--shadow-rgb), .3);border:1px solid var(--border);
+      border-radius:8px;color:var(--text-strong);padding:8px 10px;font-size:var(--t-sm);font-weight:700;
+      color-scheme: var(--scheme);cursor:pointer;letter-spacing:.3px}
+    #pend input[type=date]:hover{border-color:var(--primary);background:rgba(var(--brand-rgb), .12)}
+    #pend input[type=date]::-webkit-calendar-picker-indicator{
+      cursor:pointer;opacity:1;transform:scale(1.35);margin-left:6px;
+      filter:invert(64%) sepia(38%) saturate(1400%) hue-rotate(207deg) brightness(102%)}
+    #pend input[type=date]:hover::-webkit-calendar-picker-indicator{
+      filter:invert(88%) sepia(20%) saturate(900%) hue-rotate(200deg) brightness(115%)}
+    /* Sin relleno: el dibujo de Excel es lo que se reconoce. Lo que queda aca
+       es solo lo que .btn-icono no cubre. */
+    #pend .pend-btn{font-weight:800;font-size:var(--t-sm);letter-spacing:.4px}
+    #pend .pend-btn:disabled{opacity:.75;cursor:progress}
+    /* La ruedita del botón mientras trabaja. Va acá y no en el CSS del tablero
+       porque #pend se lleva su estilo puesto y se puede probar suelto. */
+    #pend .pend-giro{display:inline-block;width:11px;height:11px;vertical-align:-1px;
+      border:2px solid rgba(var(--ink-rgb), .25);border-left-color:currentColor;border-radius:50%;
+      animation:pend-giro .7s linear infinite;margin-right:5px}
+    @keyframes pend-giro{to{transform:rotate(360deg)}}
+
+    #pend .pend-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+      gap:12px;margin-bottom:16px}
+    #pend .pend-card{background:rgba(var(--ink-rgb), .04);border:1px solid var(--border);
+      border-radius:14px;padding:15px;text-align:center}
+    #pend .pend-card .v{font-size:var(--t-xl);font-weight:800;color:var(--text-strong);line-height:1.1}
+    #pend .pend-card .v.hot{color:var(--pend-amber)}
+    #pend .pend-card .l{font-size:var(--t-xs);color:var(--text-muted);margin-top:3px;letter-spacing:.4px}
+
+    #pend .pend-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media(max-width:980px){#pend .pend-grid{grid-template-columns:1fr}}
+    #pend .pend-panel{background:rgba(var(--ink-rgb), .04);border:1px solid var(--border);
+      border-radius:14px;padding:16px 18px}
+    #pend .pend-panel h3{margin:0 0 2px;font-size:var(--t-sm);font-weight:800;
+      letter-spacing:.9px;color:var(--text-strong)}
+    #pend .pend-cap{font-size:var(--t-sm);color:var(--text-muted);margin-bottom:11px}
+    #pend .pend-vacio{color:var(--text-muted);font-size:var(--t-sm);padding:12px 0}
+
+    #pend table{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
+    #pend th{text-align:left;color:var(--text-muted);font-size:var(--t-xs);letter-spacing:.6px;
+      font-weight:700;padding:6px 8px;border-bottom:1px solid var(--border)}
+    #pend th.n,#pend td.n{text-align:right;font-variant-numeric:tabular-nums}
+    #pend td{padding:6px 8px;border-bottom:1px solid rgba(var(--ink-rgb), .05)}
+    #pend tbody tr:last-child td{border-bottom:0}
+    #pend .pend-bar{height:5px;border-radius:4px;background:rgba(var(--brand-rgb), .75);
+      display:block;margin-top:3px}
+    #pend .pend-bar.ambar{background:rgba(var(--warning-rgb), .8)}
+    #pend .pend-ojo td{color:var(--warning-pale)}
+    #pend .pend-gris td{color:var(--text-muted)}
+    #pend .pend-mas{font-size:var(--t-sm);color:var(--primary);font-weight:700;
+      padding-top:8px;display:block}
+    #pend .pend-nota{border-left:3px solid var(--pend-amber);padding:9px 13px;
+      background:rgba(var(--warning-rgb), .07);border-radius:0 8px 8px 0;margin-top:11px;
+      font-size:var(--t-sm);color:var(--blue-pale)}
+    #pend .pend-nada{text-align:center;padding:40px 20px}
+    #pend .pend-nada-t{font-size:var(--t-lg);font-weight:700;color:var(--text-strong);margin-bottom:6px}
+    </style>
+</head>
+<body>
+<div id="aviso">MAQUETA &middot; Despacho &rsaquo; Correo de Hoy &middot; datos reales del correo del 09-09</div>
+<div id="pend"></div>
+<script type="module">
+const nf = (n) => Number(n || 0).toLocaleString('es-PE');
+
+/** El % que le toca a la barra, siempre contra el mayor de su propio cuadro. */
+const anchoBarra = (v, max) => (max > 0 ? Math.max(2, Math.round(100 * v / max)) : 0);
+const esc = (t) => String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+const cuadro = (titulo, pie, filas, opciones) => {
+    const o = opciones || {};
+    const tope = o.tope || 8;
+    const conPed = o.conPed !== false;
+    const conPct = !!o.conPct;
+    const lista = (filas || []).slice(0, tope);
+    const max = lista.reduce((m, f) => Math.max(m, Number(f.und) || 0), 0);
+    const total = (filas || []).reduce((s, f) => s + (Number(f.und) || 0), 0);
+    const resto = (filas || []).length - lista.length;
+
+    if (!lista.length) {
+        return `<div class="pend-panel"><h3>${esc(titulo)}</h3>
+            <div class="pend-cap">${esc(pie)}</div>
+            <div class="pend-vacio">Sin datos para esta fecha</div></div>`;
+    }
+
+    return `<div class="pend-panel">
+        <h3>${esc(titulo)}</h3>
+        <div class="pend-cap">${esc(pie)}</div>
+        <table>
+          <thead><tr>
+            <th>${esc(o.etiqueta || 'DETALLE')}</th>
+            ${conPed ? '<th class="n">PEDIDOS</th>' : ''}
+            <th class="n">UNIDADES</th>
+            ${conPct ? '<th class="n">%</th>' : ''}
+          </tr></thead>
+          <tbody>
+            ${lista.map(f => {
+                const und = Number(f.und) || 0;
+                const destacar = o.destacar && o.destacar(f);
+                return `<tr${destacar ? ' class="pend-ojo"' : ''}>
+                  <td>${esc(f.k)}</td>
+                  ${conPed ? `<td class="n">${nf(f.ped)}</td>` : ''}
+                  <td class="n">${nf(und)}
+                    <span class="pend-bar${destacar ? ' ambar' : ''}"
+                          style="width:${anchoBarra(und, max)}%"></span></td>
+                  ${conPct ? `<td class="n">${total ? Math.round(100 * und / total) : 0}%</td>` : ''}
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        ${resto > 0 ? `<span class="pend-mas">▸ y ${nf(resto)} más</span>` : ''}
+        ${o.nota ? `<div class="pend-nota">${o.nota}</div>` : ''}
+      </div>`;
+};
+const cuadroRutas = (filas, sinCruce) => {
+    const lista = filas || [];
+    if (!lista.length) {
+        return `<div class="pend-panel pend-ancho"><h3>POR RUTA DE DESPACHO</h3>
+            <div class="pend-cap">Zona y ruta, partido en calzado y accesorios</div>
+            <div class="pend-vacio">Sin datos para esta fecha</div></div>`;
+    }
+
+    const tot = { acc: 0, cal: 0 };
+    lista.forEach(f => { tot.acc += Number(f.acc) || 0; tot.cal += Number(f.cal) || 0; });
+
+    const bloque = (zona) => {
+        const suyas = lista.filter(f => f.z === zona);
+        if (!suyas.length) return '';
+        const sa = suyas.reduce((s, f) => s + (Number(f.acc) || 0), 0);
+        const sc = suyas.reduce((s, f) => s + (Number(f.cal) || 0), 0);
+        return `<tr class="pend-zona">
+            <td>${esc(zona)}</td>
+            <td class="n">${nf(sa)}</td><td class="n">${nf(sc)}</td>
+            <td class="n">${nf(sa + sc)}</td></tr>` +
+          suyas.map(f => `<tr>
+            <td class="pend-sangria">${esc(f.k)}</td>
+            <td class="n">${nf(f.acc)}</td><td class="n">${nf(f.cal)}</td>
+            <td class="n">${nf(f.und)}</td></tr>`).join('');
+    };
+
+    const perdidas = sinCruce && Number(sinCruce.und) > 0
+        ? `<div class="pend-nota"><b>${nf(sinCruce.und)} unidades</b> de
+           ${nf(sinCruce.tiendas)} tiendas no figuran en el maestro de rutas y quedan
+           fuera de este cuadro.</div>`
+        : '';
+
+    return `<div class="pend-panel pend-ancho">
+        <h3>POR RUTA DE DESPACHO</h3>
+        <div class="pend-cap">El mismo corte que arma comercial: zona y ruta, partido
+          en calzado y accesorios</div>
+        <table>
+          <thead><tr>
+            <th>ZONA / RUTA</th>
+            <th class="n">ACCESORIOS</th><th class="n">CALZADO</th>
+            <th class="n">TOTAL</th>
+          </tr></thead>
+          <tbody>
+            ${bloque('LIMA')}${bloque('PROVINCIA')}
+            <tr class="pend-total">
+              <td>TOTAL GENERAL</td>
+              <td class="n">${nf(tot.acc)}</td><td class="n">${nf(tot.cal)}</td>
+              <td class="n">${nf(tot.acc + tot.cal)}</td></tr>
+          </tbody>
+        </table>
+        ${perdidas}
+        <div class="pend-nota">En Lima la fila es el <b>día de despacho + turno</b>;
+          en provincia, el <b>transportista</b>. Accesorios junta todo lo que el
+          Maestro no marca como Footwear.</div>
+      </div>`;
+};
+
+const D = {"fecha": "2026-09-09", "generado": "2026-09-09 21:00", "correo": {"guias": 879, "tiendas": 83, "unidades": 46575}, "wms": {"guias": 461, "unidades": 28914, "articulos": 3221, "tiendas": 82}, "sinAbrir": {"guias": 418, "unidades": 8433, "tiendas": 30}, "pedidoAbiertas": 38142, "tiendas": [{"k": "521 B2 CAJAMARCA", "ped": 97, "und": 2730}, {"k": "744 B4 CUSCO", "ped": 7, "und": 2157}, {"k": "541 B PAITA", "ped": 9, "und": 1946}, {"k": "740 B1 CUSCO", "ped": 13, "und": 1288}, {"k": "404 B2 BARRANCA", "ped": 39, "und": 1271}, {"k": "831 B MOYOBAMBA", "ped": 44, "und": 1271}, {"k": "405 B3 BARRANCA", "ped": 7, "und": 1239}, {"k": "641 B HUARAZ", "ped": 7, "und": 1146}, {"k": "746 B5 CUSCO", "ped": 43, "und": 1100}, {"k": "348 B2 LURIN", "ped": 19, "und": 1063}, {"k": "241 B SAN JUAN DE L", "ped": 7, "und": 893}, {"k": "333 B2 SAN JUAN DE MIRAFLORES", "ped": 50, "und": 878}, {"k": "760 B AYACUCHO", "ped": 5, "und": 864}, {"k": "423 B HUAMACHUCO", "ped": 41, "und": 863}, {"k": "333 B2 SAN JUAN", "ped": 5, "und": 825}, {"k": "535 B LA UNION PIUR", "ped": 6, "und": 789}, {"k": "268 B LURIN", "ped": 9, "und": 776}, {"k": "830 B TARAPOTO", "ped": 6, "und": 739}, {"k": "525 B JAEN", "ped": 9, "und": 731}, {"k": "334 B2 MALL DEL SUR", "ped": 6, "und": 711}, {"k": "763 B 2 AYACUCHO", "ped": 5, "und": 706}, {"k": "336 B MALL DEL SUR", "ped": 6, "und": 705}, {"k": "601 B1 HUANCAYO", "ped": 14, "und": 693}, {"k": "399 B4 HUACHO", "ped": 3, "und": 671}, {"k": "410 B2 HUARAL", "ped": 8, "und": 665}, {"k": "522 B3 CAJAMARCA", "ped": 8, "und": 643}, {"k": "607 B6 HUANCAYO", "ped": 17, "und": 609}, {"k": "625 B SATIPO", "ped": 21, "und": 587}, {"k": "401 B HUACHO", "ped": 8, "und": 558}, {"k": "408 B CHANCAY", "ped": 18, "und": 557}, {"k": "742 B3 CUSCO", "ped": 6, "und": 542}, {"k": "602 B2 HUANCAYO", "ped": 14, "und": 536}, {"k": "741 B2 CUSCO", "ped": 5, "und": 534}, {"k": "243 NS SAN JUAN DE", "ped": 6, "und": 529}, {"k": "790 B ABANCAY", "ped": 6, "und": 524}, {"k": "829 B CHACHAPOYAS", "ped": 5, "und": 523}, {"k": "545 B CHULUCANAS", "ped": 5, "und": 505}, {"k": "529 B2 JAEN", "ped": 7, "und": 503}, {"k": "350 B SAN JUAN DE M", "ped": 5, "und": 478}, {"k": "622 B HUANCAVELICA", "ped": 19, "und": 473}, {"k": "141 B1 SAN BORJA", "ped": 5, "und": 472}, {"k": "643 B3 HUARAZ", "ped": 7, "und": 436}, {"k": "457 B NAZCA", "ped": 2, "und": 433}, {"k": "406 B HUARAL", "ped": 12, "und": 421}, {"k": "748 B PUERTO MALDON", "ped": 7, "und": 418}, {"k": "709 B8 AREQUIPA", "ped": 8, "und": 404}, {"k": "407 B CASMA", "ped": 5, "und": 382}, {"k": "603 B3 HUANCAYO", "ped": 9, "und": 370}, {"k": "337 BG MALL DEL SUR", "ped": 5, "und": 366}, {"k": "642 B2 HUARAZ", "ped": 5, "und": 348}, {"k": "751 B1 JULIACA", "ped": 6, "und": 346}, {"k": "620 B TARMA", "ped": 15, "und": 340}, {"k": "453 B4 ICA", "ped": 5, "und": 336}, {"k": "605 B5 HUANCAYO", "ped": 9, "und": 335}, {"k": "750 NS CUSCO", "ped": 6, "und": 331}, {"k": "719 B12 AREQUIPA", "ped": 8, "und": 308}, {"k": "834 B BAGUA GRANDE", "ped": 4, "und": 303}, {"k": "417 B VIRU", "ped": 3, "und": 294}, {"k": "626 B PICHANAQUI", "ped": 15, "und": 290}, {"k": "758 WB CUSCO", "ped": 6, "und": 282}, {"k": "827 B4 PUCALLPA", "ped": 5, "und": 279}, {"k": "409 B PUNTA HERMOSA", "ped": 4, "und": 262}, {"k": "518 B CAJABAMBA", "ped": 7, "und": 261}, {"k": "627 B JUANJUI", "ped": 6, "und": 261}, {"k": "705 B6 AREQUIPA", "ped": 7, "und": 233}, {"k": "519 B CHOTA", "ped": 7, "und": 232}, {"k": "711 B10 AREQUIPA", "ped": 8, "und": 224}, {"k": "832 B2 TARAPOTO", "ped": 3, "und": 220}, {"k": "792 B ANDAHUAYLAS", "ped": 4, "und": 219}, {"k": "704 B5 AREQUIPA", "ped": 6, "und": 204}, {"k": "706 B2 AREQUIPA", "ped": 8, "und": 198}, {"k": "727 B MOQUEGUA", "ped": 7, "und": 197}, {"k": "702 B4 AREQUIPA", "ped": 5, "und": 192}, {"k": "120 B1 CALLAO", "ped": 4, "und": 180}, {"k": "269 BG LURIN", "ped": 5, "und": 173}, {"k": "524 BG CAJAMARCA", "ped": 5, "und": 173}, {"k": "710 B9 AREQUIPA", "ped": 4, "und": 171}, {"k": "708 NS2 AREQUIPA", "ped": 4, "und": 160}, {"k": "722 NS AREQUIPA", "ped": 4, "und": 149}, {"k": "745 B QUILLABAMBA", "ped": 4, "und": 143}, {"k": "547 B CATACAOS", "ped": 5, "und": 142}, {"k": "610 WB2 HUANCAYO", "ped": 5, "und": 138}, {"k": "434 B3 CHINCHA", "ped": 5, "und": 128}], "prioridad": [{"k": "REPOSICION", "ped": 378, "und": 36301}, {"k": "DOBLE TRAMO", "ped": 418, "und": 8433}, {"k": "MARCAS TERCERAS", "ped": 72, "und": 1003}, {"k": "NS+SUMMER", "ped": 6, "und": 713}, {"k": "CANVAS LEGEND", "ped": 5, "und": 125}], "rims": [{"k": "01 MEN", "ped": 152, "und": 7661}, {"k": "06 OTHERS", "ped": 83, "und": 5350}, {"k": "02 WOMEN", "ped": 176, "und": 5190}, {"k": "04 SPORT", "ped": 220, "und": 4399}, {"k": "03 KIDS", "ped": 189, "und": 4102}, {"k": "05 SCHOOL", "ped": 60, "und": 615}, {"k": "08 ACCESORIES", "ped": 78, "und": 574}, {"k": "11 NON COMMERCIAL COMPLEMENTS", "ped": 3, "und": 522}, {"k": "07 INDUSTRIAL", "ped": 68, "und": 455}, {"k": "09 CLOTHING", "ped": 3, "und": 46}], "coleccion": [{"k": "2026-Q4", "ped": 312, "und": 15262}, {"k": "2027-Q1", "ped": 167, "und": 8512}, {"k": "2026-Q3", "ped": 265, "und": 3607}, {"k": "(en blanco)", "ped": 35, "und": 620}, {"k": "ND", "ped": 3, "und": 522}, {"k": "2026-Q2", "ped": 76, "und": 290}, {"k": "2026-Q1", "ped": 37, "und": 78}, {"k": "2025-Q4", "ped": 3, "und": 9}, {"k": "2025-Q3", "ped": 2, "und": 5}, {"k": "2022-Q4", "ped": 2, "und": 4}, {"k": "2024-Q4", "ped": 2, "und": 3}, {"k": "2025-Q2", "ped": 1, "und": 2}], "gender": [{"k": "Footwear", "und": 27772}, {"k": "Non Footwear", "und": 620}, {"k": "Non Commercial", "und": 522}], "rutas": [{"z": "PROVINCIA", "k": "LOG", "acc": 176, "cal": 13778, "und": 13954}, {"z": "PROVINCIA", "k": "DIVAL", "acc": 743, "cal": 4281, "und": 5024}, {"z": "PROVINCIA", "k": "TRANSA", "acc": 38, "cal": 1933, "und": 1971}, {"z": "PROVINCIA", "k": "TOSCANO", "acc": 19, "cal": 1908, "und": 1927}, {"z": "LIMA", "k": "LUNES - MIÉRCOLES DIA", "acc": 93, "cal": 1774, "und": 1867}, {"z": "PROVINCIA", "k": "ARQ - LOG", "acc": 27, "cal": 1510, "und": 1537}, {"z": "LIMA", "k": "LUNES DIA", "acc": 29, "cal": 1253, "und": 1282}, {"z": "LIMA", "k": "LUNES NOCHE", "acc": 9, "cal": 808, "und": 817}, {"z": "LIMA", "k": "LUNES - JUEVES DIA", "acc": 2, "cal": 443, "und": 445}, {"z": "LIMA", "k": "MARTES DIA", "acc": 6, "cal": 84, "und": 90}], "rutasSinCruce": {"und": 0, "tiendas": 0}};
+
+const cab = `
+  <div class="pend-head">
+    <div>
+      <h2>Correo de hoy</h2>
+      <div class="pend-sub">lo que comercial mandó el ${D.fecha} &middot; armado el ${D.generado}</div>
+    </div>
+    <div class="pend-acc">
+      <div class="pend-cal">
+        <input type="date" value="${D.fecha}">
+        <span class="pend-guardados">15 días guardados</span>
+      </div>
+      <button class="btn-icono btn-excel pend-btn" title="Descargar en Excel">XLS</button>
+    </div>
+  </div>`;
+
+const tarjetas = `
+  <div class="pend-cards">
+    <div class="pend-card"><div class="v">${nf(D.correo.guias)}</div><div class="l">GUÍAS</div></div>
+    <div class="pend-card"><div class="v">${nf(D.correo.tiendas)}</div><div class="l">TIENDAS</div></div>
+    <div class="pend-card"><div class="v hot">${nf(D.correo.unidades)}</div><div class="l">UNIDADES QUE PIDIÓ COMERCIAL</div></div>
+    <div class="pend-card"><div class="v">${nf(D.wms.unidades)}</div><div class="l">ABIERTO EN EL WMS</div></div>
+    <div class="pend-card"><div class="v">${nf(D.sinAbrir.guias)}</div><div class="l">GUÍAS SIN ABRIR</div></div>
+  </div>`;
+
+const llegada = `
+  <div class="pend-panel">
+    <h3>¿EL WMS YA TIENE LO QUE MANDÓ COMERCIAL?</h3>
+    <div class="pend-cap">Una guía que el WMS no tiene abierta no se puede trabajar todavía</div>
+    <table>
+      <thead><tr><th>ESTADO DE LA GUÍA</th><th class="n">GUÍAS</th><th class="n">PIDIÓ COMERCIAL</th><th class="n">ABIERTO EN EL WMS</th></tr></thead>
+      <tbody>
+        <tr><td><b>Abierta en el WMS</b> → se puede trabajar</td>
+            <td class="n"><b>${nf(D.wms.guias)}</b></td>
+            <td class="n">${nf(D.pedidoAbiertas)}</td>
+            <td class="n"><b>${nf(D.wms.unidades)}</b></td></tr>
+        <tr class="pend-ojo"><td>Todavía no abierta en el WMS</td>
+            <td class="n">${nf(D.sinAbrir.guias)}</td>
+            <td class="n">${nf(D.sinAbrir.unidades)}</td>
+            <td class="n">—</td></tr>
+        <tr class="pend-total"><td>TOTAL DEL CORREO</td>
+            <td class="n">${nf(D.correo.guias)}</td>
+            <td class="n">${nf(D.correo.unidades)}</td>
+            <td class="n">${nf(D.wms.unidades)}</td></tr>
+      </tbody>
+    </table>
+    <div class="pend-nota"><b>${nf(D.sinAbrir.guias)} guías</b> de
+      ${nf(D.sinAbrir.tiendas)} tiendas llegaron por correo y el WMS todavía no las
+      tiene abiertas. Son ${nf(D.sinAbrir.unidades)} unidades que hoy no se pueden picar.</div>
+  </div>`;
+
+const rotulo = (t, c) => `<div class="pend-bloque"><h4>${t}</h4><div class="c">${c}</div></div>`;
+
+const cuadros = [
+  rotulo('LO QUE MANDÓ COMERCIAL HOY',
+         `${nf(D.correo.guias)} guías &middot; ${nf(D.correo.unidades)} unidades &middot; la cantidad es la del correo`),
+  llegada,
+  cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
+         `Las 10 más cargadas de ${nf(D.correo.tiendas)}`,
+         D.tiendas, { etiqueta: 'TIENDA', tope: 10 }),
+  cuadro('POR QUÉ LO PIDIÓ COMERCIAL', 'La columna Prioridad del correo',
+         D.prioridad, { etiqueta: 'PRIORIDAD', tope: 8, conPct: true }),
+  rotulo('DE ESO, LO QUE EL WMS TIENE ABIERTO',
+         `${nf(D.wms.guias)} guías &middot; ${nf(D.wms.unidades)} unidades &middot; el correo no trae el artículo, así que estos cortes solo se pueden hacer sobre lo abierto`),
+  cuadro('POR GENDER RIMS', 'Sale del Maestro de artículos',
+         D.rims, { etiqueta: 'GENDER RIMS', tope: 10 }),
+  cuadro('POR COLECCIÓN', 'La Coleccion PO del Maestro',
+         D.coleccion, { etiqueta: 'COLECCIÓN', tope: 8, conPct: true }),
+  cuadro('CALZADO Y LO QUE NO LO ES',
+         'Lo separa el G. Gender del Maestro, no la etiqueta del correo',
+         D.gender, { etiqueta: 'TIPO', tope: 6, conPed: false, conPct: true,
+                     nota: 'Un total que mezcla zapatos con cajas no dice nada.' }),
+  cuadroRutas(D.rutas, D.rutasSinCruce),
+].join('');
+
+/* ACA LA COLUMNA SE LLAMA GUIAS. `cuadro()` la titula PEDIDOS porque en el
+   pendiente eso es lo que cuenta; en este modulo la unidad es la guia del correo
+   y las tarjetas de arriba ya dicen GUIAS. Al codearlo va como opcion del
+   helper, no como este reemplazo. */
+document.getElementById('pend').innerHTML =
+    (cab + tarjetas + `<div class="pend-grid">${cuadros}</div>`)
+        .replace(/>PEDIDOS</g, '>GUÍAS<');
+</script>
+</body>
+</html>
