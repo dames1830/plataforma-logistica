@@ -24,6 +24,7 @@ CORRE DETRAS DEL ROBOT DEL ASN, a las 04:30.
 """
 import os
 import re
+import subprocess
 import sys
 import json
 import time
@@ -875,6 +876,37 @@ def main(log_externo=None):
     ok = subir(p)
     if tabla and "--sin-tabla" not in sys.argv:
         cargar_tabla(tabla, tabla_meta, lambda c: (MARCA_DE or {}).get(c[:7], ""))
+
+    # ── Y DETRAS, RECIBIDO Y SIN PICAR ──────────────────────────────────────
+    #
+    # Daniel, 10-sep-2026: *"que corra con el ASN, detras del ASN"*. Va
+    # encadenado y NO con hora propia a proposito: ese reporte cruza el ASN
+    # contra el picking, asi que tiene que leer el ASN RECIEN BAJADO. Con dos
+    # relojes separados, el dia que el ASN se demore el reporte saldria con la
+    # foto de ayer y nadie se enteraria.
+    #
+    # NO PUEDE TUMBAR AL ASN. Si falla, se avisa y esta funcion devuelve lo
+    # suyo igual: el ASN ya esta publicado y es lo que el CD mira.
+    if "--sin-recibido" not in sys.argv:
+        segundo = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "recibido_sin_picar.py")
+        if not os.path.isfile(segundo):
+            log("No esta recibido_sin_picar.py, no se arma ese reporte.", "WARN")
+        else:
+            log("")
+            log("El ASN quedo publicado: ahora recibido y sin picar...")
+            try:
+                cod = subprocess.run([sys.executable, segundo],
+                                     timeout=30 * 60).returncode
+                if cod == 0:
+                    log("Recibido y sin picar: publicado")
+                else:
+                    log("Recibido y sin picar: FALLO (codigo %s). El ASN SI se "
+                        "publico." % cod, "WARN")
+            except Exception as e:
+                log("No se pudo arrancar recibido_sin_picar.py (%s: %s). El ASN "
+                    "SI se publico." % (type(e).__name__, str(e)[:120]), "WARN")
+
     return 0 if ok else 3
 
 
