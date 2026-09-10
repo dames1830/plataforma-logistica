@@ -24,7 +24,7 @@
  * en la misma corrida que arma el pendiente.
  */
 
-import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0685';
+import { nf, esc, cuadro, cuadroRutas, estilos } from './pendiente.js?v=29.0686';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -115,7 +115,7 @@ function cuadroNoLiberadosDetalle(n) {
     const filas = (n && n.detalle) || [];
     if (!filas.length) return '';
     const top = filas.slice(0, 15);
-    return `<div class="pend-panel pend-ancho">
+    return `<div class="pend-panel">
         <h3>UNO POR UNO, DEL MÁS VIEJO AL MÁS NUEVO</h3>
         <div class="pend-cap">Solo retail &middot; las 15 más viejas de ${nf(filas.length)} &middot; el botón baja la lista completa</div>
         <table>
@@ -249,7 +249,7 @@ function cuadroRepetidas(filas) {
     const cerradas = lista.filter(f => !(Number(f.wms) > 0));
     const undCerradas = cerradas.reduce((s, f) => s + (Number(f.pidio) || 0), 0);
 
-    return `<div class="pend-panel pend-ancho">
+    return `<div class="pend-panel">
         <h3>LO QUE COMERCIAL YA HABÍA MANDADO ANTES</h3>
         <div class="pend-cap">Guías que vienen en el correo de hoy pero que comercial
           ya había pedido otro día</div>
@@ -329,8 +329,8 @@ function cuerpo(d, fecha, dias) {
            Daniel, 10-sep-2026: son el respaldo de los dos cuadros de arriba -uno
            por uno los no liberados, y las guias que comercial repitio-, y al
            fondo obligaban a recorrer el modulo entero para llegar. */
-        cuadroNoLiberadosDetalle(d.noLiberados),
-        cuadroRepetidas(d.repetidas),
+        `<div class="pend-dos">${cuadroNoLiberadosDetalle(d.noLiberados)}`
+          + `${cuadroRepetidas(d.repetidas)}</div>`,
         cuadro('A QUÉ TIENDA HAY QUE DESPACHAR',
                `Las 10 más cargadas de ${nf(c.tiendas)}`,
                d.tiendas, { etiqueta: 'TIENDA', tope: 10, etiquetaPed: 'GUÍAS' }),
@@ -366,6 +366,12 @@ function estiloBloque() {
     #pend .pend-tres{grid-column:1/-1;display:grid;
       grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
     #pend .pend-tres .pend-panel{overflow-x:auto}
+    /* Los dos detalles, mitad y mitad. Mismo resguardo: si una tabla no entra se
+       desliza dentro de su recuadro, y en pantalla angosta se apilan. */
+    #pend .pend-dos{grid-column:1/-1;display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+    #pend .pend-dos .pend-panel{overflow-x:auto}
+    @media(max-width:1200px){#pend .pend-dos{grid-template-columns:1fr}}
     @media(max-width:1200px){#pend .pend-tres{grid-template-columns:1fr}}
     /* La referencia de lo que quedo fuera del maestro: se deja a la vista pero
        sin pesar. Daniel: *"que no se note mucho, con una letra pluma"*. */
