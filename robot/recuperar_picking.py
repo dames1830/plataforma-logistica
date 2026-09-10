@@ -94,6 +94,51 @@ def abrir_log():
                         % datetime.now().strftime("%Y-%m-%d_%H%M%S"))
 
 
+# DONDE SE QUEDO, PARA PODER SEGUIR DESPUES.
+#
+# Daniel, 10-sep-2026: *"quince minutos antes de que sea el cambio de turno ya
+# paras... me dices en que dia, para retomarlo despues de las nueve"*.
+#
+# No alcanza con anotarlo en el log: al retomar hace falta la lista EXACTA de
+# dias que faltan, porque muchos de los que ya estan en la carpeta hay que
+# rehacerlos igual -bajaron con el filtro de creacion viejo-. Mirando solo la
+# carpeta, esos se saltearian y quedarian incompletos para siempre.
+PENDIENTE = os.path.join(LOGS, "recuperar_picking_pendiente.json")
+
+
+def guardar_pendiente(dias):
+    try:
+        os.makedirs(LOGS, exist_ok=True)
+        with io.open(PENDIENTE, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps([d.strftime("%d-%m-%Y") for d in dias]))
+        log("Anotado donde me quede: %d dias en %s"
+            % (len(dias), os.path.basename(PENDIENTE)))
+    except Exception as e:
+        log("no pude anotar los pendientes (%s)" % type(e).__name__, "ERROR")
+
+
+def leer_pendiente():
+    with io.open(PENDIENTE, encoding="utf-8") as fh:
+        return [datetime.strptime(x, "%d-%m-%Y") for x in json.load(fh)]
+
+
+def borrar_pendiente():
+    try:
+        if os.path.exists(PENDIENTE):
+            os.remove(PENDIENTE)
+    except Exception:
+        pass
+
+
+def hora_limite(txt):
+    """`--parar-a 19:15` -> el momento de hoy a esa hora."""
+    if not txt:
+        return None
+    h, m = (txt.split(":") + ["0"])[:2]
+    ahora = datetime.now()
+    return ahora.replace(hour=int(h), minute=int(m), second=0, microsecond=0)
+
+
 def arg(nombre, defecto=None):
     for i, a in enumerate(sys.argv):
         if a == nombre and i + 1 < len(sys.argv):
@@ -233,7 +278,8 @@ def bajar_dia_armando(pk, page, destino, dia):
     return bajar_dia_rapido(pk, page, destino, dia)
 
 
-def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista):
+def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista,
+                    limite=None):
     """Entra al WMS y baja dias hasta que se acabe el bloque.
 
        Los dias bajados se sacan de `pendientes`; los que no llego a tocar
@@ -258,6 +304,12 @@ def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista):
 
             primero = True
             while pendientes and (time.time() - t0) < minutos * 60:
+                # EL FRENO VA ANTES DE EMPEZAR EL DIA, no en el medio: un dia a
+                # medias dejaria un CSV cortado que parece bueno.
+                if limite and datetime.now() >= limite:
+                    log("Son las %s: me detengo antes del cambio de turno."
+                        % datetime.now().strftime("%H:%M"), "WARN")
+                    break
                 dia = pendientes[0]
                 destino = os.path.join(base, "Picking",
                                        "Picking %d-%d.csv" % (dia.day, dia.month))
@@ -463,6 +515,8 @@ def run():
     probar = "--probar" in sys.argv
     a_la_vista = "--ver" in sys.argv
     rehacer = "--rehacer" in sys.argv
+    seguir = "--seguir" in sys.argv
+    limite = hora_limite(arg("--parar-a"))
     bloque = int(arg("--bloque", BLOQUE_MIN))
     d0 = fecha(arg("--desde"), datetime(datetime.now().year, 4, 1))
     d1 = fecha(arg("--hasta"), datetime.now() - timedelta(days=1))
@@ -494,6 +548,23 @@ def run():
         finally:
             bloqueo_wms.soltar()
 
+    if seguir:
+        if not os.path.exists(PENDIENTE):
+            log("No hay nada anotado como pendiente: no quedo nada a medias.")
+            return 0
+        faltan = leer_pendiente()
+        log("=" * 62)
+        log("RETOMANDO LO QUE QUEDO PENDIENTE  ·  %d dias" % len(faltan))
+        log("=" * 62)
+        log("creado desde .............. %s" % CREACION_DESDE)
+        if not faltan:
+            borrar_pendiente()
+            return 0
+        log("del %s al %s" % (faltan[0].strftime("%d-%m-%Y"),
+                              faltan[-1].strftime("%d-%m-%Y")))
+        return trabajar(pk, wms, bloqueo_wms, sync_playwright, base, faltan,
+                        bloque, a_la_vista, limite)
+
     faltan = dias_que_faltan(base, d0, d1, rehacer)
     log("=" * 62)
     log("RECUPERAR PICKING  ·  %s a %s"
@@ -520,9 +591,23 @@ def run():
         log("Falta WMS_PASSWORD en el .env", "ERROR")
         return 1
 
+    return trabajar(pk, wms, bloqueo_wms, sync_playwright, base, faltan,
+                    bloque, a_la_vista, limite)
+
+
+def trabajar(pk, wms, bloqueo_wms, sync_playwright, base, faltan, bloque,
+             a_la_vista, limite):
+    """El bucle de bloques. Lo llaman los dos caminos —la corrida normal y
+       `--seguir`— para que retomar sea exactamente lo mismo que empezar."""
     t0 = time.time()
     bajados, fallaron, n = [], [], 0
     while faltan:
+        if limite and datetime.now() >= limite:
+            log("")
+            log("PARO ACA: son las %s y el ancla del cambio de turno entra a las "
+                "%s." % (datetime.now().strftime("%H:%M"),
+                         (limite + timedelta(minutes=15)).strftime("%H:%M")), "WARN")
+            break
         n += 1
         # SE ESPERA EL TURNO COMO CUALQUIER OTRO ROBOT, y esta corrida SI cede:
         # no tiene hora, puede seguir dentro de una hora. Lo que no puede es
@@ -536,7 +621,7 @@ def run():
         log("-" * 62)
         try:
             b, f = bajar_un_bloque(pk, wms, sync_playwright, base, faltan,
-                                   bloque, a_la_vista)
+                                   bloque, a_la_vista, limite)
         except Exception as e:
             log("El bloque %d se cayo entero (%s: %s). Se sigue con el siguiente."
                 % (n, type(e).__name__, str(e)[:160]), "WARN")
@@ -555,16 +640,30 @@ def run():
         if faltan:
             time.sleep(ESPERA_ENTRE_BLOQUES)
 
+    # LO QUE NO SE ALCANZO A HACER SE ANOTA, incluidos los que fallaron: al
+    # retomar hay que pedirlos otra vez, y mirando la carpeta no se distinguen.
+    queda = list(faltan) + [d for d in fallaron if d not in faltan]
+    queda.sort()
     log("")
     log("=" * 62)
-    log("LISTO en %.1f horas  ·  %d bajados  ·  %d fallaron  ·  %d sin tocar"
-        % ((time.time() - t0) / 3600.0, len(bajados), len(fallaron), len(faltan)))
+    log("%s en %.1f horas  ·  %d bajados  ·  %d fallaron  ·  %d sin tocar"
+        % ("PARADO" if queda else "LISTO", (time.time() - t0) / 3600.0,
+           len(bajados), len(fallaron), len(faltan)))
+    if bajados:
+        log("del %s al %s" % (bajados[0].strftime("%d-%m-%Y"),
+                              bajados[-1].strftime("%d-%m-%Y")))
     if fallaron:
         log("no se pudieron bajar: "
             + ", ".join(d.strftime("%d-%m") for d in fallaron), "WARN")
-        log("Se recuperan volviendo a lanzar este mismo script.")
+    if queda:
+        log("ME QUEDE EN: falta desde el %s (%d dias)"
+            % (queda[0].strftime("%d-%m-%Y"), len(queda)), "WARN")
+        guardar_pendiente(queda)
+        log("Para seguir:  python recuperar_picking.py --seguir")
+    else:
+        borrar_pendiente()
     log("=" * 62)
-    return 0 if not fallaron and not faltan else 1
+    return 0 if not queda else 1
 
 
 if __name__ == "__main__":
