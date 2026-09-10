@@ -171,7 +171,11 @@ def bajar_dia_rapido(pk, page, destino, dia):
     _, pie = pk.total_paginas(page)
     pk.ejecutar_busqueda(page)
     log("Esperando a que Oracle traiga las filas...")
-    paginas = pk.esperar_resultado(page, distinto_de=pie)
+    # DOS MINUTOS Y MEDIO, NO DIEZ. `esperar_resultado` solo se da por vencido
+    # antes de tiempo cuando el pie CAMBIO, y dos dias vacios seguidos dejan el
+    # mismo pie -"/ 1 Paginas"-, asi que se comia el timeout entero por dia. Un
+    # dia con datos contesta en 3 a 9 segundos; 150 sobran de lejos.
+    paginas = pk.esperar_resultado(page, timeout_seg=150, distinto_de=pie)
     if not paginas:
         log("El %s no trajo ninguna fila." % dia.strftime("%d-%m-%Y"), "WARN")
         pk.marcar_sin_movimiento("picking", dia.strftime("%d-%m-%Y"))
