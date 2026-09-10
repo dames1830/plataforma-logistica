@@ -15,8 +15,8 @@
  * numero calculado en dos sitios se desincroniza, y ya paso en este proyecto.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0695';
-import { icono } from '../services_v245/iconos.js?v=29.0695';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0696';
+import { icono } from '../services_v245/iconos.js?v=29.0696';
 
 /**
  * LO QUE EL WMS ABRE Y COMERCIAL NUNCA LIBERO.
@@ -86,7 +86,7 @@ function cuadroDetalle(n) {
     return `<div class="pend-panel">
         <div class="pend-cab2">
           <div>
-            <h3>UNO POR UNO, DEL MÁS VIEJO AL MÁS NUEVO</h3>
+            <h3>TRACKING PEDIDOS</h3>
             <div class="pend-cap">Solo retail &middot; ${nf(filas.length)} pedidos</div>
           </div>
           <div class="pend-acc2">
