@@ -75,6 +75,16 @@ ORIGEN = {'23': 'Nacional', '24': 'Importación'}
 
 rec = collections.defaultdict(lambda: {'pares': 0.0, 'fecha': None, 'asn': '',
                                        'lpn': '', 'desc': '', 'origen': ''})
+# EL ARCHIVO DEL ASN TRAE LA MISMA FILA REPETIDA, y sumarlas infla todo.
+#
+# Lo caza Daniel el 10-sep-2026 mirando un LPN: la web decia 900 pares y el WMS
+# 15. Medido en el ASN 20261052701CA: 3.600 filas y solo 60 ENTERAS DISTINTAS
+# -cada una repetida 60 veces, que es justo el numero de SKU del ASN: la
+# exportacion cruza-. Sumando todo daban 21.600; sumando una por fila, 360.
+#
+# Es la MISMA trampa que ya tenia documentada `armar_pendiente.py` con el Detalle
+# de Orden, y volvi a caer en ella en otro archivo.
+vistas_asn = set()
 for ruta in sorted(glob.glob(os.path.join(B, 'ASN', 'ASN 2026-0[89].xlsx'))):
     wb = openpyxl.load_workbook(ruta, read_only=True, data_only=True)
     it = wb.worksheets[0].iter_rows(values_only=True)
@@ -98,6 +108,12 @@ for ruta in sorted(glob.glob(os.path.join(B, 'ASN', 'ASN 2026-0[89].xlsx'))):
         sku = str(r[iart] or '').strip()
         if not sku:
             continue
+        # LA FILA ENTERA es la llave: dos filas identicas son la misma, y el
+        # archivo las trae por decenas.
+        clave = tuple(str(x) for x in r)
+        if clave in vistas_asn:
+            continue
+        vistas_asn.add(clave)
         try:
             q = float(r[irec] or 0)
         except Exception:
@@ -294,6 +310,8 @@ sys.argv = _ARGV
 
 cuerpo = json.dumps(datos, ensure_ascii=False).encode('utf-8')
 t = datos['tarjetas']
+A.log('ASN: %s filas distintas despues de descartar las repetidas'
+      % format(len(vistas_asn), ',d'))
 A.log('Recibido y sin picar: %s SKU  ·  no salieron a tienda %s  ·  de esos, NADIE '
       'los toco %s  ·  con 5 o menos %s  ·  %s pares parados  ·  el mas viejo %s dias'
       % (format(t['skus'], ',d'), format(t['sinPicar'], ',d'),
