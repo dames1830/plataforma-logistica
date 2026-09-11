@@ -96,13 +96,18 @@ todavía no sabemos si baja.
 
 LA FOTO FRESCA DE LA TARDE
 --------------------------
-    python picking_y_orden.py --solo-pendientes
+    python picking_y_orden.py --solo-pendientes --sin-despachados
 
 Baja SOLO el "Detalle Orden Pendientes.csv" y hasta HOY, no hasta ayer. Lo llama
 `armar_pendiente.py` en cuanto entra el correo de comercial, porque la foto de las
 06:57 no sirve para cruzar contra un correo de las 19:00: el 21-ago-2026 el
 automático publicó 31.246 unidades cuando lo real eran 116.467 —el 87% del
 pendiente son órdenes nacidas durante el día—.
+
+`--solo-pendientes` A SECAS BAJA LOS DOS ACUMULADOS, Pendientes y Despachados, y así
+la usa la corrida de las 04:30. La bajada del correo los heredaba los dos: del 04 al
+10-sep-2026 eran 11 a 12 minutos y 50 MB de Despachados cada noche, dentro del cierre
+de turno, que el pendiente no lee. Por eso lleva `--sin-despachados`.
 
 A esa hora el WMS lo está usando el robot del stock, así que esta bajada **cede**:
 espera 20 minutos y, si sigue ocupado, sale con código 3 sin bajar nada. Vale más
@@ -1647,7 +1652,8 @@ def descargar_despachados(page, destino, hasta_dia, dias=DIAS_DESPACHADOS,
 
 
 class _SinAcumulados(Exception):
-    """Corta la bajada de Pendientes y Despachados cuando va `--solo-dia`.
+    """Corta la bajada de un acumulado que no toca: los dos con `--solo-dia`, el
+    Pendientes con `--solo-despachados` y el Despachados con `--sin-despachados`.
 
     Se usa una excepcion y no un `if` porque los dos acumulados estan dentro del
     mismo `try` y lo que sigue ya sabe tratarlos como no bajados.
@@ -1691,6 +1697,17 @@ def run():
     # una sola vez de madrugada, porque lo que cambia en doce horas no justifica bajar
     # 73 MB dos veces.
     solo_dia = "--solo-dia" in sys.argv
+    # `--sin-despachados` deja fuera SOLO los Despachados. La pone `armar_pendiente.py`
+    # en la bajada que dispara el correo de comercial, que cruza el Pendientes y nada
+    # mas.
+    #
+    # `--solo-pendientes` A SECAS BAJA LOS DOS ACUMULADOS -asi la usa la corrida de las
+    # 04:30, que si los necesita-, y la bajada del correo heredaba el Despachados: se
+    # rompia la regla de arriba, un acumulado una vez al dia. Medido en los logs del 04
+    # al 10-sep-2026: 11 a 12 minutos y 50 MB de mas cada noche, dentro del cierre de
+    # turno y con la misma cuenta. El 10-sep el pendiente salio 19:35 en vez de ~19:23
+    # y el ancla de las 19:30 espero cuatro minutos a que terminara.
+    sin_desp = "--sin-despachados" in sys.argv
 
     dia = dia_pedido()
     log("=" * 58)
@@ -1767,7 +1784,7 @@ def run():
         log("Detalle Orden-> %s" % ruta_ord)
     if not solo_dia and not solo_desp:
         log("Pendientes   -> %s" % ruta_pend)
-    if not solo_dia:
+    if not solo_dia and not sin_desp:
         log("Despachados  -> %s" % ruta_desp)
 
     if not wms.WMS_PASSWORD or wms.WMS_PASSWORD == "TU_PASSWORD_AQUI":
@@ -1844,8 +1861,11 @@ def run():
             # LOS DESPACHADOS VAN ULTIMOS y tampoco cambian el resultado de la
             # corrida. Es el mas nuevo de los cuatro: si falla, el picking y el
             # detalle ya estan bajados y lo unico que se pierde es saber que salio.
+            if sin_desp and not solo_dia:
+                log("--sin-despachados: los Despachados NO se bajan; van en la "
+                    "corrida de las 04:30")
             try:
-                if solo_dia:
+                if solo_dia or sin_desp:
                     raise _SinAcumulados("no toca")
                 ok_desp = wms.con_reintentos(
                     "Despachados",
@@ -1865,12 +1885,12 @@ def run():
 
     hechos = int(bool(ok_pick)) + int(bool(ok_ord))
     log("=" * 58)
-    def _ac(ok, toca):
+    def _ac(ok, toca, bandera):
         if not toca:
-            return "no tocaba (%s)" % ("--solo-dia" if solo_dia else "--solo-despachados")
+            return "no tocaba (%s)" % ("--solo-dia" if solo_dia else bandera)
         return "bajados" if ok else "NO se bajaron"
-    log("Pendientes:  %s" % _ac(ok_pend, not (solo_dia or solo_desp)))
-    log("Despachados: %s" % _ac(ok_desp, not solo_dia))
+    log("Pendientes:  %s" % _ac(ok_pend, not (solo_dia or solo_desp), "--solo-despachados"))
+    log("Despachados: %s" % _ac(ok_desp, not (solo_dia or sin_desp), "--sin-despachados"))
     if solo_desp:
         log("LISTO en %.1f minutos" % ((time.time() - t0) / 60.0))
         log("=" * 58)

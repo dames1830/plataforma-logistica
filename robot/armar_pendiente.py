@@ -68,8 +68,8 @@ pendiente salio con la foto de las 06:57 contra un correo de las 18:32: publico
 **31.246 unidades cuando lo real eran 116.467**. Las ordenes coincidian -1.608
 contra 1.583, porque las define el correo-; lo que faltaba eran las lineas nacidas
 durante el dia, el 87% del pendiente. Ahora corre `picking_y_orden.py
---solo-pendientes` y **no publica nada si la foto no queda posterior al correo**:
-vale mas el pendiente de ayer que uno corto encima del bueno.
+--solo-pendientes --sin-despachados` y **no publica nada si la foto no queda
+posterior al correo**: vale mas el pendiente de ayer que uno corto encima del bueno.
 
     python armar_pendiente.py              baja la foto, arma y publica el de hoy
     python armar_pendiente.py --probar     calcula y muestra, sin bajar ni publicar
@@ -98,6 +98,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import traceback
 import urllib.parse
 import urllib.request
@@ -203,6 +204,7 @@ def pares_de_la_caja(sku):
 MINIMO_CRUCE = 0.30      # si cruza menos que esto, algo se rompio: no se publica
 # Cuanto se le da a la bajada del WMS. Son 365 dias -unas 65.000 lineas- y tarda
 # unos 8 minutos, pero puede pasarse 20 esperando al robot del stock y reintentar.
+# Si se pasa, se la corta y el candado que deja lo suelta `soltar_candado_propio`.
 ESPERA_BAJADA = 45 * 60
 
 
@@ -524,6 +526,44 @@ def hora_correo():
     return ultimo
 
 
+def soltar_candado_propio(lanzada):
+    """SI LA BAJADA SE CORTO POR TIEMPO, SU CANDADO LO SUELTA ESTE ROBOT.
+
+    `subprocess.run` con `timeout` MATA a picking_y_orden.py: se va sin pasar por su
+    `finally`, y el `bloqueo_wms.soltar()` que vive ahi no corre nunca. El candado
+    queda puesto hasta que se vence -150 minutos- y los robots que vienen detras
+    esperan su tiempo y despues entran igual, encima, con la misma cuenta `dames`.
+
+    SOLO SE SUELTA EL DE ESTA BAJADA, y para eso tienen que darse las dos cosas:
+      - que diga 'pendientes de la tarde', que es como lo toma picking_y_orden.py
+        con `--solo-pendientes`;
+      - que se haya tomado DESPUES de lanzarla. Si se corto mientras esperaba su
+        turno, el candado es del que estaba adentro -el ancla, el cierre, otra
+        bajada de la tarde- y ese no se toca.
+
+    `lanzada` es el time.time() de cuando se lanzo la bajada.
+    """
+    try:
+        import bloqueo_wms
+    except Exception as e:
+        log('   no se pudo mirar el candado del WMS (%s)' % type(e).__name__, 'AVISO')
+        return False
+    duenio = bloqueo_wms.quien_esta()
+    if not duenio:
+        log('   el candado del WMS ya estaba libre')
+        return False
+    tomado_despues = duenio['minutos'] * 60.0 <= (time.time() - lanzada) + 2
+    if duenio['quien'] != 'pendientes de la tarde' or not tomado_despues:
+        log('   el candado del WMS es de otro robot (%s, hace %.0f min): no se toca'
+            % (duenio['quien'], duenio['minutos']), 'AVISO')
+        return False
+    bloqueo_wms.soltar()
+    log('   se solto el candado del WMS que dejo la bajada cortada (tomado hace %.0f '
+        'min). Sin esto quedaba puesto hasta vencerse y los robots de atras entraban '
+        'encima.' % duenio['minutos'], 'AVISO')
+    return True
+
+
 def refrescar_pendientes():
     """BAJA DEL WMS UNA FOTO DE HOY ANTES DE CRUZAR. Devuelve True solo si la foto
     que queda en disco es POSTERIOR al correo mas nuevo.
@@ -558,9 +598,23 @@ def refrescar_pendientes():
 
     log('Bajando del WMS la foto de hoy (365 dias, unos 8 minutos)...')
     cod = -1
+    cortada = False
+    # SIN LOS DESPACHADOS. `--solo-pendientes` a secas baja los dos acumulados -la
+    # corrida de las 04:30 los necesita- y este cruce solo lee el Pendientes: del 04 al
+    # 10-sep-2026 eran 11 a 12 minutos y 50 MB de mas cada noche, dentro del cierre de
+    # turno, y el 10-sep el pendiente salio 19:35 en vez de ~19:23. Un
+    # picking_y_orden.py que todavia no conoce la bandera la ignora y baja los dos,
+    # como antes.
+    lanzada = time.time()
     try:
-        cod = subprocess.run([sys.executable, bajador, '--solo-pendientes'],
+        cod = subprocess.run([sys.executable, bajador, '--solo-pendientes',
+                              '--sin-despachados'],
                              timeout=ESPERA_BAJADA).returncode
+    except subprocess.TimeoutExpired:
+        cortada = True
+        log('La bajada paso los %d minutos y se corto sin terminar.'
+            % (ESPERA_BAJADA // 60), 'ERROR')
+        soltar_candado_propio(lanzada)
     except Exception as e:
         log('No se pudo correr picking_y_orden.py (%s: %s)'
             % (type(e).__name__, str(e)[:140]), 'ERROR')
@@ -569,7 +623,7 @@ def refrescar_pendientes():
     elif cod == 3:
         log('El WMS estaba ocupado con otro robot y esta bajada le cede el paso.',
             'AVISO')
-    else:
+    elif not cortada:
         log('La bajada FALLO (codigo %s). Mirar logs/picking_orden_*.log' % cod,
             'ERROR')
 
