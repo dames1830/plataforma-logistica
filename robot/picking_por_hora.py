@@ -101,8 +101,14 @@ API = "https://logistics-backend-wv0x.onrender.com/api/logistics"
 AREA_PICKING = "picking_dias"
 AREA_MAESTRO = "articulos"
 
-# El mismo tope que aplica la pantalla (csvHub_v6.js: PICKING_TOPE_DIAS).
-TOPE_DIAS = 120
+# EL MISMO TOPE QUE LA PANTALLA (csvHub_v6.js: PICKING_TOPE_DIAS). Si se separan,
+# el que tenga el menor borra lo que guardo el otro.
+#
+# 200, NO 120, desde el 10-sep-2026. Daniel pidio el Reporte Picking desde el
+# 01-04-2026 con los meses recuperados del WMS: son 136 dias, y con 120 el primer
+# pase del avance habria borrado abril sin avisar. Medido: un dia pesa de 125 a
+# 180 KB, asi que 200 dias son unos 30 MB sin comprimir.
+TOPE_DIAS = 200
 
 # CUÁNTO TIENE QUE PESAR EL CSV. Muy por debajo del piso del robot diario (500 KB)
 # a propósito: a las 08:00 este robot pide cuatro horas de catálogo web, que son

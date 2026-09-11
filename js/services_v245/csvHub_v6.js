@@ -3280,8 +3280,16 @@ export const calculateBufferPallets = (configOverride = null) => {
    ============================================================================ */
 
 const PICKING_AREA = 'picking_dias';
-/** Tope de días guardados. A 80 KB cada uno son ~9,6 MB en el peor caso. */
-const PICKING_TOPE_DIAS = 120;
+/** Tope de días guardados.
+ *
+ *  200, NO 120, desde el 10-sep-2026. Daniel pidió el Reporte Picking desde el
+ *  01-04-2026 con los meses recuperados del WMS —136 días—, y con 120 cualquier
+ *  guardado habría borrado abril sin avisar. Medido: un día pesa de 125 a 180 KB,
+ *  así que 200 días son unos 30 MB sin comprimir (el backend lo manda con GZip).
+ *
+ *  El robot usa el MISMO tope en `robot/picking_por_hora.py`: si se separan, el
+ *  que tenga el menor borra lo que guardó el otro. */
+const PICKING_TOPE_DIAS = 200;
 
 /**
  * SIEMPRE `?date=MASTER`, EN LA LECTURA Y EN LA ESCRITURA.
