@@ -107,12 +107,32 @@ pendiente son órdenes nacidas durante el día—.
 A esa hora el WMS lo está usando el robot del stock, así que esta bajada **cede**:
 espera 20 minutos y, si sigue ocupado, sale con código 3 sin bajar nada. Vale más
 quedarse con el pendiente de ayer que pisarlo con uno a medias.
+
+LOS ACUMULADOS, DE A TRAMOS
+---------------------------
+La exportación a CSV del WMS corta en 200.000 filas y no avisa. Los Despachados de
+30 días la pasaron el 08-sep-2026 y bajaron cortados cuatro veces, sin un solo error
+en el log. Desde el 10-sep los dos acumulados —Pendientes y Despachados— miran
+primero cuántas páginas trae la búsqueda y, si no caben, se bajan en tramos de fecha
+de creación que después se juntan en el archivo de siempre. Ver
+`descargar_por_tramos`.
+
+    python picking_y_orden.py --solo-despachados
+    python picking_y_orden.py --solo-pendientes --carpeta <carpeta> --esperar 90
+
+`--solo-despachados` baja solo ese archivo, hasta hoy. `--carpeta` deja los dos
+acumulados en otra carpeta —para probar sin pisar los de OneDrive, que leen los
+demás robots— y `--esperar` son los minutos que se espera el turno del WMS antes de
+rendirse sin entrar.
 """
 
+import csv
+import heapq
 import io
 import json
 import os
 import re
+import shutil
 import sys
 import time
 from datetime import datetime, timedelta
@@ -221,9 +241,11 @@ MINIMO_FILAS_DESPACHADOS = 2000
 # domingo 30-ago había pasado igual con 301 filas. Un día flojo pesa poco y está
 # completo: **el peso no dice si la descarga sirvió; las filas sí**.
 #
-# Y el archivo se guarda ANTES de comprobar, así que un piso mal puesto no
-# protege de nada: solo canta un error que no existe y gasta tres reintentos,
-# nueve minutos de sesión del WMS, para volver a bajar el mismo archivo bueno.
+# Y un piso mal puesto no protege de nada: solo canta un error que no existe y
+# gasta tres reintentos, nueve minutos de sesión del WMS, para volver a bajar el
+# mismo archivo bueno. (Hasta el 10-sep-2026, además, el archivo se guardaba
+# ANTES de comprobar, encima del bueno; ahora baja a un archivo de paso: ver
+# `exportar_csv`.)
 #
 # Medido sobre lo que hay en disco al 06-sep-2026:
 #     Picking          5.621 filas el sábado, 18.000 a 28.000 entre semana
@@ -239,6 +261,46 @@ MINIMO_FILAS_PENDIENTES = 2000
 # CUANTO SE LE DA A ORACLE PARA ARMAR EL CSV, en minutos. Los reportes de siempre lo
 # arman en dos o tres; el OBLPN es mucho mas pesado y le pasa su propio valor.
 MINUTOS_ARMADO = 15
+
+# ══ EL TOPE DE LA EXPORTACIÓN: 200.000 FILAS ══════════════════════════════════
+#
+# ORACLE CORTA LA EXPORTACIÓN A CSV EN 200.000 FILAS Y NO AVISA. Lo destapó el
+# "Detalle Orden Despachados.csv": del 08 al 10-sep-2026 bajó 200.000 filas clavadas
+# cuatro veces, mientras la grilla anunciaba 1.620, 1.673, 1.681 y 1.733 páginas
+# —de 202.376 filas para arriba la más chica—. El archivo sale sano de forma, con
+# sus 30 columnas y la última fila entera: nada en él delata el corte, y el robot lo
+# daba por bueno.
+#
+# Y NO CORTA POR FECHA SINO POR ARTÍCULO. La exportación viene ordenada por "Código
+# de artículo", así que lo que queda afuera es la COLA de la lista: el 10-sep, del
+# 8899314-1-03 para arriba —los códigos 98 y 99 de Bata y North Star, Weinbrenner,
+# Power, Bubblegummers—, en los treinta días a la vez. Un archivo así no dice "me
+# falta la última semana": dice que esas marcas no se despacharon.
+TOPE_EXPORTACION_WMS = 200000
+# LA GRILLA MUESTRA 125 FILAS POR PÁGINA, y con eso las páginas dicen cuántas filas
+# tiene que traer el archivo. Medido en los logs del 06 al 10-sep-2026: de 55
+# descargas, 47 cayeron justas en sus páginas —TODAS las del Detalle de Orden, de
+# madrugada y de tarde—; cuatro OBLPN del día se pasaron por 1, 43, 111 y 424 filas
+# —el embalaje seguía mientras Oracle armaba el archivo—, y las otras cuatro eran
+# los Despachados cortados. Por eso el control de páginas lo usan los tramos del
+# Detalle de Orden y no el OBLPN.
+FILAS_POR_PAGINA = 125
+# HASTA DÓNDE SE EXPORTA DE UNA VEZ. Si la búsqueda anuncia más, el rango se parte
+# ANTES de exportar: no tiene sentido esperar doce minutos un archivo que ya se sabe
+# cortado. Quedan 50.000 filas de margen para lo que entre entre la búsqueda y la
+# exportación, que en esos 55 casos nunca pasó de 424.
+FILAS_POR_TRAMO = 150000
+# UN FRENO por si algo sale muy mal: un filtro de estado perdido trae millones de
+# filas y el rango se partiría una y otra vez.
+MAXIMO_BUSQUEDAS_POR_TRAMOS = 16
+# LOS TRAMOS SE PISAN UNA HORA: uno termina a las 23:59:59 y el siguiente empieza a
+# las 23:00:00 de ese mismo día. Cortando 23:59:59 -> 00:00:00, una orden creada a
+# las 23:59:59 y medio no entraría en ninguno de los dos. Lo que sale repetido se
+# quita al juntar, por orden entera: ver `juntar_tramos`.
+HORA_EMPALME = "23:00:00"
+# UN CAMPO DE HASTA 16 MB. El módulo csv corta en 131.072 caracteres por campo y
+# levanta un error: una descripción larga no puede tumbar la cuenta de filas.
+csv.field_size_limit(16 * 1024 * 1024)
 
 _LOG = None
 _PASO = 0
@@ -361,7 +423,9 @@ def dia_pedido():
     # defecto es ayer -este robot nacio como "Picking y Detalle Orden de ayer"-.
     # Un cierre de turno tiene que retratar SU turno: el de las 19:00 baja el dia que
     # termina y el de las 07:00 el que arranca. Entre los dos queda el dia completo.
-    if "--solo-pendientes" in sys.argv or "--solo-dia" in sys.argv:
+    #
+    # `--solo-despachados` TAMBIEN ES HOY: es la misma bajada de la madrugada, sola.
+    if any(b in sys.argv for b in ("--solo-pendientes", "--solo-dia", "--solo-despachados")):
         return datetime.now()
     return datetime.now() - timedelta(days=1)
 
@@ -719,7 +783,78 @@ def sello_exportacion(page):
         return ""
 
 
-def exportar_csv(page, destino, minimo_filas, minutos_armado=MINUTOS_ARMADO):
+def contar_filas(ruta):
+    """Cuántas filas de datos trae un CSV del WMS, sin contar la cabecera.
+
+    SE CUENTAN REGISTROS, NO RENGLONES. Una descripción con un salto de línea adentro
+    ocupa dos renglones y es una sola fila: contando renglones, un archivo cortado en
+    200.000 filas podía dar 200.001 y pasar de largo el control del tope. Se lee de a
+    poco, sin cargarlo entero: los acumulados pesan 25 y 50 MB."""
+    with io.open(ruta, encoding="utf-8-sig", errors="replace", newline="") as fh:
+        registros = sum(1 for _ in csv.reader(fh, delimiter=";"))
+    return max(0, registros - 1)
+
+
+def cuadra_con_paginas(filas, paginas):
+    """¿Las filas del archivo son las que anunciaban las páginas de la grilla?
+
+    'exacto' si caben en esas páginas; 'cerca' si se van por una página —entró o
+    salió algo entre la búsqueda y la exportación—; 'no' si no tienen nada que ver.
+    Ver FILAS_POR_PAGINA."""
+    if not paginas:
+        return "no"
+    minimo = FILAS_POR_PAGINA * (paginas - 1) + 1
+    maximo = FILAS_POR_PAGINA * paginas
+    if minimo <= filas <= maximo:
+        return "exacto"
+    if minimo - FILAS_POR_PAGINA <= filas <= maximo + FILAS_POR_PAGINA:
+        return "cerca"
+    return "no"
+
+
+def motivo_de_rechazo(filas, minimo_filas, paginas=None):
+    """Por qué un archivo recién bajado NO se da por bueno, o None si está bien.
+
+    EL TOPE VA PRIMERO Y ES EXACTO: 200.000 filas justas es un archivo cortado,
+    aunque pase el piso y aunque nadie haya dicho cuántas páginas eran. Ver
+    TOPE_EXPORTACION_WMS. Va aparte para poder probarla sin entrar al WMS."""
+    if filas == TOPE_EXPORTACION_WMS:
+        return "truncado"
+    if filas < minimo_filas:
+        return "corto"
+    if paginas and cuadra_con_paginas(filas, paginas) == "no":
+        return "no_cuadra"
+    return None
+
+
+def _ruta_de_paso(destino):
+    """Dónde espera un archivo recién bajado hasta pasar los controles: en los logs
+    del robot, fuera de OneDrive y lejos de las carpetas que leen los demás robots."""
+    carpeta = os.path.join(LOGS, "descargas_en_paso")
+    os.makedirs(carpeta, exist_ok=True)
+    return os.path.join(carpeta, os.path.basename(destino))
+
+
+def _borrar(ruta):
+    try:
+        if ruta and os.path.exists(ruta):
+            os.remove(ruta)
+    except OSError:
+        pass
+
+
+def poner_en_su_lugar(paso, destino):
+    """El archivo ya comprobado, encima del anterior.
+
+    SE COPIA, NO SE MUEVE. Mover a OneDrive un archivo del mismo disco es solo
+    cambiarle el nombre: aparece sin que OneDrive lo vea nacer y no se sincroniza
+    nunca. Copiarlo lo escribe de nuevo, igual que hacía la descarga directa."""
+    os.makedirs(os.path.dirname(destino), exist_ok=True)
+    shutil.copyfile(paso, destino)
+    _borrar(paso)
+
+
+def exportar_csv(page, destino, minimo_filas, minutos_armado=MINUTOS_ARMADO, paginas=None):
     """Exportar -> Exportar a CSV -> Aceptar -> esperar el sello nuevo -> Descargar.
 
     Es el mismo camino que baja el Stock Activo todos los días desde el 30-jul-2026,
@@ -727,7 +862,28 @@ def exportar_csv(page, destino, minimo_filas, minutos_armado=MINUTOS_ARMADO):
 
     `minutos_armado` es cuánto se le da a Oracle para armar el archivo. Son 15 para los
     reportes de siempre y 30 para el OBLPN, que es el más pesado: la corrida del 29-ago a
-    las 04:16 se rindió a los 15 minutos con el archivo todavía armándose."""
+    las 04:16 se rindió a los 15 minutos con el archivo todavía armándose.
+
+    `paginas`, si viene, son las que anunció la grilla, y el archivo tiene que traer
+    esas filas. Lo usan los tramos de los acumulados.
+
+    EL ARCHIVO BAJA A UN LUGAR DE PASO Y RECIÉN AL PASAR LOS CONTROLES PISA AL
+    ANTERIOR. Hasta el 10-sep-2026 se guardaba directo encima y después se contaba:
+    cuando el robot se daba cuenta de que venía corto —o cortado en el tope—, ya había
+    pisado el bueno, y los que leen la carpeta —el pendiente, la distribución, las
+    producciones— no se enteran de que la corrida falló. Ahora queda el de la vuelta
+    anterior, que es la regla de Daniel: vale más quedarse con el de ayer que pisarlo
+    con uno a medias."""
+    paso = _ruta_de_paso(destino)
+    _borrar(paso)
+    if not _bajar_exportacion(page, paso, minutos_armado):
+        return False
+    return _dar_por_bueno(page, paso, destino, minimo_filas, paginas)
+
+
+def _bajar_exportacion(page, paso, minutos_armado):
+    """El camino por el WMS hasta dejar el archivo en `paso`. False si el sello de la
+    exportación no cambió: bajar ahí sería traerse el archivo anterior."""
     import wms_automation_final as wms
 
     sello_viejo = sello_exportacion(page)
@@ -764,27 +920,44 @@ def exportar_csv(page, destino, minimo_filas, minutos_armado=MINUTOS_ARMADO):
     with page.expect_download(timeout=300000) as info:
         time.sleep(1)
         page.get_by_role("link", name="Descargar").last.click(force=True, timeout=120000)
-    descarga = info.value
-    os.makedirs(os.path.dirname(destino), exist_ok=True)
-    descarga.save_as(destino)
+    info.value.save_as(paso)
+    return True
 
-    kb = os.path.getsize(destino) / 1024.0
+
+def _dar_por_bueno(page, paso, destino, minimo_filas, paginas=None):
+    """Los controles del archivo recién bajado y, si los pasa, a su lugar."""
+    import wms_automation_final as wms
+
+    kb = os.path.getsize(paso) / 1024.0
     # SE CUENTAN LAS FILAS, NO LOS BYTES. Ver el comentario de los MINIMO_FILAS_*.
-    # Se lee de a poco: los acumulados son de 25 y 44 MB.
-    filas = 0
     try:
-        with io.open(destino, encoding="utf-8-sig", errors="replace") as fh:
-            for _ in fh:
-                filas += 1
-        filas = max(0, filas - 1)          # fuera la cabecera
-    except OSError as e:
+        filas = contar_filas(paso)
+    except (OSError, csv.Error) as e:
         log("No se pudo leer el archivo recién bajado: %s" % e, "ERROR")
         return False
-    if filas < minimo_filas:
+    motivo = motivo_de_rechazo(filas, minimo_filas, paginas)
+    if motivo == "truncado":
+        log("ARCHIVO TRUNCADO: bajó %s filas justas, que es el tope de la exportación "
+            "del WMS. Lo que pasa de ahí no viene y no hay forma de saber cuánto falta. "
+            "No se da por bueno: queda el archivo anterior." % format(filas, ",d"), "ERROR")
+        return False
+    if motivo == "corto":
         log("El archivo bajó con solo %s filas (%.0f KB), se esperaban más de %s"
             % (format(filas, ",d"), kb, format(minimo_filas, ",d")), "ERROR")
         wms.captura(page, "archivo_chico")
         return False
+    if motivo == "no_cuadra":
+        log("El archivo trae %s filas y la grilla anunciaba %s páginas: de %s a %s "
+            "filas. No se da por bueno."
+            % (format(filas, ",d"), format(paginas, ",d"),
+               format(FILAS_POR_PAGINA * (paginas - 1) + 1, ",d"),
+               format(FILAS_POR_PAGINA * paginas, ",d")), "ERROR")
+        return False
+    if paginas and cuadra_con_paginas(filas, paginas) == "cerca":
+        log("   %s filas para %s páginas: se va por menos de una página, entró o salió "
+            "algo mientras Oracle armaba el archivo"
+            % (format(filas, ",d"), format(paginas, ",d")), "WARN")
+    poner_en_su_lugar(paso, destino)
     log("Guardado: %s filas · %.2f MB en %s"
         % (format(filas, ",d"), kb / 1024.0, destino))
     return True
@@ -1022,6 +1195,372 @@ def poner_estado(page, etiqueta, valor):
     log("   %s = %s" % (etiqueta, elegido))
 
 
+# ─────────── Los acumulados, de a tramos: el tope de las 200.000 filas ───────────
+
+COL_ORDEN = "Número de orden"
+COL_CREACION = "Registro de hora de creación de cabecera de orden"
+COL_ARTICULO = "Código de artículo"
+
+# LO QUE YA BAJÓ BIEN EN ESTA CORRIDA. Si un tramo falla, `con_reintentos` vuelve a
+# llamar desde el principio; los tramos que estaban bien no se exportan otra vez,
+# que cada uno son minutos de sesión del WMS.
+_TRAMOS_LISTOS = {}
+_CARPETAS_LIMPIAS = set()
+
+
+def _limpio(valor):
+    """El valor sin el ="..." con que el WMS envuelve algunos números."""
+    v = (valor or "").strip()
+    if v.startswith('="') and v.endswith('"'):
+        v = v[2:-1]
+    return v
+
+
+def _fecha_wms(valor):
+    """'13/08/2026 18:44:55' -> datetime; None si no se entiende."""
+    try:
+        return datetime.strptime(_limpio(valor), "%d/%m/%Y %H:%M:%S")
+    except ValueError:
+        return None
+
+
+def _registros(ruta):
+    """Cada registro de un CSV del WMS como (campos, texto tal cual vino). El primero
+    es la cabecera.
+
+    EL TEXTO CRUDO ES PARA JUNTAR SIN TOCAR NADA: los ="..." de los números, las
+    comillas y los fines de línea quedan como los escribió Oracle, y una fila con un
+    salto de línea adentro llega entera en un solo texto."""
+    with io.open(ruta, encoding="utf-8-sig", errors="replace", newline="") as fh:
+        crudo = []
+
+        def renglones():
+            for renglon in fh:
+                crudo.append(renglon)
+                yield renglon
+
+        for campos in csv.reader(renglones(), delimiter=";"):
+            texto = "".join(crudo)
+            del crudo[:]
+            yield campos, texto
+
+
+def partir_en_dos(desde_dia, hasta_dia):
+    """Un rango de días enteros en dos mitades; un solo día no se parte (None)."""
+    dias = (hasta_dia.date() - desde_dia.date()).days
+    if dias < 1:
+        return None
+    medio = desde_dia + timedelta(days=dias // 2)
+    return (desde_dia, medio), (medio + timedelta(days=1), hasta_dia)
+
+
+def filtro_del_tramo(desde_dia, hasta_dia, inicio_del_rango):
+    """Las casillas de fecha de un tramo: ((fecha, hora), (fecha, hora)).
+
+    El primer tramo arranca a las 0:00:00, como siempre; los demás, a la HORA_EMPALME
+    del día anterior, para no perder lo creado en el último segundo del corte."""
+    if desde_dia.date() <= inicio_del_rango.date():
+        de = (desde_dia.strftime("%d/%m/%Y"), "0:00:00")
+    else:
+        de = ((desde_dia - timedelta(days=1)).strftime("%d/%m/%Y"), HORA_EMPALME)
+    return de, (hasta_dia.strftime("%d/%m/%Y"), "23:59:59")
+
+
+def revisar_tramo(ruta, desde, hasta):
+    """(filas, filas creadas FUERA de [desde, hasta]) de un tramo recién bajado.
+
+    Se puede mirar la fecha de la cabecera porque el filtro del panel es ESA fecha:
+    comprobado el 10-sep-2026 sobre 1.128.273 filas de los diarios, ninguna trae una
+    cabecera creada otro día. Una fecha que no se entiende cuenta como fuera: mejor un
+    tramo rechazado de más que uno de otro rango aceptado."""
+    filas = fuera = 0
+    registros = _registros(ruta)
+    cabecera, _ = next(registros, ([], ""))
+    if COL_CREACION not in cabecera:
+        registros.close()
+        raise ValueError("%s no trae la columna '%s'" % (os.path.basename(ruta), COL_CREACION))
+    i = cabecera.index(COL_CREACION)
+    for campos, _ in registros:
+        filas += 1
+        creada = _fecha_wms(campos[i]) if len(campos) > i else None
+        if creada is None or not desde <= creada <= hasta:
+            fuera += 1
+    return filas, fuera
+
+
+def juntar_tramos(tramos, salida):
+    """Junta los CSV de los tramos en uno solo, como si el WMS lo hubiera exportado de
+    una vez. `tramos` es [(ruta, desde, hasta)], del más viejo al más nuevo, con las
+    fechas que se pusieron en el panel.
+
+    ORDENADO POR CÓDIGO DE ARTÍCULO, que es como exporta el WMS: el archivo juntado se
+    lee igual que los de siempre. Cada tramo ya viene ordenado, así que se intercalan
+    fila a fila, sin cargar 50 MB en memoria, y cada fila se copia TAL CUAL vino.
+
+    LO REPETIDO DEL EMPALME SE QUITA POR ORDEN ENTERA. Una orden creada entre las
+    23:00 y las 23:59:59 del día de corte sale en los dos tramos; se queda la del más
+    nuevo, que es la foto más fresca. Por orden y no por fila, porque dos filas
+    idénticas de una misma orden son reales —la orden pide el mismo artículo en dos
+    líneas— y no hay que juntarlas. Y solo se miran las órdenes creadas dentro del
+    empalme: una orden de otro día no se toca nunca.
+
+    Devuelve (filas escritas, filas repetidas quitadas)."""
+    cabeceras = []
+    for ruta, _, _ in tramos:
+        registros = _registros(ruta)
+        cabeceras.append(next(registros, (None, "")))
+        registros.close()
+    cabecera, texto_cabecera = cabeceras[0]
+    if not cabecera or any(c != cabecera for c, _ in cabeceras[1:]):
+        raise ValueError("Los tramos no traen las mismas columnas: no se pueden juntar")
+    faltan = [c for c in (COL_ORDEN, COL_CREACION, COL_ARTICULO) if c not in cabecera]
+    if faltan:
+        raise ValueError("Para juntar los tramos faltan las columnas: %s" % ", ".join(faltan))
+    i_ord = cabecera.index(COL_ORDEN)
+    i_cre = cabecera.index(COL_CREACION)
+    i_art = cabecera.index(COL_ARTICULO)
+    largo = max(i_ord, i_cre, i_art) + 1
+    fin = "\r\n" if texto_cabecera.endswith("\r\n") else "\n"
+    if not texto_cabecera.endswith("\n"):
+        texto_cabecera += fin
+
+    def orden_y_hora(campos):
+        if len(campos) < largo:
+            return None, None
+        creada = _limpio(campos[i_cre])
+        return (_limpio(campos[i_ord]), creada), _fecha_wms(creada)
+
+    # Las órdenes que cada tramo trae de su empalme: las creadas antes de que termine
+    # el tramo anterior. Solo esas pueden estar también en el anterior.
+    del_empalme = [set() for _ in tramos]
+    for j in range(1, len(tramos)):
+        fin_anterior = tramos[j - 1][2]
+        registros = _registros(tramos[j][0])
+        next(registros, None)
+        for campos, _ in registros:
+            orden, creada = orden_y_hora(campos)
+            if orden and creada is not None and creada <= fin_anterior:
+                del_empalme[j].add(orden)
+
+    quitadas = [0]
+
+    def filas_del(i):
+        siguiente = del_empalme[i + 1] if i + 1 < len(tramos) else set()
+        desde_siguiente = tramos[i + 1][1] if i + 1 < len(tramos) else None
+        registros = _registros(tramos[i][0])
+        next(registros, None)
+        for campos, texto in registros:
+            if siguiente:
+                orden, creada = orden_y_hora(campos)
+                if (orden in siguiente and creada is not None
+                        and creada >= desde_siguiente):
+                    quitadas[0] += 1
+                    continue
+            if not texto.endswith("\n"):
+                texto += fin
+            yield (_limpio(campos[i_art]) if len(campos) > i_art else ""), texto
+
+    escritas = 0
+    with io.open(salida, "w", encoding="utf-8-sig", newline="") as out:
+        out.write(texto_cabecera)
+        for _, texto in heapq.merge(*[filas_del(i) for i in range(len(tramos))],
+                                    key=lambda par: par[0]):
+            out.write(texto)
+            escritas += 1
+    return escritas, quitadas[0]
+
+
+def _buscar_detalle_orden(page, que, de, a, estados, con_fotos=False):
+    """Una búsqueda en REP_DETALLE DE ORDEN por fecha de creación y estado.
+
+    `de` y `a` son (fecha, hora) y `estados` el par (desde, hasta). Devuelve las
+    páginas que anuncia la grilla, o None si un estado no se pudo poner.
+
+    LOS ESTADOS SON OBLIGATORIOS. Sin ellos la búsqueda trae todos: los pendientes
+    mezclarían lo atendido y los despachados, lo que no salió. Y partido en tramos
+    sería peor todavía, millones de filas en decenas de exportaciones. No se baja."""
+    import wms_automation_final as wms
+
+    abrir_pantalla(page, PANTALLA_ORDEN)
+    abrir_panel(page)
+    limpiar_panel(page)
+
+    poner_fecha_y_hora(page, ETQ_ORD_DESDE, de[0], de[1])
+    poner_fecha_y_hora(page, ETQ_ORD_HASTA, a[0], a[1])
+
+    # Los estados van DESPUÉS de las fechas: si la lista dispara una búsqueda por su
+    # cuenta, que al menos salga con las fechas ya puestas.
+    for etq, val in ((ETQ_ORD_ESTADO_DE, estados[0]), (ETQ_ORD_ESTADO_A, estados[1])):
+        try:
+            poner_estado(page, etq, val)
+        except Exception as e:
+            log("   NO se pudo poner '%s' = %s (%s: %s). Sin ese filtro el archivo "
+                "traeria todos los estados. No se baja."
+                % (etq, val, type(e).__name__, str(e)[:120]), "ERROR")
+            return None
+    if con_fotos:
+        foto(page, "%s_filtros_puestos" % que.lower())
+
+    _, pie_antes = total_paginas(page)      # el pie que deja la búsqueda anterior
+    ejecutar_busqueda(page)
+    log("Esperando a que Oracle traiga las filas...")
+    paginas = esperar_resultado(page, timeout_seg=420, distinto_de=pie_antes)
+    if not paginas:
+        # DOS TRAMOS SEGUIDOS CON LAS MISMAS PÁGINAS DEJAN EL MISMO PIE y la espera de
+        # arriba no ve el cambio. Si la grilla tiene páginas y caben en un tramo, se
+        # sigue: `revisar_tramo` comprueba por las fechas que el archivo sea de ESTE
+        # tramo y no del anterior.
+        paginas, txt = total_paginas(page)
+        if paginas and paginas * FILAS_POR_PAGINA <= FILAS_POR_TRAMO:
+            log("El pie no cambió (%s). Se sigue: las fechas del archivo dirán si es de "
+                "este tramo" % txt, "WARN")
+        else:
+            paginas = 0
+    if not paginas:
+        wms.captura(page, "%s_sin_datos" % que.lower())
+        raise TimeoutError("%s: la búsqueda no trajo ninguna fila" % que)
+    if con_fotos:
+        foto(page, "%s_resultado" % que.lower())
+    return paginas
+
+
+def descargar_por_tramos(page, destino, que, desde_dia, hasta_dia, estados, minimo_filas,
+                         sin_exportar=False, con_fotos=False):
+    """Baja un acumulado del Detalle de Orden sin chocar con el tope de 200.000 filas.
+
+    SE BUSCA EL RANGO ENTERO Y SE MIRAN LAS PÁGINAS, que se leen antes de exportar
+    nada. Si caben en FILAS_POR_TRAMO se exporta de una vez, como siempre. Si no, el
+    rango se parte en dos mitades de días y se repite con cada una: un mes tranquilo
+    sale en un solo archivo y uno cargado en los tramos que haga falta, sin adivinar
+    de antemano cuántos.
+
+    CADA TRAMO SE COMPRUEBA DOS VECES antes de juntarlo: que traiga las filas que
+    anunciaban sus páginas, y que todas sus fechas de creación caigan dentro del
+    tramo. Lo segundo es por la grilla vieja: si la búsqueda no llegó a correr, la
+    pantalla sigue mostrando el tramo anterior y la exportación lo trae entero con
+    otro nombre; cuadra con sus páginas y está mal. Si uno falla se levanta el error y
+    `con_reintentos` vuelve a probar, sin bajar otra vez los que ya estaban bien.
+
+    Al final los tramos se juntan en el archivo de siempre —ordenado por artículo,
+    como exporta el WMS— y ese archivo recién pisa al anterior cuando todo cuadró."""
+    carpeta = os.path.join(LOGS, "tramos_%s" % que.lower())
+    if carpeta not in _CARPETAS_LIMPIAS:
+        # Lo que haya quedado de otra corrida no se mezcla con esta.
+        shutil.rmtree(carpeta, ignore_errors=True)
+        _CARPETAS_LIMPIAS.add(carpeta)
+    os.makedirs(carpeta, exist_ok=True)
+
+    por_hacer = [(desde_dia, hasta_dia)]
+    listos = []
+    busquedas = 0
+    while por_hacer:
+        d, h = por_hacer.pop(0)
+        nombre = "del %s al %s" % (d.strftime("%d-%m"), h.strftime("%d-%m"))
+        clave = (que, d.date(), h.date())
+        if clave in _TRAMOS_LISTOS:
+            log("Tramo %s: ya bajó bien en el intento anterior, no se repite" % nombre)
+            listos.append(_TRAMOS_LISTOS[clave])
+            continue
+        busquedas += 1
+        if busquedas > MAXIMO_BUSQUEDAS_POR_TRAMOS:
+            log("%s: van %d búsquedas y el rango todavía no cabe. Algo está mal —¿el "
+                "filtro de estado?—. No se baja." % (que, MAXIMO_BUSQUEDAS_POR_TRAMOS),
+                "ERROR")
+            return False
+        de, a = filtro_del_tramo(d, h, desde_dia)
+        desde_dt = datetime.strptime("%s %s" % de, "%d/%m/%Y %H:%M:%S")
+        hasta_dt = datetime.strptime("%s %s" % a, "%d/%m/%Y %H:%M:%S")
+        log("-" * 58)
+        log("%s · tramo %s  (%s %s  ->  %s %s)"
+            % (que.upper(), nombre, de[0], de[1], a[0], a[1]))
+        paginas = _buscar_detalle_orden(page, que, de, a, estados, con_fotos)
+        if paginas is None:
+            return False
+        if paginas * FILAS_POR_PAGINA > FILAS_POR_TRAMO:
+            mitades = partir_en_dos(d, h)
+            if not mitades:
+                log("El %s solo trae %s páginas: más de %s filas en UN día. No se puede "
+                    "partir más." % (d.strftime("%d-%m-%Y"), format(paginas, ",d"),
+                                     format(FILAS_POR_TRAMO, ",d")), "ERROR")
+                return False
+            (d1, h1), (d2, h2) = mitades
+            log("%s páginas son hasta %s filas, y de una vez se exportan %s: se parte "
+                "en %s a %s y %s a %s"
+                % (format(paginas, ",d"), format(paginas * FILAS_POR_PAGINA, ",d"),
+                   format(FILAS_POR_TRAMO, ",d"), d1.strftime("%d-%m"),
+                   h1.strftime("%d-%m"), d2.strftime("%d-%m"), h2.strftime("%d-%m")))
+            por_hacer[0:0] = list(mitades)
+            continue
+        if sin_exportar:
+            log("MODO PRUEBA: el tramo cabe (%s páginas) y no se exporta"
+                % format(paginas, ",d"))
+            continue
+
+        ruta = os.path.join(carpeta, "%s_%s.csv" % (d.strftime("%Y%m%d"), h.strftime("%Y%m%d")))
+        try:
+            ok = exportar_csv(page, ruta, 1, paginas=paginas)
+        except Exception as e:
+            # UN TRAMO SIN FILAS NO ES UNA FALLA. La misma regla del día vacío: una sola
+            # página y sin botón de exportar, porque no hay nada que exportar.
+            if paginas <= 1 and "Exportar" in str(e):
+                log("Tramo %s sin filas: una sola página y sin botón de exportar"
+                    % nombre, "WARN")
+                _TRAMOS_LISTOS[clave] = (d, h, None, 0, desde_dt, hasta_dt)
+                listos.append(_TRAMOS_LISTOS[clave])
+                continue
+            raise
+        if not ok:
+            raise RuntimeError("%s: el tramo %s no bajó bien" % (que, nombre))
+        filas, fuera = revisar_tramo(ruta, desde_dt, hasta_dt)
+        if fuera:
+            log("El tramo %s trae %s de %s filas creadas FUERA del tramo: se exportó otra "
+                "búsqueda, no esta. No se da por bueno."
+                % (nombre, format(fuera, ",d"), format(filas, ",d")), "ERROR")
+            raise RuntimeError("%s: el tramo %s trae filas de otro rango" % (que, nombre))
+        _TRAMOS_LISTOS[clave] = (d, h, ruta, filas, desde_dt, hasta_dt)
+        listos.append(_TRAMOS_LISTOS[clave])
+        log("Tramo %s bueno: %s filas en %s páginas"
+            % (nombre, format(filas, ",d"), format(paginas, ",d")))
+
+    if sin_exportar:
+        return True
+
+    con_filas = sorted((t for t in listos if t[2]), key=lambda t: t[0])
+    if not con_filas:
+        log("%s: ningún tramo trajo filas" % que, "ERROR")
+        return False
+    suma = sum(t[3] for t in con_filas)
+    paso = _ruta_de_paso(destino)
+    if len(con_filas) == 1:
+        shutil.copyfile(con_filas[0][2], paso)
+        total, repetidas = suma, 0
+    else:
+        total, repetidas = juntar_tramos([(t[2], t[4], t[5]) for t in con_filas], paso)
+        log("Juntados %d tramos: %s filas, menos %s repetidas del empalme = %s"
+            % (len(con_filas), format(suma, ",d"), format(repetidas, ",d"),
+               format(total, ",d")))
+        if total + repetidas != suma:
+            log("Al juntar no cuadran las filas: %s escritas y %s repetidas contra %s de "
+                "los tramos. No se da por bueno."
+                % (format(total, ",d"), format(repetidas, ",d"), format(suma, ",d")),
+                "ERROR")
+            return False
+    if total < minimo_filas:
+        log("%s: %s filas en total, se esperaban más de %s"
+            % (que, format(total, ",d"), format(minimo_filas, ",d")), "ERROR")
+        return False
+    mb = os.path.getsize(paso) / 1048576.0
+    poner_en_su_lugar(paso, destino)
+    for t in con_filas:
+        _borrar(t[2])
+    for k in [k for k in _TRAMOS_LISTOS if k[0] == que]:
+        del _TRAMOS_LISTOS[k]
+    log("Guardado: %s filas · %.2f MB en %s  (%d %s)"
+        % (format(total, ",d"), mb, destino, len(con_filas),
+           "tramo" if len(con_filas) == 1 else "tramos"))
+    return True
+
+
 def descargar_pendientes(page, destino, hasta_dia, dias=DIAS_PENDIENTES,
                          sin_exportar=False, con_fotos=False):
     """El Detalle de Orden de TODO lo que sigue sin atender, hasta %d días atrás.
@@ -1046,46 +1585,22 @@ def descargar_pendientes(page, destino, hasta_dia, dias=DIAS_PENDIENTES,
     El archivo se llama siempre igual y se pisa: es una foto del pendiente de hoy,
     no un histórico.
     """
-    import wms_automation_final as wms
     desde_dia = hasta_dia - timedelta(days=dias - 1)
     log("=" * 58)
     log("PENDIENTES · del %s al %s (%d días)"
         % (desde_dia.strftime("%d-%m-%Y"), hasta_dia.strftime("%d-%m-%Y"), dias))
     log("=" * 58)
-
-    abrir_pantalla(page, PANTALLA_ORDEN)
-    abrir_panel(page)
-    limpiar_panel(page)
-
-    poner_fecha_y_hora(page, ETQ_ORD_DESDE, desde_dia.strftime("%d/%m/%Y"), "0:00:00")
-    poner_fecha_y_hora(page, ETQ_ORD_HASTA, hasta_dia.strftime("%d/%m/%Y"), "23:59:59")
-
-    # Los estados van DESPUÉS de las fechas: si la lista dispara una búsqueda por
-    # su cuenta, que al menos salga con las fechas ya puestas y no con 90 días de
-    # todo el almacén.
-    for etq, val in ((ETQ_ORD_ESTADO_DE, ESTADO_DESDE), (ETQ_ORD_ESTADO_A, ESTADO_HASTA)):
-        try:
-            poner_estado(page, etq, val)
-        except Exception as e:
-            log("   NO se pudo poner '%s' = %s (%s: %s). El archivo va a salir "
-                "enorme: son 90 dias de todos los estados."
-                % (etq, val, type(e).__name__, str(e)[:120]), "WARN")
-    if con_fotos:
-        foto(page, "pendientes_filtros_puestos")
-
-    _, pie_antes = total_paginas(page)      # el pie que deja la búsqueda anterior
-    ejecutar_busqueda(page)
-    log("Esperando a que Oracle traiga las filas...")
-    if not esperar_resultado(page, timeout_seg=420, distinto_de=pie_antes):
-        wms.captura(page, "pendientes_sin_datos")
-        raise TimeoutError("Los pendientes no trajeron ninguna fila")
-    if con_fotos:
-        foto(page, "pendientes_resultado")
-
-    if sin_exportar:
-        log("MODO PRUEBA: no se exporta")
-        return True
-    return exportar_csv(page, destino, MINIMO_FILAS_PENDIENTES)
+    # DE A TRAMOS SI HACE FALTA. Hoy son unas 100.000 filas y salen de una vez, igual
+    # que siempre; el día que pasen de FILAS_POR_TRAMO se parten solas en vez de bajar
+    # cortadas, como les pasó a los despachados. Ver `descargar_por_tramos`.
+    #
+    # Y SIN FILTRO DE ESTADO YA NO SE BAJA. Antes seguía con un aviso de que "el
+    # archivo iba a salir enorme": 365 días de todos los estados, que el tope habría
+    # cortado por artículo sin decir nada. Un pendiente que no se actualiza se nota;
+    # uno que mezcla lo atendido con lo que falta, no.
+    return descargar_por_tramos(page, destino, "Pendientes", desde_dia, hasta_dia,
+                                (ESTADO_DESDE, ESTADO_HASTA), MINIMO_FILAS_PENDIENTES,
+                                sin_exportar=sin_exportar, con_fotos=con_fotos)
 
 
 # ──────────────────────────────── La corrida ────────────────────────────────
@@ -1104,53 +1619,22 @@ def descargar_despachados(page, destino, hasta_dia, dias=DIAS_DESPACHADOS,
     El archivo se pisa en cada corrida: es la foto de lo despachado del ultimo mes, no
     un historico. El historico de lo picado ya lo tiene el archivo de picking de cada dia.
     """
-    import wms_automation_final as wms
     desde_dia = hasta_dia - timedelta(days=dias - 1)
     log("=" * 58)
     log("DESPACHADOS - del %s al %s (%d dias) - estados Cargado y Enviado"
         % (desde_dia.strftime("%d-%m-%Y"), hasta_dia.strftime("%d-%m-%Y"), dias))
     log("=" * 58)
-
-    abrir_pantalla(page, PANTALLA_ORDEN)
-    abrir_panel(page)
-    limpiar_panel(page)
-
-    poner_fecha_y_hora(page, ETQ_ORD_DESDE, desde_dia.strftime("%d/%m/%Y"), "0:00:00")
-    poner_fecha_y_hora(page, ETQ_ORD_HASTA, hasta_dia.strftime("%d/%m/%Y"), "23:59:59")
-
-    # Igual que en los pendientes: los estados van DESPUES de las fechas, por si la
-    # lista dispara una busqueda por su cuenta.
-    for etq, val in ((ETQ_ORD_ESTADO_DE, ESTADO_DESP_DESDE),
-                     (ETQ_ORD_ESTADO_A, ESTADO_DESP_HASTA)):
-        try:
-            poner_estado(page, etq, val)
-        except Exception as e:
-            # SIN EL FILTRO NO SE BAJA NADA. Aca no vale el "que salga grande y ya":
-            # sin estado esto trae 30 dias de TODAS las ordenes, y el reporte creeria
-            # que todo eso se despacho. Un archivo que no esta se nota; uno que miente,
-            # no.
-            log("   NO se pudo poner '%s' = %s (%s: %s). Sin ese filtro el archivo "
-                "traeria todos los estados y el reporte contaria como despachado lo "
-                "que no lo esta. No se baja."
-                % (etq, val, type(e).__name__, str(e)[:120]), "ERROR")
-            return False
-
-    if con_fotos:
-        foto(page, "despachados_filtros_puestos")
-
-    _, pie_antes = total_paginas(page)
-    ejecutar_busqueda(page)
-    log("Esperando a que Oracle traiga las filas...")
-    if not esperar_resultado(page, timeout_seg=420, distinto_de=pie_antes):
-        wms.captura(page, "despachados_sin_datos")
-        raise TimeoutError("Los despachados no trajeron ninguna fila")
-    if con_fotos:
-        foto(page, "despachados_resultado")
-
-    if sin_exportar:
-        log("MODO PRUEBA: no se exporta")
-        return True
-    return exportar_csv(page, destino, MINIMO_FILAS_DESPACHADOS)
+    # DE A TRAMOS: treinta dias de despachados ya pasan las 200.000 filas que exporta
+    # el WMS -unas 209.000 el 10-sep-2026-. Ver `descargar_por_tramos`.
+    #
+    # SIN EL FILTRO DE ESTADO NO SE BAJA NADA. Aca no vale el "que salga grande y ya":
+    # sin estado esto trae 30 dias de TODAS las ordenes, y el reporte creeria que todo
+    # eso se despacho. Un archivo que no esta se nota; uno que miente, no. Lo cuida
+    # `_buscar_detalle_orden`.
+    return descargar_por_tramos(page, destino, "Despachados", desde_dia, hasta_dia,
+                                (ESTADO_DESP_DESDE, ESTADO_DESP_HASTA),
+                                MINIMO_FILAS_DESPACHADOS,
+                                sin_exportar=sin_exportar, con_fotos=con_fotos)
 
 
 class _SinAcumulados(Exception):
@@ -1173,6 +1657,23 @@ def run():
     a_la_vista = "--ver" in sys.argv
     sin_exportar = "--sin-exportar" in sys.argv
     solo_pend = "--solo-pendientes" in sys.argv
+    # `--solo-despachados` baja SOLO los despachados, hasta hoy. Nacio el 10-sep-2026
+    # para probar los tramos sin tocar nada mas, y sirve para rehacerlos a mano si una
+    # madrugada fallan.
+    solo_desp = "--solo-despachados" in sys.argv
+    # `--carpeta` deja los dos acumulados en otra carpeta y no en OneDrive: es para
+    # PROBAR, que el archivo de prueba no pise el bueno ni lo lean los demas robots.
+    # `--esperar` son los minutos que se espera el turno del WMS.
+    carpeta_acum = None
+    minutos_espera = None
+    for i, a in enumerate(sys.argv[:-1]):
+        if a == "--carpeta":
+            carpeta_acum = sys.argv[i + 1]
+        elif a == "--esperar":
+            try:
+                minutos_espera = max(1, int(sys.argv[i + 1]))
+            except ValueError:
+                pass
     # `--solo-dia` es el reves de `--solo-pendientes`: baja Picking y Detalle Orden
     # DEL DIA y deja fuera los dos acumulados -Pendientes 21 MB y Despachados 52 MB-.
     #
@@ -1185,7 +1686,8 @@ def run():
     dia = dia_pedido()
     log("=" * 58)
     log("%s · día %s%s"
-        % ("PENDIENTES DEL WMS, FOTO FRESCA" if solo_pend else "REPORTES DIARIOS DEL WMS",
+        % ("DESPACHADOS DEL WMS" if solo_desp else
+           "PENDIENTES DEL WMS, FOTO FRESCA" if solo_pend else "REPORTES DIARIOS DEL WMS",
            dia.strftime("%d-%m-%Y"), "  (MODO PRUEBA, no exporta)" if sin_exportar else ""))
     log("=" * 58)
 
@@ -1221,11 +1723,16 @@ def run():
     # NO SE PIERDE LA CORRIDA, que es la regla de Daniel: a los 45 minutos entra
     # igual. Solo deja de pisar al ancla en los casos en que el ancla se demora, que
     # son justo los que la rompian.
-    quien = "pendientes de la tarde" if solo_pend else "reportes diarios"
-    libre = bloqueo_wms.esperar_turno(log, minutos_max=20 if solo_pend else 45, quien=quien)
-    if solo_pend and not libre:
-        log("El WMS sigue ocupado. NO se baja la foto: vale mas quedarse con el "
-            "pendiente de ayer que pisarlo con uno a medias.", "ERROR")
+    # `--solo-despachados` CEDE IGUAL QUE LA BAJADA DE LA TARDE: no tiene hora fija y
+    # no puede meterse encima de nadie.
+    cede = solo_pend or solo_desp
+    quien = ("despachados" if solo_desp else
+             "pendientes de la tarde" if solo_pend else "reportes diarios")
+    libre = bloqueo_wms.esperar_turno(log, minutos_max=minutos_espera or (20 if cede else 45),
+                                      quien=quien)
+    if cede and not libre:
+        log("El WMS sigue ocupado. NO se baja nada: vale mas quedarse con el archivo "
+            "de ayer que pisarlo con uno a medias.", "ERROR")
         return 3
     bloqueo_wms.tomar(quien)
 
@@ -1243,13 +1750,16 @@ def run():
     # rompería los archivos que ya están cargados.
     ruta_pick = os.path.join(base, "Picking", "Picking %d-%d.csv" % (dia.day, dia.month))
     ruta_ord = os.path.join(base, "Detalle Orden", "Detalle Orden %s.csv" % dia.strftime("%d-%m"))
-    ruta_pend = os.path.join(base, "Detalle Orden", ARCHIVO_PENDIENTES)
-    ruta_desp = os.path.join(base, "Detalle Orden", ARCHIVO_DESPACHADOS)
-    if not solo_pend:
+    carpeta_ord = carpeta_acum or os.path.join(base, "Detalle Orden")
+    ruta_pend = os.path.join(carpeta_ord, ARCHIVO_PENDIENTES)
+    ruta_desp = os.path.join(carpeta_ord, ARCHIVO_DESPACHADOS)
+    if not solo_pend and not solo_desp:
         log("Picking      -> %s" % ruta_pick)
         log("Detalle Orden-> %s" % ruta_ord)
-    if not solo_dia:
+    if not solo_dia and not solo_desp:
         log("Pendientes   -> %s" % ruta_pend)
+    if not solo_dia:
+        log("Despachados  -> %s" % ruta_desp)
 
     if not wms.WMS_PASSWORD or wms.WMS_PASSWORD == "TU_PASSWORD_AQUI":
         log("Falta WMS_PASSWORD en el .env", "ERROR")
@@ -1289,7 +1799,7 @@ def run():
             log("Sesión iniciada como %s" % wms.WMS_USER)
             time.sleep(15)
 
-            if not solo_pend:
+            if not solo_pend and not solo_desp:
                 ok_pick = wms.con_reintentos(
                     "Avance de Picking",
                     lambda: descargar_picking(page, ruta_pick, dia,
@@ -1308,7 +1818,7 @@ def run():
                 log("--solo-dia: Pendientes y Despachados NO se bajan; van en la "
                     "corrida de las 04:30")
             try:
-                if solo_dia:
+                if solo_dia or solo_desp:
                     raise _SinAcumulados("no toca")
                 ok_pend = wms.con_reintentos(
                     "Pendientes",
@@ -1346,9 +1856,16 @@ def run():
 
     hechos = int(bool(ok_pick)) + int(bool(ok_ord))
     log("=" * 58)
-    _ac = lambda ok: "no tocaba (--solo-dia)" if solo_dia else ("bajados" if ok else "NO se bajaron")
-    log("Pendientes:  %s" % _ac(ok_pend))
-    log("Despachados: %s" % _ac(ok_desp))
+    def _ac(ok, toca):
+        if not toca:
+            return "no tocaba (%s)" % ("--solo-dia" if solo_dia else "--solo-despachados")
+        return "bajados" if ok else "NO se bajaron"
+    log("Pendientes:  %s" % _ac(ok_pend, not (solo_dia or solo_desp)))
+    log("Despachados: %s" % _ac(ok_desp, not solo_dia))
+    if solo_desp:
+        log("LISTO en %.1f minutos" % ((time.time() - t0) / 60.0))
+        log("=" * 58)
+        return 0 if ok_desp else 1
     if solo_pend:
         log("LISTO en %.1f minutos" % ((time.time() - t0) / 60.0))
         log("=" * 58)
