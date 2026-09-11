@@ -234,8 +234,13 @@ DE_FABRICA = {
     # embalaje (20:20), que ya bajaban lo mismo sin decir que era el numero final.
     # Por eso esos dos van con `saltar` mas arriba. Termina cerca de las 20:50, con
     # 40 minutos de margen antes del cruce contra el WMS de las 21:30.
-    'corte_turno':  {'activa': True, 'hora': '20:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
-                                                               'jue': True, 'vie': True, 'sab': True, 'dom': False}},
+    # APAGADO DESDE EL 10-sep-2026. Desde el 04-sep el corte corre DENTRO de los dos
+    # cierres (`ejecutar_robot_wms.bat` -> `corte_turno.py --sin-recepcion`), y este de
+    # las 20:00 lo repetia encima: el 09-sep bajo el OBLPN dos veces y el Detalle de
+    # Orden del cierre espero 45 minutos su turno. Estaba apagado en la web y el
+    # guardado de Parametros del 09-sep 19:00 lo volvio a prender. Daniel lo apago.
+    'corte_turno':  {'activa': False, 'hora': '20:00', 'dias': {'lun': True, 'mar': True, 'mie': True,
+                                                                'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     # EL ASN FALTABA ACA, y por eso no bajaba desde el 01-sep-2026.
     #
     # La web ya lo tenia entero -en la lista de tareas y en `robotsPorDefecto()`-

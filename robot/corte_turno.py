@@ -169,9 +169,36 @@ def correr(nombre, args, minutos=45):
     if r.returncode != 0:
         for l in (r.stderr or salida).strip().splitlines()[-3:]:
             log("   " + l.strip()[:150], "ERROR")
+    ok = r.returncode == 0
+    # UN ROBOT QUE CEDE SALE CON 0. `picking_por_hora.py` se saltea la hora si otro
+    # robot esta en el WMS y devuelve 0 -"en 60 minutos se vuelve a intentar"-.
+    # Dentro del corte no vuelve nadie: eso es no haber bajado nada. Paso el 08-sep
+    # y el 10-sep-2026, y el corte lo anoto como "OK en 0.0 min".
+    if ok and "Se saltea esta hora" in salida:
+        log("   el robot cedio el turno: no bajo nada", "ERROR")
+        ok = False
     mins = (datetime.now() - ini).total_seconds() / 60.0
-    log("    %s en %.1f min" % ("OK" if r.returncode == 0 else "FALLO", mins))
-    return r.returncode == 0, mins
+    log("    %s en %.1f min" % ("OK" if ok else "FALLO", mins))
+    return ok, mins
+
+
+def publicar_si_bajo(bajo, nombre, args):
+    """El paso de publicar, solo si el de bajar salio bien. Ver PICKING en `main`."""
+    if bajo:
+        return correr(nombre, args, minutos=20)
+    log("--- %s" % nombre)
+    log("    NO SE PUBLICA: no bajo el archivo, y republicar el del pase anterior le "
+        "pondria la hora del cierre. El cuadro se queda con ese pase y con su hora.")
+    return False, 0.0
+
+
+def paso_del_corte(nombre, bajo, publico, minutos):
+    paso = {"paso": nombre, "ok": bool(bajo and publico), "min": round(minutos, 1)}
+    if not bajo:
+        paso["motivo"] = "no bajo el archivo"
+    elif not publico:
+        paso["motivo"] = "bajo pero no se publico"
+    return paso
 
 
 def avisar(pasos, dia):
@@ -218,14 +245,23 @@ def main():
 
     if not solo_rec:
         # ── 1. PICKING final del dia ────────────────────────────────────────
-        # Los dos pasos del avance de siempre: bajar y publicar. El segundo corre
-        # aunque el primero falle -queda el archivo del pase anterior, y un cuadro
-        # de hace dos horas es mejor que una pantalla en blanco-.
+        # Los dos pasos del avance de siempre: bajar y publicar.
+        #
+        # SI NO BAJO, NO SE PUBLICA. Antes el segundo corria igual -"un cuadro de
+        # hace dos horas es mejor que una pantalla en blanco"-, pero la pantalla no
+        # queda en blanco: se queda con el pase de la tarde y con SU hora.
+        # Republicarlo le ponia la hora del cierre a un numero de la tarde, y el parte
+        # lo daba por bueno. El 08-sep-2026 la web mostro 9.681 lineas embaladas como
+        # el final del dia y eran 16.297.
+        #
+        # `--esperar 25`: DENTRO DEL CORTE EL PICKING NO CEDE. Solo, se saltea la hora
+        # si otro robot esta en el WMS; aca espera su turno como el OBLPN.
         ok, m = correr("PICKING · bajando el archivo del dia",
-                       [os.path.join(AQUI, "picking_por_hora.py")], minutos=40)
-        ok2, m2 = correr("PICKING · publicando el cuadro",
-                         [os.path.join(AQUI, "produccion_picking.py")], minutos=20)
-        pasos.append({"paso": "picking", "ok": ok and ok2, "min": round(m + m2, 1)})
+                       [os.path.join(AQUI, "picking_por_hora.py"), "--esperar", "25"],
+                       minutos=40)
+        ok2, m2 = publicar_si_bajo(ok, "PICKING · publicando el cuadro",
+                                   [os.path.join(AQUI, "produccion_picking.py")])
+        pasos.append(paso_del_corte("picking", ok, ok2, m + m2))
 
         # ── 2. EMBALAJE final del dia ───────────────────────────────────────
         # `--hoy` = el dia en curso. Sin esa bandera bajaria AYER, que es la salida
@@ -233,9 +269,12 @@ def main():
         if hay_tiempo("EMBALAJE"):
             ok, m = correr("EMBALAJE · bajando el OBLPN del dia",
                            [os.path.join(AQUI, "oblpn_embalaje.py"), "--hoy"], minutos=40)
-            ok2, m2 = correr("EMBALAJE · publicando el cuadro",
-                             [os.path.join(AQUI, "produccion_embalaje.py")], minutos=20)
-            pasos.append({"paso": "embalaje", "ok": ok and ok2, "min": round(m + m2, 1)})
+            # SI NO BAJO, NO SE PUBLICA, igual que el picking. El 10-sep-2026 a las 20:30
+            # el OBLPN se canso de esperar su turno y el corte publico igual el pase de
+            # la tarde -9.647 lineas- como si fuera el final del dia.
+            ok2, m2 = publicar_si_bajo(ok, "EMBALAJE · publicando el cuadro",
+                                       [os.path.join(AQUI, "produccion_embalaje.py")])
+            pasos.append(paso_del_corte("embalaje", ok, ok2, m + m2))
         else:
             pasos.append({"paso": "embalaje", "ok": False, "min": 0, "motivo": "sin tiempo"})
 

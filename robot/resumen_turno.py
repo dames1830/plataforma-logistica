@@ -21,7 +21,8 @@ Es la misma razon que hizo nacer a `avisar_log.py`: **cuando un paso falla, el
 robot que lo ejecuta se rinde**, y un aviso metido adentro se calla justo el dia
 que hace falta. Este corre DESPUES, aparte, y mira lo que quedo:
 
-    el archivo esta en disco y con cuantas filas   ->  se bajo
+    el archivo esta en disco, es de DESPUES del
+    corte, y con cuantas filas                     ->  se bajo
     el area esta publicada despues del corte       ->  se publico
 
 Las dos cosas, no una: el 28-ago bajo el Stock Activo pero no la Reserva, y mirar
@@ -121,6 +122,25 @@ def filas(ruta):
         return None
 
 
+def hora_del_archivo(ruta):
+    """Cuando se escribio el archivo por ultima vez. None si no se puede saber.
+
+       ESTAR NO ALCANZA: TIENE QUE SER DE ESTE CORTE. El 08-sep-2026 el ancla de las
+       19:20 se cayo y el parte de las 20:01 igual dio visto bueno a dos cosas viejas:
+
+           Slotting   el de las 07:18 de esa manana. Los dos cierres lo guardan con
+                      el mismo nombre, `Slotting 08-09-26.xlsx`
+           OBLPN      el del pase de las 15:41, 36.583 filas. La bajada del cierre
+                      habia fallado; el de verdad trajo 49.365
+
+       Y el cuadro si figuraba publicado despues del corte: el cierre, al no poder
+       bajar, republico el archivo de la tarde. Por eso se mira la hora del archivo."""
+    try:
+        return datetime.fromtimestamp(os.path.getmtime(ruta))
+    except OSError:
+        return None
+
+
 def sin_movimiento(que, dia, no_antes_de=None):
     """True si el robot comprobo, DENTRO DE ESTE TURNO, que no habia nada que bajar.
 
@@ -209,6 +229,18 @@ def revisar(turno, cuando=None):
             else:
                 pasos.append((nombre, False, "no bajó el archivo"))
             return
+        escrito = hora_del_archivo(ruta)
+        if escrito is not None and escrito < limite:
+            # EL ARCHIVO ES DE ANTES DEL CORTE: lo dejo un pase de la tarde o el cierre
+            # anterior. Solo va en verde si el robot comprobo, en este turno, que no
+            # habia nada que bajar.
+            if marca and sin_movimiento(marca, dia_marca or limite.strftime("%d-%m-%Y"),
+                                        marca_desde or limite):
+                pasos.append((nombre, True, "sin movimiento"))
+            else:
+                pasos.append((nombre, False, "el archivo es de las %s, anterior al corte"
+                              % escrito.strftime("%H:%M")))
+            return
         n = filas(ruta)
         pub = publicada_despues(ver, area_clave, limite) if area_clave else True
         detalle = "%s filas" % format(n, ",d") if n is not None else "sin leer"
@@ -222,8 +254,17 @@ def revisar(turno, cuando=None):
 
     if ss:
         slot = os.path.join(ss, "Slotting", "Slotting %02d-%02d-%s.xlsx" % (d, m, a2))
-        pasos.append(("Slotting", os.path.exists(slot),
-                      "armado" if os.path.exists(slot) else "no se armó"))
+        # EL DE LA MANANA Y EL DE LA NOCHE SE LLAMAN IGUAL. Sin mirar la hora, el de
+        # las 07:00 le daba el visto bueno al cierre de la noche aunque el ancla se
+        # hubiera caido (08-sep-2026). Ver `hora_del_archivo`.
+        escrito = hora_del_archivo(slot) if os.path.exists(slot) else None
+        if escrito is None:
+            pasos.append(("Slotting", False, "no se armó"))
+        elif escrito < limite:
+            pasos.append(("Slotting", False, "es el de las %s, anterior al corte"
+                          % escrito.strftime("%H:%M")))
+        else:
+            pasos.append(("Slotting", True, "armado"))
         archivo("Picking", os.path.join(ss, "Picking", "Picking %d-%d.csv" % (d, m)),
                 "picking_por_hora", marca="picking")
         # EL OBLPN ES EL DEL DIA DEL CORTE. `corte_turno.py` corre

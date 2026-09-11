@@ -422,12 +422,27 @@ def run():
 
     # ESTE ROBOT CEDE. Vuelve en 60 minutos y no se pierde nada; el de las 08:00,
     # que corre una sola vez al día, es el que espera y entra igual.
+    #
+    # SALVO DENTRO DEL CIERRE DE TURNO: `corte_turno.py` lo llama con `--esperar 25`.
+    # Ahí no vuelve nadie en 60 minutos, y ceder era cerrar el día sin bajar el
+    # picking con un "OK en 0.0 min" (08-sep y 10-sep-2026). Espera su turno como el
+    # OBLPN y, si el otro no sale, devuelve 3 para que el corte lo cuente como falla.
     duenio = bloqueo_wms.quien_esta()
     if duenio:
-        log("Hay otro robot adentro (%s, hace %.0f min). Se saltea esta hora."
-            % (duenio["quien"], duenio["minutos"]), "WARN")
-        log("No es un error: en 60 minutos se vuelve a intentar.")
-        return 0
+        espera = argumento("esperar")
+        if not espera:
+            log("Hay otro robot adentro (%s, hace %.0f min). Se saltea esta hora."
+                % (duenio["quien"], duenio["minutos"]), "WARN")
+            log("No es un error: en 60 minutos se vuelve a intentar.")
+            return 0
+        try:
+            minutos_espera = max(1, int(espera))
+        except ValueError:
+            minutos_espera = 25
+        if not bloqueo_wms.esperar_turno(log, minutos_max=minutos_espera,
+                                         quien="picking del cierre"):
+            log("El WMS sigue ocupado: el picking del cierre no se baja.", "ERROR")
+            return 3
     bloqueo_wms.tomar("picking de la hora")
 
     if not wms.WMS_PASSWORD or wms.WMS_PASSWORD == "TU_PASSWORD_AQUI":

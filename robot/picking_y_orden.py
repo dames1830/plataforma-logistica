@@ -1112,7 +1112,8 @@ def descargar_detalle_orden(page, destino, dia, sin_exportar=False, con_fotos=Fa
 
     ejecutar_busqueda(page)
     log("Esperando a que Oracle traiga las filas...")
-    if not esperar_resultado(page):
+    paginas = esperar_resultado(page)
+    if not paginas:
         wms.captura(page, "orden_sin_datos")
         raise TimeoutError("El detalle de orden del %s no trajo ninguna fila"
                            % dia.strftime("%d-%m-%Y"))
@@ -1122,7 +1123,15 @@ def descargar_detalle_orden(page, destino, dia, sin_exportar=False, con_fotos=Fa
     if sin_exportar:
         log("MODO PRUEBA: no se exporta")
         return True
-    return exportar_csv(page, destino, MINIMO_FILAS_ORDEN)
+    # UNA SOLA PAGINA ES UN DIA QUE RECIEN EMPIEZA, NO UNA BUSQUEDA QUE FALLO.
+    # El cierre de las 07:00 pide el Detalle de Orden de HOY, que a esa hora trae
+    # solo lo creado desde medianoche: 38 ordenes el 10-sep-2026, 45 el 09, 48 el 07.
+    # Con el piso de 40 el robot rechazaba un archivo completo, reintentaba tres
+    # veces -siete minutos de WMS- y anotaba un ERROR que no era. Si la grilla dice
+    # una pagina, no hay mas de 125 filas que esperar; el piso sigue delatando lo
+    # que tiene que delatar, un archivo sin ninguna fila.
+    minimo = 1 if str(paginas).strip() == "1" else MINIMO_FILAS_ORDEN
+    return exportar_csv(page, destino, minimo)
 
 
 
