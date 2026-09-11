@@ -83,7 +83,9 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 ACUMULADO = os.path.join(AQUI, "evolucion_fotos.json.gz")
 # Subir este número obliga a releer las 76 fotos. Se sube cuando cambia QUÉ se guarda
 # de cada foto: lo ya guardado quedó armado con la regla vieja y no se puede mezclar.
-FORMATO_ACUMULADO = 2
+# 3 desde el 11-sep-2026: las fotos de enero habían quedado guardadas con fecha 2020 (ver
+# `fechas_disponibles`). Con el 2 el acumulado las conservaba y sumaba las buenas al lado.
+FORMATO_ACUMULADO = 3
 
 
 # Cuando lo llama el robot le pasa SU log, para que todo quede en el mismo archivo de
@@ -168,10 +170,17 @@ def fechas_disponibles(base):
                 if not f.lower().endswith(ext):
                     continue
                 m = re.search(r"(\d{4})-(\d{2})-(\d{2})", f)
+                m4 = None if m else re.search(r"(\d{2})-(\d{2})-(\d{4})", f)
                 if m:
                     d = "%s-%s-%s" % m.groups()
+                elif m4:
+                    # EL AÑO DE CUATRO CIFRAS SE PRUEBA ANTES QUE EL DE DOS. Las copias de
+                    # enero se llaman "Activo 02-01-2026.csv", y el patrón de dos cifras
+                    # leía "02-01-20": la foto quedaba en 2020-01-02 y la permanencia de
+                    # 3.337 artículos decía 346 semanas donde había 35. Hasta el 11-sep-2026.
+                    d = "%s-%s-%s" % (m4.group(3), m4.group(2), m4.group(1))
                 else:
-                    m = re.search(r"(\d{2})-(\d{2})-(\d{2})", f)
+                    m = re.search(r"(\d{2})-(\d{2})-(\d{2})(?!\d)", f)
                     if not m:
                         continue
                     d = "20%s-%s-%s" % (m.group(3), m.group(2), m.group(1))
