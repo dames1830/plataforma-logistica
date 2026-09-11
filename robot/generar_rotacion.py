@@ -36,6 +36,17 @@ copias de eso es garantía de que un día digan cosas distintas.
 
 · NON MOVER es el que no tuvo NINGUNA salida en esos 3 meses. No es "nunca en su vida".
 
+· LO QUE SALIÓ SE MIDE CON EL PICKING, NO CON LAS FOTOS DEL STOCK. Hasta el 11-sep-2026 era
+  la suma de las bajadas entre una foto diaria y la siguiente, y se quedaba corto: si el
+  mismo día a un artículo le entra mercadería y se pica, la foto casi no se mueve y la salida
+  no se ve. Cruzado contra el picking de los mismos 61 días, 686 de los 1.332 "non movers"
+  de calzado tenían picking. Daniel: "si, cambialo". Las fotos siguen dando lo que saben dar:
+  el stock de hoy y desde cuándo está cada artículo.
+
+· EL PICKING SE CUENTA EN LA UNIDAD DEL STOCK: la `Cantidad empaquetada` tal cual, que en el
+  prepack son CAJAS, igual que la cantidad de las fotos. Abrir la curva de un solo lado
+  dividiría pares entre cajas y la cobertura del prepack saldría inventada.
+
 · NO HAY ABC POR VALOR: no tenemos el costo del artículo en ninguna fuente.
 
 · SE MIRA ACTIVO + RESERVA, las dos. Sin la reserva, la mitad que sube a reserva se ve
@@ -45,8 +56,11 @@ copias de eso es garantía de que un día digan cosas distintas.
   hang tags, cartones— van aparte: un rollo de 10.000 etiquetas cuenta como 10.000
   unidades e inflaría el stock sin decir nada de la rotación de la mercadería.
 """
+import csv
+import io
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -67,6 +81,11 @@ MESES_VENTANA = 3        # la ventana fija con la que se mide a todos
 TOPE_SEMANAS = 10        # el corte entre fast y slow, en semanas de cobertura
 NUEVO_SEMANAS = 4        # menos que esto y el ritmo todavía no significa nada
 TRAMOS = [(0, 4), (5, 10), (11, 20), (21, 9999)]   # la permanencia, en semanas
+
+# El picking que deja el robot en OneDrive, un archivo por día: "Picking 3-9.csv".
+CARPETA_PICKING = ("scraping Stock", "Picking")
+RE_PICKING = re.compile(r"^Picking (\d{1,2})-(\d{1,2})\.csv$")
+MINIMO_DIAS_PICKING = 10    # con menos, todo saldría "non mover": no se publica
 
 
 # Cuando lo llama el robot de las 19:00 le presta su log, así todo queda en el parte de
@@ -146,6 +165,72 @@ def grupo_de(gg):
     return "SINM"
 
 
+def salidas_del_picking(base, desde, hasta):
+    """Lo que se picó de cada artículo entre `desde` y `hasta`, en la unidad del stock.
+
+    Devuelve ({cod: unidades}, {cod: último día con picking}, [días leídos]).
+
+    · SOLO `Finalizada`. La fila `Cancelado` es la copia de la tarea, no otra salida.
+    · LA UNIDAD ES LA DEL STOCK: `Cantidad empaquetada` tal cual (ver arriba).
+    · EL AÑO NO VIENE EN EL NOMBRE ("Picking 3-9.csv"): se toma el de `hasta`, y el anterior
+      para los meses que quedan detrás de un cambio de año.
+    · SIN PICKING NO SE PUBLICA. Con la carpeta vacía todo saldría "non mover" y taparía el
+      estudio bueno del día anterior."""
+    from datetime import date
+    carpeta = os.path.join(base, *CARPETA_PICKING)
+    if not os.path.isdir(carpeta):
+        raise RuntimeError("No está la carpeta del picking: %s" % carpeta)
+    d0, d1 = _dia(desde), _dia(hasta)
+    salidas, ultimo, dias = {}, {}, []
+    for n in sorted(os.listdir(carpeta)):
+        m = RE_PICKING.match(n)
+        if not m:
+            continue
+        dd, mm = int(m.group(1)), int(m.group(2))
+        try:
+            f = date(d1.year if mm <= d1.month else d1.year - 1, mm, dd)
+        except ValueError:
+            continue
+        if not (d0 <= f <= d1):
+            continue
+        dia = f.isoformat()
+        try:
+            with io.open(os.path.join(carpeta, n), encoding="utf-8-sig", errors="replace",
+                         newline="") as fh:
+                rd = csv.reader(fh, delimiter=";")
+                ix = {k.strip(): i for i, k in enumerate(next(rd, []))}
+                iE, iS, iQ = ix.get("Estado"), ix.get("Código de artículo"), ix.get("Cantidad empaquetada")
+                if None in (iE, iS, iQ):
+                    log("%s no trae las columnas del picking: se saltea" % n, "WARN")
+                    continue
+                tope = max(iE, iS, iQ)
+                for row in rd:
+                    if len(row) <= tope or row[iE] != "Finalizada":
+                        continue
+                    try:
+                        q = float(row[iQ].replace('="', "").replace('"', "").replace(",", ".") or 0)
+                    except ValueError:
+                        continue
+                    if q <= 0:
+                        continue
+                    # La misma llave que las fotos: lo de antes del primer guion, sin ceros
+                    cod = row[iS].split("-")[0].strip().strip('="').lstrip("0") or "0"
+                    salidas[cod] = salidas.get(cod, 0) + q
+                    if dia > ultimo.get(cod, ""):
+                        ultimo[cod] = dia
+        except OSError as e:
+            log("No se pudo leer %s (%s): se saltea" % (n, e), "WARN")
+            continue
+        dias.append(dia)
+    dias.sort()
+    if len(dias) < MINIMO_DIAS_PICKING:
+        raise RuntimeError("La ventana tiene %d días de picking: hacen falta al menos %d."
+                           % (len(dias), MINIMO_DIAS_PICKING))
+    log("picking del %s al %s: %d días, %d artículos con salida"
+        % (dias[0], dias[-1], len(dias), len(salidas)))
+    return salidas, ultimo, dias
+
+
 def construir():
     if FALTAN:
         raise RuntimeError(
@@ -193,6 +278,9 @@ def construir():
         if i % 20 == 0 or i == len(enVentana):
             log("  %d/%d fotos leídas" % (i, len(enVentana)))
 
+    # ── Lo que salió: el picking de la misma ventana ────────────────────────────────
+    salidas, ultimo_pick, dias_pick = salidas_del_picking(base, desde, hasta)
+
     # ── La primera foto de todas, para saber desde cuándo está cada artículo ────────
     #
     # LA PERMANENCIA SE MIDE CON EL HISTÓRICO COMPLETO, no con la ventana. Un artículo
@@ -224,17 +312,14 @@ def construir():
         if hoy <= 0:
             continue          # se fue del almacén: no es permanencia de nadie
 
-        # LO QUE SALIÓ ES LA SUMA DE LAS BAJADAS, no `entró − queda`. Un artículo que
-        # bajó 300 y después le repusieron 500 movió 300, no −200. Mirando solo las
-        # puntas, la reposición tapa la venta y el artículo parece quieto.
-        salio = entro = 0
-        ultMov = None
+        # LO QUE SALIÓ ES LO QUE SE PICÓ en la ventana (ver la cabecera). Lo que ENTRÓ se
+        # sigue sacando de las fotos, como la suma de las subidas: no clasifica a nadie.
+        salio = int(round(salidas.get(cod, 0)))
+        ultMov = ultimo_pick.get(cod)
+        entro = 0
         for a, b in zip(fechas, fechas[1:]):
             dif = hist[b] - hist[a]
-            if dif < 0:
-                salio += -dif
-                ultMov = b
-            elif dif > 0:
+            if dif > 0:
                 entro += dif
         semanasVentana = max(1.0, (hoyD - _dia(fechas[0])).days / 7.0)
         vel = round(salio / semanasVentana, 1)
@@ -278,6 +363,9 @@ def construir():
         # semanas" como exacto.
         "desdeHistoria": dias[0],
         "fotos": len(enVentana), "fotosTotales": len(dias),
+        # De dónde sale "salió", para que la pantalla lo diga
+        "salidas": "picking", "diasPicking": len(dias_pick),
+        "pickingDesde": dias_pick[0], "pickingHasta": dias_pick[-1],
         "mesesVentana": MESES_VENTANA, "topeSemanas": TOPE_SEMANAS,
         "nuevoSemanas": NUEVO_SEMANAS,
         "tramos": [list(t) for t in TRAMOS],
