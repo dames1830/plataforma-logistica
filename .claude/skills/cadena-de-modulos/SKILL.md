@@ -169,9 +169,12 @@ De ahí salen tres comportamientos de `processAlmacenajeTasks` que parecen agres
 2. **Una Creada no se arrastra**: lo que no se trabajó en el turno se cierra y la ola nueva se
    arma con el stock de este momento. *"Si hay diez tareas y solamente avancé dos, las ocho que
    quedan creadas se cambian de estado al momento que yo procese tareas."*
-3. **Las Asignadas NO se tocan.** Alguien las está trabajando con la hoja en la mano y su
-   mercadería sigue en el buffer; el descuento de `yaComprometido` las cuenta, así que no se
-   duplican.
+3. **Las Asignadas de la ola en curso NO se tocan.** Alguien las está trabajando con la hoja en
+   la mano y su mercadería sigue en el buffer; el descuento de `yaComprometido` las cuenta, así
+   que no se duplican. **Las de olas anteriores SÍ se cierran**, como NO TRABAJADA y reiniciadas
+   (sin pareja ni horas). Regla de Daniel del 11-sep-2026, después de que dos Asignadas viejas
+   —empezadas, nunca cerradas y con el buffer ya vacío— le descontaran a la ola del 10-09 lo
+   que acababa de llegar de sus mismos artículos. Ver `cerrarAsignadasDeOlasAnteriores`.
 
 Y el orden importa: **vencer → cerrar → ajustar → contar**. Cambiarlo rompe la cuenta.
 
