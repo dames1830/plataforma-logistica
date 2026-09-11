@@ -51,6 +51,7 @@ tiene nada se anota en `sin_movimiento.json` y no se vuelve a pedir.
     python recuperar_picking.py --desde 01-04-2026 --hasta 09-09-2026 --bloque 20
 """
 
+import collections
 import io
 import json
 import os
@@ -136,7 +137,13 @@ def hora_limite(txt):
         return None
     h, m = (txt.split(":") + ["0"])[:2]
     ahora = datetime.now()
-    return ahora.replace(hour=int(h), minute=int(m), second=0, microsecond=0)
+    momento = ahora.replace(hour=int(h), minute=int(m), second=0, microsecond=0)
+    # SI ESA HORA YA PASO, ES LA DE MAÑANA. La corrida que retoma a las 21:00
+    # frena a las 06:45, antes del ancla de la mañana, y sin esto se detenia en el
+    # primer segundo: las 06:45 de "hoy" ya habian pasado.
+    if momento <= ahora:
+        momento += timedelta(days=1)
+    return momento
 
 
 def arg(nombre, defecto=None):
@@ -214,77 +221,153 @@ ETQ_CREA_DESDE = "De registro de hora de creación"
 CREACION_DESDE = "01/08/2025"
 
 
-def bajar_dia_rapido(pk, page, destino, dia):
-    """El MISMO panel, otras dos fechas.
+# EL "/ 1 PAGINAS" DE ESTA PANTALLA NO ES CONFIABLE.
+#
+# 10-sep-2026, recuperando mayo: el robot dio por vacios el martes 05, el jueves
+# 07, el lunes 11, el miercoles 13, el viernes 15 y el lunes 18 -dias de trabajo
+# normales-, alternados con dias que si bajaron. Y apenas arranco un bloque con
+# el navegador limpio, el 19, el 20 y el 21 volvieron a bajar bien.
+#
+# El pie de TRX_ASIGNACIONES no trae el "Recuperados <fecha> <hora>": el robot lo
+# lee de un "/ N Paginas" suelto, y con Oracle todavia cargando ese suelto dice
+# "/ 1". Se aceptaba a los 3 segundos, se intentaba exportar sobre una grilla que
+# no estaba lista, no aparecia "Exportar a CSV" y el dia quedaba sin movimiento.
+#
+# LA REGLA QUE SALIO DE ESO: un dia vacio NUNCA se acepta a la primera. Se vuelve
+# a pedir con la pantalla recien abierta y con paciencia, y solo si tampoco ahi
+# hay nada que exportar queda como vacio. Y lo que SI se exporta se lee fila por
+# fila antes de guardarlo: tiene que ser del dia que dice el nombre.
+#
+# Revisado ese mismo dia sobre lo ya bajado: 39 de 39 archivos traian el 100% de
+# su dia. El dano era solo el vacio falso, nunca un dia cambiado por otro. La
+# validacion queda igual, porque la causa del pie no se entendio del todo.
 
-    NO SE VUELVE A ELEGIR LA BUSQUEDA GUARDADA, y esa es la diferencia entera
-    entre que esto funcione o no. El boton "Busquedas guardadas" es un
-    INTERRUPTOR: el primer clic despliega el bloque y el segundo lo PLIEGA, asi
-    que dentro de una misma sesion sale bien uno de cada dos.
+VACIOS_CONFIRMADOS = os.path.join(LOGS, "picking_vacios_confirmados.json")
 
-    Medido el 10-sep-2026 con la sonda `--mirar`: 15-04 bien, 29-04 falla,
-    15-05 bien, 29-05 falla, 12-06 bien, 26-06 falla. Alternancia perfecta.
 
-    Y no hace falta repetirla: la busqueda guardada solo sirve para ARMAR el
-    panel -la pantalla exige una fecha de creacion-, y ya quedo armado con el
-    primer dia del bloque. De paso cada dia cuesta la mitad, porque tampoco hay
-    que cerrar y reabrir la pantalla.
+def leer_confirmados():
+    try:
+        with io.open(VACIOS_CONFIRMADOS, encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return {}
 
-    EL PIE DE LA BUSQUEDA ANTERIOR ES LA OTRA TRAMPA. Reusando la pagina, la
-    grilla del dia anterior sigue en pantalla con su pie de "Recuperados": sin
-    `distinto_de` el robot lo lee como si fuera el resultado nuevo y exporta el
-    dia equivocado dentro del archivo de hoy.
-    """
+
+def marcar_confirmado(dia):
+    datos = leer_confirmados()
+    datos[dia.strftime("%d-%m-%Y")] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        os.makedirs(LOGS, exist_ok=True)
+        with io.open(VACIOS_CONFIRMADOS, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(datos, ensure_ascii=False, indent=1))
+    except Exception as e:
+        log("no pude anotar el vacio confirmado (%s)" % type(e).__name__, "WARN")
+
+
+def buscar_dia(pk, page, dia, espera):
+    """Pone las tres fechas, busca y devuelve las paginas que dice el pie.
+
+       EL PIE DE LA BUSQUEDA ANTERIOR SE PASA COMO `distinto_de`. Reusando la
+       pagina, la grilla del dia anterior sigue en pantalla: sin eso el robot
+       lee el resultado viejo como si fuera el nuevo."""
     f = dia.strftime("%d/%m/%Y")
-    log("=" * 58)
-    log("AVANCE DE PICKING · %s  (mismo panel)" % dia.strftime("%d-%m-%Y"))
-    log("=" * 58)
     pk.abrir_panel(page)
     pk.poner_fecha_y_hora(page, ETQ_CREA_DESDE, CREACION_DESDE, "0:00:00")
-
     pk.poner_fecha_y_hora(page, pk.ETQ_PICK_DESDE, f, "0:00:00")
     pk.poner_fecha_y_hora(page, pk.ETQ_PICK_HASTA, f, "23:59:59")
     _, pie = pk.total_paginas(page)
     pk.ejecutar_busqueda(page)
     log("Esperando a que Oracle traiga las filas...")
-    # DOS MINUTOS Y MEDIO, NO DIEZ. `esperar_resultado` solo se da por vencido
-    # antes de tiempo cuando el pie CAMBIO, y dos dias vacios seguidos dejan el
-    # mismo pie -"/ 1 Paginas"-, asi que se comia el timeout entero por dia. Un
-    # dia con datos contesta en 3 a 9 segundos; 150 sobran de lejos.
-    paginas = pk.esperar_resultado(page, timeout_seg=150, distinto_de=pie)
-    if not paginas:
-        log("El %s no trajo ninguna fila." % dia.strftime("%d-%m-%Y"), "WARN")
-        pk.marcar_sin_movimiento("picking", dia.strftime("%d-%m-%Y"))
-        return False
+    return pk.esperar_resultado(page, timeout_seg=espera, distinto_de=pie)
+
+
+def exportar_y_validar(pk, page, destino, dia):
+    """Exporta a un archivo DE PASO, lo lee y recien ahi lo pone en su lugar.
+
+       'ok'    las filas son del dia y el archivo quedo en la carpeta
+       'vacio' no hubo nada que exportar
+       'mal'   se exporto algo que no es de ese dia, o no llego a bajar
+
+       DE PASO Y FUERA DE LA CARPETA Picking, a proposito: otros robots leen
+       Picking/*.csv -el de recibido y sin picar, a las 02:30- y un archivo a
+       medio validar ahi adentro lo contarian como bueno. Y sobre todo: uno malo
+       no pisa al que ya estaba."""
+    import revisar_dias_picking as rv
+    paso = os.path.join(LOGS, "picking_en_paso")
+    os.makedirs(paso, exist_ok=True)
+    tmp = os.path.join(paso, os.path.basename(destino))
+    if os.path.exists(tmp):
+        os.remove(tmp)
     try:
-        pk.exportar_csv(page, destino, pk.MINIMO_FILAS_PICKING)
-        return True
+        # PISO DE UNA FILA, no de 200: el domingo 19-04 tiene 6 filas y es real.
+        ok = pk.exportar_csv(page, tmp, 1)
     except Exception as e:
-        if pk.dia_vacio(e, paginas, "picking", dia.strftime("%d-%m-%Y")):
-            return False
+        if "Exportar" in str(e):
+            return "vacio"
         raise
+    if not ok or not os.path.exists(tmp):
+        return "mal"
+    total, del_dia, otras, error = rv.revisar_archivo(tmp, dia)
+    pct = 100.0 * del_dia / total if total else 0.0
+    if error or pct < 98.0:
+        log("El archivo del %s NO es de ese dia: %s filas, %.1f%% del dia%s%s"
+            % (dia.strftime("%d-%m-%Y"), format(total, ",d"), pct,
+               (" · otras " + ", ".join("%s=%d" % par for par in otras)) if otras else "",
+               (" · " + error) if error else ""), "ERROR")
+        os.remove(tmp)
+        return "mal"
+    os.replace(tmp, destino)
+    log("Validado: %s filas, %.1f%% del %s -> %s"
+        % (format(total, ",d"), pct, dia.strftime("%d-%m-%Y"), os.path.basename(destino)))
+    return "ok"
 
 
-def bajar_dia_armando(pk, page, destino, dia):
-    """El primer dia del bloque: abre la pantalla y arma el panel desde cero.
+def bajar_dia(pk, page, destino, dia, armar=False, confirmar=False):
+    """Un dia entero: buscar, esperar lo que haga falta, exportar y validar.
 
-       NO se usa `picking_y_orden.descargar_picking` porque ese acepta la fecha
-       de creacion que trae la busqueda guardada, y esa es justamente la que
-       tapaba abril. Todo lo demas es igual."""
-    pk.abrir_pantalla(page, pk.PANTALLA_PICKING)
-    pk.abrir_panel(page)
-    log("Eligiendo la búsqueda guardada '%s'..." % pk.BUSQUEDA_PICKING)
-    pk.elegir_busqueda_guardada(page, pk.BUSQUEDA_PICKING)
-    return bajar_dia_rapido(pk, page, destino, dia)
+       `armar` abre la pantalla y elige la busqueda guardada: el primer dia de
+       cada bloque y cada confirmacion. Los demas dias NO la repiten, porque el
+       boton "Busquedas guardadas" es un INTERRUPTOR: el primer clic despliega el
+       bloque y el segundo lo pliega, y repetirla fallaba uno de cada dos dias.
+       Solo arma el panel; con reescribir las fechas alcanza.
+
+       `confirmar` es la segunda mirada a un dia que parecio vacio: pantalla
+       recien abierta y hasta un minuto de paciencia antes de creerle al pie."""
+    log("=" * 58)
+    log("AVANCE DE PICKING · %s%s" % (
+        dia.strftime("%d-%m-%Y"),
+        "  (CONFIRMANDO, pantalla recien abierta)" if confirmar
+        else ("" if armar else "  (mismo panel)")))
+    log("=" * 58)
+    if armar:
+        pk.abrir_pantalla(page, pk.PANTALLA_PICKING)
+        pk.abrir_panel(page)
+        log("Eligiendo la búsqueda guardada '%s'..." % pk.BUSQUEDA_PICKING)
+        pk.elegir_busqueda_guardada(page, pk.BUSQUEDA_PICKING)
+    paginas = buscar_dia(pk, page, dia, 240 if confirmar else 90)
+    if not paginas or paginas <= 1:
+        # No se le cree al "/ 1": se le da tiempo a Oracle y se vuelve a mirar.
+        hasta = time.time() + (60 if confirmar else 8)
+        while time.time() < hasta:
+            time.sleep(5)
+            otra, txt = pk.total_paginas(page)
+            if otra and otra > 1:
+                log("El pie cambio a '%s': SI habia filas." % txt, "WARN")
+                break
+    return exportar_y_validar(pk, page, destino, dia)
 
 
 def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista,
                     limite=None):
-    """Entra al WMS y baja dias hasta que se acabe el bloque.
+    """Entra al WMS y trabaja dias hasta que se acabe el bloque.
 
-       Los dias bajados se sacan de `pendientes`; los que no llego a tocar
-       quedan ahi para el bloque siguiente."""
-    bajados, fallaron = [], []
+       Devuelve (bajados, vacios, fallaron). Cada dia sale de `pendientes` apenas
+       tiene veredicto; los que no llego a tocar quedan para el bloque siguiente.
+
+       YA NO HAY REINTENTO POR `picking_y_orden.descargar_picking`: ese usa la
+       fecha de creacion de la busqueda guardada -01/05/2026- y un dia bajado por
+       ahi saldria incompleto con la hora de hoy, sin que nada lo delate."""
+    bajados, vacios, fallaron = [], [], []
     t0 = time.time()
     with sync() as p:
         log("Abriendo navegador...")
@@ -302,7 +385,7 @@ def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista,
             log("Sesion iniciada como %s" % wms.WMS_USER)
             time.sleep(15)
 
-            primero = True
+            armar = True
             while pendientes and (time.time() - t0) < minutos * 60:
                 # EL FRENO VA ANTES DE EMPEZAR EL DIA, no en el medio: un dia a
                 # medias dejaria un CSV cortado que parece bueno.
@@ -314,51 +397,80 @@ def bajar_un_bloque(pk, wms, sync, base, pendientes, minutos, a_la_vista,
                 destino = os.path.join(base, "Picking",
                                        "Picking %d-%d.csv" % (dia.day, dia.month))
                 try:
-                    # El primer dia del bloque abre la pantalla y elige la
-                    # busqueda guardada; los demas reusan ese mismo panel.
-                    if primero:
-                        bajar_dia_armando(pk, page, destino, dia)
-                        primero = False
-                    else:
-                        bajar_dia_rapido(pk, page, destino, dia)
-                    bajados.append(dia)
-                    pendientes.pop(0)
+                    estado = bajar_dia(pk, page, destino, dia, armar=armar)
+                    armar = False
+                    if estado != "ok":
+                        log("El %s dio '%s'. No se le cree a la primera: se "
+                            "confirma con la pantalla recien abierta."
+                            % (dia.strftime("%d-%m-%Y"), estado), "WARN")
+                        estado = bajar_dia(pk, page, destino, dia, armar=True,
+                                           confirmar=True)
+                        if estado == "ok":
+                            log("El %s NO estaba vacio: era el pie de la grilla."
+                                % dia.strftime("%d-%m-%Y"), "WARN")
                 except Exception as e:
-                    # SE INTENTA UNA VEZ MAS ANTES DE DARLO POR PERDIDO. La lista
-                    # de busquedas guardadas a veces no se despliega a tiempo -el
-                    # robot diario tambien lo sufre y lo resuelve reabriendola-, y
-                    # eso no es motivo para perder el dia.
-                    log("El %s fallo (%s: %s). Un intento mas, reabriendo la "
-                        "pantalla..."
-                        % (dia.strftime("%d-%m-%Y"), type(e).__name__, str(e)[:110]),
+                    log("El %s fallo (%s: %s)"
+                        % (dia.strftime("%d-%m-%Y"), type(e).__name__, str(e)[:140]),
                         "WARN")
-                    try:
-                        # A PROPOSITO POR EL CAMINO LARGO: `descargar_picking`
-                        # cierra y reabre la pantalla, y eso deja el bloque de
-                        # busquedas guardadas plegado otra vez, que es el estado
-                        # desde el que el interruptor funciona.
-                        pk.descargar_picking(page, destino, dia)
-                        bajados.append(dia)
-                        pendientes.pop(0)
-                        continue
-                    except Exception as e2:
-                        # UN DIA QUE FALLA NO PUEDE PARAR LOS OTROS 117. Se anota,
-                        # se saca de la cola y se sigue; al final se listan todos
-                        # juntos para una segunda pasada.
-                        log("El %s no se pudo bajar (%s: %s)"
-                            % (dia.strftime("%d-%m-%Y"), type(e2).__name__,
-                               str(e2)[:140]), "WARN")
+                    estado = "error"
+                pendientes.pop(0)
+                if estado == "ok":
+                    bajados.append(dia)
+                elif estado == "vacio":
+                    log("El %s queda como VACIO CONFIRMADO (dos miradas, la "
+                        "segunda con la pantalla recien abierta)."
+                        % dia.strftime("%d-%m-%Y"))
+                    marcar_confirmado(dia)
+                    vacios.append(dia)
+                else:
+                    # UN DIA QUE FALLA NO PUEDE PARAR LOS DEMAS. Se anota y se
+                    # corta el bloque: el siguiente arranca con navegador limpio,
+                    # que es justamente lo que lo arreglo en mayo.
                     fallaron.append(dia)
-                    pendientes.pop(0)
-                    # La pagina puede haber quedado a medias. Se corta el bloque
-                    # y el siguiente arranca con navegador limpio.
                     break
         finally:
             try:
                 nav.close()
             except Exception:
                 pass
-    return bajados, fallaron
+    return bajados, vacios, fallaron
+
+
+def dias_por_hacer(base, d0, d1, corte):
+    """QUE FALTA DE VERDAD, mirando la carpeta y no una lista anotada.
+
+       Un dia esta hecho si su archivo se escribio DESPUES de `corte` -con la
+       fecha de creacion corregida- y sus filas son de ese dia, o si quedo como
+       vacio confirmado. Todo lo demas se pide: los que no tienen archivo, los que
+       se bajaron con el filtro viejo -antes del corte- y cualquiera que traiga
+       otro dia adentro.
+
+       Sin esto, retomar desde la lista que anoto la corrida de las 19:15 se
+       habria salteado los vacios falsos de mayo: esa corrida los conto hechos."""
+    import revisar_dias_picking as rv
+    confirmados = leer_confirmados()
+    faltan, motivos = [], collections.Counter()
+    d = d0
+    while d <= d1:
+        clave = d.strftime("%d-%m-%Y")
+        ruta = os.path.join(base, "Picking", "Picking %d-%d.csv" % (d.day, d.month))
+        if clave in confirmados:
+            motivos["vacio confirmado"] += 1
+        elif not os.path.exists(ruta):
+            faltan.append(d)
+            motivos["sin archivo"] += 1
+        elif os.path.getmtime(ruta) < corte:
+            faltan.append(d)
+            motivos["filtro viejo"] += 1
+        else:
+            total, del_dia, _, error = rv.revisar_archivo(ruta, d)
+            if error or not total or del_dia * 100.0 / total < 98.0:
+                faltan.append(d)
+                motivos["otro dia adentro"] += 1
+            else:
+                motivos["hecho y validado"] += 1
+        d += timedelta(days=1)
+    return faltan, motivos
 
 
 def solo_mirar(pk, wms, sync, base, fechas):
@@ -565,6 +677,38 @@ def run():
         return trabajar(pk, wms, bloqueo_wms, sync_playwright, base, faltan,
                         bloque, a_la_vista, limite)
 
+    # --corte: LO QUE FALTA DE VERDAD, sacado de la carpeta. Es el modo con el que
+    # se retoma, y reemplaza a --seguir: la lista que anota una corrida vieja
+    # cuenta como hechos los vacios falsos que ella misma produjo.
+    corte_txt = arg("--corte")
+    if corte_txt:
+        corte = datetime.strptime(corte_txt, "%d-%m-%Y %H:%M").timestamp()
+        faltan, motivos = dias_por_hacer(base, d0, d1, corte)
+        log("=" * 62)
+        log("RECUPERAR PICKING  ·  %s a %s  ·  lo que falta de verdad"
+            % (d0.strftime("%d-%m-%Y"), d1.strftime("%d-%m-%Y")))
+        log("=" * 62)
+        for motivo, cuantos in sorted(motivos.items()):
+            log("   %-24s %d" % (motivo, cuantos))
+        log("creado desde .............. %s" % CREACION_DESDE)
+        log("se piden .................. %d" % len(faltan))
+        if limite:
+            log("frena a las ............... %s" % limite.strftime("%d-%m %H:%M"))
+        if not faltan:
+            log("No falta ninguno.")
+            borrar_pendiente()
+            return 0
+        log("del %s al %s" % (faltan[0].strftime("%d-%m-%Y"),
+                              faltan[-1].strftime("%d-%m-%Y")))
+        if probar:
+            log("")
+            log("MODO PROBAR. Los dias serian:")
+            for i in range(0, len(faltan), 12):
+                log("   " + "  ".join(x.strftime("%d-%m") for x in faltan[i:i + 12]))
+            return 0
+        return trabajar(pk, wms, bloqueo_wms, sync_playwright, base, faltan,
+                        bloque, a_la_vista, limite)
+
     faltan = dias_que_faltan(base, d0, d1, rehacer)
     log("=" * 62)
     log("RECUPERAR PICKING  ·  %s a %s"
@@ -600,7 +744,7 @@ def trabajar(pk, wms, bloqueo_wms, sync_playwright, base, faltan, bloque,
     """El bucle de bloques. Lo llaman los dos caminos —la corrida normal y
        `--seguir`— para que retomar sea exactamente lo mismo que empezar."""
     t0 = time.time()
-    bajados, fallaron, n = [], [], 0
+    bajados, vacios, fallaron, n = [], [], [], 0
     while faltan:
         if limite and datetime.now() >= limite:
             log("")
@@ -620,19 +764,20 @@ def trabajar(pk, wms, bloqueo_wms, sync_playwright, base, faltan, bloque,
             % (n, len(faltan), (time.time() - t0) / 60.0))
         log("-" * 62)
         try:
-            b, f = bajar_un_bloque(pk, wms, sync_playwright, base, faltan,
-                                   bloque, a_la_vista, limite)
+            b, v, f = bajar_un_bloque(pk, wms, sync_playwright, base, faltan,
+                                      bloque, a_la_vista, limite)
         except Exception as e:
             log("El bloque %d se cayo entero (%s: %s). Se sigue con el siguiente."
                 % (n, type(e).__name__, str(e)[:160]), "WARN")
-            b, f = [], []
+            b, v, f = [], [], []
         finally:
             bloqueo_wms.soltar()
         bajados += b
+        vacios += v
         fallaron += f
-        log("bloque %d: %d bajados  ·  %d fallaron  ·  quedan %d"
-            % (n, len(b), len(f), len(faltan)))
-        if not b and not f:
+        log("bloque %d: %d bajados  ·  %d vacios confirmados  ·  %d fallaron  ·  quedan %d"
+            % (n, len(b), len(v), len(f), len(faltan)))
+        if not b and not v and not f:
             log("Ese bloque no logro bajar nada. Se corta para no dar vueltas "
                 "en falso; hay que volver a lanzarlo cuando el WMS este mejor.",
                 "ERROR")
@@ -646,9 +791,10 @@ def trabajar(pk, wms, bloqueo_wms, sync_playwright, base, faltan, bloque,
     queda.sort()
     log("")
     log("=" * 62)
-    log("%s en %.1f horas  ·  %d bajados  ·  %d fallaron  ·  %d sin tocar"
+    log("%s en %.1f horas  ·  %d bajados  ·  %d vacios confirmados  ·  %d fallaron"
+        "  ·  %d sin tocar"
         % ("PARADO" if queda else "LISTO", (time.time() - t0) / 3600.0,
-           len(bajados), len(fallaron), len(faltan)))
+           len(bajados), len(vacios), len(fallaron), len(faltan)))
     if bajados:
         log("del %s al %s" % (bajados[0].strftime("%d-%m-%Y"),
                               bajados[-1].strftime("%d-%m-%Y")))
