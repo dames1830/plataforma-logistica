@@ -1,12 +1,12 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0735';
-import * as adminService from './services_v245/adminService.js?v=29.0735';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0735';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0735';
-import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0735';
-import { registrar } from './services_v245/eventosService.js?v=29.0735';
+import { getSession, logout } from './services_v245/auth.js?v=29.0736';
+import * as adminService from './services_v245/adminService.js?v=29.0736';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0736';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0736';
+import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0736';
+import { registrar } from './services_v245/eventosService.js?v=29.0736';
 
 /* EL CHAT SE CARGA APARTE Y DESPUES DEL TABLERO. No es una pantalla: es una burbuja que
    flota sobre todas, al costado del indicador del servidor. Se guarda aca para poder
@@ -475,7 +475,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0735';
+      this.APP_VERSION = 'v29.0736';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -801,16 +801,26 @@ class App {
      su computadora y encontrarse la misma web adentro de un marco. Hacen falta las dos
      cosas: pantalla angosta Y pantalla tactil (o la app instalada). Con `?movil=1` se
      fuerza para probarla desde la PC, y con `?movil=0` se sale. */
-  enCelular() {
+  enCelular(user) {
     try {
       const q = new URLSearchParams(location.search).get('movil');
-      if (q === '1') { try { localStorage.removeItem('deam_prefiere_escritorio'); } catch (e) {} return true; }
       if (q === '0') return false;
+
+      /* LOS CHOFERES NO. Trabajan desde el telefono todos los dias y su Portal Chofer ya
+         tiene pantalla de celular en el tablero. Su perfil de app -su ruta y su parada-
+         llega con Despacho unificado; hasta entonces no se les toca nada. */
+      const rol = String((user && user.role) || '').toLowerCase();
+      if (rol === 'transportista' || rol === 'transporte' || rol === 'chofer') return false;
+
+      if (q === '1') { try { localStorage.removeItem('deam_prefiere_escritorio'); } catch (e) {} return true; }
       if (localStorage.getItem('deam_prefiere_escritorio') === '1') return false;
+
+      /* LA APP SALE SOLO SI LA INSTALARON. Abrir la web en el navegador del telefono sigue
+         dando el tablero de siempre: nadie pierde de un dia para otro lo que usaba, y la
+         app llega cuando cada uno decide instalarla. Y una ventana chica en la PC no es un
+         telefono: tambien tiene que ser angosta. */
       const instalada = window.matchMedia('(display-mode: standalone)').matches;
-      const angosta = window.innerWidth <= 820;
-      const tactil = (navigator.maxTouchPoints || 0) > 0;
-      return angosta && (tactil || instalada);
+      return instalada && window.innerWidth <= 820;
     } catch (e) { return false; }
   }
 
@@ -819,7 +829,7 @@ class App {
     this.isRendered = true;
     
     try {
-        if (user && this.enCelular()) {
+        if (user && this.enCelular(user)) {
             /* LA APP DEL CELULAR: su propia cara, con cinco secciones abajo y fondo claro.
                No es el tablero de la web achicado. */
             const { renderAppMovil } = await import(`./views/app_movil.js?v=${this.APP_VERSION}`);

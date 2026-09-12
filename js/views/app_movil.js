@@ -25,8 +25,8 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0735';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0735';
+import * as adminService from '../services_v245/adminService.js?v=29.0736';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0736';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
