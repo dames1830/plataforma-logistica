@@ -108,14 +108,29 @@ const nombreDeSala = (s) => {
     if (!s) return '';
     if (s.tipo === 'grupo') return s.nombre;
     const otro = (s.miembros || []).filter(u => u !== YO.username)[0];
-    return otro || s.nombre || '';
+    return nombreDe(otro) || s.nombre || '';
 };
 
 const esMiSala = (s) => !!s && (s.tipo === 'grupo'
     ? (s.miembros || []).indexOf(YO.username) >= 0
     : (s.miembros || []).indexOf(YO.username) >= 0);
 
-const iniciales = (nombre) => String(nombre || '?').slice(0, 2).toUpperCase();
+/* EN PANTALLA VA EL NOMBRE, NO EL USUARIO. Daniel: "lo debo buscar por nombre, pero en la web
+   solo lo puedo buscar por usuario". El usuario queda abajo, chiquito, porque sigue siendo lo
+   que identifica a la persona en las tareas y en los reportes. */
+/** A quien se le puede escribir hoy: los dados de baja no pueden entrar a la web. */
+const activos = () => gente.filter(p => p.active !== 0 && p.active !== false);
+
+const nombreDe = (usuario) => {
+    const p = gente.filter(x => x.username === usuario)[0];
+    return (p && p.name) || usuario || '';
+};
+
+const iniciales = (texto) => {
+    const partes = String(texto || '?').trim().split(' ').filter(Boolean);
+    if (partes.length >= 2) return (partes[0][0] + partes[1][0]).toUpperCase();
+    return String(texto || '?').slice(0, 2).toUpperCase();
+};
 
 const crearDirecta = async (usuario) => {
     const id = idDirecta(YO.username, usuario);
@@ -485,7 +500,7 @@ const filaSala = (s) => {
     const ultimo = lista.slice(-1)[0];
     const n = sinLeer(s.id);
     const previo = ultimo
-        ? (s.tipo === 'grupo' && ultimo.de !== YO.username ? ultimo.de + ': ' : '')
+        ? (s.tipo === 'grupo' && ultimo.de !== YO.username ? nombreDe(ultimo.de).split(' ')[0] + ': ' : '')
             + (ultimo.borrado ? 'mensaje borrado' : ultimo.texto)
         : 'Sin mensajes todavía';
     return `<button type="button" class="chat-fila" data-sala="${esc(s.id)}">
@@ -498,10 +513,10 @@ const filaSala = (s) => {
 };
 
 const filaPersona = (p) => `<button type="button" class="chat-fila" data-persona="${esc(p.username)}">
-        <span class="chat-ini">${esc(iniciales(p.username))}</span>
-        <span class="quien">${esc(p.username)}</span>
+        <span class="chat-ini">${esc(iniciales(p.name || p.username))}</span>
+        <span class="quien">${esc(p.name || p.username)}</span>
         <span class="marca">Nuevo</span>
-        <span class="ultimo">${esc(p.role || '')} · sin conversación todavía</span>
+        <span class="ultimo">${esc(p.username)} · ${esc(p.role || '')}</span>
         <span class="nuevos" style="visibility:hidden"></span>
     </button>`;
 
@@ -518,18 +533,26 @@ const pintarLista = () => {
     const salasQ = ordenadas.filter(s => nombreDeSala(s).toLowerCase().indexOf(q) >= 0);
     const conSala = {};
     salas.forEach(s => { if (s.tipo !== 'grupo') (s.miembros || []).forEach(u => { conSala[u] = true; }); });
-    const personas = gente.filter(p => p.username !== YO.username && !conSala[p.username]
-        && (p.username.toLowerCase().indexOf(q) >= 0 || String(p.role || '').toLowerCase().indexOf(q) >= 0));
+    const personas = activos().filter(p => p.username !== YO.username && !conSala[p.username]
+        && (String(p.name || '').toLowerCase().indexOf(q) >= 0
+            || p.username.toLowerCase().indexOf(q) >= 0
+            || String(p.role || '').toLowerCase().indexOf(q) >= 0));
     let html = '';
     if (salasQ.length) html += '<div class="sec">Conversaciones</div>' + salasQ.map(filaSala).join('');
     if (personas.length) html += '<div class="sec">Personas de la web</div>' + personas.map(filaPersona).join('');
     caja.innerHTML = html || '<div class="vacio">Nadie con ese nombre.</div>';
 };
 
+/* AL REPINTAR NO SE PIERDE NI EL CURSOR NI LO ESCRITO A MEDIAS.
+   Daniel: "cuando envio un mensaje el foco debe volver al chat para seguir escribiendo... tengo
+   que darle clic a la caja de texto". Pasaba porque cada refresco -el propio envio, y el latido
+   cada 4 segundos- rehacia la ventanita entera: el navegador tira la caja vieja y crea otra, sin
+   foco y sin lo que hubiera adentro. Ahora: si el dibujo quedo igual no se toca nada, y si
+   cambio se repone el texto de cada caja, el foco y la posicion del cursor. */
 const pintarVentanas = () => {
     const caja = nodo('chat-ventanas');
     if (!caja) return;
-    caja.innerHTML = abiertas.map(v => {
+    const html = abiertas.map(v => {
         const s = salaDe(v.id);
         if (!s) return '';
         const lista = mensajes[v.id] || [];
@@ -538,10 +561,10 @@ const pintarVentanas = () => {
             let html = '';
             const dia = diaDe(m.cuando);
             if (dia && dia !== diaPintado) { diaPintado = dia; html += `<div class="chat-dia">${esc(dia === diaDe(sello()) ? 'Hoy' : dia.split('-').reverse().join('/'))}</div>`; }
-            if (m.aviso) return html + `<div class="chat-msg aviso">${esc(m.de)} ${esc(m.texto)}</div>`;
+            if (m.aviso) return html + `<div class="chat-msg aviso">${esc(nombreDe(m.de))} ${esc(m.texto)}</div>`;
             if (m.borrado) return html + `<div class="chat-msg borrado">mensaje borrado</div>`;
             const mio = m.de === YO.username;
-            const de = (!mio && s.tipo === 'grupo') ? `<div class="de">${esc(m.de)}</div>` : '';
+            const de = (!mio && s.tipo === 'grupo') ? `<div class="de">${esc(nombreDe(m.de))}</div>` : '';
             const estado = mio ? (m.sinEnviar ? ' · sin enviar' : '') : '';
             const quitar = YO.username === SUPERUSUARIO
                 ? `<button class="quitar" type="button" title="Borrar (solo el administrador)" data-borrar="${esc(m.id)}" data-sala="${esc(s.id)}">×</button>` : '';
@@ -567,6 +590,33 @@ const pintarVentanas = () => {
             </div>
         </section>`;
     }).join('');
+
+    if (caja.__ultimoDibujo === html) return;          // nada cambio: no se toca la pantalla
+
+    const act = document.activeElement;
+    const escribiendo = (act && act.getAttribute && act.getAttribute('data-escribir'))
+        ? { sala: act.getAttribute('data-escribir'), valor: act.value, pos: act.selectionStart }
+        : null;
+    const aMedias = {};
+    caja.querySelectorAll('[data-escribir]').forEach(i => {
+        if (i.value) aMedias[i.getAttribute('data-escribir')] = i.value;
+    });
+
+    caja.__ultimoDibujo = html;
+    caja.innerHTML = html;
+
+    caja.querySelectorAll('[data-escribir]').forEach(i => {
+        const id = i.getAttribute('data-escribir');
+        if (aMedias[id]) i.value = aMedias[id];
+    });
+    if (escribiendo) {
+        const otra = caja.querySelector(`[data-escribir="${escribiendo.sala}"]`);
+        if (otra) {
+            otra.value = escribiendo.valor;
+            otra.focus();
+            try { otra.setSelectionRange(escribiendo.pos, escribiendo.pos); } catch (e) { /* da igual */ }
+        }
+    }
     abiertas.forEach(v => {
         const c = caja.querySelector(`[data-cuerpo="${v.id}"]`);
         if (c) c.scrollTop = c.scrollHeight;
@@ -666,8 +716,8 @@ const enganchar = () => {
     nodo('chat-nuevo-grupo').addEventListener('click', () => {
         nodo('chat-panel').hidden = true;
         panelAbierto = false;
-        nodo('chat-grupo-gente').innerHTML = gente.filter(p => p.username !== YO.username)
-            .map(p => `<label><input type="checkbox" value="${esc(p.username)}"> ${esc(p.username)} · <span style="color:var(--text-dim)">${esc(p.role || '')}</span></label>`).join('');
+        nodo('chat-grupo-gente').innerHTML = activos().filter(p => p.username !== YO.username)
+            .map(p => `<label><input type="checkbox" value="${esc(p.username)}"> ${esc(p.name || p.username)} · <span style="color:var(--text-dim)">${esc(p.username)} · ${esc(p.role || '')}</span></label>`).join('');
         nodo('chat-grupo').hidden = false;
     });
     nodo('chat-grupo-cancelar').addEventListener('click', () => {
@@ -718,9 +768,10 @@ const escribir = async (idSala) => {
     if (!caja) return;
     const texto = caja.value;
     caja.value = '';
+    caja.focus();                       // el cursor se queda aca, sin esperar al servidor
     await mandar(idSala, texto);
     const otra = raiz.querySelector(`[data-escribir="${idSala}"]`);
-    if (otra) otra.focus();
+    if (otra && document.activeElement !== otra) otra.focus();
 };
 
 /* ── ARRANQUE Y APAGADO ────────────────────────────────────────────────────────────────── */
@@ -738,7 +789,10 @@ export const montarChat = async (session) => {
         const r = await fetch(`${API}/users?t=${Date.now()}`);
         const c = await r.json();
         const d = (c && c.data) || c || [];
-        gente = (Array.isArray(d) ? d : []).filter(u => u && u.username && u.active !== 0);
+        /* El directorio guarda a TODOS, tambien a los dados de baja: sus mensajes viejos
+           tienen que seguir mostrando su nombre y no su usuario. A quien se le puede escribir
+           hoy lo decide `activos()`. */
+        gente = (Array.isArray(d) ? d : []).filter(u => u && u.username);
     } catch (e) { gente = []; }
 
     try { salas = (await traer(SALAS)).filter(esMiSala); } catch (e) { salas = []; }

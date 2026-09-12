@@ -1,12 +1,12 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0717';
-import * as adminService from './services_v245/adminService.js?v=29.0717';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0717';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0717';
-import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0717';
-import { registrar } from './services_v245/eventosService.js?v=29.0717';
+import { getSession, logout } from './services_v245/auth.js?v=29.0718';
+import * as adminService from './services_v245/adminService.js?v=29.0718';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0718';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0718';
+import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0718';
+import { registrar } from './services_v245/eventosService.js?v=29.0718';
 
 /* EL CHAT SE CARGA APARTE Y DESPUES DEL TABLERO. No es una pantalla: es una burbuja que
    flota sobre todas, al costado del indicador del servidor. Se guarda aca para poder
@@ -475,7 +475,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0717';
+      this.APP_VERSION = 'v29.0718';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está

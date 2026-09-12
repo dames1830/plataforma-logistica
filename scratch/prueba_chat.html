@@ -48,10 +48,15 @@
       chk(!!document.getElementById('chat-burbuja'), 'la burbuja aparece al costado del indicador del servidor');
       chk(!!document.getElementById('chat-panel'), 'el panel existe, cerrado');
       const seVe = (id) => getComputedStyle(document.getElementById(id)).display !== 'none';
+      const chat0 = window.__chat;
       chk(document.getElementById('chat-panel').hidden === true, 'el panel arranca cerrado');
       chk(!seVe('chat-panel') && !seVe('chat-grupo') && !seVe('chat-toast'),
           'y cerrado quiere decir que NO SE VE: ni el panel, ni la ventana de grupo, ni el globito');
-      chk(!seVe('chat-globo'), 'sin mensajes nuevos, el contador rojo no se ve (ni con un cero)');
+      const pendientesAlEntrar = chat0.estado().sinLeer;
+      chk(pendientesAlEntrar > 0 ? seVe('chat-globo') : !seVe('chat-globo'),
+          pendientesAlEntrar > 0
+            ? 'al entrar ya habia ' + pendientesAlEntrar + ' sin leer y el contador se ve'
+            : 'sin mensajes nuevos, el contador rojo no se ve (ni con un cero)');
 
       // 1. abrir una conversación con alguien con quien nunca se hablo
       const idSala = await chat.crearDirecta(OTRO);
@@ -101,7 +106,43 @@
       chk(borrado && borrado.borrado === true && borrado.borradoPor === 'dames', 'el administrador borra el mensaje y queda la marca de quién lo borró');
       chk(!!document.querySelector('.chat-ventana .chat-msg.borrado'), 'en pantalla se lee "mensaje borrado"');
 
-      // 6. un grupo
+      // 6. el cursor se queda en la caja al mandar, y lo escrito a medias no se pierde
+      const cajaTexto = document.querySelector('[data-escribir="' + idSala + '"]');
+      cajaTexto.focus();
+      cajaTexto.value = 'segundo mensaje seguido';
+      document.querySelector('[data-enviar="' + idSala + '"]').click();
+      await esperar(1200);
+      const cajaDespues = document.querySelector('[data-escribir="' + idSala + '"]');
+      chk(document.activeElement === cajaDespues, 'despues de enviar, el cursor sigue en la caja de texto');
+      chk(cajaDespues.value === '', 'y la caja quedo vacia, lista para el siguiente');
+      cajaDespues.value = 'esto lo estoy escribiendo';
+      cajaDespues.focus();
+      await chat.latir();
+      await esperar(300);
+      const cajaTrasLatido = document.querySelector('[data-escribir="' + idSala + '"]');
+      chk(cajaTrasLatido.value === 'esto lo estoy escribiendo' && document.activeElement === cajaTrasLatido,
+          'un refresco en medio no se lleva lo que se estaba escribiendo ni el cursor');
+      cajaTrasLatido.value = '';
+
+      // 7. buscar por NOMBRE, que es como lo pidio Daniel
+      document.getElementById('chat-buscar').value = 'manuel';
+      document.getElementById('chat-buscar').dispatchEvent(new Event('input'));
+      await esperar(200);
+      const filas = Array.from(document.querySelectorAll('#chat-lista [data-persona]'));
+      const loQueSeLee = document.getElementById('chat-lista').textContent;
+      chk(loQueSeLee.indexOf('Manuel Sosa') >= 0 && loQueSeLee.indexOf('Manuel Tex') >= 0,
+          'buscando "manuel" salen los dos Manuel, tengan conversación o no');
+      chk(filas.length && filas[0].querySelector('.quien').textContent.indexOf(' ') > 0,
+          'en la lista se lee el NOMBRE de la persona, no el usuario: ' + (filas[0] ? filas[0].querySelector('.quien').textContent : ''));
+      chk(filas.length && filas[0].querySelector('.ultimo').textContent.indexOf('·') > 0,
+          'y abajo, chiquito, el usuario y el puesto: ' + (filas[0] ? filas[0].querySelector('.ultimo').textContent : ''));
+      document.getElementById('chat-buscar').value = '';
+      document.getElementById('chat-buscar').dispatchEvent(new Event('input'));
+      const tituloVentana = document.querySelector('.chat-ventana[data-sala="' + idSala + '"] .n');
+      chk(tituloVentana && tituloVentana.textContent.trim() === 'Carlos Ascencio',
+          'la ventanita se titula con el nombre: ' + (tituloVentana ? tituloVentana.textContent.trim() : ''));
+
+      // 8. un grupo
       const idGrupo = await chat.crearGrupo('Prueba turno noche', [OTRO, 'msosa']);
       await esperar(600);
       const salas = await (await fetch(API + '/chat_salas?t=' + Date.now())).json();
