@@ -25,9 +25,9 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0746';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0746';
-import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0746';
+import * as adminService from '../services_v245/adminService.js?v=29.0747';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0747';
+import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0747';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -755,25 +755,20 @@ const verLaFoto = (lista) => {
     document.body.appendChild(capa);
 };
 
-/* SE PARTE EN DOS BLOQUES CUANDO LA LAMINA ES MAS ALTA QUE ANCHA. El tope de WhatsApp cae
-   sobre el LADO MAS LARGO: con treinta y tres personas el alto se lleva todo el presupuesto
-   y a cada fila le tocan pocos puntos. Partida en dos, cada bloque queda casi cuadrado y las
-   filas se leen. En tres no se gana nada: desde ahi el lado largo pasa a ser el ancho. */
+/* UNA SOLA IMAGEN. Daniel, viendola: *"en una sola imagen nada mas, dejalo, esta bien"*.
+   Se probo partirla en dos porque el tope de WhatsApp cae sobre el lado mas largo, pero con
+   la gente de hoy entra de sobra y prefiere mandar una. Si algun dia crece la lista y llega
+   borrosa, partirla es volver a repartir `orden` en dos mitades y llamar dos veces a
+   `dibujarLaFoto`, que ya sabe decir "bloque 1 de 2". */
 const laminasDeLaLista = () => {
-    /* Primero los que faltaron, que es lo que se va a mirar. El numero de fila se pone
-       ANTES de partir, para que los dos bloques sigan la misma cuenta. */
+    /* Primero los que faltaron, que es lo que se va a mirar. */
     const orden = listaLocal.slice().sort((x, y) => {
         const fx = x.present === false ? 0 : 1, fy = y.present === false ? 0 : 1;
         if (fx !== fy) return fx - fy;
         return nombreCorto(x).localeCompare(nombreCorto(y), 'es');
     }).map((p, i) => Object.assign({ __n: i + 1 }, p));
 
-    const unaSola = dibujarLaFoto(orden, 1, 1);
-    if (unaSola.height <= unaSola.width) return [unaSola];
-
-    const mitad = Math.ceil(orden.length / 2);
-    return [dibujarLaFoto(orden.slice(0, mitad), 1, 2),
-            dibujarLaFoto(orden.slice(mitad), 2, 2)];
+    return [dibujarLaFoto(orden, 1, 1)];
 };
 
 /** Arma los bloques y los manda por donde el telefono deje: WhatsApp, correo, lo que sea. */
