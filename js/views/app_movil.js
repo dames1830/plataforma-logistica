@@ -25,9 +25,9 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0748';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0748';
-import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0748';
+import * as adminService from '../services_v245/adminService.js?v=29.0749';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0749';
+import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0749';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -195,6 +195,11 @@ const ICONOS = {
     avisos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.8a6 6 0 1 0-12 0c0 5.4-2 7-2 7h16s-2-1.6-2-7"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></svg>'
 };
 
+/* El icono de compartir de siempre -tres puntos unidos-, dibujado y no puesto como emoji:
+   asi se ve igual en todos los telefonos y a tono con los de la barra de abajo. Daniel:
+   "ya no tiene sentido el icono de la camara, deberia estar un icono de compartir". */
+const ICONO_COMPARTIR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;display:block"><circle cx="18" cy="5.5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="M8.3 10.8 15.7 6.8"/><path d="M8.3 13.2l7.4 4"/></svg>';
+
 const SECCIONES = [
     { id: 'inicio', rotulo: 'Inicio', icono: 'inicio' },
     { id: 'reportes', rotulo: 'Reportes', icono: 'reportes' },
@@ -330,6 +335,7 @@ const JUSTIFICACIONES = [
     ['Otros', 'Otros']
 ];
 
+let listaTocada = false;     // se marco algo y todavia no se guardo: no se pisa con lo del servidor
 let listaLocal = null;       // la lista de hoy, mientras se edita
 let listaCerrada = false;    // ya la cerraron: se ve, no se toca
 let listaGuardando = false;
@@ -343,6 +349,7 @@ const cargarLista = () => {
     const guardado = adminService.getAttendance(fechaDeLaLista());
     listaCerrada = !!(guardado && guardado.finalized);
     listaLocal = armarLista(adminService.getWorkers() || [], guardado);
+    listaTocada = false;
 };
 
 const pantallaLista = () => {
@@ -384,9 +391,8 @@ const pantallaLista = () => {
             <span class="am-grande">${numero(vinieron)}<span style="font-size:1.3rem;color:#8B9B9F">/${numero(total)}</span></span>
             <span class="am-pie">${faltaron ? `${numero(faltaron)} ${faltaron === 1 ? 'falta' : 'faltas'}` : 'nadie faltó'}${listaCerrada ? ' · lista cerrada' : ' · toca solo a quien faltó'}</span>
             <span class="acciones">
-                <button type="button" class="am-chico solo-icono" data-foto title="Armar la foto para Recursos Humanos">📷</button>
+                <button type="button" class="am-chico solo-icono" data-foto title="Compartir la lista con Recursos Humanos">${ICONO_COMPARTIR}</button>
                 ${listaCerrada ? '' : `
-                <button type="button" class="am-chico solo-icono" data-sincronizar title="Traer lo último del servidor">🔄</button>
                 <button type="button" class="am-chico" data-guardar ${listaGuardando ? 'disabled' : ''}>${listaGuardando ? 'Guardando…' : 'Guardar'}</button>`}
             </span>
         </div>
@@ -412,6 +418,7 @@ const marcar = (dni, vino) => {
     const p = listaLocal.filter(x => String(x.dni) === String(dni))[0];
     if (!p) return;
     p.present = !!vino;
+    listaTocada = true;
     if (!vino) p.onTime = false;      // quien no vino no puede haber llegado a tiempo
     if (vino) p.justification = '';   // si al final vino, el motivo que se puso ya no aplica
     pintar();
@@ -420,15 +427,20 @@ const marcar = (dni, vino) => {
 const anotarMotivo = (dni, motivo) => {
     if (listaCerrada || !listaLocal) return;
     const p = listaLocal.filter(x => String(x.dni) === String(dni))[0];
-    if (p) p.justification = motivo || '';
+    if (p) { p.justification = motivo || ''; listaTocada = true; }
     /* NO se repinta: se perderia el desplegable recien abierto y el sitio de la lista. */
 };
 
-const sincronizar = async (boton) => {
-    if (boton) { boton.disabled = true; boton.textContent = '⌛'; }
-    try { await adminService.initializeAdminData(true); } catch (e) { console.warn('[APP] sincronizar:', e && e.message); }
+/* SIN BOTON DE REFRESCAR: la lista se trae sola al entrar a la seccion. Daniel lo pidio y
+   tiene razon, pero ojo con el por que: la app NO se refresca cada 20 segundos -eso es el
+   radar de la web-. Aca las demas pantallas se rehacen cada minuto y LA LISTA NO SE TOCA
+   sola a proposito, porque estaria pisando lo que se acaba de marcar. Por eso el traido va
+   al entrar, y solo se aplica si todavia no se marco nada. */
+const refrescarLista = async () => {
+    try { await adminService.initializeAdminData(true); } catch (e) { console.warn('[APP] traer la lista:', e && e.message); }
+    if (listaTocada) return;          // se empezo a marcar mientras llegaba: no se pisa
     cargarLista();
-    pintar();
+    if (seccion === 'lista') pintar();
 };
 
 const reabrirLista = async () => {
@@ -608,6 +620,30 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     g.textAlign = 'left';
 
     /* ── LAS CINCO TARJETAS ──────────────────────────────────────────────────────────── */
+    /* LAS DOS SILUETAS de la tarjeta de hombres y mujeres: cabeza y cuerpo, en relleno.
+       Se dibujan a mano porque un canvas no entiende los iconos SVG de la plataforma. Son
+       las mismas de la lamina de la web, que las pidio Daniel: "iconos de hombre y mujer
+       (como sombras)". La cabeza es igual en las dos; lo que cambia es el cuerpo: en el
+       hombre baja casi recto desde los hombros y en la mujer se abre hacia abajo. */
+    const silueta = (cx, cy, alto, esHombre, color) => {
+        const r = alto * 0.19;
+        const yCab = cy - alto / 2 + r;
+        const yHom = yCab + r + alto * 0.05;
+        const yPie = cy + alto / 2;
+        const hom = alto * 0.29;
+        const pie = esHombre ? alto * 0.24 : alto * 0.42;
+        g.fillStyle = color;
+        g.beginPath(); g.arc(cx, yCab, r, 0, Math.PI * 2); g.fill();
+        g.beginPath();
+        g.moveTo(cx - hom, yHom + alto * 0.10);
+        g.quadraticCurveTo(cx - hom, yHom, cx - hom * 0.5, yHom);
+        g.lineTo(cx + hom * 0.5, yHom);
+        g.quadraticCurveTo(cx + hom, yHom, cx + hom, yHom + alto * 0.10);
+        g.lineTo(cx + pie, yPie);
+        g.lineTo(cx - pie, yPie);
+        g.closePath(); g.fill();
+    };
+
     const TARJETAS = [
         [String(total), 'OPERARIOS', TINTA],
         [String(asistieron), 'ASISTENCIAS', VA],
@@ -623,7 +659,27 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
         g.textAlign = 'center';
         g.fillStyle = color;
         g.font = `800 16px ${UI}`;
-        g.fillText(valor, x + anchoT / 2, ALTO_TITULO + 28);
+        if (i === 4) {
+            /* La ultima lleva las dos siluetas, cada una delante de su numero. */
+            const AZUL_H = '#2C4C7C', NARANJA_M = '#B26A00';
+            const anchoH = g.measureText(String(hombres)).width;
+            const anchoM = g.measureText(String(mujeres)).width;
+            const sep = 9, icono = 9;
+            const todo = icono + 3 + anchoH + sep + icono + 3 + anchoM;
+            let cx = x + anchoT / 2 - todo / 2;
+            silueta(cx + icono / 2, ALTO_TITULO + 27, 16, true, AZUL_H);
+            cx += icono + 3;
+            g.textAlign = 'left'; g.fillStyle = AZUL_H;
+            g.fillText(String(hombres), cx, ALTO_TITULO + 28);
+            cx += anchoH + sep;
+            silueta(cx + icono / 2, ALTO_TITULO + 27, 16, false, NARANJA_M);
+            cx += icono + 3;
+            g.fillStyle = NARANJA_M;
+            g.fillText(String(mujeres), cx, ALTO_TITULO + 28);
+            g.textAlign = 'center';
+        } else {
+            g.fillText(valor, x + anchoT / 2, ALTO_TITULO + 28);
+        }
         g.fillStyle = TENUE;
         g.font = `700 7.5px ${UI}`;
         let r = rotulo;
@@ -872,7 +928,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         const s = e.target.closest('[data-seccion]');
         if (s) {
             seccion = s.getAttribute('data-seccion');
-            if (seccion === 'lista') cargarLista();   // se relee al entrar, no al dibujar
+            if (seccion === 'lista') { cargarLista(); refrescarLista(); }   // se trae al entrar
             pintar();
             return;
         }
@@ -882,8 +938,6 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (falto) { marcar(falto.getAttribute('data-falto'), false); return; }
         if (e.target.closest('[data-guardar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
-        const sinc = e.target.closest('[data-sincronizar]');
-        if (sinc) { sincronizar(sinc); return; }
         if (e.target.closest('[data-reabrir]')) { reabrirLista(); return; }
         if (e.target.closest('[data-cerrar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-escritorio]')) { irAEscritorio(); return; }
