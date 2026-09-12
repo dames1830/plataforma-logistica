@@ -1,0 +1,81 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prueba del pintado sin parpadeo</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; padding: 18px; line-height: 1.6; }
+  .ok { color: #34d399; } .falla { color: #f87171; }
+  pre { font-size: 13px; white-space: pre-wrap; }
+</style>
+<h3>Pintado por partes · se prueban las funciones reales de dashboard_v28.js</h3>
+<div id="caja"></div>
+<pre id="salida">corriendo...</pre>
+<script src="_morfar_extraido.js"></script>
+<script>
+  const caja = document.getElementById('caja');
+  const res = [];
+  const chk = (cond, msg) => { res.push((cond ? 'OK    ' : 'FALLA ') + msg); };
+
+  const A = '<div class="panel"><h2 id="t">Tareas del 11-09</h2>'
+    + '<table><tbody id="cuerpo">'
+    + '<tr id="f1"><td>Tarea70</td><td class="est">Finalizado</td><td>812</td></tr>'
+    + '<tr id="f2"><td>Tarea71</td><td class="est">Asignado</td><td>1244</td></tr>'
+    + '<tr id="f3"><td>Tarea72</td><td class="est">Creada</td><td>1178</td></tr>'
+    + '</tbody></table>'
+    + '<input id="buscar" type="text" value="">'
+    + '<canvas id="grafico" width="100" height="40"></canvas></div>';
+
+  const B = '<div class="panel"><h2 id="t">Tareas del 11-09</h2>'
+    + '<table><tbody id="cuerpo">'
+    + '<tr id="f1"><td>Tarea70</td><td class="est">Finalizado</td><td>812</td></tr>'
+    + '<tr id="f2" data-nuevo="si"><td>Tarea71</td><td class="est">Finalizado</td><td>1244</td></tr>'
+    + '<tr id="f4"><td>Tarea73</td><td class="est">Creada</td><td>926</td></tr>'
+    + '</tbody></table>'
+    + '<input id="buscar" type="text" value="">'
+    + '<canvas id="grafico" width="100" height="40"></canvas></div>';
+
+  caja.innerHTML = A;
+  const f1 = document.getElementById('f1');
+  const f2 = document.getElementById('f2');
+  const titulo = document.getElementById('t');
+  const lienzo = document.getElementById('grafico');
+  f1.__marca = 'la misma fila';
+
+  // el usuario esta escribiendo en el buscador cuando llega el refresco
+  const inp = document.getElementById('buscar');
+  inp.focus();
+  inp.value = 'north';
+
+  aplicarDibujo(caja, B);
+
+  chk(document.getElementById('f1') === f1 && f1.__marca === 'la misma fila',
+      'la fila que no cambio NO se toca: sigue siendo el mismo nodo');
+  chk(document.getElementById('t') === titulo, 'el titulo que no cambio tampoco se toca');
+  chk(document.getElementById('f2') === f2, 'la fila que cambio se actualiza en su sitio, no se reemplaza');
+  chk(document.querySelector('#f2 .est').textContent === 'Finalizado', 'el texto de la celda quedo actualizado');
+  chk(document.getElementById('f2').getAttribute('data-nuevo') === 'si', 'el atributo nuevo se agrego');
+  chk(!!document.getElementById('f4'), 'la fila nueva aparecio');
+  chk(!document.getElementById('f3'), 'la fila que ya no esta desaparecio');
+  chk(document.getElementById('buscar').value === 'north' && document.activeElement === document.getElementById('buscar'),
+      'lo que el usuario escribia no se piso y sigue con el foco');
+  chk(document.getElementById('grafico') === lienzo, 'el canvas no se toca si no cambio: el grafico se rehace por su cuenta (destroy + new Chart)');
+
+  const esperado = document.createElement('div');
+  esperado.innerHTML = B;
+  chk(caja.innerHTML === esperado.innerHTML, 'el resultado final es exactamente el dibujo nuevo');
+
+  // segunda vuelta con el mismo dibujo: no se toca ni un nodo
+  const f2b = document.getElementById('f2');
+  const f4b = document.getElementById('f4');
+  const lienzoB = document.getElementById('grafico');
+  aplicarDibujo(caja, B);
+  chk(document.getElementById('f2') === f2b && document.getElementById('f4') === f4b,
+      'volver a pintar lo mismo no toca ninguna fila');
+  chk(document.getElementById('grafico') === lienzoB, 'y en la segunda vuelta tampoco se toca');
+
+  const fallas = res.filter(function (r) { return r.indexOf('FALLA') === 0; }).length;
+  document.getElementById('salida').innerHTML = res.join(String.fromCharCode(10))
+    + String.fromCharCode(10) + String.fromCharCode(10)
+    + (fallas ? '<span class="falla">HAY ' + fallas + ' FALLA(S)</span>'
+              : '<span class="ok">TODO BIEN (' + res.length + ' de ' + res.length + ')</span>');
+  document.title = fallas ? 'FALLAS ' + fallas : 'TODO BIEN ' + res.length;
+</script>
