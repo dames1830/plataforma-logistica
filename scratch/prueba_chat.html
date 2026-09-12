@@ -67,17 +67,27 @@
       const texto = 'prueba automática ' + new Date().toLocaleTimeString('es-PE');
       await chat.mandar(idSala, texto);
       await esperar(600);
-      const enServidor = await (await fetch(API + '/chat_' + idSala + '?t=' + Date.now())).json();
+      const enServidor = await (await fetch(API + '/chat_' + idSala + '?date=MASTER&t=' + Date.now())).json();
       const lista = (enServidor && enServidor.data) || [];
       chk(lista.some(m => m.texto === texto && m.de === 'dames'), 'el mensaje llegó al servidor con su autor y su hora');
       chk(lista.every(m => m.id && m.cuando && m.cuando.indexOf('Z') < 0), 'los mensajes van con id propio y hora local, sin Z');
+
+      // 2b. LA MEDIANOCHE NO SE LLEVA LA CONVERSACION
+      //     El servidor guarda una foto por dia y devuelve la mas reciente; si el mensaje
+      //     cayera en la foto de hoy, manana la conversacion arrancaria vacia y a los dos
+      //     dias se perderia de verdad. Tiene que estar en MASTER y NO en la foto del dia.
+      const hoyAqui = new Date().toLocaleString('sv').slice(0, 10);
+      const fotoDelDia = await (await fetch(API + '/chat_' + idSala + '?date=' + hoyAqui + '&t=' + Date.now())).json();
+      const enElDia = ((fotoDelDia && fotoDelDia.data) || []);
+      chk(!enElDia.some(m => m.texto === texto),
+          'el mensaje NO quedo en la foto del dia: la medianoche no se lleva la conversacion');
 
       // 3. que llegue uno de la otra persona: se escribe directo al área, como si fuera su PC
       // la hora va LOCAL, que es como la escribe la otra PC (nunca toISOString)
       const suyo = { id: 'pru_' + Date.now().toString(36), de: OTRO,
                      cuando: new Date().toLocaleString('sv').replace(' ', 'T'),
                      texto: 'respuesta de ' + OTRO };
-      await fetch(API + '/chat_' + idSala, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(suyo) });
+      await fetch(API + '/chat_' + idSala + '?date=MASTER', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(suyo) });
       await esperar(400);
       await chat.latir();
       const estado = chat.estado();
@@ -102,7 +112,7 @@
       // 5. borrar un mensaje: solo el administrador
       await chat.borrar(idSala, suyo.id);
       await esperar(500);
-      const tras = await (await fetch(API + '/chat_' + idSala + '?t=' + Date.now())).json();
+      const tras = await (await fetch(API + '/chat_' + idSala + '?date=MASTER&t=' + Date.now())).json();
       const borrado = ((tras && tras.data) || []).filter(m => m.id === suyo.id)[0];
       chk(borrado && borrado.borrado === true && borrado.borradoPor === 'dames', 'el administrador borra el mensaje y queda la marca de quién lo borró');
       chk(!!document.querySelector('.chat-ventana .chat-msg.borrado'), 'en pantalla se lee "mensaje borrado"');
@@ -163,7 +173,7 @@
           'la foto se achico antes de subir: de ' + Math.round(foto.size / 1024) + ' KB a '
           + Math.round((conFoto ? conFoto.adjunto.tamano : 0) / 1024) + ' KB');
 
-      const areaFoto = await (await fetch(API + '/chat_adj_' + conFoto.adjunto.id + '?t=' + Date.now())).json();
+      const areaFoto = await (await fetch(API + '/chat_adj_' + conFoto.adjunto.id + '?date=MASTER&t=' + Date.now())).json();
       const guardada = ((areaFoto && areaFoto.data) || [])[0];
       chk(guardada && String(guardada.datos || '').indexOf('data:image/') === 0,
           'la foto quedo guardada en su propia area del servidor');
@@ -192,7 +202,7 @@
       // 9. un grupo
       const idGrupo = await chat.crearGrupo('Prueba turno noche', [OTRO, 'msosa']);
       await esperar(600);
-      const salas = await (await fetch(API + '/chat_salas?t=' + Date.now())).json();
+      const salas = await (await fetch(API + '/chat_salas?date=MASTER&t=' + Date.now())).json();
       const grupo = ((salas && salas.data) || []).filter(s => s.id === idGrupo)[0];
       chk(grupo && grupo.tipo === 'grupo' && grupo.miembros.length === 3, 'el grupo se creó con sus tres integrantes');
       chk(grupo && grupo.creador === 'dames', 'queda anotado quién lo creó');

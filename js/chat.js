@@ -34,6 +34,20 @@
 const BASE = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com');
 const API = BASE + '/api/logistics';
 const SALAS = 'chat_salas';
+
+/* TODO EL CHAT SE GUARDA BAJO LA MISMA FOTO: "MASTER".
+ *
+ * El servidor guarda UNA FOTO POR DIA de cada area y, cuando se le pide el area sin
+ * decirle fecha, devuelve la MAS RECIENTE. A las 00:00 la foto del dia nuevo arranca
+ * vacia: el primer mensaje de la madrugada creaba una foto con ese mensaje solo, y la
+ * conversacion entera parecia borrada. Y no era solo parecer: el servidor conserva unicamente
+ * las 2 fotos mas recientes de cada area, asi que a los dos dias los mensajes se perdian
+ * de verdad.
+ *
+ * Guardando siempre en MASTER -como ya hacen la configuracion, los usuarios y las tareas
+ * de almacenaje- la conversacion es UNA SOLA y no depende del dia. El robot de archivado
+ * es el unico que la recorta, y recien a los 30 dias. */
+const FOTO = 'date=MASTER';
 const LEIDOS = 'chat_leidos';
 const CADA_LENTO = 20000;   // sin ventanas abiertas: alcanza para el contador
 const CADA_VIVO = 4000;     // con una ventana abierta: la conversación tiene que sentirse viva
@@ -67,7 +81,7 @@ const cabeceras = () => {
 };
 
 const traer = async (area) => {
-    const r = await fetch(`${API}/${area}?t=${Date.now()}`);
+    const r = await fetch(`${API}/${area}?${FOTO}&t=${Date.now()}`);
     if (!r.ok) throw new Error(`${area}: ${r.status}`);
     const c = await r.json();
     const d = (c && c.data !== undefined) ? c.data : c;
@@ -77,7 +91,7 @@ const traer = async (area) => {
 /* Un elemento con id: el servidor lo reemplaza si existe y lo AGREGA si no. Es lo que
    permite mandar un mensaje sin reescribir la conversación entera. */
 const poner = async (area, elemento) => {
-    const r = await fetch(`${API}/${area}`, {
+    const r = await fetch(`${API}/${area}?${FOTO}`, {
         method: 'PATCH', headers: cabeceras(), body: JSON.stringify(elemento)
     });
     if (!r.ok) throw new Error(`${area}: ${r.status}`);
@@ -319,7 +333,7 @@ const subirAdjunto = async (archivo) => {
     const id = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
     const ficha = { id, nombre: archivo.name || 'foto.jpg', tipo,
                     mime: listo.type || archivo.type || '', tamano: listo.size };
-    const r = await fetch(API + '/chat_adj_' + id, {
+    const r = await fetch(API + '/chat_adj_' + id + '?' + FOTO, {
         method: 'POST', headers: cabeceras(),
         body: JSON.stringify([Object.assign({ datos: datos }, ficha)])
     });

@@ -25,8 +25,8 @@
  */
 
 import { nf, esc, cuadro, cuadroRutas, estilos, engancharBuscador }
-    from './pendiente.js?v=29.0719';
-import { icono } from '../services_v245/iconos.js?v=29.0719';
+    from './pendiente.js?v=29.0720';
+import { icono } from '../services_v245/iconos.js?v=29.0720';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
