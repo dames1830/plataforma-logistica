@@ -53,6 +53,10 @@ const CADA_LENTO = 20000;   // sin ventanas abiertas: alcanza para el contador
 const CADA_VIVO = 4000;     // con una ventana abierta: la conversación tiene que sentirse viva
 const MAX_VENTANAS = 3;
 const EN_LA_LISTA = 5;      // cuantas conversaciones se ven en el panel sin buscar
+const PRESENCIA = 'chat_presencia';
+const ANUNCIO_CADA = 25000;      // cada cuanto esta pantalla dice "sigo aqui"
+const MIRAR_QUIEN_CADA = 15000;  // cada cuanto pregunta quien mas esta
+const SE_APAGA_A_LOS = 70000;    // sin noticias, se apaga la bolita (dos avisos perdidos)
 const SUPERUSUARIO = 'dames';
 
 let YO = null;              // { username, role, token }
@@ -72,6 +76,10 @@ let toastReloj = null;
 let toastSala = null;
 let arrancado = false;
 let salaDelClip = null;     // a que conversacion va el archivo que se esta eligiendo
+let presencia = {};         // { usuario: cuando dijo "sigo aqui", en hora del servidor }
+let desfaseReloj = 0;       // ms entre el reloj del servidor y el de esta PC
+let ultimoAnuncio = 0;
+let ultimaMirada = 0;
 
 /* ── LO QUE HABLA CON EL SERVIDOR ──────────────────────────────────────────────────────── */
 
@@ -112,6 +120,53 @@ const marcasDelServidor = async () => {
     } catch (e) { return null; }
 };
 
+/* ── QUIEN ESTA CONECTADO ──────────────────────────────────────────────────────────────
+ *
+ * El servidor no avisa nada por su cuenta, asi que cada pantalla escribe "sigo aqui" en el
+ * area `chat_presencia` cada 25 segundos. Quien dijo algo en los ultimos 70 esta en linea;
+ * los 70 son a proposito: aguantan dos avisos perdidos por una red lenta sin apagar la
+ * bolita de alguien que si esta.
+ *
+ * LA HORA ES LA DEL SERVIDOR, NO LA DE CADA PC. Dos computadoras del almacen pueden tener
+ * la hora distinta por minutos -ya paso con el contador de no leidos-. Si la bolita se
+ * calculara con el reloj de cada una, una PC atrasada veria a todo el mundo desconectado.
+ * Se pregunta la hora del servidor UNA vez al entrar y se guarda la diferencia. */
+
+const ahoraDelServidor = () => Date.now() + desfaseReloj;
+
+const sincronizarReloj = async () => {
+    try {
+        const salida = Date.now();
+        const r = await fetch(`${BASE}/api/health?t=${salida}`);
+        if (!r.ok) return;
+        const c = await r.json();
+        if (!c || !c.timestamp) return;
+        /* Se le descuenta la mitad del viaje de ida y vuelta: es la forma barata de no
+           contar como desfase lo que en realidad tardo la red. */
+        const viaje = (Date.now() - salida) / 2;
+        desfaseReloj = new Date(c.timestamp).getTime() + viaje - Date.now();
+    } catch (e) { desfaseReloj = 0; }
+};
+
+/** Dice "sigo aqui". Con `apagandome`, dice lo contrario: al salir, la bolita se apaga ya. */
+const anunciarme = async (apagandome = false) => {
+    if (!YO) return;
+    try { await poner(PRESENCIA, { id: YO.username, visto: apagandome ? 0 : ahoraDelServidor() }); }
+    catch (e) { /* se reintenta en el proximo latido */ }
+};
+
+const mirarQuienEsta = async () => {
+    try {
+        const lista = await traer(PRESENCIA);
+        const nuevo = {};
+        lista.forEach(p => { if (p && p.id) nuevo[p.id] = Number(p.visto) || 0; });
+        presencia = nuevo;
+    } catch (e) { /* se reintenta; mientras tanto vale lo ultimo que se supo */ }
+};
+
+const enLinea = (usuario) => !!usuario
+    && (ahoraDelServidor() - (presencia[usuario] || 0)) < SE_APAGA_A_LOS;
+
 /* ── LAS SALAS ─────────────────────────────────────────────────────────────────────────── */
 
 /** El id de una conversación de dos sale de los dos nombres, ordenados: las dos PC lo
@@ -137,9 +192,16 @@ const esMiSala = (s) => !!s && (s.tipo === 'grupo'
 /** A quien se le puede escribir hoy: los dados de baja no pueden entrar a la web. */
 const activos = () => gente.filter(p => p.active !== 0 && p.active !== false);
 
+/* LOS NOMBRES, TODOS IGUALES. En la lista de usuarios hay nombres escritos en mayusculas
+   -"VICENTE MORON"- y otros normales, y en el chat quedaban mezclados. Se dibujan siempre
+   con la primera letra de cada palabra en mayuscula y el resto en minuscula. NO se toca el
+   dato guardado: si manana alguien carga otro nombre a los gritos, tambien se vera parejo. */
+const nombreBonito = (texto) => String(texto || '').trim().toLocaleLowerCase('es')
+    .replace(/(^|[\s\-'])(\S)/g, (t, antes, letra) => antes + letra.toLocaleUpperCase('es'));
+
 const nombreDe = (usuario) => {
     const p = gente.filter(x => x.username === usuario)[0];
-    return (p && p.name) || usuario || '';
+    return (p && nombreBonito(p.name)) || usuario || '';
 };
 
 const iniciales = (texto) => {
@@ -453,6 +515,13 @@ const latir = async () => {
        justamente para cuando la persona esta mirando otra cosa; si el latido se apagara al
        cambiar de pestana, el mensaje aparecia recien al volver. El navegador espacia solo los
        relojes de las pestanas ocultas, y con eso alcanza. */
+    /* "Sigo aqui" y "quien mas esta". Van con su propio reloj y no con el del latido:
+       el latido se acelera a 4 s con una ventana abierta, y no hace falta anunciarse
+       quince veces por minuto. */
+    const ahoraAqui = Date.now();
+    if (ahoraAqui - ultimoAnuncio > ANUNCIO_CADA) { ultimoAnuncio = ahoraAqui; anunciarme(); }
+    if (ahoraAqui - ultimaMirada > MIRAR_QUIEN_CADA) { ultimaMirada = ahoraAqui; await mirarQuienEsta(); }
+
     const marcas = await marcasDelServidor();
     const cambio = (area) => {
         if (!marcas) return true;                       // sin versiones, se pregunta igual
@@ -549,9 +618,17 @@ const CSS = `
   border-bottom: 1px solid rgba(var(--ink-rgb), 0.05); padding: 0.55rem 0.9rem; display: grid;
   grid-template-columns: 32px 1fr auto; gap: 0.05rem 0.6rem; align-items: center; font-family: inherit; }
 .chat-fila:hover { background: rgba(var(--ink-rgb), 0.04); }
-.chat-ini { grid-row: span 2; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center;
+.chat-ini { position: relative; grid-row: span 2; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center;
   font-size: 11px; font-weight: 800; color: var(--brand-pale); background: rgba(var(--brand-rgb), 0.16);
   border: 1px solid rgba(var(--brand-rgb), 0.3); }
+/* La bolita verde: quien esta con la web abierta ahora mismo. */
+.chat-ini.en-linea::after { content: ''; position: absolute; right: -3px; bottom: -3px;
+  width: 11px; height: 11px; border-radius: 50%; background: rgba(var(--success-rgb), 1);
+  border: 2px solid var(--panel-solid); box-shadow: 0 0 6px rgba(var(--success-rgb), 0.7); }
+.chat-ventana .vcab .luz { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto;
+  background: rgba(var(--ink-rgb), 0.28); }
+.chat-ventana .vcab .luz.si { background: rgba(var(--success-rgb), 1);
+  box-shadow: 0 0 6px rgba(var(--success-rgb), 0.7); }
 .chat-ini.grupo { color: var(--text-pale); background: rgba(var(--ink-rgb), 0.06); border-color: rgba(var(--ink-rgb), 0.12); }
 .chat-fila .quien { font-weight: 700; color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-fila .hora { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
@@ -714,8 +791,9 @@ const filaSala = (s) => {
         ? (s.tipo === 'grupo' && !ultimo.aviso && ultimo.de !== YO.username ? nombreDe(ultimo.de).split(' ')[0] + ': ' : '')
             + (ultimo.borrado ? 'mensaje borrado' : ultimo.texto)
         : 'Sin mensajes todavía';
+    const conQuien = s.tipo === 'grupo' ? null : (s.miembros || []).filter(u => u !== YO.username)[0];
     return `<button type="button" class="chat-fila" data-sala="${esc(s.id)}">
-        <span class="chat-ini ${s.tipo === 'grupo' ? 'grupo' : ''}">${esc(iniciales(nombreDeSala(s)))}</span>
+        <span class="chat-ini ${s.tipo === 'grupo' ? 'grupo' : ''} ${enLinea(conQuien) ? 'en-linea' : ''}">${esc(iniciales(nombreDeSala(s)))}</span>
         <span class="quien">${esc(nombreDeSala(s))}</span>
         <span class="hora">${ultimo ? esc(horaCorta(ultimo.cuando)) : ''}</span>
         <span class="ultimo">${esc(previo)}</span>
@@ -724,8 +802,8 @@ const filaSala = (s) => {
 };
 
 const filaPersona = (p) => `<button type="button" class="chat-fila" data-persona="${esc(p.username)}">
-        <span class="chat-ini">${esc(iniciales(p.name || p.username))}</span>
-        <span class="quien">${esc(p.name || p.username)}</span>
+        <span class="chat-ini ${enLinea(p.username) ? 'en-linea' : ''}">${esc(iniciales(nombreBonito(p.name) || p.username))}</span>
+        <span class="quien">${esc(nombreBonito(p.name) || p.username)}</span>
         <span class="marca">Nuevo</span>
         <span class="ultimo">${esc(p.username)} · ${esc(p.role || '')}</span>
         <span class="nuevos" style="visibility:hidden"></span>
@@ -805,6 +883,7 @@ const pintarVentanas = () => {
         const n = sinLeer(s.id);
         return `<section class="chat-ventana ${v.plegada ? 'plegada' : 'abierta'} ${n ? 'con-nuevos' : ''}" data-sala="${esc(s.id)}">
             <header class="vcab" data-plegar="${esc(s.id)}">
+                ${s.tipo === 'grupo' ? '' : `<span class="luz ${enLinea((s.miembros || []).filter(u => u !== YO.username)[0]) ? 'si' : ''}" title="${enLinea((s.miembros || []).filter(u => u !== YO.username)[0]) ? 'En línea' : 'Sin conexión'}"></span>`}
                 <span class="n">${esc(nombreDeSala(s))}</span>
                 ${v.plegada && n ? `<span class="cuenta">${n}</span>` : ''}
                 <span class="acciones">
@@ -961,7 +1040,7 @@ const enganchar = () => {
         nodo('chat-panel').hidden = true;
         panelAbierto = false;
         nodo('chat-grupo-gente').innerHTML = activos().filter(p => p.username !== YO.username)
-            .map(p => `<label><input type="checkbox" value="${esc(p.username)}"> ${esc(p.name || p.username)} · <span style="color:var(--text-dim)">${esc(p.username)} · ${esc(p.role || '')}</span></label>`).join('');
+            .map(p => `<label><input type="checkbox" value="${esc(p.username)}"> ${esc(nombreBonito(p.name) || p.username)} · <span style="color:var(--text-dim)">${esc(p.username)} · ${esc(p.role || '')}</span></label>`).join('');
         nodo('chat-grupo').hidden = false;
         acomodarVentanas();
     });
@@ -1104,6 +1183,12 @@ export const montarChat = async (session) => {
         leidos = (mio && mio.salas) || {};
     } catch (e) { leidos = {}; }
 
+    await sincronizarReloj();
+    await mirarQuienEsta();
+    ultimaMirada = Date.now();
+    anunciarme();
+    ultimoAnuncio = Date.now();
+
     for (const s of salas) { await bajarSala(s.id); reponerContador(s.id); }
     pintar();
     acomodarReloj();
@@ -1112,15 +1197,18 @@ export const montarChat = async (session) => {
 };
 
 export const desmontarChat = () => {
+    anunciarme(true);        // al salir, la bolita se apaga enseguida y no en 70 segundos
     if (reloj) { clearInterval(reloj); reloj = null; }
     if (raiz && raiz.parentNode) raiz.parentNode.removeChild(raiz);
     const est = document.getElementById('chat-estilos');
     if (est && est.parentNode) est.parentNode.removeChild(est);
     raiz = null; arrancado = false; salas = []; mensajes = {}; abiertas = []; panelAbierto = false;
+    presencia = {}; ultimoAnuncio = 0; ultimaMirada = 0;
 };
 
 /* Para la prueba del navegador: deja a mano lo que hace falta empujar sin tocar la pantalla. */
 window.__chat = { latir, mandar, crearDirecta, crearGrupo, borrar, bajarSala, marcasDelServidor,
                   mandarConAdjunto, subirAdjunto, achicarFoto,
+                  anunciarme, mirarQuienEsta, enLinea, nombreBonito, sincronizarReloj,
                   estado: () => ({ salas, mensajes, leidos, noLeidos, abiertas, versionesVistas,
                                    sinLeer: sinLeerTotal() }) };

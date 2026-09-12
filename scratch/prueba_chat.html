@@ -316,6 +316,41 @@
             'en pantalla angosta (' + window.innerWidth + ' px) van abajo y no se mueven, como debe ser');
       }
 
+      // 13. LOS NOMBRES, TODOS IGUALES
+      chk(chat.nombreBonito('VICENTE MORON') === 'Vicente Moron',
+          'un nombre a los gritos se dibuja parejo: VICENTE MORON -> ' + chat.nombreBonito('VICENTE MORON'));
+      chk(chat.nombreBonito('daniel ames') === 'Daniel Ames' && chat.nombreBonito('Carlos Ascencio') === 'Carlos Ascencio',
+          'y los que ya estaban bien no se tocan');
+
+      // 14. LA BOLITA VERDE
+      //     Nadie avisa por el servidor: cada pantalla dice "sigo aqui" cada 25 segundos.
+      chk(chat.enLinea('dames'), 'esta pantalla figura en linea despues de anunciarse');
+      chk(!chat.enLinea('nadie_que_no_existe'), 'y alguien que nunca se anuncio, no');
+
+      // otra persona se anuncia desde "su PC": se escribe directo en el area
+      await fetch(API + '/chat_presencia?date=MASTER', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: OTRO, visto: Date.now() })
+      });
+      await chat.mirarQuienEsta();
+      chk(chat.enLinea(OTRO), 'cuando ' + OTRO + ' se anuncia, se le enciende la bolita');
+
+      if (document.getElementById('chat-panel').hidden) { document.getElementById('chat-burbuja').click(); await esperar(400); }
+      document.getElementById('chat-buscar').value = '';
+      document.getElementById('chat-buscar').dispatchEvent(new Event('input'));
+      await esperar(300);
+      const filaDelOtro = document.querySelector('#chat-lista [data-sala="' + idSala + '"] .chat-ini');
+      chk(!!filaDelOtro && filaDelOtro.classList.contains('en-linea'),
+          'y en la lista se le ve la bolita verde al costado de su inicial');
+
+      // y se apaga cuando deja de avisar: se le pone una hora vieja
+      await fetch(API + '/chat_presencia?date=MASTER', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: OTRO, visto: Date.now() - 5 * 60 * 1000 })
+      });
+      await chat.mirarQuienEsta();
+      chk(!chat.enLinea(OTRO), 'y si deja de avisar cinco minutos, la bolita se apaga');
+
       pintar();
     } catch (e) {
       res.push('FALLA se cayó la prueba: ' + (e && e.message));
