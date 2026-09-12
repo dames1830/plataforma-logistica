@@ -25,9 +25,9 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0747';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0747';
-import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0747';
+import * as adminService from '../services_v245/adminService.js?v=29.0748';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0748';
+import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0748';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -551,7 +551,7 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     const ALTO_TITULO = 66;
     const ALTO_TARJETAS = 62;
     const ALTO_ENCABEZADO = 26;
-    const ALTO_PIE = 50;
+    const ALTO_PIE = 30;      // solo la leyenda: debajo ya no va nada
 
     const dias = semanaDeHoy();
     const marcas = marcasDeLaSemana(dias);
@@ -714,13 +714,9 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
         lx += g.measureText(texto).width + 12;
     });
 
-    g.fillStyle = TENUE;
-    g.font = `400 9.5px ${UI}`;
-    const ahora = new Date();
-    const dd = (n) => String(n).padStart(2, '0');
-    g.fillText(`Logística Deam1830 · ${dd(ahora.getDate())}/${dd(ahora.getMonth() + 1)} ${dd(ahora.getHours())}:${dd(ahora.getMinutes())}`
-               + (listaCerrada ? ' · lista cerrada' : ' · sin cerrar')
-               + (deCuantos > 1 ? '  ·  bloque ' + nBloque + ' de ' + deCuantos : ''), MARGEN, y + 36);
+    /* DEBAJO DE LA LEYENDA NO VA NADA. Estaba el sello con la hora y el "sin cerrar", y
+       Daniel lo saco: la foto se manda al toque, asi que la hora la pone el propio WhatsApp,
+       y lo de "sin cerrar" es cosa de la web, no de Recursos Humanos. */
 
     return lienzo;
 };
