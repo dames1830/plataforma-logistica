@@ -25,9 +25,9 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0741';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0741';
-import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0741';
+import * as adminService from '../services_v245/adminService.js?v=29.0743';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0743';
+import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0743';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -58,7 +58,7 @@ const CSS = `
 #app-movil .am-cab .ttl { font-size: 1.12rem; font-weight: 750; letter-spacing: -0.015em; }
 
 #app-movil .am-cuerpo { overflow-y: auto; -webkit-overflow-scrolling: touch;
-  padding: 0.9rem 1.1rem 1.4rem; display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
+  padding: 0.9rem 0.8rem 1.4rem; display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
 
 #app-movil .am-tarjeta { background: var(--am-carta); border: 1px solid var(--am-linea);
   border-radius: 12px; padding: 0.85rem 0.95rem; display: flex; flex-direction: column; gap: 0.35rem; }
@@ -105,40 +105,41 @@ const CSS = `
   font-size: .78rem; text-decoration: underline; cursor: pointer; padding: .6rem; align-self: center; }
 
 /* ── PASAR LISTA ─────────────────────────────────────────────────────────────────────── */
+/* TRES COLUMNAS DE VERDAD, no una fila y otra debajo: quien | asistio o falto | motivo.
+   La del motivo existe siempre -vacia en quien asistio- para que quede alineada de arriba
+   abajo, que es lo que hace que se lea como columna y no como un remiendo. */
 #app-movil .am-persona { background: var(--am-carta); border: 1px solid var(--am-linea);
-  border-radius: 11px; padding: 0.55rem 0.6rem 0.55rem 0.7rem; display: flex; align-items: center;
-  gap: 0.6rem; min-width: 0; transition: border-color .15s ease, background .15s ease; }
+  border-radius: 11px; padding: 0.5rem 0.55rem; display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 86px; align-items: center;
+  gap: 0.3rem; min-width: 0; transition: border-color .15s ease, background .15s ease; }
 #app-movil .am-persona.falto { border-color: #E7BEBC; background: #FDF7F7; }
-#app-movil .am-persona .ini { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-  background: var(--am-va-agua); color: var(--am-va); display: grid; place-items: center;
-  font-size: 0.66rem; font-weight: 750; font-family: var(--am-num); }
-#app-movil .am-persona.falto .ini { background: var(--am-tarde-agua); color: var(--am-tarde); }
-#app-movil .am-persona .quien { flex: 1; min-width: 0; }
+#app-movil .am-persona .quien { min-width: 0; }
 /* display:block en los dos: como span sueltos, el nombre y el DNI salian pegados en la
    misma linea -"Gian AlataDNI 74821779"- y el recorte con puntos suspensivos no aplicaba. */
 #app-movil .am-persona .nm { display: block; font-weight: 650; font-size: 0.88rem; letter-spacing: -.005em;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #app-movil .am-persona .dni { display: block; font-family: var(--am-num); font-size: 0.64rem;
   color: var(--am-tenue); line-height: 1.3; }
-#app-movil .am-persona .marcas { display: flex; gap: 0.3rem; flex-shrink: 0; }
-#app-movil .am-persona .marcas button { font-family: var(--am-ui); font-size: 0.72rem; font-weight: 700;
-  padding: 0.42rem 0.6rem; border-radius: 8px; border: 1.5px solid var(--am-linea);
-  background: var(--am-carta); color: var(--am-tenue); cursor: pointer; min-width: 52px; }
+#app-movil .am-persona .marcas { display: flex; gap: 0.25rem; }
+#app-movil .am-persona .marcas button { font-family: var(--am-ui); font-size: 0.68rem; font-weight: 700;
+  padding: 0.42rem 0.4rem; border-radius: 8px; border: 1.5px solid var(--am-linea);
+  background: var(--am-carta); color: var(--am-tenue); cursor: pointer; min-width: 46px; }
+#app-movil .am-persona .motivo { min-width: 0; }
+#app-movil .am-persona .motivo select { width: 100%; font-family: var(--am-ui); font-size: 0.7rem;
+  padding: 0.4rem 0.3rem; border-radius: 8px; border: 1px solid #E7BEBC; background: var(--am-carta);
+  color: var(--am-tinta); }
+#app-movil .am-persona .motivo .nada { display: block; text-align: center; color: #C6D0CE; font-size: 0.8rem; }
 #app-movil .am-persona .marcas button.si-vino { background: var(--am-va); border-color: var(--am-va); color: #fff; }
 #app-movil .am-persona .marcas button.si-falto { background: var(--am-tarde); border-color: var(--am-tarde); color: #fff; }
 #app-movil .am-persona .marcas button:disabled { opacity: .55; cursor: default; }
 
-/* La justificacion, colgada de la fila de quien falto. */
-#app-movil .am-justif { background: #FDF7F7; border: 1px solid #E7BEBC; border-top: 0;
-  border-radius: 0 0 11px 11px; margin: -11px 0 0; padding: 0.55rem 0.7rem 0.6rem;
-  display: flex; align-items: center; gap: 0.5rem; }
-#app-movil .am-justif label { font-family: var(--am-num); font-size: 0.6rem; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--am-tarde); font-weight: 700; flex-shrink: 0; }
-#app-movil .am-justif select { flex: 1; min-width: 0; font-family: var(--am-ui); font-size: 0.82rem;
-  padding: 0.45rem 0.5rem; border-radius: 8px; border: 1px solid #E7BEBC; background: var(--am-carta);
-  color: var(--am-tinta); }
-#app-movil .am-persona.falto { border-radius: 11px 11px 0 0; }
-#app-movil .am-persona.falto.sola { border-radius: 11px; }
+/* La cabecera de la lista, con el nombre de cada columna: sin esto, dos botones y un
+   desplegable sueltos no se leen como una tabla. */
+#app-movil .am-encabezado { display: grid; grid-template-columns: minmax(0, 1fr) auto 86px;
+  gap: 0.3rem; padding: 0 0.55rem; font-family: var(--am-num); font-size: 0.58rem;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--am-tenue); font-weight: 700; }
+#app-movil .am-encabezado .c2 { min-width: 96px; text-align: center; }
+#app-movil .am-encabezado .c3 { text-align: center; }
 
 /* EL RESUMEN: la cifra manda, el boton acompaña. */
 #app-movil .am-resumen { display: grid; grid-template-columns: minmax(0, 1fr) auto;
@@ -154,6 +155,7 @@ const CSS = `
 #app-movil .am-chico:disabled { border-color: var(--am-linea); color: var(--am-tenue); cursor: default; }
 #app-movil .am-chico.solo-icono { padding: 0.5rem 0.6rem; border-color: var(--am-linea);
   color: var(--am-suave); font-size: 0.95rem; }
+#app-movil .am-nota { font-size: .72rem; color: var(--am-tenue); text-align: center; margin: 0; padding: 0 .6rem; }
 #app-movil .am-cerrada { background: var(--am-va-agua); border: 1px solid var(--am-va);
   color: var(--am-va); border-radius: 11px; padding: 0.85rem; text-align: center; font-weight: 700; }
 
@@ -348,37 +350,36 @@ const pantallaLista = () => {
     const gente = listaLocal.map(p => {
         const falto = p.present === false;
         const bloq = listaCerrada ? 'disabled' : '';
-        /* LA JUSTIFICACION CUELGA DE LA FILA, y solo de la de quien falto: en la web es una
-           columna porque hay pantalla de sobra; treinta y tres desplegables en un telefono
-           serian un estorbo. A quien vino no se le pone justificacion nunca. */
-        const justif = !falto ? '' : `
-        <div class="am-justif">
-            <label for="j-${esc(p.dni)}">Motivo</label>
-            <select id="j-${esc(p.dni)}" ${bloq} data-justif="${esc(p.dni)}">
-                ${JUSTIFICACIONES.map(([valor, rotulo]) =>
-                    `<option value="${esc(valor)}" ${String(p.justification || '') === valor ? 'selected' : ''}>${esc(rotulo)}</option>`).join('')}
-            </select>
-        </div>`;
+        /* El motivo SOLO se puede elegir en quien falto, pero la columna esta siempre: en
+           quien asistio va una raya, para que las tres columnas queden alineadas. */
+        const motivo = falto
+            ? `<select ${bloq} data-justif="${esc(p.dni)}" aria-label="Motivo de la falta">
+                   ${JUSTIFICACIONES.map(([valor, rotulo]) =>
+                       `<option value="${esc(valor)}" ${String(p.justification || '') === valor ? 'selected' : ''}>${esc(rotulo)}</option>`).join('')}
+               </select>`
+            : '<span class="nada">–</span>';
         return `
         <div class="am-persona ${falto ? 'falto' : ''}">
-            <span class="ini">${esc(iniciales(p))}</span>
             <span class="quien"><span class="nm">${esc(nombreCorto(p))}</span><span class="dni">DNI ${esc(p.dni)}</span></span>
             <span class="marcas">
-                <button type="button" ${bloq} class="${falto ? '' : 'si-vino'}" data-vino="${esc(p.dni)}">Vino</button>
+                <button type="button" ${bloq} class="${falto ? '' : 'si-vino'}" data-vino="${esc(p.dni)}">Asistió</button>
                 <button type="button" ${bloq} class="${falto ? 'si-falto' : ''}" data-falto="${esc(p.dni)}">Faltó</button>
             </span>
-        </div>${justif}`;
+            <span class="motivo">${motivo}</span>
+        </div>`;
     }).join('');
 
     return `
         <div class="am-tarjeta am-resumen">
-            <span class="am-rotulo">Vinieron</span>
+            <span class="am-rotulo">Asistieron</span>
             <span class="am-grande">${numero(vinieron)}<span style="font-size:1.3rem;color:#8B9B9F">/${numero(total)}</span></span>
             <span class="am-pie">${faltaron ? `${numero(faltaron)} ${faltaron === 1 ? 'falta' : 'faltas'}` : 'nadie faltó'}${listaCerrada ? ' · lista cerrada' : ' · toca solo a quien faltó'}</span>
-            ${listaCerrada ? '' : `<span class="acciones">
+            <span class="acciones">
+                <button type="button" class="am-chico solo-icono" data-foto title="Armar la foto para Recursos Humanos">📷</button>
+                ${listaCerrada ? '' : `
                 <button type="button" class="am-chico solo-icono" data-sincronizar title="Traer lo último del servidor">🔄</button>
-                <button type="button" class="am-chico" data-guardar ${listaGuardando ? 'disabled' : ''}>${listaGuardando ? 'Guardando…' : 'Guardar'}</button>
-            </span>`}
+                <button type="button" class="am-chico" data-guardar ${listaGuardando ? 'disabled' : ''}>${listaGuardando ? 'Guardando…' : 'Guardar'}</button>`}
+            </span>
         </div>
 
         ${listaCerrada
@@ -387,9 +388,10 @@ const pantallaLista = () => {
             : ''}
 
         <div class="am-seccion">${listaCerrada ? 'Lista cerrada del turno' : 'Turno noche'}</div>
+        <div class="am-encabezado"><span>Persona</span><span class="c2">Asistió / Faltó</span><span class="c3">Motivo</span></div>
         ${gente}
 
-        ${listaCerrada ? '' : '<button type="button" class="am-boton fino" data-cerrar>💾 Cerrar asistencia</button>'}
+        ${listaCerrada ? '' : '<p class="am-nota">Al guardar, la lista queda cerrada y pasa al historial. Solo el administrador puede reabrirla.</p>'}
         <button type="button" class="am-salida" data-escritorio>Ver la versión de escritorio</button>
     `;
 };
@@ -428,9 +430,12 @@ const reabrirLista = async () => {
     pintar();
 };
 
+/* GUARDAR ES GUARDAR Y CERRAR. Daniel, 12-sep: *"al guardar deberias bloquear... y el unico
+   que puede desbloquear soy yo, como dames"*. Cerrar no es un detalle: es lo que manda la
+   lista al historial de performance con su puntaje, asi que se pregunta antes. */
 const guardarLista = async (cerrando) => {
     if (!listaLocal || listaGuardando) return;
-    if (cerrando && !confirm('¿Cerrar la lista del turno? Después se corrige desde la web.')) return;
+    if (cerrando && !confirm('Al guardar, la lista queda CERRADA y pasa al historial.\n\n¿Guardar y cerrar?')) return;
     listaGuardando = true;
     pintar();
     try {
@@ -442,6 +447,152 @@ const guardarLista = async (cerrando) => {
     }
     listaGuardando = false;
     pintar();
+};
+
+/* ── LA FOTO PARA RECURSOS HUMANOS ─────────────────────────────────────────────────────── */
+
+const MES_LARGO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+                   'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+const fechaLarga = (iso) => {
+    const [a, m, d] = String(iso).split('-').map(Number);
+    const f = new Date(a, m - 1, d);
+    return `${DIAS[f.getDay()]} ${d} de ${MES_LARGO[m - 1]} de ${a}`;
+};
+
+const dibujarLaFoto = () => {
+    const ESCALA = 2;               // se dibuja al doble: en un celular, a 1x sale borroso
+    const ANCHO = 440;
+    const MARGEN = 18;
+    const ALTO_FILA = 21;
+    const ALTO_CAB = 96;
+    const ALTO_PIE = 30;
+
+    const total = listaLocal.length;
+    const faltaron = listaLocal.filter(p => p.present === false).length;
+    const alto = ALTO_CAB + 24 + total * ALTO_FILA + ALTO_PIE;
+
+    const lienzo = document.createElement('canvas');
+    lienzo.width = ANCHO * ESCALA;
+    lienzo.height = alto * ESCALA;
+    const g = lienzo.getContext('2d');
+    g.scale(ESCALA, ESCALA);
+    g.textBaseline = 'middle';
+
+    const UI = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    const VA = '#0B5F52', TARDE = '#98302E', TENUE = '#6C7B80', TINTA = '#131C1F';
+
+    g.fillStyle = '#FFFFFF';
+    g.fillRect(0, 0, ANCHO, alto);
+
+    /* La cabecera verde: es lo que hace que se reconozca de un vistazo en el chat. */
+    g.fillStyle = VA;
+    g.fillRect(0, 0, ANCHO, 62);
+    g.fillStyle = '#FFFFFF';
+    g.font = `700 15px ${UI}`;
+    g.fillText('ASISTENCIA · TURNO NOCHE', MARGEN, 24);
+    g.font = `400 11.5px ${UI}`;
+    g.fillStyle = 'rgba(255,255,255,0.88)';
+    g.fillText(fechaLarga(fechaDeLaLista()), MARGEN, 44);
+
+    /* El resumen, con el numero grande: es el dato que mira Recursos Humanos primero. */
+    g.fillStyle = TINTA;
+    g.font = `700 26px ${UI}`;
+    const cifra = `${total - faltaron}/${total}`;
+    g.fillText(cifra, MARGEN, 84);
+    const anchoCifra = g.measureText(cifra).width;
+    g.font = `400 11.5px ${UI}`;
+    g.fillStyle = TENUE;
+    g.fillText('asistieron', MARGEN + anchoCifra + 8, 79);
+    g.fillStyle = faltaron ? TARDE : VA;
+    g.font = `700 11.5px ${UI}`;
+    g.fillText(faltaron ? `${faltaron} ${faltaron === 1 ? 'falta' : 'faltas'}` : 'sin faltas',
+               MARGEN + anchoCifra + 8, 93);
+
+    g.strokeStyle = '#DCE4E2';
+    g.lineWidth = 1;
+    g.beginPath(); g.moveTo(MARGEN, ALTO_CAB + 8); g.lineTo(ANCHO - MARGEN, ALTO_CAB + 8); g.stroke();
+
+    /* La lista: primero los que faltaron, que es lo que se va a mirar. */
+    const orden = listaLocal.slice().sort((a, b) => {
+        const fa = a.present === false ? 0 : 1, fb = b.present === false ? 0 : 1;
+        if (fa !== fb) return fa - fb;
+        return nombreCorto(a).localeCompare(nombreCorto(b), 'es');
+    });
+
+    let y = ALTO_CAB + 24;
+    orden.forEach((p, i) => {
+        const falto = p.present === false;
+        if (i % 2 === 1) { g.fillStyle = '#F6F9F8'; g.fillRect(MARGEN - 6, y - 10, ANCHO - 2 * MARGEN + 12, ALTO_FILA); }
+        g.fillStyle = falto ? TARDE : VA;
+        g.font = `700 12px ${UI}`;
+        g.fillText(falto ? '✗' : '✓', MARGEN, y);
+        g.fillStyle = TINTA;
+        g.font = `${falto ? 700 : 400} 11.5px ${UI}`;
+        let nombre = nombreCorto(p);
+        while (g.measureText(nombre).width > 200 && nombre.length > 4) nombre = nombre.slice(0, -2);
+        g.fillText(nombre, MARGEN + 16, y);
+        g.fillStyle = TENUE;
+        g.font = `400 10px ${UI}`;
+        g.fillText(String(p.dni || ''), MARGEN + 226, y);
+        if (falto) {
+            g.fillStyle = TARDE;
+            g.font = `400 10px ${UI}`;
+            g.fillText(p.justification || 'sin motivo', MARGEN + 300, y);
+        }
+        y += ALTO_FILA;
+    });
+
+    g.strokeStyle = '#DCE4E2';
+    g.beginPath(); g.moveTo(MARGEN, y + 2); g.lineTo(ANCHO - MARGEN, y + 2); g.stroke();
+    g.fillStyle = TENUE;
+    g.font = `400 9.5px ${UI}`;
+    const ahora = new Date();
+    const dd = (n) => String(n).padStart(2, '0');
+    g.fillText(`Logística Deam1830 · ${dd(ahora.getDate())}/${dd(ahora.getMonth() + 1)} ${dd(ahora.getHours())}:${dd(ahora.getMinutes())}`
+               + (listaCerrada ? ' · lista cerrada' : ' · sin cerrar'), MARGEN, y + 16);
+
+    return lienzo;
+};
+
+/** Muestra la foto a pantalla completa, para guardarla o compartirla a mano. */
+const verLaFoto = (datos) => {
+    const capa = document.createElement('div');
+    capa.style.cssText = 'position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.9);'
+        + 'display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:16px;';
+    const img = document.createElement('img');
+    img.src = datos;
+    img.style.cssText = 'max-width:100%; max-height:78%; border-radius:10px; background:#fff;';
+    const bajar = document.createElement('a');
+    bajar.href = datos;
+    bajar.download = `Asistencia ${fechaDeLaLista()}.png`;
+    bajar.textContent = 'Guardar la foto';
+    bajar.style.cssText = 'background:#0B5F52; color:#fff; padding:.8rem 1.4rem; border-radius:10px;'
+        + 'font-family:system-ui,sans-serif; font-weight:700; text-decoration:none;';
+    const nota = document.createElement('span');
+    nota.textContent = 'Mantén el dedo sobre la foto para compartirla';
+    nota.style.cssText = 'color:#C8D2D0; font-family:system-ui,sans-serif; font-size:.8rem;';
+    capa.appendChild(img); capa.appendChild(bajar); capa.appendChild(nota);
+    capa.addEventListener('click', (e) => { if (e.target === capa) capa.remove(); });
+    document.body.appendChild(capa);
+};
+
+/** Arma la foto y la manda por donde el telefono deje: WhatsApp, correo, lo que sea. */
+const mandarFoto = async () => {
+    if (!listaLocal) cargarLista();
+    if (!listaLocal.length) return;
+    const lienzo = dibujarLaFoto();
+    const blob = await new Promise(r => lienzo.toBlob(r, 'image/png'));
+    const archivo = new File([blob], `Asistencia ${fechaDeLaLista()}.png`, { type: 'image/png' });
+    /* El menu de compartir del telefono. Si el navegador no lo tiene -o es una PC- se
+       muestra la foto para guardarla, que es la salida de siempre. */
+    try {
+        if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+            await navigator.share({ files: [archivo], title: 'Asistencia del turno' });
+            return;
+        }
+    } catch (e) { /* si la persona cancela el menu, no pasa nada */ return; }
+    verLaFoto(lienzo.toDataURL('image/png'));
 };
 
 const CABECERAS = {
@@ -533,7 +684,8 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (vino) { marcar(vino.getAttribute('data-vino'), true); return; }
         const falto = e.target.closest('[data-falto]');
         if (falto) { marcar(falto.getAttribute('data-falto'), false); return; }
-        if (e.target.closest('[data-guardar]')) { guardarLista(false); return; }
+        if (e.target.closest('[data-guardar]')) { guardarLista(true); return; }
+        if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
         const sinc = e.target.closest('[data-sincronizar]');
         if (sinc) { sincronizar(sinc); return; }
         if (e.target.closest('[data-reabrir]')) { reabrirLista(); return; }

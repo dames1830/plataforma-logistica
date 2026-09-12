@@ -20,9 +20,9 @@
  *  las dos, así que el módulo funciona solo.
  * ════════════════════════════════════════════════════════════════════════════ */
 
-import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0741';
+import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0743';
 /* El icono del Excel, el mismo que usa toda la plataforma. */
-import { icono } from '../services_v245/iconos.js?v=29.0741';
+import { icono } from '../services_v245/iconos.js?v=29.0743';
 
 /* LA FECHA NUNCA SALE DE toISOString(): devuelve UTC y a las 19:00 hora de Lima
    ya adelantó el día. Se arma a mano con la hora local. */
