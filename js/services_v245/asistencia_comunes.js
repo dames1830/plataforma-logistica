@@ -49,19 +49,39 @@ export const armarLista = (trabajadores, guardado) => {
         const dni = String(w.dni || w.Dni || '');
         if (!porDni.has(dni)) porDni.set(dni, fichaEnBlanco(w));
     });
-    return Array.from(porDni.values());
+    /* Ordenada por apellido desde el vamos: la pantalla y la foto muestran lo mismo y en
+       el mismo orden que la web. */
+    return Array.from(porDni.values())
+        .sort((a, b) => claveDeOrden(a).localeCompare(claveDeOrden(b), 'es'));
 };
 
-/** El nombre como se lee: "Jorge Quispe", no "QUISPE ROJAS, JORGE LUIS". */
+/* EL APELLIDO VA PRIMERO, como en la web. Daniel, 12-sep: *"el apellido tiene que estar
+   1ro, y filtra por eso, tal cual esta en la web"*. Cruzar dos listas ordenadas distinto
+   -una por nombre de pila y otra por apellido- es justo lo que hace perder el tiempo. */
+const parejo = (t) => String(t || '').trim().toLocaleLowerCase('es')
+    .replace(/(^|[\s\-'])(\S)/g, (m, antes, letra) => antes + letra.toLocaleUpperCase('es'));
+
+/** Corto, para la pantalla del celular: "Casahuaman, Katheen". */
 export const nombreCorto = (ficha) => {
-    const parejo = (t) => String(t || '').trim().toLocaleLowerCase('es')
-        .replace(/(^|[\s\-'])(\S)/g, (m, antes, letra) => antes + letra.toLocaleUpperCase('es'));
-    const nombres = parejo(ficha.nombre).split(' ').filter(Boolean);
     const apellidos = parejo(ficha.apellidos).split(' ').filter(Boolean);
-    const n = nombres[0] || '';
+    const nombres = parejo(ficha.nombre).split(' ').filter(Boolean);
     const a = apellidos[0] || '';
-    return (n + ' ' + a).trim() || parejo(ficha.nombre) || String(ficha.dni || '');
+    const n = nombres[0] || '';
+    if (a && n) return a + ', ' + n;
+    return (a || n) || String(ficha.dni || '');
 };
+
+/** Entero, para la foto: "Casahuaman Murga, Katheen". */
+export const nombreCompleto = (ficha) => {
+    const a = parejo(ficha.apellidos);
+    const n = parejo(ficha.nombre);
+    if (a && n) return a + ', ' + n;
+    return (a || n) || String(ficha.dni || '');
+};
+
+/** Por lo que se ordena: apellido y despues nombre. */
+export const claveDeOrden = (ficha) =>
+    (String(ficha.apellidos || '') + ' ' + String(ficha.nombre || '')).trim().toLocaleUpperCase('es');
 
 export const iniciales = (ficha) => {
     const n = String(ficha.nombre || '').trim();

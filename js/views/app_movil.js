@@ -25,9 +25,9 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0749';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0749';
-import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0749';
+import * as adminService from '../services_v245/adminService.js?v=29.0753';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0753';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0753';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -530,28 +530,27 @@ const fichaMaestro = (dni) => {
     return { cargo: ABREVIA[cargo] || cargo, sexo: String(w.sexo || w.Sexo || '').trim().toUpperCase() };
 };
 
-/** Lo que hizo cada persona cada dia de la semana. */
+/* SOLO LOS DIAS GUARDADOS. Daniel, 12-sep: *"solo debe mostrar asistencia los dias
+   guardados o asistencia cerrada; esta mostrando el sabado cuando ni siquiera he tomado
+   asistencia"*. Una foto que se manda a Recursos Humanos no puede decir que la gente
+   asistio cuando todavia no se paso lista. Una lista sin cerrar es como si no estuviera,
+   igual que en el cuadro de la web. */
 const marcasDeLaSemana = (dias) => {
-    const hoy = fechaDeLaLista();
     const por = {};
+    const cerrados = [];
     dias.forEach(d => {
         const k = claveDia(d);
-        let filas = null;
-        if (k === hoy) {
-            filas = listaLocal;
-        } else {
-            const reg = adminService.getAttendance(k);
-            if (reg && Array.isArray(reg.data) && reg.finalized === true) filas = reg.data;
-        }
-        if (!filas) return;
-        filas.forEach(p => {
+        const reg = adminService.getAttendance(k);
+        if (!reg || !Array.isArray(reg.data) || reg.finalized !== true) return;
+        cerrados.push(k);
+        reg.data.forEach(p => {
             const dni = String(p.dni || '').trim();
             if (!dni) return;
             if (!por[dni]) por[dni] = {};
             por[dni][k] = { vino: p.present === true, obs: String(p.justification || '').trim() };
         });
     });
-    return por;
+    return { por, cerrados };
 };
 
 const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
@@ -566,15 +565,19 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     const ALTO_PIE = 30;      // solo la leyenda: debajo ya no va nada
 
     const dias = semanaDeHoy();
-    const marcas = marcasDeLaSemana(dias);
-    const hoyK = fechaDeLaLista();
+    const { por: marcas, cerrados } = marcasDeLaSemana(dias);
+    /* LAS TARJETAS CUENTAN EL ULTIMO DIA CERRADO, no el de hoy sin guardar: un resumen de
+       algo que nadie ha pasado todavia no dice nada. Es lo mismo que hace la web. */
+    const ultimoCerrado = cerrados.length ? cerrados[cerrados.length - 1] : null;
+    const deEseDia = ultimoCerrado
+        ? (adminService.getAttendance(ultimoCerrado).data || []) : [];
 
-    const total = listaLocal.length;
-    const faltaron = listaLocal.filter(p => p.present === false && !String(p.justification || '').trim()).length;
-    const conObs = listaLocal.filter(p => p.present === false && String(p.justification || '').trim()).length;
-    const asistieron = listaLocal.filter(p => p.present !== false).length;
+    const total = deEseDia.length;
+    const faltaron = deEseDia.filter(p => p.present === false && !String(p.justification || '').trim()).length;
+    const conObs = deEseDia.filter(p => p.present === false && String(p.justification || '').trim()).length;
+    const asistieron = deEseDia.filter(p => p.present !== false).length;
     let hombres = 0, mujeres = 0;
-    listaLocal.forEach(p => {
+    deEseDia.forEach(p => {
         const sx = fichaMaestro(p.dni).sexo;
         if (sx === 'H') hombres++; else if (sx === 'M') mujeres++;
     });
@@ -615,8 +618,12 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     g.fillText('DEAM1830', ANCHO - MARGEN, 33);
     g.font = `700 9px ${UI}`;
     g.fillStyle = 'rgba(255,255,255,0.7)';
-    g.fillText(`RESUMEN DEL ${DIAS[new Date(hoyK + 'T12:00:00').getDay()].slice(0, 3).toUpperCase()} `
-               + `${new Date(hoyK + 'T12:00:00').getDate()}`, ANCHO - MARGEN, 50);
+    if (ultimoCerrado) {
+        const f = new Date(ultimoCerrado + 'T12:00:00');
+        g.fillText(`RESUMEN DEL ${DIAS[f.getDay()].slice(0, 3).toUpperCase()} ${f.getDate()}`, ANCHO - MARGEN, 50);
+    } else {
+        g.fillText('SIN DÍAS CERRADOS', ANCHO - MARGEN, 50);
+    }
     g.textAlign = 'left';
 
     /* ── LAS CINCO TARJETAS ──────────────────────────────────────────────────────────── */
@@ -707,7 +714,7 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     const ROTULO = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM'];
     g.textAlign = 'center';
     dias.forEach((d, i) => {
-        const esHoy = claveDia(d) === hoyK;
+        const esHoy = claveDia(d) === ultimoCerrado;
         g.fillStyle = esHoy ? VA : TENUE;
         g.font = `${esHoy ? 800 : 700} 8.5px ${UI}`;
         g.fillText(ROTULO[i], xDia(i), yEnc - 4);
@@ -718,7 +725,10 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
 
     let y = yEnc + ALTO_ENCABEZADO;
     deEsteBloque.forEach((p, i) => {
-        const falto = p.present === false;
+        /* Se resalta por lo que dice el ULTIMO DIA CERRADO, no por lo que hay en pantalla:
+           la foto habla de lo guardado. */
+        const delDia = ultimoCerrado ? (marcas[String(p.dni)] || {})[ultimoCerrado] : null;
+        const falto = !!delDia && delDia.vino === false;
         if (i % 2 === 1) { g.fillStyle = '#F6F9F8'; g.fillRect(MARGEN - 6, y - 10, ANCHO - 2 * MARGEN + 12, ALTO_FILA); }
         g.textAlign = 'left';
         g.fillStyle = TENUE;
@@ -726,7 +736,7 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
         g.fillText(String(p.__n), xNum, y);
         g.fillStyle = TINTA;
         g.font = `${falto ? 700 : 400} 11px ${UI}`;
-        let nombre = nombreCorto(p);
+        let nombre = nombreCompleto(p);
         while (g.measureText(nombre).width > ANCHO_NOMBRE - 8 && nombre.length > 4) nombre = nombre.slice(0, -2);
         g.fillText(nombre, xNombre, y);
         g.fillStyle = TENUE;
@@ -813,12 +823,11 @@ const verLaFoto = (lista) => {
    borrosa, partirla es volver a repartir `orden` en dos mitades y llamar dos veces a
    `dibujarLaFoto`, que ya sabe decir "bloque 1 de 2". */
 const laminasDeLaLista = () => {
-    /* Primero los que faltaron, que es lo que se va a mirar. */
-    const orden = listaLocal.slice().sort((x, y) => {
-        const fx = x.present === false ? 0 : 1, fy = y.present === false ? 0 : 1;
-        if (fx !== fy) return fx - fy;
-        return nombreCorto(x).localeCompare(nombreCorto(y), 'es');
-    }).map((p, i) => Object.assign({ __n: i + 1 }, p));
+    /* POR APELLIDO, como la web. Antes iban primero los que faltaron: quien cruza la foto
+       contra el cuadro de la web tenia que buscar a cada persona dos veces. */
+    const orden = listaLocal.slice()
+        .sort((x, y) => claveDeOrden(x).localeCompare(claveDeOrden(y), 'es'))
+        .map((p, i) => Object.assign({ __n: i + 1 }, p));
 
     return [dibujarLaFoto(orden, 1, 1)];
 };
