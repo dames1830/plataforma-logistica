@@ -1,12 +1,12 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0712';
-import * as adminService from './services_v245/adminService.js?v=29.0712';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0712';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0712';
-import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0712';
-import { registrar } from './services_v245/eventosService.js?v=29.0712';
+import { getSession, logout } from './services_v245/auth.js?v=29.0713';
+import * as adminService from './services_v245/adminService.js?v=29.0713';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0713';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0713';
+import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0713';
+import { registrar } from './services_v245/eventosService.js?v=29.0713';
 
 
 /* ── LO QUE SE ROMPE, SE ANOTA ──────────────────────────────────────────────────
@@ -470,7 +470,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0712';
+      this.APP_VERSION = 'v29.0713';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -679,14 +679,18 @@ class App {
 
   startInactivityTimer() {
       if (this.inactivityTimeout) clearTimeout(this.inactivityTimeout);
-      // 20 minutos = 20 * 60 * 1000 = 1200000 ms
+      // DOS HORAS, no veinte minutos. Pedido de Daniel el 12-sep-2026: con 20 minutos, el
+      // que deja la PC un rato queda fuera de la sesion y deja de ver lo que llega -el chat
+      // interno avisa solo con la sesion abierta-. Las PC del almacen son del turno y estan
+      // a la vista, asi que el riesgo de dejarla abierta es chico al lado de perderse avisos.
+      // 2 horas = 2 * 60 * 60 * 1000 = 7200000 ms
       this.inactivityTimeout = setTimeout(() => {
           if (getSession()) {
-              console.warn("â³ [PULSE] Sesión expirada por inactividad (20 min).");
+              console.warn("â³ [PULSE] Sesión expirada por inactividad (2 h).");
               logout();
               window.location.reload();
           }
-      }, 1200000);
+      }, 7200000);
   }
 
   async init() {
