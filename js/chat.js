@@ -579,12 +579,14 @@ const CSS = `
 #chat-burbuja {
   position: fixed; bottom: 20px; right: 20px; z-index: 9999; width: 40px; height: 40px;
   border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer;
-  background: rgba(var(--primary-rgb), 0.95); border: 1.5px solid rgba(var(--brand-rgb), 0.6);
-  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.45), 0 4px 20px rgba(var(--shadow-rgb), 0.4);
+  /* --btn-fill y no --primary: en el tema Negro el acento es BLANCO y la burbuja
+     quedaba blanca con el icono blanco adentro. Es la misma regla de los botones. */
+  background: var(--btn-fill); border: 1.5px solid rgba(var(--brand-rgb), 0.6);
+  box-shadow: 0 0 15px rgba(var(--brand-rgb), 0.35), 0 4px 20px rgba(var(--shadow-rgb), 0.4);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 #chat-burbuja:hover { transform: scale(1.1); }
-#chat-burbuja svg { width: 21px; height: 21px; fill: #fff; }
+#chat-burbuja svg { width: 21px; height: 21px; fill: var(--on-primary); }
 #chat-burbuja.late { animation: chat-latido 1s ease-in-out 3; border-color: var(--warning-soft); }
 @keyframes chat-latido { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
 #chat-globo {
@@ -634,7 +636,7 @@ const CSS = `
 .chat-fila .hora { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .chat-fila .ultimo { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-fila .nuevos { font-size: 11px; font-weight: 800; min-width: 18px; height: 18px; padding: 0 5px;
-  border-radius: 50px; background: var(--primary); color: #fff; display: grid; place-items: center; }
+  border-radius: 50px; background: var(--btn-fill); color: var(--on-primary); display: grid; place-items: center; }
 .chat-fila .marca { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: var(--brand-pale); }
 /* LAS VENTANITAS VIVEN AL COSTADO DEL PANEL. Con el panel cerrado se corren a la derecha,
    hasta quedar pegadas a la burbuja: si no, dejaban un hueco del ancho del panel.
@@ -672,12 +674,14 @@ const CSS = `
   min-width: 0; overflow-wrap: anywhere; }
 .chat-msg .de { font-size: 10px; font-weight: 700; color: var(--brand-pale); margin-bottom: 0.15rem; }
 .chat-msg .pie { margin-top: 0.25rem; font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-.chat-msg.mio { align-self: flex-end; background: rgba(var(--primary-rgb), 0.38); border-color: rgba(var(--brand-rgb), 0.35);
-  color: var(--text-main); }
+.chat-msg.mio { align-self: flex-end; background: rgba(var(--brand-rgb), 0.22); border-color: rgba(var(--brand-rgb), 0.35);
+  color: var(--text-strong); }
 .chat-msg.mio .pie { text-align: right; color: var(--brand-pale); }
 .chat-msg.aviso { align-self: center; max-width: 95%; text-align: center; font-size: 10px; color: var(--warning-soft);
   background: rgba(var(--warning-soft-rgb), 0.08); border-color: rgba(var(--warning-soft-rgb), 0.3); }
-.chat-msg.borrado { font-style: italic; color: var(--text-dim); }
+/* --text-muted y no --text-dim: medido, el gris mas apagado daba 3,03 a 1 contra el fondo
+   del globo -por debajo de lo que se lee comodo- y encima en italica y chiquito. */
+.chat-msg.borrado { font-style: italic; color: var(--text-muted); }
 .chat-msg .quitar { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%;
   border: 1px solid rgba(var(--danger-rgb), 0.5); background: var(--panel-deep, #0b1120); color: var(--danger-soft);
   font-size: 11px; line-height: 1; cursor: pointer; display: none; place-items: center; }
@@ -687,7 +691,10 @@ const CSS = `
 .chat-ventana .caja { min-width: 0; }
 .chat-ventana .caja input { flex: 1; min-width: 0; background: var(--panel-deep, #0b1120); color: var(--text-main);
   border: 1px solid rgba(var(--ink-rgb), 0.1); border-radius: 8px; padding: 0.45rem 0.6rem; font-size: var(--t-xs); }
-.chat-ventana .caja button { background: var(--primary); border: 0; color: #fff; border-radius: 8px;
+/* :not(.clip) porque .caja button le ganaba en peso a la regla del clip y se lo pintaba
+   igual que Enviar: dos botones llenos uno al lado del otro, y el clip no es una accion
+   principal. */
+.chat-ventana .caja button:not(.clip) { background: var(--btn-fill); border: 0; color: var(--on-primary); border-radius: 8px;
   padding: 0.45rem 0.7rem; font-size: var(--t-xs); font-weight: 700; cursor: pointer; }
 .chat-msg .adj-img { display: block; max-width: 100%; border-radius: 8px; margin-top: 0.2rem; cursor: zoom-in; background: rgba(var(--ink-rgb), 0.06); min-height: 40px; }
 .chat-msg .adj-file { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem; padding: 0.4rem 0.5rem;
@@ -730,7 +737,7 @@ const CSS = `
 #chat-grupo label { display: flex; align-items: center; gap: 0.5rem; color: var(--text-soft); cursor: pointer; }
 #chat-grupo .botones { display: flex; gap: 0.5rem; justify-content: flex-end; }
 #chat-grupo button { border-radius: 8px; padding: 0.4rem 0.8rem; font-size: var(--t-xs); font-weight: 700; cursor: pointer; }
-#chat-grupo .crear { background: var(--primary); border: 1px solid var(--primary); color: #fff; }
+#chat-grupo .crear { background: var(--btn-fill); border: 1px solid var(--btn-fill); color: var(--on-primary); }
 #chat-grupo .cancelar { background: none; border: 1px solid rgba(var(--ink-rgb), 0.15); color: var(--text-muted); }
 @media (max-width: 900px) { #chat-ventanas, #chat-ventanas.solas { right: 20px; bottom: 130px; } #chat-panel, #chat-grupo { width: 280px; } }
 @media (prefers-reduced-motion: reduce) { #chat-burbuja.late { animation: none; } }

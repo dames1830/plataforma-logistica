@@ -370,6 +370,56 @@
           'y vuelven a salir las ultimas conversaciones: ' + alVolver + ' (antes de cerrar habia '
           + conBusqueda + ' resultado(s) de la busqueda)');
 
+      // 16. EL CHAT SE LEE EN LOS CUATRO TEMAS
+      //     En Negro el acento es BLANCO: el boton Enviar quedaba blanco sobre blanco y la
+      //     burbuja, blanca con el icono blanco. No se mira: se mide.
+      const aNum = (c) => (String(c || '').match(/[\d.]+/g) || []).map(Number);
+      const mezclar = (f, b) => [0,1,2].map(i => Math.round(f[i]*(f[3]??1) + b[i]*(1-(f[3]??1))));
+      const fondoReal = (el) => {
+        const capas = []; let n = el;
+        while (n && n !== document.documentElement) {
+          const c = aNum(getComputedStyle(n).backgroundColor);
+          if (c.length >= 3 && (c[3] === undefined || c[3] > 0)) capas.push(c.length === 3 ? [...c, 1] : c);
+          if (capas.length && capas[capas.length-1][3] === 1) break;
+          n = n.parentElement;
+        }
+        capas.push([0,0,0,1]);
+        let acc = capas[capas.length-1].slice(0,3);
+        for (let i = capas.length-2; i >= 0; i--) acc = mezclar(capas[i], acc);
+        return acc;
+      };
+      const brillo = (c) => { const a = c.map(v => { v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); }); return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2]; };
+      const contraste = (a, b) => +(((Math.max(brillo(a),brillo(b))+0.05)/(Math.min(brillo(a),brillo(b))+0.05))).toFixed(2);
+
+      const PIEZAS = [
+        ['el icono de la burbuja', '#chat-burbuja svg', 'fill'],
+        ['el boton Enviar', '.chat-ventana [data-enviar]', 'color'],
+        ['el boton del clip', '.chat-ventana .clip', 'color'],
+        ['mis mensajes', '.chat-msg.mio', 'color'],
+        ['los mensajes del otro', '.chat-msg:not(.mio):not(.aviso)', 'color'],
+        ['la hora del mensaje', '.chat-msg .pie', 'color'],
+        ['el titulo de la ventanita', '.chat-ventana .vcab .n', 'color'],
+        ['el nombre en la lista', '.chat-fila .quien', 'color'],
+        ['el ultimo mensaje en la lista', '.chat-fila .ultimo', 'color'],
+        ['la caja de texto', '.chat-ventana .caja input', 'color'],
+      ];
+      const temaAntes = document.documentElement.getAttribute('data-tema');
+      for (const tema of ['indigo', 'pbi', 'pbi-classic', 'negro']) {
+        document.documentElement.setAttribute('data-tema', tema);
+        await esperar(250);
+        let peor = 99, dondePeor = '';
+        let faltaron = 0;
+        for (const [nombre, sel, prop] of PIEZAS) {
+          const el = document.querySelector(sel);
+          if (!el) { faltaron++; continue; }
+          const c = contraste(fondoReal(el), aNum(getComputedStyle(el)[prop]).slice(0,3));
+          if (c < peor) { peor = c; dondePeor = nombre; }
+        }
+        chk(peor >= 4.5, 'tema ' + tema.toUpperCase() + ': todo se lee, lo mas justo es '
+            + dondePeor + ' con ' + peor + ' a 1' + (faltaron ? ' (' + faltaron + ' pieza(s) no estaban)' : ''));
+      }
+      document.documentElement.setAttribute('data-tema', temaAntes || 'indigo');
+
       pintar();
     } catch (e) {
       res.push('FALLA se cayó la prueba: ' + (e && e.message));
