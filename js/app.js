@@ -1,12 +1,17 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0715';
-import * as adminService from './services_v245/adminService.js?v=29.0715';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0715';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0715';
-import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0715';
-import { registrar } from './services_v245/eventosService.js?v=29.0715';
+import { getSession, logout } from './services_v245/auth.js?v=29.0716';
+import * as adminService from './services_v245/adminService.js?v=29.0716';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0716';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0716';
+import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0716';
+import { registrar } from './services_v245/eventosService.js?v=29.0716';
+
+/* EL CHAT SE CARGA APARTE Y DESPUES DEL TABLERO. No es una pantalla: es una burbuja que
+   flota sobre todas, al costado del indicador del servidor. Se guarda aca para poder
+   apagarlo al cerrar sesion. Si su archivo falla, la plataforma sigue igual. */
+let chatModulo = null;
 
 
 /* ── LO QUE SE ROMPE, SE ANOTA ──────────────────────────────────────────────────
@@ -470,7 +475,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0715';
+      this.APP_VERSION = 'v29.0716';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -813,9 +818,16 @@ class App {
             // de una sola vez con su propio innerHTML.
             await renderDashboard(this.root, user, () => {
                 this.isRendered = false;
+                try { if (chatModulo) chatModulo.desmontarChat(); } catch (e) { /* si no llego a montarse, da igual */ }
                 logout();
                 this.init();
             });
+
+            /* El chat, cuando el tablero ya esta en pantalla: no le quita un segundo al
+               arranque y, si su archivo tiene un problema, no se lleva la pantalla con el. */
+            import(`./chat.js?v=${this.APP_VERSION}`)
+                .then(m => { chatModulo = m; return m.montarChat(user); })
+                .catch(e => console.warn('[CHAT] no se pudo montar:', e && e.message));
         } else {
             const { renderLogin } = await import(`./views/login.js?v=${this.APP_VERSION}`);
             pantallaCarga.hasta(85);      // el login ya esta listo para dibujarse

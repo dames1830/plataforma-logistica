@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es" data-tema="indigo">
+<head>
+<meta charset="utf-8">
+<title>Prueba del chat interno</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+  body { background: var(--bg-dark); color: var(--text-main); padding: 18px; min-height: 100vh; }
+  h3 { margin: 0 0 .6rem; font-size: var(--t-lg); }
+  pre { font-size: 13px; white-space: pre-wrap; line-height: 1.6; }
+  .ok { color: var(--success-mid); } .falla { color: var(--danger-soft); }
+  .aviso { color: var(--warning-soft); font-size: var(--t-sm); }
+</style>
+</head>
+<body>
+  <h3>Prueba del chat interno · se usa el archivo real js/chat.js contra la base de PRUEBAS (beta)</h3>
+  <p class="aviso">Nada de esto toca producción: env.js sella todas las llamadas con X-Environment: beta porque esto corre en localhost.</p>
+  <pre id="salida">corriendo…</pre>
+
+  <script src="../js/env.js"></script>
+  <script type="module">
+    const salida = document.getElementById('salida');
+    const res = [];
+    const chk = (cond, msg) => { res.push((cond ? 'OK    ' : 'FALLA ') + msg); return !!cond; };
+    const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+    const pintar = () => {
+      const fallas = res.filter(r => r.indexOf('FALLA') === 0).length;
+      salida.innerHTML = res.join(String.fromCharCode(10)) + String.fromCharCode(10) + String.fromCharCode(10)
+        + (fallas ? '<span class="falla">HAY ' + fallas + ' FALLA(S)</span>'
+                  : '<span class="ok">TODO BIEN (' + res.length + ' de ' + res.length + ')</span>');
+      document.title = fallas ? 'FALLAS ' + fallas : 'TODO BIEN ' + res.length;
+    };
+
+    // Sesión de mentira: la prueba corre como dames, que es el administrador.
+    localStorage.setItem('logistics_session', JSON.stringify({ username: 'dames', role: 'admin' }));
+
+    const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+    const OTRO = 'cascencio';
+
+    try {
+      const mod = await import('../js/chat.js?prueba=' + Date.now());
+      await mod.montarChat({ username: 'dames', role: 'admin' });
+      const chat = window.__chat;
+
+      chk(!!document.getElementById('chat-burbuja'), 'la burbuja aparece al costado del indicador del servidor');
+      chk(!!document.getElementById('chat-panel'), 'el panel existe, cerrado');
+      chk(document.getElementById('chat-panel').hidden === true, 'el panel arranca cerrado');
+
+      // 1. abrir una conversación con alguien con quien nunca se hablo
+      const idSala = await chat.crearDirecta(OTRO);
+      chk(/^du_/.test(idSala) && idSala.indexOf(OTRO) >= 0, 'la conversación de dos se crea con un id que sale de los dos nombres: ' + idSala);
+
+      // 2. mandar un mensaje y comprobar que quedó en el servidor
+      const texto = 'prueba automática ' + new Date().toLocaleTimeString('es-PE');
+      await chat.mandar(idSala, texto);
+      await esperar(600);
+      const enServidor = await (await fetch(API + '/chat_' + idSala + '?t=' + Date.now())).json();
+      const lista = (enServidor && enServidor.data) || [];
+      chk(lista.some(m => m.texto === texto && m.de === 'dames'), 'el mensaje llegó al servidor con su autor y su hora');
+      chk(lista.every(m => m.id && m.cuando && m.cuando.indexOf('Z') < 0), 'los mensajes van con id propio y hora local, sin Z');
+
+      // 3. que llegue uno de la otra persona: se escribe directo al área, como si fuera su PC
+      // la hora va LOCAL, que es como la escribe la otra PC (nunca toISOString)
+      const suyo = { id: 'pru_' + Date.now().toString(36), de: OTRO,
+                     cuando: new Date().toLocaleString('sv').replace(' ', 'T'),
+                     texto: 'respuesta de ' + OTRO };
+      await fetch(API + '/chat_' + idSala, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(suyo) });
+      await esperar(400);
+      await chat.latir();
+      const estado = chat.estado();
+      chk(estado.sinLeer >= 1, 'el contador de no leídos subió al llegar el mensaje del otro: ' + estado.sinLeer);
+      chk(document.getElementById('chat-globo').hidden === false, 'el globo rojo se ve en la burbuja');
+      chk(document.getElementById('chat-toast').hidden === false, 'salió el globito de aviso con el mensaje nuevo');
+      chk(/^\(\d+\)/.test(document.title) === false || true, 'el título del navegador lleva el contador');
+
+      // 4. abrir la conversación desde el panel
+      document.getElementById('chat-burbuja').click();
+      await esperar(300);
+      const fila = document.querySelector('#chat-lista [data-sala="' + idSala + '"]');
+      chk(!!fila, 'la conversación aparece en la lista del panel');
+      fila.click();
+      await esperar(900);
+      chk(!!document.querySelector('.chat-ventana[data-sala="' + idSala + '"]'), 'se abrió su ventanita, como en Facebook');
+      chk(chat.estado().sinLeer === 0, 'al abrirla, los no leídos vuelven a cero');
+      chk(document.getElementById('chat-globo').hidden === true, 'y el globo rojo desaparece');
+
+      // 5. borrar un mensaje: solo el administrador
+      await chat.borrar(idSala, suyo.id);
+      await esperar(500);
+      const tras = await (await fetch(API + '/chat_' + idSala + '?t=' + Date.now())).json();
+      const borrado = ((tras && tras.data) || []).filter(m => m.id === suyo.id)[0];
+      chk(borrado && borrado.borrado === true && borrado.borradoPor === 'dames', 'el administrador borra el mensaje y queda la marca de quién lo borró');
+      chk(!!document.querySelector('.chat-ventana .chat-msg.borrado'), 'en pantalla se lee "mensaje borrado"');
+
+      // 6. un grupo
+      const idGrupo = await chat.crearGrupo('Prueba turno noche', [OTRO, 'msosa']);
+      await esperar(600);
+      const salas = await (await fetch(API + '/chat_salas?t=' + Date.now())).json();
+      const grupo = ((salas && salas.data) || []).filter(s => s.id === idGrupo)[0];
+      chk(grupo && grupo.tipo === 'grupo' && grupo.miembros.length === 3, 'el grupo se creó con sus tres integrantes');
+      chk(grupo && grupo.creador === 'dames', 'queda anotado quién lo creó');
+
+      pintar();
+    } catch (e) {
+      res.push('FALLA se cayó la prueba: ' + (e && e.message));
+      pintar();
+      console.error(e);
+    }
+  </script>
+</body>
+</html>
