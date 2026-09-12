@@ -46,7 +46,10 @@
       await mod.montarChat({ username: 'dames', role: 'admin' });
       const chat = window.__chat;
 
-      chk(!!document.getElementById('chat-burbuja'), 'la burbuja aparece al costado del indicador del servidor');
+      const burbujaSola = document.getElementById('chat-burbuja');
+      chk(!!burbujaSola, 'la burbuja del chat esta en la esquina de abajo a la derecha');
+      chk(getComputedStyle(burbujaSola).right === '20px',
+          'y esta sola: el foquito del servidor subio a la barra de arriba');
       chk(!!document.getElementById('chat-panel'), 'el panel existe, cerrado');
       const seVe = (id) => getComputedStyle(document.getElementById(id)).display !== 'none';
       const chat0 = window.__chat;

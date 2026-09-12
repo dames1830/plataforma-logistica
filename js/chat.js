@@ -505,8 +505,10 @@ const esc = (s) => String(s === undefined || s === null ? '' : s)
 const ICONO_GENTE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path></svg>';
 
 const CSS = `
+/* LA BURBUJA SE QUEDO SOLA EN LA ESQUINA: el foquito del servidor subio a la barra de
+   arriba, al costado del nombre, asi que este rincon es todo del chat. */
 #chat-burbuja {
-  position: fixed; bottom: 20px; right: 72px; z-index: 9999; width: 40px; height: 40px;
+  position: fixed; bottom: 20px; right: 20px; z-index: 9999; width: 40px; height: 40px;
   border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer;
   background: rgba(var(--primary-rgb), 0.95); border: 1.5px solid rgba(var(--brand-rgb), 0.6);
   box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.45), 0 4px 20px rgba(var(--shadow-rgb), 0.4);
@@ -563,7 +565,7 @@ const CSS = `
    no supuesto- y la ventanita no se movia nunca. El salto es instantaneo y basta. */
 #chat-ventanas { position: fixed; right: 348px; bottom: 20px; z-index: 9998; display: flex;
   flex-direction: row-reverse; align-items: flex-end; gap: 10px; }
-#chat-ventanas.solas { right: 124px; }
+#chat-ventanas.solas { right: 72px; }
 .chat-ventana { width: 288px; background: var(--panel-solid); border: 1px solid rgba(var(--ink-rgb), 0.1);
   border-radius: 14px 14px 0 0; box-shadow: 0 18px 40px rgba(var(--shadow-rgb), 0.55);
   display: grid; grid-template-rows: auto 1fr auto; overflow: hidden;
