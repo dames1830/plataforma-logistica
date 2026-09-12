@@ -25,8 +25,9 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0736';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0736';
+import * as adminService from '../services_v245/adminService.js?v=29.0739';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0739';
+import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0739';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -102,6 +103,37 @@ const CSS = `
 
 #app-movil .am-salida { background: none; border: 0; color: var(--am-tenue); font-family: var(--am-ui);
   font-size: .78rem; text-decoration: underline; cursor: pointer; padding: .6rem; align-self: center; }
+
+/* ── PASAR LISTA ─────────────────────────────────────────────────────────────────────── */
+#app-movil .am-persona { background: var(--am-carta); border: 1px solid var(--am-linea);
+  border-radius: 11px; padding: 0.55rem 0.6rem 0.55rem 0.7rem; display: flex; align-items: center;
+  gap: 0.6rem; min-width: 0; transition: border-color .15s ease, background .15s ease; }
+#app-movil .am-persona.falto { border-color: #E7BEBC; background: #FDF7F7; }
+#app-movil .am-persona .ini { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: var(--am-va-agua); color: var(--am-va); display: grid; place-items: center;
+  font-size: 0.66rem; font-weight: 750; font-family: var(--am-num); }
+#app-movil .am-persona.falto .ini { background: var(--am-tarde-agua); color: var(--am-tarde); }
+#app-movil .am-persona .quien { flex: 1; min-width: 0; }
+/* display:block en los dos: como span sueltos, el nombre y el DNI salian pegados en la
+   misma linea -"Gian AlataDNI 74821779"- y el recorte con puntos suspensivos no aplicaba. */
+#app-movil .am-persona .nm { display: block; font-weight: 650; font-size: 0.88rem; letter-spacing: -.005em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#app-movil .am-persona .dni { display: block; font-family: var(--am-num); font-size: 0.64rem;
+  color: var(--am-tenue); line-height: 1.3; }
+#app-movil .am-persona .marcas { display: flex; gap: 0.3rem; flex-shrink: 0; }
+#app-movil .am-persona .marcas button { font-family: var(--am-ui); font-size: 0.72rem; font-weight: 700;
+  padding: 0.42rem 0.6rem; border-radius: 8px; border: 1.5px solid var(--am-linea);
+  background: var(--am-carta); color: var(--am-tenue); cursor: pointer; min-width: 52px; }
+#app-movil .am-persona .marcas button.si-vino { background: var(--am-va); border-color: var(--am-va); color: #fff; }
+#app-movil .am-persona .marcas button.si-falto { background: var(--am-tarde); border-color: var(--am-tarde); color: #fff; }
+#app-movil .am-persona .marcas button:disabled { opacity: .55; cursor: default; }
+
+#app-movil .am-boton { display: block; width: 100%; padding: 0.95rem; border-radius: 11px;
+  border: 1px solid var(--am-va); background: var(--am-va); color: #fff; font-family: var(--am-ui);
+  font-size: 0.98rem; font-weight: 700; cursor: pointer; }
+#app-movil .am-boton:disabled { background: #C9D4D2; border-color: #C9D4D2; color: #55666B; cursor: default; }
+#app-movil .am-boton.fino { background: none; color: var(--am-va); font-size: .86rem; padding: .7rem;
+  border-style: dashed; }
 
 #app-movil .am-barra { display: flex; background: var(--am-carta); border-top: 1px solid var(--am-linea);
   padding: 0.4rem 0.25rem calc(0.55rem + env(safe-area-inset-bottom)); }
@@ -245,11 +277,96 @@ const pantallaEnCamino = (id) => {
     `;
 };
 
+/* ── PASAR LISTA ─────────────────────────────────────────────────────────────────────────
+   Todos arrancan presentes y se toca SOLO a quien falto. La puntualidad y la justificacion
+   se afinan en la web: aca va lo que se necesita de pie y con una mano. */
+let listaLocal = null;       // la lista de hoy, mientras se edita
+let listaCerrada = false;    // ya la cerraron: se ve, no se toca
+let listaGuardando = false;
+
+const fechaDeLaLista = () => {
+    const d = new Date();
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+};
+
+const cargarLista = () => {
+    const guardado = adminService.getAttendance(fechaDeLaLista());
+    listaCerrada = !!(guardado && guardado.finalized);
+    listaLocal = armarLista(adminService.getWorkers() || [], guardado);
+};
+
+const pantallaLista = () => {
+    if (!listaLocal) cargarLista();
+    const total = listaLocal.length;
+    const faltaron = listaLocal.filter(p => p.present === false).length;
+    const vinieron = total - faltaron;
+
+    if (!total) {
+        return `<div class="am-vacio">No hay gente del turno noche cargada para pasar lista.</div>
+                <button type="button" class="am-salida" data-escritorio>Ver la versión de escritorio</button>`;
+    }
+
+    const gente = listaLocal.map(p => {
+        const falto = p.present === false;
+        const bloq = listaCerrada ? 'disabled' : '';
+        return `
+        <div class="am-persona ${falto ? 'falto' : ''}">
+            <span class="ini">${esc(iniciales(p))}</span>
+            <span class="quien"><span class="nm">${esc(nombreCorto(p))}</span><span class="dni">DNI ${esc(p.dni)}</span></span>
+            <span class="marcas">
+                <button type="button" ${bloq} class="${falto ? '' : 'si-vino'}" data-vino="${esc(p.dni)}">Vino</button>
+                <button type="button" ${bloq} class="${falto ? 'si-falto' : ''}" data-falto="${esc(p.dni)}">Faltó</button>
+            </span>
+        </div>`;
+    }).join('');
+
+    return `
+        <div class="am-tarjeta">
+            <span class="am-rotulo">Vinieron</span>
+            <span class="am-grande">${numero(vinieron)}<span style="font-size:1.3rem;color:#8B9B9F">/${numero(total)}</span></span>
+            <span class="am-pie">${faltaron ? `${numero(faltaron)} ${faltaron === 1 ? 'falta' : 'faltas'}` : 'nadie faltó'}${listaCerrada ? ' · lista cerrada' : ' · toca solo a quien faltó'}</span>
+        </div>
+
+        ${listaCerrada ? '' : `<button type="button" class="am-boton" data-guardar ${listaGuardando ? 'disabled' : ''}>${listaGuardando ? 'Guardando…' : 'Guardar la lista'}</button>`}
+
+        <div class="am-seccion">${listaCerrada ? 'Lista cerrada del turno' : 'Turno noche'}</div>
+        ${gente}
+
+        ${listaCerrada ? '' : '<button type="button" class="am-boton fino" data-cerrar>Cerrar la lista del turno</button>'}
+        <button type="button" class="am-salida" data-escritorio>Ver la versión de escritorio</button>
+    `;
+};
+
+const marcar = (dni, vino) => {
+    if (listaCerrada || !listaLocal) return;
+    const p = listaLocal.filter(x => String(x.dni) === String(dni))[0];
+    if (!p) return;
+    p.present = !!vino;
+    if (!vino) p.onTime = false;      // quien no vino no puede haber llegado a tiempo
+    pintar();
+};
+
+const guardarLista = async (cerrando) => {
+    if (!listaLocal || listaGuardando) return;
+    if (cerrando && !confirm('¿Cerrar la lista del turno? Después se corrige desde la web.')) return;
+    listaGuardando = true;
+    pintar();
+    try {
+        await adminService.saveAttendance(fechaDeLaLista(), { data: listaLocal, finalized: !!cerrando });
+        if (cerrando) listaCerrada = true;
+    } catch (e) {
+        console.warn('[APP] no se pudo guardar la lista:', e && e.message);
+        alert('No se pudo guardar la lista. Vuelve a intentar.');
+    }
+    listaGuardando = false;
+    pintar();
+};
+
 const CABECERAS = {
     inicio: () => ({ sub: `Turno · ${diaEnLetras()}`, ttl: `${saludo()}, ${String(YO.name || YO.username).split(' ')[0]}` }),
     reportes: () => ({ sub: `Datos del ${diaEnLetras()}`, ttl: 'Reportes' }),
     tareas: () => ({ sub: `Turno · ${diaEnLetras()}`, ttl: 'Tareas' }),
-    lista: () => ({ sub: `Turno · ${diaEnLetras()}`, ttl: 'Pasar lista' }),
+    lista: () => ({ sub: `Turno noche · ${diaEnLetras()}`, ttl: 'Pasar lista' }),
     avisos: () => ({ sub: 'Sin avisos todavía', ttl: 'Avisos' })
 };
 
@@ -260,7 +377,9 @@ const pintar = () => {
     raiz.querySelector('.am-cab .ttl').textContent = cab.ttl;
 
     const cuerpo = raiz.querySelector('.am-cuerpo');
-    cuerpo.innerHTML = seccion === 'inicio' ? pantallaInicio() : pantallaEnCamino(seccion);
+    cuerpo.innerHTML = seccion === 'inicio' ? pantallaInicio()
+        : seccion === 'lista' ? pantallaLista()
+        : pantallaEnCamino(seccion);
     cuerpo.scrollTop = 0;
 
     raiz.querySelector('.am-barra').innerHTML = SECCIONES.map(s => `
@@ -322,7 +441,18 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
 
     raiz.addEventListener('click', (e) => {
         const s = e.target.closest('[data-seccion]');
-        if (s) { seccion = s.getAttribute('data-seccion'); pintar(); return; }
+        if (s) {
+            seccion = s.getAttribute('data-seccion');
+            if (seccion === 'lista') cargarLista();   // se relee al entrar, no al dibujar
+            pintar();
+            return;
+        }
+        const vino = e.target.closest('[data-vino]');
+        if (vino) { marcar(vino.getAttribute('data-vino'), true); return; }
+        const falto = e.target.closest('[data-falto]');
+        if (falto) { marcar(falto.getAttribute('data-falto'), false); return; }
+        if (e.target.closest('[data-guardar]')) { guardarLista(false); return; }
+        if (e.target.closest('[data-cerrar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-escritorio]')) { irAEscritorio(); return; }
     });
 
@@ -332,7 +462,9 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
        cada veinte segundos. Con un minuto alcanza, y cuando vuelve a la mano se refresca. */
     if (reloj) clearInterval(reloj);
     reloj = setInterval(() => {
-        if (document.visibilityState === 'visible') pintar();
+        /* NO SE REPINTA LA LISTA SOLA: se estaria pisando lo que la persona acaba de marcar
+           y todavia no guardo. Las demas pantallas si se refrescan. */
+        if (document.visibilityState === 'visible' && seccion !== 'lista') pintar();
     }, 60000);
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') pintar();
