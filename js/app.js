@@ -1,12 +1,12 @@
 /**
  * App Entry Point v24.5.8 - SECURE SYNC
  */
-import { getSession, logout } from './services_v245/auth.js?v=29.0731';
-import * as adminService from './services_v245/adminService.js?v=29.0731';
-import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0731';
-import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0731';
-import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0731';
-import { registrar } from './services_v245/eventosService.js?v=29.0731';
+import { getSession, logout } from './services_v245/auth.js?v=29.0735';
+import * as adminService from './services_v245/adminService.js?v=29.0735';
+import { observarTablas } from './services_v245/tablasOrdenables.js?v=29.0735';
+import { aplicarTemaDeUsuario } from './services_v245/temaService.js?v=29.0735';
+import { instalarSalidaConEsc } from './services_v245/salidas.js?v=29.0735';
+import { registrar } from './services_v245/eventosService.js?v=29.0735';
 
 /* EL CHAT SE CARGA APARTE Y DESPUES DEL TABLERO. No es una pantalla: es una burbuja que
    flota sobre todas, al costado del indicador del servidor. Se guarda aca para poder
@@ -475,7 +475,7 @@ window.alert = function(message) {
 class App {
     constructor(rootId) {
       this.root = document.getElementById(rootId);
-      this.APP_VERSION = 'v29.0731';
+      this.APP_VERSION = 'v29.0735';
     
     // Solo deja constancia de con qué versión se arrancó. La detección de una versión
     // nueva se hace contra el servidor —ver vigilarVersion()—, porque este número está
@@ -796,11 +796,42 @@ class App {
     } catch (e) { /* si el navegador no lo soporta, todo sigue igual que antes */ }
   }
 
+  /* ¿ESTO ES UN CELULAR? La app no se decide por el ancho de la ventana a secas: una
+     ventana chica en la PC NO es un telefono, y Daniel lo vio al instalar la plataforma en
+     su computadora y encontrarse la misma web adentro de un marco. Hacen falta las dos
+     cosas: pantalla angosta Y pantalla tactil (o la app instalada). Con `?movil=1` se
+     fuerza para probarla desde la PC, y con `?movil=0` se sale. */
+  enCelular() {
+    try {
+      const q = new URLSearchParams(location.search).get('movil');
+      if (q === '1') { try { localStorage.removeItem('deam_prefiere_escritorio'); } catch (e) {} return true; }
+      if (q === '0') return false;
+      if (localStorage.getItem('deam_prefiere_escritorio') === '1') return false;
+      const instalada = window.matchMedia('(display-mode: standalone)').matches;
+      const angosta = window.innerWidth <= 820;
+      const tactil = (navigator.maxTouchPoints || 0) > 0;
+      return angosta && (tactil || instalada);
+    } catch (e) { return false; }
+  }
+
   async render(user) {
     if (this.isRendered) return;
     this.isRendered = true;
     
     try {
+        if (user && this.enCelular()) {
+            /* LA APP DEL CELULAR: su propia cara, con cinco secciones abajo y fondo claro.
+               No es el tablero de la web achicado. */
+            const { renderAppMovil } = await import(`./views/app_movil.js?v=${this.APP_VERSION}`);
+            pantallaCarga.hasta(85);
+            this.root.innerHTML = '';
+            await renderAppMovil(this.root, user, () => {
+                this.isRendered = false;
+                logout();
+                this.init();
+            });
+            return;
+        }
         if (user) {
             // La MISMA dirección que precargó adelantarDashboard(), o se baja dos veces.
             const { renderDashboard } = await import(this.urlDashboard());
