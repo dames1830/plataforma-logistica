@@ -24,9 +24,10 @@
   <script type="module">
     const salida = document.getElementById('salida');
     const res = [];
-    const chk = (cond, msg) => { res.push((cond ? 'OK    ' : 'FALLA ') + msg); return !!cond; };
+    let pintar = () => {};
+    const chk = (cond, msg) => { res.push((cond ? 'OK    ' : 'FALLA ') + msg); pintar(); return !!cond; };
     const esperar = (ms) => new Promise(r => setTimeout(r, ms));
-    const pintar = () => {
+    pintar = () => {
       const fallas = res.filter(r => r.indexOf('FALLA') === 0).length;
       salida.innerHTML = res.join(String.fromCharCode(10)) + String.fromCharCode(10) + String.fromCharCode(10)
         + (fallas ? '<span class="falla">HAY ' + fallas + ' FALLA(S)</span>'
@@ -142,7 +143,53 @@
       chk(tituloVentana && tituloVentana.textContent.trim() === 'Carlos Ascencio',
           'la ventanita se titula con el nombre: ' + (tituloVentana ? tituloVentana.textContent.trim() : ''));
 
-      // 8. un grupo
+      // 8. mandar una foto: se achica sola, viaja y se ve en la conversacion
+      const lienzo = document.createElement('canvas');
+      lienzo.width = 2400; lienzo.height = 1600;
+      const cx = lienzo.getContext('2d');
+      cx.fillStyle = '#4f46e5'; cx.fillRect(0, 0, 2400, 1600);
+      cx.fillStyle = '#fff'; cx.font = '120px sans-serif'; cx.fillText('PRUEBA', 200, 800);
+      const original = await new Promise(r => lienzo.toBlob(r, 'image/png'));
+      const foto = new File([original], 'guia-de-prueba.png', { type: 'image/png' });
+      chk(foto.size > 40000, 'la foto de prueba pesa ' + Math.round(foto.size / 1024) + ' KB antes de mandarla');
+
+      await chat.mandarConAdjunto(idSala, foto);
+      await esperar(1500);
+
+      const conFoto = (chat.estado().mensajes[idSala] || []).filter(m => m.adjunto)[0];
+      chk(!!conFoto, 'el mensaje quedo con su adjunto');
+      chk(conFoto && conFoto.adjunto.tipo === 'imagen', 'se reconocio como imagen');
+      chk(conFoto && conFoto.adjunto.tamano < foto.size / 2,
+          'la foto se achico antes de subir: de ' + Math.round(foto.size / 1024) + ' KB a '
+          + Math.round((conFoto ? conFoto.adjunto.tamano : 0) / 1024) + ' KB');
+
+      const areaFoto = await (await fetch(API + '/chat_adj_' + conFoto.adjunto.id + '?t=' + Date.now())).json();
+      const guardada = ((areaFoto && areaFoto.data) || [])[0];
+      chk(guardada && String(guardada.datos || '').indexOf('data:image/') === 0,
+          'la foto quedo guardada en su propia area del servidor');
+
+      await esperar(1200);
+      const enPantalla = document.querySelector('.chat-ventana[data-sala="' + idSala + '"] .adj-img');
+      chk(!!enPantalla, 'la foto se dibuja dentro de la conversacion');
+      chk(enPantalla && String(enPantalla.src || '').indexOf('data:image/') === 0,
+          'y se ve de verdad: la imagen tiene su contenido cargado');
+
+      enPantalla.click();
+      await esperar(500);
+      chk(!document.getElementById('chat-visor').hidden, 'al hacer clic se abre grande');
+      document.getElementById('chat-visor').click();
+      await esperar(200);
+      chk(document.getElementById('chat-visor').hidden, 'y se cierra al tocarla');
+
+      // un archivo que no es imagen sale como tarjeta para descargar
+      const doc = new File([new Blob(['guia;cantidad', 'texto'], { type: 'text/csv' })], 'pendiente.csv', { type: 'text/csv' });
+      await chat.mandarConAdjunto(idSala, doc);
+      await esperar(1500);
+      const tarjeta = document.querySelector('.chat-ventana[data-sala="' + idSala + '"] .adj-file');
+      chk(!!tarjeta && tarjeta.textContent.indexOf('pendiente.csv') >= 0,
+          'un archivo que no es foto sale como tarjeta con su nombre y su peso');
+
+      // 9. un grupo
       const idGrupo = await chat.crearGrupo('Prueba turno noche', [OTRO, 'msosa']);
       await esperar(600);
       const salas = await (await fetch(API + '/chat_salas?t=' + Date.now())).json();

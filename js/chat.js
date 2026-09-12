@@ -56,6 +56,7 @@ let audio = null;
 let toastReloj = null;
 let toastSala = null;
 let arrancado = false;
+let salaDelClip = null;     // a que conversacion va el archivo que se esta eligiendo
 
 /* ── LO QUE HABLA CON EL SERVIDOR ──────────────────────────────────────────────────────── */
 
@@ -167,12 +168,13 @@ const sello = () => {
 const horaCorta = (cuando) => String(cuando || '').slice(11, 16);
 const diaDe = (cuando) => String(cuando || '').slice(0, 10);
 
-const mandar = async (idSala, texto, esAviso = false) => {
+const mandar = async (idSala, texto, esAviso = false, adjunto = null) => {
     const t = String(texto || '').trim();
-    if (!t) return false;
+    if (!t && !adjunto) return false;
     const msg = { id: `${Date.now().toString(36)}_${YO.username}_${Math.random().toString(36).slice(2, 7)}`,
                   de: YO.username, texto: t, cuando: sello() };
     if (esAviso) msg.aviso = true;
+    if (adjunto) msg.adjunto = adjunto;
     mensajes[idSala] = (mensajes[idSala] || []).concat(msg);
     leidos[idSala] = msg.cuando;
     noLeidos[idSala] = 0;
@@ -227,6 +229,157 @@ const reponerContador = (idSala) => {
     const desde = leidos[idSala] || '';
     noLeidos[idSala] = (mensajes[idSala] || [])
         .filter(m => m.de !== YO.username && String(m.cuando || '') > desde).length;
+};
+
+/* -- LAS FOTOS Y LOS ARCHIVOS -------------------------------------------------------------
+ *
+ * CADA ADJUNTO VIVE EN SU PROPIA AREA, `chat_adj_<id>`, con el archivo en base64 adentro.
+ * No se usa el almacen de `/api/archivos` -el de los stocks y el slotting- porque ese esta
+ * hecho para el robot: al subir uno nuevo BORRA el anterior del mismo tipo y del mismo dia, y
+ * aca cada foto tiene que quedarse. Un area por archivo tambien evita reescribir una lista de
+ * varios MB cada vez que alguien manda algo.
+ *
+ * LAS FOTOS SE ACHICAN EN EL NAVEGADOR antes de salir: 1600 px de lado mayor y JPEG 0,72. Una
+ * foto de celular de 4 MB queda en unos 250 KB y en pantalla se ve igual.
+ *
+ * A los 30 dias el robot de archivado se las lleva a OneDrive y las borra de aca: el servidor
+ * nunca acumula.
+ */
+const TOPE_ARCHIVO_MB = 5;
+const TOPE_VIDEO_MB = 15;
+const LADO_MAXIMO = 1600;
+
+const tipoDeArchivo = (mime) => {
+    const m = String(mime || '').toLowerCase();
+    if (m.indexOf('image/') === 0) return 'imagen';
+    if (m.indexOf('video/') === 0) return 'video';
+    return 'archivo';
+};
+
+const pesoLegible = (bytes) => {
+    const n = Number(bytes) || 0;
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return Math.round(n / 1024) + ' KB';
+    return (n / 1024 / 1024).toFixed(1) + ' MB';
+};
+
+const leerComoDatos = (blob) => new Promise((listo, falla) => {
+    const lector = new FileReader();
+    lector.onload = () => listo(lector.result);
+    lector.onerror = () => falla(new Error('no se pudo leer el archivo'));
+    lector.readAsDataURL(blob);
+});
+
+/** Achica la foto en el navegador. Si algo falla, se manda tal cual vino. */
+const achicarFoto = (archivo) => new Promise((listo) => {
+    const mime = String(archivo.type || '');
+    if (mime.indexOf('image/') !== 0 || mime.indexOf('gif') >= 0) { listo(archivo); return; }
+    const url = URL.createObjectURL(archivo);
+    const img = new Image();
+    img.onload = () => {
+        try {
+            const escala = Math.min(1, LADO_MAXIMO / Math.max(img.width, img.height));
+            if (escala >= 1 && archivo.size < 400 * 1024) { URL.revokeObjectURL(url); listo(archivo); return; }
+            const lienzo = document.createElement('canvas');
+            lienzo.width = Math.round(img.width * escala);
+            lienzo.height = Math.round(img.height * escala);
+            lienzo.getContext('2d').drawImage(img, 0, 0, lienzo.width, lienzo.height);
+            lienzo.toBlob((b) => {
+                URL.revokeObjectURL(url);
+                listo(b && b.size < archivo.size ? b : archivo);
+            }, 'image/jpeg', 0.72);
+        } catch (e) { URL.revokeObjectURL(url); listo(archivo); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); listo(archivo); };
+    img.src = url;
+});
+
+const adjuntos = {};      // { idAdjunto: datos } - lo ya bajado, para no pedirlo dos veces
+
+const traerAdjunto = async (id) => {
+    if (adjuntos[id]) return adjuntos[id];
+    try {
+        const lista = await traer('chat_adj_' + id);
+        const a = lista[0];
+        if (a && a.datos) { adjuntos[id] = a.datos; return a.datos; }
+    } catch (e) { /* se vuelve a intentar en el proximo dibujo */ }
+    return null;
+};
+
+/** Sube el archivo y devuelve la ficha que viaja dentro del mensaje. */
+const subirAdjunto = async (archivo) => {
+    const tipo = tipoDeArchivo(archivo.type);
+    const listo = tipo === 'imagen' ? await achicarFoto(archivo) : archivo;
+    const topeMb = tipo === 'video' ? TOPE_VIDEO_MB : TOPE_ARCHIVO_MB;
+    if (listo.size > topeMb * 1024 * 1024) {
+        alert('Ese archivo pesa ' + pesoLegible(listo.size) + ' y el maximo es ' + topeMb + ' MB.');
+        return null;
+    }
+    const datos = await leerComoDatos(listo);
+    const id = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    const ficha = { id, nombre: archivo.name || 'foto.jpg', tipo,
+                    mime: listo.type || archivo.type || '', tamano: listo.size };
+    const r = await fetch(API + '/chat_adj_' + id, {
+        method: 'POST', headers: cabeceras(),
+        body: JSON.stringify([Object.assign({ datos: datos }, ficha)])
+    });
+    if (!r.ok) throw new Error('no se pudo subir el archivo');
+    adjuntos[id] = datos;
+    return ficha;
+};
+
+const mandarConAdjunto = async (idSala, archivo) => {
+    const clip = raiz.querySelector('[data-clip="' + idSala + '"]');
+    if (clip) { clip.textContent = '...'; clip.disabled = true; }
+    try {
+        const ficha = await subirAdjunto(archivo);
+        if (ficha) {
+            const cajaTexto = raiz.querySelector('[data-escribir="' + idSala + '"]');
+            const texto = (cajaTexto && cajaTexto.value.trim()) || '';
+            if (cajaTexto) cajaTexto.value = '';
+            await mandar(idSala, texto, false, ficha);
+        }
+    } catch (e) {
+        console.warn('[CHAT] no se pudo mandar el archivo:', e && e.message);
+        alert('No se pudo mandar el archivo. Vuelve a intentar.');
+    } finally {
+        const otro = raiz.querySelector('[data-clip="' + idSala + '"]');
+        if (otro) { otro.textContent = '📎'; otro.disabled = false; }
+    }
+};
+
+/** Rellena las fotos que ya estan en pantalla, cuando llegan sus datos. */
+const pintarAdjuntos = () => {
+    if (!raiz) return;
+    raiz.querySelectorAll('[data-adj]:not([data-listo])').forEach((el) => {
+        const id = el.getAttribute('data-adj');
+        traerAdjunto(id).then((datos) => {
+            if (!datos) return;
+            el.setAttribute('data-listo', '1');
+            if (el.tagName === 'IMG') el.src = datos;
+        });
+    });
+};
+
+const verGrande = (id) => {
+    traerAdjunto(id).then((datos) => {
+        if (!datos) return;
+        const v = nodo('chat-visor');
+        v.querySelector('img').src = datos;
+        v.hidden = false;
+    });
+};
+
+const bajarAdjunto = (id, nombre) => {
+    traerAdjunto(id).then((datos) => {
+        if (!datos) return;
+        const a = document.createElement('a');
+        a.href = datos;
+        a.download = nombre || 'archivo';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    });
 };
 
 /* ── EL TONO ───────────────────────────────────────────────────────────────────────────── */
@@ -420,6 +573,21 @@ const CSS = `
   border: 1px solid rgba(var(--ink-rgb), 0.1); border-radius: 8px; padding: 0.45rem 0.6rem; font-size: var(--t-xs); }
 .chat-ventana .caja button { background: var(--primary); border: 0; color: #fff; border-radius: 8px;
   padding: 0.45rem 0.7rem; font-size: var(--t-xs); font-weight: 700; cursor: pointer; }
+.chat-msg .adj-img { display: block; max-width: 100%; border-radius: 8px; margin-top: 0.2rem; cursor: zoom-in; background: rgba(var(--ink-rgb), 0.06); min-height: 40px; }
+.chat-msg .adj-file { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem; padding: 0.4rem 0.5rem;
+  border-radius: 8px; background: rgba(var(--ink-rgb), 0.06); border: 1px solid rgba(var(--ink-rgb), 0.1);
+  cursor: pointer; color: var(--text-pale); }
+.chat-msg .adj-file:hover { background: rgba(var(--primary-rgb), 0.25); }
+.chat-msg .adj-file .ico { font-size: var(--t-lg); }
+.chat-msg .adj-file .peso { margin-left: auto; font-size: 10px; color: var(--text-dim); white-space: nowrap; }
+.chat-ventana .clip { background: rgba(var(--ink-rgb), 0.06); border: 1px solid rgba(var(--ink-rgb), 0.1);
+  color: var(--text-pale); border-radius: 8px; padding: 0.45rem 0.55rem; font-size: var(--t-sm); cursor: pointer; }
+.chat-ventana .clip:hover { background: rgba(var(--primary-rgb), 0.3); }
+.chat-ventana.soltando { outline: 2px dashed var(--brand-light); outline-offset: -4px; }
+#chat-visor { position: fixed; inset: 0; z-index: 10000; background: rgba(var(--shadow-rgb), 0.88);
+  display: flex; align-items: center; justify-content: center; padding: 2rem; cursor: zoom-out; }
+#chat-visor[hidden] { display: none !important; }
+#chat-visor img { max-width: 100%; max-height: 100%; border-radius: 10px; box-shadow: 0 20px 60px rgba(var(--shadow-rgb), 0.6); }
 #chat-toast { position: fixed; right: 20px; bottom: 72px; z-index: 9999; width: 270px; background: var(--panel-solid);
   border: 1px solid rgba(var(--warning-soft-rgb), 0.45); border-left: 3px solid var(--warning-soft); border-radius: 12px;
   box-shadow: 0 18px 40px rgba(var(--shadow-rgb), 0.55); padding: 0.6rem 0.75rem; display: grid;
@@ -487,6 +655,8 @@ const dibujarCascaron = () => {
             <span class="de" id="chat-toast-de"></span>
             <span class="txt" id="chat-toast-txt"></span>
         </button>
+        <div id="chat-visor" hidden><img alt="Imagen del chat"></div>
+        <input id="chat-archivo" type="file" hidden accept="image/*,video/*,.pdf,.xlsx,.xls,.csv,.docx,.doc,.txt">
         <button id="chat-burbuja" type="button" aria-label="Abrir el chat">
             ${ICONO_GENTE}
             <span id="chat-globo" hidden>0</span>
@@ -568,7 +738,15 @@ const pintarVentanas = () => {
             const estado = mio ? (m.sinEnviar ? ' · sin enviar' : '') : '';
             const quitar = YO.username === SUPERUSUARIO
                 ? `<button class="quitar" type="button" title="Borrar (solo el administrador)" data-borrar="${esc(m.id)}" data-sala="${esc(s.id)}">×</button>` : '';
-            return html + `<div class="chat-msg ${mio ? 'mio' : ''}">${de}${esc(m.texto)}
+            const adj = !m.adjunto ? ''
+                : (m.adjunto.tipo === 'imagen'
+                    ? `<img class="adj-img" data-adj="${esc(m.adjunto.id)}" data-ver="${esc(m.adjunto.id)}" alt="${esc(m.adjunto.nombre)}">`
+                    : `<div class="adj-file" data-bajar="${esc(m.adjunto.id)}" data-nombre="${esc(m.adjunto.nombre)}">
+                           <span class="ico">${m.adjunto.tipo === 'video' ? '\u{1F3AC}' : '\u{1F4C4}'}</span>
+                           <span>${esc(m.adjunto.nombre)}</span>
+                           <span class="peso">${esc(pesoLegible(m.adjunto.tamano))}</span>
+                       </div>`);
+            return html + `<div class="chat-msg ${mio ? 'mio' : ''}">${de}${esc(m.texto)}${adj}
                 <div class="pie">${esc(horaCorta(m.cuando))}${estado}</div>${quitar}</div>`;
         }).join('');
         const n = sinLeer(s.id);
@@ -584,6 +762,7 @@ const pintarVentanas = () => {
             <div class="cuerpo" data-cuerpo="${esc(s.id)}">${cuerpo || '<div class="chat-dia">Sin mensajes</div>'}</div>
             <div class="pie">
                 <div class="caja">
+                    <button type="button" class="clip" data-clip="${esc(s.id)}" title="Mandar una foto o un archivo">📎</button>
                     <input type="text" placeholder="Escribe…" data-escribir="${esc(s.id)}" aria-label="Escribe un mensaje">
                     <button type="button" data-enviar="${esc(s.id)}">Enviar</button>
                 </div>
@@ -621,6 +800,7 @@ const pintarVentanas = () => {
         const c = caja.querySelector(`[data-cuerpo="${v.id}"]`);
         if (c) c.scrollTop = c.scrollHeight;
     });
+    pintarAdjuntos();
 };
 
 const pintarGlobo = () => {
@@ -750,6 +930,18 @@ const enganchar = () => {
             abiertas.forEach(v => { if (v.id === id) { v.plegada = !v.plegada; if (!v.plegada) marcarLeida(id); } });
             pintar(); acomodarReloj(); return;
         }
+        const ver = e.target.closest('[data-ver]');
+        if (ver) { verGrande(ver.getAttribute('data-ver')); return; }
+        const bajar = e.target.closest('[data-bajar]');
+        if (bajar) { bajarAdjunto(bajar.getAttribute('data-bajar'), bajar.getAttribute('data-nombre')); return; }
+        const clip = e.target.closest('[data-clip]');
+        if (clip) {
+            salaDelClip = clip.getAttribute('data-clip');
+            const elegidor = nodo('chat-archivo');
+            elegidor.value = '';
+            elegidor.click();
+            return;
+        }
         const quitar = e.target.closest('[data-borrar]');
         if (quitar) { borrar(quitar.getAttribute('data-sala'), quitar.getAttribute('data-borrar')); return; }
         const enviar = e.target.closest('[data-enviar]');
@@ -760,6 +952,50 @@ const enganchar = () => {
             e.preventDefault();
             escribir(e.target.getAttribute('data-escribir'));
         }
+    });
+
+    /* Pegar una captura con Ctrl+V: es como se manda la mayoria de las fotos de pantalla. */
+    ventanas.addEventListener('paste', (e) => {
+        const sala = e.target.getAttribute && e.target.getAttribute('data-escribir');
+        if (!sala || !e.clipboardData || !e.clipboardData.files || !e.clipboardData.files.length) return;
+        e.preventDefault();
+        mandarConAdjunto(sala, e.clipboardData.files[0]);
+    });
+
+    /* Arrastrar el archivo encima de la ventanita. */
+    const salaDe = (nodo2) => {
+        const v = nodo2 && nodo2.closest ? nodo2.closest('.chat-ventana') : null;
+        return v ? v.getAttribute('data-sala') : null;
+    };
+    ventanas.addEventListener('dragover', (e) => {
+        if (!salaDe(e.target)) return;
+        e.preventDefault();
+        const v = e.target.closest('.chat-ventana');
+        if (v) v.classList.add('soltando');
+    });
+    ventanas.addEventListener('dragleave', (e) => {
+        const v = e.target.closest && e.target.closest('.chat-ventana');
+        if (v) v.classList.remove('soltando');
+    });
+    ventanas.addEventListener('drop', (e) => {
+        const sala = salaDe(e.target);
+        if (!sala) return;
+        e.preventDefault();
+        const v = e.target.closest('.chat-ventana');
+        if (v) v.classList.remove('soltando');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+            mandarConAdjunto(sala, e.dataTransfer.files[0]);
+        }
+    });
+
+    nodo('chat-archivo').addEventListener('change', (e) => {
+        const archivo = e.target.files && e.target.files[0];
+        if (archivo && salaDelClip) mandarConAdjunto(salaDelClip, archivo);
+    });
+
+    nodo('chat-visor').addEventListener('click', () => { nodo('chat-visor').hidden = true; });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && raiz && nodo('chat-visor') && !nodo('chat-visor').hidden) nodo('chat-visor').hidden = true;
     });
 };
 
@@ -819,5 +1055,6 @@ export const desmontarChat = () => {
 
 /* Para la prueba del navegador: deja a mano lo que hace falta empujar sin tocar la pantalla. */
 window.__chat = { latir, mandar, crearDirecta, crearGrupo, borrar, bajarSala, marcasDelServidor,
+                  mandarConAdjunto, subirAdjunto, achicarFoto,
                   estado: () => ({ salas, mensajes, leidos, noLeidos, abiertas, versionesVistas,
                                    sinLeer: sinLeerTotal() }) };
