@@ -25,9 +25,9 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0743';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0743';
-import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0743';
+import * as adminService from '../services_v245/adminService.js?v=29.0744';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0744';
+import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0744';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -51,13 +51,18 @@ const CSS = `
 }
 #app-movil * { box-sizing: border-box; }
 
+#app-movil .am-cab > * { display: block; width: min(100%, 560px); margin-inline: auto; }
 #app-movil .am-cab { padding: calc(0.7rem + env(safe-area-inset-top)) 1.1rem 0.8rem;
   background: var(--am-papel); border-bottom: 1px solid var(--am-linea); }
 #app-movil .am-cab .sub { font-family: var(--am-num); font-size: 0.7rem; letter-spacing: .04em;
   text-transform: uppercase; color: var(--am-tenue); }
 #app-movil .am-cab .ttl { font-size: 1.12rem; font-weight: 750; letter-spacing: -0.015em; }
 
+/* AUNQUE LA VENTANA SEA ANCHA, LA APP SE QUEDA DEL ANCHO DE UN TELEFONO. Estirada, las
+   tres columnas se separaban: el nombre solo a la izquierda y los botones y el motivo
+   pegados a la derecha. Es una app de celular; se centra y se queda en su ancho. */
 #app-movil .am-cuerpo { overflow-y: auto; -webkit-overflow-scrolling: touch;
+  width: min(100%, 560px); margin-inline: auto;
   padding: 0.9rem 0.8rem 1.4rem; display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
 
 #app-movil .am-tarjeta { background: var(--am-carta); border: 1px solid var(--am-linea);
@@ -111,7 +116,7 @@ const CSS = `
 #app-movil .am-persona { background: var(--am-carta); border: 1px solid var(--am-linea);
   border-radius: 11px; padding: 0.5rem 0.55rem; display: grid;
   grid-template-columns: minmax(0, 1fr) auto 86px; align-items: center;
-  gap: 0.3rem; min-width: 0; transition: border-color .15s ease, background .15s ease; }
+  gap: 0.55rem; min-width: 0; transition: border-color .15s ease, background .15s ease; }
 #app-movil .am-persona.falto { border-color: #E7BEBC; background: #FDF7F7; }
 #app-movil .am-persona .quien { min-width: 0; }
 /* display:block en los dos: como span sueltos, el nombre y el DNI salian pegados en la
@@ -136,7 +141,7 @@ const CSS = `
 /* La cabecera de la lista, con el nombre de cada columna: sin esto, dos botones y un
    desplegable sueltos no se leen como una tabla. */
 #app-movil .am-encabezado { display: grid; grid-template-columns: minmax(0, 1fr) auto 86px;
-  gap: 0.3rem; padding: 0 0.55rem; font-family: var(--am-num); font-size: 0.58rem;
+  gap: 0.55rem; padding: 0 0.55rem; font-family: var(--am-num); font-size: 0.58rem;
   letter-spacing: .1em; text-transform: uppercase; color: var(--am-tenue); font-weight: 700; }
 #app-movil .am-encabezado .c2 { min-width: 96px; text-align: center; }
 #app-movil .am-encabezado .c3 { text-align: center; }
@@ -153,8 +158,11 @@ const CSS = `
   padding: 0.5rem 0.85rem; border-radius: 9px; border: 1px solid var(--am-va);
   background: var(--am-carta); color: var(--am-va); cursor: pointer; white-space: nowrap; }
 #app-movil .am-chico:disabled { border-color: var(--am-linea); color: var(--am-tenue); cursor: default; }
-#app-movil .am-chico.solo-icono { padding: 0.5rem 0.6rem; border-color: var(--am-linea);
-  color: var(--am-suave); font-size: 0.95rem; }
+/* Los dos iconos miden lo mismo y se ven: antes la camara quedaba mas chica que el
+   refrescar y Daniel la veia perdida. */
+#app-movil .am-chico.solo-icono { width: 44px; height: 40px; padding: 0; display: grid;
+  place-items: center; border-color: var(--am-linea); color: var(--am-suave); font-size: 1.25rem;
+  line-height: 1; }
 #app-movil .am-nota { font-size: .72rem; color: var(--am-tenue); text-align: center; margin: 0; padding: 0 .6rem; }
 #app-movil .am-cerrada { background: var(--am-va-agua); border: 1px solid var(--am-va);
   color: var(--am-va); border-radius: 11px; padding: 0.85rem; text-align: center; font-weight: 700; }
@@ -167,7 +175,8 @@ const CSS = `
   border-style: dashed; }
 
 #app-movil .am-barra { display: flex; background: var(--am-carta); border-top: 1px solid var(--am-linea);
-  padding: 0.4rem 0.25rem calc(0.55rem + env(safe-area-inset-bottom)); }
+  padding: 0.4rem 0.25rem calc(0.55rem + env(safe-area-inset-bottom));
+  width: min(100%, 560px); margin-inline: auto; }
 #app-movil .am-barra button { flex: 1; min-width: 0; background: none; border: 0; cursor: pointer;
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0.25rem 0.1rem;
   font-family: var(--am-ui); font-size: 0.58rem; font-weight: 650; color: #8B9B9F; position: relative; }
