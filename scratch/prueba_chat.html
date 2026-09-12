@@ -173,6 +173,10 @@
           'la foto se achico antes de subir: de ' + Math.round(foto.size / 1024) + ' KB a '
           + Math.round((conFoto ? conFoto.adjunto.tamano : 0) / 1024) + ' KB');
 
+      chk(conFoto && /\.jpg$/i.test(conFoto.adjunto.nombre) && conFoto.adjunto.mime === 'image/jpeg',
+          'y el nombre dice la verdad: se mando como ' + (conFoto ? conFoto.adjunto.nombre : '?')
+          + ' porque al achicarla pasa a JPEG');
+
       const areaFoto = await (await fetch(API + '/chat_adj_' + conFoto.adjunto.id + '?date=MASTER&t=' + Date.now())).json();
       const guardada = ((areaFoto && areaFoto.data) || [])[0];
       chk(guardada && String(guardada.datos || '').indexOf('data:image/') === 0,
@@ -199,6 +203,28 @@
       chk(!!tarjeta && tarjeta.textContent.indexOf('pendiente.csv') >= 0,
           'un archivo que no es foto sale como tarjeta con su nombre y su peso');
 
+      // 8b. NADA QUEDA CORTADO POR LA DERECHA
+      //     La ventanita tiene 288 px y esconde lo que sobre. Si una pieza de adentro
+      //     -la fila de escribir, el nombre de un archivo, una foto- pide mas, el boton
+      //     Enviar y el borde de la foto se van fuera de la pantalla sin aviso.
+      const ventana = document.querySelector('.chat-ventana[data-sala="' + idSala + '"]');
+      const anchoVentana = Math.round(ventana.getBoundingClientRect().width);
+      chk(ventana.scrollWidth <= ventana.clientWidth + 1,
+          'la ventanita no corta nada por la derecha: pide ' + ventana.scrollWidth
+          + ' px y tiene ' + ventana.clientWidth);
+      const anchos = [...ventana.children].map(el => Math.round(el.getBoundingClientRect().width));
+      chk(anchos.every(a => a <= anchoVentana + 1),
+          'la cabecera, la conversacion y la fila de escribir entran en los ' + anchoVentana + ' px');
+
+      // un nombre larguisimo se recorta con puntos suspensivos, no empuja la ventana
+      const largo = new File([new Blob(['x'], { type: 'text/csv' })],
+                             'reporte-de-pendientes-por-ruta-y-canal-septiembre-2026-final.csv',
+                             { type: 'text/csv' });
+      await chat.mandarConAdjunto(idSala, largo);
+      await esperar(1500);
+      chk(ventana.scrollWidth <= ventana.clientWidth + 1,
+          'un nombre de archivo larguisimo tampoco ensancha la ventana');
+
       // 9. un grupo
       const idGrupo = await chat.crearGrupo('Prueba turno noche', [OTRO, 'msosa']);
       await esperar(600);
@@ -206,6 +232,33 @@
       const grupo = ((salas && salas.data) || []).filter(s => s.id === idGrupo)[0];
       chk(grupo && grupo.tipo === 'grupo' && grupo.miembros.length === 3, 'el grupo se creó con sus tres integrantes');
       chk(grupo && grupo.creador === 'dames', 'queda anotado quién lo creó');
+
+      // 10. la seña que deja el robot de archivado NO despierta a nadie
+      //     Corre de madrugada y toca todas las conversaciones. Si contara como mensaje
+      //     nuevo, todo el mundo amaneceria con el globo rojo y un tono por conversacion.
+      const sinLeerAntes = chat.estado().sinLeer;
+      await fetch(API + '/chat_' + idGrupo + '?date=MASTER', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: 'nota_archivo', de: '', aviso: true, sistema: true,
+                               cuando: new Date().toLocaleString('sv').replace(' ', 'T'),
+                               texto: 'lo anterior al 01-01-2026 esta guardado en OneDrive' })
+      });
+      await chat.latir();
+      await esperar(400);
+      chk(chat.estado().sinLeer === sinLeerAntes,
+          'la seña del robot de archivado no cuenta como mensaje nuevo');
+
+      // y en cambio un mensaje de verdad en esa misma conversacion SI cuenta
+      await fetch(API + '/chat_' + idGrupo + '?date=MASTER', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: 'pru_g_' + Date.now().toString(36), de: OTRO,
+                               cuando: new Date().toLocaleString('sv').replace(' ', 'T'),
+                               texto: 'esto si tiene que avisar' })
+      });
+      await chat.latir();
+      await esperar(400);
+      chk(chat.estado().sinLeer === sinLeerAntes + 1,
+          'y un mensaje de una persona en esa misma conversacion si avisa');
 
       pintar();
     } catch (e) {

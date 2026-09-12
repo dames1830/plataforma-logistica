@@ -242,7 +242,7 @@ const marcarLeida = (idSala) => {
 const reponerContador = (idSala) => {
     const desde = leidos[idSala] || '';
     noLeidos[idSala] = (mensajes[idSala] || [])
-        .filter(m => m.de !== YO.username && String(m.cuando || '') > desde).length;
+        .filter(m => m.de !== YO.username && !m.sistema && String(m.cuando || '') > desde).length;
 };
 
 /* -- LAS FOTOS Y LOS ARCHIVOS -------------------------------------------------------------
@@ -331,7 +331,14 @@ const subirAdjunto = async (archivo) => {
     }
     const datos = await leerComoDatos(listo);
     const id = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
-    const ficha = { id, nombre: archivo.name || 'foto.jpg', tipo,
+    /* AL ACHICARLA, LA FOTO CAMBIA DE FORMATO. Guardarla con el nombre ".png" de antes deja
+       un archivo que por dentro es JPEG: se abre igual, pero el nombre miente y asi queda
+       para siempre en OneDrive cuando el robot la archive. */
+    let nombre = archivo.name || 'foto.jpg';
+    if (tipo === 'imagen' && (listo.type || '') === 'image/jpeg' && !/\.jpe?g$/i.test(nombre)) {
+        nombre = nombre.replace(/\.[^.]+$/, '') + '.jpg';
+    }
+    const ficha = { id, nombre, tipo,
                     mime: listo.type || archivo.type || '', tamano: listo.size };
     const r = await fetch(API + '/chat_adj_' + id + '?' + FOTO, {
         method: 'POST', headers: cabeceras(),
@@ -465,7 +472,10 @@ const latir = async () => {
     for (const s of salas) {
         const abiertaViva = abiertas.some(v => v.id === s.id && !v.plegada);
         if (!cambio('chat_' + s.id) && !abiertaViva) continue;
-        const nuevos = (await bajarSala(s.id)).filter(m => m.de !== YO.username);
+        /* `sistema` es lo que deja el robot de archivado: no suena ni pone globo rojo.
+           Corre de madrugada y toca todas las conversaciones; sin esto todo el mundo
+           amaneceria con un aviso por conversacion. */
+        const nuevos = (await bajarSala(s.id)).filter(m => m.de !== YO.username && !m.sistema);
         if (!nuevos.length) continue;
         if (abiertaViva) {
             marcarLeida(s.id);                       // la esta mirando: ya esta leido
@@ -550,7 +560,11 @@ const CSS = `
   flex-direction: row-reverse; align-items: flex-end; gap: 10px; }
 .chat-ventana { width: 288px; background: var(--panel-solid); border: 1px solid rgba(var(--ink-rgb), 0.1);
   border-radius: 14px 14px 0 0; box-shadow: 0 18px 40px rgba(var(--shadow-rgb), 0.55);
-  display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+  display: grid; grid-template-rows: auto 1fr auto; overflow: hidden;
+  /* minmax(0, ...): sin esto la columna se estira a lo que pida la pieza mas ancha
+     -la fila de escribir- y la ventana corta por la derecha lo que le sobra. */
+  grid-template-columns: minmax(0, 1fr); }
+.chat-ventana > * { min-width: 0; }
 .chat-ventana.abierta { height: 372px; }
 .chat-ventana.plegada .cuerpo, .chat-ventana.plegada .pie { display: none; }
 .chat-ventana .vcab { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.7rem;
@@ -568,7 +582,9 @@ const CSS = `
 .chat-dia { align-self: center; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
   color: var(--text-dim); padding: 0.15rem 0.6rem; border-radius: 50px; background: rgba(var(--ink-rgb), 0.05); }
 .chat-msg { position: relative; max-width: 82%; padding: 0.45rem 0.6rem; border-radius: 10px; font-size: var(--t-xs);
-  line-height: 1.5; color: var(--text-pale); background: var(--panel-alt, #1c2b3a); border: 1px solid rgba(var(--ink-rgb), 0.06); }
+  line-height: 1.5; color: var(--text-pale); background: var(--panel-alt, #1c2b3a); border: 1px solid rgba(var(--ink-rgb), 0.06);
+  /* Un link largo o un codigo sin espacios se parte antes que empujar la ventana. */
+  min-width: 0; overflow-wrap: anywhere; }
 .chat-msg .de { font-size: 10px; font-weight: 700; color: var(--brand-pale); margin-bottom: 0.15rem; }
 .chat-msg .pie { margin-top: 0.25rem; font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .chat-msg.mio { align-self: flex-end; background: rgba(var(--primary-rgb), 0.38); border-color: rgba(var(--brand-rgb), 0.35);
@@ -583,19 +599,22 @@ const CSS = `
 .chat-msg:hover .quitar { display: grid; }
 .chat-ventana .pie { border-top: 1px solid rgba(var(--ink-rgb), 0.07); }
 .chat-ventana .caja { display: flex; gap: 0.4rem; padding: 0.55rem 0.6rem; }
-.chat-ventana .caja input { flex: 1; background: var(--panel-deep, #0b1120); color: var(--text-main);
+.chat-ventana .caja { min-width: 0; }
+.chat-ventana .caja input { flex: 1; min-width: 0; background: var(--panel-deep, #0b1120); color: var(--text-main);
   border: 1px solid rgba(var(--ink-rgb), 0.1); border-radius: 8px; padding: 0.45rem 0.6rem; font-size: var(--t-xs); }
 .chat-ventana .caja button { background: var(--primary); border: 0; color: #fff; border-radius: 8px;
   padding: 0.45rem 0.7rem; font-size: var(--t-xs); font-weight: 700; cursor: pointer; }
 .chat-msg .adj-img { display: block; max-width: 100%; border-radius: 8px; margin-top: 0.2rem; cursor: zoom-in; background: rgba(var(--ink-rgb), 0.06); min-height: 40px; }
 .chat-msg .adj-file { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem; padding: 0.4rem 0.5rem;
   border-radius: 8px; background: rgba(var(--ink-rgb), 0.06); border: 1px solid rgba(var(--ink-rgb), 0.1);
-  cursor: pointer; color: var(--text-pale); }
+  cursor: pointer; color: var(--text-pale); min-width: 0; max-width: 100%; }
+.chat-msg .adj-file .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-msg .adj-file:hover { background: rgba(var(--primary-rgb), 0.25); }
 .chat-msg .adj-file .ico { font-size: var(--t-lg); }
 .chat-msg .adj-file .peso { margin-left: auto; font-size: 10px; color: var(--text-dim); white-space: nowrap; }
 .chat-ventana .clip { background: rgba(var(--ink-rgb), 0.06); border: 1px solid rgba(var(--ink-rgb), 0.1);
-  color: var(--text-pale); border-radius: 8px; padding: 0.45rem 0.55rem; font-size: var(--t-sm); cursor: pointer; }
+  color: var(--text-pale); border-radius: 8px; padding: 0.45rem 0.5rem; font-size: var(--t-sm); cursor: pointer;
+  flex: 0 0 auto; line-height: 1; }
 .chat-ventana .clip:hover { background: rgba(var(--primary-rgb), 0.3); }
 .chat-ventana.soltando { outline: 2px dashed var(--brand-light); outline-offset: -4px; }
 #chat-visor { position: fixed; inset: 0; z-index: 10000; background: rgba(var(--shadow-rgb), 0.88);
@@ -684,7 +703,7 @@ const filaSala = (s) => {
     const ultimo = lista.slice(-1)[0];
     const n = sinLeer(s.id);
     const previo = ultimo
-        ? (s.tipo === 'grupo' && ultimo.de !== YO.username ? nombreDe(ultimo.de).split(' ')[0] + ': ' : '')
+        ? (s.tipo === 'grupo' && !ultimo.aviso && ultimo.de !== YO.username ? nombreDe(ultimo.de).split(' ')[0] + ': ' : '')
             + (ultimo.borrado ? 'mensaje borrado' : ultimo.texto)
         : 'Sin mensajes todavía';
     return `<button type="button" class="chat-fila" data-sala="${esc(s.id)}">
@@ -757,7 +776,7 @@ const pintarVentanas = () => {
                     ? `<img class="adj-img" data-adj="${esc(m.adjunto.id)}" data-ver="${esc(m.adjunto.id)}" alt="${esc(m.adjunto.nombre)}">`
                     : `<div class="adj-file" data-bajar="${esc(m.adjunto.id)}" data-nombre="${esc(m.adjunto.nombre)}">
                            <span class="ico">${m.adjunto.tipo === 'video' ? '\u{1F3AC}' : '\u{1F4C4}'}</span>
-                           <span>${esc(m.adjunto.nombre)}</span>
+                           <span class="nom">${esc(m.adjunto.nombre)}</span>
                            <span class="peso">${esc(pesoLegible(m.adjunto.tamano))}</span>
                        </div>`);
             return html + `<div class="chat-msg ${mio ? 'mio' : ''}">${de}${esc(m.texto)}${adj}
