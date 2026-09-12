@@ -26,9 +26,9 @@ archivar_chat.py  -  Se lleva a OneDrive lo que el chat ya tiene mas de 30 dias.
           archivos\\2026-06\\...                      pdf, excel, lo que sea
           _indice.json                                que carpeta es que conversacion
 
-  Y EN EL CHAT QUEDA LA SEÑA. Arriba de cada conversacion recortada aparece una
-  linea gris: "lo anterior al 12-08-2026 esta guardado en OneDrive". Sin eso,
-  alguien que ve la conversacion mas corta piensa que se perdio.
+  EN EL CHAT NO QUEDA NINGUNA LEYENDA. Se probo dejar una linea avisando donde
+  estaba lo archivado y Daniel la saco el mismo dia: el archivo esta en OneDrive
+  y ahi se busca; en la conversacion solo van los mensajes.
 
   LOS ARCHIVOS SUELTOS tambien se limpian. Si alguien adjunto una foto y despues
   el administrador borro el mensaje, la foto seguia ocupando el servidor para
@@ -475,19 +475,32 @@ def trabajar_sala(chats, sala, corte, nombres, indice, de_verdad):
     frescos = leer(area)
     quedan = [m for m in frescos if m.get('id') not in archivados and m.get('id') != 'nota_archivo']
     # `sistema` le dice al chat que no suene ni ponga globo rojo por esta linea.
-    nota = {'id': 'nota_archivo', 'de': '', 'aviso': True, 'sistema': True,
-            'cuando': '%sT00:00:00' % corte,
-            'texto': 'lo anterior al %s esta guardado en OneDrive (Proyecto web Logistico\\chats)' % bonita(corte)}
-    guardar(area, [nota] + quedan)
+    # SIN LEYENDA EN LA CONVERSACION. Se probo dejar una linea ("lo anterior al ... esta en
+    # OneDrive") y Daniel la saco el mismo dia: *"esa leyenda borrala, que no este"*. El
+    # archivo esta en OneDrive y ahi se busca; en el chat solo van los mensajes.
+    guardar(area, quedan)
     time.sleep(1)
     final = leer(area)
-    if len(final) != len(quedan) + 1:
-        log('     ATENCION: se esperaban %d mensajes y quedaron %d' % (len(quedan) + 1, len(final)), 'AVISO')
+    if len(final) != len(quedan):
+        log('     ATENCION: se esperaban %d mensajes y quedaron %d' % (len(quedan), len(final)), 'AVISO')
     log('     recortada: %d -> %d mensajes' % (len(frescos), len(final)))
 
     sueltos = [m['adjunto']['id'] for m in viejos if m.get('adjunto') and m['adjunto'].get('id')
                and m['adjunto']['id'] in donde_quedo]
     return len(viejos), len(donde_quedo), sueltos
+
+
+def quitar_leyenda(idsala):
+    """Se lleva la leyenda que dejaban las primeras corridas, alla donde haya quedado."""
+    area = 'chat_%s' % idsala
+    try:
+        lista = leer(area)
+    except Exception:
+        return
+    limpia = [m for m in lista if m.get('id') != 'nota_archivo']
+    if len(limpia) != len(lista):
+        guardar(area, limpia)
+        log('  %s: se quito la leyenda del archivado' % idsala)
 
 
 # ── LOS ADJUNTOS QUE YA NO NOMBRA NADIE ─────────────────────────────────────────────
@@ -568,6 +581,8 @@ def main():
 
     for sala in salas:
         try:
+            if de_verdad:
+                quitar_leyenda(sala.get('id'))
             m, a, sueltos = trabajar_sala(chats, sala, corte, nombres, indice, de_verdad)
             total_msg += m
             total_adj += a

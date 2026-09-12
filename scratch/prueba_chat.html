@@ -106,8 +106,13 @@
       fila.click();
       await esperar(900);
       chk(!!document.querySelector('.chat-ventana[data-sala="' + idSala + '"]'), 'se abrió su ventanita, como en Facebook');
-      chk(chat.estado().sinLeer === 0, 'al abrirla, los no leídos vuelven a cero');
-      chk(document.getElementById('chat-globo').hidden === true && !seVe('chat-globo'), 'y el globo rojo desaparece de la pantalla');
+      chk((chat.estado().noLeidos[idSala] || 0) === 0, 'al abrirla, los no leídos de esa conversación vuelven a cero');
+      const globoAhora = chat.estado().sinLeer;
+      chk(globoAhora === 0
+            ? (document.getElementById('chat-globo').hidden === true && !seVe('chat-globo'))
+            : seVe('chat-globo'),
+          globoAhora === 0 ? 'y el globo rojo desaparece de la pantalla'
+                           : 'y el globo rojo queda solo con lo de las otras conversaciones: ' + globoAhora);
 
       // 5. borrar un mensaje: solo el administrador
       await chat.borrar(idSala, suyo.id);
@@ -259,6 +264,54 @@
       await esperar(400);
       chk(chat.estado().sinLeer === sinLeerAntes + 1,
           'y un mensaje de una persona en esa misma conversacion si avisa');
+
+      // 11. el panel no se hace largo: como mucho 5 conversaciones
+      const panel = document.getElementById('chat-panel');
+      if (panel.hidden) { document.getElementById('chat-burbuja').click(); await esperar(400); }
+      document.getElementById('chat-buscar').value = '';
+      document.getElementById('chat-buscar').dispatchEvent(new Event('input'));
+      await esperar(300);
+      const cuantasSalas = chat.estado().salas.length;
+      const filasLista = document.querySelectorAll('#chat-lista [data-sala]').length;
+      chk(filasLista <= 5, 'el panel muestra ' + filasLista + ' conversaciones de ' + cuantasSalas
+          + ': nunca mas de 5');
+      chk(cuantasSalas < 5 ? filasLista === cuantasSalas : filasLista === 5,
+          cuantasSalas < 5 ? 'y si hay menos de cinco, salen todas' : 'y son las cinco mas recientes');
+      chk([...document.querySelectorAll('#chat-lista [data-sala]')]
+            .some(f => f.getAttribute('data-sala') === idSala),
+          'la conversación que se acaba de usar está entre las cinco');
+
+      // y buscando SI se llega a las demas
+      document.getElementById('chat-buscar').value = 'prueba turno';
+      document.getElementById('chat-buscar').dispatchEvent(new Event('input'));
+      await esperar(300);
+      chk(document.querySelectorAll('#chat-lista [data-sala]').length >= filasLista,
+          'buscando se llega a las que no entran en las cinco');
+      document.getElementById('chat-buscar').value = '';
+      document.getElementById('chat-buscar').dispatchEvent(new Event('input'));
+      await esperar(200);
+
+      // 12. al cerrar el panel, las ventanitas se corren y no dejan hueco
+      const cajaVentanas = document.getElementById('chat-ventanas');
+      const conPanel = Math.round(cajaVentanas.getBoundingClientRect().right);
+      document.getElementById('chat-burbuja').click();          // cerrar el panel
+      await esperar(500);
+      const sinPanel = Math.round(cajaVentanas.getBoundingClientRect().right);
+      chk(cajaVentanas.classList.contains('solas'),
+          'al cerrar el panel las ventanitas quedan marcadas para correrse');
+      if (window.innerWidth > 900) {
+        chk(sinPanel > conPanel + 100,
+            'y se corren a la derecha: de ' + conPanel + ' a ' + sinPanel + ', sin dejar hueco');
+        const burbuja = document.getElementById('chat-burbuja').getBoundingClientRect();
+        const separacion = Math.round(burbuja.left - sinPanel);
+        chk(separacion > 0 && separacion < 40,
+            'quedan pegadas a la burbuja sin taparla: ' + separacion + ' px de separacion');
+      } else {
+        // En pantalla angosta las ventanitas ya van abajo del todo, sin panel al costado:
+        // ahi no hay hueco que tapar y no se mueven a proposito.
+        chk(sinPanel === conPanel,
+            'en pantalla angosta (' + window.innerWidth + ' px) van abajo y no se mueven, como debe ser');
+      }
 
       pintar();
     } catch (e) {

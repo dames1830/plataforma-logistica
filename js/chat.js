@@ -52,6 +52,7 @@ const LEIDOS = 'chat_leidos';
 const CADA_LENTO = 20000;   // sin ventanas abiertas: alcanza para el contador
 const CADA_VIVO = 4000;     // con una ventana abierta: la conversación tiene que sentirse viva
 const MAX_VENTANAS = 3;
+const EN_LA_LISTA = 5;      // cuantas conversaciones se ven en el panel sin buscar
 const SUPERUSUARIO = 'dames';
 
 let YO = null;              // { username, role, token }
@@ -556,8 +557,13 @@ const CSS = `
 .chat-fila .nuevos { font-size: 11px; font-weight: 800; min-width: 18px; height: 18px; padding: 0 5px;
   border-radius: 50px; background: var(--primary); color: #fff; display: grid; place-items: center; }
 .chat-fila .marca { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: var(--brand-pale); }
+/* LAS VENTANITAS VIVEN AL COSTADO DEL PANEL. Con el panel cerrado se corren a la derecha,
+   hasta quedar pegadas a la burbuja: si no, dejaban un hueco del ancho del panel.
+   SIN TRANSICION: con transition en right el navegador se quedaba en el valor viejo -medido,
+   no supuesto- y la ventanita no se movia nunca. El salto es instantaneo y basta. */
 #chat-ventanas { position: fixed; right: 348px; bottom: 20px; z-index: 9998; display: flex;
   flex-direction: row-reverse; align-items: flex-end; gap: 10px; }
+#chat-ventanas.solas { right: 124px; }
 .chat-ventana { width: 288px; background: var(--panel-solid); border: 1px solid rgba(var(--ink-rgb), 0.1);
   border-radius: 14px 14px 0 0; box-shadow: 0 18px 40px rgba(var(--shadow-rgb), 0.55);
   display: grid; grid-template-rows: auto 1fr auto; overflow: hidden;
@@ -647,7 +653,7 @@ const CSS = `
 #chat-grupo button { border-radius: 8px; padding: 0.4rem 0.8rem; font-size: var(--t-xs); font-weight: 700; cursor: pointer; }
 #chat-grupo .crear { background: var(--primary); border: 1px solid var(--primary); color: #fff; }
 #chat-grupo .cancelar { background: none; border: 1px solid rgba(var(--ink-rgb), 0.15); color: var(--text-muted); }
-@media (max-width: 900px) { #chat-ventanas { right: 20px; bottom: 130px; } #chat-panel, #chat-grupo { width: 280px; } }
+@media (max-width: 900px) { #chat-ventanas, #chat-ventanas.solas { right: 20px; bottom: 130px; } #chat-panel, #chat-grupo { width: 280px; } }
 @media (prefers-reduced-motion: reduce) { #chat-burbuja.late { animation: none; } }
 `;
 
@@ -732,7 +738,19 @@ const pintarLista = () => {
         const ub = (mensajes[b.id] || []).slice(-1)[0];
         return String((ub || {}).cuando || '').localeCompare(String((ua || {}).cuando || ''));
     });
-    if (!q) { caja.innerHTML = ordenadas.map(filaSala).join('') || '<div class="vacio">Todavía no hay conversaciones. Busca a alguien arriba.</div>'; return; }
+    /* SOLO LAS ULTIMAS. Daniel: "deberia aparecerme solo los ultimos cinco chat que han tenido
+       conversacion... pero no debe pasarse de cinco para que no se haga un listado tan grande".
+       Si hay tres, salen tres. Las demas se encuentran por el buscador de arriba.
+       Las que tienen mensajes sin leer van primero -no se puede esconder un mensaje nuevo-,
+       pero el tope de cinco es tope: ocupan lugar, no lo agregan. */
+    if (!q) {
+        const alaVista = ordenadas.filter(s => sinLeer(s.id))
+            .concat(ordenadas.filter(s => !sinLeer(s.id)))
+            .slice(0, EN_LA_LISTA);
+        caja.innerHTML = alaVista.map(filaSala).join('')
+            || '<div class="vacio">Todavía no hay conversaciones. Busca a alguien arriba.</div>';
+        return;
+    }
     const salasQ = ordenadas.filter(s => nombreDeSala(s).toLowerCase().indexOf(q) >= 0);
     const conSala = {};
     salas.forEach(s => { if (s.tipo !== 'grupo') (s.miembros || []).forEach(u => { conSala[u] = true; }); });
@@ -846,7 +864,17 @@ const pintarGlobo = () => {
     document.title = n ? `(${n}) ${base}` : base;
 };
 
-const pintar = () => { pintarLista(); pintarVentanas(); pintarGlobo(); };
+/* Donde van las ventanitas: al costado del panel si esta abierto, pegadas a la burbuja si no.
+   Se calcula en cada dibujo y no en cada clic, asi vale para todos los caminos que abren o
+   cierran el panel (la burbuja, crear un grupo, cancelarlo). */
+const acomodarVentanas = () => {
+    const caja = nodo('chat-ventanas');
+    if (!caja) return;
+    const panelALaVista = panelAbierto || !nodo('chat-grupo').hidden;
+    caja.classList.toggle('solas', !panelALaVista);
+};
+
+const pintar = () => { pintarLista(); pintarVentanas(); pintarGlobo(); acomodarVentanas(); };
 
 const esconderToast = () => {
     const t = nodo('chat-toast');
@@ -899,6 +927,7 @@ const enganchar = () => {
         panelAbierto = !panelAbierto;
         nodo('chat-panel').hidden = !panelAbierto;
         if (panelAbierto) { pintarLista(); nodo('chat-buscar').focus(); latir(); }
+        acomodarVentanas();
         acomodarReloj();
     });
 
@@ -932,11 +961,13 @@ const enganchar = () => {
         nodo('chat-grupo-gente').innerHTML = activos().filter(p => p.username !== YO.username)
             .map(p => `<label><input type="checkbox" value="${esc(p.username)}"> ${esc(p.name || p.username)} · <span style="color:var(--text-dim)">${esc(p.username)} · ${esc(p.role || '')}</span></label>`).join('');
         nodo('chat-grupo').hidden = false;
+        acomodarVentanas();
     });
     nodo('chat-grupo-cancelar').addEventListener('click', () => {
         nodo('chat-grupo').hidden = true;
         panelAbierto = true;
         nodo('chat-panel').hidden = false;
+        acomodarVentanas();
     });
     nodo('chat-grupo-crear').addEventListener('click', async () => {
         const nombre = nodo('chat-grupo-nombre').value.trim();
