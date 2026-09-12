@@ -25,9 +25,9 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0744';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0744';
-import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0744';
+import * as adminService from '../services_v245/adminService.js?v=29.0746';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0746';
+import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0746';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -469,17 +469,105 @@ const fechaLarga = (iso) => {
     return `${DIAS[f.getDay()]} ${d} de ${MES_LARGO[m - 1]} de ${a}`;
 };
 
-const dibujarLaFoto = () => {
+/* LA SEMANA QUE SE MUESTRA: de lunes a domingo, la del dia de hoy. Es la misma ventana que
+   usa el cuadro de la web, para que los dos digan lo mismo. */
+const semanaDeHoy = () => {
+    const hoy = new Date();
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
+    const dias = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(lunes);
+        d.setDate(lunes.getDate() + i);
+        dias.push(d);
+    }
+    return dias;
+};
+
+const claveDia = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** El numero de semana, contado por su jueves, igual que en la web. */
+const numeroDeSemana = (lunes) => {
+    const jue = new Date(lunes); jue.setDate(lunes.getDate() + 3);
+    const eneUno = new Date(jue.getFullYear(), 0, 1);
+    return Math.ceil(((jue - eneUno) / 86400000 + 1) / 7);
+};
+
+/** La inicial del motivo, la misma de la web: en una foto no hay cursor que pasar, asi que
+ *  la celda tiene que decir POR QUE sola. */
+const letraDelMotivo = (obs) => {
+    const t = String(obs || '').trim().toUpperCase();
+    if (t.indexOf('VAC') === 0) return 'V';
+    if (t.indexOf('DESC') === 0) return 'M';
+    if (t.indexOf('CUMPLE') === 0) return 'C';
+    if (t.indexOf('OTRO') === 0) return 'O';
+    return '!';
+};
+
+/* EL CARGO Y EL SEXO SALEN DEL MAESTRO DE TRABAJADORES, cruzados por DNI. El sexo NO se
+   deduce del nombre: seria inventar un dato sobre una persona de verdad; quien no este
+   marcado no suma a ninguno de los dos. */
+const ABREVIA = { 'AYUDANTE DE ALMACEN': 'A. ALMACEN', 'MONTACARGUISTA': 'MONTACARG.',
+                  'OPERADOR DE SISTEMA': 'OP. SISTEMA', 'RECEPCION': 'RECEPCIÓN' };
+
+const fichaMaestro = (dni) => {
+    const w = (adminService.getWorkers() || []).filter(x =>
+        String(x.dni || x.Dni || '').trim() === String(dni).trim())[0];
+    if (!w) return { cargo: '', sexo: '' };
+    const cargo = String(w.puesto || w.Puesto || '').trim().toUpperCase();
+    return { cargo: ABREVIA[cargo] || cargo, sexo: String(w.sexo || w.Sexo || '').trim().toUpperCase() };
+};
+
+/** Lo que hizo cada persona cada dia de la semana. */
+const marcasDeLaSemana = (dias) => {
+    const hoy = fechaDeLaLista();
+    const por = {};
+    dias.forEach(d => {
+        const k = claveDia(d);
+        let filas = null;
+        if (k === hoy) {
+            filas = listaLocal;
+        } else {
+            const reg = adminService.getAttendance(k);
+            if (reg && Array.isArray(reg.data) && reg.finalized === true) filas = reg.data;
+        }
+        if (!filas) return;
+        filas.forEach(p => {
+            const dni = String(p.dni || '').trim();
+            if (!dni) return;
+            if (!por[dni]) por[dni] = {};
+            por[dni][k] = { vino: p.present === true, obs: String(p.justification || '').trim() };
+        });
+    });
+    return por;
+};
+
+const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     const ESCALA = 2;               // se dibuja al doble: en un celular, a 1x sale borroso
-    const ANCHO = 440;
     const MARGEN = 18;
-    const ALTO_FILA = 21;
-    const ALTO_CAB = 96;
-    const ALTO_PIE = 30;
+    const ANCHO_NUM = 20, ANCHO_NOMBRE = 168, ANCHO_DNI = 64, ANCHO_CARGO = 84, ANCHO_DIA = 29;
+    const ANCHO = MARGEN * 2 + ANCHO_NUM + ANCHO_NOMBRE + ANCHO_DNI + ANCHO_CARGO + 7 * ANCHO_DIA;
+    const ALTO_FILA = 20;
+    const ALTO_TITULO = 66;
+    const ALTO_TARJETAS = 62;
+    const ALTO_ENCABEZADO = 26;
+    const ALTO_PIE = 50;
+
+    const dias = semanaDeHoy();
+    const marcas = marcasDeLaSemana(dias);
+    const hoyK = fechaDeLaLista();
 
     const total = listaLocal.length;
-    const faltaron = listaLocal.filter(p => p.present === false).length;
-    const alto = ALTO_CAB + 24 + total * ALTO_FILA + ALTO_PIE;
+    const faltaron = listaLocal.filter(p => p.present === false && !String(p.justification || '').trim()).length;
+    const conObs = listaLocal.filter(p => p.present === false && String(p.justification || '').trim()).length;
+    const asistieron = listaLocal.filter(p => p.present !== false).length;
+    let hombres = 0, mujeres = 0;
+    listaLocal.forEach(p => {
+        const sx = fichaMaestro(p.dni).sexo;
+        if (sx === 'H') hombres++; else if (sx === 'M') mujeres++;
+    });
+
+    const alto = ALTO_TITULO + ALTO_TARJETAS + ALTO_ENCABEZADO + deEsteBloque.length * ALTO_FILA + ALTO_PIE;
 
     const lienzo = document.createElement('canvas');
     lienzo.width = ANCHO * ESCALA;
@@ -489,119 +577,227 @@ const dibujarLaFoto = () => {
     g.textBaseline = 'middle';
 
     const UI = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-    const VA = '#0B5F52', TARDE = '#98302E', TENUE = '#6C7B80', TINTA = '#131C1F';
+    const VA = '#0B5F52', TARDE = '#98302E', CURSO = '#B26A00', TENUE = '#6C7B80',
+          TINTA = '#131C1F', AZUL = '#2C4C7C';
 
     g.fillStyle = '#FFFFFF';
     g.fillRect(0, 0, ANCHO, alto);
 
-    /* La cabecera verde: es lo que hace que se reconozca de un vistazo en el chat. */
+    /* ── EL TITULO, como el de la web ────────────────────────────────────────────────── */
     g.fillStyle = VA;
-    g.fillRect(0, 0, ANCHO, 62);
+    g.fillRect(0, 0, ANCHO, ALTO_TITULO);
     g.fillStyle = '#FFFFFF';
-    g.font = `700 15px ${UI}`;
-    g.fillText('ASISTENCIA · TURNO NOCHE', MARGEN, 24);
-    g.font = `400 11.5px ${UI}`;
-    g.fillStyle = 'rgba(255,255,255,0.88)';
-    g.fillText(fechaLarga(fechaDeLaLista()), MARGEN, 44);
+    g.font = `800 16px ${UI}`;
+    g.fillText('CONTROL DE ASISTENCIA TURNO NOCHE', MARGEN, 24);
+    const a = dias[0], b = dias[6];
+    g.font = `400 11px ${UI}`;
+    g.fillStyle = 'rgba(255,255,255,0.85)';
+    g.fillText(`Semana ${numeroDeSemana(a)}  ·  ${a.getDate()} de ${MES_LARGO[a.getMonth()]} al `
+               + `${b.getDate()} de ${MES_LARGO[b.getMonth()]} de ${b.getFullYear()}`, MARGEN, 44);
+    g.textAlign = 'right';
+    g.font = `400 9px ${UI}`;
+    g.fillStyle = 'rgba(255,255,255,0.7)';
+    g.fillText('LOGÍSTICA', ANCHO - MARGEN, 18);
+    g.font = `800 13px ${UI}`;
+    g.fillStyle = '#8FD8C9';
+    g.fillText('DEAM1830', ANCHO - MARGEN, 33);
+    g.font = `700 9px ${UI}`;
+    g.fillStyle = 'rgba(255,255,255,0.7)';
+    g.fillText(`RESUMEN DEL ${DIAS[new Date(hoyK + 'T12:00:00').getDay()].slice(0, 3).toUpperCase()} `
+               + `${new Date(hoyK + 'T12:00:00').getDate()}`, ANCHO - MARGEN, 50);
+    g.textAlign = 'left';
 
-    /* El resumen, con el numero grande: es el dato que mira Recursos Humanos primero. */
-    g.fillStyle = TINTA;
-    g.font = `700 26px ${UI}`;
-    const cifra = `${total - faltaron}/${total}`;
-    g.fillText(cifra, MARGEN, 84);
-    const anchoCifra = g.measureText(cifra).width;
-    g.font = `400 11.5px ${UI}`;
-    g.fillStyle = TENUE;
-    g.fillText('asistieron', MARGEN + anchoCifra + 8, 79);
-    g.fillStyle = faltaron ? TARDE : VA;
-    g.font = `700 11.5px ${UI}`;
-    g.fillText(faltaron ? `${faltaron} ${faltaron === 1 ? 'falta' : 'faltas'}` : 'sin faltas',
-               MARGEN + anchoCifra + 8, 93);
-
-    g.strokeStyle = '#DCE4E2';
-    g.lineWidth = 1;
-    g.beginPath(); g.moveTo(MARGEN, ALTO_CAB + 8); g.lineTo(ANCHO - MARGEN, ALTO_CAB + 8); g.stroke();
-
-    /* La lista: primero los que faltaron, que es lo que se va a mirar. */
-    const orden = listaLocal.slice().sort((a, b) => {
-        const fa = a.present === false ? 0 : 1, fb = b.present === false ? 0 : 1;
-        if (fa !== fb) return fa - fb;
-        return nombreCorto(a).localeCompare(nombreCorto(b), 'es');
+    /* ── LAS CINCO TARJETAS ──────────────────────────────────────────────────────────── */
+    const TARJETAS = [
+        [String(total), 'OPERARIOS', TINTA],
+        [String(asistieron), 'ASISTENCIAS', VA],
+        [String(faltaron), faltaron === 1 ? 'FALTA' : 'FALTAS', TARDE],
+        [String(conObs), 'OBSERVACIONES', CURSO],
+        [`${hombres} · ${mujeres}`, 'HOMBRES · MUJERES', AZUL]
+    ];
+    const anchoT = (ANCHO - 2 * MARGEN - 4 * 6) / 5;
+    TARJETAS.forEach(([valor, rotulo, color], i) => {
+        const x = MARGEN + i * (anchoT + 6);
+        g.fillStyle = '#F3F6F5';
+        g.fillRect(x, ALTO_TITULO + 10, anchoT, ALTO_TARJETAS - 20);
+        g.textAlign = 'center';
+        g.fillStyle = color;
+        g.font = `800 16px ${UI}`;
+        g.fillText(valor, x + anchoT / 2, ALTO_TITULO + 28);
+        g.fillStyle = TENUE;
+        g.font = `700 7.5px ${UI}`;
+        let r = rotulo;
+        while (g.measureText(r).width > anchoT - 6 && r.length > 4) r = r.slice(0, -1);
+        g.fillText(r, x + anchoT / 2, ALTO_TITULO + 42);
     });
+    g.textAlign = 'left';
 
-    let y = ALTO_CAB + 24;
-    orden.forEach((p, i) => {
+    /* ── LOS ENCABEZADOS DE COLUMNA ──────────────────────────────────────────────────── */
+    const xNum = MARGEN;
+    const xNombre = xNum + ANCHO_NUM;
+    const xDni = xNombre + ANCHO_NOMBRE;
+    const xCargo = xDni + ANCHO_DNI;
+    const xDia = (i) => xCargo + ANCHO_CARGO + i * ANCHO_DIA + ANCHO_DIA / 2;
+    const yEnc = ALTO_TITULO + ALTO_TARJETAS + 4;
+
+    g.fillStyle = '#EEF2F1';
+    g.fillRect(MARGEN - 6, yEnc - 12, ANCHO - 2 * MARGEN + 12, ALTO_ENCABEZADO - 2);
+    g.fillStyle = TENUE;
+    g.font = `700 8.5px ${UI}`;
+    g.fillText('#', xNum, yEnc);
+    g.fillText('NOMBRES Y APELLIDOS', xNombre, yEnc);
+    g.fillText('DNI', xDni, yEnc);
+    g.fillText('CARGO', xCargo, yEnc);
+    const ROTULO = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM'];
+    g.textAlign = 'center';
+    dias.forEach((d, i) => {
+        const esHoy = claveDia(d) === hoyK;
+        g.fillStyle = esHoy ? VA : TENUE;
+        g.font = `${esHoy ? 800 : 700} 8.5px ${UI}`;
+        g.fillText(ROTULO[i], xDia(i), yEnc - 4);
+        g.font = `400 8px ${UI}`;
+        g.fillText(String(d.getDate()), xDia(i), yEnc + 6);
+    });
+    g.textAlign = 'left';
+
+    let y = yEnc + ALTO_ENCABEZADO;
+    deEsteBloque.forEach((p, i) => {
         const falto = p.present === false;
         if (i % 2 === 1) { g.fillStyle = '#F6F9F8'; g.fillRect(MARGEN - 6, y - 10, ANCHO - 2 * MARGEN + 12, ALTO_FILA); }
-        g.fillStyle = falto ? TARDE : VA;
-        g.font = `700 12px ${UI}`;
-        g.fillText(falto ? '✗' : '✓', MARGEN, y);
-        g.fillStyle = TINTA;
-        g.font = `${falto ? 700 : 400} 11.5px ${UI}`;
-        let nombre = nombreCorto(p);
-        while (g.measureText(nombre).width > 200 && nombre.length > 4) nombre = nombre.slice(0, -2);
-        g.fillText(nombre, MARGEN + 16, y);
+        g.textAlign = 'left';
         g.fillStyle = TENUE;
-        g.font = `400 10px ${UI}`;
-        g.fillText(String(p.dni || ''), MARGEN + 226, y);
-        if (falto) {
-            g.fillStyle = TARDE;
-            g.font = `400 10px ${UI}`;
-            g.fillText(p.justification || 'sin motivo', MARGEN + 300, y);
-        }
+        g.font = `400 9px ${UI}`;
+        g.fillText(String(p.__n), xNum, y);
+        g.fillStyle = TINTA;
+        g.font = `${falto ? 700 : 400} 11px ${UI}`;
+        let nombre = nombreCorto(p);
+        while (g.measureText(nombre).width > ANCHO_NOMBRE - 8 && nombre.length > 4) nombre = nombre.slice(0, -2);
+        g.fillText(nombre, xNombre, y);
+        g.fillStyle = TENUE;
+        g.font = `400 9.5px ${UI}`;
+        g.fillText(String(p.dni || ''), xDni, y);
+        let cargo = fichaMaestro(p.dni).cargo;
+        while (g.measureText(cargo).width > ANCHO_CARGO - 6 && cargo.length > 3) cargo = cargo.slice(0, -2);
+        g.fillText(cargo, xCargo, y);
+
+        /* La semana, con el mismo codigo de simbolos de la web. */
+        g.textAlign = 'center';
+        dias.forEach((d, j) => {
+            const m = (marcas[String(p.dni)] || {})[claveDia(d)];
+            if (!m) { g.fillStyle = '#C6D0CE'; g.font = `400 11px ${UI}`; g.fillText('–', xDia(j), y); return; }
+            if (m.obs) { g.fillStyle = CURSO; g.font = `800 11px ${UI}`; g.fillText(letraDelMotivo(m.obs), xDia(j), y); return; }
+            g.fillStyle = m.vino ? VA : TARDE;
+            g.font = `700 11.5px ${UI}`;
+            g.fillText(m.vino ? '✓' : '✗', xDia(j), y);
+        });
+        g.textAlign = 'left';
         y += ALTO_FILA;
     });
 
+    /* ── LA LEYENDA: es lo que hace que el cuadro se entienda sin preguntar ───────────── */
     g.strokeStyle = '#DCE4E2';
+    g.lineWidth = 1;
     g.beginPath(); g.moveTo(MARGEN, y + 2); g.lineTo(ANCHO - MARGEN, y + 2); g.stroke();
+
+    const leyenda = [['✓', 'asistió', VA], ['V', 'vacaciones', CURSO], ['M', 'descanso médico', CURSO],
+                     ['C', 'cumpleaños', CURSO], ['O', 'otros (justificada)', CURSO],
+                     ['✗', 'falta injustificada', TARDE]];
+    let lx = MARGEN;
+    leyenda.forEach(([simbolo, texto, color]) => {
+        g.fillStyle = color;
+        g.font = `800 10px ${UI}`;
+        g.fillText(simbolo, lx, y + 18);
+        lx += g.measureText(simbolo).width + 4;
+        g.fillStyle = TENUE;
+        g.font = `400 9.5px ${UI}`;
+        g.fillText(texto, lx, y + 18);
+        lx += g.measureText(texto).width + 12;
+    });
+
     g.fillStyle = TENUE;
     g.font = `400 9.5px ${UI}`;
     const ahora = new Date();
     const dd = (n) => String(n).padStart(2, '0');
     g.fillText(`Logística Deam1830 · ${dd(ahora.getDate())}/${dd(ahora.getMonth() + 1)} ${dd(ahora.getHours())}:${dd(ahora.getMinutes())}`
-               + (listaCerrada ? ' · lista cerrada' : ' · sin cerrar'), MARGEN, y + 16);
+               + (listaCerrada ? ' · lista cerrada' : ' · sin cerrar')
+               + (deCuantos > 1 ? '  ·  bloque ' + nBloque + ' de ' + deCuantos : ''), MARGEN, y + 36);
 
     return lienzo;
 };
 
-/** Muestra la foto a pantalla completa, para guardarla o compartirla a mano. */
-const verLaFoto = (datos) => {
+/** Muestra las fotos a pantalla completa, para guardarlas o compartirlas a mano. */
+const verLaFoto = (lista) => {
+    const datos = Array.isArray(lista) ? lista : [lista];
     const capa = document.createElement('div');
     capa.style.cssText = 'position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.9);'
         + 'display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:16px;';
-    const img = document.createElement('img');
-    img.src = datos;
-    img.style.cssText = 'max-width:100%; max-height:78%; border-radius:10px; background:#fff;';
-    const bajar = document.createElement('a');
-    bajar.href = datos;
-    bajar.download = `Asistencia ${fechaDeLaLista()}.png`;
-    bajar.textContent = 'Guardar la foto';
-    bajar.style.cssText = 'background:#0B5F52; color:#fff; padding:.8rem 1.4rem; border-radius:10px;'
-        + 'font-family:system-ui,sans-serif; font-weight:700; text-decoration:none;';
+    capa.style.overflowY = 'auto';
+    capa.style.justifyContent = 'flex-start';
+    datos.forEach((d, i) => {
+        const img = document.createElement('img');
+        img.src = d;
+        img.style.cssText = 'max-width:100%; border-radius:10px; background:#fff;';
+        const bajar = document.createElement('a');
+        bajar.href = d;
+        bajar.download = datos.length > 1
+            ? 'Asistencia ' + fechaDeLaLista() + ' (' + (i + 1) + ' de ' + datos.length + ').png'
+            : 'Asistencia ' + fechaDeLaLista() + '.png';
+        bajar.textContent = datos.length > 1 ? 'Guardar el bloque ' + (i + 1) : 'Guardar la foto';
+        bajar.style.cssText = 'background:#0B5F52; color:#fff; padding:.8rem 1.4rem; border-radius:10px;'
+            + 'font-family:system-ui,sans-serif; font-weight:700; text-decoration:none;';
+        capa.appendChild(img); capa.appendChild(bajar);
+    });
     const nota = document.createElement('span');
     nota.textContent = 'Mantén el dedo sobre la foto para compartirla';
     nota.style.cssText = 'color:#C8D2D0; font-family:system-ui,sans-serif; font-size:.8rem;';
-    capa.appendChild(img); capa.appendChild(bajar); capa.appendChild(nota);
+    capa.appendChild(nota);
     capa.addEventListener('click', (e) => { if (e.target === capa) capa.remove(); });
     document.body.appendChild(capa);
 };
 
-/** Arma la foto y la manda por donde el telefono deje: WhatsApp, correo, lo que sea. */
+/* SE PARTE EN DOS BLOQUES CUANDO LA LAMINA ES MAS ALTA QUE ANCHA. El tope de WhatsApp cae
+   sobre el LADO MAS LARGO: con treinta y tres personas el alto se lleva todo el presupuesto
+   y a cada fila le tocan pocos puntos. Partida en dos, cada bloque queda casi cuadrado y las
+   filas se leen. En tres no se gana nada: desde ahi el lado largo pasa a ser el ancho. */
+const laminasDeLaLista = () => {
+    /* Primero los que faltaron, que es lo que se va a mirar. El numero de fila se pone
+       ANTES de partir, para que los dos bloques sigan la misma cuenta. */
+    const orden = listaLocal.slice().sort((x, y) => {
+        const fx = x.present === false ? 0 : 1, fy = y.present === false ? 0 : 1;
+        if (fx !== fy) return fx - fy;
+        return nombreCorto(x).localeCompare(nombreCorto(y), 'es');
+    }).map((p, i) => Object.assign({ __n: i + 1 }, p));
+
+    const unaSola = dibujarLaFoto(orden, 1, 1);
+    if (unaSola.height <= unaSola.width) return [unaSola];
+
+    const mitad = Math.ceil(orden.length / 2);
+    return [dibujarLaFoto(orden.slice(0, mitad), 1, 2),
+            dibujarLaFoto(orden.slice(mitad), 2, 2)];
+};
+
+/** Arma los bloques y los manda por donde el telefono deje: WhatsApp, correo, lo que sea. */
 const mandarFoto = async () => {
     if (!listaLocal) cargarLista();
     if (!listaLocal.length) return;
-    const lienzo = dibujarLaFoto();
-    const blob = await new Promise(r => lienzo.toBlob(r, 'image/png'));
-    const archivo = new File([blob], `Asistencia ${fechaDeLaLista()}.png`, { type: 'image/png' });
-    /* El menu de compartir del telefono. Si el navegador no lo tiene -o es una PC- se
-       muestra la foto para guardarla, que es la salida de siempre. */
+    const lienzos = laminasDeLaLista();
+    const archivos = [];
+    for (let i = 0; i < lienzos.length; i++) {
+        const blob = await new Promise(r => lienzos[i].toBlob(r, 'image/png'));
+        const nombre = lienzos.length > 1
+            ? 'Asistencia ' + fechaDeLaLista() + ' (' + (i + 1) + ' de ' + lienzos.length + ').png'
+            : 'Asistencia ' + fechaDeLaLista() + '.png';
+        archivos.push(new File([blob], nombre, { type: 'image/png' }));
+    }
+    /* El menu de compartir del telefono, con los dos bloques de una vez. Si el navegador no
+       lo tiene -o es una PC- se muestran para guardarlos, que es la salida de siempre. */
     try {
-        if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-            await navigator.share({ files: [archivo], title: 'Asistencia del turno' });
+        if (navigator.canShare && navigator.canShare({ files: archivos })) {
+            await navigator.share({ files: archivos, title: 'Asistencia del turno' });
             return;
         }
     } catch (e) { /* si la persona cancela el menu, no pasa nada */ return; }
-    verLaFoto(lienzo.toDataURL('image/png'));
+    verLaFoto(lienzos.map(l => l.toDataURL('image/png')));
 };
 
 const CABECERAS = {
