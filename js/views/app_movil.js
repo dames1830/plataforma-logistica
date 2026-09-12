@@ -25,9 +25,9 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0739';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0739';
-import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0739';
+import * as adminService from '../services_v245/adminService.js?v=29.0741';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0741';
+import { armarLista, nombreCorto, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0741';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -127,6 +127,35 @@ const CSS = `
 #app-movil .am-persona .marcas button.si-vino { background: var(--am-va); border-color: var(--am-va); color: #fff; }
 #app-movil .am-persona .marcas button.si-falto { background: var(--am-tarde); border-color: var(--am-tarde); color: #fff; }
 #app-movil .am-persona .marcas button:disabled { opacity: .55; cursor: default; }
+
+/* La justificacion, colgada de la fila de quien falto. */
+#app-movil .am-justif { background: #FDF7F7; border: 1px solid #E7BEBC; border-top: 0;
+  border-radius: 0 0 11px 11px; margin: -11px 0 0; padding: 0.55rem 0.7rem 0.6rem;
+  display: flex; align-items: center; gap: 0.5rem; }
+#app-movil .am-justif label { font-family: var(--am-num); font-size: 0.6rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--am-tarde); font-weight: 700; flex-shrink: 0; }
+#app-movil .am-justif select { flex: 1; min-width: 0; font-family: var(--am-ui); font-size: 0.82rem;
+  padding: 0.45rem 0.5rem; border-radius: 8px; border: 1px solid #E7BEBC; background: var(--am-carta);
+  color: var(--am-tinta); }
+#app-movil .am-persona.falto { border-radius: 11px 11px 0 0; }
+#app-movil .am-persona.falto.sola { border-radius: 11px; }
+
+/* EL RESUMEN: la cifra manda, el boton acompaña. */
+#app-movil .am-resumen { display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center; gap: 0.15rem 0.7rem; }
+#app-movil .am-resumen .am-rotulo,
+#app-movil .am-resumen .am-grande,
+#app-movil .am-resumen .am-pie { grid-column: 1; }
+#app-movil .am-resumen .acciones { grid-column: 2; grid-row: 1 / span 3;
+  display: flex; align-items: center; gap: 0.4rem; }
+#app-movil .am-chico { font-family: var(--am-ui); font-size: 0.82rem; font-weight: 680;
+  padding: 0.5rem 0.85rem; border-radius: 9px; border: 1px solid var(--am-va);
+  background: var(--am-carta); color: var(--am-va); cursor: pointer; white-space: nowrap; }
+#app-movil .am-chico:disabled { border-color: var(--am-linea); color: var(--am-tenue); cursor: default; }
+#app-movil .am-chico.solo-icono { padding: 0.5rem 0.6rem; border-color: var(--am-linea);
+  color: var(--am-suave); font-size: 0.95rem; }
+#app-movil .am-cerrada { background: var(--am-va-agua); border: 1px solid var(--am-va);
+  color: var(--am-va); border-radius: 11px; padding: 0.85rem; text-align: center; font-weight: 700; }
 
 #app-movil .am-boton { display: block; width: 100%; padding: 0.95rem; border-radius: 11px;
   border: 1px solid var(--am-va); background: var(--am-va); color: #fff; font-family: var(--am-ui);
@@ -280,6 +309,16 @@ const pantallaEnCamino = (id) => {
 /* ── PASAR LISTA ─────────────────────────────────────────────────────────────────────────
    Todos arrancan presentes y se toca SOLO a quien falto. La puntualidad y la justificacion
    se afinan en la web: aca va lo que se necesita de pie y con una mano. */
+/* LAS MISMAS CUATRO DE LA WEB, con el mismo valor guardado: si aca dijera "Descanso medico"
+   sin tilde, el mismo dia quedarian dos motivos distintos para lo mismo. */
+const JUSTIFICACIONES = [
+    ['', '— sin motivo —'],
+    ['Descanso Médico', 'Descanso médico'],
+    ['Vacaciones', 'Vacaciones'],
+    ['Cumpleaños', 'Cumpleaños'],
+    ['Otros', 'Otros']
+];
+
 let listaLocal = null;       // la lista de hoy, mientras se edita
 let listaCerrada = false;    // ya la cerraron: se ve, no se toca
 let listaGuardando = false;
@@ -309,6 +348,17 @@ const pantallaLista = () => {
     const gente = listaLocal.map(p => {
         const falto = p.present === false;
         const bloq = listaCerrada ? 'disabled' : '';
+        /* LA JUSTIFICACION CUELGA DE LA FILA, y solo de la de quien falto: en la web es una
+           columna porque hay pantalla de sobra; treinta y tres desplegables en un telefono
+           serian un estorbo. A quien vino no se le pone justificacion nunca. */
+        const justif = !falto ? '' : `
+        <div class="am-justif">
+            <label for="j-${esc(p.dni)}">Motivo</label>
+            <select id="j-${esc(p.dni)}" ${bloq} data-justif="${esc(p.dni)}">
+                ${JUSTIFICACIONES.map(([valor, rotulo]) =>
+                    `<option value="${esc(valor)}" ${String(p.justification || '') === valor ? 'selected' : ''}>${esc(rotulo)}</option>`).join('')}
+            </select>
+        </div>`;
         return `
         <div class="am-persona ${falto ? 'falto' : ''}">
             <span class="ini">${esc(iniciales(p))}</span>
@@ -317,25 +367,34 @@ const pantallaLista = () => {
                 <button type="button" ${bloq} class="${falto ? '' : 'si-vino'}" data-vino="${esc(p.dni)}">Vino</button>
                 <button type="button" ${bloq} class="${falto ? 'si-falto' : ''}" data-falto="${esc(p.dni)}">Faltó</button>
             </span>
-        </div>`;
+        </div>${justif}`;
     }).join('');
 
     return `
-        <div class="am-tarjeta">
+        <div class="am-tarjeta am-resumen">
             <span class="am-rotulo">Vinieron</span>
             <span class="am-grande">${numero(vinieron)}<span style="font-size:1.3rem;color:#8B9B9F">/${numero(total)}</span></span>
             <span class="am-pie">${faltaron ? `${numero(faltaron)} ${faltaron === 1 ? 'falta' : 'faltas'}` : 'nadie faltó'}${listaCerrada ? ' · lista cerrada' : ' · toca solo a quien faltó'}</span>
+            ${listaCerrada ? '' : `<span class="acciones">
+                <button type="button" class="am-chico solo-icono" data-sincronizar title="Traer lo último del servidor">🔄</button>
+                <button type="button" class="am-chico" data-guardar ${listaGuardando ? 'disabled' : ''}>${listaGuardando ? 'Guardando…' : 'Guardar'}</button>
+            </span>`}
         </div>
 
-        ${listaCerrada ? '' : `<button type="button" class="am-boton" data-guardar ${listaGuardando ? 'disabled' : ''}>${listaGuardando ? 'Guardando…' : 'Guardar la lista'}</button>`}
+        ${listaCerrada
+            ? `<div class="am-cerrada">✅ Asistencia cerrada</div>
+               ${esElAdministrador() ? '<button type="button" class="am-boton fino" data-reabrir>Reabrir la lista</button>' : ''}`
+            : ''}
 
         <div class="am-seccion">${listaCerrada ? 'Lista cerrada del turno' : 'Turno noche'}</div>
         ${gente}
 
-        ${listaCerrada ? '' : '<button type="button" class="am-boton fino" data-cerrar>Cerrar la lista del turno</button>'}
+        ${listaCerrada ? '' : '<button type="button" class="am-boton fino" data-cerrar>💾 Cerrar asistencia</button>'}
         <button type="button" class="am-salida" data-escritorio>Ver la versión de escritorio</button>
     `;
 };
+
+const esElAdministrador = () => String((YO && YO.username) || '') === 'dames';
 
 const marcar = (dni, vino) => {
     if (listaCerrada || !listaLocal) return;
@@ -343,6 +402,29 @@ const marcar = (dni, vino) => {
     if (!p) return;
     p.present = !!vino;
     if (!vino) p.onTime = false;      // quien no vino no puede haber llegado a tiempo
+    if (vino) p.justification = '';   // si al final vino, el motivo que se puso ya no aplica
+    pintar();
+};
+
+const anotarMotivo = (dni, motivo) => {
+    if (listaCerrada || !listaLocal) return;
+    const p = listaLocal.filter(x => String(x.dni) === String(dni))[0];
+    if (p) p.justification = motivo || '';
+    /* NO se repinta: se perderia el desplegable recien abierto y el sitio de la lista. */
+};
+
+const sincronizar = async (boton) => {
+    if (boton) { boton.disabled = true; boton.textContent = '⌛'; }
+    try { await adminService.initializeAdminData(true); } catch (e) { console.warn('[APP] sincronizar:', e && e.message); }
+    cargarLista();
+    pintar();
+};
+
+const reabrirLista = async () => {
+    if (!esElAdministrador()) return;
+    if (!confirm('¿Reabrir la lista del turno? Se va a poder editar de nuevo.')) return;
+    try { await adminService.reopenAttendance(fechaDeLaLista()); } catch (e) { alert('No se pudo reabrir.'); return; }
+    cargarLista();
     pintar();
 };
 
@@ -452,8 +534,16 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         const falto = e.target.closest('[data-falto]');
         if (falto) { marcar(falto.getAttribute('data-falto'), false); return; }
         if (e.target.closest('[data-guardar]')) { guardarLista(false); return; }
+        const sinc = e.target.closest('[data-sincronizar]');
+        if (sinc) { sincronizar(sinc); return; }
+        if (e.target.closest('[data-reabrir]')) { reabrirLista(); return; }
         if (e.target.closest('[data-cerrar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-escritorio]')) { irAEscritorio(); return; }
+    });
+
+    raiz.addEventListener('change', (e) => {
+        const j = e.target.closest('[data-justif]');
+        if (j) anotarMotivo(j.getAttribute('data-justif'), j.value);
     });
 
     pintar();
