@@ -1,56 +1,56 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada, traerDemandaGuardada} from '../services_v245/csvHub_v6.js?v=29.0728';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada, traerDemandaGuardada} from '../services_v245/csvHub_v6.js?v=29.0731';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0728';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0728';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0728';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0728';
-import * as metasService from '../services_v245/metasService.js?v=29.0728';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0728';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0728';
+import * as adminService from '../services_v245/adminService.js?v=29.0731';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0731';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0731';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0731';
+import * as metasService from '../services_v245/metasService.js?v=29.0731';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0731';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0731';
 /* EL SELLO DE CADA REPORTE: cuando se proceso lo que se esta mirando.
    Se pinta solo; ver la tabla AREAS_POR_PANTALLA en el propio servicio. */
-import { vigilarSellos } from '../services_v245/selloService.js?v=29.0728';
+import { vigilarSellos } from '../services_v245/selloService.js?v=29.0731';
 /* EL REPORTE DE DISTRIBUCION, compartido con el enlace publico. */
-import * as distribucionReporte from '../reportes/distribucion.js?v=29.0728';
+import * as distribucionReporte from '../reportes/distribucion.js?v=29.0731';
 /* EL CATALOGO DE LOS REPORTES PUBLICOS. Lo comparten esta matriz de permisos
    y la pagina publica: antes la lista estaba escrita a mano en los dos lados
    y cada submodulo nuevo se quedaba fuera de los dos. */
 import { CATALOGO as CAT_PUB, MODULOS as MOD_PUB, permisosDe as permisosPub,
          paraGuardar as permisosParaGuardar, cuentaModulos as cuentaModPub }
-    from '../services_v245/catalogoReportesPublicos.js?v=29.0728';
+    from '../services_v245/catalogoReportesPublicos.js?v=29.0731';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, ubicacionDeReservaCuenta,
          _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0728';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0728';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0728';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0728';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0728';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0728';
-import { renderCapacidad } from './capacidad.js?v=29.0728';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0728';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0728';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0728';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0728';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0728';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0728';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0728';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0728';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0728';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0728';
-import { montarRecibidoSinPicar } from '../reportes/recibido_sin_picar.js?v=29.0728';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0728';
-import { montarCorreoHoy } from '../reportes/correo_hoy.js?v=29.0728';
-import { montarPedidosWms } from '../reportes/pedidos_wms.js?v=29.0728';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0728';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0728';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0728';
-import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0728';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0728';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0728';
-import { montarSlotting } from './slotting.js?v=29.0728';
-import { montarEventos } from './eventos.js?v=29.0728';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0728';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0731';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0731';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0731';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0731';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0731';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0731';
+import { renderCapacidad } from './capacidad.js?v=29.0731';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0731';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0731';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0731';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0731';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0731';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0731';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0731';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0731';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0731';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0731';
+import { montarRecibidoSinPicar } from '../reportes/recibido_sin_picar.js?v=29.0731';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0731';
+import { montarCorreoHoy } from '../reportes/correo_hoy.js?v=29.0731';
+import { montarPedidosWms } from '../reportes/pedidos_wms.js?v=29.0731';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0731';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0731';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0731';
+import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0731';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0731';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0731';
+import { montarSlotting } from './slotting.js?v=29.0731';
+import { montarEventos } from './eventos.js?v=29.0731';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0731';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -413,7 +413,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0728';
+const VERSION = '29.0731';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -2718,11 +2718,20 @@ const TABS = [
        data y confunde"*. El ruteo de abajo la sigue conociendo por si alguien llega con
        un enlace viejo. */
   ] },
+  /* ASISTENCIA ES SU PROPIO MODULO desde el 12-sep-2026, y no una sub-pestaña de
+     Administracion. Daniel decidio que la lista la pasa el supervisor, y Administracion
+     es solo admin y jefe: el supervisor no llegaba. Darle Administracion entera para
+     eso le habria entregado tambien Trabajadores, Usuarios, Permisos y Performance.
+     Es la MISMA pantalla, montada en el area principal.
+     Tambien es el primer paso de la app: con permiso propio se le puede dar en el
+     celular a quien pasa la lista y a nadie mas. */
+  { id: 'asistencia', label: 'Asistencia', icon: '📅', roles: ['admin', 'jefe', 'supervisor'] },
   { id: 'admin_pers', label: 'Administración', icon: '👥', roles: ['admin', 'jefe'], subTabs: [
     { id: 'trabajadores', label: 'Trabajadores', icon: '👷' },
     { id: 'usuarios', label: 'Usuarios', icon: '👥' },
     { id: 'permisos', label: 'Permisos', icon: '🛡️' },
-    { id: 'asistencia', label: 'Asistencia', icon: '📅' },
+    /* ASISTENCIA YA NO VIVE ACA: subio a modulo propio, arriba. El ruteo de
+       `renderAdminTab` la sigue conociendo por si alguien llega con un enlace viejo. */
     { id: 'performance', label: 'Performance', icon: '📈', subTabs: [
         { id: 'historial', label: 'Historial', icon: '📅' },
         { id: 'graficos', label: 'Asistencia', icon: '✅' },
@@ -3322,7 +3331,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      todas. */
   const abrirPortalNoRetail = async (destino) => {
       const { renderDespachoNoRetailPortal } =
-          await import('../reportes/despacho_no_retail.js?v=29.0728');
+          await import('../reportes/despacho_no_retail.js?v=29.0731');
       return renderDespachoNoRetailPortal(destino, {
           fetchAndParseNoRetailClients,
           showNRPhotoLoader,
@@ -3465,6 +3474,7 @@ export const renderDashboard = async (container, user, onLogout) => {
     else if (currentTab === 'almacenaje') await renderGenericAreaTab('almacenaje', 'Gestión de Almacenaje');
     else if (currentTab === 'descargas') await renderDescargasInventario(contentArea);
     else if (currentTab === 'slotting') await renderSlotting(contentArea, localStorage.getItem('activeSub_slotting') || 'slot_tareas');
+    else if (currentTab === 'asistencia') renderAsistenciaSection(contentArea);
     else if (currentTab === 'admin_pers') await renderAdminTab();
     else if (currentTab === 'config') await renderConfigTab();
     else {
@@ -4564,7 +4574,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const abrirZonaBuffer = async () => {
-      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0728');
+      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0731');
       return montarZonaBuffer({
           estado: estadoBuffer,
           contentArea,
@@ -5130,7 +5140,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0728');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0731');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5393,7 +5403,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0728');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0731');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -6001,14 +6011,28 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
     });
   };
 
+  /* QUE MODULOS TIENEN CARA DE CELULAR. La casilla de App solo se puede marcar en estos;
+     el resto sale con una raya, para que nadie prenda por error algo que en un telefono se
+     ve roto. La lista CRECE a medida que cada modulo tiene su version movil. */
+  const MODULOS_CON_APP = ['inicio'];
+  let vistaPermisos = 'web';        // 'web' o 'app'
+
   const renderPermisosSection = (container) => {
     const roles = ['jefe', 'coordinador', 'supervisor', 'encargado', 'asistente', 'transportista'];
     const allRoles = ['admin', ...roles];
+    const esApp = vistaPermisos === 'app';
+    /* La clave con la que se guarda: la de siempre para la web, con `app:` delante para el
+       celular. Es una fila mas en la misma tabla, no una tabla nueva. */
+    const clave = (id) => esApp ? 'app:' + id : id;
     
     container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
             <h3 style="color:var(--primary); margin:0;">Matriz de Permisos Dinámica</h3>
-            <span style="font-size:var(--t-xs); color:var(--success); font-weight:600;">✨ Haz clic en un módulo para expandir sus sub-pestañas</span>
+            <div style="display:flex; gap:0.4rem; background:rgba(var(--ink-rgb), 0.06); padding:4px; border-radius:10px;">
+                <button type="button" class="vista-permisos" data-vista="web" style="border:0; cursor:pointer; padding:0.4rem 0.9rem; border-radius:8px; font-size:var(--t-xs); font-weight:800; background:${esApp ? 'transparent' : 'var(--btn-fill)'}; color:${esApp ? 'var(--text-muted)' : 'var(--on-primary)'};">🖥️ WEB</button>
+                <button type="button" class="vista-permisos" data-vista="app" style="border:0; cursor:pointer; padding:0.4rem 0.9rem; border-radius:8px; font-size:var(--t-xs); font-weight:800; background:${esApp ? 'var(--btn-fill)' : 'transparent'}; color:${esApp ? 'var(--on-primary)' : 'var(--text-muted)'};">📱 APP</button>
+            </div>
+            <span style="font-size:var(--t-xs); color:var(--success); font-weight:600;">${esApp ? '📱 Lo que cada rol ve en el celular' : '✨ Haz clic en un módulo para expandir sus sub-pestañas'}</span>
         </div>
         <div class="glass-panel" style="padding:0; overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
@@ -6021,7 +6045,7 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
                 <tbody>
                     ${TABS.map(t => {
                         let rows = [];
-                        const hasSub = t.subTabs && t.subTabs.length > 0;
+                        const hasSub = t.subTabs && t.subTabs.length > 0 && !esApp;
                         
                         // Nivel 1: Fila principal
                         rows.push(`
@@ -6031,19 +6055,31 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
                                 ${t.icon} ${t.label}
                             </td>
                             ${allRoles.map(r => {
-                                const dbVal = (adminService.getPermissions(r) ? adminService.getPermissions(r)[t.id] : undefined);
-                                let hasAccess = r === 'admin' ? true : (dbVal !== undefined ? (dbVal === 1 || dbVal === true) : t.roles.includes(r));
+                                /* SIN VERSION MOVIL, NO HAY CASILLA: una raya. Prenderlo mandaria
+                                   al celular una pantalla pensada para un monitor. */
+                                if (esApp && MODULOS_CON_APP.indexOf(t.id) < 0) {
+                                    return `<td class="celda" style="text-align:center; color:var(--text-dim);" title="Todavía no tiene versión para celular">—</td>`;
+                                }
+                                const dbVal = (adminService.getPermissions(r) ? adminService.getPermissions(r)[clave(t.id)] : undefined);
+                                /* EN LA APP NO SE HEREDA NADA. En la web, un modulo sin permiso
+                                   guardado cae en la lista de roles escrita en el codigo; en el
+                                   celular eso prenderia solo cosas que nadie eligio, asi que lo que
+                                   no esta marcado esta apagado. */
+                                let hasAccess = r === 'admin' ? true
+                                    : (dbVal !== undefined ? (dbVal === 1 || dbVal === true)
+                                       : (esApp ? false : t.roles.includes(r)));
                                 /* SOLO EL ADMINISTRADOR QUEDA FIJO, y no es un descuido: si se le
                                    pudiera quitar el acceso a Administracion, el que lo hiciera se
                                    quedaria sin forma de volver a entrar a arreglarlo. El asistente
                                    se maneja como cualquier otro rol desde el 07-sep-2026. */
                                 const isFixed = r === 'admin';
-                                return `<td class="celda"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${t.id}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer;"'}></td>`;
+                                return `<td class="celda"><input type="checkbox" class="perm-toggle" data-role="${r}" data-tab="${clave(t.id)}" ${hasAccess ? 'checked' : ''} ${isFixed ? 'disabled' : 'style="cursor:pointer;"'}></td>`;
                             }).join('')}
                         </tr>`);
 
                         // Nivel 2: Filas de sub-pestañas
-                        if (hasSub) {
+                        // EN EL CELULAR NO HAY SUB-PESTAÑAS: un modulo entra o no entra.
+                        if (hasSub && !esApp) {
                             t.subTabs.forEach(sub => {
                                 const subKey = `${t.id}_${sub.id}`;
                                 const hasSubSub = sub.subTabs && sub.subTabs.length > 0;
@@ -6086,7 +6122,10 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
         </div>
         <div style="margin-top:1rem; padding:1rem; background:rgba(var(--primary-rgb), 0.05); border-radius:8px; border:1px solid rgba(var(--primary-rgb), 0.2);">
             <p style="font-size:var(--t-sm); color:var(--text-muted); margin:0;">
-                <b>Tip:</b> Haz clic en los módulos con el icono ▶ para expandir sus secciones. El anidamiento permite un control quirúrgico de lo que cada rol puede ver.
+                ${esApp ? `<b>📱 Estás viendo la app.</b> Lo que marques acá es lo que cada rol ve en el celular, y llega a los teléfonos en la siguiente sincronización: <b>no hay que publicar una versión nueva en Play Store</b>.
+                <br>Los módulos con una raya <b>—</b> todavía no tienen versión para celular; van apareciendo a medida que se les hace la pantalla chica.
+                <br>En el celular no hay sub-pestañas: un módulo entra o no entra.`
+                : `<b>Tip:</b> Haz clic en los módulos con el icono ▶ para expandir sus secciones. El anidamiento permite un control quirúrgico de lo que cada rol puede ver.`}
                 <br><b>La columna ADMIN va fija a propósito:</b> si se le pudiera quitar el acceso, quien lo hiciera se quedaría sin forma de volver a entrar a corregirlo. Todos los demás roles se pueden marcar y desmarcar.
             </p>
         </div>
@@ -6104,6 +6143,13 @@ const cuerpoReporte = () => esPBI() ? 'overflow-x:auto; padding:0;' : 'overflow-
             subRows.forEach(sr => sr.style.display = isVisible ? 'none' : 'table-row');
             if(icon) icon.textContent = isVisible ? '▶' : '▼';
             row.style.background = isVisible ? 'rgba(var(--ink-rgb), 0.02)' : 'rgba(var(--primary-rgb), 0.05)';
+        });
+    });
+
+    document.querySelectorAll('.vista-permisos').forEach(b => {
+        b.addEventListener('click', () => {
+            vistaPermisos = b.dataset.vista;
+            renderPermisosSection(container);
         });
     });
 
@@ -14216,7 +14262,7 @@ const renderRFSection = (container) => {
           se ata una sola vez al entrar y esas dieciséis quedaron intactas. El
           porqué completo está en la cabecera de ese archivo. */
        (async () => {
-           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0728');
+           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0731');
            montarInventarios(l2Container, {
                renderUploadArea,
                showPremiumConfirm,
@@ -18613,7 +18659,7 @@ const renderRFSection = (container) => {
              `renderDashboard` y que ahora, viviendo afuera, no alcanza sola.
              `tareasDeAlmacenaje` va como función y no como lista: la caché se
              reemplaza entera cuando entran tareas nuevas. */
-          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0728');
+          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0731');
           const corrida = await barrerParaSlotting(
             (Array.isArray(zonasDeLaCorrida) && zonasDeLaCorrida.length)
               ? zonasDeLaCorrida
@@ -26973,7 +27019,7 @@ window.__menuMapa = (btn) => {
              lado es un `let` que leen el plan del Excel y el prepack: si se
              pasara la lista, esos dos nunca se enterarían de la foto nueva. */
           (async () => {
-              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0728');
+              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0731');
               renderAnalisisReserva(skuBuf, {
                   htmlConsolidacionReserva,
                   engancharClicConsolidacion,
@@ -30815,12 +30861,12 @@ window.__menuMapa = (btn) => {
         /* El buscador se carga aparte y NO frena al resto: si el servidor viejo
            todavia no tiene /api/asn, el cuadro dice que no se pudo consultar y
            los demas siguen dibujandose igual. */
-        import('../reportes/asn_buscador.js?v=29.0728').then(m => {
+        import('../reportes/asn_buscador.js?v=29.0731').then(m => {
           const cb = container.querySelector('#asn_buscador');
           if (cb) m.montarBuscadorAsn(cb, { api: 'https://logistics-backend-wv0x.onrender.com' });
         }).catch(e => console.warn('[ASN] no se pudo cargar el buscador:', e));
 
-        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0728');
+        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0731');
         const caja = container.querySelector('#asn_detalle');
         /* El HOY va de aca, con getLogicalDate(): el paquete trae el suyo -el del
            robot- y si la corrida fallo, ese "hoy" es de ayer y todo el calendario

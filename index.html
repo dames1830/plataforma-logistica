@@ -6,6 +6,36 @@
        el 404 de /favicon.ico que el navegador pedia por su cuenta. -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
+  <!-- ══════════════════════════════════════════════════════════════════════════════
+       LA PLATAFORMA, INSTALADA EN EL CELULAR
+       ──────────────────────────────────────────────────────────────────────────────
+       El manifiesto es lo que le dice a Android como se llama, con que icono y de que
+       color abrirla. Con el y con `sw.js`, el telefono ofrece "Instalar aplicacion":
+       queda con su icono en la pantalla de inicio y abre SIN la barra del navegador.
+       No pasa por ninguna tienda y no cuesta nada.
+       ══════════════════════════════════════════════════════════════════════════════ -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b1120">
+  <meta name="mobile-web-app-capable" content="yes">
+  <!-- El iPhone no lee el manifiesto: el icono y el nombre se los hay que decir aparte. -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Deam1830">
+  <link rel="apple-touch-icon" href="iconos/app-192.png">
+  <script>
+    /* Se registra con red de seguridad: si falla, la web sigue igual de bien. Y solo
+       donde el navegador lo permite -https o localhost-, para no ensuciar la consola
+       con un error cuando alguien abre el archivo suelto. */
+    if ('serviceWorker' in navigator
+        && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function (e) {
+          console.warn('[APP] no se pudo registrar el ayudante de instalacion:', e && e.message);
+        });
+      });
+    }
+  </script>
+
 <script>
 /* AVISO DE ERROR — NO USAR innerHTML AQUI.
  *
@@ -84,7 +114,7 @@
   </script>
 
   <!-- ENTORNO: decide produccion vs pruebas. DEBE ir antes que cualquier otro script. -->
-  <script src="js/env.js?v=29.0728"></script>
+  <script src="js/env.js?v=29.0731"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logística Deam1830</title>
@@ -98,14 +128,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   
-  <link rel="stylesheet" href="css/main.css?v=29.0728" id="main_css">
+  <link rel="stylesheet" href="css/main.css?v=29.0731" id="main_css">
   <!-- Los temas van DESPUES de main.css a proposito: redefinen las mismas
        variables (--primary, --bg-dark, --text-muted...) y con la misma
        especificidad gana la ultima hoja que se carga. -->
-  <link rel="stylesheet" href="css/temas.css?v=29.0728" id="temas_css">
+  <link rel="stylesheet" href="css/temas.css?v=29.0731" id="temas_css">
   <!-- Los componentes van DESPUES de los temas: usan sus tokens y sus clases
        tienen que poder ganarle a lo generico de main.css. -->
-  <link rel="stylesheet" href="css/componentes.css?v=29.0728" id="componentes_css">
+  <link rel="stylesheet" href="css/componentes.css?v=29.0731" id="componentes_css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
   <style>
     #sync-indicator {
@@ -207,11 +237,11 @@
   <div id="sync-indicator" class="sync-online">
     <span id="sync-icon" style="font-size:var(--t-lg); user-select: none;">…</span>
     <div class="sync-tooltip">
-      <div id="sync-text" style="font-weight: 800; font-size:var(--t-sm); color: var(--text-strong); white-space: nowrap;">SISTEMA v29.0728 ONLINE</div>
+      <div id="sync-text" style="font-weight: 800; font-size:var(--t-sm); color: var(--text-strong); white-space: nowrap;">SISTEMA v29.0731 ONLINE</div>
       <div style="font-size:var(--t-xs); color: rgba(var(--ink-rgb), 0.4); margin-top: 4px; white-space: nowrap;">System is currently up to date and syncing.</div>
     </div>
   </div>
-  <script src="js/app.js?v=29.0728" type="module">
+  <script src="js/app.js?v=29.0731" type="module">
     document.addEventListener('DOMContentLoaded', () => {
       const syncIndicator = document.getElementById('sync-indicator');
       syncIndicator.addEventListener('click', (e) => {
