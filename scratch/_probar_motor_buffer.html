@@ -17,7 +17,7 @@ const R = [];
 const linea = (ok, t) => R.push(`<span class="${ok ? 'ok' : 'mal'}">${ok ? 'OK  ' : 'MAL '}</span>${t}`);
 const pinta = () => document.getElementById('r').innerHTML = R.join('\n');
 
-const hub = await import('../js/services_v245/csvHub_v6.js?v=29.0724');
+const hub = await import('../js/services_v245/csvHub_v6.js?v=29.0725');
 
 /* Las mismas areas que carga Zona Buffer. Se traen del servidor de PRODUCCION:
    esta pagina se abre en localhost, asi que env.js la sella como beta... por eso

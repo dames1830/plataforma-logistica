@@ -351,6 +351,25 @@
       await chat.mirarQuienEsta();
       chk(!chat.enLinea(OTRO), 'y si deja de avisar cinco minutos, la bolita se apaga');
 
+      // 15. EL BUSCADOR NO SE QUEDA CON LO DE LA VEZ PASADA
+      const burb = document.getElementById('chat-burbuja');
+      const caja = document.getElementById('chat-buscar');
+      if (document.getElementById('chat-panel').hidden) { burb.click(); await esperar(400); }
+      caja.value = 'vicen';
+      caja.dispatchEvent(new Event('input'));
+      await esperar(300);
+      const conBusqueda = document.querySelectorAll('#chat-lista [data-sala], #chat-lista [data-persona]').length;
+      burb.click();                       // cerrar
+      await esperar(300);
+      burb.click();                       // y volver a abrir
+      await esperar(500);
+      chk(document.getElementById('chat-buscar').value === '',
+          'al volver a abrir el panel, el buscador arranca vacio');
+      const alVolver = document.querySelectorAll('#chat-lista [data-sala]').length;
+      chk(alVolver > 0 && alVolver <= 5,
+          'y vuelven a salir las ultimas conversaciones: ' + alVolver + ' (antes de cerrar habia '
+          + conBusqueda + ' resultado(s) de la busqueda)');
+
       pintar();
     } catch (e) {
       res.push('FALLA se cayó la prueba: ' + (e && e.message));

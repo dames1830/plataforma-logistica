@@ -1002,13 +1002,30 @@ const abrirSala = async (id) => {
     if (caja) caja.focus();
 };
 
+/* EL PANEL SE ABRE SIEMPRE LIMPIO: sin lo que se busco la vez pasada y con las ultimas
+   conversaciones a la vista. Daniel: "escribo, cierro, vuelvo a abrir y sigue la palabra ahi;
+   deberia quedarse en cero y mostrarme los cinco". Va en un solo sitio porque el panel se
+   abre por dos caminos -la burbuja y volver de "+ Grupo"- y los dos tienen que limpiar. */
+const abrirPanel = () => {
+    panelAbierto = true;
+    nodo('chat-panel').hidden = false;
+    nodo('chat-buscar').value = '';
+    pintarLista();
+    nodo('chat-buscar').focus();
+    acomodarVentanas();
+};
+
+const cerrarPanel = () => {
+    panelAbierto = false;
+    nodo('chat-panel').hidden = true;
+    acomodarVentanas();
+};
+
 const enganchar = () => {
     nodo('chat-burbuja').addEventListener('click', () => {
         nodo('chat-grupo').hidden = true;
-        panelAbierto = !panelAbierto;
-        nodo('chat-panel').hidden = !panelAbierto;
-        if (panelAbierto) { pintarLista(); nodo('chat-buscar').focus(); latir(); }
-        acomodarVentanas();
+        if (panelAbierto) cerrarPanel();
+        else { abrirPanel(); latir(); }
         acomodarReloj();
     });
 
@@ -1046,9 +1063,7 @@ const enganchar = () => {
     });
     nodo('chat-grupo-cancelar').addEventListener('click', () => {
         nodo('chat-grupo').hidden = true;
-        panelAbierto = true;
-        nodo('chat-panel').hidden = false;
-        acomodarVentanas();
+        abrirPanel();
     });
     nodo('chat-grupo-crear').addEventListener('click', async () => {
         const nombre = nodo('chat-grupo-nombre').value.trim();
