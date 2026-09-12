@@ -405,12 +405,20 @@ const CSS = `
   border: 1px solid rgba(var(--ink-rgb), 0.1); border-radius: 8px; padding: 0.45rem 0.6rem; font-size: var(--t-xs); }
 .chat-ventana .caja button { background: var(--primary); border: 0; color: #fff; border-radius: 8px;
   padding: 0.45rem 0.7rem; font-size: var(--t-xs); font-weight: 700; cursor: pointer; }
-#chat-toast { position: fixed; right: 72px; bottom: 72px; z-index: 9999; width: 270px; background: var(--panel-solid);
+#chat-toast { position: fixed; right: 20px; bottom: 72px; z-index: 9999; width: 270px; background: var(--panel-solid);
   border: 1px solid rgba(var(--warning-soft-rgb), 0.45); border-left: 3px solid var(--warning-soft); border-radius: 12px;
   box-shadow: 0 18px 40px rgba(var(--shadow-rgb), 0.55); padding: 0.6rem 0.75rem; display: grid;
   grid-template-columns: 32px 1fr; gap: 0.15rem 0.6rem; cursor: pointer; text-align: left; font-family: inherit; }
 #chat-toast .de { font-size: var(--t-xs); font-weight: 800; color: var(--text-strong); }
 #chat-toast .txt { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* EL ATRIBUTO hidden TIENE QUE GANARLE AL display DE ARRIBA.
+   Un selector de id con display:grid le gana al [hidden]{display:none} que trae el navegador,
+   asi que el panel, la ventana de grupo y el globito se veian los TRES encimados aunque por
+   dentro estuvieran cerrados; y como quedaban uno sobre otro, los clics no llegaban. Lo vio
+   Daniel en su pantalla: "se esta pisando el chat... doy clic y no funciona nada". La prueba
+   automatica no lo agarro porque miraba la propiedad hidden y no si se veia: aplicado no es lo
+   mismo que se ve. */
+#chat-panel[hidden], #chat-grupo[hidden], #chat-toast[hidden], #chat-globo[hidden] { display: none !important; }
 #chat-grupo { position: fixed; right: 20px; bottom: 72px; z-index: 9998; width: 310px; background: var(--panel-solid);
   border: 1px solid rgba(var(--brand-rgb), 0.4); border-radius: 14px; box-shadow: 0 18px 40px rgba(var(--shadow-rgb), 0.55);
   padding: 0.9rem; display: grid; gap: 0.6rem; font-size: var(--t-xs); }
@@ -587,6 +595,9 @@ const esconderToast = () => {
 const avisar = (sala, msg) => {
     const t = nodo('chat-toast');
     if (!t) return;
+    /* Si el panel o la ventana de grupo estan abiertos, el globito no sale: ocupan el mismo
+       rincon y quedarian uno encima del otro. El contador rojo y la lista ya avisan. */
+    if (panelAbierto || !nodo('chat-grupo').hidden) { tin(); return; }
     toastSala = sala.id;
     nodo('chat-toast-ini').textContent = iniciales(nombreDeSala(sala));
     nodo('chat-toast-de').textContent = nombreDeSala(sala);

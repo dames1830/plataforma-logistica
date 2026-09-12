@@ -47,7 +47,11 @@
 
       chk(!!document.getElementById('chat-burbuja'), 'la burbuja aparece al costado del indicador del servidor');
       chk(!!document.getElementById('chat-panel'), 'el panel existe, cerrado');
+      const seVe = (id) => getComputedStyle(document.getElementById(id)).display !== 'none';
       chk(document.getElementById('chat-panel').hidden === true, 'el panel arranca cerrado');
+      chk(!seVe('chat-panel') && !seVe('chat-grupo') && !seVe('chat-toast'),
+          'y cerrado quiere decir que NO SE VE: ni el panel, ni la ventana de grupo, ni el globito');
+      chk(!seVe('chat-globo'), 'sin mensajes nuevos, el contador rojo no se ve (ni con un cero)');
 
       // 1. abrir una conversación con alguien con quien nunca se hablo
       const idSala = await chat.crearDirecta(OTRO);
@@ -72,8 +76,10 @@
       await chat.latir();
       const estado = chat.estado();
       chk(estado.sinLeer >= 1, 'el contador de no leídos subió al llegar el mensaje del otro: ' + estado.sinLeer);
-      chk(document.getElementById('chat-globo').hidden === false, 'el globo rojo se ve en la burbuja');
-      chk(document.getElementById('chat-toast').hidden === false, 'salió el globito de aviso con el mensaje nuevo');
+      chk(document.getElementById('chat-globo').hidden === false && seVe('chat-globo'), 'el globo rojo se ve en la burbuja');
+      chk(document.getElementById('chat-toast').hidden === false && seVe('chat-toast'),
+          'salió el globito de aviso con el mensaje nuevo, y se ve');
+      chk(!seVe('chat-grupo'), 'la ventana de grupo sigue sin verse mientras tanto');
       chk(/^\(\d+\)/.test(document.title) === false || true, 'el título del navegador lleva el contador');
 
       // 4. abrir la conversación desde el panel
@@ -85,7 +91,7 @@
       await esperar(900);
       chk(!!document.querySelector('.chat-ventana[data-sala="' + idSala + '"]'), 'se abrió su ventanita, como en Facebook');
       chk(chat.estado().sinLeer === 0, 'al abrirla, los no leídos vuelven a cero');
-      chk(document.getElementById('chat-globo').hidden === true, 'y el globo rojo desaparece');
+      chk(document.getElementById('chat-globo').hidden === true && !seVe('chat-globo'), 'y el globo rojo desaparece de la pantalla');
 
       // 5. borrar un mensaje: solo el administrador
       await chat.borrar(idSala, suyo.id);
