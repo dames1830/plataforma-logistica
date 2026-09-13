@@ -25,11 +25,13 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0755';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0755';
+import * as adminService from '../services_v245/adminService.js?v=29.0756';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0756';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0755';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0756';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0756';
+import * as metasService from '../services_v245/metasService.js?v=29.0756';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -111,6 +113,151 @@ const CSS = `
 
 #app-movil .am-salida { background: none; border: 0; color: var(--am-tenue); font-family: var(--am-ui);
   font-size: .78rem; text-decoration: underline; cursor: pointer; padding: .6rem; align-self: center; }
+
+/* ── TAREAS ───────────────────────────────────────────────────────────────────────────
+   Maqueta aprobada el 12-sep-2026. La lista se queda LIMPIA -numero, marca, etiqueta y
+   cantidad- y todo lo demas aparece al tocar el registro. Daniel: *"que no se acumulen
+   tantas cosas en la pantalla, pero que lleve el corazon del modulo"*. */
+
+/* EL RANGO DE FECHAS EN DOS COLUMNAS. En la web "Desde … hasta …" entra en una linea; en
+   un telefono de 360 px no, y Daniel lo dijo: *"la fila esta muy larga"*. Mismo texto y
+   mismo icono de trazo que 'selectorRango()', otra disposicion. */
+#app-movil .am-rango { display: grid; grid-template-columns: auto 1fr 1fr; align-items: center;
+  gap: 0.2rem 0.7rem; background: var(--am-carta); border: 1px solid var(--am-linea);
+  border-radius: 10px; padding: 0.45rem 0.7rem; }
+#app-movil .am-rango > svg { grid-row: 1 / 3; width: 16px; height: 16px; color: var(--am-va); }
+#app-movil .am-rango .eti { font-size: 0.6rem; font-weight: 800; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--am-tenue); }
+#app-movil .am-rango input { background: transparent; border: 0; padding: 0; width: 100%;
+  font-family: var(--am-num); font-size: 0.82rem; font-weight: 700; color: var(--am-tinta);
+  outline: none; color-scheme: light; }
+
+#app-movil .am-tira { display: flex; gap: .4rem; }
+#app-movil .am-filtro { font-family: var(--am-num); font-size: 0.63rem; letter-spacing: .05em;
+  text-transform: uppercase; padding: .32rem .6rem; border-radius: 20px;
+  border: 1px solid var(--am-linea); background: var(--am-carta); color: var(--am-tenue);
+  font-weight: 700; cursor: pointer; }
+#app-movil .am-filtro[aria-pressed="true"] { background: var(--am-tinta);
+  border-color: var(--am-tinta); color: #fff; }
+
+/* LA FILA. El borde izquierdo repite el estado en FORMA, no solo en color: es la regla 3
+   de la maqueta y lo que salva a quien no distingue verde de rojo. */
+#app-movil .am-tarea { display: grid; grid-template-columns: auto 1fr auto auto;
+  align-items: center; gap: .7rem; background: var(--am-carta);
+  border: 1px solid var(--am-linea); border-left: 3px solid #B6C2C0; border-radius: 10px;
+  padding: .62rem .7rem; width: 100%; text-align: left; font-family: var(--am-ui);
+  color: inherit; cursor: pointer; }
+#app-movil .am-tarea.curso { border-left-color: var(--am-curso); }
+#app-movil .am-tarea.fin { border-left-color: var(--am-va); }
+#app-movil .am-tarea.malo { border-left-color: var(--am-tarde); }
+#app-movil .am-tarea .n { font-family: var(--am-num); font-size: .78rem; font-weight: 700;
+  color: var(--am-tenue); min-width: 2.4ch; }
+/* La marca se recorta si hace falta; la etiqueta NUNCA, que es la que dice como va. */
+#app-movil .am-tarea .m { display: flex; align-items: center; gap: .4rem; min-width: 0; }
+#app-movil .am-tarea .m > .txt { font-size: .9rem; font-weight: 600; color: var(--am-tinta);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#app-movil .am-tarea .m > .am-chapa { flex: none; }
+#app-movil .am-tarea .q { font-family: var(--am-num); font-variant-numeric: tabular-nums;
+  font-size: .95rem; font-weight: 700; color: var(--am-tinta); }
+#app-movil .am-tarea .q i { font-style: normal; font-size: .62rem; color: var(--am-tenue);
+  margin-left: .15rem; }
+#app-movil .am-tarea .v { color: var(--am-linea); font-size: 1rem; line-height: 1; }
+#app-movil .am-tarea .quien { grid-column: 2 / 5; font-family: var(--am-num);
+  font-size: .62rem; margin-top: -.15rem; color: var(--am-curso); }
+#app-movil .am-tarea.fin .quien { color: var(--am-va); }
+#app-movil .am-tarea.malo .quien { color: var(--am-tarde); }
+#app-movil .am-chapa.ch-mal { background: var(--am-tarde-agua); color: var(--am-tarde); }
+
+/* ── LA HOJA DEL REGISTRO ────────────────────────────────────────────────────────────── */
+#app-movil .am-velo { position: fixed; inset: 0; background: rgba(19,28,31,.45);
+  display: flex; align-items: flex-end; z-index: 40; }
+#app-movil .am-hoja { background: var(--am-carta); border-radius: 16px 16px 0 0; width: 100%;
+  max-width: 560px; margin-inline: auto; padding: .5rem .9rem 1.2rem; max-height: 92vh;
+  overflow-y: auto; }
+#app-movil .am-asa { width: 34px; height: 4px; background: var(--am-linea); border-radius: 2px;
+  margin: .1rem auto .7rem; }
+#app-movil .am-quees { display: flex; align-items: center; justify-content: space-between;
+  gap: .5rem; border-bottom: 1px solid var(--am-linea); padding-bottom: .6rem;
+  margin-bottom: .7rem; }
+#app-movil .am-quees b { font-size: 1.05rem; color: var(--am-tinta); }
+#app-movil .am-quees .dia { font-family: var(--am-num); font-size: .66rem;
+  color: var(--am-tenue); margin-left: auto; }
+
+#app-movil .am-tres3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .42rem;
+  margin-bottom: .8rem; }
+#app-movil .am-tres3 > div { background: var(--am-papel); border-radius: 9px;
+  padding: .42rem .5rem; min-width: 0; }
+#app-movil .am-tres3 .l { font-family: var(--am-num); font-size: .53rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--am-tenue); }
+#app-movil .am-tres3 .v { font-family: var(--am-num); font-size: .9rem; font-weight: 700;
+  color: var(--am-tinta); font-variant-numeric: tabular-nums; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+#app-movil .am-tres3 .v.chico { font-size: .72rem; }
+
+/* EL OBJETIVO va aparte y con color porque es la unica linea que JUZGA el trabajo;
+   mezclarla con marca y cantidad -que son datos- la esconderia. */
+#app-movil .am-objetivo { display: grid; grid-template-columns: auto 1fr; gap: 0 .55rem;
+  align-items: baseline; border-radius: 9px; padding: .45rem .6rem; margin-bottom: .8rem; }
+#app-movil .am-objetivo .l { font-family: var(--am-num); font-size: .53rem; letter-spacing: .1em;
+  text-transform: uppercase; opacity: .75; }
+#app-movil .am-objetivo .v { font-family: var(--am-num); font-size: .88rem; font-weight: 700; }
+#app-movil .am-objetivo .d { grid-column: 1 / 3; font-family: var(--am-num); font-size: .62rem;
+  opacity: .75; margin-top: .1rem; }
+#app-movil .am-objetivo.si { background: var(--am-va-agua); color: var(--am-va); }
+#app-movil .am-objetivo.no { background: var(--am-tarde-agua); color: var(--am-tarde); }
+#app-movil .am-objetivo.sin { background: var(--am-papel); color: var(--am-tenue); }
+
+#app-movil .am-campo { margin-bottom: .6rem; }
+#app-movil .am-campo label { display: block; font-family: var(--am-num); font-size: .58rem;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--am-tenue);
+  margin-bottom: .25rem; }
+#app-movil .am-campo select, #app-movil .am-campo input[type="time"] { width: 100%;
+  font-family: var(--am-ui); font-size: .9rem; font-weight: 600; padding: .55rem;
+  border: 1px solid var(--am-linea); border-radius: 9px; background: var(--am-carta);
+  color: var(--am-tinta); color-scheme: light; }
+#app-movil .am-campo input[type="time"] { font-family: var(--am-num); font-weight: 700; }
+#app-movil .am-par { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+
+#app-movil .am-botones { display: flex; gap: .45rem; margin-top: .8rem; }
+#app-movil .am-btn { flex: 1; padding: .72rem .5rem; border-radius: 10px; border: 0;
+  font-family: var(--am-ui); font-size: .86rem; font-weight: 700; cursor: pointer; }
+#app-movil .am-btn.va { background: var(--am-va); color: #fff; }
+#app-movil .am-btn.linea { background: none; border: 1px solid var(--am-va); color: var(--am-va); }
+#app-movil .am-btn.mala { background: var(--am-tarde); color: #fff; }
+#app-movil .am-btn.avisa { background: var(--am-curso); color: #fff; }
+#app-movil .am-btn.gris { background: none; border: 1px solid var(--am-linea); color: var(--am-suave); }
+#app-movil .am-btn[disabled] { opacity: .5; cursor: default; }
+
+/* DONDE VA CADA COSA, Y POR QUE. El pulgar cae en el CENTRO de la pantalla: ahi va SALIR,
+   que es lo que se aprieta cien veces al dia. Reiniciar y Eliminar se van a la esquina
+   derecha, lejos del recorrido del dedo. Daniel, 12-sep: *"por error su dedo no vaya a
+   apretarlo y vayan a malograr la tarea"*. Las tres columnas dejan a Salir centrado de
+   verdad, no centrado "entre los otros dos". */
+#app-movil .am-acciones { display: grid; gap: .35rem; margin-top: .85rem; padding-top: .55rem;
+  border-top: 1px solid var(--am-linea); }
+#app-movil .am-acciones .der { display: flex; gap: .9rem; justify-content: flex-end; }
+#app-movil .am-acc { background: none; border: 0; cursor: pointer; font-family: var(--am-ui);
+  font-size: .76rem; font-weight: 650; color: var(--am-tenue); display: flex;
+  align-items: center; gap: .3rem; padding: .3rem; }
+#app-movil .am-acc[disabled] { opacity: .35; cursor: default; }
+#app-movil .am-salir { background: none; border: 0; cursor: pointer; justify-self: center;
+  font-family: var(--am-ui); font-size: .9rem; font-weight: 700; color: var(--am-tinta);
+  padding: .45rem 1.6rem; display: flex; align-items: center; gap: .35rem; }
+
+/* LA SEGUNDA PREGUNTA. Encima de la hoja, no en su lugar: al cancelar se vuelve exactamente
+   a donde estaba, con lo que se hubiera escrito todavia puesto. */
+#app-movil .am-confirma { position: fixed; inset: 0; background: rgba(19,28,31,.55);
+  display: flex; align-items: center; justify-content: center; padding: 1.1rem; z-index: 50; }
+#app-movil .am-tarjeta { background: var(--am-carta); border-radius: 14px;
+  padding: 1.1rem 1rem .9rem; width: 100%; max-width: 340px;
+  box-shadow: 0 10px 30px rgba(19,28,31,.25); }
+#app-movil .am-tarjeta h5 { margin: 0 0 .5rem; font-family: var(--am-num); font-size: .66rem;
+  letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+#app-movil .am-tarjeta h5.aviso { color: var(--am-curso); }
+#app-movil .am-tarjeta h5.malo { color: var(--am-tarde); }
+#app-movil .am-tarjeta p { margin: 0 0 .3rem; font-size: .9rem; color: var(--am-tinta);
+  line-height: 1.45; }
+#app-movil .am-tarjeta p.menor { font-size: .8rem; color: var(--am-suave); }
 
 /* ── PASAR LISTA ─────────────────────────────────────────────────────────────────────── */
 /* TRES COLUMNAS DE VERDAD, no una fila y otra debajo: quien | asistio o falto | motivo.
@@ -221,7 +368,6 @@ const SECCIONES = [
    seccion en blanco parece rota; una que avisa que esta en camino, no. */
 const EN_CAMINO = {
     reportes: ['Los siete reportes en pantalla chica', 'Turno, picking por hora, KPI, marcas, SKU sin salida y rotación. Los números ya se calculan bien: falta rearmarlos para el celular.'],
-    tareas: ['Asignar una tarea desde el celular', 'Ver las abiertas, elegir al operario y asignársela. La asignación ya funciona en la web y se sincroniza tarea por tarea.'],
     lista: ['Pasar lista del turno', 'Marcar P, T o F por cada persona con el pulgar. Se guarda en el mismo sitio que la lista de la web.'],
     avisos: ['Los avisos', 'Robot caído, tarea vencida, ruta demorada. Es lo único que empieza de cero: hace falta el envío desde el servidor y el permiso del teléfono.']
 };
@@ -329,6 +475,359 @@ const pantallaEnCamino = (id) => {
         </div>
         <button type="button" class="am-salida" data-escritorio>Ver la versión de escritorio</button>
     `;
+};
+
+/* ── TAREAS ──────────────────────────────────────────────────────────────────────────────
+ *  Maqueta aprobada el 12-sep-2026, despues de tres vueltas suyas.
+ *
+ *  LA LISTA SE QUEDA LIMPIA: numero, marca con su etiqueta de estado, y cantidad. Todo lo
+ *  demas -los operarios, las dos horas, el objetivo y las acciones- aparece AL TOCAR el
+ *  registro. Daniel: *"en la pestaña de tareas debe estar limpia, sino que al apretar el
+ *  registro me tiene que dar todos esos detalles"*.
+ *
+ *  NADA SE QUEDA EN EL CELULAR. Se escribe la MISMA tarea del area `almacenaje_tasks` que
+ *  lee la web, con su mismo id, y por `saveAlmacenajeTasks(tarea)` -que viaja sola, por
+ *  PATCH, sin pisar las demas-. Por eso al asignar desde el telefono se llenan solas, en la
+ *  web, las columnas de usuarios, horas, productividad y objetivo. Es un registro visto
+ *  desde dos pantallas, no dos sistemas que sincronizar.
+ * ─────────────────────────────────────────────────────────────────────────────────────── */
+
+/* EL RANGO ARRANCA EN HOY, SIEMPRE. Daniel: *"siempre que actualice la aplicacion tiene que
+   estar con la fecha actual"*. Y si ese dia no hubo tareas, la pantalla dice "Sin tareas" y
+   se queda vacia: *"no inventes nada"*. */
+let tareasDesde = null;
+let tareasHasta = null;
+let tareasFiltro = 'sin';          // sin | curso | todas
+let tareaAbierta = null;           // el id de la que tiene la hoja abierta
+let tareaPregunta = null;          // 'reiniciar' | 'eliminar' mientras se confirma
+let tareasGuardando = false;
+let tareasBorrador = null;         // lo tecleado en la hoja, para no perderlo al repintar
+
+const MES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const DIA_CORTO = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+
+/* NUNCA `toISOString()`: devuelve UTC y a las 19:00 de Lima ya es el dia siguiente, justo
+   cuando entra el turno noche. Es la regla de toda la plataforma. */
+const hoyISO = () => jornadaService.fechaLogicaDe();
+
+const fechaCorta = (iso) => {
+    const p = String(iso || '').split('-').map(Number);
+    if (p.length !== 3) return '';
+    const d = new Date(p[0], p[1] - 1, p[2]);
+    return `${DIA_CORTO[d.getDay()]} ${p[2]} ${MES_CORTO[p[1] - 1]}`;
+};
+
+const arrancarTareas = () => {
+    if (!tareasDesde) { tareasDesde = hoyISO(); tareasHasta = hoyISO(); }
+};
+
+/** La meta que le toca a esta tarea. La resuelve el servicio, no esta pantalla. */
+const metaDe = (t) => {
+    const { familia, detalle } = tareasComunes.categoriaDeTarea(t);
+    return metasService.resolverMeta(detalle, familia, t && t.fecha);
+};
+
+/** Como se ve el estado: etiqueta, color y el borde de la fila. */
+const pintaEstado = (t) => {
+    const st = String(t.status || '');
+    if (st === 'Asignado') return { chapa: 'ch-curso', texto: 'ASIGNADO', clase: 'curso' };
+    if (st === 'Finalizado') {
+        /* FINALIZADO EN VERDE SI CUMPLIO, EN ROJO SI NO. La palabra es la misma; lo que
+           cambia es el color. Y `null` -todavia no se sabe- nunca se pinta de rojo: una
+           tarea sin terminar no fallo nada. */
+        const obj = tareasComunes.objetivoDe(t, metaDe(t));
+        return obj === 'NO_CUMPLIO'
+            ? { chapa: 'ch-mal', texto: 'FINALIZADO', clase: 'malo' }
+            : { chapa: 'ch-va', texto: 'FINALIZADO', clase: 'fin' };
+    }
+    if (st === 'Vencida') return { chapa: 'ch-tarde', texto: 'NO TRABAJADA', clase: 'malo' };
+    return { chapa: 'ch-quieto', texto: 'CREADA', clase: '' };
+};
+
+const tareasEnRango = () => {
+    arrancarTareas();
+    return (adminService.getAlmacenajeTasks() || [])
+        .filter(t => t && String(t.fecha) >= tareasDesde && String(t.fecha) <= tareasHasta)
+        .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha))
+            || (numeroDe(a.id) - numeroDe(b.id)));
+};
+
+/** `2026-09-12_Tarea21` -> 21, para ordenar por numero y no alfabeticamente (Tarea10 < Tarea2). */
+const numeroDe = (id) => {
+    const m = String(id || '').match(/(\d+)\s*$/);
+    return m ? Number(m[1]) : 0;
+};
+
+const CALENDARIO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>';
+const ICO_REINICIAR = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>';
+const ICO_BORRAR = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6 7l1 13h10l1-13"/></svg>';
+const ICO_SALIR = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+
+const pantallaTareas = () => {
+    const todas = tareasEnRango();
+    const grupos = {
+        sin: todas.filter(t => String(t.status) === 'Creada'),
+        curso: todas.filter(t => String(t.status) === 'Asignado'),
+        todas
+    };
+    const lista = grupos[tareasFiltro] || todas;
+    const rotulo = { sin: 'Sin asignar', curso: 'En curso', todas: 'Todas' }[tareasFiltro];
+    const pares = lista.reduce((a, t) => a + (parseFloat(t.qty) || 0), 0);
+
+    const filas = lista.map(t => {
+        const E = pintaEstado(t);
+        const ini = tareasComunes.horaCorta(t.inicio);
+        const fin = tareasComunes.horaCorta(t.termino);
+        const pie = t.u1 ? `${esc(t.u1)} + ${esc(t.u2 || '—')}`
+            + (ini ? ` · ${ini}` : '') + (fin ? ` → ${fin}` : '') : '';
+        return `
+        <button type="button" class="am-tarea ${E.clase}" data-tarea="${esc(t.id)}">
+            <span class="n">${numeroDe(t.id)}</span>
+            <span class="m"><span class="txt">${esc(t.marca || 'Sin marca')}</span>
+                <span class="am-chapa ${E.chapa}">${E.texto}</span></span>
+            <span class="q">${numero(t.qty)}<i>prs</i></span>
+            <span class="v">›</span>
+            ${pie ? `<span class="quien">${pie}</span>` : ''}
+        </button>`;
+    }).join('');
+
+    const capsula = (k, txt) => `
+        <button type="button" class="am-filtro" data-filtro="${k}"
+            aria-pressed="${k === tareasFiltro}">${txt} ${grupos[k].length}</button>`;
+
+    return `
+        <div class="am-rango">${CALENDARIO_SVG}
+            <span class="eti">Desde</span><span class="eti">hasta</span>
+            <input type="date" data-desde value="${tareasDesde}">
+            <input type="date" data-hasta value="${tareasHasta}">
+        </div>
+        <div class="am-tira">
+            ${capsula('sin', 'Sin asignar')}${capsula('curso', 'En curso')}${capsula('todas', 'Todas')}
+        </div>
+        ${lista.length ? `<div class="am-seccion">${rotulo}
+            <span style="float:right; font-weight:400; letter-spacing:0; text-transform:none">${numero(pares)} pares</span></div>`
+        : ''}
+        ${lista.length ? filas : '<div class="am-vacio" style="font-weight:700; padding:3rem 1rem">Sin tareas</div>'}
+    `;
+};
+
+/* ── LA HOJA DEL REGISTRO ───────────────────────────────────────────────────────────── */
+
+const operarios = () => (adminService.getWorkers() || [])
+    .filter(w => w && w.active)
+    .map(w => ({ clave: tareasComunes.usuarioCorto(w), nombre: w.nombre || w.Nombre || '' }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+const opcionesDe = (sel) => `<option value="">Elegir operario…</option>`
+    + operarios().map(o => `<option value="${esc(o.clave)}" ${o.clave === sel ? 'selected' : ''}>${esc(o.clave)} (${esc(o.nombre)})</option>`).join('');
+
+const hojaDeTarea = () => {
+    const t = (adminService.getAlmacenajeTasks() || []).find(x => x && x.id === tareaAbierta);
+    if (!t) return '';
+    const E = pintaEstado(t);
+    const meta = metaDe(t);
+    const obj = tareasComunes.objetivoDe(t, meta);
+    const esFin = String(t.status) === 'Finalizado';
+    const b = tareasBorrador || {};
+    const u1 = b.u1 !== undefined ? b.u1 : (t.u1 || '');
+    const u2 = b.u2 !== undefined ? b.u2 : (t.u2 || '');
+    const hi = b.hi !== undefined ? b.hi : tareasComunes.horaCorta(t.inicio);
+    const hf = b.hf !== undefined ? b.hf : tareasComunes.horaCorta(t.termino);
+
+    const permitido = Math.round(tareasComunes.minutosPermitidos(
+        tareasComunes.avanceDeTarea(t) || (parseFloat(t.qty) || 0), meta));
+    const principal = String(t.status) === 'Creada' ? 'Asignar e iniciar'
+        : (String(t.status) === 'Asignado' ? 'Finalizar' : 'Guardar cambios');
+
+    const pregunta = tareaPregunta ? tarjetaPregunta(t) : '';
+
+    return `
+    <div class="am-velo" data-velo>
+      <div class="am-hoja">
+        <div class="am-asa"></div>
+        <div class="am-quees">
+            <b>${esc(tareasComunes.numeroDeTarea(t.id))}</b>
+            <span class="am-chapa ${E.chapa}">${E.texto}</span>
+            <span class="dia">${fechaCorta(t.fecha)}</span>
+        </div>
+
+        <div class="am-tres3">
+            <div><div class="l">Marca</div><div class="v chico">${esc(t.marca || '—')}</div></div>
+            <div><div class="l">Cantidad</div><div class="v">${numero(t.qty)}</div></div>
+            <div><div class="l">Tiempo</div><div class="v">${tareasComunes.tiempoHHMM(t) || '—'}</div></div>
+        </div>
+
+        <div class="am-objetivo ${obj === 'CUMPLIO' ? 'si' : (obj === 'NO_CUMPLIO' ? 'no' : 'sin')}">
+            <span class="l">Objetivo</span>
+            <span class="v">${obj === 'CUMPLIO' ? 'CUMPLIÓ' : (obj === 'NO_CUMPLIO' ? 'NO CUMPLIÓ' : '—')}</span>
+            <span class="d">${obj ? `${numero(t.qty)} pares · permitido ${permitido} min`
+                                  : 'se calcula al terminar'}</span>
+        </div>
+
+        <div class="am-campo"><label>Usuario 1 · obligatorio</label>
+            <select data-u1>${opcionesDe(u1)}</select></div>
+        <div class="am-campo"><label>Usuario 2 · obligatorio</label>
+            <select data-u2>${opcionesDe(u2)}</select></div>
+
+        <div class="am-par">
+            <div class="am-campo"><label>Hora inicio</label>
+                <input type="time" data-hi value="${hi}"></div>
+            <div class="am-campo"><label>Hora término</label>
+                <input type="time" data-hf value="${hf}"></div>
+        </div>
+
+        <div class="am-botones">
+            <button type="button" class="am-btn va" data-principal ${tareasGuardando ? 'disabled' : ''}>
+                ${tareasGuardando ? 'Guardando…' : principal}</button>
+            ${String(t.status) === 'Asignado' ?
+              `<button type="button" class="am-btn linea" data-guardar-tarea ${tareasGuardando ? 'disabled' : ''}>Guardar</button>` : ''}
+        </div>
+
+        <div class="am-acciones">
+            <div class="der">
+                <button type="button" class="am-acc" data-pide="reiniciar">${ICO_REINICIAR} Reiniciar</button>
+                <button type="button" class="am-acc" data-pide="eliminar"
+                    ${esFin && !esElAdministrador() ? 'disabled title="Solo dames puede eliminar una finalizada"' : ''}>
+                    ${ICO_BORRAR} Eliminar</button>
+            </div>
+            <button type="button" class="am-salir" data-cerrar-hoja>${ICO_SALIR} Salir</button>
+        </div>
+      </div>
+    </div>${pregunta}`;
+};
+
+/* LA SEGUNDA PREGUNTA. Los textos salen de `resetTask` y `deleteTask` del tablero; no son
+   unos parecidos escritos de nuevo. Alla van en mayusculas de corrido: en un telefono eso
+   se lee peor, asi que el titulo lleva la mayuscula y el cuerpo se lee como una frase. */
+const tarjetaPregunta = (t) => {
+    const n = tareasComunes.numeroDeTarea(t.id);
+    const P = tareaPregunta === 'reiniciar'
+        ? { clase: 'aviso', btn: 'avisa', titulo: 'Reiniciar tarea', si: 'Reiniciar',
+            cuerpo: `¿Reiniciar la ${n}?`,
+            menor: 'Se borrarán los usuarios y las horas asignadas.' }
+        : { clase: 'malo', btn: 'mala', titulo: 'Eliminar tarea', si: 'Eliminar',
+            cuerpo: `¿Estás seguro de eliminar la ${n}?`,
+            menor: 'Esta acción es permanente y se borrará de todos los terminales.' };
+    return `
+    <div class="am-confirma" data-confirma>
+      <div class="am-tarjeta">
+        <h5 class="${P.clase}">${P.titulo}</h5>
+        <p>${P.cuerpo}</p>
+        <p class="menor">${P.menor}</p>
+        <div class="am-botones">
+            <button type="button" class="am-btn gris" data-no>Cancelar</button>
+            <button type="button" class="am-btn ${P.btn}" data-si>${P.si}</button>
+        </div>
+      </div>
+    </div>`;
+};
+
+/* ── GUARDAR ────────────────────────────────────────────────────────────────────────────
+   LAS MISMAS VALIDACIONES DE LA WEB, no unas nuevas: dos operarios siempre -"toda tarea de
+   almacenaje se trabaja en grupo de 2"-, nunca la misma persona dos veces, y si hay hora de
+   termino tiene que haber hora de inicio. */
+const leerBorrador = () => {
+    if (!raiz) return;
+    const q = (sel) => raiz.querySelector(sel);
+    if (!q('[data-u1]')) return;
+    tareasBorrador = {
+        u1: q('[data-u1]').value, u2: q('[data-u2]').value,
+        hi: q('[data-hi]').value, hf: q('[data-hf]').value
+    };
+};
+
+const guardarTarea = async (accion) => {
+    const t = (adminService.getAlmacenajeTasks() || []).find(x => x && x.id === tareaAbierta);
+    if (!t || tareasGuardando) return;
+    leerBorrador();
+    const b = tareasBorrador || {};
+
+    if (!b.u1 || !b.u2) {
+        alert('Grupo incompleto.\n\nToda tarea de almacenaje se trabaja en grupo de 2: asigna Usuario 1 y Usuario 2.');
+        return;
+    }
+    if (b.u1 === b.u2) { alert('Usuario 1 y Usuario 2 no pueden ser la misma persona.'); return; }
+    if (b.hf && !b.hi) { alert('Si pones la hora de término, también tiene que ir la de inicio.'); return; }
+
+    /* LA FECHA DE LAS HORAS ES LA DEL TRABAJO, no la del nacimiento de la tarea. Una tarea
+       vive hasta 48 horas: con la suya, el turno de hoy trabajando una de ayer quedaria
+       registrado como trabajo de ayer y el reporte del dia mostraria cero. */
+    const jornada = hoyISO();
+    const previo = { u1: t.u1, u2: t.u2, inicio: t.inicio, termino: t.termino, status: t.status };
+
+    t.u1 = b.u1;
+    t.u2 = b.u2;
+    if (b.hi) t.inicio = tareasComunes.selloDeHora(b.hi, jornada);
+    if (b.hf) t.termino = tareasComunes.selloDeHora(b.hf, jornada);
+    if (accion === 'asignar') {
+        t.status = 'Asignado';
+        if (!t.inicio) t.inicio = tareasComunes.selloDeHora(horaDeAhora(), jornada);
+    } else if (accion === 'finalizar') {
+        if (!t.termino) t.termino = tareasComunes.selloDeHora(horaDeAhora(), jornada);
+        t.status = 'Finalizado';
+    }
+    t._dirty = true;
+
+    tareasGuardando = true;
+    pintar();
+    let ok = false;
+    try { ok = await adminService.saveAlmacenajeTasks(t); } catch (e) { ok = false; }
+    tareasGuardando = false;
+
+    if (ok === false) {
+        /* NO LLEGO: se deshace y se dice. Igual que en la web — dar por guardado lo que no
+           llego es peor que fallar, porque nadie lo vuelve a mirar. */
+        Object.assign(t, previo);
+        pintar();
+        alert('No se pudo guardar: el servidor no confirmó.\n\nRevisa la conexión y vuelve a intentarlo. La tarea sigue como estaba.');
+        return;
+    }
+    tareasBorrador = null;
+    tareaAbierta = null;
+    pintar();
+};
+
+const horaDeAhora = () => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+
+const reiniciarTarea = async () => {
+    const t = (adminService.getAlmacenajeTasks() || []).find(x => x && x.id === tareaAbierta);
+    if (!t) return;
+    const previo = { u1: t.u1, u2: t.u2, inicio: t.inicio, termino: t.termino, status: t.status };
+    t.u1 = null; t.u2 = null; t.inicio = null; t.termino = null; t.status = 'Creada';
+    t.audited = false;
+    t._dirty = true;
+    tareasGuardando = true; pintar();
+    let ok = false;
+    try { ok = await adminService.saveAlmacenajeTasks(t); } catch (e) { ok = false; }
+    tareasGuardando = false;
+    if (ok === false) { Object.assign(t, previo); alert('No se pudo reiniciar: el servidor no confirmó.'); }
+    tareasBorrador = null;
+    tareaAbierta = null;
+    pintar();
+};
+
+/* ELIMINAR SE HACE SOBRE LA LISTA DEL SERVIDOR, no sobre la de este telefono: si se subiera
+   la copia local se irian con ella los cambios que otra pantalla haya hecho mientras tanto. */
+const eliminarTarea = async () => {
+    const id = tareaAbierta;
+    if (!id) return;
+    tareasGuardando = true; pintar();
+    let ok = false;
+    try {
+        const frescas = await adminService.traerTareasFrescas();
+        const quedan = (Array.isArray(frescas) ? frescas : adminService.getAlmacenajeTasks())
+            .filter(x => x && x.id !== id);
+        ok = await adminService.saveAlmacenajeTasks(quedan);
+        if (ok !== false) adminService.adminStore.almacenaje_tasks = quedan;
+    } catch (e) { ok = false; }
+    tareasGuardando = false;
+    if (ok === false) alert('No se pudo eliminar: el servidor no confirmó. La tarea sigue ahí.');
+    tareasBorrador = null;
+    tareaAbierta = null;
+    pintar();
 };
 
 /* ── PASAR LISTA ─────────────────────────────────────────────────────────────────────────
@@ -1022,6 +1521,9 @@ const pintar = () => {
     const cuerpo = raiz.querySelector('.am-cuerpo');
     cuerpo.innerHTML = seccion === 'inicio' ? pantallaInicio()
         : seccion === 'lista' ? pantallaLista()
+        /* La hoja va DENTRO del cuerpo pero es `position: fixed`, asi que no la recorta el
+           scroll ni la encierra la rejilla de tres filas de la app. */
+        : seccion === 'tareas' ? (pantallaTareas() + hojaDeTarea())
         : seccion === 'avisos' ? pantallaAvisos()
         : pantallaEnCamino(seccion);
     cuerpo.scrollTop = 0;
@@ -1088,6 +1590,18 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (s) {
             seccion = s.getAttribute('data-seccion');
                 if (seccion === 'lista') { cargarLista(); refrescarLista(); }   // se trae al entrar
+            if (seccion === 'tareas') {
+                /* Se traen frescas al entrar: en el almacen hay otras pantallas asignando
+                   al mismo tiempo, y ver una tarea libre que ya tiene dueño hace que dos
+                   grupos salgan a buscar la misma mercaderia. */
+                tareaAbierta = null; tareaPregunta = null; tareasBorrador = null;
+                adminService.loadAlmacenajeTasks(true).then(pintar).catch(() => {});
+                /* SE REPINTA CUANDO LLEGAN LAS METAS. Sin esto, el primer dibujo usa el
+                   valor de respaldo -300 u/h- en vez del de la categoria, y el objetivo
+                   puede salir al reves: una tarea que no cumplio aparece en verde y un
+                   segundo despues se pone roja. Lo cazo la prueba de la pantalla. */
+                metasService.cargarReglas().then(pintar).catch(() => {});
+            }
             if (seccion === 'avisos') mirarAvisos().then(pintar);
             pintar();
             return;
@@ -1103,11 +1617,64 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (e.target.closest('[data-reabrir]')) { reabrirLista(); return; }
         if (e.target.closest('[data-cerrar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-escritorio]')) { irAEscritorio(); return; }
+
+        /* ── TAREAS ──────────────────────────────────────────────────────────────────
+           LA SEGUNDA PREGUNTA MANDA mientras esta abierta: nada mas responde hasta que se
+           conteste, para que no se pueda esquivar tocando al costado. */
+        if (tareaPregunta) {
+            if (e.target.closest('[data-no]')) { tareaPregunta = null; pintar(); return; }
+            if (e.target.closest('[data-si]')) {
+                const que = tareaPregunta;
+                tareaPregunta = null;
+                if (que === 'reiniciar') reiniciarTarea(); else eliminarTarea();
+                return;
+            }
+            return;
+        }
+        const cap = e.target.closest('[data-filtro]');
+        if (cap) { tareasFiltro = cap.getAttribute('data-filtro'); pintar(); return; }
+        const reg = e.target.closest('[data-tarea]');
+        if (reg) { tareaAbierta = reg.getAttribute('data-tarea'); tareasBorrador = null; pintar(); return; }
+        if (e.target.closest('[data-cerrar-hoja]')) {
+            tareaAbierta = null; tareasBorrador = null; pintar(); return;
+        }
+        const pide = e.target.closest('[data-pide]');
+        if (pide && !pide.disabled) { leerBorrador(); tareaPregunta = pide.getAttribute('data-pide'); pintar(); return; }
+        if (e.target.closest('[data-principal]')) {
+            const t = (adminService.getAlmacenajeTasks() || []).find(x => x && x.id === tareaAbierta);
+            const st = String((t && t.status) || '');
+            guardarTarea(st === 'Creada' ? 'asignar' : (st === 'Asignado' ? 'finalizar' : 'guardar'));
+            return;
+        }
+        if (e.target.closest('[data-guardar-tarea]')) { guardarTarea('guardar'); return; }
+        /* Tocar el velo, fuera de la hoja, tambien cierra. */
+        if (e.target.hasAttribute && e.target.hasAttribute('data-velo')) {
+            tareaAbierta = null; tareasBorrador = null; pintar(); return;
+        }
     });
 
     raiz.addEventListener('change', (e) => {
         const j = e.target.closest('[data-justif]');
-        if (j) anotarMotivo(j.getAttribute('data-justif'), j.value);
+        if (j) { anotarMotivo(j.getAttribute('data-justif'), j.value); return; }
+
+        /* EL RANGO. Cambiar una fecha cierra la hoja: la tarea que se estaba mirando puede
+           quedar fuera del rango nuevo, y dejar abierta una que ya no esta en la lista
+           confunde mas de lo que ayuda. */
+        if (e.target.hasAttribute('data-desde') || e.target.hasAttribute('data-hasta')) {
+            const v = e.target.value;
+            if (!v) return;
+            if (e.target.hasAttribute('data-desde')) tareasDesde = v; else tareasHasta = v;
+            /* NO se le corrige la fecha a nadie. Tuve puesto que un `hasta` anterior al
+               `desde` se moviera solo, y esta mal por dos motivos: la web no lo hace, y
+               cambiarle en silencio lo que acaba de elegir es peor que mostrarle una lista
+               vacia. Un rango al reves no trae nada y la pantalla lo dice. */
+            tareaAbierta = null; tareasBorrador = null;
+            pintar();
+            return;
+        }
+        /* Lo tecleado en la hoja se guarda en memoria: el reloj de un minuto repinta, y sin
+           esto se perderia lo que la persona acaba de elegir. */
+        if (e.target.closest('[data-u1],[data-u2],[data-hi],[data-hf]')) leerBorrador();
     });
 
     pintar();

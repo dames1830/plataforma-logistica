@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba · Tareas en la app</title>
+<!--
+  MONTA LA PANTALLA DE TAREAS DE VERDAD Y LA REVISA.
+
+  No es una copia de la pantalla: importa `renderAppMovil` y mira el DOM que sale. Una
+  maqueta paralela probaria la maqueta, no el producto — y ya paso una vez, el 21-ago-2026,
+  que estuve cuatro vueltas mostrando un problema que solo existia en mi dibujo.
+
+  Se abre sin login a proposito: las contraseñas no se escriben en pruebas.
+-->
+<style>
+  body { margin:0; font:14px/1.5 system-ui, sans-serif; background:#0f172a; color:#e2e8f0; }
+  #informe { position:fixed; inset:auto 0 0 0; z-index: 9999; max-height:46vh; overflow:auto;
+             background:#0b1220; border-top:2px solid #334155; padding:.8rem 1rem; font-size:12.5px; }
+  #informe h3 { margin:.2rem 0 .6rem; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:#94a3b8; }
+  .ok  { color:#4ade80; } .mal { color:#f87171; font-weight:700; }
+  .li  { display:grid; grid-template-columns:2.2rem 1fr; gap:.5rem; padding:.12rem 0; }
+  #resumen { margin-top:.6rem; padding-top:.5rem; border-top:1px solid #334155; font-weight:700; }
+</style>
+</head>
+<body>
+<div id="informe"><h3>Probando…</h3><div id="lineas"></div><div id="resumen"></div></div>
+<script type="module">
+import { renderAppMovil } from '../js/views/app_movil.js';
+import * as adminService from '../js/services_v245/adminService.js';
+
+const lineas = document.getElementById('lineas');
+let fallos = 0;
+const ok = (cond, que, detalle) => {
+    if (!cond) fallos++;
+    const d = document.createElement('div');
+    d.className = 'li';
+    d.innerHTML = `<span class="${cond ? 'ok' : 'mal'}">${cond ? 'ok' : 'MAL'}</span>`
+                + `<span>${que}${detalle ? ` <span style="color:#64748b">· ${detalle}</span>` : ''}</span>`;
+    lineas.appendChild(d);
+    return cond;
+};
+const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => [...document.querySelectorAll(sel)];
+const toque = (el) => el && el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+/* Las tareas con las que se prueba: las 35 REALES del 12-09 de produccion, con sus estados,
+   operarios y horas. Se ponen en memoria, no en el servidor: la prueba no ensucia beta. */
+const CRUDAS = [
+ [1,'Bubblegummers',625,'Creada','','','',''], [2,'Bubblegummers',978,'Creada','','','',''],
+ [8,'Bubblegummers Licenses',1347,'Creada','','','',''],
+ [13,'North Star',4080,'Creada','','','',''],
+ [19,'North Star',340,'Finalizado','lfernandez','ncruz','20:15','21:05'],
+ [21,'Power',391,'Asignado','mpiscoya','kmalimba','21:12',''],
+ [23,'Power',161,'Finalizado','mpiscoya','kmalimba','20:14','20:54'],
+ [29,'Adidas',830,'Asignado','ncruz','lfernandez','21:05',''],
+ [31,'Adidas',1410,'Asignado','rlunazco','mparia','20:11',''],
+ [35,'Bata Industrials',444,'Creada','','','','']
+];
+const HOY = (() => { const d = new Date(), p = (x) => String(x).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; })();
+
+const sello = (h) => h ? `${HOY}T${h}:00` : '';
+const TAREAS = CRUDAS.map(([n,m,q,st,u1,u2,ini,fin]) => ({
+    id: `${HOY}_Tarea${n}`, fecha: HOY, marca: m, qty: q, status: st,
+    u1, u2, inicio: sello(ini), termino: sello(fin), creador: 'dames',
+    /* Un articulo FOOTWEAR / 04 SPORT, que es lo que son de verdad: asi la meta que
+       resuelve `metasService` es la misma que en produccion (400 u/h, 10 min de base). */
+    items: [{ sku7: '1613303', marca: m, gender: 'FOOTWEAR', genderRims: '04 SPORT',
+              bufferQty: q, zonaQty: 1,
+              items: [{ ubi: 'CDBUFFER-A-00-106', qty: q, talla: '25', avance: null }] }]
+}));
+
+const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
+
+(async () => {
+  try {
+    /* NO se le pasa el body: `renderAppMovil` LIMPIA el contenedor que recibe y se
+       llevaria el panel del informe. La app se cuelga sola del body igual. */
+    const descarte = document.createElement('div');
+    document.body.appendChild(descarte);
+    await renderAppMovil(descarte, YO, () => {});
+  } catch (e) {
+    ok(false, 'la app se monta', e && e.message);
+  }
+
+  /* Se siembran las tareas DESPUES de montar, porque al arrancar se traen las de beta. */
+  adminService.adminStore.almacenaje_tasks = TAREAS;
+
+  ok(!!$('#app-movil'), 'la app se monta');
+  const tabTareas = $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'tareas');
+  ok(!!tabTareas, 'existe la pestaña Tareas en la barra de abajo');
+
+  toque(tabTareas);
+  /* Se espera a que lleguen las metas: sin ellas el objetivo se calcula con el valor de
+     respaldo y los colores salen al reves. Es el defecto que esta prueba encontro. */
+  await esperar(1800);
+  adminService.adminStore.almacenaje_tasks = TAREAS;   // el "traer frescas" del tab pisa
+  toque($('[data-filtro="todas"]'));
+  await esperar(60);
+
+  /* ── 1. EL RANGO ────────────────────────────────────────────────────────────── */
+  const desde = $('[data-desde]'), hasta = $('[data-hasta]');
+  ok(desde && hasta, 'el rango tiene Desde y hasta, dos calendarios');
+  ok(desde && desde.value === HOY && hasta.value === HOY,
+     'arranca en el día de hoy', `${desde && desde.value}`);
+  ok($$('#app-movil .am-rango').length === 1 && !/hoy/i.test($('.am-rango').textContent),
+     'no hay atajo "Hoy"');
+  const eti = $$('#app-movil .am-rango .eti').map(e => e.textContent.trim().toLowerCase());
+  ok(eti.join('|') === 'desde|hasta', 'dice "Desde … hasta …" como la web', eti.join(' / '));
+
+  /* ── 2. LA LISTA ────────────────────────────────────────────────────────────── */
+  const filas = $$('#app-movil .am-tarea');
+  ok(filas.length === TAREAS.length, 'salen todas las tareas del día',
+     `${filas.length} de ${TAREAS.length}`);
+
+  const f1 = filas[0];
+  ok(f1 && f1.querySelector('.n') && f1.querySelector('.m .txt') && f1.querySelector('.q'),
+     'cada fila lleva número, marca y cantidad');
+  ok(f1 && f1.querySelector('.m .am-chapa'), 'la etiqueta de estado va al lado de la marca');
+  ok(f1 && /625/.test(f1.querySelector('.q').textContent),
+     'la cantidad es la de verdad', f1 && f1.querySelector('.q').textContent.trim());
+
+  const chapaDe = (n) => {
+    const f = filas.find(x => x.dataset.tarea.endsWith(`Tarea${n}`));
+    return f && f.querySelector('.am-chapa');
+  };
+  ok(chapaDe(1) && chapaDe(1).textContent.trim() === 'CREADA', 'Tarea1: CREADA');
+  ok(chapaDe(1) && chapaDe(1).classList.contains('ch-quieto'), 'CREADA va en plomo');
+  ok(chapaDe(21) && chapaDe(21).textContent.trim() === 'ASIGNADO', 'Tarea21: ASIGNADO');
+  ok(chapaDe(21) && chapaDe(21).classList.contains('ch-curso'), 'ASIGNADO va en ámbar');
+  ok(chapaDe(19) && chapaDe(19).textContent.trim() === 'FINALIZADO', 'Tarea19: FINALIZADO');
+  ok(chapaDe(19) && chapaDe(19).classList.contains('ch-va'),
+     'la que CUMPLIÓ va en verde', '340 pares en 50 min, permitido 61');
+  ok(chapaDe(23) && chapaDe(23).classList.contains('ch-mal'),
+     'la que NO CUMPLIÓ va en rojo', '161 pares en 40 min, permitido 34');
+
+  /* ── 3. LAS CÁPSULAS ────────────────────────────────────────────────────────── */
+  const caps = $$('#app-movil .am-filtro').map(b => b.textContent.trim());
+  ok(caps.length === 3, 'tres cápsulas', caps.join(' / '));
+  ok(/Sin asignar 5/.test(caps[0] || ''), 'cuenta las sin asignar', caps[0]);
+  ok(/En curso 3/.test(caps[1] || ''), 'cuenta las en curso', caps[1]);
+  ok(/Todas 10/.test(caps[2] || ''), 'cuenta todas', caps[2]);
+
+  /* ── 4. LA HOJA DEL REGISTRO ────────────────────────────────────────────────── */
+  const t21 = filas.find(x => x.dataset.tarea.endsWith('Tarea21'));
+  toque(t21);
+  await esperar(80);
+  const hoja = $('#app-movil .am-hoja');
+  ok(!!hoja, 'al tocar el registro se abre la hoja');
+  ok(hoja && /Tarea21/.test(hoja.textContent), 'la hoja es de esa tarea');
+  ok($('[data-u1]') && $('[data-u2]'), 'trae los dos usuarios');
+  ok($('[data-u1]').value === 'mpiscoya' && $('[data-u2]').value === 'kmalimba',
+     'con los operarios que tenía', `${$('[data-u1]').value} + ${$('[data-u2]').value}`);
+  ok($('[data-hi]') && $('[data-hf]'), 'trae las dos horas, editables');
+  ok($('[data-hi]').value === '21:12', 'la hora de inicio es la real', $('[data-hi]').value);
+  ok($('[data-hi]').type === 'time', 'la hora se edita con un reloj, no a mano');
+  ok(/Finalizar/.test($('[data-principal]').textContent),
+     'una asignada ofrece Finalizar');
+
+  /* ── 5. DÓNDE ESTÁ CADA BOTÓN ───────────────────────────────────────────────── */
+  const salir = $('[data-cerrar-hoja]');
+  ok(!!salir, 'existe Salir');
+  const caja = $('#app-movil .am-acciones').getBoundingClientRect();
+  const cs = salir.getBoundingClientRect();
+  const centroSalir = cs.left + cs.width / 2;
+  const centroCaja = caja.left + caja.width / 2;
+  ok(Math.abs(centroSalir - centroCaja) < 6, 'Salir está CENTRADO de verdad',
+     `${Math.round(centroSalir)} vs ${Math.round(centroCaja)} px`);
+  const borrar = $('[data-pide="eliminar"]').getBoundingClientRect();
+  ok(borrar.left > centroCaja, 'Eliminar está a la derecha del centro',
+     `${Math.round(borrar.left)} px`);
+  /* En un telefono no caben los tres en una fila -harian falta 426 px y hay 346-, asi que
+     van en dos: los peligrosos arriba a la derecha y Salir abajo, centrado. Queda mas
+     lejos del pulgar todavia, que era el motivo. */
+  ok(borrar.bottom <= cs.top + 2, 'Eliminar está en otra fila, encima de Salir',
+     `eliminar acaba en ${Math.round(borrar.bottom)}, salir empieza en ${Math.round(cs.top)}`);
+  ok(cs.bottom > borrar.bottom, 'Salir es lo más cercano al borde de abajo',
+     'donde descansa el pulgar');
+
+  /* ── 6. LA SEGUNDA PREGUNTA ─────────────────────────────────────────────────── */
+  toque($('[data-pide="eliminar"]'));
+  await esperar(80);
+  const conf = $('#app-movil .am-confirma');
+  ok(!!conf, 'Eliminar vuelve a preguntar, no borra');
+  ok(conf && /Esta acción es permanente/.test(conf.textContent),
+     'con el texto de la web', 'se borrará de todos los terminales');
+  toque($('[data-no]'));
+  await esperar(80);
+  ok(!$('#app-movil .am-confirma'), 'Cancelar cierra la pregunta');
+  ok(!!$('#app-movil .am-hoja'), 'y se vuelve a la hoja, no a la lista');
+
+  toque($('[data-pide="reiniciar"]'));
+  await esperar(80);
+  ok($('#app-movil .am-confirma') && /Se borrarán los usuarios/.test($('.am-confirma').textContent),
+     'Reiniciar también pregunta', 'con su propio texto');
+  toque($('[data-no]'));
+  await esperar(60);
+
+  /* ── 7. SALIR ───────────────────────────────────────────────────────────────── */
+  toque($('[data-cerrar-hoja]'));
+  await esperar(80);
+  ok(!$('#app-movil .am-hoja'), 'Salir cierra la hoja');
+  ok($$('#app-movil .am-tarea').length > 0, 'y se vuelve a la lista');
+
+  /* ── 8. EL DÍA SIN TAREAS ───────────────────────────────────────────────────── */
+  /* LAS DOS fechas: mover solo "Desde" hacia atras AMPLIA el rango, no lo cambia de dia,
+     y las tareas de hoy seguirian dentro. (Me equivoque en la primera version de esta
+     prueba y acuse a la pantalla de un fallo que era mio.) */
+  /* CADA `pintar()` REEMPLAZA EL DOM: hay que volver a buscar el campo despues de cada
+     cambio, o se le escribe a un elemento que ya no esta en la pantalla. */
+  const ponerFecha = async (cual, valor) => {
+      const el = $(`[data-${cual}]`);
+      el.value = valor;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      await esperar(120);
+  };
+  await ponerFecha('desde', '2026-01-05');
+  await ponerFecha('hasta', '2026-01-05');
+  ok($$('#app-movil .am-tarea').length === 0, 'un día sin tareas no muestra ninguna');
+  ok(/Sin tareas/.test($('#app-movil .am-cuerpo').textContent),
+     'dice "Sin tareas" y se queda vacía');
+
+  /* Un rango al reves -hasta antes que desde- no trae nada y no se le corrige la fecha
+     a nadie: el valor elegido se queda como se eligio. */
+  await ponerFecha('hasta', '2020-01-01');
+  ok($('[data-hasta]').value === '2020-01-01', 'no se le cambia la fecha que eligió',
+     $('[data-hasta]').value);
+  ok(/Sin tareas/.test($('#app-movil .am-cuerpo').textContent), 'un rango al revés no trae nada');
+
+  /* ── 9. EL OBJETIVO EN LA HOJA ──────────────────────────────────────────────── */
+  await ponerFecha('desde', HOY);
+  await ponerFecha('hasta', HOY);
+  adminService.adminStore.almacenaje_tasks = TAREAS;
+  toque($('[data-filtro="todas"]'));
+  await esperar(60);
+  toque($$('#app-movil .am-tarea').find(x => x.dataset.tarea.endsWith('Tarea23')));
+  await esperar(80);
+  const obj = $('#app-movil .am-objetivo');
+  ok(obj && /NO CUMPLIÓ/.test(obj.textContent), 'la hoja dice el objetivo', obj && obj.textContent.trim().replace(/\s+/g,' '));
+  ok(obj && obj.classList.contains('no'), 'y en rojo');
+  /* UN SOLO BOTON POR ACCION. En una finalizada el principal ya es "Guardar cambios": un
+     segundo "Guardar" al lado hace dudar de si hacen cosas distintas. */
+  ok($$('#app-movil .am-botones .am-btn').length === 1,
+     'una finalizada tiene un solo botón', $$('#app-movil .am-botones .am-btn').map(b => b.textContent.trim()).join(' / '));
+  ok(/Guardar cambios/.test($('[data-principal]').textContent), 'y dice Guardar cambios');
+  ok(/00:40/.test($('#app-movil .am-tres3').textContent), 'y el tiempo trabajado');
+
+  const res = document.getElementById('resumen');
+  res.className = fallos ? 'mal' : 'ok';
+  res.textContent = fallos ? `HAY ${fallos} FALLO(S)` : 'Todo correcto en la pantalla de verdad';
+  document.querySelector('#informe h3').textContent = fallos ? 'Con fallos' : 'Listo';
+  window.__resultado = { fallos, total: lineas.children.length };
+})();
+</script>
+</body>
+</html>
