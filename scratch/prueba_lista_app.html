@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba · Pasar lista en el celular</title>
+<!--
+  LOS DOS DEFECTOS QUE DANIEL VIO EN PRODUCCION, comprobados sobre la pantalla de verdad:
+
+    1. el nombre salia cortado ("Barazorda, Jua…")
+    2. al marcar a alguien del final, la lista saltaba al principio
+
+  Lo del recorte NO se mira: se mide. Un nombre esta cortado cuando su `scrollWidth` es
+  mayor que el ancho que tiene para dibujarse; eso es un hecho, no una impresion.
+-->
+<link rel="stylesheet" href="../css/main_v176.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body { margin:0; font:14px/1.5 system-ui, sans-serif; background:#0b1220; color:#e2e8f0; }
+  #informe { position:fixed; inset:0; z-index:99999; overflow:auto; background:#0b1220; padding:1rem 1.2rem 3rem; }
+  h2 { font-size:14px; margin:1.3rem 0 .5rem; letter-spacing:.06em; text-transform:uppercase;
+       color:#94a3b8; border-bottom:1px solid #1e293b; padding-bottom:.3rem; }
+  .li { display:grid; grid-template-columns:2.6rem 1fr auto; gap:.5rem; padding:.13rem 0;
+        font-size:12.5px; align-items:baseline; }
+  .ok { color:#4ade80; } .mal { color:#f87171; font-weight:700; }
+  .d { font-family:ui-monospace, monospace; font-size:11.5px; color:#64748b; }
+  #resumen { margin-top:1.3rem; padding-top:.7rem; border-top:2px solid #1e293b; font-weight:700; }
+</style>
+</head>
+<body>
+<div id="informe"><h1 style="font-size:17px;margin:.2rem 0 .8rem">Probando Pasar lista…</h1><div id="salida"></div><div id="resumen"></div></div>
+<script type="module">
+import { renderAppMovil } from '../js/views/app_movil.js';
+import * as adminService from '../js/services_v245/adminService.js';
+import * as temaService from '../js/services_v245/temaService.js';
+
+const salida = document.getElementById('salida');
+let fallos = 0, total = 0;
+const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const ok = (cond, que, det) => {
+    total++;
+    if (!cond) fallos++;
+    const d = document.createElement('div');
+    d.className = 'li';
+    d.innerHTML = `<span class="${cond?'ok':'mal'}">${cond?'ok':'MAL'}</span><span>${que}</span><span class="d">${det||''}</span>`;
+    salida.appendChild(d);
+};
+const titulo = (t) => { const h = document.createElement('h2'); h.textContent = t; salida.appendChild(h); };
+
+/* LOS NOMBRES REALES de su captura de producción, con los más largos incluidos: si entran
+   estos, entran todos. */
+const GENTE = [
+  ['74821779','Gian Paulo','Alata Curo'], ['47252019','Juan Carlos','Barazorda Quispe'],
+  ['74881905','Maria Elena','Bravo Ramos'], ['77498772','Luis Alberto','Bujaico Flores'],
+  ['76528834','Jose Antonio','Casafrancaá Mendoza'], ['46610910','Rosa Maria','Casahuaman Huaman'],
+  ['70112233','Kimberly','Malimba Sanchez'], ['70445566','Manuel Alberto','Piscoya Diaz'],
+  ['70778899','Noe','Cruz Vera'], ['71001122','Rosa','Lunazco Paredes'],
+  ['71334455','Marleny','Paria Quispe'], ['71667788','Lucia','Fernandez Rojas']
+];
+/* Se rellena hasta 38, como su turno de anoche, para que la lista haya que desplazarla. */
+while (GENTE.length < 38) {
+  const i = GENTE.length;
+  GENTE.push([String(80000000 + i), 'Operario ' + i, 'Apellido' + i + ' Segundo' + i]);
+}
+
+const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
+
+(async () => {
+  const descarte = document.createElement('div');
+  document.body.appendChild(descarte);
+  try { await renderAppMovil(descarte, YO, () => {}); }
+  catch (e) { ok(false, 'la app se monta', e && e.message); }
+
+  /* Se siembra la gente del turno, con el mismo formato que usa `adminService`. */
+  adminService.adminStore.workers = GENTE.map(([dni, nombre, apellidos]) => ({
+    /* `puesto`, no `cargo`: es lo que mira `gentePorLista`, y tiene que ser uno de
+       CARGOS_ASISTENCIA o la persona no entra en la lista. */
+    dni, nombre, apellidos, active: true, turno: 'NOCHE', puesto: 'ALMACENAJE'
+  }));
+
+  $('#informe').style.pointerEvents = 'none';
+  const tab = $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'lista');
+  tab.click();
+  await esperar(1600);
+
+  const filas = $$('#app-movil .am-persona');
+  ok(filas.length > 0, 'la lista trae gente', filas.length + ' personas');
+
+  for (const T of temaService.TEMAS) {
+    temaService.aplicarTema(T.id);
+    await esperar(150);
+    titulo(T.nombre);
+
+    /* ── 1. ¿ENTRA EL NOMBRE? ─────────────────────────────────────────────────
+       `scrollWidth > clientWidth` significa que el texto NO cabe y se está
+       recortando con puntos suspensivos. Es medible, no opinable. */
+    const nombres = $$('#app-movil .am-persona .nm');
+    const cortados = nombres.filter(n => n.scrollWidth > n.clientWidth + 1);
+    ok(cortados.length === 0, 'ningún nombre sale cortado',
+       cortados.length ? cortados.slice(0,3).map(n => n.textContent).join(' · ')
+                       : nombres.length + ' nombres, el más largo ' +
+                         Math.max(...nombres.map(n => n.scrollWidth)) + 'px de ' +
+                         nombres[0].clientWidth + 'px');
+
+    /* ── 2. LAS COLUMNAS CUADRAN CON SU ENCABEZADO ───────────────────────────── */
+    const enc = getComputedStyle($('#app-movil .am-encabezado')).gridTemplateColumns;
+    const fila = getComputedStyle($('#app-movil .am-persona')).gridTemplateColumns;
+    ok(enc === fila, 'el encabezado y las filas usan las mismas columnas', enc);
+
+    ok(/Asistencia/.test($('#app-movil .am-encabezado').textContent),
+       'la columna se llama Asistencia', $('#app-movil .am-encabezado').textContent.replace(/\s+/g,' ').trim());
+
+    /* ── 3. SE LEE ──────────────────────────────────────────────────────────── */
+    const canal = (c) => { c/=255; return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4); };
+    const luz = ([r,g,b]) => 0.2126*canal(r)+0.7152*canal(g)+0.0722*canal(b);
+    const rgb = (t) => (String(t).match(/\d+/g)||[0,0,0]).slice(0,3).map(Number);
+    const cont = (a,b) => { const L1=luz(a),L2=luz(b); return (Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05); };
+    const fondoFila = rgb(getComputedStyle($('#app-movil .am-persona')).backgroundColor);
+    const rNombre = cont(rgb(getComputedStyle(nombres[0]).color), fondoFila);
+    ok(rNombre >= 4.5, 'el nombre se lee', rNombre.toFixed(2) + ' : 1');
+    const dni = $('#app-movil .am-persona .dni');
+    ok(cont(rgb(getComputedStyle(dni).color), fondoFila) >= 4.5, 'el DNI se lee',
+       cont(rgb(getComputedStyle(dni).color), fondoFila).toFixed(2) + ' : 1');
+  }
+
+  temaService.aplicarTema('indigo');
+  await esperar(150);
+
+  /* ── 4. EL SCROLL NO SALTA AL MARCAR ──────────────────────────────────────── */
+  titulo('Marcar a alguien del final');
+  const cuerpo = $('#app-movil .am-cuerpo');
+  cuerpo.scrollTop = cuerpo.scrollHeight;
+  await esperar(120);
+  const antes = cuerpo.scrollTop;
+  ok(antes > 200, 'la lista se puede desplazar hasta abajo', antes + 'px');
+
+  const ultimos = $$('#app-movil .am-persona [data-falto]');
+  const elUltimo = ultimos[ultimos.length - 1];
+  elUltimo.click();
+  await esperar(250);
+  const despues = $('#app-movil .am-cuerpo').scrollTop;
+  ok(Math.abs(despues - antes) < 30, 'al marcar FALTÓ la lista NO salta al principio',
+     `estaba en ${antes}px y quedó en ${despues}px`);
+
+  /* Y que la marca haya quedado puesta, no solo que no se mueva. */
+  const marcada = $$('#app-movil .am-persona').filter(p => p.classList.contains('falto'));
+  ok(marcada.length === 1, 'la falta quedó marcada', marcada.length + ' con falta');
+
+  /* ── 5. AL CAMBIAR DE PANTALLA SÍ VUELVE ARRIBA ───────────────────────────── */
+  $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'inicio').click();
+  await esperar(200);
+  $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'lista').click();
+  await esperar(900);
+  ok($('#app-movil .am-cuerpo').scrollTop === 0, 'al volver a entrar, arranca arriba',
+     $('#app-movil .am-cuerpo').scrollTop + 'px');
+
+  const res = document.getElementById('resumen');
+  res.className = fallos ? 'mal' : 'ok';
+  res.textContent = fallos ? `HAY ${fallos} FALLO(S) de ${total}` : `Las ${total} comprobaciones, correctas`;
+  document.querySelector('#informe h1').textContent = fallos ? 'Con fallos' : 'Listo';
+  window.__resultado = { fallos, total };
+})();
+</script>
+</body>
+</html>

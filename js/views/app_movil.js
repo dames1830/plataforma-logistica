@@ -25,21 +25,24 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0758';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0758';
+import * as adminService from '../services_v245/adminService.js?v=29.0759';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0759';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0758';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0758';
-import * as metasService from '../services_v245/metasService.js?v=29.0758';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0759';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0759';
+import * as metasService from '../services_v245/metasService.js?v=29.0759';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0758';
+import * as temaService from '../services_v245/temaService.js?v=29.0759';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
    clara siempre, tambien cuando la web esta en el tema Negro. */
+/* OJO AL EDITAR: todo esto vive dentro de un TEMPLATE LITERAL, asi que un backtick
+   en un comentario lo CORTA y la app deja de cargar entera. Paso tres veces el
+   12-sep-2026. Para citar una propiedad o un valor, comillas simples. */
 const CSS = `
 #app-movil {
   --am-papel: #EEF2F1; --am-carta: #FFFFFF; --am-linea: #DCE4E2;
@@ -274,36 +277,48 @@ const CSS = `
    La del motivo existe siempre -vacia en quien asistio- para que quede alineada de arriba
    abajo, que es lo que hace que se lea como columna y no como un remiendo. */
 #app-movil .am-persona { background: var(--am-carta); border: 1px solid var(--am-linea);
-  border-radius: 11px; padding: 0.5rem 0.55rem; display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 86px; align-items: center;
-  gap: 0.55rem; min-width: 0; transition: border-color .15s ease, background .15s ease; }
-#app-movil .am-persona.falto { border-color: #E7BEBC; background: #FDF7F7; }
+  border-radius: 11px; padding: 0.5rem 0.5rem; display: grid;
+  /* LAS TRES COLUMNAS, EXPLICITAS Y IGUALES A LAS DEL ENCABEZADO. Antes la del medio era
+     'auto' -o sea, lo que midieran los botones- y la del nombre se quedaba con las sobras:
+     salia "Barazorda, Jua…". Ahora el nombre se lleva todo lo que no esta reservado. */
+  grid-template-columns: minmax(0, 1fr) 88px 68px; align-items: center;
+  gap: 0.45rem; min-width: 0;
+  /* La transicion va SOLO en el borde. Sobre 'background' no sirve: cuando el color sale
+     de una variable y la variable cambia -al cambiar de tema-, el elemento se queda con
+     el color viejo hasta que lo vuelvan a crear. */
+  transition: border-color .15s ease; }
+/* El tinte de quien falto, tambien por tema: #FDF7F7 es un rosa de papel blanco y sobre
+   un fondo oscuro se veria como un parche. */
+#app-movil .am-persona.falto { border-color: var(--am-tarde); background: var(--am-tarde-agua); }
 #app-movil .am-persona .quien { min-width: 0; }
 /* display:block en los dos: como span sueltos, el nombre y el DNI salian pegados en la
    misma linea -"Gian AlataDNI 74821779"- y el recorte con puntos suspensivos no aplicaba. */
-#app-movil .am-persona .nm { display: block; font-weight: 650; font-size: 0.88rem; letter-spacing: -.005em;
+#app-movil .am-persona .nm { display: block; font-weight: 650; font-size: 0.83rem; letter-spacing: -.008em;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #app-movil .am-persona .dni { display: block; font-family: var(--am-num); font-size: 0.64rem;
   color: var(--am-tenue); line-height: 1.3; }
-#app-movil .am-persona .marcas { display: flex; gap: 0.25rem; }
-#app-movil .am-persona .marcas button { font-family: var(--am-ui); font-size: 0.68rem; font-weight: 700;
-  padding: 0.42rem 0.4rem; border-radius: 8px; border: 1.5px solid var(--am-linea);
-  background: var(--am-carta); color: var(--am-tenue); cursor: pointer; min-width: 46px; }
+#app-movil .am-persona .marcas { display: flex; gap: 0.22rem; min-width: 0; }
+#app-movil .am-persona .marcas button { font-family: var(--am-ui); font-size: 0.66rem; font-weight: 700;
+  padding: 0.42rem 0.15rem; border-radius: 8px; border: 1.5px solid var(--am-linea);
+  background: var(--am-carta); color: var(--am-tenue); cursor: pointer;
+  flex: 1; min-width: 0; }
 #app-movil .am-persona .motivo { min-width: 0; }
-#app-movil .am-persona .motivo select { width: 100%; font-family: var(--am-ui); font-size: 0.7rem;
-  padding: 0.4rem 0.3rem; border-radius: 8px; border: 1px solid #E7BEBC; background: var(--am-carta);
+#app-movil .am-persona .motivo select { width: 100%; font-family: var(--am-ui); font-size: 0.66rem;
+  padding: 0.4rem 0.15rem; border-radius: 8px; border: 1px solid var(--am-tarde); background: var(--am-carta);
   color: var(--am-tinta); }
-#app-movil .am-persona .motivo .nada { display: block; text-align: center; color: #C6D0CE; font-size: 0.8rem; }
+#app-movil .am-persona .motivo .nada { display: block; text-align: center; color: var(--am-linea); font-size: 0.8rem; }
 #app-movil .am-persona .marcas button.si-vino { background: var(--am-relleno); border-color: var(--am-relleno); color: var(--am-sobre); }
-#app-movil .am-persona .marcas button.si-falto { background: var(--am-tarde); border-color: var(--am-tarde); color: #fff; }
+#app-movil .am-persona .marcas button.si-falto { background: var(--am-tarde); border-color: var(--am-tarde); color: var(--am-papel); }
 #app-movil .am-persona .marcas button:disabled { opacity: .55; cursor: default; }
 
 /* La cabecera de la lista, con el nombre de cada columna: sin esto, dos botones y un
    desplegable sueltos no se leen como una tabla. */
-#app-movil .am-encabezado { display: grid; grid-template-columns: minmax(0, 1fr) auto 86px;
-  gap: 0.55rem; padding: 0 0.55rem; font-family: var(--am-num); font-size: 0.58rem;
-  letter-spacing: .1em; text-transform: uppercase; color: var(--am-tenue); font-weight: 700; }
-#app-movil .am-encabezado .c2 { min-width: 96px; text-align: center; }
+/* EL BORDE TRANSPARENTE NO ES ADORNO: las filas llevan uno de 1px, y sin el aqui la
+   columna elastica del encabezado mide 2px mas y los titulos quedan corridos. */
+#app-movil .am-encabezado { display: grid; grid-template-columns: minmax(0, 1fr) 88px 68px;
+  gap: 0.45rem; padding: 0 0.5rem; border: 1px solid transparent; font-family: var(--am-num); font-size: 0.56rem;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--am-tenue); font-weight: 700; }
+#app-movil .am-encabezado .c2 { text-align: center; }
 #app-movil .am-encabezado .c3 { text-align: center; }
 
 /* EL RESUMEN: la cifra manda, el boton acompaña. */
@@ -480,6 +495,8 @@ let raiz = null;
 let seccion = 'inicio';
 /* El menu de arriba: null cerrado, 'raiz' el primer nivel, 'temas' o 'avisos' ya dentro. */
 let menu = null;
+/* La ultima pantalla dibujada, para saber si hay que volver el scroll arriba o no. */
+let _ultimaPintada = null;
 let YO = null;
 let alSalir = null;
 let reloj = null;
@@ -1017,7 +1034,7 @@ const pantallaLista = () => {
             : ''}
 
         <div class="am-seccion">${listaCerrada ? 'Lista cerrada del turno' : 'Turno noche'}</div>
-        <div class="am-encabezado"><span>Persona</span><span class="c2">Asistió / Faltó</span><span class="c3">Motivo</span></div>
+        <div class="am-encabezado"><span>Persona</span><span class="c2">Asistencia</span><span class="c3">Motivo</span></div>
         ${gente}
 
         ${listaCerrada ? '' : '<p class="am-nota">Al guardar, la lista queda cerrada y pasa al historial. Solo el administrador puede reabrirla.</p>'}
@@ -1669,7 +1686,11 @@ const pintar = () => {
         : seccion === 'tareas' ? (pantallaTareas() + hojaDeTarea())
         : seccion === 'avisos' ? pantallaAvisos()
         : pantallaEnCamino(seccion);
-    cuerpo.scrollTop = 0;
+    /* EL SCROLL SOLO SE REINICIA AL CAMBIAR DE PANTALLA. Antes se reiniciaba en CADA
+       repintado, y marcar a alguien repinta: con 38 personas, tocar "Faltó" en el ultimo
+       devolvia la lista al principio y habia que volver a bajar. Lo vio Daniel en
+       produccion pasando lista. */
+    if (seccion !== _ultimaPintada) { cuerpo.scrollTop = 0; _ultimaPintada = seccion; }
 
     const capa = raiz.querySelector('.am-capa-menu');
     capa.innerHTML = menu ? `<div class="am-velo-menu" data-velo-menu>${panelMenu()}</div>` : '';
