@@ -25,11 +25,11 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0754';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0754';
+import * as adminService from '../services_v245/adminService.js?v=29.0755';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0755';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0754';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0755';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -90,10 +90,11 @@ const CSS = `
   padding: 0.7rem 0.85rem; display: flex; align-items: center; gap: 0.7rem; min-width: 0; }
 #app-movil .am-fila .cinta { width: 3px; align-self: stretch; border-radius: 2px; flex-shrink: 0; }
 #app-movil .am-fila .medio { flex: 1; min-width: 0; }
-#app-movil .am-fila .t { font-weight: 640; font-size: 0.87rem; letter-spacing: -0.005em;
+/* display:block en los dos: como spans sueltos, el titulo y el detalle salian pegados en la
+   misma linea -"Cada robot que correComo le fue..."-. */
+#app-movil .am-fila .t { display: block; font-weight: 640; font-size: 0.87rem; letter-spacing: -0.005em;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#app-movil .am-fila .d { font-size: 0.72rem; color: var(--am-tenue);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#app-movil .am-fila .d { display: block; font-size: 0.72rem; color: var(--am-tenue); line-height: 1.35; }
 #app-movil .am-chapa { font-family: var(--am-num); font-size: 0.58rem; font-weight: 700;
   letter-spacing: .08em; text-transform: uppercase; padding: 0.2rem 0.45rem; border-radius: 3px; white-space: nowrap; }
 #app-movil .ch-va { background: var(--am-va-agua); color: var(--am-va); }
