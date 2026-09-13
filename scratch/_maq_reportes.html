@@ -1,0 +1,480 @@
+<meta charset="utf-8">
+<title>Almacenaje por marcas</title>
+<style>
+  :root{
+    --papel:#EEF2F1; --carta:#FFFFFF; --linea:#DCE4E2;
+    --tinta:#131C1F; --suave:#4A5D63; --tenue:#6C7B80;
+    --va:#0B5F52;    --va-agua:#E0EFEC;
+    --curso:#B26A00; --curso-agua:#F8EEDC;
+    --tarde:#98302E;
+    --ui:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    --num:"Cascadia Mono",ui-monospace,"SF Mono",Consolas,monospace;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --pag:#F6F8F7; --pag-linea:#E2E8E6; --pag-tinta:#131C1F;
+    --pag-suave:#4A5D63; --pag-tenue:#6C7B80; --pag-chip:#EEF2F1;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --pag:#11181A; --pag-linea:#253133; --pag-tinta:#E8EFED;
+      --pag-suave:#A8B8BA; --pag-tenue:#7E8F92; --pag-chip:#1B2427;
+    }
+  }
+  :root[data-theme="dark"]{
+    --pag:#11181A; --pag-linea:#253133; --pag-tinta:#E8EFED;
+    --pag-suave:#A8B8BA; --pag-tenue:#7E8F92; --pag-chip:#1B2427;
+  }
+
+  body{ background:var(--pag); color:var(--pag-tinta); font-family:var(--ui);
+        font-size:15px; line-height:1.5; }
+  .ancho{ max-width:1180px; margin-inline:auto; padding:2.2rem 1.1rem 4rem; }
+
+  .kicker{ font-family:var(--num); font-size:.66rem; letter-spacing:.16em;
+           text-transform:uppercase; color:var(--pag-tenue); }
+  h1{ font-family:var(--serif); font-size:clamp(1.9rem,4.4vw,2.6rem); line-height:1.1;
+      margin:.35rem 0 .7rem; font-weight:600; text-wrap:balance; color:var(--pag-tinta); }
+  h2.sec{ font-family:var(--serif); font-size:1.45rem; font-weight:600;
+          margin:3rem 0 .3rem; color:var(--pag-tinta); }
+  .bajada{ color:var(--pag-suave); max-width:66ch; margin:0 0 .5rem; }
+  .bajada strong{ color:var(--pag-tinta); font-weight:650; }
+
+  .dos{ display:grid; gap:2.4rem; margin-top:1.6rem;
+        grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); align-items:start; }
+  .cuadro{ display:flex; flex-direction:column; gap:.8rem; }
+  .rotulo h3{ font-family:var(--serif); font-size:1.14rem; font-weight:600; margin:0;
+              color:var(--pag-tinta); }
+  .rotulo p{ margin:.2rem 0 0; font-size:.86rem; color:var(--pag-tenue); }
+
+  /* ── El teléfono ────────────────────────────────────────────────────────── */
+  .tel{ background:var(--papel); border:1px solid var(--linea); border-radius:20px;
+        overflow:hidden; box-shadow:0 1px 2px rgba(19,28,31,.05),0 14px 34px rgba(19,28,31,.10);
+        display:flex; flex-direction:column; height:700px; color-scheme:light;
+        position:relative; }
+
+  /* LA BARRA DE ARRIBA, NUEVA. El titulo a la izquierda y el menu a la derecha: esta en
+     TODOS los modulos, no solo en Inicio. */
+  .cab{ padding:.65rem .8rem .55rem .95rem; background:var(--papel);
+        border-bottom:1px solid var(--linea); flex:none;
+        display:grid; grid-template-columns:1fr auto; align-items:center; gap:.5rem; }
+  .cab .sub{ font-family:var(--num); font-size:.62rem; letter-spacing:.05em;
+             text-transform:uppercase; color:var(--tenue); }
+  .cab h4{ margin:.05rem 0 0; font-size:1.26rem; font-weight:700; color:var(--tinta);
+           letter-spacing:-.01em; }
+  .menu-btn{ grid-row:1/3; width:38px; height:38px; border-radius:10px; border:1px solid var(--linea);
+             background:var(--carta); color:var(--suave); display:grid; place-items:center;
+             cursor:pointer; }
+
+  .cuerpo{ flex:1; overflow-y:auto; padding:.8rem .7rem 1rem; display:flex;
+           flex-direction:column; gap:.55rem; }
+  .cuerpo::-webkit-scrollbar{ width:0 }
+
+  /* El titulo del reporte, con el compartir al costado */
+  .encabeza{ display:flex; align-items:center; gap:.5rem; margin:.1rem .1rem 0; }
+  .encabeza .t{ font-size:1.02rem; font-weight:700; color:var(--tinta); letter-spacing:-.01em; }
+  .compartir{ margin-left:auto; width:34px; height:34px; border-radius:9px; flex:none;
+              border:1px solid var(--va); background:var(--va-agua); color:var(--va);
+              display:grid; place-items:center; cursor:pointer; }
+
+  .rango{ display:grid; grid-template-columns:auto 1fr 1fr; align-items:center;
+          gap:.2rem .7rem; background:var(--carta); border:1px solid var(--linea);
+          border-radius:10px; padding:.45rem .7rem; flex:none; }
+  .rango > svg{ grid-row:1/3; color:var(--va); }
+  .rango .eti{ font-size:.6rem; font-weight:800; letter-spacing:.05em;
+               text-transform:uppercase; color:var(--tenue); }
+  .rango input{ background:transparent; border:none; padding:0; width:100%;
+                font-family:var(--num); font-size:.82rem; font-weight:700;
+                color:var(--tinta); outline:none; cursor:pointer; color-scheme:light; }
+
+  .resumen{ background:var(--carta); border:1px solid var(--linea); border-radius:13px;
+            padding:.85rem .9rem .8rem; }
+  .resumen .rot{ font-family:var(--num); font-size:.6rem; letter-spacing:.1em;
+                 text-transform:uppercase; color:var(--tenue); }
+  .resumen .gran{ font-family:var(--num); font-variant-numeric:tabular-nums;
+                  font-size:2.5rem; font-weight:700; line-height:1; letter-spacing:-.03em;
+                  color:var(--va); margin:.15rem 0 .1rem; }
+  .resumen .de{ font-size:.8rem; color:var(--suave); }
+  .resumen .de b{ font-family:var(--num); color:var(--tinta); font-weight:700; }
+  .barra{ height:8px; background:var(--papel); border-radius:5px; overflow:hidden; margin-top:.6rem; }
+  .barra > i{ display:block; height:100%; background:var(--va); border-radius:5px; }
+  .resumen .pie{ display:flex; justify-content:space-between; align-items:baseline;
+                 margin-top:.35rem; font-family:var(--num); font-size:.66rem; color:var(--tenue); }
+  .resumen .pie b{ color:var(--va); font-size:.84rem; }
+
+  /* ── UN BUFFER ───────────────────────────────────────────────────────────
+     No dice "A" ni "B" en el codigo: se agrupa por lo que venga. El dia que
+     aparezca un CDBUFFER-D sale solo, sin tocar nada. */
+  .buffer{ background:var(--carta); border:1px solid var(--linea); border-radius:12px;
+           overflow:hidden; }
+  .buffer > .tapa{ display:flex; align-items:baseline; justify-content:space-between;
+                   gap:.5rem; padding:.5rem .7rem; background:var(--va-agua);
+                   border-bottom:1px solid var(--linea); }
+  .buffer > .tapa b{ font-family:var(--num); font-size:.72rem; font-weight:700;
+                     letter-spacing:.06em; color:var(--va); }
+  .buffer > .tapa span{ font-family:var(--num); font-size:.68rem; color:var(--va); opacity:.8;
+                        font-variant-numeric:tabular-nums; }
+  .marca{ padding:.5rem .7rem .55rem; border-top:1px solid var(--linea); }
+  .buffer .marca:first-of-type{ border-top:none; }
+  .marca .alto{ display:flex; align-items:baseline; justify-content:space-between; gap:.6rem; }
+  .marca .nom{ font-size:.88rem; font-weight:600; color:var(--tinta); overflow:hidden;
+               text-overflow:ellipsis; white-space:nowrap; }
+  .marca .cifras{ font-family:var(--num); font-variant-numeric:tabular-nums;
+                  font-size:.82rem; white-space:nowrap; }
+  .marca .cifras b{ color:var(--tinta); font-weight:700; }
+  .marca .cifras span{ color:var(--tenue); }
+  .marca .bajo{ display:flex; align-items:center; gap:.55rem; margin-top:.38rem; }
+  .marca .bajo .b{ flex:1; height:6px; background:var(--papel); border-radius:4px; overflow:hidden; }
+  .marca .bajo .b > i{ display:block; height:100%; border-radius:4px; background:var(--va); }
+  .marca .pct{ font-family:var(--num); font-size:.74rem; font-weight:700; min-width:3.4ch;
+               text-align:right; }
+  .marca.cero .pct{ color:var(--tenue); } .marca.cero .bajo .b > i{ background:var(--linea); }
+  .marca.poco .pct{ color:var(--curso); } .marca.poco .bajo .b > i{ background:var(--curso); }
+  .marca.bien .pct{ color:var(--va); }
+
+  .total{ background:var(--va); color:#fff; border-radius:11px; padding:.6rem .75rem;
+          display:flex; align-items:baseline; justify-content:space-between; }
+  .total .t{ font-size:.78rem; font-weight:700; letter-spacing:.02em; }
+  .total .c{ font-family:var(--num); font-variant-numeric:tabular-nums; font-size:.88rem;
+             font-weight:700; }
+
+  /* CUATRO pestañas: Avisos se fue al menu de arriba. */
+  .pie-app{ display:grid; grid-template-columns:repeat(4,1fr); background:var(--carta);
+            border-top:1px solid var(--linea); flex:none; }
+  .pie-app div{ padding:.5rem .2rem .55rem; text-align:center; font-size:.62rem;
+                color:var(--tenue); }
+  .pie-app div.on{ color:var(--va); font-weight:700; }
+  .pie-app svg{ display:block; margin:0 auto .18rem; }
+
+  /* ── EL MENU DE ARRIBA ──────────────────────────────────────────────────── */
+  .velo{ position:absolute; inset:0; background:rgba(19,28,31,.45); display:flex;
+         align-items:flex-start; justify-content:flex-end; padding:.6rem; border-radius:20px; }
+  .panel{ background:var(--carta); border-radius:14px; width:min(85%,260px); overflow:hidden;
+          box-shadow:0 12px 34px rgba(19,28,31,.28); }
+  .panel .gr{ font-family:var(--num); font-size:.55rem; letter-spacing:.12em;
+              text-transform:uppercase; color:var(--tenue); padding:.7rem .8rem .25rem; }
+  .panel a{ display:flex; align-items:center; gap:.55rem; padding:.6rem .8rem;
+            font-size:.88rem; color:var(--tinta); border-top:1px solid var(--linea);
+            cursor:pointer; }
+  .panel a .ch{ margin-left:auto; font-family:var(--num); font-size:.6rem; color:var(--tenue); }
+  .panel a.sel{ color:var(--va); font-weight:700; }
+  .panel a.sel .ch{ color:var(--va); }
+  .swatch{ width:15px; height:15px; border-radius:4px; flex:none; border:1px solid rgba(0,0,0,.12); }
+
+  /* ── LA LÁMINA QUE SE MANDA POR WHATSAPP ────────────────────────────────── */
+  .lamina-caja{ margin-top:1.2rem; overflow-x:auto; }
+  .lamina{ min-width:620px; border-radius:12px; overflow:hidden;
+           font-family:'Inter', system-ui, sans-serif; }
+  .lamina .top{ display:flex; align-items:center; justify-content:space-between; gap:1rem;
+                padding:.7rem 1rem; }
+  .lamina .top .tt{ font-weight:900; font-size:1.05rem; letter-spacing:.04em; }
+  .lamina .top .sy{ font-size:.62rem; font-weight:700; letter-spacing:.04em; }
+  .lamina table{ width:100%; border-collapse:collapse; font-size:.76rem; }
+  .lamina th{ padding:.42rem .6rem; text-transform:uppercase; font-size:.6rem;
+              font-weight:800; letter-spacing:.05em; text-align:center; }
+  .lamina th:nth-child(1), .lamina th:nth-child(2){ text-align:left; }
+  .lamina td{ padding:.34rem .6rem; text-align:center; font-variant-numeric:tabular-nums; }
+  .lamina td:nth-child(1), .lamina td:nth-child(2){ text-align:left; }
+  .lamina tr.sub td, .lamina tr.granT td{ font-weight:900; }
+
+  .botonera{ display:flex; gap:.45rem; flex-wrap:wrap; margin-top:1rem; }
+  .botonera button{ font-family:var(--num); font-size:.66rem; letter-spacing:.06em;
+                    text-transform:uppercase; font-weight:700; padding:.42rem .75rem;
+                    border-radius:8px; border:1px solid var(--pag-linea);
+                    background:var(--pag-chip); color:var(--pag-suave); cursor:pointer; }
+  .botonera button[aria-pressed="true"]{ background:var(--pag-tinta); color:var(--pag);
+                                         border-color:var(--pag-tinta); }
+
+  .notas{ margin-top:3rem; border-top:1px solid var(--pag-linea); padding-top:1.5rem;
+          display:grid; gap:1.4rem; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); }
+  .nota h4{ font-family:var(--serif); font-size:1.02rem; font-weight:600; margin:0 0 .35rem;
+            color:var(--pag-tinta); }
+  .nota p{ margin:0 0 .45rem; font-size:.88rem; color:var(--pag-suave); }
+  .nota p:last-child{ margin-bottom:0 }
+  .nota .ojo{ color:#C4514E; font-weight:600; }
+  code{ font-family:var(--num); font-size:.85em; background:var(--pag-chip);
+        padding:.08em .32em; border-radius:4px; color:#2E8F7D; }
+  .dato{ font-family:var(--num); font-size:.78rem; color:var(--pag-tenue);
+         border-top:1px solid var(--pag-linea); margin-top:2rem; padding-top:.8rem; }
+</style>
+
+<div class="ancho">
+
+  <p class="kicker">Maqueta · segunda vuelta</p>
+  <h1>Almacenaje por marcas</h1>
+  <p class="bajada">Ahora <strong>separado por buffer</strong>, con el botón de compartir
+     y el menú de arriba. Los números son los de tu captura de las 22:43.</p>
+
+  <div class="dos" id="telefonos"></div>
+
+  <h2 class="sec">Lo que sale al compartir</h2>
+  <p class="bajada">La misma lámina que mandas hoy al grupo: <strong>las ocho columnas, los
+     subtotales por buffer y el total general</strong>. Cambia con el tema — prueba los
+     cuatro.</p>
+  <div class="botonera" id="temas"></div>
+  <div class="lamina-caja"><div class="lamina" id="lamina"></div></div>
+
+  <div class="notas">
+    <div class="nota">
+      <h4>Se agrupa por lo que venga</h4>
+      <p>En el código no dice «A» ni «B» en ningún lado: se agrupa por el buffer que traiga
+         cada ubicación. El día que aparezca un <strong>CDBUFFER-D</strong> sale solo, con
+         su subtotal, sin tocar nada.</p>
+      <p>Es lo que ya hace <code>datosMarcas()</code> para la web.</p>
+    </div>
+    <div class="nota">
+      <h4>La lámina no es una captura</h4>
+      <p>Se dibuja en el teléfono con los mismos datos y los colores del tema elegido, igual
+         que la foto de la asistencia. Sale nítida, no pixeleada como un pantallazo.</p>
+      <p>Al tocar compartir se abre el WhatsApp del teléfono con la imagen lista.</p>
+    </div>
+    <div class="nota">
+      <h4>Avisos se fue del menú de abajo</h4>
+      <p>Como pediste. Quedan <strong>cuatro pestañas</strong> —Inicio, Reportes, Tareas,
+         Asistencia— y Avisos pasa al menú de arriba, junto con Temas.</p>
+      <p>El menú está en <strong>todos los módulos</strong>, no solo en Inicio.</p>
+    </div>
+    <div class="nota">
+      <h4>Una duda sobre los temas</h4>
+      <p class="ojo">Necesito tu respuesta.</p>
+      <p>El tema cambia <strong>la lámina</strong>, eso es seguro. ¿Quieres que cambie
+         también <strong>la app entera</strong>?</p>
+      <p>Lo pregunto porque la regla 4 de la maqueta que aprobaste dice fondo claro siempre,
+         y la razón era buena: <em>un chofer en la calle a mediodía no ve una pantalla
+         oscura</em>. Tú decides.</p>
+    </div>
+  </div>
+
+  <p class="dato">Paleta de <code>app_movil.js</code> · las cuentas y los temas de la lámina,
+     de <code>js/reportes/marcas.js</code> · los colores, de <code>css/temas.css</code></p>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════════
+   LOS DATOS DE SU FOTO — reporte del 12-09-2026, sync 22:43.
+   [area, marca, buffer, dia, noche]
+   ══════════════════════════════════════════════════════════════════════════════ */
+const CRUDO = [
+  ['CDBUFFER-B','Bata Industrials',   810, 0,   0],
+  ['CDBUFFER-B','Bubblegummers',      204, 0,   0],
+  ['CDBUFFER-B','North Star',         436, 0, 340],
+  ['CDBUFFER-B','Power',              552, 0, 552],
+  ['CDBUFFER-A','Adidas',            4721, 0,   0],
+  ['CDBUFFER-A','Bata',              6217, 0,   0],
+  ['CDBUFFER-A','Bubblegummers',     4062, 0,   0],
+  ['CDBUFFER-A','Bubblegummers Licenses', 2992, 0, 0],
+  ['CDBUFFER-A','North Star',       23820, 0,   0],
+  ['CDBUFFER-A','Power',             1191, 0,   0]
+];
+
+const mil = (n) => Math.round(n).toLocaleString('es-PE');
+
+/* EL NOMBRE CON EL QUE SE AGRUPA NO ES EL QUE SE MUESTRA. "Bubblegummers Licenses" no
+   entra en la columna y parte la fila en dos, asi que se pinta "B.G Licenses" — pero se
+   ORDENA y se SUMA por el completo, que es lo que hace `marcaCorta()` en la web. Si se
+   ordenara por el corto, esa fila cambiaria de sitio respecto del reporte que el manda. */
+const CORTAS = { 'BUBBLEGUMMERS LICENSES': 'B.G Licenses' };
+const corta = (m) => CORTAS[m.toUpperCase()] || m;
+const pctDe = (t, b) => b > 0 ? Math.round((t / b) * 100) : 0;
+const conTot = (d) => ({ ...d, total: d.dia + d.noche,
+                         pendiente: d.buffer - (d.dia + d.noche),
+                         pct: pctDe(d.dia + d.noche, d.buffer) });
+
+/* SE AGRUPA POR LO QUE VENGA. Ni una linea dice "A" ni "B": si manana hay un CDBUFFER-D,
+   aparece con su subtotal sin tocar el codigo. Es lo mismo que hace `datosMarcas()`. */
+const AREAS = (() => {
+  const m = new Map();
+  CRUDO.forEach(([area, marca, buffer, dia, noche]) => {
+    if (!m.has(area)) m.set(area, new Map());
+    const g = m.get(area);
+    const x = g.get(marca) || { marca, buffer: 0, dia: 0, noche: 0 };
+    x.buffer += buffer; x.dia += dia; x.noche += noche;
+    g.set(marca, x);
+  });
+  return [...m.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))          // igual que la web: B antes que A
+    .map(([area, g]) => {
+      const marcas = [...g.values()].sort((a, b) => a.marca.localeCompare(b.marca)).map(conTot);
+      const suma = marcas.reduce((s, x) => ({ buffer: s.buffer + x.buffer, dia: s.dia + x.dia,
+                                              noche: s.noche + x.noche }), { buffer:0, dia:0, noche:0 });
+      return { area, marcas, totales: conTot(suma) };
+    });
+})();
+
+const GRAN = conTot(AREAS.reduce((s, a) => ({ buffer: s.buffer + a.totales.buffer,
+  dia: s.dia + a.totales.dia, noche: s.noche + a.totales.noche }), { buffer:0, dia:0, noche:0 }));
+
+/* LOS CUADROS CUADRAN: si esto falla, la maqueta esta mintiendo. */
+console.assert(GRAN.buffer === 45005 && GRAN.total === 892 && GRAN.pct === 2,
+  'la suma no cuadra con la foto de Daniel');
+
+const ico = (d, w) => `<svg width="${w||17}" height="${w||17}" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICONOS = {
+  Inicio:    ico('<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>'),
+  Reportes:  ico('<path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/>'),
+  Tareas:    ico('<rect x="3" y="4" width="18" height="17" rx="3"/><path d="m8 12 3 3 5-6"/>'),
+  Asistencia:ico('<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="m17 12 2 2 3.5-3.5"/>')
+};
+const PIE = Object.keys(ICONOS).map(k =>
+  `<div class="${k === 'Reportes' ? 'on' : ''}">${ICONOS[k]}${k}</div>`).join('');
+
+const CALENDARIO = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+  <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>`;
+const RAYITAS = ico('<path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/>', 19);
+/* EL ICONO DE COMPARTIR, el mismo que ya usa la foto de la asistencia. */
+const COMPARTIR = ico('<circle cx="18" cy="5.5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="M8.3 10.8 15.7 6.8"/><path d="M8.3 13.2l7.4 4"/>', 18);
+
+const HOY = '2026-09-12';
+const DIAS = ['dom','lun','mar','mié','jue','vie','sáb'];
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const bonita = (iso) => { const [a,m,d] = iso.split('-').map(Number);
+  return DIAS[new Date(a,m-1,d).getDay()] + ' ' + d + ' ' + MESES[m-1]; };
+
+const claseDe = (p) => p === 0 ? 'cero' : (p < 80 ? 'poco' : 'bien');
+
+const filaMarca = (m) => `
+  <div class="marca ${claseDe(m.pct)}">
+    <div class="alto"><span class="nom">${corta(m.marca)}</span>
+      <span class="cifras"><b>${mil(m.total)}</b> <span>de ${mil(m.buffer)}</span></span></div>
+    <div class="bajo"><span class="b"><i style="width:${Math.max(m.pct, m.total>0?2:0)}%"></i></span>
+      <span class="pct">${m.pct}%</span></div>
+  </div>`;
+
+const CUERPO = `
+    <div class="encabeza"><span class="t">Almacenaje por marcas</span>
+      <button class="compartir" title="Compartir por WhatsApp">${COMPARTIR}</button></div>
+    <div class="rango">${CALENDARIO}
+      <span class="eti">Desde</span><span class="eti">hasta</span>
+      <input type="date" value="${HOY}"><input type="date" value="${HOY}"></div>
+
+    <div class="resumen">
+      <div class="rot">Avanzado hoy</div>
+      <div class="gran">${mil(GRAN.total)}</div>
+      <div class="de">de <b>${mil(GRAN.buffer)}</b> pares en el buffer</div>
+      <div class="barra"><i style="width:${Math.max(GRAN.pct,2)}%"></i></div>
+      <div class="pie"><span>Quedan ${mil(GRAN.pendiente)}</span><b>${GRAN.pct}%</b></div>
+    </div>
+
+    ${AREAS.map(a => `<div class="buffer">
+        <div class="tapa"><b>${a.area}</b>
+          <span>${mil(a.totales.total)} de ${mil(a.totales.buffer)} · ${a.totales.pct}%</span></div>
+        ${a.marcas.map(filaMarca).join('')}
+      </div>`).join('')}
+
+    <div class="total"><span class="t">TOTAL GENERAL</span>
+      <span class="c">${mil(GRAN.total)} de ${mil(GRAN.buffer)} · ${GRAN.pct}%</span></div>`;
+
+const CABECERA = (titulo) => `
+  <div class="cab">
+    <div><div class="sub">Turno · ${bonita(HOY).toUpperCase()}</div><h4>${titulo}</h4></div>
+    <button class="menu-btn">${RAYITAS}</button>
+  </div>`;
+
+const MENU = `
+  <div class="velo"><div class="panel">
+    <div class="gr">Temas</div>
+    <a class="sel"><span class="swatch" style="background:#0f172a"></span>Indigo<span class="ch">✓</span></a>
+    <a><span class="swatch" style="background:#F3F2F1"></span>Power BI</a>
+    <a><span class="swatch" style="background:#FFFFFF"></span>Power BI clásico</a>
+    <a><span class="swatch" style="background:#000000"></span>Negro</a>
+    <div class="gr">Ajustes</div>
+    <a>${ico('<path d="M18 9a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M10.5 20.5a2 2 0 0 0 3 0"/>', 16)}Avisos<span class="ch">activados</span></a>
+    <a>${ico('<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/>', 16)}Ver en escritorio</a>
+    <a>${ico('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>', 16)}Salir</a>
+  </div></div>`;
+
+document.getElementById('telefonos').innerHTML = [
+  ['El reporte, por buffer',
+   'Cada buffer con su subtotal, y el compartir al lado del título. Se agrupa por lo que venga, no por «A» y «B».',
+   CABECERA('Reportes') + `<div class="cuerpo">${CUERPO}</div><div class="pie-app">${PIE}</div>`],
+  ['El menú de arriba',
+   'Las tres rayitas, en todos los módulos. Temas, Avisos y lo demás que no merece una pestaña.',
+   CABECERA('Reportes') + `<div class="cuerpo">${CUERPO}</div><div class="pie-app">${PIE}</div>` + MENU]
+].map(([t, p, html]) => `
+  <div class="cuadro">
+    <div class="rotulo"><h3>${t}</h3><p>${p}</p></div>
+    <div class="tel">${html}</div>
+  </div>`).join('');
+
+/* ── LA LÁMINA, EN LOS CUATRO TEMAS ──────────────────────────────────────────
+   Los colores salen de `css/temas.css` y de `TEMA_OSCURO` / `TEMA_CLARO` / `TEMA_PBI`
+   de `js/reportes/marcas.js`: no son unos parecidos elegidos a ojo. */
+const TEMAS = {
+  indigo: { nombre:'Indigo', fondo:'#0b1220', panel:'#0f172a', cab:'#00e5ff', cabFondo:'transparent',
+    borde:'rgba(0,229,255,.18)', area:'#94a3b8', marca:'#ffffff', valor:'#ffffff',
+    dia:'#facc15', noche:'#818cf8', pend:'#00e5ff', tt:'#ffffff', sy:'#00e5ff',
+    sub:'rgba(0,229,255,.12)', subLetra:'#00e5ff', granT:'rgba(0,229,255,.25)', granLetra:'#00e5ff',
+    ok:'#22c55e', medio:'#fbbf24', mal:'#ef4444' },
+  pbi: { nombre:'Power BI', fondo:'#F3F2F1', panel:'#FFFFFF', cab:'#FFFFFF', cabFondo:'#12365c',
+    borde:'#E3E1DE', area:'#605E5C', marca:'#201F1E', valor:'#201F1E',
+    dia:'#7D6700', noche:'#12239E', pend:'#0E76D6', tt:'#FFFFFF', sy:'#DBE4F0',
+    sub:'#dbe4f0', subLetra:'#12365c', granT:'#12365c', granLetra:'#FFFFFF',
+    ok:'#1A6336', medio:'#6E5B00', mal:'#A4262C' },
+  clasico: { nombre:'PBI clásico', fondo:'#FAF9F8', panel:'#FFFFFF', cab:'#FFFFFF', cabFondo:'#1C2B3A',
+    borde:'#EEE9E3', area:'#9C9590', marca:'#1C2B3A', valor:'#1C2B3A',
+    dia:'#B45309', noche:'#4A4540', pend:'#B45309', tt:'#FFFFFF', sy:'#C9C3BC',
+    sub:'#F4F1EC', subLetra:'#1C2B3A', granT:'#1C2B3A', granLetra:'#FFFFFF',
+    ok:'#22c55e', medio:'#fbbf24', mal:'#ef4444' },
+  negro: { nombre:'Negro', fondo:'#000000', panel:'#0a0a0a', cab:'#FFFFFF', cabFondo:'transparent',
+    borde:'rgba(255,255,255,.14)', area:'#a3a3a3', marca:'#ffffff', valor:'#ffffff',
+    dia:'#facc15', noche:'#d4d4d4', pend:'#ffffff', tt:'#ffffff', sy:'#a3a3a3',
+    sub:'rgba(255,255,255,.10)', subLetra:'#ffffff', granT:'rgba(255,255,255,.20)', granLetra:'#ffffff',
+    ok:'#22c55e', medio:'#fbbf24', mal:'#ef4444' }
+};
+
+/* El semaforo del %: la web usa tres niveles, no dos. */
+const colorPct = (T, pct) => pct === 0 ? T.mal : (pct < 100 ? T.medio : T.ok);
+const flecha = (pct) => pct === 0 ? '●' : (pct < 100 ? '▲' : '▲');
+
+const dibujarLamina = (clave) => {
+  const T = TEMAS[clave];
+  const celda = (v, color, peso) =>
+    `<td style="color:${color};${peso ? `font-weight:${peso};` : ''}">${v}</td>`;
+  const filas = AREAS.map(a => `
+    ${a.marcas.map(m => `<tr style="border-bottom:1px solid ${T.borde}; background:${T.panel}">
+        ${celda(a.area, T.area)}${celda(`<b style="color:${T.marca}">${corta(m.marca)}</b>`, T.marca)}
+        ${celda(mil(m.buffer), T.valor, 700)}${celda(mil(m.dia), T.dia, 700)}
+        ${celda(mil(m.noche), T.noche, 700)}${celda(mil(m.total), T.valor, 700)}
+        ${celda(`${flecha(m.pct)} ${m.pct}%`, colorPct(T, m.pct), 700)}
+        ${celda(mil(m.pendiente), T.pend, 800)}</tr>`).join('')}
+    <tr class="sub" style="background:${T.sub}; border-top:1.5px solid ${T.subLetra}; border-bottom:1.5px solid ${T.subLetra}">
+      <td colspan="2" style="color:${T.subLetra}; border-left:4px solid ${T.subLetra}">TOTAL ${a.area}</td>
+      ${celda(mil(a.totales.buffer), T.valor)}${celda(mil(a.totales.dia), T.dia)}
+      ${celda(mil(a.totales.noche), T.noche)}${celda(mil(a.totales.total), T.valor)}
+      ${celda(`${a.totales.pct}%`, colorPct(T, a.totales.pct))}${celda(mil(a.totales.pendiente), T.pend)}</tr>`).join('');
+
+  return `
+  <div class="top" style="background:${T.panel}; border-bottom:2px solid ${T.cabFondo === 'transparent' ? T.cab : T.cabFondo}">
+    <div><div class="tt" style="color:${T.tt}">REPORTE ALMACENAJE - MARCAS</div>
+      <div class="sy" style="color:${T.sy}">SYNC_ID: 12/09/2026 10:43 p. m.</div></div>
+    <div class="sy" style="color:${T.sy}">Desde 12/09/2026 &nbsp;hasta 12/09/2026</div>
+  </div>
+  <table>
+    <thead><tr style="background:${T.cabFondo}; border-bottom:2px solid ${T.cabFondo === 'transparent' ? T.cab : T.cabFondo}">
+      ${['AREA','MARCAS','BUFFER','DÍA','NOCHE','TOTAL','%','PENDIENTE']
+        .map((h,i) => `<th style="color:${i===3?T.dia:(i===4?T.noche:(i===7?T.pend:T.cab))}">${h}</th>`).join('')}
+    </tr></thead>
+    <tbody>${filas}
+      <tr class="granT" style="background:${T.granT}; border-top:2px solid ${T.granLetra}; border-bottom:2px solid ${T.granLetra}">
+        <td colspan="2" style="color:${T.granLetra}; border-left:6px solid ${T.granLetra}">TOTAL GENERAL CDBUFFER</td>
+        ${celda(mil(GRAN.buffer), T.granLetra)}${celda(mil(GRAN.dia), T.dia)}
+        ${celda(mil(GRAN.noche), T.noche)}${celda(mil(GRAN.total), T.granLetra)}
+        ${celda(`${GRAN.pct}%`, colorPct(T, GRAN.pct))}${celda(mil(GRAN.pendiente), T.granLetra)}</tr>
+    </tbody>
+  </table>`;
+};
+
+const caja = document.getElementById('lamina');
+const pintarLamina = (clave) => {
+  caja.style.background = TEMAS[clave].fondo;
+  caja.innerHTML = dibujarLamina(clave);
+  [...document.querySelectorAll('#temas button')].forEach(b =>
+    b.setAttribute('aria-pressed', b.dataset.t === clave));
+};
+document.getElementById('temas').innerHTML = Object.entries(TEMAS)
+  .map(([k, T]) => `<button data-t="${k}" aria-pressed="${k === 'indigo'}">${T.nombre}</button>`).join('');
+document.getElementById('temas').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-t]');
+  if (b) pintarLamina(b.dataset.t);
+});
+pintarLamina('indigo');
+</script>

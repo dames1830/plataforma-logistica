@@ -25,13 +25,17 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0756';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0756';
+import * as adminService from '../services_v245/adminService.js?v=29.0757';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0757';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0756';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0756';
-import * as metasService from '../services_v245/metasService.js?v=29.0756';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0757';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0757';
+import * as metasService from '../services_v245/metasService.js?v=29.0757';
+/* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
+   y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
+   seguiria viendo el otro en el otro. */
+import * as temaService from '../services_v245/temaService.js?v=29.0757';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -56,6 +60,8 @@ const CSS = `
 #app-movil * { box-sizing: border-box; }
 
 #app-movil .am-cab > * { display: block; width: min(100%, 560px); margin-inline: auto; }
+#app-movil .am-cab-fila { display: flex; align-items: center; justify-content: space-between;
+  gap: .6rem; }
 #app-movil .am-cab { padding: calc(0.7rem + env(safe-area-inset-top)) 1.1rem 0.8rem;
   background: var(--am-papel); border-bottom: 1px solid var(--am-linea); }
 #app-movil .am-cab .sub { font-family: var(--am-num); font-size: 0.7rem; letter-spacing: .04em;
@@ -97,12 +103,16 @@ const CSS = `
 #app-movil .am-fila .t { display: block; font-weight: 640; font-size: 0.87rem; letter-spacing: -0.005em;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #app-movil .am-fila .d { display: block; font-size: 0.72rem; color: var(--am-tenue); line-height: 1.35; }
-#app-movil .am-chapa { font-family: var(--am-num); font-size: 0.58rem; font-weight: 700;
+/* LA LETRA DE LA ETIQUETA ES LA DEL TEMA. El color va en el tinte y en el borde: si la
+   letra tambien lleva el color, texto y fondo son el mismo tono y no se lee -1.64 : 1 en
+   Indigo, medido-. Asi las cuatro etiquetas se leen en los cuatro temas sin afinar nada. */
+#app-movil .am-chapa { color: var(--am-tinta); border: 1px solid transparent;
+  font-family: var(--am-num); font-size: 0.58rem; font-weight: 700;
   letter-spacing: .08em; text-transform: uppercase; padding: 0.2rem 0.45rem; border-radius: 3px; white-space: nowrap; }
-#app-movil .ch-va { background: var(--am-va-agua); color: var(--am-va); }
-#app-movil .ch-curso { background: var(--am-curso-agua); color: #8A5200; }
-#app-movil .ch-tarde { background: var(--am-tarde-agua); color: var(--am-tarde); }
-#app-movil .ch-quieto { background: var(--am-quieto-agua); color: var(--am-quieto); }
+#app-movil .ch-va { background: var(--am-va-agua); border-color: var(--am-va); }
+#app-movil .ch-curso { background: var(--am-curso-agua); border-color: var(--am-curso); }
+#app-movil .ch-tarde { background: var(--am-tarde-agua); border-color: var(--am-tarde); }
+#app-movil .ch-quieto { background: var(--am-quieto-agua); border-color: var(--am-quieto); }
 
 #app-movil .am-vacio { text-align: center; color: var(--am-tenue); font-size: .85rem; padding: 1.4rem 0.5rem; }
 #app-movil .am-pronto { background: var(--am-carta); border: 1px dashed #C2CFCC; border-radius: 12px;
@@ -137,8 +147,8 @@ const CSS = `
   text-transform: uppercase; padding: .32rem .6rem; border-radius: 20px;
   border: 1px solid var(--am-linea); background: var(--am-carta); color: var(--am-tenue);
   font-weight: 700; cursor: pointer; }
-#app-movil .am-filtro[aria-pressed="true"] { background: var(--am-tinta);
-  border-color: var(--am-tinta); color: #fff; }
+#app-movil .am-filtro[aria-pressed="true"] { background: var(--am-relleno);
+  border-color: var(--am-relleno); color: var(--am-sobre); }
 
 /* LA FILA. El borde izquierdo repite el estado en FORMA, no solo en color: es la regla 3
    de la maqueta y lo que salva a quien no distingue verde de rojo. */
@@ -166,7 +176,7 @@ const CSS = `
   font-size: .62rem; margin-top: -.15rem; color: var(--am-curso); }
 #app-movil .am-tarea.fin .quien { color: var(--am-va); }
 #app-movil .am-tarea.malo .quien { color: var(--am-tarde); }
-#app-movil .am-chapa.ch-mal { background: var(--am-tarde-agua); color: var(--am-tarde); }
+#app-movil .am-chapa.ch-mal { background: var(--am-tarde-agua); border-color: var(--am-tarde); }
 
 /* ── LA HOJA DEL REGISTRO ────────────────────────────────────────────────────────────── */
 #app-movil .am-velo { position: fixed; inset: 0; background: rgba(19,28,31,.45);
@@ -221,7 +231,7 @@ const CSS = `
 #app-movil .am-botones { display: flex; gap: .45rem; margin-top: .8rem; }
 #app-movil .am-btn { flex: 1; padding: .72rem .5rem; border-radius: 10px; border: 0;
   font-family: var(--am-ui); font-size: .86rem; font-weight: 700; cursor: pointer; }
-#app-movil .am-btn.va { background: var(--am-va); color: #fff; }
+#app-movil .am-btn.va { background: var(--am-relleno); color: var(--am-sobre); }
 #app-movil .am-btn.linea { background: none; border: 1px solid var(--am-va); color: var(--am-va); }
 #app-movil .am-btn.mala { background: var(--am-tarde); color: #fff; }
 #app-movil .am-btn.avisa { background: var(--am-curso); color: #fff; }
@@ -284,7 +294,7 @@ const CSS = `
   padding: 0.4rem 0.3rem; border-radius: 8px; border: 1px solid #E7BEBC; background: var(--am-carta);
   color: var(--am-tinta); }
 #app-movil .am-persona .motivo .nada { display: block; text-align: center; color: #C6D0CE; font-size: 0.8rem; }
-#app-movil .am-persona .marcas button.si-vino { background: var(--am-va); border-color: var(--am-va); color: #fff; }
+#app-movil .am-persona .marcas button.si-vino { background: var(--am-relleno); border-color: var(--am-relleno); color: var(--am-sobre); }
 #app-movil .am-persona .marcas button.si-falto { background: var(--am-tarde); border-color: var(--am-tarde); color: #fff; }
 #app-movil .am-persona .marcas button:disabled { opacity: .55; cursor: default; }
 
@@ -318,7 +328,7 @@ const CSS = `
   color: var(--am-va); border-radius: 11px; padding: 0.85rem; text-align: center; font-weight: 700; }
 
 #app-movil .am-boton { display: block; width: 100%; padding: 0.95rem; border-radius: 11px;
-  border: 1px solid var(--am-va); background: var(--am-va); color: #fff; font-family: var(--am-ui);
+  border: 1px solid var(--am-relleno); background: var(--am-relleno); color: var(--am-sobre); font-family: var(--am-ui);
   font-size: 0.98rem; font-weight: 700; cursor: pointer; }
 #app-movil .am-boton:disabled { background: #C9D4D2; border-color: #C9D4D2; color: #55666B; cursor: default; }
 #app-movil .am-boton.fino { background: none; color: var(--am-va); font-size: .86rem; padding: .7rem;
@@ -329,15 +339,108 @@ const CSS = `
   width: min(100%, 560px); margin-inline: auto; }
 #app-movil .am-barra button { flex: 1; min-width: 0; background: none; border: 0; cursor: pointer;
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0.25rem 0.1rem;
-  font-family: var(--am-ui); font-size: 0.58rem; font-weight: 650; color: #8B9B9F; position: relative; }
+  font-family: var(--am-ui); font-size: 0.58rem; font-weight: 650; color: var(--am-tenue);
+  position: relative; }
 #app-movil .am-barra button .gl { width: 22px; height: 22px; display: block; }
 #app-movil .am-barra button .gl svg { width: 100%; height: 100%; display: block; }
 #app-movil .am-barra button[aria-selected="true"] { color: var(--am-va); }
 #app-movil .am-barra .punto { position: absolute; top: 2px; right: 50%; margin-right: -14px;
   width: 6px; height: 6px; border-radius: 50%; background: var(--am-tarde); }
+/* ── LA BARRA DE ARRIBA Y SU MENU ────────────────────────────────────────────────────────
+   Va en TODAS las pantallas, no solo en Inicio: ahi vive lo que no es un modulo. */
+#app-movil .am-menu-btn { width: 38px; height: 38px; border-radius: 10px; flex: none;
+  border: 1px solid var(--am-linea); background: var(--am-carta); color: var(--am-suave);
+  display: grid; place-items: center; cursor: pointer; }
+#app-movil .am-menu-btn svg { width: 19px; height: 19px; display: block; }
+#app-movil .am-velo-menu { position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: flex-start; justify-content: flex-end; padding: .6rem;
+  z-index: 60; }
+#app-movil .am-panel { background: var(--am-carta); border: 1px solid var(--am-linea);
+  border-radius: 14px; width: min(86%, 280px); overflow: hidden;
+  box-shadow: 0 12px 34px rgba(0,0,0,.35); max-height: 88vh; overflow-y: auto; }
+#app-movil .am-panel .gr { font-family: var(--am-num); font-size: .55rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--am-tenue); padding: .7rem .85rem .25rem; }
+#app-movil .am-panel button { display: flex; align-items: center; gap: .6rem; width: 100%;
+  padding: .68rem .85rem; font-family: var(--am-ui); font-size: .9rem; text-align: left;
+  color: var(--am-tinta); background: none; border: 0; border-top: 1px solid var(--am-linea);
+  cursor: pointer; }
+#app-movil .am-panel button .ch { margin-left: auto; font-family: var(--am-num);
+  font-size: .62rem; color: var(--am-tenue); }
+#app-movil .am-panel button.sel { color: var(--am-va); font-weight: 700; }
+#app-movil .am-panel button.sel .ch { color: var(--am-va); }
+#app-movil .am-panel button svg { width: 16px; height: 16px; flex: none; }
+#app-movil .am-muestra { width: 16px; height: 16px; border-radius: 5px; flex: none;
+  border: 1px solid rgba(128,128,128,.4); }
+#app-movil .am-panel .desc { display: block; font-size: .72rem; color: var(--am-tenue);
+  font-weight: 400; margin-top: .1rem; }
+
+/* ── LA APP SIGUE EL TEMA DE LA PLATAFORMA ───────────────────────────────────────────────
+   Daniel, 12-sep-2026: *"la app tiene que adaptarse al tema"*. Cambia la regla 4 de la
+   maqueta -fondo claro siempre-, que el mismo habia puesto pensando en el chofer al sol;
+   queda dicho por si alguna vez hay que volver sobre eso.
+
+   Los valores NO se eligen a ojo: son los de 'css/temas.css', tema por tema. Y el acento va
+   partido en dos papeles porque en NEGRO '--primary' es blanco puro: '--am-va' es color de
+   letra -tiene que leerse sobre la tarjeta- y '--am-relleno' es fondo de boton, con
+   '--am-sobre' encima. Juntarlos da blanco sobre blanco, que ya paso en el chat.
+   ────────────────────────────────────────────────────────────────────────────────────── */
+
+/* ÍNDIGO — el de siempre, azul noche. Es tambien el que vale si no hay tema puesto. */
+html[data-tema="indigo"] #app-movil, #app-movil {
+  --am-papel: #0f172a; --am-carta: #1e293b; --am-linea: rgba(255,255,255,0.10);
+  --am-tinta: #ffffff; --am-suave: #e2e8f0; --am-tenue: #94a3b8;
+  --am-va: #818cf8;   --am-va-agua: rgba(129,140,248,0.16);
+  --am-curso: #fbbf24; --am-curso-agua: rgba(251,191,36,0.15);
+  --am-tarde: #f87171; --am-tarde-agua: rgba(248,113,113,0.15);
+  --am-quieto: #94a3b8; --am-quieto-agua: rgba(148,163,184,0.14);
+  --am-relleno: #4f46e5; --am-sobre: #ffffff;
+}
+
+/* GERENCIAL · POWER BI — claro, azul. */
+html[data-tema="pbi"] #app-movil {
+  --am-papel: #F3F2F1; --am-carta: #FFFFFF; --am-linea: #E1DFDD;
+  --am-tinta: #201F1E; --am-suave: #323130; --am-tenue: #605E5C;
+  --am-va: #0E76D6;   --am-va-agua: #DEECF9;
+  --am-curso: #6E5B00; --am-curso-agua: #FFF4CE;
+  --am-tarde: #A4262C; --am-tarde-agua: #FDE7E9;
+  --am-quieto: #605E5C; --am-quieto-agua: #F3F2F1;
+  --am-relleno: #0E76D6; --am-sobre: #FFFFFF;
+}
+
+/* POWER BI CLÁSICO — claro, verde azulado. */
+html[data-tema="pbi-classic"] #app-movil {
+  --am-papel: #F5F5F5; --am-carta: #FFFFFF; --am-linea: #E0E0E0;
+  --am-tinta: #263133; --am-suave: #415255; --am-tenue: #5F6B6D;
+  --am-va: #00847A;   --am-va-agua: #DDF0EE;
+  --am-curso: #7F6907; --am-curso-agua: #FBF3D5;
+  --am-tarde: #C54C49; --am-tarde-agua: #FBE6E5;
+  --am-quieto: #5F6B6D; --am-quieto-agua: #EFEFEF;
+  --am-relleno: #00847A; --am-sobre: #FFFFFF;
+}
+
+/* NEGRO — sin color. El acento es el blanco, y por eso el relleno NO puede serlo:
+   '--btn-fill' del tema es #2A2A2A, que es lo que se usa de fondo. */
+html[data-tema="negro"] #app-movil {
+  --am-papel: #000000; --am-carta: #121212; --am-linea: #2A2A2A;
+  --am-tinta: #FFFFFF; --am-suave: #C8C8C8; --am-tenue: #9A9A9A;
+  --am-va: #FFFFFF;   --am-va-agua: #262626;
+  --am-curso: #C39B45; --am-curso-agua: #2B2214;
+  --am-tarde: #C7554D; --am-tarde-agua: #2B1917;
+  --am-quieto: #9A9A9A; --am-quieto-agua: #1C1C1C;
+  --am-relleno: #2A2A2A; --am-sobre: #FFFFFF;
+}
+
+/* El fondo de la app, que antes estaba clavado en el bloque de arriba. */
+#app-movil { background: var(--am-papel); color: var(--am-tinta); }
+
 `;
 
 const ICONOS = {
+    rayitas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>',
+    volver: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+    paleta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></svg>',
+    escritorio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/></svg>',
+    puerta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>',
     inicio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.2 12 3.5l9 6.7V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9.2 21v-6.4h5.6V21"/></svg>',
     reportes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9"/><path d="M9.3 20V4.5"/><path d="M14.7 20v-7.5"/><path d="M20 20V7"/></svg>',
     tareas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8.4 12.2l2.4 2.4 4.8-5"/></svg>',
@@ -360,8 +463,9 @@ const SECCIONES = [
     { id: 'inicio', rotulo: 'Inicio', icono: 'inicio' },
     { id: 'reportes', rotulo: 'Reportes', icono: 'reportes' },
     { id: 'tareas', rotulo: 'Tareas', icono: 'tareas' },
-    { id: 'lista', rotulo: 'Asistencia', icono: 'lista' },
-    { id: 'avisos', rotulo: 'Avisos', icono: 'avisos' }
+    /* AVISOS SE FUE DE ABAJO. Daniel, 12-sep: *"el aviso deberia estar [en el menu], no
+       deberia estar como un modulo principal"*. Abajo quedan los cuatro modulos y nada mas. */
+    { id: 'lista', rotulo: 'Asistencia', icono: 'lista' }
 ];
 
 /* Lo que todavia no tiene pantalla. Se dice lo que va a haber, con nombre y todo: una
@@ -374,6 +478,8 @@ const EN_CAMINO = {
 
 let raiz = null;
 let seccion = 'inicio';
+/* El menu de arriba: null cerrado, 'raiz' el primer nivel, 'temas' o 'avisos' ya dentro. */
+let menu = null;
 let YO = null;
 let alSalir = null;
 let reloj = null;
@@ -1504,6 +1610,43 @@ const pantallaAvisos = () => {
     `;
 };
 
+/* ── EL MENU ─────────────────────────────────────────────────────────────────────────────
+   Dos niveles, como lo pidio: se entra a Temas y ahi se elige, no se elige desde el primer
+   nivel. Avisos vive aca y ya no ocupa una pestaña abajo. */
+const panelMenu = () => {
+    if (menu === 'temas') {
+        const puesto = temaService.temaActual();
+        return `<div class="am-panel">
+            <button type="button" data-menu-volver>${ICONOS.volver}Configuración · Temas</button>
+            ${temaService.TEMAS.map(t => `
+                <button type="button" data-poner-tema="${esc(t.id)}" class="${t.id === puesto ? 'sel' : ''}">
+                    <span class="am-muestra" style="background:${esc(t.muestras[0])}"></span>
+                    <span>${esc(t.nombre)}<span class="desc">${esc(t.descripcion)}</span></span>
+                    ${t.id === puesto ? '<span class="ch">✓</span>' : ''}
+                </button>`).join('')}
+        </div>`;
+    }
+    if (menu === 'avisos') {
+        return `<div class="am-panel">
+            <button type="button" data-menu-volver>${ICONOS.volver}Configuración · Avisos</button>
+            <div style="padding:.2rem .2rem .6rem">${pantallaAvisos()}</div>
+        </div>`;
+    }
+    const t = temaService.TEMAS.find(x => x.id === temaService.temaActual());
+    const avisos = avisosEstado === 'prendidos' ? 'activados'
+        : (avisosEstado === 'bloqueados' ? 'bloqueados' : 'apagados');
+    return `<div class="am-panel">
+        <div class="gr">Configuración</div>
+        <button type="button" data-menu-ir="temas">${ICONOS.paleta}Temas
+            <span class="ch">${esc((t && t.nombre) || '—')} ›</span></button>
+        <button type="button" data-menu-ir="avisos">${ICONOS.avisos}Avisos
+            <span class="ch">${avisos} ›</span></button>
+        <div class="gr">Sesión</div>
+        <button type="button" data-escritorio>${ICONOS.escritorio}Ver en escritorio</button>
+        <button type="button" data-salir-app>${ICONOS.puerta}Salir</button>
+    </div>`;
+};
+
 const CABECERAS = {
     inicio: () => ({ sub: `Turno · ${diaEnLetras()}`, ttl: `${saludo()}, ${String(YO.name || YO.username).split(' ')[0]}` }),
     reportes: () => ({ sub: `Datos del ${diaEnLetras()}`, ttl: 'Reportes' }),
@@ -1527,6 +1670,9 @@ const pintar = () => {
         : seccion === 'avisos' ? pantallaAvisos()
         : pantallaEnCamino(seccion);
     cuerpo.scrollTop = 0;
+
+    const capa = raiz.querySelector('.am-capa-menu');
+    capa.innerHTML = menu ? `<div class="am-velo-menu" data-velo-menu>${panelMenu()}</div>` : '';
 
     raiz.querySelector('.am-barra').innerHTML = SECCIONES.map(s => `
         <button type="button" role="tab" data-seccion="${s.id}" aria-selected="${s.id === seccion}">
@@ -1564,9 +1710,16 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
     raiz = document.createElement('div');
     raiz.id = 'app-movil';
     raiz.innerHTML = `
-        <header class="am-cab"><div class="sub"></div><div class="ttl"></div></header>
+        <header class="am-cab">
+            <div class="am-cab-fila">
+                <div><div class="sub"></div><div class="ttl"></div></div>
+                <button type="button" class="am-menu-btn" data-menu aria-label="Menú">
+                    ${ICONOS.rayitas}</button>
+            </div>
+        </header>
         <main class="am-cuerpo"></main>
-        <nav class="am-barra" role="tablist"></nav>`;
+        <nav class="am-barra" role="tablist"></nav>
+        <div class="am-capa-menu"></div>`;
     document.body.appendChild(raiz);
 
     /* LA CINTA DE PRUEBAS NO PUEDE TAPAR LA BARRA DE ABAJO. En beta, env.js pega un cartel
@@ -1589,6 +1742,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         const s = e.target.closest('[data-seccion]');
         if (s) {
             seccion = s.getAttribute('data-seccion');
+            menu = null;
                 if (seccion === 'lista') { cargarLista(); refrescarLista(); }   // se trae al entrar
             if (seccion === 'tareas') {
                 /* Se traen frescas al entrar: en el almacen hay otras pantallas asignando
@@ -1616,6 +1770,32 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (e.target.closest('[data-apagar-avisos]')) { apagarAvisos(); return; }
         if (e.target.closest('[data-reabrir]')) { reabrirLista(); return; }
         if (e.target.closest('[data-cerrar]')) { guardarLista(true); return; }
+        /* ── EL MENU ───────────────────────────────────────────────────────────── */
+        if (e.target.closest('[data-menu]')) { menu = menu ? null : 'raiz'; pintar(); return; }
+        if (e.target.closest('[data-menu-volver]')) { menu = 'raiz'; pintar(); return; }
+        const ir = e.target.closest('[data-menu-ir]');
+        if (ir) {
+            menu = ir.getAttribute('data-menu-ir');
+            if (menu === 'avisos') mirarAvisos().then(pintar);
+            pintar();
+            return;
+        }
+        /* OJO AL NOMBRE: no puede ser `data-tema`, porque <html> lo lleva y `closest`
+           sube hasta ahi. Con ese nombre, este renglon atrapaba TODOS los clics de la app
+           y cortaba la cadena; la pantalla dejaba de responder sin dar ningun error. */
+        const elTema = e.target.closest('[data-poner-tema]');
+        if (elTema) {
+            /* Se guarda en el MISMO sitio que la web: el tema es de la persona, no del
+               aparato. Elegirlo en el celular lo cambia tambien en su PC. */
+            temaService.setTema(elTema.getAttribute('data-poner-tema'), YO && YO.username);
+            pintar();
+            return;
+        }
+        if (e.target.closest('[data-salir-app]')) { menu = null; if (alSalir) alSalir(); return; }
+        if (e.target.hasAttribute && e.target.hasAttribute('data-velo-menu')) {
+            menu = null; pintar(); return;
+        }
+
         if (e.target.closest('[data-escritorio]')) { irAEscritorio(); return; }
 
         /* ── TAREAS ──────────────────────────────────────────────────────────────────

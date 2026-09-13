@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba · la app en los cuatro temas</title>
+<!--
+  PASA LA APP POR LOS CUATRO TEMAS Y MIDE SI SE LEE.
+
+  Daniel, 12-sep-2026: *"pasa la app por los diferentes temas y tiene que verse bien, la
+  claridad de las letras, de los numeros, de los valores, de los iconos"*.
+
+  NO SE MIRA: SE MIDE. El contraste se calcula sobre el color YA COMPUESTO -si un texto va
+  a medio tono sobre una tarjeta translucida, lo que importa es lo que llega al ojo, no lo
+  que dice el CSS-. Mirar de reojo es como se colo el chat ilegible en el tema Negro.
+
+  La vara es la de la WCAG: 4.5 para texto normal, 3.0 para texto grande (>=18.66px en
+  negrita o >=24px) y para los bordes de un control.
+-->
+<link rel="stylesheet" href="../css/main_v176.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body { margin:0; font:14px/1.5 system-ui, sans-serif; background:#0b1220; color:#e2e8f0; }
+  #informe { position:fixed; inset:0; z-index:99999; overflow:auto; background:#0b1220;
+             padding:1rem 1.2rem 3rem; }
+  h2 { font-size:15px; margin:1.4rem 0 .5rem; letter-spacing:.06em; text-transform:uppercase;
+       color:#94a3b8; border-bottom:1px solid #1e293b; padding-bottom:.3rem; }
+  .li { display:grid; grid-template-columns:2.6rem 1fr auto; gap:.5rem; padding:.14rem 0;
+        font-size:12.5px; align-items:baseline; }
+  .ok { color:#4ade80; } .mal { color:#f87171; font-weight:700; } .avi { color:#fbbf24; }
+  .ratio { font-family:ui-monospace, monospace; font-size:11.5px; color:#64748b; }
+  #resumen { margin-top:1.4rem; padding-top:.7rem; border-top:2px solid #1e293b;
+             font-weight:700; font-size:14px; }
+</style>
+</head>
+<body>
+<div id="informe"><h1 style="font-size:17px;margin:.2rem 0 .8rem">Midiendo la app en los cuatro temas…</h1><div id="salida"></div><div id="resumen"></div></div>
+<script type="module">
+import { renderAppMovil } from '../js/views/app_movil.js';
+import * as adminService from '../js/services_v245/adminService.js';
+import * as temaService from '../js/services_v245/temaService.js';
+
+const salida = document.getElementById('salida');
+let fallos = 0, avisos = 0, total = 0;
+const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+/* Toca algo y avisa si no estaba, en vez de reventar la vuelta entera. */
+const toca = (sel, que) => {
+    const el = $(sel);
+    if (!el) { nota('no encuentro ' + (que || sel), 'mal'); fallos++; return false; }
+    el.click();
+    return true;
+};
+
+/* ── EL CONTRASTE, COMO LO DEFINE LA WCAG ────────────────────────────────────────── */
+const canal = (c) => { c /= 255; return c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); };
+const luz = ([r,g,b]) => 0.2126*canal(r) + 0.7152*canal(g) + 0.0722*canal(b);
+const contraste = (a, b) => { const L1 = luz(a), L2 = luz(b);
+    return (Math.max(L1,L2) + 0.05) / (Math.min(L1,L2) + 0.05); };
+
+const aRGBA = (txt) => {
+    const m = String(txt).match(/rgba?\(([^)]+)\)/);
+    if (!m) return [0,0,0,1];
+    const p = m[1].split(',').map(x => parseFloat(x));
+    return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1];
+};
+/* Un color a medio tono se COMPONE sobre lo que tenga debajo: es lo que llega al ojo. */
+const sobre = (frente, fondo) => {
+    const a = frente[3];
+    return [0,1,2].map(i => Math.round(frente[i]*a + fondo[i]*(1-a)));
+};
+/* EL FONDO REAL DE UN ELEMENTO. Se juntan las capas subiendo por los padres hasta dar con
+   una opaca, y despues se componen DE ABAJO HACIA ARRIBA, que es el orden en que se ven.
+   Componerlas al revés -o perder el alfa por el camino- da un numero que no existe. */
+const fondoDe = (el) => {
+    const capas = [];
+    let n = el;
+    while (n && n.nodeType === 1) {
+        const c = aRGBA(getComputedStyle(n).backgroundColor);
+        if (c[3] > 0) capas.push(c);
+        if (c[3] === 1) break;
+        n = n.parentElement;
+    }
+    let fondo = [11, 18, 32];                       // el papel del navegador, si todo es translucido
+    for (let i = capas.length - 1; i >= 0; i--) fondo = sobre(capas[i], fondo);
+    return fondo;
+};
+
+const mide = (el, que, vara) => {
+    if (!el) { return; }
+    total++;
+    const cs = getComputedStyle(el);
+    const fondo = fondoDe(el);
+    const frente = aRGBA(cs.color);
+    const color = frente[3] < 1 ? sobre(frente, fondo) : frente.slice(0,3);
+    const r = contraste(color, fondo);
+    const px = parseFloat(cs.fontSize) || 14;
+    const grande = px >= 24 || (px >= 18.66 && parseInt(cs.fontWeight, 10) >= 700);
+    const pide = vara || (grande ? 3 : 4.5);
+    const bien = r >= pide;
+    if (!bien) fallos++;
+    const d = document.createElement('div');
+    d.className = 'li';
+    d.innerHTML = `<span class="${bien ? 'ok' : 'mal'}">${bien ? 'ok' : 'MAL'}</span>`
+        + `<span>${que}</span><span class="ratio">${r.toFixed(2)} : 1 &nbsp;(pide ${pide})</span>`;
+    salida.appendChild(d);
+};
+
+const nota = (t, clase) => {
+    const d = document.createElement('div');
+    d.className = 'li';
+    d.innerHTML = `<span class="${clase || 'avi'}">${clase === 'ok' ? 'ok' : '·'}</span><span>${t}</span><span></span>`;
+    salida.appendChild(d);
+    if (!clase) avisos++;
+};
+
+/* ── DATOS: las tareas reales, para que haya de todo en pantalla ─────────────────── */
+const HOY = (() => { const d = new Date(), p = (x) => String(x).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; })();
+const TAREAS = [
+  [1,'Bubblegummers',625,'Creada','','','',''],
+  [19,'North Star',340,'Finalizado','lfernandez','ncruz','20:15','21:05'],
+  [21,'Power',391,'Asignado','mpiscoya','kmalimba','21:12',''],
+  [23,'Power',161,'Finalizado','mpiscoya','kmalimba','20:14','20:54']
+].map(([n,m,q,st,u1,u2,i,f]) => ({
+  id: `${HOY}_Tarea${n}`, fecha: HOY, marca: m, qty: q, status: st, u1, u2,
+  inicio: i ? `${HOY}T${i}:00` : '', termino: f ? `${HOY}T${f}:00` : '', creador: 'dames',
+  items: [{ sku7:'1613303', marca:m, gender:'FOOTWEAR', genderRims:'04 SPORT', bufferQty:q,
+            zonaQty:1, items:[{ ubi:'CDBUFFER-A-00-106', qty:q, talla:'25', avance:null }] }]
+}));
+
+const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
+
+(async () => {
+  const descarte = document.createElement('div');
+  document.body.appendChild(descarte);
+  try { await renderAppMovil(descarte, YO, () => {}); }
+  catch (e) { nota('la app NO se monta: ' + (e && e.message), 'mal'); fallos++; }
+  $('#informe').style.pointerEvents = 'none';
+
+  for (const T of temaService.TEMAS) {
+    temaService.aplicarTema(T.id);
+    await esperar(120);
+
+    const h = document.createElement('h2');
+    h.textContent = `${T.nombre}  ·  ${T.id}`;
+    salida.appendChild(h);
+
+    /* ── La pantalla de Tareas, que es la que más colores tiene ───────────────── */
+    const tab = $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'tareas');
+    tab.click();
+    /* SE ESPERA AL SERVIDOR ANTES DE SEMBRAR: al entrar, la pantalla pide las tareas
+       frescas, y esa respuesta llega despues y pisa lo que uno haya puesto. */
+    await esperar(2200);
+    adminService.adminStore.almacenaje_tasks = TAREAS;
+    toca('[data-filtro="todas"]', 'la cápsula Todas');
+    await esperar(150);
+    if ($$('#app-movil .am-tarea').length !== TAREAS.length) {
+        nota(`la lista trae ${$$('#app-movil .am-tarea').length} tareas y deberían ser ${TAREAS.length}`, 'mal');
+        fallos++;
+    }
+
+    mide($('#app-movil .am-cab .ttl'), 'el título de la pantalla');
+    mide($('#app-movil .am-cab .sub'), 'el turno y la fecha, arriba');
+    mide($('#app-movil .am-rango .eti'), 'los rótulos DESDE / HASTA');
+    mide($('#app-movil .am-rango input'), 'la fecha elegida');
+    mide($('#app-movil .am-filtro[aria-pressed="true"]'), 'la cápsula marcada');
+    mide($('#app-movil .am-filtro:not([aria-pressed="true"])'), 'una cápsula sin marcar');
+    mide($('#app-movil .am-tarea .m .txt'), 'el nombre de la marca');
+    mide($('#app-movil .am-tarea .n'), 'el número de la tarea');
+    mide($('#app-movil .am-tarea .q'), 'la cantidad de pares');
+    mide($('#app-movil .am-seccion'), 'el rótulo de la sección');
+
+    const chapas = { 'ch-quieto':'CREADA', 'ch-curso':'ASIGNADO', 'ch-va':'FINALIZADO (cumplió)',
+                     'ch-mal':'FINALIZADO (no cumplió)' };
+    Object.entries(chapas).forEach(([c, q]) => mide($('#app-movil .am-chapa.' + c), 'la etiqueta ' + q));
+
+    /* La hoja del registro */
+    toca('#app-movil .am-tarea', 'una tarea de la lista');
+    await esperar(180);
+    mide($('#app-movil .am-quees b'), 'el número, en la hoja');
+    mide($('#app-movil .am-tres3 .v'), 'los valores de la hoja');
+    mide($('#app-movil .am-tres3 .l'), 'los rótulos de la hoja');
+    mide($('#app-movil .am-campo label'), 'la etiqueta del campo');
+    mide($('#app-movil .am-campo select'), 'el operario elegido');
+    mide($('#app-movil .am-campo input[type=time]'), 'la hora');
+    mide($('#app-movil .am-btn.va'), 'el botón principal (lleno)');
+    mide($('#app-movil .am-salir'), 'Salir');
+    mide($('#app-movil .am-acc'), 'Reiniciar / Eliminar');
+    mide($('#app-movil .am-objetivo .v'), 'CUMPLIÓ / NO CUMPLIÓ');
+
+    /* Los iconos: el trazo toma `currentColor`, asi que se mide igual. */
+    const iconoBarra = $('#app-movil .am-barra button[aria-selected="true"]');
+    mide(iconoBarra, 'la pestaña activa (texto e ícono)', 3);
+    mide($('#app-movil .am-barra button[aria-selected="false"]'), 'una pestaña apagada', 3);
+    mide($('#app-movil .am-menu-btn'), 'el ícono del menú, arriba', 3);
+
+    toca('[data-cerrar-hoja]', 'el botón Salir de la hoja');
+    await esperar(120);
+
+    /* ── El menú ──────────────────────────────────────────────────────────────── */
+    toca('[data-menu]', 'el botón del menú');
+    await esperar(180);
+    mide($('#app-movil .am-panel button'), 'una opción del menú');
+    mide($('#app-movil .am-panel .gr'), 'el rótulo del grupo');
+    mide($('#app-movil .am-panel button .ch'), 'el valor al costado (Indigo ›)');
+
+    toca('[data-menu-ir="temas"]', 'la entrada Temas del menú');
+    await esperar(180);
+    mide($('#app-movil .am-panel button.sel'), 'el tema puesto, marcado');
+    /* NINGUN GANCHO PUEDE USAR UN ATRIBUTO QUE TAMBIEN VIVA EN <html> O EN <body>:
+       `closest` sube hasta ahi y se traga todos los clics de la app. Paso con
+       `data-tema`, que <html> lleva para el tema de la plataforma. */
+    const enLaRaiz = [...document.documentElement.attributes].map(a => a.name)
+        .concat([...document.body.attributes].map(a => a.name));
+    const ganchos = [...new Set($$('#app-movil [data-menu],#app-movil [data-filtro],#app-movil [data-tarea],#app-movil [data-poner-tema],#app-movil [data-menu-ir]')
+        .flatMap(el => [...el.attributes].map(a => a.name).filter(n => n.startsWith('data-'))))];
+    const chocan = ganchos.filter(g => enLaRaiz.includes(g));
+    if (chocan.length) { nota('un gancho choca con un atributo de <html>: ' + chocan.join(', '), 'mal'); fallos++; }
+    else nota('ningún gancho choca con <html> ni con <body>', 'ok');
+    mide($('#app-movil .am-panel .desc'), 'la descripción del tema');
+    const puesto = $('#app-movil .am-panel button.sel');
+    if (puesto && puesto.textContent.includes(T.nombre)) nota('el tema puesto es el que dice', 'ok');
+    else { nota('el menú no marca el tema puesto'); }
+
+    /* Se cierra el menú para la vuelta siguiente. */
+    if ($('#app-movil .am-velo-menu')) toca('[data-menu]', 'el botón del menú');
+    await esperar(120);
+    if ($('#app-movil .am-velo-menu')) toca('[data-menu]', 'el botón del menú');
+    await esperar(100);
+  }
+
+  /* Se vuelve al tema de la persona, para no dejarle otro puesto. */
+  temaService.aplicarTemaDeUsuario(YO.username);
+
+  const res = document.getElementById('resumen');
+  res.className = fallos ? 'mal' : 'ok';
+  res.textContent = fallos
+    ? `HAY ${fallos} PROBLEMA(S) DE LEGIBILIDAD  ·  ${total} medidas en 4 temas`
+    : `Los ${total} textos, números, botones e íconos se leen en los 4 temas`;
+  document.querySelector('#informe h1').textContent = fallos ? 'Con problemas' : 'Listo';
+  window.__resultado = { fallos, avisos, total };
+})();
+</script>
+</body>
+</html>
