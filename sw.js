@@ -31,3 +31,51 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 /* El oyente tiene que EXISTIR, pero no hace nada: sin `respondWith`, el navegador maneja
    el pedido como siempre. Es la version mas segura posible de un service worker. */
 self.addEventListener('fetch', () => { /* se deja pasar */ });
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════
+ *  LOS AVISOS
+ *  ───────────────────────────────────────────────────────────────────────────────────────
+ *  Esto es lo que hace que el telefono se entere CON LA PANTALLA APAGADA y la app cerrada.
+ *  El resto de la plataforma se entera preguntando cada 20 segundos, y un celular en el
+ *  bolsillo no pregunta nada: el navegador lo congela. Aca es al reves — el servidor avisa.
+ *
+ *  QUIEN LO MANDA: el robot `avisar_push.py`, desde el servidor del almacen. No pasa por
+ *  Render ni por ninguna tienda.
+ * ═══════════════════════════════════════════════════════════════════════════════════════ */
+
+self.addEventListener('push', (evento) => {
+    let d = {};
+    try { d = evento.data ? evento.data.json() : {}; } catch (e) { d = { cuerpo: evento.data && evento.data.text() }; }
+
+    const titulo = d.titulo || 'Logística Deam1830';
+    const opciones = {
+        body: d.cuerpo || '',
+        icon: d.icono || 'iconos/app-192.png',
+        badge: 'iconos/app-192.png',
+        /* LA ETIQUETA AGRUPA. Si el mismo robot avisa dos veces, la segunda REEMPLAZA a la
+           primera en vez de apilarse: lo que importa es lo ultimo que paso, no la lista de
+           todo lo que paso mientras el telefono estaba guardado. */
+        tag: d.etiqueta || 'deam',
+        renotify: !!d.insistir,
+        data: { url: d.url || './index.html' },
+        /* Sin vibracion ni sonido propios: los pone el telefono como la persona los tenga
+           configurados, que es lo correcto de madrugada. */
+        timestamp: Date.now()
+    };
+    evento.waitUntil(self.registration.showNotification(titulo, opciones));
+});
+
+/* Al tocar el aviso: si la app ya esta abierta se trae al frente -no se abre otra-, y si no,
+   se abre. Abrir una segunda ventana de lo mismo desorienta. */
+self.addEventListener('notificationclick', (evento) => {
+    evento.notification.close();
+    const destino = (evento.notification.data && evento.notification.data.url) || './index.html';
+    evento.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((abiertas) => {
+            for (const c of abiertas) {
+                if ('focus' in c) return c.focus();
+            }
+            if (self.clients.openWindow) return self.clients.openWindow(destino);
+        })
+    );
+});

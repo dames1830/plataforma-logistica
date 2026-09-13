@@ -25,9 +25,11 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0753';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0753';
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0753';
+import * as adminService from '../services_v245/adminService.js?v=29.0754';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0754';
+const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
+
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0754';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -199,6 +201,12 @@ const ICONOS = {
    asi se ve igual en todos los telefonos y a tono con los de la barra de abajo. Daniel:
    "ya no tiene sentido el icono de la camara, deberia estar un icono de compartir". */
 const ICONO_COMPARTIR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;display:block"><circle cx="18" cy="5.5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="M8.3 10.8 15.7 6.8"/><path d="M8.3 13.2l7.4 4"/></svg>';
+
+/* LA LLAVE PUBLICA DE LOS AVISOS. Es publica a proposito: identifica al servidor que manda
+   y no sirve para mandar nada. La privada vive SOLO en el servidor del almacen, como
+   variable de maquina (`VAPID_PRIVADA`), nunca en el repositorio. */
+const LLAVE_AVISOS = 'BE2dQmsJ0AvtY2ZSq9C3CqEvfv9zRkpyuJCz40uiUxkbemrIWHrF4JAopR0z4ZYw28zRpe-HW0goOTh1yIxbGQk';
+const AREA_AVISOS = 'push_suscripciones';
 
 const SECCIONES = [
     { id: 'inicio', rotulo: 'Inicio', icono: 'inicio' },
@@ -856,12 +864,152 @@ const mandarFoto = async () => {
     verLaFoto(lienzos.map(l => l.toDataURL('image/png')));
 };
 
+/* ── LOS AVISOS DEL CELULAR ───────────────────────────────────────────────────────────── */
+
+let avisosEstado = 'mirando';    // mirando | apagados | prendidos | sin-soporte | bloqueados
+let avisosTrabajando = false;
+
+/** El identificador de ESTE telefono. Una persona puede tener el celular y la tablet, y cada
+ *  uno necesita su propia suscripcion: si se pisaran, el aviso llegaria a uno solo. */
+const idDeEsteTelefono = () => {
+    try {
+        let id = localStorage.getItem('deam_id_telefono');
+        if (!id) {
+            id = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+            localStorage.setItem('deam_id_telefono', id);
+        }
+        return id;
+    } catch (e) { return 'sin-memoria'; }
+};
+
+const puedeAvisos = () => ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+
+const mirarAvisos = async () => {
+    if (!puedeAvisos()) { avisosEstado = 'sin-soporte'; return; }
+    if (Notification.permission === 'denied') { avisosEstado = 'bloqueados'; return; }
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        const sus = await reg.pushManager.getSubscription();
+        avisosEstado = sus ? 'prendidos' : 'apagados';
+    } catch (e) { avisosEstado = 'apagados'; }
+};
+
+/** La llave viaja en base64 de URL y el navegador la quiere en bytes. */
+const llaveEnBytes = (base64) => {
+    const relleno = '='.repeat((4 - base64.length % 4) % 4);
+    const limpia = (base64 + relleno).replace(/-/g, '+').replace(/_/g, '/');
+    const crudo = atob(limpia);
+    const bytes = new Uint8Array(crudo.length);
+    for (let i = 0; i < crudo.length; i++) bytes[i] = crudo.charCodeAt(i);
+    return bytes;
+};
+
+const prenderAvisos = async () => {
+    if (avisosTrabajando) return;
+    avisosTrabajando = true; pintar();
+    try {
+        const permiso = await Notification.requestPermission();
+        if (permiso !== 'granted') {
+            avisosEstado = permiso === 'denied' ? 'bloqueados' : 'apagados';
+            return;
+        }
+        const reg = await navigator.serviceWorker.ready;
+        const sus = await reg.pushManager.subscribe({
+            userVisibleOnly: true,                       // sin esto el navegador no suscribe
+            applicationServerKey: llaveEnBytes(LLAVE_AVISOS)
+        });
+        const s = sus.toJSON();
+        await fetch(`${BASE_API}/${AREA_AVISOS}?date=MASTER`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', ...(YO.token ? { 'X-Auth-Token': YO.token } : {}) },
+            body: JSON.stringify({
+                id: YO.username + '|' + idDeEsteTelefono(),
+                usuario: YO.username,
+                rol: YO.role || '',
+                endpoint: s.endpoint,
+                claves: s.keys,
+                telefono: navigator.userAgent.slice(0, 90),
+                cuando: new Date().toISOString()
+            })
+        });
+        avisosEstado = 'prendidos';
+    } catch (e) {
+        console.warn('[APP] no se pudieron prender los avisos:', e && e.message);
+        alert('No se pudieron activar los avisos. Vuelve a intentar.');
+        await mirarAvisos();
+    }
+    avisosTrabajando = false;
+    pintar();
+};
+
+const apagarAvisos = async () => {
+    if (avisosTrabajando) return;
+    avisosTrabajando = true; pintar();
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        const sus = await reg.pushManager.getSubscription();
+        if (sus) await sus.unsubscribe();
+        /* Se borra tambien del servidor: si quedara, el robot seguiria mandando avisos a un
+           telefono que ya no los quiere y el servicio terminaria rechazandolos. */
+        await fetch(`${BASE_API}/${AREA_AVISOS}?date=MASTER`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', ...(YO.token ? { 'X-Auth-Token': YO.token } : {}) },
+            body: JSON.stringify({ id: YO.username + '|' + idDeEsteTelefono(), usuario: YO.username, baja: true })
+        });
+        avisosEstado = 'apagados';
+    } catch (e) { console.warn('[APP] apagar avisos:', e && e.message); }
+    avisosTrabajando = false;
+    pintar();
+};
+
+const pantallaAvisos = () => {
+    const esAdmin = esElAdministrador();
+    const loQueLlega = esAdmin
+        ? [['🤖', 'Cada robot que corre', 'Cómo le fue a cada corrida, apenas termina.'],
+           ['📦', 'Los cortes de stock', 'El de las 07:00 y el de las 19:00.'],
+           ['💬', 'Los mensajes del chat', 'Cuando alguien te escribe.']]
+        : [['📦', 'Los cortes de stock', 'El de las 07:00 y el de las 19:00.'],
+           ['💬', 'Los mensajes del chat', 'Cuando alguien te escribe.']];
+
+    const lista = loQueLlega.map(([ic, que, detalle]) => `
+        <div class="am-fila">
+            <span class="cinta" style="background:var(--am-va)"></span>
+            <span class="medio"><span class="t">${ic} ${esc(que)}</span><span class="d">${esc(detalle)}</span></span>
+        </div>`).join('');
+
+    let caja = '';
+    if (avisosEstado === 'sin-soporte') {
+        caja = `<div class="am-pronto"><span class="ic">📵</span><span class="q">Este teléfono no admite avisos</span>
+                <span class="p">Hace falta Android con Chrome, o un iPhone con la app agregada a la pantalla de inicio.</span></div>`;
+    } else if (avisosEstado === 'bloqueados') {
+        caja = `<div class="am-pronto"><span class="ic">🔕</span><span class="q">Los avisos están bloqueados</span>
+                <span class="p">Se dijo que no una vez. Para volver a permitirlos hay que entrar a los ajustes del navegador, en los permisos de este sitio.</span></div>`;
+    } else if (avisosEstado === 'prendidos') {
+        caja = `<div class="am-cerrada">🔔 Avisos activados en este teléfono</div>
+                <button type="button" class="am-boton fino" data-apagar-avisos ${avisosTrabajando ? 'disabled' : ''}>Apagar los avisos aquí</button>`;
+    } else {
+        caja = `<div class="am-tarjeta">
+                    <span class="am-rotulo">Avisos</span>
+                    <span class="am-pie">Con esto el teléfono avisa <b>aunque esté guardado y con la pantalla apagada</b>. Sin esto, solo te enteras al abrir la app.</span>
+                </div>
+                <button type="button" class="am-boton" data-prender-avisos ${avisosTrabajando ? 'disabled' : ''}>${avisosTrabajando ? 'Activando…' : '🔔 Activar los avisos'}</button>`;
+    }
+
+    return `
+        ${caja}
+        <div class="am-seccion">Qué te va a llegar</div>
+        ${lista}
+        <p class="am-nota">Los avisos los manda el servidor del almacén. No pasan por ninguna tienda ni cuestan nada.</p>
+        <button type="button" class="am-salida" data-escritorio>Ver la versión de escritorio</button>
+    `;
+};
+
 const CABECERAS = {
     inicio: () => ({ sub: `Turno · ${diaEnLetras()}`, ttl: `${saludo()}, ${String(YO.name || YO.username).split(' ')[0]}` }),
     reportes: () => ({ sub: `Datos del ${diaEnLetras()}`, ttl: 'Reportes' }),
     tareas: () => ({ sub: `Turno · ${diaEnLetras()}`, ttl: 'Tareas' }),
     lista: () => ({ sub: `Turno noche · ${diaEnLetras()}`, ttl: 'Pasar lista' }),
-    avisos: () => ({ sub: 'Sin avisos todavía', ttl: 'Avisos' })
+    avisos: () => ({ sub: avisosEstado === 'prendidos' ? 'Activados en este teléfono' : 'Apagados', ttl: 'Avisos' })
 };
 
 const pintar = () => {
@@ -873,6 +1021,7 @@ const pintar = () => {
     const cuerpo = raiz.querySelector('.am-cuerpo');
     cuerpo.innerHTML = seccion === 'inicio' ? pantallaInicio()
         : seccion === 'lista' ? pantallaLista()
+        : seccion === 'avisos' ? pantallaAvisos()
         : pantallaEnCamino(seccion);
     cuerpo.scrollTop = 0;
 
@@ -937,7 +1086,8 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         const s = e.target.closest('[data-seccion]');
         if (s) {
             seccion = s.getAttribute('data-seccion');
-            if (seccion === 'lista') { cargarLista(); refrescarLista(); }   // se trae al entrar
+                if (seccion === 'lista') { cargarLista(); refrescarLista(); }   // se trae al entrar
+            if (seccion === 'avisos') mirarAvisos().then(pintar);
             pintar();
             return;
         }
@@ -947,6 +1097,8 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (falto) { marcar(falto.getAttribute('data-falto'), false); return; }
         if (e.target.closest('[data-guardar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
+        if (e.target.closest('[data-prender-avisos]')) { prenderAvisos(); return; }
+        if (e.target.closest('[data-apagar-avisos]')) { apagarAvisos(); return; }
         if (e.target.closest('[data-reabrir]')) { reabrirLista(); return; }
         if (e.target.closest('[data-cerrar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-escritorio]')) { irAEscritorio(); return; }
