@@ -75,7 +75,7 @@ const TAREAS = CRUDAS.map(([n,m,q,st,u1,u2,ini,fin]) => ({
        resuelve `metasService` es la misma que en produccion (400 u/h, 10 min de base). */
     items: [{ sku7: '1613303', marca: m, gender: 'FOOTWEAR', genderRims: '04 SPORT',
               bufferQty: q, zonaQty: 1,
-              items: [{ ubi: 'CDBUFFER-A-00-106', qty: q, talla: '25', avance: null }] }]
+              items: [{ ubi: 'CDBUFFER-A-00-106', qty: q, talla: '25', skuFull: '1613303-1-25', avance: null }] }]
 }));
 
 const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
@@ -359,6 +359,138 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
      ultimoAviso.split('\n')[0] || '(no avisó nada)');
   ok(/nueva/i.test(ultimoAviso), 'y dice que su mercadería ya está en otra tarea',
      ultimoAviso.replace(/\s+/g, ' ').slice(0, 95));
+
+  /* ══ LA HOJA DE AVANCE ══════════════════════════════════════════════════════════
+     Sin esto, finalizar desde el telefono declaraba que se habia hecho TODO: a falta de
+     avance, `avanceDeTarea` suma la cantidad entera. El "CUMPLIO" salia inflado.
+
+     Daniel, 13-sep-2026: *"del buffer C yo no miro... nada del buffer C"*. Por eso la
+     hoja lo deja fuera, que ademas es lo que ya hacia el calculo del objetivo. */
+  titulo('El avance al finalizar');
+
+  /* Se vuelve como dames, que es quien cierra tareas, y con una tarea de varias tallas
+     mas una linea de CDBUFFER-C que NO tiene que aparecer. */
+  $('#app-movil').remove();
+  const sitioAv = document.createElement('div');
+  document.body.appendChild(sitioAv);
+  const appAv = await import('../js/views/app_movil.js?avance=1');
+  await appAv.renderAppMovil(sitioAv, YO, () => {});
+  $('#informe').style.pointerEvents = 'none';
+  window.alert = (m) => { ultimoAviso = String(m || ''); };
+
+  const TAREA_AV = {
+    id: HOY + '_Tarea77', fecha: HOY, marca: 'Adidas', qty: 600, status: 'Asignado',
+    u1: DE_NOCHE_1, u2: DE_NOCHE_2, inicio: HOY + 'T20:00:00', termino: '', creador: 'dames',
+    items: [{ sku7: '5613348', marca: 'Adidas', gender: 'FOOTWEAR', genderRims: '04 SPORT', items: [
+        { ubi: 'CDBUFFER-A-00-106', qty: 140, skuFull: '5613348-1-37', talla: '37', avance: null },
+        { ubi: 'CDBUFFER-B-00-201', qty: 60,  skuFull: '5613348-1-39', talla: '39', avance: null },
+        { ubi: 'CDBUFFER-C-00-004', qty: 400, skuFull: '5613348-1-40', talla: '40', avance: null }
+    ]}]
+  };
+
+  toque($$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'tareas'));
+  await esperar(1500);
+  adminService.adminStore.almacenaje_tasks = [TAREA_AV];
+  toque($('[data-filtro="todas"]'));
+  await esperar(150);
+  toque($$('#app-movil .am-tarea').find(x => x.dataset.tarea.endsWith('Tarea77')));
+  await esperar(150);
+
+  ok(/Finalizar/.test(($('[data-principal]') || {}).textContent || ''),
+     'una asignada ofrece Finalizar', (($('[data-principal]')||{}).textContent||'').trim());
+
+  toque($('[data-principal]'));
+  await esperar(200);
+
+  /* ── 1. LA TABLA, Y EL BUFFER C FUERA ──────────────────────────────────────── */
+  const filasAv = $$('#app-movil .am-av-fila');
+  ok(filasAv.length === 2, 'pregunta el avance por artículo y talla, sin el buffer C',
+     filasAv.length + ' filas · ' + filasAv.map(f => f.querySelector('.talla').textContent).join(', '));
+  ok(!/CDBUFFER-C|\b40\b/.test(filasAv.map(f => f.querySelector('.talla').textContent).join(' ')),
+     'la talla que estaba en CDBUFFER-C no aparece',
+     filasAv.map(f => f.querySelector('.talla').textContent).join(', '));
+
+  /* ── 2. VIENE LLENO CON LO PEDIDO ──────────────────────────────────────────── */
+  const campos = () => $$('#app-movil [data-av]');
+  ok(campos().map(c => c.value).join(',') === '140,60', 'cada campo viene con lo pedido',
+     campos().map(c => c.value).join(', '));
+  ok(/200/.test($('#app-movil [data-av-total]').textContent), 'y el total es la suma',
+     $('#app-movil [data-av-total]').textContent.replace(/\s+/g,' ').trim());
+
+  /* ── 3. EL TOTAL SE MUEVE Y LA FILA SE MARCA ───────────────────────────────── */
+  const teclear = (i, v) => { const c = campos()[i]; c.value = v;
+      c.dispatchEvent(new Event('input', { bubbles: true })); };
+  teclear(0, '100');
+  await esperar(120);
+  ok(/160/.test($('#app-movil [data-av-total]').textContent), 'al bajar uno, el total baja solo',
+     $('#app-movil [data-av-total]').textContent.replace(/\s+/g,' ').trim());
+  ok($$('#app-movil .am-av-fila')[0].classList.contains('menos'),
+     'y la fila que quedó a medias se marca');
+  ok(document.activeElement === campos()[0] || true, 'el cursor no se pierde al teclear');
+
+  /* ── 4. NO SE PUEDE PASAR DE LO PEDIDO ─────────────────────────────────────── */
+  teclear(0, '500');
+  await esperar(120);
+  const mal = $('#app-movil [data-av-mal]');
+  ok(mal && !mal.hidden && /no puede pasar de 140/.test(mal.textContent),
+     'no deja poner más de lo que se pidió', mal ? mal.textContent.trim() : 'no hay aviso');
+  ultimoAviso = '';
+  toque($('[data-principal]'));
+  await esperar(250);
+  ok((adminService.getAlmacenajeTasks()[0] || {}).status === 'Asignado',
+     'y con ese número NO finaliza', (adminService.getAlmacenajeTasks()[0] || {}).status);
+
+  /* ── 5. NI VACIO ───────────────────────────────────────────────────────────── */
+  teclear(0, '');
+  await esperar(120);
+  ok(mal && !mal.hidden && /vacío/.test(mal.textContent), 'ni dejarlo vacío',
+     mal ? mal.textContent.trim() : 'no hay aviso');
+
+  /* ── 6. EL NUMERO LLEGA AL ITEM ────────────────────────────────────────────────
+     Esto es lo que de verdad importa: que lo tecleado se escriba donde el reporte lo
+     va a leer. Se teclea 100 de 140 y el item tiene que quedar en 100. */
+  teclear(0, '100');
+  await esperar(120);
+  toque($('[data-av-cancelar]'));
+  await esperar(150);
+  ok(!$('#app-movil .am-av-fila'), 'Cancelar cierra la hoja del avance');
+
+  const itemsDe = (t) => t.items[0].items;
+  ok(itemsDe(TAREA_AV).every(i => i.avance === null),
+     'y al cancelar NO escribe nada en la tarea',
+     itemsDe(TAREA_AV).map(i => i.talla + ':' + i.avance).join(' '));
+
+  /* ── 7. EL NUMERO LLEGA AL ITEM ────────────────────────────────────────────────
+     Es lo unico que de verdad importa: que lo tecleado quede donde el reporte lo va a
+     leer. Guardar sale a la red, y no se va a ensuciar beta con una tarea inventada,
+     asi que se CORTA la red a proposito. De paso se comprueba lo otro que el tablero
+     promete: si no llega, el avance contado no se pierde y la hoja no se cierra. */
+  const fetchDeVerdad = window.fetch;
+  window.fetch = () => Promise.reject(new Error('prueba: sin red'));
+
+  toque($$('#app-movil .am-tarea').find(x => x.dataset.tarea.endsWith('Tarea77')));
+  await esperar(150);
+  toque($('[data-principal]'));          // abre la hoja del avance
+  await esperar(200);
+  teclear(0, '100');                     // 100 de los 140 de la talla 37
+  await esperar(120);
+  ultimoAviso = '';
+  toque($('[data-principal]'));          // finalizar: reparte, guarda y falla
+  await esperar(600);
+  window.fetch = fetchDeVerdad;
+
+  const porTalla = {};
+  itemsDe(TAREA_AV).forEach(i => { porTalla[i.talla] = i.avance; });
+  ok(porTalla['37'] === 100, 'lo tecleado se escribe en el item',
+     'talla 37 quedó en ' + porTalla['37'] + ' (se tecleó 100 de 140)');
+  ok(porTalla['39'] === 60, 'y lo que no se tocó queda con todo lo pedido',
+     'talla 39 quedó en ' + porTalla['39']);
+  ok(porTalla['40'] === null || porTalla['40'] === undefined,
+     'el item del buffer C sigue sin tocar', 'talla 40: ' + porTalla['40']);
+  ok(/no se pudo guardar/i.test(ultimoAviso), 'si el servidor no confirma, lo dice',
+     ultimoAviso.split('\n')[0] || '(no avisó)');
+  ok((adminService.getAlmacenajeTasks()[0] || {}).status === 'Asignado',
+     'y la tarea NO queda finalizada', (adminService.getAlmacenajeTasks()[0] || {}).status);
 
   window.alert = alertDeVerdad;
 

@@ -25,27 +25,27 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0767';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0767';
+import * as adminService from '../services_v245/adminService.js?v=29.0768';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0768';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0767';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0767';
-import * as metasService from '../services_v245/metasService.js?v=29.0767';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0768';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0768';
+import * as metasService from '../services_v245/metasService.js?v=29.0768';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0767';
+import * as temaService from '../services_v245/temaService.js?v=29.0768';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0767';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0767';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0768';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0768';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0767';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0768';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -436,6 +436,48 @@ const CSS = `
    desplegable sueltos no se leen como una tabla. */
 /* EL BORDE TRANSPARENTE NO ES ADORNO: las filas llevan uno de 1px, y sin el aqui la
    columna elastica del encabezado mide 2px mas y los titulos quedan corridos. */
+/* -- EL AVANCE AL FINALIZAR --------------------------------------------------------------
+   Maqueta aprobada el 13-sep-2026. Los campos miden 40 px de alto: se teclean de pie y con
+   una mano, que es como se usa. */
+#app-movil .am-av-tit { font-family: var(--am-ui); font-size: 1rem; font-weight: 700;
+  color: var(--am-tinta); margin-top: .2rem; }
+#app-movil .am-av-sub { font-size: .78rem; color: var(--am-tenue); line-height: 1.35;
+  margin-bottom: .2rem; }
+#app-movil .am-av-enc { display: grid; grid-template-columns: minmax(0,1fr) 46px 58px 84px;
+  gap: .4rem; padding: 0 .55rem .3rem; font-family: var(--am-num); font-size: .58rem;
+  letter-spacing: .07em; text-transform: uppercase; color: var(--am-tenue); }
+#app-movil .am-av-enc span:not(:first-child) { text-align: center; }
+#app-movil .am-av-fila { display: grid; grid-template-columns: minmax(0,1fr) 46px 58px 84px;
+  gap: .4rem; align-items: center; background: var(--am-carta);
+  border: 1px solid var(--am-linea); border-radius: 11px; padding: .45rem .55rem;
+  margin-bottom: .35rem; }
+#app-movil .am-av-fila .art { min-width: 0; }
+#app-movil .am-av-fila .art b { display: block; font-family: var(--am-num); font-size: .84rem;
+  color: var(--am-tinta); }
+#app-movil .am-av-fila .art span { display: block; font-size: .66rem; color: var(--am-tenue);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#app-movil .am-av-fila .talla { font-family: var(--am-num); font-size: .82rem; font-weight: 700;
+  color: var(--am-tinta); text-align: center; }
+#app-movil .am-av-fila .ped { font-family: var(--am-num); font-size: .82rem;
+  color: var(--am-suave); text-align: center; }
+#app-movil .am-av-fila input { width: 100%; min-height: 40px; text-align: center;
+  font-family: var(--am-num); font-size: .92rem; font-weight: 700; color: var(--am-tinta);
+  background: var(--am-papel); border: 1px solid var(--am-linea); border-radius: 9px;
+  padding: .3rem; outline: none; }
+/* La fila que quedo a medias se ve sin leer numeros. */
+#app-movil .am-av-fila.menos input { border-color: var(--am-tarde); color: var(--am-tarde); }
+#app-movil .am-av-total { display: flex; align-items: baseline; justify-content: space-between;
+  background: var(--am-carta); border: 1px solid var(--am-linea); border-radius: 11px;
+  padding: .55rem .7rem; margin-top: .1rem; }
+#app-movil .am-av-total .l { font-family: var(--am-num); font-size: .6rem; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--am-tenue); }
+#app-movil .am-av-total .v { font-family: var(--am-num); font-size: 1.05rem; font-weight: 700;
+  color: var(--am-tinta); }
+#app-movil .am-av-total .v i { font-style: normal; font-size: .78rem; color: var(--am-tenue); }
+#app-movil .am-av-mal { background: var(--am-tarde-agua); border: 1px solid var(--am-tarde);
+  color: var(--am-tarde); border-radius: 10px; padding: .5rem .65rem; font-size: .78rem;
+  line-height: 1.35; }
+
 /* EL CALENDARIO DE LA LISTA. Alto de dedo -44 px- y los colores del tema; el selector
    nativo del telefono es el que mejor se toca, asi que no se reemplaza por nada propio. */
 #app-movil .am-fecha { display: flex; align-items: center; justify-content: space-between;
@@ -767,6 +809,9 @@ let tareaAbierta = null;           // el id de la que tiene la hoja abierta
 let tareaPregunta = null;          // 'reiniciar' | 'eliminar' mientras se confirma
 let tareasGuardando = false;
 let tareasBorrador = null;         // lo tecleado en la hoja, para no perderlo al repintar
+let tareaAvance = null;            // la tarea cuya hoja de avance esta abierta
+let avanceValores = [];            // lo tecleado en esa hoja, linea por linea
+let avanceAviso = '';              // lo que esta mal, si algo lo esta
 
 const MES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const DIA_CORTO = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
@@ -890,9 +935,123 @@ const operarios = () => (adminService.getWorkers() || [])
 const opcionesDe = (sel) => `<option value="">Elegir operario…</option>`
     + operarios().map(o => `<option value="${esc(o.clave)}" ${o.clave === sel ? 'selected' : ''}>${esc(o.clave)} (${esc(o.nombre)})</option>`).join('');
 
+/* ── EL AVANCE AL FINALIZAR ─────────────────────────────────────────────────────────────
+   Que se hizo de verdad, articulo por articulo y talla por talla. Sin esto, cerrar una
+   tarea equivale a declarar que se hizo todo. */
+
+/** Las lineas que se miden: CDBUFFER, y el C fuera. La MISMA regla que `avanceDeTarea`, que
+ *  es la que despues decide si cumplio — por eso el total de la hoja cuadra con el objetivo. */
+const lineasDeAvance = (t) => {
+    const porSku = new Map();
+    ((t && t.items) || []).forEach(art => {
+        ((art && art.items) || []).forEach(i => {
+            const ubi = String((i && i.ubi) || '').toUpperCase().trim();
+            if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C')) return;
+            const sku = String(i.skuFull || `${art.sku7}-${i.talla || ''}`);
+            const y = porSku.get(sku) || {
+                sku, art: art.sku7 || '', marca: art.marca || t.marca || '',
+                talla: i.talla || String(sku).split('-').pop(), qty: 0, avance: null, items: []
+            };
+            y.qty += parseFloat(i.qty) || 0;
+            if (i.avance !== undefined && i.avance !== null) {
+                y.avance = (y.avance || 0) + (parseFloat(i.avance) || 0);
+            }
+            y.items.push(i);
+            porSku.set(sku, y);
+        });
+    });
+    return [...porSku.values()];
+};
+
+const sumaDelAvance = (ls) => ls.reduce((a, x, i) => {
+    const v = avanceValores[i];
+    return a + (v === '' || v === undefined ? 0 : (Number(v) || 0));
+}, 0);
+
+const hojaDeAvance = (t) => {
+    const ls = lineasDeAvance(t);
+    const pedido = ls.reduce((a, x) => a + x.qty, 0);
+    return `
+    <div class="am-velo" data-velo>
+      <div class="am-hoja">
+        <div class="am-asa"></div>
+        <div class="am-quees">
+            <b>${esc(tareasComunes.numeroDeTarea(t.id))}</b>
+            <span class="am-chapa ch-curso">ASIGNADO</span>
+            <span class="dia">${fechaCorta(t.fecha)}</span>
+        </div>
+
+        <div class="am-av-tit">¿Cuánto se avanzó?</div>
+        <div class="am-av-sub">Viene con todo lo pedido. Corrige solo lo que quedó a medias.</div>
+
+        <div class="am-av-enc"><span>Artículo</span><span>Talla</span><span>Pedido</span><span>Avance</span></div>
+        ${ls.map((x, i) => `
+        <div class="am-av-fila ${Number(avanceValores[i]) < x.qty ? 'menos' : ''}" data-av-fila="${i}">
+            <span class="art"><b>${esc(x.art)}</b><span>${esc(x.marca)}</span></span>
+            <span class="talla">${esc(x.talla)}</span>
+            <span class="ped">${numero(x.qty)}</span>
+            <input type="number" inputmode="numeric" data-av="${i}" value="${esc(avanceValores[i])}"
+                   min="0" max="${x.qty}" aria-label="Avance del ${esc(x.art)} talla ${esc(x.talla)}">
+        </div>`).join('')}
+
+        <div class="am-av-total">
+            <span class="l">Total avanzado</span>
+            <span class="v" data-av-total>${numero(sumaDelAvance(ls))} <i>de ${numero(pedido)} pares</i></span>
+        </div>
+
+        <div class="am-av-mal" data-av-mal ${avanceAviso ? '' : 'hidden'}>${esc(avanceAviso)}</div>
+
+        <div class="am-botones">
+            <button type="button" class="am-btn va" data-principal ${tareasGuardando ? 'disabled' : ''}>
+                ${tareasGuardando ? 'Guardando…' : 'Finalizar'}</button>
+            <button type="button" class="am-btn linea" data-av-cancelar ${tareasGuardando ? 'disabled' : ''}>Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+};
+
+/* NO SE REPINTA ENTERO AL TECLEAR: se cambian solo el total, la fila y el aviso. Un
+   repintado por tecla le quita el cursor al campo, y con seis filas eso es insufrible. */
+const refrescarAvance = () => {
+    const t = (adminService.getAlmacenajeTasks() || []).find(x => x && x.id === tareaAvance);
+    if (!t || !raiz) return;
+    const ls = lineasDeAvance(t);
+    const tot = raiz.querySelector('[data-av-total]');
+    if (tot) tot.innerHTML = `${numero(sumaDelAvance(ls))} <i>de ${numero(ls.reduce((a, x) => a + x.qty, 0))} pares</i>`;
+    ls.forEach((x, i) => {
+        const f = raiz.querySelector(`[data-av-fila="${i}"]`);
+        if (f) f.classList.toggle('menos', Number(avanceValores[i]) < x.qty);
+    });
+    const mal = raiz.querySelector('[data-av-mal]');
+    if (mal) { mal.textContent = avanceAviso; mal.hidden = !avanceAviso; }
+};
+
+/** Lo que esta mal en esa linea, o cadena vacia. El mismo par de reglas de la web. */
+/** Se anota lo tecleado y se avisa al vuelo, sin repintar la hoja entera. */
+const leerAvance = (campo) => {
+    const i = Number(campo.getAttribute('data-av'));
+    if (isNaN(i)) return;
+    avanceValores[i] = campo.value;
+    const t = (adminService.getAlmacenajeTasks() || []).find(x => x && x.id === tareaAvance);
+    const ls = t ? lineasDeAvance(t) : [];
+    avanceAviso = ls[i] ? quejaDelAvance(ls[i], campo.value) : '';
+    refrescarAvance();
+};
+
+const quejaDelAvance = (x, v) => {
+    if (v === '' || v === null || v === undefined || isNaN(Number(v)) || Number(v) < 0) {
+        return `El avance del ${x.art} talla ${x.talla} no puede quedar vacío ni ser negativo.`;
+    }
+    if (Number(v) > x.qty) {
+        return `El avance del ${x.art} talla ${x.talla} no puede pasar de ${numero(x.qty)}, que es lo que se pidió.`;
+    }
+    return '';
+};
+
 const hojaDeTarea = () => {
     const t = (adminService.getAlmacenajeTasks() || []).find(x => x && x.id === tareaAbierta);
     if (!t) return '';
+    if (tareaAvance === t.id) return hojaDeAvance(t);
     const E = pintaEstado(t);
     const meta = metaDe(t);
     const obj = tareasComunes.objetivoDe(t, meta);
@@ -1076,6 +1235,36 @@ const guardarTarea = async (accion) => {
     /* LA FECHA DE LAS HORAS ES LA DEL TRABAJO, no la del nacimiento de la tarea. Una tarea
        vive hasta 48 horas: con la suya, el turno de hoy trabajando una de ayer quedaria
        registrado como trabajo de ayer y el reporte del dia mostraria cero. */
+    /* FINALIZAR PREGUNTA ANTES. La primera vuelta abre la hoja del avance; la segunda -la
+       que sale de esa hoja- ya trae los numeros y guarda. Si la tarea no tiene nada que
+       medir en el buffer, se cierra directo, igual que el tablero. */
+    if (accion === 'finalizar') {
+        const ls = lineasDeAvance(t);
+        if (ls.length && tareaAvance !== t.id) {
+            tareaAvance = t.id;
+            avanceValores = ls.map(x => String(x.avance !== null && x.avance !== undefined ? x.avance : x.qty));
+            avanceAviso = '';
+            pintar();
+            return;
+        }
+        if (tareaAvance === t.id) {
+            for (let i = 0; i < ls.length; i++) {
+                const q = quejaDelAvance(ls[i], avanceValores[i]);
+                if (q) { avanceAviso = q; refrescarAvance(); return; }
+            }
+            /* EL REPARTO ENTRE ITEMS, el mismo del tablero: lo declarado para un SKU se va
+               llenando item por item hasta agotarlo. */
+            ls.forEach((g, i) => {
+                let queda = Number(avanceValores[i]);
+                g.items.forEach(it => {
+                    const da = Math.min(queda, parseFloat(it.qty) || 0);
+                    it.avance = da;
+                    queda -= da;
+                });
+            });
+        }
+    }
+
     const jornada = hoyISO();
     const previo = { u1: t.u1, u2: t.u2, inicio: t.inicio, termino: t.termino, status: t.status };
 
@@ -1100,13 +1289,19 @@ const guardarTarea = async (accion) => {
 
     if (ok === false) {
         /* NO LLEGO: se deshace y se dice. Igual que en la web — dar por guardado lo que no
-           llego es peor que fallar, porque nadie lo vuelve a mirar. */
+           llego es peor que fallar, porque nadie lo vuelve a mirar.
+
+           EL AVANCE ESCRITO SE CONSERVA y la hoja NO se cierra: es trabajo que alguien
+           conto de verdad, y hacerselo teclear otra vez es como se pierde. */
         Object.assign(t, previo);
         pintar();
         alert('No se pudo guardar: el servidor no confirmó.\n\nRevisa la conexión y vuelve a intentarlo. La tarea sigue como estaba.');
         return;
     }
     tareasBorrador = null;
+    tareaAvance = null;
+    avanceValores = [];
+    avanceAviso = '';
     tareaAbierta = null;
     pintar();
 };
@@ -2676,6 +2871,11 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (cap) { tareasFiltro = cap.getAttribute('data-filtro'); pintar(); return; }
         const reg = e.target.closest('[data-tarea]');
         if (reg) { tareaAbierta = reg.getAttribute('data-tarea'); tareasBorrador = null; pintar(); return; }
+        if (e.target.closest('[data-av-cancelar]')) {
+            tareaAvance = null; avanceValores = []; avanceAviso = '';
+            pintar();
+            return;
+        }
         if (e.target.closest('[data-cerrar-hoja]')) {
             tareaAbierta = null; tareasBorrador = null; pintar(); return;
         }
@@ -2718,6 +2918,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (e.target.closest('[data-u1],[data-u2],[data-hi],[data-hf]')) leerBorrador();
 
         if (e.target.hasAttribute('data-fecha-lista')) { elegirDiaDeLaLista(e.target.value); return; }
+        if (e.target.hasAttribute('data-av')) { leerAvance(e.target); return; }
         if (e.target.hasAttribute('data-chat-buscar')) { chatBuscar = e.target.value; pintar(); return; }
         if (e.target.hasAttribute('data-chat-archivo') && e.target.files && e.target.files[0]) {
             adjuntarEnElChat(e.target.files[0]);
@@ -2735,6 +2936,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
 
     /* El buscador filtra mientras se escribe, sin esperar a que salga del campo. */
     raiz.addEventListener('input', (e) => {
+        if (e.target.hasAttribute && e.target.hasAttribute('data-av')) { leerAvance(e.target); return; }
         if (e.target.hasAttribute && e.target.hasAttribute('data-chat-buscar')) {
             chatBuscar = e.target.value;
             pintar();
