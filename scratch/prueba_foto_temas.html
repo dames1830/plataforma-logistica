@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba · la foto de la asistencia en los cuatro temas</title>
+<!--
+  LA FOTO QUE SE MANDA AL GRUPO TIENE QUE SEGUIR EL TEMA.
+
+  Daniel, 12-sep-2026: *"le he puesto el tema indigo a la aplicacion, y cuando comparto la
+  asistencia me sale con el tema blanco"*.
+
+  Se dibuja la lamina DE VERDAD en los cuatro temas y se le leen los pixeles: el fondo tiene
+  que cambiar, y el texto tiene que leerse sobre el. Un canvas no tiene CSS que inspeccionar,
+  asi que se mide el color que de verdad quedo pintado.
+-->
+<link rel="stylesheet" href="../css/main_v176.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body { margin:0; font:14px/1.5 system-ui, sans-serif; background:#0b1220; color:#e2e8f0; }
+  #informe { position:fixed; inset:0; z-index:99999; overflow:auto; background:#0b1220; padding:1rem 1.2rem 3rem; }
+  h2 { font-size:14px; margin:1.3rem 0 .4rem; letter-spacing:.06em; text-transform:uppercase;
+       color:#94a3b8; border-bottom:1px solid #1e293b; padding-bottom:.3rem; }
+  .li { display:grid; grid-template-columns:2.6rem 1fr auto; gap:.5rem; padding:.13rem 0; font-size:12.5px; }
+  .ok { color:#4ade80; } .mal { color:#f87171; font-weight:700; }
+  .d { font-family:ui-monospace, monospace; font-size:11.5px; color:#64748b; }
+  #resumen { margin-top:1.3rem; padding-top:.7rem; border-top:2px solid #1e293b; font-weight:700; }
+  .miniaturas { display:flex; gap:.8rem; flex-wrap:wrap; margin:.7rem 0 0; }
+  .miniaturas figure { margin:0; }
+  .miniaturas img { width:240px; border:1px solid #1e293b; border-radius:6px; display:block; }
+  .miniaturas figcaption { font-size:11px; color:#64748b; padding-top:.25rem; }
+</style>
+</head>
+<body>
+<div id="informe"><h1 style="font-size:17px;margin:.2rem 0 .8rem">Dibujando la foto en los cuatro temas…</h1>
+<div id="salida"></div><div class="miniaturas" id="minis"></div><div id="resumen"></div></div>
+<script type="module">
+import { renderAppMovil } from '../js/views/app_movil.js';
+import * as adminService from '../js/services_v245/adminService.js';
+import * as temaService from '../js/services_v245/temaService.js';
+
+const salida = document.getElementById('salida');
+let fallos = 0, total = 0;
+const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const ok = (cond, que, det) => {
+    total++; if (!cond) fallos++;
+    const d = document.createElement('div'); d.className = 'li';
+    d.innerHTML = `<span class="${cond?'ok':'mal'}">${cond?'ok':'MAL'}</span><span>${que}</span><span class="d">${det||''}</span>`;
+    salida.appendChild(d);
+};
+const titulo = (t) => { const h = document.createElement('h2'); h.textContent = t; salida.appendChild(h); };
+
+/* ── Contraste sobre lo que de verdad quedo pintado ──────────────────────────── */
+const canal = (c) => { c/=255; return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4); };
+const luz = ([r,g,b]) => 0.2126*canal(r)+0.7152*canal(g)+0.0722*canal(b);
+const cont = (a,b) => { const L1=luz(a), L2=luz(b); return (Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05); };
+const pixel = (g, x, y) => [...g.getImageData(x, y, 1, 1).data].slice(0,3);
+
+/* El color mas oscuro y el mas claro de una franja: sirven para saber si hay texto encima
+   del fondo y con cuanta diferencia. */
+const extremos = (g, x, y, w, h) => {
+    const d = g.getImageData(x, y, w, h).data;
+    let osc = null, cla = null, lo = 2, hi = -1;
+    for (let i = 0; i < d.length; i += 4) {
+        const p = [d[i], d[i+1], d[i+2]];
+        const L = luz(p);
+        if (L < lo) { lo = L; osc = p; }
+        if (L > hi) { hi = L; cla = p; }
+    }
+    return { osc, cla, ratio: cont(osc, cla) };
+};
+
+const GENTE = [];
+for (let i = 0; i < 22; i++) GENTE.push({
+    dni: String(70000000 + i), nombre: 'Operario ' + i, apellidos: 'Apellido' + i + ' Segundo' + i,
+    active: true, turno: 'NOCHE', puesto: 'ALMACENAJE'
+});
+
+const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
+
+(async () => {
+  const descarte = document.createElement('div');
+  document.body.appendChild(descarte);
+  try { await renderAppMovil(descarte, YO, () => {}); }
+  catch (e) { ok(false, 'la app se monta', e && e.message); }
+  adminService.adminStore.workers = GENTE;
+  $('#informe').style.pointerEvents = 'none';
+
+  $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'lista').click();
+  await esperar(1500);
+
+  /* Se saca `dibujarLaFoto` del modulo por la puerta de atras: la app no la exporta, asi
+     que se usa la que ya esta enganchada al boton de compartir, disparandola. Para poder
+     MIRAR el lienzo sin abrir el compartir del telefono, se intercepta `toBlob`. */
+  const lienzos = {};
+  const original = HTMLCanvasElement.prototype.toBlob;
+  HTMLCanvasElement.prototype.toBlob = function (cb, ...r) {
+      lienzos[document.documentElement.getAttribute('data-tema') || 'indigo'] = this;
+      return original.call(this, cb, ...r);
+  };
+
+  const fondos = {};
+  for (const T of temaService.TEMAS) {
+    temaService.aplicarTema(T.id);
+    await esperar(200);
+    titulo(T.nombre);
+
+    const boton = $('#app-movil [data-foto]');
+    if (!boton) { ok(false, 'existe el botón de compartir en Pasar lista'); continue; }
+    boton.click();
+    await esperar(700);
+
+    const c = lienzos[T.id];
+    if (!c) { ok(false, 'la foto se dibuja', 'no se generó ningún lienzo'); continue; }
+    ok(true, 'la foto se dibuja', c.width + '×' + c.height + 'px');
+
+    const g = c.getContext('2d');
+    /* El papel: una esquina de abajo, lejos del titulo y de las tarjetas. */
+    const papel = pixel(g, c.width - 10, c.height - 10);
+    fondos[T.id] = papel.join(',');
+    ok(true, 'el papel de la foto', 'rgb(' + papel.join(', ') + ')');
+
+    /* LA FRANJA DEL TITULO: tiene que tener letra encima que se lea. */
+    const franja = extremos(g, 10, 10, c.width - 20, 70);
+    ok(franja.ratio >= 4.5, 'el título se lee sobre su franja', franja.ratio.toFixed(2) + ' : 1');
+
+    /* EL CUERPO DE LA TABLA: los nombres sobre el papel. */
+    const cuerpo = extremos(g, 10, Math.round(c.height * 0.55), c.width - 20, 60);
+    ok(cuerpo.ratio >= 4.5, 'los nombres se leen sobre el papel', cuerpo.ratio.toFixed(2) + ' : 1');
+
+    /* LA LEYENDA, al pie. */
+    const pie = extremos(g, 10, c.height - 52, c.width - 20, 40);
+    ok(pie.ratio >= 4.5, 'la leyenda se lee', pie.ratio.toFixed(2) + ' : 1');
+
+    const fig = document.createElement('figure');
+    const img = document.createElement('img');
+    img.src = c.toDataURL('image/png');
+    fig.appendChild(img);
+    const cap = document.createElement('figcaption');
+    cap.textContent = T.nombre;
+    fig.appendChild(cap);
+    document.getElementById('minis').appendChild(fig);
+
+    /* Se cierra el visor de la foto antes de la vuelta siguiente. */
+    const cerrar = $('#app-movil .am-foto-cerrar, [data-cerrar-foto]');
+    if (cerrar) cerrar.click(); else { const v = $('.am-visor, .am-foto'); if (v) v.remove(); }
+    await esperar(250);
+  }
+  HTMLCanvasElement.prototype.toBlob = original;
+
+  titulo('Y lo más importante');
+  const distintos = new Set(Object.values(fondos));
+  ok(distintos.size >= 3, 'el papel de la foto CAMBIA con el tema',
+     Object.entries(fondos).map(([k,v]) => k + ': rgb(' + v.replace(/,/g,', ') + ')').join('  ·  '));
+
+  const res = document.getElementById('resumen');
+  res.className = fallos ? 'mal' : 'ok';
+  res.textContent = fallos ? `HAY ${fallos} FALLO(S) de ${total}` : `Las ${total} comprobaciones, correctas`;
+  document.querySelector('#informe h1').textContent = fallos ? 'Con fallos' : 'Listo';
+  window.__resultado = { fallos, total, fondos };
+})();
+</script>
+</body>
+</html>

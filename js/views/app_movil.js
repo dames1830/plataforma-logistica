@@ -25,17 +25,17 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0759';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0759';
+import * as adminService from '../services_v245/adminService.js?v=29.0760';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0760';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0759';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0759';
-import * as metasService from '../services_v245/metasService.js?v=29.0759';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0760';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0760';
+import * as metasService from '../services_v245/metasService.js?v=29.0760';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0759';
+import * as temaService from '../services_v245/temaService.js?v=29.0760';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -1184,7 +1184,44 @@ const marcasDeLaSemana = (dias) => {
     return { por, cerrados };
 };
 
+/* LOS COLORES DE LA FOTO SALEN DE LA PANTALLA, no de una lista escrita a mano.
+   Un `canvas` no entiende `var(--am-va)`: hay que darle el color ya resuelto. Se lee del
+   propio `#app-movil`, que lleva la paleta del tema puesto, y asi la foto que se manda al
+   grupo y lo que se ve en el telefono no pueden decir cosas distintas. */
+const paletaDeLaFoto = () => {
+    const el = raiz || document.getElementById('app-movil') || document.body;
+    const cs = getComputedStyle(el);
+    const t = (n, sinEl) => (cs.getPropertyValue(n) || '').trim() || sinEl;
+    return {
+        hoja:   t('--am-carta', '#FFFFFF'),     /* el papel de la lamina */
+        banda:  t('--am-papel', '#EEF2F1'),     /* encabezados, tarjetas y filas alternas */
+        tinta:  t('--am-tinta', '#131C1F'),
+        tenue:  t('--am-tenue', '#6C7B80'),
+        linea:  t('--am-linea', '#DCE4E2'),
+        va:     t('--am-va', '#0B5F52'),
+        curso:  t('--am-curso', '#B26A00'),
+        tarde:  t('--am-tarde', '#98302E'),
+        /* La franja del titulo va llena: fondo `relleno` y letra `sobre`. NUNCA el acento
+           a secas — en el tema Negro el acento es blanco puro y quedaria blanco sobre
+           blanco, que es el error que ya se pago en el chat. */
+        franja: t('--am-relleno', '#0B5F52'),
+        sobre:  t('--am-sobre', '#FFFFFF')
+    };
+};
+
+/* Un color con transparencia, para los tonos intermedios de la franja. Acepta #RGB y
+   #RRGGBB; si le llega otra cosa, lo devuelve tal cual y no rompe el dibujo. */
+const conAlfa = (color, a) => {
+    const c = String(color || '').trim();
+    const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c);
+    if (!m) return c;
+    const h = m[1].length === 3 ? m[1].split('').map(x => x + x).join('') : m[1];
+    const n = parseInt(h, 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+};
+
 const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
+    const P = paletaDeLaFoto();
     const ESCALA = 2;               // se dibuja al doble: en un celular, a 1x sale borroso
     const MARGEN = 18;
     const ANCHO_NUM = 20, ANCHO_NOMBRE = 168, ANCHO_DNI = 64, ANCHO_CARGO = 84, ANCHO_DIA = 29;
@@ -1223,16 +1260,16 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     g.textBaseline = 'middle';
 
     const UI = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-    const VA = '#0B5F52', TARDE = '#98302E', CURSO = '#B26A00', TENUE = '#6C7B80',
-          TINTA = '#131C1F', AZUL = '#2C4C7C';
+    const VA = P.va, TARDE = P.tarde, CURSO = P.curso, TENUE = P.tenue,
+          TINTA = P.tinta, AZUL = P.va;
 
-    g.fillStyle = '#FFFFFF';
+    g.fillStyle = P.hoja;
     g.fillRect(0, 0, ANCHO, alto);
 
     /* ── EL TITULO, como el de la web ────────────────────────────────────────────────── */
-    g.fillStyle = VA;
+    g.fillStyle = P.franja;
     g.fillRect(0, 0, ANCHO, ALTO_TITULO);
-    g.fillStyle = '#FFFFFF';
+    g.fillStyle = P.sobre;
     g.font = `800 16px ${UI}`;
     g.fillText('CONTROL DE ASISTENCIA TURNO NOCHE', MARGEN, 24);
     const a = dias[0], b = dias[6];
@@ -1245,7 +1282,7 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     g.fillStyle = 'rgba(255,255,255,0.7)';
     g.fillText('LOGÍSTICA', ANCHO - MARGEN, 18);
     g.font = `800 13px ${UI}`;
-    g.fillStyle = '#8FD8C9';
+    g.fillStyle = conAlfa(P.sobre, 0.75);
     g.fillText('DEAM1830', ANCHO - MARGEN, 33);
     g.font = `700 9px ${UI}`;
     g.fillStyle = 'rgba(255,255,255,0.7)';
@@ -1292,14 +1329,16 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     const anchoT = (ANCHO - 2 * MARGEN - 4 * 6) / 5;
     TARJETAS.forEach(([valor, rotulo, color], i) => {
         const x = MARGEN + i * (anchoT + 6);
-        g.fillStyle = '#F3F6F5';
+        g.fillStyle = P.banda;
         g.fillRect(x, ALTO_TITULO + 10, anchoT, ALTO_TARJETAS - 20);
         g.textAlign = 'center';
         g.fillStyle = color;
         g.font = `800 16px ${UI}`;
         if (i === 4) {
             /* La ultima lleva las dos siluetas, cada una delante de su numero. */
-            const AZUL_H = '#2C4C7C', NARANJA_M = '#B26A00';
+            /* Hombres y mujeres se distinguen con dos acentos DEL TEMA. El azul y el
+               naranja del diseño claro no se leen sobre un fondo oscuro. */
+            const AZUL_H = P.va, NARANJA_M = P.curso;
             const anchoH = g.measureText(String(hombres)).width;
             const anchoM = g.measureText(String(mujeres)).width;
             const sep = 9, icono = 9;
@@ -1334,7 +1373,7 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     const xDia = (i) => xCargo + ANCHO_CARGO + i * ANCHO_DIA + ANCHO_DIA / 2;
     const yEnc = ALTO_TITULO + ALTO_TARJETAS + 4;
 
-    g.fillStyle = '#EEF2F1';
+    g.fillStyle = P.banda;
     g.fillRect(MARGEN - 6, yEnc - 12, ANCHO - 2 * MARGEN + 12, ALTO_ENCABEZADO - 2);
     g.fillStyle = TENUE;
     g.font = `700 8.5px ${UI}`;
@@ -1360,7 +1399,7 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
            la foto habla de lo guardado. */
         const delDia = ultimoCerrado ? (marcas[String(p.dni)] || {})[ultimoCerrado] : null;
         const falto = !!delDia && delDia.vino === false;
-        if (i % 2 === 1) { g.fillStyle = '#F6F9F8'; g.fillRect(MARGEN - 6, y - 10, ANCHO - 2 * MARGEN + 12, ALTO_FILA); }
+        if (i % 2 === 1) { g.fillStyle = P.banda; g.fillRect(MARGEN - 6, y - 10, ANCHO - 2 * MARGEN + 12, ALTO_FILA); }
         g.textAlign = 'left';
         g.fillStyle = TENUE;
         g.font = `400 9px ${UI}`;
@@ -1381,7 +1420,7 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
         g.textAlign = 'center';
         dias.forEach((d, j) => {
             const m = (marcas[String(p.dni)] || {})[claveDia(d)];
-            if (!m) { g.fillStyle = '#C6D0CE'; g.font = `400 11px ${UI}`; g.fillText('–', xDia(j), y); return; }
+            if (!m) { g.fillStyle = P.linea; g.font = `400 11px ${UI}`; g.fillText('–', xDia(j), y); return; }
             if (m.obs) { g.fillStyle = CURSO; g.font = `800 11px ${UI}`; g.fillText(letraDelMotivo(m.obs), xDia(j), y); return; }
             g.fillStyle = m.vino ? VA : TARDE;
             g.font = `700 11.5px ${UI}`;
@@ -1392,7 +1431,7 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
     });
 
     /* ── LA LEYENDA: es lo que hace que el cuadro se entienda sin preguntar ───────────── */
-    g.strokeStyle = '#DCE4E2';
+    g.strokeStyle = P.linea;
     g.lineWidth = 1;
     g.beginPath(); g.moveTo(MARGEN, y + 2); g.lineTo(ANCHO - MARGEN, y + 2); g.stroke();
 
