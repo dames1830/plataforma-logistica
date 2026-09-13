@@ -25,17 +25,21 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0760';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0760';
+import * as adminService from '../services_v245/adminService.js?v=29.0761';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0761';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0760';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0760';
-import * as metasService from '../services_v245/metasService.js?v=29.0760';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0761';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0761';
+import * as metasService from '../services_v245/metasService.js?v=29.0761';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0760';
+import * as temaService from '../services_v245/temaService.js?v=29.0761';
+/* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
+   usan el tablero y el portal publico: no hay una tercera version del calculo. */
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0761';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0761';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -145,7 +149,11 @@ const CSS = `
   font-family: var(--am-num); font-size: 0.82rem; font-weight: 700; color: var(--am-tinta);
   outline: none; color-scheme: light; }
 
-#app-movil .am-tira { display: flex; gap: .4rem; }
+#app-movil .am-tira { display: flex; gap: .4rem; align-items: center; }
+#app-movil .am-compartir { margin-left: auto; width: 34px; height: 34px; border-radius: 9px;
+  flex: none; border: 1px solid var(--am-va); background: var(--am-va-agua); color: var(--am-va);
+  display: grid; place-items: center; cursor: pointer; }
+#app-movil .am-compartir svg { width: 17px; height: 17px; display: block; }
 #app-movil .am-filtro { font-family: var(--am-num); font-size: 0.63rem; letter-spacing: .05em;
   text-transform: uppercase; padding: .32rem .6rem; border-radius: 20px;
   border: 1px solid var(--am-linea); background: var(--am-carta); color: var(--am-tenue);
@@ -476,17 +484,16 @@ const AREA_AVISOS = 'push_suscripciones';
 
 const SECCIONES = [
     { id: 'inicio', rotulo: 'Inicio', icono: 'inicio' },
-    { id: 'reportes', rotulo: 'Reportes', icono: 'reportes' },
     { id: 'tareas', rotulo: 'Tareas', icono: 'tareas' },
-    /* AVISOS SE FUE DE ABAJO. Daniel, 12-sep: *"el aviso deberia estar [en el menu], no
-       deberia estar como un modulo principal"*. Abajo quedan los cuatro modulos y nada mas. */
+    /* ABAJO, SOLO LOS MODULOS. Avisos y Temas se fueron al menu de arriba, y Reportes
+       desaparecio: Daniel, 12-sep, *"ya estaria de mas el modulo de reportes"* — cada
+       pantalla comparte lo suyo, asi que no hacia falta un sitio aparte para los cuadros. */
     { id: 'lista', rotulo: 'Asistencia', icono: 'lista' }
 ];
 
 /* Lo que todavia no tiene pantalla. Se dice lo que va a haber, con nombre y todo: una
    seccion en blanco parece rota; una que avisa que esta en camino, no. */
 const EN_CAMINO = {
-    reportes: ['Los siete reportes en pantalla chica', 'Turno, picking por hora, KPI, marcas, SKU sin salida y rotación. Los números ya se calculan bien: falta rearmarlos para el celular.'],
     lista: ['Pasar lista del turno', 'Marcar P, T o F por cada persona con el pulgar. Se guarda en el mismo sitio que la lista de la web.'],
     avisos: ['Los avisos', 'Robot caído, tarea vencida, ruta demorada. Es lo único que empieza de cero: hace falta el envío desde el servidor y el permiso del teléfono.']
 };
@@ -726,6 +733,10 @@ const pantallaTareas = () => {
         </div>
         <div class="am-tira">
             ${capsula('sin', 'Sin asignar')}${capsula('curso', 'En curso')}${capsula('todas', 'Todas')}
+            <!-- COMPARTIR: la pantalla va recortada porque es un telefono, pero lo que sale
+                 es el reporte COMPLETO de la web, con el tema puesto. -->
+            <button type="button" class="am-compartir" data-compartir-tareas
+                aria-label="Compartir el reporte">${ICONO_COMPARTIR}</button>
         </div>
         ${lista.length ? `<div class="am-seccion">${rotulo}
             <span style="float:right; font-weight:400; letter-spacing:0; text-transform:none">${numero(pares)} pares</span></div>`
@@ -1458,7 +1469,7 @@ const dibujarLaFoto = (deEsteBloque, nBloque, deCuantos) => {
 };
 
 /** Muestra las fotos a pantalla completa, para guardarlas o compartirlas a mano. */
-const verLaFoto = (lista) => {
+const verLaFoto = (lista, comoSeLlama) => {
     const datos = Array.isArray(lista) ? lista : [lista];
     const capa = document.createElement('div');
     capa.style.cssText = 'position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.9);'
@@ -1471,11 +1482,14 @@ const verLaFoto = (lista) => {
         img.style.cssText = 'max-width:100%; border-radius:10px; background:#fff;';
         const bajar = document.createElement('a');
         bajar.href = d;
-        bajar.download = datos.length > 1
-            ? 'Asistencia ' + fechaDeLaLista() + ' (' + (i + 1) + ' de ' + datos.length + ').png'
-            : 'Asistencia ' + fechaDeLaLista() + '.png';
+        bajar.download = comoSeLlama ? comoSeLlama
+            : (datos.length > 1
+                ? 'Asistencia ' + fechaDeLaLista() + ' (' + (i + 1) + ' de ' + datos.length + ').png'
+                : 'Asistencia ' + fechaDeLaLista() + '.png');
         bajar.textContent = datos.length > 1 ? 'Guardar el bloque ' + (i + 1) : 'Guardar la foto';
-        bajar.style.cssText = 'background:#0B5F52; color:#fff; padding:.8rem 1.4rem; border-radius:10px;'
+        /* Los colores del visor tambien del tema: era verde pino fijo. */
+        bajar.style.cssText = 'background:' + paletaDeLaFoto().franja + '; color:' + paletaDeLaFoto().sobre
+            + '; padding:.8rem 1.4rem; border-radius:10px;'
             + 'font-family:system-ui,sans-serif; font-weight:700; text-decoration:none;';
         capa.appendChild(img); capa.appendChild(bajar);
     });
@@ -1503,6 +1517,180 @@ const laminasDeLaLista = () => {
 };
 
 /** Arma los bloques y los manda por donde el telefono deje: WhatsApp, correo, lo que sea. */
+
+/* ── EL REPORTE DE ALMACENAJE POR MARCAS, PARA MANDAR ────────────────────────────────────
+ *  Daniel, 12-sep-2026: *"al momento de compartir quiero exactamente ese reporte"*, el de
+ *  la web. La pantalla del telefono va recortada a proposito —numero, marca, cantidad— pero
+ *  lo que sale por WhatsApp lleva las OCHO columnas, los buffers separados con su subtotal
+ *  y el total general, igual que el cuadro que el manda todos los dias.
+ *
+ *  SE DIBUJA, NO SE CAPTURA: una foto de la pantalla saldria recortada y borrosa. Y los
+ *  colores salen del tema puesto, como la foto de la asistencia.
+ * ─────────────────────────────────────────────────────────────────────────────────────── */
+const dibujarLaminaMarcas = (datos, desde, hasta) => {
+    const P = paletaDeLaFoto();
+    const ESCALA = 2;                 // a 1x, en un telefono, sale borroso
+    const M = 16;                     // margen
+    /* Los anchos salen de lo que tiene que entrar: PENDIENTE lleva cinco cifras con puntos
+       y MARCAS el nombre mas largo del maestro. */
+    const COL = [96, 150, 88, 66, 76, 76, 74, 96];
+    const ANCHO = M * 2 + COL.reduce((a, b) => a + b, 0);
+    const H_TITULO = 54, H_CAB = 28, H_FILA = 25, H_SUB = 29, H_GRAN = 34;
+
+    const areas = datos.areas || [];
+    const nFilas = areas.reduce((a, x) => a + x.marcas.length, 0);
+    const alto = H_TITULO + H_CAB + nFilas * H_FILA + areas.length * H_SUB + H_GRAN + M;
+
+    const lienzo = document.createElement('canvas');
+    lienzo.width = ANCHO * ESCALA;
+    lienzo.height = alto * ESCALA;
+    const g = lienzo.getContext('2d');
+    g.scale(ESCALA, ESCALA);
+    g.textBaseline = 'middle';
+    const UI = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    const NUM = '"Cascadia Mono", ui-monospace, "SF Mono", Consolas, monospace';
+    const mil = (n) => Math.round(Number(n) || 0).toLocaleString('es-PE');
+
+    /* El borde de cada columna, para no recalcularlo en cada fila. */
+    const x0 = [];
+    COL.reduce((acc, w, i) => { x0[i] = acc; return acc + w; }, M);
+    const der = (i) => x0[i] + COL[i] - 8;        // las cifras van pegadas a la derecha
+
+    g.fillStyle = P.hoja;
+    g.fillRect(0, 0, ANCHO, alto);
+
+    /* ── La franja del titulo ────────────────────────────────────────────────── */
+    g.fillStyle = P.franja;
+    g.fillRect(0, 0, ANCHO, H_TITULO);
+    g.textAlign = 'left';
+    g.fillStyle = P.sobre;
+    g.font = `900 17px ${UI}`;
+    g.fillText('REPORTE ALMACENAJE - MARCAS', M, 22);
+    g.font = `700 10px ${NUM}`;
+    g.fillStyle = conAlfa(P.sobre, 0.75);
+    g.fillText('SYNC_ID: ' + new Date().toLocaleString('es-PE',
+        { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }), M, 40);
+    g.textAlign = 'right';
+    g.fillText('Desde ' + comoSeLee(desde) + '   hasta ' + comoSeLee(hasta), ANCHO - M, 31);
+
+    /* ── Los titulos de las columnas ─────────────────────────────────────────── */
+    let y = H_TITULO;
+    g.fillStyle = P.banda;
+    g.fillRect(0, y, ANCHO, H_CAB);
+    const TITULOS = ['AREA', 'MARCAS', 'BUFFER', 'DÍA', 'NOCHE', 'TOTAL', '%', 'PENDIENTE'];
+    const COLOR_CAB = [P.tenue, P.tenue, P.va, P.curso, P.va, P.va, P.va, P.va];
+    g.font = `800 9.5px ${UI}`;
+    TITULOS.forEach((t, i) => {
+        g.fillStyle = COLOR_CAB[i];
+        if (i < 2) { g.textAlign = 'left'; g.fillText(t, x0[i] + 8, y + H_CAB / 2); }
+        else { g.textAlign = 'right'; g.fillText(t, der(i), y + H_CAB / 2); }
+    });
+    g.strokeStyle = P.va;
+    g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(0, y + H_CAB); g.lineTo(ANCHO, y + H_CAB); g.stroke();
+    y += H_CAB;
+
+    /* El semaforo del porcentaje: rojo si no se toco, ambar si va a medias, verde si llego.
+       Es el mismo criterio del reporte de la web. */
+    const colorPct = (pct, hecho, meta) => pct === 0 ? P.tarde : (hecho < meta ? P.curso : P.va);
+    const cifra = (txt, i, yy, color, peso) => {
+        g.textAlign = 'right';
+        g.fillStyle = color;
+        g.font = `${peso || 700} 11.5px ${NUM}`;
+        g.fillText(txt, der(i), yy);
+    };
+
+    areas.forEach(a => {
+        a.marcas.forEach((m, k) => {
+            const yc = y + H_FILA / 2;
+            if (k % 2 === 1) { g.fillStyle = P.banda; g.fillRect(0, y, ANCHO, H_FILA); }
+            g.textAlign = 'left';
+            g.fillStyle = P.tenue;
+            g.font = `600 10.5px ${UI}`;
+            g.fillText(a.area, x0[0] + 8, yc);
+            g.fillStyle = P.tinta;
+            g.font = `800 11.5px ${UI}`;
+            g.fillText(recortar(g, marcaCorta(m.marca), COL[1] - 14), x0[1] + 8, yc);
+            cifra(mil(m.buffer), 2, yc, P.tinta);
+            cifra(mil(m.dia), 3, yc, P.curso);
+            cifra(mil(m.noche), 4, yc, P.va);
+            cifra(mil(m.total), 5, yc, P.tinta);
+            cifra(m.pct + '%', 6, yc, colorPct(m.pct, m.total, m.buffer), 800);
+            cifra(mil(m.pendiente), 7, yc, P.tinta, 800);
+            y += H_FILA;
+        });
+
+        /* El subtotal del buffer. */
+        const yc = y + H_SUB / 2;
+        g.fillStyle = conAlfa(P.va, 0.14);
+        g.fillRect(0, y, ANCHO, H_SUB);
+        g.fillStyle = P.va;
+        g.fillRect(0, y, 4, H_SUB);
+        g.textAlign = 'left';
+        g.font = `900 11px ${UI}`;
+        g.fillText('TOTAL ' + a.area, x0[0] + 10, yc);
+        const T = a.totales;
+        cifra(mil(T.buffer), 2, yc, P.tinta, 900);
+        cifra(mil(T.dia), 3, yc, P.curso, 900);
+        cifra(mil(T.noche), 4, yc, P.va, 900);
+        cifra(mil(T.total), 5, yc, P.tinta, 900);
+        cifra(T.pct + '%', 6, yc, colorPct(T.pct, T.total, T.buffer), 900);
+        cifra(mil(T.pendiente), 7, yc, P.tinta, 900);
+        y += H_SUB;
+    });
+
+    /* ── El total general ────────────────────────────────────────────────────── */
+    const G = datos.granTotal || { buffer: 0, dia: 0, noche: 0, total: 0, pct: 0, pendiente: 0 };
+    const yg = y + H_GRAN / 2;
+    g.fillStyle = P.franja;
+    g.fillRect(0, y, ANCHO, H_GRAN);
+    g.textAlign = 'left';
+    g.fillStyle = P.sobre;
+    g.font = `900 12.5px ${UI}`;
+    g.fillText('TOTAL GENERAL CDBUFFER', x0[0] + 10, yg);
+    const claro = (txt, i, peso) => {
+        g.textAlign = 'right'; g.fillStyle = P.sobre;
+        g.font = `${peso || 900} 12px ${NUM}`; g.fillText(txt, der(i), yg);
+    };
+    claro(mil(G.buffer), 2); claro(mil(G.dia), 3); claro(mil(G.noche), 4);
+    claro(mil(G.total), 5); claro(G.pct + '%', 6); claro(mil(G.pendiente), 7);
+
+    return lienzo;
+};
+
+/* Corta un texto con puntos suspensivos si no entra: un nombre que se sale pisa la columna
+   siguiente y el cuadro deja de leerse como cuadro. */
+const recortar = (g, txt, ancho) => {
+    let t = String(txt || '');
+    if (g.measureText(t).width <= ancho) return t;
+    while (t.length > 1 && g.measureText(t + '…').width > ancho) t = t.slice(0, -1);
+    return t + '…';
+};
+
+const comoSeLee = (iso) => {
+    const p = String(iso || '').split('-');
+    return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : String(iso || '');
+};
+
+/* Arma el reporte del rango que se este viendo y lo manda. */
+const mandarReporteTareas = async () => {
+    const tareas = adminService.getAlmacenajeTasks() || [];
+    const datos = datosMarcas(tareas, tareasDesde, tareasHasta,
+                              armarTurnoDe(adminService.getWorkers() || []));
+    if (!datos || datos.vacio) { alert('No hay nada que compartir en estas fechas.'); return; }
+    const lienzo = dibujarLaminaMarcas(datos, tareasDesde, tareasHasta);
+    const nombre = 'Almacenaje por marcas ' + comoSeLee(tareasDesde).replace(/\//g, '-') + '.png';
+    const blob = await new Promise(r => lienzo.toBlob(r, 'image/png'));
+    const archivo = new File([blob], nombre, { type: 'image/png' });
+    try {
+        if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+            await navigator.share({ files: [archivo], title: 'Almacenaje por marcas' });
+            return;
+        }
+    } catch (e) { return; }        // si cancela el menu del telefono, no pasa nada
+    verLaFoto([lienzo.toDataURL('image/png')], nombre);
+};
+
 const mandarFoto = async () => {
     if (!listaLocal) cargarLista();
     if (!listaLocal.length) return;
@@ -1705,7 +1893,6 @@ const panelMenu = () => {
 
 const CABECERAS = {
     inicio: () => ({ sub: `Turno · ${diaEnLetras()}`, ttl: `${saludo()}, ${String(YO.name || YO.username).split(' ')[0]}` }),
-    reportes: () => ({ sub: `Datos del ${diaEnLetras()}`, ttl: 'Reportes' }),
     tareas: () => ({ sub: `Turno · ${diaEnLetras()}`, ttl: 'Tareas' }),
     lista: () => ({ sub: `Turno noche · ${diaEnLetras()}`, ttl: 'Pasar lista' }),
     avisos: () => ({ sub: avisosEstado === 'prendidos' ? 'Activados en este teléfono' : 'Apagados', ttl: 'Avisos' })
@@ -1871,6 +2058,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
             }
             return;
         }
+        if (e.target.closest('[data-compartir-tareas]')) { mandarReporteTareas(); return; }
         const cap = e.target.closest('[data-filtro]');
         if (cap) { tareasFiltro = cap.getAttribute('data-filtro'); pintar(); return; }
         const reg = e.target.closest('[data-tarea]');

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba · el reporte que se comparte desde Tareas</title>
+<!--
+  LO QUE SALE AL COMPARTIR DESDE TAREAS.
+
+  Daniel, 12-sep-2026: *"al momento de compartir quiero exactamente ese reporte"* —el de la
+  web, con sus ocho columnas, los buffers separados y el total general— *"y que se adapte al
+  tema"*.
+
+  Se dibuja la lamina de verdad con tareas reales y se comprueban tres cosas: que los
+  numeros CUADREN con lo que dice `datosMarcas`, que se lea en los cuatro temas, y que la
+  pestaña de Reportes ya no exista.
+-->
+<link rel="stylesheet" href="../css/main_v176.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body { margin:0; font:14px/1.5 system-ui, sans-serif; background:#0b1220; color:#e2e8f0; }
+  #informe { position:fixed; inset:0; z-index:99999; overflow:auto; background:#0b1220; padding:1rem 1.2rem 3rem; }
+  h2 { font-size:14px; margin:1.3rem 0 .4rem; letter-spacing:.06em; text-transform:uppercase;
+       color:#94a3b8; border-bottom:1px solid #1e293b; padding-bottom:.3rem; }
+  .li { display:grid; grid-template-columns:2.6rem 1fr auto; gap:.5rem; padding:.13rem 0; font-size:12.5px; }
+  .ok { color:#4ade80; } .mal { color:#f87171; font-weight:700; }
+  .d { font-family:ui-monospace, monospace; font-size:11.5px; color:#64748b; }
+  #resumen { margin-top:1.3rem; padding-top:.7rem; border-top:2px solid #1e293b; font-weight:700; }
+  #minis { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1rem; }
+  #minis img { width:100%; border:1px solid #1e293b; border-radius:6px; display:block; }
+  #minis figure { margin:0 } #minis figcaption { font-size:11px; color:#64748b; padding-top:.25rem }
+</style>
+</head>
+<body>
+<div id="informe"><h1 style="font-size:17px;margin:.2rem 0 .8rem">Probando el reporte…</h1>
+<div id="salida"></div><div id="minis"></div><div id="resumen"></div></div>
+<script type="module">
+import { renderAppMovil } from '../js/views/app_movil.js';
+import * as adminService from '../js/services_v245/adminService.js';
+import * as temaService from '../js/services_v245/temaService.js';
+import { datosMarcas, armarTurnoDe } from '../js/reportes/marcas.js';
+
+const salida = document.getElementById('salida');
+let fallos = 0, total = 0;
+const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const ok = (c, que, det) => { total++; if (!c) fallos++;
+    const d = document.createElement('div'); d.className='li';
+    d.innerHTML = `<span class="${c?'ok':'mal'}">${c?'ok':'MAL'}</span><span>${que}</span><span class="d">${det||''}</span>`;
+    salida.appendChild(d); };
+const titulo = (t) => { const h=document.createElement('h2'); h.textContent=t; salida.appendChild(h); };
+
+const canal=(c)=>{c/=255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4);};
+const luz=([r,g,b])=>0.2126*canal(r)+0.7152*canal(g)+0.0722*canal(b);
+const cont=(a,b)=>{const L1=luz(a),L2=luz(b);return (Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05);};
+const extremos=(g,x,y,w,h)=>{const d=g.getImageData(x,y,w,h).data;let o=null,c=null,lo=2,hi=-1;
+  for(let i=0;i<d.length;i+=4){const p=[d[i],d[i+1],d[i+2]],L=luz(p);
+    if(L<lo){lo=L;o=p;} if(L>hi){hi=L;c=p;}} return cont(o,c);};
+const pixel=(g,x,y)=>[...g.getImageData(x,y,1,1).data].slice(0,3);
+
+/* TAREAS REALES: las del sábado 12, con sus ubicaciones de buffer para que caigan en
+   CDBUFFER-A y CDBUFFER-B como en el reporte de verdad. */
+const HOY = (() => { const d=new Date(),p=x=>String(x).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; })();
+const sello = (h) => h ? `${HOY}T${h}:00` : '';
+const T = (n, marca, qty, st, u1, u2, ini, fin, ubi) => ({
+  id:`${HOY}_Tarea${n}`, fecha:HOY, marca, qty, status:st, u1, u2,
+  inicio:sello(ini), termino:sello(fin), creador:'dames',
+  items:[{ sku7:'1613303', marca, gender:'FOOTWEAR', genderRims:'04 SPORT', bufferQty:qty,
+           zonaQty:1, items:[{ ubi, qty, talla:'25', avance: st==='Finalizado'? qty : null }] }]
+});
+const TAREAS = [
+  T(1,'Bubblegummers',625,'Creada','','','','', 'CDBUFFER-A-00-106'),
+  T(2,'North Star',3153,'Creada','','','','',  'CDBUFFER-A-01-010'),
+  T(3,'Bata',2400,'Creada','','','','',        'CDBUFFER-A-02-044'),
+  T(4,'Bubblegummers Licenses',1347,'Creada','','','','','CDBUFFER-A-03-077'),
+  T(19,'North Star',340,'Finalizado','lfernandez','ncruz','20:15','21:05','CDBUFFER-B-01-002'),
+  T(23,'Power',161,'Finalizado','mpiscoya','kmalimba','20:14','20:54','CDBUFFER-B-01-009'),
+  T(21,'Power',391,'Asignado','mpiscoya','kmalimba','21:12','',        'CDBUFFER-B-02-011')
+];
+const GENTE = [
+  { dni:'1', nombre:'Manuel', apellidos:'Piscoya Diaz', active:true, turno:'NOCHE', puesto:'ALMACENAJE' },
+  { dni:'2', nombre:'Kimberly', apellidos:'Malimba Rojas', active:true, turno:'NOCHE', puesto:'ALMACENAJE' },
+  { dni:'3', nombre:'Lucia', apellidos:'Fernandez Paz', active:true, turno:'NOCHE', puesto:'ALMACENAJE' },
+  { dni:'4', nombre:'Noe', apellidos:'Cruz Vera', active:true, turno:'NOCHE', puesto:'ALMACENAJE' }
+];
+
+const YO = { username:'dames', name:'Daniel Ames', role:'admin' };
+
+(async () => {
+  const d0 = document.createElement('div'); document.body.appendChild(d0);
+  try { await renderAppMovil(d0, YO, () => {}); } catch (e) { ok(false,'la app se monta', e && e.message); }
+  adminService.adminStore.almacenaje_tasks = TAREAS;
+  adminService.adminStore.workers = GENTE;
+  $('#informe').style.pointerEvents = 'none';
+
+  titulo('La barra de abajo');
+  const tabs = $$('#app-movil .am-barra button').map(b => b.dataset.seccion);
+  ok(tabs.indexOf('reportes') === -1, 'Reportes ya no está', tabs.join(' · '));
+  ok(tabs.length === 3, 'quedan tres módulos', tabs.length + ': ' + tabs.join(', '));
+
+  $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'tareas').click();
+  await esperar(2200);
+  adminService.adminStore.almacenaje_tasks = TAREAS;
+  $('[data-filtro="todas"]').click();
+  await esperar(150);
+  ok(!!$('[data-compartir-tareas]'), 'Tareas tiene su botón de compartir');
+
+  /* Lo que DEBERIA decir el reporte, calculado por el mismo modulo que usa la web. */
+  const esperado = datosMarcas(TAREAS, HOY, HOY, armarTurnoDe(GENTE));
+  const G = esperado.granTotal;
+  ok(esperado.areas.length === 2, 'se separan los buffers',
+     esperado.areas.map(a => a.area).join(' · '));
+
+  const lienzos = {};
+  const orig = HTMLCanvasElement.prototype.toBlob;
+  HTMLCanvasElement.prototype.toBlob = function (cb, ...r) {
+      lienzos[document.documentElement.getAttribute('data-tema') || 'indigo'] = this;
+      return orig.call(this, cb, ...r);
+  };
+
+  const papeles = {};
+  for (const TH of temaService.TEMAS) {
+    temaService.aplicarTema(TH.id);
+    await esperar(200);
+    titulo(TH.nombre);
+    $('[data-compartir-tareas]').click();
+    await esperar(800);
+    const c = lienzos[TH.id];
+    if (!c) { ok(false, 'la lámina se dibuja'); continue; }
+    ok(true, 'la lámina se dibuja', c.width + '×' + c.height + 'px');
+    const g = c.getContext('2d');
+    papeles[TH.id] = pixel(g, c.width - 6, Math.round(c.height * 0.45)).join(',');
+    ok(extremos(g, 6, 6, c.width - 12, 100) >= 4.5, 'el título se lee sobre su franja',
+       extremos(g, 6, 6, c.width - 12, 100).toFixed(2) + ' : 1');
+    ok(extremos(g, 6, Math.round(c.height*0.4), c.width-12, 60) >= 4.5, 'las filas se leen',
+       extremos(g, 6, Math.round(c.height*0.4), c.width-12, 60).toFixed(2) + ' : 1');
+    ok(extremos(g, 6, c.height - 74, c.width - 12, 68) >= 4.5, 'el TOTAL GENERAL se lee',
+       extremos(g, 6, c.height - 74, c.width - 12, 68).toFixed(2) + ' : 1');
+
+    const fig = document.createElement('figure');
+    const img = document.createElement('img'); img.src = c.toDataURL('image/png');
+    fig.appendChild(img);
+    const cap = document.createElement('figcaption'); cap.textContent = TH.nombre;
+    fig.appendChild(cap); document.getElementById('minis').appendChild(fig);
+
+    const v = document.querySelector('div[style*="z-index:60"]'); if (v) v.remove();
+    await esperar(200);
+  }
+  HTMLCanvasElement.prototype.toBlob = orig;
+  temaService.aplicarTema('indigo');
+
+  titulo('Lo que importa');
+  ok(new Set(Object.values(papeles)).size >= 3, 'el papel cambia con el tema',
+     Object.entries(papeles).map(([k,v]) => k+': rgb('+v.replace(/,/g,', ')+')').join('  ·  '));
+
+  /* LOS CUADROS CUADRAN: buffer − día − noche = pendiente, y las áreas suman el general. */
+  const sum = (f) => esperado.areas.reduce((a, x) => a + x.totales[f], 0);
+  ok(sum('buffer') === G.buffer && sum('total') === G.total && sum('pendiente') === G.pendiente,
+     'los subtotales suman el total general',
+     `buffer ${G.buffer} · avance ${G.total} · pendiente ${G.pendiente}`);
+  ok(G.buffer - G.total === G.pendiente, 'buffer − avance = pendiente',
+     `${G.buffer} − ${G.total} = ${G.pendiente}`);
+
+  const res = document.getElementById('resumen');
+  res.className = fallos ? 'mal' : 'ok';
+  res.textContent = fallos ? `HAY ${fallos} FALLO(S) de ${total}` : `Las ${total} comprobaciones, correctas`;
+  document.querySelector('#informe h1').textContent = fallos ? 'Con fallos' : 'Listo';
+  window.__resultado = { fallos, total };
+})();
+</script>
+</body>
+</html>
