@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba · el chat en la app</title>
+<!--
+  EL CHAT DEL CELULAR, SOBRE LA PANTALLA DE VERDAD Y EN LOS CUATRO TEMAS.
+
+  Daniel, 13-sep-2026: *"pásalo por los cuatro temas para que las letras se noten, el diseño
+  se note bien"*.
+
+  Se monta la app, se le siembran salas y mensajes -sin tocar el servidor: sus conversaciones
+  son suyas- y se mide. El contraste se calcula sobre el color YA COMPUESTO, que es lo que
+  llega al ojo.
+-->
+<link rel="stylesheet" href="../css/main_v176.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body { margin:0; font:14px/1.5 system-ui, sans-serif; background:#0b1220; color:#e2e8f0; }
+  #informe { position:fixed; inset:0; z-index:99999; overflow:auto; background:#0b1220; padding:1rem 1.2rem 3rem; }
+  h2 { font-size:14px; margin:1.3rem 0 .4rem; letter-spacing:.06em; text-transform:uppercase;
+       color:#94a3b8; border-bottom:1px solid #1e293b; padding-bottom:.3rem; }
+  .li { display:grid; grid-template-columns:2.6rem 1fr auto; gap:.5rem; padding:.13rem 0; font-size:12.5px; }
+  .ok { color:#4ade80; } .mal { color:#f87171; font-weight:700; }
+  .d { font-family:ui-monospace, monospace; font-size:11.5px; color:#64748b; }
+  #resumen { margin-top:1.3rem; padding-top:.7rem; border-top:2px solid #1e293b; font-weight:700; }
+</style>
+</head>
+<body>
+<div id="informe"><h1 style="font-size:17px;margin:.2rem 0 .8rem">Probando el chat…</h1>
+<div id="salida"></div><div id="resumen"></div></div>
+<script type="module">
+import { renderAppMovil } from '../js/views/app_movil.js';
+import * as adminService from '../js/services_v245/adminService.js';
+import * as temaService from '../js/services_v245/temaService.js';
+
+const salida = document.getElementById('salida');
+let fallos = 0, total = 0;
+const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const ok = (c, que, det) => { total++; if (!c) fallos++;
+  const d = document.createElement('div'); d.className='li';
+  d.innerHTML = `<span class="${c?'ok':'mal'}">${c?'ok':'MAL'}</span><span>${que}</span><span class="d">${det||''}</span>`;
+  salida.appendChild(d); };
+const titulo = (t) => { const h=document.createElement('h2'); h.textContent=t; salida.appendChild(h); };
+
+/* ── Contraste sobre el color ya compuesto ───────────────────────────────────── */
+const canal=(c)=>{c/=255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4);};
+const luz=([r,g,b])=>0.2126*canal(r)+0.7152*canal(g)+0.0722*canal(b);
+const cont=(a,b)=>{const L1=luz(a),L2=luz(b);return (Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05);};
+const aRGBA=(t)=>{const m=String(t).match(/rgba?\(([^)]+)\)/);if(!m)return[0,0,0,1];
+  const p=m[1].split(',').map(parseFloat);return[p[0],p[1],p[2],p.length>3?p[3]:1];};
+const sobre=(f,fo)=>[0,1,2].map(i=>Math.round(f[i]*f[3]+fo[i]*(1-f[3])));
+const fondoDe=(el)=>{const capas=[];let n=el;
+  while(n&&n.nodeType===1){const c=aRGBA(getComputedStyle(n).backgroundColor);
+    if(c[3]>0)capas.push(c); if(c[3]===1)break; n=n.parentElement;}
+  let f=[11,18,32]; for(let i=capas.length-1;i>=0;i--) f=sobre(capas[i],f); return f;};
+const mide=(el,que,vara)=>{
+  if(!el){ ok(false, que, 'no está en la pantalla'); return; }
+  total++;
+  const cs=getComputedStyle(el), fo=fondoDe(el), fr=aRGBA(cs.color);
+  const col=fr[3]<1?sobre(fr,fo):fr.slice(0,3);
+  const r=cont(col,fo), px=parseFloat(cs.fontSize)||14;
+  const grande=px>=24||(px>=18.66&&parseInt(cs.fontWeight,10)>=700);
+  const pide=vara||(grande?3:4.5), bien=r>=pide;
+  if(!bien) fallos++;
+  const d=document.createElement('div'); d.className='li';
+  d.innerHTML=`<span class="${bien?'ok':'mal'}">${bien?'ok':'MAL'}</span><span>${que}</span>`
+    +`<span class="d">${r.toFixed(2)} : 1 &nbsp;(pide ${pide})</span>`;
+  salida.appendChild(d);
+};
+
+const YO = { username:'dames', name:'Daniel Ames', role:'admin' };
+const hoy = new Date().toISOString().slice(0,10);
+const sello = (h) => `${hoy} ${h}:00`;
+
+/* Salas y mensajes DE PRUEBA. No se leen los suyos ni se escribe en el servidor: se siembra
+   el estado en memoria, que es lo que la pantalla dibuja. */
+const SALAS = [
+  { id:'du_dames__msosa',  tipo:'directa', miembros:['dames','msosa'],  creador:'dames' },
+  { id:'du_dames__vmoron', tipo:'directa', miembros:['dames','vmoron'], creador:'dames' },
+  { id:'gr_prueba', tipo:'grupo', nombre:'Turno noche',
+    miembros:['dames','msosa','vmoron','apillpa'], creador:'dames' }
+];
+const MENSAJES = {
+  'du_dames__msosa': [
+    { id:'m1', de:'msosa', texto:'Jefe, el ancla de las 19:30 ya terminó', cuando:sello('20:15') },
+    { id:'m2', de:'dames', texto:'Perfecto. ¿El slotting salió?', cuando:sello('20:17') },
+    { id:'m3', de:'msosa', texto:'Sí, 30.212 artículos', cuando:sello('20:18') },
+    { id:'m4', de:'msosa', texto:'', cuando:sello('20:19'),
+      adjunto:{ id:'adj1', tipo:'archivo', nombre:'Slotting 12-09-26.xlsx', tamano:1468006 } },
+    { id:'m5', de:'msosa', texto:'Ya quedó el corte, jefe', cuando:sello('20:20') }
+  ],
+  'du_dames__vmoron': [
+    { id:'n1', de:'dames', texto:'Mañana revisamos el buffer C', cuando:sello('19:10') }
+  ],
+  'gr_prueba': [
+    { id:'g1', de:'apillpa', texto:'Quedaron 3 tareas sin asignar', cuando:sello('21:58') },
+    { id:'g2', de:'dames', texto:'Las veo y les asigno gente', cuando:sello('22:02') }
+  ]
+};
+
+(async () => {
+  const d0 = document.createElement('div'); document.body.appendChild(d0);
+  try { await renderAppMovil(d0, YO, () => {}); } catch (e) { ok(false,'la app se monta', e && e.message); }
+  $('#informe').style.pointerEvents = 'none';
+
+  titulo('La barra de abajo');
+  const tabs = $$('#app-movil .am-barra button').map(b => b.dataset.seccion);
+  ok(tabs.includes('chat'), 'Chat está abajo', tabs.join(' · '));
+  ok(tabs.length === 4, 'cuatro módulos', tabs.length + '');
+  ok(tabs.indexOf('chat') === 1, 'Chat va segundo, después de Inicio');
+
+  /* Se entra al chat y se siembra el estado. */
+  $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'chat').click();
+  await esperar(2500);
+
+  /* NO SE IMPORTA `chat.js`: la app lo carga con `?v=`, y otra URL seria otro modulo con
+     su propio estado. `window.__chat` lo deja la instancia que de verdad esta dibujando. */
+  const est = window.__chat && window.__chat.estado ? window.__chat.estado() : null;
+  ok(!!est, 'el chat arrancó sus datos', est ? est.salas.length + ' sala(s) reales' : '—');
+
+  /* SE INTERCEPTA LA RED, no la memoria. Al abrir una conversacion la app le pregunta al
+     servidor por sus mensajes y reemplaza lo que tenga -que es lo correcto: asi se entera de
+     lo que llego mientras tanto-. Contestandole aqui, el dato recorre el mismo camino que en
+     produccion y la pantalla no sabe que esta en una prueba. */
+  const fetchReal = window.fetch.bind(window);
+  window.fetch = async (url, ...r) => {
+      const u = String(url && url.url ? url.url : url);
+      const m = /\/api\/logistics\/(chat_[^?]+)/.exec(u);
+      if (m && MENSAJES[m[1].replace(/^chat_/, '')]) {
+          return new Response(JSON.stringify({ data: MENSAJES[m[1].replace(/^chat_/, '')] }),
+                              { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (/\/api\/logistics\/chat_salas/.test(u) && (!r[0] || r[0].method !== 'POST')) {
+          return new Response(JSON.stringify({ data: SALAS }),
+                              { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return fetchReal(url, ...r);
+  };
+
+  const vivo = window.__chat.estado();
+  vivo.salas.length = 0; SALAS.forEach(s => vivo.salas.push(s));
+  Object.keys(MENSAJES).forEach(k => { vivo.mensajes[k] = MENSAJES[k]; });
+  vivo.noLeidos['du_dames__msosa'] = 3;
+  $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'chat').click();
+  await esperar(400);
+
+  titulo('La lista de conversaciones');
+  const convs = $$('#app-movil .am-conv');
+  ok(convs.length === 3, 'salen las tres conversaciones', convs.length + '');
+  ok(!!$('#app-movil .am-globo'), 'el globo de no leídos está', ($('#app-movil .am-globo')||{}).textContent);
+  ok(!!$('#app-movil .am-barra .punto'), 'y también sobre la pestaña Chat',
+     ($('#app-movil .am-barra .punto')||{}).textContent);
+  ok(!!$('#app-movil .am-buscar input'), 'hay buscador');
+  ok($$('#app-movil .am-persona-chat').length > 0, 'y la gente para empezar una nueva',
+     $$('#app-movil .am-persona-chat').length + ' persona(s)');
+
+  /* ── LOS CUATRO TEMAS ─────────────────────────────────────────────────────── */
+  for (const T of temaService.TEMAS) {
+    temaService.aplicarTema(T.id);
+    await esperar(200);
+    titulo(T.nombre);
+
+    /* La lista. Se repone el no leido: en el tema anterior se abrio la conversacion y
+       quedo leida -que es lo correcto-, y sin globo no hay nada que medir. */
+    window.__chat.estado().noLeidos['du_dames__msosa'] = 3;
+    if (!$('#app-movil .am-conv')) { $$('#app-movil .am-barra button').find(b=>b.dataset.seccion==='chat').click(); await esperar(300); }
+    else { $$('#app-movil .am-barra button').find(b=>b.dataset.seccion==='chat').click(); await esperar(300); }
+    mide($('#app-movil .am-conv .nm'), 'el nombre de la conversación');
+    mide($('#app-movil .am-conv .ult'), 'la vista previa del último mensaje');
+    mide($('#app-movil .am-conv .hora'), 'la hora');
+    mide($('#app-movil .am-ini'), 'las iniciales del avatar', 3);
+    mide($('#app-movil .am-globo'), 'el globo de no leídos');
+    mide($('#app-movil .am-buscar input'), 'el buscador');
+    mide($('#app-movil .am-persona-chat .nm'), 'el nombre de quien no tiene conversación');
+    mide($('#app-movil .am-persona-chat .rol'), 'su cargo');
+    mide($$('#app-movil .am-barra button')[1], 'la pestaña Chat', 3);
+
+    /* Adentro de una conversación */
+    /* POR SU ID, no por su posicion: la lista se ordena por el ultimo mensaje y "la
+       primera" cambia sola. Esta es la que trae adjunto, foto y dos dias. */
+    $('#app-movil [data-sala="du_dames__msosa"]').click();
+    await esperar(700);
+    mide($('#app-movil .am-cab-conv .quien b'), 'con quién hablo');
+    mide($('#app-movil .am-cab-conv .quien span'), 'si está en línea');
+    mide($('#app-movil .am-msg:not(.mio) .tx'), 'un mensaje recibido');
+    ok(!!$('#app-movil .am-adj'), 'el adjunto se dibuja',
+       ($('#app-movil .am-adj') || {}).textContent || 'no está');
+    mide($('#app-movil .am-msg.mio .tx'), 'un mensaje mío');
+    mide($('#app-movil .am-msg .hr'), 'la hora del mensaje');
+    mide($('#app-movil .am-dia'), 'la fecha que separa los días');
+    mide($('#app-movil .am-adj .nm'), 'el nombre del archivo adjunto');
+    mide($('#app-movil .am-adj .pz'), 'su peso');
+    mide($('#app-movil .am-caja input'), 'la caja de escribir');
+
+    /* Que la conversación ocupe la pantalla. */
+    if (T.id === 'indigo') {
+      ok(!!$('#app-movil.en-conversacion'), 'la conversación ocupa la pantalla');
+      ok(getComputedStyle($('#app-movil .am-cab')).display === 'none',
+         'la cabecera de la app se esconde');
+      ok(!!$('#app-movil .am-barra'), 'pero la barra de abajo se queda');
+    }
+
+    $('[data-chat-volver]').click();
+    await esperar(300);
+    if (T.id === 'indigo') ok(!!$('#app-movil .am-conv'), 'el botón de volver regresa a la lista');
+  }
+
+  temaService.aplicarTema('indigo');
+
+  /* ── Y QUE EL CHAT DE ESCRITORIO SIGA ENTERO ──────────────────────────────
+     Se le separaron los datos de la pantalla para que lo use el celular; eso no
+     puede haberle tocado nada a la web, que es la que esta en produccion. */
+  titulo('El chat de la web, que no se toco');
+  const mod = await import('../js/chat.js?v=' + Date.now());
+  ok(typeof mod.montarChat === 'function', 'montarChat sigue exportado');
+  ok(typeof mod.desmontarChat === 'function', 'desmontarChat sigue exportado');
+  ok(typeof mod.arrancarDatosDelChat === 'function', 'y ahora también los datos sueltos');
+  ['mandar','crearDirecta','crearGrupo','bajarSala','marcarLeida','enLinea','nombreDe',
+   'nombreDeSala','horaCorta','pesoLegible','estadoDelChat','alCambiarElChat']
+    .forEach(f => ok(typeof mod[f] === 'function', `expone ${f}`));
+
+  const res = document.getElementById('resumen');
+  res.className = fallos ? 'mal' : 'ok';
+  res.textContent = fallos ? `HAY ${fallos} PROBLEMA(S) de ${total}`
+                           : `Las ${total} comprobaciones, correctas en los 4 temas`;
+  document.querySelector('#informe h1').textContent = fallos ? 'Con problemas' : 'Listo';
+  window.__resultado = { fallos, total };
+})();
+</script>
+</body>
+</html>

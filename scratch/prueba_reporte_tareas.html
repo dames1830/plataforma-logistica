@@ -101,7 +101,8 @@ const YO = { username:'dames', name:'Daniel Ames', role:'admin' };
   titulo('La barra de abajo');
   const tabs = $$('#app-movil .am-barra button').map(b => b.dataset.seccion);
   ok(tabs.indexOf('reportes') === -1, 'Reportes ya no está', tabs.join(' · '));
-  ok(tabs.length === 3, 'quedan tres módulos', tabs.length + ': ' + tabs.join(', '));
+  /* Cuatro desde que entro el Chat: Inicio, Chat, Tareas y Asistencia. */
+  ok(tabs.length === 4, 'cuatro módulos abajo', tabs.join(', '));
 
   $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'tareas').click();
   await esperar(2200);

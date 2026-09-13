@@ -80,6 +80,9 @@ let presencia = {};         // { usuario: cuando dijo "sigo aqui", en hora del s
 let desfaseReloj = 0;       // ms entre el reloj del servidor y el de esta PC
 let ultimoAnuncio = 0;
 let ultimaMirada = 0;
+/* QUIEN MAS QUIERE ENTERARSE. La app del celular dibuja su propia pantalla, asi que el
+   latido le avisa por aca en vez de pintar el cascaron de escritorio. */
+let avisarCambio = null;
 
 /* ── LO QUE HABLA CON EL SERVIDOR ──────────────────────────────────────────────────────── */
 
@@ -962,7 +965,13 @@ const acomodarVentanas = () => {
     caja.classList.toggle('solas', !panelALaVista);
 };
 
-const pintar = () => { pintarLista(); pintarVentanas(); pintarGlobo(); acomodarVentanas(); };
+const pintar = () => {
+    /* SIN CASCARON NO HAY NADA QUE PINTAR, pero el que escucha si tiene que enterarse: es
+       el caso del celular, que usa estos datos y dibuja lo suyo. */
+    if (avisarCambio) { try { avisarCambio(); } catch (e) { /* que no tumbe el latido */ } }
+    if (!raiz) return;
+    pintarLista(); pintarVentanas(); pintarGlobo(); acomodarVentanas();
+};
 
 const esconderToast = () => {
     const t = nodo('chat-toast');
@@ -1179,14 +1188,20 @@ const escribir = async (idSala) => {
 
 /* ── ARRANQUE Y APAGADO ────────────────────────────────────────────────────────────────── */
 
-export const montarChat = async (session) => {
-    if (arrancado) return;
+/* ══════════════════════════════════════════════════════════════════════════════════════
+ *  LOS DATOS DEL CHAT, SIN PANTALLA
+ *  ──────────────────────────────────────────────────────────────────────────────────────
+ *  Trae el directorio, las salas, los leidos y la presencia, y deja el latido andando. NO
+ *  dibuja nada: de eso se encarga quien llame — el cascaron flotante en la web, o la
+ *  pantalla completa en el celular.
+ *
+ *  Existe para que el chat del telefono no sea OTRO chat. Las salas, los mensajes y los
+ *  leidos son los mismos: leer algo en el celular lo deja leido en la PC.
+ * ══════════════════════════════════════════════════════════════════════════════════════ */
+export const arrancarDatosDelChat = async (session) => {
     YO = session && session.username ? session : null;
-    if (!YO) return;
-    arrancado = true;
+    if (!YO) return false;
     try { sonando = localStorage.getItem('chat_tono') !== '0'; } catch (e) { /* da igual */ }
-
-    dibujarCascaron();
 
     try {
         const r = await fetch(`${API}/users?t=${Date.now()}`);
@@ -1212,11 +1227,34 @@ export const montarChat = async (session) => {
     ultimoAnuncio = Date.now();
 
     for (const s of salas) { await bajarSala(s.id); reponerContador(s.id); }
-    pintar();
     acomodarReloj();
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') latir(); });
-    console.log(`💬 [CHAT] listo para ${YO.username}: ${salas.length} conversación(es).`);
+    console.log(`💬 [CHAT] datos listos para ${YO.username}: ${salas.length} conversación(es).`);
+    return true;
 };
+
+/* El chat de ESCRITORIO: los mismos datos, mas su cascaron flotante. */
+export const montarChat = async (session) => {
+    if (arrancado) return;
+    if (!(session && session.username)) return;
+    arrancado = true;
+    dibujarCascaron();
+    if (!(await arrancarDatosDelChat(session))) { arrancado = false; return; }
+    pintar();
+};
+
+/* ── LO QUE NECESITA QUIEN DIBUJE OTRA PANTALLA ──────────────────────────────────────────
+   Se exporta lo que ya existe; no hay funciones nuevas ni reglas nuevas. `alCambiarElChat`
+   es el aviso del latido: llega un mensaje, y quien escucha redibuja. */
+export const alCambiarElChat = (fn) => { avisarCambio = fn; };
+export const estadoDelChat = () => ({
+    yo: YO, salas, mensajes, leidos, noLeidos, gente, presencia,
+    sinLeerTotal: sinLeerTotal()
+});
+export { mandar, mandarConAdjunto, borrar, crearDirecta, crearGrupo, bajarSala, latir,
+         marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, nombreBonito, iniciales,
+         nombreDeSala, idDirecta, salaDe, activos, horaCorta, diaDe, traerAdjunto,
+         pesoLegible, tipoDeArchivo };
 
 export const desmontarChat = () => {
     anunciarme(true);        // al salir, la bolita se apaga enseguida y no en 70 segundos

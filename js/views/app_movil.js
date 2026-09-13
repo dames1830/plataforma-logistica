@@ -25,21 +25,27 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0761';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0761';
+import * as adminService from '../services_v245/adminService.js?v=29.0762';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0762';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0761';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0761';
-import * as metasService from '../services_v245/metasService.js?v=29.0761';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0762';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0762';
+import * as metasService from '../services_v245/metasService.js?v=29.0762';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0761';
+import * as temaService from '../services_v245/temaService.js?v=29.0762';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0761';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0761';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0762';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0762';
+/* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
+   presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
+import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
+         bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
+         iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0762';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -280,6 +286,106 @@ const CSS = `
   line-height: 1.45; }
 #app-movil .am-tarjeta p.menor { font-size: .8rem; color: var(--am-suave); }
 
+/* -- EL CHAT -----------------------------------------------------------------------------
+   Maqueta aprobada el 13-sep-2026. Ni un color escrito a mano: todos salen de los tokens,
+   que es lo unico que hace que se lea en los cuatro temas. */
+#app-movil .am-buscar { display: flex; align-items: center; gap: .5rem; background: var(--am-carta);
+  border: 1px solid var(--am-linea); border-radius: 10px; padding: .48rem .65rem; flex: none; }
+#app-movil .am-buscar svg { width: 15px; height: 15px; color: var(--am-tenue); flex: none; }
+#app-movil .am-buscar input { border: 0; background: transparent; outline: none; width: 100%;
+  font-family: var(--am-ui); font-size: .88rem; color: var(--am-tinta); }
+
+/* LA INICIAL, con la bolita de quien esta ahora. Es la misma presencia de la web. */
+#app-movil .am-ini { width: 38px; height: 38px; border-radius: 50%; display: grid;
+  place-items: center; background: var(--am-va-agua); color: var(--am-va);
+  font-family: var(--am-num); font-size: .76rem; font-weight: 700; position: relative; flex: none; }
+#app-movil .am-ini.grupo { background: var(--am-curso-agua); color: var(--am-curso); }
+#app-movil .am-ini.en-linea::after { content: ''; position: absolute; right: -1px; bottom: -1px;
+  width: 11px; height: 11px; border-radius: 50%; background: #22A06B;
+  border: 2px solid var(--am-carta); }
+
+#app-movil .am-conv, #app-movil .am-persona-chat { display: grid;
+  grid-template-columns: auto 1fr auto; gap: .65rem; align-items: center;
+  background: var(--am-carta); border: 1px solid var(--am-linea); border-radius: 12px;
+  padding: .55rem .65rem; width: 100%; text-align: left; font-family: var(--am-ui);
+  color: var(--am-tinta); cursor: pointer; }
+#app-movil .am-conv .medio, #app-movil .am-persona-chat > span:nth-child(2) { min-width: 0; }
+#app-movil .am-conv .nm, #app-movil .am-persona-chat .nm { display: block; font-size: .92rem;
+  font-weight: 650; color: var(--am-tinta); overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; }
+#app-movil .am-conv .ult { display: block; font-size: .78rem; color: var(--am-tenue);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#app-movil .am-persona-chat .rol { display: block; font-family: var(--am-num); font-size: .6rem;
+  color: var(--am-tenue); text-transform: uppercase; letter-spacing: .05em; }
+#app-movil .am-persona-chat .est { font-family: var(--am-num); font-size: .58rem; color: var(--am-va); }
+#app-movil .am-conv .der { display: flex; flex-direction: column; align-items: flex-end;
+  gap: .2rem; flex: none; }
+#app-movil .am-conv .hora { font-family: var(--am-num); font-size: .62rem; color: var(--am-tenue); }
+#app-movil .am-globo { min-width: 19px; height: 19px; padding: 0 .32rem; border-radius: 10px;
+  background: var(--am-relleno); color: var(--am-sobre); font-family: var(--am-num);
+  font-size: .62rem; font-weight: 700; display: grid; place-items: center; }
+
+/* -- ADENTRO DE UNA CONVERSACION ---------------------------------------------------------
+   Ocupa la pantalla: sin cabecera de la app y sin relleno del cuerpo. En un telefono, un
+   chat con marco alrededor desperdicia media pantalla. */
+#app-movil.en-conversacion .am-cab { display: none; }
+#app-movil.en-conversacion .am-cuerpo { padding: 0; gap: 0; }
+#app-movil .am-cab-conv { display: flex; align-items: center; gap: .55rem; padding: .55rem .7rem;
+  background: var(--am-papel); border-bottom: 1px solid var(--am-linea); flex: none; }
+#app-movil .am-volver { background: none; border: 0; cursor: pointer; color: var(--am-suave);
+  display: grid; place-items: center; padding: .2rem; }
+#app-movil .am-volver svg { width: 20px; height: 20px; }
+#app-movil .am-cab-conv .quien { min-width: 0; }
+#app-movil .am-cab-conv .quien b { display: block; font-size: .95rem; color: var(--am-tinta);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#app-movil .am-cab-conv .quien span { display: block; font-family: var(--am-num);
+  font-size: .62rem; color: var(--am-va); }
+#app-movil .am-cab-conv .quien span.off { color: var(--am-tenue); }
+
+#app-movil .am-charla { flex: 1; overflow-y: auto; padding: .7rem .65rem; display: flex;
+  flex-direction: column; gap: .3rem; }
+#app-movil .am-charla::-webkit-scrollbar { width: 0 }
+#app-movil .am-dia { align-self: center; font-family: var(--am-num); font-size: .58rem;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--am-tenue);
+  background: var(--am-papel); padding: .2rem .6rem; border-radius: 10px; margin: .35rem 0; }
+#app-movil .am-msg { max-width: 82%; padding: .45rem .65rem .3rem; border-radius: 12px;
+  background: var(--am-carta); border: 1px solid var(--am-linea); align-self: flex-start; }
+#app-movil .am-msg.mio { align-self: flex-end; background: var(--am-relleno);
+  border-color: var(--am-relleno); }
+#app-movil .am-msg .de { display: block; font-family: var(--am-num); font-size: .62rem;
+  font-weight: 700; color: var(--am-va); margin-bottom: .1rem; }
+#app-movil .am-msg .tx { font-size: .88rem; line-height: 1.35; color: var(--am-tinta);
+  white-space: pre-wrap; word-break: break-word; }
+#app-movil .am-msg.mio .tx { color: var(--am-sobre); }
+#app-movil .am-msg.borrado .tx { color: var(--am-tenue); font-style: italic; }
+#app-movil .am-msg .hr { display: block; text-align: right; font-family: var(--am-num);
+  font-size: .56rem; color: var(--am-tenue); margin-top: .1rem; }
+#app-movil .am-msg.mio .hr { color: var(--am-sobre); opacity: .7; }
+#app-movil .am-msg .am-adj { display: flex; align-items: center; gap: .45rem; width: 100%;
+  background: var(--am-papel); border: 0; border-radius: 8px; padding: .35rem .5rem;
+  margin-bottom: .25rem; cursor: pointer; font-family: var(--am-ui); }
+#app-movil .am-msg .am-adj svg { width: 16px; height: 16px; color: var(--am-suave); flex: none; }
+#app-movil .am-msg .am-adj .nm { font-size: .76rem; color: var(--am-tinta); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+#app-movil .am-msg .am-adj .pz { font-family: var(--am-num); font-size: .58rem;
+  color: var(--am-tenue); margin-left: auto; flex: none; }
+#app-movil .am-foto-msg { display: block; width: 100%; border-radius: 8px;
+  margin-bottom: .25rem; background: var(--am-papel); min-height: 40px; cursor: pointer; }
+
+#app-movil .am-caja { display: flex; align-items: center; gap: .4rem; padding: .5rem .6rem;
+  background: var(--am-carta); border-top: 1px solid var(--am-linea); flex: none; }
+#app-movil .am-clip { width: 36px; height: 36px; border-radius: 10px; flex: none;
+  border: 1px solid var(--am-linea); background: var(--am-papel); color: var(--am-suave);
+  display: grid; place-items: center; cursor: pointer; }
+#app-movil .am-clip svg { width: 18px; height: 18px; }
+#app-movil .am-caja input { flex: 1; min-width: 0; border: 1px solid var(--am-linea);
+  border-radius: 18px; padding: .5rem .8rem; font-family: var(--am-ui); font-size: .88rem;
+  background: var(--am-papel); color: var(--am-tinta); outline: none; }
+#app-movil .am-enviar { width: 36px; height: 36px; border-radius: 50%; border: 0; flex: none;
+  background: var(--am-relleno); color: var(--am-sobre); display: grid; place-items: center;
+  cursor: pointer; }
+#app-movil .am-enviar svg { width: 17px; height: 17px; }
+
 /* ── PASAR LISTA ─────────────────────────────────────────────────────────────────────── */
 /* TRES COLUMNAS DE VERDAD, no una fila y otra debajo: quien | asistio o falto | motivo.
    La del motivo existe siempre -vacia en quien asistio- para que quede alineada de arriba
@@ -465,6 +571,7 @@ const ICONOS = {
     escritorio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/></svg>',
     puerta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>',
     inicio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.2 12 3.5l9 6.7V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9.2 21v-6.4h5.6V21"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.3-.6L3 21l1.8-5A8.3 8.3 0 0 1 4 11.5a8.4 8.4 0 0 1 8.5-8.4h.5A8.4 8.4 0 0 1 21 11z"/></svg>',
     reportes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9"/><path d="M9.3 20V4.5"/><path d="M14.7 20v-7.5"/><path d="M20 20V7"/></svg>',
     tareas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8.4 12.2l2.4 2.4 4.8-5"/></svg>',
     lista: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.6 20c0-3.2 2.4-5.2 5.4-5.2s5.4 2 5.4 5.2"/><path d="M17 11.5l1.7 1.7 3.1-3.3"/></svg>',
@@ -484,6 +591,9 @@ const AREA_AVISOS = 'push_suscripciones';
 
 const SECCIONES = [
     { id: 'inicio', rotulo: 'Inicio', icono: 'inicio' },
+    /* EL CHAT VA ABAJO Y NO EN EL MENU: es lo que mas se toca en el dia y tiene que estar a
+       un dedo. Ademas el globo de los no leidos solo sirve si se ve sin entrar. */
+    { id: 'chat', rotulo: 'Chat', icono: 'chat' },
     { id: 'tareas', rotulo: 'Tareas', icono: 'tareas' },
     /* ABAJO, SOLO LOS MODULOS. Avisos y Temas se fueron al menu de arriba, y Reportes
        desaparecio: Daniel, 12-sep, *"ya estaria de mas el modulo de reportes"* — cada
@@ -962,6 +1072,220 @@ const eliminarTarea = async () => {
     tareasBorrador = null;
     tareaAbierta = null;
     pintar();
+};
+
+/* ── EL CHAT ─────────────────────────────────────────────────────────────────────────────
+ *  Maqueta aprobada el 13-sep-2026. Daniel: *"la misma funcionalidad del chat en el app"*.
+ *
+ *  ES EL MISMO CHAT, NO OTRO. Las salas, los mensajes, los leidos y la presencia salen de
+ *  `chat.js`, que sigue siendo el unico dueño de esas reglas: leer algo aca lo deja leido en
+ *  su PC. Escribir un segundo chat para el telefono habria sido repetir el error que ya se
+ *  pago con el reporte de marcas —dos copias de la misma cuenta que se separan—.
+ *
+ *  LO QUE SI CAMBIA ES LA FORMA. En la web el chat vive en burbujas flotando sobre el
+ *  tablero, porque ahi se esta trabajando en otra cosa. En un telefono no hay sitio para
+ *  ventanas: la conversacion ocupa la pantalla y se escribe con una mano.
+ * ─────────────────────────────────────────────────────────────────────────────────────── */
+
+let chatListo = false;        // ya se trajeron los datos en esta sesion
+let chatSala = null;          // la conversacion abierta, o null en la lista
+let chatBuscar = '';
+let chatMandando = false;
+
+/* Se pide UNA vez. `arrancarDatosDelChat` deja el latido andando y avisa por
+   `alCambiarElChat` cada vez que llega algo, asi que la pantalla se refresca sola. */
+const prepararChat = async () => {
+    if (chatListo || !YO) return;
+    chatListo = true;
+    alCambiarElChat(() => { if (seccion === 'chat' || raiz) pintar(); });
+    try { await arrancarDatosDelChat(YO); } catch (e) { console.warn('[APP] chat:', e && e.message); }
+    pintar();
+};
+
+const ICO_LUPA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+const ICO_VOLVER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+const ICO_CLIP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8.5-8.6a3.3 3.3 0 0 1 4.7 4.7L10 17.8a1.7 1.7 0 0 1-2.4-2.4l7.8-7.9"/></svg>';
+const ICO_ENVIAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12 16-8-6 8 6 8z"/></svg>';
+const ICO_PAPEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
+
+/* El ultimo mensaje de una sala, para la vista previa de la lista. */
+const ultimoDe = (id, mensajes) => ((mensajes[id] || []).slice(-1)[0]) || null;
+
+const vistaPrevia = (m) => {
+    if (!m) return 'Sin mensajes todavía';
+    const mio = m.de === YO.username;
+    const cuerpo = m.borrado ? 'Mensaje borrado'
+        : (m.adjunto ? (m.adjunto.tipo === 'imagen' ? 'Foto' : (m.adjunto.nombre || 'Archivo'))
+                     : String(m.texto || ''));
+    return (mio ? 'Tú: ' : '') + cuerpo;
+};
+
+const pantallaChat = () => {
+    const E = estadoDelChat();
+    const q = chatBuscar.trim().toLowerCase();
+
+    /* Las conversaciones, la del ultimo mensaje primero: es el orden de cualquier chat y
+       el mismo que usa la web. */
+    const salas = (E.salas || []).slice().sort((a, b) => {
+        const ua = ultimoDe(a.id, E.mensajes), ub = ultimoDe(b.id, E.mensajes);
+        return String((ub && ub.cuando) || '').localeCompare(String((ua && ua.cuando) || ''));
+    }).filter(s => !q || nombreDeSala(s).toLowerCase().includes(q));
+
+    const fila = (s) => {
+        const otro = s.tipo === 'grupo' ? null
+            : (s.miembros || []).filter(u => u !== YO.username)[0];
+        const nombre = nombreDeSala(s);
+        const m = ultimoDe(s.id, E.mensajes);
+        const n = sinLeer(s.id);
+        return `
+        <button type="button" class="am-conv" data-sala="${esc(s.id)}">
+            <span class="am-ini ${s.tipo === 'grupo' ? 'grupo' : ''} ${otro && enLinea(otro) ? 'en-linea' : ''}">${esc(inicialesChat(nombre))}</span>
+            <span class="medio"><span class="nm">${esc(nombre)}</span>
+                <span class="ult">${esc(vistaPrevia(m))}</span></span>
+            <span class="der">
+                <span class="hora">${m ? esc(horaCorta(m.cuando)) : ''}</span>
+                ${n ? `<span class="am-globo">${n > 99 ? '99+' : n}</span>` : ''}</span>
+        </button>`;
+    };
+
+    /* Con quien todavia no hay conversacion. `activos()` decide a quien se le puede
+       escribir hoy; los dados de baja siguen teniendo nombre en los mensajes viejos. */
+    const yaHablo = new Set((E.salas || []).flatMap(s => s.miembros || []));
+    const nuevos = activos()
+        .filter(p => p.username !== YO.username && !yaHablo.has(p.username))
+        .filter(p => !q || nombreDe(p.username).toLowerCase().includes(q))
+        .sort((a, b) => nombreDe(a.username).localeCompare(nombreDe(b.username), 'es'));
+
+    return `
+        <div class="am-buscar">${ICO_LUPA}
+            <input type="search" data-chat-buscar value="${esc(chatBuscar)}"
+                placeholder="Buscar una conversación…"></div>
+        ${salas.length ? salas.map(fila).join('')
+            : `<div class="am-vacio">${q ? 'Nada con ese nombre' : 'Todavía no tienes conversaciones'}</div>`}
+        ${nuevos.length ? `<div class="am-seccion" style="margin-top:.7rem">Empezar una nueva</div>` : ''}
+        ${nuevos.map(p => `
+            <button type="button" class="am-persona-chat" data-nueva-con="${esc(p.username)}">
+                <span class="am-ini ${enLinea(p.username) ? 'en-linea' : ''}">${esc(inicialesChat(nombreDe(p.username)))}</span>
+                <span><span class="nm">${esc(nombreDe(p.username))}</span>
+                    <span class="rol">${esc(p.role || '')}</span></span>
+                <span class="est">${enLinea(p.username) ? 'en línea' : ''}</span>
+            </button>`).join('')}
+    `;
+};
+
+/* ── ADENTRO DE UNA CONVERSACION ─────────────────────────────────────────────────────── */
+const pantallaConversacion = () => {
+    const E = estadoDelChat();
+    const s = salaDe(chatSala);
+    if (!s) { chatSala = null; return pantallaChat(); }
+    const otro = s.tipo === 'grupo' ? null : (s.miembros || []).filter(u => u !== YO.username)[0];
+    const msgs = E.mensajes[s.id] || [];
+
+    let diaAnterior = '';
+    const burbujas = msgs.map(m => {
+        const d = diaDe(m.cuando);
+        const cambia = d !== diaAnterior;
+        diaAnterior = d;
+        const mio = m.de === YO.username;
+        const a = m.adjunto;
+        return (cambia ? `<span class="am-dia">${esc(comoSeLee(d))}</span>` : '')
+            + `<div class="am-msg ${mio ? 'mio' : ''} ${m.borrado ? 'borrado' : ''}">
+                ${!mio && s.tipo === 'grupo' ? `<span class="de">${esc(nombreDe(m.de))}</span>` : ''}
+                ${a ? (a.tipo === 'imagen'
+                    ? `<img class="am-foto-msg" data-ver-adjunto="${esc(a.id)}" alt="${esc(a.nombre || 'Foto')}">`
+                    : `<button type="button" class="am-adj" data-bajar-adjunto="${esc(a.id)}">
+                          ${ICO_PAPEL}<span class="nm">${esc(a.nombre || 'Archivo')}</span>
+                          <span class="pz">${esc(pesoLegible(a.tamano || 0))}</span></button>`) : ''}
+                ${m.texto ? `<span class="tx">${esc(m.texto)}</span>` : ''}
+                <span class="hr">${esc(horaCorta(m.cuando))}</span>
+               </div>`;
+    }).join('');
+
+    const estado = s.tipo === 'grupo'
+        ? `${(s.miembros || []).length} personas`
+        : (otro && enLinea(otro) ? 'en línea' : 'desconectado');
+
+    return `
+        <div class="am-cab-conv">
+            <button type="button" class="am-volver" data-chat-volver aria-label="Volver">${ICO_VOLVER}</button>
+            <span class="am-ini ${s.tipo === 'grupo' ? 'grupo' : ''} ${otro && enLinea(otro) ? 'en-linea' : ''}">${esc(inicialesChat(nombreDeSala(s)))}</span>
+            <span class="quien"><b>${esc(nombreDeSala(s))}</b>
+                <span class="${otro && enLinea(otro) ? '' : 'off'}">${esc(estado)}</span></span>
+        </div>
+        <div class="am-charla" data-charla>
+            ${burbujas || '<div class="am-vacio">Escribe el primer mensaje</div>'}
+        </div>
+        <div class="am-caja">
+            <button type="button" class="am-clip" data-chat-clip aria-label="Adjuntar">${ICO_CLIP}</button>
+            <input type="text" data-chat-texto placeholder="Escribe un mensaje…" ${chatMandando ? 'disabled' : ''}>
+            <button type="button" class="am-enviar" data-chat-enviar aria-label="Enviar">${ICO_ENVIAR}</button>
+        </div>
+        <input type="file" data-chat-archivo hidden
+            accept="image/*,video/*,.pdf,.xlsx,.xls,.csv,.doc,.docx,.txt">
+    `;
+};
+
+/* ── LO QUE HACE LA PERSONA ──────────────────────────────────────────────────────────── */
+const abrirConversacion = async (id) => {
+    chatSala = id;
+    marcarLeida(id);
+    pintar();
+    try { await bajarSala(id); } catch (e) { /* se reintenta en el latido */ }
+    marcarLeida(id);
+    pintar();
+    alFinalDeLaCharla();
+};
+
+/* La charla arranca abajo, en lo ultimo: es lo que uno quiere ver al abrir. */
+const alFinalDeLaCharla = () => {
+    const c = raiz && raiz.querySelector('[data-charla]');
+    if (c) c.scrollTop = c.scrollHeight;
+};
+
+const escribirEnElChat = async () => {
+    const campo = raiz && raiz.querySelector('[data-chat-texto]');
+    const texto = campo ? String(campo.value || '').trim() : '';
+    if (!texto || !chatSala || chatMandando) return;
+    chatMandando = true;
+    if (campo) campo.value = '';
+    pintar();
+    try { await mandar(chatSala, texto); } catch (e) { alert('No se pudo enviar. Revisa la conexión.'); }
+    chatMandando = false;
+    marcarLeida(chatSala);
+    pintar();
+    alFinalDeLaCharla();
+};
+
+const adjuntarEnElChat = async (archivo) => {
+    if (!archivo || !chatSala) return;
+    chatMandando = true;
+    pintar();
+    try { await mandarConAdjunto(chatSala, archivo); }
+    catch (e) { alert('No se pudo enviar el archivo: ' + (e && e.message ? e.message : 'error')); }
+    chatMandando = false;
+    pintar();
+    alFinalDeLaCharla();
+};
+
+/* Las fotos de los mensajes se bajan una vez y se pintan cuando llegan: si viajaran dentro
+   del HTML, cada repintado las volveria a pedir. */
+const pintarFotosDelChat = () => {
+    if (!raiz) return;
+    raiz.querySelectorAll('img[data-ver-adjunto]').forEach(async (img) => {
+        if (img.dataset.puesta) return;
+        img.dataset.puesta = '1';
+        try { img.src = await traerAdjunto(img.getAttribute('data-ver-adjunto')); }
+        catch (e) { img.remove(); }
+    });
+};
+
+const bajarAdjuntoDelChat = async (id, nombre) => {
+    try {
+        const datos = await traerAdjunto(id);
+        const a = document.createElement('a');
+        a.href = datos; a.download = nombre || 'archivo';
+        document.body.appendChild(a); a.click(); a.remove();
+    } catch (e) { alert('No se pudo abrir el archivo.'); }
 };
 
 /* ── PASAR LISTA ─────────────────────────────────────────────────────────────────────────
@@ -1894,6 +2218,11 @@ const panelMenu = () => {
 const CABECERAS = {
     inicio: () => ({ sub: `Turno · ${diaEnLetras()}`, ttl: `${saludo()}, ${String(YO.name || YO.username).split(' ')[0]}` }),
     tareas: () => ({ sub: `Turno · ${diaEnLetras()}`, ttl: 'Tareas' }),
+    chat: () => {
+        const n = sinLeerTotal();
+        const enPie = activos().filter(p => p.username !== (YO && YO.username) && enLinea(p.username)).length;
+        return { sub: (n ? `${n} sin leer` : 'Todo leído') + ` · ${enPie} en línea`, ttl: 'Chat' };
+    },
     lista: () => ({ sub: `Turno noche · ${diaEnLetras()}`, ttl: 'Pasar lista' }),
     avisos: () => ({ sub: avisosEstado === 'prendidos' ? 'Activados en este teléfono' : 'Apagados', ttl: 'Avisos' })
 };
@@ -1904,11 +2233,16 @@ const pintar = () => {
     raiz.querySelector('.am-cab .sub').textContent = cab.sub;
     raiz.querySelector('.am-cab .ttl').textContent = cab.ttl;
 
+    /* LA CONVERSACION OCUPA LA PANTALLA. Se le quita el relleno al cuerpo y se esconde la
+       cabecera: en un telefono, un chat con marco alrededor desperdicia media pantalla. */
+    raiz.classList.toggle('en-conversacion', seccion === 'chat' && !!chatSala);
+
     const cuerpo = raiz.querySelector('.am-cuerpo');
     cuerpo.innerHTML = seccion === 'inicio' ? pantallaInicio()
         : seccion === 'lista' ? pantallaLista()
         /* La hoja va DENTRO del cuerpo pero es `position: fixed`, asi que no la recorta el
            scroll ni la encierra la rejilla de tres filas de la app. */
+        : seccion === 'chat' ? (chatSala ? pantallaConversacion() : pantallaChat())
         : seccion === 'tareas' ? (pantallaTareas() + hojaDeTarea())
         : seccion === 'avisos' ? pantallaAvisos()
         : pantallaEnCamino(seccion);
@@ -1921,10 +2255,17 @@ const pintar = () => {
     const capa = raiz.querySelector('.am-capa-menu');
     capa.innerHTML = menu ? `<div class="am-velo-menu" data-velo-menu>${panelMenu()}</div>` : '';
 
-    raiz.querySelector('.am-barra').innerHTML = SECCIONES.map(s => `
+    raiz.querySelector('.am-barra').innerHTML = SECCIONES.map(s => {
+        /* EL GLOBO SE VE SIN ENTRAR, que es para lo que sirve. */
+        const n = s.id === 'chat' && chatListo ? sinLeerTotal() : 0;
+        return `
         <button type="button" role="tab" data-seccion="${s.id}" aria-selected="${s.id === seccion}">
             <span class="gl">${ICONOS[s.icono]}</span>${esc(s.rotulo)}
-        </button>`).join('');
+            ${n ? `<span class="punto">${n > 99 ? '99+' : n}</span>` : ''}
+        </button>`;
+    }).join('');
+
+    if (seccion === 'chat' && chatSala) { pintarFotosDelChat(); alFinalDeLaCharla(); }
 };
 
 /** Vuelve a la web de siempre y se acuerda de la decisión. */
@@ -2003,6 +2344,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
                    segundo despues se pone roja. Lo cazo la prueba de la pantalla. */
                 metasService.cargarReglas().then(pintar).catch(() => {});
             }
+            if (seccion === 'chat') { chatSala = null; prepararChat(); }
             if (seccion === 'avisos') mirarAvisos().then(pintar);
             pintar();
             return;
@@ -2058,6 +2400,29 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
             }
             return;
         }
+        /* ── EL CHAT ─────────────────────────────────────────────────────────────── */
+        const laSala = e.target.closest('[data-sala]');
+        if (laSala) { abrirConversacion(laSala.getAttribute('data-sala')); return; }
+        if (e.target.closest('[data-chat-volver]')) { chatSala = null; pintar(); return; }
+        const conQuien = e.target.closest('[data-nueva-con]');
+        if (conQuien) {
+            crearDirecta(conQuien.getAttribute('data-nueva-con'))
+                .then(id => abrirConversacion(id)).catch(() => alert('No se pudo abrir la conversación.'));
+            return;
+        }
+        if (e.target.closest('[data-chat-enviar]')) { escribirEnElChat(); return; }
+        if (e.target.closest('[data-chat-clip]')) {
+            const f = raiz.querySelector('[data-chat-archivo]');
+            if (f) { f.value = ''; f.click(); }
+            return;
+        }
+        const bajar = e.target.closest('[data-bajar-adjunto]');
+        if (bajar) {
+            bajarAdjuntoDelChat(bajar.getAttribute('data-bajar-adjunto'),
+                                (bajar.querySelector('.nm') || {}).textContent);
+            return;
+        }
+
         if (e.target.closest('[data-compartir-tareas]')) { mandarReporteTareas(); return; }
         const cap = e.target.closest('[data-filtro]');
         if (cap) { tareasFiltro = cap.getAttribute('data-filtro'); pintar(); return; }
@@ -2103,6 +2468,30 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         /* Lo tecleado en la hoja se guarda en memoria: el reloj de un minuto repinta, y sin
            esto se perderia lo que la persona acaba de elegir. */
         if (e.target.closest('[data-u1],[data-u2],[data-hi],[data-hf]')) leerBorrador();
+
+        if (e.target.hasAttribute('data-chat-buscar')) { chatBuscar = e.target.value; pintar(); return; }
+        if (e.target.hasAttribute('data-chat-archivo') && e.target.files && e.target.files[0]) {
+            adjuntarEnElChat(e.target.files[0]);
+        }
+    });
+
+    /* ENTER MANDA. En un telefono el teclado trae su propia tecla de enviar y es lo que la
+       gente aprieta; sin esto habria que apuntar al boton cada vez. */
+    raiz.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.hasAttribute && e.target.hasAttribute('data-chat-texto')) {
+            e.preventDefault();
+            escribirEnElChat();
+        }
+    });
+
+    /* El buscador filtra mientras se escribe, sin esperar a que salga del campo. */
+    raiz.addEventListener('input', (e) => {
+        if (e.target.hasAttribute && e.target.hasAttribute('data-chat-buscar')) {
+            chatBuscar = e.target.value;
+            pintar();
+            const c = raiz.querySelector('[data-chat-buscar]');
+            if (c) { c.focus(); c.setSelectionRange(c.value.length, c.value.length); }
+        }
     });
 
     pintar();
