@@ -25,27 +25,27 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0764';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0764';
+import * as adminService from '../services_v245/adminService.js?v=29.0765';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0765';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0764';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0764';
-import * as metasService from '../services_v245/metasService.js?v=29.0764';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0765';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0765';
+import * as metasService from '../services_v245/metasService.js?v=29.0765';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0764';
+import * as temaService from '../services_v245/temaService.js?v=29.0765';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0764';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0764';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0765';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0765';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0764';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0765';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -1360,10 +1360,15 @@ const anotarEnElBorrador = (p) => {
     guardarBorradorLista();
 };
 
-const fechaDeLaLista = () => {
-    const d = new Date();
-    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
-};
+/* EL DIA DEL TURNO, NO EL DEL CALENDARIO. El turno noche cruza la medianoche: una lista
+   pasada a las 03:00 del domingo es del turno del SABADO. Con el calendario se archivaba en
+   el domingo, y el sabado quedaba sin asistencia — pasó el 13-sep-2026 y lo vio Daniel:
+   *"mi turno es del sabado, ¿como va a ser eso?"*.
+
+   Es la MISMA regla que usa todo lo demas de la plataforma, no una nueva: `hoyISO()` es
+   `jornadaService.fechaLogicaDe()`. La asistencia era el unico sitio que se guiaba por el
+   calendario. */
+const fechaDeLaLista = () => hoyISO();
 
 const cargarLista = () => {
     const fecha = fechaDeLaLista();
@@ -1531,9 +1536,14 @@ const fechaLarga = (iso) => {
 };
 
 /* LA SEMANA QUE SE MUESTRA: de lunes a domingo, la del dia de hoy. Es la misma ventana que
-   usa el cuadro de la web, para que los dos digan lo mismo. */
+   usa el cuadro de la web, para que los dos digan lo mismo.
+
+   ARRANCA DEL DIA DEL TURNO. A las 02:00 de un lunes el calendario ya dice lunes y salia la
+   semana que recien empieza, con el turno de ese domingo -que todavia se esta trabajando-
+   caido en la semana anterior. */
 const semanaDeHoy = () => {
-    const hoy = new Date();
+    const [aa, mm, dd] = String(fechaDeLaLista()).split('-').map(Number);
+    const hoy = new Date(aa, mm - 1, dd);
     const lunes = new Date(hoy);
     lunes.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
     const dias = [];

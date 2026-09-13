@@ -33,6 +33,7 @@
 import { renderAppMovil } from '../js/views/app_movil.js';
 import * as adminService from '../js/services_v245/adminService.js';
 import * as temaService from '../js/services_v245/temaService.js';
+import * as jornadaService from '../js/services_v245/jornadaService.js';
 
 const salida = document.getElementById('salida');
 let fallos = 0, total = 0;
@@ -208,6 +209,35 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
   const guardadoEnElTelefono = localStorage.getItem('deam_lista_borrador');
   ok(!!guardadoEnElTelefono, 'el borrador quedó guardado en el teléfono',
      (guardadoEnElTelefono || '').slice(0, 70) + '…');
+
+  /* ── EL DÍA CON EL QUE SE ARCHIVA ─────────────────────────────────────────────
+     Daniel, 13-sep: *"la estoy tomando ahorita domingo tres de la mañana, pero mi
+     turno es del sábado"*. En el servidor el sábado 12 no tenía nada y el domingo
+     13 tenía sus 38 personas cerradas.
+
+     NO ALCANZA CON PROBAR LA REGLA —`fechaLogicaDe` ya estaba bien y la asistencia
+     la ignoraba—: hay que probar que la ASISTENCIA la usa. El borrador lleva su
+     fecha adentro y sirve de testigo. */
+  titulo('El día con el que se archiva la lista');
+  const hoyCalendario = (() => { const d = new Date();
+      return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-'); })();
+  const diaDelTurno = jornadaService.fechaLogicaDe();
+  const conQueFecha = (JSON.parse(guardadoEnElTelefono || '{}') || {}).fecha;
+  ok(conQueFecha === diaDelTurno, 'la lista se archiva con el día del TURNO',
+     'archiva en ' + conQueFecha + ' · turno ' + diaDelTurno + ' · calendario ' + hoyCalendario
+     + (diaDelTurno === hoyCalendario ? ' (hoy coinciden)' : ' (hoy NO coinciden: se nota)'));
+
+  /* Y la regla, con una hora fija, para que se pueda comprobar a cualquier hora del
+     día y no solo de madrugada. */
+  ok(jornadaService.fechaLogicaDe(new Date(2026, 8, 13, 3, 0, 0)) === '2026-09-12',
+     'a las 03:00 del domingo, el turno sigue siendo el del sábado',
+     jornadaService.fechaLogicaDe(new Date(2026, 8, 13, 3, 0, 0)));
+  ok(jornadaService.fechaLogicaDe(new Date(2026, 8, 12, 21, 0, 0)) === '2026-09-12',
+     'y a las 21:00 del sábado, también el sábado',
+     jornadaService.fechaLogicaDe(new Date(2026, 8, 12, 21, 0, 0)));
+  ok(jornadaService.fechaLogicaDe(new Date(2026, 8, 13, 9, 0, 0)) === '2026-09-13',
+     'pasadas las 07:00 ya es el día nuevo',
+     jornadaService.fechaLogicaDe(new Date(2026, 8, 13, 9, 0, 0)));
 
   $('#app-movil').remove();
   const otroSitio = document.createElement('div');
