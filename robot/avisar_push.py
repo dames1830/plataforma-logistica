@@ -32,6 +32,7 @@ avisar_push.py  -  Le avisa al celular, con la pantalla apagada y la app cerrada
     python avisar_push.py --texto "prueba" --a dames            un aviso suelto
     python avisar_push.py --probar                              dice a quien le llegaria
     python avisar_push.py --listar                              los telefonos suscritos
+    python avisar_push.py --beta --texto "hola" --a dames        contra la base de PRUEBAS
 """
 
 import json
@@ -55,6 +56,7 @@ VAPID_CORREO = os.environ.get('VAPID_CORREO', 'mailto:dames1830@gmail.com')
 TIMEOUT = 60
 
 ADMIN = 'dames'
+USAR_BETA = False
 
 # QUE ROBOT ES CADA COSA, con el nombre que se entiende en un aviso de dos lineas. La
 # clave es el nombre de la tarea programada, tal como la escribe `correr_si_toca.bat`.
@@ -91,6 +93,8 @@ def _pedir(ruta, datos=None, metodo=None):
     cab = {'Content-Type': 'application/json', 'User-Agent': 'avisar-push'}
     if ROBOT_TOKEN:
         cab['X-Robot-Token'] = ROBOT_TOKEN
+    if USAR_BETA:
+        cab['X-Environment'] = 'beta'
     req = urllib.request.Request('%s%s' % (API, ruta), data=cuerpo,
                                  method=metodo or ('POST' if datos is not None else 'GET'),
                                  headers=cab)
@@ -175,7 +179,11 @@ def avisar(clave, titulo, cuerpo, url='./index.html', etiqueta=None, de_verdad=T
 
 
 def main():
+    global USAR_BETA
     args = sys.argv[1:]
+    USAR_BETA = '--beta' in args
+    if USAR_BETA:
+        log('contra la base de PRUEBAS (beta)')
     def valor(bandera, porDefecto=None):
         return args[args.index(bandera) + 1] if bandera in args else porDefecto
 
