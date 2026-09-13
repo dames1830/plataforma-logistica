@@ -399,7 +399,21 @@ def descargar_stock_reserva(page, dest_path):
     # Con 4 minutos y ocho vueltas, en el mismo rato hay OCHO oportunidades en vez de
     # tres. Ver `con_reintentos(..., intentos=8)` mas abajo.
     log("Desplegando el menú de exportación...")
-    flecha = report_iframe.locator(".wrHvButtonandArrowContainer.wrHvExportButton > .wrPopoverMenuButtonOpenArrow").first
+    # LA PESTAÑA QUE SE VE, NO LA PRIMERA. Cada reintento abre OTRA pestaña del informe
+    # dentro del marco de Web Reports y las anteriores quedan en el DOM con su botón de
+    # exportar escondido. `.first` apuntaba a la más vieja: `wait_for(visible)` se comía
+    # los cuatro minutos, el intento moría sin archivo, y el siguiente heredaba una
+    # pestaña más. Con ocho vueltas son treinta minutos quemados y ni un xlsx.
+    #
+    # Por eso el intento 1 a veces bajaba y del 2 en adelante NUNCA: el defecto solo
+    # aparece cuando el primero falla. Es lo que el 04-sep-2026 dejó al ancla de las
+    # 07:00 sin reserva después de 1h25m —no era Oracle lento, era esto—. Visto de
+    # nuevo el 13-sep-2026 02:26 y comprobado en la captura de la falla.
+    #
+    # Es el mismo error que tumbó los OBLPN en agosto, del otro lado: allá sobraba la
+    # última pestaña, acá sobraba la primera. Por eso no se elige otra punta sino la que
+    # está VISIBLE, que es correcta con una pestaña y con ocho.
+    flecha = report_iframe.locator(".wrHvButtonandArrowContainer.wrHvExportButton > .wrPopoverMenuButtonOpenArrow").filter(visible=True).last
     flecha.wait_for(state="visible", timeout=240000)
     flecha.click(force=True)
     time.sleep(2)
