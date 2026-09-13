@@ -33,7 +33,6 @@
 import { renderAppMovil } from '../js/views/app_movil.js';
 import * as adminService from '../js/services_v245/adminService.js';
 import * as temaService from '../js/services_v245/temaService.js';
-import * as jornadaService from '../js/services_v245/jornadaService.js';
 
 const salida = document.getElementById('salida');
 let fallos = 0, total = 0;
@@ -94,6 +93,41 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
   const filas = $$('#app-movil .am-persona');
   ok(filas.length > 0, 'la lista trae gente', filas.length + ' personas');
 
+  /* ── EL CALENDARIO ────────────────────────────────────────────────────────────
+     Daniel, 13-sep: *"por qué nunca hemos fallado en la asistencia? Porque la web
+     te da la opción de escoger el día... el celular no me da esa opción, no hay
+     calendario. Ponme un calendario ahí"*. */
+  titulo('El calendario');
+  const hoyCalendario = (() => { const d = new Date();
+      return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-'); })();
+  const cal = () => $('#app-movil [data-fecha-lista]');
+  ok(!!cal(), 'hay un calendario en Pasar lista', cal() ? cal().type : 'no está');
+  ok(cal() && cal().value === hoyCalendario, 'arranca en el día de hoy, como la web',
+     (cal() || {}).value + ' · hoy ' + hoyCalendario);
+  ok(cal() && cal().getBoundingClientRect().height >= 40,
+     'se puede tocar con el pulgar (40px o más)',
+     (cal() ? cal().getBoundingClientRect().height.toFixed(0) : '0') + 'px');
+
+  /* DE AQUI EN ADELANTE SE TRABAJA EN UN DIA SIN NADA GUARDADO. El día de hoy trae
+     lo que haya en el almacén —hoy, 30 faltas cerradas— y una prueba que cuenta
+     faltas no puede depender de eso. Con el calendario, el día limpio es gratis. */
+  const DIA_LIMPIO = '2019-01-01';
+  const OTRO_DIA = '2018-01-01';
+  const irAlDia = async (iso) => {
+      const c = cal(); c.value = iso;
+      c.dispatchEvent(new Event('change', { bubbles: true }));
+      await esperar(450);
+  };
+  await irAlDia(DIA_LIMPIO);
+  /* La cabecera escribe "mar 1 ene", sin año: es el mismo formato corto que usa el resto
+     de la app. Se busca el día y el mes, que es lo que se ve. */
+  ok(/1 ene/.test($('#app-movil .am-cab .sub').textContent),
+     'al elegir un día, la cabecera dice ESE día',
+     $('#app-movil .am-cab .sub').textContent.trim());
+  ok($$('#app-movil .am-persona.falto').length === 0,
+     'un día sin nada guardado arranca con todos presentes',
+     $$('#app-movil .am-persona.falto').length + ' con falta');
+
   for (const T of temaService.TEMAS) {
     temaService.aplicarTema(T.id);
     await esperar(150);
@@ -123,7 +157,25 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
     const luz = ([r,g,b]) => 0.2126*canal(r)+0.7152*canal(g)+0.0722*canal(b);
     const rgb = (t) => (String(t).match(/\d+/g)||[0,0,0]).slice(0,3).map(Number);
     const cont = (a,b) => { const L1=luz(a),L2=luz(b); return (Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05); };
-    const fondoFila = rgb(getComputedStyle($('#app-movil .am-persona')).backgroundColor);
+    /* EL COLOR QUE SE VE, NO EL QUE DICE LA REGLA. La fila de quien faltó lleva un
+       rojo al 15 %: quedarse con ese rojo da 1.08 : 1 y es falso, porque el ojo ve la
+       MEZCLA con lo que hay debajo. Se componen las capas hasta llegar a una opaca. */
+    const sobre = (frente, fondo, alfa) => frente.map((c, i) => Math.round(c * alfa + fondo[i] * (1 - alfa)));
+    const fondoReal = (el) => {
+        const capas = [];
+        let n = el;
+        while (n && n !== document.body) {
+            const p = (String(getComputedStyle(n).backgroundColor).match(/[\d.]+/g) || []).map(Number);
+            const a = p.length > 3 ? p[3] : 1;
+            if (a > 0) capas.push({ c: p.slice(0, 3), a });
+            if (a >= 0.999) break;
+            n = n.parentElement;
+        }
+        let base = capas.length ? capas.pop().c : [255, 255, 255];
+        while (capas.length) { const cap = capas.pop(); base = sobre(cap.c, base, cap.a); }
+        return base;
+    };
+    const fondoFila = fondoReal($('#app-movil .am-persona'));
     const rNombre = cont(rgb(getComputedStyle(nombres[0]).color), fondoFila);
     ok(rNombre >= 4.5, 'el nombre se lee', rNombre.toFixed(2) + ' : 1');
     const dni = $('#app-movil .am-persona .dni');
@@ -142,8 +194,12 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
   const antes = cuerpo.scrollTop;
   ok(antes > 200, 'la lista se puede desplazar hasta abajo', antes + 'px');
 
-  const ultimos = $$('#app-movil .am-persona [data-falto]');
-  const elUltimo = ultimos[ultimos.length - 1];
+  /* Se marca a alguien que NO esté marcado, y se cuenta la diferencia: así el número
+     que traiga el almacén ese día da igual. */
+  const faltasAntes = $$('#app-movil .am-persona.falto').length;
+  const libres = $$('#app-movil .am-persona:not(.falto)');
+  const elUltimo = libres[libres.length - 1].querySelector('[data-falto]');
+  const dniMarcado = libres[libres.length - 1].querySelector('.dni').textContent.replace('DNI', '').trim();
   elUltimo.click();
   await esperar(250);
   const despues = $('#app-movil .am-cuerpo').scrollTop;
@@ -151,8 +207,9 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
      `estaba en ${antes}px y quedó en ${despues}px`);
 
   /* Y que la marca haya quedado puesta, no solo que no se mueva. */
-  const marcada = $$('#app-movil .am-persona').filter(p => p.classList.contains('falto'));
-  ok(marcada.length === 1, 'la falta quedó marcada', marcada.length + ' con falta');
+  const marcada = $$('#app-movil .am-persona.falto');
+  ok(marcada.length === faltasAntes + 1, 'la falta quedó marcada',
+     faltasAntes + ' faltas antes, ' + marcada.length + ' ahora · ' + dniMarcado);
 
   /* ── 5. AL CAMBIAR DE PANTALLA SÍ VUELVE ARRIBA ───────────────────────────── */
   $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'inicio').click();
@@ -168,9 +225,11 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
      escrito arriba —para el scroll— y por eso el defecto pasó por delante de la
      prueba sin que sonara nada: NADIE MIRABA LA MARCA. */
   titulo('Ir a otra pestaña y volver');
-  const trasVolver = $$('#app-movil .am-persona').filter(p => p.classList.contains('falto'));
+  const dniDe0 = (p) => p.querySelector('.dni').textContent.replace('DNI', '').trim();
+  const trasVolver = $$('#app-movil .am-persona.falto').filter(p => dniDe0(p) === dniMarcado);
   ok(trasVolver.length === 1, 'la falta SIGUE marcada después de ir y volver',
-     trasVolver.length + ' con falta' + (trasVolver[0] ? ' · ' + trasVolver[0].querySelector('.nm').textContent : ''));
+     'el ' + dniMarcado + (trasVolver.length ? ' sigue marcado' : ' se borró')
+     + ' · ' + $$('#app-movil .am-persona.falto').length + ' faltas en total');
 
   /* Y que se vea que es un borrador, o parece guardado y nadie aprieta Guardar.
      VA EN EL BOTON, no en el pie de la tarjeta: ahi cambiaba el alto de la tarjeta y la
@@ -180,11 +239,32 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
      'el botón Guardar avisa cuántas marcas hay sin guardar',
      $('#app-movil [data-guardar]').textContent.trim());
 
+  ok(cal() && cal().value === DIA_LIMPIO, 'y el día elegido no se pierde al ir y volver',
+     (cal() || {}).value);
+
+  /* UN BORRADOR POR DIA: ir a mirar otro día no se puede llevar lo que se lleva
+     marcado en este. Con una sola caja, se lo llevaba. */
+  const guardadoAqui = JSON.parse(localStorage.getItem('deam_lista_borrador') || '{}');
+  ok(Object.keys(guardadoAqui)[0] === DIA_LIMPIO, 'el borrador se guarda bajo el día elegido',
+     Object.keys(guardadoAqui).join(', '));
+  await irAlDia(OTRO_DIA);
+  ok($$('#app-movil .am-persona.falto').length === 0, 'el otro día no hereda las marcas',
+     $$('#app-movil .am-persona.falto').length + ' con falta');
+  await irAlDia(DIA_LIMPIO);
+  ok($$('#app-movil .am-persona.falto').filter(p => dniDe0(p) === dniMarcado).length === 1,
+     'y al volver, lo marcado en el primero sigue ahí', dniMarcado);
+
   const dniDe = (p) => p.querySelector('.dni').textContent.replace('DNI', '').trim();
   const quienFalto = trasVolver.length ? dniDe(trasVolver[0]) : '';
 
-  /* Aprovechando que está marcado: el motivo también tiene que quedarse. */
-  const sel = trasVolver.length ? trasVolver[0].querySelector('select[data-justif]') : null;
+  /* Aprovechando que está marcado: el motivo también tiene que quedarse.
+
+     SE VUELVE A BUSCAR LA FILA. La de antes ya no está en la pantalla —entre medio se
+     cambió de día y se volvió— y poner un valor en un desplegable que ya no existe no
+     dispara nada: el test pasaría o fallaría sin haber probado nada. */
+  const filaDe = (dni) => $$('#app-movil .am-persona.falto').filter(p => dniDe0(p) === dni)[0];
+  const sel = (filaDe(dniMarcado) || {}).querySelector
+      ? filaDe(dniMarcado).querySelector('select[data-justif]') : null;
   if (sel) {
     sel.value = 'Vacaciones';
     sel.dispatchEvent(new Event('change', { bubbles: true }));
@@ -193,7 +273,8 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
     await esperar(200);
     $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'lista').click();
     await esperar(900);
-    const sel2 = $$('#app-movil .am-persona.falto select[data-justif]')[0];
+    const f2 = filaDe(dniMarcado);
+    const sel2 = f2 && f2.querySelector('select[data-justif]');
     ok(sel2 && sel2.value === 'Vacaciones', 'el motivo también se queda al ir y volver',
        sel2 ? sel2.value || '(vacío)' : 'no hay desplegable');
   } else {
@@ -210,34 +291,6 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
   ok(!!guardadoEnElTelefono, 'el borrador quedó guardado en el teléfono',
      (guardadoEnElTelefono || '').slice(0, 70) + '…');
 
-  /* ── EL DÍA CON EL QUE SE ARCHIVA ─────────────────────────────────────────────
-     Daniel, 13-sep: *"la estoy tomando ahorita domingo tres de la mañana, pero mi
-     turno es del sábado"*. En el servidor el sábado 12 no tenía nada y el domingo
-     13 tenía sus 38 personas cerradas.
-
-     NO ALCANZA CON PROBAR LA REGLA —`fechaLogicaDe` ya estaba bien y la asistencia
-     la ignoraba—: hay que probar que la ASISTENCIA la usa. El borrador lleva su
-     fecha adentro y sirve de testigo. */
-  titulo('El día con el que se archiva la lista');
-  const hoyCalendario = (() => { const d = new Date();
-      return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-'); })();
-  const diaDelTurno = jornadaService.fechaLogicaDe();
-  const conQueFecha = (JSON.parse(guardadoEnElTelefono || '{}') || {}).fecha;
-  ok(conQueFecha === diaDelTurno, 'la lista se archiva con el día del TURNO',
-     'archiva en ' + conQueFecha + ' · turno ' + diaDelTurno + ' · calendario ' + hoyCalendario
-     + (diaDelTurno === hoyCalendario ? ' (hoy coinciden)' : ' (hoy NO coinciden: se nota)'));
-
-  /* Y la regla, con una hora fija, para que se pueda comprobar a cualquier hora del
-     día y no solo de madrugada. */
-  ok(jornadaService.fechaLogicaDe(new Date(2026, 8, 13, 3, 0, 0)) === '2026-09-12',
-     'a las 03:00 del domingo, el turno sigue siendo el del sábado',
-     jornadaService.fechaLogicaDe(new Date(2026, 8, 13, 3, 0, 0)));
-  ok(jornadaService.fechaLogicaDe(new Date(2026, 8, 12, 21, 0, 0)) === '2026-09-12',
-     'y a las 21:00 del sábado, también el sábado',
-     jornadaService.fechaLogicaDe(new Date(2026, 8, 12, 21, 0, 0)));
-  ok(jornadaService.fechaLogicaDe(new Date(2026, 8, 13, 9, 0, 0)) === '2026-09-13',
-     'pasadas las 07:00 ya es el día nuevo',
-     jornadaService.fechaLogicaDe(new Date(2026, 8, 13, 9, 0, 0)));
 
   $('#app-movil').remove();
   const otroSitio = document.createElement('div');
@@ -247,12 +300,13 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
   $('#informe').style.pointerEvents = 'none';
   $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'lista').click();
   await esperar(1600);
+  await irAlDia(DIA_LIMPIO);          // la app recargada arranca en hoy, como la web
 
   /* EL CONTRATO, no una persona concreta: lo que hay en el borrador y sigue estando en el
      turno tiene que seguir marcado. `initializeAdminData` sale a la red y a veces vuelve
      con otra gente; si eso pasa, se dice, en vez de un fallo que no se entiende. */
   const enLaLista = new Set($$('#app-movil .am-persona').map(dniDe));
-  const guardadas = Object.keys((JSON.parse(localStorage.getItem('deam_lista_borrador') || '{}') || {}).marcas || {});
+  const guardadas = Object.keys((JSON.parse(localStorage.getItem('deam_lista_borrador') || '{}') || {})[DIA_LIMPIO] || {});
   const deberian = guardadas.filter(d => enLaLista.has(d));
   const marcadas = $$('#app-movil .am-persona.falto').map(dniDe);
 
@@ -263,7 +317,8 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
      'esperadas [' + deberian.join(', ') + '] · marcadas [' + marcadas.join(', ') + ']');
   ok(marcadas.includes(quienFalto), 'y es la MISMA persona',
      quienFalto + ' entre [' + marcadas.join(', ') + ']');
-  const selR = $$('#app-movil .am-persona.falto select[data-justif]')[0];
+  const fR = $$('#app-movil .am-persona.falto').filter(p => dniDe0(p) === dniMarcado)[0];
+  const selR = fR && fR.querySelector('select[data-justif]');
   ok(selR && selR.value === 'Vacaciones', 'y con su motivo', selR ? selR.value || '(vacío)' : 'no hay');
 
   /* ── 8. EL BORRADOR DE AYER NO REAPARECE HOY ──────────────────────────────────
@@ -271,7 +326,8 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
      hoy. Eso mandaría a Recursos Humanos una falta que nadie marcó. */
   titulo('El borrador de otro día');
   const deAyer = JSON.parse(localStorage.getItem('deam_lista_borrador'));
-  deAyer.fecha = '2020-01-01';
+  deAyer['2020-01-01'] = deAyer[DIA_LIMPIO];      // el mismo borrador, fechado en otro dia
+  delete deAyer[DIA_LIMPIO];
   localStorage.setItem('deam_lista_borrador', JSON.stringify(deAyer));
 
   $('#app-movil').remove();
@@ -282,6 +338,7 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
   $('#informe').style.pointerEvents = 'none';
   $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'lista').click();
   await esperar(1600);
+  await irAlDia(DIA_LIMPIO);          // la app recargada arranca en hoy, como la web
 
   /* ── 9. MARCAR NO PUEDE MOVER LA LISTA ────────────────────────────────────────
      Si la tarjeta de arriba cambia de alto al marcar, TODO lo de abajo se corre y la

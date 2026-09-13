@@ -25,27 +25,27 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0765';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0765';
+import * as adminService from '../services_v245/adminService.js?v=29.0766';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0766';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0765';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0765';
-import * as metasService from '../services_v245/metasService.js?v=29.0765';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0766';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0766';
+import * as metasService from '../services_v245/metasService.js?v=29.0766';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0765';
+import * as temaService from '../services_v245/temaService.js?v=29.0766';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0765';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0765';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0766';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0766';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0765';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0766';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -436,6 +436,24 @@ const CSS = `
    desplegable sueltos no se leen como una tabla. */
 /* EL BORDE TRANSPARENTE NO ES ADORNO: las filas llevan uno de 1px, y sin el aqui la
    columna elastica del encabezado mide 2px mas y los titulos quedan corridos. */
+/* EL CALENDARIO DE LA LISTA. Alto de dedo -44 px- y los colores del tema; el selector
+   nativo del telefono es el que mejor se toca, asi que no se reemplaza por nada propio. */
+#app-movil .am-fecha { display: flex; align-items: center; justify-content: space-between;
+  gap: 0.6rem; background: var(--am-carta); border: 1px solid var(--am-linea);
+  border-radius: 12px; padding: 0.45rem 0.7rem; }
+#app-movil .am-fecha > span { font-family: var(--am-num); font-size: 0.62rem;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--am-tenue); }
+#app-movil .am-fecha input { font-family: var(--am-ui); font-size: 0.92rem; font-weight: 650;
+  color: var(--am-tinta); background: var(--am-papel); border: 1px solid var(--am-linea);
+  border-radius: 9px; padding: 0.4rem 0.55rem; min-height: 40px; }
+/* EL ALMANAQUE QUE ABRE EL TELEFONO ES DEL SISTEMA, no nuestro, y se pinta segun
+   'color-scheme'. Sin esto, en los dos temas oscuros el iconito sale negro sobre negro y
+   parece que no hubiera calendario. Se le dice a cada tema de que color es. */
+#app-movil .am-fecha input { color-scheme: dark; }
+html[data-tema="pbi"] #app-movil .am-fecha input,
+html[data-tema="pbi-classic"] #app-movil .am-fecha input { color-scheme: light; }
+#app-movil .am-fecha input::-webkit-calendar-picker-indicator { cursor: pointer; }
+
 #app-movil .am-encabezado { display: grid; grid-template-columns: minmax(0, 1fr) 88px 68px;
   gap: 0.45rem; padding: 0 0.5rem; border: 1px solid transparent; font-family: var(--am-num); font-size: 0.56rem;
   letter-spacing: .08em; text-transform: uppercase; color: var(--am-tenue); font-weight: 700; }
@@ -1328,25 +1346,41 @@ let listaGuardando = false;
 const LLAVE_BORRADOR = 'deam_lista_borrador';
 let listaBorrador = {};      // dni -> { present, onTime, justification }
 
-const leerBorradorLista = (fecha) => {
+/* UN BORRADOR POR FECHA. Con el calendario puesto se puede empezar la lista del sabado,
+   mirar la del domingo y volver: si hubiera una sola caja, el sabado se habria perdido en
+   ese paseo. Se guardan los tres ultimos dias y nada mas, que es de sobra para no dejar
+   basura vieja en el telefono. */
+const DIAS_DE_BORRADOR = 3;
+
+const todosLosBorradores = () => {
     try {
         const crudo = JSON.parse(localStorage.getItem(LLAVE_BORRADOR) || 'null');
-        /* Con la fecha adentro, el borrador de ayer no reaparece manana. */
-        return (crudo && crudo.fecha === fecha && crudo.marcas) ? crudo.marcas : {};
+        if (!crudo || typeof crudo !== 'object') return {};
+        /* La forma vieja -{fecha, marcas}- se traduce sola, para no perder lo que hubiera
+           a medio pasar cuando entre esta version. */
+        if (crudo.fecha && crudo.marcas) return { [crudo.fecha]: crudo.marcas };
+        return crudo;
     } catch (e) { return {}; }
 };
 
+const leerBorradorLista = (fecha) => todosLosBorradores()[fecha] || {};
+
 const guardarBorradorLista = () => {
     try {
-        if (!Object.keys(listaBorrador).length) localStorage.removeItem(LLAVE_BORRADOR);
-        else localStorage.setItem(LLAVE_BORRADOR,
-            JSON.stringify({ fecha: fechaDeLaLista(), marcas: listaBorrador }));
+        const todos = todosLosBorradores();
+        if (Object.keys(listaBorrador).length) todos[fechaDeLaLista()] = listaBorrador;
+        else delete todos[fechaDeLaLista()];
+        const quedan = Object.keys(todos).sort().slice(-DIAS_DE_BORRADOR);
+        const limpio = {};
+        quedan.forEach(f => { limpio[f] = todos[f]; });
+        if (!quedan.length) localStorage.removeItem(LLAVE_BORRADOR);
+        else localStorage.setItem(LLAVE_BORRADOR, JSON.stringify(limpio));
     } catch (e) { /* sin sitio en el telefono: se sigue, en memoria igual esta */ }
 };
 
 const olvidarBorradorLista = () => {
     listaBorrador = {};
-    try { localStorage.removeItem(LLAVE_BORRADOR); } catch (e) { /* da igual */ }
+    guardarBorradorLista();          // borra el de ESTE dia y deja los otros
 };
 
 /* Se llama despues de cada toque. Guarda el estado completo de esa persona -no solo lo que
@@ -1360,15 +1394,35 @@ const anotarEnElBorrador = (p) => {
     guardarBorradorLista();
 };
 
-/* EL DIA DEL TURNO, NO EL DEL CALENDARIO. El turno noche cruza la medianoche: una lista
-   pasada a las 03:00 del domingo es del turno del SABADO. Con el calendario se archivaba en
-   el domingo, y el sabado quedaba sin asistencia — pasó el 13-sep-2026 y lo vio Daniel:
-   *"mi turno es del sabado, ¿como va a ser eso?"*.
+/* LA FECHA DE LA LISTA: hoy por omision, y SE PUEDE ELEGIR.
 
-   Es la MISMA regla que usa todo lo demas de la plataforma, no una nueva: `hoyISO()` es
-   `jornadaService.fechaLogicaDe()`. La asistencia era el unico sitio que se guiaba por el
-   calendario. */
-const fechaDeLaLista = () => hoyISO();
+   Igual que la web, y a proposito. Daniel, 13-sep-2026: *"por que nunca hemos fallado en la
+   asistencia? Porque la web te da la opcion de escoger el dia. Si quiero pasar la lista a
+   las tres de la manana del domingo, selecciono la fecha DOCE. El celular no me da esa
+   opcion, por eso en automatico la toma como hoy"*.
+
+   No se pone la fecha logica del turno: eso adivina, y adivinar en una lista que va a
+   Recursos Humanos es peor que preguntar. El que pasa la lista sabe de que dia es. */
+const hoyEnElCalendario = () => {
+    const d = new Date();
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+};
+let listaFecha = null;                  // la que eligio; null = hoy
+const fechaDeLaLista = () => listaFecha || hoyEnElCalendario();
+
+/** El dia de la lista en letras, con el mismo formato que `diaEnLetras`: "sáb 12 sep". */
+const diaDeLaListaEnLetras = () => {
+    const [aa, mm, dd] = String(fechaDeLaLista()).split('-').map(Number);
+    const f = new Date(aa, mm - 1, dd);
+    return `${DIAS[f.getDay()].slice(0, 3)} ${dd} ${MESES[mm - 1]}`;
+};
+
+const elegirDiaDeLaLista = (iso) => {
+    if (!iso || iso === fechaDeLaLista()) return;
+    listaFecha = iso;
+    cargarLista();          // la de ese dia, con su borrador y su estado de cerrada
+    pintar();
+};
 
 const cargarLista = () => {
     const fecha = fechaDeLaLista();
@@ -1434,6 +1488,12 @@ const pantallaLista = () => {
     }).join('');
 
     return `
+        <label class="am-fecha">
+            <span>Día de la lista</span>
+            <input type="date" data-fecha-lista value="${esc(fechaDeLaLista())}"
+                   aria-label="Día de la lista que se está pasando">
+        </label>
+
         <div class="am-tarjeta am-resumen">
             <span class="am-rotulo">Asistieron</span>
             <span class="am-grande">${numero(vinieron)}<span style="font-size:1.3rem;color:#8B9B9F">/${numero(total)}</span></span>
@@ -1538,9 +1598,9 @@ const fechaLarga = (iso) => {
 /* LA SEMANA QUE SE MUESTRA: de lunes a domingo, la del dia de hoy. Es la misma ventana que
    usa el cuadro de la web, para que los dos digan lo mismo.
 
-   ARRANCA DEL DIA DEL TURNO. A las 02:00 de un lunes el calendario ya dice lunes y salia la
-   semana que recien empieza, con el turno de ese domingo -que todavia se esta trabajando-
-   caido en la semana anterior. */
+   ARRANCA DEL DIA QUE SE ESTA MIRANDO, no del de hoy: con el calendario puesto se puede
+   estar pasando la lista del sabado un domingo de madrugada, y la foto de la semana tiene
+   que ser la de ese sabado. */
 const semanaDeHoy = () => {
     const [aa, mm, dd] = String(fechaDeLaLista()).split('-').map(Number);
     const hoy = new Date(aa, mm - 1, dd);
@@ -2316,7 +2376,9 @@ const CABECERAS = {
         const enPie = activos().filter(p => p.username !== (YO && YO.username) && enLinea(p.username)).length;
         return { sub: (n ? `${n} sin leer` : 'Todo leído') + ` · ${enPie} en línea`, ttl: 'Chat' };
     },
-    lista: () => ({ sub: `Turno noche · ${diaEnLetras()}`, ttl: 'Pasar lista' }),
+    /* EL DIA ELEGIDO, no el de hoy. Si la cabecera dijera hoy mientras se edita otro dia,
+       se estaria marcando sobre el equivocado sin que nada lo avise. */
+    lista: () => ({ sub: `Turno noche · ${diaDeLaListaEnLetras()}`, ttl: 'Pasar lista' }),
     avisos: () => ({ sub: avisosEstado === 'prendidos' ? 'Activados en este teléfono' : 'Apagados', ttl: 'Avisos' })
 };
 
@@ -2586,6 +2648,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
            esto se perderia lo que la persona acaba de elegir. */
         if (e.target.closest('[data-u1],[data-u2],[data-hi],[data-hf]')) leerBorrador();
 
+        if (e.target.hasAttribute('data-fecha-lista')) { elegirDiaDeLaLista(e.target.value); return; }
         if (e.target.hasAttribute('data-chat-buscar')) { chatBuscar = e.target.value; pintar(); return; }
         if (e.target.hasAttribute('data-chat-archivo') && e.target.files && e.target.files[0]) {
             adjuntarEnElChat(e.target.files[0]);
