@@ -68,6 +68,11 @@ while (GENTE.length < 38) {
 const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
 
 (async () => {
+  /* Cada corrida arranca limpia: un borrador de la corrida anterior haria pasar o fallar
+     pruebas por un motivo que no es el que se esta midiendo. */
+  const olvidar = () => { try { localStorage.removeItem('deam_lista_borrador'); } catch (e) { /* da igual */ } };
+  olvidar();
+
   const descarte = document.createElement('div');
   document.body.appendChild(descarte);
   try { await renderAppMovil(descarte, YO, () => {}); }
@@ -155,6 +160,123 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
   await esperar(900);
   ok($('#app-movil .am-cuerpo').scrollTop === 0, 'al volver a entrar, arranca arriba',
      $('#app-movil .am-cuerpo').scrollTop + 'px');
+
+  /* ── 6. Y LA MARCA SIGUE AHÍ ──────────────────────────────────────────────────
+     Daniel, 13-sep: *"marco una asistencia como falta, me voy a otra pestaña y
+     regreso y se borra lo que ya había puesto"*. Este ida y vuelta ya estaba
+     escrito arriba —para el scroll— y por eso el defecto pasó por delante de la
+     prueba sin que sonara nada: NADIE MIRABA LA MARCA. */
+  titulo('Ir a otra pestaña y volver');
+  const trasVolver = $$('#app-movil .am-persona').filter(p => p.classList.contains('falto'));
+  ok(trasVolver.length === 1, 'la falta SIGUE marcada después de ir y volver',
+     trasVolver.length + ' con falta' + (trasVolver[0] ? ' · ' + trasVolver[0].querySelector('.nm').textContent : ''));
+
+  /* Y que se vea que es un borrador, o parece guardado y nadie aprieta Guardar.
+     VA EN EL BOTON, no en el pie de la tarjeta: ahi cambiaba el alto de la tarjeta y la
+     lista entera saltaba al marcar -33 px medidos-, que es justo lo que Daniel ya habia
+     reclamado. El aviso no puede costar un salto. */
+  ok(/\(\s*1\s*\)/.test($('#app-movil [data-guardar]').textContent),
+     'el botón Guardar avisa cuántas marcas hay sin guardar',
+     $('#app-movil [data-guardar]').textContent.trim());
+
+  const dniDe = (p) => p.querySelector('.dni').textContent.replace('DNI', '').trim();
+  const quienFalto = trasVolver.length ? dniDe(trasVolver[0]) : '';
+
+  /* Aprovechando que está marcado: el motivo también tiene que quedarse. */
+  const sel = trasVolver.length ? trasVolver[0].querySelector('select[data-justif]') : null;
+  if (sel) {
+    sel.value = 'Vacaciones';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    await esperar(200);
+    $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'inicio').click();
+    await esperar(200);
+    $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'lista').click();
+    await esperar(900);
+    const sel2 = $$('#app-movil .am-persona.falto select[data-justif]')[0];
+    ok(sel2 && sel2.value === 'Vacaciones', 'el motivo también se queda al ir y volver',
+       sel2 ? sel2.value || '(vacío)' : 'no hay desplegable');
+  } else {
+    ok(false, 'el motivo también se queda al ir y volver', 'no se encontró el desplegable');
+  }
+
+  /* ── 7. SI SE RECARGA LA APP, EL BORRADOR VUELVE ──────────────────────────────
+     Esto es lo que pasa de verdad en el almacén: el teléfono se bloquea o se
+     recarga la página con treinta marcas puestas. Se tira la app y se importa el
+     módulo OTRA VEZ con otra dirección: son dos instancias distintas, así que la
+     segunda arranca con el estado en blanco, igual que un arranque de cero. */
+  titulo('Recargar la app con la lista a medio pasar');
+  const guardadoEnElTelefono = localStorage.getItem('deam_lista_borrador');
+  ok(!!guardadoEnElTelefono, 'el borrador quedó guardado en el teléfono',
+     (guardadoEnElTelefono || '').slice(0, 70) + '…');
+
+  $('#app-movil').remove();
+  const otroSitio = document.createElement('div');
+  document.body.appendChild(otroSitio);
+  const otraApp = await import('../js/views/app_movil.js?recarga=1');
+  await otraApp.renderAppMovil(otroSitio, YO, () => {});
+  $('#informe').style.pointerEvents = 'none';
+  $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'lista').click();
+  await esperar(1600);
+
+  /* EL CONTRATO, no una persona concreta: lo que hay en el borrador y sigue estando en el
+     turno tiene que seguir marcado. `initializeAdminData` sale a la red y a veces vuelve
+     con otra gente; si eso pasa, se dice, en vez de un fallo que no se entiende. */
+  const enLaLista = new Set($$('#app-movil .am-persona').map(dniDe));
+  const guardadas = Object.keys((JSON.parse(localStorage.getItem('deam_lista_borrador') || '{}') || {}).marcas || {});
+  const deberian = guardadas.filter(d => enLaLista.has(d));
+  const marcadas = $$('#app-movil .am-persona.falto').map(dniDe);
+
+  ok(deberian.length > 0, 'la persona marcada sigue en el turno que trajo el servidor',
+     deberian.length ? deberian.join(', ') : 'el turno cambió a mitad de prueba: ' + guardadas.join(', '));
+  ok(deberian.length > 0 && marcadas.length === deberian.length && deberian.every(d => marcadas.includes(d)),
+     'después de recargar la app, la falta sigue puesta',
+     'esperadas [' + deberian.join(', ') + '] · marcadas [' + marcadas.join(', ') + ']');
+  ok(marcadas.includes(quienFalto), 'y es la MISMA persona',
+     quienFalto + ' entre [' + marcadas.join(', ') + ']');
+  const selR = $$('#app-movil .am-persona.falto select[data-justif]')[0];
+  ok(selR && selR.value === 'Vacaciones', 'y con su motivo', selR ? selR.value || '(vacío)' : 'no hay');
+
+  /* ── 8. EL BORRADOR DE AYER NO REAPARECE HOY ──────────────────────────────────
+     Un borrador sin fecha volvería mañana y pondría faltas de ayer en la lista de
+     hoy. Eso mandaría a Recursos Humanos una falta que nadie marcó. */
+  titulo('El borrador de otro día');
+  const deAyer = JSON.parse(localStorage.getItem('deam_lista_borrador'));
+  deAyer.fecha = '2020-01-01';
+  localStorage.setItem('deam_lista_borrador', JSON.stringify(deAyer));
+
+  $('#app-movil').remove();
+  const tercerSitio = document.createElement('div');
+  document.body.appendChild(tercerSitio);
+  const terceraApp = await import('../js/views/app_movil.js?recarga=2');
+  await terceraApp.renderAppMovil(tercerSitio, YO, () => {});
+  $('#informe').style.pointerEvents = 'none';
+  $$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'lista').click();
+  await esperar(1600);
+
+  /* ── 9. MARCAR NO PUEDE MOVER LA LISTA ────────────────────────────────────────
+     Si la tarjeta de arriba cambia de alto al marcar, TODO lo de abajo se corre y la
+     persona que se estaba mirando se va de la pantalla. Poner el aviso de "sin guardar"
+     en el pie de esa tarjeta la acortaba 33 px; se mide, no se supone. */
+  titulo('Marcar no mueve la lista');
+  const alto = () => $('#app-movil .am-resumen').getBoundingClientRect().height;
+  const altoAntes = alto();
+  $$('#app-movil .am-persona [data-falto]')[0].click();
+  await esperar(260);
+  const altoDespues = alto();
+  ok(Math.abs(altoDespues - altoAntes) < 1, 'la tarjeta de arriba no cambia de alto al marcar',
+     altoAntes.toFixed(1) + 'px → ' + altoDespues.toFixed(1) + 'px');
+  $$('#app-movil .am-persona [data-vino]')[0].click();
+  await esperar(200);
+  olvidar();
+
+  const conAyer = $$('#app-movil .am-persona').filter(p => p.classList.contains('falto'));
+  ok(conAyer.length === 0, 'un borrador de otro día NO se aplica a la lista de hoy',
+     conAyer.length + ' con falta');
+  ok(!/sin guardar/i.test($('#app-movil .am-resumen .am-pie').textContent),
+     'y la tarjeta no dice que haya nada sin guardar',
+     $('#app-movil .am-resumen .am-pie').textContent.replace(/\s+/g,' ').trim());
+
+  olvidar();
 
   const res = document.getElementById('resumen');
   res.className = fallos ? 'mal' : 'ok';

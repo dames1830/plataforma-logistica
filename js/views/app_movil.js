@@ -25,27 +25,27 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0763';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0763';
+import * as adminService from '../services_v245/adminService.js?v=29.0764';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0764';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0763';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0763';
-import * as metasService from '../services_v245/metasService.js?v=29.0763';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0764';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0764';
+import * as metasService from '../services_v245/metasService.js?v=29.0764';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0763';
+import * as temaService from '../services_v245/temaService.js?v=29.0764';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0763';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0763';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0764';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0764';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0763';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0764';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -1317,20 +1317,86 @@ let listaLocal = null;       // la lista de hoy, mientras se edita
 let listaCerrada = false;    // ya la cerraron: se ve, no se toca
 let listaGuardando = false;
 
+/* EL BORRADOR VIVE EN EL TELEFONO, no solo en memoria. Pasar lista a treinta personas de
+   pie en el almacen lleva rato, y en ese rato el telefono se bloquea, se cambia de pestana
+   o se recarga la pagina. Cualquiera de esas tres borraba todo. Daniel: *"no seria mejor
+   que se quede lo que estoy digitando... asi no haya grabado"*.
+
+   SE ANOTA A QUIEN SE TOCO, no la lista completa: asi lo que alguien guarde desde la web
+   para los demas sigue llegando, y lo marcado aca solo le gana en esas personas. Guardar
+   la lista entera convertiria al celular en una foto vieja que tapa al servidor. */
+const LLAVE_BORRADOR = 'deam_lista_borrador';
+let listaBorrador = {};      // dni -> { present, onTime, justification }
+
+const leerBorradorLista = (fecha) => {
+    try {
+        const crudo = JSON.parse(localStorage.getItem(LLAVE_BORRADOR) || 'null');
+        /* Con la fecha adentro, el borrador de ayer no reaparece manana. */
+        return (crudo && crudo.fecha === fecha && crudo.marcas) ? crudo.marcas : {};
+    } catch (e) { return {}; }
+};
+
+const guardarBorradorLista = () => {
+    try {
+        if (!Object.keys(listaBorrador).length) localStorage.removeItem(LLAVE_BORRADOR);
+        else localStorage.setItem(LLAVE_BORRADOR,
+            JSON.stringify({ fecha: fechaDeLaLista(), marcas: listaBorrador }));
+    } catch (e) { /* sin sitio en el telefono: se sigue, en memoria igual esta */ }
+};
+
+const olvidarBorradorLista = () => {
+    listaBorrador = {};
+    try { localStorage.removeItem(LLAVE_BORRADOR); } catch (e) { /* da igual */ }
+};
+
+/* Se llama despues de cada toque. Guarda el estado completo de esa persona -no solo lo que
+   cambio- para que al volver quede exactamente como se la dejo. */
+const anotarEnElBorrador = (p) => {
+    listaBorrador[String(p.dni)] = {
+        present: p.present,
+        onTime: p.onTime,
+        justification: p.justification || ''
+    };
+    guardarBorradorLista();
+};
+
 const fechaDeLaLista = () => {
     const d = new Date();
     return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
 };
 
 const cargarLista = () => {
-    const guardado = adminService.getAttendance(fechaDeLaLista());
+    const fecha = fechaDeLaLista();
+    const guardado = adminService.getAttendance(fecha);
     listaCerrada = !!(guardado && guardado.finalized);
     listaLocal = armarLista(adminService.getWorkers() || [], guardado);
-    listaTocada = false;
+
+    /* LO DEL SERVIDOR ES LA BASE; LO MARCADO Y SIN GUARDAR VA ENCIMA. En ese orden: asi se
+       ve lo que cambio otro y no se pierde lo que se acaba de marcar aca.
+
+       Si la lista ya esta cerrada no hay nada que seguir editando, y un borrador viejo
+       tapando una lista cerrada mostraria numeros que ya no son los que fueron al
+       historial. Se descarta. */
+    if (listaCerrada) {
+        olvidarBorradorLista();
+    } else {
+        listaBorrador = leerBorradorLista(fecha);
+        listaLocal.forEach(p => {
+            const m = listaBorrador[String(p.dni)];
+            if (!m) return;
+            p.present = m.present;
+            p.onTime = m.onTime;
+            p.justification = m.justification || '';
+        });
+    }
+    listaTocada = Object.keys(listaBorrador).length > 0;
 };
 
 const pantallaLista = () => {
     if (!listaLocal) cargarLista();
+    /* CUANTAS MARCAS HAY SIN GUARDAR. Se dice en la tarjeta: si se conserva el borrador hay
+       que avisar que es un borrador, o parece guardado y nadie aprieta Guardar. */
+    const sinGuardar = listaCerrada ? 0 : Object.keys(listaBorrador).length;
     const total = listaLocal.length;
     const faltaron = listaLocal.filter(p => p.present === false).length;
     const vinieron = total - faltaron;
@@ -1370,7 +1436,7 @@ const pantallaLista = () => {
             <span class="acciones">
                 <button type="button" class="am-chico solo-icono" data-foto title="Compartir la lista con Recursos Humanos">${ICONO_COMPARTIR}</button>
                 ${listaCerrada ? '' : `
-                <button type="button" class="am-chico" data-guardar ${listaGuardando ? 'disabled' : ''}>${listaGuardando ? 'Guardando…' : 'Guardar'}</button>`}
+                <button type="button" class="am-chico" data-guardar ${listaGuardando ? 'disabled' : ''}>${listaGuardando ? 'Guardando…' : sinGuardar ? `Guardar (${numero(sinGuardar)})` : 'Guardar'}</button>`}
             </span>
         </div>
 
@@ -1398,13 +1464,14 @@ const marcar = (dni, vino) => {
     listaTocada = true;
     if (!vino) p.onTime = false;      // quien no vino no puede haber llegado a tiempo
     if (vino) p.justification = '';   // si al final vino, el motivo que se puso ya no aplica
+    anotarEnElBorrador(p);
     pintar();
 };
 
 const anotarMotivo = (dni, motivo) => {
     if (listaCerrada || !listaLocal) return;
     const p = listaLocal.filter(x => String(x.dni) === String(dni))[0];
-    if (p) { p.justification = motivo || ''; listaTocada = true; }
+    if (p) { p.justification = motivo || ''; listaTocada = true; anotarEnElBorrador(p); }
     /* NO se repinta: se perderia el desplegable recien abierto y el sitio de la lista. */
 };
 
@@ -1415,7 +1482,9 @@ const anotarMotivo = (dni, motivo) => {
    al entrar, y solo se aplica si todavia no se marco nada. */
 const refrescarLista = async () => {
     try { await adminService.initializeAdminData(true); } catch (e) { console.warn('[APP] traer la lista:', e && e.message); }
-    if (listaTocada) return;          // se empezo a marcar mientras llegaba: no se pisa
+    /* ANTES ACA SE VOLVIA SIN HACER NADA si ya se habia marcado algo, porque `cargarLista`
+       borraba lo marcado. Ahora lo respeta -lo vuelve a poner encima-, asi que se puede
+       aplicar siempre: entra lo que cambio otro y se conserva lo de aca. */
     cargarLista();
     if (seccion === 'lista') pintar();
 };
@@ -1438,6 +1507,9 @@ const guardarLista = async (cerrando) => {
     pintar();
     try {
         await adminService.saveAttendance(fechaDeLaLista(), { data: listaLocal, finalized: !!cerrando });
+        /* Guardado de verdad: el borrador ya no hace falta y dejarlo solo puede estorbar. */
+        olvidarBorradorLista();
+        listaTocada = false;
         if (cerrando) listaCerrada = true;
     } catch (e) {
         console.warn('[APP] no se pudo guardar la lista:', e && e.message);
@@ -2361,7 +2433,12 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (s) {
             seccion = s.getAttribute('data-seccion');
             menu = null;
-                if (seccion === 'lista') { cargarLista(); refrescarLista(); }   // se trae al entrar
+            /* SE TRAE AL ENTRAR, PERO SIN BORRAR LO MARCADO. Antes aca iba un `cargarLista()`
+               suelto antes del refresco, y eso rehacia la lista desde el servidor y ponia
+               `listaTocada` en falso: el seguro que tiene `refrescarLista` para no pisar lo
+               marcado quedaba esquivado por este camino. Ir a Tareas y volver borraba
+               treinta marcas. */
+            if (seccion === 'lista') refrescarLista();
             if (seccion === 'tareas') {
                 /* Se traen frescas al entrar: en el almacen hay otras pantallas asignando
                    al mismo tiempo, y ver una tarea libre que ya tiene dueño hace que dos
