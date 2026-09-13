@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · El avance al finalizar, en el celular</title>
+<!--
+  LA PIEZA QUE FALTA PARA QUE EL CELULAR HAGA LO MISMO QUE LA WEB.
+
+  Hoy, al finalizar desde el telefono, no se pregunta nada: la tarea se cierra y el sistema
+  entiende que se hizo TODO lo pedido -asi esta escrito en `avanceDeTarea`, que a falta de
+  avance suma la cantidad entera-. En la web, en cambio, sale una tabla por SKU con lo
+  pedido y un campo para escribir lo realmente avanzado.
+
+  Consecuencia de no tenerlo: el "CUMPLIO" de la etiqueta sale inflado, porque se mide
+  contra un avance que nadie confirmo.
+
+  ESTA MAQUETA NO ES UN DIBUJO APARTE: monta la app de verdad y le pone encima la hoja
+  propuesta, con sus mismos tokens y sus mismas clases. Lo que se ve aca es lo que se va a
+  ver en el telefono.
+-->
+<link rel="stylesheet" href="../css/main_v176.css">
+<link rel="stylesheet" href="../css/temas.css">
+<style>
+  body { margin:0; background:#0b1220; }
+  #barra { position:fixed; left:0; right:0; bottom:0; z-index:99999; display:flex; gap:.4rem;
+           justify-content:center; padding:.5rem; background:rgba(8,14,26,.94);
+           border-top:1px solid #1e293b; font:12px system-ui, sans-serif; }
+  #barra button { font:600 12px system-ui, sans-serif; color:#cbd5e1; background:#1e293b;
+                  border:1px solid #334155; border-radius:7px; padding:.35rem .7rem; cursor:pointer; }
+  #barra button.on { background:#4f46e5; border-color:#4f46e5; color:#fff; }
+  #barra span { color:#64748b; align-self:center; margin-right:.3rem; }
+</style>
+</head>
+<body>
+<div id="barra"><span>Maqueta · tema:</span></div>
+<script type="module">
+import { renderAppMovil } from '../js/views/app_movil.js';
+import * as adminService from '../js/services_v245/adminService.js';
+import * as temaService from '../js/services_v245/temaService.js';
+import * as jornadaService from '../js/services_v245/jornadaService.js';
+
+const HOY = jornadaService.fechaLogicaDe();
+
+/* UNA TAREA DE VERDAD, con varios SKU y varias tallas: es el caso que hace falta resolver.
+   Una de un solo SKU no muestra el problema. */
+const TAREA = {
+  id: `${HOY}_Tarea31`, fecha: HOY, marca: 'Adidas', qty: 1410, status: 'Asignado',
+  u1: 'rlunazco', u2: 'mparia', inicio: `${HOY}T20:11:00`, termino: '', creador: 'dames',
+  items: [
+    { sku7: '5613348', marca: 'Adidas', gender: 'FOOTWEAR', genderRims: '04 SPORT', items: [
+      { ubi: 'CDBUFFER-A-00-106', qty: 140, skuFull: '5613348-1-37', talla: '37', avance: null },
+      { ubi: 'CDBUFFER-A-00-106', qty: 140, skuFull: '5613348-1-38', talla: '38', avance: null },
+      { ubi: 'CDBUFFER-B-00-201', qty: 60,  skuFull: '5613348-1-39', talla: '39', avance: null }
+    ]},
+    { sku7: '8814995', marca: 'Adidas', gender: 'FOOTWEAR', genderRims: '04 SPORT', items: [
+      { ubi: 'CDBUFFER-A-00-118', qty: 430, skuFull: '8814995-1-41', talla: '41', avance: null },
+      { ubi: 'CDBUFFER-A-00-118', qty: 380, skuFull: '8814995-1-42', talla: '42', avance: null },
+      { ubi: 'CDBUFFER-C-00-004', qty: 260, skuFull: '8814995-1-43', talla: '43', avance: null }
+    ]}
+  ]
+};
+
+const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const numero = (n) => new Intl.NumberFormat('es-PE').format(Math.round(Number(n) || 0));
+
+/* ── LO QUE SE PROPONE ────────────────────────────────────────────────────────────────
+   Las mismas reglas que la web, en la forma que sirve en un telefono:
+
+   · Solo entran los items de CDBUFFER, y el CDBUFFER-C queda fuera -es prepack, que no se
+     mide en pares-. Es lo mismo que hace `avanceDeTarea`.
+   · Se agrupa por SKU completo, articulo + talla, igual que la web.
+   · Cada campo VIENE LLENO con lo pedido: el caso normal es que se haya hecho todo, y
+     asi el dedo solo toca lo que quedo a medias.
+   · No se puede poner mas de lo pedido ni menos de cero.
+   · El total de abajo se mueve solo: es el numero con el que se va a medir si cumplio. */
+const CSS_PROPUESTO = `
+#app-movil .am-av-tit { font-family: var(--am-ui); font-size: 1rem; font-weight: 700;
+  color: var(--am-tinta); margin-top: .2rem; }
+#app-movil .am-av-sub { font-size: .78rem; color: var(--am-tenue); line-height: 1.35;
+  margin-bottom: .2rem; }
+#app-movil .am-av-enc { display: grid; grid-template-columns: minmax(0,1fr) 46px 58px 84px;
+  gap: .4rem; padding: 0 .55rem .3rem; font-family: var(--am-num); font-size: .58rem;
+  letter-spacing: .07em; text-transform: uppercase; color: var(--am-tenue); }
+#app-movil .am-av-enc span:not(:first-child) { text-align: center; }
+#app-movil .am-av-fila { display: grid; grid-template-columns: minmax(0,1fr) 46px 58px 84px;
+  gap: .4rem; align-items: center; background: var(--am-carta);
+  border: 1px solid var(--am-linea); border-radius: 11px; padding: .45rem .55rem;
+  margin-bottom: .35rem; }
+#app-movil .am-av-fila .art { min-width: 0; }
+#app-movil .am-av-fila .art b { display: block; font-family: var(--am-num); font-size: .84rem;
+  color: var(--am-tinta); }
+#app-movil .am-av-fila .art span { display: block; font-size: .66rem; color: var(--am-tenue);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#app-movil .am-av-fila .talla { font-family: var(--am-num); font-size: .82rem; font-weight: 700;
+  color: var(--am-tinta); text-align: center; }
+#app-movil .am-av-fila .ped { font-family: var(--am-num); font-size: .82rem;
+  color: var(--am-suave); text-align: center; }
+#app-movil .am-av-fila input { width: 100%; min-height: 40px; text-align: center;
+  font-family: var(--am-num); font-size: .92rem; font-weight: 700; color: var(--am-tinta);
+  background: var(--am-papel); border: 1px solid var(--am-linea); border-radius: 9px;
+  padding: .3rem; outline: none; }
+#app-movil .am-av-fila.menos input { border-color: var(--am-tarde); color: var(--am-tarde); }
+#app-movil .am-av-total { display: flex; align-items: baseline; justify-content: space-between;
+  background: var(--am-carta); border: 1px solid var(--am-linea); border-radius: 11px;
+  padding: .55rem .7rem; margin-top: .1rem; }
+#app-movil .am-av-total .l { font-family: var(--am-num); font-size: .6rem; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--am-tenue); }
+#app-movil .am-av-total .v { font-family: var(--am-num); font-size: 1.05rem; font-weight: 700;
+  color: var(--am-tinta); }
+#app-movil .am-av-total .v i { font-style: normal; font-size: .78rem; color: var(--am-tenue); }
+#app-movil .am-av-mal { background: var(--am-tarde-agua); border: 1px solid var(--am-tarde);
+  color: var(--am-tarde); border-radius: 10px; padding: .5rem .65rem; font-size: .78rem;
+  line-height: 1.35; }
+`;
+
+/** Los items que se miden, con la MISMA regla que `avanceDeTarea`: CDBUFFER sí, el C no. */
+const lineasDeAvance = (t) => {
+    const porSku = new Map();
+    (t.items || []).forEach(art => {
+        ((art && art.items) || []).forEach(i => {
+            const ubi = String((i && i.ubi) || '').toUpperCase().trim();
+            if (!ubi.startsWith('CDBUFFER') || ubi.startsWith('CDBUFFER-C')) return;
+            const sku = String(i.skuFull || `${art.sku7}-${i.talla || ''}`);
+            const y = porSku.get(sku) || { sku, art: art.sku7, marca: art.marca,
+                talla: i.talla || sku.split('-').pop(), qty: 0, avance: null };
+            y.qty += parseFloat(i.qty) || 0;
+            if (i.avance !== undefined && i.avance !== null) y.avance = (y.avance || 0) + (parseFloat(i.avance) || 0);
+            porSku.set(sku, y);
+        });
+    });
+    return [...porSku.values()];
+};
+
+const hojaDeAvance = (t, valores, aviso) => {
+    const ls = lineasDeAvance(t);
+    const pedido = ls.reduce((a, x) => a + x.qty, 0);
+    const hecho = ls.reduce((a, x, i) => a + (valores[i] === '' ? 0 : Number(valores[i])), 0);
+    return `
+    <div class="am-velo">
+      <div class="am-hoja">
+        <div class="am-asa"></div>
+        <div class="am-quees">
+            <b>Tarea 31</b>
+            <span class="am-chapa ch-curso">ASIGNADO</span>
+            <span class="dia">${esc(t.fecha.split('-').reverse().slice(0,2).join('/'))}</span>
+        </div>
+
+        <div class="am-av-tit">¿Cuánto se avanzó?</div>
+        <div class="am-av-sub">Viene con todo lo pedido. Corrige solo lo que quedó a medias.</div>
+
+        <div class="am-av-enc"><span>Artículo</span><span>Talla</span><span>Pedido</span><span>Avance</span></div>
+        ${ls.map((x, i) => `
+        <div class="am-av-fila ${Number(valores[i]) < x.qty ? 'menos' : ''}">
+            <span class="art"><b>${esc(x.art)}</b><span>${esc(x.marca)}</span></span>
+            <span class="talla">${esc(x.talla)}</span>
+            <span class="ped">${numero(x.qty)}</span>
+            <input type="number" inputmode="numeric" data-av="${i}" value="${esc(valores[i])}"
+                   min="0" max="${x.qty}" aria-label="Avance del ${esc(x.art)} talla ${esc(x.talla)}">
+        </div>`).join('')}
+
+        <div class="am-av-total">
+            <span class="l">Total avanzado</span>
+            <span class="v">${numero(hecho)} <i>de ${numero(pedido)} pares</i></span>
+        </div>
+
+        ${aviso ? `<div class="am-av-mal">${esc(aviso)}</div>` : ''}
+
+        <div class="am-botones">
+            <button type="button" class="am-btn va">Finalizar</button>
+            <button type="button" class="am-btn linea">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+};
+
+/* ── SE MONTA SOBRE LA APP DE VERDAD ──────────────────────────────────────────────── */
+(async () => {
+  const descarte = document.createElement('div');
+  document.body.appendChild(descarte);
+  await renderAppMovil(descarte, YO, () => {});
+  adminService.adminStore.almacenaje_tasks = [TAREA];
+
+  const est = document.createElement('style');
+  est.textContent = CSS_PROPUESTO;
+  document.head.appendChild(est);
+
+  const ls = lineasDeAvance(TAREA);
+  let valores = ls.map(x => String(x.qty));
+  let aviso = '';
+
+  const raiz = document.getElementById('app-movil');
+  const capa = document.createElement('div');
+  raiz.appendChild(capa);
+
+  const pintar = () => { capa.innerHTML = hojaDeAvance(TAREA, valores, aviso); };
+  pintar();
+
+  capa.addEventListener('input', (e) => {
+      const i = e.target.getAttribute('data-av');
+      if (i === null) return;
+      valores[i] = e.target.value;
+      const tope = ls[i].qty;
+      const v = Number(e.target.value);
+      aviso = e.target.value === '' || v < 0
+          ? `El avance del ${ls[i].art} talla ${ls[i].talla} no puede quedar vacío ni ser negativo.`
+          : (v > tope ? `El avance del ${ls[i].art} talla ${ls[i].talla} no puede pasar de ${tope}, que es lo que se pidió.` : '');
+      const donde = e.target.selectionStart;
+      pintar();
+      const otro = capa.querySelector(`[data-av="${i}"]`);
+      if (otro) { otro.focus(); try { otro.setSelectionRange(donde, donde); } catch (err) { /* da igual */ } }
+  });
+
+  /* Los cuatro temas, para verlo como lo va a ver él. */
+  const barra = document.getElementById('barra');
+  temaService.TEMAS.forEach((T, i) => {
+      const b = document.createElement('button');
+      b.textContent = T.nombre;
+      if (i === 0) b.className = 'on';
+      b.onclick = () => {
+          temaService.aplicarTema(T.id);
+          [...barra.querySelectorAll('button')].forEach(x => x.classList.remove('on'));
+          b.classList.add('on');
+      };
+      barra.appendChild(b);
+  });
+  window.__maqueta = { lineas: ls.length, pedido: ls.reduce((a,x)=>a+x.qty,0) };
+})();
+</script>
+</body>
+</html>

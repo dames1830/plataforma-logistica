@@ -45,6 +45,9 @@ const esperar = (ms) => new Promise(r => setTimeout(r, ms));
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
 const toque = (el) => el && el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+const titulo = (t) => { const h = document.createElement('h4');
+    h.style.cssText = 'margin:1.2rem 0 .4rem;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8';
+    h.textContent = t; lineas.appendChild(h); };
 
 /* Las tareas con las que se prueba: las 35 REALES del 12-09 de produccion, con sus estados,
    operarios y horas. Se ponen en memoria, no en el servidor: la prueba no ensucia beta. */
@@ -249,6 +252,115 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
      'una finalizada tiene un solo botón', $$('#app-movil .am-botones .am-btn').map(b => b.textContent.trim()).join(' / '));
   ok(/Guardar cambios/.test($('[data-principal]').textContent), 'y dice Guardar cambios');
   ok(/00:40/.test($('#app-movil .am-tres3').textContent), 'y el tiempo trabajado');
+
+  /* ══ LOS GUARDIAS DEL TABLERO ═══════════════════════════════════════════════════
+     Daniel, 13-sep-2026: *"asigné un operario de turno noche con uno de turno día y no
+     me saltó el mensaje que me salta en la web... te dije que la misma lógica,
+     funcionalidad, todo debería pasar a la aplicación"*. Al ir a buscar esa, aparecieron
+     tres más que tampoco habían pasado. */
+  titulo('Los guardias que tiene el tablero');
+
+  /* Se atrapan los avisos en vez de dejarlos parar la prueba. */
+  let ultimoAviso = '';
+  const alertDeVerdad = window.alert;
+  window.alert = (m) => { ultimoAviso = String(m || ''); };
+
+  /* Gente con turno conocido: el guardia lee el turno del maestro, no lo adivina. */
+  adminService.adminStore.workers = [
+    { dni: '10000001', nombre: 'Noe',    apellidos: 'Cruz Vera',      active: true, turno: 'NOCHE', puesto: 'ALMACENAJE' },
+    { dni: '10000002', nombre: 'Lucia',  apellidos: 'Fernandez Rojas', active: true, turno: 'NOCHE', puesto: 'ALMACENAJE' },
+    { dni: '10000003', nombre: 'Manuel', apellidos: 'Piscoya Diaz',    active: true, turno: 'DIA',   puesto: 'ALMACENAJE' }
+  ];
+  const DE_NOCHE_1 = 'ncruz', DE_NOCHE_2 = 'lfernandez', DE_DIA = 'mpiscoya';
+
+  adminService.adminStore.almacenaje_tasks = TAREAS;
+  toque($('[data-filtro="todas"]'));
+  await esperar(60);
+  toque($$('#app-movil .am-tarea').find(x => x.dataset.tarea.endsWith('Tarea35')));   // Creada
+  await esperar(120);
+
+  const poner = (sel, v) => { const e = $(sel); e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); };
+
+  /* ── 1. CONFLICTO DE TURNO ─────────────────────────────────────────────────── */
+  ultimoAviso = '';
+  poner('[data-u1]', DE_NOCHE_1);
+  poner('[data-u2]', DE_DIA);
+  toque($('[data-principal]'));
+  await esperar(200);
+  ok(/turno/i.test(ultimoAviso), 'uno de noche con uno de día: avisa del conflicto de turno',
+     ultimoAviso.split('\n')[0] || '(no avisó nada)');
+  ok(/NOCHE/.test(ultimoAviso) && /D[IÍ]A/.test(ultimoAviso),
+     'y dice de qué turno es cada uno', ultimoAviso.replace(/\s+/g, ' ').slice(0, 90));
+  const sigueCreada = (adminService.getAlmacenajeTasks() || []).find(x => x.id.endsWith('Tarea35'));
+  ok(sigueCreada && sigueCreada.status === 'Creada', 'y NO la asigna',
+     sigueCreada ? sigueCreada.status : 'no está');
+
+  /* ── 2. Y NO ESTORBA CUANDO SON DEL MISMO TURNO ────────────────────────────────
+     Se pasa el guardia del turno y se para en el siguiente: si el aviso que sale es el
+     de las horas, es que el del turno dejó pasar. Sin llegar a guardar, que escribiría
+     en beta. */
+  ultimoAviso = '';
+  poner('[data-u1]', DE_NOCHE_1);
+  poner('[data-u2]', DE_NOCHE_2);
+  poner('[data-hf]', '21:30');
+  toque($('[data-principal]'));
+  await esperar(200);
+  ok(/de inicio/i.test(ultimoAviso), 'dos del mismo turno pasan el guardia del turno',
+     ultimoAviso.split('\n')[0] || '(no avisó nada)');
+
+  /* ── 3 y 4. LOS QUE SOLO VEN LOS QUE NO SON DAMES ──────────────────────────────
+     `dames` puede tocar todo, así que con este usuario los guardias callan a propósito.
+     Se monta otra app como la ve el asistente. */
+  $('#app-movil').remove();
+  const otroSitio = document.createElement('div');
+  document.body.appendChild(otroSitio);
+  const appDelAsistente = await import('../js/views/app_movil.js?asistente=1');
+  await appDelAsistente.renderAppMovil(otroSitio, { username: 'ncruz', name: 'Noe Cruz', role: 'user' }, () => {});
+  $('#informe').style.pointerEvents = 'none';
+  window.alert = (m) => { ultimoAviso = String(m || ''); };
+
+  /* Una tarea de hace una semana -jornada cerrada- y una que una corrida cerró sin
+     trabajar. Se agregan a las de siempre para que la pantalla las encuentre. */
+  const haceUnaSemana = (() => { const d = new Date(HOY + 'T12:00:00'); d.setDate(d.getDate() - 7);
+      return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-'); })();
+  const VIEJA = { ...TAREAS[0], id: haceUnaSemana + '_Tarea90', fecha: haceUnaSemana, status: 'Asignado' };
+  const NO_TRABAJADA = { ...TAREAS[0], id: HOY + '_Tarea91', fecha: HOY, status: 'Vencida' };
+
+  toque($$('#app-movil .am-barra button').find(b => b.dataset.seccion === 'tareas'));
+  await esperar(1500);
+  adminService.adminStore.almacenaje_tasks = TAREAS.concat([VIEJA, NO_TRABAJADA]);
+  const dsd = $('[data-desde]'); dsd.value = haceUnaSemana; dsd.dispatchEvent(new Event('change', { bubbles: true }));
+  await esperar(300);
+  toque($('[data-filtro="todas"]'));
+  await esperar(120);
+
+  /* Jornada cerrada */
+  ultimoAviso = '';
+  toque($$('#app-movil .am-tarea').find(x => x.dataset.tarea.endsWith('Tarea90')));
+  await esperar(120);
+  toque($('[data-pide="reiniciar"]'));
+  await esperar(80);
+  toque($('[data-si]'));
+  await esperar(200);
+  ok(/jornada cerrada/i.test(ultimoAviso), 'una tarea de hace una semana no se puede reiniciar',
+     ultimoAviso.split('\n')[0] || '(no avisó nada)');
+  ok(/presentado|números de días pasados/i.test(ultimoAviso), 'y explica por qué',
+     ultimoAviso.replace(/\s+/g, ' ').slice(-75));
+
+  /* Tarea no trabajada */
+  toque($('[data-cerrar-hoja]'));
+  await esperar(100);
+  ultimoAviso = '';
+  toque($$('#app-movil .am-tarea').find(x => x.dataset.tarea.endsWith('Tarea91')));
+  await esperar(120);
+  toque($('[data-principal]'));
+  await esperar(200);
+  ok(/no trabajada/i.test(ultimoAviso), 'una tarea NO TRABAJADA no se reabre',
+     ultimoAviso.split('\n')[0] || '(no avisó nada)');
+  ok(/nueva/i.test(ultimoAviso), 'y dice que su mercadería ya está en otra tarea',
+     ultimoAviso.replace(/\s+/g, ' ').slice(0, 95));
+
+  window.alert = alertDeVerdad;
 
   const res = document.getElementById('resumen');
   res.className = fallos ? 'mal' : 'ok';

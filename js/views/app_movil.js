@@ -25,27 +25,27 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0766';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0766';
+import * as adminService from '../services_v245/adminService.js?v=29.0767';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0767';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0766';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0766';
-import * as metasService from '../services_v245/metasService.js?v=29.0766';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0767';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0767';
+import * as metasService from '../services_v245/metasService.js?v=29.0767';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0766';
+import * as temaService from '../services_v245/temaService.js?v=29.0767';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0766';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0766';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0767';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0767';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0766';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0767';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -991,10 +991,50 @@ const tarjetaPregunta = (t) => {
     </div>`;
 };
 
+/* ── LOS GUARDIAS DEL TABLERO ───────────────────────────────────────────────────────────
+   En la web, las cuatro acciones -asignar, reiniciar, eliminar y editar horas- pasan por
+   estos dos antes de nada. Son reglas de negocio, no adornos, y no estaban en el celular.
+   Ver `tareaCerrada` y `tareaNoTrabajada` en dashboard_v28.js. */
+
+/** La jornada de esa tarea ya cerro: solo el superusuario puede tocarla. */
+const tareaCerrada = (t) => !!t && !!t.fecha
+    && jornadaService.jornadaVencida(t.fecha) && !esElAdministrador();
+
+/** Una corrida la cerro sin trabajar; su mercaderia ya esta pedida en una tarea nueva. */
+const tareaNoTrabajada = (t) => !!t && String(t.status) === 'Vencida' && !esElAdministrador();
+
+/** El aviso, uno solo para todos los intentos, para que la regla se explique igual siempre. */
+const avisarSiNoSePuede = (t, accion) => {
+    if (tareaCerrada(t)) {
+        const dia = String((t && t.fecha) || '').split('-').reverse().join('/');
+        alert(`Jornada cerrada.\n\nLa tarea del ${dia} ya no se puede ${accion}. `
+            + `Las tareas quedan abiertas ${jornadaService.textoCierre()}; después solo DAMES puede tocarlas.\n\n`
+            + 'Es lo que evita que los números de días pasados cambien después de haberlos presentado.');
+        return true;
+    }
+    if (tareaNoTrabajada(t)) {
+        alert(`Tarea no trabajada.\n\nLa ${tareasComunes.numeroDeTarea(t.id)} se cerró en una corrida `
+            + 'porque no se alcanzó a trabajar, y su mercadería ya está pedida en una tarea NUEVA. '
+            + 'Si se reabre, serían dos hojas mandando por lo mismo.\n\n'
+            + 'Busca el código en la lista de tareas de hoy: está en alguna de las nuevas.');
+        return true;
+    }
+    return false;
+};
+
+/** El turno de ese operario, leido del maestro de trabajadores igual que en la web. */
+const turnoDelOperario = (clave) => {
+    const w = (adminService.getWorkers() || [])
+        .filter(x => x && x.active)
+        .find(x => tareasComunes.usuarioCorto(x) === String(clave));
+    if (!w) return null;
+    return String(w.turno || w.Turno || '').trim().toUpperCase() === 'NOCHE' ? 'NOCHE' : 'DÍA';
+};
+
 /* ── GUARDAR ────────────────────────────────────────────────────────────────────────────
    LAS MISMAS VALIDACIONES DE LA WEB, no unas nuevas: dos operarios siempre -"toda tarea de
-   almacenaje se trabaja en grupo de 2"-, nunca la misma persona dos veces, y si hay hora de
-   termino tiene que haber hora de inicio. */
+   almacenaje se trabaja en grupo de 2"-, nunca la misma persona dos veces, si hay hora de
+   termino tiene que haber hora de inicio, y los dos operarios del MISMO TURNO. */
 const leerBorrador = () => {
     if (!raiz) return;
     const q = (sel) => raiz.querySelector(sel);
@@ -1006,8 +1046,13 @@ const leerBorrador = () => {
 };
 
 const guardarTarea = async (accion) => {
+    if (tareasGuardando) return;
     const t = (adminService.getAlmacenajeTasks() || []).find(x => x && x.id === tareaAbierta);
-    if (!t || tareasGuardando) return;
+    /* SE MIRA LA TAREA VIVA, y si ya no esta se dice. Antes se volvia en silencio y parecia
+       que el boton no hiciera nada. */
+    if (!t) { avisarTareaDesaparecida(accion); return; }
+    if (avisarSiNoSePuede(t, accion === 'finalizar' ? 'finalizar' : 'modificar')) return;
+
     leerBorrador();
     const b = tareasBorrador || {};
 
@@ -1017,6 +1062,16 @@ const guardarTarea = async (accion) => {
     }
     if (b.u1 === b.u2) { alert('Usuario 1 y Usuario 2 no pueden ser la misma persona.'); return; }
     if (b.hf && !b.hi) { alert('Si pones la hora de término, también tiene que ir la de inicio.'); return; }
+
+    /* LOS DOS DEL MISMO TURNO. Lo vio Daniel el 13-sep-2026: el tablero lo avisa y el
+       celular dejaba juntar a uno de noche con uno de dia. */
+    const t1 = turnoDelOperario(b.u1);
+    const t2 = turnoDelOperario(b.u2);
+    if (t1 && t2 && t1 !== t2) {
+        alert(`Conflicto de turno.\n\nUsuario 1 es de turno ${t1} y Usuario 2 es de turno ${t2}.\n\n`
+            + 'Los dos operarios tienen que ser del mismo turno.');
+        return;
+    }
 
     /* LA FECHA DE LAS HORAS ES LA DEL TRABAJO, no la del nacimiento de la tarea. Una tarea
        vive hasta 48 horas: con la suya, el turno de hoy trabajando una de ayer quedaria
@@ -1061,9 +1116,20 @@ const horaDeAhora = () => {
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
+/** Lo que se dice cuando la tarea ya no esta en la lista. */
+const avisarTareaDesaparecida = (accion) => {
+    alert(`No se pudo ${accion}: esa tarea ya no está en la lista.\n\n`
+        + 'Alguien la eliminó o una corrida la cerró mientras la tenías abierta. '
+        + 'Cierra la hoja y vuelve a mirar las tareas de hoy.');
+    tareasBorrador = null;
+    tareaAbierta = null;
+    pintar();
+};
+
 const reiniciarTarea = async () => {
     const t = (adminService.getAlmacenajeTasks() || []).find(x => x && x.id === tareaAbierta);
-    if (!t) return;
+    if (!t) { avisarTareaDesaparecida('reiniciar'); return; }
+    if (avisarSiNoSePuede(t, 'reiniciar')) return;
     const previo = { u1: t.u1, u2: t.u2, inicio: t.inicio, termino: t.termino, status: t.status };
     t.u1 = null; t.u2 = null; t.inicio = null; t.termino = null; t.status = 'Creada';
     t.audited = false;
@@ -1083,6 +1149,9 @@ const reiniciarTarea = async () => {
 const eliminarTarea = async () => {
     const id = tareaAbierta;
     if (!id) return;
+    const t = (adminService.getAlmacenajeTasks() || []).find(x => x && x.id === id);
+    if (!t) { avisarTareaDesaparecida('eliminar'); return; }
+    if (avisarSiNoSePuede(t, 'eliminar')) return;
     tareasGuardando = true; pintar();
     let ok = false;
     try {
