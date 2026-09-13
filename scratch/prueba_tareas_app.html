@@ -28,6 +28,7 @@
 <script type="module">
 import { renderAppMovil } from '../js/views/app_movil.js';
 import * as adminService from '../js/services_v245/adminService.js';
+import * as jornadaService from '../js/services_v245/jornadaService.js';
 
 const lineas = document.getElementById('lineas');
 let fallos = 0;
@@ -58,8 +59,10 @@ const CRUDAS = [
  [31,'Adidas',1410,'Asignado','rlunazco','mparia','20:11',''],
  [35,'Bata Industrials',444,'Creada','','','','']
 ];
-const HOY = (() => { const d = new Date(), p = (x) => String(x).padStart(2,'0');
-    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; })();
+/* LA FECHA DE LA JORNADA, NO LA DEL CALENDARIO. A las 00:05 el calendario ya dice el dia
+   siguiente, pero el turno noche sigue perteneciendo al dia que arranco — y la app abre en
+   esa jornada. Fechar las tareas de prueba con el calendario las dejaba fuera del rango. */
+const HOY = jornadaService.fechaLogicaDe();
 
 const sello = (h) => h ? `${HOY}T${h}:00` : '';
 const TAREAS = CRUDAS.map(([n,m,q,st,u1,u2,ini,fin]) => ({

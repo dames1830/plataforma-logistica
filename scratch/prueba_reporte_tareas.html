@@ -38,6 +38,7 @@
 import { renderAppMovil } from '../js/views/app_movil.js';
 import * as adminService from '../js/services_v245/adminService.js';
 import * as temaService from '../js/services_v245/temaService.js';
+import * as jornadaService from '../js/services_v245/jornadaService.js';
 import { datosMarcas, armarTurnoDe } from '../js/reportes/marcas.js';
 
 const salida = document.getElementById('salida');
@@ -61,8 +62,10 @@ const pixel=(g,x,y)=>[...g.getImageData(x,y,1,1).data].slice(0,3);
 
 /* TAREAS REALES: las del sábado 12, con sus ubicaciones de buffer para que caigan en
    CDBUFFER-A y CDBUFFER-B como en el reporte de verdad. */
-const HOY = (() => { const d=new Date(),p=x=>String(x).padStart(2,'0');
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; })();
+/* LA FECHA DE LA JORNADA, NO LA DEL CALENDARIO. A las 00:05 el calendario ya dice el dia
+   siguiente, pero el turno noche sigue perteneciendo al dia que arranco — y la app abre en
+   esa jornada. Fechar las tareas de prueba con el calendario las dejaba fuera del rango. */
+const HOY = jornadaService.fechaLogicaDe();
 const sello = (h) => h ? `${HOY}T${h}:00` : '';
 const T = (n, marca, qty, st, u1, u2, ini, fin, ubi) => ({
   id:`${HOY}_Tarea${n}`, fecha:HOY, marca, qty, status:st, u1, u2,

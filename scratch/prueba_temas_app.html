@@ -39,6 +39,7 @@
 import { renderAppMovil } from '../js/views/app_movil.js';
 import * as adminService from '../js/services_v245/adminService.js';
 import * as temaService from '../js/services_v245/temaService.js';
+import * as jornadaService from '../js/services_v245/jornadaService.js';
 
 const salida = document.getElementById('salida');
 let fallos = 0, avisos = 0, total = 0;
@@ -116,8 +117,10 @@ const nota = (t, clase) => {
 };
 
 /* ── DATOS: las tareas reales, para que haya de todo en pantalla ─────────────────── */
-const HOY = (() => { const d = new Date(), p = (x) => String(x).padStart(2,'0');
-    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; })();
+/* LA FECHA DE LA JORNADA, NO LA DEL CALENDARIO. A las 00:05 el calendario ya dice el dia
+   siguiente, pero el turno noche sigue perteneciendo al dia que arranco — y la app abre en
+   esa jornada. Fechar las tareas de prueba con el calendario las dejaba fuera del rango. */
+const HOY = jornadaService.fechaLogicaDe();
 const TAREAS = [
   [1,'Bubblegummers',625,'Creada','','','',''],
   [19,'North Star',340,'Finalizado','lfernandez','ncruz','20:15','21:05'],
