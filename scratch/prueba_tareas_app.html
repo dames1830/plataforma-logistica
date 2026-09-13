@@ -103,6 +103,16 @@ const YO = { username: 'dames', name: 'Daniel Ames', role: 'admin' };
      respaldo y los colores salen al reves. Es el defecto que esta prueba encontro. */
   await esperar(1800);
   adminService.adminStore.almacenaje_tasks = TAREAS;   // el "traer frescas" del tab pisa
+  /* Y los operarios de esas tareas, por lo mismo: los desplegables se arman con el maestro
+     de trabajadores, y si el de beta no llego -o si alguien dio de baja a uno- quedan
+     vacios y la prueba grita por algo que no esta midiendo. */
+  adminService.adminStore.workers = [
+    ['mpiscoya','Manuel','Piscoya Diaz'], ['kmalimba','Kimberly','Malimba Sanchez'],
+    ['ncruz','Noe','Cruz Vera'], ['lfernandez','Lucia','Fernandez Rojas'],
+    ['rlunazco','Rosa','Lunazco Paredes'], ['mparia','Marleny','Paria Quispe']
+  ].map(([clave, nombre, apellidos], n) => ({
+    dni: '7000000' + n, nombre, apellidos, active: true, turno: 'NOCHE', puesto: 'ALMACENAJE'
+  }));
   toque($('[data-filtro="todas"]'));
   await esperar(60);
 

@@ -462,10 +462,35 @@ export async function pullGlobal(requestedAreas = null, force = false) {
             const current = syncStore[r.area];
             const incoming = r.data;
 
-            // Si el área es un objeto (como attendance), verificamos compatibilidad
+            /* SE REEMPLAZA, NO SE FUSIONA.
+             *
+             * Acá decía `{ ...syncStore[area], ...incoming }`. Fusionar agrega y cambia,
+             * pero NUNCA QUITA: una clave borrada en el servidor —una fecha de asistencia,
+             * por ejemplo— se quedaba para siempre en el equipo que ya la tenía. Y como lo
+             * bajado se guarda en IndexedDB y se restaura al abrir, recargar tampoco la
+             * sacaba: volvía de la caché y se fusionaba de nuevo.
+             *
+             * Peor todavía: ese equipo, al guardar cualquier otro día, subía su copia CON
+             * la clave borrada adentro y la resucitaba en el servidor. O sea que en la
+             * práctica no se podía borrar nada.
+             *
+             * Lo vio Daniel el 13-sep-2026: se borró del servidor la asistencia del 13-09
+             * —lo comprobé releyéndola, y sus 38 registros de rendimiento SÍ desaparecieron
+             * porque esa área es una lista y las listas ya se reemplazaban— pero en su
+             * pantalla el 13-09 seguía ahí. La diferencia entre las dos áreas era esta
+             * línea, y no otra cosa.
+             *
+             * El servidor devuelve el área ENTERA, así que reemplazar es lo correcto: es
+             * lo mismo que ya se hacía con las listas. Lo que se está editando sin guardar
+             * no vive acá —la asistencia a medio pasar y la hoja de tarea tienen su propio
+             * borrador—, y para lo recién subido está el seguro de los 15 segundos de
+             * arriba.
+             *
+             * Se conserva el control de forma: a un área que es objeto solo la reemplaza
+             * otro objeto. Si el servidor contestara cualquier cosa, se deja lo que hay. */
             if (current && typeof current === 'object' && !Array.isArray(current)) {
                 if (incoming && typeof incoming === 'object' && !Array.isArray(incoming)) {
-                    syncStore[r.area] = { ...syncStore[r.area], ...incoming };
+                    syncStore[r.area] = incoming;
                 }
             } else {
                 syncStore[r.area] = incoming;

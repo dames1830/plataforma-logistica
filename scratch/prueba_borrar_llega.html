@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Prueba · lo borrado en el servidor llega al equipo</title>
+<!--
+  EL DEFECTO: al bajar un area, el motor la FUSIONABA con la copia del equipo. Fusionar
+  agrega y cambia, pero nunca quita, asi que una fecha borrada en el servidor se quedaba
+  para siempre en el navegador — y al guardar cualquier otro dia, ese equipo la volvia a
+  subir y la resucitaba.
+
+  Lo vio Daniel el 13-sep-2026: se borro la asistencia del 13-09, sus registros de
+  rendimiento desaparecieron -esa area es una lista, y las listas ya se reemplazaban- pero
+  la asistencia seguia en su pantalla.
+
+  COMO SE PRUEBA: se mete a mano una fecha que el servidor NO tiene, se manda a bajar, y
+  tiene que desaparecer. Con el codigo viejo sobrevive.
+-->
+<style>
+  body { margin:0; padding:1.2rem; background:#0b1220; color:#e2e8f0;
+         font:14px/1.6 system-ui, sans-serif; }
+  h1 { font-size:17px; margin:0 0 1rem; }
+  .li { display:grid; grid-template-columns:3rem 1fr auto; gap:.6rem; padding:.2rem 0;
+        font-size:13px; align-items:baseline; border-bottom:1px solid #16202f; }
+  .ok { color:#4ade80; font-weight:700; } .mal { color:#f87171; font-weight:700; }
+  .d { font-family:ui-monospace, monospace; font-size:11.5px; color:#64748b; }
+  #resumen { margin-top:1rem; padding-top:.7rem; border-top:2px solid #1e293b; font-weight:700; }
+</style>
+</head>
+<body>
+<h1>¿Lo borrado en el servidor llega al equipo?</h1>
+<div id="salida"></div>
+<div id="resumen"></div>
+<script type="module">
+import * as sync from '../js/services_v245/sync_engine_v24_9.js';
+
+const salida = document.getElementById('salida');
+let fallos = 0, total = 0;
+const ok = (cond, que, det) => {
+    total++; if (!cond) fallos++;
+    const d = document.createElement('div');
+    d.className = 'li';
+    d.innerHTML = `<span class="${cond?'ok':'mal'}">${cond?'ok':'MAL'}</span><span>${que}</span><span class="d">${det||''}</span>`;
+    salida.appendChild(d);
+};
+
+(async () => {
+  /* Se baja el area de verdad, para partir de lo que hay. */
+  await sync.pullGlobal(['attendance'], true);
+  const antes = Object.keys(sync.syncStore.attendance || {}).length;
+  ok(antes > 0, 'baja la asistencia del servidor', antes + ' días');
+
+  /* UNA FECHA QUE EL SERVIDOR NO TIENE, puesta a mano: es exactamente la situación del
+     equipo de Daniel, que conservaba el 13-09 después de borrarlo. */
+  const FANTASMA = '1999-01-01';
+  sync.syncStore.attendance[FANTASMA] = { finalized: true, data: [{ dni: '0', present: false }] };
+  ok(!!sync.syncStore.attendance[FANTASMA], 'se mete a mano un día que el servidor no tiene', FANTASMA);
+
+  /* SE SIMULA QUE EL SERVIDOR CAMBIO, que es lo que paso de verdad al borrar el 13-09:
+     la marca de cambio del area se movio a las 04:21. Sin esto, la segunda bajada no
+     descarga nada -el motor la saltea por version igual- y la prueba no probaria nada. */
+  window._pulseSyncState.versiones['attendance'] = 'cambio-a-proposito';
+  await new Promise(r => setTimeout(r, 200));
+  await sync.pullGlobal(['attendance'], true);
+
+  const sigue = !!sync.syncStore.attendance[FANTASMA];
+  ok(!sigue, 'al bajar de nuevo, ese día DESAPARECE',
+     sigue ? 'sigue ahí: se está fusionando en vez de reemplazar' : 'ya no está');
+
+  const despues = Object.keys(sync.syncStore.attendance || {}).length;
+  ok(despues === antes, 'y no se pierde ningún día de los buenos',
+     `${antes} antes · ${despues} después`);
+
+  /* Y lo que importa hoy: el 13-09 no puede estar. */
+  const elDomingo = !!(sync.syncStore.attendance || {})['2026-09-13'];
+  ok(!elDomingo, 'el 13-09-2026 no está en lo que baja el servidor',
+     elDomingo ? 'SIGUE' : 'no está');
+  ok(!!(sync.syncStore.attendance || {})['2026-09-11'],
+     'y los días anteriores siguen estando', '11-09 presente');
+
+  const res = document.getElementById('resumen');
+  res.className = fallos ? 'mal' : 'ok';
+  res.textContent = fallos ? `HAY ${fallos} FALLO(S) de ${total}` : `Las ${total} comprobaciones, correctas`;
+  window.__resultado = { fallos, total };
+})();
+</script>
+</body>
+</html>
