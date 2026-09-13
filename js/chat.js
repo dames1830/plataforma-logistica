@@ -970,7 +970,27 @@ const pintar = () => {
        el caso del celular, que usa estos datos y dibuja lo suyo. */
     if (avisarCambio) { try { avisarCambio(); } catch (e) { /* que no tumbe el latido */ } }
     if (!raiz) return;
+
+    /* EL CURSOR SE QUEDA DONDE ESTABA. `pintarVentanas` reemplaza el HTML de la ventana, y
+       con el la caja de texto: el cursor se quedaba sin sitio y habia que volver a tocarla.
+       `escribir()` ya lo devolvia despues de mandar, pero el LATIDO repinta un segundo
+       despues y se lo llevaba otra vez — por eso Daniel lo notaba igual. Se arregla aca,
+       que es por donde pasan todos los repintados. */
+    const a = document.activeElement;
+    const escribiendo = a && a.getAttribute && a.getAttribute('data-escribir');
+    const cursor = escribiendo ? a.selectionStart : 0;
+    const llevaba = escribiendo ? a.value : '';
+
     pintarLista(); pintarVentanas(); pintarGlobo(); acomodarVentanas();
+
+    if (escribiendo) {
+        const otra = raiz.querySelector(`[data-escribir="${escribiendo}"]`);
+        if (otra) {
+            if (llevaba && !otra.value) otra.value = llevaba;
+            otra.focus();
+            try { otra.setSelectionRange(cursor, cursor); } catch (e) { /* da igual */ }
+        }
+    }
 };
 
 const esconderToast = () => {

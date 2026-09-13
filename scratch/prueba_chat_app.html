@@ -45,6 +45,10 @@ const ok = (c, que, det) => { total++; if (!c) fallos++;
   d.innerHTML = `<span class="${c?'ok':'mal'}">${c?'ok':'MAL'}</span><span>${que}</span><span class="d">${det||''}</span>`;
   salida.appendChild(d); };
 const titulo = (t) => { const h=document.createElement('h2'); h.textContent=t; salida.appendChild(h); };
+/* Fuerza un repintado SIN navegar: la app repinta al volver a la vista, y es el mismo
+   camino que toma cuando el latido trae un mensaje nuevo. Tocar la pestaña no sirve —
+   eso vuelve a la lista y se lleva por delante lo que se estaba probando. */
+const pintarDeNuevo = () => document.dispatchEvent(new Event('visibilitychange'));
 
 /* ── Contraste sobre el color ya compuesto ───────────────────────────────────── */
 const canal=(c)=>{c/=255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4);};
@@ -201,7 +205,31 @@ const MENSAJES = {
       ok(!!$('#app-movil.en-conversacion'), 'la conversación ocupa la pantalla');
       ok(getComputedStyle($('#app-movil .am-cab')).display === 'none',
          'la cabecera de la app se esconde');
-      ok(!!$('#app-movil .am-barra'), 'pero la barra de abajo se queda');
+
+      /* LA BARRA VA PEGADA ABAJO. Al esconder la cabecera con `display:none`, todo se
+         corria una fila y la barra caia en la fila elastica: 437 px de alto en una
+         ventana de 878. Lo vio Daniel en beta. */
+      const barra = $('#app-movil .am-barra').getBoundingClientRect();
+      const app = $('#app-movil').getBoundingClientRect();
+      ok(Math.abs(barra.bottom - app.bottom) < 2, 'la barra está pegada al borde de abajo',
+         `barra acaba en ${Math.round(barra.bottom)}, la app en ${Math.round(app.bottom)}`);
+      ok(barra.height < 90, 'y no se estira', Math.round(barra.height) + 'px de alto');
+      const caja = $('#app-movil .am-caja').getBoundingClientRect();
+      ok(caja.bottom <= barra.top + 1, 'la caja de escribir queda justo encima',
+         `${Math.round(caja.bottom)} vs ${Math.round(barra.top)}`);
+
+      /* EL CURSOR SE QUEDA DONDE ESTABA tras un repintado: es lo que molestaba al
+         escribir dos mensajes seguidos. */
+      const campo = $('#app-movil [data-chat-texto]');
+      campo.focus();
+      campo.value = 'probando';
+      campo.setSelectionRange(8, 8);
+      pintarDeNuevo();
+      await esperar(120);
+      const otro = $('#app-movil [data-chat-texto]');
+      ok(document.activeElement === otro, 'tras repintar, el cursor sigue en la caja');
+      ok(otro.value === 'probando', 'y no se pierde lo que se estaba escribiendo', otro.value);
+      otro.value = '';
     }
 
     $('[data-chat-volver]').click();

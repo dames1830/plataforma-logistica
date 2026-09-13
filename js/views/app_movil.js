@@ -25,27 +25,27 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0762';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0762';
+import * as adminService from '../services_v245/adminService.js?v=29.0763';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0763';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0762';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0762';
-import * as metasService from '../services_v245/metasService.js?v=29.0762';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0763';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0763';
+import * as metasService from '../services_v245/metasService.js?v=29.0763';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0762';
+import * as temaService from '../services_v245/temaService.js?v=29.0763';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0762';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0762';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0763';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0763';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0762';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0763';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -67,9 +67,16 @@ const CSS = `
   position: fixed; inset: 0; z-index: 10;
   background: var(--am-papel); color: var(--am-tinta);
   font-family: var(--am-ui); font-size: 14px; line-height: 1.45;
-  display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: minmax(0, 1fr);
+  display: grid; grid-template-rows: auto 1fr auto auto; grid-template-columns: minmax(0, 1fr);
   overflow: hidden;
 }
+/* CADA UNO ANCLADO A SU FILA. Sin esto, esconder la cabecera dentro de una conversacion
+   corre todo hacia arriba -un 'display:none' no ocupa su fila- y la barra de abajo cae en
+   la fila elastica: media pantalla de barra. Lo vio Daniel en beta. */
+#app-movil > .am-cab { grid-row: 1; }
+#app-movil > .am-cuerpo { grid-row: 2; }
+#app-movil > .am-barra { grid-row: 3; }
+#app-movil > .am-capa-menu { grid-row: 4; }
 #app-movil * { box-sizing: border-box; }
 
 #app-movil .am-cab > * { display: block; width: min(100%, 560px); margin-inline: auto; }
@@ -1217,7 +1224,7 @@ const pantallaConversacion = () => {
         </div>
         <div class="am-caja">
             <button type="button" class="am-clip" data-chat-clip aria-label="Adjuntar">${ICO_CLIP}</button>
-            <input type="text" data-chat-texto placeholder="Escribe un mensaje…" ${chatMandando ? 'disabled' : ''}>
+            <input type="text" data-chat-texto placeholder="Escribe un mensaje…">
             <button type="button" class="am-enviar" data-chat-enviar aria-label="Enviar">${ICO_ENVIAR}</button>
         </div>
         <input type="file" data-chat-archivo hidden
@@ -1246,14 +1253,18 @@ const escribirEnElChat = async () => {
     const campo = raiz && raiz.querySelector('[data-chat-texto]');
     const texto = campo ? String(campo.value || '').trim() : '';
     if (!texto || !chatSala || chatMandando) return;
+    /* NO SE DESHABILITA EL CAMPO MIENTRAS VIAJA. Un campo deshabilitado pierde el foco, y
+       entonces hay que volver a tocarlo para escribir el mensaje siguiente — que es
+       justamente lo que molestaba. Se vacia y se sigue pudiendo escribir. */
     chatMandando = true;
     if (campo) campo.value = '';
-    pintar();
     try { await mandar(chatSala, texto); } catch (e) { alert('No se pudo enviar. Revisa la conexión.'); }
     chatMandando = false;
     marcarLeida(chatSala);
     pintar();
     alFinalDeLaCharla();
+    const otra = raiz && raiz.querySelector('[data-chat-texto]');
+    if (otra) otra.focus();
 };
 
 const adjuntarEnElChat = async (archivo) => {
@@ -2237,6 +2248,15 @@ const pintar = () => {
        cabecera: en un telefono, un chat con marco alrededor desperdicia media pantalla. */
     raiz.classList.toggle('en-conversacion', seccion === 'chat' && !!chatSala);
 
+    /* DONDE ESTABA EL CURSOR. El repintado reemplaza la caja de texto por otra nueva, y sin
+       esto hay que volver a tocarla para seguir escribiendo. Daniel: *"yo quiero escribir,
+       apretar enter y que el foco siga en el cuadro de texto"*. */
+    const escribiendo = document.activeElement
+        && document.activeElement.hasAttribute
+        && document.activeElement.hasAttribute('data-chat-texto');
+    const dondeIbaElCursor = escribiendo ? document.activeElement.selectionStart : 0;
+    const loQueLlevaba = escribiendo ? document.activeElement.value : '';
+
     const cuerpo = raiz.querySelector('.am-cuerpo');
     cuerpo.innerHTML = seccion === 'inicio' ? pantallaInicio()
         : seccion === 'lista' ? pantallaLista()
@@ -2266,6 +2286,16 @@ const pintar = () => {
     }).join('');
 
     if (seccion === 'chat' && chatSala) { pintarFotosDelChat(); alFinalDeLaCharla(); }
+
+    /* Y se le devuelve el cursor donde estaba, con lo que llevara escrito. */
+    if (escribiendo) {
+        const campo = raiz.querySelector('[data-chat-texto]');
+        if (campo && !campo.disabled) {
+            if (loQueLlevaba && !campo.value) campo.value = loQueLlevaba;
+            campo.focus();
+            try { campo.setSelectionRange(dondeIbaElCursor, dondeIbaElCursor); } catch (e) { /* da igual */ }
+        }
+    }
 };
 
 /** Vuelve a la web de siempre y se acuerda de la decisión. */
