@@ -47,8 +47,26 @@ ROBOT_TOKEN = os.environ.get('ROBOT_TOKEN', '')
 AREA_MAESTRO = 'articulos'
 AREA_FOTOS = 'reserva_fotos'
 
-CARPETA = os.path.join(os.path.expanduser('~'), 'OneDrive', 'danielames.bata',
-                       'scraping Stock', 'Stock Reserva')
+def _carpeta_reserva():
+    r"""Donde estan las fotos de reserva. SE BUSCA, NO SE ARMA CON `~`.
+
+    Corriendo como tarea el usuario es SYSTEM y `~` es `system32\config\systemprofile`,
+    que no es el OneDrive de nadie -y que ademas el 08-sep-2026 tuvo una carpeta fantasma
+    con ese nombre-. Es la misma busqueda que usan los demas robots."""
+    for c in (os.environ.get('OneDrive'), os.environ.get('OneDriveCommercial'),
+              os.path.join(os.path.expanduser('~'), 'OneDrive'),
+              os.path.join('C:', os.sep, 'Users', 'Administrator', 'OneDrive'),
+              os.path.join('C:', os.sep, 'Users', 'dames', 'OneDrive')):
+        if not c or 'systemprofile' in c.lower():
+            continue
+        ruta = os.path.join(c, 'danielames.bata', 'scraping Stock', 'Stock Reserva')
+        if os.path.isdir(ruta):
+            return ruta
+    return os.path.join(os.path.expanduser('~'), 'OneDrive', 'danielames.bata',
+                        'scraping Stock', 'Stock Reserva')
+
+
+CARPETA = _carpeta_reserva()
 
 MINIMO_RESERVA = 500
 MINIMO_MAESTRO = 5000

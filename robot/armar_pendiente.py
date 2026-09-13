@@ -145,7 +145,9 @@ def _base_onedrive():
     for c in (os.environ.get('OneDrive'), os.environ.get('OneDriveCommercial'),
               os.path.join(os.path.expanduser('~'), 'OneDrive'),
               r'C:\Users\Administrator\OneDrive', r'C:\Users\dames\OneDrive'):
-        if not c:
+        # El perfil de SYSTEM no es OneDrive: el 08-sep-2026 se fabrico ahi una carpeta
+        # fantasma y esta busqueda la elegia primero. La historia, en `distribucion.py`.
+        if not c or 'systemprofile' in c.lower():
             continue
         ruta = os.path.join(c, 'danielames.bata', 'scraping Stock')
         if os.path.isdir(ruta):
@@ -416,7 +418,9 @@ def leer_maestro():
     gen, rims, colec = {}, {}, {}
     for r in it:
         c = limpio(r[iC]) if iC < len(r) else ''
-        if not c:
+        # El perfil de SYSTEM no es OneDrive: el 08-sep-2026 se fabrico ahi una carpeta
+        # fantasma y esta busqueda la elegia primero. La historia, en `distribucion.py`.
+        if not c or 'systemprofile' in c.lower():
             continue
         if iG is not None and iG < len(r):
             gen[c] = str(r[iG] or '').strip()

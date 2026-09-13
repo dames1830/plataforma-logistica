@@ -58,18 +58,29 @@ TIMEOUT = 60
 ADMIN = 'dames'
 USAR_BETA = False
 
-# QUE ROBOT ES CADA COSA, con el nombre que se entiende en un aviso de dos lineas. La
-# clave es el nombre de la tarea programada, tal como la escribe `correr_si_toca.bat`.
+# COMO SE LLAMA CADA ROBOT EN EL TELEFONO.
+#
+#   Daniel, 12-sep, al ver el primero: *"eso lo ve un gerente, un jefe de logistica. Que
+#   es eso? Esta bien para un tecnico"*.
+#
+# A la izquierda va el nombre de la tarea -jerga nuestra, la escribe `correr_si_toca.bat`-.
+# A la derecha, lo que se dice en el almacen. NUNCA sale al telefono lo de la izquierda:
+# si alguna clave faltara, `bonito()` la arregla antes de que nadie la lea.
 NOMBRES = {
     'asn_web': 'ASN',
-    'ancla_noche': 'Corte de stock de las 19:00',
-    'ancla_manana': 'Corte de stock de las 07:00',
+    # EL ANCLA SE LLAMA CAMBIO DE TURNO. "Ancla" es como le decimos entre nosotros a la
+    # foto de stock que parte el dia; para quien recibe el aviso, es el cambio de turno.
+    'ancla_noche': 'Cambio de turno de la noche',
+    'ancla_manana': 'Cambio de turno de la mañana',
+    # La tarea del WMS vigila los DOS horarios, asi que el lanzador pasa las dos claves
+    # juntas. Sin esta linea el telefono decia "ancla_noche,ancla_manana".
+    'ancla_noche,ancla_manana': 'Cambio de turno',
     'stock_hora': 'Stock por hora',
     'picking_hora': 'Picking por hora',
     'oblpn_hora': 'Embalaje por hora',
     'mapa_hora': 'Mapa de calor',
     'reportes': 'Pendientes y Despachados',
-    'respaldo': 'Respaldo',
+    'respaldo': 'Respaldo de los datos',
     'archivado': 'Archivado',
     'cierre_dia': 'Cierre del día',
     'cruce_wms': 'Cruce del WMS',
@@ -79,8 +90,27 @@ NOMBRES = {
     'despacho_potencial': 'Despacho potencial',
 }
 
-# LOS DOS CORTES QUE LE INTERESAN A TODO EL MUNDO. Del resto solo se entera el admin.
-PARA_TODOS = ('ancla_manana', 'ancla_noche')
+# LOS CAMBIOS DE TURNO, QUE LE INTERESAN A TODO EL MUNDO -son los cortes de stock de las
+# 07:00 y las 19:00-. Del resto solo se entera el admin.
+PARA_TODOS = ('ancla_manana', 'ancla_noche', 'ancla_noche,ancla_manana')
+
+
+def bonito(clave):
+    """El nombre que se puede leer. Si la clave esta en la lista, el suyo; y si no -un
+    robot nuevo que nadie agrego-, se la arregla: fuera los guiones bajos, una sola
+    mayuscula al principio. Es la red que evita que a un jefe le llegue `foo_bar` al
+    telefono, que fue exactamente el defecto de la primera noche."""
+    if clave in NOMBRES:
+        return NOMBRES[clave]
+    partes = [p.strip() for p in clave.split(',') if p.strip()]
+    legibles = [NOMBRES.get(p, p.replace('_', ' ').strip().capitalize()) for p in partes]
+    # Sin repetir: "Cambio de turno, Cambio de turno" no se le manda a nadie.
+    vistos, salida = set(), []
+    for t in legibles:
+        if t.lower() not in vistos:
+            vistos.add(t.lower())
+            salida.append(t)
+    return ' y '.join(salida) if salida else 'Robot'
 
 
 def log(t, nivel='INFO'):
@@ -216,12 +246,17 @@ def main():
 
     resultado = valor('--resultado', '0')
     clave = robot.strip().strip('"')
-    nombre = NOMBRES.get(clave, clave)
+    nombre = bonito(clave)
     bien = str(resultado).strip() in ('0', '')
+    hora = datetime.now().strftime('%H:%M')
+
+    # EL CODIGO DE ERROR SE QUEDA ACA, en el log, que es donde sirve para arreglarlo. En el
+    # telefono no dice nada: quien lo lee no puede hacer nada con un "codigo 1".
+    if not bien:
+        log('%s devolvió el código %s' % (clave, resultado), 'AVISO')
 
     titulo = ('✅ ' if bien else '⚠️ ') + nombre
-    cuerpo = ('Terminó bien · %s' % datetime.now().strftime('%H:%M')) if bien \
-        else ('Terminó con problema (código %s) · %s' % (resultado, datetime.now().strftime('%H:%M')))
+    cuerpo = ('Terminó bien · %s' % hora) if bien else ('No pudo terminar · %s' % hora)
 
     return avisar(clave, titulo, cuerpo, etiqueta=clave, de_verdad=not probar)
 

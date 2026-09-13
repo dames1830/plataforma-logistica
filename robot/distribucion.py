@@ -151,7 +151,13 @@ def base_onedrive():
               os.path.join(os.path.expanduser("~"), "OneDrive"),
               os.path.join("C:", os.sep, "Users", "Administrator", "OneDrive"),
               os.path.join("C:", os.sep, "Users", "dames", "OneDrive")):
-        if not c:
+        # EL PERFIL DE SYSTEM NUNCA ES ONEDRIVE, aunque tenga una carpeta con ese
+        # nombre. Corriendo como tarea, `~` es `system32\config\systemprofile`; el
+        # 08-sep-2026 un robot creo ahi `OneDrive\danielames.bata` con makedirs y esta
+        # busqueda -que prueba `~` antes que la ruta fija del servidor- se quedo con la
+        # carpeta vacia. Este robot dijo "No hay ningun archivo de OBLPN" durante cuatro
+        # dias. Sin esta linea vuelve a pasar en cuanto alguien haga otro makedirs.
+        if not c or 'systemprofile' in c.lower():
             continue
         ruta = os.path.join(c, "danielames.bata")
         if os.path.isdir(ruta):
