@@ -25,17 +25,17 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0757';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0757';
+import * as adminService from '../services_v245/adminService.js?v=29.0758';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0758';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0757';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0757';
-import * as metasService from '../services_v245/metasService.js?v=29.0757';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0758';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0758';
+import * as metasService from '../services_v245/metasService.js?v=29.0758';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0757';
+import * as temaService from '../services_v245/temaService.js?v=29.0758';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
