@@ -665,6 +665,17 @@ RETENCION_SNAPSHOTS = {
     'picking_por_hora': 31,
     'embalaje_por_hora': 31,
     'cruce_wms': 31,
+    # LA PROGRAMACION DE RECEPCION, un mes.
+    #
+    # Se quedaba con el tope de 2 dias, o sea que el area solo tenia anteayer y ayer:
+    # el 14-sep-2026, al ir a corregir seis dias mal leidos, cada publicacion borraba
+    # la anterior y al final solo sobrevivieron los dos ultimos. Un reporte de
+    # recepcion no se puede armar con dos dias, y el robot lleva desde el 03-sep
+    # guardando citas que se borraban solas sin que nadie lo notara.
+    #
+    # No cuesta nada: un dia son unos 6 KB -catorce citas-, o sea 190 KB el mes
+    # entero, contra el disco de 1 GB. Es la mitad de lo que pesa un dia de picking.
+    'citas_recepcion': 31,
 }
 RETENCION_POR_DEFECTO = 2
 
