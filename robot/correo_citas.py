@@ -666,19 +666,40 @@ def citas_de_la_imagen(ruta):
             alturas.add(int(y))
     alturas = sorted(alturas)
 
-    # Que columna es cada una
+    # QUE COLUMNA ES CADA UNA, Y POR QUE NO ALCANZA CON CONTAR ORDENES.
+    #
+    # Elegir "la que mas ordenes tiene" es una moneda al aire. Medido sobre la
+    # captura del 14-09-2026: la columna O/C trae 13 y la de OBSERVACION 12, porque
+    # ahi va el detalle de catalogo, cajas y etiquetas con su propio codigo. Un
+    # punto de diferencia.
+    #
+    # El dia que gana Observacion, todo se corre tres columnas: el proveedor pasa a
+    # leerse de la columna UND. Asi se publico la programacion del lunes 14 con
+    # "828", "1460" y "526" guardados como NOMBRE DEL PROVEEDOR y 0 pares de total.
+    #
+    # Lo que de verdad las separa no es CUANTAS ordenes hay, sino CUANTO del texto
+    # son ordenes: la columna O/C es casi solo AAAA-NNNNN, mientras que en
+    # Observacion van entre descripciones -"HORNO MICROONDA", "CAJA BTS 5 SCHOLL",
+    # "BATA CATALOGO FTW"- y no llegan ni a un tercio.
     idx_oc = idx_hora = None
     puntajes = {}
+    densidad = {}
     for k, c in enumerate(columnas):
         texto = " ".join((t.get("t") or "") for t in (c.get("trozos") or []))
         for p in sueltas:
             if c["x0"] <= p["x"] + p["w"] / 2.0 < c["x1"]:
                 texto += " " + p["t"]
         puntajes[k] = (len(RE_OC.findall(texto)), len(RE_HORA.findall(texto)))
+        limpio_t = (texto or "").strip()
+        densidad[k] = (sum(len(m.group(0)) for m in RE_OC.finditer(limpio_t))
+                       / float(len(limpio_t))) if limpio_t else 0.0
     if puntajes:
-        idx_oc = max(puntajes, key=lambda k: puntajes[k][0])
-        if puntajes[idx_oc][0] == 0:
-            idx_oc = None
+        # Entre las que TIENEN ordenes, la mas densa. Se redondea a dos decimales
+        # para que una diferencia minima no decida: con densidades parejas manda
+        # el numero de ordenes, que es el criterio de antes.
+        con_oc = [k for k in puntajes if puntajes[k][0]]
+        if con_oc:
+            idx_oc = max(con_oc, key=lambda k: (round(densidad[k], 2), puntajes[k][0]))
         idx_hora = max(puntajes, key=lambda k: puntajes[k][1])
         if puntajes[idx_hora][1] == 0:
             idx_hora = None
@@ -746,14 +767,49 @@ def citas_de_la_imagen(ruta):
         ya, yb = alturas[i - 1], alturas[i]
         if (leer(col_tipo, ya, yb) or "").upper().startswith("TOTAL"):
             total = _num(leer(col_und, ya, yb))
-    avisos = cuadrar(filas, total)
+    avisos, graves = cuadrar(filas, total)
     return filas, {"total": total, "celdas": d.get("celdasLeidas"),
-                   "palabras": len(sueltas), "avisos": avisos,
-                   "cuadra": not avisos}
+                   "palabras": len(sueltas), "avisos": avisos, "graves": graves,
+                   "cuadra": not avisos, "fiable": not graves}
+
+
+def total_programado(filas):
+    """Los pares que se esperan en el dia.
+
+    SALE DE LA COLUMNA "UND", NO DE "CANT. POR OC". Hay citas que no traen
+    desglose por orden y solo llevan su total en UND -WINDSOR y PASITOS el 04-sep,
+    CLIFOR el 14, ADIDAS el 11-: sumando la otra columna valen CERO.
+
+    Medido sobre las ocho capturas de septiembre: sumar UND da el TOTAL del cuadro
+    en las ocho. Sumar CANT. POR OC fallaba en cinco, y el 11-sep daba 2.895 donde
+    el cuadro dice 7.616 -se perdia la fila entera de ADIDAS-.
+
+    Una cita son todas las filas que comparten proveedor y hora; su UND va en la
+    primera. Si esa cita no trae UND legible, se cae a la suma de sus ordenes.
+    """
+    vistos, ordenes = {}, {}
+    for f in filas:
+        if 'CALZ' not in (f.get('tipo') or '').upper():
+            continue
+        clave = (f.get('proveedor') or '') + '|' + (f.get('hora') or '')
+        ordenes[clave] = ordenes.get(clave, 0) + (f.get('cantidad') or 0)
+        if f.get('und'):
+            vistos[clave] = f['und']
+        elif clave not in vistos:
+            vistos[clave] = None
+    total = sum(v if v else ordenes.get(k, 0) for k, v in vistos.items())
+    # Si no se reconocio ni una cita de calzado, vale lo que haya: el aviso de
+    # `cuadrar` ya se encarga de que eso no se publique.
+    return total or sum(f.get('cantidad') or 0 for f in filas)
 
 
 def cuadrar(filas, total):
     """Comprueba la tabla contra sus totales y rellena lo que se pueda.
+
+    Devuelve (avisos, graves). GRAVE es lo que hace que el numero publicado sea
+    falso: un descuadre, una cita sin cantidad, una orden que se leyo distinto de
+    las dos formas. No es grave que el correo no traiga TOTAL -el del 07 y el del
+    08-sep vienen con 0 de fabrica- si por dentro cada cita cuadra con su UND.
 
     DOS CUENTAS, las mismas que hace Daniel:
       1. Las filas que comparten el mismo UND son una sola cita con varias
@@ -764,6 +820,7 @@ def cuadrar(filas, total):
     -no leido-. Si faltan dos o mas, no se inventa: se avisa.
     """
     avisos = []
+    graves = []
 
     # ── 1. cada grupo contra su UND ────────────────────────────────────────
     grupos = {}
@@ -784,10 +841,12 @@ def cuadrar(filas, total):
             avisos.append("las %d ordenes de %s suman %s y la fila dice %s"
                           % (len(gs), gs[0].get("proveedor") or "?",
                              format(suma, ","), format(und, ",")))
+            graves.append(avisos[-1])
         elif len(faltan) > 1:
             avisos.append("a la cita de %s le faltan %d cantidades y no se pueden "
                           "despejar de una sola cuenta"
                           % (gs[0].get("proveedor") or "?", len(faltan)))
+            graves.append(avisos[-1])
 
     # ── 2. los UND contra el TOTAL ─────────────────────────────────────────
     if total:
@@ -818,9 +877,11 @@ def cuadrar(filas, total):
         elif not sinUnd and suma != total:
             avisos.append("las citas suman %s y el TOTAL de la tabla dice %s"
                           % (format(suma, ","), format(total, ",")))
+            graves.append(avisos[-1])
         elif len(sinUnd) > 1:
             avisos.append("%d citas quedaron sin cantidad y el TOTAL solo permite "
                           "despejar una" % len(sinUnd))
+            graves.append(avisos[-1])
 
     # ── 3. lo que quedo sin cantidad, se diga o no se pueda despejar ───────
     #
@@ -833,6 +894,7 @@ def cuadrar(filas, total):
     for f in sinCantidad:
         avisos.append("la cita de %s (%s) quedo SIN CANTIDAD: hay que mirarla en la imagen"
                       % (f.get("proveedor") or "?", f.get("oc") or "sin orden"))
+        graves.append(avisos[-1])
 
     if not total:
         avisos.append("no se pudo leer el TOTAL de la tabla, asi que no hay contra "
@@ -841,7 +903,12 @@ def cuadrar(filas, total):
     for f in filas:
         if f.get("dudoso"):
             avisos.append("la orden %s se leyo distinto de las dos formas" % f.get("oc"))
-    return avisos
+            graves.append(avisos[-1])
+    # NI UNA SOLA CITA DE CALZADO: la lectura no sirvio, aunque no haya descuadres.
+    if not [f for f in filas if "CALZ" in (f.get("tipo") or "").upper()]:
+        avisos.append("no se reconocio ninguna cita de calzado en la tabla")
+        graves.append(avisos[-1])
+    return avisos, graves
 
 
 def fecha_del_asunto(asunto, llegada):
@@ -1058,8 +1125,7 @@ def main():
                 fallos += 1
                 continue
 
-        total = sum(f['cantidad'] or 0 for f in filas
-                    if 'CALZ' in (f.get('tipo') or '').upper()) or                 sum(f['cantidad'] or 0 for f in filas)
+        total = total_programado(filas)
         for f in filas[:25]:
             log('     %-10s %-9s %-13s %-26s %8s %s'
                 % ((f.get('tipo') or '')[:10], f.get('hora', ''), f.get('oc', ''),
@@ -1076,11 +1142,33 @@ def main():
         if meta.get('cuadra'):
             log('   CUADRA: las citas suman %s y la tabla dice %s'
                 % (format(total, ','), format(meta.get('total') or 0, ',')))
-        else:
-            for av in meta.get('avisos') or []:
-                log('   REVISAR: %s' % av, 'ERROR')
-            log('   Se publica igual, marcado como "no comprobado": la imagen queda '
-                'en Citas %s.png para mirarla.' % fecha, 'WARN')
+        for av in meta.get('avisos') or []:
+            log('   REVISAR: %s' % av,
+                'ERROR' if av in (meta.get('graves') or []) else 'WARN')
+
+        # LO QUE NO SE PUEDE COMPROBAR, NO SE PUBLICA.
+        #
+        #   Daniel, 14-sep-2026, al elegir que hacer cuando no cuadre: *no publicar
+        #   y avisar*.
+        #
+        # Antes se publicaba igual, "marcado como no comprobado" en un campo que no
+        # mira nadie. Asi salieron siete de las ocho programaciones de septiembre con
+        # el numero equivocado -el 08-sep 2.651 donde el cuadro dice 5.708- sin que
+        # se enterara nadie. Un numero incompleto que se ve completo es peor que un
+        # hueco: el hueco se nota.
+        #
+        # NO es grave que el correo no traiga TOTAL: el del 07 y el del 08-sep vienen
+        # con 0 de fabrica y por dentro cuadran perfecto. Eso sale por WARN y se
+        # publica.
+        #
+        # El correo se deja SIN MARCAR a proposito, asi que el pase siguiente lo
+        # vuelve a intentar; y como esto cuenta como fallo, el aviso llega al
+        # telefono -espaciado dos horas, ver avisar_push.py-.
+        if not meta.get('fiable'):
+            log('   NO SE PUBLICA: la lectura no se pudo comprobar. La imagen queda '
+                'en Citas %s.png para mirarla a mano.' % fecha, 'ERROR')
+            fallos += 1
+            continue
 
         if probar:
             log('   --probar: no se publica nada')
