@@ -938,6 +938,20 @@ def main():
     vistos = leer_vistos()
     encontrados = 0
     publicados = 0
+    # FALLOS DE VERDAD, que NO es lo mismo que no tener nada que publicar.
+    #
+    #   Daniel, 14-sep-2026, con 36 avisos iguales de "No pudo terminar" encima:
+    #   *"me esta llegando esta notificacion... esta asi desde el mediodia"*.
+    #
+    # Este robot mira el buzon cada 10 minutos de 12:00 a 19:00 y el correo llega UNA
+    # vez. O sea que "no publique nada" es lo NORMAL en 35 de los 36 pases del dia, y
+    # devolverlo como error hacia sonar el telefono cada 10 minutos por algo que estaba
+    # bien. Peor: el dia que la lectura de la tabla salio en cero -14-09- no aviso nada,
+    # porque ese pase si habia publicado. Avisaba de lo bueno y callaba lo malo.
+    #
+    # Desde aca el codigo de salida significa UNA sola cosa: *fallo algo*. No encontrar
+    # el correo todavia no es fallar.
+    fallos = 0
 
     for bandeja, it in correos(dias, diag=True):
         try:
@@ -1035,11 +1049,13 @@ def main():
             if not ruta:
                 log('   NO HAY NI TABLA NI IMAGEN en este correo. Se deja SIN MARCAR '
                     'para volver a intentarlo.', 'ERROR')
+                fallos += 1
                 continue
             filas, meta = citas_de_la_imagen(ruta)
             if not filas:
                 log('   NO SE PUDO LEER LA IMAGEN. Queda guardada en %s para mirarla '
                     'a mano; el correo se deja SIN MARCAR.' % os.path.basename(ruta), 'ERROR')
+                fallos += 1
                 continue
 
         total = sum(f['cantidad'] or 0 for f in filas
@@ -1095,6 +1111,7 @@ def main():
             return 0
         except Exception as e:
             log('   NO SE PUDO PUBLICAR: %s' % e, 'ERROR')
+            fallos += 1
 
     if listar:
         log('')
@@ -1104,10 +1121,13 @@ def main():
     guardar_vistos(vistos)
     log('')
     if not encontrados:
-        log('ningun correo con ese asunto en los ultimos %d dias' % dias, 'WARN')
-        return 1
-    log('%d correo(s) con ese asunto, %d publicado(s)' % (encontrados, publicados))
-    return 0 if publicados or probar else 1
+        log('ningun correo con ese asunto en los ultimos %d dias · todavia no llega, '
+            'que a esta hora es lo normal' % dias, 'WARN')
+    else:
+        log('%d correo(s) con ese asunto, %d publicado(s)' % (encontrados, publicados))
+    if fallos:
+        log('%d cosa(s) fallaron de verdad; se avisa' % fallos, 'ERROR')
+    return 1 if fallos else 0
 
 
 if __name__ == '__main__':

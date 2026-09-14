@@ -94,6 +94,80 @@ NOMBRES = {
 # 07:00 y las 19:00-. Del resto solo se entera el admin.
 PARA_TODOS = ('ancla_manana', 'ancla_noche', 'ancla_noche,ancla_manana')
 
+# CADA CUANTO PUEDE REPETIRSE EL MISMO AVISO, en minutos.
+#
+#   Daniel, 14-sep-2026, despues de recibir 36 avisos iguales de "Correo de citas" en
+#   una tarde: *"recibir avisos cada dos horas en el rango de 12:00 a 19:00"*.
+#
+# HAY ROBOTS QUE MIRAN MUCHAS VECES PARA CAZAR ALGO QUE PASA UNA SOLA VEZ AL DIA: el
+# correo de citas revisa el buzon cada 10 minutos de 12:00 a 19:00 -36 pases- y el
+# despacho potencial hace lo suyo 11 veces. Que miren seguido esta bien: el correo
+# llega cuando llega y hay que cazarlo enseguida. Lo que no puede es sonar el telefono
+# cada vez.
+#
+# Aca se separan las dos cosas: el robot sigue mirando cada 10 minutos y el telefono
+# suena cada dos horas.
+#
+# NO ES UN FILTRO CIEGO, y eso es lo que lo hace de fiar: si el resultado CAMBIA
+# -venia bien y fallo, o venia fallando y se arreglo- el aviso sale AL MOMENTO, porque
+# eso si es noticia. Lo unico que se calla es la repeticion de lo mismo. Un filtro que
+# tambien se tragara los cambios seria peor que no tener aviso.
+ESPACIADO = {
+    'correo_citas': 120,
+    'despacho_potencial': 120,
+}
+
+# Donde se apunta el ultimo aviso de cada robot, al lado del script como las demas
+# marcas.
+MARCAS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'avisos_ultimo.json')
+
+
+def _marcas():
+    try:
+        with open(MARCAS, encoding='utf-8') as f:
+            return json.load(f) or {}
+    except Exception:
+        return {}
+
+
+def _apuntar(clave, bien):
+    """Deja constancia de este aviso.
+
+    FALLA CALLADO A PROPOSITO. Si no se puede escribir la marca, el aviso ya salio; lo
+    unico que se pierde es el espaciado del siguiente, que saldra antes de tiempo.
+    Nunca al reves: un error aca no puede tragarse un aviso."""
+    try:
+        d = _marcas()
+        d[clave] = {'cuando': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'bien': bool(bien)}
+        with open(MARCAS, 'w', encoding='utf-8') as f:
+            json.dump(d, f, ensure_ascii=False, indent=1)
+    except Exception as e:
+        log('no se pudo apuntar la marca del aviso: %s' % str(e)[:80], 'AVISO')
+
+
+def toca_avisar(clave, bien):
+    """(si_toca, por_que). Ver ESPACIADO: solo frena la REPETICION de lo mismo."""
+    minutos = ESPACIADO.get(clave)
+    if not minutos:
+        return True, ''
+    m = _marcas().get(clave)
+    if not m:
+        return True, 'es el primer aviso de este robot'
+    if bool(m.get('bien')) != bool(bien):
+        return True, 'cambio respecto al ultimo aviso, que es justo lo que hay que contar'
+    try:
+        antes = datetime.strptime(str(m.get('cuando')), '%Y-%m-%d %H:%M:%S')
+    except Exception:
+        return True, 'la marca anterior no se entiende'
+    pasados = (datetime.now() - antes).total_seconds() / 60.0
+    # Si el reloj fue hacia atras, se avisa. Callar por una marca del futuro dejaria el
+    # telefono mudo hasta que el reloj la alcanzara.
+    if pasados < 0 or pasados >= minutos:
+        return True, 'el anterior fue hace %d min y el espaciado es de %d' % (pasados, minutos)
+    return False, ('se repite lo mismo de hace %d min; el espaciado de este robot es de '
+                   '%d min' % (pasados, minutos))
+
 
 def bonito(clave):
     """El nombre que se puede leer. Si la clave esta en la lista, el suyo; y si no -un
@@ -258,7 +332,19 @@ def main():
     titulo = ('✅ ' if bien else '⚠️ ') + nombre
     cuerpo = ('Terminó bien · %s' % hora) if bien else ('No pudo terminar · %s' % hora)
 
-    return avisar(clave, titulo, cuerpo, etiqueta=clave, de_verdad=not probar)
+    toca, porque = toca_avisar(clave, bien)
+    if not toca:
+        log('no se manda: %s' % porque)
+        return 0
+    if porque:
+        log('se manda: %s' % porque)
+
+    salida = avisar(clave, titulo, cuerpo, etiqueta=clave, de_verdad=not probar)
+    # Se apunta DESPUES de mandarlo, y solo cuando va de verdad: un --probar no puede
+    # dejar callado al aviso siguiente.
+    if not probar:
+        _apuntar(clave, bien)
+    return salida
 
 
 if __name__ == '__main__':
