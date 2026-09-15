@@ -167,6 +167,22 @@ def avisar_novedad(clave, texto):
         pass
 
 
+
+def marcar_hecho(clave):
+    """Deja constancia de que HOY este robot ya hizo lo suyo.
+
+    De aqui sale que el aviso del cierre no suene en falso: ver _hecho_hoy() en
+    avisar_push.py. Se escribe tanto al publicar como al ver que ya estaba hecho,
+    porque las dos cosas significan lo mismo: el dia NO quedo vacio."""
+    try:
+        carpeta = os.path.join(AQUI, 'novedades')
+        if not os.path.isdir(carpeta):
+            os.makedirs(carpeta)
+        with io.open(os.path.join(carpeta, clave + '.hecho'), 'w', encoding='utf-8') as fh:
+            fh.write(datetime.datetime.now().strftime('%Y-%m-%d'))
+    except Exception:
+        pass
+
 def limpiar_logs(dias=30):
     """Los suyos de mas de un mes, fuera. Son 2 KB cada uno, pero uno por dia
        durante un año es basura que despues nadie mira."""
@@ -856,6 +872,10 @@ def main():
         if ya_se_hizo(correo) and '--forzar' not in sys.argv:
             log('el potencial ya se publico con %s. No se repite.'
                 % os.path.basename(correo))
+            # EL DIA NO QUEDO VACIO. Sin esto, el aviso del cierre decia "no llego
+            # el correo de comercial en todo el dia" con el correo procesado desde
+            # las 19:34 — paso la primera noche, el 14-09-2026.
+            marcar_hecho('despacho_potencial')
             return 0
 
     archivos, ultimo, fecha = elegir_dia(ss)
@@ -936,8 +956,10 @@ def main():
         if publicar_area.publicar(area, datos, 'MASTER'):
             log('%-24s publicado  (%.0f KB)' % (area, n / 1024))
             # Solo el potencial avisa: la distribucion no espera ningun correo.
-            if area == 'despacho_potencial_dia' and _TITULAR:
-                avisar_novedad('despacho_potencial', _TITULAR)
+            if area == 'despacho_potencial_dia':
+                marcar_hecho('despacho_potencial')
+                if _TITULAR:
+                    avisar_novedad('despacho_potencial', _TITULAR)
         else:
             log('%-24s *** NO SE PUDO PUBLICAR ***' % area)
             ok = False

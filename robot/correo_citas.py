@@ -970,6 +970,22 @@ def guardar_vistos(v):
         log('no se pudo guardar la lista de vistos: %s' % e, 'WARN')
 
 
+
+def marcar_hecho(clave):
+    """Deja constancia de que HOY este robot ya hizo lo suyo.
+
+    De aqui sale que el aviso del cierre no suene en falso: ver _hecho_hoy() en
+    avisar_push.py. Se escribe tanto al publicar como al ver que ya estaba hecho,
+    porque las dos cosas significan lo mismo: el dia NO quedo vacio."""
+    try:
+        carpeta = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'novedades')
+        if not os.path.isdir(carpeta):
+            os.makedirs(carpeta)
+        with io.open(os.path.join(carpeta, clave + '.hecho'), 'w', encoding='utf-8') as fh:
+            fh.write(datetime.now().strftime('%Y-%m-%d'))
+    except Exception:
+        pass
+
 def avisar_novedad(clave, texto):
     """Deja el titular para el aviso al celular.
 
@@ -1009,6 +1025,8 @@ def main():
         log('hoy ya se capturo a las %s (programa el %s, %s citas). No se abre Outlook.'
             % (marca.get('capturadoALas', '?'), marca.get('programaElDia', '?'),
                marca.get('citas', '?')))
+        # EL DIA NO QUEDO VACIO: que el aviso del cierre no diga que no llego nada.
+        marcar_hecho('correo_citas')
         return 0
 
     log('=' * 62)
@@ -1204,6 +1222,7 @@ def main():
         try:
             estado = publicar(fecha, datos)
             log('   publicado en %s del %s (%s)' % (AREA, fecha, estado))
+            marcar_hecho('correo_citas')
             avisar_novedad('correo_citas', 'Citas del %s/%s: %s pares en %d citas'
                            % (fecha[8:10], fecha[5:7], format(total, ','), len(filas)))
             publicados += 1

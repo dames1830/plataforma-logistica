@@ -170,6 +170,32 @@ def _novedad(clave):
         return None
 
 
+def _hecho_hoy(clave):
+    """¿El robot dice que hoy ya hizo lo suyo?
+
+    SE LE PREGUNTA A EL, y no a la marca de avisos. La primera noche el aviso del
+    cierre salio en falso -"No llego el correo de comercial en todo el dia"- con el
+    correo procesado desde las 19:34 y el propio robot diciendolo en su registro:
+    *"el potencial ya se publico con Guias 14.09.xlsx. No se repite."*.
+
+    El fallo estaba en a QUIEN se le pregunto: `novedadEl` solo sabe si se mando un
+    aviso, no si el correo llego. Como el robot habia publicado antes de que este
+    mecanismo existiera, la marca estaba vacia y el dia parecio vacio.
+
+    El robot escribe este archivo tanto cuando publica como cuando ve que hoy ya
+    estaba hecho. ANTE LA DUDA se devuelve True -o sea, NO se avisa-: callar de mas
+    cuesta un aviso; gritar de mas cuesta la confianza en todos los demas."""
+    try:
+        ruta = os.path.join(NOVEDADES, clave + '.hecho')
+        if not os.path.exists(ruta):
+            return False
+        with open(ruta, encoding='utf-8') as f:
+            return (f.read() or '').strip()[:10] == datetime.now().strftime('%Y-%m-%d')
+    except Exception as e:
+        log('no se pudo leer si %s ya hizo lo suyo: %s' % (clave, str(e)[:60]), 'AVISO')
+        return True
+
+
 def _es_el_ultimo_pase(clave):
     """¿Esta es su ultima vuelta de hoy?
 
@@ -418,7 +444,8 @@ def main():
         # No encontro nada. Se calla... salvo que sea su ULTIMA vuelta del dia y el
         # dia se este acabando con las manos vacias: eso si hay que contarlo.
         hoy = datetime.now().strftime('%Y-%m-%d')
-        ya_encontro_hoy = ((_marcas().get(clave) or {}).get('novedadEl') == hoy)
+        ya_encontro_hoy = (_hecho_hoy(clave)
+                           or (_marcas().get(clave) or {}).get('novedadEl') == hoy)
         if ya_encontro_hoy or not _es_el_ultimo_pase(clave):
             log('no se manda: %s' % ('hoy ya encontro lo suyo' if ya_encontro_hoy
                                      else 'no trajo novedad y todavia le quedan vueltas'))
