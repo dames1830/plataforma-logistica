@@ -25,29 +25,29 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0790';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0790';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0790';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0790';
+import * as adminService from '../services_v245/adminService.js?v=29.0791';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0791';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0791';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0791';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0790';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0790';
-import * as metasService from '../services_v245/metasService.js?v=29.0790';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0791';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0791';
+import * as metasService from '../services_v245/metasService.js?v=29.0791';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0790';
+import * as temaService from '../services_v245/temaService.js?v=29.0791';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0790';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0790';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0791';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0791';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0790';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0791';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -223,12 +223,13 @@ const CSS = `
    texto seguia siendo una plantilla valida. */
 #app-movil .dsp-cargar { display: flex; align-items: center; justify-content: center;
   min-width: 46px; background: var(--am-va-agua); border: 1px solid var(--am-va);
-  border-radius: 10px; color: var(--am-va); font-size: 1.1rem; cursor: pointer; }
+  border-radius: 10px; color: var(--am-va); font-size: 1.1rem; cursor: pointer;
+  font-family: var(--am-ui); padding: 0; }
 #app-movil .dsp-cargar:active { transform: scale(.95); }
-#app-movil .dsp-otra { display: flex; align-items: center; justify-content: center;
-  background: var(--am-papel); border: 1px solid var(--am-linea); border-radius: 8px;
-  padding: .32rem .7rem; color: var(--am-suave); font-size: .72rem; font-weight: 700;
-  font-family: var(--am-ui); cursor: pointer; }
+#app-movil .dsp-otra { display: inline-flex; align-items: center; justify-content: center;
+  gap: .3rem; background: var(--am-papel); border: 1px solid var(--am-linea);
+  border-radius: 8px; padding: .32rem .7rem; color: var(--am-suave); font-size: .72rem;
+  font-weight: 700; font-family: var(--am-ui); cursor: pointer; }
 #app-movil .dsp-pastilla { font-size: .6rem; font-weight: 800; letter-spacing: .04em;
   text-transform: uppercase; padding: .14rem .38rem; border-radius: 3px; white-space: nowrap; }
 #app-movil .dsp-dato { display: flex; justify-content: space-between; gap: .7rem; padding: .13rem 0;
@@ -253,6 +254,7 @@ const CSS = `
   color: var(--am-va); }
 #app-movil .dsp-adj.pide { border-color: var(--am-tarde); color: var(--am-tarde);
   background: var(--am-tarde-agua); }
+#app-movil .dsp-adj:active { transform: scale(.97); }
 #app-movil .dsp-adj .ic { font-size: 1.25rem; }
 /* LOS DOS ICONOS DEL RECUADRO: ver y cambiar. Van grandes -36 px de lado- porque se
    tocan con el pulgar, en la calle, a veces con guantes. */
@@ -3180,9 +3182,7 @@ const pantallaDespacho = () => {
             ? '<b>Todavía no hay despachos de catálogo.</b> El área existe pero llegó vacía.'
             : '<b>No se pudo leer los despachos.</b> Esto no quiere decir que no haya: puede ser que el servidor esté reiniciando, que tarda como un minuto en volver.'}</div>
           <div class="dsp-ver" style="justify-content:center; margin-top:.9rem;">
-            <label class="dsp-otra">\ud83d\udcc4 Cargar la orden<input type="file" data-dcargar
-              accept="*/*"
-              style="display:none"></label>
+            <button type="button" class="dsp-otra" data-dcargar>\ud83d\udcc4 Cargar la orden</button>
             <button type="button" data-drecargar>Volver a preguntar</button>
             <button type="button" data-dsalir>Ir a Inicio</button>
           </div>`;
@@ -3247,10 +3247,8 @@ const pantallaDespacho = () => {
       <div class="dsp-barra">
         <input id="des_busca" class="dsp-buscar" type="search" placeholder="Buscar rótulo, pedido, factura, destino…"
                value="${esc(desBusca)}">
-        <label class="dsp-cargar" title="Cargar la orden de comercial">\ud83d\udcc4
-          <input type="file" data-dcargar
-            accept="*/*"
-            style="display:none"></label>
+        <button type="button" class="dsp-cargar" data-dcargar
+          title="Cargar la orden de comercial">\ud83d\udcc4</button>
       </div>
       <div class="am-tres">
         ${tarjeta('', L.length, 'despachos')}
@@ -3282,6 +3280,91 @@ const desGuardarEscrito = () => {
     return desBorrador;
 };
 
+/* ══ EL SELECTOR DE ARCHIVO VIVE FUERA DE LA PANTALLA ═════════════════════
+   Daniel: *"le doy clic al Excel, me vuelve a la aplicación, pero nada, no carga nada"*.
+
+   El <input type="file"> estaba dentro de la pantalla, y la pantalla se repinta sola
+   -cuando llegan datos, cuando se toca algo-. Mientras el explorador de Android está
+   abierto la app queda en segundo plano y se repinta igual: al volver, el input que
+   abrió el explorador YA NO EXISTE, y Android le entrega el archivo a un elemento
+   suelto que no está en la página. Nadie se entera. Vuelve y no pasa nada.
+
+   Acá se crea UNO SOLO, colgado del <body>, que no se repinta nunca. El botón de la
+   pantalla ya no lleva input adentro: solo manda a abrir este. */
+let entradaArchivo = null;
+const entradasAdjunto = {};
+
+const pedirElArchivo = () => {
+    if (!entradaArchivo) {
+        entradaArchivo = document.createElement('input');
+        entradaArchivo.type = 'file';
+        /* Cualquier archivo, a propósito: filtrar por extensión esconde el que baja de
+           WhatsApp, que suele llegar sin tipo. Si no es un Excel, el lector lo dice. */
+        entradaArchivo.accept = '*/*';
+        entradaArchivo.style.display = 'none';
+        document.body.appendChild(entradaArchivo);
+        entradaArchivo.addEventListener('change', () => {
+            const arch = entradaArchivo.files && entradaArchivo.files[0];
+            entradaArchivo.value = '';            // para poder elegir el mismo otra vez
+            if (arch) leerLaOrden(arch);
+        });
+    }
+    entradaArchivo.value = '';
+    entradaArchivo.click();
+};
+
+/* LO MISMO PARA LAS FOTOS Y EL PDF, y por el mismo motivo: la ficha se repinta, y
+   mientras la cámara está abierta la app está en segundo plano. Al volver con la foto
+   tomada, el recuadro que abrió la cámara ya no existe y la foto se pierde sin decir
+   nada. Uno por tipo —la foto pide la cámara y el PDF no—, colgados del <body>. */
+const pedirElAdjunto = (cual) => {
+    if (!entradasAdjunto[cual]) {
+        const e = document.createElement('input');
+        e.type = 'file';
+        e.accept = cual === 'pdf' ? 'application/pdf' : 'image/*';
+        e.style.display = 'none';
+        document.body.appendChild(e);
+        e.addEventListener('change', async () => {
+            const arch = e.files && e.files[0];
+            e.value = '';
+            if (!arch) return;
+            try {
+                desGuardarEscrito();
+                desAviso = 'Preparando ' + cual + '\u2026'; pintar();
+                desAdjuntos[cual] = await DES.prepararAdjunto(arch, cual);
+                desAviso = 'Ya est\u00e1 ' + (cual === 'pdf' ? 'el PDF' : 'la ' + cual) + '. Toca Guardar para subirlo.';
+            } catch (err) {
+                desAviso = 'No se pudo usar ese archivo: ' + ((err && err.message) || '');
+            }
+            pintar();
+        });
+        entradasAdjunto[cual] = e;
+    }
+    entradasAdjunto[cual].value = '';
+    entradasAdjunto[cual].click();
+};
+
+/* Leer el archivo y mostrar lo que trae. No guarda nada. */
+const leerLaOrden = async (arch) => {
+    seccion = 'despacho';
+    desOrden = { estado: 'leyendo' };
+    pintar();
+    try {
+        const r = await ORD.leerArchivo(arch);
+        if (!r.ok) { desOrden = { estado: 'malo', motivo: r.motivo }; pintar(); return; }
+        const idx = await DES.traerIndice(true);
+        desOrden = {
+            estado: 'mirando', orden: r.orden, filas: r.filas, cuadre: r.cuadre,
+            fecha: DES.hoyTexto(),
+            agencias: new Set(r.filas.map((f) => String(f.age || '').toUpperCase())).size,
+            repetida: ORD.yaCargada(idx, r.orden.od)
+        };
+    } catch (err) {
+        desOrden = { estado: 'malo', motivo: (err && err.message) || 'no se pudo leer' };
+    }
+    pintar();
+};
+
 /* ══ CARGAR LA ORDEN DE DESPACHO ══════════════════════════════════════
    Daniel, 15-sep-2026: *"el excel llega por WhatsApp... lo ideal sería cargarlo por
    celular del WhatsApp al celular de frente"*.
@@ -3310,9 +3393,7 @@ const hojaDeCarga = () => {
             comercial. Si lo bajaste de WhatsApp, prueba abrirlo primero para ver que no
             esté a medio bajar.</p>
             <div class="dsp-ver" style="margin-top:.8rem">
-              <label class="dsp-otra">Elegir otro<input type="file" data-dcargar
-                accept="*/*"
-                style="display:none"></label>
+              <button type="button" class="dsp-otra" data-dcargar>Elegir otro</button>
               <button type="button" data-dcarga-cerrar>Cerrar</button>
             </div>
           </div></div></div>`;
@@ -3454,8 +3535,7 @@ const hojaDeDespacho = () => {
         const hay = aca || enDrive;
         const botones = aca ? `<span class="dsp-acc">
               <button type="button" data-dver="${cual}" title="Ver">👁️</button>
-              <label title="Cambiar">🔄<input type="file" data-dadj="${cual}"
-                accept="${cual === 'pdf' ? 'application/pdf' : 'image/*'}" style="display:none"></label>
+              <button type="button" data-dadj="${cual}" title="Cambiar">🔄</button>
             </span>` : '';
         const cuerpo = `<span class="ic">${cual === 'pdf' ? '📄' : '📷'}</span>
             <span>${esc(rot)}${pide ? ' *' : ''}</span>
@@ -3464,11 +3544,9 @@ const hojaDeDespacho = () => {
            tocar en cualquier hueco volvería a abrir el selector de archivos. */
         return hay
             ? `<div class="dsp-adj hay">${cuerpo}${botones}${enDrive
-                ? `<label class="dsp-acc"><span class="dsp-uno">🔄</span><input type="file" data-dadj="${cual}"
-                   accept="image/*" style="display:none"></label>` : ''}</div>`
-            : `<label class="dsp-adj ${pide ? 'pide' : ''}">${cuerpo}
-                <input type="file" data-dadj="${cual}" accept="${cual === 'pdf' ? 'application/pdf' : 'image/*'}" style="display:none">
-              </label>`;
+                ? `<span class="dsp-acc"><button type="button" class="dsp-uno"
+                   data-dadj="${cual}">🔄</button></span>` : ''}</div>`
+            : `<div class="dsp-adj ${pide ? 'pide' : ''}" data-dadj="${cual}">${cuerpo}</div>`;
     };
 
     return `
@@ -3777,6 +3855,19 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
     alSalir = onLogout;
     seccion = (String(location.hash || '').indexOf('robots') >= 0) ? 'robots' : 'inicio';
 
+    /* ══ EL EXCEL QUE LLEGO POR COMPARTIR ══════════════════════════════════
+       Cuando se comparte el archivo desde WhatsApp, Android abre la app con el archivo
+       ya guardado por el ayudante. Se recoge ANTES de dibujar, para que lo primero que
+       se vea sea el cargador con el archivo puesto y no la pantalla de Inicio: el que
+       comparte un Excel no quiere ver el resumen del turno, quiere cargarlo.
+
+       Se hace sin esperar -no se pone `await` que trabe el arranque-: si el archivo
+       tarda, la app abre igual y el cargador aparece un segundo despues. */
+    if (String(location.search || '').indexOf('compartido') >= 0) {
+        seccion = 'despacho';
+        ORD.archivoCompartido().then((arch) => { if (arch) leerLaOrden(arch); }).catch(() => {});
+    }
+
     try {
         if (navigator.serviceWorker && !window._amEscuchaAvisos) {
             window._amEscuchaAvisos = true;
@@ -3833,46 +3924,6 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
     /* El archivo elegido: se achica, se pasa a base64 y se queda en memoria hasta que
        se toque Guardar. Así, si alguien cierra sin guardar, no queda una foto suelta
        en el servidor. */
-    /* El Excel de la orden. Se lee y se MUESTRA; no se guarda nada todavia. */
-    raiz.addEventListener('change', async (e) => {
-        const cg = e.target.closest('[data-dcargar]');
-        if (cg) {
-            const arch = cg.files && cg.files[0];
-            cg.value = '';                       // para poder elegir el mismo otra vez
-            if (!arch) return;
-            desOrden = { estado: 'leyendo' }; pintar();
-            try {
-                const r = await ORD.leerArchivo(arch);
-                if (!r.ok) { desOrden = { estado: 'malo', motivo: r.motivo }; pintar(); return; }
-                const idx = await DES.traerIndice(true);
-                desOrden = {
-                    estado: 'mirando', orden: r.orden, filas: r.filas, cuadre: r.cuadre,
-                    fecha: DES.hoyTexto(),
-                    agencias: new Set(r.filas.map((f) => String(f.age || '').toUpperCase())).size,
-                    repetida: ORD.yaCargada(idx, r.orden.od)
-                };
-            } catch (err) {
-                desOrden = { estado: 'malo', motivo: (err && err.message) || 'no se pudo leer' };
-            }
-            pintar();
-            return;
-        }
-        const inp = e.target.closest('[data-dadj]');
-        if (!inp) return;
-        const cual = inp.getAttribute('data-dadj');
-        const arch = inp.files && inp.files[0];
-        if (!arch) return;
-        try {
-            desGuardarEscrito();
-            desAviso = 'Preparando ' + cual + '…'; pintar();
-            desAdjuntos[cual] = await DES.prepararAdjunto(arch, cual);
-            desAviso = 'Ya está ' + (cual === 'pdf' ? 'el PDF' : 'la ' + cual) + '. Toca Guardar para subirlo.';
-        } catch (err) {
-            desAviso = 'No se pudo usar ese archivo: ' + ((err && err.message) || '');
-        }
-        pintar();
-    });
-
     /* Las fechas no son un filtro más: cambiarlas manda a buscar semanas al servidor. */
     raiz.addEventListener('change', (e) => {
         const cf = e.target.closest('#des_cfecha');
@@ -3950,6 +4001,9 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
         /* ── DESPACHO ── */
         /* ── EL CARGADOR ── */
+        if (e.target.closest('[data-dcargar]')) { pedirElArchivo(); return; }
+        const da = e.target.closest('[data-dadj]');
+        if (da) { pedirElAdjunto(da.getAttribute('data-dadj')); return; }
         if (e.target.closest('[data-dcarga-cerrar]')) { desOrden = null; pintar(); return; }
         if (e.target.closest('[data-dcarga-guardar]')) { guardarLaOrden(); return; }
         if (e.target.closest('[data-dcarga-ver]')) {
