@@ -33,7 +33,8 @@
  * 102 reales, y de 753 destinos, 580.
  */
 
-import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0774';
+import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0775';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0775';
 
 const AREA = 'despacho_catalogo';
 
@@ -114,7 +115,12 @@ const ESTADOS = {
     'PENDIENTE':   { et: 'Pendiente',   color: 'var(--warning)', fondo: 'rgba(var(--warning-rgb), 0.12)' },
     'REPROGRAMAR': { et: 'Reprogramar', color: 'var(--warning)', fondo: 'rgba(var(--warning-rgb), 0.12)' }
 };
-const PENDIENTES = ['PENDIENTE', 'REPROGRAMAR', ''];
+/* LA REGLA DE QUÉ CUENTA COMO "SIN LIQUIDAR" VIVE EN UN SOLO SITIO.
+   Acá había una copia. Si la regla estuviera en dos lados, el día que se cambie en uno
+   la web y el celular dirían números distintos del mismo día, y cuando dos pantallas se
+   contradicen no se puede creer a ninguna. Los colores sí son de acá: el celular tiene
+   su propia paleta. */
+const PENDIENTES = null;   // se usa DES.sinLiquidar
 
 const esc = (s) => String(s === undefined || s === null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -170,7 +176,7 @@ let filtro = { canal: 'catalogo', agencia: '', asesor: '', estado: '', texto: ''
 let abierta = null;          /* el id de la fila abierta en la ficha */
 let raiz = null;
 
-const pendiente = (f) => PENDIENTES.indexOf(String(f.est || '').toUpperCase()) >= 0;
+const pendiente = (f) => DES.sinLiquidar(f);
 
 const delDia = (f, dia) => String(f.desp || '') === dia;
 
