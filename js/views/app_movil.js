@@ -25,28 +25,28 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0780';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0780';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0780';
+import * as adminService from '../services_v245/adminService.js?v=29.0781';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0781';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0781';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0780';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0780';
-import * as metasService from '../services_v245/metasService.js?v=29.0780';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0781';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0781';
+import * as metasService from '../services_v245/metasService.js?v=29.0781';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0780';
+import * as temaService from '../services_v245/temaService.js?v=29.0781';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0780';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0780';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0781';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0781';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0780';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0781';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -185,6 +185,12 @@ const CSS = `
 #app-movil .dsp-sub.on { background: var(--am-va-agua); color: var(--am-va); }
 #app-movil .dsp-sub span { display: block; font-family: var(--am-num); font-size: .68rem;
   font-weight: 400; opacity: .8; }
+/* SI PARECE UN BOTON, TIENE QUE SERLO. Las tres tarjetas del resumen filtran la
+   lista al tocarlas; sin esta marca visual seguirian pareciendo un cartel. */
+#app-movil .dsp-toca { cursor: pointer; border: 1px solid transparent; transition: border-color .12s; }
+#app-movil .dsp-toca:active { transform: scale(.97); }
+#app-movil .dsp-toca.on { border-color: var(--am-va); background: var(--am-va-agua); }
+#app-movil .dsp-quitar { cursor: pointer; color: var(--am-va); }
 #app-movil .dsp-rango { background: var(--am-carta); border: 1px solid var(--am-linea);
   border-radius: 11px; padding: .5rem; display: flex; flex-direction: column; gap: .45rem; }
 #app-movil .dsp-fechas { display: flex; gap: .4rem; }
@@ -221,6 +227,15 @@ const CSS = `
 #app-movil .dsp-adj.pide { border-color: var(--am-tarde); color: var(--am-tarde);
   background: var(--am-tarde-agua); }
 #app-movil .dsp-adj .ic { font-size: 1.25rem; }
+/* LOS DOS ICONOS DEL RECUADRO: ver y cambiar. Van grandes -36 px de lado- porque se
+   tocan con el pulgar, en la calle, a veces con guantes. */
+#app-movil .dsp-acc { display: flex; gap: .3rem; margin-top: .3rem; }
+#app-movil .dsp-acc > button, #app-movil .dsp-acc > label,
+#app-movil .dsp-acc .dsp-uno { display: flex; align-items: center; justify-content: center;
+  min-width: 36px; min-height: 30px; border-radius: 8px; cursor: pointer; font-size: 1rem;
+  border: 1px solid var(--am-linea); background: var(--am-carta); color: inherit;
+  font-family: var(--am-ui); padding: 0; }
+#app-movil .dsp-acc > button:active, #app-movil .dsp-acc > label:active { transform: scale(.94); }
 #app-movil .dsp-adj small { opacity: .8; font-size: .62rem; }
 #app-movil .dsp-ver { display: flex; gap: .4rem; margin-top: .5rem; flex-wrap: wrap; }
 #app-movil .dsp-ver button { background: var(--am-papel); border: 1px solid var(--am-linea);
@@ -3004,6 +3019,7 @@ let desBorrador = null;
 let desGuardando = false;
 let desAdjuntos = {};
 let desBusca = '';
+let desMarca = '';           /* '', 'atendidos', 'incidencias': la tarjeta tocada */
 let desAviso = '';
 let desReloj = null;
 
@@ -3137,11 +3153,31 @@ const pantallaDespacho = () => {
     const sub = (id, rot, n) => `<div class="dsp-sub ${desSub === id ? 'on' : ''}" data-dsub="${id}">
         ${esc(rot)}<span>${esc(String(n))}</span></div>`;
 
-    const atendidos = L.filter((f) => String(f.est).toUpperCase() === 'ATENDIDO').length;
-    const conInc = L.filter((f) => f.inc).length;
-    const gasto = L.reduce((a, f) => a + (Number(f.gasto) || 0), 0);
+    /* ══ LAS TRES TARJETAS FILTRAN ═════════════════════════════════════
+       Daniel, 15-sep-2026: *"veo los botones de 45 despachos, 45 atendidos, una
+       incidencia, y no puedo entrar. Quiero entrar a la incidencia y no me da la
+       opción. Debería tocar y debería filtrarme nada más la incidencia"*.
 
-    const filas = L.slice(0, 120).map((f) => `
+       Tenía razón y el error es viejo: un número grande en una tarjeta PARECE un
+       botón. Si parece un botón, tiene que serlo —o no parecerlo—, y con dos
+       incidencias entre cuarenta y cinco guías, encontrarlas a mano es absurdo.
+
+       LOS NÚMEROS DE LAS TARJETAS NO CAMBIAN AL FILTRAR. Siguen siendo los del día,
+       que es lo que hace que se pueda volver: si al tocar "incidencias" las tres
+       tarjetas pasaran a 2, 0, 2, nadie sabría dónde estaba parado. Lo que se recorta
+       es la lista de abajo, y la tarjeta tocada queda encendida. */
+    const esAtendido = (x) => String(x.est).toUpperCase() === 'ATENDIDO';
+    const atendidos = L.filter(esAtendido).length;
+    const conInc = L.filter((x) => x.inc).length;
+    const gasto = L.reduce((a, f) => a + (Number(f.gasto) || 0), 0);
+    const M = desMarca === 'atendidos' ? L.filter(esAtendido)
+            : desMarca === 'incidencias' ? L.filter((x) => x.inc)
+            : L;
+    const tarjeta = (id, n, rot, color) => `<div class="am-tarjeta dsp-toca ${desMarca === id ? 'on' : ''}"
+        data-dmarca="${id}"><b class="am-gordo"${color ? ` style="color:${color}"` : ''}>${n}</b>
+        <span class="am-pie">${esc(rot)}</span></div>`;
+
+    const filas = M.slice(0, 120).map((f) => `
         <div class="am-fila" data-desp="${esc(f.id)}">
           <span class="cinta" style="background:${desTono(f.est)}"></span>
           <div style="min-width:0;flex:1">
@@ -3167,17 +3203,20 @@ const pantallaDespacho = () => {
       <input id="des_busca" class="dsp-buscar" type="search" placeholder="Buscar rótulo, pedido, factura, destino…"
              value="${esc(desBusca)}">
       <div class="am-tres">
-        <div class="am-tarjeta"><b class="am-gordo">${L.length}</b><span class="am-pie">despachos</span></div>
-        <div class="am-tarjeta"><b class="am-gordo" style="color:var(--am-va)">${atendidos}</b><span class="am-pie">atendidos</span></div>
-        <div class="am-tarjeta"><b class="am-gordo" style="color:${conInc ? 'var(--am-tarde)' : 'var(--am-tinta)'}">${conInc}</b><span class="am-pie">incidencias</span></div>
+        ${tarjeta('', L.length, 'despachos')}
+        ${tarjeta('atendidos', atendidos, 'atendidos', 'var(--am-va)')}
+        ${tarjeta('incidencias', conInc, 'incidencias', conInc ? 'var(--am-tarde)' : 'var(--am-tinta)')}
       </div>
+      ${desMarca ? `<p class="am-nota dsp-quitar" data-dmarca="">Viendo solo ${
+          esc(desMarca)} (${M.length} de ${L.length}) · <b>tocar para ver todo</b></p>` : ''}
       ${gasto ? `<p class="am-nota">Gasto de lo que se ve: S/ ${gasto.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>` : ''}
-      ${L.length ? `<div class="am-pila">${filas}</div>` : `<p class="am-vacio">${
-          desBusca ? 'Nada que coincida con lo que buscas.'
+      ${M.length ? `<div class="am-pila">${filas}</div>` : `<p class="am-vacio">${
+          desMarca ? 'No hay ninguna con ' + esc(desMarca) + ' en lo que se está viendo.'
+        : desBusca ? 'Nada que coincida con lo que buscas.'
         : desSub === 'liquidar' ? 'No queda ninguna guía por liquidar.'
         : desSub === 'rango' ? 'No hubo despachos entre esas dos fechas.'
         : 'Todavía no se cargó ninguna guía de este día.'}</p>`}
-      ${L.length > 120 ? `<p class="am-nota">Se muestran los primeros 120 de ${L.length}. Afina la búsqueda.</p>` : ''}`;
+      ${M.length > 120 ? `<p class="am-nota">Se muestran los primeros 120 de ${M.length}. Afina la búsqueda.</p>` : ''}`;
 };
 
 /* LO YA ESCRITO SE GUARDA ANTES DE REPINTAR. Tocar un estado, un canal o elegir una
@@ -3219,17 +3258,47 @@ const hojaDeDespacho = () => {
     const bEstado = (k) => `<button type="button" class="dsp-eb ${est === k ? 'on' : ''}" data-dest="${k}"
         style="${est === k ? 'background:' + desAgua(k) + ';color:' + desTono(k) + ';border-color:' + desTono(k) : ''}">
         ${esc(DES.ESTADOS[k].et)}</button>`;
+    /* ══ EL RECUADRO DEL ADJUNTO ═══════════════════════════════════════
+       Daniel, 15-sep-2026: *"dice 'ya tiene', pero le doy clic para ver la foto y me
+       manda a adjuntar. Debería apretar donde dice 'ya tiene' y aparecerme dos
+       opciones: ver la foto, y abajo la opción de escoger otra —de repente el
+       liquidador se equivocó de foto—, pero con un ícono, no con palabras"*.
+
+       Tenía dos errores encima:
+         1. El recuadro era un <label> con el <input type=file> adentro, así que tocarlo
+            SIEMPRE abría el selector de archivos, tuviera foto o no.
+         2. El botón de ver estaba abajo, en otra fila, con la palabra "Ver foto". El
+            ojo tiene que estar donde está la foto.
+
+       Ahora: sin nada, el recuadro entero abre la cámara. Con algo, dos íconos:
+       👁 ver · 🔄 cambiar.
+
+       EL OJO SOLO SALE SI DE VERDAD SE PUEDE ABRIR. Las fotos que vienen del AppSheet
+       siguen en su Drive y la plataforma no tiene acceso: ahí el recuadro dice "en el
+       Drive" y no hay ojo. Un ojo que no abre nada es una mentira. */
     const adj = (cual, rot, pide) => {
-        const puesto = desAdjuntos[cual];
-        const hay = puesto || (f[cual] === 'plataforma') || (cual === 'foto' && f.foto);
-        return `<label class="dsp-adj ${hay ? 'hay' : (pide ? 'pide' : '')}">
-            <span class="ic">${cual === 'pdf' ? '📄' : '📷'}</span>
+        const puesto = desAdjuntos[cual];                       // recién elegido, sin guardar
+        const aca = puesto || f[cual] === 'plataforma';         // se puede abrir desde acá
+        const enDrive = !aca && cual === 'foto' && f.foto;      // existe, pero no la tenemos
+        const hay = aca || enDrive;
+        const botones = aca ? `<span class="dsp-acc">
+              <button type="button" data-dver="${cual}" title="Ver">👁️</button>
+              <label title="Cambiar">🔄<input type="file" data-dadj="${cual}"
+                accept="${cual === 'pdf' ? 'application/pdf' : 'image/*'}" style="display:none"></label>
+            </span>` : '';
+        const cuerpo = `<span class="ic">${cual === 'pdf' ? '📄' : '📷'}</span>
             <span>${esc(rot)}${pide ? ' *' : ''}</span>
-            <small>${puesto ? 'listo' : (hay ? 'ya tiene' : 'tocar')}</small>
-            <input type="file" data-dadj="${cual}" accept="${cual === 'pdf' ? 'application/pdf' : 'image/*'}" style="display:none">
-        </label>`;
+            <small>${puesto ? 'listo' : enDrive ? 'en el Drive' : hay ? 'ya tiene' : 'tocar'}</small>`;
+        /* Con algo adentro es un <div> y no un <label>: si siguiera siendo label,
+           tocar en cualquier hueco volvería a abrir el selector de archivos. */
+        return hay
+            ? `<div class="dsp-adj hay">${cuerpo}${botones}${enDrive
+                ? `<label class="dsp-acc"><span class="dsp-uno">🔄</span><input type="file" data-dadj="${cual}"
+                   accept="image/*" style="display:none"></label>` : ''}</div>`
+            : `<label class="dsp-adj ${pide ? 'pide' : ''}">${cuerpo}
+                <input type="file" data-dadj="${cual}" accept="${cual === 'pdf' ? 'application/pdf' : 'image/*'}" style="display:none">
+              </label>`;
     };
-    const verBotones = ['foto', 'foto2', 'pdf'].filter((k) => f[k] === 'plataforma');
 
     return `
     <div class="am-velo" data-velo>
@@ -3259,10 +3328,9 @@ const hojaDeDespacho = () => {
 
           <div class="am-bloque"><h4>La prueba</h4>
             <div class="dsp-adjs">${adj('foto', 'Foto', true)}${adj('foto2', 'Foto 2')}${adj('pdf', 'PDF')}</div>
-            ${verBotones.length ? `<div class="dsp-ver">${verBotones.map((k) =>
-                `<button type="button" data-dver="${k}">Ver ${k}</button>`).join('')}</div>` : ''}
             ${(f.foto && f.foto !== 'plataforma') ? `<p class="am-nota" style="margin-top:.4rem">
-               La foto de este despacho sigue en el Drive del AppSheet. Desde acá no se puede abrir.</p>` : ''}</div>
+               La foto vieja sigue en el Drive del AppSheet y desde acá no se puede abrir.
+               Toca 🔄 para tomar una nueva y que quede en la plataforma.</p>` : ''}</div>
 
           <div class="am-bloque"><h4>Lo que llena el liquidador</h4>
             ${campo('des_fact', 'Factura', val('fact'))}
@@ -3287,7 +3355,10 @@ const hojaDeDespacho = () => {
 
 /* Ver una foto o el PDF a pantalla completa. */
 const verAdjuntoMovil = async (id, cual) => {
-    const a = await DES.traerAdjunto(id, cual);
+    /* PRIMERO LA QUE ACABA DE ELEGIR, si todavía no la guardó. Es justo cuando más
+       falta hace mirarla: recién tomada, para ver si el número de la factura se lee
+       antes de subirla. Pedirle al servidor una que aún no está ahí traería la anterior. */
+    const a = desAdjuntos[cual] || await DES.traerAdjunto(id, cual);
     if (!a || !a.dato) { desAviso = 'No se pudo traer el archivo.'; pintar(); return; }
     const capa = document.createElement('div');
     capa.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9600;display:flex;' +
@@ -3645,7 +3716,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
                Acordarse de la sub-pestana solo sirve para heredar un callejon. */
             if (seccion === 'despacho') {
                 desSub = 'hoy'; desAbierto = null; desBorrador = null; desAdjuntos = {};
-                desBusca = ''; desAviso = ''; desRango = null;
+                desBusca = ''; desAviso = ''; desRango = null; desMarca = '';
                 desDatos = null; desCargando = false;
             }
             if (seccion === 'chat') { chatSala = null; prepararChat(); }
@@ -3660,9 +3731,16 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (e.target.closest('[data-guardar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
         /* ── DESPACHO ── */
+        const dm = e.target.closest('[data-dmarca]');
+        if (dm) {
+            const q = dm.getAttribute('data-dmarca');
+            desMarca = (q === desMarca) ? '' : q;   // volver a tocarla la apaga
+            pintar(); return;
+        }
         const ds = e.target.closest('[data-dsub]');
         if (ds) {
-            desSub = ds.getAttribute('data-dsub'); desAbierto = null; desCargando = true; pintar();
+            desSub = ds.getAttribute('data-dsub'); desAbierto = null; desMarca = '';
+            desCargando = true; pintar();
             mirarDespachos().then(pintar);
             return;
         }
