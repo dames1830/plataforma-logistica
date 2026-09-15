@@ -73,7 +73,15 @@ self.addEventListener('notificationclick', (evento) => {
     evento.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((abiertas) => {
             for (const c of abiertas) {
-                if ('focus' in c) return c.focus();
+                if ('focus' in c) {
+                    /* TRAERLA AL FRENTE NO ALCANZA. Si la app ya estaba abierta en otra
+                       pantalla, el toque la enfocaba y dejaba a Daniel donde estuviera:
+                       tocaba el aviso de un robot caido y aparecia el chat. Se le dice a
+                       donde ir; si no entiende el mensaje -version vieja-, al menos
+                       enfoca, que es lo que hacia antes. */
+                    try { c.postMessage({ tipo: 'ir', url: destino }); } catch (e) { /* da igual */ }
+                    return c.focus();
+                }
             }
             if (self.clients.openWindow) return self.clients.openWindow(destino);
         })

@@ -40,6 +40,8 @@ import os
 import sys
 import time
 import urllib.request
+
+import anotar_log
 from datetime import datetime, timedelta
 
 try:
@@ -150,6 +152,50 @@ AL_CIERRE_SIN_NADA = {
 
 # Donde el robot deja el titular del dia. Lo escribe el, lo lee y lo BORRA este.
 NOVEDADES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'novedades')
+
+# EL REGISTRO DE CADA ROBOT, para poder pegar el detalle tecnico en el Log.
+#
+# No es un capricho: la noche del 14-sep el despacho potencial murio y su registro
+# se cortaba en seco, sin decir por que. Tener las ultimas lineas guardadas al lado
+# del aviso convierte la proxima vez en una respuesta de un minuto.
+#
+# Se guarda el PREFIJO del archivo porque casi todos llevan la fecha y la hora en
+# el nombre; se toma el mas reciente que empiece asi.
+CARPETA_LOGS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+PREFIJO_LOG = {
+    'correo_citas': 'correo_citas.log',
+    'despacho_potencial': 'distribucion_',
+    'distribucion': 'distribucion_',
+    'ancla_noche': 'run_',
+    'ancla_manana': 'run_',
+    'ancla_noche,ancla_manana': 'run_',
+    'corte_turno': 'corteturno_',
+    'picking_hora': 'pickinghora_',
+    'oblpn_hora': 'picking_orden_',
+    'cruce_wms': 'cruce',
+    'asn_web': 'asn',
+}
+
+
+def _detalle_tecnico(clave):
+    """Las ultimas lineas del registro de ese robot. Vacio si no se encuentra."""
+    pref = PREFIJO_LOG.get(clave)
+    if not pref:
+        return ''
+    try:
+        # Los dos robots de distribucion.py comparten prefijo: se afina por el
+        # sufijo que el propio archivo lleva desde el 14-sep.
+        sufijo = ''
+        if clave in ('despacho_potencial', 'distribucion'):
+            sufijo = '_potencial.log' if clave == 'despacho_potencial' else '_distribucion.log'
+        candidatos = [n for n in os.listdir(CARPETA_LOGS)
+                      if n.startswith(pref) and n.endswith(sufijo or '.log')]
+        if not candidatos:
+            return ''
+        mejor = max(candidatos, key=lambda n: os.path.getmtime(os.path.join(CARPETA_LOGS, n)))
+        return anotar_log.ultimas_lineas(os.path.join(CARPETA_LOGS, mejor), 12)
+    except Exception:
+        return ''
 
 
 def _novedad(clave):
@@ -352,7 +398,13 @@ def mandar(suscripcion, titulo, cuerpo, url='./index.html', etiqueta='deam'):
         return False, codigo
 
 
-def avisar(clave, titulo, cuerpo, url='./index.html', etiqueta=None, de_verdad=True):
+# A DONDE LLEVA EL AVISO AL TOCARLO. La pantalla de Robots de la app, no el inicio:
+# Daniel, 15-sep-2026, *"que me llegue la notificacion de no se proceso y al abrirlo que
+# me de el detalle"*. El chat sigue llevando al chat.
+DESTINO_ROBOT = './index.html#robots'
+
+
+def avisar(clave, titulo, cuerpo, url=DESTINO_ROBOT, etiqueta=None, de_verdad=True):
     destinos = a_quien(clave)
     if not destinos:
         log('nadie tiene los avisos activados para "%s"' % clave, 'AVISO')
@@ -451,8 +503,13 @@ def main():
                                      else 'no trajo novedad y todavia le quedan vueltas'))
             return 0
         log('se manda: es su ultima vuelta y el dia termina sin novedad')
+        texto = AL_CIERRE_SIN_NADA.get(clave, 'Sin novedad en todo el día')
+        if not probar:
+            anotar_log.anotar(clave, texto, tipo='aviso',
+                              consecuencia=anotar_log.consecuencia_de(clave),
+                              tecnico=_detalle_tecnico(clave))
         salida = avisar(clave, '⚠️ ' + nombre,
-                        '%s · %s' % (AL_CIERRE_SIN_NADA.get(clave, 'Sin novedad en todo el día'), hora),
+                        '%s · %s' % (texto, hora),
                         etiqueta=clave, de_verdad=not probar)
         if not probar:
             _apuntar(clave, bien)
@@ -463,6 +520,21 @@ def main():
         cuerpo = '%s · %s' % (novedad, hora)
     else:
         cuerpo = ('Terminó bien · %s' % hora) if bien else ('No pudo terminar · %s' % hora)
+
+    # LO QUE SUENA ES LO QUE SE ANOTA, y sale del mismo sitio a proposito: si el
+    # celular dice una cosa y el Log otra, no se puede creer a ninguno de los dos.
+    #
+    # Se anota SIEMPRE, aunque el aviso se calle por el espaciado: el telefono es
+    # para enterarse y el Log para consultar. La pantalla del dia necesita saber
+    # que este robot corrio, suene o no.
+    if not probar:
+        anotar_log.anotar(
+            clave,
+            novedad if (bien and novedad) else
+            ('Terminó bien' if bien else 'No pudo terminar'),
+            tipo='ok' if bien else 'error',
+            consecuencia='' if bien else anotar_log.consecuencia_de(clave),
+            tecnico='' if bien else _detalle_tecnico(clave))
 
     toca, porque = toca_avisar(clave, bien)
     # UNA NOVEDAD NO ESPERA. El espaciado frena la repeticion de lo mismo, no una

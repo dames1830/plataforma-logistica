@@ -25,27 +25,27 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0770';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0770';
+import * as adminService from '../services_v245/adminService.js?v=29.0771';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0771';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0770';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0770';
-import * as metasService from '../services_v245/metasService.js?v=29.0770';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0771';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0771';
+import * as metasService from '../services_v245/metasService.js?v=29.0771';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0770';
+import * as temaService from '../services_v245/temaService.js?v=29.0771';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0770';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0770';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0771';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0771';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0770';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0771';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -134,6 +134,39 @@ const CSS = `
 #app-movil .ch-tarde { background: var(--am-tarde-agua); border-color: var(--am-tarde); }
 #app-movil .ch-quieto { background: var(--am-quieto-agua); border-color: var(--am-quieto); }
 
+/* ── LOS ROBOTS ──────────────────────────────────────────────────────────────────────
+   Se apoyan en lo que ya hay -.am-fila, .cinta, .am-tres, .am-hoja- y solo agregan lo
+   propio. Nada de una segunda forma de pintar una fila. */
+#app-movil .am-pila { display: flex; flex-direction: column; gap: .5rem; }
+#app-movil .am-fila-tit { margin: 0; font-size: .85rem; font-weight: 700; color: var(--am-tinta);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#app-movil .am-fila-sub { margin: .1rem 0 0; font-size: .76rem; color: var(--am-tenue); line-height: 1.4; }
+#app-movil .am-hora { font-family: var(--am-num); font-size: .74rem; color: var(--am-tenue); flex-shrink: 0; }
+#app-movil .am-flecha { color: var(--am-tenue); flex-shrink: 0; font-size: .95rem; }
+#app-movil .am-gordo { display: block; font-family: var(--am-num); font-size: 1.3rem;
+  font-weight: 700; color: var(--am-tinta); line-height: 1.2; }
+#app-movil .am-aviso { background: var(--am-tarde-agua); border: 1px solid var(--am-linea);
+  border-left: 3px solid var(--am-tarde); border-radius: 11px; padding: .75rem .85rem;
+  font-size: .83rem; color: var(--am-suave); line-height: 1.5; }
+#app-movil .am-hoja-cab { padding: .9rem 1rem; border-bottom: 1px solid var(--am-linea); }
+#app-movil .am-hoja-ttl { margin: 0; font-size: 1rem; font-weight: 800; }
+#app-movil .am-hoja-sub { margin: .15rem 0 0; font-family: var(--am-num); font-size: .75rem; color: var(--am-suave); }
+#app-movil .am-hoja-cuerpo { padding: .8rem; display: flex; flex-direction: column; gap: .55rem;
+  overflow: auto; max-height: 60vh; }
+#app-movil .am-bloque { background: var(--am-papel); border: 1px solid var(--am-linea);
+  border-radius: 11px; padding: .7rem .8rem; }
+#app-movil .am-bloque h4 { margin: 0 0 .3rem; font-size: .66rem; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--am-tenue); font-weight: 800; }
+#app-movil .am-bloque p { margin: 0; font-size: .85rem; color: var(--am-suave); line-height: 1.5; }
+#app-movil .am-tecnico { background: var(--am-quieto-agua); border: 1px solid var(--am-linea);
+  border-radius: 11px; padding: .55rem .7rem; }
+#app-movil .am-tecnico summary { font-size: .68rem; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--am-tenue); font-weight: 800; cursor: pointer; }
+#app-movil .am-tecnico pre { margin: .5rem 0 0; font-family: var(--am-num); font-size: .68rem;
+  color: var(--am-suave); white-space: pre; overflow-x: auto; line-height: 1.55; }
+#app-movil .am-boton-suave { background: var(--am-carta); color: var(--am-suave);
+  border: 1px solid var(--am-linea); border-radius: 10px; padding: .7rem; font-family: var(--am-ui);
+  font-size: .85rem; font-weight: 700; cursor: pointer; }
 #app-movil .am-vacio { text-align: center; color: var(--am-tenue); font-size: .85rem; padding: 1.4rem 0.5rem; }
 #app-movil .am-pronto { background: var(--am-carta); border: 1px dashed #C2CFCC; border-radius: 12px;
   padding: 1.6rem 1.1rem; text-align: center; display: flex; flex-direction: column; gap: .5rem; }
@@ -642,6 +675,7 @@ const ICONOS = {
     reportes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9"/><path d="M9.3 20V4.5"/><path d="M14.7 20v-7.5"/><path d="M20 20V7"/></svg>',
     tareas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8.4 12.2l2.4 2.4 4.8-5"/></svg>',
     lista: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.6 20c0-3.2 2.4-5.2 5.4-5.2s5.4 2 5.4 5.2"/><path d="M17 11.5l1.7 1.7 3.1-3.3"/></svg>',
+    robots: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="2.5"/><path d="M12 8V4.6"/><circle cx="12" cy="3.4" r="1.2"/><path d="M9 13.2h.01M15 13.2h.01"/><path d="M9.6 17h4.8"/></svg>',
     avisos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.8a6 6 0 1 0-12 0c0 5.4-2 7-2 7h16s-2-1.6-2-7"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></svg>'
 };
 
@@ -2595,6 +2629,203 @@ const pantallaAvisos = () => {
     `;
 };
 
+/* ── LOS ROBOTS ──────────────────────────────────────────────────────────────────────────
+   Daniel, 15-sep-2026: *"que me llegue la notificacion de no se proceso y al abrirlo que
+   me de el detalle... que me diga: sabe que Daniel, no se proceso el activo, tenemos el
+   stock anterior todavia"*.
+
+   POR QUE VIVE EN EL MENU Y NO ABAJO. Abajo van los modulos que se tocan todo el dia; esto
+   se mira cuando algo fallo. Y el aviso del telefono abre esta pantalla directo, asi que no
+   hay que buscarla.
+
+   DE DONDE SALE. Del mismo Log de la web -`/api/eventos`-, que desde hoy escriben TODOS los
+   robots con su consecuencia. No hay un segundo sitio con la verdad: si el celular dijera
+   una cosa y la web otra, no se podria creer a ninguno. */
+const API_EVENTOS = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/eventos';
+let robotsDatos = null;         /* null = todavia no se pidio */
+let robotsCargando = false;
+let robotAbierto = null;        /* el indice de la fila abierta, o null */
+let robotsAgrupados = [];       /* lo mismo que pinta la lista, para que la hoja no recalcule */
+
+const mirarRobots = async () => {
+    robotsCargando = true;
+    try {
+        const r = await fetch(`${API_EVENTOS}?dias=1&origen=robot&t=${Date.now()}`);
+        if (!r.ok) throw new Error('el servidor contestó ' + r.status);
+        const c = await r.json();
+        robotsDatos = { filas: (c && (c.eventos || c.data)) || [], error: '' };
+    } catch (e) {
+        /* NO SE PUDO PREGUNTAR NO ES QUE NO HAYA PASADO NADA. Se dice cual de las dos
+           cosas es: confundirlas fue el defecto que hizo ver el Maestro como perdido. */
+        robotsDatos = { filas: [], error: (e && e.message) || 'no se pudo conectar' };
+    }
+    robotsCargando = false;
+};
+
+/* El detalle que mandan los robots viene como JSON con la consecuencia aparte. Lo que no
+   sea JSON se muestra tal cual: las anotaciones viejas se siguen leyendo. */
+const detalleDeRobot = (txt) => {
+    const crudo = String(txt == null ? '' : txt);
+    if (!crudo) return { consecuencia: '', tecnico: '', plano: '' };
+    try {
+        const d = JSON.parse(crudo);
+        if (d && typeof d === 'object' && (d.consecuencia || d.tecnico)) {
+            return { consecuencia: d.consecuencia || '', tecnico: d.tecnico || '', plano: '' };
+        }
+    } catch (e) { /* no era JSON */ }
+    return { consecuencia: '', tecnico: '', plano: crudo };
+};
+
+/* EL NOMBRE QUE SE PUEDE LEER, tambien aca.
+   Los robots que anotan por su cuenta desde hace meses -el Slotting, el vigia del ancla-
+   escriben su clave cruda: `ancla_noche`, `vigia_noche`. Daniel, 12-sep, sobre justamente
+   esto: *"eso lo ve un gerente, un jefe de logistica... que es eso?"*. Se arregla al
+   pintar, sin tocar lo que ya quedo guardado. */
+const NOMBRE_ROBOT = {
+    ancla_noche: 'Cierre del turno d\u00eda', ancla_manana: 'Cierre del turno noche',
+    cierre_noche: 'Cierre del turno d\u00eda', cierre_manana: 'Cierre del turno noche',
+    vigia_noche: 'Vig\u00eda del cierre', vigia_manana: 'Vig\u00eda del cierre',
+    stock_hora: 'Stock por hora', picking_hora: 'Avance de picking',
+    oblpn_hora: 'Avance de embalaje', mapa_hora: 'Mapa de calor',
+    reportes: 'Pendientes y Despachados', respaldo: 'Respaldo de los datos',
+    archivado: 'Archivado', cierre_dia: 'Cierre del d\u00eda', cruce_wms: 'Cruce del WMS',
+    correo_citas: 'Correo de citas', corte_turno: 'Corte de turno',
+    distribucion: 'Distribuci\u00f3n', despacho_potencial: 'Despacho potencial',
+    asn_web: 'ASN', slotting: 'Slotting'
+};
+const nombreRobot = (q) => {
+    const k = String(q || '').trim();
+    if (NOMBRE_ROBOT[k]) return NOMBRE_ROBOT[k];
+    if (!/[_,]/.test(k)) return k || 'Robot';
+    const vistos = [];
+    k.split(',').map(x => x.trim()).filter(Boolean).forEach(x => {
+        const t = NOMBRE_ROBOT[x] || x.replace(/_/g, ' ').trim().replace(/^./, c => c.toUpperCase());
+        if (vistos.indexOf(t) < 0) vistos.push(t);
+    });
+    return vistos.join(' y ') || 'Robot';
+};
+
+const horaDe = (cuando) => String(cuando || '').slice(11, 16);
+
+const pantallaRobots = () => {
+    if (robotsDatos === null) {
+        if (!robotsCargando) mirarRobots().then(pintar);
+        return `<p class="am-vacio">Buscando cómo les fue a los robots…</p>`;
+    }
+    if (robotsDatos.error) {
+        return `<div class="am-aviso"><b>No se pudo consultar el registro</b><br>
+            ${esc(robotsDatos.error)}. Esto no quiere decir que los robots hayan fallado:
+            puede ser que el servidor esté reiniciando. Vuelve a entrar en un minuto.</div>`;
+    }
+    const filas = robotsDatos.filas || [];
+    if (!filas.length) {
+        return `<p class="am-vacio">Todavía no hay ninguna corrida anotada hoy.</p>`;
+    }
+
+    /* UNA FILA POR ROBOT, NO UNA POR ANOTACION. El cierre del turno deja seis lineas en
+       una sola corrida -el stock activo, la reserva, el WMS, el slotting- y seis filas
+       iguales en el celular no dicen mas que una: dicen menos, porque hay que leerlas
+       todas para dar con la que importa. Se agrupa por robot y se guarda LO PEOR que le
+       paso, que es lo que hay que mirar; el resto queda dentro, en el detalle. */
+    const PESO = { error: 3, aviso: 2, ok: 1 };
+    const porRobot = new Map();
+    filas.forEach(f => {
+        const k = nombreRobot(f.quien);
+        const g = porRobot.get(k) || { nombre: k, lineas: [], tipo: 'ok', cuando: '', cara: null };
+        g.lineas.push(f);
+        if ((PESO[f.tipo] || 0) > (PESO[g.tipo] || 0)) { g.tipo = f.tipo; g.cara = f; }
+        if (!g.cara) g.cara = f;
+        if (String(f.cuando || '') > g.cuando) g.cuando = String(f.cuando || '');
+        porRobot.set(k, g);
+    });
+
+    /* LO QUE FALLO, PRIMERO. A las once de la noche nadie baja la lista buscando el rojo. */
+    const orden = { error: 0, aviso: 1, ok: 2 };
+    const ordenadas = Array.from(porRobot.values()).sort((a, b) => {
+        const d = (orden[a.tipo] ?? 3) - (orden[b.tipo] ?? 3);
+        return d !== 0 ? d : String(b.cuando || '').localeCompare(String(a.cuando || ''));
+    });
+    const malas = ordenadas.filter(g => g.tipo === 'error' || g.tipo === 'aviso').length;
+
+    const resumen = `
+      <div class="am-tres">
+        <div class="am-tarjeta"><b class="am-gordo">${ordenadas.length - malas}</b><span class="am-pie">corrieron</span></div>
+        <div class="am-tarjeta"><b class="am-gordo" style="color:${malas ? 'var(--am-tarde)' : 'var(--am-tinta)'}">${malas}</b><span class="am-pie">con problema</span></div>
+      </div>`;
+
+    const lista = ordenadas.map((g, i) => {
+        const mal = g.tipo === 'error' || g.tipo === 'aviso';
+        const f = g.cara || {};
+        const d = detalleDeRobot(f.detalle);
+        const sub = d.consecuencia || d.plano || '';
+        return `
+        <div class="am-fila" data-robot="${i}">
+          <span class="cinta" style="background:${mal ? 'var(--am-tarde)' : 'var(--am-va)'}"></span>
+          <div style="min-width:0;flex:1">
+            <p class="am-fila-tit">${esc(g.nombre)}</p>
+            <p class="am-fila-sub" style="${mal ? 'color:var(--am-tarde);font-weight:600' : ''}">${esc(f.accion || '')}</p>
+            ${sub && mal ? `<p class="am-fila-sub">${esc(String(sub).slice(0, 90))}${String(sub).length > 90 ? '…' : ''}</p>` : ''}
+          </div>
+          <span class="am-hora">${esc(horaDe(g.cuando))}</span>
+          <span class="am-flecha">›</span>
+        </div>`;
+    }).join('');
+
+    /* Se guarda lo agrupado para que la hoja del detalle mire EXACTAMENTE lo mismo que la
+       lista. Calcularlo dos veces es como acaba una pantalla contando algo distinto de la
+       otra. */
+    robotsAgrupados = ordenadas;
+    return resumen + `<div class="am-pila">${lista}</div>`;
+};
+
+const hojaDeRobot = () => {
+    if (robotAbierto === null) return '';
+    const g = robotsAgrupados[robotAbierto];
+    if (!g) return '';
+    const f = g.cara || {};
+    const mal = g.tipo === 'error' || g.tipo === 'aviso';
+    const d = detalleDeRobot(f.detalle);
+    /* TODO LO QUE HIZO HOY, en orden. Es lo que contesta "¿y entonces qué sí corrió?". */
+    const pasos = g.lineas.slice().sort((a, b) =>
+        String(a.cuando || '').localeCompare(String(b.cuando || '')));
+
+    return `
+    <div class="am-velo" data-velo>
+      <div class="am-hoja">
+        <div class="am-hoja-cab" style="background:${mal ? 'var(--am-tarde-agua)' : 'var(--am-va-agua)'}">
+          <p class="am-hoja-ttl" style="color:${mal ? 'var(--am-tarde)' : 'var(--am-va)'}">
+            ${mal ? '⚠️' : '✅'} ${esc(g.nombre)}</p>
+          <p class="am-hoja-sub">${esc(String(g.cuando || '').slice(0, 16))}</p>
+        </div>
+        <div class="am-hoja-cuerpo">
+          <div class="am-bloque">
+            <h4>Qué pasó</h4>
+            <p>${esc(f.accion || 'Sin detalle')}</p>
+          </div>
+          ${d.consecuencia ? `
+          <div class="am-bloque">
+            <h4>Qué significa para ti</h4>
+            <p>${esc(d.consecuencia)}</p>
+          </div>` : ''}
+          ${d.plano ? `<div class="am-bloque"><h4>Detalle</h4><p>${esc(d.plano)}</p></div>` : ''}
+          ${pasos.length > 1 ? `
+          <div class="am-bloque">
+            <h4>Todo lo que hizo hoy</h4>
+            ${pasos.map(x => `<p style="display:flex;gap:.5rem;margin-top:.25rem">
+                <span style="font-family:var(--am-num);font-size:.75rem;color:var(--am-tenue);flex-shrink:0">${esc(horaDe(x.cuando))}</span>
+                <span style="color:${x.tipo === 'ok' ? 'var(--am-suave)' : 'var(--am-tarde)'}">${esc(x.accion || '')}</span></p>`).join('')}
+          </div>` : ''}
+          ${d.tecnico ? `
+          <details class="am-tecnico">
+            <summary>Detalle técnico</summary>
+            <pre>${esc(d.tecnico)}</pre>
+          </details>` : ''}
+          <button type="button" class="am-boton-suave" data-cerrar-robot>Cerrar</button>
+        </div>
+      </div>
+    </div>`;
+};
+
 /* ── EL MENU ─────────────────────────────────────────────────────────────────────────────
    Dos niveles, como lo pidio: se entra a Temas y ahi se elige, no se elige desde el primer
    nivel. Avisos vive aca y ya no ocupa una pestaña abajo. */
@@ -2609,6 +2840,12 @@ const panelMenu = () => {
                     <span>${esc(t.nombre)}<span class="desc">${esc(t.descripcion)}</span></span>
                     ${t.id === puesto ? '<span class="ch">✓</span>' : ''}
                 </button>`).join('')}
+        </div>`;
+    }
+    if (menu === 'robots') {
+        return `<div class="am-panel">
+            <button type="button" data-menu-volver>${ICONOS.volver}Robots de hoy</button>
+            <div style="padding:.2rem .2rem .6rem">${pantallaRobots()}</div>
         </div>`;
     }
     if (menu === 'avisos') {
@@ -2626,6 +2863,8 @@ const panelMenu = () => {
             <span class="ch">${esc((t && t.nombre) || '—')} ›</span></button>
         <button type="button" data-menu-ir="avisos">${ICONOS.avisos}Avisos
             <span class="ch">${avisos} ›</span></button>
+        <button type="button" data-menu-ir="robots">${ICONOS.robots}Robots
+            <span class="ch">cómo les fue hoy ›</span></button>
         <div class="gr">Sesión</div>
         <button type="button" data-escritorio>${ICONOS.escritorio}Ver en escritorio</button>
         <button type="button" data-salir-app>${ICONOS.puerta}Salir</button>
@@ -2643,7 +2882,14 @@ const CABECERAS = {
     /* EL DIA ELEGIDO, no el de hoy. Si la cabecera dijera hoy mientras se edita otro dia,
        se estaria marcando sobre el equivocado sin que nada lo avise. */
     lista: () => ({ sub: `Turno noche · ${diaDeLaListaEnLetras()}`, ttl: 'Pasar lista' }),
-    avisos: () => ({ sub: avisosEstado === 'prendidos' ? 'Activados en este teléfono' : 'Apagados', ttl: 'Avisos' })
+    avisos: () => ({ sub: avisosEstado === 'prendidos' ? 'Activados en este teléfono' : 'Apagados', ttl: 'Avisos' }),
+    robots: () => {
+        const F = (robotsDatos && robotsDatos.filas) || [];
+        const malas = F.filter(x => x.tipo === 'error' || x.tipo === 'aviso').length;
+        return { sub: robotsDatos === null ? 'Consultando…'
+                    : (malas ? `${malas} con problema · ${diaEnLetras()}` : `Todo en orden · ${diaEnLetras()}`),
+                 ttl: 'Robots' };
+    }
 };
 
 const pintar = () => {
@@ -2672,6 +2918,7 @@ const pintar = () => {
            scroll ni la encierra la rejilla de tres filas de la app. */
         : seccion === 'chat' ? (chatSala ? pantallaConversacion() : pantallaChat())
         : seccion === 'tareas' ? (pantallaTareas() + hojaDeTarea())
+        : seccion === 'robots' ? (pantallaRobots() + hojaDeRobot())
         : seccion === 'avisos' ? pantallaAvisos()
         : pantallaEnCamino(seccion);
     /* EL SCROLL SOLO SE REINICIA AL CAMBIAR DE PANTALLA. Antes se reiniciaba en CADA
@@ -2716,10 +2963,34 @@ export const prefiereEscritorio = () => {
     try { return localStorage.getItem('deam_prefiere_escritorio') === '1'; } catch (e) { return false; }
 };
 
+/* AL TOCAR UN AVISO, ABRIR LO QUE EL AVISO DECIA.
+   El aviso del robot trae `#robots` en su destino. Hay dos caminos y hacen falta los dos:
+   con la app cerrada llega por el hash de la direccion, y con la app ya abierta llega como
+   mensaje del service worker -ahi la direccion no cambia-. Sin el segundo, tocar el aviso
+   con la app abierta dejaba a Daniel en la pantalla donde estuviera. */
+const irDesdeElAviso = (destino) => {
+    if (!destino || String(destino).indexOf('#robots') < 0) return;
+    seccion = 'robots';
+    robotAbierto = null;
+    robotsDatos = null;          /* que se relea: el aviso es de algo que acaba de pasar */
+    menu = null;
+    if (raiz) pintar();
+};
+
 export const renderAppMovil = async (contenedor, user, onLogout) => {
     YO = user;
     alSalir = onLogout;
-    seccion = 'inicio';
+    seccion = (String(location.hash || '').indexOf('robots') >= 0) ? 'robots' : 'inicio';
+
+    try {
+        if (navigator.serviceWorker && !window._amEscuchaAvisos) {
+            window._amEscuchaAvisos = true;
+            navigator.serviceWorker.addEventListener('message', (ev) => {
+                const d = ev && ev.data;
+                if (d && d.tipo === 'ir') irDesdeElAviso(d.url);
+            });
+        }
+    } catch (e) { /* sin service worker se entra a mano, que es lo de siempre */ }
 
     /* Los mismos datos de siempre. Si el servidor tarda, la app dibuja igual y se completa
        en la siguiente vuelta: mas vale una pantalla con ceros que una en blanco. */
@@ -2798,11 +3069,16 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (falto) { marcar(falto.getAttribute('data-falto'), false); return; }
         if (e.target.closest('[data-guardar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
+        const fr = e.target.closest('[data-robot]');
+        if (fr) { robotAbierto = parseInt(fr.getAttribute('data-robot'), 10); pintar(); return; }
+        if (e.target.closest('[data-cerrar-robot]')) { robotAbierto = null; pintar(); return; }
         if (e.target.closest('[data-prender-avisos]')) { prenderAvisos(); return; }
         if (e.target.closest('[data-apagar-avisos]')) { apagarAvisos(); return; }
         if (e.target.closest('[data-reabrir]')) { reabrirLista(); return; }
         if (e.target.closest('[data-cerrar]')) { guardarLista(true); return; }
         /* ── EL MENU ───────────────────────────────────────────────────────────── */
+        if (seccion === 'robots' && robotAbierto !== null && e.target.closest('[data-velo]')
+            && !e.target.closest('.am-hoja')) { robotAbierto = null; pintar(); return; }
         if (e.target.closest('[data-menu]')) { menu = menu ? null : 'raiz'; pintar(); return; }
         if (e.target.closest('[data-menu-volver]')) { menu = 'raiz'; pintar(); return; }
         const ir = e.target.closest('[data-menu-ir]');

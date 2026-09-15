@@ -15,7 +15,7 @@
  * redibujarlo en cada filtro era lo que hacía parpadear la pantalla.
  */
 
-import { icono } from '../services_v245/iconos.js?v=29.0770';
+import { icono } from '../services_v245/iconos.js?v=29.0771';
 
 const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -60,6 +60,40 @@ export const montarEventos = (container, OPC = {}) => {
         return `<span style="display:inline-block; min-width:52px; text-align:center; font-size:var(--t-xs);
                        font-weight:800; letter-spacing:0.04em; color:${c.texto}; background:${c.fondo};
                        border:1px solid ${c.texto}; border-radius:6px; padding:2px 7px;">${c.etiqueta}</span>`;
+    };
+
+    /* EL DETALLE, EN DOS PARTES.
+       Desde el 15-sep-2026 los robots mandan el detalle como JSON con dos campos:
+       `consecuencia` -que se pierde si esto no corrio, en palabras- y `tecnico`
+       -las lineas del registro, para arreglarlo-.
+
+       Daniel pidio justo esa separacion: *"que me diga: sabe que Daniel, no se
+       proceso el activo, tenemos el stock anterior todavia"*. "Fallo" no dice si
+       puede seguir trabajando; la consecuencia si.
+
+       Lo de antes sigue funcionando: un detalle que no sea JSON se pinta tal cual,
+       que es lo que manda la entrada a la plataforma y el Slotting. */
+    const detalleBonito = (txt) => {
+        const crudo = String(txt == null ? '' : txt);
+        if (!crudo) return '';
+        let d = null;
+        try { d = JSON.parse(crudo); } catch (e) { d = null; }
+        if (!d || typeof d !== 'object' || (!d.consecuencia && !d.tecnico)) return esc(crudo);
+        const partes = [];
+        if (d.consecuencia) {
+            partes.push(`<div style="color:var(--text-soft); line-height:1.5;">${esc(d.consecuencia)}</div>`);
+        }
+        if (d.tecnico) {
+            partes.push(`
+              <details style="margin-top:.35rem;">
+                <summary style="cursor:pointer; color:var(--text-dim); font-size:var(--t-xs);
+                                letter-spacing:.08em; text-transform:uppercase;">Detalle técnico</summary>
+                <pre style="margin:.35rem 0 0; font-family:var(--font-num); font-size:var(--t-xs);
+                            color:var(--text-muted); white-space:pre; overflow-x:auto;
+                            line-height:1.5;">${esc(d.tecnico)}</pre>
+              </details>`);
+        }
+        return partes.join('');
     };
 
     const lista = (L) => `
@@ -152,7 +186,7 @@ export const montarEventos = (container, OPC = {}) => {
               <td style="padding:9px 10px; white-space:nowrap; font-size:var(--t-sm);">
                   ${ICONO_ORIGEN[e.origen] || '•'} <b style="color:var(--text-strong);">${esc(e.quien || e.origen)}</b></td>
               <td style="padding:9px 10px; font-size:var(--t-sm); color:${col.texto}; font-weight:600;">${esc(e.accion)}</td>
-              <td style="padding:9px 10px; font-size:var(--t-xs); color:var(--text-muted);">${esc(e.detalle)}</td>
+              <td style="padding:9px 10px; font-size:var(--t-xs); color:var(--text-muted); max-width:420px;">${detalleBonito(e.detalle)}</td>
             </tr>`;
         }).join('') || `
             <tr><td colspan="5" style="padding:2.5rem; text-align:center; color:var(--text-muted);
