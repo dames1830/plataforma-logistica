@@ -1354,6 +1354,36 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
 #  4. EL EXCEL
 # ══════════════════════════════════════════════════════════════════════════════
 
+def fechas_de_orden():
+    """Cuando nacio cada orden en el WMS: {guia: 'dd/mm/aaaa'}.
+
+    Se relee el archivo del WMS en vez de arrastrar el dato por media docena de
+    funciones. Son dos segundos sobre 24 MB, el mismo criterio que ya sigue
+    `armar_correo_hoy`.
+    """
+    fechas = {}
+    if not os.path.isfile(PENDIENTES):
+        return fechas
+    f = io.open(PENDIENTES, encoding='utf-8-sig', newline='', errors='replace')
+    r = csv.reader(f, delimiter=';')
+    try:
+        next(r)
+    except StopIteration:
+        f.close()
+        return fechas
+    for row in r:
+        if len(row) < 20:
+            continue
+        g = limpio(row[1])
+        if g in fechas:
+            continue
+        fo = limpio(row[18])                 # "Fecha de orden", dd/mm/aaaa
+        if len(fo) == 10:
+            fechas[g] = fo
+    f.close()
+    return fechas
+
+
 def excel(ruta, cabecera, IQ, guias, por_guia, por_sku):
     """Dos hojas.
 
@@ -1362,14 +1392,28 @@ def excel(ruta, cabecera, IQ, guias, por_guia, por_sku):
     por atender. Decision de Daniel, 20-ago-2026: *"debe ser tal cual el archivo
     que manda comercial, solo que las cantidades deberian variar"*. Las guias ya
     atendidas del todo no salen: no aportan nada.
+
+    Y AL FINAL, UNA COLUMNA MAS: `FECHA ORDEN WMS`. Nace el 15-sep-2026 de un
+    malentendido que costo una discusion entera. La columna `FECHA` de este Excel
+    es la del correo -es la fila del correo tal cual-, o sea EL DIA EN QUE
+    COMERCIAL LIBERO LA GUIA. Daniel filtro esa columna, vio solo setiembre y
+    penso que el reporte estaba mintiendo, porque yo le habia mostrado guias de
+    julio y agosto: *"me dices una cosa, me muestras otra"*. Las dos cosas eran
+    ciertas y eran DOS FECHAS DISTINTAS. Ahora van las dos, una al lado de la
+    otra, y no hay que creerle a nadie.
+
+    Va ULTIMA y no en el medio: las once columnas de comercial quedan tal cual,
+    en su orden, que es lo que Daniel pidio.
     """
+    fecha_orden = fechas_de_orden()
+    cab = list(cabecera) + ['FECHA ORDEN WMS']
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Detalle'
     relleno = PatternFill('solid', fgColor='1F3864')
     negrita = Font(bold=True, color='FFFFFF')
 
-    ws.append(cabecera)
+    ws.append(cab)
     for c in ws[1]:
         c.fill = relleno
         c.font = negrita
@@ -1381,9 +1425,9 @@ def excel(ruta, cabecera, IQ, guias, por_guia, por_sku):
         while len(fila) < len(cabecera):
             fila.append('')
         fila[IQ] = int(round(q))
-        ws.append(fila[:len(cabecera)])
+        ws.append(fila[:len(cabecera)] + [fecha_orden.get(g, '')])
     ws.freeze_panes = 'A2'
-    for i, ancho in enumerate([9, 8, 27, 17, 13, 12, 11, 9, 13, 21, 11], 1):
+    for i, ancho in enumerate([9, 8, 27, 17, 13, 12, 11, 9, 13, 21, 11, 17], 1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = ancho
 
     ws2 = wb.create_sheet('Resumen')
