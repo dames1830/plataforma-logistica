@@ -15,8 +15,8 @@
  * numero calculado en dos sitios se desincroniza, y ya paso en este proyecto.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0793';
-import { icono } from '../services_v245/iconos.js?v=29.0793';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0795';
+import { icono } from '../services_v245/iconos.js?v=29.0795';
 
 /**
  * LO QUE EL WMS ABRE Y COMERCIAL NUNCA LIBERO.
@@ -148,6 +148,102 @@ function cuadroGender(n) {
       </div>`;
 }
 
+/**
+ * CUANTO TARDO COMERCIAL EN LIBERAR LO QUE EL WMS YA TENIA CREADO.
+ *
+ * Daniel, 15-sep-2026, mirando la guia 7991491: *"comercial lo ha creado el 22 de
+ * julio y lo ha liberado el 11 de setiembre. Nada de agosto ha pasado. 50 dias.
+ * Ha sido por algo estrategico o porque se olvidaron?"*.
+ *
+ * Son las dos fechas que ya se veian sueltas y nunca juntas: la de la orden en el
+ * WMS y la del correo. La resta es el dato, y por eso la columna DIAS existe
+ * aunque el pidio *"asi simple nada mas"*: es el motivo del reporte.
+ *
+ * EL PARETO CUENTA LOS 1.339; EL DETALLE DEJA FUERA LAS DE EL MISMO DIA. Una guia
+ * liberada el dia que nacio no tiene demora que mirar, y las 1.094 sumaban 80 KB a
+ * cada apertura. Los dos rotulos lo dicen, porque los cuadros tienen que cuadrar.
+ */
+function cuadroLiberacion(L) {
+    const filas = (L && L.tramos) || [];
+    if (!filas.length) return '';
+    const p = L.peor;
+    return `<div class="pend-panel">
+        <h3>PEDIDO LIBERADO</h3>
+        <div class="pend-cap">Cuánto tardó comercial en liberar lo que el WMS ya
+          tenía creado &middot; ${nf(L.pedidos)} pedidos del pendiente</div>
+        <table>
+          <thead><tr>
+            <th>DEMORA EN LIBERAR</th><th class="c">PEDIDOS</th>
+            <th class="c">UNIDADES</th><th class="c">%</th>
+          </tr></thead>
+          <tbody>
+            ${filas.map(f => `<tr${/8 a 15|16 a 30|de 30/.test(f.k) ? ' class="pend-ojo"' : ''}>
+              <td>${esc(f.k)}</td>
+              <td class="c">${nf(f.ped)}</td>
+              <td class="c">${nf(f.und)}</td>
+              <td class="c">${f.pct}%</td></tr>`).join('')}
+            <tr class="pend-total"><td>TOTAL</td>
+              <td class="c">${nf(L.pedidos)}</td>
+              <td class="c">${nf(L.unidades)}</td>
+              <td class="c">100%</td></tr>
+          </tbody>
+        </table>
+        ${L.semana && L.semana.ped ? `<div class="pend-nota">
+          <b>${nf(L.semana.ped)} pedidos esperaron más de una semana</b> a que comercial
+          los liberara, y son ${nf(L.semana.und)} unidades.${p ? ` El que más, la guía
+          <b>${esc(p.guia)}</b> de <b>${esc(p.tienda)}</b>: el WMS la creó el
+          ${esc(p.orden)} y comercial la liberó el ${esc(p.correo)}.
+          <b>${nf(p.dias)} días.</b>` : ''}</div>` : ''}
+      </div>`;
+}
+
+/**
+ * EL DETALLE, GUIA POR GUIA, con las dos fechas una al lado de la otra.
+ *
+ * Las columnas las dicto Daniel: guia, fecha del correo, fecha de orden en el WMS,
+ * unidades pendientes y la tienda. Van en ese orden, con DIAS entre las fechas y
+ * las unidades para no tener que restar a ojo.
+ */
+function cuadroLiberacionDetalle(L) {
+    const filas = (L && L.detalle) || [];
+    if (!filas.length) return '';
+    return `<div class="pend-panel">
+        <div class="pend-cab2">
+          <div>
+            <h3>DETALLE POR GUÍA</h3>
+            <div class="pend-cap">De la que más esperó a la que menos &middot;
+              ${nf(filas.length)} de ${nf(L.pedidos)} &middot; las liberadas el mismo día
+              no salen</div>
+          </div>
+          <div class="pend-acc2">
+            <input type="search" id="lib_buscar" class="pend-buscar"
+                   placeholder="Guía o tienda">
+            <button type="button" id="lib_xls" class="btn-icono btn-excel"
+                    title="Exportar a Excel" aria-label="Exportar a Excel">${icono('excel', 18)}</button>
+          </div>
+        </div>
+        <div class="pend-scroll">
+          <table>
+            <thead><tr>
+              <th>GUÍA</th><th class="n">FECHA ORDEN WMS</th><th class="n">FECHA CORREO</th>
+              <th class="n">DÍAS</th><th class="n">PENDIENTE</th><th>TIENDA</th>
+            </tr></thead>
+            <tbody id="lib_filas">
+              ${filas.map(f => `<tr${Number(f.dias) > 7 ? ' class="pend-ojo"' : ''}
+                data-b="${esc((f.guia + ' ' + f.tienda).toLowerCase())}">
+                <td>${esc(f.guia)}</td>
+                <td class="n">${esc(f.orden)}</td>
+                <td class="n">${esc(f.correo)}</td>
+                <td class="n">${nf(f.dias)}</td>
+                <td class="n">${nf(f.und)}</td>
+                <td>${esc(f.tienda)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="pend-suave" id="lib_cuenta"></div>
+      </div>`;
+}
+
 /* ── EL MONTAJE ─────────────────────────────────────────────────────────────── */
 
 export function montarPedidosWms(raiz, OPC) {
@@ -155,6 +251,8 @@ export function montarPedidosWms(raiz, OPC) {
     const d = O.datos;
     const fecha = O.fecha || (d && d.fecha) || '';
     const n = d && d.noLiberados;
+    /* Lo nuevo va ABAJO del todo y no reemplaza nada: es otra pregunta. */
+    const L = d && d.liberacion;
 
     const cab = `
       <div class="pend-head">
@@ -190,6 +288,7 @@ export function montarPedidosWms(raiz, OPC) {
             <div class="pend-col">${cuadroPareto(n)}${cuadroGender(n)}</div>
             ${cuadroDetalle(n)}
           </div>
+          ${L ? `<div class="pend-dos">${cuadroLiberacion(L)}${cuadroLiberacionDetalle(L)}</div>` : ''}
         </div>${estiloPropio()}</div>`;
 
     engancharBuscador(raiz, 'nolib', {
@@ -198,6 +297,14 @@ export function montarPedidosWms(raiz, OPC) {
         aFila: (f) => [f.orden, f.destino, f.tipo, f.fecha,
                        Number(f.dias) || 0, Number(f.pares) || 0],
         archivo: 'Pedidos WMS no liberados', unidad: 'pedidos', fecha: fecha,
+    });
+    if (L) engancharBuscador(raiz, 'lib', {
+        sacarFilas: () => ((O.datos || {}).liberacion || {}).detalle,
+        cabecera: ['Guia', 'Fecha orden WMS', 'Fecha correo', 'Dias',
+                   'Pendiente', 'Tienda'],
+        aFila: (f) => [f.guia, f.orden, f.correo, Number(f.dias) || 0,
+                       Number(f.und) || 0, f.tienda],
+        archivo: 'Pedido liberado', unidad: 'pedidos', fecha: fecha,
     });
     engancharFecha(raiz, O);
 }

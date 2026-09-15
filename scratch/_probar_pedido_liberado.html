@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="indigo">
+<head>
+<meta charset="utf-8">
+<title>Prueba - Pedido Liberado</title>
+<!--
+  BANCO DE PRUEBAS, no es la pantalla. Monta `montarPedidosWms` con los datos de
+  verdad que el robot acaba de publicar en beta, para ver que DIBUJA -que el
+  import cargue no alcanza-. Se abre con el servidor de pruebas:
+     http://127.0.0.1:5599/scratch/_probar_pedido_liberado.html
+-->
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{margin:0;background:var(--bg-dark);color:var(--text-main);
+    font-family:var(--font-ui);padding:20px}
+  .barra{display:flex;gap:8px;margin-bottom:16px}
+  .barra button{background:rgba(var(--ink-rgb),.08);border:1px solid var(--border);
+    color:var(--text-strong);border-radius:8px;padding:6px 12px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="barra">
+  <button type="button" data-t="indigo">Indigo</button>
+  <button type="button" data-t="pbi">PBI</button>
+  <button type="button" data-t="pbi-classic">PBI Classic</button>
+  <button type="button" data-t="negro">Negro</button>
+</div>
+<div id="raiz"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+import { montarPedidosWms } from '../js/reportes/pedidos_wms.js';
+
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/correo_hoy?date=2026-09-15';
+const r = await fetch(API, { headers: { 'X-Environment': 'beta' } });
+const j = await r.json();
+window.__d = j.data;
+montarPedidosWms(document.getElementById('raiz'), {
+    datos: j.data, fecha: '2026-09-15',
+    alCambiarFecha: (f) => console.log('cambio de fecha', f),
+});
+document.querySelectorAll('.barra button').forEach((b) => {
+    b.addEventListener('click', () => { document.documentElement.dataset.tema = b.dataset.t; });
+});
+console.log('MONTADO. liberacion =', j.data && j.data.liberacion
+    ? j.data.liberacion.pedidos + ' pedidos, ' + j.data.liberacion.detalle.length + ' filas'
+    : 'NO VINO');
+</script>
+</body>
+</html>

@@ -46,7 +46,7 @@
  * lo liquidado colgando de números que ya no existen.
  */
 
-import * as DES from './despachoCatalogo.js?v=29.0793';
+import * as DES from './despachoCatalogo.js?v=29.0795';
 
 /* Los catorce títulos que manda comercial, y a qué campo va cada uno. Se reconocen por
    el título y no por la posición: es lo único que sobrevive a que alguien mueva una
