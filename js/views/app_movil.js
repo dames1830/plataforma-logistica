@@ -25,28 +25,29 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0785';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0785';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0785';
+import * as adminService from '../services_v245/adminService.js?v=29.0787';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0787';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0787';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0787';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0785';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0785';
-import * as metasService from '../services_v245/metasService.js?v=29.0785';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0787';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0787';
+import * as metasService from '../services_v245/metasService.js?v=29.0787';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0785';
+import * as temaService from '../services_v245/temaService.js?v=29.0787';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0785';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0785';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0787';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0787';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0785';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0787';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -202,6 +203,19 @@ const CSS = `
 #app-movil .dsp-buscar { width: 100%; background: var(--am-carta); border: 1px solid var(--am-linea);
   border-radius: 10px; padding: .55rem .7rem; color: var(--am-tinta); font-size: .85rem;
   font-family: var(--am-ui); }
+#app-movil .dsp-barra { display: flex; gap: .4rem; align-items: stretch; }
+#app-movil .dsp-barra .dsp-buscar { flex: 1; }
+/* EL BOTON DE CARGAR VA AL LADO DEL BUSCADOR y no escondido en el menu: es lo primero
+   que se hace en el dia -llega el archivo por WhatsApp y se carga-, y lo que se hace
+   todos los dias tiene que estar a un toque. */
+#app-movil .dsp-cargar { display: flex; align-items: center; justify-content: center;
+  min-width: 46px; background: var(--am-va-agua); border: 1px solid var(--am-va);
+  border-radius: 10px; color: var(--am-va); font-size: 1.1rem; cursor: pointer; }
+#app-movil .dsp-cargar:active { transform: scale(.95); }
+#app-movil .dsp-otra { display: flex; align-items: center; justify-content: center;
+  background: var(--am-papel); border: 1px solid var(--am-linea); border-radius: 8px;
+  padding: .32rem .7rem; color: var(--am-suave); font-size: .72rem; font-weight: 700;
+  font-family: var(--am-ui); cursor: pointer; }
 #app-movil .dsp-pastilla { font-size: .6rem; font-weight: 800; letter-spacing: .04em;
   text-transform: uppercase; padding: .14rem .38rem; border-radius: 3px; white-space: nowrap; }
 #app-movil .dsp-dato { display: flex; justify-content: space-between; gap: .7rem; padding: .13rem 0;
@@ -3020,6 +3034,9 @@ let desGuardando = false;
 let desAdjuntos = {};
 let desBusca = '';
 let desMarca = '';           /* '', 'atendidos', 'incidencias': la tarjeta tocada */
+/* EL CARGADOR. null = cerrado. Si no, lo que se leyó del archivo, esperando el visto
+   bueno: NADA se guarda hasta que se toca el botón. */
+let desOrden = null;
 let desAviso = '';
 let desReloj = null;
 
@@ -3140,11 +3157,19 @@ const pantallaDespacho = () => {
         /* Y LLEVA SUS PROPIOS BOTONES. Daniel, 15-sep-2026: *"¿cómo salgo de esto? no me
            da opciones"*. La salida estaba -la barra de abajo-, pero en una ventana
            angosta se confunde con el borde. Un cartel que ocupa la pantalla entera
-           tiene que traer su salida puesta, no confiar en que se vea la de al lado. */
+           tiene que traer su salida puesta, no confiar en que se vea la de al lado.
+
+       Y LLEVA TAMBIEN EL BOTON DE CARGAR. El cargador vive al lado del buscador, y
+       con el area vacia el buscador no se dibuja: sin este boton, el primer dia -o
+       cualquier dia que el area amanezca vacia- no habria forma de meter la primera
+       orden desde el telefono. Lo cazo probar la carga desde cero. */
         return `<div class="am-aviso">${DES.seLeyo()
             ? '<b>Todavía no hay despachos de catálogo.</b> El área existe pero llegó vacía.'
             : '<b>No se pudo leer los despachos.</b> Esto no quiere decir que no haya: puede ser que el servidor esté reiniciando, que tarda como un minuto en volver.'}</div>
           <div class="dsp-ver" style="justify-content:center; margin-top:.9rem;">
+            <label class="dsp-otra">\ud83d\udcc4 Cargar la orden<input type="file" data-dcargar
+              accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              style="display:none"></label>
             <button type="button" data-drecargar>Volver a preguntar</button>
             <button type="button" data-dsalir>Ir a Inicio</button>
           </div>`;
@@ -3206,8 +3231,14 @@ const pantallaDespacho = () => {
         sub('rango', 'Historial', desSub === 'rango' ? desDatos.length : desCuenta(rr.desde, rr.hasta))}</div>
       ${desSub === 'rango' ? desSelectorDeFechas() : ''}
       ${desCargando ? '<p class="am-nota">Trayendo…</p>' : ''}
-      <input id="des_busca" class="dsp-buscar" type="search" placeholder="Buscar rótulo, pedido, factura, destino…"
-             value="${esc(desBusca)}">
+      <div class="dsp-barra">
+        <input id="des_busca" class="dsp-buscar" type="search" placeholder="Buscar rótulo, pedido, factura, destino…"
+               value="${esc(desBusca)}">
+        <label class="dsp-cargar" title="Cargar la orden de comercial">\ud83d\udcc4
+          <input type="file" data-dcargar
+            accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            style="display:none"></label>
+      </div>
       <div class="am-tres">
         ${tarjeta('', L.length, 'despachos')}
         ${tarjeta('atendidos', atendidos, 'atendidos', 'var(--am-va)')}
@@ -3236,6 +3267,127 @@ const desGuardarEscrito = () => {
         if (el) desBorrador[k] = el.value;
     });
     return desBorrador;
+};
+
+/* ══ CARGAR LA ORDEN DE DESPACHO ══════════════════════════════════════
+   Daniel, 15-sep-2026: *"el excel llega por WhatsApp... lo ideal sería cargarlo por
+   celular del WhatsApp al celular de frente"*.
+
+   Dos pantallas y un botón. Se elige el archivo, se MUESTRA lo que se leyó —con el
+   cuadre contra los totales del propio archivo— y recién ahí se guarda. Nada se
+   escribe antes: si algo no cuadra se cancela y no quedó ni media fila.
+
+   La lectura no está acá sino en `despachoOrden.js`, para que la web pueda usar
+   exactamente la misma y no haya dos formas de leer el mismo Excel. */
+const hojaDeCarga = () => {
+    if (!desOrden) return '';
+    const c = desOrden;
+    const dato = (r, v) => `<div class="dsp-dato"><span>${esc(r)}</span><b>${esc(
+        v === '' || v === null || v === undefined ? '\u2014' : v)}</b></div>`;
+    if (c.estado === 'leyendo') {
+        return `<div class="am-velo" data-velo><div class="am-hoja"><div class="am-hoja-cuerpo">
+            <p class="am-vacio">Leyendo el archivo…</p></div></div></div>`;
+    }
+    if (c.estado === 'malo') {
+        return `<div class="am-velo" data-velo><div class="am-hoja">
+          <div class="am-hoja-cab"><p class="am-hoja-ttl">No se pudo leer</p></div>
+          <div class="am-hoja-cuerpo">
+            <div class="am-aviso"><b>${esc(c.motivo || 'El archivo no se pudo abrir.')}</b></div>
+            <p class="am-nota">Tiene que ser el Excel de la orden de despacho, el que manda
+            comercial. Si lo bajaste de WhatsApp, prueba abrirlo primero para ver que no
+            esté a medio bajar.</p>
+            <div class="dsp-ver" style="margin-top:.8rem">
+              <label class="dsp-otra">Elegir otro<input type="file" data-dcargar
+                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                style="display:none"></label>
+              <button type="button" data-dcarga-cerrar>Cerrar</button>
+            </div>
+          </div></div></div>`;
+    }
+    if (c.estado === 'listo') {
+        return `<div class="am-velo" data-velo><div class="am-hoja">
+          <div class="am-hoja-cab" style="background:var(--am-va-agua)">
+            <p class="am-hoja-ttl" style="color:var(--am-va)">Cargadas</p>
+            <p class="am-hoja-sub">${c.guardadas} guías del ${esc(desDiaEnLetras(c.fecha))}</p>
+          </div>
+          <div class="am-hoja-cuerpo">
+            <div class="am-bloque"><h4>Lo que hizo</h4>
+              ${dato('Orden', c.orden.od || '\u2014')}
+              ${dato('Fecha de despacho', desDiaEnLetras(c.fecha))}
+              ${dato('Guías', c.guardadas)}
+              ${c.reusadas ? dato('De esas, ya estaban', c.reusadas) : ''}
+              ${(c.guardadas - c.reusadas) > 0 && c.reusadas
+                 ? dato('Nuevas', c.guardadas - c.reusadas) : ''}
+              ${dato('Estado', 'PENDIENTE')}
+            </div>
+            <button type="button" class="am-btn" data-dcarga-ver style="width:100%">
+              Ver las ${c.guardadas} en Por liquidar</button>
+          </div></div></div>`;
+    }
+
+    /* El caso normal: se leyó bien y se muestra ANTES de guardar. */
+    const q = c.cuadre || {};
+    const muestra = c.filas.slice(0, 5).map((f) => `
+        <div class="am-fila"><span class="cinta" style="background:var(--am-curso)"></span>
+          <div style="min-width:0;flex:1">
+            <p class="am-fila-tit">${esc(f.rot || f.prom || '\u2014')}</p>
+            <p class="am-fila-sub">${esc(f.age || '')} \u2192 ${esc(f.dest || '')}</p>
+            <p class="am-fila-sub">${esc(f.ase || '')}${f.cant ? ' \u00b7 ' + f.cant + ' pares' : ''}</p>
+          </div></div>`).join('');
+
+    return `<div class="am-velo" data-velo><div class="am-hoja">
+      <div class="am-hoja-cab">
+        <p class="am-hoja-ttl">${esc(c.orden.od || 'Orden de despacho')}</p>
+        <p class="am-hoja-sub">${esc(c.orden.archivo || '')}${c.orden.creada
+            ? ' \u00b7 creada el ' + esc(c.orden.creada) : ''}</p>
+      </div>
+      <div class="am-hoja-cuerpo">
+        <div class="am-tres">
+          <div class="am-tarjeta"><b class="am-gordo">${c.filas.length}</b><span class="am-pie">guías</span></div>
+          <div class="am-tarjeta"><b class="am-gordo">${Math.round(q.pares || 0)}</b><span class="am-pie">pares</span></div>
+          <div class="am-tarjeta"><b class="am-gordo">${c.agencias}</b><span class="am-pie">agencias</span></div>
+        </div>
+
+        ${q.ok
+          ? `<div class="am-aviso" style="background:var(--am-va-agua);border-color:var(--am-va)">
+              <b>Cuadra con el resumen del archivo.</b> ${Math.round(q.pares)} pares y
+              S/ ${(q.venta || 0).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})},
+              igual que lo que dice arriba en el propio Excel.</div>`
+          : `<div class="am-aviso"><b>No cuadra con el resumen del archivo.</b>
+              Leí ${Math.round(q.pares)} pares y el archivo dice ${q.dicePares}.
+              Mejor no cargarlo hasta saber por qué.</div>`}
+
+        ${q.premios ? `<p class="am-nota">El archivo dice <b>${q.dicePares + q.premios} enviados</b>
+          y las guías suman <b>${q.dicePares} pedidos</b>. Los ${q.premios} de diferencia son
+          premios, y el archivo no dice de qué guía son: la cantidad de cada guía queda en
+          la pedida.</p>` : ''}
+
+        ${c.repetida ? `<div class="am-aviso"><b>Esta orden ya está cargada</b>${
+          c.repetida.cargada ? ' desde el ' + esc(c.repetida.cargada) : ''}${
+          c.repetida.guias ? ', con ' + c.repetida.guias + ' guías' : ''}. Si la vuelves a
+          cargar se actualizan, no se duplican, y lo que ya se liquidó no se toca.</div>` : ''}
+
+        <div class="am-bloque"><h4>Fecha de despacho</h4>
+          <div class="dsp-rango">
+            <span class="dsp-cal">\ud83d\udcc5</span>
+            <span class="dsp-rot">Sale el</span>
+            <input id="des_cfecha" type="date" value="${esc(c.fecha)}">
+          </div>
+          <p class="am-nota">Es el día que sale el camión, no el que comercial armó la
+          orden${c.orden.creada ? ' (' + esc(c.orden.creada) + ')' : ''}.</p></div>
+
+        <div class="am-bloque"><h4>Las primeras, para mirar</h4>
+          <div class="am-pila">${muestra}</div>
+          ${c.filas.length > 5 ? `<p class="am-nota">y ${c.filas.length - 5} más.</p>` : ''}</div>
+
+        ${c.aviso ? `<div class="am-aviso">${esc(c.aviso)}</div>` : ''}
+        <button type="button" class="am-btn" data-dcarga-guardar style="width:100%"
+          ${c.guardando ? 'disabled' : ''}>${c.guardando ? 'Guardando…'
+            : 'Cargar las ' + c.filas.length + ' guías'}</button>
+        <button type="button" class="am-boton-suave" data-dcarga-cerrar
+          style="width:100%;margin-top:.5rem">Cancelar</button>
+        <p class="am-nota">Nada se guarda hasta tocar el botón.</p>
+      </div></div></div>`;
 };
 
 /* ── LA FICHA, QUE ES DONDE SE LIQUIDA ─────────────────────────────────────────────── */
@@ -3383,6 +3535,28 @@ const verAdjuntoMovil = async (id, cual) => {
     document.body.appendChild(capa);
 };
 
+/* GUARDAR LA ORDEN. Recien aca se escribe algo. Si falla, la hoja se queda abierta con
+   lo leido y el motivo: perder los datos del archivo obligaria a ir a buscarlo otra vez
+   al WhatsApp, y eso en la calle es media hora. */
+const guardarLaOrden = async () => {
+    const c = desOrden;
+    if (!c || c.guardando || !c.filas) return;
+    if (!DES.esFecha(c.fecha)) { c.aviso = 'Falta la fecha de despacho.'; pintar(); return; }
+    c.guardando = true; c.aviso = ''; pintar();
+    try {
+        const r = await ORD.guardarOrden(c.orden, c.filas, c.fecha, (t) => { c.aviso = t; pintar(); });
+        desOrden = { estado: 'listo', orden: c.orden, fecha: c.fecha,
+                     guardadas: r.guardadas, reusadas: r.reusadas };
+        desDatos = null;                     // que se vuelva a traer con lo nuevo adentro
+        pintar();
+    } catch (e) {
+        c.guardando = false;
+        c.aviso = 'No se pudo guardar: ' + ((e && e.message) || 'sin detalle')
+                + '. Nada se perdio, vuelve a intentarlo.';
+        pintar();
+    }
+};
+
 const guardarDespacho = async () => {
     if (desGuardando || !desAbierto) return;
     const f = DES.filaDe(desAbierto) || (desDatos || []).find((x) => String(x.id) === String(desAbierto));
@@ -3525,7 +3699,7 @@ const pintar = () => {
            scroll ni la encierra la rejilla de tres filas de la app. */
         : seccion === 'chat' ? (chatSala ? pantallaConversacion() : pantallaChat())
         : seccion === 'tareas' ? (pantallaTareas() + hojaDeTarea())
-        : seccion === 'despacho' ? (pantallaDespacho() + hojaDeDespacho())
+        : seccion === 'despacho' ? (pantallaDespacho() + hojaDeDespacho() + hojaDeCarga())
         : seccion === 'robots' ? (pantallaRobots() + hojaDeRobot())
         : seccion === 'avisos' ? pantallaAvisos()
         : pantallaEnCamino(seccion);
@@ -3646,7 +3820,30 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
     /* El archivo elegido: se achica, se pasa a base64 y se queda en memoria hasta que
        se toque Guardar. Así, si alguien cierra sin guardar, no queda una foto suelta
        en el servidor. */
+    /* El Excel de la orden. Se lee y se MUESTRA; no se guarda nada todavia. */
     raiz.addEventListener('change', async (e) => {
+        const cg = e.target.closest('[data-dcargar]');
+        if (cg) {
+            const arch = cg.files && cg.files[0];
+            cg.value = '';                       // para poder elegir el mismo otra vez
+            if (!arch) return;
+            desOrden = { estado: 'leyendo' }; pintar();
+            try {
+                const r = await ORD.leerArchivo(arch);
+                if (!r.ok) { desOrden = { estado: 'malo', motivo: r.motivo }; pintar(); return; }
+                const idx = await DES.traerIndice(true);
+                desOrden = {
+                    estado: 'mirando', orden: r.orden, filas: r.filas, cuadre: r.cuadre,
+                    fecha: DES.hoyTexto(),
+                    agencias: new Set(r.filas.map((f) => String(f.age || '').toUpperCase())).size,
+                    repetida: ORD.yaCargada(idx, r.orden.od)
+                };
+            } catch (err) {
+                desOrden = { estado: 'malo', motivo: (err && err.message) || 'no se pudo leer' };
+            }
+            pintar();
+            return;
+        }
         const inp = e.target.closest('[data-dadj]');
         if (!inp) return;
         const cual = inp.getAttribute('data-dadj');
@@ -3665,6 +3862,8 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
 
     /* Las fechas no son un filtro más: cambiarlas manda a buscar semanas al servidor. */
     raiz.addEventListener('change', (e) => {
+        const cf = e.target.closest('#des_cfecha');
+        if (cf && desOrden) { desOrden.fecha = cf.value; pintar(); return; }
         const d1 = e.target.closest('#des_d1');
         const d2 = e.target.closest('#des_d2');
         if (!d1 && !d2) return;
@@ -3737,6 +3936,14 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (e.target.closest('[data-guardar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
         /* ── DESPACHO ── */
+        /* ── EL CARGADOR ── */
+        if (e.target.closest('[data-dcarga-cerrar]')) { desOrden = null; pintar(); return; }
+        if (e.target.closest('[data-dcarga-guardar]')) { guardarLaOrden(); return; }
+        if (e.target.closest('[data-dcarga-ver]')) {
+            desOrden = null; desSub = 'liquidar'; desMarca = ''; desCargando = true; pintar();
+            mirarDespachos(true).then(pintar);
+            return;
+        }
         const dm = e.target.closest('[data-dmarca]');
         if (dm) {
             const q = dm.getAttribute('data-dmarca');
