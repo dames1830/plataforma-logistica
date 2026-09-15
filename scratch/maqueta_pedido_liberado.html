@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="indigo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta - Pedido Liberado</title>
+<!--
+  MAQUETA de `Picking > Pedidos WMS`, cuadro nuevo AL FINAL de la pantalla.
+
+  Lo pidio Daniel el 15-sep-2026 al ver la guia 7991491: *"comercial lo ha creado
+  el 22 de julio y lo ha liberado el 11 de setiembre. 50 dias. Ha sido por algo
+  estrategico o porque se olvidaron? Quiero que me armes un reporte"*.
+
+  Columnas, dictadas por el: guia, fecha del correo, fecha de orden en el WMS,
+  unidades pendientes y la tienda. *"Asi simple nada mas"*. La columna DIAS es lo
+  unico que agrego: es la resta de las dos fechas y es el motivo del reporte.
+
+  DATOS REALES del pendiente del 15-09-2026 11:04 (1.339 guias). Los estilos
+  salen RECORTADOS de `js/reportes/pendiente.js` y de `css/temas.css`, no
+  reescritos: lo que se ve aca es lo que se va a ver en la pantalla.
+-->
+<style>
+/* LOS CUATRO TEMAS, RECORTADOS TAL CUAL DE css/temas.css. Van pegados y no por
+   <link> porque la maqueta se abre como archivo suelto y los enlaces relativos
+   no cargan; si se copian a mano dejan de ser los de la plataforma. */
+:root,
+html[data-tema="indigo"] {
+  --tema-nombre: "indigo";
+
+  /* Tipografia ---------------------------------------------------------- */
+  --font-ui:        'Inter', sans-serif;
+  --font-num:       'Inter', sans-serif;
+
+  /* Superficies --------------------------------------------------------- */
+  --bg-dark:        #0f172a;
+  --bg-image:       radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
+                    radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
+  --bg-card:        rgba(30, 41, 59, 0.7);
+  --panel:          rgba(30, 41, 59, 0.5);
+  --panel-solid:    #1e293b;
+  --panel-alt:      #1c2b3a;
+  --panel-deep:     #0b1120;
+  --panel-deeper:   #101a2c;
+  --surface-max:    #000000;
+  --glass-bg:       rgba(15, 23, 42, 0.6);
+  --glass-border:   rgba(255, 255, 255, 0.08);
+  --glass-shadow:   0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --glass-blur:     blur(16px);
+  --border:         rgba(255, 255, 255, 0.1);
+  --input-bg:       #1e293b;
+  --scheme:         dark;             /* color-scheme de los <input> */
+
+  /* Tinta — de mas fuerte a mas apagada ---------------------------------- */
+  --text-strong:    #ffffff;
+  --text-main:      #f8fafc;
+  --text-pale:      #e2e8f0;
+  --text-soft:      #cbd5e1;
+  --text-muted:     #94a3b8;
+  --text-dim:       #64748b;
+  --text-faint:     #475569;
+  --text-grey:      #d1d5db;
+  --text-grey2:     #9ca3af;
+
+  /* Marca ---------------------------------------------------------------- */
+  --primary:        #4f46e5;
+  --primary-hover:  #4338ca;
+  --primary-2:      #6366f1;
+  --brand-light:    #818cf8;
+  --brand-pale:     #a5b4fc;
+  --brand-paler:    #c4b5fd;
+  --on-primary:     #ffffff;
+  --btn-fill:      var(--primary);
+
+  /* Semaforo — el color aca SI significa algo ----------------------------- */
+  --danger:         #ef4444;
+  --danger-soft:    #f87171;
+  --danger-pale:    #fca5a5;
+  --danger-deep:    #b91c1c;
+  --danger-deeper:  #991b1b;
+  /* EL SELLO DE LOS REPORTES (indigo, fondo oscuro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #FBBF24;
+  --sello-alarma:   #FCA5A5;
+  --success:        #22c55e;
+  --success-alt:    #10b981;
+  --success-soft:   #4ade80;
+  --success-pale:   #6ee7b7;
+  --success-mid:    #34d399;
+  --success-deep:   #059669;
+  --success-dark:   #1a6336;
+  --warning:        #f59e0b;
+  --warning-soft:   #fbbf24;
+  --warning-pale:   #fde68a;
+  --yellow:         #facc15;
+  --yellow-deep:    #eab308;
+  --bronze:         #b45309;
+  --orange:         #f97316;
+
+  /* El punto del semaforo: version viva, para rellenos chicos ------------- */
+  --sem-ok:         #22c55e;
+  --sem-warn:       #fbbf24;
+  --sem-bad:        #ef4444;
+
+  /* Acentos de apoyo ------------------------------------------------------ */
+  --cyan-neon:      #00e5ff;
+  --cyan:           #22d3ee;
+  --cyan-deep:      #06b6d4;
+  --sky:            #38bdf8;
+  --sky-deep:       #0ea5e9;
+  --blue:           #3b82f6;
+  --blue-soft:      #93c5fd;
+  --blue-mid:       #60a5fa;
+  --blue-deep:      #024dbd;
+  --blue-pale:      #e6edf7;
+  --violet:         #8b5cf6;
+  --violet-soft:    #a78bfa;
+  --pink:           #ec4899;
+  --pink-soft:      #f472b6;
+
+  /* Trios RGB para las transparencias ------------------------------------- */
+  --ink-rgb:            255, 255, 255;   /* la tinta que contrasta con el fondo */
+
+  /* EL VELO DEL RIBBON DE NAVEGACION. Daniel, 26-ago-2026: "le pueden poner un
+     fondo oscuro, ojo oscuro leve, solo leve para que no se vea muy blanco".
+     El ribbon usaba --bg-card, que en los temas claros es BLANCO PURO -mas claro
+     todavia que el area de trabajo de abajo-, asi que la banda no se distinguia
+     de nada.
+
+     Va GRADUADO POR TEMA y no con un solo numero: en los claros la tinta es negra
+     y el velo oscurece, pero en el negro la tinta es BLANCA y el mismo 10% subiria
+     la barra a un gris medio. Ese tema Daniel lo quiere negro, asi que ahi el velo
+     es minimo: lo justo para que la banda se despegue del fondo. */
+  --ribbon-veil:        rgba(255, 255, 255, 0.045);
+  --shadow-rgb:           0,   0,   0;
+  --bg-rgb:              15,  23,  42;
+  --card-rgb:            30,  41,  59;
+  --primary-rgb:         79,  70, 229;
+  --primary2-rgb:        99, 102, 241;
+  --brand-rgb:          129, 140, 248;
+  --brand-pale-rgb:     165, 180, 252;
+  --success-rgb:         34, 197,  94;
+  --success-alt-rgb:     16, 185, 129;
+  --danger-rgb:         239,  68,  68;
+  --warning-rgb:        245, 158,  11;
+  --warning-soft-rgb:   251, 191,  36;
+  --yellow-rgb:         250, 204,  21;
+  --cyan-neon-rgb:        0, 229, 255;
+  --cyan-rgb:            34, 211, 238;
+  --cyan-deep-rgb:        6, 182, 212;
+  --sky-rgb:             56, 189, 248;
+  --blue-rgb:            59, 130, 246;
+  --violet-rgb:         139,  92, 246;
+  --on-accent:           #000000;
+  --text-muted-rgb:      148, 163, 184;
+  --pink-rgb:            236,  72, 153;
+  --orange-rgb:          249, 115,  22;
+
+  /* Formas ---------------------------------------------------------------- */
+  --r-lg:           16px;
+  --r-md:           12px;
+  --r-sm:           8px;
+
+  /* Los emoji del menu van a color ---------------------------------------- */
+  --icon-filter:    none;
+}
+
+html[data-tema="pbi"] {
+  --tema-nombre: "pbi";
+
+  --font-ui:        'Segoe UI', 'Inter', sans-serif;
+  --font-num:       'Segoe UI', 'Inter', sans-serif;
+
+  --bg-dark:        #F3F2F1;
+  --bg-image:       none;
+  --bg-card:        #FFFFFF;
+  --panel:          #FFFFFF;
+  --panel-solid:    #FFFFFF;
+  --panel-alt:      #FAF9F8;
+  --panel-deep:     #F3F2F1;
+  --panel-deeper:   #EDEBE9;
+  --surface-max:    #FFFFFF;
+  --glass-bg:       #FFFFFF;
+  --glass-border:   #E1DFDD;
+  --glass-shadow:   0 1px 3px rgba(0, 0, 0, 0.08);
+  --glass-blur:     none;
+  --border:         #E1DFDD;
+  --input-bg:       #FFFFFF;
+  --scheme:         light;
+
+  --text-strong:    #201F1E;
+  --text-main:      #252423;
+  --text-pale:      #323130;
+  --text-soft:      #3B3A39;
+  --text-muted:     #605E5C;
+  --text-dim:       #8A8886;
+  --text-faint:     #A19F9D;
+  --text-grey:      #484644;
+  --text-grey2:     #6E6C6A;
+
+  --primary:        #0E76D6;
+  --primary-hover:  #0B5EAC;
+  --primary-2:      #118DFF;
+  --brand-light:    #12239E;
+  --brand-pale:     #12239E;
+  --brand-paler:    #744EC2;
+  --on-primary:     #FFFFFF;
+  --btn-fill:      var(--primary);
+
+  --danger:         #D1434E;
+  --danger-soft:    #C0454F;
+  --danger-pale:    #A83A44;
+  --danger-deep:    #A32A34;
+  --danger-deeper:  #8C242C;
+  /* EL SELLO DE LOS REPORTES (pbi, fondo claro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #6E5B00;
+  --sello-alarma:   #8C242C;
+  --success:        #148833;
+  --success-alt:    #197278;
+  --success-soft:   #148833;
+  --success-pale:   #12742C;
+  --success-mid:    #197278;
+  --success-deep:   #0F6B26;
+  --success-dark:   #0C5620;
+  --warning:        #7D6700;
+  --warning-soft:   #6E5B00;
+  --warning-pale:   #6E5B00;
+  --yellow:         #7D6700;
+  --yellow-deep:    #6E5B00;
+  --bronze:         #8A5A12;
+  --orange:         #B8541F;
+
+  --sem-ok:         #1AAB40;
+  --sem-warn:       #D9B300;
+  --sem-bad:        #D64550;
+
+  --cyan-neon:      #0E76D6;
+  --cyan:           #197278;
+  --cyan-deep:      #0F5C60;
+  --sky:            #0E76D6;
+  --sky-deep:       #0B5EAC;
+  --blue:           #0E76D6;
+  --blue-soft:      #12239E;
+  --blue-mid:       #0E76D6;
+  --blue-deep:      #12239E;
+  --blue-pale:      #12239E;
+  --violet:         #744EC2;
+  --violet-soft:    #6B007B;
+  --pink:           #C13A8E;
+  --pink-soft:      #A83079;
+
+  --ink-rgb:               0,   0,   0;   /* tinta oscura: el reves del blanco */
+
+  --ribbon-veil:        rgba(  0,   0,   0, 0.10);
+  --shadow-rgb:          232, 231, 229;
+  --bg-rgb:             243, 242, 241;
+  --card-rgb:           255, 255, 255;
+  --primary-rgb:          14, 118, 214;
+  --primary2-rgb:        18,  35, 158;
+  --brand-rgb:           18,  35, 158;
+  --brand-pale-rgb:        18,  35, 158;
+  --success-rgb:          20, 136,  51;
+  --success-alt-rgb:     25, 114, 120;
+  --danger-rgb:         214,  69,  80;
+  --warning-rgb:        138, 114,   0;
+  --warning-soft-rgb:   138, 114,   0;
+  --yellow-rgb:         138, 114,   0;
+  --cyan-neon-rgb:        14, 118, 214;
+  --cyan-rgb:            25, 114, 120;
+  --cyan-deep-rgb:       15,  92,  96;
+  --sky-rgb:              14, 118, 214;
+  --blue-rgb:             14, 118, 214;
+  --violet-rgb:         116,  78, 194;
+  --on-accent:           #FFFFFF;
+  --text-muted-rgb:       96,  94,  92;
+  --pink-rgb:            193,  58, 142;
+  --orange-rgb:          184,  84,  31;
+
+  --r-lg:           4px;
+  --r-md:           2px;
+  --r-sm:           2px;
+
+  --icon-filter:    none;
+}
+
+html[data-tema="pbi-classic"] {
+  --tema-nombre: "pbi-classic";
+
+  --font-ui:        'Segoe UI', 'Inter', sans-serif;
+  --font-num:       'Segoe UI', 'Inter', sans-serif;
+
+  --bg-dark:        #F5F5F5;
+  --bg-image:       none;
+  --bg-card:        #FFFFFF;
+  --panel:          #FFFFFF;
+  --panel-solid:    #FFFFFF;
+  --panel-alt:      #FAFAFA;
+  --panel-deep:     #F5F5F5;
+  --panel-deeper:   #EEEEEE;
+  --surface-max:    #FFFFFF;
+  --glass-bg:       #FFFFFF;
+  --glass-border:   #E0E0E0;
+  --glass-shadow:   0 1px 3px rgba(0, 0, 0, 0.08);
+  --glass-blur:     none;
+  --border:         #E0E0E0;
+  --input-bg:       #FFFFFF;
+  --scheme:         light;
+
+  --text-strong:    #263133;
+  --text-main:      #374649;
+  --text-pale:      #415255;
+  --text-soft:      #4B5E61;
+  --text-muted:     #5F6B6D;
+  --text-dim:       #849093;
+  --text-faint:     #9AA5A7;
+  --text-grey:      #46585B;
+  --text-grey2:     #6D797B;
+
+  --primary:        #00847A;
+  --primary-hover:  #006B63;
+  --primary-2:      #01B8AA;
+  --brand-light:    #374649;
+  --brand-pale:     #374649;
+  --brand-paler:    #8A5580;
+  --on-primary:     #FFFFFF;
+  --btn-fill:      var(--primary);
+
+  --danger:         #C54C49;
+  --danger-soft:    #B8433F;
+  --danger-pale:    #A63A36;
+  --danger-deep:    #9C332F;
+  --danger-deeper:  #872C29;
+  /* EL SELLO DE LOS REPORTES (pbi-classic, fondo claro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #6B5606;
+  --sello-alarma:   #872C29;
+  --success:        #00847A;
+  --success-alt:    #00847A;
+  --success-soft:   #00776E;
+  --success-pale:   #006B63;
+  --success-mid:    #00847A;
+  --success-deep:   #006158;
+  --success-dark:   #00534C;
+  --warning:        #7F6907;
+  --warning-soft:   #6E5A06;
+  --warning-pale:   #705C06;
+  --yellow:         #7F6907;
+  --yellow-deep:    #705C06;
+  --bronze:         #8A5A12;
+  --orange:         #B85A2E;
+
+  --sem-ok:         #01B8AA;
+  --sem-warn:       #F2C80F;
+  --sem-bad:        #FD625E;
+
+  --cyan-neon:      #00847A;
+  --cyan:           #00847A;
+  --cyan-deep:      #006B63;
+  --sky:            #2C7A96;
+  --sky-deep:       #23657D;
+  --blue:           #2C7A96;
+  --blue-soft:      #23657D;
+  --blue-mid:       #2C7A96;
+  --blue-deep:      #1D5468;
+  --blue-pale:      #23657D;
+  --violet:         #8A5580;
+  --violet-soft:    #7A4A71;
+  --pink:           #A66999;
+  --pink-soft:      #94587F;
+
+  --ink-rgb:               0,   0,   0;
+
+  --ribbon-veil:        rgba(  0,   0,   0, 0.10);
+  --shadow-rgb:          230, 232, 232;
+  --bg-rgb:             245, 245, 245;
+  --card-rgb:           255, 255, 255;
+  --primary-rgb:            0, 132, 122;
+  --primary2-rgb:           0, 132, 122;
+  --brand-rgb:           55,  70,  73;
+  --brand-pale-rgb:          55,  70,  73;
+  --success-rgb:            0, 132, 122;
+  --success-alt-rgb:        0, 132, 122;
+  --danger-rgb:         197,  76,  73;
+  --warning-rgb:        140, 115,   8;
+  --warning-soft-rgb:   140, 115,   8;
+  --yellow-rgb:         140, 115,   8;
+  --cyan-neon-rgb:       44, 122, 150;
+  --cyan-rgb:             0, 132, 122;
+  --cyan-deep-rgb:          0, 132, 122;
+  --sky-rgb:             44, 122, 150;
+  --blue-rgb:            44, 122, 150;
+  --violet-rgb:         138,  85, 128;
+  --on-accent:           #FFFFFF;
+  --text-muted-rgb:       95, 107, 109;
+  --pink-rgb:            148,  88, 127;
+  --orange-rgb:          184,  90,  46;
+
+  --r-lg:           4px;
+  --r-md:           2px;
+  --r-sm:           2px;
+
+  --icon-filter:    none;
+}
+
+html[data-tema="negro"] {
+  --tema-nombre: "negro";
+
+  --font-ui:        'Inter', sans-serif;
+  --font-num:       'Inter', sans-serif;
+
+  --bg-dark:        #000000;
+  --bg-image:       none;
+  --bg-card:        #0C0C0C;
+  --panel:          #0C0C0C;
+  --panel-solid:    #121212;
+  --panel-alt:      #0F0F0F;
+  --panel-deep:     #060606;
+  --panel-deeper:   #030303;
+  --surface-max:    #000000;
+  --glass-bg:       #0A0A0A;
+  --glass-border:   #1C1C1C;
+  --glass-shadow:   none;
+  --glass-blur:     none;
+  --border:         #1F1F1F;
+  --input-bg:       #101010;
+  --scheme:         dark;
+
+  --text-strong:    #FFFFFF;
+  --text-main:      #D6D6D6;
+  --text-pale:      #C8C8C8;
+  --text-soft:      #B4B4B4;
+  --text-muted:     #828282;
+  --text-dim:       #606060;
+  --text-faint:     #4A4A4A;
+  --text-grey:      #BDBDBD;
+  --text-grey2:     #8E8E8E;
+
+  --primary:        #FFFFFF;
+  --primary-hover:  #D6D6D6;
+  --primary-2:      #E0E0E0;
+  --brand-light:    #C8C8C8;
+  --brand-pale:     #A8A8A8;
+  --brand-paler:    #909090;
+  --on-primary:     #FFFFFF;
+  --btn-fill:      #2A2A2A;
+
+  --danger:         #C7554D;
+  --danger-soft:    #D4675F;
+  --danger-pale:    #E08A84;
+  --danger-deep:    #A6423B;
+  --danger-deeper:  #8C3831;
+  /* EL SELLO DE LOS REPORTES (negro, fondo oscuro). Vivo sobre oscuro,
+     oscurecido sobre claro: el mismo criterio que el resto de los acentos. */
+  --sello-aviso:    #D9A441;
+  --sello-alarma:   #E8837A;
+  --success:        #3FA968;
+  --success-alt:    #3FA968;
+  --success-soft:   #55BC7C;
+  --success-pale:   #7FD09F;
+  --success-mid:    #4AB271;
+  --success-deep:   #338C56;
+  --success-dark:   #2A7347;
+  --warning:        #B08A38;
+  --warning-soft:   #C39B45;
+  --warning-pale:   #D6B472;
+  --yellow:         #B08A38;
+  --yellow-deep:    #97762E;
+  --bronze:         #8E6E2C;
+  --orange:         #B07440;
+
+  --sem-ok:         #3FA968;
+  --sem-warn:       #B08A38;
+  --sem-bad:        #C7554D;
+
+  /* Grises escalonados: sin color, pero todavia distinguibles entre si */
+  --cyan-neon:      #FFFFFF;
+  --cyan:           #D6D6D6;
+  --cyan-deep:      #A8A8A8;
+  --sky:            #C0C0C0;
+  --sky-deep:       #9A9A9A;
+  --blue:           #B4B4B4;
+  --blue-soft:      #DADADA;
+  --blue-mid:       #C4C4C4;
+  --blue-deep:      #8A8A8A;
+  --blue-pale:      #C8C8C8;
+  --violet:         #9E9E9E;
+  --violet-soft:    #BABABA;
+  --pink:           #AEAEAE;
+  --pink-soft:      #CACACA;
+
+  --ink-rgb:            255, 255, 255;
+
+  --ribbon-veil:        rgba(255, 255, 255, 0.035);
+  --shadow-rgb:           0,   0,   0;
+  --bg-rgb:               0,   0,   0;
+  --card-rgb:            12,  12,  12;
+  --primary-rgb:        255, 255, 255;
+  --primary2-rgb:       224, 224, 224;
+  --brand-rgb:          200, 200, 200;
+  --brand-pale-rgb:     168, 168, 168;
+  --success-rgb:         63, 169, 104;
+  --success-alt-rgb:     63, 169, 104;
+  --danger-rgb:         199,  85,  77;
+  --warning-rgb:        176, 138,  56;
+  --warning-soft-rgb:   176, 138,  56;
+  --yellow-rgb:         176, 138,  56;
+  --cyan-neon-rgb:      255, 255, 255;
+  --cyan-rgb:           214, 214, 214;
+  --cyan-deep-rgb:      168, 168, 168;
+  --sky-rgb:            192, 192, 192;
+  --blue-rgb:           180, 180, 180;
+  --violet-rgb:         158, 158, 158;
+  --on-accent:           #000000;
+  --text-muted-rgb:      130, 130, 130;
+  --pink-rgb:            174, 174, 174;
+  --orange-rgb:          176, 116,  64;
+
+  --r-lg:           6px;
+  --r-md:           4px;
+  --r-sm:           3px;
+
+  /* Los emoji del menu se apagan: es lo que mas "colorido" dejaba al tema */
+  --icon-filter:    grayscale(1) opacity(.68);
+}
+
+:root {
+  --t-xs:   0.75rem;    /* 12px · etiquetas de columna, notas al pie   */
+  --t-sm:   0.875rem;   /* 14px · celdas de tabla                      */
+  --t-md:   0.9375rem;  /* 15px · texto de la interfaz                 */
+  --t-lg:   1.125rem;   /* 18px · subtitulos y cifras destacadas       */
+  --t-xl:   1.5rem;     /* 24px · titulos de seccion                   */
+  --t-2xl:  2.125rem;   /* 34px · cifras grandes de KPI                */
+
+  /* Espaciado: 333 combinaciones de padding distintas se reducen a estas. */
+  --e-1:    0.25rem;
+  --e-2:    0.45rem;
+  --e-3:    0.7rem;
+  --e-4:    1rem;
+  --e-5:    1.5rem;
+}
+
+/* ---- fin del recorte de css/temas.css ---- */
+
+/* Solo el envase de la maqueta. Lo de abajo es el CSS de verdad. */
+body{margin:0;background:var(--bg-dark);color:var(--text-main);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:0 0 40px}
+.mq-barra{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:12px 20px;border-bottom:1px solid var(--border);margin-bottom:22px}
+.mq-barra b{font-size:12px;letter-spacing:.6px;color:var(--text-muted);margin-right:6px}
+.mq-barra button{background:rgba(var(--ink-rgb),.06);border:1px solid var(--border);
+  color:var(--text-strong);border-radius:8px;padding:6px 12px;font-size:12px;
+  font-weight:700;cursor:pointer;font-family:inherit}
+.mq-barra button:hover{border-color:var(--primary)}
+.mq-barra button[aria-pressed=true]{background:rgba(var(--brand-rgb),.18);border-color:var(--primary)}
+.mq-lienzo{max-width:1180px;margin:0 auto;padding:0 20px}
+.mq-antes{color:var(--text-muted);font-size:13px;border:1px dashed var(--border);
+  border-radius:12px;padding:14px 16px;margin-bottom:18px}
+
+/* RECORTADO DE js/reportes/pendiente.js, funcion estilos() */
+#pend{--pend-amber:var(--warning)}
+#pend .pend-total td{font-weight:900;color:var(--text-strong);
+  border-top:2px solid rgba(var(--ink-rgb),.15)}
+#pend .pend-grid{display:grid;grid-template-columns:1fr;gap:16px}
+#pend .pend-panel{background:rgba(var(--ink-rgb), .04);border:1px solid var(--border);
+  border-radius:14px;padding:16px 18px}
+#pend .pend-panel h3{margin:0 0 2px;font-size:var(--t-sm);font-weight:800;
+  letter-spacing:.9px;color:var(--text-strong)}
+#pend .pend-cap{font-size:var(--t-sm);color:var(--text-muted);margin-bottom:11px}
+#pend table{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
+#pend th{text-align:left;color:var(--text-muted);font-size:var(--t-xs);letter-spacing:.6px;
+  font-weight:700;padding:6px 8px;border-bottom:1px solid var(--border)}
+#pend th.n,#pend td.n{text-align:right;font-variant-numeric:tabular-nums}
+#pend th.c,#pend td.c{text-align:center;font-variant-numeric:tabular-nums}
+#pend td{padding:6px 8px;border-bottom:1px solid rgba(var(--ink-rgb), .05)}
+#pend tbody tr:last-child td{border-bottom:0}
+#pend .pend-ojo td{color:var(--warning-pale)}
+#pend .pend-suave{font-size:var(--t-xs);color:var(--text-muted);padding-top:8px}
+#pend .pend-nota{border-left:3px solid var(--pend-amber);padding:9px 13px;
+  background:rgba(var(--warning-rgb), .07);border-radius:0 8px 8px 0;margin-top:11px;
+  font-size:var(--t-sm);color:var(--blue-pale)}
+#pend .pend-cab2{display:flex;justify-content:space-between;align-items:flex-start;
+  gap:12px;flex-wrap:wrap;margin-bottom:11px}
+#pend .pend-acc2{display:flex;gap:8px;align-items:center}
+#pend .pend-buscar{background:rgba(var(--shadow-rgb), .3);border:1px solid var(--border);
+  border-radius:8px;color:var(--text-strong);padding:7px 10px;font-size:var(--t-sm);
+  font-family:inherit;min-width:210px}
+#pend .pend-buscar:focus{outline:none;border-color:var(--primary)}
+#pend .pend-scroll{max-height:420px;overflow:auto}
+#pend .pend-scroll thead th{position:sticky;top:0;z-index:1;background:var(--bg-dark)}
+#pend .btn-icono{background:rgba(var(--ink-rgb),.06);border:1px solid var(--border);
+  color:var(--text-strong);border-radius:8px;width:34px;height:34px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+#pend .btn-icono:hover{border-color:var(--primary)}
+</style>
+</head>
+<body>
+
+<div class="mq-barra">
+  <b>MAQUETA &middot; LOS CUATRO TEMAS</b>
+  <button type="button" data-t="indigo" aria-pressed="true">Indigo</button>
+  <button type="button" data-t="pbi">PBI</button>
+  <button type="button" data-t="pbi-classic">PBI Classic</button>
+  <button type="button" data-t="negro">Negro</button>
+</div>
+
+<div class="mq-lienzo">
+  <div class="mq-antes">Arriba de esto queda todo lo que ya tiene <b>Picking &rsaquo; Pedidos WMS</b>:
+    el pareto &ldquo;PEDIDOS WMS NO LIBERADOS&rdquo;, el cuadro GENDER y TRACKING PEDIDOS.
+    Lo nuevo va al final, sin tocar nada de lo de arriba.</div>
+
+  <div id="pend">
+    <div class="pend-grid">
+
+      <div class="pend-panel">
+        <h3>PEDIDO LIBERADO</h3>
+        <div class="pend-cap">Cu&aacute;nto tard&oacute; comercial en liberar lo que el WMS ya
+          ten&iacute;a creado &middot; 1.339 pedidos del pendiente &middot; 15-09-2026 11:04</div>
+        <table>
+          <thead><tr>
+            <th>DEMORA EN LIBERAR</th><th class="c">PEDIDOS</th>
+            <th class="c">UNIDADES</th><th class="c">%</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>el mismo d&iacute;a</td><td class="c">1.094</td><td class="c">59.573</td><td class="c">82%</td></tr>
+            <tr><td>1 a 3 d&iacute;as</td><td class="c">106</td><td class="c">2.192</td><td class="c">8%</td></tr>
+            <tr><td>4 a 7 d&iacute;as</td><td class="c">117</td><td class="c">1.590</td><td class="c">9%</td></tr>
+            <tr class="pend-ojo"><td>8 a 15 d&iacute;as</td><td class="c">13</td><td class="c">389</td><td class="c">1%</td></tr>
+            <tr class="pend-ojo"><td>16 a 30 d&iacute;as</td><td class="c">8</td><td class="c">137</td><td class="c">1%</td></tr>
+            <tr class="pend-ojo"><td>m&aacute;s de 30 d&iacute;as</td><td class="c">1</td><td class="c">15</td><td class="c">0%</td></tr>
+            <tr class="pend-total"><td>TOTAL</td><td class="c">1.339</td>
+              <td class="c">63.896</td><td class="c">100%</td></tr>
+          </tbody>
+        </table>
+        <div class="pend-nota"><b>22 pedidos esperaron m&aacute;s de una semana</b> a que comercial
+          los liberara, y son 541 unidades. El m&aacute;s viejo, la gu&iacute;a <b>7991491</b> de
+          <b>B1 TUMBES</b>: el WMS la cre&oacute; el 22-07 y comercial la liber&oacute; el 11-09.
+          <b>51 d&iacute;as.</b></div>
+      </div>
+
+      <div class="pend-panel">
+        <div class="pend-cab2">
+          <div>
+            <h3>DETALLE POR GU&Iacute;A</h3>
+            <div class="pend-cap">De la que m&aacute;s esper&oacute; a la que menos &middot; solo retail</div>
+          </div>
+          <div class="pend-acc2">
+            <input type="search" id="lib_buscar" class="pend-buscar" placeholder="Gu&iacute;a o tienda">
+            <button type="button" class="btn-icono" title="Exportar a Excel">XLS</button>
+          </div>
+        </div>
+        <div class="pend-scroll">
+          <table>
+            <thead><tr>
+              <th>GU&Iacute;A</th><th class="n">FECHA ORDEN WMS</th><th class="n">FECHA CORREO</th>
+              <th class="n">D&Iacute;AS</th><th class="n">PENDIENTE</th><th>TIENDA</th>
+            </tr></thead>
+            <tbody id="lib_filas">
+              <tr class="pend-ojo" data-b="7991491 560 b1 tumbes"><td>7991491</td><td class="n">22/07/2026</td><td class="n">11/09/2026</td><td class="n">51</td><td class="n">15</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="7996680 560 b1 tumbes"><td>7996680</td><td class="n">12/08/2026</td><td class="n">11/09/2026</td><td class="n">30</td><td class="n">12</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="7996926 560 b1 tumbes"><td>7996926</td><td class="n">12/08/2026</td><td class="n">11/09/2026</td><td class="n">30</td><td class="n">5</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="7998119 560 b1 tumbes"><td>7998119</td><td class="n">14/08/2026</td><td class="n">11/09/2026</td><td class="n">28</td><td class="n">28</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="7998616 560 b1 tumbes"><td>7998616</td><td class="n">17/08/2026</td><td class="n">11/09/2026</td><td class="n">25</td><td class="n">8</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="7999911 560 b1 tumbes"><td>7999911</td><td class="n">19/08/2026</td><td class="n">11/09/2026</td><td class="n">23</td><td class="n">39</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="8001962 560 b1 tumbes"><td>8001962</td><td class="n">24/08/2026</td><td class="n">11/09/2026</td><td class="n">18</td><td class="n">16</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="8002175 560 b1 tumbes"><td>8002175</td><td class="n">24/08/2026</td><td class="n">11/09/2026</td><td class="n">18</td><td class="n">16</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="8001762 560 b1 tumbes"><td>8001762</td><td class="n">24/08/2026</td><td class="n">11/09/2026</td><td class="n">18</td><td class="n">13</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="8003964 560 b1 tumbes"><td>8003964</td><td class="n">27/08/2026</td><td class="n">11/09/2026</td><td class="n">15</td><td class="n">88</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="8003794 560 b1 tumbes"><td>8003794</td><td class="n">27/08/2026</td><td class="n">11/09/2026</td><td class="n">15</td><td class="n">50</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="8004173 560 b1 tumbes"><td>8004173</td><td class="n">27/08/2026</td><td class="n">11/09/2026</td><td class="n">15</td><td class="n">8</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="8003912 392 b3 magdalena"><td>8003912</td><td class="n">27/08/2026</td><td class="n">08/09/2026</td><td class="n">12</td><td class="n">22</td><td>392 B3 MAGDALENA</td></tr>
+              <tr class="pend-ojo" data-b="8003880 248 b3 carabayllo"><td>8003880</td><td class="n">27/08/2026</td><td class="n">08/09/2026</td><td class="n">12</td><td class="n">5</td><td>248 B3 CARABAYLLO</td></tr>
+              <tr class="pend-ojo" data-b="8005792 560 b1 tumbes"><td>8005792</td><td class="n">01/09/2026</td><td class="n">11/09/2026</td><td class="n">10</td><td class="n">98</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="8005553 560 b1 tumbes"><td>8005553</td><td class="n">01/09/2026</td><td class="n">11/09/2026</td><td class="n">10</td><td class="n">80</td><td>560 B1 TUMBES</td></tr>
+              <tr class="pend-ojo" data-b="8005492 401 b huacho"><td>8005492</td><td class="n">01/09/2026</td><td class="n">09/09/2026</td><td class="n">8</td><td class="n">14</td><td>401 B HUACHO</td></tr>
+              <tr class="pend-ojo" data-b="8005493 404 b2 barranca"><td>8005493</td><td class="n">01/09/2026</td><td class="n">09/09/2026</td><td class="n">8</td><td class="n">8</td><td>404 B2 BARRANCA</td></tr>
+              <tr class="pend-ojo" data-b="8005726 401 b huacho"><td>8005726</td><td class="n">01/09/2026</td><td class="n">09/09/2026</td><td class="n">8</td><td class="n">5</td><td>401 B HUACHO</td></tr>
+              <tr class="pend-ojo" data-b="8005626 120 b1 callao"><td>8005626</td><td class="n">01/09/2026</td><td class="n">09/09/2026</td><td class="n">8</td><td class="n">5</td><td>120 B1 CALLAO</td></tr>
+              <tr class="pend-ojo" data-b="8005727 404 b2 barranca"><td>8005727</td><td class="n">01/09/2026</td><td class="n">09/09/2026</td><td class="n">8</td><td class="n">3</td><td>404 B2 BARRANCA</td></tr>
+              <tr class="pend-ojo" data-b="8006555 157 b5 chorrillos"><td>8006555</td><td class="n">03/09/2026</td><td class="n">11/09/2026</td><td class="n">8</td><td class="n">3</td><td>157 B5 CHORRILLOS</td></tr>
+              <tr data-b="8005700 284 b huaycan"><td>8005700</td><td class="n">01/09/2026</td><td class="n">08/09/2026</td><td class="n">7</td><td class="n">12</td><td>284 B HUAYCAN</td></tr>
+              <tr data-b="8005680 248 b3 carabayllo"><td>8005680</td><td class="n">01/09/2026</td><td class="n">08/09/2026</td><td class="n">7</td><td class="n">9</td><td>248 B3 CARABAYLLO</td></tr>
+              <tr data-b="8005643 157 b5 chorrillos"><td>8005643</td><td class="n">01/09/2026</td><td class="n">08/09/2026</td><td class="n">7</td><td class="n">1</td><td>157 B5 CHORRILLOS</td></tr>
+              <tr data-b="8006537 406 b huaral"><td>8006537</td><td class="n">03/09/2026</td><td class="n">09/09/2026</td><td class="n">6</td><td class="n">8</td><td>406 B HUARAL</td></tr>
+              <tr data-b="8005861 801 b1 iquitos"><td>8005861</td><td class="n">01/09/2026</td><td class="n">07/09/2026</td><td class="n">6</td><td class="n">2</td><td>801 B1 IQUITOS</td></tr>
+              <tr data-b="8005865 809 b8 iquitos"><td>8005865</td><td class="n">01/09/2026</td><td class="n">07/09/2026</td><td class="n">6</td><td class="n">2</td><td>809 B8 IQUITOS</td></tr>
+              <tr data-b="8005862 802 b2 iquitos"><td>8005862</td><td class="n">01/09/2026</td><td class="n">07/09/2026</td><td class="n">6</td><td class="n">1</td><td>802 B2 IQUITOS</td></tr>
+              <tr data-b="8005866 813 ns iquitos"><td>8005866</td><td class="n">01/09/2026</td><td class="n">07/09/2026</td><td class="n">6</td><td class="n">1</td><td>813 NS IQUITOS</td></tr>
+              <tr data-b="8005864 807 b yurimaguas"><td>8005864</td><td class="n">01/09/2026</td><td class="n">07/09/2026</td><td class="n">6</td><td class="n">1</td><td>807 B YURIMAGUAS</td></tr>
+              <tr data-b="8005863 804 b4 iquitos"><td>8005863</td><td class="n">01/09/2026</td><td class="n">07/09/2026</td><td class="n">6</td><td class="n">1</td><td>804 B4 IQUITOS</td></tr>
+              <tr data-b="8006591 406 b huaral"><td>8006591</td><td class="n">03/09/2026</td><td class="n">09/09/2026</td><td class="n">6</td><td class="n">1</td><td>406 B HUARAL</td></tr>
+              <tr data-b="8006590 401 b huacho"><td>8006590</td><td class="n">03/09/2026</td><td class="n">09/09/2026</td><td class="n">6</td><td class="n">1</td><td>401 B HUACHO</td></tr>
+              <tr data-b="8006609 535 b la union piur"><td>8006609</td><td class="n">03/09/2026</td><td class="n">09/09/2026</td><td class="n">6</td><td class="n">1</td><td>535 B LA UNION PIUR</td></tr>
+              <tr data-b="8006486 235 b faucett"><td>8006486</td><td class="n">03/09/2026</td><td class="n">08/09/2026</td><td class="n">5</td><td class="n">63</td><td>235 B FAUCETT</td></tr>
+              <tr data-b="8006507 235 b faucett"><td>8006507</td><td class="n">03/09/2026</td><td class="n">08/09/2026</td><td class="n">5</td><td class="n">15</td><td>235 B FAUCETT</td></tr>
+              <tr data-b="8008377 809 b8 iquitos"><td>8008377</td><td class="n">09/09/2026</td><td class="n">14/09/2026</td><td class="n">5</td><td class="n">11</td><td>809 B8 IQUITOS</td></tr>
+              <tr data-b="8006550 124 b ventanilla"><td>8006550</td><td class="n">03/09/2026</td><td class="n">08/09/2026</td><td class="n">5</td><td class="n">10</td><td>124 B VENTANILLA</td></tr>
+              <tr data-b="8008378 813 ns iquitos"><td>8008378</td><td class="n">09/09/2026</td><td class="n">14/09/2026</td><td class="n">5</td><td class="n">10</td><td>813 NS IQUITOS</td></tr>
+              <tr data-b="8006587 392 b3 magdalena"><td>8006587</td><td class="n">03/09/2026</td><td class="n">08/09/2026</td><td class="n">5</td><td class="n">9</td><td>392 B3 MAGDALENA</td></tr>
+              <tr data-b="8006575 272 b chosica"><td>8006575</td><td class="n">03/09/2026</td><td class="n">08/09/2026</td><td class="n">5</td><td class="n">9</td><td>272 B CHOSICA</td></tr>
+              <tr data-b="8006578 284 b huaycan"><td>8006578</td><td class="n">03/09/2026</td><td class="n">08/09/2026</td><td class="n">5</td><td class="n">6</td><td>284 B HUAYCAN</td></tr>
+              <tr data-b="8007157 830 b tarapoto"><td>8007157</td><td class="n">04/09/2026</td><td class="n">09/09/2026</td><td class="n">5</td><td class="n">2</td><td>830 B TARAPOTO</td></tr>
+              <tr data-b="8007144 750 ns cusco"><td>8007144</td><td class="n">04/09/2026</td><td class="n">09/09/2026</td><td class="n">5</td><td class="n">2</td><td>750 NS CUSCO</td></tr>
+              <tr data-b="8007141 744 b4 cusco"><td>8007141</td><td class="n">04/09/2026</td><td class="n">09/09/2026</td><td class="n">5</td><td class="n">2</td><td>744 B4 CUSCO</td></tr>
+              <tr data-b="8007124 641 b huaraz"><td>8007124</td><td class="n">04/09/2026</td><td class="n">09/09/2026</td><td class="n">5</td><td class="n">2</td><td>641 B HUARAZ</td></tr>
+              <tr data-b="8006552 143 b5 miraflores"><td>8006552</td><td class="n">03/09/2026</td><td class="n">08/09/2026</td><td class="n">5</td><td class="n">2</td><td>143 B5 MIRAFLORES</td></tr>
+              <tr data-b="8007139 740 b1 cusco"><td>8007139</td><td class="n">04/09/2026</td><td class="n">09/09/2026</td><td class="n">5</td><td class="n">1</td><td>740 B1 CUSCO</td></tr>
+              <tr data-b="8007084 423 b huamachuco"><td>8007084</td><td class="n">04/09/2026</td><td class="n">09/09/2026</td><td class="n">5</td><td class="n">1</td><td>423 B HUAMACHUCO</td></tr>
+              <tr data-b="8006487 235 b faucett"><td>8006487</td><td class="n">03/09/2026</td><td class="n">08/09/2026</td><td class="n">5</td><td class="n">1</td><td>235 B FAUCETT</td></tr>
+              <tr data-b="8008969 807 b yurimaguas"><td>8008969</td><td class="n">10/09/2026</td><td class="n">14/09/2026</td><td class="n">4</td><td class="n">483</td><td>807 B YURIMAGUAS</td></tr>
+              <tr data-b="8008967 804 b4 iquitos"><td>8008967</td><td class="n">10/09/2026</td><td class="n">14/09/2026</td><td class="n">4</td><td class="n">188</td><td>804 B4 IQUITOS</td></tr>
+              <tr data-b="8006494 804 b4 iquitos"><td>8006494</td><td class="n">03/09/2026</td><td class="n">07/09/2026</td><td class="n">4</td><td class="n">100</td><td>804 B4 IQUITOS</td></tr>
+              <tr data-b="8006497 807 b yurimaguas"><td>8006497</td><td class="n">03/09/2026</td><td class="n">07/09/2026</td><td class="n">4</td><td class="n">65</td><td>807 B YURIMAGUAS</td></tr>
+              <tr data-b="8009422 721 b el pedregal"><td>8009422</td><td class="n">10/09/2026</td><td class="n">14/09/2026</td><td class="n">4</td><td class="n">20</td><td>721 B EL PEDREGAL</td></tr>
+              <tr data-b="8009416 706 b2 arequipa"><td>8009416</td><td class="n">10/09/2026</td><td class="n">14/09/2026</td><td class="n">4</td><td class="n">15</td><td>706 B2 AREQUIPA</td></tr>
+              <tr data-b="8009410 621 b la merced"><td>8009410</td><td class="n">10/09/2026</td><td class="n">14/09/2026</td><td class="n">4</td><td class="n">15</td><td>621 B LA MERCED</td></tr>
+              <tr data-b="8009419 711 b10 arequipa"><td>8009419</td><td class="n">10/09/2026</td><td class="n">14/09/2026</td><td class="n">4</td><td class="n">15</td><td>711 B10 AREQUIPA</td></tr>
+              <tr data-b="8009201 433 b2 chincha"><td>8009201</td><td class="n">10/09/2026</td><td class="n">14/09/2026</td><td class="n">4</td><td class="n">12</td><td>433 B2 CHINCHA</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pend-suave" id="lib_cuenta">60 de 1.339 pedidos &middot; en la pantalla van los 1.339</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* Solo para la maqueta: cambiar de tema y probar el buscador. */
+var botones = document.querySelectorAll('.mq-barra button');
+botones.forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.documentElement.dataset.tema = b.dataset.t;
+    botones.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+  });
+});
+var bus = document.getElementById('lib_buscar');
+var filas = Array.prototype.slice.call(document.querySelectorAll('#lib_filas tr'));
+var cuenta = document.getElementById('lib_cuenta');
+bus.addEventListener('input', function () {
+  var q = bus.value.trim().toLowerCase();
+  var n = 0;
+  filas.forEach(function (tr) {
+    var ok = !q || (tr.dataset.b || '').indexOf(q) !== -1;
+    tr.hidden = !ok;
+    if (ok) n++;
+  });
+  cuenta.textContent = (n === filas.length)
+    ? '60 de 1.339 pedidos · en la pantalla van los 1.339'
+    : n + ' de 60 que se muestran acá';
+});
+</script>
+</body>
+</html>

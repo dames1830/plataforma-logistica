@@ -101,7 +101,7 @@ import sys
 import traceback
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import date, datetime
 
 try:
     import openpyxl
@@ -1181,6 +1181,126 @@ def armar_no_liberados(hoy, guias, rutas, gen):
     return datos
 
 
+def armar_liberacion(hoy, guias):
+    """CUANTO TARDO COMERCIAL EN LIBERAR LO QUE EL WMS YA TENIA CREADO.
+
+    POR QUE EXISTE. Daniel, 15-sep-2026, mirando la guia 7991491: *"comercial lo
+    ha creado el 22 de julio y lo ha liberado el 11 de setiembre. Nada de agosto
+    ha pasado. 50 dias. Ha sido por algo estrategico o porque se olvidaron?"*.
+
+    Son las DOS FECHAS que ya se veian sueltas y nunca juntas: la de la orden en
+    el WMS y la del correo que la libero. La resta es el dato.
+
+    EL UNIVERSO ES EL PENDIENTE: guias que comercial libero antes de hoy y que el
+    WMS sigue teniendo abiertas. Las que ya se picaron desaparecen de la foto, asi
+    que esto mide lo que HOY sigue esperando, no un historico. La pantalla lo dice.
+
+    EL DETALLE DEJA FUERA LAS DE EL MISMO DIA, que el 15-sep eran el 82%. No es un
+    recorte de conveniencia: una guia liberada el dia que nacio no tiene demora que
+    mirar, y meter las 1.094 sumaba 80 KB a cada apertura de la pantalla. El pareto
+    de arriba si las cuenta, y por eso los dos cuadros no dan el mismo total: el
+    rotulo lo aclara.
+    """
+    hoy_d = datetime.strptime(hoy, '%Y-%m-%d').date()
+    if not os.path.isfile(PENDIENTES):
+        return None
+
+    pares = collections.defaultdict(float)
+    nacio = {}
+    vistas = set()
+    f = io.open(PENDIENTES, encoding='utf-8-sig', newline='', errors='replace')
+    r = csv.reader(f, delimiter=';')
+    try:
+        next(r)
+    except StopIteration:
+        f.close()
+        return None
+    for row in r:
+        if len(row) < 20 or row[4].strip() not in ESTADOS:
+            continue
+        o = limpio(row[1])
+        if o not in guias:
+            continue                       # sin correo no hay nada que medir
+        sku, dest = limpio(row[5]), limpio(row[13])
+        if (o, sku, dest) in vistas:
+            continue
+        vistas.add((o, sku, dest))
+        p = (num(row[6]) - num(row[9])) * pares_de_la_caja(sku)
+        if p <= 0:
+            continue
+        pares[o] += p
+        if o not in nacio:
+            fo = limpio(row[18])           # "Fecha de orden", dd/mm/aaaa
+            if len(fo) == 10:
+                try:
+                    nacio[o] = date(int(fo[6:10]), int(fo[3:5]), int(fo[0:2]))
+                except ValueError:
+                    pass
+    f.close()
+    if not pares:
+        return None
+
+    filas = []
+    for o, p in pares.items():
+        if o not in nacio:
+            continue
+        fila, mes, dia = guias[o]
+        try:
+            correo = date(hoy_d.year, int(mes), int(dia))
+        except ValueError:
+            continue
+        # El correo de un diciembre mirado en enero cae un ano atras.
+        if correo > hoy_d:
+            correo = date(hoy_d.year - 1, int(mes), int(dia))
+        if correo < hoy_d:
+            def campo(i):
+                return (str(fila[i]).strip()
+                        if i < len(fila) and fila[i] is not None else '')
+            filas.append({
+                'guia': o,
+                'orden': nacio[o].strftime('%d/%m/%Y'),
+                'correo': correo.strftime('%d/%m/%Y'),
+                'dias': (correo - nacio[o]).days,
+                'und': int(round(p)),
+                'tienda': ('%s %s' % (campo(1), campo(2))).strip() or '(sin tienda)',
+            })
+    if not filas:
+        return None
+
+    TRAMOS = [(0, 0, 'el mismo dia'), (1, 3, '1 a 3 dias'), (4, 7, '4 a 7 dias'),
+              (8, 15, '8 a 15 dias'), (16, 30, '16 a 30 dias'),
+              (31, 99999, 'mas de 30 dias')]
+    cuenta = collections.OrderedDict((t[2], [0, 0]) for t in TRAMOS)
+    for x in filas:
+        for a, b, k in TRAMOS:
+            if a <= x['dias'] <= b:
+                cuenta[k][0] += 1
+                cuenta[k][1] += x['und']
+                break
+    total = len(filas)
+    tarde = [x for x in filas if x['dias'] >= 1]
+    tarde.sort(key=lambda x: (-x['dias'], -x['und']))
+    semana = [x for x in tarde if x['dias'] > 7]
+
+    log('Liberacion: %s pedidos del pendiente; %s tardaron mas de una semana '
+        'en liberarse (%s unidades). El peor, %s dias.'
+        % (format(total, ',d'), format(len(semana), ',d'),
+           format(sum(x['und'] for x in semana), ',d'),
+           tarde[0]['dias'] if tarde else 0))
+
+    return {
+        'pedidos': total,
+        'unidades': int(round(sum(x['und'] for x in filas))),
+        'tramos': [{'k': k, 'ped': v[0], 'und': int(round(v[1])),
+                    'pct': int(round(100.0 * v[0] / total)) if total else 0}
+                   for k, v in cuenta.items()],
+        'semana': {'ped': len(semana),
+                   'und': int(round(sum(x['und'] for x in semana)))},
+        'peor': tarde[0] if tarde else None,
+        'detalle': tarde,
+    }
+
+
 def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
     """Lo que comercial mando HOY, que es justo lo que el pendiente deja fuera.
 
@@ -1340,6 +1460,9 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
     # modulo porque el cuadro que ocupaba ese lugar quedo en cero al sacar el
     # doble tramo, y esto si hay que mirarlo todos los dias.
     datos['noLiberados'] = armar_no_liberados(hoy, guias, rutas, gen)
+    # Y LAS DOS FECHAS JUNTAS: cuanto tardo comercial en liberar cada guia.
+    # Va en este mismo modulo porque lo mira el mismo que mira lo no liberado.
+    datos['liberacion'] = armar_liberacion(hoy, guias)
     log('Correo de hoy: %s guias / %s unidades pedidas  ->  el WMS tiene abiertas '
         '%s guias / %s unidades  (sin abrir %s)'
         % (format(datos['correo']['guias'], ',d'),
