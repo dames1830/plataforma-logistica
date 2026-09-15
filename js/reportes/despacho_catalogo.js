@@ -33,7 +33,13 @@
  * 102 reales, y de 753 destinos, 580.
  */
 
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0781';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0782';
+/* EL RANGO DE FECHAS ES EL DE TODA LA PLATAFORMA, no uno propio. Acá había dos
+   <input type="date"> sueltos, que es justo lo que `selectorRango` vino a terminar: 21
+   pantallas armaban el suyo, unas con "DE:/HASTA:", otras con "DE/A", la mayoría sin
+   decir qué era el primer campo. Daniel lo cantó apenas lo vio al lado del Tracking:
+   *"la fecha la puedes poner en una fila"*. Una sola caja que se lee como una frase. */
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0782';
 
 /* ── DE DÓNDE SALEN LOS DATOS ─────────────────────────────────────────────────
    De `despachoCatalogo.js`, que los baja POR SEMANAS. Acá había una copia de todo
@@ -88,6 +94,7 @@ let raiz = null;
 let FILAS = [];              /* SOLO lo que la pestaña de turno necesita, de ESTE canal */
 let cargando = false;
 let diaMostrado = '';        /* qué día está mostrando la pestaña Hoy */
+let marca = '';              /* la tarjeta del resumen que se tocó */
 
 /* ── UNA PANTALLA, DOS MÓDULOS ────────────────────────────────────────
    Daniel, 15-sep-2026: *"en la aplicación va a haber un solo tracking, yo puedo poner
@@ -171,8 +178,18 @@ const pastilla = (e) => {
         background:${c.fondo}; color:${c.color};">${esc(c.et)}</span>`;
 };
 
-const tarjeta = (n, rotulo, color) => `
-    <div style="flex:1; min-width:96px; background:var(--panel); border:1px solid var(--border);
+/* ══ LAS TARJETAS DEL RESUMEN FILTRAN ═════════════════════════════════
+   Daniel lo pidió para el celular —*"quiero entrar a la incidencia y no me da la
+   opción"*— y acá faltaba lo mismo, peor: "con incidencia" no se podía alcanzar con
+   NINGÚN filtro de esta pantalla. Los estados tenían su lista desplegable; la
+   incidencia no tenía nada, y es la que uno busca.
+
+   LOS NÚMEROS NO CAMBIAN AL FILTRAR: siguen siendo los del rango, que es lo que
+   permite volver. Lo que se recorta es la tabla. */
+const tarjeta = (n, rotulo, color, id) => `
+    <div ${id !== undefined ? `data-marca="${id}" style="cursor:pointer;` : 'style="'}flex:1; min-width:96px;
+                background:${id !== undefined && marca === id ? 'rgba(var(--primary2-rgb), 0.12)' : 'var(--panel)'};
+                border:1px solid ${id !== undefined && marca === id ? 'var(--primary-2)' : 'var(--border)'};
                 border-radius:12px; padding:.7rem .8rem;">
       <div style="font-family:var(--font-num); font-size:var(--t-2xl); font-weight:900; line-height:1.1;
                   color:${color || 'var(--text-strong)'};">${n}</div>
@@ -238,17 +255,11 @@ const barra = () => {
         <option value="">Todos los estados</option>
         ${Object.keys(ESTADOS).map((k) => `<option value="${k}" ${filtro.estado === k ? 'selected' : ''}>${esc(ESTADOS[k].et)}</option>`).join('')}
       </select>
-      ${pestana === 'rango' ? `
-      <input id="dc_d1" type="date" value="${esc(filtro.desde)}" title="Desde"
-        style="background:var(--input-bg); border:1px solid var(--border); border-radius:9px; padding:.45rem .5rem;
-               color:var(--text-main); font-size:var(--t-sm); color-scheme:var(--scheme);">
-      <input id="dc_d2" type="date" value="${esc(filtro.hasta)}" title="Hasta"
-        style="background:var(--input-bg); border:1px solid var(--border); border-radius:9px; padding:.45rem .5rem;
-               color:var(--text-main); font-size:var(--t-sm); color-scheme:var(--scheme);">
-      ${atajos()}` : ''}
+      ${pestana === 'rango' ? selectorRango(filtro.desde, filtro.hasta, null,
+          { idDesde: 'dc_d1', idHasta: 'dc_d2' }) + atajos() : ''}
       <button type="button" id="dc_excel" style="background:var(--panel); border:1px solid var(--border);
         border-radius:9px; padding:.5rem .8rem; color:var(--text-soft); font-size:var(--t-sm);
-        font-weight:700; cursor:pointer; font-family:inherit;">Excel (${num(L.length)})</button>
+        font-weight:700; cursor:pointer; font-family:inherit;">Excel (${num(deLaMarca(L).length)})</button>
     </div>`;
 };
 
@@ -277,6 +288,13 @@ const atajos = () => RANGOS.map(([et, dame], k) => {
         font-size:var(--t-sm); font-weight:700; cursor:pointer; font-family:inherit;">${esc(et)}</button>`;
 }).join('');
 
+const deLaMarca = (L) =>
+      marca === 'atendidos' ? L.filter((f) => String(f.est).toUpperCase() === 'ATENDIDO')
+    : marca === 'no atendidos' ? L.filter((f) => String(f.est).toUpperCase() === 'NO ATENDIDO')
+    : marca === 'por liquidar' ? L.filter(pendiente)
+    : marca === 'con incidencia' ? L.filter((f) => f.inc)
+    : L;
+
 const resumen = (L) => {
     const at = L.filter((f) => String(f.est).toUpperCase() === 'ATENDIDO').length;
     const no = L.filter((f) => String(f.est).toUpperCase() === 'NO ATENDIDO').length;
@@ -285,13 +303,16 @@ const resumen = (L) => {
     const gasto = L.reduce((a, f) => a + (Number(f.gasto) || 0), 0);
     return `
     <div style="display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1rem;">
-      ${tarjeta(num(L.length), 'despachos')}
-      ${tarjeta(num(at), 'atendidos', 'var(--success)')}
-      ${pen ? tarjeta(num(pen), 'por liquidar', 'var(--warning)') : ''}
-      ${tarjeta(num(no), 'no atendidos', no ? 'var(--danger)' : null)}
-      ${tarjeta(num(inc), 'con incidencia', inc ? 'var(--warning)' : null)}
+      ${tarjeta(num(L.length), 'despachos', null, '')}
+      ${tarjeta(num(at), 'atendidos', 'var(--success)', 'atendidos')}
+      ${pen ? tarjeta(num(pen), 'por liquidar', 'var(--warning)', 'por liquidar') : ''}
+      ${tarjeta(num(no), 'no atendidos', no ? 'var(--danger)' : null, 'no atendidos')}
+      ${tarjeta(num(inc), 'con incidencia', inc ? 'var(--warning)' : null, 'con incidencia')}
       ${tarjeta(soles(gasto).replace('S/ ', ''), 'gasto S/')}
-    </div>`;
+    </div>
+    ${marca ? `<p data-marca="" style="margin:-.5rem 0 1rem; cursor:pointer; font-size:var(--t-sm);
+       color:var(--primary-2);">Viendo solo <b>${esc(marca)}</b> (${num(deLaMarca(L).length)} de
+       ${num(L.length)}) · tocar para ver todo</p>` : ''}`;
 };
 
 const tabla = (L) => {
@@ -658,18 +679,18 @@ const pintar = () => {
       </div>
       ${barra()}
       ${resumen(L)}
-      ${tabla(L)}
+      ${tabla(deLaMarca(L))}
     </div>
     ${ficha()}`;
 
     /* Los toques */
     raiz.querySelectorAll('[data-pes]').forEach((b) => b.addEventListener('click', async () => {
-        pestana = b.getAttribute('data-pes'); abierta = null; pintar();
+        pestana = b.getAttribute('data-pes'); abierta = null; marca = ''; pintar();
         await cargar(); pintar();
     }));
     raiz.querySelectorAll('[data-rango]').forEach((b) => b.addEventListener('click', async () => {
         const r = RANGOS[Number(b.getAttribute('data-rango'))][1]();
-        filtro.desde = r.desde; filtro.hasta = r.hasta; abierta = null; pintar();
+        filtro.desde = r.desde; filtro.hasta = r.hasta; abierta = null; marca = ''; pintar();
         await cargar(); pintar();
     }));
     raiz.querySelectorAll('[data-fila]').forEach((tr) => tr.addEventListener('click', () => {
@@ -763,7 +784,13 @@ const pintar = () => {
     };
     fecha('#dc_d1', 'desde'); fecha('#dc_d2', 'hasta');
     const ex = raiz.querySelector('#dc_excel');
-    if (ex) ex.addEventListener('click', () => bajarExcel(visibles()));
+    if (ex) ex.addEventListener('click', () => bajarExcel(deLaMarca(visibles())));
+    /* La tarjeta tocada filtra; volver a tocarla apaga el filtro. */
+    raiz.querySelectorAll('[data-marca]').forEach((b) => b.addEventListener('click', () => {
+        const q = b.getAttribute('data-marca');
+        marca = (q === marca) ? '' : q;
+        abierta = null; pintar();
+    }));
 };
 
 /* ── LA PUERTA ────────────────────────────────────────────────────────────────── */

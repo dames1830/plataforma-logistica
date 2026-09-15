@@ -25,28 +25,28 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0781';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0781';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0781';
+import * as adminService from '../services_v245/adminService.js?v=29.0782';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0782';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0782';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0781';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0781';
-import * as metasService from '../services_v245/metasService.js?v=29.0781';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0782';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0782';
+import * as metasService from '../services_v245/metasService.js?v=29.0782';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0781';
+import * as temaService from '../services_v245/temaService.js?v=29.0782';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0781';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0781';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0782';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0782';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0781';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0782';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -192,13 +192,13 @@ const CSS = `
 #app-movil .dsp-toca.on { border-color: var(--am-va); background: var(--am-va-agua); }
 #app-movil .dsp-quitar { cursor: pointer; color: var(--am-va); }
 #app-movil .dsp-rango { background: var(--am-carta); border: 1px solid var(--am-linea);
-  border-radius: 11px; padding: .5rem; display: flex; flex-direction: column; gap: .45rem; }
-#app-movil .dsp-fechas { display: flex; gap: .4rem; }
-#app-movil .dsp-fechas label { flex: 1; display: block; }
-#app-movil .dsp-fechas span { display: block; font-size: .66rem; color: var(--am-tenue); margin-bottom: 2px; }
-#app-movil .dsp-fechas input { width: 100%; background: var(--am-papel); border: 1px solid var(--am-linea);
-  border-radius: 8px; padding: .4rem .5rem; color: var(--am-tinta); font-size: .78rem;
-  font-family: var(--am-ui); }
+  border-radius: 11px; padding: .45rem .6rem; display: flex; align-items: center; gap: .35rem; }
+#app-movil .dsp-cal { font-size: .9rem; opacity: .8; flex-shrink: 0; }
+#app-movil .dsp-rot { font-size: .64rem; font-weight: 800; letter-spacing: .04em;
+  color: var(--am-tenue); white-space: nowrap; flex-shrink: 0; }
+#app-movil .dsp-rango input { flex: 1; min-width: 0; background: transparent; border: 0;
+  padding: 0; color: var(--am-tinta); font-size: .76rem; font-weight: 700;
+  font-family: var(--am-ui); outline: none; }
 #app-movil .dsp-buscar { width: 100%; background: var(--am-carta); border: 1px solid var(--am-linea);
   border-radius: 10px; padding: .55rem .7rem; color: var(--am-tinta); font-size: .85rem;
   font-family: var(--am-ui); }
@@ -599,11 +599,11 @@ const CSS = `
    'color-scheme'. Sin esto, en los dos temas oscuros el iconito sale negro sobre negro y
    parece que no hubiera calendario. Se le dice a cada tema de que color es. */
 #app-movil .am-fecha input,
-#app-movil .dsp-fechas input { color-scheme: dark; }
+#app-movil .dsp-rango input { color-scheme: dark; }
 html[data-tema="pbi"] #app-movil .am-fecha input,
 html[data-tema="pbi-classic"] #app-movil .am-fecha input,
-html[data-tema="pbi"] #app-movil .dsp-fechas input,
-html[data-tema="pbi-classic"] #app-movil .dsp-fechas input { color-scheme: light; }
+html[data-tema="pbi"] #app-movil .dsp-rango input,
+html[data-tema="pbi-classic"] #app-movil .dsp-rango input { color-scheme: light; }
 #app-movil .am-fecha input::-webkit-calendar-picker-indicator { cursor: pointer; }
 
 #app-movil .am-encabezado { display: grid; grid-template-columns: minmax(0, 1fr) 88px 68px;
@@ -3104,13 +3104,19 @@ const desCuenta = (desde, hasta) => {
     return n === null ? '·' : n;
 };
 
+/* EN UNA SOLA FILA, COMO EN EL RESTO DE LA PLATAFORMA. Daniel: *"la fecha la puedes
+   poner en una fila"*, señalando el Tracking, que usa `selectorRango` de
+   `reportesComunes`. Ese componente está escrito con las variables de la web
+   -`--text-strong`, `--border`- y acá el tema es otro, así que se copia la FORMA
+   -calendario, "Desde", fecha, "hasta", fecha, todo en una línea que se lee como una
+   frase- con los colores del celular. Antes eran dos cajones apilados con su rótulo
+   arriba: tres renglones para decir dos fechas, en la pantalla donde menos sobran. */
 const desSelectorDeFechas = () => {
     const r = desRango || DES.rangoDeLaSemana();
     return `<div class="dsp-rango">
-        <div class="dsp-fechas">
-          <label><span>Desde</span><input id="des_d1" type="date" value="${esc(r.desde)}"></label>
-          <label><span>Hasta</span><input id="des_d2" type="date" value="${esc(r.hasta)}"></label>
-        </div>
+        <span class="dsp-cal">📅</span>
+        <span class="dsp-rot">Desde</span><input id="des_d1" type="date" value="${esc(r.desde)}">
+        <span class="dsp-rot">hasta</span><input id="des_d2" type="date" value="${esc(r.hasta)}">
       </div>`;
 };
 
