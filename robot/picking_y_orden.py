@@ -376,9 +376,8 @@ def dia_pedido():
             except ValueError:
                 continue
         raise SystemExit("No entendí la fecha '%s'. Se escribe asi: --dia 12-08-2026" % valor)
-    # SIN --dia, EL DEFECTO ES AYER. Hasta el 15-sep-2026 `--solo-pendientes`
-    # traia hoy; ahora hace falta pedirlo con `--hasta-hoy`, y el porque esta
-    # explicado abajo.
+    # SIN --dia, la corrida de las 08:00 baja AYER. Las dos fotos del pendiente
+    # -`--solo-pendientes`- llegan hasta HOY, y el porque esta abajo.
     #
     # `--solo-dia` TAMBIEN ES HOY, y esto fallo la primera noche: el cierre de las
     # 19:00 del 04-sep bajo el Detalle Orden del **03-09**, porque sin bandera el
@@ -386,21 +385,34 @@ def dia_pedido():
     # Un cierre de turno tiene que retratar SU turno: el de las 19:00 baja el dia que
     # termina y el de las 07:00 el que arranca. Entre los dos queda el dia completo.
     #
-    # ══ EL 15-sep-2026 ESTO SE PARTIO EN DOS ════════════════════════════════
-    # Daniel: *"no tiene sentido que pidas el estatus de hoy. Tu tienes que sacar
-    # el estatus del 14 hacia atras. Manana 16 sacas hasta el 15. El 17 hasta el
-    # 16"*. Tiene razon PARA EL PASE DE LA MANANA: a las 05:30 lo que se busca es
-    # el pendiente -de ayer hacia atras-, y lo que haya nacido de madrugada
-    # comercial todavia no lo libero. Pedirlo no suma nada.
+    # ══ LAS DOS FOTOS DEL PENDIENTE LLEGAN HASTA HOY ════════════════════════
+    # Se discutio el 15-sep-2026 y se volvio a lo mismo, asi que queda escrito para
+    # no repetir la vuelta.
     #
-    # PERO LA BAJADA DE LA NOCHE SI NECESITA HOY, y es otra pregunta. Esa la
-    # dispara el correo de comercial, y lo que quiere saber es "de las guias que
-    # acaba de mandar, cuales ya estan abiertas en el WMS". Esas ordenes nacen
-    # DURANTE EL DIA: cortando la foto en ayer, el Correo de Hoy saldria en cero.
-    # Por eso `armar_pendiente.py` la pide con `--hasta-hoy`.
+    # Daniel primero pidio cortarlas en AYER: *"no tiene sentido que pidas el
+    # estatus de hoy; tu tienes que sacar el estatus del 14 hacia atras"*. Y para el
+    # PENDIENTE es cierto: una guia entra al pendiente solo si comercial la libero
+    # ANTES de hoy, asi que lo que nacio hoy no puede entrar. Pero la foto no es el
+    # pendiente: es la materia prima de tres cuadros a la vez.
     #
-    # `--solo-dia` -el cierre de turno- sigue siendo HOY: retrata SU turno.
-    if "--hasta-hoy" in sys.argv or "--solo-dia" in sys.argv:
+    # LO QUE SE PIERDE CORTANDO EN AYER, medido ese dia:
+    #   · Correo de Hoy: el 82% de las guias nace en el WMS EL MISMO DIA del correo
+    #     -el del 10-09 fue el 100%-. Sin el dia de hoy, ese modulo sale en cero.
+    #   · Pedidos WMS: lo creado hoy y todavia no liberado no se veria hasta manana.
+    #   · Pendiente: NO se gana nada. Ese dia, de 1.339 guias del pendiente, CERO
+    #     habian nacido hoy.
+    #
+    # O sea: pedir hasta hoy no mete ni una guia de hoy en el pendiente -eso lo
+    # decide la fecha del correo, no el rango de la foto- y es lo unico que les da
+    # de comer a los otros dos cuadros. Daniel lo cerro asi: *"el pendiente si
+    # necesita el 15, entonces"*.
+    #
+    # `--hasta-hoy` se acepta y no cambia nada: `armar_pendiente.py` lo manda para
+    # dejar dicho, en el comando, que ESA bajada necesita el dia de hoy.
+    #
+    # `--solo-dia` -el cierre de turno- tambien es HOY: retrata SU turno.
+    if ("--solo-pendientes" in sys.argv or "--hasta-hoy" in sys.argv
+            or "--solo-dia" in sys.argv):
         return datetime.now()
     return datetime.now() - timedelta(days=1)
 
