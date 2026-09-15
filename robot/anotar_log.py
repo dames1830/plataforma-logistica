@@ -132,6 +132,22 @@ def consecuencia_de(clave):
     return CONSECUENCIA.get(clave, '')
 
 
+def primera_frase(texto, tope=105):
+    """La consecuencia recortada para que quepa en la notificacion del celular.
+
+    EL AVISO TIENE QUE DECIR QUE SE PIERDE, no solo que fallo. Pero un push no es una
+    pantalla: se corta a las dos lineas y lo que sobra no se lee. Se manda la primera
+    frase -que es donde esta lo importante, por como estan escritas- y el resto queda
+    en el detalle, a un toque."""
+    t = ' '.join(str(texto or '').split())
+    if not t:
+        return ''
+    punto = t.find('. ')
+    if 0 < punto <= tope:
+        return t[:punto + 1]
+    return t if len(t) <= tope else (t[:tope].rsplit(' ', 1)[0] + '…')
+
+
 def anotar(robot, accion, consecuencia='', tecnico='', tipo='ok', origen='robot'):
     """Deja una línea en el Log de la web. Devuelve True si se pudo.
 
@@ -140,7 +156,11 @@ def anotar(robot, accion, consecuencia='', tecnico='', tipo='ok', origen='robot'
     que arreglarlo; van plegadas y nunca sustituyen a la consecuencia.
     """
     try:
-        detalle = {}
+        # LA CLAVE VIAJA CON EL DATO. El Log guarda el nombre bonito -"Despacho
+        # potencial"-, que es lo que hay que leer; pero el boton de relanzar necesita
+        # la clave de verdad. Sin esto, la app tendria que adivinarla del nombre, y el
+        # dia que se cambie un nombre el boton llamaria al robot equivocado.
+        detalle = {'robot': str(robot)}
         if consecuencia:
             detalle['consecuencia'] = str(consecuencia)[:900]
         if tecnico:
@@ -152,7 +172,7 @@ def anotar(robot, accion, consecuencia='', tecnico='', tipo='ok', origen='robot'
             'quien': bonito(robot),
             'tipo': tipo,
             'accion': str(accion)[:300],
-            'detalle': json.dumps(detalle, ensure_ascii=False) if detalle else '',
+            'detalle': json.dumps(detalle, ensure_ascii=False),
         }, ensure_ascii=False).encode('utf-8')
         p = urllib.request.Request(API, data=cuerpo, method='POST',
                                    headers={'Content-Type': 'application/json'})

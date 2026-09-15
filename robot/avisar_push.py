@@ -508,8 +508,17 @@ def main():
             anotar_log.anotar(clave, texto, tipo='aviso',
                               consecuencia=anotar_log.consecuencia_de(clave),
                               tecnico=_detalle_tecnico(clave))
+        # EL AVISO DICE QUE SE PIERDE, no solo que no llego.
+        #
+        #   Daniel, 15-sep: *"que me diga: sabe que Daniel, no se proceso el activo,
+        #   tenemos el stock anterior todavia"*.
+        #
+        # Cabe porque va la primera frase; el resto esta a un toque, en la pantalla de
+        # Robots, que es adonde lleva este mismo aviso.
+        corta = anotar_log.primera_frase(anotar_log.consecuencia_de(clave))
         salida = avisar(clave, '⚠️ ' + nombre,
-                        '%s · %s' % (texto, hora),
+                        ('%s %s · %s' % (texto + '.', corta, hora)) if corta
+                        else ('%s · %s' % (texto, hora)),
                         etiqueta=clave, de_verdad=not probar)
         if not probar:
             _apuntar(clave, bien)
@@ -518,8 +527,12 @@ def main():
     titulo = ('✅ ' if bien else '⚠️ ') + nombre
     if bien and novedad:
         cuerpo = '%s · %s' % (novedad, hora)
+    elif not bien:
+        # Lo mismo cuando falla de verdad: que se lea que queda en pie.
+        corta = anotar_log.primera_frase(anotar_log.consecuencia_de(clave))
+        cuerpo = ('No pudo terminar. %s · %s' % (corta, hora)) if corta             else ('No pudo terminar · %s' % hora)
     else:
-        cuerpo = ('Terminó bien · %s' % hora) if bien else ('No pudo terminar · %s' % hora)
+        cuerpo = 'Terminó bien · %s' % hora
 
     # LO QUE SUENA ES LO QUE SE ANOTA, y sale del mismo sitio a proposito: si el
     # celular dice una cosa y el Log otra, no se puede creer a ninguno de los dos.

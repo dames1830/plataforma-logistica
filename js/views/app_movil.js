@@ -25,27 +25,27 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0771';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0771';
+import * as adminService from '../services_v245/adminService.js?v=29.0772';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0772';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0771';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0771';
-import * as metasService from '../services_v245/metasService.js?v=29.0771';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0772';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0772';
+import * as metasService from '../services_v245/metasService.js?v=29.0772';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0771';
+import * as temaService from '../services_v245/temaService.js?v=29.0772';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0771';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0771';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0772';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0772';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0771';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0772';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -164,6 +164,13 @@ const CSS = `
   color: var(--am-tenue); font-weight: 800; cursor: pointer; }
 #app-movil .am-tecnico pre { margin: .5rem 0 0; font-family: var(--am-num); font-size: .68rem;
   color: var(--am-suave); white-space: pre; overflow-x: auto; line-height: 1.55; }
+#app-movil .am-pregunta { background: var(--am-curso-agua); border: 1px solid var(--am-linea);
+  border-left: 3px solid var(--am-curso); border-radius: 11px; padding: .75rem .8rem; }
+#app-movil .am-pregunta p { margin: 0 0 .55rem; font-size: .85rem; color: var(--am-suave); line-height: 1.45; }
+#app-movil .am-hecho { margin: 0; font-size: .82rem; color: var(--am-va); font-weight: 600; }
+#app-movil .am-acciones { display: flex; flex-direction: column; gap: .45rem; }
+#app-movil .am-boton-fuerte { background: var(--am-va); color: #fff; border: 0; border-radius: 10px;
+  padding: .72rem; font-family: var(--am-ui); font-size: .85rem; font-weight: 700; cursor: pointer; }
 #app-movil .am-boton-suave { background: var(--am-carta); color: var(--am-suave);
   border: 1px solid var(--am-linea); border-radius: 10px; padding: .7rem; font-family: var(--am-ui);
   font-size: .85rem; font-weight: 700; cursor: pointer; }
@@ -2666,14 +2673,15 @@ const mirarRobots = async () => {
    sea JSON se muestra tal cual: las anotaciones viejas se siguen leyendo. */
 const detalleDeRobot = (txt) => {
     const crudo = String(txt == null ? '' : txt);
-    if (!crudo) return { consecuencia: '', tecnico: '', plano: '' };
+    if (!crudo) return { consecuencia: '', tecnico: '', robot: '', plano: '' };
     try {
         const d = JSON.parse(crudo);
-        if (d && typeof d === 'object' && (d.consecuencia || d.tecnico)) {
-            return { consecuencia: d.consecuencia || '', tecnico: d.tecnico || '', plano: '' };
+        if (d && typeof d === 'object' && (d.consecuencia || d.tecnico || d.robot)) {
+            return { consecuencia: d.consecuencia || '', tecnico: d.tecnico || '',
+                     robot: d.robot || '', plano: '' };
         }
     } catch (e) { /* no era JSON */ }
-    return { consecuencia: '', tecnico: '', plano: crudo };
+    return { consecuencia: '', tecnico: '', robot: '', plano: crudo };
 };
 
 /* EL NOMBRE QUE SE PUEDE LEER, tambien aca.
@@ -2693,6 +2701,15 @@ const NOMBRE_ROBOT = {
     distribucion: 'Distribuci\u00f3n', despacho_potencial: 'Despacho potencial',
     asn_web: 'ASN', slotting: 'Slotting'
 };
+/* LA PREGUNTA QUE HACE EL AVISO, tal como la pidio: *"que me pregunte: lo vas a revisar
+   manualmente? no lo van a enviar?"*. Una pregunta se contesta; un cartel se ignora. */
+const PREGUNTA_ROBOT = {
+    despacho_potencial: '\u00bfLo revisas t\u00fa, o no van a enviar el correo?',
+    correo_citas: '\u00bfLo revisas t\u00fa, o no van a enviar la programaci\u00f3n?',
+    cierre_dia: '\u00bfLo intentamos otra vez?'
+};
+const preguntaDe = (k) => PREGUNTA_ROBOT[k] || '\u00bfQu\u00e9 hacemos?';
+
 const nombreRobot = (q) => {
     const k = String(q || '').trim();
     if (NOMBRE_ROBOT[k]) return NOMBRE_ROBOT[k];
@@ -2703,6 +2720,65 @@ const nombreRobot = (q) => {
         if (vistos.indexOf(t) < 0) vistos.push(t);
     });
     return vistos.join(' y ') || 'Robot';
+};
+
+/* ── PEDIR ALGO DESDE EL CELULAR ─────────────────────────────────────────────────────
+   Daniel, 15-sep-2026: *"que hago si no tengo la laptop a la mano? Desde el celular, yo
+   puedo hacer algo, puedo mandar un comando, algo para que el robot lo vuelva a
+   procesar"*.
+
+   EL CELULAR NO LE HABLA AL SERVIDOR. Deja el pedido en la plataforma y el servidor lo
+   recoge cada pocos minutos (robot/atender_ordenes.py). Asi no hace falta abrir ningun
+   puerto ni guardar una clave del servidor en el telefono.
+
+   LOS QUE SE PUEDEN RELANZAR son los mismos ocho que acepta el servidor, y la lista de
+   alla manda: si aca sobrara uno, el servidor lo rechaza igual. El Robot Oracle WMS
+   -el del stock del turno- queda fuera a proposito: tarda veinte minutos y maneja Excel.
+   Relanzarlo a ciegas desde un telefono es justo lo que no hay que poder hacer. */
+const AREA_ORDENES = 'robot_ordenes';
+const RELANZABLES = ['despacho_potencial', 'correo_citas', 'distribucion', 'cruce_wms',
+                     'corte_turno', 'asn_web', 'oblpn_hora', 'cierre_dia'];
+let ordenEnCurso = '';
+
+const pedirOrden = async (clave, que) => {
+    ordenEnCurso = que;
+    if (raiz) pintar();
+    try {
+        /* Se relee el area entera y se le agrega el pedido, para no pisar lo que haya
+           dejado otro telefono. Mismo criterio que usa el resto de la plataforma. */
+        let ordenes = [];
+        try {
+            const r = await fetch(`${BASE_API}/${AREA_ORDENES}?date=MASTER&t=${Date.now()}`);
+            if (r.ok) {
+                const c = await r.json();
+                const d = (c && c.data !== undefined) ? c.data : c;
+                if (d && Array.isArray(d.ordenes)) ordenes = d.ordenes;
+            }
+        } catch (e) { /* si no se pudo releer, va sola */ }
+
+        const ahora = new Date();
+        const dosD = (n) => String(n).padStart(2, '0');
+        ordenes.push({
+            id: 'o' + Date.now(),
+            robot: clave,
+            que: que,
+            pedidoPor: (YO && (YO.name || YO.username)) || 'alguien',
+            cuando: `${ahora.getFullYear()}-${dosD(ahora.getMonth() + 1)}-${dosD(ahora.getDate())} ${dosD(ahora.getHours())}:${dosD(ahora.getMinutes())}:${dosD(ahora.getSeconds())}`,
+            estado: 'pendiente'
+        });
+
+        const r2 = await fetch(`${BASE_API}/${AREA_ORDENES}?date=MASTER`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ordenes: ordenes.slice(-40) })
+        });
+        if (!r2.ok) throw new Error('el servidor contestó ' + r2.status);
+        ordenEnCurso = que === 'relanzar' ? 'pedido' : 'silenciado';
+    } catch (e) {
+        ordenEnCurso = 'falló';
+        console.warn('[ROBOTS] no se pudo pedir:', e && e.message);
+    }
+    if (raiz) pintar();
 };
 
 const horaDe = (cuando) => String(cuando || '').slice(11, 16);
@@ -2785,6 +2861,7 @@ const hojaDeRobot = () => {
     const f = g.cara || {};
     const mal = g.tipo === 'error' || g.tipo === 'aviso';
     const d = detalleDeRobot(f.detalle);
+    const claveDelRobot = d.robot || '';
     /* TODO LO QUE HIZO HOY, en orden. Es lo que contesta "¿y entonces qué sí corrió?". */
     const pasos = g.lineas.slice().sort((a, b) =>
         String(a.cuando || '').localeCompare(String(b.cuando || '')));
@@ -2820,6 +2897,18 @@ const hojaDeRobot = () => {
             <summary>Detalle técnico</summary>
             <pre>${esc(d.tecnico)}</pre>
           </details>` : ''}
+          ${(mal && RELANZABLES.indexOf(claveDelRobot) >= 0) ? `
+          <div class="am-pregunta">
+            <p><b>${esc(preguntaDe(claveDelRobot))}</b></p>
+            ${ordenEnCurso === 'pedido' ? `<p class="am-hecho">Pedido. El servidor lo recoge en unos minutos y te avisa cuando termine.</p>`
+              : ordenEnCurso === 'silenciado' ? `<p class="am-hecho">Listo, hoy no te avisa mas de esto.</p>`
+              : ordenEnCurso === 'fall\u00f3' ? `<p class="am-hecho" style="color:var(--am-tarde)">No se pudo mandar el pedido. Vuelve a intentarlo.</p>`
+              : ordenEnCurso ? `<p class="am-hecho">Mandando...</p>` : `
+            <div class="am-acciones">
+              <button type="button" class="am-boton-fuerte" data-relanzar="${esc(claveDelRobot)}">Intentarlo otra vez ahora</button>
+              <button type="button" class="am-boton-suave" data-silenciar="${esc(claveDelRobot)}">Lo reviso yo \u00b7 no avises m\u00e1s hoy</button>
+            </div>`}
+          </div>` : ''}
           <button type="button" class="am-boton-suave" data-cerrar-robot>Cerrar</button>
         </div>
       </div>
@@ -3070,8 +3159,12 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (e.target.closest('[data-guardar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
         const fr = e.target.closest('[data-robot]');
-        if (fr) { robotAbierto = parseInt(fr.getAttribute('data-robot'), 10); pintar(); return; }
-        if (e.target.closest('[data-cerrar-robot]')) { robotAbierto = null; pintar(); return; }
+        if (fr) { robotAbierto = parseInt(fr.getAttribute('data-robot'), 10); ordenEnCurso = ''; pintar(); return; }
+        const rel = e.target.closest('[data-relanzar]');
+        if (rel) { pedirOrden(rel.getAttribute('data-relanzar'), 'relanzar'); return; }
+        const sil = e.target.closest('[data-silenciar]');
+        if (sil) { pedirOrden(sil.getAttribute('data-silenciar'), 'silenciar'); return; }
+        if (e.target.closest('[data-cerrar-robot]')) { robotAbierto = null; ordenEnCurso = ''; pintar(); return; }
         if (e.target.closest('[data-prender-avisos]')) { prenderAvisos(); return; }
         if (e.target.closest('[data-apagar-avisos]')) { apagarAvisos(); return; }
         if (e.target.closest('[data-reabrir]')) { reabrirLista(); return; }
