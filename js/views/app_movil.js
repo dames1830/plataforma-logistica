@@ -25,28 +25,28 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0778';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0778';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0778';
+import * as adminService from '../services_v245/adminService.js?v=29.0779';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0779';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0779';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0778';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0778';
-import * as metasService from '../services_v245/metasService.js?v=29.0778';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0779';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0779';
+import * as metasService from '../services_v245/metasService.js?v=29.0779';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0778';
+import * as temaService from '../services_v245/temaService.js?v=29.0779';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0778';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0778';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0779';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0779';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0778';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0779';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -187,13 +187,6 @@ const CSS = `
   font-weight: 400; opacity: .8; }
 #app-movil .dsp-rango { background: var(--am-carta); border: 1px solid var(--am-linea);
   border-radius: 11px; padding: .5rem; display: flex; flex-direction: column; gap: .45rem; }
-#app-movil .dsp-chips { display: flex; gap: .3rem; flex-wrap: wrap; }
-#app-movil .dsp-chip { flex: 1 1 calc(50% - .3rem); background: var(--am-papel);
-  border: 1px solid var(--am-linea); border-radius: 8px; padding: .4rem .3rem; color: var(--am-suave);
-  font-size: .74rem; font-weight: 700; font-family: var(--am-ui); cursor: pointer; }
-#app-movil .dsp-chip.on { background: var(--am-va-agua); border-color: var(--am-va); color: var(--am-va); }
-#app-movil .dsp-chip small { display: block; font-weight: 400; opacity: .75; font-size: .62rem;
-  font-family: var(--am-num); }
 #app-movil .dsp-fechas { display: flex; gap: .4rem; }
 #app-movil .dsp-fechas label { flex: 1; display: block; }
 #app-movil .dsp-fechas span { display: block; font-size: .66rem; color: var(--am-tenue); margin-bottom: 2px; }
@@ -3016,16 +3009,6 @@ let desReloj = null;
 
 const desHoy = () => DES.hoyTexto();
 
-/* LOS ATAJOS DE FECHA. En un teléfono nadie teclea dos fechas para ver la semana
-   pasada. Cada uno dice al lado cuánto falta bajar —la semana en curso ya está y no
-   cuesta nada— para que se sepa ANTES de tocar, no después de esperar. */
-const DES_RANGOS = [
-    ['Esta semana', () => DES.rangoDeLaSemana()],
-    ['La pasada', () => DES.rangoDeLaSemana(DES.sumarDias(DES.hoyTexto(), -7))],
-    ['15 días', () => ({ desde: DES.sumarDias(DES.hoyTexto(), -14), hasta: DES.hoyTexto() })],
-    ['Este mes', () => ({ desde: DES.hoyTexto().slice(0, 8) + '01', hasta: DES.hoyTexto() })]
-];
-
 /* QUÉ SE BAJA EN CADA SUB-PESTAÑA:
      Hoy          la semana en curso, y se muestra el día de hoy
      Por liquidar solo las semanas que el índice marca con guías abiertas
@@ -3095,26 +3078,19 @@ const desDiaEnLetras = (f) => {
     return DES_DIAS[new Date(a, m - 1, d).getDay()] + ' ' + d + ' ' + DES_MESES[m - 1];
 };
 
-/* Los cuatro atajos arriba y las dos fechas abajo. Los atajos cubren el 95% de los
-   casos; las fechas están para el 5% restante y para que nadie quede encerrado. */
+/* NADA DE KILOBYTES EN PANTALLA. Acá había cuatro atajos de fecha que decían al lado
+   cuánto pesaba bajar cada uno -"+228 KB"-. Daniel: *"quita esta tontería de la app"*.
+   Tenía razón: al que liquida en la calle no le importa cuánto pesa, le importa la
+   fecha. Era mi plomería asomándose a la pantalla de otro. Quedan las dos fechas, que
+   es lo que pidió. */
 const desCuenta = (desde, hasta) => {
     const n = DES.contarRango(desde, hasta);
-    if (n !== null) return n;
-    const kb = DES.pesoDelRango(desde, hasta);
-    return kb ? '+' + kb + ' KB' : '—';
+    return n === null ? '·' : n;
 };
 
 const desSelectorDeFechas = () => {
     const r = desRango || DES.rangoDeLaSemana();
-    const chips = DES_RANGOS.map(([et, dame], k) => {
-        const x = dame();
-        const puesto = x.desde === r.desde && x.hasta === r.hasta;
-        const kb = DES.pesoDelRango(x.desde, x.hasta);
-        return `<button type="button" class="dsp-chip ${puesto ? 'on' : ''}" data-drango="${k}">${esc(et)}${kb
-            ? `<small>+${kb} KB</small>` : ''}</button>`;
-    }).join('');
     return `<div class="dsp-rango">
-        <div class="dsp-chips">${chips}</div>
         <div class="dsp-fechas">
           <label><span>Desde</span><input id="des_d1" type="date" value="${esc(r.desde)}"></label>
           <label><span>Hasta</span><input id="des_d2" type="date" value="${esc(r.hasta)}"></label>
@@ -3223,7 +3199,7 @@ const hojaDeDespacho = () => {
         return `<label class="dsp-adj ${hay ? 'hay' : (pide ? 'pide' : '')}">
             <span class="ic">${cual === 'pdf' ? '📄' : '📷'}</span>
             <span>${esc(rot)}${pide ? ' *' : ''}</span>
-            <small>${puesto ? puesto.kb + ' KB listo' : (hay ? 'ya tiene' : 'tocar')}</small>
+            <small>${puesto ? 'listo' : (hay ? 'ya tiene' : 'tocar')}</small>
             <input type="file" data-dadj="${cual}" accept="${cual === 'pdf' ? 'application/pdf' : 'image/*'}" style="display:none">
         </label>`;
     };
@@ -3568,7 +3544,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
             });
             desAviso = 'Preparando ' + cual + '…'; pintar();
             desAdjuntos[cual] = await DES.prepararAdjunto(arch, cual);
-            desAviso = cual + ' listo: ' + desAdjuntos[cual].kb + ' KB. Toca Guardar para subirlo.';
+            desAviso = 'Ya está ' + (cual === 'pdf' ? 'el PDF' : 'la ' + cual) + '. Toca Guardar para subirlo.';
         } catch (err) {
             desAviso = 'No se pudo usar ese archivo: ' + ((err && err.message) || '');
         }
@@ -3660,13 +3636,6 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         }
         if (e.target.closest('[data-dsalir]')) {
             seccion = 'inicio'; menu = null; pintar(); return;
-        }
-        const dr = e.target.closest('[data-drango]');
-        if (dr) {
-            desRango = DES_RANGOS[Number(dr.getAttribute('data-drango'))][1]();
-            desAbierto = null; desCargando = true; pintar();
-            mirarDespachos().then(pintar);
-            return;
         }
         const dd = e.target.closest('[data-desp]');
         if (dd) { desAbierto = dd.getAttribute('data-desp'); desBorrador = null;

@@ -290,13 +290,13 @@ export const contarRango = (desde, hasta) => {
     return n;
 };
 
-/** Cuántos kilobytes costaría un rango que todavía no se bajó. Para poder avisarlo. */
-export const pesoDelRango = (desde, hasta) => {
-    const hay = (INDICE && INDICE.semanas) || {};
-    return semanasEntre(desde, hasta)
-        .filter((l) => hay[l] && !SEMANAS[l])
-        .reduce((t, l) => t + (hay[l].kb || 0), 0);
-};
+/* ACÁ HABÍA UN `pesoDelRango`, que decía cuántos kilobytes costaba un rango todavía no
+   bajado, y las dos pantallas lo pintaban al lado de los atajos de fecha: "+228 KB".
+   Daniel lo vio en el celular y lo llamó por su nombre: *"quita esta tontería de la
+   app"*. Tenía razón —al que liquida en la calle le importa la fecha, no el peso— y se
+   fue también la función, no solo el texto: dejarla exportada sin que la use nadie es
+   una invitación a volver a pintarla. El `kb` de cada semana sigue en el índice, que es
+   donde sirve, para saber cómo está repartido el peso sin abrir el navegador. */
 
 /** true si el índice se pudo leer. Distingue "no hay nada" de "no pude preguntar". */
 export const seLeyo = () => !!INDICE;

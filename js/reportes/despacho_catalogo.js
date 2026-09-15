@@ -33,7 +33,7 @@
  * 102 reales, y de 753 destinos, 580.
  */
 
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0778';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0779';
 
 /* ── DE DÓNDE SALEN LOS DATOS ─────────────────────────────────────────────────
    De `despachoCatalogo.js`, que los baja POR SEMANAS. Acá había una copia de todo
@@ -177,9 +177,7 @@ const barra = () => {
        "ese día no se despachó nada". */
     const cuenta = (desde, hasta) => {
         const n = DES.contarRango(desde, hasta);
-        if (n !== null) return num(n);
-        const kb = DES.pesoDelRango(desde, hasta);
-        return kb ? '+' + kb + ' KB' : '—';
+        return n === null ? '·' : num(n);
     };
     const hoy = hoyTexto();
     const pes = [
@@ -239,7 +237,11 @@ const barra = () => {
 /* ── LOS ATAJOS DE FECHA ──────────────────────────────────────────────────────
    Nadie quiere teclear dos fechas para ver la semana pasada. Y cada uno dice al lado
    cuánto falta bajar: la semana en curso ya está en memoria y no cuesta nada; el mes
-   entero son cuatro semanas más. Que se vea ANTES de tocar, no después de esperar. */
+   entero son cuatro semanas más.
+
+   Cada uno decía al lado cuánto pesaba bajarlo -"+228 KB"-. Se fue: Daniel lo vio en el
+   celular y lo llamó por su nombre, *"quita esta tontería de la app"*. Es plomería
+   nuestra asomándose a la pantalla de otro, y no deja de serlo por estar en la web. */
 const RANGOS = [
     ['Esta semana', () => DES.rangoDeLaSemana()],
     ['La pasada', () => DES.rangoDeLaSemana(DES.sumarDias(hoyTexto(), -7))],
@@ -250,13 +252,11 @@ const RANGOS = [
 const atajos = () => RANGOS.map(([et, dame], k) => {
     const r = dame();
     const puesto = r.desde === filtro.desde && r.hasta === filtro.hasta;
-    const kb = DES.pesoDelRango(r.desde, r.hasta);
     return `<button type="button" data-rango="${k}" title="${esc(fechaBonita(r.desde))} a ${esc(fechaBonita(r.hasta))}"
         style="background:${puesto ? 'rgba(var(--primary2-rgb), 0.14)' : 'var(--panel)'};
         border:1px solid ${puesto ? 'var(--primary-2)' : 'var(--border)'}; border-radius:9px;
         padding:.5rem .7rem; color:${puesto ? 'var(--primary-2)' : 'var(--text-soft)'};
-        font-size:var(--t-sm); font-weight:700; cursor:pointer; font-family:inherit;">${esc(et)}${kb
-        ? ` <span style="font-weight:400; opacity:.7;">+${kb} KB</span>` : ''}</button>`;
+        font-size:var(--t-sm); font-weight:700; cursor:pointer; font-family:inherit;">${esc(et)}</button>`;
 }).join('');
 
 const resumen = (L) => {
@@ -665,7 +665,7 @@ const pintar = () => {
                 dato: await aBase64(chico)
             };
             pintar();
-            aviso(cual + ' listo: ' + Math.round(chico.size / 1024) + ' KB. Toca Guardar para subirlo.');
+            aviso('Ya está ' + (cual === 'pdf' ? 'el PDF' : 'la ' + cual) + '. Toca Guardar para subirlo.');
         } catch (e) {
             aviso('No se pudo leer el archivo: ' + ((e && e.message) || ''), true);
         }
