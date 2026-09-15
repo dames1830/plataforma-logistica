@@ -25,28 +25,28 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0779';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0779';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0779';
+import * as adminService from '../services_v245/adminService.js?v=29.0780';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0780';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0780';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0779';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0779';
-import * as metasService from '../services_v245/metasService.js?v=29.0779';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0780';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0780';
+import * as metasService from '../services_v245/metasService.js?v=29.0780';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0779';
+import * as temaService from '../services_v245/temaService.js?v=29.0780';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0779';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0779';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0780';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0780';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0779';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0780';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -3147,7 +3147,9 @@ const pantallaDespacho = () => {
           <div style="min-width:0;flex:1">
             <p class="am-fila-tit">${esc(f.rot || f.prom || '—')}</p>
             <p class="am-fila-sub">${esc(f.age || '')} \u2192 ${esc(f.dest || '')}</p>
-            <p class="am-fila-sub">${esc(f.ase || '')}${f.gasto ? ' · S/ ' + f.gasto : ''}${f.inc ? ' · ' + esc(String(f.inc).slice(0, 34)) : ''}</p>
+            <p class="am-fila-sub">${DES.canalDe(f) !== 'catalogo'
+                ? '<b style="color:var(--am-curso)">' + esc(DES.CANALES[DES.canalDe(f)].et.toUpperCase()) + '</b> · ' : ''}${
+              esc(f.ase || '')}${f.gasto ? ' · S/ ' + f.gasto : ''}${f.inc ? ' · ' + esc(String(f.inc).slice(0, 34)) : ''}</p>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
             <span class="dsp-pastilla" style="background:${desAgua(f.est)};color:${desTono(f.est)}">${esc(desEtiqueta(f.est))}</span>
@@ -3178,6 +3180,19 @@ const pantallaDespacho = () => {
       ${L.length > 120 ? `<p class="am-nota">Se muestran los primeros 120 de ${L.length}. Afina la búsqueda.</p>` : ''}`;
 };
 
+/* LO YA ESCRITO SE GUARDA ANTES DE REPINTAR. Tocar un estado, un canal o elegir una
+   foto vuelve a dibujar la ficha, y sin esto se borraba la factura y el gasto que el
+   liquidador acababa de teclear. Estaba copiado en tres sitios; si una copia se olvida
+   de un campo nuevo, ese campo se pierde solo a veces, que es lo peor de encontrar. */
+const desGuardarEscrito = () => {
+    desBorrador = desBorrador || {};
+    ['entr', 'repr', 'inc', 'fact', 'gasto', 'bulto', 'factA'].forEach((k) => {
+        const el = raiz && raiz.querySelector('#des_' + k);
+        if (el) desBorrador[k] = el.value;
+    });
+    return desBorrador;
+};
+
 /* ── LA FICHA, QUE ES DONDE SE LIQUIDA ─────────────────────────────────────────────── */
 const hojaDeDespacho = () => {
     if (!desAbierto) return '';
@@ -3190,6 +3205,17 @@ const hojaDeDespacho = () => {
     const dato = (r, v) => `<div class="dsp-dato"><span>${esc(r)}</span><b>${esc(v === '' || v === null || v === undefined ? '—' : v)}</b></div>`;
     const campo = (id, rot, v, tipo) => `<label class="dsp-campo"><span>${esc(rot)}</span>
         <input id="${id}" type="${tipo || 'text'}" value="${esc(v === null || v === undefined ? '' : v)}"></label>`;
+    /* ── EL CANAL, QUE ES LO QUE DECIDE A QUÉ MÓDULO CAE ─────────────────────
+       Daniel, 15-sep-2026: *"en la aplicación va a haber un solo tracking, yo puedo
+       poner retail o no retail"*. Acá se pone, y abajo dice en qué módulo de la web va
+       a aparecer: si la consecuencia no se lee al lado del botón, nadie sabe qué está
+       eligiendo. Va ARRIBA del estado a propósito —primero a dónde va, después cómo
+       quedó— y sale en todas las guías, no solo en las nuevas: las 3.129 importadas no
+       traen el campo y se asumen catálogo, así que una mal clasificada se corrige acá. */
+    const canal = String(val('canal') || DES.canalDe(f)).toLowerCase();
+    const bCanal = (k) => `<button type="button" class="dsp-eb ${canal === k ? 'on' : ''}" data-dcanal="${k}"
+        style="${canal === k ? 'background:var(--am-va-agua);color:var(--am-va);border-color:var(--am-va)' : ''}">
+        ${esc(DES.CANALES[k].et)}</button>`;
     const bEstado = (k) => `<button type="button" class="dsp-eb ${est === k ? 'on' : ''}" data-dest="${k}"
         style="${est === k ? 'background:' + desAgua(k) + ';color:' + desTono(k) + ';border-color:' + desTono(k) : ''}">
         ${esc(DES.ESTADOS[k].et)}</button>`;
@@ -3217,6 +3243,13 @@ const hojaDeDespacho = () => {
             ${dato('Líder', f.lider)}${dato('Promotor', f.prom)}${dato('Pedidos', f.ped)}
             ${dato('Cantidad', f.cant)}${dato('Cobro de flete', f.flete)}
             ${f.obs ? dato('Observación', f.obs) : ''}</div>
+
+          <div class="am-bloque"><h4>A qué módulo va</h4>
+            <div class="dsp-ests">${Object.keys(DES.CANALES).map(bCanal).join('')}</div>
+            <p class="am-nota" style="margin:.35rem 0 0">${
+              canal === 'retail'
+                ? 'Al guardar, esta guía aparece en <b>Despacho → Tracking Retail</b>.'
+                : 'Al guardar, esta guía aparece en <b>NO RETAIL → Despacho de Catálogo</b>.'}</p></div>
 
           <div class="am-bloque"><h4>Cómo quedó</h4>
             <div class="dsp-ests">${Object.keys(DES.ESTADOS).map(bEstado).join('')}</div>
@@ -3275,12 +3308,18 @@ const verAdjuntoMovil = async (id, cual) => {
 
 const guardarDespacho = async () => {
     if (desGuardando || !desAbierto) return;
-    const f = (desDatos || []).find((x) => String(x.id) === String(desAbierto));
+    const f = DES.filaDe(desAbierto) || (desDatos || []).find((x) => String(x.id) === String(desAbierto));
     if (!f) return;
     const lee = (id) => { const e = raiz.querySelector('#' + id); return e ? e.value.trim() : undefined; };
     const cambio = {};
     const poner = (k, v) => { if (v !== undefined && v !== null) cambio[k] = v; };
     poner('est', ((desBorrador || {}).est !== undefined ? desBorrador.est : f.est) || '');
+    /* EL CANAL SIEMPRE VIAJA, aunque no se haya tocado. Las 3.129 guías importadas no
+       traen el campo y se asumen catálogo; si solo se guardara al cambiarlo, el día que
+       alguien filtre por canal en el servidor las viejas quedarían fuera de los dos
+       módulos. Que lo asumido y lo guardado digan lo mismo cuesta doce caracteres. */
+    poner('canal', String(((desBorrador || {}).canal !== undefined
+        ? desBorrador.canal : DES.canalDe(f)) || 'catalogo').toLowerCase());
     poner('entr', lee('des_entr')); poner('repr', lee('des_repr')); poner('inc', lee('des_inc'));
     poner('fact', lee('des_fact')); poner('factA', lee('des_factA'));
     const g = lee('des_gasto'); if (g !== undefined) cambio.gasto = g === '' ? null : Number(g);
@@ -3537,11 +3576,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         const arch = inp.files && inp.files[0];
         if (!arch) return;
         try {
-            desBorrador = desBorrador || {};
-            ['entr', 'repr', 'inc', 'fact', 'gasto', 'bulto', 'factA'].forEach((k) => {
-                const el = raiz.querySelector('#des_' + k);
-                if (el) desBorrador[k] = el.value;
-            });
+            desGuardarEscrito();
             desAviso = 'Preparando ' + cual + '…'; pintar();
             desAdjuntos[cual] = await DES.prepararAdjunto(arch, cual);
             desAviso = 'Ya está ' + (cual === 'pdf' ? 'el PDF' : 'la ' + cual) + '. Toca Guardar para subirlo.';
@@ -3640,18 +3675,10 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         const dd = e.target.closest('[data-desp]');
         if (dd) { desAbierto = dd.getAttribute('data-desp'); desBorrador = null;
                   desAdjuntos = {}; desAviso = ''; pintar(); return; }
+        const dc = e.target.closest('[data-dcanal]');
+        if (dc) { desGuardarEscrito(); desBorrador.canal = dc.getAttribute('data-dcanal'); pintar(); return; }
         const de = e.target.closest('[data-dest]');
-        if (de) {
-            /* Se guarda lo ya escrito antes de repintar: si no, elegir un estado borraba
-               la factura y el gasto que acababa de teclear el liquidador. */
-            desBorrador = desBorrador || {};
-            ['entr', 'repr', 'inc', 'fact', 'gasto', 'bulto', 'factA'].forEach((k) => {
-                const el = raiz.querySelector('#des_' + k);
-                if (el) desBorrador[k] = el.value;
-            });
-            desBorrador.est = de.getAttribute('data-dest');
-            pintar(); return;
-        }
+        if (de) { desGuardarEscrito(); desBorrador.est = de.getAttribute('data-dest'); pintar(); return; }
         const dv = e.target.closest('[data-dver]');
         if (dv) { verAdjuntoMovil(desAbierto, dv.getAttribute('data-dver')); return; }
         if (e.target.closest('[data-dguardar]')) { guardarDespacho(); return; }

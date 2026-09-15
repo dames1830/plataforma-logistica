@@ -33,7 +33,7 @@
  * 102 reales, y de 753 destinos, 580.
  */
 
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0779';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0780';
 
 /* ── DE DÓNDE SALEN LOS DATOS ─────────────────────────────────────────────────
    De `despachoCatalogo.js`, que los baja POR SEMANAS. Acá había una copia de todo
@@ -85,9 +85,28 @@ let filtro = { canal: 'catalogo', agencia: '', asesor: '', estado: '', texto: ''
                desde: sem0.desde, hasta: sem0.hasta };
 let abierta = null;          /* el id de la fila abierta en la ficha */
 let raiz = null;
-let FILAS = [];              /* SOLO lo que la pestaña de turno necesita */
+let FILAS = [];              /* SOLO lo que la pestaña de turno necesita, de ESTE canal */
 let cargando = false;
 let diaMostrado = '';        /* qué día está mostrando la pestaña Hoy */
+
+/* ── UNA PANTALLA, DOS MÓDULOS ────────────────────────────────────────
+   Daniel, 15-sep-2026: *"en la aplicación va a haber un solo tracking, yo puedo poner
+   retail o no retail; pero cuando liquide, la data se va a ir al módulo que has creado
+   en la web... un submódulo llamado tracking retail"*.
+
+   Así que este archivo se monta DOS VECES, una en NO RETAIL y otra en Despacho, y lo
+   único que cambia es el canal. No es una copia: una copia significaría arreglar cada
+   cosa dos veces y que al mes digan números distintos.
+
+   Lo que sí hay que hacer es LIMPIAR AL CAMBIAR DE CANAL. El estado -la pestaña, los
+   filtros, la ficha abierta- vive en el módulo, y sin limpiarlo pasar de Catálogo a
+   Retail arrastraría el filtro de agencia del otro y mostraría una lista vacía que
+   parecería un error. */
+const CARA = {
+    catalogo: { ttl: 'Despacho de Catálogo', que: 'de catálogo' },
+    retail:   { ttl: 'Tracking Retail',      que: 'de retail' }
+};
+let CANAL = 'catalogo';
 
 const pendiente = (f) => DES.sinLiquidar(f);
 
@@ -101,11 +120,11 @@ const cargar = async (recargar) => {
     cargando = true;
     try {
         if (pestana === 'liquidar') {
-            FILAS = await DES.traerPendientes(recargar);
+            FILAS = await DES.traerPendientes(recargar, CANAL);
             diaMostrado = '';
         } else if (pestana === 'hoy') {
             const r = DES.rangoDeLaSemana();
-            FILAS = await DES.traerRango(r.desde, r.hasta, recargar);
+            FILAS = DES.delCanal(await DES.traerRango(r.desde, r.hasta, recargar), CANAL);
             diaMostrado = hoyTexto();
             /* SI HOY NO HAY NADA, SE MUESTRA EL ÚLTIMO DÍA CON DESPACHOS. Una pantalla
                en blanco haría pensar que está rota cuando lo que pasa es que todavía no
@@ -115,12 +134,12 @@ const cargar = async (recargar) => {
                 const ult = (i && i.hasta) || '';
                 if (ult && ult < diaMostrado) {
                     const r2 = DES.rangoDeLaSemana(ult);
-                    FILAS = await DES.traerRango(r2.desde, r2.hasta, recargar);
+                    FILAS = DES.delCanal(await DES.traerRango(r2.desde, r2.hasta, recargar), CANAL);
                     diaMostrado = ult;
                 }
             }
         } else {
-            FILAS = await DES.traerRango(filtro.desde, filtro.hasta, recargar);
+            FILAS = DES.delCanal(await DES.traerRango(filtro.desde, filtro.hasta, recargar), CANAL);
             diaMostrado = '';
         }
     } finally {
@@ -170,13 +189,12 @@ const barra = () => {
     const L = visibles();
     /* LAS CUENTAS SALEN DEL ÍNDICE, que pesa 1,3 KB. Antes salían de tener las 3.129
        filas en memoria, que es justamente lo que ya no se baja. */
-    const i = DES.elIndice() || { semanas: {} };
-    const abiertas = Object.keys(i.semanas || {}).reduce((t, k) => t + (i.semanas[k].sin || 0), 0);
+    const abiertas = DES.abiertasDelCanal(CANAL);
     /* UN CERO NO ES LO MISMO QUE NO SABERLO: si la semana todavía no se bajó, la
        pestaña dice lo que costaría bajarla, nunca un cero que se leería como
        "ese día no se despachó nada". */
     const cuenta = (desde, hasta) => {
-        const n = DES.contarRango(desde, hasta);
+        const n = DES.contarRango(desde, hasta, CANAL);
         return n === null ? '·' : num(n);
     };
     const hoy = hoyTexto();
@@ -381,6 +399,18 @@ const ficha = () => {
         </div>`;
     };
 
+    /* ── EL CANAL, Y POR QUÉ SE PUEDE CAMBIAR DESDE ACÁ ─────────────────────
+       Normalmente se marca en el celular, al liquidar. Pero una guía marcada Retail por
+       error desaparece de este módulo y solo reaparece en el otro: sin poder corregirla
+       desde la web, la única salida sería buscar el teléfono del liquidador. Al tocar el
+       otro canal se avisa que la guía se muda, porque eso es lo que pasa. */
+    const canal = String(val('canal') || DES.canalDe(f)).toLowerCase();
+    const botonCanal = (k) => `
+        <button type="button" data-canal="${k}" style="border:1px solid ${canal === k ? 'var(--primary-2)' : 'var(--border)'};
+          border-radius:9px; padding:.5rem .3rem; cursor:pointer; font-family:inherit; font-size:var(--t-sm);
+          font-weight:700; background:${canal === k ? 'rgba(var(--primary2-rgb), 0.14)' : 'var(--panel)'};
+          color:${canal === k ? 'var(--primary-2)' : 'var(--text-muted)'};">${esc(DES.CANALES[k].et)}</button>`;
+
     const botonEstado = (k) => `
         <button type="button" data-est="${k}" style="border:1px solid ${est === k ? (ESTADOS[k].color) : 'var(--border)'};
           border-radius:9px; padding:.5rem .3rem; cursor:pointer; font-family:inherit; font-size:var(--t-sm);
@@ -405,6 +435,16 @@ const ficha = () => {
               dato('Líder', f.lider) + dato('Promotor', f.prom) + dato('Pedidos', f.ped, true) +
               dato('Cantidad', num(f.cant), true) + dato('Bolsas', num(f.bolsas), true) +
               dato('Cobro de flete', f.flete) + (f.obs ? dato('Observación', f.obs) : ''))}
+
+          ${caja('A qué módulo va', `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:.4rem;">
+              ${Object.keys(DES.CANALES).map(botonCanal).join('')}
+            </div>
+            <p style="margin:.5rem 0 0; font-size:var(--t-xs); color:var(--text-muted); line-height:1.5;">
+              ${canal === CANAL
+                ? 'Se queda en este módulo.'
+                : 'Al guardar, esta guía <b>se muda</b> a ' + esc((CARA[canal] || CARA.catalogo).ttl)
+                  + ' y deja de verse acá.'}</p>`)}
 
           ${caja('Cómo quedó', `
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:.4rem;">
@@ -475,7 +515,7 @@ const bajarExcel = (L) => {
         .concat(L.map((f) => campos.map((c) => limpio(f[c])).join(';'))).join('\r\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }));
-    a.download = `Despacho Catalogo ${hoyTexto()}.csv`;
+    a.download = `Despacho ${CANAL === 'retail' ? 'Retail' : 'Catalogo'} ${hoyTexto()}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 };
@@ -551,6 +591,11 @@ const liquidar = async () => {
     const cambio = {};
     const poner = (k, v) => { if (v !== undefined && v !== null) cambio[k] = v; };
     poner('est', (b.est !== undefined ? b.est : f.est) || '');
+    /* SIEMPRE VIAJA, aunque no se haya tocado: las 3.129 guías importadas no traen el
+       campo y se asumen catálogo. Que lo asumido y lo guardado digan lo mismo cuesta
+       doce caracteres, y evita que el día que algo filtre por canal de verdad las viejas
+       queden fuera de los dos módulos. */
+    poner('canal', String((b.canal !== undefined ? b.canal : DES.canalDe(f)) || 'catalogo').toLowerCase());
     poner('entr', lee('#dc_entr'));
     poner('repr', lee('#dc_repr'));
     poner('inc', lee('#dc_inc'));
@@ -601,7 +646,7 @@ const pintar = () => {
     <div style="padding:1.1rem 1.2rem;">
       <div style="margin-bottom:.9rem;">
         <h2 style="margin:0; font-size:var(--t-xl); font-weight:900; color:var(--text-strong);
-                   letter-spacing:-.01em;">Despacho de Catálogo</h2>
+                   letter-spacing:-.01em;">${esc((CARA[CANAL] || CARA.catalogo).ttl)}</h2>
         <p style="margin:.15rem 0 0; font-size:var(--t-sm); color:var(--text-muted);">
           ${pestana === 'hoy'
             ? (hayHoy ? `Despachos de ${esc(fechaBonita(dia))}`
@@ -632,6 +677,16 @@ const pintar = () => {
     }));
     /* Los botones de estado: se guardan en el borrador y se repinta, sin perder lo
        que ya se escribió en los otros campos. */
+    raiz.querySelectorAll('[data-canal]').forEach((b) => b.addEventListener('click', () => {
+        borrador = borrador || {};
+        ['dc_entr', 'dc_repr', 'dc_inc', 'dc_fact', 'dc_gasto', 'dc_bulto', 'dc_factA'].forEach((id) => {
+            const e = raiz.querySelector('#' + id);
+            if (e) borrador[id.slice(3)] = e.value;
+        });
+        borrador.canal = b.getAttribute('data-canal');
+        pintar();
+    }));
+
     raiz.querySelectorAll('[data-est]').forEach((b) => b.addEventListener('click', () => {
         borrador = borrador || {};
         ['dc_entr', 'dc_repr', 'dc_inc', 'dc_fact', 'dc_gasto', 'dc_bulto', 'dc_factA'].forEach((id) => {
@@ -712,13 +767,24 @@ const pintar = () => {
 };
 
 /* ── LA PUERTA ────────────────────────────────────────────────────────────────── */
-export const renderDespachoCatalogo = async (container) => {
+export const renderDespachoCatalogo = async (container, canal) => {
+    const nuevo = (canal && CARA[canal]) ? canal : 'catalogo';
+    /* AL CAMBIAR DE CANAL SE EMPIEZA DE CERO. Ver CARA arriba: el estado vive en el
+       módulo y arrastrarlo entre Catálogo y Retail mostraría una lista vacía que
+       parecería un error. */
+    if (nuevo !== CANAL) {
+        CANAL = nuevo;
+        pestana = 'hoy'; abierta = null; borrador = null; FILAS = []; diaMostrado = '';
+        const r = DES.rangoDeLaSemana();
+        filtro = { canal: CANAL, agencia: '', asesor: '', estado: '', texto: '',
+                   desde: r.desde, hasta: r.hasta };
+    }
     raiz = container;
     container.innerHTML = `
       <div style="display:flex; align-items:center; gap:12px; padding:3rem; color:var(--text-muted);">
         <div style="width:22px; height:22px; border:3px solid rgba(var(--primary2-rgb), 0.15);
              border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
-        <span style="font-size:var(--t-md);">Trayendo los despachos de la semana…</span>
+        <span style="font-size:var(--t-md);">Trayendo los despachos ${esc(CARA[CANAL].que)} de la semana…</span>
       </div>`;
 
     const i = await DES.traerIndice();
@@ -729,7 +795,7 @@ export const renderDespachoCatalogo = async (container) => {
         container.innerHTML = `
           <div style="padding:3rem 1.2rem; text-align:center;">
             <p style="margin:0 0 .4rem; font-size:var(--t-lg); font-weight:800; color:var(--text-strong);">
-              No se pudo leer el despacho de catálogo</p>
+              No se pudo leer el despacho ${esc((CARA[CANAL] || CARA.catalogo).que)}</p>
             <p style="margin:0; font-size:var(--t-sm); color:var(--text-muted); line-height:1.6;">
               Esto <b>no</b> quiere decir que no haya datos: no se pudo preguntar.
               ${esc(DES.ultimoProblema() || '')}<br>Puede que el servidor esté reiniciando;
@@ -737,11 +803,15 @@ export const renderDespachoCatalogo = async (container) => {
           </div>`;
         return;
     }
+    /* OJO: acá se mira si el ÁREA está vacía, no si este canal lo está. Retail empieza
+       en cero y va a estarlo por un tiempo; taparle la pantalla con un cartel le
+       quitaría las pestañas y el selector de fechas. Que esté vacío lo dice la tabla,
+       abajo, donde no estorba. */
     if (!i.total) {
         container.innerHTML = `
           <div style="padding:3rem 1.2rem; text-align:center;">
             <p style="margin:0 0 .4rem; font-size:var(--t-lg); font-weight:800; color:var(--text-strong);">
-              Todavía no hay despachos de catálogo</p>
+              Todavía no hay despachos ${esc((CARA[CANAL] || CARA.catalogo).que)}</p>
             <p style="margin:0; font-size:var(--t-sm); color:var(--text-muted);">
               El área existe pero llegó vacía.</p>
           </div>`;

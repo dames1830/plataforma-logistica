@@ -113,6 +113,12 @@ def lunes_de(texto):
 
 SIN_CERRAR = ('PENDIENTE', 'REPROGRAMAR', '')
 
+# Los canales de la plataforma. Hoy TODO lo importado es catalogo -viene de no retail-
+# y el campo ni siquiera viaja en el dato: se asume. Retail entra cuando alguien liquide
+# una guia marcandola asi desde el celular. El cero explicito importa: sin el, el modulo
+# de Retail leeria "no se" y caeria al total, y dirla "3 por liquidar" con cero adentro.
+CANALES = ('catalogo', 'retail')
+
 
 def main():
     subir = '--subir' in sys.argv
@@ -157,12 +163,19 @@ def main():
 
         # "Sin liquidar" con lo de la plataforma ya aplicado encima.
         sin = 0
+        por_canal = dict((c, 0) for c in CANALES)
+        n_canal = dict((c, 0) for c in CANALES)
         for f in semana:
-            est = str((cambios.get(str(f.get('id'))) or {}).get('est', f.get('est') or '')).upper()
+            cambio = cambios.get(str(f.get('id'))) or {}
+            est = str(cambio.get('est', f.get('est') or '')).upper()
+            c = str(cambio.get('canal') or f.get('canal') or 'catalogo').lower()
+            n_canal[c] = n_canal.get(c, 0) + 1
             if est in SIN_CERRAR:
                 sin += 1
+                por_canal[c] = por_canal.get(c, 0) + 1
         dias = sorted(set(str(f.get('desp') or '')[:10] for f in semana if f.get('desp')))
         indice['semanas'][lunes] = {'n': len(semana), 'sin': sin,
+                                    'sinPorCanal': por_canal, 'porCanal': n_canal,
                                     'd0': dias[0] if dias else '',
                                     'd1': dias[-1] if dias else '',
                                     'kb': int(round(peso / 1024.0))}

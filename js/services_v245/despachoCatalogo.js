@@ -248,17 +248,23 @@ export const traerRango = async (desde, hasta, recargar) => {
  * de hace un mes que quedó sin liquidar. Con él se bajan solo las semanas que tienen
  * alguna abierta, que en la práctica son una o dos.
  */
-export const traerPendientes = async (recargar) => {
+export const traerPendientes = async (recargar, canal) => {
     await traerIndice(recargar);
     const hay = (INDICE && INDICE.semanas) || {};
-    const conAbiertas = Object.keys(hay).filter((l) => (hay[l].sin || 0) > 0);
+    /* Se bajan las semanas que tienen alguna abierta DE ESTE CANAL. Si el índice es de
+       los viejos y no trae el reparto, se miran todas las que tengan alguna: bajar una
+       semana de más cuesta 19 KB; no bajarla cuesta una guía escondida. */
+    const conAbiertas = Object.keys(hay).filter((l) => {
+        const x = hay[l] || {};
+        return (canal && x.sinPorCanal) ? (x.sinPorCanal[canal] || 0) > 0 : (x.sin || 0) > 0;
+    });
     await Promise.all(conAbiertas.map((l) => traerSemana(l, recargar)));
     const filas = [];
     /* Se barren TODAS las semanas que haya en memoria, no solo las que el índice
        marca: si alguien acaba de abrir una guía que estaba cerrada, el índice todavía
        no lo sabe y la pantalla igual tiene que mostrarla. */
     Object.keys(SEMANAS).forEach((l) => (SEMANAS[l] || []).forEach((f) => {
-        if (sinLiquidar(f)) filas.push(f);
+        if (sinLiquidar(f) && (!canal || canalDe(f) === canal)) filas.push(f);
     }));
     filas.sort((a, b) => String(b.desp || '').localeCompare(String(a.desp || '')));
     return filas;
@@ -278,16 +284,36 @@ export const traerTodo = async (recargar) => {
  * Es para los rótulos de las pestañas. Devolver 0 cuando en realidad no se sabe sería
  * peor que no decir nada: un cero se lee como "ese día no se despachó".
  */
-export const contarRango = (desde, hasta) => {
+export const contarRango = (desde, hasta, canal) => {
     const hay = (INDICE && INDICE.semanas) || {};
     const lunes = semanasEntre(desde, hasta).filter((l) => hay[l] !== undefined);
     if (lunes.some((l) => !SEMANAS[l])) return null;
     let n = 0;
     lunes.forEach((l) => SEMANAS[l].forEach((f) => {
         const d = String(f.desp || '');
-        if (d >= desde && d <= hasta) n++;
+        if (d >= desde && d <= hasta && (!canal || canalDe(f) === canal)) n++;
     }));
     return n;
+};
+
+/**
+ * CUANTAS QUEDAN ABIERTAS, POR CANAL, SEGUN EL INDICE.
+ *
+ * Tiene que ser por canal o el cuadro no cuadra: el modulo de Retail dirla "3 por
+ * liquidar" y al entrar mostrarla cero, porque las tres eran de Catalogo. Un numero
+ * en una pestana que no coincide con lo que hay adentro tira abajo la pantalla entera.
+ *
+ * Los indices viejos no traen el reparto por canal -se agrego despues-. En ese caso se
+ * devuelve el total, que es lo que habia: es preferible un numero de mas en Catalogo
+ * -donde hoy esta todo- que esconder una guia abierta.
+ */
+export const abiertasDelCanal = (canal) => {
+    const hay = (INDICE && INDICE.semanas) || {};
+    return Object.keys(hay).reduce((t, l) => {
+        const x = hay[l] || {};
+        if (!canal || !x.sinPorCanal) return t + (x.sin || 0);
+        return t + (x.sinPorCanal[canal] || 0);
+    }, 0);
 };
 
 /* ACÁ HABÍA UN `pesoDelRango`, que decía cuántos kilobytes costaba un rango todavía no
@@ -427,9 +453,19 @@ const recontarLaSemana = async (fila) => {
         const l = lunesDe(String(fila.desp || hoyTexto()));
         const filas = SEMANAS[l];
         if (!filas || !INDICE || !INDICE.semanas || !INDICE.semanas[l]) return;
-        const sin = filas.filter(sinLiquidar).length;
-        if (INDICE.semanas[l].sin === sin) return;
+        const abiertas = filas.filter(sinLiquidar);
+        const sin = abiertas.length;
+        /* Y EL REPARTO POR CANAL, que es de donde sale el número de cada módulo de la
+           web. Se arma con TODOS los canales conocidos, no solo con los que aparecen:
+           sin el cero explicito, Retail leería `undefined` y caería al total. */
+        const porCanal = {};
+        Object.keys(CANALES).forEach((c) => { porCanal[c] = 0; });
+        abiertas.forEach((f) => { const c = canalDe(f); porCanal[c] = (porCanal[c] || 0) + 1; });
+        const igual = INDICE.semanas[l].sin === sin
+            && JSON.stringify(INDICE.semanas[l].sinPorCanal || null) === JSON.stringify(porCanal);
+        if (igual) return;
         INDICE.semanas[l].sin = sin;
+        INDICE.semanas[l].sinPorCanal = porCanal;
         await guardarArea(AREA_INDICE, INDICE);
     } catch (e) {
         console.warn('[despacho] no se pudo actualizar el índice:', e && e.message);
