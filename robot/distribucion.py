@@ -76,6 +76,7 @@ import re
 import shutil
 import sys
 import time
+import traceback
 
 import openpyxl
 
@@ -104,9 +105,25 @@ TRAMOS = ['se movió ayer', '1 día', '2 a 3 días', '4 a 7 días',
 # primera corrida sola salio a las 23:00 en vez de las 22:00 y no se pudo saber
 # por que: ni el robot ni el registro de tareas de Windows dejaron nada.
 CARPETA_LOGS = os.path.join(AQUI, 'logs')
+
+# EL NOMBRE LLEVA QUE ROBOT ES, Y NO ES UN DETALLE.
+#
+# Por aca pasan DOS robots distintos -"Robot despacho potencial" y "Robot
+# distribucion", el mismo programa con y sin --solo-potencial- y el nombre salia
+# solo de la hora. Se cruzan una vez al dia, a las 20:00 EN PUNTO: el potencial
+# corre cada 30 minutos de 18:30 a 23:30 y la distribucion cada 12 horas desde
+# las 08:00. Arrancando el mismo segundo abrian EL MISMO archivo y escribian
+# entrelazados: encabezados duplicados, y una corrida que parecia cortada cuando
+# en realidad era la otra la que seguia.
+#
+# Los dias anteriores no se noto porque el potencial se retiraba en el primer
+# segundo -"ya se publico, no se repite"- y le dejaba el archivo libre. El
+# 14-09-2026 los dos tuvieron trabajo de verdad a la vez y uno murio.
+_MODO = 'potencial' if '--solo-potencial' in sys.argv else 'distribucion'
 _ARCHIVO_LOG = os.path.join(
     CARPETA_LOGS,
-    'distribucion_%s.log' % datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+    'distribucion_%s_%s.log'
+    % (datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'), _MODO))
 
 
 def log(msg, nivel=''):
@@ -910,4 +927,25 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    # LO QUE MATA AL ROBOT SE ESCRIBE DONDE SE PUEDA LEER.
+    #
+    # El comentario de arriba del log dice que nacio porque "no se pudo saber por
+    # que: ni el robot ni el registro de tareas de Windows dejaron nada". Seguia
+    # pasando igual: el .bat lanza `python -u distribucion.py` sin recoger la
+    # salida de error, asi que una excepcion se iba al vacio y el registro se
+    # cortaba en seco despues de la ultima linea buena, como si la corrida se
+    # hubiera esfumado.
+    #
+    # El 14-09-2026 eso costo una investigacion entera para algo que esta traza
+    # habria contestado en un minuto. El log ya falla callado por dentro, asi que
+    # esto no puede tumbar nada; y el codigo de salida sigue siendo 1, que es lo
+    # que hace sonar el aviso al telefono.
+    try:
+        sys.exit(main())
+    except SystemExit:
+        raise
+    except BaseException:
+        log('SE CAYO LA CORRIDA. Lo que dijo Python:', 'ERROR')
+        for linea in traceback.format_exc().rstrip().split('\n'):
+            log('    ' + linea.rstrip(), 'ERROR')
+        sys.exit(1)
