@@ -560,10 +560,17 @@ def refrescar_pendientes():
             % bajador, 'ERROR')
         return False
 
-    log('Bajando del WMS la foto de hoy (365 dias, unos 8 minutos)...')
+    # `--hasta-hoy` A PROPOSITO. Desde el 15-sep-2026 la bajada termina en AYER por
+    # defecto -es lo que necesita el pendiente, y lo pidio Daniel: *"no tiene
+    # sentido que pidas el estatus de hoy"*-. Pero ESTA bajada la dispara el correo
+    # de comercial, y lo que quiere saber es cuales de las guias que acaba de mandar
+    # ya estan abiertas en el WMS. Esas ordenes nacen DURANTE EL DIA: cortando la
+    # foto en ayer, el Correo de Hoy saldria en cero.
+    log('Bajando del WMS la foto de hoy (desde el 01-01-2026, unos 8 minutos)...')
     cod = -1
     try:
-        cod = subprocess.run([sys.executable, bajador, '--solo-pendientes'],
+        cod = subprocess.run([sys.executable, bajador, '--solo-pendientes',
+                              '--hasta-hoy'],
                              timeout=ESPERA_BAJADA).returncode
     except Exception as e:
         log('No se pudo correr picking_y_orden.py (%s: %s)'
