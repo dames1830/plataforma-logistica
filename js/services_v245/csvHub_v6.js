@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0769';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0770';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0769';
+const VERSION = '29.0770';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -913,21 +913,44 @@ export const revisarMaestro = (filas) => {
     return { ok: true, articulos, titulos };
 };
 
-/** Ficha de la copia publicada. Pesa unos pocos bytes, se puede pedir siempre. */
+/**
+ * Ficha de la copia publicada. Pesa unos pocos bytes, se puede pedir siempre.
+ *
+ * DEVUELVE TRES COSAS DISTINTAS, Y HAY QUE MIRAR CUAL:
+ *     la ficha    hay copia publicada
+ *     null        NUNCA se publicó — el área contestó y está vacía
+ *     { error }   NO SE PUDO PREGUNTAR — el servidor no contestó, o contestó mal
+ *
+ * Antes devolvía `null` para los tres casos, y eso hacía que un servidor caído se
+ * viera exactamente igual que un Maestro que nunca existió.
+ *
+ * Daniel, 14-sep-2026, abriendo Archivos Nube mientras Render reiniciaba por un
+ * despliegue: *"por qué no está el maestro de artículos?"*. La pantalla decía
+ * "Nunca" y "todavía no hay ninguna copia publicada" con las 30.211 filas intactas
+ * en el servidor. Noventa segundos de caída se leían como pérdida de datos.
+ *
+ * Y el susto era lo de menos: con la ficha en null, la guarda que avisa cuando el
+ * archivo nuevo trae menos del 80% de artículos que el publicado NO CORRE, y el
+ * texto dice "Es la primera publicación". En ese hueco se podía pisar el Maestro
+ * bueno con uno cortado, sin una sola advertencia.
+ */
 export const infoMaestroPublicado = async () => {
     try {
         const res = await fetch(`${API_URL}/${MAESTRO_FICHA}?t=${Date.now()}`);
-        if (!res.ok) return null;
+        if (!res.ok) return { error: `el servidor contestó ${res.status}` };
         const j = await res.json();
         const f = j && j.data;
-        // Un área sin datos devuelve {} o []: eso significa "nunca se publicó"
+        // Un área sin datos devuelve {} o []: eso sí significa "nunca se publicó"
         if (!f || Array.isArray(f) || !f.filas) return null;
         return { filas: f.filas, usuario: f.usuario || '—', fecha: f.fecha || j.updated_at || '' };
     } catch (e) {
         console.warn('[MAESTRO] No se pudo consultar la ficha:', e && e.message);
-        return null;
+        return { error: (e && e.message) || 'no se pudo conectar con el servidor' };
     }
 };
+
+/** ¿Es una copia de verdad, y no un "no se pudo preguntar"? */
+export const hayCopiaPublicada = (f) => !!(f && !f.error && f.filas);
 
 /**
  * LA HORA A LA QUE SE PUBLICÓ, EN HORA DE ACÁ Y NO EN LA DE GREENWICH.
@@ -993,6 +1016,11 @@ export const publicarMaestro = async (filas, username = 'sistema') => {
  */
 export const traerMaestroPublicado = async () => {
     const ficha = await infoMaestroPublicado();
+    // No se pudo preguntar: se dice así, para que quien llame use la copia de esta
+    // PC en vez de dar por hecho que no hay nada publicado.
+    if (ficha && ficha.error) {
+        return { origen: 'no se pudo consultar', filas: 0, ficha: null, error: ficha.error };
+    }
     if (!ficha) return { origen: 'no publicado', filas: 0, ficha: null };
 
     let guardada = null;

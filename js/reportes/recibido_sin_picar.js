@@ -18,9 +18,9 @@
  * nombre, con fecha MASTER: es una foto, no una serie por día.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0769';
-import { icono } from '../services_v245/iconos.js?v=29.0769';
-import { laminaResumen } from '../services_v245/laminas.js?v=29.0769';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0770';
+import { icono } from '../services_v245/iconos.js?v=29.0770';
+import { laminaResumen } from '../services_v245/laminas.js?v=29.0770';
 
 /* Las columnas que valen para los dos, y las que solo tienen sentido cuando
    hubo pick. Separarlas es lo que evita el mar de guiones. */
