@@ -143,6 +143,30 @@ def log(msg, nivel=''):
         pass
 
 
+
+# EL TITULAR PARA EL AVISO AL CELULAR.
+#
+#   Daniel, 14-sep-2026: *"que me envie notificacion cuando encuentre algo"*.
+#
+# Este robot mira 11 veces al dia y solo una encuentra el correo de comercial; las
+# otras diez entran, ven que ya se proceso y se van. Sin esto no suena nada — ver
+# SOLO_CON_NOVEDAD en avisar_push.py.
+_TITULAR = ''
+
+
+def avisar_novedad(clave, texto):
+    """Deja el titular donde avisar_push.py lo va a buscar. FALLA CALLADO: un
+    problema escribiendo esto no puede estropear una corrida que salio bien."""
+    try:
+        carpeta = os.path.join(AQUI, 'novedades')
+        if not os.path.isdir(carpeta):
+            os.makedirs(carpeta)
+        with io.open(os.path.join(carpeta, clave + '.txt'), 'w', encoding='utf-8') as fh:
+            fh.write(texto)
+    except Exception:
+        pass
+
+
 def limpiar_logs(dias=30):
     """Los suyos de mas de un mes, fuera. Son 2 KB cada uno, pero uno por dia
        durante un año es basura que despues nadie mira."""
@@ -755,8 +779,10 @@ def potencial(ss, arch, gen, TIENDAS, porTienda, detTienda, en_bulto):
         f['tF'] = f['sF'] + f['pF'] + f['cF']
         f['tN'] = f['sN'] + f['pN'] + f['cN']
     filas.sort(key=lambda x: -(x['tF'] + x['tN']))
-    log('potencial: %d tiendas - %d pares'
-        % (len(filas), sum(f['tF'] + f['tN'] for f in filas)))
+    global _TITULAR
+    _tiendas, _pares = len(filas), sum(f['tF'] + f['tN'] for f in filas)
+    log('potencial: %d tiendas - %d pares' % (_tiendas, _pares))
+    _TITULAR = ('%s tiendas, %s pares' % (format(_tiendas, ','), format(_pares, ',')))
     return filas
 
 
@@ -909,6 +935,9 @@ def main():
         # CADA AREA VA POR SEPARADO: si una falla, las otras ya quedaron puestas.
         if publicar_area.publicar(area, datos, 'MASTER'):
             log('%-24s publicado  (%.0f KB)' % (area, n / 1024))
+            # Solo el potencial avisa: la distribucion no espera ningun correo.
+            if area == 'despacho_potencial_dia' and _TITULAR:
+                avisar_novedad('despacho_potencial', _TITULAR)
         else:
             log('%-24s *** NO SE PUDO PUBLICAR ***' % area)
             ok = False

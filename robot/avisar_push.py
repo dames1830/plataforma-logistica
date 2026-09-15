@@ -40,7 +40,7 @@ import os
 import sys
 import time
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 
 try:
     sys.stdout.reconfigure(encoding='utf-8')
@@ -121,6 +121,83 @@ ESPACIADO = {
 # marcas.
 MARCAS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'avisos_ultimo.json')
 
+# LOS ROBOTS QUE ESPERAN ALGO QUE PASA UNA VEZ AL DIA.
+#
+#   Daniel, 14-sep-2026: *"que me envie notificacion cuando encuentre algo, pues,
+#   no? Si encuentra el correo a las 7, ya que ya no me envie despues de las 7
+#   nada. Y si hasta las 11 no encuentra nada, una notificacion nada mas a las 11
+#   diciendo: sabes que, no se pudo realizar tal cosa. Y a ver que hago yo a esa
+#   hora"*.
+#
+# El correo de citas mira el buzon 36 veces al dia y captura UNA. El despacho
+# potencial mira 11 veces y las otras 10 entra, ve que el correo ya se proceso y
+# se va. Avisar de cada mirada es llamar para decir que no hay novedad, y al
+# tercer dia se ignora el aviso entero — incluido el que importaba.
+#
+# La regla que pidio, y que es la correcta:
+#     lo encontro    UN aviso con el numero, y se acabo el dia
+#     no llego nada  silencio, y UN solo aviso en el ULTIMO pase de su horario
+#     fallo de verdad                          ese suena al momento, siempre
+SOLO_CON_NOVEDAD = ('correo_citas', 'despacho_potencial')
+
+# Lo que se dice en ese unico aviso del final, cuando el dia se acaba sin nada.
+# Tiene que decir QUE no llego, no "sin novedad": quien lo lee a esa hora todavia
+# puede hacer algo, y para eso necesita saber que falta.
+AL_CIERRE_SIN_NADA = {
+    'correo_citas': 'No llegó la programación de recepción en todo el día',
+    'despacho_potencial': 'No llegó el correo de comercial en todo el día',
+}
+
+# Donde el robot deja el titular del dia. Lo escribe el, lo lee y lo BORRA este.
+NOVEDADES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'novedades')
+
+
+def _novedad(clave):
+    """Lo que el robot dejo escrito si de verdad hizo algo. None si no hubo.
+
+    Se lo lleva al leerlo: el titular vale para ESTE aviso. Si quedara, el pase
+    siguiente lo volveria a mandar como si fuera nuevo."""
+    ruta = os.path.join(NOVEDADES, clave + '.txt')
+    try:
+        if not os.path.exists(ruta):
+            return None
+        with open(ruta, encoding='utf-8') as f:
+            texto = (f.read() or '').strip()
+        os.remove(ruta)
+        return texto[:180] or None
+    except Exception as e:
+        log('no se pudo leer la novedad de %s: %s' % (clave, str(e)[:60]), 'AVISO')
+        return None
+
+
+def _es_el_ultimo_pase(clave):
+    """¿Esta es su ultima vuelta de hoy?
+
+    Se le pregunta a `horario_robot`, la MISMA funcion con la que cada robot
+    decide si le toca. Una copia del horario aca se desincronizaria el dia que se
+    cambie una hora desde la web, y entonces el aviso del cierre saldria a
+    destiempo o no saldria.
+
+    ANTE LA DUDA, NO. Si no se puede leer el horario se devuelve False -o sea, no
+    es el ultimo- y no suena nada: un aviso de cierre equivocado a las once de la
+    noche es peor que no tenerlo."""
+    try:
+        import horario_robot
+        cfg, _ = horario_robot.configuracion()
+        ahora = datetime.now()
+        actual = horario_robot.franja_actual(clave, cfg, ahora)
+        t = ahora.replace(second=0, microsecond=0)
+        fin = ahora.replace(hour=23, minute=59, second=0, microsecond=0)
+        while t < fin:
+            t += timedelta(minutes=5)
+            f = horario_robot.franja_actual(clave, cfg, t)
+            if f and f != actual:
+                return False
+        return True
+    except Exception as e:
+        log('no se pudo saber si es el ultimo pase de %s: %s' % (clave, str(e)[:60]), 'AVISO')
+        return False
+
 
 def _marcas():
     try:
@@ -130,7 +207,7 @@ def _marcas():
         return {}
 
 
-def _apuntar(clave, bien):
+def _apuntar(clave, bien, hubo_novedad=False):
     """Deja constancia de este aviso.
 
     FALLA CALLADO A PROPOSITO. Si no se puede escribir la marca, el aviso ya salio; lo
@@ -138,8 +215,13 @@ def _apuntar(clave, bien):
     Nunca al reves: un error aca no puede tragarse un aviso."""
     try:
         d = _marcas()
+        antes = d.get(clave) or {}
+        hoy = datetime.now().strftime('%Y-%m-%d')
         d[clave] = {'cuando': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    'bien': bool(bien)}
+                    'bien': bool(bien),
+                    # EL DIA EN QUE ENCONTRO ALGO. Sin esto, el aviso del cierre
+                    # saldria igual las noches en que el correo SI llego.
+                    'novedadEl': hoy if hubo_novedad else antes.get('novedadEl', '')}
         with open(MARCAS, 'w', encoding='utf-8') as f:
             json.dump(d, f, ensure_ascii=False, indent=1)
     except Exception as e:
@@ -329,10 +411,37 @@ def main():
     if not bien:
         log('%s devolvió el código %s' % (clave, resultado), 'AVISO')
 
+    # EL TITULAR QUE DEJO EL ROBOT, si es que hizo algo.
+    novedad = _novedad(clave)
+
+    if bien and not novedad and clave in SOLO_CON_NOVEDAD:
+        # No encontro nada. Se calla... salvo que sea su ULTIMA vuelta del dia y el
+        # dia se este acabando con las manos vacias: eso si hay que contarlo.
+        hoy = datetime.now().strftime('%Y-%m-%d')
+        ya_encontro_hoy = ((_marcas().get(clave) or {}).get('novedadEl') == hoy)
+        if ya_encontro_hoy or not _es_el_ultimo_pase(clave):
+            log('no se manda: %s' % ('hoy ya encontro lo suyo' if ya_encontro_hoy
+                                     else 'no trajo novedad y todavia le quedan vueltas'))
+            return 0
+        log('se manda: es su ultima vuelta y el dia termina sin novedad')
+        salida = avisar(clave, '⚠️ ' + nombre,
+                        '%s · %s' % (AL_CIERRE_SIN_NADA.get(clave, 'Sin novedad en todo el día'), hora),
+                        etiqueta=clave, de_verdad=not probar)
+        if not probar:
+            _apuntar(clave, bien)
+        return salida
+
     titulo = ('✅ ' if bien else '⚠️ ') + nombre
-    cuerpo = ('Terminó bien · %s' % hora) if bien else ('No pudo terminar · %s' % hora)
+    if bien and novedad:
+        cuerpo = '%s · %s' % (novedad, hora)
+    else:
+        cuerpo = ('Terminó bien · %s' % hora) if bien else ('No pudo terminar · %s' % hora)
 
     toca, porque = toca_avisar(clave, bien)
+    # UNA NOVEDAD NO ESPERA. El espaciado frena la repeticion de lo mismo, no una
+    # noticia: el dia que llega el correo, ese aviso sale cuando llega.
+    if novedad:
+        toca, porque = True, 'trae novedad'
     if not toca:
         log('no se manda: %s' % porque)
         return 0
@@ -343,7 +452,7 @@ def main():
     # Se apunta DESPUES de mandarlo, y solo cuando va de verdad: un --probar no puede
     # dejar callado al aviso siguiente.
     if not probar:
-        _apuntar(clave, bien)
+        _apuntar(clave, bien, hubo_novedad=bool(novedad))
     return salida
 
 

@@ -970,6 +970,21 @@ def guardar_vistos(v):
         log('no se pudo guardar la lista de vistos: %s' % e, 'WARN')
 
 
+def avisar_novedad(clave, texto):
+    """Deja el titular para el aviso al celular.
+
+    Ver SOLO_CON_NOVEDAD en avisar_push.py: sin esto, una corrida que sale bien no
+    suena. FALLA CALLADO, porque un problema escribiendo esto no puede estropear
+    una corrida que ya termino bien."""
+    try:
+        carpeta = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'novedades')
+        if not os.path.isdir(carpeta):
+            os.makedirs(carpeta)
+        with io.open(os.path.join(carpeta, clave + '.txt'), 'w', encoding='utf-8') as fh:
+            fh.write(texto)
+    except Exception:
+        pass
+
 def publicar(fecha, datos):
     # PELADO: el servidor lo envuelve solo. Envolverlo aca deja `data.data`.
     cuerpo = json.dumps(datos, ensure_ascii=False).encode('utf-8')
@@ -1189,6 +1204,8 @@ def main():
         try:
             estado = publicar(fecha, datos)
             log('   publicado en %s del %s (%s)' % (AREA, fecha, estado))
+            avisar_novedad('correo_citas', 'Citas del %s/%s: %s pares en %d citas'
+                           % (fecha[8:10], fecha[5:7], format(total, ','), len(filas)))
             publicados += 1
             vistos.add(id_correo)
             # SOLO SE MARCA EL DIA CUANDO ALGO SE PUBLICO DE VERDAD. Marcar al
