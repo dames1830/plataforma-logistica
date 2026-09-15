@@ -25,29 +25,29 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0791';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0791';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0791';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0791';
+import * as adminService from '../services_v245/adminService.js?v=29.0792';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0792';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0792';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0792';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0791';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0791';
-import * as metasService from '../services_v245/metasService.js?v=29.0791';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0792';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0792';
+import * as metasService from '../services_v245/metasService.js?v=29.0792';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0791';
+import * as temaService from '../services_v245/temaService.js?v=29.0792';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0791';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0791';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0792';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0792';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0791';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0792';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -3783,6 +3783,25 @@ const pintar = () => {
     const dondeIbaElCursor = escribiendo ? document.activeElement.selectionStart : 0;
     const loQueLlevaba = escribiendo ? document.activeElement.value : '';
 
+    /* ══ DONDE IBA LA HOJA ════════════════════════════════════════════════
+       Daniel, 15-sep-2026, cargando la orden: *"al momento de darle 'cargar las 64
+       guías' me redirigió hacia arriba, entonces no supe qué hacer; un usuario normal
+       va a pensar que algo pasó, o que ya está cargado, y se va a salir de la ventana"*.
+
+       Tenía razón y el efecto es peor que incómodo: el botón está abajo, y al tocarlo la
+       hoja se repinta y vuelve al principio. Desde arriba no se ve ni el botón ni el
+       "Guardando…", así que parece que terminó cuando recién empieza. Alguien cierra la
+       ventana a mitad de la subida.
+
+       El cuerpo de la app ya guardaba su posición desde que pasar lista la perdía; la
+       HOJA no, porque se rehace entera dentro del cuerpo. Se guarda igual. */
+    const donde = (sel) => [...raiz.querySelectorAll(sel)].map((e) => e.scrollTop);
+    /* Por indice y no por el primero que aparezca: puede haber dos hojas abiertas -la
+       ficha y el cargador- y devolverle a una la posicion de la otra seria peor que no
+       hacer nada. */
+    const dondeIbaLaHoja = donde('.am-hoja');
+    const dondeIbaElCuerpoDeLaHoja = donde('.am-hoja-cuerpo');
+
     const cuerpo = raiz.querySelector('.am-cuerpo');
     cuerpo.innerHTML = seccion === 'inicio' ? pantallaInicio()
         : seccion === 'lista' ? pantallaLista()
@@ -3799,6 +3818,16 @@ const pintar = () => {
        devolvia la lista al principio y habia que volver a bajar. Lo vio Daniel en
        produccion pasando lista. */
     if (seccion !== _ultimaPintada) { cuerpo.scrollTop = 0; _ultimaPintada = seccion; }
+
+    /* Y las hojas vuelven a donde estaban. Solo si hay las mismas que antes: si se
+       cerró una y se abrió otra, lo correcto es empezar arriba. */
+    const devolver = (sel, guardado) => {
+        const ahora = [...raiz.querySelectorAll(sel)];
+        if (ahora.length !== guardado.length) return;
+        ahora.forEach((e, i) => { if (guardado[i]) e.scrollTop = guardado[i]; });
+    };
+    devolver('.am-hoja', dondeIbaLaHoja);
+    devolver('.am-hoja-cuerpo', dondeIbaElCuerpoDeLaHoja);
 
     const capa = raiz.querySelector('.am-capa-menu');
     capa.innerHTML = menu ? `<div class="am-velo-menu" data-velo-menu>${panelMenu()}</div>` : '';
