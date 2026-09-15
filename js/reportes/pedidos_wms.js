@@ -15,8 +15,8 @@
  * numero calculado en dos sitios se desincroniza, y ya paso en este proyecto.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0796';
-import { icono } from '../services_v245/iconos.js?v=29.0796';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0797';
+import { icono } from '../services_v245/iconos.js?v=29.0797';
 
 /**
  * LO QUE EL WMS ABRE Y COMERCIAL NUNCA LIBERO.
@@ -178,7 +178,8 @@ export function cuadroLiberacion(L, O) {
             <th class="c">UNIDADES</th><th class="c">%</th>
           </tr></thead>
           <tbody>
-            ${filas.map(f => `<tr${/8 a 15|16 a 30|de 30/.test(f.k) ? ' class="pend-ojo"' : ''}>
+            ${filas.map(f => `<tr${f.ped && /8 a 15|16 a 30|de 30/.test(f.k)
+                ? ' class="pend-ojo"' : ''}>
               <td>${esc(f.k)}</td>
               <td class="c">${nf(f.ped)}</td>
               <td class="c">${nf(f.und)}</td>

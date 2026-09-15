@@ -25,12 +25,12 @@
  */
 
 import { nf, esc, cuadro, cuadroRutas, estilos, engancharBuscador }
-    from './pendiente.js?v=29.0796';
-import { icono } from '../services_v245/iconos.js?v=29.0796';
+    from './pendiente.js?v=29.0797';
+import { icono } from '../services_v245/iconos.js?v=29.0797';
 /* LOS MISMOS DOS CUADROS QUE PICKING > PEDIDOS WMS, no una copia. Daniel,
    15-sep-2026: *"este mismo reporte que este en el modulo de correo de hoy"*.
    Alla miran lo liberado de ayer hacia atras; aca, lo que comercial solto HOY. */
-import { cuadroLiberacion, cuadroLiberacionDetalle } from './pedidos_wms.js?v=29.0796';
+import { cuadroLiberacion, cuadroLiberacionDetalle } from './pedidos_wms.js?v=29.0797';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
