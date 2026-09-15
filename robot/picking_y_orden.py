@@ -147,6 +147,31 @@ ETQ_ORD_ESTADO_A = "A estado"
 # Y NO CUESTA NADA: la corrida de 365 días tardó 7,9 minutos contra 7,4 la de 90, y
 # el archivo pesó 11,60 MB contra 12,10. El filtro es por ESTADO, no por fecha: lo
 # viejo que sigue abierto son unas pocas cientos de líneas.
+#
+# ══ Y DESDE EL 15-sep-2026 EL PISO ES FIJO: EL 01-01-2026 ═════════════════════
+# Daniel: *"agarra desde el primero de enero de 2026 hacia ayer. Y va dinamicamente:
+# para manana 16, tu pendiente va a ser a partir del 15 para atras, hasta el primero
+# de enero"*.
+#
+# POR QUE UN PISO FIJO Y NO UNA VENTANA MOVIL. Los 365 dias movian el piso todos los
+# dias, y una ventana que se mueve PIERDE COSAS SIN AVISAR: la orden que cumple un
+# ano abierta se cae de la foto y nadie se entera. Con el piso fijo la ventana solo
+# crece, y lo que esta abierto sigue estando.
+#
+# EL FIN SIGUE SIENDO HOY, NO AYER. La misma foto la usa el Correo de Hoy para ver
+# que de lo que mando comercial esta noche ya esta abierto en el WMS; cortandola en
+# ayer ese modulo quedaria en cero. El corte de "ayer hacia atras" lo hace el
+# reporte con la fecha del correo -ver el skill `una-guia-un-lugar`-, no la bajada.
+#
+# NO ENGORDA EL ARCHIVO, LO ADELGAZA: el 15-sep el piso movil arrancaba el
+# 16-09-2025 y el fijo arranca el 01-01-2026. Esa foto trajo 104.330 filas contra un
+# tope de 200.000 donde el WMS corta sin avisar -ver el archivo de Despachados, que
+# hoy sale cortado en 200.000 exactas-. El filtro sigue siendo por ESTADO: lo viejo
+# que sigue abierto son unos cientos de lineas.
+# Es un `datetime` y no un `date` a proposito: `dia_pedido()` devuelve datetime y
+# los dos no se pueden comparar entre si.
+DESDE_PENDIENTES = datetime(2026, 1, 1)
+# Solo para `--dias N`, la salida de emergencia que pide una ventana movil a mano.
 DIAS_PENDIENTES = 365
 # LOS DOS ESTADOS QUE PUEDEN TENER PENDIENTE, medido el 19-ago-2026 sobre los doce
 # archivos que hay: "Creada" (76.113 lineas, 152.698 pares) y "Parcialmente
@@ -351,17 +376,43 @@ def dia_pedido():
             except ValueError:
                 continue
         raise SystemExit("No entendí la fecha '%s'. Se escribe asi: --dia 12-08-2026" % valor)
-    # SIN --dia, la corrida de las 08:00 baja AYER. La bajada de la tarde
-    # -`--solo-pendientes`, la que dispara el correo de comercial- tiene que
-    # llegar hasta HOY: lo que busca son justamente las ordenes nacidas durante
-    # el dia, que a las 06:57 todavia no existian.
+    # SIN --dia, la corrida de las 08:00 baja AYER. Las dos fotos del pendiente
+    # -`--solo-pendientes`- llegan hasta HOY, y el porque esta abajo.
     #
     # `--solo-dia` TAMBIEN ES HOY, y esto fallo la primera noche: el cierre de las
     # 19:00 del 04-sep bajo el Detalle Orden del **03-09**, porque sin bandera el
     # defecto es ayer -este robot nacio como "Picking y Detalle Orden de ayer"-.
     # Un cierre de turno tiene que retratar SU turno: el de las 19:00 baja el dia que
     # termina y el de las 07:00 el que arranca. Entre los dos queda el dia completo.
-    if "--solo-pendientes" in sys.argv or "--solo-dia" in sys.argv:
+    #
+    # ══ LAS DOS FOTOS DEL PENDIENTE LLEGAN HASTA HOY ════════════════════════
+    # Se discutio el 15-sep-2026 y se volvio a lo mismo, asi que queda escrito para
+    # no repetir la vuelta.
+    #
+    # Daniel primero pidio cortarlas en AYER: *"no tiene sentido que pidas el
+    # estatus de hoy; tu tienes que sacar el estatus del 14 hacia atras"*. Y para el
+    # PENDIENTE es cierto: una guia entra al pendiente solo si comercial la libero
+    # ANTES de hoy, asi que lo que nacio hoy no puede entrar. Pero la foto no es el
+    # pendiente: es la materia prima de tres cuadros a la vez.
+    #
+    # LO QUE SE PIERDE CORTANDO EN AYER, medido ese dia:
+    #   · Correo de Hoy: el 82% de las guias nace en el WMS EL MISMO DIA del correo
+    #     -el del 10-09 fue el 100%-. Sin el dia de hoy, ese modulo sale en cero.
+    #   · Pedidos WMS: lo creado hoy y todavia no liberado no se veria hasta manana.
+    #   · Pendiente: NO se gana nada. Ese dia, de 1.339 guias del pendiente, CERO
+    #     habian nacido hoy.
+    #
+    # O sea: pedir hasta hoy no mete ni una guia de hoy en el pendiente -eso lo
+    # decide la fecha del correo, no el rango de la foto- y es lo unico que les da
+    # de comer a los otros dos cuadros. Daniel lo cerro asi: *"el pendiente si
+    # necesita el 15, entonces"*.
+    #
+    # `--hasta-hoy` se acepta y no cambia nada: `armar_pendiente.py` lo manda para
+    # dejar dicho, en el comando, que ESA bajada necesita el dia de hoy.
+    #
+    # `--solo-dia` -el cierre de turno- tambien es HOY: retrata SU turno.
+    if ("--solo-pendientes" in sys.argv or "--hasta-hoy" in sys.argv
+            or "--solo-dia" in sys.argv):
         return datetime.now()
     return datetime.now() - timedelta(days=1)
 
@@ -1031,7 +1082,7 @@ def poner_estado(page, etiqueta, valor):
     log("   %s = %s" % (etiqueta, elegido))
 
 
-def descargar_pendientes(page, destino, hasta_dia, dias=DIAS_PENDIENTES,
+def descargar_pendientes(page, destino, hasta_dia, dias=None,
                          sin_exportar=False, con_fotos=False):
     """El Detalle de Orden de TODO lo que sigue sin atender, hasta %d días atrás.
 
@@ -1056,7 +1107,12 @@ def descargar_pendientes(page, destino, hasta_dia, dias=DIAS_PENDIENTES,
     no un histórico.
     """
     import wms_automation_final as wms
-    desde_dia = hasta_dia - timedelta(days=dias - 1)
+    # Sin `--dias`, el piso es FIJO —el 01-01-2026— y la ventana crece sola cada
+    # día. El `min` es para la recuperación de un día viejo (`--dia 12-08-2025`):
+    # ahí el piso fijo quedaría por delante del final y la búsqueda saldría vacía.
+    desde_dia = (min(DESDE_PENDIENTES, hasta_dia) if dias is None
+                 else hasta_dia - timedelta(days=dias - 1))
+    dias = (hasta_dia - desde_dia).days + 1
     log("=" * 58)
     log("PENDIENTES · del %s al %s (%d días)"
         % (desde_dia.strftime("%d-%m-%Y"), hasta_dia.strftime("%d-%m-%Y"), dias))
@@ -1265,18 +1321,20 @@ def run():
         bloqueo_wms.soltar()
         return 1
 
-    # CUANTOS DIAS MIRA HACIA ATRAS EL PENDIENTE. Todos los dias son 90, que es lo
-    # que Daniel eligio. Se puede pedir mas de una vez para revisar si quedo algo
-    # colgado de meses anteriores:  python picking_y_orden.py --dias 365
-    dias_pend = DIAS_PENDIENTES
+    # HASTA DONDE MIRA HACIA ATRAS EL PENDIENTE. Por defecto, hasta el piso fijo
+    # —el 01-01-2026—. Con `--dias N` se pide una ventana movil de N dias, que es
+    # la salida para comprobar si quedo algo colgado de antes de ese piso:
+    #     python picking_y_orden.py --solo-pendientes --dias 500
+    dias_pend = None
     for i, a in enumerate(sys.argv):
         if a == "--dias" and i + 1 < len(sys.argv):
             try:
                 dias_pend = max(1, int(sys.argv[i + 1]))
             except ValueError:
                 pass
-    if dias_pend != DIAS_PENDIENTES:
-        log("Los pendientes se van a pedir de %d dias, no de %d" % (dias_pend, DIAS_PENDIENTES))
+    if dias_pend is not None:
+        log("Los pendientes se van a pedir de %d dias hacia atras, no desde el %s"
+            % (dias_pend, DESDE_PENDIENTES.strftime("%d-%m-%Y")))
 
     ok_pick = ok_ord = ok_pend = ok_desp = False
     try:

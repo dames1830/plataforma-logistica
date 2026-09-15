@@ -560,10 +560,17 @@ def refrescar_pendientes():
             % bajador, 'ERROR')
         return False
 
-    log('Bajando del WMS la foto de hoy (365 dias, unos 8 minutos)...')
+    # `--hasta-hoy` A PROPOSITO. Desde el 15-sep-2026 la bajada termina en AYER por
+    # defecto -es lo que necesita el pendiente, y lo pidio Daniel: *"no tiene
+    # sentido que pidas el estatus de hoy"*-. Pero ESTA bajada la dispara el correo
+    # de comercial, y lo que quiere saber es cuales de las guias que acaba de mandar
+    # ya estan abiertas en el WMS. Esas ordenes nacen DURANTE EL DIA: cortando la
+    # foto en ayer, el Correo de Hoy saldria en cero.
+    log('Bajando del WMS la foto de hoy (desde el 01-01-2026, unos 8 minutos)...')
     cod = -1
     try:
-        cod = subprocess.run([sys.executable, bajador, '--solo-pendientes'],
+        cod = subprocess.run([sys.executable, bajador, '--solo-pendientes',
+                              '--hasta-hoy'],
                              timeout=ESPERA_BAJADA).returncode
     except Exception as e:
         log('No se pudo correr picking_y_orden.py (%s: %s)'
@@ -1347,6 +1354,36 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
 #  4. EL EXCEL
 # ══════════════════════════════════════════════════════════════════════════════
 
+def fechas_de_orden():
+    """Cuando nacio cada orden en el WMS: {guia: 'dd/mm/aaaa'}.
+
+    Se relee el archivo del WMS en vez de arrastrar el dato por media docena de
+    funciones. Son dos segundos sobre 24 MB, el mismo criterio que ya sigue
+    `armar_correo_hoy`.
+    """
+    fechas = {}
+    if not os.path.isfile(PENDIENTES):
+        return fechas
+    f = io.open(PENDIENTES, encoding='utf-8-sig', newline='', errors='replace')
+    r = csv.reader(f, delimiter=';')
+    try:
+        next(r)
+    except StopIteration:
+        f.close()
+        return fechas
+    for row in r:
+        if len(row) < 20:
+            continue
+        g = limpio(row[1])
+        if g in fechas:
+            continue
+        fo = limpio(row[18])                 # "Fecha de orden", dd/mm/aaaa
+        if len(fo) == 10:
+            fechas[g] = fo
+    f.close()
+    return fechas
+
+
 def excel(ruta, cabecera, IQ, guias, por_guia, por_sku):
     """Dos hojas.
 
@@ -1355,14 +1392,28 @@ def excel(ruta, cabecera, IQ, guias, por_guia, por_sku):
     por atender. Decision de Daniel, 20-ago-2026: *"debe ser tal cual el archivo
     que manda comercial, solo que las cantidades deberian variar"*. Las guias ya
     atendidas del todo no salen: no aportan nada.
+
+    Y AL FINAL, UNA COLUMNA MAS: `FECHA ORDEN WMS`. Nace el 15-sep-2026 de un
+    malentendido que costo una discusion entera. La columna `FECHA` de este Excel
+    es la del correo -es la fila del correo tal cual-, o sea EL DIA EN QUE
+    COMERCIAL LIBERO LA GUIA. Daniel filtro esa columna, vio solo setiembre y
+    penso que el reporte estaba mintiendo, porque yo le habia mostrado guias de
+    julio y agosto: *"me dices una cosa, me muestras otra"*. Las dos cosas eran
+    ciertas y eran DOS FECHAS DISTINTAS. Ahora van las dos, una al lado de la
+    otra, y no hay que creerle a nadie.
+
+    Va ULTIMA y no en el medio: las once columnas de comercial quedan tal cual,
+    en su orden, que es lo que Daniel pidio.
     """
+    fecha_orden = fechas_de_orden()
+    cab = list(cabecera) + ['FECHA ORDEN WMS']
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Detalle'
     relleno = PatternFill('solid', fgColor='1F3864')
     negrita = Font(bold=True, color='FFFFFF')
 
-    ws.append(cabecera)
+    ws.append(cab)
     for c in ws[1]:
         c.fill = relleno
         c.font = negrita
@@ -1374,9 +1425,9 @@ def excel(ruta, cabecera, IQ, guias, por_guia, por_sku):
         while len(fila) < len(cabecera):
             fila.append('')
         fila[IQ] = int(round(q))
-        ws.append(fila[:len(cabecera)])
+        ws.append(fila[:len(cabecera)] + [fecha_orden.get(g, '')])
     ws.freeze_panes = 'A2'
-    for i, ancho in enumerate([9, 8, 27, 17, 13, 12, 11, 9, 13, 21, 11], 1):
+    for i, ancho in enumerate([9, 8, 27, 17, 13, 12, 11, 9, 13, 21, 11, 17], 1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = ancho
 
     ws2 = wb.create_sheet('Resumen')
@@ -1592,6 +1643,32 @@ def main():
                 'pendiente sale corto y pisaria al bueno; queda el del dia anterior. '
                 'El correo lo vuelve a intentar en la proxima vuelta.', 'ERROR')
             return 2
+        log('')
+
+    # Y CON --sin-bajar, LA FOTO TIENE QUE SER DE HOY IGUAL.
+    #
+    # `--sin-bajar` no pide nada al WMS: usa el archivo que ya esta en disco. Eso
+    # esta bien en el pase de la manana, donde la bajada acaba de dejarlo ahi
+    # arriba. Pero si esa bajada fallo -el WMS ocupado con otro robot, que es como
+    # sale con codigo 3-, el archivo en disco es el de AYER y el pendiente saldria
+    # de una foto vieja SELLADA CON LA HORA DE HOY. Una pantalla que se ve fresca y
+    # no lo esta es peor que una que se ve vieja: de ahi se deciden las paletas que
+    # se bajan.
+    #
+    # El camino normal ya tiene su guarda -la foto tiene que ser posterior al
+    # correo-; este atajo no la tenia. Con --probar no se comprueba nada, que para
+    # eso esta.
+    if sin_bajar and not probar and hoy == datetime.now().strftime('%Y-%m-%d'):
+        foto = hora_foto()
+        if not foto or datetime.fromtimestamp(foto).date() != datetime.now().date():
+            log('')
+            log('NO SE PUBLICA NADA. La foto del WMS que hay en disco es del %s y '
+                'hoy es %s: la bajada de esta misma corrida no dejo una nueva. '
+                'Queda publicado el pendiente del dia anterior, que al menos dice '
+                'de cuando es.' % (_reloj(foto), datetime.now().strftime('%d-%m')),
+                'ERROR')
+            return 2
+        log('Foto del WMS en disco: %s. No se baja de nuevo.' % _reloj(foto))
         log('')
 
     (datos, guias, cabecera, IQ, por_guia, por_sku, sku_hoy, sku_antes,
