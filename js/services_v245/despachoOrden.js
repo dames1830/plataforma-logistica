@@ -46,7 +46,7 @@
  * lo liquidado colgando de números que ya no existen.
  */
 
-import * as DES from './despachoCatalogo.js?v=29.0787';
+import * as DES from './despachoCatalogo.js?v=29.0788';
 
 /* Los catorce títulos que manda comercial, y a qué campo va cada uno. Se reconocen por
    el título y no por la posición: es lo único que sobrevive a que alguien mueva una
@@ -58,7 +58,8 @@ export const TITULOS = {
     'CobroFlete': 'flete', 'Observacion': 'obs', 'Detalle': 'det'
 };
 const NUMEROS = ['cant', 'bolsas', 'venta', 'pedBol'];
-const MINIMO_TITULOS = 10;      // con 10 de 14 ya es la hoja buena
+const MINIMO_TITULOS = 10;
+const CANALES_VALIDOS = Object.keys(DES.CANALES);      // con 10 de 14 ya es la hoja buena
 
 /** Saca el espacio duro y los espacios de más. Sin esto no coincide ningún título. */
 const limpio = (v) => String(v === undefined || v === null ? '' : v)
@@ -197,7 +198,12 @@ export const yaCargada = (indice, od) =>
  * Guarda la orden. Agrega a la semana que le toca y NO borra nada más.
  * `avisar(texto)` para ir contando qué hace.
  */
-export const guardarOrden = async (orden, filas, fecha, avisar) => {
+export const guardarOrden = async (orden, filas, fecha, avisar, canal) => {
+    /* EL CANAL LO PONE LA PANTALLA QUE CARGA. Cargar desde Tracking Retail marca las
+       guias como retail y desde Despacho de Catalogo como catalogo; el celular, que
+       muestra todos los canales, carga como catalogo, que es lo que manda comercial
+       hoy. Asi la orden cae en el modulo correcto sin preguntar nada. */
+    const elCanal = (CANALES_VALIDOS.indexOf(String(canal || '')) >= 0) ? String(canal) : 'catalogo';
     const decir = (t) => { if (avisar) avisar(t); };
     const lunes = DES.lunesDe(fecha);
 
@@ -235,7 +241,7 @@ export const guardarOrden = async (orden, filas, fecha, avisar) => {
             libre++;
         }
         g.desp = fecha;
-        g.canal = 'catalogo';
+        g.canal = elCanal;
         g.od = orden.od || '';
         if (!g.est) g.est = 'PENDIENTE';
         return g;

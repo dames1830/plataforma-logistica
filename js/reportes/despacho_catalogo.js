@@ -33,13 +33,16 @@
  * 102 reales, y de 753 destinos, 580.
  */
 
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0787';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0788';
 /* EL RANGO DE FECHAS ES EL DE TODA LA PLATAFORMA, no uno propio. Acá había dos
    <input type="date"> sueltos, que es justo lo que `selectorRango` vino a terminar: 21
    pantallas armaban el suyo, unas con "DE:/HASTA:", otras con "DE/A", la mayoría sin
    decir qué era el primer campo. Daniel lo cantó apenas lo vio al lado del Tracking:
    *"la fecha la puedes poner en una fila"*. Una sola caja que se lee como una frase. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0787';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0788';
+/* La lectura del Excel es LA MISMA que usa el celular. Dos formas de leer el mismo
+   archivo es el camino mas corto a que dos pantallas digan numeros distintos. */
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0788';
 
 /* ── DE DÓNDE SALEN LOS DATOS ─────────────────────────────────────────────────
    De `despachoCatalogo.js`, que los baja POR SEMANAS. Acá había una copia de todo
@@ -95,6 +98,9 @@ let FILAS = [];              /* SOLO lo que la pestaña de turno necesita, de ES
 let cargando = false;
 let diaMostrado = '';        /* qué día está mostrando la pestaña Hoy */
 let marca = '';              /* la tarjeta del resumen que se tocó */
+/* LA ORDEN QUE SE ESTA CARGANDO. null = no hay ninguna. Si no, lo leido del archivo
+   esperando el visto bueno: nada se escribe hasta que se toca el boton. */
+let carga = null;
 
 /* ── UNA PANTALLA, DOS MÓDULOS ────────────────────────────────────────
    Daniel, 15-sep-2026: *"en la aplicación va a haber un solo tracking, yo puedo poner
@@ -257,6 +263,13 @@ const barra = () => {
       </select>
       ${pestana === 'rango' ? selectorRango(filtro.desde, filtro.hasta, null,
           { idDesde: 'dc_d1', idHasta: 'dc_d2' }) + atajos() : ''}
+      <label id="dc_cargar" title="Cargar la orden que manda comercial"
+        style="background:rgba(var(--primary2-rgb), 0.12); border:1px solid var(--primary-2);
+        border-radius:9px; padding:.5rem .8rem; color:var(--primary-2); font-size:var(--t-sm);
+        font-weight:700; cursor:pointer; font-family:inherit; display:inline-flex; gap:.35rem;
+        align-items:center;">\ud83d\udcc4 Cargar orden<input type="file" data-dc-cargar
+        accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        style="display:none"></label>
       <button type="button" id="dc_excel" style="background:var(--panel); border:1px solid var(--border);
         border-radius:9px; padding:.5rem .8rem; color:var(--text-soft); font-size:var(--t-sm);
         font-weight:700; cursor:pointer; font-family:inherit;">Excel (${num(deLaMarca(L).length)})</button>
@@ -656,6 +669,169 @@ const liquidar = async () => {
 };
 
 /* ── DIBUJAR ──────────────────────────────────────────────────────────────────── */
+/* Recien aca se escribe algo. Si falla, la ventana se queda con lo leido y el motivo:
+   perder el archivo obligaria a ir a buscarlo otra vez. */
+const guardarLaOrden = async () => {
+    const c = carga;
+    if (!c || c.guardando || !c.filas) return;
+    if (!DES.esFecha(c.fecha)) { c.aviso = 'Falta la fecha de despacho.'; pintar(); return; }
+    c.guardando = true; c.aviso = ''; pintar();
+    try {
+        const r = await ORD.guardarOrden(c.orden, c.filas, c.fecha,
+            (t) => { c.aviso = t; pintar(); }, CANAL);
+        carga = { estado: 'listo', orden: c.orden, fecha: c.fecha,
+                  guardadas: r.guardadas, reusadas: r.reusadas };
+        pintar();
+    } catch (e) {
+        c.guardando = false;
+        c.aviso = 'No se pudo guardar: ' + ((e && e.message) || 'sin detalle')
+                + '. Nada se perdi\u00f3, vuelve a intentarlo.';
+        pintar();
+    }
+};
+
+/* ══ CARGAR LA ORDEN DE DESPACHO ══════════════════════════════════════
+   Lo mismo que en el celular y con la misma lectura, porque es el mismo archivo. Lo
+   unico que cambia es el canal: cargar desde Tracking Retail marca las guias como
+   retail, y desde Despacho de Catalogo como catalogo. La pantalla ya sabe cual es.
+
+   Se ve lo que se leyo ANTES de guardar. Si algo no cuadra se cancela y no quedo ni
+   media fila escrita. */
+const ventanaDeCarga = () => {
+    if (!carga) return '';
+    const c = carga;
+    const caja2 = (t, cuerpo) => `
+      <div style="background:var(--panel); border:1px solid var(--border); border-radius:12px;
+                  padding:.8rem .9rem; margin-bottom:.7rem;">
+        <div style="font-size:var(--t-xs); font-weight:800; letter-spacing:.06em;
+             text-transform:uppercase; color:var(--text-muted); margin-bottom:.45rem;">${esc(t)}</div>
+        ${cuerpo}</div>`;
+    const marco = (cuerpo) => `
+      <div id="dc_velo_carga" style="position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9200;
+           display:flex; align-items:center; justify-content:center; padding:1rem;">
+        <div style="background:var(--panel-solid); border:1px solid var(--border); border-radius:16px;
+             max-width:560px; width:100%; max-height:88vh; overflow:auto; padding:1.1rem;">
+          ${cuerpo}</div></div>`;
+
+    if (c.estado === 'leyendo') {
+        return marco(`<p style="margin:0; padding:1.4rem; text-align:center; color:var(--text-muted);
+          font-size:var(--t-sm);">Leyendo el archivo…</p>`);
+    }
+    if (c.estado === 'malo') {
+        return marco(`
+          <h3 style="margin:0 0 .5rem; font-size:var(--t-lg); font-weight:900;
+              color:var(--text-strong);">No se pudo leer</h3>
+          <div style="background:rgba(var(--danger-rgb), 0.12); color:var(--danger-pale);
+               border-radius:9px; padding:.7rem .8rem; font-size:var(--t-sm);">
+            ${esc(c.motivo || 'El archivo no se pudo abrir.')}</div>
+          <p style="font-size:var(--t-xs); color:var(--text-muted); line-height:1.6;">
+            Tiene que ser el Excel de la orden de despacho, el que manda comercial.</p>
+          <button type="button" data-dc-carga-cerrar style="background:var(--panel);
+            border:1px solid var(--border); border-radius:9px; padding:.5rem 1rem;
+            color:var(--text-soft); font-size:var(--t-sm); font-weight:700; cursor:pointer;
+            font-family:inherit;">Cerrar</button>`);
+    }
+    if (c.estado === 'listo') {
+        return marco(`
+          <h3 style="margin:0 0 .5rem; font-size:var(--t-lg); font-weight:900; color:var(--success);">
+            ${c.guardadas} guías cargadas</h3>
+          <p style="margin:0 0 .8rem; font-size:var(--t-sm); color:var(--text-muted); line-height:1.6;">
+            Orden <b>${esc(c.orden.od || '\u2014')}</b>, despacho del
+            <b>${esc(fechaBonita(c.fecha))}</b>, en <b>PENDIENTE</b>.${
+            c.reusadas ? ` De esas, ${c.reusadas} ya estaban y se actualizaron sin tocar lo liquidado.` : ''}</p>
+          <button type="button" data-dc-carga-cerrar style="background:var(--primary);
+            color:var(--on-primary); border:0; border-radius:9px; padding:.55rem 1.1rem;
+            font-size:var(--t-sm); font-weight:800; cursor:pointer; font-family:inherit;">Ver</button>`);
+    }
+
+    const q = c.cuadre || {};
+    const lista = c.filas.slice(0, 6).map((f) => `
+      <div style="display:flex; gap:.6rem; padding:.4rem 0; border-bottom:1px solid var(--border);
+                  font-size:var(--t-sm);">
+        <div style="min-width:0; flex:1;">
+          <div style="font-weight:700; color:var(--text-strong); white-space:nowrap;
+               overflow:hidden; text-overflow:ellipsis;">${esc(f.rot || f.prom || '\u2014')}</div>
+          <div style="font-size:var(--t-xs); color:var(--text-muted);">${esc(f.age || '')}
+            \u2192 ${esc(f.dest || '')} \u00b7 ${esc(f.ase || '')}</div>
+        </div>
+        <div style="font-family:var(--font-num); color:var(--text-soft); flex-shrink:0;">
+          ${num(f.cant || 0)}</div>
+      </div>`).join('');
+
+    return marco(`
+      <h3 style="margin:0 0 .15rem; font-size:var(--t-lg); font-weight:900; color:var(--text-strong);">
+        ${esc(c.orden.od || 'Orden de despacho')}</h3>
+      <p style="margin:0 0 .8rem; font-size:var(--t-xs); color:var(--text-muted);">
+        ${esc(c.orden.archivo || '')}${c.orden.creada ? ' \u00b7 creada el '
+          + esc(fechaBonita(c.orden.creada)) : ''}</p>
+
+      <div style="display:flex; gap:.6rem; margin-bottom:.7rem;">
+        ${tarjeta(num(c.filas.length), 'gu\u00edas')}
+        ${tarjeta(num(Math.round(q.pares || 0)), 'pares')}
+        ${tarjeta(num(c.agencias), 'agencias')}
+      </div>
+
+      <div style="background:${q.ok ? 'rgba(var(--success-rgb), 0.12)' : 'rgba(var(--danger-rgb), 0.12)'};
+           color:${q.ok ? 'var(--success)' : 'var(--danger-pale)'}; border-radius:9px;
+           padding:.6rem .8rem; font-size:var(--t-sm); line-height:1.55; margin-bottom:.7rem;">
+        ${q.ok
+          ? `<b>Cuadra con el resumen del archivo.</b> ${num(Math.round(q.pares))} pares y
+             ${soles(q.venta)}, igual que lo que dice el propio Excel.`
+          : `<b>No cuadra con el resumen del archivo.</b> Le\u00ed ${num(Math.round(q.pares))}
+             pares y el archivo dice ${num(q.dicePares)}. Mejor no cargarlo hasta saber por qu\u00e9.`}
+      </div>
+
+      ${q.premios ? `<p style="margin:0 0 .7rem; font-size:var(--t-xs); color:var(--text-muted);
+        line-height:1.6;">El archivo dice <b>${num(q.dicePares + q.premios)} enviados</b> y las gu\u00edas
+        suman <b>${num(q.dicePares)} pedidos</b>. Los ${num(q.premios)} de diferencia son premios, y el
+        archivo no dice de qu\u00e9 gu\u00eda son: la cantidad de cada gu\u00eda queda en la pedida.</p>` : ''}
+
+      ${c.repetida ? `<div style="background:rgba(var(--warning-rgb), 0.12); color:var(--warning);
+        border-radius:9px; padding:.6rem .8rem; font-size:var(--t-sm); line-height:1.55;
+        margin-bottom:.7rem;"><b>Esta orden ya est\u00e1 cargada</b>${c.repetida.cargada
+        ? ' desde el ' + esc(fechaBonita(c.repetida.cargada)) : ''}. Si la vuelves a cargar se
+        actualizan, no se duplican, y lo que ya se liquid\u00f3 no se toca.</div>` : ''}
+
+      ${caja2('Fecha de despacho',
+        /* UNA SOLA FECHA, no un rango. `selectorRango` mostraba "Desde 15/09 hasta
+           15/09", que para un dia solo se lee como si faltara algo. */
+        `<div class="rango-fechas" style="display:inline-flex; align-items:center; gap:9px;
+           background:rgba(var(--ink-rgb), 0.04); border:1px solid var(--border);
+           border-radius:9px; padding:5px 12px;">
+           <span style="font-size:11px; color:var(--text-muted); font-weight:800;
+             letter-spacing:.04em;">SALE EL</span>
+           <input id="dc_cfecha" type="date" value="${esc(c.fecha)}" style="background:transparent;
+             border:none; color:var(--text-strong); font-size:12.5px; font-weight:700;
+             outline:none; cursor:pointer; font-family:inherit; color-scheme:var(--scheme);">
+         </div>`
+        + `<p style="margin:.5rem 0 0; font-size:var(--t-xs); color:var(--text-muted); line-height:1.5;">
+           Es el d\u00eda que sale el cami\u00f3n, no el que comercial arm\u00f3 la orden${
+           c.orden.creada ? ' (' + esc(fechaBonita(c.orden.creada)) + ')' : ''}. Entran en
+           <b>${esc((CARA[CANAL] || CARA.catalogo).ttl)}</b>.</p>`)}
+
+      ${caja2('Las primeras, para mirar', lista + (c.filas.length > 6
+        ? `<p style="margin:.5rem 0 0; font-size:var(--t-xs); color:var(--text-muted);">y
+           ${num(c.filas.length - 6)} m\u00e1s.</p>` : ''))}
+
+      ${c.aviso ? `<div style="background:rgba(var(--ink-rgb), 0.06); border-radius:9px;
+        padding:.5rem .8rem; font-size:var(--t-sm); color:var(--text-soft);
+        margin-bottom:.6rem;">${esc(c.aviso)}</div>` : ''}
+
+      <div style="display:flex; gap:.5rem;">
+        <button type="button" data-dc-carga-guardar ${c.guardando ? 'disabled' : ''}
+          style="flex:1; background:var(--primary); color:var(--on-primary); border:0;
+          border-radius:9px; padding:.6rem 1rem; font-size:var(--t-sm); font-weight:800;
+          cursor:pointer; font-family:inherit;">${c.guardando ? 'Guardando\u2026'
+            : 'Cargar las ' + c.filas.length + ' gu\u00edas'}</button>
+        <button type="button" data-dc-carga-cerrar style="background:var(--panel);
+          border:1px solid var(--border); border-radius:9px; padding:.6rem 1.1rem;
+          color:var(--text-soft); font-size:var(--t-sm); font-weight:700; cursor:pointer;
+          font-family:inherit;">Cancelar</button>
+      </div>
+      <p style="margin:.6rem 0 0; font-size:var(--t-xs); color:var(--text-muted);">
+        Nada se guarda hasta tocar el bot\u00f3n.</p>`);
+};
+
 const pintar = () => {
     if (!raiz) return;
     const L = visibles();
@@ -681,7 +857,7 @@ const pintar = () => {
       ${resumen(L)}
       ${tabla(deLaMarca(L))}
     </div>
-    ${ficha()}`;
+    ${ficha()}${ventanaDeCarga()}`;
 
     /* Los toques */
     raiz.querySelectorAll('[data-pes]').forEach((b) => b.addEventListener('click', async () => {
@@ -783,6 +959,38 @@ const pintar = () => {
         });
     };
     fecha('#dc_d1', 'desde'); fecha('#dc_d2', 'hasta');
+    /* ── EL CARGADOR ── */
+    const inpCarga = raiz.querySelector('[data-dc-cargar]');
+    if (inpCarga) inpCarga.addEventListener('change', async () => {
+        const arch = inpCarga.files && inpCarga.files[0];
+        inpCarga.value = '';
+        if (!arch) return;
+        carga = { estado: 'leyendo' }; pintar();
+        try {
+            const r = await ORD.leerArchivo(arch);
+            if (!r.ok) { carga = { estado: 'malo', motivo: r.motivo }; pintar(); return; }
+            const idx = await DES.traerIndice(true);
+            carga = {
+                estado: 'mirando', orden: r.orden, filas: r.filas, cuadre: r.cuadre,
+                fecha: hoyTexto(),
+                agencias: new Set(r.filas.map((f) => String(f.age || '').toUpperCase())).size,
+                repetida: ORD.yaCargada(idx, r.orden.od)
+            };
+        } catch (e) {
+            carga = { estado: 'malo', motivo: (e && e.message) || 'no se pudo leer' };
+        }
+        pintar();
+    });
+    raiz.querySelectorAll('[data-dc-carga-cerrar]').forEach((b) => b.addEventListener('click', async () => {
+        const habiaCargado = carga && carga.estado === 'listo';
+        carga = null; pintar();
+        if (habiaCargado) { await cargar(true); pintar(); }
+    }));
+    const bcg = raiz.querySelector('[data-dc-carga-guardar]');
+    if (bcg) bcg.addEventListener('click', guardarLaOrden);
+    const cf = raiz.querySelector('#dc_cfecha');
+    if (cf) cf.addEventListener('change', () => { if (carga) { carga.fecha = cf.value; pintar(); } });
+
     const ex = raiz.querySelector('#dc_excel');
     if (ex) ex.addEventListener('click', () => bajarExcel(deLaMarca(visibles())));
     /* La tarjeta tocada filtra; volver a tocarla apaga el filtro. */
