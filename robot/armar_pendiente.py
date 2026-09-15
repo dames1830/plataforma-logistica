@@ -1181,7 +1181,7 @@ def armar_no_liberados(hoy, guias, rutas, gen):
     return datos
 
 
-def armar_liberacion(hoy, guias):
+def armar_liberacion(hoy, guias, de_hoy=False):
     """CUANTO TARDO COMERCIAL EN LIBERAR LO QUE EL WMS YA TENIA CREADO.
 
     POR QUE EXISTE. Daniel, 15-sep-2026, mirando la guia 7991491: *"comercial lo
@@ -1191,9 +1191,21 @@ def armar_liberacion(hoy, guias):
     Son las DOS FECHAS que ya se veian sueltas y nunca juntas: la de la orden en
     el WMS y la del correo que la libero. La resta es el dato.
 
-    EL UNIVERSO ES EL PENDIENTE: guias que comercial libero antes de hoy y que el
-    WMS sigue teniendo abiertas. Las que ya se picaron desaparecen de la foto, asi
-    que esto mide lo que HOY sigue esperando, no un historico. La pantalla lo dice.
+    EL UNIVERSO SON LAS GUIAS QUE EL WMS TIENE ABIERTAS. Cuales, lo decide
+    `de_hoy`, y es la misma linea que parte todo este modulo -ver el skill
+    `una-guia-un-lugar`-:
+
+        de_hoy=False   las que comercial libero ANTES de hoy  -> el Pendiente
+        de_hoy=True    las que libero HOY                     -> el Correo de Hoy
+
+    Daniel, 15-sep-2026: *"este mismo reporte que este en el modulo de correo de
+    hoy; lo que quiero detectar es los pedidos que esta mandando el dia de hoy,
+    que liberaron el dia de hoy, cuando se crearon en el WMS"*. Es la misma
+    pregunta sobre el otro grupo, asi que es la misma funcion y no una copia: dos
+    copias del mismo calculo se desincronizan, y ya paso en este proyecto.
+
+    Las que ya se picaron desaparecen de la foto, asi que esto mide lo que sigue
+    abierto AHORA, no un historico. La pantalla lo dice.
 
     EL DETALLE DEJA FUERA LAS DE EL MISMO DIA, que el 15-sep eran el 82%. No es un
     recorte de conveniencia: una guia liberada el dia que nacio no tiene demora que
@@ -1252,7 +1264,7 @@ def armar_liberacion(hoy, guias):
         # El correo de un diciembre mirado en enero cae un ano atras.
         if correo > hoy_d:
             correo = date(hoy_d.year - 1, int(mes), int(dia))
-        if correo < hoy_d:
+        if (correo == hoy_d) if de_hoy else (correo < hoy_d):
             def campo(i):
                 return (str(fila[i]).strip()
                         if i < len(fila) and fila[i] is not None else '')
@@ -1284,9 +1296,10 @@ def armar_liberacion(hoy, guias):
     tarde.sort(key=lambda x: (-x['dias'], -x['und']))
     semana = [x for x in tarde if x['dias'] > 7]
 
-    log('Liberacion: %s pedidos del pendiente; %s tardaron mas de una semana '
+    log('Liberacion (%s): %s pedidos; %s tardaron mas de una semana '
         'en liberarse (%s unidades). El peor, %s dias.'
-        % (format(total, ',d'), format(len(semana), ',d'),
+        % ('correo de hoy' if de_hoy else 'pendiente',
+           format(total, ',d'), format(len(semana), ',d'),
            format(sum(x['und'] for x in semana), ',d'),
            tarde[0]['dias'] if tarde else 0))
 
@@ -1463,8 +1476,17 @@ def armar_correo_hoy(hoy, guias, IQ, gen, rims, colec, rutas):
     # doble tramo, y esto si hay que mirarlo todos los dias.
     datos['noLiberados'] = armar_no_liberados(hoy, guias, rutas, gen)
     # Y LAS DOS FECHAS JUNTAS: cuanto tardo comercial en liberar cada guia.
-    # Va en este mismo modulo porque lo mira el mismo que mira lo no liberado.
+    #
+    # VAN LAS DOS, una por grupo, y en el mismo paquete porque las dos pantallas
+    # leen esta area:
+    #   `liberacion`       lo de AYER HACIA ATRAS  -> Picking > Pedidos WMS
+    #   `liberacionHoy`    lo que libero HOY       -> Despacho > Correo de Hoy
+    #
+    # Daniel, 15-sep-2026: *"este mismo reporte que este en el modulo de correo de
+    # hoy; lo que quiero detectar es los pedidos que esta mandando el dia de hoy,
+    # que liberaron el dia de hoy, cuando se crearon en el WMS"*.
     datos['liberacion'] = armar_liberacion(hoy, guias)
+    datos['liberacionHoy'] = armar_liberacion(hoy, guias, de_hoy=True)
     log('Correo de hoy: %s guias / %s unidades pedidas  ->  el WMS tiene abiertas '
         '%s guias / %s unidades  (sin abrir %s)'
         % (format(datos['correo']['guias'], ',d'),

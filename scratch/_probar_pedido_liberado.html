@@ -31,21 +31,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
 import { montarPedidosWms } from '../js/reportes/pedidos_wms.js';
+import { montarCorreoHoy } from '../js/reportes/correo_hoy.js';
 
-const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/correo_hoy?date=2026-09-15';
+/* ?correo=1 monta Despacho > Correo de Hoy; sin eso, Picking > Pedidos WMS.
+   La fecha se puede pasar con ?f=2026-09-14. */
+const cual = new URLSearchParams(location.search);
+const DIA = cual.get('f') || '2026-09-15';
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/correo_hoy?date=' + DIA;
 const r = await fetch(API, { headers: { 'X-Environment': 'beta' } });
 const j = await r.json();
 window.__d = j.data;
-montarPedidosWms(document.getElementById('raiz'), {
-    datos: j.data, fecha: '2026-09-15',
+const montar = cual.get('correo') ? montarCorreoHoy : montarPedidosWms;
+montar(document.getElementById('raiz'), {
+    datos: j.data, fecha: DIA,
     alCambiarFecha: (f) => console.log('cambio de fecha', f),
 });
 document.querySelectorAll('.barra button').forEach((b) => {
     b.addEventListener('click', () => { document.documentElement.dataset.tema = b.dataset.t; });
 });
-console.log('MONTADO. liberacion =', j.data && j.data.liberacion
-    ? j.data.liberacion.pedidos + ' pedidos, ' + j.data.liberacion.detalle.length + ' filas'
-    : 'NO VINO');
+const L = j.data && (cual.get('correo') ? j.data.liberacionHoy : j.data.liberacion);
+console.log('MONTADO.', cual.get('correo') ? 'correo de hoy' : 'pendiente', '=',
+    L ? L.pedidos + ' pedidos, ' + L.detalle.length + ' filas' : 'NO VINO');
 </script>
 </body>
 </html>
